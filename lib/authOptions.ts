@@ -3,7 +3,6 @@ import AzureADProvider from "next-auth/providers/azure-ad";
 import { getUserProfile } from "./azureGraph";
 
 export const authOptions: NextAuthOptions = {
-  secret: process.env.NEXTAUTH_SECRET,
   providers: [
     AzureADProvider({
       clientId: process.env.AZURE_AD_CLIENT_ID || "",
