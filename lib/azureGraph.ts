@@ -3,7 +3,7 @@ import axios from "axios";
 export async function getUserProfile(accessToken: string) {
   try {
     const response = await axios.get(
-      "https://graph.microsoft.com/v1.0/me?$select=employeeId",
+      "https://graph.microsoft.com/v1.0/me?$select=employeeId,jobTitle",
       {
         headers: {
           Authorization: `Bearer ${accessToken}`,
@@ -11,12 +11,9 @@ export async function getUserProfile(accessToken: string) {
       }
     );
 
-    console.log(response.data);
-
     // Extract relevant information from the response
-    const { employeeId } = response.data;
-
-    return { employeeId };
+    const { employeeId, jobTitle } = response.data;
+    return { employeeId, jobTitle };
   } catch (error) {
     // Handle errors appropriately
     console.error("Error fetching user profile:");

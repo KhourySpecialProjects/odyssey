@@ -19,15 +19,17 @@ export const authOptions: NextAuthOptions = {
           account?.access_token as string
         );
 
-        // Add the employeeId to the token
+        // Add the employeeId and jobTitle to the token
         token.employeeId = graphProfile.employeeId || "";
+        token.jobTitle = graphProfile.jobTitle || "";
       }
 
       return token;
     },
     session: async ({ session, token }) => {
-      // Add properties to session, if needed
+      // Add properties to session
       session.employeeId = token.employeeId as string;
+      session.jobTitle = token.jobTitle as string;
 
       return session;
     },

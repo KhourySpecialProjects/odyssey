@@ -1,7 +1,8 @@
 "use client";
 
+import { Avatar, DropdownMenu } from "@lemonsqueezy/wedges";
+import { ChevronDownIcon, LogOutIcon } from "lucide-react";
 import { signIn, signOut, useSession } from "next-auth/react";
-import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -35,37 +36,55 @@ export default function Header() {
             ) : null}
 
             {session?.user ? (
-              <div className="inline-flex flex-row items-center gap-4">
-                <div className="inline-flex flex-row items-center">
-                  Hello,{" "}
-                  {session.user.image && (
-                    <Image
-                      className="block w-6 h-6 mx-1 rounded-full"
-                      src={session.user.image}
-                      alt="profile photo"
-                      width={48}
-                      height={48}
-                    />
-                  )}
-                  <strong>
-                    {session.user.name ?? session.user.email} (
-                    {session.employeeId || "no NUID"})
-                  </strong>
-                  !
-                </div>
-                <Link
-                  href="/api/auth/signout"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    signOut();
-                  }}
-                  className="px-4 py-2 text-sm font-medium text-center text-white bg-blue-700 rounded-lg hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
-                >
-                  Log out
-                </Link>
+              <div className="flex items-center justify-center">
+                <DropdownMenu>
+                  <DropdownMenu.Trigger asChild>
+                    <span className="group flex shrink cursor-pointer select-none items-center justify-center gap-1 rounded-lg p-1.5 px-2 text-sm text-surface-600 transition-colors duration-100 wg-antialiased hover:bg-surface dark:hover:bg-white/5">
+                      {session.user.image ? (
+                        <Avatar
+                          size="xs"
+                          src={session.user.image}
+                          initials={session.user.name?.charAt(0) || "?"}
+                        />
+                      ) : null}
+
+                      <span className=" ms-2 flex flex-col">
+                        <span className="font-medium">
+                          Hi, <b>{session.user.name ?? session.user.email}</b>!
+                        </span>
+                      </span>
+
+                      <ChevronDownIcon className="trigger-icon h-5 w-5 text-surface-400" />
+                    </span>
+                  </DropdownMenu.Trigger>
+
+                  <DropdownMenu.Content
+                    align="center"
+                    className="min-w-[140px]"
+                  >
+                    <DropdownMenu.Label>
+                      NUID: {session.employeeId || "unknown"}
+                      <br />
+                      Title: {session.jobTitle || "unknown"}
+                    </DropdownMenu.Label>
+
+                    <DropdownMenu.Separator />
+
+                    <DropdownMenu.Item
+                      onClick={(e) => {
+                        e.preventDefault();
+                        signOut();
+                      }}
+                    >
+                      <LogOutIcon className="w-4 h-4" />
+                      <span>Log Out</span>
+                    </DropdownMenu.Item>
+                  </DropdownMenu.Content>
+                </DropdownMenu>
               </div>
             ) : null}
           </div>
+
           <div
             className="items-center justify-between hidden w-full md:flex md:w-auto md:order-1"
             id="navbar-sticky"
