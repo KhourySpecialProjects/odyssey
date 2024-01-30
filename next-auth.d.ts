@@ -4,5 +4,6 @@ declare module "next-auth" {
   interface Session {
     employeeId: string;
     jobTitle: string;
+    token?: any;
   }
 }
