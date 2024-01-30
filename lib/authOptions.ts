@@ -8,6 +8,11 @@ export const authOptions: NextAuthOptions = {
       clientId: process.env.AZURE_AD_CLIENT_ID || "",
       clientSecret: process.env.AZURE_AD_CLIENT_SECRET || "",
       tenantId: process.env.AZURE_AD_TENANT_ID,
+      authorization: {
+        params: {
+          scope: "openid email profile User.Read",
+        },
+      },
     }),
   ],
   callbacks: {
@@ -30,7 +35,6 @@ export const authOptions: NextAuthOptions = {
       // Add properties to session
       session.employeeId = token.employeeId as string;
       session.jobTitle = token.jobTitle as string;
-      session.token = token;
 
       return session;
     },
