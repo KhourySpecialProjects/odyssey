@@ -16,7 +16,7 @@ export async function getUserProfile(accessToken: string) {
     return { employeeId, jobTitle };
   } catch (error) {
     // Handle errors appropriately
-    console.error("Error fetching user profile:");
+    console.error("Error fetching user profile:", error);
     throw new Error("Failed to fetch user profile");
   }
 }
