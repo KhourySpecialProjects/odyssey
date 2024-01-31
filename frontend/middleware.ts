@@ -2,10 +2,10 @@ import { withAuth } from "next-auth/middleware";
 
 export default withAuth({
   callbacks: {
-    authorized({ req, token }) {
+    authorized({ token }) {
       return !!token;
     },
   },
 });
 
-export const config = { matcher: ["/admin"] };
+export const config = { matcher: ["/private"] };

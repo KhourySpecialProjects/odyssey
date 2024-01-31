@@ -7,7 +7,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 export default function Header() {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const pathname = usePathname();
 
   const activeLinkClasses =
@@ -18,24 +18,19 @@ export default function Header() {
   return (
     <>
       <nav className="fixed top-0 z-20 w-full bg-white border-b border-gray-200 dark:bg-gray-900 start-0 dark:border-gray-600">
-        <div className="flex flex-wrap items-center justify-between max-w-screen-xl p-4 mx-auto">
+        <div className="grid grid-cols-2 md:grid-cols-[1fr_auto_1fr] items-center justify-between max-w-screen-xl p-4 mx-auto">
           <Link href="/" className="flex items-center space-x-3">
             <span className="self-center text-2xl font-semibold whitespace-nowrap dark:text-white">
               Droplets
             </span>
           </Link>
-          <div className="flex space-x-3 md:order-2 md:space-x-0">
-            {!session ? (
-              <button
-                type="button"
-                onClick={() => signIn("azure-ad")}
-                className="px-4 py-2 text-sm font-medium text-center text-white bg-blue-700 rounded-lg hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
-              >
-                Log in
-              </button>
-            ) : null}
-
-            {session?.user ? (
+          <div className="flex space-x-3 md:col-start-3 md:space-x-0 justify-end">
+            {status === "loading" ? (
+              <div
+                role="status"
+                className="max-w-sm animate-pulse h-9 bg-gray-200 rounded-full dark:bg-gray-700 w-48"
+              ></div>
+            ) : session?.user ? (
               <div className="flex items-center justify-center">
                 <DropdownMenu>
                   <DropdownMenu.Trigger asChild>
@@ -82,11 +77,19 @@ export default function Header() {
                   </DropdownMenu.Content>
                 </DropdownMenu>
               </div>
-            ) : null}
+            ) : (
+              <button
+                type="button"
+                onClick={() => signIn("azure-ad")}
+                className="px-4 py-2 text-sm font-medium text-center text-white bg-blue-700 rounded-lg hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+              >
+                Log in
+              </button>
+            )}
           </div>
 
           <div
-            className="items-center justify-between hidden w-full md:flex md:w-auto md:order-1"
+            className="items-center justify-between hidden w-full md:flex md:w-auto md:col-start-2 md:row-start-1"
             id="navbar-sticky"
           >
             <ul className="flex flex-col p-4 mt-4 font-medium border border-gray-100 rounded-lg md:p-0 bg-gray-50 md:space-x-8 md:flex-row md:mt-0 md:border-0 md:bg-white dark:bg-gray-800 md:dark:bg-gray-900 dark:border-gray-700">

@@ -828,6 +828,12 @@ export interface ApiAuthorizedUserAuthorizedUser extends Schema.CollectionType {
   };
   attributes: {
     email: Attribute.Email & Attribute.Required & Attribute.Unique;
+    isAdmin: Attribute.Boolean &
+      Attribute.Required &
+      Attribute.DefaultTo<false>;
+    isEnabled: Attribute.Boolean &
+      Attribute.Required &
+      Attribute.DefaultTo<true>;
     createdAt: Attribute.DateTime;
     updatedAt: Attribute.DateTime;
     createdBy: Attribute.Relation<

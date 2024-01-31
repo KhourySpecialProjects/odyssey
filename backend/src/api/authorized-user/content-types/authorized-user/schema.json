@@ -16,6 +16,16 @@
       "type": "email",
       "required": true,
       "unique": true
+    },
+    "isAdmin": {
+      "type": "boolean",
+      "default": false,
+      "required": true
+    },
+    "isEnabled": {
+      "type": "boolean",
+      "default": true,
+      "required": true
     }
   }
 }
