@@ -11,7 +11,7 @@ export async function fetchAuthorizedUsers() {
       sort: ["email"],
       fields: ["id", "email", "isAdmin", "isEnabled"],
       pagination: {
-        pageSize: 1,
+        pageSize: 25,
         page: 1,
       },
     });

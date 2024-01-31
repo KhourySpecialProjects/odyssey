@@ -14,6 +14,45 @@ const AuthorizedUserSchema = z.object({
   isAdmin: z.coerce.boolean(),
 });
 
+const CreateAuthorizedUser = AuthorizedUserSchema.omit({ id: true });
+export async function createAuthorizedUser(prevState: any, formData: FormData) {
+  const { email, isEnabled, isAdmin } = CreateAuthorizedUser.parse({
+    email: formData.get("email"),
+    isEnabled: formData.get("isEnabled"),
+    isAdmin: formData.get("isAdmin"),
+  });
+
+  const dataToSend = {
+    data: {
+      email,
+      isEnabled,
+      isAdmin,
+    },
+  };
+
+  try {
+    const response = await fetch(STRAPI_URL + "/api/authorized-users", {
+      method: "POST",
+      body: JSON.stringify(dataToSend),
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+      },
+    });
+    const data = await response.json();
+    if (!response.ok)
+      return { ok: false, error: data.error.message, data: null };
+    if (response.ok && data.error)
+      return { ok: false, error: data.error.message, data: null };
+  } catch (err) {
+    console.error(err);
+    return { error: "Database Error: Failed to Update Authorized User." };
+  }
+
+  revalidatePath("/private");
+  return { message: `User ${email} created!`, success: true };
+}
+
 const UpdateAuthorizedUser = AuthorizedUserSchema.omit({ email: true });
 export async function updateAuthorizedUser(formData: FormData) {
   const { id, isEnabled, isAdmin } = UpdateAuthorizedUser.parse({
@@ -24,8 +63,8 @@ export async function updateAuthorizedUser(formData: FormData) {
 
   const dataToSend = {
     data: {
-      isEnabled: isEnabled,
-      isAdmin: isAdmin,
+      isEnabled,
+      isAdmin,
     },
   };
 
@@ -39,8 +78,6 @@ export async function updateAuthorizedUser(formData: FormData) {
       },
     });
     const data = await response.json();
-    console.log(dataToSend);
-    console.log(data);
     if (!response.ok)
       return { ok: false, error: data.error.message, data: null };
     if (response.ok && data.error)

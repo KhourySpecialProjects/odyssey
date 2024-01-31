@@ -6,7 +6,7 @@ import { useFormStatus } from "react-dom";
 
 export function AuthorizedUserBlock({ user }: { user: AuthorizedUser }) {
   return (
-    <li className="py-0">
+    <li className="py-0 [&:not(:first-child)]:pt-3">
       <div className="flex items-center space-x-4">
         <div className="flex-1 min-w-0">
           <p className="font-medium text-gray-900 truncate dark:text-white">
