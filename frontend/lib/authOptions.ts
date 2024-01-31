@@ -1,6 +1,6 @@
 import { NextAuthOptions } from "next-auth";
 import AzureADProvider from "next-auth/providers/azure-ad";
-import { getUserProfile } from "./azureGraph";
+import { getUserProfile } from "./azure";
 import {
   fetchIsAdmin,
   fetchIsAuthorizedUser as fetchIsAuthorized,

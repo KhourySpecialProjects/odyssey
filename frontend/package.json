@@ -12,6 +12,7 @@
     "@lemonsqueezy/wedges": "^1.2.1",
     "@microsoft/microsoft-graph-client": "^3.0.7",
     "@radix-ui/react-dialog": "^1.0.5",
+    "@strapi/blocks-react-renderer": "^1.0.0",
     "axios": "^1.6.7",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.0",
@@ -23,9 +24,11 @@
     "react-dom": "^18.2.0",
     "tailwind-merge": "^2.2.1",
     "tailwindcss-animate": "^1.0.7",
-    "zod": "^3.22.4"
+    "zod": "^3.22.4",
+    "zustand": "^4.5.0"
   },
   "devDependencies": {
+    "@tailwindcss/typography": "^0.5.10",
     "@types/node": "^20.11.13",
     "@types/qs": "^6.9.11",
     "@types/react": "^18.2.48",

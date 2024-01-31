@@ -1,6 +1,6 @@
 import axios from "axios";
 import qs from "qs";
-import { flattenAttributes } from "@/lib/utils";
+import { fetchAPI, flattenAttributes } from "@/lib/utils";
 
 const STRAPI_URL = process.env.STRAPI_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;

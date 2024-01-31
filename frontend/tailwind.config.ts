@@ -36,7 +36,11 @@ const config: Config = {
       },
     },
   },
-  plugins: [wedgesTW(), require("tailwindcss-animate")],
+  plugins: [
+    wedgesTW(),
+    require("tailwindcss-animate"),
+    require("@tailwindcss/typography"),
+  ],
 } satisfies Config;
 
 export default config;

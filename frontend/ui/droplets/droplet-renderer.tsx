@@ -1,0 +1,49 @@
+"use client";
+
+import { Button, Tooltip } from "@lemonsqueezy/wedges";
+import { BlocksRenderer } from "@strapi/blocks-react-renderer";
+import { BugIcon } from "lucide-react";
+import { useState } from "react";
+
+export function DropletRenderer({ droplet }: any) {
+  const [debug, setDebug] = useState(false);
+
+  return (
+    <div className="w-full max-w-5xl p-8 mx-auto">
+      <h1 className="text-4xl font-bold">{droplet.name}</h1>
+      <p>
+        This is a <strong>{droplet.type}</strong> Droplet.
+      </p>
+
+      <h2 className="mt-2 font-bold">Authors:</h2>
+      {droplet.authors.map((author: any) => (
+        <div key={author.id}>
+          <p className="font-medium">{author.name}</p>
+          <p>{author.bio || <em>No bio available.</em>}</p>
+        </div>
+      ))}
+
+      <hr className="mt-4 mb-8" />
+
+      <div className="prose">
+        <BlocksRenderer content={droplet.content} />
+      </div>
+
+      <Tooltip content="Toggle debugging">
+        <Button
+          onClick={() => setDebug(!debug)}
+          className="fixed bottom-2 left-2"
+          size="xs-icon"
+          aria-label="Debug"
+        >
+          <BugIcon className="w-4" />
+        </Button>
+      </Tooltip>
+      {debug ? (
+        <pre className="mt-4 p-4 text-sm break-words whitespace-pre rounded-md bg-slate-100 text-wrap">
+          {JSON.stringify(droplet, null, 2)}
+        </pre>
+      ) : null}
+    </div>
+  );
+}

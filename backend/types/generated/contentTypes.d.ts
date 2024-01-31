@@ -798,6 +798,11 @@ export interface ApiAuthorAuthor extends Schema.CollectionType {
         maxLength: 200;
       }>;
     photo: Attribute.Media;
+    droplets: Attribute.Relation<
+      'api::author.author',
+      'manyToMany',
+      'api::droplet.droplet'
+    >;
     createdAt: Attribute.DateTime;
     updatedAt: Attribute.DateTime;
     createdBy: Attribute.Relation<
@@ -851,6 +856,45 @@ export interface ApiAuthorizedUserAuthorizedUser extends Schema.CollectionType {
   };
 }
 
+export interface ApiDropletDroplet extends Schema.CollectionType {
+  collectionName: 'droplets';
+  info: {
+    singularName: 'droplet';
+    pluralName: 'droplets';
+    displayName: 'Droplet';
+    description: '';
+  };
+  options: {
+    draftAndPublish: true;
+  };
+  attributes: {
+    name: Attribute.String & Attribute.Required & Attribute.Unique;
+    type: Attribute.Enumeration<['knowledge', 'skill']> & Attribute.Required;
+    authors: Attribute.Relation<
+      'api::droplet.droplet',
+      'manyToMany',
+      'api::author.author'
+    >;
+    slug: Attribute.UID<'api::droplet.droplet', 'name'> & Attribute.Required;
+    content: Attribute.Blocks & Attribute.Required;
+    createdAt: Attribute.DateTime;
+    updatedAt: Attribute.DateTime;
+    publishedAt: Attribute.DateTime;
+    createdBy: Attribute.Relation<
+      'api::droplet.droplet',
+      'oneToOne',
+      'admin::user'
+    > &
+      Attribute.Private;
+    updatedBy: Attribute.Relation<
+      'api::droplet.droplet',
+      'oneToOne',
+      'admin::user'
+    > &
+      Attribute.Private;
+  };
+}
+
 declare module '@strapi/types' {
   export module Shared {
     export interface ContentTypes {
@@ -871,6 +915,7 @@ declare module '@strapi/types' {
       'plugin::users-permissions.user': PluginUsersPermissionsUser;
       'api::author.author': ApiAuthorAuthor;
       'api::authorized-user.authorized-user': ApiAuthorizedUserAuthorizedUser;
+      'api::droplet.droplet': ApiDropletDroplet;
     }
   }
 }

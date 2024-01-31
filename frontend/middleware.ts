@@ -8,4 +8,4 @@ export default withAuth({
   },
 });
 
-export const config = { matcher: ["/private"] };
+export const config = { matcher: ["/private", "/d/:path*"] };
