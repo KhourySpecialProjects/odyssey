@@ -1,0 +1,21 @@
+{
+  "kind": "collectionType",
+  "collectionName": "authorized_users",
+  "info": {
+    "singularName": "authorized-user",
+    "pluralName": "authorized-users",
+    "displayName": "Authorized User",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "email": {
+      "type": "email",
+      "required": true,
+      "unique": true
+    }
+  }
+}

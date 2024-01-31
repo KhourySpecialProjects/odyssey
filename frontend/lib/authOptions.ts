@@ -1,6 +1,7 @@
 import { NextAuthOptions } from "next-auth";
 import AzureADProvider from "next-auth/providers/azure-ad";
 import { getUserProfile } from "./azureGraph";
+import { fetchAuthorizedUsers as fetchIsAuthorized } from "./data";
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -16,6 +17,20 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   callbacks: {
+    async signIn({ user }) {
+      if (!user.email) return false;
+
+      const isAllowedToSignIn = await fetchIsAuthorized(user.email);
+
+      if (isAllowedToSignIn) {
+        return true;
+      } else {
+        // Return false to display a default error message
+        // return false;
+        // Or you can return a URL to redirect to:
+        return "/unauthorized";
+      }
+    },
     async jwt({ token, user, account, profile }) {
       // Add extra properties to the JWT token
       if (user) {
