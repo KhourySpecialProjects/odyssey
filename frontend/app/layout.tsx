@@ -1,4 +1,5 @@
 import AuthSessionProvider from "@/providers/SessionProvider";
+import { DebugBanner } from "@/ui/debug-banner";
 import Header from "@/ui/header";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
@@ -25,7 +26,11 @@ export default function RootLayout({
             <Header />
           </Suspense>
 
-          <main className="mt-20">{children}</main>
+          <div className="h-[4.25rem]"></div>
+
+          <DebugBanner />
+
+          <main>{children}</main>
         </AuthSessionProvider>
       </body>
     </html>
