@@ -30,7 +30,6 @@ export async function fetchAPI(
     const requestUrl = `${getStrapiURL(
       `/api${path}${queryString ? `?${queryString}` : ""}`
     )}`;
-    console.log(requestUrl);
 
     // Trigger API call
     const response = await fetch(requestUrl, mergedOptions);

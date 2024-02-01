@@ -22,8 +22,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const droplet = flattenAttributes(await getDropletBySlug(params.slug));
   if (droplet.length === 0) return notFound();
 
-  console.log("here", droplet);
-
   return {
     title: droplet[0].name,
   };

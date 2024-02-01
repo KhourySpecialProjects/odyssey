@@ -92,3 +92,40 @@ export async function updateAuthorizedUser(formData: FormData) {
   revalidatePath("/private");
   redirect("/private");
 }
+
+const DeleteAuthorizedUser = AuthorizedUserSchema.omit({
+  email: true,
+  isEnabled: true,
+  isAdmin: true,
+});
+export async function deleteAuthorizedUser(formData: FormData) {
+  const { id } = DeleteAuthorizedUser.parse({
+    id: formData.get("id"),
+  });
+
+  try {
+    const response = await fetch(
+      STRAPI_API_URL + "/api/authorized-users/" + id,
+      {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+        },
+      }
+    );
+    const data = await response.json();
+    console.log(STRAPI_API_URL + "/api/authorized-users/" + id);
+
+    if (!response.ok)
+      return { ok: false, error: data.error.message, data: null };
+    if (response.ok && data.error)
+      return { ok: false, error: data.error.message, data: null };
+  } catch (err) {
+    console.error(err);
+    return { error: "Database Error: Failed to Delete Authorized User." };
+  }
+
+  revalidatePath("/private");
+  return { message: `User ${id} deleted!`, success: true };
+}

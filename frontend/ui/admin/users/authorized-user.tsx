@@ -1,7 +1,9 @@
 "use client";
 
 import { AuthorizedUser } from "./authorized-users";
-import { updateAuthorizedUser } from "@/lib/actions";
+import { deleteAuthorizedUser, updateAuthorizedUser } from "@/lib/actions";
+import { Button, Tooltip } from "@lemonsqueezy/wedges";
+import { TrashIcon } from "lucide-react";
 import { useFormStatus } from "react-dom";
 
 export function AuthorizedUserBlock({ user }: { user: AuthorizedUser }) {
@@ -41,7 +43,7 @@ export function AuthorizedUserBlock({ user }: { user: AuthorizedUser }) {
               defaultValue={String(user.isAdmin)}
               hidden
             />
-            <SubmitButton>
+            <SubmitButton destructive={user.isEnabled}>
               {user.isEnabled ? "Disable Access" : "Enable Access"}
             </SubmitButton>
           </form>
@@ -68,11 +70,22 @@ export function AuthorizedUserBlock({ user }: { user: AuthorizedUser }) {
               defaultValue={String(!user.isAdmin)}
               hidden
             />
-            <SubmitButton>
+            <SubmitButton destructive={user.isAdmin}>
               {user.isAdmin
                 ? "Revoke Admin Permissions"
                 : "Grant Admin Permissions"}
             </SubmitButton>
+          </form>
+
+          <form action={deleteAuthorizedUser}>
+            <input
+              id="id"
+              name="id"
+              type="number"
+              defaultValue={user.id}
+              hidden
+            />
+            <SubmitDeleteButton />
           </form>
         </div>
       </div>
@@ -80,16 +93,36 @@ export function AuthorizedUserBlock({ user }: { user: AuthorizedUser }) {
   );
 }
 
-function SubmitButton({ children }: { children: React.ReactNode }) {
+function SubmitButton({
+  destructive,
+  children,
+}: {
+  destructive?: boolean;
+  children: React.ReactNode;
+}) {
   const { pending } = useFormStatus();
 
   return (
-    <button
+    <Button
       type="submit"
-      className="px-4 py-2 text-sm font-medium text-center text-white bg-blue-700 rounded-lg hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+      size="sm"
+      destructive={destructive}
+      variant={destructive ? "link" : "primary"}
       aria-disabled={pending}
     >
       {children}
-    </button>
+    </Button>
+  );
+}
+
+function SubmitDeleteButton() {
+  const { pending } = useFormStatus();
+
+  return (
+    <Tooltip content="Delete user">
+      <Button type="submit" size="sm" destructive aria-disabled={pending}>
+        <TrashIcon className="w-4" />
+      </Button>
+    </Tooltip>
   );
 }

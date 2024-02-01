@@ -12,7 +12,6 @@ import { createAuthorizedUser } from "@/lib/actions";
 import { Button, Input, Switch } from "@lemonsqueezy/wedges";
 import { DialogClose } from "@radix-ui/react-dialog";
 import { ArrowRightIcon, PlusIcon, XIcon } from "lucide-react";
-import { useState } from "react";
 import { useFormState, useFormStatus } from "react-dom";
 
 const initialState: any = {
@@ -27,9 +26,7 @@ export function CreateUser() {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <button className="px-4 py-2 text-sm font-medium text-center text-white bg-blue-700 rounded-lg hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
-          Create User
-        </button>
+        <Button after={<PlusIcon className="w-4" />}>Create User</Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
