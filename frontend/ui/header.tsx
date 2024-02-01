@@ -30,17 +30,14 @@ const headerLinks: HeaderLink[] = [
     text: "Demo Droplet",
   },
   {
-    href: "/private",
-    text: "Private",
+    href: "/admin",
+    text: "Admin",
   },
 ];
 
 export default function Header() {
   const { data: session, status } = useSession();
   const pathname = usePathname();
-
-
-
 
   return (
     <>

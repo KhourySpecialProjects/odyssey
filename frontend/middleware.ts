@@ -8,4 +8,4 @@ export default withAuth({
   },
 });
 
-export const config = { matcher: ["/private", "/d/:path*"] };
+export const config = { matcher: ["/admin", "/d/:path*"] };

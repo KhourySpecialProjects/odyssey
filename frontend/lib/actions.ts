@@ -49,7 +49,7 @@ export async function createAuthorizedUser(prevState: any, formData: FormData) {
     return { error: "Database Error: Failed to Update Authorized User." };
   }
 
-  revalidatePath("/private");
+  revalidatePath("/admin");
   return { message: `User ${email} created!`, success: true };
 }
 
@@ -89,8 +89,8 @@ export async function updateAuthorizedUser(formData: FormData) {
     console.error(err);
     return { error: "Database Error: Failed to Update Authorized User." };
   }
-  revalidatePath("/private");
-  redirect("/private");
+  revalidatePath("/admin");
+  redirect("/admin");
 }
 
 const DeleteAuthorizedUser = AuthorizedUserSchema.omit({
@@ -124,6 +124,6 @@ export async function deleteAuthorizedUser(formData: FormData) {
     return { error: "Database Error: Failed to Delete Authorized User." };
   }
 
-  revalidatePath("/private");
-  return { message: `User ${id} deleted!`, success: true };
+  revalidatePath("/admin");
+  redirect("/admin");
 }

@@ -1,14 +1,10 @@
-"use client";
-
-import { useSession } from "next-auth/react";
+import { authOptions } from "@/lib/authOptions";
+import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 
-export default function UnauthorizedRoute() {
-  const { data: session } = useSession();
-
-  if (session) {
-    redirect("/private");
-  }
+export default async function UnauthorizedRoute() {
+  const session = await getServerSession(authOptions);
+  if (session) return redirect("/admin");
 
   return (
     <div className="w-full max-w-5xl p-8 mx-auto">
