@@ -9,7 +9,7 @@ type Props = {
   };
 };
 
-export async function getDropletBySlug(slug: string) {
+async function getDropletBySlug(slug: string) {
   const path = `/droplets`;
   const urlParamsObject = { filters: { slug }, populate: "authors" };
   const options = {
