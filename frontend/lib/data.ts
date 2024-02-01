@@ -2,7 +2,7 @@ import axios from "axios";
 import qs from "qs";
 import { fetchAPI, flattenAttributes } from "@/lib/utils";
 
-const STRAPI_URL = process.env.STRAPI_URL;
+const STRAPI_API_URL = process.env.STRAPI_API_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
 
 export async function fetchAuthorizedUsers() {
@@ -16,7 +16,7 @@ export async function fetchAuthorizedUsers() {
       },
     });
     const response = await axios.get(
-      STRAPI_URL + "/api/authorized-users?" + query,
+      STRAPI_API_URL + "/api/authorized-users?" + query,
       {
         headers: { Authorization: "Bearer " + STRAPI_ACCESS_TOKEN },
       }
@@ -44,7 +44,7 @@ export async function fetchIsAuthorizedUser(email: string) {
       },
     });
     const response = await fetch(
-      STRAPI_URL + "/api/authorized-users?" + query,
+      STRAPI_API_URL + "/api/authorized-users?" + query,
       {
         headers: { Authorization: "Bearer " + STRAPI_ACCESS_TOKEN },
         cache: "no-store",
@@ -74,7 +74,7 @@ export async function fetchIsAdmin(email: string) {
       },
     });
     const response = await fetch(
-      STRAPI_URL + "/api/authorized-users?" + query,
+      STRAPI_API_URL + "/api/authorized-users?" + query,
       {
         headers: { Authorization: "Bearer " + STRAPI_ACCESS_TOKEN },
         cache: "no-store",
@@ -100,9 +100,12 @@ export async function fetchDroplets() {
         page: 1,
       },
     });
-    const response = await axios.get(STRAPI_URL + "/api/droplets?" + query, {
-      headers: { Authorization: "Bearer " + STRAPI_ACCESS_TOKEN },
-    });
+    const response = await axios.get(
+      STRAPI_API_URL + "/api/droplets?" + query,
+      {
+        headers: { Authorization: "Bearer " + STRAPI_ACCESS_TOKEN },
+      }
+    );
     const droplets = flattenAttributes(response.data.data);
     return droplets;
   } catch (error) {

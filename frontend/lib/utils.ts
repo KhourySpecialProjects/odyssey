@@ -7,9 +7,7 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export function getStrapiURL(path = "") {
-  return `${
-    process.env.NEXT_PUBLIC_STRAPI_API_URL || "http://localhost:1337"
-  }${path}`;
+  return `${process.env.STRAPI_API_URL || "http://localhost:1337"}${path}`;
 }
 
 export async function fetchAPI(
@@ -32,6 +30,7 @@ export async function fetchAPI(
     const requestUrl = `${getStrapiURL(
       `/api${path}${queryString ? `?${queryString}` : ""}`
     )}`;
+    console.log(requestUrl);
 
     // Trigger API call
     const response = await fetch(requestUrl, mergedOptions);

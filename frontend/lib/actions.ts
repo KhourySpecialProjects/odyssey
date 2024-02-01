@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 
-const STRAPI_URL = process.env.STRAPI_URL;
+const STRAPI_API_URL = process.env.STRAPI_API_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
 
 const AuthorizedUserSchema = z.object({
@@ -31,7 +31,7 @@ export async function createAuthorizedUser(prevState: any, formData: FormData) {
   };
 
   try {
-    const response = await fetch(STRAPI_URL + "/api/authorized-users", {
+    const response = await fetch(STRAPI_API_URL + "/api/authorized-users", {
       method: "POST",
       body: JSON.stringify(dataToSend),
       headers: {
@@ -69,14 +69,17 @@ export async function updateAuthorizedUser(formData: FormData) {
   };
 
   try {
-    const response = await fetch(STRAPI_URL + "/api/authorized-users/" + id, {
-      method: "PUT",
-      body: JSON.stringify(dataToSend),
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
-      },
-    });
+    const response = await fetch(
+      STRAPI_API_URL + "/api/authorized-users/" + id,
+      {
+        method: "PUT",
+        body: JSON.stringify(dataToSend),
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+        },
+      }
+    );
     const data = await response.json();
     if (!response.ok)
       return { ok: false, error: data.error.message, data: null };
