@@ -115,8 +115,6 @@ export async function deleteAuthorizedUser(formData: FormData) {
       }
     );
     const data = await response.json();
-    console.log(STRAPI_API_URL + "/api/authorized-users/" + id);
-
     if (!response.ok)
       return { ok: false, error: data.error.message, data: null };
     if (response.ok && data.error)
