@@ -89,3 +89,24 @@ export async function fetchIsAdmin(email: string) {
     throw new Error("Failed to fetch authorized users data.");
   }
 }
+
+export async function fetchDroplets() {
+  try {
+    const query = qs.stringify({
+      sort: ["name"],
+      fields: ["id", "name", "type", "slug"],
+      pagination: {
+        pageSize: 25,
+        page: 1,
+      },
+    });
+    const response = await axios.get(STRAPI_URL + "/api/droplets?" + query, {
+      headers: { Authorization: "Bearer " + STRAPI_ACCESS_TOKEN },
+    });
+    const droplets = flattenAttributes(response.data.data);
+    return droplets;
+  } catch (error) {
+    console.error("Database Error:", error);
+    throw new Error("Failed to fetch authorized users data.");
+  }
+}

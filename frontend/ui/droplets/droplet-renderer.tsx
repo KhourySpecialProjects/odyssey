@@ -13,13 +13,17 @@ export function DropletRenderer({ droplet }: any) {
         This is a <strong>{droplet.type}</strong> Droplet.
       </p>
 
-      <h2 className="mt-2 font-bold">Authors:</h2>
-      {droplet.authors.map((author: any) => (
-        <div key={author.id}>
-          <p className="font-medium">{author.name}</p>
-          <p>{author.bio || <em>No bio available.</em>}</p>
-        </div>
-      ))}
+      <h2 className="mt-4 font-bold">Authors:</h2>
+      <div className="mt-2 flex flex-row gap-2">
+        {droplet.authors.map((author: any) => (
+          <div key={author.id} className="flex-1 p-4 bg-slate-100 rounded-md">
+            <p className="font-medium">{author.name}</p>
+            <p className="text-sm">
+              {author.bio || <em>No bio available.</em>}
+            </p>
+          </div>
+        ))}
+      </div>
 
       <hr className="mt-4 mb-8" />
 
