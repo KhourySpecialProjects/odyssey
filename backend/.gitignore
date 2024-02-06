@@ -79,6 +79,7 @@ $RECYCLE.BIN/
 *#
 ssl
 .idea
+.nvmrc
 nbproject
 public/uploads/*
 !public/uploads/.gitkeep
