@@ -21,6 +21,7 @@ export async function fetchAPI(
       next: { revalidate: 60 },
       headers: {
         "Content-Type": "application/json",
+        Authorization: "Bearer " + process.env.STRAPI_ACCESS_TOKEN,
       },
       ...options,
     };

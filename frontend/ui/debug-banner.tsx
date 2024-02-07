@@ -1,31 +1,25 @@
 "use client";
 
+import { cn } from "@/lib/utils";
 import useDebugStore from "@/stores/debug-store";
-import { Button, Tooltip } from "@lemonsqueezy/wedges";
 import { BugIcon } from "lucide-react";
 
-export function DebugBanner() {
+export function DebugBanner({ className }: { className?: string }) {
   const isDebugEnabled = useDebugStore((state) => state.debug);
-  const toggleDebug = useDebugStore((state) => state.toggle);
+
+  if (!isDebugEnabled) return null;
 
   return (
-    <>
-      {isDebugEnabled ? (
-        <p className="py-2 w-full text-center text-sm uppercase font-medium text-black bg-gray-100">
-          Debug Mode Enabled
-        </p>
-      ) : null}
-
-      <Tooltip content="Toggle debugging">
-        <Button
-          onClick={toggleDebug}
-          className="fixed bottom-2 left-2"
-          size="xs-icon"
-          aria-label="Debug"
-        >
-          <BugIcon className="w-4" />
-        </Button>
-      </Tooltip>
-    </>
+    <div
+      className={cn(
+        "py-2 w-full text-center text-sm uppercase font-medium text-black bg-slate-100 rounded-md",
+        className
+      )}
+    >
+      <p className="inline-flex flex-row items-center gap-2">
+        <BugIcon className="w-4 h-4" />
+        Debug Mode Enabled
+      </p>
+    </div>
   );
 }

@@ -21,8 +21,8 @@ export default async function AuthorizedUsers() {
         <CreateUser />
       </div>
 
-      <div className="mt-4 bg-slate-100 p-4 rounded-md">
-        <ul className="divide-y divide-gray-200 dark:divide-gray-700 md:space-y-4">
+      <div className="p-4 mt-4 rounded-md bg-slate-100">
+        <ul className="divide-y divide-slate-200 dark:divide-slate-700 md:space-y-4">
           {authorizedUsers.map((user: AuthorizedUser) => (
             <AuthorizedUserBlock user={user} key={user.id} />
           ))}

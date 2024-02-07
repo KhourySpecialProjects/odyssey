@@ -19,7 +19,10 @@
     },
     "type": {
       "type": "enumeration",
-      "enum": ["knowledge", "skill"],
+      "enum": [
+        "knowledge",
+        "skill"
+      ],
       "required": true
     },
     "authors": {
@@ -33,9 +36,19 @@
       "targetField": "name",
       "required": true
     },
-    "content": {
-      "type": "blocks",
-      "required": true
+    "focusArea": {
+      "type": "enumeration",
+      "enum": [
+        "personal",
+        "professional",
+        "technical"
+      ]
+    },
+    "lessons": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::lesson.lesson",
+      "inversedBy": "droplets"
     }
   }
 }

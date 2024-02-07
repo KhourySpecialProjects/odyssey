@@ -1,0 +1,14 @@
+{
+  "collectionName": "components_droplets_generics",
+  "info": {
+    "displayName": "Generic",
+    "icon": "pencil"
+  },
+  "options": {},
+  "attributes": {
+    "content": {
+      "type": "blocks",
+      "required": true
+    }
+  }
+}

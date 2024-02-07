@@ -18,11 +18,11 @@ export default async function HomeRoute() {
       <h2 className="mt-4 font-bold">Droplets Overview</h2>
       <p>Check out some droplets:</p>
 
-      <div className="bg-slate-100 rounded-md">
-        <ul className="mt-4 flex flex-col divide-y divide-gray-200">
+      <div className="rounded-md bg-slate-100">
+        <ul className="flex flex-col mt-4 divide-y divide-slate-200">
           {droplets.map((droplet: Droplet) => (
             <Link key={droplet.id} href={"/d/" + droplet.slug}>
-              <li className="inline-flex items-center hover:underline [&:not(:first-child)]:pt-3 transition-colors rounded-md py-2 px-4 gap-2">
+              <li className="inline-flex items-center hover:underline [&:not(:first-child)]:pt-3 rounded-md py-2 px-4 gap-2">
                 <p>
                   <span className="font-medium">{droplet.name}</span> (
                   {droplet.type})

@@ -876,7 +876,12 @@ export interface ApiDropletDroplet extends Schema.CollectionType {
       'api::author.author'
     >;
     slug: Attribute.UID<'api::droplet.droplet', 'name'> & Attribute.Required;
-    content: Attribute.Blocks & Attribute.Required;
+    focusArea: Attribute.Enumeration<['personal', 'professional', 'technical']>;
+    lessons: Attribute.Relation<
+      'api::droplet.droplet',
+      'manyToMany',
+      'api::lesson.lesson'
+    >;
     createdAt: Attribute.DateTime;
     updatedAt: Attribute.DateTime;
     publishedAt: Attribute.DateTime;
@@ -888,6 +893,48 @@ export interface ApiDropletDroplet extends Schema.CollectionType {
       Attribute.Private;
     updatedBy: Attribute.Relation<
       'api::droplet.droplet',
+      'oneToOne',
+      'admin::user'
+    > &
+      Attribute.Private;
+  };
+}
+
+export interface ApiLessonLesson extends Schema.CollectionType {
+  collectionName: 'lessons';
+  info: {
+    singularName: 'lesson';
+    pluralName: 'lessons';
+    displayName: 'Lesson';
+  };
+  options: {
+    draftAndPublish: true;
+  };
+  attributes: {
+    title: Attribute.String &
+      Attribute.Required &
+      Attribute.SetMinMaxLength<{
+        maxLength: 100;
+      }>;
+    slug: Attribute.UID<'api::lesson.lesson', 'title'> & Attribute.Required;
+    blocks: Attribute.DynamicZone<['droplets.generic', 'droplets.video']> &
+      Attribute.Required;
+    droplets: Attribute.Relation<
+      'api::lesson.lesson',
+      'manyToMany',
+      'api::droplet.droplet'
+    >;
+    createdAt: Attribute.DateTime;
+    updatedAt: Attribute.DateTime;
+    publishedAt: Attribute.DateTime;
+    createdBy: Attribute.Relation<
+      'api::lesson.lesson',
+      'oneToOne',
+      'admin::user'
+    > &
+      Attribute.Private;
+    updatedBy: Attribute.Relation<
+      'api::lesson.lesson',
       'oneToOne',
       'admin::user'
     > &
@@ -916,6 +963,7 @@ declare module '@strapi/types' {
       'api::author.author': ApiAuthorAuthor;
       'api::authorized-user.authorized-user': ApiAuthorizedUserAuthorizedUser;
       'api::droplet.droplet': ApiDropletDroplet;
+      'api::lesson.lesson': ApiLessonLesson;
     }
   }
 }

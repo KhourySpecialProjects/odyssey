@@ -9,7 +9,7 @@ import { usePathname } from "next/navigation";
 const activeLinkClasses =
   "block px-3 py-2 text-white bg-blue-700 rounded md:bg-transparent md:text-blue-700 md:p-0 md:dark:text-blue-500";
 const inactiveLinkClasses =
-  "block px-3 py-2 text-gray-900 rounded hover:bg-gray-100 md:hover:bg-transparent md:hover:text-blue-700 md:p-0 md:dark:hover:text-blue-500 dark:text-white dark:hover:bg-gray-700 dark:hover:text-white md:dark:hover:bg-transparent dark:border-gray-700";
+  "block px-3 py-2 text-slate-900 rounded hover:bg-slate-100 md:hover:bg-transparent md:hover:text-blue-700 md:p-0 md:dark:hover:text-blue-500 dark:text-white dark:hover:bg-slate-700 dark:hover:text-white md:dark:hover:bg-transparent dark:border-slate-700";
 
 type HeaderLink = {
   href: string;
@@ -41,24 +41,24 @@ export default function Header() {
 
   return (
     <>
-      <nav className="fixed top-0 z-20 w-full bg-white border-b border-gray-200 dark:bg-gray-900 start-0 dark:border-gray-600">
+      <nav className="fixed top-0 z-20 w-full bg-white border-b border-slate-200 dark:bg-slate-900 start-0 dark:border-slate-600">
         <div className="grid grid-cols-2 md:grid-cols-[1fr_auto_1fr] items-center justify-between max-w-screen-xl p-4 mx-auto">
           <Link href="/" className="flex items-center space-x-3">
             <span className="self-center text-2xl font-semibold whitespace-nowrap dark:text-white">
               Khoury Odyssey
             </span>
           </Link>
-          <div className="flex space-x-3 md:col-start-3 md:space-x-0 justify-end">
+          <div className="flex justify-end space-x-3 md:col-start-3 md:space-x-0">
             {status === "loading" ? (
               <div
                 role="status"
-                className="max-w-sm animate-pulse h-9 bg-gray-200 rounded-full dark:bg-gray-700 w-48"
+                className="w-48 max-w-sm rounded-full animate-pulse h-9 bg-slate-200 dark:bg-slate-700"
               ></div>
             ) : session?.user ? (
               <div className="flex items-center justify-center">
                 <DropdownMenu>
                   <DropdownMenu.Trigger asChild>
-                    <span className="group flex shrink cursor-pointer select-none items-center justify-center gap-1 rounded-lg p-1.5 px-2 text-sm text-surface-600 transition-colors duration-100 wg-antialiased hover:bg-surface dark:hover:bg-white/5">
+                    <div className="group flex shrink cursor-pointer select-none items-center justify-center gap-1 rounded-lg p-1.5 px-2 text-sm text-slate-600 transition-colors duration-100 wg-antialiased hover:bg-slate-100 dark:hover:bg-white/5">
                       {session.user.image ? (
                         <Avatar
                           size="xs"
@@ -67,14 +67,12 @@ export default function Header() {
                         />
                       ) : null}
 
-                      <span className=" ms-2 flex flex-col">
-                        <span className="font-medium">
-                          Hi, <b>{session.user.name ?? session.user.email}</b>!
-                        </span>
+                      <span className="font-medium ms-2">
+                        Hi, <b>{session.user.name ?? session.user.email}</b>!
                       </span>
 
-                      <ChevronDownIcon className="trigger-icon h-5 w-5 text-surface-400" />
-                    </span>
+                      <ChevronDownIcon className="w-5 h-5 trigger-icon text-slate-400" />
+                    </div>
                   </DropdownMenu.Trigger>
 
                   <DropdownMenu.Content
@@ -116,7 +114,7 @@ export default function Header() {
             className="items-center justify-between hidden w-full md:flex md:w-auto md:col-start-2 md:row-start-1"
             id="navbar-sticky"
           >
-            <ul className="flex flex-col p-4 mt-4 font-medium border border-gray-100 rounded-lg md:p-0 bg-gray-50 md:space-x-8 md:flex-row md:mt-0 md:border-0 md:bg-white dark:bg-gray-800 md:dark:bg-gray-900 dark:border-gray-700">
+            <ul className="flex flex-col p-4 mt-4 font-medium border rounded-lg border-slate-100 md:p-0 bg-slate-50 md:space-x-8 md:flex-row md:mt-0 md:border-0 md:bg-white dark:bg-slate-800 md:dark:bg-slate-900 dark:border-slate-700">
               {headerLinks.map((link) => (
                 <li key={link.href}>
                   <Link

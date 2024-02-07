@@ -1,4 +1,4 @@
-export default function Page() {
+export default function NotFoundRoute() {
   return (
     <div className="w-full max-w-5xl p-8 mx-auto">
       <h1 className="font-bold">Not Found</h1>

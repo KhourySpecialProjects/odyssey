@@ -3,28 +3,24 @@
 import useDebugStore from "@/stores/debug-store";
 import { BlocksRenderer } from "@strapi/blocks-react-renderer";
 
-export function DropletRenderer({ droplet }: any) {
+export function LessonRenderer({ lesson }: any) {
   const isDebugEnabled = useDebugStore((state) => state.debug);
 
   return (
-    <div className="w-full mx-auto max-w-prose">
-      <p className="p-4 -mx-4 rounded-md bg-slate-50 text-slate-700">
-        You are viewing the <strong>{droplet.name}</strong> {droplet.type}{" "}
-        Droplet in the {droplet.focusArea} focus area.
-      </p>
+    <div className="w-full py-8 mx-auto max-w-prose">
+      <h1 className="text-4xl font-extrabold">{lesson.title}</h1>
 
       <div className="h-8"></div>
 
       <div className="prose">
-        {droplet.lessons[0].blocks.map((b: any, i: number) => (
+        {lesson.blocks.map((b: any, i: number) => (
           <LessonBlockRenderer key={i} block={b} />
         ))}
-        {/* <BlocksRenderer content={droplet.content} /> */}
       </div>
 
       {isDebugEnabled ? (
         <pre className="p-4 mt-4 text-sm break-words whitespace-pre rounded-md bg-slate-100 text-wrap">
-          {JSON.stringify(droplet, null, 2)}
+          {JSON.stringify(lesson, null, 2)}
         </pre>
       ) : null}
     </div>
@@ -32,17 +28,21 @@ export function DropletRenderer({ droplet }: any) {
 }
 
 function LessonBlockRenderer({ block }: { block: any }) {
-  switch (block.__content) {
+  switch (block.__component) {
+    case "droplets.generic":
+      return <BlocksRenderer content={block.content} />;
+
     case "droplets.video":
       return (
         <iframe
-          width="80%"
-          height="480"
+          width="100%"
+          height="400"
           style={{ display: "flex", margin: "auto" }}
           src={`${block.url}`}
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
           allowFullScreen
-          title="Embedded youtube"
+          title="Embedded YouTube"
+          className="rounded-md"
         />
       );
 
