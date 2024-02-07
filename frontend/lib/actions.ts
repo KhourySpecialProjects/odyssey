@@ -46,7 +46,7 @@ export async function createAuthorizedUser(prevState: any, formData: FormData) {
       return { ok: false, error: data.error.message, data: null };
   } catch (err) {
     console.error(err);
-    return { error: "Database Error: Failed to Update Authorized User." };
+    return { error: "Database Error: Failed to Create Authorized User." };
   }
 
   revalidatePath("/admin");
