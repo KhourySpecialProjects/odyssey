@@ -51,7 +51,7 @@ export default function Sidebar({
       ></div>
 
       <button
-        aria-controls="default-sidebar"
+        aria-controls="sidebar"
         type="button"
         className="z-50 inline-flex items-center p-2 mt-2 text-sm rounded-lg ms-3 text-slate-500 sm:hidden hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-200 dark:text-slate-400 dark:hover:bg-slate-700 dark:focus:ring-slate-600"
         onClick={() => setExpanded(true)}
@@ -61,6 +61,7 @@ export default function Sidebar({
       </button>
 
       <aside
+        id="sidebar"
         className={cn(
           "fixed top-0 left-0 z-40 w-64 h-screen transition-transform",
           expanded
