@@ -1,8 +1,9 @@
 import { getDropletBySlug } from "@/lib/droplets";
 import { flattenAttributes } from "@/lib/utils";
-import { Button } from "@lemonsqueezy/wedges";
+import { Avatar, Button } from "@lemonsqueezy/wedges";
 import { ArrowRightIcon } from "lucide-react";
 import { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
@@ -32,7 +33,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function DropletRoute({ params }: Props) {
   let droplet = await getDropletBySlug(params.slug, {
-    authors: "*",
+    authors: {
+      populate: "*",
+    },
     lessons: {
       populate: "*",
     },
@@ -41,7 +44,7 @@ export default async function DropletRoute({ params }: Props) {
   droplet = flattenAttributes(droplet)[0];
 
   return (
-    <div className="w-full max-w-5xl p-8 mx-auto">
+    <div className="w-full max-w-prose p-8 mx-auto">
       <h1 className="text-4xl font-bold">{droplet.name}</h1>
       <p>
         This is a <strong>{droplet.type}</strong> Droplet.
@@ -51,8 +54,19 @@ export default async function DropletRoute({ params }: Props) {
       <div className="flex flex-row gap-2 mt-2">
         {droplet.authors.map((author: any) => (
           <div key={author.id} className="flex-1 p-4 rounded-md bg-slate-100">
-            <p className="font-medium">{author.name}</p>
-            <p className="text-sm">
+            {author.photo ? (
+              <div className="mb-2">
+                <Avatar
+                  size="2xl"
+                  className="border border-slate-200 rounded-md"
+                  src={author.photo.formats.medium.url}
+                  initials={author.name.charAt(0)}
+                />
+              </div>
+            ) : null}
+
+            <p className="text-lg font-bold">{author.name}</p>
+            <p className="mt-1 text-sm text-slate-700">
               {author.bio || <em>No bio available.</em>}
             </p>
           </div>
