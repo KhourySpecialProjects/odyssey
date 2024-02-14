@@ -2,13 +2,18 @@
   "collectionName": "components_droplets_generics",
   "info": {
     "displayName": "Generic",
-    "icon": "pencil"
+    "icon": "pencil",
+    "description": ""
   },
   "options": {},
   "attributes": {
     "content": {
-      "type": "blocks",
-      "required": true
+      "type": "customField",
+      "options": {
+        "output": "HTML",
+        "preset": "rich"
+      },
+      "customField": "plugin::ckeditor.CKEditor"
     }
   }
 }

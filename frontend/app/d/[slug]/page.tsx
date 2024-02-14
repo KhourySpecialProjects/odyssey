@@ -44,8 +44,8 @@ export default async function DropletRoute({ params }: Props) {
   droplet = flattenAttributes(droplet)[0];
 
   return (
-    <div className="w-full max-w-prose p-8 mx-auto">
-      <h1 className="text-4xl font-bold">{droplet.name}</h1>
+    <div className="w-full max-w-prose py-8 mx-auto">
+      <h1 className="mb-2 text-4xl font-bold">{droplet.name}</h1>
       <p>
         This is a <strong>{droplet.type}</strong> Droplet.
       </p>

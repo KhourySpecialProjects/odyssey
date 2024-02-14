@@ -4,7 +4,8 @@
   "info": {
     "singularName": "lesson",
     "pluralName": "lessons",
-    "displayName": "Lesson"
+    "displayName": "Lesson",
+    "description": ""
   },
   "options": {
     "draftAndPublish": true
@@ -25,7 +26,8 @@
       "type": "dynamiczone",
       "components": [
         "droplets.generic",
-        "droplets.video"
+        "droplets.video",
+        "droplets.callout"
       ],
       "required": true
     },

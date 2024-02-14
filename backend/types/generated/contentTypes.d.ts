@@ -787,6 +787,7 @@ export interface ApiAuthorAuthor extends Schema.CollectionType {
     singularName: 'author';
     pluralName: 'authors';
     displayName: 'Author';
+    description: '';
   };
   options: {
     draftAndPublish: false;
@@ -906,6 +907,7 @@ export interface ApiLessonLesson extends Schema.CollectionType {
     singularName: 'lesson';
     pluralName: 'lessons';
     displayName: 'Lesson';
+    description: '';
   };
   options: {
     draftAndPublish: true;
@@ -917,7 +919,9 @@ export interface ApiLessonLesson extends Schema.CollectionType {
         maxLength: 100;
       }>;
     slug: Attribute.UID<'api::lesson.lesson', 'title'> & Attribute.Required;
-    blocks: Attribute.DynamicZone<['droplets.generic', 'droplets.video']> &
+    blocks: Attribute.DynamicZone<
+      ['droplets.generic', 'droplets.video', 'droplets.callout']
+    > &
       Attribute.Required;
     droplets: Attribute.Relation<
       'api::lesson.lesson',

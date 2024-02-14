@@ -1,37 +1,45 @@
 "use client";
 
-import Link from "next/link";
+import UnauthorizedRoute from "@/app/(general)/unauthorized/page";
+import { cn } from "@/lib/utils";
 import { DebugBanner } from "@/ui/debug-banner";
-import { useLayoutEffect, useState } from "react";
+import { Avatar, DropdownMenu, ProgressBar } from "@lemonsqueezy/wedges";
 import {
   ArrowLeftCircleIcon,
   ChevronDownIcon,
+  HistoryIcon,
   LogOutIcon,
   MenuIcon,
   NotebookTextIcon,
   TargetIcon,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { Avatar, DropdownMenu, ProgressBar } from "@lemonsqueezy/wedges";
 import { Session } from "next-auth";
-import UnauthorizedRoute from "@/app/(general)/unauthorized/page";
 import { signOut } from "next-auth/react";
+import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useLayoutEffect, useState } from "react";
 
 export default function Sidebar({
   session,
   droplet,
 }: {
   session: Session | null;
-  droplet?: any;
+  droplet: any;
 }) {
   const [expanded, setExpanded] = useState(false);
   const pathname = usePathname();
 
   const activeLinkClasses =
-    "flex items-center p-2 bg-slate-200 [&>svg]:text-red-600 rounded-lg text-slate-900 dark:text-white hover:bg-slate-100 dark:hover:bg-slate-700 group";
+    "flex items-center p-2 bg-slate-200 [&>svg]:text-purple-700 rounded-lg dark:text-white dark:hover:bg-slate-700 group text-purple-700 transition-colors";
   const inactiveLinkClasses =
-    "flex items-center p-2 rounded-lg text-slate-900 dark:text-white hover:bg-slate-100 dark:hover:bg-slate-700 group";
+    "flex items-center p-2 rounded-lg text-slate-900 dark:text-white hover:bg-slate-100 dark:hover:bg-slate-700 group transition-colors";
+
+  const totalLessons = droplet.lessons.length + 1;
+  const lessonSlug = pathname.split("/").at(-1);
+  const lessonSlugIndex = droplet.lessons
+    .map((l: any) => l.slug)
+    .indexOf(lessonSlug);
+  const dropletProgress = ((lessonSlugIndex + 1) / totalLessons) * 100;
 
   useLayoutEffect(() => {
     window.addEventListener("resize", () => setExpanded(false));
@@ -93,9 +101,9 @@ export default function Sidebar({
           <ul className="space-y-2 font-medium">
             <li>
               <Link
-                href="/d/demo-droplet"
+                href={`/d/${droplet.slug}`}
                 className={
-                  pathname == "/d/demo-droplet"
+                  pathname == `/d/${droplet.slug}`
                     ? activeLinkClasses
                     : inactiveLinkClasses
                 }
@@ -114,7 +122,11 @@ export default function Sidebar({
                       : inactiveLinkClasses
                   }
                 >
-                  <NotebookTextIcon />
+                  {lesson.title.toLowerCase() === "recap" ? (
+                    <HistoryIcon />
+                  ) : (
+                    <NotebookTextIcon />
+                  )}
                   <span className="ms-3">{lesson.title}</span>
                 </Link>
               </li>
@@ -123,7 +135,10 @@ export default function Sidebar({
 
           <div className="bottom-0 left-0 w-full p-2 mt-4 space-y-4 md:px-3 md:mg-0 md:flex-col md:absolute dark:bg-slate-800">
             <div className="px-2">
-              <ProgressBar label="20% complete" value={20} />
+              <ProgressBar
+                label={`${dropletProgress}% complete`}
+                value={dropletProgress}
+              />
             </div>
 
             <DropdownMenu>

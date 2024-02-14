@@ -1,0 +1,22 @@
+{
+  "collectionName": "components_droplets_callouts",
+  "info": {
+    "displayName": "Callout",
+    "icon": "volumeUp",
+    "description": ""
+  },
+  "options": {},
+  "attributes": {
+    "content": {
+      "type": "blocks",
+      "required": true
+    },
+    "type": {
+      "type": "enumeration",
+      "enum": [
+        "info",
+        "warning"
+      ]
+    }
+  }
+}

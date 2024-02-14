@@ -1,13 +1,16 @@
 import { authOptions } from "@/lib/authOptions";
 import { getDropletBySlug } from "@/lib/droplets";
 import { flattenAttributes } from "@/lib/utils";
+import DropletFooter from "@/ui/droplets/footer";
 import Sidebar from "@/ui/droplets/sidebar";
+import { Button } from "@lemonsqueezy/wedges";
 import type { Metadata } from "next";
 import { getServerSession } from "next-auth";
 
 type Props = {
   params: {
     slug: string;
+    lessonSlug?: string;
   };
   children: React.ReactNode;
 };
@@ -36,6 +39,8 @@ export default async function RootLayout({ params, children }: Props) {
       <div className="p-4 sm:ml-64">
         <div className="p-4 border-2 border-dashed rounded-lg border-slate-200 dark:border-slate-700">
           {children}
+
+          <DropletFooter droplet={droplet} />
         </div>
       </div>
     </>

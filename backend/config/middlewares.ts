@@ -6,8 +6,20 @@ export default [
         useDefaults: true,
         directives: {
           "connect-src": ["'self'", "https:"],
-          "img-src": ["'self'", "data:", "blob:", process.env.DO_CDN_URL],
-          "media-src": ["'self'", "data:", "blob:", process.env.DO_CDN_URL],
+          "img-src": [
+            "'self'",
+            "data:",
+            "blob:",
+            "market-assets.strapi.io",
+            process.env.DO_CDN_URL,
+          ],
+          "media-src": [
+            "'self'",
+            "data:",
+            "blob:",
+            "market-assets.strapi.io",
+            process.env.DO_CDN_URL,
+          ],
           upgradeInsecureRequests: null,
         },
       },

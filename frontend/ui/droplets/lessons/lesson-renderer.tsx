@@ -12,7 +12,7 @@ export function LessonRenderer({ lesson }: any) {
 
       <div className="h-8"></div>
 
-      <div className="prose">
+      <div className="space-y-12">
         {lesson.blocks.map((b: any, i: number) => (
           <LessonBlockRenderer key={i} block={b} />
         ))}
@@ -30,7 +30,21 @@ export function LessonRenderer({ lesson }: any) {
 function LessonBlockRenderer({ block }: { block: any }) {
   switch (block.__component) {
     case "droplets.generic":
-      return <BlocksRenderer content={block.content} />;
+      return (
+        <div
+          className="mt-4 prose prose-lg"
+          dangerouslySetInnerHTML={{ __html: block.content }}
+        ></div>
+      );
+
+    case "droplets.callout":
+      return (
+        <div className="bg-purple-100 py-3 px-4 rounded-md border border-purple-200">
+          <div>
+            <BlocksRenderer content={block.content} />
+          </div>
+        </div>
+      );
 
     case "droplets.video":
       return (
