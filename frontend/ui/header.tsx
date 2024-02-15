@@ -1,7 +1,7 @@
 "use client";
 
 import { Avatar, DropdownMenu } from "@lemonsqueezy/wedges";
-import { ChevronDownIcon, LogOutIcon } from "lucide-react";
+import { ChevronDownIcon, CogIcon, LogOutIcon } from "lucide-react";
 import { signIn, signOut, useSession } from "next-auth/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -22,16 +22,8 @@ const headerLinks: HeaderLink[] = [
     text: "Home",
   },
   {
-    href: "/public",
-    text: "Public",
-  },
-  {
-    href: "/d/demo-droplet",
-    text: "Demo Droplet",
-  },
-  {
-    href: "/admin",
-    text: "Admin",
+    href: "/explore",
+    text: "Explore",
   },
 ];
 
@@ -87,15 +79,24 @@ export default function Header() {
 
                     <DropdownMenu.Separator />
 
-                    <DropdownMenu.Item
-                      onClick={(e) => {
-                        e.preventDefault();
-                        signOut();
-                      }}
-                    >
-                      <LogOutIcon className="w-4 h-4" />
-                      <span>Log Out</span>
-                    </DropdownMenu.Item>
+                    <DropdownMenu.Group>
+                      <DropdownMenu.Item asChild>
+                        <Link href="/admin">
+                          <CogIcon className="w-4 h-4" />
+                          <span>Admin</span>
+                        </Link>
+                      </DropdownMenu.Item>
+
+                      <DropdownMenu.Item
+                        onClick={(e) => {
+                          e.preventDefault();
+                          signOut();
+                        }}
+                      >
+                        <LogOutIcon className="w-4 h-4" />
+                        <span>Log Out</span>
+                      </DropdownMenu.Item>
+                    </DropdownMenu.Group>
                   </DropdownMenu.Content>
                 </DropdownMenu>
               </div>
