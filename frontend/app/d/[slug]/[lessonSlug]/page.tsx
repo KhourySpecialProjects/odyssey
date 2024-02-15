@@ -23,7 +23,7 @@ async function getLessonBySlug(lessonSlug: string) {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const res = await getLessonBySlug(params.lessonSlug);
   if (res.data.length === 0) return {};
-  const lesson = flattenAttributes(res);
+  const lesson = flattenAttributes(res.data)[0];
 
   return {
     title: lesson.title,
@@ -36,6 +36,4 @@ export default async function DropletRoute({ params }: Props) {
   const lesson = flattenAttributes(res)[0];
 
   return <LessonRenderer lesson={lesson} />;
-
-  // return <DropletRenderer droplet={lesson} />;
 }

@@ -2,7 +2,12 @@
 
 import { cn } from "@/lib/utils";
 import { Button } from "@lemonsqueezy/wedges";
-import { ArrowLeftIcon, ArrowRightIcon } from "lucide-react";
+import {
+  ArrowLeftIcon,
+  ArrowRightIcon,
+  ThumbsDownIcon,
+  ThumbsUpIcon,
+} from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -56,34 +61,65 @@ export default function DropletFooter({ droplet }: { droplet: any }) {
   }
 
   return (
-    <div className="mt-8 border-t border-t-purple-100 pt-8 max-w-prose mx-auto flex flex-col md:flex-row gap-2 md:justify-between">
-      {previous ? (
-        <PaginationLinkWrapper link={previous.link}>
-          <ArrowLeftIcon />
-          <div>
-            <p className="font-bold">Previous</p>
-            <p className="text-sm">{previous.name}</p>
+    <>
+      {pathSegments.length > 3 &&
+      !pathSegments.at(-1)?.toLowerCase().includes("recap") ? (
+        <div className="mt-8 flex flex-col gap-4 max-w-prose mx-auto p-8 w-full items-center rounded-md border border-purple-200">
+          <h2 className="font-bold text-lg text-purple-700">
+            Was this lesson informative?
+          </h2>
+          <div className="flex gap-2">
+            <Button
+              size="md"
+              variant="outline"
+              before={<ThumbsUpIcon className="w-4 h-4" />}
+            >
+              Yes
+            </Button>
+            <Button
+              size="md"
+              variant="outline"
+              after={<ThumbsDownIcon className="w-4 h-4" />}
+            >
+              No
+            </Button>
           </div>
-        </PaginationLinkWrapper>
-      ) : (
-        <div className="flex-1"></div>
-      )}
+        </div>
+      ) : null}
 
-      {next ? (
-        <PaginationLinkWrapper
-          link={next.link}
-          className="text-right float-right"
-        >
-          <div>
-            <p className="font-bold">Next</p>
-            <p className="text-sm">{next.name}</p>
-          </div>
-          <ArrowRightIcon />
-        </PaginationLinkWrapper>
-      ) : (
-        <div className="flex-1"></div>
-      )}
-    </div>
+      <div className="mt-8 pb-2 max-w-prose mx-auto flex flex-col md:flex-row gap-2 md:justify-between">
+        {previous ? (
+          <PaginationLinkWrapper link={previous.link}>
+            <div className="rounded-full p-2 bg-purple-100">
+              <ArrowLeftIcon />
+            </div>
+            <div>
+              <p className="font-bold">Previous</p>
+              <p className="text-sm">{previous.name}</p>
+            </div>
+          </PaginationLinkWrapper>
+        ) : (
+          <div className="flex-1"></div>
+        )}
+
+        {next ? (
+          <PaginationLinkWrapper
+            link={next.link}
+            className="text-right float-right"
+          >
+            <div>
+              <p className="font-bold">Next</p>
+              <p className="text-sm">{next.name}</p>
+            </div>
+            <div className="rounded-full p-2 bg-purple-100">
+              <ArrowRightIcon />
+            </div>
+          </PaginationLinkWrapper>
+        ) : (
+          <div className="flex-1"></div>
+        )}
+      </div>
+    </>
   );
 }
 
@@ -98,11 +134,11 @@ const PaginationLinkWrapper = ({
 }) => (
   <Link
     href={link}
-    className="leading-tight bg-purple-50 hover:bg-purple-100 p-4 rounded-md flex-1 transition-colors"
+    className="leading-tight bg-purple-50 hover:bg-purple-100 p-4 rounded-md flex-1 transition-colors border border-purple-200"
   >
     <div
       className={cn(
-        "inline-flex items-center gap-2 text-purple-700",
+        "inline-flex items-center gap-3 text-purple-700",
         className
       )}
     >

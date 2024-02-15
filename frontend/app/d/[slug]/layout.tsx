@@ -3,7 +3,6 @@ import { getDropletBySlug } from "@/lib/droplets";
 import { flattenAttributes } from "@/lib/utils";
 import DropletFooter from "@/ui/droplets/footer";
 import Sidebar from "@/ui/droplets/sidebar";
-import { Button } from "@lemonsqueezy/wedges";
 import type { Metadata } from "next";
 import { getServerSession } from "next-auth";
 
@@ -15,10 +14,23 @@ type Props = {
   children: React.ReactNode;
 };
 
-export const metadata: Metadata = {
-  title: "Khoury Odyssey",
-  description: "",
-};
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  let droplet = await getDropletBySlug(params.slug, {
+    authors: "*",
+    lessons: {
+      populate: "*",
+    },
+  });
+  if (droplet.data.length === 0) return {};
+  droplet = flattenAttributes(droplet)[0];
+
+  return {
+    title: {
+      absolute: `Overview | ${droplet.name}`,
+      template: `%s | ${droplet.name}`,
+    },
+  };
+}
 
 export default async function RootLayout({ params, children }: Props) {
   const session = await getServerSession(authOptions);

@@ -3,7 +3,6 @@ import { flattenAttributes } from "@/lib/utils";
 import { Avatar, Button } from "@lemonsqueezy/wedges";
 import { ArrowRightIcon } from "lucide-react";
 import { Metadata } from "next";
-import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
@@ -24,10 +23,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   droplet = flattenAttributes(droplet)[0];
 
   return {
-    title: {
-      absolute: `Overview | ${droplet.name}`,
-      template: `%s | ${droplet.name}`,
-    },
+    title: `Overview | ${droplet.name}`,
   };
 }
 

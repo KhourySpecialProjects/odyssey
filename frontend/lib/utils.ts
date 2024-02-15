@@ -1,4 +1,5 @@
-import { type ClassValue, clsx } from "clsx";
+import { clsx, type ClassValue } from "clsx";
+import { parse } from "node-html-parser";
 import qs from "qs";
 import { twMerge } from "tailwind-merge";
 
@@ -83,4 +84,18 @@ export function flattenAttributes(data: any): any {
   }
 
   return flattened;
+}
+
+export function extractHeadings(html: string): any[] {
+  if (!html || html.length === 0) return [];
+
+  const root = parse(html);
+  const headings = Array.from(
+    root.querySelectorAll("h1, h2, h3, h4, h5, h6")
+  ).map((heading) => ({
+    level: parseInt(heading.tagName[1]),
+    text: heading.textContent?.trim(),
+  }));
+
+  return headings;
 }
