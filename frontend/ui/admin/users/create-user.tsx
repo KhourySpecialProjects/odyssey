@@ -48,12 +48,12 @@ export function CreateUser() {
                   <Button before={<XIcon className="w-4" />}>Close</Button>
                 </DialogClose>
               </div>
+
+              <hr className="my-4" />
+
+              <p className="font-medium">Add Another?</p>
             </>
           ) : null}
-
-          <hr className="my-4" />
-
-          <p className="font-medium">Add Another?</p>
 
           <Input
             id="email"

@@ -1,7 +1,6 @@
 "use client";
 
 import useDebugStore from "@/stores/debug-store";
-import { BlocksRenderer } from "@strapi/blocks-react-renderer";
 
 export function DropletRenderer({ droplet }: any) {
   const isDebugEnabled = useDebugStore((state) => state.debug);
@@ -19,7 +18,6 @@ export function DropletRenderer({ droplet }: any) {
         {droplet.lessons[0].blocks.map((b: any, i: number) => (
           <LessonBlockRenderer key={i} block={b} />
         ))}
-        {/* <BlocksRenderer content={droplet.content} /> */}
       </div>
 
       {isDebugEnabled ? (
