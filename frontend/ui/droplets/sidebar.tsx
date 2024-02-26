@@ -39,7 +39,9 @@ export default function Sidebar({
   const lessonSlugIndex = droplet.lessons
     .map((l: any) => l.slug)
     .indexOf(lessonSlug);
-  const dropletProgress = ((lessonSlugIndex + 1) / totalLessons) * 100;
+  const dropletProgress = Math.round(
+    ((lessonSlugIndex + 1) / totalLessons) * 100
+  );
 
   useLayoutEffect(() => {
     window.addEventListener("resize", () => setExpanded(false));
