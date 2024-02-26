@@ -13,6 +13,26 @@ export interface DropletsCallout extends Schema.Component {
   };
 }
 
+export interface DropletsExpandable extends Schema.Component {
+  collectionName: 'components_droplets_expandables';
+  info: {
+    displayName: 'Expandable';
+    icon: 'archive';
+  };
+  attributes: {
+    title: Attribute.String & Attribute.Required;
+    content: Attribute.RichText &
+      Attribute.Required &
+      Attribute.CustomField<
+        'plugin::ckeditor.CKEditor',
+        {
+          output: 'HTML';
+          preset: 'rich';
+        }
+      >;
+  };
+}
+
 export interface DropletsGeneric extends Schema.Component {
   collectionName: 'components_droplets_generics';
   info: {
@@ -47,6 +67,7 @@ declare module '@strapi/types' {
   export module Shared {
     export interface Components {
       'droplets.callout': DropletsCallout;
+      'droplets.expandable': DropletsExpandable;
       'droplets.generic': DropletsGeneric;
       'droplets.video': DropletsVideo;
     }

@@ -1,8 +1,20 @@
 "use client";
 
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import { extractHeadings } from "@/lib/utils";
 import useDebugStore from "@/stores/debug-store";
 import { BlocksRenderer } from "@strapi/blocks-react-renderer";
+import { ArrowDownFromLineIcon, ArrowRightIcon } from "lucide-react";
 
 export function LessonRenderer({ lesson }: any) {
   const isDebugEnabled = useDebugStore((state) => state.debug);
@@ -66,6 +78,22 @@ function LessonBlockRenderer({ block }: { block: any }) {
         <div className="bg-purple-100 -mx-8 py-6 px-6 rounded-md border border-purple-200">
           <BlocksRenderer content={block.content} />
         </div>
+      );
+
+    case "droplets.expandable":
+      return (
+        <Collapsible className="border border-slate-200 w-full p-4 rounded-md">
+          <CollapsibleTrigger className="text-purple-600 font-bold inline-flex gap-2 items-center flex-row">
+            {block.title}
+            <ArrowDownFromLineIcon className="text-purple-400 w-4 h-4" />
+          </CollapsibleTrigger>
+          <CollapsibleContent className="mt-4 pt-3 border-t border-t-slate-200">
+            <div
+              className="prose"
+              dangerouslySetInnerHTML={{ __html: block.content }}
+            ></div>
+          </CollapsibleContent>
+        </Collapsible>
       );
 
     case "droplets.video":

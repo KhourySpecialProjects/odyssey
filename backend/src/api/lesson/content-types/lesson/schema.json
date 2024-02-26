@@ -27,7 +27,8 @@
       "components": [
         "droplets.generic",
         "droplets.video",
-        "droplets.callout"
+        "droplets.callout",
+        "droplets.expandable"
       ],
       "required": true
     },

@@ -11,6 +11,8 @@
   "dependencies": {
     "@lemonsqueezy/wedges": "^1.2.1",
     "@microsoft/microsoft-graph-client": "^3.0.7",
+    "@radix-ui/react-accordion": "^1.1.2",
+    "@radix-ui/react-collapsible": "^1.0.3",
     "@radix-ui/react-dialog": "^1.0.5",
     "@strapi/blocks-react-renderer": "^1.0.0",
     "axios": "^1.6.7",

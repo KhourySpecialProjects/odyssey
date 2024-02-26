@@ -922,7 +922,12 @@ export interface ApiLessonLesson extends Schema.CollectionType {
       }>;
     slug: Attribute.UID<'api::lesson.lesson', 'title'> & Attribute.Required;
     blocks: Attribute.DynamicZone<
-      ['droplets.generic', 'droplets.video', 'droplets.callout']
+      [
+        'droplets.generic',
+        'droplets.video',
+        'droplets.callout',
+        'droplets.expandable'
+      ]
     > &
       Attribute.Required;
     droplets: Attribute.Relation<
