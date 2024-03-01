@@ -5,6 +5,7 @@ export async function getUserProfile(accessToken: string) {
       {
         headers: {
           Authorization: `Bearer ${accessToken}`,
+          cache: "no-cache",
         },
       }
     );
@@ -12,7 +13,7 @@ export async function getUserProfile(accessToken: string) {
     const data = await response.json();
 
     // Extract relevant information from the response
-    const { employeeId, jobTitle } = data.data;
+    const { employeeId, jobTitle } = data;
     return { employeeId, jobTitle };
   } catch (error) {
     // Handle errors appropriately
