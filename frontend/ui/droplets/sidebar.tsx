@@ -97,7 +97,7 @@ export default function Sidebar({
             className="flex items-center p-2 mb-6 text-xs font-normal uppercase rounded-lg text-slate-900 dark:text-white hover:bg-slate-100 dark:hover:bg-slate-700 group"
           >
             <ArrowLeftCircleIcon className="w-4 h-4" />
-            <span className="ms-2">Back to Discovery</span>
+            <span className="ms-2">Back to Explore</span>
           </Link>
 
           <ul className="space-y-2 font-medium">

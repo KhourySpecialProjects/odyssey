@@ -1,8 +1,6 @@
-import axios from "axios";
-
 export async function getUserProfile(accessToken: string) {
   try {
-    const response = await axios.get(
+    const response = await fetch(
       "https://graph.microsoft.com/v1.0/me?$select=employeeId,jobTitle",
       {
         headers: {
@@ -11,8 +9,10 @@ export async function getUserProfile(accessToken: string) {
       }
     );
 
+    const data = await response.json();
+
     // Extract relevant information from the response
-    const { employeeId, jobTitle } = response.data;
+    const { employeeId, jobTitle } = data.data;
     return { employeeId, jobTitle };
   } catch (error) {
     // Handle errors appropriately

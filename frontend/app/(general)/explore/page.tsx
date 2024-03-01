@@ -1,5 +1,4 @@
 import { fetchDroplets } from "@/lib/data";
-import useDebugStore from "@/stores/debug-store";
 import { ArrowRightCircleIcon } from "lucide-react";
 import Link from "next/link";
 
@@ -12,7 +11,6 @@ type Droplet = {
 
 export default async function ExploreRoute() {
   const droplets = await fetchDroplets();
-  console.log(droplets);
 
   return (
     <>
