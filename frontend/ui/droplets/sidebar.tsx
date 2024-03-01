@@ -114,6 +114,7 @@ export default function Sidebar({
                 <span className="ms-3">Overview</span>
               </Link>
             </li>
+
             {droplet.lessons.map((lesson: any, i: number) => (
               <li key={i}>
                 <Link
@@ -125,9 +126,9 @@ export default function Sidebar({
                   }
                 >
                   {lesson.title.toLowerCase() === "recap" ? (
-                    <HistoryIcon />
+                    <HistoryIcon className="shrink-0" />
                   ) : (
-                    <NotebookTextIcon />
+                    <NotebookTextIcon className="shrink-0" />
                   )}
                   <span className="ms-3">{lesson.title}</span>
                 </Link>
