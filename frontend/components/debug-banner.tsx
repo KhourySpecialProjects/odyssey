@@ -12,12 +12,12 @@ export function DebugBanner({ className }: { className?: string }) {
   return (
     <div
       className={cn(
-        "py-2 w-full text-center text-sm uppercase font-medium text-black bg-slate-100 rounded-md",
+        "py-1 w-full text-center text-xs uppercase font-medium text-white bg-cyan-800",
         className
       )}
     >
       <p className="inline-flex flex-row items-center gap-2">
-        <BugIcon className="w-4 h-4" />
+        <BugIcon className="w-3 h-3" />
         Debug Mode Enabled
       </p>
     </div>

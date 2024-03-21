@@ -20,7 +20,7 @@ export default function GeneralLayout({
         <Header />
       </Suspense>
 
-      <div className="h-[4.25rem]"></div>
+      <div className="h-[4.5rem]"></div>
 
       <Suspense>
         <AccessRequestBanner />

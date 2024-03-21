@@ -1,22 +1,35 @@
 "use client";
 
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import useDebugStore from "@/stores/debug-store";
-import { Button, Tooltip } from "@lemonsqueezy/wedges";
 import { BugIcon } from "lucide-react";
+import { Button } from "./ui/button";
 
 export default function DebugToggle() {
   const toggleDebug = useDebugStore((state) => state.toggle);
 
   return (
-    <Tooltip content="Toggle debugging">
-      <Button
-        onClick={toggleDebug}
-        className="z-50 fixed bottom-2 right-2"
-        size="xs-icon"
-        aria-label="Debug"
-      >
-        <BugIcon className="w-4" />
-      </Button>
-    </Tooltip>
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            onClick={toggleDebug}
+            className="z-50 fixed bottom-2 right-2"
+            size="icon"
+            aria-label="Debug"
+          >
+            <BugIcon className="w-4" />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>
+          <p>Toggle debugging</p>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 }
