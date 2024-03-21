@@ -44,7 +44,7 @@ export default async function AccessRequestBanner() {
           <Link
             href="/request-access"
             // className="flex-none rounded-full bg-gray-900 px-3.5 py-1 text-sm font-semibold text-white shadow-sm hover:bg-gray-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-900"
-            className="inline-flex flex-row gap-1.5 items-center transition-colors rounded-md bg-purple-600 px-3.5 py-2 text-xs font-semibold text-white shadow-sm hover:bg-purple-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple-600"
+            className="inline-flex flex-row gap-1.5 items-center transition-colors rounded-md bg-cyan-600 px-3.5 py-2 text-xs font-semibold text-white shadow-sm hover:bg-cyan-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-600"
           >
             Request Access <ArrowRightIcon className="w-4 h-4" />
           </Link>

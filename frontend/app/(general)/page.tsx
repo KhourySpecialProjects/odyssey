@@ -37,7 +37,7 @@ export default function HomeRoute() {
             <div className="mt-10 flex items-center justify-center gap-x-6">
               <Link
                 href="/explore"
-                className="inline-flex flex-row gap-1.5 items-center transition-colors rounded-md bg-purple-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-purple-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple-600"
+                className="inline-flex flex-row gap-1.5 items-center transition-colors rounded-md bg-cyan-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-cyan-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-600"
               >
                 Explore
                 <ArrowRightIcon className="w-4 h-4" />
