@@ -1,7 +1,7 @@
 "use client";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { ChevronDownIcon, CogIcon, LogOutIcon } from "lucide-react";
+import { ChevronDownIcon, CogIcon, LogInIcon, LogOutIcon } from "lucide-react";
 import { signIn, signOut, useSession } from "next-auth/react";
 import Image from "next/image";
 import Link from "next/link";
@@ -14,6 +14,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
+import { Button } from "./ui/button";
 
 const activeLinkClasses =
   "block px-3 py-2 text-white bg-sky-700 rounded md:bg-transparent md:text-sky-700 md:p-0 md:dark:text-sky-500";
@@ -108,13 +109,14 @@ export default function Header() {
               </DropdownMenu>
             </div>
           ) : (
-            <button
-              type="button"
+            <Button
+              size="sm"
+              before={<LogInIcon />}
               onClick={() => signIn("azure-ad")}
-              className="px-4 py-2 text-sm font-medium text-center text-white bg-sky-700 rounded-lg hover:bg-sky-800 focus:ring-4 focus:outline-none focus:ring-sky-300 dark:bg-sky-600 dark:hover:bg-sky-700 dark:focus:ring-sky-800"
+              // className="px-4 py-2 text-sm font-medium text-center text-white bg-sky-700 rounded-lg hover:bg-sky-800 focus:ring-4 focus:outline-none focus:ring-sky-300 dark:bg-sky-600 dark:hover:bg-sky-700 dark:focus:ring-sky-800"
             >
               Log in
-            </button>
+            </Button>
           )}
         </div>
 
