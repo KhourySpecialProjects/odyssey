@@ -3,6 +3,7 @@
 import { Avatar, DropdownMenu } from "@lemonsqueezy/wedges";
 import { ChevronDownIcon, CogIcon, LogOutIcon } from "lucide-react";
 import { signIn, signOut, useSession } from "next-auth/react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -34,11 +35,15 @@ export default function Header() {
   return (
     <>
       <nav className="fixed top-0 z-20 w-full bg-white border-b border-slate-200 dark:bg-slate-900 start-0 dark:border-slate-600">
-        <div className="grid grid-cols-2 md:grid-cols-[1fr_auto_1fr] items-center justify-between max-w-screen-xl p-4 mx-auto">
+        <div className="grid grid-cols-2 md:grid-cols-[1fr_auto_1fr] items-center justify-between max-w-screen-xl px-4 py-2.5 mx-auto">
           <Link href="/" className="flex items-center space-x-3">
-            <span className="self-center text-2xl font-semibold whitespace-nowrap dark:text-white">
-              Khoury Odyssey
-            </span>
+            <Image
+              src="/logo.svg"
+              alt="Khoury Odyssey Logo"
+              width={175}
+              height={50}
+              priority
+            />
           </Link>
           <div className="flex justify-end space-x-3 md:col-start-3 md:space-x-0">
             {status === "loading" ? (
