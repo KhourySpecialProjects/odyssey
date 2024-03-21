@@ -5,6 +5,7 @@ import DropletFooter from "@/components/droplets/footer";
 import Sidebar from "@/components/droplets/sidebar";
 import type { Metadata } from "next";
 import { getServerSession } from "next-auth";
+import { notFound } from "next/navigation";
 
 type Props = {
   params: {
@@ -41,7 +42,7 @@ export default async function RootLayout({ params, children }: Props) {
       populate: "*",
     },
   });
-  if (droplet.data.length === 0) return {};
+  if (droplet.data.length === 0) return notFound();
   droplet = flattenAttributes(droplet)[0];
 
   return (
