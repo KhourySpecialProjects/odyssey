@@ -1,12 +1,6 @@
 "use client";
 
 import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
-import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
@@ -14,7 +8,7 @@ import {
 import { extractHeadings } from "@/lib/utils";
 import useDebugStore from "@/stores/debug-store";
 import { BlocksRenderer } from "@strapi/blocks-react-renderer";
-import { ArrowDownFromLineIcon, ArrowRightIcon } from "lucide-react";
+import { ArrowDownFromLineIcon } from "lucide-react";
 
 export function LessonRenderer({ lesson }: any) {
   const isDebugEnabled = useDebugStore((state) => state.debug);
@@ -75,8 +69,10 @@ function LessonBlockRenderer({ block }: { block: any }) {
 
     case "droplets.callout":
       return (
-        <div className="bg-sky-100 -mx-8 py-6 px-6 rounded-md border border-sky-200">
-          <BlocksRenderer content={block.content} />
+        <div className="bg-sky-50 -mx-8 py-6 px-6 rounded-md border border-sky-200">
+          <div className="prose mx-auto">
+            <BlocksRenderer content={block.content} />
+          </div>
         </div>
       );
 
