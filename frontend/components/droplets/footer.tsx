@@ -64,8 +64,8 @@ export default function DropletFooter({ droplet }: { droplet: any }) {
     <>
       {pathSegments.length > 3 &&
       !pathSegments.at(-1)?.toLowerCase().includes("recap") ? (
-        <div className="mt-8 flex flex-col gap-4 max-w-prose mx-auto p-8 w-full items-center rounded-md border border-cyan-200">
-          <h2 className="font-bold text-lg text-cyan-700">
+        <div className="mt-8 flex flex-col gap-4 max-w-prose mx-auto p-8 w-full items-center rounded-md border border-sky-200">
+          <h2 className="font-bold text-lg text-sky-700">
             Was this lesson informative?
           </h2>
           <div className="flex gap-2">
@@ -90,7 +90,7 @@ export default function DropletFooter({ droplet }: { droplet: any }) {
       <div className="mt-8 pb-2 max-w-prose mx-auto flex flex-col md:flex-row gap-2 md:justify-between">
         {previous ? (
           <PaginationLinkWrapper link={previous.link}>
-            <div className="rounded-full p-2 bg-cyan-100">
+            <div className="rounded-full p-2 bg-sky-100">
               <ArrowLeftIcon />
             </div>
             <div>
@@ -111,7 +111,7 @@ export default function DropletFooter({ droplet }: { droplet: any }) {
               <p className="font-bold">Next</p>
               <p className="text-sm">{next.name}</p>
             </div>
-            <div className="rounded-full p-2 bg-cyan-100">
+            <div className="rounded-full p-2 bg-sky-100">
               <ArrowRightIcon />
             </div>
           </PaginationLinkWrapper>
@@ -134,10 +134,10 @@ const PaginationLinkWrapper = ({
 }) => (
   <Link
     href={link}
-    className="leading-tight bg-cyan-50 hover:bg-cyan-100 p-4 rounded-md flex-1 transition-colors border border-cyan-200"
+    className="leading-tight bg-sky-50 hover:bg-sky-100 p-4 rounded-md flex-1 transition-colors border border-sky-200"
   >
     <div
-      className={cn("inline-flex items-center gap-3 text-cyan-700", className)}
+      className={cn("inline-flex items-center gap-3 text-sky-700", className)}
     >
       {children}
     </div>

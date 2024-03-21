@@ -32,7 +32,7 @@ export default function Sidebar({
   const pathname = usePathname();
 
   const activeLinkClasses =
-    "flex items-center p-2 bg-slate-200 [&>svg]:text-cyan-700 rounded-lg dark:text-white dark:hover:bg-slate-700 group text-cyan-700 transition-colors";
+    "flex items-center p-2 bg-slate-200 [&>svg]:text-sky-700 rounded-lg dark:text-white dark:hover:bg-slate-700 group text-sky-700 transition-colors";
   const inactiveLinkClasses =
     "flex items-center p-2 rounded-lg text-slate-900 dark:text-white hover:bg-slate-100 dark:hover:bg-slate-700 group transition-colors";
 

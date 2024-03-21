@@ -12,7 +12,7 @@ export function DebugBanner({ className }: { className?: string }) {
   return (
     <div
       className={cn(
-        "py-1 w-full text-center text-xs uppercase font-medium text-white bg-cyan-800",
+        "py-1 w-full text-center text-xs uppercase font-medium text-white bg-sky-800",
         className
       )}
     >

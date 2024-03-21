@@ -32,7 +32,7 @@ export function LessonRenderer({ lesson }: any) {
 
       <div className="h-8"></div>
 
-      <div className="bg-cyan-50 py-6 px-8 -mx-8 rounded-md border border-cyan-200">
+      <div className="bg-sky-50 py-6 px-8 -mx-8 rounded-md border border-sky-200">
         <h2 className="font-bold text-xl">Contents</h2>
         <ul className="ml-4 mt-3 list-disc list-inside">
           {headings.map((heading, index) => (
@@ -75,7 +75,7 @@ function LessonBlockRenderer({ block }: { block: any }) {
 
     case "droplets.callout":
       return (
-        <div className="bg-cyan-100 -mx-8 py-6 px-6 rounded-md border border-cyan-200">
+        <div className="bg-sky-100 -mx-8 py-6 px-6 rounded-md border border-sky-200">
           <BlocksRenderer content={block.content} />
         </div>
       );
@@ -83,9 +83,9 @@ function LessonBlockRenderer({ block }: { block: any }) {
     case "droplets.expandable":
       return (
         <Collapsible className="border border-slate-200 w-full p-4 rounded-md">
-          <CollapsibleTrigger className="text-cyan-600 font-bold inline-flex gap-2 items-center flex-row">
+          <CollapsibleTrigger className="text-sky-600 font-bold inline-flex gap-2 items-center flex-row">
             {block.title}
-            <ArrowDownFromLineIcon className="text-cyan-400 w-4 h-4" />
+            <ArrowDownFromLineIcon className="text-sky-400 w-4 h-4" />
           </CollapsibleTrigger>
           <CollapsibleContent className="mt-4 pt-3 border-t border-t-slate-200">
             <div
