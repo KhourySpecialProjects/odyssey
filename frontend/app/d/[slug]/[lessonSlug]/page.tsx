@@ -1,6 +1,6 @@
 import { fetchAPI, flattenAttributes } from "@/lib/utils";
-import { DropletRenderer } from "@/ui/droplets/droplet-renderer";
-import { LessonRenderer } from "@/ui/droplets/lessons/lesson-renderer";
+import { DropletRenderer } from "@/components/droplets/droplet-renderer";
+import { LessonRenderer } from "@/components/droplets/lessons/lesson-renderer";
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
 

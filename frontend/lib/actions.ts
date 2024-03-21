@@ -1,6 +1,6 @@
 "use server";
 
-import { createAccessRequestSchema } from "@/ui/request-access/types";
+import { createAccessRequestSchema } from "@/components/request-access/types";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";

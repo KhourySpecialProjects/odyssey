@@ -2,7 +2,7 @@
 
 import UnauthorizedRoute from "@/app/(general)/unauthorized/page";
 import { cn } from "@/lib/utils";
-import { DebugBanner } from "@/ui/debug-banner";
+import { DebugBanner } from "@/components/debug-banner";
 import { Avatar, DropdownMenu, ProgressBar } from "@lemonsqueezy/wedges";
 import {
   ArrowLeftCircleIcon,

@@ -1,6 +1,6 @@
 import { Toaster } from "@/components/ui/toaster";
 import AuthSessionProvider from "@/providers/SessionProvider";
-import DebugToggle from "@/ui/debug-toggle";
+import DebugToggle from "@/components/debug-toggle";
 import type { Metadata } from "next";
 import { Lato } from "next/font/google";
 import "./globals.css";

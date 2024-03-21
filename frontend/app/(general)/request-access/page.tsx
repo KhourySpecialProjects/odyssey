@@ -1,5 +1,5 @@
 import { authOptions } from "@/lib/authOptions";
-import { RequestAccessForm } from "@/ui/request-access/form";
+import { RequestAccessForm } from "@/components/request-access/form";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 

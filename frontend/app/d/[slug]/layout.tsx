@@ -1,8 +1,8 @@
 import { authOptions } from "@/lib/authOptions";
 import { getDropletBySlug } from "@/lib/droplets";
 import { flattenAttributes } from "@/lib/utils";
-import DropletFooter from "@/ui/droplets/footer";
-import Sidebar from "@/ui/droplets/sidebar";
+import DropletFooter from "@/components/droplets/footer";
+import Sidebar from "@/components/droplets/sidebar";
 import type { Metadata } from "next";
 import { getServerSession } from "next-auth";
 
