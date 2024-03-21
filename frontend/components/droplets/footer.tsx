@@ -1,7 +1,6 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { Button } from "@lemonsqueezy/wedges";
 import {
   ArrowLeftIcon,
   ArrowRightIcon,
@@ -10,6 +9,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { Button } from "../ui/button";
 
 type PaginationProps = {
   link: string;
@@ -69,18 +69,10 @@ export default function DropletFooter({ droplet }: { droplet: any }) {
             Was this lesson informative?
           </h2>
           <div className="flex gap-2">
-            <Button
-              size="md"
-              variant="outline"
-              before={<ThumbsUpIcon className="w-4 h-4" />}
-            >
+            <Button size="lg" variant="outline" before={<ThumbsUpIcon />}>
               Yes
             </Button>
-            <Button
-              size="md"
-              variant="outline"
-              after={<ThumbsDownIcon className="w-4 h-4" />}
-            >
+            <Button size="lg" variant="outline" after={<ThumbsDownIcon />}>
               No
             </Button>
           </div>

@@ -14,22 +14,20 @@ export default function DebugToggle() {
   const toggleDebug = useDebugStore((state) => state.toggle);
 
   return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button
-            onClick={toggleDebug}
-            className="z-50 fixed bottom-2 right-2"
-            size="icon"
-            aria-label="Debug"
-          >
-            <BugIcon className="w-4" />
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent>
-          <p>Toggle debugging</p>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Button
+          onClick={toggleDebug}
+          className="z-50 fixed bottom-2 right-2"
+          size="icon"
+          aria-label="Debug"
+        >
+          <BugIcon className="w-4" />
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent>
+        <p>Toggle debugging</p>
+      </TooltipContent>
+    </Tooltip>
   );
 }

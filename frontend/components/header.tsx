@@ -1,11 +1,19 @@
 "use client";
 
-import { Avatar, DropdownMenu } from "@lemonsqueezy/wedges";
+import { Avatar } from "@lemonsqueezy/wedges";
 import { ChevronDownIcon, CogIcon, LogOutIcon } from "lucide-react";
 import { signIn, signOut, useSession } from "next-auth/react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "./ui/dropdown-menu";
 
 const activeLinkClasses =
   "block px-3 py-2 text-white bg-sky-700 rounded md:bg-transparent md:text-sky-700 md:p-0 md:dark:text-sky-500";
@@ -53,52 +61,49 @@ export default function Header() {
           ) : session?.user ? (
             <div className="flex items-center justify-center">
               <DropdownMenu>
-                <DropdownMenu.Trigger asChild>
-                  <div className="group flex shrink cursor-pointer select-none items-center justify-center gap-1 rounded-lg p-1.5 px-2 text-sm text-slate-600 transition-colors duration-100 wg-antialiased hover:bg-slate-100 dark:hover:bg-white/5">
-                    {session.user.image ? (
-                      <Avatar
-                        size="xs"
-                        src={session.user.image}
-                        initials={session.user.name?.charAt(0) || "?"}
-                      />
-                    ) : null}
+                <DropdownMenuTrigger asChild>
+                  <div className="w-full group flex shrink cursor-pointer select-none items-center justify-between gap-1 rounded-lg p-1.5 px-2 text-sm text-slate-600 transition-colors duration-100 wg-antialiased hover:bg-slate-100 dark:hover:bg-white/5">
+                    <div className="inline-flex flex-row items-center justify-between">
+                      {session.user.image ? (
+                        <Avatar
+                          size="xs"
+                          src={session.user.image}
+                          initials={session.user.name?.charAt(0) || "?"}
+                        />
+                      ) : null}
 
-                    <span className="font-medium ms-2">
-                      Hi, <b>{session.user.name ?? session.user.email}</b>!
-                    </span>
+                      <span className="font-medium ms-2">
+                        Hi, <b>{session.user.name ?? session.user.email}</b>!
+                      </span>
+                    </div>
 
                     <ChevronDownIcon className="w-5 h-5 trigger-icon text-slate-400" />
                   </div>
-                </DropdownMenu.Trigger>
+                </DropdownMenuTrigger>
 
-                <DropdownMenu.Content align="center" className="min-w-[140px]">
-                  <DropdownMenu.Label>
+                <DropdownMenuContent className="mb-3 min-w-[220px]">
+                  <DropdownMenuLabel className="text-xs">
                     NUID: {session.employeeId || "unknown"}
                     <br />
                     Title: {session.jobTitle || "unknown"}
-                  </DropdownMenu.Label>
-
-                  <DropdownMenu.Separator />
-
-                  <DropdownMenu.Group>
-                    <DropdownMenu.Item asChild>
-                      <Link href="/admin">
-                        <CogIcon className="w-4 h-4" />
-                        <span>Admin</span>
-                      </Link>
-                    </DropdownMenu.Item>
-
-                    <DropdownMenu.Item
-                      onClick={(e) => {
-                        e.preventDefault();
-                        signOut();
-                      }}
-                    >
-                      <LogOutIcon className="w-4 h-4" />
-                      <span>Log Out</span>
-                    </DropdownMenu.Item>
-                  </DropdownMenu.Group>
-                </DropdownMenu.Content>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link href="/admin">
+                      <CogIcon className="mr-2 w-4 h-4" />
+                      <span>Admin</span>
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onSelect={(e) => {
+                      e.preventDefault();
+                      signOut();
+                    }}
+                  >
+                    <LogOutIcon className="mr-2 w-4 h-4" />
+                    <span>Log Out</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
               </DropdownMenu>
             </div>
           ) : (

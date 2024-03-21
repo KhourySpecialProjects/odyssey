@@ -1,10 +1,15 @@
 "use client";
 
-import { AuthorizedUser } from "./authorized-users";
+import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { deleteAuthorizedUser, updateAuthorizedUser } from "@/lib/actions";
-import { Button, Tooltip } from "@lemonsqueezy/wedges";
 import { TrashIcon } from "lucide-react";
 import { useFormStatus } from "react-dom";
+import { AuthorizedUser } from "./authorized-users";
 
 export function AuthorizedUserBlock({ user }: { user: AuthorizedUser }) {
   return (
@@ -106,8 +111,7 @@ function SubmitButton({
     <Button
       type="submit"
       size="sm"
-      destructive={destructive}
-      variant={destructive ? "link" : "primary"}
+      variant={destructive ? "destructive" : "link"}
       aria-disabled={pending}
     >
       {children}
@@ -119,10 +123,20 @@ function SubmitDeleteButton() {
   const { pending } = useFormStatus();
 
   return (
-    <Tooltip content="Delete user">
-      <Button type="submit" size="sm" destructive aria-disabled={pending}>
-        <TrashIcon className="w-4" />
-      </Button>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Button
+          type="submit"
+          size="sm"
+          variant="destructive"
+          aria-disabled={pending}
+        >
+          <TrashIcon className="w-4" />
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent>
+        <p>Delete user</p>
+      </TooltipContent>
     </Tooltip>
   );
 }

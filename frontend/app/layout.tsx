@@ -1,6 +1,7 @@
-import { Toaster } from "@/components/ui/toaster";
-import AuthSessionProvider from "@/providers/SessionProvider";
 import DebugToggle from "@/components/debug-toggle";
+import { Toaster } from "@/components/ui/toaster";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import AuthSessionProvider from "@/providers/SessionProvider";
 import type { Metadata } from "next";
 import { Lato } from "next/font/google";
 import "./globals.css";
@@ -24,9 +25,11 @@ export default function RootLayout({
     <html lang="en">
       <body className={lato.className}>
         <AuthSessionProvider>
-          {children}
-          <DebugToggle />
-          <Toaster />
+          <TooltipProvider delayDuration={250}>
+            {children}
+            <DebugToggle />
+            <Toaster />
+          </TooltipProvider>
         </AuthSessionProvider>
       </body>
     </html>

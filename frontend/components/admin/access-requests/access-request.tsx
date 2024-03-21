@@ -1,10 +1,15 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { deleteAccessRequest } from "@/lib/actions";
+import { TrashIcon } from "lucide-react";
 import { useFormStatus } from "react-dom";
 import { AccessRequest } from "./access-requests";
-import { TrashIcon } from "lucide-react";
-import { Button, Tooltip } from "@lemonsqueezy/wedges";
-import { deleteAccessRequest } from "@/lib/actions";
 
 export function AccessRequestBlock({ request }: { request: AccessRequest }) {
   return (
@@ -43,10 +48,20 @@ function SubmitDeleteButton() {
   const { pending } = useFormStatus();
 
   return (
-    <Tooltip content="Delete user">
-      <Button type="submit" size="sm" destructive aria-disabled={pending}>
-        <TrashIcon className="w-4" />
-      </Button>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Button
+          type="submit"
+          size="sm"
+          variant="destructive"
+          aria-disabled={pending}
+        >
+          <TrashIcon className="w-4" />
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent>
+        <p>Delete access request</p>
+      </TooltipContent>
     </Tooltip>
   );
 }

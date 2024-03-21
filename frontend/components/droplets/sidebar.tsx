@@ -3,14 +3,15 @@
 import UnauthorizedRoute from "@/app/(general)/unauthorized/page";
 import { DebugBanner } from "@/components/debug-banner";
 import { cn } from "@/lib/utils";
-import { Avatar, DropdownMenu, ProgressBar } from "@lemonsqueezy/wedges";
+import { Avatar } from "@lemonsqueezy/wedges";
 import {
-  ArrowLeftCircleIcon,
   ChevronDownIcon,
+  GalleryThumbnailsIcon,
   HistoryIcon,
   LogOutIcon,
   MenuIcon,
   NotebookTextIcon,
+  ShipIcon,
   TargetIcon,
 } from "lucide-react";
 import { Session } from "next-auth";
@@ -20,6 +21,16 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useLayoutEffect, useState } from "react";
 import { Separator } from "../ui/separator";
+import { Progress } from "../ui/progress";
+import { Label } from "../ui/label";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "../ui/dropdown-menu";
 
 export default function Sidebar({
   session,
@@ -139,14 +150,12 @@ export default function Sidebar({
 
           <div className="bottom-0 left-0 w-full p-2 mt-4 space-y-4 md:px-3 md:mg-0 md:flex-col md:absolute dark:bg-slate-800">
             <div className="px-2">
-              <ProgressBar
-                label={`${dropletProgress}% complete`}
-                value={dropletProgress}
-              />
+              <Label>{dropletProgress}% complete</Label>
+              <Progress value={dropletProgress} className="mt-1.5" />
             </div>
 
             <DropdownMenu>
-              <DropdownMenu.Trigger asChild>
+              <DropdownMenuTrigger asChild>
                 <div className="w-full group flex shrink cursor-pointer select-none items-center justify-between gap-1 rounded-lg p-1.5 px-2 text-sm text-slate-600 transition-colors duration-100 wg-antialiased hover:bg-slate-100 dark:hover:bg-white/5">
                   <div className="inline-flex flex-row items-center justify-between">
                     {session.user.image ? (
@@ -164,30 +173,31 @@ export default function Sidebar({
 
                   <ChevronDownIcon className="w-5 h-5 trigger-icon text-slate-400" />
                 </div>
-              </DropdownMenu.Trigger>
+              </DropdownMenuTrigger>
 
-              <DropdownMenu.Content
-                align="start"
-                className="mb-3 min-w-[220px]"
-              >
-                <DropdownMenu.Label>
+              <DropdownMenuContent className="mb-3 min-w-[220px]">
+                <DropdownMenuLabel className="text-xs">
                   NUID: {session.employeeId || "unknown"}
                   <br />
                   Title: {session.jobTitle || "unknown"}
-                </DropdownMenu.Label>
-
-                <DropdownMenu.Separator />
-
-                <DropdownMenu.Item
-                  onClick={(e) => {
+                </DropdownMenuLabel>
+                <DropdownMenuItem asChild>
+                  <Link href="/explore">
+                    <ShipIcon className="mr-2 w-4 h-4" />
+                    <span>Explore Droplets</span>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onSelect={(e) => {
                     e.preventDefault();
                     signOut();
                   }}
                 >
-                  <LogOutIcon className="w-4 h-4" />
+                  <LogOutIcon className="mr-2 w-4 h-4" />
                   <span>Log Out</span>
-                </DropdownMenu.Item>
-              </DropdownMenu.Content>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
             </DropdownMenu>
           </div>
         </div>

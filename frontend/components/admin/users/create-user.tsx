@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -9,7 +10,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { createAuthorizedUser } from "@/lib/actions";
-import { Button, Input, Switch } from "@lemonsqueezy/wedges";
+import { Input, Switch } from "@lemonsqueezy/wedges";
 import { DialogClose } from "@radix-ui/react-dialog";
 import { ArrowRightIcon, PlusIcon, XIcon } from "lucide-react";
 import { useFormState, useFormStatus } from "react-dom";
@@ -26,7 +27,7 @@ export function CreateUser() {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button after={<PlusIcon className="w-4" />}>Create User</Button>
+        <Button after={<PlusIcon />}>Create User</Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
@@ -45,7 +46,7 @@ export function CreateUser() {
 
               <div className="flex flex-row gap-2">
                 <DialogClose asChild>
-                  <Button before={<XIcon className="w-4" />}>Close</Button>
+                  <Button before={<XIcon />}>Close</Button>
                 </DialogClose>
               </div>
 
@@ -103,11 +104,7 @@ function SubmitButton() {
   const { pending } = useFormStatus();
 
   return (
-    <Button
-      after={<ArrowRightIcon className="w-4" />}
-      type="submit"
-      aria-disabled={pending}
-    >
+    <Button type="submit" after={<ArrowRightIcon />} aria-disabled={pending}>
       Submit
     </Button>
   );

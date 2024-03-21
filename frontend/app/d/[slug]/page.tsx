@@ -1,6 +1,7 @@
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
 import { getDropletBySlug } from "@/lib/droplets";
 import { flattenAttributes } from "@/lib/utils";
-import { Avatar, Button } from "@lemonsqueezy/wedges";
 import { ArrowRightIcon } from "lucide-react";
 import { Metadata } from "next";
 import Link from "next/link";
@@ -52,12 +53,13 @@ export default async function DropletRoute({ params }: Props) {
           <div key={author.id} className="flex-1 p-4 rounded-md bg-slate-100">
             {author.photo ? (
               <div className="mb-2">
-                <Avatar
-                  size="2xl"
-                  className="border border-slate-200 rounded-md"
-                  src={author.photo.formats.medium.url}
-                  initials={author.name.charAt(0)}
-                />
+                <Avatar className="border border-slate-200 rounded-md">
+                  <AvatarImage
+                    src={author.photo.formats.medium.url}
+                    className="object-cover object-center"
+                  />
+                  <AvatarFallback>{author.name.charAt(0)}</AvatarFallback>
+                </Avatar>
               </div>
             ) : null}
 
@@ -89,7 +91,7 @@ export default async function DropletRoute({ params }: Props) {
 
           <div className="h-8"></div>
 
-          <Button after={<ArrowRightIcon className="w-4" />} asChild>
+          <Button after={<ArrowRightIcon />} asChild>
             <Link href={`/d/${droplet.slug}/${droplet.lessons[0].slug}`}>
               Begin Droplet
             </Link>
