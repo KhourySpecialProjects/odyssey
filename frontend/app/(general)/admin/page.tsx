@@ -1,4 +1,5 @@
 import { authOptions } from "@/lib/authOptions";
+import AccessRequests from "@/ui/admin/access-requests/access-requests";
 import Session from "@/ui/admin/session";
 import AuthorizedUsers from "@/ui/admin/users/authorized-users";
 import { getServerSession } from "next-auth";
@@ -11,6 +12,7 @@ export default async function Page() {
   return (
     <div className="w-full max-w-5xl p-8 mx-auto space-y-12">
       <Session />
+      <AccessRequests />
       <AuthorizedUsers />
     </div>
   );

@@ -113,3 +113,29 @@ export async function fetchDroplets() {
     throw new Error("Failed to fetch authorized users data.");
   }
 }
+
+export async function fetchAccessRequests() {
+  try {
+    const query = qs.stringify({
+      sort: ["email"],
+      fields: ["givenName", "familyName", "email", "affiliation", "college"],
+      pagination: {
+        pageSize: 25,
+        page: 1,
+      },
+    });
+    const response = await fetch(
+      STRAPI_API_URL + "/api/access-requests?" + query,
+      {
+        headers: { Authorization: "Bearer " + STRAPI_ACCESS_TOKEN },
+        cache: "no-store",
+      }
+    );
+    const data = await response.json();
+    const accessRequests = flattenAttributes(data.data);
+    return accessRequests;
+  } catch (error) {
+    console.error("Database Error:", error);
+    throw new Error("Failed to fetch access requests data.");
+  }
+}
