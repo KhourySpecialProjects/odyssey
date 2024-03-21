@@ -1,16 +1,11 @@
-"use client";
-
+import { authOptions } from "@/lib/authOptions";
 import { ArrowRightIcon } from "lucide-react";
-import { useSession } from "next-auth/react";
+import { getServerSession } from "next-auth";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 
-export default function AccessRequestBanner() {
-  const { status } = useSession();
-
-  if (status === "authenticated") {
-    return <></>;
-  }
+export default async function AccessRequestBanner() {
+  const session = await getServerSession(authOptions);
+  if (session) return null;
 
   return (
     <>

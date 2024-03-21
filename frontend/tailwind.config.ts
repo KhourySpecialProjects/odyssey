@@ -39,6 +39,7 @@ const config: Config = {
   plugins: [
     wedgesTW(),
     require("tailwindcss-animate"),
+    require("@tailwindcss/forms"),
     require("@tailwindcss/typography"),
   ],
 } satisfies Config;
