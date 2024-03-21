@@ -1,3 +1,4 @@
+import { Button } from "@/components/ui/button";
 import { ArrowRightIcon } from "lucide-react";
 import Link from "next/link";
 
@@ -35,13 +36,9 @@ export default function HomeRoute() {
               Khoury students.
             </p>
             <div className="mt-10 flex items-center justify-center gap-x-6">
-              <Link
-                href="/explore"
-                className="inline-flex flex-row gap-1.5 items-center transition-colors rounded-md bg-sky-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-sky-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-600"
-              >
-                Explore
-                <ArrowRightIcon className="w-4 h-4" />
-              </Link>
+              <Button size="lg" after={<ArrowRightIcon />} asChild>
+                <Link href="/explore">Explore Droplets</Link>
+              </Button>
             </div>
           </div>
         </div>
