@@ -5,7 +5,6 @@ export async function getUserProfile(accessToken: string) {
       {
         headers: {
           Authorization: `Bearer ${accessToken}`,
-          cache: "no-cache",
         },
       }
     );

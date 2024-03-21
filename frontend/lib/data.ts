@@ -53,7 +53,7 @@ export async function fetchIsAuthorizedUser(email: string) {
     );
     const data = await response.json();
     const authorizedUsers = flattenAttributes(data.data);
-    return authorizedUsers.length > 0;
+    return authorizedUsers.length > 0 && authorizedUsers[0]["isEnabled"];
   } catch (error) {
     console.error("Database Error:", error);
     throw new Error("Failed to fetch authorized users data.");
