@@ -3,10 +3,8 @@
 import UnauthorizedRoute from "@/app/(general)/unauthorized/page";
 import { DebugBanner } from "@/components/debug-banner";
 import { cn } from "@/lib/utils";
-import { Avatar } from "@lemonsqueezy/wedges";
 import {
   ChevronDownIcon,
-  GalleryThumbnailsIcon,
   HistoryIcon,
   LogOutIcon,
   MenuIcon,
@@ -20,9 +18,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useLayoutEffect, useState } from "react";
-import { Separator } from "../ui/separator";
-import { Progress } from "../ui/progress";
-import { Label } from "../ui/label";
+import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -31,6 +27,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
+import { Label } from "../ui/label";
+import { Progress } from "../ui/progress";
+import { Separator } from "../ui/separator";
 
 export default function Sidebar({
   session,
@@ -159,11 +158,12 @@ export default function Sidebar({
                 <div className="w-full group flex shrink cursor-pointer select-none items-center justify-between gap-1 rounded-lg p-1.5 px-2 text-sm text-slate-600 transition-colors duration-100 wg-antialiased hover:bg-slate-100 dark:hover:bg-white/5">
                   <div className="inline-flex flex-row items-center justify-between">
                     {session.user.image ? (
-                      <Avatar
-                        size="xs"
-                        src={session.user.image}
-                        initials={session.user.name?.charAt(0) || "?"}
-                      />
+                      <Avatar variant="round" size="xs">
+                        <AvatarImage src={session.user.image} />
+                        <AvatarFallback>
+                          {session.user.name?.charAt(0) || "?"}
+                        </AvatarFallback>
+                      </Avatar>
                     ) : null}
 
                     <span className="font-medium ms-2">

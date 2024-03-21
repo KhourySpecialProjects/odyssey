@@ -54,10 +54,7 @@ export default async function DropletRoute({ params }: Props) {
             {author.photo ? (
               <div className="mb-2">
                 <Avatar className="border border-slate-200 rounded-md">
-                  <AvatarImage
-                    src={author.photo.formats.medium.url}
-                    className="object-cover object-center"
-                  />
+                  <AvatarImage src={author.photo.formats.medium.url} />
                   <AvatarFallback>{author.name.charAt(0)}</AvatarFallback>
                 </Avatar>
               </div>

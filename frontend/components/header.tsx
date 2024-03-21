@@ -1,6 +1,6 @@
 "use client";
 
-import { Avatar } from "@lemonsqueezy/wedges";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ChevronDownIcon, CogIcon, LogOutIcon } from "lucide-react";
 import { signIn, signOut, useSession } from "next-auth/react";
 import Image from "next/image";
@@ -65,11 +65,12 @@ export default function Header() {
                   <div className="w-full group flex shrink cursor-pointer select-none items-center justify-between gap-1 rounded-lg p-1.5 px-2 text-sm text-slate-600 transition-colors duration-100 wg-antialiased hover:bg-slate-100 dark:hover:bg-white/5">
                     <div className="inline-flex flex-row items-center justify-between">
                       {session.user.image ? (
-                        <Avatar
-                          size="xs"
-                          src={session.user.image}
-                          initials={session.user.name?.charAt(0) || "?"}
-                        />
+                        <Avatar variant="round" size="xs">
+                          <AvatarImage src={session.user.image} />
+                          <AvatarFallback>
+                            {session.user.name?.charAt(0) || "?"}
+                          </AvatarFallback>
+                        </Avatar>
                       ) : null}
 
                       <span className="font-medium ms-2">
