@@ -38,7 +38,7 @@ export async function fetchIsAuthorizedUser(email: string) {
           $eq: email,
         },
       },
-      fields: ["id"],
+      fields: ["id", "isEnabled"],
       pagination: {
         pageSize: 1,
         page: 1,
