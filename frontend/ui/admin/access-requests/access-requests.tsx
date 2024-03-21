@@ -21,11 +21,15 @@ export default async function AccessRequests() {
       </p>
 
       <div className="p-4 mt-4 rounded-md bg-slate-100">
-        <ul className="divide-y divide-slate-200 dark:divide-slate-700 md:space-y-4">
-          {accessRequests.map((request: AccessRequest) => (
-            <AccessRequestBlock request={request} key={request.id} />
-          ))}
-        </ul>
+        {accessRequests.length > 0 ? (
+          <ul className="divide-y divide-slate-200 dark:divide-slate-700 md:space-y-4">
+            {accessRequests.map((request: AccessRequest) => (
+              <AccessRequestBlock request={request} key={request.id} />
+            ))}
+          </ul>
+        ) : (
+          <p>There are no access requests at this time.</p>
+        )}
       </div>
     </section>
   );

@@ -22,11 +22,15 @@ export default async function AuthorizedUsers() {
       </div>
 
       <div className="p-4 mt-4 rounded-md bg-slate-100">
-        <ul className="divide-y divide-slate-200 dark:divide-slate-700 md:space-y-4">
-          {authorizedUsers.map((user: AuthorizedUser) => (
-            <AuthorizedUserBlock user={user} key={user.id} />
-          ))}
-        </ul>
+        {authorizedUsers.length > 0 ? (
+          <ul className="divide-y divide-slate-200 dark:divide-slate-700 md:space-y-4">
+            {authorizedUsers.map((user: AuthorizedUser) => (
+              <AuthorizedUserBlock user={user} key={user.id} />
+            ))}
+          </ul>
+        ) : (
+          <p>There are no authorized users.</p>
+        )}
       </div>
     </section>
   );
