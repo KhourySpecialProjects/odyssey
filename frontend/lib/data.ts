@@ -118,7 +118,14 @@ export async function fetchAccessRequests() {
   try {
     const query = qs.stringify({
       sort: ["email"],
-      fields: ["givenName", "familyName", "email", "affiliation", "college"],
+      fields: [
+        "id",
+        "givenName",
+        "familyName",
+        "email",
+        "affiliation",
+        "college",
+      ],
       pagination: {
         pageSize: 25,
         page: 1,

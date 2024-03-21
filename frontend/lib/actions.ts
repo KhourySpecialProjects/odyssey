@@ -1,6 +1,5 @@
 "use server";
 
-import { COLLEGES } from "@/app/globals";
 import { createAccessRequestSchema } from "@/ui/request-access/types";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -150,4 +149,33 @@ export async function createAccessRequest(
 
   revalidatePath("/request-access");
   redirect("/");
+}
+
+const DeleteAccessRequest = z.object({ id: z.string() });
+export async function deleteAccessRequest(formData: FormData) {
+  const { id } = DeleteAccessRequest.parse({
+    id: formData.get("id"),
+  });
+
+  try {
+    const response = await fetch(
+      STRAPI_API_URL + "/api/access-requests/" + id,
+      {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+        },
+      }
+    );
+    const data = await response.json();
+    if (!response.ok || (response.ok && data.error))
+      return { ok: false, error: data.error.message, data: null };
+  } catch (err) {
+    console.error(err);
+    return { error: "Database Error: Failed to Delete Access Request." };
+  }
+
+  revalidatePath("/admin");
+  redirect("/admin");
 }

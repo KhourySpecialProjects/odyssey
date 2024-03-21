@@ -1,6 +1,10 @@
 "use client";
 
+import { useFormStatus } from "react-dom";
 import { AccessRequest } from "./access-requests";
+import { TrashIcon } from "lucide-react";
+import { Button, Tooltip } from "@lemonsqueezy/wedges";
+import { deleteAccessRequest } from "@/lib/actions";
 
 export function AccessRequestBlock({ request }: { request: AccessRequest }) {
   return (
@@ -17,7 +21,32 @@ export function AccessRequestBlock({ request }: { request: AccessRequest }) {
             {request.email}
           </p>
         </div>
+
+        <div className="inline-flex items-center gap-2">
+          <form action={deleteAccessRequest}>
+            <input
+              id="id"
+              name="id"
+              type="number"
+              defaultValue={request.id}
+              hidden
+            />
+            <SubmitDeleteButton />
+          </form>
+        </div>
       </div>
     </li>
+  );
+}
+
+function SubmitDeleteButton() {
+  const { pending } = useFormStatus();
+
+  return (
+    <Tooltip content="Delete user">
+      <Button type="submit" size="sm" destructive aria-disabled={pending}>
+        <TrashIcon className="w-4" />
+      </Button>
+    </Tooltip>
   );
 }
