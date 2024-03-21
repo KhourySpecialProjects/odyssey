@@ -195,7 +195,7 @@ export default function Sidebar({
                   }}
                 >
                   <LogOutIcon className="mr-2 w-4 h-4" />
-                  <span>Log Out</span>
+                  <span>Sign Out</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

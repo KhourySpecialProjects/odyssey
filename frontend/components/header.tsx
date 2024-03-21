@@ -103,7 +103,7 @@ export default function Header() {
                     }}
                   >
                     <LogOutIcon className="mr-2 w-4 h-4" />
-                    <span>Log Out</span>
+                    <span>Sign Out</span>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -113,9 +113,8 @@ export default function Header() {
               size="sm"
               before={<LogInIcon />}
               onClick={() => signIn("azure-ad")}
-              // className="px-4 py-2 text-sm font-medium text-center text-white bg-sky-700 rounded-lg hover:bg-sky-800 focus:ring-4 focus:outline-none focus:ring-sky-300 dark:bg-sky-600 dark:hover:bg-sky-700 dark:focus:ring-sky-800"
             >
-              Log in
+              Sign in
             </Button>
           )}
         </div>

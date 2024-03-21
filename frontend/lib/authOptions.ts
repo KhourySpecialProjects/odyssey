@@ -19,6 +19,9 @@ export const authOptions: NextAuthOptions = {
       },
     }),
   ],
+  pages: {
+    signIn: "/auth/signin",
+  },
   callbacks: {
     async signIn({ user }) {
       if (!user.email) return false;
