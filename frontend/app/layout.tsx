@@ -1,3 +1,4 @@
+import { Toaster } from "@/components/ui/toaster";
 import AuthSessionProvider from "@/providers/SessionProvider";
 import DebugToggle from "@/ui/debug-toggle";
 import type { Metadata } from "next";
@@ -25,6 +26,7 @@ export default function RootLayout({
         <AuthSessionProvider>
           {children}
           <DebugToggle />
+          <Toaster />
         </AuthSessionProvider>
       </body>
     </html>

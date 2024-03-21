@@ -13,4 +13,5 @@ export const COLLEGES: College[] = [
   { value: "KCCS", label: "Khoury College of Computer Sciences" },
   { value: "MI", label: "Mills College at Northeastern" },
   { value: "LAW", label: "School of Law" },
+  { value: "other", label: "Other" },
 ];

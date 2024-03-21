@@ -1,0 +1,56 @@
+{
+  "kind": "collectionType",
+  "collectionName": "access_requests",
+  "info": {
+    "singularName": "access-request",
+    "pluralName": "access-requests",
+    "displayName": "Access Request",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "givenName": {
+      "type": "string",
+      "required": true
+    },
+    "familyName": {
+      "type": "string",
+      "required": true
+    },
+    "email": {
+      "type": "email",
+      "required": true,
+      "unique": true
+    },
+    "affiliation": {
+      "type": "enumeration",
+      "enum": [
+        "student",
+        "faculty",
+        "staff",
+        "other"
+      ],
+      "required": true
+    },
+    "college": {
+      "type": "enumeration",
+      "enum": [
+        "BV",
+        "CAMD",
+        "COE",
+        "CPS",
+        "COS",
+        "CSSH",
+        "DMSB",
+        "KCCS",
+        "MI",
+        "LAW",
+        "other"
+      ],
+      "required": true
+    }
+  }
+}

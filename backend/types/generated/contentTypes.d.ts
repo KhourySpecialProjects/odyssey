@@ -783,6 +783,58 @@ export interface PluginUsersPermissionsUser extends Schema.CollectionType {
   };
 }
 
+export interface ApiAccessRequestAccessRequest extends Schema.CollectionType {
+  collectionName: 'access_requests';
+  info: {
+    singularName: 'access-request';
+    pluralName: 'access-requests';
+    displayName: 'Access Request';
+    description: '';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    givenName: Attribute.String & Attribute.Required;
+    familyName: Attribute.String & Attribute.Required;
+    email: Attribute.Email & Attribute.Required & Attribute.Unique;
+    affiliation: Attribute.Enumeration<
+      ['student', 'faculty', 'staff', 'other']
+    > &
+      Attribute.Required;
+    college: Attribute.Enumeration<
+      [
+        'BV',
+        'CAMD',
+        'COE',
+        'CPS',
+        'COS',
+        'CSSH',
+        'DMSB',
+        'KCCS',
+        'MI',
+        'LAW',
+        'other'
+      ]
+    > &
+      Attribute.Required;
+    createdAt: Attribute.DateTime;
+    updatedAt: Attribute.DateTime;
+    createdBy: Attribute.Relation<
+      'api::access-request.access-request',
+      'oneToOne',
+      'admin::user'
+    > &
+      Attribute.Private;
+    updatedBy: Attribute.Relation<
+      'api::access-request.access-request',
+      'oneToOne',
+      'admin::user'
+    > &
+      Attribute.Private;
+  };
+}
+
 export interface ApiAuthorAuthor extends Schema.CollectionType {
   collectionName: 'authors';
   info: {
@@ -971,6 +1023,7 @@ declare module '@strapi/types' {
       'plugin::users-permissions.permission': PluginUsersPermissionsPermission;
       'plugin::users-permissions.role': PluginUsersPermissionsRole;
       'plugin::users-permissions.user': PluginUsersPermissionsUser;
+      'api::access-request.access-request': ApiAccessRequestAccessRequest;
       'api::author.author': ApiAuthorAuthor;
       'api::authorized-user.authorized-user': ApiAuthorizedUserAuthorizedUser;
       'api::droplet.droplet': ApiDropletDroplet;

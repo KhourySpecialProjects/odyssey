@@ -4,6 +4,11 @@ import { COLLEGES } from "@/app/globals";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+import {
+  AFFILIATIONS,
+  createAccessRequestSchema as formSchema,
+  PERMITTED_DOMAINS,
+} from "./types";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -23,50 +28,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ArrowRightIcon } from "lucide-react";
-
-const AFFILIATIONS = [
-  { value: "student", label: "Student" },
-  { value: "faculty", label: "Faculty" },
-  { value: "staff", label: "Staff" },
-  { value: "other", label: "Other" },
-];
-const PERMITTED_DOMAINS = ["northeastern.edu", "neu.edu"];
-
-type AffiliationValues = (typeof AFFILIATIONS)[number]["value"];
-const AFFILIATION_VALUES: [AffiliationValues, ...AffiliationValues[]] = [
-  AFFILIATIONS[0].value,
-  // And then merge in the remaining values from `properties`
-  ...AFFILIATIONS.slice(1).map((p) => p.value),
-];
-
-type CollegeValues = (typeof COLLEGES)[number]["value"];
-const COLLEGE_VALUES: [CollegeValues, ...CollegeValues[]] = [
-  COLLEGES[0].value,
-  // And then merge in the remaining values from `properties`
-  ...COLLEGES.slice(1).map((p) => p.value),
-];
-
-const formSchema = z
-  .object({
-    givenName: z.string().min(2).max(50),
-    familyName: z.string().min(2).max(50),
-    email: z.string().email(),
-    affiliation: z.enum(AFFILIATION_VALUES),
-    college: z.enum(COLLEGE_VALUES),
-  })
-  .refine(
-    (data) => {
-      const domain = data.email.split("@")[1];
-      return PERMITTED_DOMAINS.includes(domain);
-    },
-    {
-      message: `Email must be @${PERMITTED_DOMAINS.join(" or @")}`,
-      path: ["email"],
-    }
-  );
+import { useToast } from "@/components/ui/use-toast";
+import { createAccessRequest } from "@/lib/actions";
+import { ArrowRightIcon, LoaderIcon } from "lucide-react";
+import { useTransition } from "react";
 
 export function RequestAccessForm() {
+  const { toast } = useToast();
+  const [isPending, startTransition] = useTransition();
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -79,9 +49,22 @@ export function RequestAccessForm() {
   });
 
   function onSubmit(values: z.infer<typeof formSchema>) {
-    // Do something with the form values.
-    // ✅ This will be type-safe and validated.
-    console.log(values);
+    startTransition(() => {
+      createAccessRequest(values).then((r) => {
+        if (r && !r.ok) {
+          toast({
+            variant: "destructive",
+            title: "Uh oh! Something went wrong.",
+            description: r.error || "",
+          });
+        } else {
+          toast({
+            title: "Success!",
+            description: "Your access request has been successfully submitted.",
+          });
+        }
+      });
+    });
   }
 
   return (
@@ -204,7 +187,12 @@ export function RequestAccessForm() {
         />
 
         <div className="sm:col-span-2">
-          <Button type="submit" after={<ArrowRightIcon />} className="w-full">
+          <Button
+            type="submit"
+            after={isPending ? <LoaderIcon /> : <ArrowRightIcon />}
+            className="w-full"
+            disabled={isPending}
+          >
             Submit Request
           </Button>
         </div>
