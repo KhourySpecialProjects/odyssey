@@ -35,19 +35,13 @@ const buttonVariants = cva(
   }
 );
 
-export type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> &
-  VariantProps<typeof buttonVariants> & {
-    after?: React.ReactElement<HTMLElement>;
-    asChild?: boolean;
-    before?: React.ReactElement<HTMLElement>;
-  };
-// export interface ButtonProps
-//   extends React.ButtonHTMLAttributes<HTMLButtonElement>,
-//     VariantProps<typeof buttonVariants> {
-//   after?: React.ReactElement<HTMLElement>;
-//   asChild?: boolean;
-//   before?: React.ReactElement<HTMLElement>;
-// }
+export interface ButtonProps
+  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
+    VariantProps<typeof buttonVariants> {
+  after?: React.ReactElement<HTMLElement>;
+  asChild?: boolean;
+  before?: React.ReactElement<HTMLElement>;
+}
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   (
@@ -86,7 +80,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     ) : (
       <>
         {before ? renderIcon(before) : null}
-        {children && <span className="px-1">{children}</span>}
+        {children && <span className="px-2">{children}</span>}
         {after ? renderIcon(after) : null}
       </>
     );

@@ -1,8 +1,8 @@
 "use client";
 
 import UnauthorizedRoute from "@/app/(general)/unauthorized/page";
-import { cn } from "@/lib/utils";
 import { DebugBanner } from "@/components/debug-banner";
+import { cn } from "@/lib/utils";
 import { Avatar, DropdownMenu, ProgressBar } from "@lemonsqueezy/wedges";
 import {
   ArrowLeftCircleIcon,
@@ -15,9 +15,11 @@ import {
 } from "lucide-react";
 import { Session } from "next-auth";
 import { signOut } from "next-auth/react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useLayoutEffect, useState } from "react";
+import { Separator } from "../ui/separator";
 
 export default function Sidebar({
   session,
@@ -83,22 +85,21 @@ export default function Sidebar({
         <div className="h-full px-3 py-4 overflow-y-auto bg-slate-50 dark:bg-slate-800">
           <DebugBanner className="mb-2" />
 
-          <Link
-            href="/"
-            className="block p-2 text-2xl font-extrabold leading-7 text-slate-900 dark:text-slate-100"
-          >
-            Khoury
-            <br />
-            Odyssey
+          <Link href="/" className="block p-2 mb-4">
+            <Image
+              src="/logo.svg"
+              alt="Khoury Odyssey Logo"
+              width={175}
+              height={50}
+              priority
+            />
           </Link>
 
-          <Link
-            href="/"
-            className="flex items-center p-2 mb-6 text-xs font-normal uppercase rounded-lg text-slate-900 dark:text-white hover:bg-slate-100 dark:hover:bg-slate-700 group"
-          >
-            <ArrowLeftCircleIcon className="w-4 h-4" />
-            <span className="ms-2">Back to Explore</span>
-          </Link>
+          <Separator />
+
+          <p className="font-extrabold leading-7 text-lg p-2 my-2">
+            {droplet.name}
+          </p>
 
           <ul className="space-y-2 font-medium">
             <li>

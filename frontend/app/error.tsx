@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from "@lemonsqueezy/wedges";
+import { Button } from "@/components/ui/button";
 import { RefreshCwIcon } from "lucide-react";
 import { useEffect } from "react";
 
@@ -20,8 +20,8 @@ export default function Error({
     <div className="w-full max-w-5xl p-8 mx-auto">
       <h2 className="mb-2 font-bold">Something went wrong!</h2>
       <Button
-        before={<RefreshCwIcon className="w-4" />}
-        size="sm"
+        before={<RefreshCwIcon />}
+        size="lg"
         onClick={
           // Attempt to recover by trying to re-render the segment
           () => reset()
