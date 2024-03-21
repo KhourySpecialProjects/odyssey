@@ -1,7 +1,5 @@
-import { COLLEGES } from "@/app/globals";
+import { COLLEGES, PERMITTED_EMAIL_DOMAINS } from "@/app/globals";
 import { z } from "zod";
-
-export const PERMITTED_DOMAINS = ["northeastern.edu", "neu.edu"];
 
 export const AFFILIATIONS = [
   { value: "student", label: "Student" },
@@ -12,14 +10,12 @@ export const AFFILIATIONS = [
 type AffiliationValues = (typeof AFFILIATIONS)[number]["value"];
 const AFFILIATION_VALUES: [AffiliationValues, ...AffiliationValues[]] = [
   AFFILIATIONS[0].value,
-  // And then merge in the remaining values from `properties`
   ...AFFILIATIONS.slice(1).map((p) => p.value),
 ];
 
 type CollegeValues = (typeof COLLEGES)[number]["value"];
 const COLLEGE_VALUES: [CollegeValues, ...CollegeValues[]] = [
   COLLEGES[0].value,
-  // And then merge in the remaining values from `properties`
   ...COLLEGES.slice(1).map((p) => p.value),
 ];
 
@@ -34,10 +30,10 @@ export const createAccessRequestSchema = z
   .refine(
     (data) => {
       const domain = data.email.split("@")[1];
-      return PERMITTED_DOMAINS.includes(domain);
+      return PERMITTED_EMAIL_DOMAINS.includes(domain);
     },
     {
-      message: `Email must be @${PERMITTED_DOMAINS.join(" or @")}`,
+      message: `Email must be @${PERMITTED_EMAIL_DOMAINS.join(" or @")}`,
       path: ["email"],
     }
   );

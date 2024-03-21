@@ -15,3 +15,5 @@ export const COLLEGES: College[] = [
   { value: "LAW", label: "School of Law" },
   { value: "other", label: "Other" },
 ];
+
+export const PERMITTED_EMAIL_DOMAINS = ["northeastern.edu", "neu.edu"];
