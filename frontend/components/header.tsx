@@ -49,7 +49,7 @@ export default function Header() {
             src="/logo.svg"
             alt="Khoury Odyssey Logo"
             width={165}
-            height={50}
+            height={45}
             priority
           />
         </Link>
@@ -90,12 +90,14 @@ export default function Header() {
                     Title: {session.jobTitle || "unknown"}
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild>
-                    <Link href="/admin">
-                      <CogIcon className="mr-2 w-4 h-4" />
-                      <span>Admin</span>
-                    </Link>
-                  </DropdownMenuItem>
+                  {session.isAdmin ? (
+                    <DropdownMenuItem asChild>
+                      <Link href="/admin">
+                        <CogIcon className="mr-2 w-4 h-4" />
+                        <span>Admin</span>
+                      </Link>
+                    </DropdownMenuItem>
+                  ) : null}
                   <DropdownMenuItem
                     onSelect={(e) => {
                       e.preventDefault();

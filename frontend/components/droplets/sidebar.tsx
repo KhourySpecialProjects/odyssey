@@ -99,8 +99,8 @@ export default function Sidebar({
             <Image
               src="/logo.svg"
               alt="Khoury Odyssey Logo"
-              width={175}
-              height={50}
+              width={200}
+              height={55}
               priority
             />
           </Link>
