@@ -37,7 +37,7 @@ export function CreateUser() {
         </DialogHeader>
 
         <form action={formAction} className="flex flex-col gap-4 text-left">
-          {state?.success ? (
+          {state?.ok ? (
             <>
               <p className="p-4 rounded-md bg-slate-100 border-2 border-slate-200 text-center">
                 {state?.message}

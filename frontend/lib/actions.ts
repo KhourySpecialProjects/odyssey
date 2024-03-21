@@ -1,6 +1,7 @@
 "use server";
 
 import { COLLEGES } from "@/app/globals";
+import { createAccessRequestSchema } from "@/ui/request-access/types";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
@@ -41,9 +42,7 @@ export async function createAuthorizedUser(prevState: any, formData: FormData) {
       },
     });
     const data = await response.json();
-    if (!response.ok)
-      return { ok: false, error: data.error.message, data: null };
-    if (response.ok && data.error)
+    if (!response.ok || (response.ok && data.error))
       return { ok: false, error: data.error.message, data: null };
   } catch (err) {
     console.error(err);
@@ -51,7 +50,7 @@ export async function createAuthorizedUser(prevState: any, formData: FormData) {
   }
 
   revalidatePath("/admin");
-  return { message: `User ${email} created!`, success: true };
+  return { message: `User ${email} created!`, ok: true };
 }
 
 const UpdateAuthorizedUser = AuthorizedUserSchema.omit({ email: true });
@@ -82,9 +81,7 @@ export async function updateAuthorizedUser(formData: FormData) {
       }
     );
     const data = await response.json();
-    if (!response.ok)
-      return { ok: false, error: data.error.message, data: null };
-    if (response.ok && data.error)
+    if (!response.ok || (response.ok && data.error))
       return { ok: false, error: data.error.message, data: null };
   } catch (err) {
     console.error(err);
@@ -116,9 +113,7 @@ export async function deleteAuthorizedUser(formData: FormData) {
       }
     );
     const data = await response.json();
-    if (!response.ok)
-      return { ok: false, error: data.error.message, data: null };
-    if (response.ok && data.error)
+    if (!response.ok || (response.ok && data.error))
       return { ok: false, error: data.error.message, data: null };
   } catch (err) {
     console.error(err);
@@ -129,50 +124,8 @@ export async function deleteAuthorizedUser(formData: FormData) {
   redirect("/admin");
 }
 
-// -----
-
-const AFFILIATIONS = [
-  { value: "student", label: "Student" },
-  { value: "faculty", label: "Faculty" },
-  { value: "staff", label: "Staff" },
-  { value: "other", label: "Other" },
-];
-const PERMITTED_DOMAINS = ["northeastern.edu", "neu.edu"];
-
-type AffiliationValues = (typeof AFFILIATIONS)[number]["value"];
-const AFFILIATION_VALUES: [AffiliationValues, ...AffiliationValues[]] = [
-  AFFILIATIONS[0].value,
-  // And then merge in the remaining values from `properties`
-  ...AFFILIATIONS.slice(1).map((p) => p.value),
-];
-
-type CollegeValues = (typeof COLLEGES)[number]["value"];
-const COLLEGE_VALUES: [CollegeValues, ...CollegeValues[]] = [
-  COLLEGES[0].value,
-  // And then merge in the remaining values from `properties`
-  ...COLLEGES.slice(1).map((p) => p.value),
-];
-
-const CreateAccessRequest = z
-  .object({
-    givenName: z.string().min(2).max(50),
-    familyName: z.string().min(2).max(50),
-    email: z.string().email(),
-    affiliation: z.enum(AFFILIATION_VALUES),
-    college: z.enum(COLLEGE_VALUES),
-  })
-  .refine(
-    (data) => {
-      const domain = data.email.split("@")[1];
-      return PERMITTED_DOMAINS.includes(domain);
-    },
-    {
-      message: `Email must be @${PERMITTED_DOMAINS.join(" or @")}`,
-      path: ["email"],
-    }
-  );
 export async function createAccessRequest(
-  formData: z.infer<typeof CreateAccessRequest>
+  formData: z.infer<typeof createAccessRequestSchema>
 ) {
   try {
     const response = await fetch(STRAPI_API_URL + "/api/access-requests", {
