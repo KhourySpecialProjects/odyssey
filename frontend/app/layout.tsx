@@ -1,5 +1,5 @@
 import DebugToggle from "@/components/debug/toggle";
-import { Toaster } from "@/components/ui/toaster";
+import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import AuthSessionProvider from "@/providers/SessionProvider";
 import type { Metadata } from "next";
@@ -28,9 +28,9 @@ export default function RootLayout({
           <TooltipProvider delayDuration={250}>
             {children}
             <DebugToggle />
-            <Toaster />
           </TooltipProvider>
         </AuthSessionProvider>
+        <Toaster />
       </body>
     </html>
   );

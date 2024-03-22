@@ -17,7 +17,7 @@ export default function DebugToggle() {
       <TooltipTrigger asChild>
         <Button
           onClick={toggleDebug}
-          className="z-50 fixed bottom-2 right-2"
+          className="z-50 fixed -bottom-1 -right-1"
           size="icon"
           aria-label="Debug"
         >

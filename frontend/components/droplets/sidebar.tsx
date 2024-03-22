@@ -3,6 +3,7 @@
 import UnauthorizedRoute from "@/app/(general)/unauthorized/page";
 import { DebugBanner } from "@/components/debug/banner";
 import { cn } from "@/lib/utils";
+import { User } from "@/types";
 import {
   ChevronDownIcon,
   HistoryIcon,
@@ -12,7 +13,6 @@ import {
   ShipIcon,
   TargetIcon,
 } from "lucide-react";
-import { Session } from "next-auth";
 import { signOut } from "next-auth/react";
 import Image from "next/image";
 import Link from "next/link";
@@ -32,10 +32,10 @@ import { Progress } from "../ui/progress";
 import { Separator } from "../ui/separator";
 
 export default function Sidebar({
-  session,
+  user,
   droplet,
 }: {
-  session: Session | null;
+  user?: User | null;
   droplet: any;
 }) {
   const [expanded, setExpanded] = useState(false);
@@ -60,7 +60,7 @@ export default function Sidebar({
     return () => window.removeEventListener("resize", () => setExpanded(false));
   }, []);
 
-  if (!session || !session?.user) return <UnauthorizedRoute />;
+  if (!user) return <UnauthorizedRoute />;
 
   return (
     <>
@@ -157,17 +157,17 @@ export default function Sidebar({
               <DropdownMenuTrigger asChild>
                 <div className="w-full group flex shrink cursor-pointer select-none items-center justify-between gap-1 rounded-lg p-1.5 px-2 text-sm text-slate-600 transition-colors duration-100 wg-antialiased hover:bg-slate-100 dark:hover:bg-white/5">
                   <div className="inline-flex flex-row items-center justify-between">
-                    {session.user.image ? (
+                    {user.image ? (
                       <Avatar variant="round" size="xs">
-                        <AvatarImage src={session.user.image} />
+                        <AvatarImage src={user.image} />
                         <AvatarFallback>
-                          {session.user.name?.charAt(0) || "?"}
+                          {user.name?.charAt(0) || "?"}
                         </AvatarFallback>
                       </Avatar>
                     ) : null}
 
                     <span className="font-medium ms-2">
-                      Hi, <b>{session.user.name ?? session.user.email}</b>!
+                      Hi, <b>{user.name ?? user.email}</b>!
                     </span>
                   </div>
 
@@ -177,9 +177,9 @@ export default function Sidebar({
 
               <DropdownMenuContent className="mb-3 min-w-[220px]">
                 <DropdownMenuLabel className="text-xs">
-                  NUID: {session.employeeId || "unknown"}
+                  NUID: {user.employeeId || "unknown"}
                   <br />
-                  Title: {session.jobTitle || "unknown"}
+                  Title: {user.jobTitle || "unknown"}
                 </DropdownMenuLabel>
                 <DropdownMenuItem asChild>
                   <Link href="/explore">

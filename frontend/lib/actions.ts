@@ -3,8 +3,9 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import { createAccessRequestSchema } from "./validations/access-request";
+import { accessRequestSchema } from "./validations/access-request";
 import { AuthorizedUserSchema } from "./validations/authorized-user";
+import { reportSchema } from "./validations/report";
 
 const STRAPI_API_URL = process.env.STRAPI_API_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
@@ -118,7 +119,7 @@ export async function deleteAuthorizedUser(formData: FormData) {
 }
 
 export async function createAccessRequest(
-  formData: z.infer<typeof createAccessRequestSchema>
+  formData: z.infer<typeof accessRequestSchema>
 ) {
   try {
     const response = await fetch(STRAPI_API_URL + "/api/access-requests", {
@@ -172,4 +173,29 @@ export async function deleteAccessRequest(formData: FormData) {
 
   revalidatePath("/admin");
   redirect("/admin");
+}
+
+export async function createBugReport(formData: z.infer<typeof reportSchema>) {
+  try {
+    const response = await fetch(STRAPI_API_URL + "/api/reports", {
+      method: "POST",
+      body: JSON.stringify({ data: { ...formData, type: "bug" } }),
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+      },
+    });
+    const data = await response.json();
+
+    if (!response.ok || (response.ok && data.error)) {
+      const errorPath = data.error.details.errors[0].path[0];
+      const errorMessage = `${data.error.message} (${errorPath})`;
+      return { ok: false, error: errorMessage, data: null };
+    }
+  } catch (err) {
+    console.error(err);
+    return { error: "Database Error: Failed to Create Access Request." };
+  }
+
+  redirect(formData.path + "?ts=" + Date.now());
 }

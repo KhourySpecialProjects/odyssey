@@ -1010,6 +1010,40 @@ export interface ApiLessonLesson extends Schema.CollectionType {
   };
 }
 
+export interface ApiReportReport extends Schema.CollectionType {
+  collectionName: 'reports';
+  info: {
+    singularName: 'report';
+    pluralName: 'reports';
+    displayName: 'Report';
+    description: '';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    fullName: Attribute.String & Attribute.Required;
+    email: Attribute.Email & Attribute.Required;
+    path: Attribute.String & Attribute.Required;
+    description: Attribute.Text & Attribute.Required;
+    type: Attribute.Enumeration<['bug']> & Attribute.Required;
+    createdAt: Attribute.DateTime;
+    updatedAt: Attribute.DateTime;
+    createdBy: Attribute.Relation<
+      'api::report.report',
+      'oneToOne',
+      'admin::user'
+    > &
+      Attribute.Private;
+    updatedBy: Attribute.Relation<
+      'api::report.report',
+      'oneToOne',
+      'admin::user'
+    > &
+      Attribute.Private;
+  };
+}
+
 declare module '@strapi/types' {
   export module Shared {
     export interface ContentTypes {
@@ -1033,6 +1067,7 @@ declare module '@strapi/types' {
       'api::authorized-user.authorized-user': ApiAuthorizedUserAuthorizedUser;
       'api::droplet.droplet': ApiDropletDroplet;
       'api::lesson.lesson': ApiLessonLesson;
+      'api::report.report': ApiReportReport;
     }
   }
 }

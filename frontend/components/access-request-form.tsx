@@ -2,7 +2,9 @@
 
 import { COLLEGES, PERMITTED_EMAIL_DOMAINS } from "@/app/globals";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useTransition } from "react";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
@@ -23,17 +25,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useToast } from "@/components/ui/use-toast";
 import { createAccessRequest } from "@/lib/actions";
 import {
   AFFILIATIONS,
-  createAccessRequestSchema as formSchema,
+  accessRequestSchema as formSchema,
 } from "@/lib/validations/access-request";
 import { ArrowRightIcon, LoaderIcon } from "lucide-react";
-import { useTransition } from "react";
 
 export function RequestAccessForm() {
-  const { toast } = useToast();
   const [isPending, startTransition] = useTransition();
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -51,16 +50,11 @@ export function RequestAccessForm() {
     startTransition(() => {
       createAccessRequest(values).then((r) => {
         if (r && !r.ok) {
-          toast({
-            variant: "destructive",
-            title: "Uh oh! Something went wrong.",
+          toast.error("Uh oh! Something went wrong.", {
             description: r.error || "",
           });
         } else {
-          toast({
-            title: "Success!",
-            description: "Your access request has been successfully submitted.",
-          });
+          toast.success("Your access request has been successfully submitted.");
         }
       });
     });

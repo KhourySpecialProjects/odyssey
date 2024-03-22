@@ -19,7 +19,7 @@ const COLLEGE_VALUES: [CollegeValues, ...CollegeValues[]] = [
   ...COLLEGES.slice(1).map((p) => p.value),
 ];
 
-export const createAccessRequestSchema = z
+export const accessRequestSchema = z
   .object({
     givenName: z.string().min(2).max(50),
     familyName: z.string().min(2).max(50),

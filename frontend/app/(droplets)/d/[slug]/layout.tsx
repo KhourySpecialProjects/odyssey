@@ -1,10 +1,10 @@
 import DropletFooter from "@/components/droplets/footer";
+import { ReportBugDialog } from "@/components/droplets/reports/bug/dialog";
 import Sidebar from "@/components/droplets/sidebar";
-import { authOptions } from "@/lib/auth/options";
+import { getCurrentUser } from "@/lib/auth/session";
 import { getDropletBySlug } from "@/lib/requests/droplet";
 import { flattenAttributes } from "@/lib/utils";
 import type { Metadata } from "next";
-import { getServerSession } from "next-auth";
 import { notFound } from "next/navigation";
 
 type Props = {
@@ -34,7 +34,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function RootLayout({ params, children }: Props) {
-  const session = await getServerSession(authOptions);
+  const user = await getCurrentUser();
 
   let droplet = await getDropletBySlug(params.slug, {
     authors: "*",
@@ -47,7 +47,7 @@ export default async function RootLayout({ params, children }: Props) {
 
   return (
     <>
-      <Sidebar session={session} droplet={droplet} />
+      <Sidebar user={user} droplet={droplet} />
 
       <div className="p-4 sm:ml-64">
         <div className="p-4 border-2 border-dashed rounded-lg border-slate-200 dark:border-slate-700">
@@ -55,6 +55,10 @@ export default async function RootLayout({ params, children }: Props) {
 
           <DropletFooter droplet={droplet} />
         </div>
+      </div>
+
+      <div className="fixed bottom-8 right-8">
+        <ReportBugDialog user={user} />
       </div>
     </>
   );
