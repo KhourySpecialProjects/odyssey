@@ -2,7 +2,7 @@ export type User = {
   name?: string | null;
   email?: string | null;
   image?: string | null;
-  employeeId?: string;
+  nuid?: string;
   jobTitle?: string;
   isAdmin: boolean;
 };

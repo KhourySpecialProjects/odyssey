@@ -19,7 +19,7 @@ export async function getUserProfile(
 
     // Extract relevant information from the response
     const { employeeId, jobTitle } = data;
-    return { employeeId, jobTitle };
+    return { nuid: employeeId, jobTitle };
   } catch (error) {
     // Handle errors appropriately
     console.error("Error fetching user profile:", error);

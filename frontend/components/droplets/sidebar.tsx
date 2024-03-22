@@ -177,7 +177,7 @@ export default function Sidebar({
 
               <DropdownMenuContent className="mb-3 min-w-[220px]">
                 <DropdownMenuLabel className="text-xs">
-                  NUID: {user.employeeId || "unknown"}
+                  NUID: {user.nuid || "unknown"}
                   <br />
                   Title: {user.jobTitle || "unknown"}
                 </DropdownMenuLabel>
@@ -195,7 +195,7 @@ export default function Sidebar({
                   }}
                 >
                   <LogOutIcon className="mr-2 w-4 h-4" />
-                  <span>Sign Out</span>
+                  <span>Log Out</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

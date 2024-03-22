@@ -38,7 +38,7 @@ export function UserDropdown(user: User) {
 
       <DropdownMenuContent className="mb-3 min-w-[220px]">
         <DropdownMenuLabel className="text-xs">
-          NUID: {user.employeeId || "unknown"}
+          NUID: {user.nuid || "unknown"}
           <br />
           Title: {user.jobTitle || "unknown"}
         </DropdownMenuLabel>
@@ -61,7 +61,7 @@ export function UserDropdown(user: User) {
           }}
         >
           <LogOutIcon className="mr-2 w-4 h-4" />
-          <span>Sign Out</span>
+          <span>Log Out</span>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

@@ -54,7 +54,7 @@ export const authOptions: NextAuthOptions = {
           name: user.name,
           email: user.email,
           image: user.image,
-          employeeId: graphProfile.employeeId,
+          nuid: graphProfile.nuid,
           jobTitle: graphProfile.jobTitle,
           isAdmin: isAdmin,
         };
