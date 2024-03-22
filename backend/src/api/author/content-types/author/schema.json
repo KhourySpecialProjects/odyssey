@@ -18,7 +18,7 @@
     },
     "bio": {
       "type": "text",
-      "maxLength": 200
+      "maxLength": 400
     },
     "photo": {
       "type": "media",

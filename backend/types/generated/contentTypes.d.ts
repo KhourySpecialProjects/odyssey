@@ -855,7 +855,7 @@ export interface ApiAuthorAuthor extends Schema.CollectionType {
     name: Attribute.String & Attribute.Required;
     bio: Attribute.Text &
       Attribute.SetMinMaxLength<{
-        maxLength: 200;
+        maxLength: 400;
       }>;
     photo: Attribute.Media;
     droplets: Attribute.Relation<
