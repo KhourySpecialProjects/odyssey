@@ -1,10 +1,11 @@
+import { User } from "@/types";
 import { NextAuthOptions } from "next-auth";
 import AzureADProvider from "next-auth/providers/azure-ad";
-import { getUserProfile } from "./azure";
 import {
   fetchIsAdmin,
   fetchIsAuthorizedUser as fetchIsAuthorized,
-} from "./data";
+} from "../data";
+import { getUserProfile } from "./azure";
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -48,19 +49,24 @@ export const authOptions: NextAuthOptions = {
         // Fetch additional user data from Microsoft Graph
         const isAdmin = await fetchIsAdmin(user.email as string);
 
-        // Add the employeeId and jobTitle to the token
-        token.employeeId = graphProfile.employeeId || "";
-        token.jobTitle = graphProfile.jobTitle || "";
-        token.isAdmin = isAdmin;
+        // Enrich token with user details
+        token.user = {
+          name: user.name,
+          email: user.email,
+          image: user.image,
+          employeeId: graphProfile.employeeId,
+          jobTitle: graphProfile.jobTitle,
+          isAdmin: isAdmin,
+        };
       }
 
       return token;
     },
     session: async ({ session, token }) => {
+      if (!token.user) throw new Error("No user data");
+
       // Add properties to session
-      session.employeeId = token.employeeId as string;
-      session.jobTitle = token.jobTitle as string;
-      session.isAdmin = token.isAdmin as boolean;
+      session.user = token.user as User;
 
       return session;
     },

@@ -1,4 +1,10 @@
-export async function getUserProfile(accessToken: string) {
+import { User } from "@/types";
+
+type UserProfile = Omit<User, "isAdmin">;
+
+export async function getUserProfile(
+  accessToken: string
+): Promise<UserProfile> {
   try {
     const response = await fetch(
       "https://graph.microsoft.com/v1.0/me?$select=employeeId,jobTitle",

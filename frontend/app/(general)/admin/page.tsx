@@ -1,7 +1,7 @@
 import AccessRequests from "@/components/admin/access-requests/access-requests";
 import Session from "@/components/admin/session";
 import AuthorizedUsers from "@/components/admin/users/authorized-users";
-import { authOptions } from "@/lib/authOptions";
+import { authOptions } from "@/lib/auth/options";
 import { getServerSession } from "next-auth";
 import { notFound } from "next/navigation";
 

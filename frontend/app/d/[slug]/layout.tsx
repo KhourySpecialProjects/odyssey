@@ -1,8 +1,8 @@
-import { authOptions } from "@/lib/authOptions";
-import { getDropletBySlug } from "@/lib/droplets";
-import { flattenAttributes } from "@/lib/utils";
 import DropletFooter from "@/components/droplets/footer";
 import Sidebar from "@/components/droplets/sidebar";
+import { authOptions } from "@/lib/auth/options";
+import { getDropletBySlug } from "@/lib/droplets";
+import { flattenAttributes } from "@/lib/utils";
 import type { Metadata } from "next";
 import { getServerSession } from "next-auth";
 import { notFound } from "next/navigation";

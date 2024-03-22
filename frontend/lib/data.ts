@@ -1,5 +1,5 @@
-import qs from "qs";
 import { flattenAttributes } from "@/lib/utils";
+import qs from "qs";
 
 const STRAPI_API_URL = process.env.STRAPI_API_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
@@ -60,7 +60,7 @@ export async function fetchIsAuthorizedUser(email: string) {
   }
 }
 
-export async function fetchIsAdmin(email: string) {
+export async function fetchIsAdmin(email: string): Promise<boolean> {
   try {
     const query = qs.stringify({
       filters: {

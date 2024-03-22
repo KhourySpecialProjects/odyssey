@@ -1,4 +1,4 @@
-import { authOptions } from "@/lib/authOptions";
+import { authOptions } from "@/lib/auth/options";
 import { getServerSession } from "next-auth/next";
 import { getProviders } from "next-auth/react";
 import { redirect } from "next/navigation";

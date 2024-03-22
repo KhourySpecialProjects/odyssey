@@ -5,7 +5,7 @@ import {
   MessageHeader,
 } from "@/components/message";
 import { Button } from "@/components/ui/button";
-import { authOptions } from "@/lib/authOptions";
+import { authOptions } from "@/lib/auth/options";
 import { ArrowRightIcon } from "lucide-react";
 import { getServerSession } from "next-auth";
 import Link from "next/link";
