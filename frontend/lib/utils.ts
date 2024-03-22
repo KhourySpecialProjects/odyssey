@@ -13,13 +13,14 @@ export function getStrapiURL(path = "") {
 
 export async function fetchAPI(
   path: string,
-  urlParamsObject = {},
-  options = {}
+  urlParams = {},
+  options = {},
+  revalidate: number = 60
 ) {
   try {
     // Merge default and user options
     const mergedOptions = {
-      next: { revalidate: 60 },
+      next: { revalidate },
       headers: {
         "Content-Type": "application/json",
         Authorization: "Bearer " + process.env.STRAPI_ACCESS_TOKEN,
@@ -28,7 +29,7 @@ export async function fetchAPI(
     };
 
     // Build request URL
-    const queryString = qs.stringify(urlParamsObject);
+    const queryString = qs.stringify(urlParams);
     const requestUrl = `${getStrapiURL(
       `/api${path}${queryString ? `?${queryString}` : ""}`
     )}`;

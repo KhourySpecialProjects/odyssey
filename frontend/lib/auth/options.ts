@@ -4,7 +4,7 @@ import AzureADProvider from "next-auth/providers/azure-ad";
 import {
   fetchIsAdmin,
   fetchIsAuthorizedUser as fetchIsAuthorized,
-} from "../data";
+} from "../requests/authorized-user";
 import { getUserProfile } from "./azure";
 
 export const authOptions: NextAuthOptions = {

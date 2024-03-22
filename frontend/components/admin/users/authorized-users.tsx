@@ -1,4 +1,4 @@
-import { fetchAuthorizedUsers } from "@/lib/data";
+import { fetchAuthorizedUsers } from "@/lib/requests/authorized-user";
 import { AuthorizedUserBlock } from "./authorized-user";
 import { CreateUser } from "./create-user";
 

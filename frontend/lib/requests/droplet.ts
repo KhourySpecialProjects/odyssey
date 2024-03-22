@@ -1,4 +1,4 @@
-import { fetchAPI } from "./utils";
+import { fetchAPI } from "../utils";
 
 type PopulateValue =
   | string
@@ -8,10 +8,10 @@ type PopulateValue =
 
 export async function getDropletBySlug(slug: string, populate?: PopulateValue) {
   const path = `/droplets`;
-  const urlParamsObject = {
+  const urlParams = {
     filters: { slug },
     populate,
   };
 
-  return await fetchAPI(path, urlParamsObject);
+  return await fetchAPI(path, urlParams);
 }

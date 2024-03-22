@@ -2,7 +2,7 @@ import { authOptions } from "@/lib/auth/options";
 import { getServerSession } from "next-auth/next";
 import { getProviders } from "next-auth/react";
 import { redirect } from "next/navigation";
-import SignInButtons from "./buttons";
+import LoginButtons from "./buttons";
 
 export default async function SignIn() {
   const session = await getServerSession(authOptions);
@@ -33,7 +33,7 @@ export default async function SignIn() {
 
       <div className="mx-auto max-w-2xl text-center">
         <h2 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
-          Sign In
+          Log In
         </h2>
         <p className="mt-4 text-lg leading-normal text-gray-600 text-balance">
           Authenticate with your Northeastern University account via Azure
@@ -42,7 +42,7 @@ export default async function SignIn() {
       </div>
 
       <div className="mx-auto mt-8 max-w-2xl sm:mt-12 text-center">
-        <SignInButtons providers={providers} />
+        <LoginButtons providers={providers} />
       </div>
     </div>
   );

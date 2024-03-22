@@ -1,4 +1,4 @@
-import { fetchDroplets } from "@/lib/data";
+import { fetchDroplets } from "@/lib/requests/data";
 import { ArrowRightCircleIcon } from "lucide-react";
 import Link from "next/link";
 

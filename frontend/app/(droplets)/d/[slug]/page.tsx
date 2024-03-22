@@ -1,6 +1,6 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { getDropletBySlug } from "@/lib/droplets";
+import { getDropletBySlug } from "@/lib/requests/droplet";
 import { flattenAttributes } from "@/lib/utils";
 import { ArrowRightIcon } from "lucide-react";
 import { Metadata } from "next";

@@ -5,7 +5,7 @@ import { ArrowRightIcon } from "lucide-react";
 import { BuiltInProviderType } from "next-auth/providers/index";
 import { ClientSafeProvider, LiteralUnion, signIn } from "next-auth/react";
 
-export default function SignInButtons({
+export default function LoginButtons({
   providers,
 }: {
   providers: Record<
@@ -23,7 +23,7 @@ export default function SignInButtons({
             onClick={() => signIn(provider.id)}
             after={<ArrowRightIcon />}
           >
-            Sign in with {provider.name}
+            Log in with {provider.name}
           </Button>
         </div>
       ))}

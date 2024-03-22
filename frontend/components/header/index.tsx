@@ -1,10 +1,8 @@
 import { generalConfig } from "@/config/general";
 import { getCurrentUser } from "@/lib/auth/session";
-import { LogInIcon } from "lucide-react";
-import { signIn } from "next-auth/react";
 import Image from "next/image";
 import Link from "next/link";
-import { Button } from "../ui/button";
+import { LoginButton } from "./login-button";
 import { NavLinks } from "./nav-links";
 import { UserDropdown } from "./user-dropdown";
 
@@ -30,13 +28,7 @@ export async function Header() {
               <UserDropdown {...user} />
             </div>
           ) : (
-            <Button
-              size="sm"
-              before={<LogInIcon />}
-              onClick={() => signIn("azure-ad")}
-            >
-              Sign in
-            </Button>
+            <LoginButton />
           )}
         </div>
 

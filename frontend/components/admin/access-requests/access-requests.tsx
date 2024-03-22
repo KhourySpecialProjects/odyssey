@@ -1,4 +1,4 @@
-import { fetchAccessRequests } from "@/lib/data";
+import { fetchAccessRequests } from "@/lib/requests/data";
 import { AccessRequestBlock } from "./access-request";
 
 export type AccessRequest = {
