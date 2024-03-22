@@ -82,7 +82,6 @@ export async function updateAuthorizedUser(formData: FormData) {
     return { error: "Database Error: Failed to Update Authorized User." };
   }
   revalidatePath("/admin");
-  redirect("/admin");
 }
 
 const DeleteAuthorizedUser = AuthorizedUserSchema.omit({
@@ -115,7 +114,6 @@ export async function deleteAuthorizedUser(formData: FormData) {
   }
 
   revalidatePath("/admin");
-  redirect("/admin");
 }
 
 export async function createAccessRequest(
@@ -139,10 +137,9 @@ export async function createAccessRequest(
     }
   } catch (err) {
     console.error(err);
-    return { error: "Database Error: Failed to Create Access Request." };
+    return { error: "Database Error: Failed to create access request." };
   }
 
-  revalidatePath("/request-access");
   redirect("/");
 }
 
@@ -168,11 +165,10 @@ export async function deleteAccessRequest(formData: FormData) {
       return { ok: false, error: data.error.message, data: null };
   } catch (err) {
     console.error(err);
-    return { error: "Database Error: Failed to Delete Access Request." };
+    return { error: "Database Error: Failed to delete access request." };
   }
 
   revalidatePath("/admin");
-  redirect("/admin");
 }
 
 export async function createBugReport(formData: z.infer<typeof reportSchema>) {
@@ -194,7 +190,7 @@ export async function createBugReport(formData: z.infer<typeof reportSchema>) {
     }
   } catch (err) {
     console.error(err);
-    return { error: "Database Error: Failed to Create Access Request." };
+    return { error: "Database Error: Failed to create bug report." };
   }
 
   redirect(formData.path + "?ts=" + Date.now());
