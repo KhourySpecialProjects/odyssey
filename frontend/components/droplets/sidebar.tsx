@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { User } from "@/types";
 import {
   ChevronDownIcon,
+  CogIcon,
   HistoryIcon,
   LogOutIcon,
   MenuIcon,
@@ -187,7 +188,17 @@ export default function Sidebar({
                     <span>Explore Droplets</span>
                   </Link>
                 </DropdownMenuItem>
+                {user.isAdmin ? (
+                  <DropdownMenuItem asChild>
+                    <Link href="/admin">
+                      <CogIcon className="mr-2 w-4 h-4" />
+                      <span>Admin</span>
+                    </Link>
+                  </DropdownMenuItem>
+                ) : null}
+
                 <DropdownMenuSeparator />
+
                 <DropdownMenuItem
                   onSelect={(e) => {
                     e.preventDefault();
