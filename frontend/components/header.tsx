@@ -15,11 +15,12 @@ import {
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
 import { Button } from "./ui/button";
+import { cn } from "@/lib/utils";
 
 const activeLinkClasses =
-  "block px-3 py-2 text-white bg-sky-700 rounded md:bg-transparent md:text-sky-700 md:p-0 md:dark:text-sky-500";
+  "font-bold text-white bg-sky-700 rounded md:bg-transparent md:text-sky-700 md:p-0 md:dark:text-sky-500";
 const inactiveLinkClasses =
-  "block px-3 py-2 text-slate-900 rounded hover:bg-slate-100 md:hover:bg-transparent md:hover:text-sky-700 md:p-0 md:dark:hover:text-sky-500 dark:text-white dark:hover:bg-slate-700 dark:hover:text-white md:dark:hover:bg-transparent dark:border-slate-700";
+  "text-slate-900 rounded hover:bg-slate-100 md:hover:bg-transparent md:hover:text-sky-700 md:p-0 md:dark:hover:text-sky-500 dark:text-white dark:hover:bg-slate-700 dark:hover:text-white md:dark:hover:bg-transparent dark:border-slate-700";
 
 type HeaderLink = {
   href: string;
@@ -125,16 +126,17 @@ export default function Header() {
           className="items-center justify-between hidden w-full md:flex md:w-auto md:col-start-2 md:row-start-1"
           id="navbar-sticky"
         >
-          <ul className="flex flex-col p-4 mt-4 font-medium border rounded-lg border-slate-100 md:p-0 bg-slate-50 md:space-x-8 md:flex-row md:mt-0 md:border-0 md:bg-white dark:bg-slate-800 md:dark:bg-slate-900 dark:border-slate-700">
+          <ul className="flex flex-col p-4 mt-4 border rounded-lg border-slate-100 md:p-0 bg-slate-50 md:space-x-8 md:flex-row md:mt-0 md:border-0 md:bg-white dark:bg-slate-800 md:dark:bg-slate-900 dark:border-slate-700">
             {headerLinks.map((link) => (
               <li key={link.href}>
                 <Link
                   href={link.href}
-                  className={
+                  className={cn(
+                    "block px-3 py-2",
                     pathname == link.href
                       ? activeLinkClasses
                       : inactiveLinkClasses
-                  }
+                  )}
                   aria-current={pathname == link.href}
                 >
                   {link.text}
