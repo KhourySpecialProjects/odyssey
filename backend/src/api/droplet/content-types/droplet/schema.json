@@ -49,6 +49,12 @@
       "relation": "manyToMany",
       "target": "api::lesson.lesson",
       "inversedBy": "droplets"
+    },
+    "tags": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::tag.tag",
+      "inversedBy": "droplets"
     }
   }
 }

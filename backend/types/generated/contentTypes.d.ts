@@ -942,6 +942,11 @@ export interface ApiDropletDroplet extends Schema.CollectionType {
       'manyToMany',
       'api::lesson.lesson'
     >;
+    tags: Attribute.Relation<
+      'api::droplet.droplet',
+      'manyToMany',
+      'api::tag.tag'
+    >;
     createdAt: Attribute.DateTime;
     updatedAt: Attribute.DateTime;
     publishedAt: Attribute.DateTime;
@@ -1044,6 +1049,33 @@ export interface ApiReportReport extends Schema.CollectionType {
   };
 }
 
+export interface ApiTagTag extends Schema.CollectionType {
+  collectionName: 'tags';
+  info: {
+    singularName: 'tag';
+    pluralName: 'tags';
+    displayName: 'Tag';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    title: Attribute.String & Attribute.Required & Attribute.Unique;
+    slug: Attribute.UID<'api::tag.tag', 'title'> & Attribute.Required;
+    droplets: Attribute.Relation<
+      'api::tag.tag',
+      'manyToMany',
+      'api::droplet.droplet'
+    >;
+    createdAt: Attribute.DateTime;
+    updatedAt: Attribute.DateTime;
+    createdBy: Attribute.Relation<'api::tag.tag', 'oneToOne', 'admin::user'> &
+      Attribute.Private;
+    updatedBy: Attribute.Relation<'api::tag.tag', 'oneToOne', 'admin::user'> &
+      Attribute.Private;
+  };
+}
+
 declare module '@strapi/types' {
   export module Shared {
     export interface ContentTypes {
@@ -1068,6 +1100,7 @@ declare module '@strapi/types' {
       'api::droplet.droplet': ApiDropletDroplet;
       'api::lesson.lesson': ApiLessonLesson;
       'api::report.report': ApiReportReport;
+      'api::tag.tag': ApiTagTag;
     }
   }
 }
