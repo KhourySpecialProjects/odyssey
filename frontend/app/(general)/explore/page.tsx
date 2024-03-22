@@ -1,5 +1,6 @@
 import { fetchDroplets } from "@/lib/requests/data";
 import { ArrowRightCircleIcon } from "lucide-react";
+import { Metadata } from "next";
 import Link from "next/link";
 
 type Droplet = {
@@ -7,6 +8,11 @@ type Droplet = {
   name: string;
   type: string;
   slug: string;
+};
+
+export const metadata: Metadata = {
+  title: "Explore",
+  description: "Discover which Droplets are available on Khoury Odyssey.",
 };
 
 export default async function ExploreRoute() {

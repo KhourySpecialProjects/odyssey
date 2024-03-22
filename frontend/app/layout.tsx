@@ -12,8 +12,12 @@ const lato = Lato({
 });
 
 export const metadata: Metadata = {
-  title: "Khoury Odyssey",
-  description: "",
+  title: {
+    absolute: "Khoury Odyssey",
+    template: "%s | Khoury Odyssey",
+  },
+  description:
+    "Khoury Odyssey is a new platform designed to provide on-demand access to modern knowledge and skills pertinent to today’s undergraduate Khoury students.",
 };
 
 export default function RootLayout({

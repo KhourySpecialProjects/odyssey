@@ -1,7 +1,14 @@
 import { RequestAccessForm } from "@/components/access-request-form";
 import { authOptions } from "@/lib/auth/options";
+import { Metadata } from "next";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
+
+export const metadata: Metadata = {
+  title: "Request Access",
+  description:
+    "Interested in learning with Khoury Odyssey? Submit an access request today!",
+};
 
 export default async function RequestAccessPage() {
   const session = await getServerSession(authOptions);

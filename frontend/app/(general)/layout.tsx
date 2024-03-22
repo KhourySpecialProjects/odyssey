@@ -1,13 +1,7 @@
 import AccessRequestBanner from "@/components/access-request-banner";
 import { DebugBanner } from "@/components/debug/banner";
 import { Header } from "@/components/header";
-import type { Metadata } from "next";
 import { Suspense } from "react";
-
-export const metadata: Metadata = {
-  title: "Khoury Odyssey",
-  description: "",
-};
 
 export default function GeneralLayout({
   children,
