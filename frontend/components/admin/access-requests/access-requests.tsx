@@ -10,7 +10,7 @@ export type AccessRequest = {
   college: string;
 };
 
-export default async function AccessRequests() {
+export async function AccessRequests() {
   const accessRequests = await fetchAccessRequests();
 
   return (

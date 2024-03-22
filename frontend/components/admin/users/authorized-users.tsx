@@ -9,7 +9,7 @@ export type AuthorizedUser = {
   isEnabled: boolean;
 };
 
-export default async function AuthorizedUsers() {
+export async function AuthorizedUsers() {
   const authorizedUsers = await fetchAuthorizedUsers();
 
   return (

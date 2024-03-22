@@ -59,3 +59,26 @@ export async function fetchAccessRequests() {
     throw new Error("Failed to fetch access requests data.");
   }
 }
+
+export async function fetchReports() {
+  try {
+    const query = qs.stringify({
+      sort: ["createdAt"],
+      fields: "*",
+      pagination: {
+        pageSize: 25,
+        page: 1,
+      },
+    });
+    const response = await fetch(STRAPI_API_URL + "/api/reports?" + query, {
+      headers: { Authorization: "Bearer " + STRAPI_ACCESS_TOKEN },
+      cache: "no-store",
+    });
+    const data = await response.json();
+    const reports = flattenAttributes(data.data);
+    return reports;
+  } catch (error) {
+    console.error("Database Error:", error);
+    throw new Error("Failed to fetch access requests data.");
+  }
+}

@@ -4,7 +4,7 @@ import useDebugStore from "@/stores/debug-store";
 import { LoaderIcon } from "lucide-react";
 import { useSession } from "next-auth/react";
 
-export default function Session() {
+export function Session() {
   const { data: session, status } = useSession();
   const isDebugEnabled = useDebugStore((state) => state.debug);
 
