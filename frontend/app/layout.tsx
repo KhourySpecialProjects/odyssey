@@ -1,4 +1,4 @@
-import DebugToggle from "@/components/debug-toggle";
+import DebugToggle from "@/components/debug/toggle";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import AuthSessionProvider from "@/providers/SessionProvider";

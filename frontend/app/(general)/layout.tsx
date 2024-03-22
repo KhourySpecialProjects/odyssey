@@ -1,5 +1,5 @@
 import AccessRequestBanner from "@/components/access-request-banner";
-import { DebugBanner } from "@/components/debug-banner";
+import { DebugBanner } from "@/components/debug/banner";
 import { Header } from "@/components/header";
 import type { Metadata } from "next";
 import { Suspense } from "react";

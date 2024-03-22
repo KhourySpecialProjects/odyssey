@@ -1,7 +1,7 @@
 "use client";
 
 import UnauthorizedRoute from "@/app/(general)/unauthorized/page";
-import { DebugBanner } from "@/components/debug-banner";
+import { DebugBanner } from "@/components/debug/banner";
 import { cn } from "@/lib/utils";
 import {
   ChevronDownIcon,
