@@ -1,19 +1,13 @@
 "use server";
 
-import { createAccessRequestSchema } from "@/components/request-access/types";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
+import { createAccessRequestSchema } from "./validations/access-request";
+import { AuthorizedUserSchema } from "./validations/authorized-user";
 
 const STRAPI_API_URL = process.env.STRAPI_API_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
-
-const AuthorizedUserSchema = z.object({
-  id: z.string(),
-  email: z.string().email(),
-  isEnabled: z.coerce.boolean(),
-  isAdmin: z.coerce.boolean(),
-});
 
 const CreateAuthorizedUser = AuthorizedUserSchema.omit({ id: true });
 export async function createAuthorizedUser(prevState: any, formData: FormData) {

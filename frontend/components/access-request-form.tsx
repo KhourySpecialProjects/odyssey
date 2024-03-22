@@ -4,7 +4,6 @@ import { COLLEGES, PERMITTED_EMAIL_DOMAINS } from "@/app/globals";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { AFFILIATIONS, createAccessRequestSchema as formSchema } from "./types";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -26,6 +25,10 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
 import { createAccessRequest } from "@/lib/actions";
+import {
+  AFFILIATIONS,
+  createAccessRequestSchema as formSchema,
+} from "@/lib/validations/access-request";
 import { ArrowRightIcon, LoaderIcon } from "lucide-react";
 import { useTransition } from "react";
 
