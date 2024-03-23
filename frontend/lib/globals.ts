@@ -23,7 +23,6 @@ export type FilterOption = {
   value: string;
   count?: number;
 };
-
 export const DROPLET_FILTERS = [
   {
     name: "type",
@@ -48,12 +47,12 @@ export const DROPLET_FILTERS = [
         value: "personal",
       },
       {
-        label: "Technical",
-        value: "technical",
-      },
-      {
         label: "Professional",
         value: "professional",
+      },
+      {
+        label: "Technical",
+        value: "technical",
       },
     ],
   },
