@@ -5,7 +5,7 @@ import { fetchAPI, PopulateValue } from "../utils";
 export async function getTags({
   sort,
   filters,
-  fields = ["id", "title", "slug"],
+  fields = ["id", "name", "slug"],
   populate,
 }: StrapiRequestParams = {}): Promise<Tag[]> {
   const path = `/tags`;

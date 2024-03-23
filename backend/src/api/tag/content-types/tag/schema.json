@@ -4,22 +4,23 @@
   "info": {
     "singularName": "tag",
     "pluralName": "tags",
-    "displayName": "Tag"
+    "displayName": "Tag",
+    "description": ""
   },
   "options": {
     "draftAndPublish": false
   },
   "pluginOptions": {},
   "attributes": {
-    "title": {
+    "name": {
       "type": "string",
       "required": true,
       "unique": true
     },
     "slug": {
       "type": "uid",
-      "targetField": "title",
-      "required": true
+      "required": true,
+      "targetField": "name"
     },
     "droplets": {
       "type": "relation",

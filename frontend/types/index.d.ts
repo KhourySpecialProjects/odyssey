@@ -33,7 +33,7 @@ export type Lesson = {
 export type Tag = {
   id: string;
   slug: string;
-  title: string;
+  name: string;
   droplets: Droplet[];
 };
 

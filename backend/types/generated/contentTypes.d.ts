@@ -1055,13 +1055,14 @@ export interface ApiTagTag extends Schema.CollectionType {
     singularName: 'tag';
     pluralName: 'tags';
     displayName: 'Tag';
+    description: '';
   };
   options: {
     draftAndPublish: false;
   };
   attributes: {
-    title: Attribute.String & Attribute.Required & Attribute.Unique;
-    slug: Attribute.UID<'api::tag.tag', 'title'> & Attribute.Required;
+    name: Attribute.String & Attribute.Required & Attribute.Unique;
+    slug: Attribute.UID<'api::tag.tag', 'name'> & Attribute.Required;
     droplets: Attribute.Relation<
       'api::tag.tag',
       'manyToMany',

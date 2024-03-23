@@ -6,7 +6,7 @@ export async function TagFilter() {
     (tags) => {
       return tags.map((tag) => {
         return {
-          label: tag.title,
+          label: tag.name,
           value: tag.slug,
           count: tag.droplets.length,
         };

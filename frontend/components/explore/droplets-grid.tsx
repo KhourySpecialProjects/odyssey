@@ -83,7 +83,7 @@ export async function DropletsGrid({
                   <Badge variant="outline">{formatBadge(droplet.type)}</Badge>
                   {droplet.tags.map((tag) => (
                     <Badge key={tag.id} variant="outline">
-                      {tag.title}
+                      {tag.name}
                     </Badge>
                   ))}
                 </div>
