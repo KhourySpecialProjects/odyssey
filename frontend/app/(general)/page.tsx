@@ -22,7 +22,7 @@ export default function HomeRoute() {
         <div className="mx-auto max-w-2xl py-20 sm:py-36 lg:py-44">
           <div className="hidden sm:mb-8 sm:flex sm:justify-center">
             <div className="relative rounded-full px-3 py-1 text-sm leading-6 text-slate-600 ring-1 ring-slate-900/10 hover:ring-slate-900/20">
-              <strong>Odyssey is on its way</strong> &mdash; check back soon
+              <strong>Coming soon</strong> &mdash; request access today!
             </div>
           </div>
 
@@ -38,6 +38,14 @@ export default function HomeRoute() {
             <div className="mt-10 flex items-center justify-center gap-x-6">
               <Button size="lg" after={<ArrowRightIcon />} asChild>
                 <Link href="/explore">Explore Droplets</Link>
+              </Button>
+              <Button
+                size="lg"
+                variant="link"
+                after={<ArrowRightIcon />}
+                asChild
+              >
+                <Link href="/request-access">Request Access</Link>
               </Button>
             </div>
           </div>
