@@ -1,4 +1,4 @@
-import { COLLEGES, PERMITTED_EMAIL_DOMAINS } from "@/app/globals";
+import { COLLEGES, PERMITTED_EMAIL_DOMAINS } from "@/lib/globals";
 import { z } from "zod";
 
 export const AFFILIATIONS = [

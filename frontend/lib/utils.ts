@@ -11,33 +11,51 @@ export function getStrapiURL(path = "") {
   return `${process.env.STRAPI_API_URL || "http://localhost:1337"}${path}`;
 }
 
-export async function fetchAPI(
+export type PopulateValue =
+  | string
+  | {
+      [key: string]: PopulateValue;
+    };
+
+export async function fetchAPI<T>(
   path: string,
-  urlParams = {},
-  options = {},
-  revalidate: number = 60
-) {
+  config: {
+    urlParams?: Object;
+    options?: Object;
+    revalidate?: number;
+    flattenResponse?: boolean;
+  }
+): Promise<T> {
   try {
     // Merge default and user options
     const mergedOptions = {
-      next: { revalidate },
+      next: { revalidate: config.revalidate ?? 60 },
       headers: {
         "Content-Type": "application/json",
         Authorization: "Bearer " + process.env.STRAPI_ACCESS_TOKEN,
       },
-      ...options,
+      ...config.options,
     };
 
     // Build request URL
-    const queryString = qs.stringify(urlParams);
+    const queryString = qs.stringify(config.urlParams, {
+      encodeValuesOnly: true,
+    });
     const requestUrl = `${getStrapiURL(
       `/api${path}${queryString ? `?${queryString}` : ""}`
     )}`;
 
     // Trigger API call
-    const response = await fetch(requestUrl, mergedOptions);
-    const data = await response.json();
-    return data;
+    return await fetch(requestUrl, mergedOptions).then(async (response) => {
+      let data = await response.json();
+      if (
+        config.flattenResponse ||
+        typeof config.flattenResponse === "undefined"
+      ) {
+        data = flattenAttributes(data.data);
+      }
+      return data;
+    });
   } catch (error) {
     console.error(error);
     throw new Error(

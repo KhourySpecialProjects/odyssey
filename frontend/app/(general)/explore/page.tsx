@@ -1,22 +1,29 @@
-import { fetchDroplets } from "@/lib/requests/data";
-import { ArrowRightCircleIcon } from "lucide-react";
+import { Filter } from "@/components/explore/filter";
+import { defaultSort, sorting } from "@/lib/globals";
 import { Metadata } from "next";
-import Link from "next/link";
-
-type Droplet = {
-  id: string;
-  name: string;
-  type: string;
-  slug: string;
-};
+import { Suspense } from "react";
+import { DropletsGrid } from "../../../components/explore/droplets-grid";
+import { DropletsSkeleton } from "../../../components/explore/droplets-skeleton";
+import { Search } from "../../../components/explore/search";
 
 export const metadata: Metadata = {
   title: "Explore",
   description: "Discover which Droplets are available on Khoury Odyssey.",
 };
 
-export default async function ExploreRoute() {
-  const droplets = await fetchDroplets();
+export default async function ExplorePage({
+  searchParams,
+}: {
+  searchParams?: { [key: string]: string | string[] | undefined };
+}) {
+  const {
+    sort,
+    q: searchValue,
+    type,
+  } = searchParams as { [key: string]: string };
+  const { label: sortLabel } =
+    sorting.find((item) => item.slug === sort) || defaultSort;
+  const { sortKey } = sorting.find((item) => item.slug === sort) || defaultSort;
 
   return (
     <>
@@ -24,60 +31,20 @@ export default async function ExploreRoute() {
         <h1 className="text-5xl font-bold">Explore</h1>
       </div>
 
-      <div className="space-y-8">
-        <div className="w-full max-w-5xl mx-auto">
-          <div className="bg-slate-50 p-8 rounded-md">
-            <h2 className="text-xl font-bold">Knowledge Droplets</h2>
-            <p className="mt-1 text-slate-800">
-              Gain a comprehensive understanding of a specific topic.
-            </p>
-
-            <div className="grid md:grid-cols-4 mt-6 gap-4">
-              {droplets
-                .filter((droplet: Droplet) => droplet.type === "knowledge")
-                .map((droplet: Droplet) => (
-                  <Link
-                    className="flex flex-row justify-between items-center rounded-md bg-slate-100 border border-slate-200 p-4 hover:bg-slate-200 transition-colors"
-                    key={droplet.id}
-                    href={"/d/" + droplet.slug}
-                  >
-                    <p className="font-semibold text-lg leading-tight text-slate-700">
-                      {droplet.name}
-                    </p>
-                    <ArrowRightCircleIcon className="w-6 h-6 text-slate-700" />
-                  </Link>
-                ))}
-            </div>
+      <div className="mt-4 mb-8 max-w-5xl mx-auto w-full bg-slate-50 p-4 rounded-md">
+        <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
+          <div className="flex flex-col sm:flex-row flex-1 items-center">
+            <Filter name="type" />
+            <span className="ml-2 ">Sorting by {sortLabel}</span>
           </div>
-        </div>
 
-        <div className="w-full max-w-5xl mx-auto">
-          <div className="bg-slate-50 p-8 rounded-md">
-            <h2 className="text-xl font-bold">Skill Droplets</h2>
-            <p className="mt-1 text-slate-800">
-              Apply knowledge through guided examples for use in some
-              application.
-            </p>
-
-            <div className="grid md:grid-cols-4 mt-6 gap-4">
-              {droplets
-                .filter((droplet: Droplet) => droplet.type === "skill")
-                .map((droplet: Droplet) => (
-                  <Link
-                    className="flex flex-row justify-between items-center rounded-md bg-slate-100 border border-slate-200 p-4 hover:bg-slate-200 transition-colors"
-                    key={droplet.id}
-                    href={"/d/" + droplet.slug}
-                  >
-                    <p className="font-semibold text-lg leading-tight text-slate-700">
-                      {droplet.name}
-                    </p>
-                    <ArrowRightCircleIcon className="w-6 h-6 text-slate-700" />
-                  </Link>
-                ))}
-            </div>
-          </div>
+          <Search />
         </div>
       </div>
+
+      <Suspense fallback={<DropletsSkeleton />}>
+        <DropletsGrid searchValue={searchValue} type={type} sortKey={sortKey} />
+      </Suspense>
     </>
   );
 }

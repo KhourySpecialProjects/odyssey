@@ -1,6 +1,6 @@
 "use client";
 
-import { COLLEGES, PERMITTED_EMAIL_DOMAINS } from "@/app/globals";
+import { COLLEGES, PERMITTED_EMAIL_DOMAINS } from "@/lib/globals";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useTransition } from "react";
 import { useForm } from "react-hook-form";

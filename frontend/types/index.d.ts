@@ -15,3 +15,26 @@ export type NavItem = {
 export type GeneralConfig = {
   mainNav: NavItem[];
 };
+
+export type Author = {
+  name: string;
+  bio: string;
+  photo: any;
+  droplets: Droplet[];
+};
+
+export type Lesson = {
+  title: string;
+  slug: string;
+  blocks: any[];
+  droplets: Droplet[];
+};
+
+export type Droplet = {
+  id: string;
+  name: string;
+  type: string;
+  slug: string;
+  lessons: Lesson[];
+  authors: Author[];
+};

@@ -1,7 +1,6 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { getDropletBySlug } from "@/lib/requests/droplet";
-import { flattenAttributes } from "@/lib/utils";
 import { ArrowRightIcon } from "lucide-react";
 import { Metadata } from "next";
 import Link from "next/link";
@@ -20,8 +19,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       populate: "*",
     },
   });
-  if (droplet.data.length === 0) return {};
-  droplet = flattenAttributes(droplet)[0];
 
   return {
     title: `Overview | ${droplet.name}`,
@@ -37,8 +34,7 @@ export default async function DropletRoute({ params }: Props) {
       populate: "*",
     },
   });
-  if (droplet.data.length === 0) return notFound();
-  droplet = flattenAttributes(droplet)[0];
+  if (!droplet) return notFound();
 
   return (
     <div className="w-full max-w-prose py-8 mx-auto">
@@ -75,7 +71,7 @@ export default async function DropletRoute({ params }: Props) {
           <h2 className="font-bold">Contents:</h2>
           <div className="rounded-md bg-slate-100">
             <ul className="flex flex-col mt-2 divide-y divide-slate-200">
-              {droplet.lessons.map((lesson: any, i: number) => (
+              {droplet.lessons.map((lesson, i: number) => (
                 <li
                   key={i}
                   className="inline-flex items-center [&:not(:first-child)]:pt-3 rounded-md py-2 px-4 gap-2"

@@ -3,7 +3,6 @@ import { ReportBugDialog } from "@/components/droplets/reports/bug/dialog";
 import Sidebar from "@/components/droplets/sidebar";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getDropletBySlug } from "@/lib/requests/droplet";
-import { flattenAttributes } from "@/lib/utils";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
@@ -22,8 +21,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       populate: "*",
     },
   });
-  if (droplet.data.length === 0) return {};
-  droplet = flattenAttributes(droplet)[0];
 
   return {
     title: {
@@ -42,8 +39,7 @@ export default async function RootLayout({ params, children }: Props) {
       populate: "*",
     },
   });
-  if (droplet.data.length === 0) return notFound();
-  droplet = flattenAttributes(droplet)[0];
+  if (!droplet) return notFound();
 
   return (
     <>

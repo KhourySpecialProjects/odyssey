@@ -37,10 +37,18 @@ export function UserDropdown(user: User) {
       </DropdownMenuTrigger>
 
       <DropdownMenuContent className="mb-3 min-w-[220px]">
-        <DropdownMenuLabel className="text-xs">
-          NUID: {user.nuid || "unknown"}
-          <br />
-          Title: {user.jobTitle || "unknown"}
+        <DropdownMenuLabel className="font-normal">
+          <div className="flex flex-col space-y-1">
+            <p className="text-sm font-semibold leading-none">
+              {user.name} ({user.nuid})
+            </p>
+            <p className="text-xs leading-none text-muted-foreground">
+              {user.email}
+            </p>
+            <p className="text-xs leading-none text-muted-foreground">
+              Title: {user.jobTitle}
+            </p>
+          </div>
         </DropdownMenuLabel>
 
         <DropdownMenuSeparator />

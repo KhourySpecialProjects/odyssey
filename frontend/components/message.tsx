@@ -1,6 +1,14 @@
-export function Message({ children }: { children: React.ReactNode }) {
+import { cn } from "@/lib/utils";
+
+export function Message({
+  className,
+  children,
+}: {
+  className?: string;
+  children: React.ReactNode;
+}) {
   return (
-    <div className="w-full max-w-5xl p-8 mx-auto">
+    <div className={cn("w-full max-w-5xl p-8 mx-auto", className)}>
       <div className="grid min-h-full place-items-center bg-white px-6 py-24 sm:py-32 lg:px-8 text-center">
         {children}
       </div>
@@ -17,7 +25,7 @@ export function MessageHeader({
 }) {
   return (
     <>
-      <p className="text-base uppercase font-semibold text-indigo-600">
+      <p className="text-base uppercase font-semibold text-blue-600">
         {subtitle}
       </p>
       <h1 className="mt-4 text-3xl font-bold tracking-tight text-gray-900 sm:text-5xl">

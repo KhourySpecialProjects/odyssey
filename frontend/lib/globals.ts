@@ -17,3 +17,34 @@ export const COLLEGES: College[] = [
 ];
 
 export const PERMITTED_EMAIL_DOMAINS = ["northeastern.edu", "neu.edu"];
+
+export type SortFilterItem = {
+  label: string;
+  slug: string | null;
+  sortKey: "name:asc" | "name:desc" | "createdAt:asc" | "createdAt:desc";
+};
+
+export const defaultSort: SortFilterItem = {
+  label: "Alphabetical: A to Z",
+  slug: "alphabetical-asc",
+  sortKey: "name:asc",
+};
+
+export const sorting: SortFilterItem[] = [
+  defaultSort,
+  {
+    label: "Alphabetical: Z to A",
+    slug: "alphabetical-desc",
+    sortKey: "name:desc",
+  },
+  {
+    label: "Latest",
+    slug: "latest-desc",
+    sortKey: "createdAt:desc",
+  },
+  {
+    label: "Oldest",
+    slug: "latest-asc",
+    sortKey: "createdAt:asc",
+  },
+];
