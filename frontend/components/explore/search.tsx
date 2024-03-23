@@ -11,6 +11,7 @@ export function Search() {
   const [_, setQuery] = useQueryState("q", {
     shallow: false,
     throttleMs: 1000,
+    clearOnDefault: true,
   });
 
   return (
