@@ -5,7 +5,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import useDebugStore from "@/stores/debug-store";
+import useDebugStore from "@/stores/debug-toggle-store";
 import { BugIcon } from "lucide-react";
 import { Button } from "../ui/button";
 

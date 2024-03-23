@@ -1,9 +1,9 @@
 "use client";
 
-import useDebugStore from "@/stores/debug-store";
+import useDebugStore from "@/stores/debug-toggle-store";
 
 export function DropletRenderer({ droplet }: any) {
-  const isDebugEnabled = useDebugStore((state) => state.debug);
+  const isDebugEnabled = useDebugStore((state) => state.debugModeEnabled);
 
   return (
     <div className="w-full mx-auto max-w-prose">

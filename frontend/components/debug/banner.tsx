@@ -1,10 +1,10 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import useDebugStore from "@/stores/debug-store";
+import useDebugStore from "@/stores/debug-toggle-store";
 
 export function DebugBanner({ className }: { className?: string }) {
-  const isDebugEnabled = useDebugStore((state) => state.debug);
+  const isDebugEnabled = useDebugStore((state) => state.debugModeEnabled);
   if (!isDebugEnabled) return null;
 
   return (

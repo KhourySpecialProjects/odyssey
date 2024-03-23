@@ -2,7 +2,7 @@ import { create } from "zustand";
 import { devtools, persist } from "zustand/middleware";
 
 type DebugState = {
-  debug: boolean;
+  debugModeEnabled: boolean;
   toggle: () => void;
 };
 
@@ -10,11 +10,12 @@ const useDebugStore = create<DebugState>()(
   devtools(
     persist(
       (set) => ({
-        debug: false,
-        toggle: () => set((state) => ({ debug: !state.debug })),
+        debugModeEnabled: false,
+        toggle: () =>
+          set((state) => ({ debugModeEnabled: !state.debugModeEnabled })),
       }),
       {
-        name: "debug-storage",
+        name: "debug-toggle-storage",
       }
     )
   )
