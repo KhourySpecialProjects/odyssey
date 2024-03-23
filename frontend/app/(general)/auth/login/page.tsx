@@ -1,8 +1,13 @@
 import { authOptions } from "@/lib/auth/options";
+import { Metadata } from "next";
 import { getServerSession } from "next-auth/next";
 import { getProviders } from "next-auth/react";
 import { redirect } from "next/navigation";
 import LoginButtons from "./buttons";
+
+export const metadata: Metadata = {
+  title: "Log In",
+};
 
 export default async function SignIn() {
   const session = await getServerSession(authOptions);
