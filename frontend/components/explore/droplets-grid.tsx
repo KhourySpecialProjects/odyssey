@@ -13,11 +13,13 @@ export async function DropletsGrid({
   searchValue,
   type,
   focusArea,
+  tags,
 }: {
   searchValue?: string;
-  sortKey: string;
-  type: string;
-  focusArea: string;
+  sortKey?: string;
+  type?: string;
+  focusArea?: string;
+  tags?: string;
 }) {
   const droplets = await getDroplets({
     sort: sortKey,
@@ -32,6 +34,13 @@ export async function DropletsGrid({
               $or: focusArea
                 .split(",")
                 .map((val) => ({ focusArea: { $eq: val } })),
+            }
+          : {},
+        tags
+          ? {
+              $or: tags
+                .split(",")
+                .map((val) => ({ tags: { slug: { $eq: val } } })),
             }
           : {},
       ],

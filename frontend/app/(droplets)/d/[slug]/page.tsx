@@ -13,7 +13,7 @@ type Props = {
 };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  let droplet = await getDropletBySlug(params.slug, {
+  const droplet = await getDropletBySlug(params.slug, {
     authors: "*",
     lessons: {
       populate: "*",
@@ -26,7 +26,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function DropletRoute({ params }: Props) {
-  let droplet = await getDropletBySlug(params.slug, {
+  const droplet = await getDropletBySlug(params.slug, {
     authors: {
       populate: "*",
     },

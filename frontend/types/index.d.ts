@@ -34,6 +34,7 @@ export type Tag = {
   id: string;
   slug: string;
   title: string;
+  droplets: Droplet[];
 };
 
 export type Droplet = {

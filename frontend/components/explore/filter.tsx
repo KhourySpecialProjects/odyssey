@@ -33,7 +33,6 @@ export function Filter({
   options: FilterOption[];
   defaultValue?: string[];
 }) {
-  // const [selectedValues, setSelectedValues] = useState<string[]>(defaultValue);
   const [selectedValues, setSelectedValues] = useQueryState(
     name,
     parseAsArrayOf(parseAsString).withDefault(defaultValue).withOptions({
@@ -41,12 +40,6 @@ export function Filter({
       clearOnDefault: true,
     })
   );
-
-  // useEffect(() => {
-  //   if (!name) return;
-
-  //   setValuesParam(selectedValues.join(","));
-  // }, [name, selectedValues]);
 
   return (
     <Popover>
@@ -128,11 +121,11 @@ export function Filter({
                       <CheckIcon className="h-4 w-4" />
                     </div>
                     <span>{option.label}</span>
-                    {/* {facets?.get(option.value) && (
+                    {option.count ? (
                       <span className="ml-auto flex h-4 w-4 items-center justify-center font-mono text-xs">
-                        {facets.get(option.value)}
+                        {option.count}
                       </span>
-                    )} */}
+                    ) : null}
                   </CommandItem>
                 );
               })}

@@ -1,11 +1,12 @@
+import { DropletsGrid } from "@/components/explore/droplets-grid";
+import { DropletsSkeleton } from "@/components/explore/droplets-skeleton";
 import { Filter } from "@/components/explore/filter";
+import { Search } from "@/components/explore/search";
 import { Sort } from "@/components/explore/sort";
+import { TagFilter } from "@/components/explore/tag-filter";
 import { defaultSort, DROPLET_FILTERS, sorting } from "@/lib/globals";
 import { Metadata } from "next";
 import { Suspense } from "react";
-import { DropletsGrid } from "../../../components/explore/droplets-grid";
-import { DropletsSkeleton } from "../../../components/explore/droplets-skeleton";
-import { Search } from "../../../components/explore/search";
 
 export const metadata: Metadata = {
   title: "Explore",
@@ -22,9 +23,8 @@ export default async function ExplorePage({
     q: searchValue,
     type,
     focusArea,
+    tags,
   } = searchParams as { [key: string]: string };
-  const { label: sortLabel } =
-    sorting.find((item) => item.slug === sort) || defaultSort;
   const { sortKey } = sorting.find((item) => item.slug === sort) || defaultSort;
 
   return (
@@ -44,6 +44,7 @@ export default async function ExplorePage({
                 options={filter.options}
               />
             ))}
+            <TagFilter />
             <Sort options={sorting} defaultValue={defaultSort} />
           </div>
 
@@ -56,6 +57,7 @@ export default async function ExplorePage({
           searchValue={searchValue}
           type={type}
           focusArea={focusArea}
+          tags={tags}
           sortKey={sortKey}
         />
       </Suspense>

@@ -21,12 +21,13 @@ export const PERMITTED_EMAIL_DOMAINS = ["northeastern.edu", "neu.edu"];
 export type FilterOption = {
   label: string;
   value: string;
+  count?: number;
 };
 
 export const DROPLET_FILTERS = [
   {
     name: "type",
-    label: "Type",
+    label: "Types",
     options: [
       {
         label: "Knowledge",
