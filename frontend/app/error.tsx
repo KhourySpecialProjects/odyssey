@@ -31,8 +31,8 @@ export default function Error({
       </MessageDescription>
       <MessageActions>
         <Button
-          before={<RefreshCwIcon />}
           size="lg"
+          before={<RefreshCwIcon />}
           onClick={
             // Attempt to recover by trying to re-render the segment
             () => reset()
@@ -40,7 +40,7 @@ export default function Error({
         >
           Try again
         </Button>
-        <Button variant="link" after={<ArrowRightIcon />} asChild>
+        <Button size="lg" variant="link" after={<ArrowRightIcon />} asChild>
           <Link href="/">Start over</Link>
         </Button>
       </MessageActions>

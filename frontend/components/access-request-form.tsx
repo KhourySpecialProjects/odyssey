@@ -74,7 +74,7 @@ export function RequestAccessForm() {
               <FormLabel>Given/First Name</FormLabel>
               <FormControl>
                 <Input
-                  placeholder="John"
+                  placeholder="Sam"
                   type="text"
                   autoComplete="given-name"
                   {...field}
@@ -93,7 +93,7 @@ export function RequestAccessForm() {
               <FormLabel>Family/Last Name</FormLabel>
               <FormControl>
                 <Input
-                  placeholder="Doe"
+                  placeholder="Serif"
                   type="text"
                   autoComplete="family-name"
                   {...field}
@@ -113,7 +113,7 @@ export function RequestAccessForm() {
                 <FormLabel>Email</FormLabel>
                 <FormControl>
                   <Input
-                    placeholder="f.last@northeastern.edu"
+                    placeholder="serif.s@northeastern.edu"
                     type="email"
                     autoComplete="email"
                     {...field}

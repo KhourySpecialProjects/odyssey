@@ -25,7 +25,7 @@ export default async function UnauthorizedRoute() {
         <Button size="lg" after={<ArrowRightIcon />} asChild>
           <Link href="/request-access">Request Access</Link>
         </Button>
-        <Button variant="link" after={<ArrowRightIcon />} asChild>
+        <Button size="lg" variant="link" after={<ArrowRightIcon />} asChild>
           <Link href="/explore">Explore the Odyssey</Link>
         </Button>
       </MessageActions>
