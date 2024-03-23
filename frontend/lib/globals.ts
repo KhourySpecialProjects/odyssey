@@ -27,7 +27,7 @@ export type FilterOption = {
 export const DROPLET_FILTERS = [
   {
     name: "type",
-    label: "Types",
+    label: "Type",
     options: [
       {
         label: "Knowledge",
