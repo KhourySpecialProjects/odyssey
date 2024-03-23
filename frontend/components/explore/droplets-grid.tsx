@@ -87,7 +87,7 @@ export async function DropletsGrid({
                     </Badge>
                   ))}
                 </div>
-                <span className="text-4xl font-black place-self-end">
+                <span className="block w-full text-4xl font-black place-self-end">
                   {droplet.name}
                 </span>
               </div>
