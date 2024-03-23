@@ -1,4 +1,5 @@
 import { Filter } from "@/components/explore/filter";
+import { Sort } from "@/components/explore/sort";
 import { defaultSort, DROPLET_FILTERS, sorting } from "@/lib/globals";
 import { Metadata } from "next";
 import { Suspense } from "react";
@@ -43,7 +44,7 @@ export default async function ExplorePage({
                 options={filter.options}
               />
             ))}
-            <span className="ml-2 ">Sorting by {sortLabel}</span>
+            <Sort options={sorting} defaultValue={defaultSort} />
           </div>
 
           <Search />

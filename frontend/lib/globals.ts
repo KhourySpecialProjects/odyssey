@@ -60,7 +60,7 @@ export const DROPLET_FILTERS = [
 
 export type SortFilterItem = {
   label: string;
-  slug: string | null;
+  slug: string;
   sortKey: "name:asc" | "name:desc" | "createdAt:asc" | "createdAt:desc";
 };
 
@@ -79,12 +79,12 @@ export const sorting: SortFilterItem[] = [
   },
   {
     label: "Latest",
-    slug: "latest-desc",
+    slug: "latest",
     sortKey: "createdAt:desc",
   },
   {
-    label: "Oldest",
-    slug: "latest-asc",
+    label: "Earliest",
+    slug: "earliest",
     sortKey: "createdAt:asc",
   },
 ];

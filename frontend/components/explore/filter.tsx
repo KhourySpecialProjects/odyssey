@@ -20,8 +20,7 @@ import { Separator } from "@/components/ui/separator";
 import { FilterOption } from "@/lib/globals";
 import { cn } from "@/lib/utils";
 import { CheckIcon, PlusCircleIcon } from "lucide-react";
-import { useQueryState } from "nuqs";
-import { useEffect, useState } from "react";
+import { parseAsArrayOf, parseAsString, useQueryState } from "nuqs";
 
 export function Filter({
   name,
@@ -34,18 +33,20 @@ export function Filter({
   options: FilterOption[];
   defaultValue?: string[];
 }) {
-  const [selectedValues, setSelectedValues] = useState<string[]>(defaultValue);
-  const [_, setValuesParam] = useQueryState(name, {
-    defaultValue: defaultValue.join(","),
-    shallow: false,
-    clearOnDefault: true,
-  });
+  // const [selectedValues, setSelectedValues] = useState<string[]>(defaultValue);
+  const [selectedValues, setSelectedValues] = useQueryState(
+    name,
+    parseAsArrayOf(parseAsString).withDefault(defaultValue).withOptions({
+      shallow: false,
+      clearOnDefault: true,
+    })
+  );
 
-  useEffect(() => {
-    if (!name) return;
+  // useEffect(() => {
+  //   if (!name) return;
 
-    setValuesParam(selectedValues.join(","));
-  }, [name, selectedValues]);
+  //   setValuesParam(selectedValues.join(","));
+  // }, [name, selectedValues]);
 
   return (
     <Popover>
