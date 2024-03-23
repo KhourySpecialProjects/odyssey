@@ -12,7 +12,7 @@ export async function Header() {
   return (
     <nav className="fixed top-0 z-20 w-full bg-white border-b border-slate-200 dark:bg-slate-900 start-0 dark:border-slate-600">
       <div className="grid grid-cols-2 md:grid-cols-[1fr_auto_1fr] items-center justify-between max-w-screen-xl px-4 py-3 mx-auto">
-        <div>
+        <div className="w-max">
           <Link href="/">
             <Image
               src="/logo.svg"
