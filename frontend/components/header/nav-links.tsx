@@ -5,11 +5,17 @@ import { NavItem } from "@/types";
 import Link from "next/link";
 import { useSelectedLayoutSegment } from "next/navigation";
 
-export function NavLinks({ items }: { items: NavItem[] }) {
+export function NavLinks({
+  items,
+  className,
+}: {
+  items: NavItem[];
+  className?: string;
+}) {
   const segment = useSelectedLayoutSegment();
 
   return (
-    <ul className="flex flex-col p-4 mt-4 border rounded-lg border-slate-100 md:p-0 bg-slate-50 md:space-x-8 md:flex-row md:mt-0 md:border-0 md:bg-white dark:bg-slate-800 md:dark:bg-slate-900 dark:border-slate-700">
+    <ul className={cn("flex", className)}>
       {items.map((item) => (
         <li key={item.href}>
           <Link

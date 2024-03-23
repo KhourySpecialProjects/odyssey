@@ -112,9 +112,9 @@ export function Filter({
                   >
                     <div
                       className={cn(
-                        "mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-blue-600",
+                        "mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-sky-600",
                         isSelected
-                          ? "bg-blue-600 text-white"
+                          ? "bg-sky-600 text-white"
                           : "opacity-50 [&_svg]:invisible"
                       )}
                     >
