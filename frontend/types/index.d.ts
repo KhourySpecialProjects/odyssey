@@ -35,6 +35,8 @@ export type Droplet = {
   name: string;
   type: string;
   slug: string;
+  type: "knowledge" | "skill";
+  focusArea: "personal" | "professional" | "technical";
   lessons: Lesson[];
   authors: Author[];
 };

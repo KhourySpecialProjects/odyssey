@@ -5,6 +5,7 @@ const nextConfig = {
     loader: "default",
     domains: [process.env.DO_CDN_URL],
   },
+  transpilePackages: ["lucide-react"],
 };
 
 export default nextConfig;

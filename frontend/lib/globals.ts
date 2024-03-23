@@ -18,6 +18,46 @@ export const COLLEGES: College[] = [
 
 export const PERMITTED_EMAIL_DOMAINS = ["northeastern.edu", "neu.edu"];
 
+export type FilterOption = {
+  label: string;
+  value: string;
+};
+
+export const DROPLET_FILTERS = [
+  {
+    name: "type",
+    label: "Type",
+    options: [
+      {
+        label: "Knowledge",
+        value: "knowledge",
+      },
+      {
+        label: "Skill",
+        value: "skill",
+      },
+    ],
+  },
+  {
+    name: "focusArea",
+    label: "Focus Area",
+    options: [
+      {
+        label: "Personal",
+        value: "personal",
+      },
+      {
+        label: "Technical",
+        value: "technical",
+      },
+      {
+        label: "Professional",
+        value: "professional",
+      },
+    ],
+  },
+];
+
 export type SortFilterItem = {
   label: string;
   slug: string | null;

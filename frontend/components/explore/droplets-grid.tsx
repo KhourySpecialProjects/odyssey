@@ -11,10 +11,12 @@ export async function DropletsGrid({
   sortKey,
   searchValue,
   type,
+  focusArea,
 }: {
   searchValue?: string;
   sortKey: string;
   type: string;
+  focusArea: string;
 }) {
   const droplets = await getDroplets({
     sort: sortKey,
@@ -23,6 +25,13 @@ export async function DropletsGrid({
         searchValue ? { name: { $containsi: searchValue } } : {},
         type
           ? { $or: type.split(",").map((val) => ({ type: { $eq: val } })) }
+          : {},
+        focusArea
+          ? {
+              $or: focusArea
+                .split(",")
+                .map((val) => ({ focusArea: { $eq: val } })),
+            }
           : {},
       ],
     },

@@ -1,5 +1,5 @@
 import { Filter } from "@/components/explore/filter";
-import { defaultSort, sorting } from "@/lib/globals";
+import { defaultSort, DROPLET_FILTERS, sorting } from "@/lib/globals";
 import { Metadata } from "next";
 import { Suspense } from "react";
 import { DropletsGrid } from "../../../components/explore/droplets-grid";
@@ -20,6 +20,7 @@ export default async function ExplorePage({
     sort,
     q: searchValue,
     type,
+    focusArea,
   } = searchParams as { [key: string]: string };
   const { label: sortLabel } =
     sorting.find((item) => item.slug === sort) || defaultSort;
@@ -33,8 +34,15 @@ export default async function ExplorePage({
 
       <div className="mt-4 mb-8 max-w-5xl mx-auto w-full bg-slate-50 p-4 rounded-md">
         <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
-          <div className="flex flex-col sm:flex-row flex-1 items-center">
-            <Filter name="type" />
+          <div className="flex flex-col sm:flex-row flex-1 items-center gap-2">
+            {DROPLET_FILTERS.map((filter) => (
+              <Filter
+                key={filter.name}
+                name={filter.name}
+                label={filter.label}
+                options={filter.options}
+              />
+            ))}
             <span className="ml-2 ">Sorting by {sortLabel}</span>
           </div>
 
@@ -43,7 +51,12 @@ export default async function ExplorePage({
       </div>
 
       <Suspense fallback={<DropletsSkeleton />}>
-        <DropletsGrid searchValue={searchValue} type={type} sortKey={sortKey} />
+        <DropletsGrid
+          searchValue={searchValue}
+          type={type}
+          focusArea={focusArea}
+          sortKey={sortKey}
+        />
       </Suspense>
     </>
   );
