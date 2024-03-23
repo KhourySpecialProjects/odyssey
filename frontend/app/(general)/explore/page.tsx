@@ -9,7 +9,7 @@ import { Metadata } from "next";
 import { Suspense } from "react";
 
 export const metadata: Metadata = {
-  title: "Explore",
+  title: "Explore Droplets",
   description: "Discover which Droplets are available on Khoury Odyssey.",
 };
 
@@ -30,7 +30,7 @@ export default async function ExplorePage({
   return (
     <>
       <div className="my-4 w-full max-w-5xl p-8 mx-auto text-center">
-        <h1 className="text-5xl font-bold">Explore</h1>
+        <h1 className="text-5xl font-bold">Explore Droplets</h1>
       </div>
 
       <div className="mt-4 mb-8 max-w-5xl mx-auto w-full bg-slate-50 p-4 rounded-md">
