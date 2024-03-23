@@ -6,7 +6,7 @@ export async function getDroplets({
   sort,
   filters,
   populate,
-  fields = ["id", "name", "type", "slug"],
+  fields = ["id", "name", "slug", "type", "focusArea"],
 }: StrapiRequestParams = {}): Promise<Droplet[]> {
   const path = `/droplets`;
   const urlParams = {

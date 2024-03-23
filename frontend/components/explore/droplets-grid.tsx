@@ -6,6 +6,7 @@ import {
 import { getDroplets } from "@/lib/requests/droplet";
 import { Droplet } from "@/types";
 import Link from "next/link";
+import { Badge } from "../ui/badge";
 
 export async function DropletsGrid({
   sortKey,
@@ -35,7 +36,12 @@ export async function DropletsGrid({
           : {},
       ],
     },
+    populate: "tags",
   });
+
+  const formatBadge = (label: string) => {
+    return label.charAt(0).toUpperCase() + label.slice(1);
+  };
 
   if (!droplets || droplets.length === 0) {
     return (
@@ -51,7 +57,7 @@ export async function DropletsGrid({
   return (
     <div className="mb-8 max-w-5xl mx-auto w-full">
       <ul className="grid grid-flow-row gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-        {droplets.map((droplet: Pick<Droplet, "id" | "slug" | "name">) => (
+        {droplets.map((droplet: Droplet) => (
           <li
             className="bg-slate-50 rounded-md aspect-video transition-colors border border-slate-200 hover:border-slate-300"
             key={droplet.id}
@@ -60,9 +66,22 @@ export async function DropletsGrid({
               className="relative inline-flex h-full w-full p-8"
               href={`/d/${droplet.slug}`}
             >
-              <span className="text-4xl font-black place-self-end">
-                {droplet.name}
-              </span>
+              <div className="flex flex-col gap-2 justify-end">
+                <div className="flex flex-row flex-0 gap-1.5">
+                  <Badge variant="outline">
+                    {formatBadge(droplet.focusArea)}
+                  </Badge>
+                  <Badge variant="outline">{formatBadge(droplet.type)}</Badge>
+                  {droplet.tags.map((tag) => (
+                    <Badge key={tag.id} variant="outline">
+                      {tag.title}
+                    </Badge>
+                  ))}
+                </div>
+                <span className="text-4xl font-black place-self-end">
+                  {droplet.name}
+                </span>
+              </div>
             </Link>
           </li>
         ))}

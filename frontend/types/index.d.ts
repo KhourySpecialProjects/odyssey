@@ -30,6 +30,12 @@ export type Lesson = {
   droplets: Droplet[];
 };
 
+export type Tag = {
+  id: string;
+  slug: string;
+  title: string;
+};
+
 export type Droplet = {
   id: string;
   name: string;
@@ -37,6 +43,7 @@ export type Droplet = {
   slug: string;
   type: "knowledge" | "skill";
   focusArea: "personal" | "professional" | "technical";
+  tags: Tag[];
   lessons: Lesson[];
   authors: Author[];
 };
