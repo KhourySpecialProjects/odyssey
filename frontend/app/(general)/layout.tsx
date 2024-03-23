@@ -10,6 +10,8 @@ export default function GeneralLayout({
 }>) {
   return (
     <>
+      <DebugBanner />
+
       <Suspense>
         <Header />
       </Suspense>
@@ -17,8 +19,6 @@ export default function GeneralLayout({
       <Suspense>
         <AccessRequestBanner />
       </Suspense>
-
-      <DebugBanner />
       <main>{children}</main>
     </>
   );

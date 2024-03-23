@@ -1,7 +1,6 @@
 "use client";
 
 import UnauthorizedRoute from "@/app/(general)/unauthorized/page";
-import { DebugBanner } from "@/components/debug/banner";
 import { cn } from "@/lib/utils";
 import { User } from "@/types";
 import {
@@ -94,8 +93,6 @@ export default function Sidebar({
         aria-label="Sidebar"
       >
         <div className="h-full px-3 py-4 overflow-y-auto bg-slate-50 dark:bg-slate-800">
-          <DebugBanner className="mb-2" />
-
           <Link href="/" className="block p-2 mb-4">
             <Image
               src="/logo.svg"
@@ -108,7 +105,7 @@ export default function Sidebar({
 
           <Separator />
 
-          <p className="font-extrabold leading-7 text-lg p-2 my-2">
+          <p className="p-2 my-2 text-lg font-extrabold leading-7">
             {droplet.name}
           </p>
 
@@ -184,14 +181,14 @@ export default function Sidebar({
                 </DropdownMenuLabel>
                 <DropdownMenuItem asChild>
                   <Link href="/explore">
-                    <ShipIcon className="mr-2 w-4 h-4" />
+                    <ShipIcon className="w-4 h-4 mr-2" />
                     <span>Explore Droplets</span>
                   </Link>
                 </DropdownMenuItem>
                 {user.isAdmin ? (
                   <DropdownMenuItem asChild>
                     <Link href="/admin">
-                      <CogIcon className="mr-2 w-4 h-4" />
+                      <CogIcon className="w-4 h-4 mr-2" />
                       <span>Admin</span>
                     </Link>
                   </DropdownMenuItem>
@@ -205,7 +202,7 @@ export default function Sidebar({
                     signOut();
                   }}
                 >
-                  <LogOutIcon className="mr-2 w-4 h-4" />
+                  <LogOutIcon className="w-4 h-4 mr-2" />
                   <span>Log Out</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>

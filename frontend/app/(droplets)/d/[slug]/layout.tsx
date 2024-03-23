@@ -1,3 +1,4 @@
+import { DebugBanner } from "@/components/debug/banner";
 import DropletFooter from "@/components/droplets/footer";
 import { ReportBugDialog } from "@/components/droplets/reports/bug/dialog";
 import Sidebar from "@/components/droplets/sidebar";
@@ -45,8 +46,10 @@ export default async function RootLayout({ params, children }: Props) {
     <>
       <Sidebar user={user} droplet={droplet} />
 
-      <div className="p-4 sm:ml-64">
-        <div className="p-4 border-2 border-dashed rounded-lg border-slate-200 dark:border-slate-700">
+      <div className="sm:ml-64">
+        <DebugBanner className="mb-2" />
+
+        <div className="p-4 m-4 border-2 border-dashed rounded-lg border-slate-200 dark:border-slate-700">
           {children}
 
           <DropletFooter droplet={droplet} />
