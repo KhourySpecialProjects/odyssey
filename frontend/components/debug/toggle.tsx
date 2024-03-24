@@ -11,13 +11,14 @@ import { Button } from "../ui/button";
 
 export default function DebugToggle() {
   const toggleDebug = useDebugStore((state) => state.toggle);
+  if (process.env.NODE_ENV !== "development") return null;
 
   return (
     <Tooltip>
       <TooltipTrigger asChild>
         <Button
           onClick={toggleDebug}
-          className="z-50 fixed -bottom-1 -right-1"
+          className="fixed z-50 -bottom-1 -right-1"
           size="icon"
           aria-label="Debug"
         >
