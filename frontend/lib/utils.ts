@@ -11,6 +11,16 @@ export function getStrapiURL(path = "") {
   return `${process.env.STRAPI_API_URL || "http://localhost:1337"}${path}`;
 }
 
+/**
+ * Uppercase the first character in the given string.
+ *
+ * @param text target string to uppercase
+ * @returns revised string
+ */
+export function uppercaseFirstChar(text: string): string {
+  return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
 export type PopulateValue =
   | string
   | {

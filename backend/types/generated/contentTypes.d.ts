@@ -947,6 +947,10 @@ export interface ApiDropletDroplet extends Schema.CollectionType {
       'manyToMany',
       'api::tag.tag'
     >;
+    description: Attribute.Text &
+      Attribute.SetMinMaxLength<{
+        maxLength: 500;
+      }>;
     createdAt: Attribute.DateTime;
     updatedAt: Attribute.DateTime;
     publishedAt: Attribute.DateTime;

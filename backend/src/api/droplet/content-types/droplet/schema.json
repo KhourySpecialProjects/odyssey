@@ -55,6 +55,10 @@
       "relation": "manyToMany",
       "target": "api::tag.tag",
       "inversedBy": "droplets"
+    },
+    "description": {
+      "type": "text",
+      "maxLength": 500
     }
   }
 }

@@ -4,12 +4,12 @@ import UnauthorizedRoute from "@/app/(general)/unauthorized/page";
 import { cn } from "@/lib/utils";
 import { User } from "@/types";
 import {
+  BookTextIcon,
   ChevronDownIcon,
   CogIcon,
   HistoryIcon,
   LogOutIcon,
   MenuIcon,
-  NotebookTextIcon,
   ShipIcon,
   TargetIcon,
 } from "lucide-react";
@@ -42,7 +42,7 @@ export default function Sidebar({
   const pathname = usePathname();
 
   const activeLinkClasses =
-    "flex items-center p-2 bg-slate-200 [&>svg]:text-sky-700 rounded-lg dark:text-white dark:hover:bg-slate-700 group text-sky-700 transition-colors";
+    "flex font-bold items-center p-2 bg-slate-200 [&>svg]:text-sky-700 rounded-lg dark:text-white dark:hover:bg-slate-700 group text-sky-700 transition-colors";
   const inactiveLinkClasses =
     "flex items-center p-2 rounded-lg text-slate-900 dark:text-white hover:bg-slate-100 dark:hover:bg-slate-700 group transition-colors";
 
@@ -137,7 +137,7 @@ export default function Sidebar({
                   {lesson.title.toLowerCase() === "recap" ? (
                     <HistoryIcon className="shrink-0" />
                   ) : (
-                    <NotebookTextIcon className="shrink-0" />
+                    <BookTextIcon className="shrink-0" />
                   )}
                   <span className="ms-3">{lesson.title}</span>
                 </Link>

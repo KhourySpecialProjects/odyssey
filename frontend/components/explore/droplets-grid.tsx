@@ -4,6 +4,7 @@ import {
   MessageHeader,
 } from "@/components/message";
 import { getDroplets } from "@/lib/requests/droplet";
+import { uppercaseFirstChar } from "@/lib/utils";
 import { Droplet } from "@/types";
 import Link from "next/link";
 import { Badge } from "../ui/badge";
@@ -48,13 +49,9 @@ export async function DropletsGrid({
     populate: "tags",
   });
 
-  const formatBadge = (label: string) => {
-    return label.charAt(0).toUpperCase() + label.slice(1);
-  };
-
   if (!droplets || droplets.length === 0) {
     return (
-      <Message className="mb-8 border border-dashed border-slate-200 rounded-md">
+      <Message className="mb-8 border border-dashed rounded-md border-slate-200">
         <MessageHeader subtitle="No Results" title="No Droplets Found" />
         <MessageDescription>
           There are no Droplets that match &quot;{searchValue}&quot;.
@@ -64,23 +61,25 @@ export async function DropletsGrid({
   }
 
   return (
-    <div className="mb-8 max-w-5xl mx-auto w-full">
-      <ul className="grid grid-flow-row gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+    <div className="w-full max-w-5xl mx-auto mb-8">
+      <ul className="grid grid-flow-row grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {droplets.map((droplet: Droplet) => (
           <li
-            className="bg-slate-50 rounded-md aspect-video transition-colors border border-slate-200 hover:border-slate-300"
+            className="transition-colors border rounded-md bg-slate-50 aspect-video border-slate-200 hover:border-slate-300"
             key={droplet.id}
           >
             <Link
-              className="relative inline-flex h-full w-full p-8"
+              className="relative inline-flex w-full h-full p-8"
               href={`/d/${droplet.slug}`}
             >
-              <div className="flex flex-col gap-2 justify-end">
+              <div className="flex flex-col justify-end gap-2">
                 <div className="flex flex-row flex-0 gap-1.5">
                   <Badge variant="outline">
-                    {formatBadge(droplet.focusArea)}
+                    {uppercaseFirstChar(droplet.focusArea)}
                   </Badge>
-                  <Badge variant="outline">{formatBadge(droplet.type)}</Badge>
+                  <Badge variant="outline">
+                    {uppercaseFirstChar(droplet.type)}
+                  </Badge>
                   {droplet.tags.map((tag) => (
                     <Badge key={tag.id} variant="outline">
                       {tag.name}

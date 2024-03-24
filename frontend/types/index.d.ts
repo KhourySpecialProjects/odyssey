@@ -17,6 +17,7 @@ export type GeneralConfig = {
 };
 
 export type Author = {
+  id: number;
   name: string;
   bio: string;
   photo: any;
@@ -24,6 +25,7 @@ export type Author = {
 };
 
 export type Lesson = {
+  id: number;
   title: string;
   slug: string;
   blocks: any[];
@@ -31,17 +33,17 @@ export type Lesson = {
 };
 
 export type Tag = {
-  id: string;
+  id: number;
   slug: string;
   name: string;
   droplets: Droplet[];
 };
 
 export type Droplet = {
-  id: string;
-  name: string;
-  type: string;
+  id: number;
   slug: string;
+  name: string;
+  description?: string;
   type: "knowledge" | "skill";
   focusArea: "personal" | "professional" | "technical";
   tags: Tag[];

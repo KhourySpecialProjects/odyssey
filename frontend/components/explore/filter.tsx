@@ -45,17 +45,18 @@ export function Filter({
     <Popover>
       <PopoverTrigger asChild>
         <Button variant="outline" size="sm" className="gap-0.25 border-dashed">
-          <PlusCircleIcon className="mr-2 w-4 h-4" />
+          <PlusCircleIcon className="w-4 h-4 mr-2" />
 
           {label}
 
           {selectedValues?.length > 0 && (
             <>
-              <Separator orientation="vertical" className="mx-2 h-4" />
+              <Separator orientation="vertical" className="h-4 mx-2" />
 
               <Badge
                 variant="secondary"
-                className="rounded-sm px-1 font-normal lg:hidden"
+                radius="md"
+                className="px-1 font-normal lg:hidden"
               >
                 {selectedValues.length}
               </Badge>
@@ -64,7 +65,8 @@ export function Filter({
                 {selectedValues.length > 2 ? (
                   <Badge
                     variant="secondary"
-                    className="rounded-sm px-1 font-normal"
+                    radius="md"
+                    className="px-1 font-normal"
                   >
                     {selectedValues.length} selected
                   </Badge>
@@ -75,7 +77,7 @@ export function Filter({
                       <Badge
                         variant="secondary"
                         key={option.value}
-                        className="rounded-sm px-1 font-normal"
+                        className="px-1 font-normal rounded-sm"
                       >
                         {option.label}
                       </Badge>
@@ -118,11 +120,11 @@ export function Filter({
                           : "opacity-50 [&_svg]:invisible"
                       )}
                     >
-                      <CheckIcon className="h-4 w-4" />
+                      <CheckIcon className="w-4 h-4" />
                     </div>
                     <span>{option.label}</span>
                     {option.count ? (
-                      <span className="ml-auto flex h-4 w-4 items-center justify-center font-mono text-xs">
+                      <span className="flex items-center justify-center w-4 h-4 ml-auto font-mono text-xs">
                         {option.count}
                       </span>
                     ) : null}

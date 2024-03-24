@@ -1,5 +1,4 @@
 import { DebugBanner } from "@/components/debug/banner";
-import DropletFooter from "@/components/droplets/footer";
 import { ReportBugDialog } from "@/components/droplets/reports/bug/dialog";
 import Sidebar from "@/components/droplets/sidebar";
 import { getCurrentUser } from "@/lib/auth/session";
@@ -16,12 +15,7 @@ type Props = {
 };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  let droplet = await getDropletBySlug(params.slug, {
-    authors: "*",
-    lessons: {
-      populate: "*",
-    },
-  });
+  let droplet = await getDropletBySlug(params.slug);
 
   return {
     title: {
@@ -35,7 +29,6 @@ export default async function RootLayout({ params, children }: Props) {
   const user = await getCurrentUser();
 
   let droplet = await getDropletBySlug(params.slug, {
-    authors: "*",
     lessons: {
       populate: "*",
     },
@@ -51,8 +44,6 @@ export default async function RootLayout({ params, children }: Props) {
 
         <div className="p-4 m-4 border-2 border-dashed rounded-lg border-slate-200 dark:border-slate-700">
           {children}
-
-          <DropletFooter droplet={droplet} />
         </div>
       </div>
 
