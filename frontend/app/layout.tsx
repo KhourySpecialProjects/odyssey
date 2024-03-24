@@ -12,6 +12,7 @@ const lato = Lato({
 });
 
 export const metadata: Metadata = {
+  metadataBase: process.env.APP_URL ? new URL(process.env.APP_URL) : null,
   title: {
     absolute: "Khoury Odyssey",
     template: "%s | Khoury Odyssey",
