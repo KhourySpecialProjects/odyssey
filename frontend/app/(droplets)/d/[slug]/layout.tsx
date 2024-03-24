@@ -16,6 +16,7 @@ type Props = {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   let droplet = await getDropletBySlug(params.slug);
+  if (!droplet) return {};
 
   return {
     title: {
