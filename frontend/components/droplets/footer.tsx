@@ -130,7 +130,10 @@ const PaginationLinkWrapper = ({
     className="flex-1 p-4 leading-tight transition-colors border rounded-md bg-sky-50 hover:bg-sky-100 border-sky-200"
   >
     <div
-      className={cn("inline-flex items-center gap-3 text-sky-700", className)}
+      className={cn(
+        "inline-flex items-center h-full gap-3 text-sky-700",
+        className
+      )}
     >
       {children}
     </div>

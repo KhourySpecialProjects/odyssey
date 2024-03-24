@@ -52,7 +52,7 @@ export default function Sidebar({
     .map((l: any) => l.slug)
     .indexOf(lessonSlug);
   const dropletProgress = Math.round(
-    ((lessonSlugIndex + 1) / totalLessons) * 100
+    ((lessonSlugIndex + 2) / totalLessons) * 100 // offset for intro and 0-index
   );
 
   useLayoutEffect(() => {
