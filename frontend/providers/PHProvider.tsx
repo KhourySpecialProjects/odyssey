@@ -13,7 +13,7 @@ if (typeof window !== "undefined") {
 export function PHProvider({ children }: { children: React.ReactNode }) {
   // disable analytics in non-prod environments
   if (process.env.NODE_ENV !== "production") {
-    return null;
+    return children;
   }
 
   return <PostHogProvider client={posthog}>{children}</PostHogProvider>;

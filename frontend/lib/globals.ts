@@ -25,20 +25,6 @@ export type FilterOption = {
 };
 export const DROPLET_FILTERS = [
   {
-    name: "type",
-    label: "Type",
-    options: [
-      {
-        label: "Knowledge",
-        value: "knowledge",
-      },
-      {
-        label: "Skill",
-        value: "skill",
-      },
-    ],
-  },
-  {
     name: "focusArea",
     label: "Focus Area",
     options: [
@@ -53,6 +39,20 @@ export const DROPLET_FILTERS = [
       {
         label: "Technical",
         value: "technical",
+      },
+    ],
+  },
+  {
+    name: "type",
+    label: "Type",
+    options: [
+      {
+        label: "Knowledge",
+        value: "knowledge",
+      },
+      {
+        label: "Skill",
+        value: "skill",
       },
     ],
   },

@@ -93,7 +93,7 @@ export default function Sidebar({
         aria-label="Sidebar"
       >
         <div className="h-full px-3 py-4 overflow-y-auto bg-slate-50 dark:bg-slate-800">
-          <Link href="/" className="block p-2 mb-4">
+          <Link href="/explore" className="block p-2 mb-4">
             <Image
               src="/logo.svg"
               alt="Khoury Odyssey Logo"
