@@ -35,6 +35,7 @@
     "next-themes": "^0.3.0",
     "node-html-parser": "^6.1.12",
     "nuqs": "^1.17.1",
+    "posthog-js": "^1.116.5",
     "qs": "^6.11.2",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
