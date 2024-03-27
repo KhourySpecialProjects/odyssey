@@ -7,10 +7,11 @@ import {
 } from "@/components/ui/collapsible";
 import { extractHeadings } from "@/lib/utils";
 import useDebugStore from "@/stores/debug-toggle-store";
+import { Lesson } from "@/types";
 import { BlocksRenderer } from "@strapi/blocks-react-renderer";
 import { ArrowDownFromLineIcon } from "lucide-react";
 
-export function LessonRenderer({ lesson }: any) {
+export function LessonRenderer({ lesson }: { lesson: Lesson }) {
   const isDebugEnabled = useDebugStore((state) => state.debugModeEnabled);
 
   let headings: any[] = [];

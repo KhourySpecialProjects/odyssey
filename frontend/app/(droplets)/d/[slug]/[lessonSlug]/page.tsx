@@ -1,5 +1,5 @@
 import { LessonRenderer } from "@/components/droplets/lessons/lesson-renderer";
-import { fetchAPI } from "@/lib/utils";
+import { getLessonBySlug } from "@/lib/requests/lesson";
 import { Lesson } from "@/types";
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
@@ -11,19 +11,11 @@ type Props = {
   };
 };
 
-async function getLessonBySlug(lessonSlug: string): Promise<Lesson> {
-  const path = `/lessons`;
-  const urlParams = {
-    filters: { slug: lessonSlug },
-    populate: "*",
-  };
-  return await fetchAPI<Lesson[]>(path, { urlParams: urlParams }).then(
-    (lessons) => lessons[0]
-  );
-}
-
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const lesson = await getLessonBySlug(params.lessonSlug);
+  const lesson = await getLessonBySlug<Pick<Lesson, "title">>(
+    params.lessonSlug,
+    { fields: ["title"], populate: undefined }
+  );
   if (!lesson) return {};
 
   return {

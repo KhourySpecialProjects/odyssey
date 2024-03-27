@@ -19,6 +19,7 @@ type Props = {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const droplet = await getDropletBySlug<Pick<Droplet, "name">>(params.slug, {
     fields: ["name"],
+    populate: undefined,
   });
   if (!droplet) return {};
 

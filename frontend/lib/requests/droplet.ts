@@ -34,19 +34,9 @@ export async function getDroplets({
  * @param options Strapi query modifiers.
  * @returns The Droplet.
  */
-export async function getDropletBySlug<
-  T extends Partial<Droplet> = Pick<
-    Droplet,
-    "id" | "name" | "slug" | "type" | "focusArea"
-  >
->(
+export async function getDropletBySlug<T extends Partial<Droplet> = Droplet>(
   slug: string,
-  {
-    sort,
-    filters,
-    populate,
-    fields = ["id", "name", "slug", "type", "focusArea"],
-  }: StrapiRequestParams = {}
+  { sort, filters, populate = "*", fields = ["*"] }: StrapiRequestParams = {}
 ): Promise<T> {
   const path = `/droplets`;
   const urlParams = {
