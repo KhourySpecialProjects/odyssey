@@ -2,7 +2,8 @@ import { COLLEGES, PERMITTED_EMAIL_DOMAINS } from "@/lib/globals";
 import { z } from "zod";
 
 export const AFFILIATIONS = [
-  { value: "student", label: "Student" },
+  { value: "undergraduateStudent", label: "Undergraduate Student" },
+  { value: "graduateStudent", label: "Graduate Student" },
   { value: "faculty", label: "Faculty" },
   { value: "staff", label: "Staff" },
   { value: "other", label: "Other" },

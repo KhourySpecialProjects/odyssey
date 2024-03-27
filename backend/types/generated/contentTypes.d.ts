@@ -804,7 +804,7 @@ export interface ApiAccessRequestAccessRequest extends Schema.CollectionType {
     familyName: Attribute.String & Attribute.Required;
     email: Attribute.Email & Attribute.Required & Attribute.Unique;
     affiliation: Attribute.Enumeration<
-      ['student', 'faculty', 'staff', 'other']
+      ['undergraduateStudent', 'graduateStudent', 'faculty', 'staff', 'other']
     > &
       Attribute.Required;
     college: Attribute.Enumeration<

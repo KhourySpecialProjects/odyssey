@@ -28,7 +28,8 @@
     "affiliation": {
       "type": "enumeration",
       "enum": [
-        "student",
+        "undergraduateStudent",
+        "graduateStudent",
         "faculty",
         "staff",
         "other"
