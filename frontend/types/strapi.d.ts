@@ -20,3 +20,22 @@ export interface StrapiRequestParams extends StrapiBaseRequestParams {
   pagination?: PaginationByOffset | PaginationByPage;
   filters?: Record<string, unknown>;
 }
+
+export interface StrapiMediaParams {
+  name: String;
+  alternativeText?: String;
+  caption?: String;
+  width?: Integer;
+  height?: Integer;
+  formats?: JSON<any>;
+  hash: String;
+  ext?: String;
+  mime: String;
+  size: Decimal;
+  url: String;
+  previewUrl?: String;
+  provider: String;
+  provider_metadata?: JSON;
+  createdAt?: DateTime;
+  updatedAt?: DateTime;
+}

@@ -2,7 +2,8 @@ import { DebugBanner } from "@/components/debug/banner";
 import { ReportBugDialog } from "@/components/droplets/reports/bug/dialog";
 import Sidebar from "@/components/droplets/sidebar";
 import { getCurrentUser } from "@/lib/auth/session";
-import { deprecated__getDropletBySlug } from "@/lib/requests/droplet";
+import { getDropletBySlug } from "@/lib/requests/droplet";
+import { Droplet } from "@/types";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
@@ -15,7 +16,9 @@ type Props = {
 };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  let droplet = await deprecated__getDropletBySlug(params.slug);
+  const droplet = await getDropletBySlug<Pick<Droplet, "name">>(params.slug, {
+    fields: ["name"],
+  });
   if (!droplet) return {};
 
   return {
@@ -29,10 +32,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function RootLayout({ params, children }: Props) {
   const user = await getCurrentUser();
 
-  let droplet = await deprecated__getDropletBySlug(params.slug, {
-    lessons: {
-      populate: "*",
-    },
+  const droplet = await getDropletBySlug<
+    Pick<Droplet, "name" | "slug" | "lessons">
+  >(params.slug, {
+    fields: ["name", "slug"],
+    populate: ["lessons"],
   });
   if (!droplet) return notFound();
 

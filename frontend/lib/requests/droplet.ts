@@ -1,7 +1,12 @@
 import { Droplet } from "@/types";
 import { StrapiRequestParams } from "@/types/strapi";
-import { fetchAPI, PopulateValue } from "../utils";
+import { fetchAPI } from "../utils";
 
+/**
+ * Gets the first 25 Droplets matching the specified criteria, unless overridden by `options`.
+ * @param options Strapi query modifiers.
+ * @returns The matching Droplets.
+ */
 export async function getDroplets({
   sort,
   filters,
@@ -24,23 +29,38 @@ export async function getDroplets({
 }
 
 /**
- *
- * @deprecated
- * @param slug
- * @param populate
- * @returns
+ * Gets the desired Droplet by its unique slug.
+ * @param slug The unique slug of the desired Droplet.
+ * @param options Strapi query modifiers.
+ * @returns The Droplet.
  */
-export async function deprecated__getDropletBySlug(
+export async function getDropletBySlug<
+  T extends Partial<Droplet> = Pick<
+    Droplet,
+    "id" | "name" | "slug" | "type" | "focusArea"
+  >
+>(
   slug: string,
-  populate?: PopulateValue
-): Promise<Droplet> {
+  {
+    sort,
+    filters,
+    populate,
+    fields = ["id", "name", "slug", "type", "focusArea"],
+  }: StrapiRequestParams = {}
+): Promise<T> {
   const path = `/droplets`;
   const urlParams = {
-    filters: { slug },
+    sort,
+    filters: { ...filters, slug },
     populate,
+    fields,
+    pagination: {
+      pageSize: 1,
+      page: 1,
+    },
   };
 
-  return await fetchAPI<Droplet[]>(path, { urlParams }).then(
+  return await fetchAPI<T[]>(path, { urlParams }).then(
     (droplets) => droplets[0]
   );
 }

@@ -2,7 +2,7 @@
 
 import UnauthorizedRoute from "@/app/(general)/unauthorized/page";
 import { cn } from "@/lib/utils";
-import { User } from "@/types";
+import { Droplet, User } from "@/types";
 import {
   BookTextIcon,
   ChevronDownIcon,
@@ -36,7 +36,7 @@ export default function Sidebar({
   droplet,
 }: {
   user?: User | null;
-  droplet: any;
+  droplet: Pick<Droplet, "name" | "slug" | "lessons">;
 }) {
   const [expanded, setExpanded] = useState(false);
   const pathname = usePathname();

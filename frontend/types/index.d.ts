@@ -1,3 +1,5 @@
+import { type StrapiMediaParams } from "./strapi";
+
 export type User = {
   name?: string | null;
   email?: string | null;
@@ -20,7 +22,7 @@ export type Author = {
   id: number;
   name: string;
   bio: string;
-  photo: any;
+  photo: StrapiMediaParams;
   droplets: Droplet[];
 };
 

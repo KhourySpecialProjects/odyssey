@@ -2,8 +2,9 @@ import { GradientBackground } from "@/components/gradient-bg";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { deprecated__getDropletBySlug } from "@/lib/requests/droplet";
+import { getDropletBySlug } from "@/lib/requests/droplet";
 import { uppercaseFirstChar } from "@/lib/utils";
+import { Droplet } from "@/types";
 import { ArrowRightIcon, BookTextIcon } from "lucide-react";
 import { Metadata } from "next";
 import Link from "next/link";
@@ -16,7 +17,9 @@ type Props = {
 };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const droplet = await deprecated__getDropletBySlug(params.slug);
+  const droplet = await getDropletBySlug<Pick<Droplet, "name">>(params.slug, {
+    fields: ["name"],
+  });
   if (!droplet) return {};
 
   return {
@@ -25,17 +28,21 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function DropletRoute({ params }: Props) {
-  const droplet = await deprecated__getDropletBySlug(params.slug, {
-    authors: {
-      populate: "*",
-    },
-    lessons: {
-      populate: "*",
-    },
-    tags: {
-      populate: "*",
+  const droplet = await getDropletBySlug<Droplet>(params.slug, {
+    fields: ["*"],
+    populate: {
+      authors: {
+        populate: "*",
+      },
+      lessons: {
+        populate: "*",
+      },
+      tags: {
+        populate: "*",
+      },
     },
   });
+  console.log(droplet.authors[0].photo);
   if (!droplet) return notFound();
 
   return (
@@ -111,7 +118,7 @@ export default async function DropletRoute({ params }: Props) {
                 className="inline-flex [&:not(:first-child)]:pt-3 rounded-md p-4 gap-4"
               >
                 <Avatar variant="round" className="border border-sky-800">
-                  <AvatarImage src={author.photo.formats.medium.url} />
+                  <AvatarImage src={author.photo?.formats?.medium.url} />
                   <AvatarFallback>{author.name.charAt(0)}</AvatarFallback>
                 </Avatar>
 
