@@ -1,12 +1,11 @@
 import { cn } from "@/lib/utils";
-import { ReactNode } from "react";
 
 export function GradientBackground({
   className,
   children,
 }: {
   className?: string;
-  children: ReactNode;
+  children: React.ReactNode;
 }) {
   return (
     <div
