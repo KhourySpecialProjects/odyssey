@@ -1,5 +1,5 @@
 import DropletFooter from "@/components/droplets/footer";
-import { getDropletBySlug } from "@/lib/requests/droplet";
+import { deprecated__getDropletBySlug } from "@/lib/requests/droplet";
 import { notFound } from "next/navigation";
 
 type Props = {
@@ -11,7 +11,7 @@ type Props = {
 };
 
 export default async function RootLayout({ params, children }: Props) {
-  let droplet = await getDropletBySlug(params.slug, {
+  let droplet = await deprecated__getDropletBySlug(params.slug, {
     lessons: {
       populate: "*",
     },

@@ -23,7 +23,14 @@ export async function getDroplets({
   return await fetchAPI<Droplet[]>(path, { urlParams });
 }
 
-export async function getDropletBySlug(
+/**
+ *
+ * @deprecated
+ * @param slug
+ * @param populate
+ * @returns
+ */
+export async function deprecated__getDropletBySlug(
   slug: string,
   populate?: PopulateValue
 ): Promise<Droplet> {

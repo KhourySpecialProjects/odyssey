@@ -2,7 +2,7 @@ import { DebugBanner } from "@/components/debug/banner";
 import { ReportBugDialog } from "@/components/droplets/reports/bug/dialog";
 import Sidebar from "@/components/droplets/sidebar";
 import { getCurrentUser } from "@/lib/auth/session";
-import { getDropletBySlug } from "@/lib/requests/droplet";
+import { deprecated__getDropletBySlug } from "@/lib/requests/droplet";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
@@ -15,7 +15,7 @@ type Props = {
 };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  let droplet = await getDropletBySlug(params.slug);
+  let droplet = await deprecated__getDropletBySlug(params.slug);
   if (!droplet) return {};
 
   return {
@@ -29,7 +29,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function RootLayout({ params, children }: Props) {
   const user = await getCurrentUser();
 
-  let droplet = await getDropletBySlug(params.slug, {
+  let droplet = await deprecated__getDropletBySlug(params.slug, {
     lessons: {
       populate: "*",
     },

@@ -2,7 +2,7 @@ import { GradientBackground } from "@/components/gradient-bg";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { getDropletBySlug } from "@/lib/requests/droplet";
+import { deprecated__getDropletBySlug } from "@/lib/requests/droplet";
 import { uppercaseFirstChar } from "@/lib/utils";
 import { ArrowRightIcon, BookTextIcon } from "lucide-react";
 import { Metadata } from "next";
@@ -16,7 +16,7 @@ type Props = {
 };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const droplet = await getDropletBySlug(params.slug);
+  const droplet = await deprecated__getDropletBySlug(params.slug);
   if (!droplet) return {};
 
   return {
@@ -25,7 +25,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function DropletRoute({ params }: Props) {
-  const droplet = await getDropletBySlug(params.slug, {
+  const droplet = await deprecated__getDropletBySlug(params.slug, {
     authors: {
       populate: "*",
     },
