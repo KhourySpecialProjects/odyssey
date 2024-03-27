@@ -42,7 +42,8 @@
         "personal",
         "professional",
         "technical"
-      ]
+      ],
+      "required": true
     },
     "lessons": {
       "type": "relation",

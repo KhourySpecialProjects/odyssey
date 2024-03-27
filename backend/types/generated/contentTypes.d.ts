@@ -936,7 +936,10 @@ export interface ApiDropletDroplet extends Schema.CollectionType {
       'api::author.author'
     >;
     slug: Attribute.UID<'api::droplet.droplet', 'name'> & Attribute.Required;
-    focusArea: Attribute.Enumeration<['personal', 'professional', 'technical']>;
+    focusArea: Attribute.Enumeration<
+      ['personal', 'professional', 'technical']
+    > &
+      Attribute.Required;
     lessons: Attribute.Relation<
       'api::droplet.droplet',
       'manyToMany',
