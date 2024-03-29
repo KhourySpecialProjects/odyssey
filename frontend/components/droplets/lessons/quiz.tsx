@@ -31,9 +31,9 @@ export function Quiz({ data }: { data: any }) {
                   />
                   <Label
                     htmlFor={a.id}
-                    className="flex cursor-pointer flex-row items-center gap-4 rounded-md border border-slate-200 hover:border-blue-200 bg-popover p-4 hover:bg-blue-50 transition-colors hover:text-blue-800 peer-data-[state=checked]:border-blue-700 [&:has([data-state=checked])]:border-blue-700"
+                    className="flex cursor-pointer flex-row items-center gap-4 rounded-md border border-slate-200 hover:border-sky-700 bg-popover p-4 hover:bg-slate-50 transition-colors hover:text-sky-700 peer-data-[state=checked]:border-sky-700 [&:has([data-state=checked])]:border-sky-700"
                   >
-                    <span className="flex items-center justify-center w-8 h-8 text-sm font-bold border border-blue-700 rounded-full bg-blue-50">
+                    <span className="flex items-center justify-center w-8 h-8 text-sm font-bold border rounded-full border-sky-700 bg-slate-100 text-sky-700">
                       {number === 0
                         ? "A"
                         : number === 1
