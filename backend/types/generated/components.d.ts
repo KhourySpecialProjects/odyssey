@@ -85,7 +85,7 @@ export interface QuizzesAnswer extends Schema.Component {
       Attribute.Required &
       Attribute.Private &
       Attribute.DefaultTo<false>;
-    answerText: Attribute.String & Attribute.Required;
+    content: Attribute.String & Attribute.Required;
   };
 }
 

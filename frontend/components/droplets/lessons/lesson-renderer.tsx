@@ -10,6 +10,7 @@ import useDebugStore from "@/stores/debug-toggle-store";
 import { Lesson } from "@/types";
 import { BlocksRenderer } from "@strapi/blocks-react-renderer";
 import { ArrowDownFromLineIcon } from "lucide-react";
+import { Quiz } from "./quiz";
 
 export function LessonRenderer({ lesson }: { lesson: Lesson }) {
   const isDebugEnabled = useDebugStore((state) => state.debugModeEnabled);
@@ -83,7 +84,7 @@ function LessonBlockRenderer({ block }: { block: any }) {
       );
 
     case "droplets.quiz":
-      return <div>{JSON.stringify(block, null, 2)}</div>;
+      return <Quiz data={block} />;
 
     case "droplets.callout":
       return (
@@ -97,7 +98,7 @@ function LessonBlockRenderer({ block }: { block: any }) {
     case "droplets.expandable":
       return (
         <Collapsible className="border border-slate-200 w-full p-4 rounded-md">
-         <div>{JSON.stringify(block, null, 2)}</div>;
+          <div>{JSON.stringify(block, null, 2)}</div>;
           <CollapsibleTrigger className="text-sky-600 font-bold inline-flex gap-2 items-center flex-row">
             {block.title}
             <ArrowDownFromLineIcon className="text-sky-400 w-4 h-4" />

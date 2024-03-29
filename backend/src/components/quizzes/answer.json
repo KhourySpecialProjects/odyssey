@@ -12,7 +12,7 @@
       "private": true,
       "required": true
     },
-    "answerText": {
+    "content": {
       "type": "string",
       "required": true
     }
