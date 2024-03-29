@@ -23,8 +23,34 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-export default async function DropletRoute({ params }: Props) {
-  const lesson = await getLessonBySlug(params.lessonSlug);
+export default async function LessonRoute({ params }: Props) {
+  const lesson = await getLessonBySlug(params.lessonSlug, {
+    populate: {
+      blocks: {
+        on: {
+          "droplets.generic": {
+            populate: "*",
+          },
+          "droplets.video": {
+            populate: "*",
+          },
+          "droplets.quiz": {
+            populate: {
+              questions: {
+                populate: { answerOptions: "*" },
+              },
+            },
+          },
+          "droplets.callout": {
+            populate: "*",
+          },
+          "droplets.expandable": {
+            populate: "*",
+          },
+        },
+      },
+    },
+  });
   if (!lesson) return notFound();
 
   return <LessonRenderer lesson={lesson} />;

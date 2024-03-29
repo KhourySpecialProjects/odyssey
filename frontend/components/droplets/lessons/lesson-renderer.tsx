@@ -68,31 +68,6 @@ function LessonBlockRenderer({ block }: { block: any }) {
         ></div>
       );
 
-    case "droplets.callout":
-      return (
-        <div className="bg-sky-50 -mx-8 py-6 px-6 rounded-md border border-sky-200">
-          <div className="prose mx-auto">
-            <BlocksRenderer content={block.content} />
-          </div>
-        </div>
-      );
-
-    case "droplets.expandable":
-      return (
-        <Collapsible className="border border-slate-200 w-full p-4 rounded-md">
-          <CollapsibleTrigger className="text-sky-600 font-bold inline-flex gap-2 items-center flex-row">
-            {block.title}
-            <ArrowDownFromLineIcon className="text-sky-400 w-4 h-4" />
-          </CollapsibleTrigger>
-          <CollapsibleContent className="mt-4 pt-3 border-t border-t-slate-200">
-            <div
-              className="prose"
-              dangerouslySetInnerHTML={{ __html: block.content }}
-            ></div>
-          </CollapsibleContent>
-        </Collapsible>
-      );
-
     case "droplets.video":
       return (
         <iframe
@@ -105,6 +80,35 @@ function LessonBlockRenderer({ block }: { block: any }) {
           title="Embedded YouTube"
           className="rounded-md"
         />
+      );
+
+    case "droplets.quiz":
+      return <div>{JSON.stringify(block, null, 2)}</div>;
+
+    case "droplets.callout":
+      return (
+        <div className="bg-sky-50 -mx-8 py-6 px-6 rounded-md border border-sky-200">
+          <div className="prose mx-auto">
+            <BlocksRenderer content={block.content} />
+          </div>
+        </div>
+      );
+
+    case "droplets.expandable":
+      return (
+        <Collapsible className="border border-slate-200 w-full p-4 rounded-md">
+         <div>{JSON.stringify(block, null, 2)}</div>;
+          <CollapsibleTrigger className="text-sky-600 font-bold inline-flex gap-2 items-center flex-row">
+            {block.title}
+            <ArrowDownFromLineIcon className="text-sky-400 w-4 h-4" />
+          </CollapsibleTrigger>
+          <CollapsibleContent className="mt-4 pt-3 border-t border-t-slate-200">
+            <div
+              className="prose"
+              dangerouslySetInnerHTML={{ __html: block.content }}
+            ></div>
+          </CollapsibleContent>
+        </Collapsible>
       );
 
     default:

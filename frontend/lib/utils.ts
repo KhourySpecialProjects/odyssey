@@ -55,6 +55,9 @@ export async function fetchAPI<T>(
       `/api${path}${queryString ? `?${queryString}` : ""}`
     )}`;
 
+    console.log(requestUrl);
+
+
     // Trigger API call
     return await fetch(requestUrl, mergedOptions).then(async (response) => {
       let data = await response.json();

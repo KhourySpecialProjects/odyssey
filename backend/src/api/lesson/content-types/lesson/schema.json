@@ -27,6 +27,7 @@
       "components": [
         "droplets.generic",
         "droplets.video",
+        "droplets.quiz",
         "droplets.callout",
         "droplets.expandable"
       ],

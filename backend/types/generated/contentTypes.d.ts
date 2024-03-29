@@ -994,6 +994,7 @@ export interface ApiLessonLesson extends Schema.CollectionType {
       [
         'droplets.generic',
         'droplets.video',
+        'droplets.quiz',
         'droplets.callout',
         'droplets.expandable'
       ]

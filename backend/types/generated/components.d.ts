@@ -52,6 +52,17 @@ export interface DropletsGeneric extends Schema.Component {
   };
 }
 
+export interface DropletsQuiz extends Schema.Component {
+  collectionName: 'components_droplets_quizzes';
+  info: {
+    displayName: 'Quiz';
+  };
+  attributes: {
+    questions: Attribute.Component<'quizzes.question', true> &
+      Attribute.Required;
+  };
+}
+
 export interface DropletsVideo extends Schema.Component {
   collectionName: 'components_droplets_videos';
   info: {
@@ -63,13 +74,53 @@ export interface DropletsVideo extends Schema.Component {
   };
 }
 
+export interface QuizzesAnswer extends Schema.Component {
+  collectionName: 'components_quiz_answer';
+  info: {
+    displayName: 'Quiz Answer';
+    description: '';
+  };
+  attributes: {
+    isCorrect: Attribute.Boolean &
+      Attribute.Required &
+      Attribute.Private &
+      Attribute.DefaultTo<false>;
+    answerText: Attribute.String & Attribute.Required;
+  };
+}
+
+export interface QuizzesQuestion extends Schema.Component {
+  collectionName: 'components_quiz_questions';
+  info: {
+    displayName: 'Quiz Question';
+    icon: 'question';
+    description: '';
+  };
+  attributes: {
+    content: Attribute.RichText &
+      Attribute.Required &
+      Attribute.CustomField<
+        'plugin::ckeditor.CKEditor',
+        {
+          output: 'HTML';
+          preset: 'light';
+        }
+      >;
+    answerOptions: Attribute.Component<'quizzes.answer', true> &
+      Attribute.Required;
+  };
+}
+
 declare module '@strapi/types' {
   export module Shared {
     export interface Components {
       'droplets.callout': DropletsCallout;
       'droplets.expandable': DropletsExpandable;
       'droplets.generic': DropletsGeneric;
+      'droplets.quiz': DropletsQuiz;
       'droplets.video': DropletsVideo;
+      'quizzes.answer': QuizzesAnswer;
+      'quizzes.question': QuizzesQuestion;
     }
   }
 }
