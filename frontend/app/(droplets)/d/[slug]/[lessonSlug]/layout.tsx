@@ -12,10 +12,10 @@ type Props = {
 };
 
 export default async function RootLayout({ params, children }: Props) {
-  const droplet = await getDropletBySlug<Pick<Droplet, "lessons">>(
+  const droplet = await getDropletBySlug<Pick<Droplet, "slug" | "lessons">>(
     params.slug,
     {
-      fields: [],
+      fields: ["slug"],
       populate: ["lessons"],
     }
   );

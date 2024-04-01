@@ -81,7 +81,7 @@ export async function DropletsGrid({
                   <Badge variant="outline">
                     {uppercaseFirstChar(droplet.type)}
                   </Badge>
-                  {droplet.tags.map((tag) => (
+                  {droplet.tags?.map((tag) => (
                     <Badge key={tag.id} variant="outline">
                       {tag.name}
                     </Badge>

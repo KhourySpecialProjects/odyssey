@@ -17,7 +17,11 @@ type PaginationProps = {
   name: string;
 };
 
-export default function DropletFooter({ droplet }: { droplet: Droplet }) {
+export default function DropletFooter({
+  droplet,
+}: {
+  droplet: Pick<Droplet, "slug" | "lessons">;
+}) {
   const pathname = usePathname();
 
   if (!droplet.lessons || droplet.lessons.length === 0) return null;
