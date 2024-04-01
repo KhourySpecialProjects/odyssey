@@ -2,7 +2,6 @@ import { Quiz } from "@/types";
 import { QuizQuestionBlock } from "./quiz-question";
 
 export function QuizBlock({ data }: { data: Quiz }) {
-  console.log(data);
   return (
     <div className="px-6 py-12 my-12 -mx-6 border rounded-md not-prose bg-slate-50 border-slate-200">
       <div className="text-center">

@@ -98,7 +98,6 @@ function LessonBlockRenderer({ block }: { block: any }) {
     case "droplets.expandable":
       return (
         <Collapsible className="w-full p-4 border rounded-md border-slate-200">
-          <div>{JSON.stringify(block, null, 2)}</div>;
           <CollapsibleTrigger className="inline-flex flex-row items-center gap-2 font-bold text-sky-600">
             {block.title}
             <ArrowDownFromLineIcon className="w-4 h-4 text-sky-400" />

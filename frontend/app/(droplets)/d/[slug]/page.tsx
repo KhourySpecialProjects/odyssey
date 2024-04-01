@@ -43,7 +43,6 @@ export default async function DropletRoute({ params }: Props) {
       },
     },
   });
-  console.log(droplet.authors[0].photo);
   if (!droplet) return notFound();
 
   return (
