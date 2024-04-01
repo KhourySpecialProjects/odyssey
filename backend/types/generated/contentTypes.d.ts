@@ -992,10 +992,6 @@ export interface ApiLessonLesson extends Schema.CollectionType {
       Attribute.SetMinMaxLength<{
         maxLength: 100;
       }>;
-    title: Attribute.String &
-      Attribute.SetMinMaxLength<{
-        maxLength: 100;
-      }>;
     slug: Attribute.UID<'api::lesson.lesson', 'name'> & Attribute.Required;
     blocks: Attribute.DynamicZone<
       [
