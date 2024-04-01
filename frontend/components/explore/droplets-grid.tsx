@@ -26,6 +26,7 @@ export async function DropletsGrid({
     sort: sortKey,
     filters: {
       $and: [
+        { isHidden: false },
         searchValue ? { name: { $containsi: searchValue } } : {},
         type
           ? { $or: type.split(",").map((val) => ({ type: { $eq: val } })) }

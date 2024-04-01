@@ -9,7 +9,7 @@ import { fetchAPI } from "../utils";
  */
 export async function getDroplets({
   sort,
-  filters,
+  filters = { isHidden: false },
   populate,
   fields = ["id", "name", "slug", "type", "focusArea"],
 }: StrapiRequestParams = {}): Promise<Droplet[]> {

@@ -60,6 +60,11 @@
     "description": {
       "type": "text",
       "maxLength": 500
+    },
+    "isHidden": {
+      "type": "boolean",
+      "default": false,
+      "required": true
     }
   }
 }

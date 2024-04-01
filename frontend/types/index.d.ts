@@ -51,6 +51,7 @@ export type Droplet = {
   tags?: Tag[];
   lessons?: Lesson[];
   authors: Author[];
+  isHidden: boolean;
 };
 
 export type QuizAnswerOption = {
