@@ -24,13 +24,13 @@ export function LessonRenderer({ lesson }: { lesson: Lesson }) {
 
   return (
     <div className="w-full py-8 mx-auto max-w-prose">
-      <h1 className="text-4xl font-extrabold">{lesson.title}</h1>
+      <h1 className="text-4xl font-extrabold">{lesson.name}</h1>
 
       <div className="h-8"></div>
 
-      <div className="bg-sky-50 py-6 px-8 -mx-8 rounded-md border border-sky-200">
-        <h2 className="font-bold text-xl">Contents</h2>
-        <ul className="ml-4 mt-3 list-disc list-inside">
+      <div className="px-8 py-6 -mx-8 border rounded-md bg-sky-50 border-sky-200">
+        <h2 className="text-xl font-bold">Contents</h2>
+        <ul className="mt-3 ml-4 list-disc list-inside">
           {headings.map((heading, index) => (
             <li
               key={index}
@@ -88,8 +88,8 @@ function LessonBlockRenderer({ block }: { block: any }) {
 
     case "droplets.callout":
       return (
-        <div className="bg-sky-50 -mx-8 py-6 px-6 rounded-md border border-sky-200">
-          <div className="prose mx-auto">
+        <div className="px-6 py-6 -mx-8 border rounded-md bg-sky-50 border-sky-200">
+          <div className="mx-auto prose">
             <BlocksRenderer content={block.content} />
           </div>
         </div>
@@ -97,13 +97,13 @@ function LessonBlockRenderer({ block }: { block: any }) {
 
     case "droplets.expandable":
       return (
-        <Collapsible className="border border-slate-200 w-full p-4 rounded-md">
+        <Collapsible className="w-full p-4 border rounded-md border-slate-200">
           <div>{JSON.stringify(block, null, 2)}</div>;
-          <CollapsibleTrigger className="text-sky-600 font-bold inline-flex gap-2 items-center flex-row">
+          <CollapsibleTrigger className="inline-flex flex-row items-center gap-2 font-bold text-sky-600">
             {block.title}
-            <ArrowDownFromLineIcon className="text-sky-400 w-4 h-4" />
+            <ArrowDownFromLineIcon className="w-4 h-4 text-sky-400" />
           </CollapsibleTrigger>
-          <CollapsibleContent className="mt-4 pt-3 border-t border-t-slate-200">
+          <CollapsibleContent className="pt-3 mt-4 border-t border-t-slate-200">
             <div
               className="prose"
               dangerouslySetInnerHTML={{ __html: block.content }}

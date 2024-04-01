@@ -984,12 +984,16 @@ export interface ApiLessonLesson extends Schema.CollectionType {
     draftAndPublish: true;
   };
   attributes: {
-    title: Attribute.String &
+    name: Attribute.String &
       Attribute.Required &
       Attribute.SetMinMaxLength<{
         maxLength: 100;
       }>;
-    slug: Attribute.UID<'api::lesson.lesson', 'title'> & Attribute.Required;
+    title: Attribute.String &
+      Attribute.SetMinMaxLength<{
+        maxLength: 100;
+      }>;
+    slug: Attribute.UID<'api::lesson.lesson', 'name'> & Attribute.Required;
     blocks: Attribute.DynamicZone<
       [
         'droplets.generic',

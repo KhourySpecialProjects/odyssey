@@ -28,7 +28,7 @@ export type Author = {
 
 export type Lesson = {
   id: number;
-  title: string;
+  name: string;
   slug: string;
   blocks: any[];
   droplets: Droplet[];

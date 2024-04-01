@@ -46,13 +46,13 @@ export default function Sidebar({
   const inactiveLinkClasses =
     "flex items-center p-2 rounded-lg text-slate-900 dark:text-white hover:bg-slate-100 dark:hover:bg-slate-700 group transition-colors";
 
-  const totalLessons = droplet.lessons.length + 1;
+  const totalLessons = (droplet.lessons?.length ?? 0) + 1;
   const lessonSlug = pathname.split("/").at(-1);
   const lessonSlugIndex = droplet.lessons
-    .map((l: any) => l.slug)
+    ?.map((l: any) => l.slug)
     .indexOf(lessonSlug);
   const dropletProgress = Math.round(
-    ((lessonSlugIndex + 2) / totalLessons) * 100 // offset for intro and 0-index
+    (((lessonSlugIndex ?? 0) + 2) / totalLessons) * 100 // offset for intro and 0-index
   );
 
   useLayoutEffect(() => {
@@ -124,7 +124,7 @@ export default function Sidebar({
               </Link>
             </li>
 
-            {droplet.lessons.map((lesson: any, i: number) => (
+            {droplet.lessons?.map((lesson, i: number) => (
               <li key={i}>
                 <Link
                   href={`/d/${droplet.slug}/${lesson.slug}`}
@@ -134,12 +134,12 @@ export default function Sidebar({
                       : inactiveLinkClasses
                   }
                 >
-                  {lesson.title.toLowerCase() === "recap" ? (
+                  {lesson.name.toLowerCase() === "recap" ? (
                     <HistoryIcon className="shrink-0" />
                   ) : (
                     <BookTextIcon className="shrink-0" />
                   )}
-                  <span className="ms-3">{lesson.title}</span>
+                  <span className="ms-3">{lesson.name}</span>
                 </Link>
               </li>
             ))}

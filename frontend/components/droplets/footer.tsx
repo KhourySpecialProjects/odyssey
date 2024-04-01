@@ -1,6 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
+import { Droplet } from "@/types";
 import {
   ArrowLeftIcon,
   ArrowRightIcon,
@@ -16,8 +17,10 @@ type PaginationProps = {
   name: string;
 };
 
-export default function DropletFooter({ droplet }: { droplet: any }) {
+export default function DropletFooter({ droplet }: { droplet: Droplet }) {
   const pathname = usePathname();
+
+  if (!droplet.lessons || droplet.lessons.length === 0) return null;
 
   let previous: PaginationProps | null = null;
   let next: PaginationProps | null = null;
@@ -39,7 +42,7 @@ export default function DropletFooter({ droplet }: { droplet: any }) {
       const prevLesson = droplet.lessons[currentLessonSlugIndex - 1];
       previous = {
         link: `/d/${droplet.slug}/${prevLesson.slug}`,
-        name: prevLesson.title,
+        name: prevLesson.name,
       };
     }
 
@@ -49,14 +52,14 @@ export default function DropletFooter({ droplet }: { droplet: any }) {
       const nextLesson = droplet.lessons[currentLessonSlugIndex + 1];
       next = {
         link: `/d/${droplet.slug}/${nextLesson.slug}`,
-        name: nextLesson.title,
+        name: nextLesson.name,
       };
     }
   } else {
     const nextLesson = droplet.lessons[0];
     next = {
       link: `/d/${droplet.slug}/${nextLesson.slug}`,
-      name: nextLesson.title,
+      name: nextLesson.name,
     };
   }
 

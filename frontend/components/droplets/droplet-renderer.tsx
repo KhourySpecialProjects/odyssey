@@ -40,7 +40,7 @@ function LessonBlockRenderer({ block }: { block: any }) {
           src={`${block.url}`}
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
           allowFullScreen
-          title="Embedded youtube"
+          title="Embedded YouTube video"
         />
       );
 

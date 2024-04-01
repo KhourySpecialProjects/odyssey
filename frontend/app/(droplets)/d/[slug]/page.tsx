@@ -92,7 +92,7 @@ export default async function DropletRoute({ params }: Props) {
                     className="inline-flex items-center [&:not(:first-child)]:pt-3 rounded-md py-2 px-4 gap-2"
                   >
                     <BookTextIcon className="w-5 h-5 mr-0.5" />
-                    {lesson.title}
+                    {lesson.name}
                   </li>
                 ))}
               </ul>
