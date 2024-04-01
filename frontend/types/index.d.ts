@@ -52,3 +52,20 @@ export type Droplet = {
   lessons?: Lesson[];
   authors: Author[];
 };
+
+export type QuizAnswerOption = {
+  id: number;
+  content: string;
+  isCorrect: boolean;
+};
+
+export type QuizQuestion = {
+  id: number;
+  content: string;
+  answerOptions: QuizAnswerOption[];
+};
+
+export type Quiz = {
+  id: number;
+  questions: QuizQuestion[];
+};

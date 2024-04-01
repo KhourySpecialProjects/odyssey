@@ -57,7 +57,7 @@ export default async function DropletRoute({ params }: Props) {
             <Badge size="lg" variant="outline">
               {uppercaseFirstChar(droplet.type)}
             </Badge>
-            {droplet.tags.map((tag) => (
+            {droplet.tags?.map((tag) => (
               <Badge key={tag.id} size="lg" variant="outline">
                 {tag.name}
               </Badge>
@@ -83,7 +83,7 @@ export default async function DropletRoute({ params }: Props) {
             This Droplet contains the following lessons:
           </p>
 
-          {droplet.lessons.length > 0 ? (
+          {droplet.lessons && droplet.lessons.length > 0 ? (
             <div className="mt-4 rounded-md bg-slate-100">
               <ul className="flex flex-col mt-2 divide-y divide-slate-200">
                 {droplet.lessons.map((lesson) => (
@@ -135,13 +135,15 @@ export default async function DropletRoute({ params }: Props) {
           </ul>
         </div>
 
-        <div className="mt-8 md:mt-12">
-          <Button size="lg" after={<ArrowRightIcon />} asChild>
-            <Link href={`/d/${droplet.slug}/${droplet.lessons[0].slug}`}>
-              Begin Droplet
-            </Link>
-          </Button>
-        </div>
+        {droplet.lessons && droplet.lessons.length > 0 ? (
+          <div className="mt-8 md:mt-12">
+            <Button size="lg" after={<ArrowRightIcon />} asChild>
+              <Link href={`/d/${droplet.slug}/${droplet.lessons[0].slug}`}>
+                Begin Droplet
+              </Link>
+            </Button>
+          </div>
+        ) : null}
       </div>
     </>
   );

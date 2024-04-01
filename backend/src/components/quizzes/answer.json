@@ -1,7 +1,7 @@
 {
   "collectionName": "components_quiz_answer",
   "info": {
-    "displayName": "Quiz Answer",
+    "displayName": "Quiz Answer Option",
     "description": ""
   },
   "options": {},
@@ -9,7 +9,6 @@
     "isCorrect": {
       "type": "boolean",
       "default": false,
-      "private": true,
       "required": true
     },
     "content": {

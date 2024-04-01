@@ -10,7 +10,7 @@ import useDebugStore from "@/stores/debug-toggle-store";
 import { Lesson } from "@/types";
 import { BlocksRenderer } from "@strapi/blocks-react-renderer";
 import { ArrowDownFromLineIcon } from "lucide-react";
-import { Quiz } from "./quiz";
+import { QuizBlock } from "./quiz";
 
 export function LessonRenderer({ lesson }: { lesson: Lesson }) {
   const isDebugEnabled = useDebugStore((state) => state.debugModeEnabled);
@@ -84,7 +84,7 @@ function LessonBlockRenderer({ block }: { block: any }) {
       );
 
     case "droplets.quiz":
-      return <Quiz data={block} />;
+      return <QuizBlock data={block} />;
 
     case "droplets.callout":
       return (

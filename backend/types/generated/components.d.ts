@@ -77,13 +77,12 @@ export interface DropletsVideo extends Schema.Component {
 export interface QuizzesAnswer extends Schema.Component {
   collectionName: 'components_quiz_answer';
   info: {
-    displayName: 'Quiz Answer';
+    displayName: 'Quiz Answer Option';
     description: '';
   };
   attributes: {
     isCorrect: Attribute.Boolean &
       Attribute.Required &
-      Attribute.Private &
       Attribute.DefaultTo<false>;
     content: Attribute.String & Attribute.Required;
   };
