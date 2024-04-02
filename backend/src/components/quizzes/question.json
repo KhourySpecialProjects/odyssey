@@ -19,7 +19,7 @@
     "answerOptions": {
       "type": "component",
       "repeatable": true,
-      "component": "quizzes.answeroption",
+      "component": "quizzes.answer-option",
       "required": true
     }
   }

@@ -958,7 +958,7 @@ export interface ApiDropletDroplet extends Schema.CollectionType {
       Attribute.Required &
       Attribute.DefaultTo<false>;
     learningObjectives: Attribute.Component<
-      'droplets.learning-objectives',
+      'droplets.learning-objective',
       true
     > &
       Attribute.Required;

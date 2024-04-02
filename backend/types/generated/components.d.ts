@@ -52,13 +52,14 @@ export interface DropletsGeneric extends Schema.Component {
   };
 }
 
-export interface DropletsLearningObjectives extends Schema.Component {
-  collectionName: 'components_droplets_learning_objectives';
+export interface DropletsLearningObjective extends Schema.Component {
+  collectionName: 'components_droplets_learning_objective';
   info: {
-    displayName: 'Learning Objectives';
+    displayName: 'Learning Objective';
+    description: '';
   };
   attributes: {
-    objective: Attribute.String;
+    objective: Attribute.String & Attribute.Required;
   };
 }
 
@@ -84,7 +85,7 @@ export interface DropletsVideo extends Schema.Component {
   };
 }
 
-export interface QuizzesAnsweroption extends Schema.Component {
+export interface QuizzesAnswerOption extends Schema.Component {
   collectionName: 'components_quiz_answer_option';
   info: {
     displayName: 'Quiz Answer Option';
@@ -115,7 +116,7 @@ export interface QuizzesQuestion extends Schema.Component {
           preset: 'rich';
         }
       >;
-    answerOptions: Attribute.Component<'quizzes.answeroption', true> &
+    answerOptions: Attribute.Component<'quizzes.answer-option', true> &
       Attribute.Required;
   };
 }
@@ -126,10 +127,10 @@ declare module '@strapi/types' {
       'droplets.callout': DropletsCallout;
       'droplets.expandable': DropletsExpandable;
       'droplets.generic': DropletsGeneric;
-      'droplets.learning-objectives': DropletsLearningObjectives;
+      'droplets.learning-objective': DropletsLearningObjective;
       'droplets.quiz': DropletsQuiz;
       'droplets.video': DropletsVideo;
-      'quizzes.answeroption': QuizzesAnsweroption;
+      'quizzes.answer-option': QuizzesAnswerOption;
       'quizzes.question': QuizzesQuestion;
     }
   }

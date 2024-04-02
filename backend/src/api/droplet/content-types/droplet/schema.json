@@ -70,7 +70,7 @@
       "displayName": "Learning Objectives",
       "type": "component",
       "repeatable": true,
-      "component": "droplets.learning-objectives",
+      "component": "droplets.learning-objective",
       "required": true
     }
   }
