@@ -47,13 +47,20 @@ export default function Sidebar({
   const inactiveLinkClasses =
     "flex items-center p-2 rounded-lg text-slate-900 dark:text-white hover:bg-slate-100 dark:hover:bg-slate-700 group transition-colors";
 
-  const totalLessons = (droplet.lessons?.length ?? 0) + 1;
-  const lessonSlug = pathname.split("/").at(-1);
-  const lessonSlugIndex = droplet.lessons
-    ?.map((l: any) => l.slug)
-    .indexOf(lessonSlug);
+  const totalLessons = droplet.lessons?.length ?? 0;
+  const totalPages = totalLessons + 2;
+  const pageSlug = pathname.split("/").at(-1);
+
+  let pageSlugIndex = 0;
+  if (pageSlug === "recap") {
+    pageSlugIndex = totalLessons;
+  } else {
+    pageSlugIndex =
+      droplet.lessons?.map((l: any) => l.slug).indexOf(pageSlug) ?? 0;
+  }
+
   const dropletProgress = Math.round(
-    (((lessonSlugIndex ?? 0) + 2) / totalLessons) * 100 // offset for intro and 0-index
+    ((pageSlugIndex + 2) / totalPages) * 100 // offset for intro and 0-index
   );
 
   useLayoutEffect(() => {
