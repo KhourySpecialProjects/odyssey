@@ -1,7 +1,8 @@
 "use client";
 
+import { getInitials } from "@/lib/utils";
 import { User } from "@/types";
-import { ChevronDownIcon, CogIcon, LogOutIcon } from "lucide-react";
+import { ChevronDownIcon, CogIcon, LogOutIcon, User2Icon } from "lucide-react";
 import { signOut } from "next-auth/react";
 import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
@@ -23,7 +24,11 @@ export function UserDropdown(user: User) {
             <Avatar variant="round" size="xs">
               <AvatarImage src={user.image ?? undefined} />
               <AvatarFallback>
-                {user.name?.charAt(0) ?? user.email?.charAt(0) ?? "?"}
+                {user.name ? (
+                  getInitials(user.name)
+                ) : (
+                  <User2Icon className="w-4 h-4" />
+                )}
               </AvatarFallback>
             </Avatar>
 
@@ -56,7 +61,7 @@ export function UserDropdown(user: User) {
         {user.isAdmin ? (
           <DropdownMenuItem asChild>
             <Link href="/admin">
-              <CogIcon className="mr-2 w-4 h-4" />
+              <CogIcon className="w-4 h-4 mr-2" />
               <span>Admin</span>
             </Link>
           </DropdownMenuItem>
@@ -68,7 +73,7 @@ export function UserDropdown(user: User) {
             signOut();
           }}
         >
-          <LogOutIcon className="mr-2 w-4 h-4" />
+          <LogOutIcon className="w-4 h-4 mr-2" />
           <span>Log Out</span>
         </DropdownMenuItem>
       </DropdownMenuContent>

@@ -1,7 +1,7 @@
 "use client";
 
 import UnauthorizedRoute from "@/app/(general)/unauthorized/page";
-import { cn } from "@/lib/utils";
+import { cn, getInitials } from "@/lib/utils";
 import { Droplet, User } from "@/types";
 import {
   BookTextIcon,
@@ -183,7 +183,7 @@ export default function Sidebar({
                       <Avatar variant="round" size="xs">
                         <AvatarImage src={user.image} />
                         <AvatarFallback>
-                          {user.name?.charAt(0) || "?"}
+                          {getInitials(user.name ?? "")}
                         </AvatarFallback>
                       </Avatar>
                     ) : null}

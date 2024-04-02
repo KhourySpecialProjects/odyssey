@@ -3,7 +3,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { getDropletBySlug } from "@/lib/requests/droplet";
-import { uppercaseFirstChar } from "@/lib/utils";
+import { getInitials, uppercaseFirstChar } from "@/lib/utils";
 import { Droplet } from "@/types";
 import {
   ArrowRightIcon,
@@ -156,7 +156,7 @@ export default async function DropletRoute({ params }: Props) {
               <li key={author.id} className="inline-flex gap-4 p-4">
                 <Avatar variant="round" className="border border-sky-800">
                   <AvatarImage src={author.photo?.formats?.medium.url} />
-                  <AvatarFallback>{author.name.charAt(0)}</AvatarFallback>
+                  <AvatarFallback>{getInitials(author.name)}</AvatarFallback>
                 </Avatar>
 
                 <div>

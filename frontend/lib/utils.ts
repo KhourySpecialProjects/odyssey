@@ -21,6 +21,18 @@ export function uppercaseFirstChar(text: string): string {
   return text.charAt(0).toUpperCase() + text.slice(1);
 }
 
+/**
+ * Get initials for the given name.
+ *
+ * @param name name to get initials from
+ * @returns extracted initials
+ */
+export function getInitials(name: string): string {
+  const words = name.split(" ");
+  const initials = words.map((word) => word.charAt(0).toUpperCase());
+  return initials.join("");
+}
+
 export type PopulateValue =
   | string
   | {
