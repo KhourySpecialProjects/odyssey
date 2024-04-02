@@ -11,7 +11,7 @@
       "type": "customField",
       "options": {
         "output": "HTML",
-        "preset": "light"
+        "preset": "standard"
       },
       "customField": "plugin::ckeditor.CKEditor",
       "required": true
