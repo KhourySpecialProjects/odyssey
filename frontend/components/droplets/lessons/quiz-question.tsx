@@ -47,13 +47,14 @@ export function QuizQuestionBlock({ question }: { question: QuizQuestion }) {
   }
 
   if (!correctAnswer) {
-    throw new Error(`Quiz question ${question.id} has no correct answer.`);
+    console.error(`Quiz question ${question.id} has no correct answer.`);
+    return <p className="text-center">This question could not be loaded.</p>;
   }
 
   return (
     <>
       <div
-        className="prose prose-sky prose-table:text-left"
+        className="prose prose-sky prose-table:text-left prose-p:text-center"
         dangerouslySetInnerHTML={{ __html: question.content }}
       ></div>
 

@@ -66,7 +66,7 @@ export default async function DropletRoute({ params }: Props) {
             {droplet.name}
           </h1>
           {droplet.description ? (
-            <p className="mt-3 text-slate-500 md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed dark:text-slate-400">
+            <p className="mt-3 text-slate-500 text-pretty md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed dark:text-slate-400">
               {droplet.description}
             </p>
           ) : null}
