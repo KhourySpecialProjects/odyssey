@@ -159,12 +159,16 @@ export default async function DropletRoute({ params }: Props) {
                   <AvatarFallback>{getInitials(author.name)}</AvatarFallback>
                 </Avatar>
 
-                <div>
+                <div
+                  className={!author.bio ? "flex flex-row items-center" : ""}
+                >
                   <span className="font-bold leading-relaxed">
                     {author.name}
                   </span>
 
-                  <p className="text-sm text-slate-600">{author.bio}</p>
+                  {author.bio ? (
+                    <p className="text-sm text-slate-600">{author.bio}</p>
+                  ) : null}
                 </div>
               </li>
             ))}
