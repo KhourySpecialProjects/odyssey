@@ -92,60 +92,62 @@ export default function Sidebar({
         )}
         aria-label="Sidebar"
       >
-        <div className="h-full px-3 py-4 overflow-y-auto bg-slate-50 dark:bg-slate-800">
-          <Link href="/explore" className="block p-2 mb-4">
-            <Image
-              src="/logo.svg"
-              alt="Khoury Odyssey Logo"
-              width={200}
-              height={55}
-              priority
-            />
-          </Link>
+        <div className="flex flex-col h-full py-4 overflow-y-auto md:justify-between md:pb-0 bg-slate-50 dark:bg-slate-800">
+          <div className="px-3">
+            <Link href="/explore" className="block p-2 mb-4">
+              <Image
+                src="/logo.svg"
+                alt="Khoury Odyssey Logo"
+                width={200}
+                height={55}
+                priority
+              />
+            </Link>
 
-          <Separator />
+            <Separator />
 
-          <p className="p-2 my-2 text-lg font-extrabold leading-7">
-            {droplet.name}
-          </p>
+            <p className="p-2 my-2 text-lg font-extrabold leading-7">
+              {droplet.name}
+            </p>
 
-          <ul className="space-y-2 font-medium">
-            <li>
-              <Link
-                href={`/d/${droplet.slug}`}
-                className={
-                  pathname == `/d/${droplet.slug}`
-                    ? activeLinkClasses
-                    : inactiveLinkClasses
-                }
-              >
-                <TargetIcon />
-                <span className="ms-3">Overview</span>
-              </Link>
-            </li>
-
-            {droplet.lessons?.map((lesson, i: number) => (
-              <li key={i}>
+            <ul className="space-y-2 font-medium">
+              <li>
                 <Link
-                  href={`/d/${droplet.slug}/${lesson.slug}`}
+                  href={`/d/${droplet.slug}`}
                   className={
-                    pathname == `/d/${droplet.slug}/${lesson.slug}`
+                    pathname == `/d/${droplet.slug}`
                       ? activeLinkClasses
                       : inactiveLinkClasses
                   }
                 >
-                  {lesson.name.toLowerCase() === "recap" ? (
-                    <HistoryIcon className="shrink-0" />
-                  ) : (
-                    <BookTextIcon className="shrink-0" />
-                  )}
-                  <span className="ms-3">{lesson.name}</span>
+                  <TargetIcon />
+                  <span className="ms-3">Overview</span>
                 </Link>
               </li>
-            ))}
-          </ul>
 
-          <div className="bottom-0 left-0 w-full p-2 mt-4 space-y-4 md:px-3 md:mg-0 md:flex-col md:absolute dark:bg-slate-800">
+              {droplet.lessons?.map((lesson, i: number) => (
+                <li key={i}>
+                  <Link
+                    href={`/d/${droplet.slug}/${lesson.slug}`}
+                    className={
+                      pathname == `/d/${droplet.slug}/${lesson.slug}`
+                        ? activeLinkClasses
+                        : inactiveLinkClasses
+                    }
+                  >
+                    {lesson.name.toLowerCase() === "recap" ? (
+                      <HistoryIcon className="shrink-0" />
+                    ) : (
+                      <BookTextIcon className="shrink-0" />
+                    )}
+                    <span className="ms-3">{lesson.name}</span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div className="bottom-0 left-0 w-full p-2 mt-4 space-y-4 border-t bg-slate-50 border-t-slate-200 md:sticky md:px-3 md:mb-0 md:flex-col dark:bg-slate-800">
             <div className="px-2">
               <Label>{dropletProgress}% complete</Label>
               <Progress value={dropletProgress} className="mt-1.5" />
