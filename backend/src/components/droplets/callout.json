@@ -16,7 +16,9 @@
       "enum": [
         "info",
         "warning"
-      ]
+      ],
+      "required": true,
+      "default": "info"
     }
   }
 }

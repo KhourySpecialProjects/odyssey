@@ -9,7 +9,9 @@ export interface DropletsCallout extends Schema.Component {
   };
   attributes: {
     content: Attribute.Blocks & Attribute.Required;
-    type: Attribute.Enumeration<['info', 'warning']>;
+    type: Attribute.Enumeration<['info', 'warning']> &
+      Attribute.Required &
+      Attribute.DefaultTo<'info'>;
   };
 }
 
