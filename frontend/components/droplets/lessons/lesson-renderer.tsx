@@ -64,7 +64,7 @@ function LessonBlockRenderer({ block }: { block: any }) {
     case "droplets.generic":
       return (
         <div
-          className="mt-4 prose prose-lg"
+          className="mt-4 prose prose-lg prose-sky"
           dangerouslySetInnerHTML={{ __html: block.content }}
         ></div>
       );
@@ -89,7 +89,7 @@ function LessonBlockRenderer({ block }: { block: any }) {
     case "droplets.callout":
       return (
         <div className="px-6 py-6 -mx-8 border rounded-md bg-sky-50 border-sky-200">
-          <div className="mx-auto prose">
+          <div className="mx-auto prose prose-sky">
             <BlocksRenderer content={block.content} />
           </div>
         </div>
@@ -104,7 +104,7 @@ function LessonBlockRenderer({ block }: { block: any }) {
           </CollapsibleTrigger>
           <CollapsibleContent className="pt-3 mt-4 border-t border-t-slate-200">
             <div
-              className="prose"
+              className="prose prose-sky"
               dangerouslySetInnerHTML={{ __html: block.content }}
             ></div>
           </CollapsibleContent>
