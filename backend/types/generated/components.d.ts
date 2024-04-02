@@ -105,7 +105,7 @@ export interface QuizzesQuestion extends Schema.Component {
           preset: 'rich';
         }
       >;
-    answerOptions: Attribute.Component<'quizzes.answer', true> &
+    answerOptions: Attribute.Component<'quizzes.answeroption', true> &
       Attribute.Required;
   };
 }
