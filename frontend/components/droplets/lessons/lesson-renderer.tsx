@@ -71,16 +71,17 @@ function LessonBlockRenderer({ block }: { block: any }) {
 
     case "droplets.video":
       return (
-        <iframe
-          width="100%"
-          height="400"
-          style={{ display: "flex", margin: "auto" }}
-          src={`${block.url}`}
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-          allowFullScreen
-          title="Embedded YouTube"
-          className="rounded-md"
-        />
+        <div className="mx-auto md:-mx-8">
+          <iframe
+            width="100%"
+            height="400"
+            src={block.url}
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+            title="Embedded YouTube video"
+            className="rounded-md"
+          />
+        </div>
       );
 
     case "droplets.quiz":
@@ -88,7 +89,7 @@ function LessonBlockRenderer({ block }: { block: any }) {
 
     case "droplets.callout":
       return (
-        <div className="px-6 py-6 -mx-8 border rounded-md bg-sky-50 border-sky-200">
+        <div className="px-6 py-6 border rounded-md md:-mx-8 bg-sky-50 border-sky-200">
           <div className="mx-auto prose prose-sky">
             <BlocksRenderer content={block.content} />
           </div>
