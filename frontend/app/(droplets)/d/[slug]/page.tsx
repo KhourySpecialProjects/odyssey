@@ -32,16 +32,10 @@ export default async function DropletRoute({ params }: Props) {
   const droplet = await getDropletBySlug<Droplet>(params.slug, {
     fields: ["*"],
     populate: {
-      authors: {
-        populate: "*",
-      },
+      authors: { populate: "*" },
       learningObjectives: { populate: "*" },
-      lessons: {
-        populate: "*",
-      },
-      tags: {
-        populate: "*",
-      },
+      lessons: { populate: "*" },
+      tags: { populate: "*" },
     },
   });
   if (!droplet) return notFound();
@@ -81,7 +75,7 @@ export default async function DropletRoute({ params }: Props) {
 
             <div className="w-full p-8 mt-4 border rounded-md bg-slate-50 border-slate-200">
               <div
-                className="mx-auto prose"
+                className="mx-auto prose prose-sky"
                 dangerouslySetInnerHTML={{ __html: droplet.overview }}
               ></div>
             </div>

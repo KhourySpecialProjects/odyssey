@@ -81,6 +81,11 @@
       },
       "required": false,
       "customField": "plugin::ckeditor.CKEditor"
+    },
+    "nextSteps": {
+      "type": "component",
+      "repeatable": true,
+      "component": "droplets.resource"
     }
   }
 }

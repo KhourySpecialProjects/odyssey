@@ -129,3 +129,10 @@ export function extractHeadings(html: string): any[] {
 
   return headings;
 }
+
+export function getPath(type: "droplet", slug: string): string {
+  switch (type) {
+    case "droplet":
+      return `/d/${slug}`;
+  }
+}

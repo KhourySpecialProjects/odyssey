@@ -74,6 +74,17 @@ export interface DropletsQuiz extends Schema.Component {
   };
 }
 
+export interface DropletsResource extends Schema.Component {
+  collectionName: 'components_droplets_resources';
+  info: {
+    displayName: 'Resource';
+  };
+  attributes: {
+    label: Attribute.String;
+    url: Attribute.String & Attribute.Required;
+  };
+}
+
 export interface DropletsVideo extends Schema.Component {
   collectionName: 'components_droplets_videos';
   info: {
@@ -129,6 +140,7 @@ declare module '@strapi/types' {
       'droplets.generic': DropletsGeneric;
       'droplets.learning-objective': DropletsLearningObjective;
       'droplets.quiz': DropletsQuiz;
+      'droplets.resource': DropletsResource;
       'droplets.video': DropletsVideo;
       'quizzes.answer-option': QuizzesAnswerOption;
       'quizzes.question': QuizzesQuestion;

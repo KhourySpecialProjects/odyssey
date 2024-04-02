@@ -66,8 +66,8 @@ export async function DropletsGrid({
       <ul className="grid grid-flow-row grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {droplets.map((droplet: Droplet) => (
           <li
-            className="transition-colors border rounded-md bg-slate-50 aspect-video border-slate-200 hover:border-slate-300"
             key={droplet.id}
+            className="transition-colors border rounded-md bg-slate-50 aspect-video border-slate-200 hover:border-slate-300"
           >
             <Link
               className="relative inline-flex w-full h-full p-8"

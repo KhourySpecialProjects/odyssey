@@ -46,6 +46,12 @@ export type LearningObjective = {
   objective: string;
 };
 
+export type Resource = {
+  id: number;
+  label?: string;
+  url: string;
+};
+
 export type Droplet = {
   id: number;
   slug: string;
@@ -58,6 +64,7 @@ export type Droplet = {
   learningObjectives: LearningObjective[];
   lessons?: Lesson[];
   authors?: Author[];
+  nextSteps?: Resource[];
   isHidden: boolean;
 };
 

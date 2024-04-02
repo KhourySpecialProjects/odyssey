@@ -970,6 +970,7 @@ export interface ApiDropletDroplet extends Schema.CollectionType {
           preset: 'light';
         }
       >;
+    nextSteps: Attribute.Component<'droplets.resource', true>;
     createdAt: Attribute.DateTime;
     updatedAt: Attribute.DateTime;
     publishedAt: Attribute.DateTime;

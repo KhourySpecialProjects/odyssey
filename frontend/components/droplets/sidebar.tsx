@@ -120,7 +120,7 @@ export default function Sidebar({
                       : inactiveLinkClasses
                   }
                 >
-                  <TargetIcon />
+                  <TargetIcon className="shrink-0" />
                   <span className="leading-snug ms-3">Overview</span>
                 </Link>
               </li>
@@ -144,6 +144,20 @@ export default function Sidebar({
                   </Link>
                 </li>
               ))}
+
+              <li>
+                <Link
+                  href={`/d/${droplet.slug}/recap`}
+                  className={
+                    pathname == `/d/${droplet.slug}/recap`
+                      ? activeLinkClasses
+                      : inactiveLinkClasses
+                  }
+                >
+                  <HistoryIcon className="shrink-0" />
+                  <span className="leading-snug ms-3">Recap</span>
+                </Link>
+              </li>
             </ul>
           </div>
 
