@@ -74,8 +74,21 @@ export default async function DropletRoute({ params }: Props) {
         </div>
       </GradientBackground>
 
-      <div className="w-full max-w-2xl py-8 mx-auto">
-        <div>
+      <div className="w-full max-w-2xl py-8 mx-auto space-y-8 md:space-y-12">
+        {droplet.overview ? (
+          <section>
+            <h2 className="text-2xl font-bold text-slate-900">Overview</h2>
+
+            <div className="w-full p-8 mt-4 border rounded-md bg-slate-50 border-slate-200">
+              <div
+                className="mx-auto prose"
+                dangerouslySetInnerHTML={{ __html: droplet.overview }}
+              ></div>
+            </div>
+          </section>
+        ) : null}
+
+        <section>
           <h2 className="text-2xl font-bold text-slate-900">
             Learning Objectives
           </h2>
@@ -83,12 +96,12 @@ export default async function DropletRoute({ params }: Props) {
             By completing this Droplet, you should:
           </p>
 
-          <div className="mt-4 rounded-md bg-slate-100">
-            <ul className="flex flex-col mt-2 divide-y divide-slate-200">
+          <div className="mt-4 border rounded-md bg-slate-50 border-slate-200">
+            <ul className="flex flex-col divide-y divide-slate-200">
               {droplet.learningObjectives.map((objective) => (
                 <li
                   key={objective.id}
-                  className="inline-flex leading-snug items-center [&:not(:first-child)]:pt-3 rounded-md py-2.5 px-4 gap-2"
+                  className="inline-flex items-center gap-2 px-4 py-3 leading-snug"
                 >
                   <GoalIcon className="w-5 h-5 mr-0.5 shrink-0" />
                   {objective.objective}
@@ -96,9 +109,9 @@ export default async function DropletRoute({ params }: Props) {
               ))}
             </ul>
           </div>
-        </div>
+        </section>
 
-        <div className="mt-8 md:mt-12">
+        <section>
           <h2 className="text-2xl font-bold text-slate-900">
             What&rsquo;s Inside
           </h2>
@@ -107,12 +120,12 @@ export default async function DropletRoute({ params }: Props) {
           </p>
 
           {droplet.lessons && droplet.lessons.length > 0 ? (
-            <div className="mt-4 rounded-md bg-slate-100">
-              <ul className="flex flex-col mt-2 divide-y divide-slate-200">
+            <div className="mt-4 border rounded-md bg-slate-50 border-slate-200">
+              <ul className="flex flex-col divide-y divide-slate-200">
                 {droplet.lessons.map((lesson) => (
                   <li
                     key={lesson.id}
-                    className="inline-flex leading-snug items-center [&:not(:first-child)]:pt-3 rounded-md py-2.5 px-4 gap-2"
+                    className="inline-flex items-center gap-2 px-4 py-3 leading-snug"
                   >
                     <BookTextIcon className="w-5 h-5 mr-0.5 shrink-0" />
                     {lesson.name}
@@ -121,13 +134,13 @@ export default async function DropletRoute({ params }: Props) {
               </ul>
             </div>
           ) : (
-            <div className="p-4 mt-2 rounded-md bg-slate-100">
+            <div className="p-4 mt-2 border rounded-md bg-slate-50 border-slate-200">
               This Droplet does not have any lessons yet. Check back soon!
             </div>
           )}
-        </div>
+        </section>
 
-        <div className="mt-8 md:mt-12">
+        <section>
           <h2 className="text-2xl font-bold text-slate-900">
             About the Authors
           </h2>
@@ -135,12 +148,9 @@ export default async function DropletRoute({ params }: Props) {
             This Droplet was written by the following individuals:
           </p>
 
-          <ul className="flex flex-col mt-4 divide-y rounded-md bg-slate-100 divide-slate-200">
-            {droplet.authors.map((author) => (
-              <li
-                key={author.id}
-                className="inline-flex [&:not(:first-child)]:pt-3 rounded-md p-4 gap-4"
-              >
+          <ul className="flex flex-col mt-4 border divide-y rounded-md bg-slate-50 border-slate-200 divide-slate-200">
+            {droplet.authors?.map((author) => (
+              <li key={author.id} className="inline-flex gap-4 p-4">
                 <Avatar variant="round" className="border border-sky-800">
                   <AvatarImage src={author.photo?.formats?.medium.url} />
                   <AvatarFallback>{author.name.charAt(0)}</AvatarFallback>
@@ -156,16 +166,16 @@ export default async function DropletRoute({ params }: Props) {
               </li>
             ))}
           </ul>
-        </div>
+        </section>
 
         {droplet.lessons && droplet.lessons.length > 0 ? (
-          <div className="mt-8 md:mt-12">
+          <section>
             <Button size="lg" after={<ArrowRightIcon />} asChild>
               <Link href={`/d/${droplet.slug}/${droplet.lessons[0].slug}`}>
                 Begin Droplet
               </Link>
             </Button>
-          </div>
+          </section>
         ) : null}
       </div>
     </>

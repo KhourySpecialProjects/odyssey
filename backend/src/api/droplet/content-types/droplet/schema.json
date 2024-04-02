@@ -72,6 +72,15 @@
       "repeatable": true,
       "component": "droplets.learning-objective",
       "required": true
+    },
+    "overview": {
+      "type": "customField",
+      "options": {
+        "output": "HTML",
+        "preset": "light"
+      },
+      "required": false,
+      "customField": "plugin::ckeditor.CKEditor"
     }
   }
 }

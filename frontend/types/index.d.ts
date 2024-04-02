@@ -51,12 +51,13 @@ export type Droplet = {
   slug: string;
   name: string;
   description?: string;
+  overview?: string;
   type: "knowledge" | "skill";
   focusArea: "personal" | "professional" | "technical";
   tags?: Tag[];
   learningObjectives: LearningObjective[];
   lessons?: Lesson[];
-  authors: Author[];
+  authors?: Author[];
   isHidden: boolean;
 };
 

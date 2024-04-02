@@ -962,6 +962,14 @@ export interface ApiDropletDroplet extends Schema.CollectionType {
       true
     > &
       Attribute.Required;
+    overview: Attribute.RichText &
+      Attribute.CustomField<
+        'plugin::ckeditor.CKEditor',
+        {
+          output: 'HTML';
+          preset: 'light';
+        }
+      >;
     createdAt: Attribute.DateTime;
     updatedAt: Attribute.DateTime;
     publishedAt: Attribute.DateTime;
