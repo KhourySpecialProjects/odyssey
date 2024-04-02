@@ -41,6 +41,11 @@ export type Tag = {
   droplets: Droplet[];
 };
 
+export type LearningObjective = {
+  id: number;
+  objective: string;
+};
+
 export type Droplet = {
   id: number;
   slug: string;
@@ -49,6 +54,7 @@ export type Droplet = {
   type: "knowledge" | "skill";
   focusArea: "personal" | "professional" | "technical";
   tags?: Tag[];
+  learningObjectives: LearningObjective[];
   lessons?: Lesson[];
   authors: Author[];
   isHidden: boolean;

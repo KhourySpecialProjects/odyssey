@@ -65,6 +65,13 @@
       "type": "boolean",
       "default": false,
       "required": true
+    },
+    "learningObjectives": {
+      "displayName": "Learning Objectives",
+      "type": "component",
+      "repeatable": true,
+      "component": "droplets.learning-objectives",
+      "required": true
     }
   }
 }

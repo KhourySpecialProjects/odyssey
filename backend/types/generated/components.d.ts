@@ -52,6 +52,16 @@ export interface DropletsGeneric extends Schema.Component {
   };
 }
 
+export interface DropletsLearningObjectives extends Schema.Component {
+  collectionName: 'components_droplets_learning_objectives';
+  info: {
+    displayName: 'Learning Objectives';
+  };
+  attributes: {
+    objective: Attribute.String;
+  };
+}
+
 export interface DropletsQuiz extends Schema.Component {
   collectionName: 'components_droplets_quizzes';
   info: {
@@ -116,6 +126,7 @@ declare module '@strapi/types' {
       'droplets.callout': DropletsCallout;
       'droplets.expandable': DropletsExpandable;
       'droplets.generic': DropletsGeneric;
+      'droplets.learning-objectives': DropletsLearningObjectives;
       'droplets.quiz': DropletsQuiz;
       'droplets.video': DropletsVideo;
       'quizzes.answeroption': QuizzesAnsweroption;

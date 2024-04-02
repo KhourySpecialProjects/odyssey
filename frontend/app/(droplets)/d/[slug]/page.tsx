@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { getDropletBySlug } from "@/lib/requests/droplet";
 import { uppercaseFirstChar } from "@/lib/utils";
 import { Droplet } from "@/types";
-import { ArrowRightIcon, BookTextIcon } from "lucide-react";
+import { ArrowRightIcon, BookTextIcon, GoalIcon } from "lucide-react";
 import { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -35,6 +35,7 @@ export default async function DropletRoute({ params }: Props) {
       authors: {
         populate: "*",
       },
+      learningObjectives: { populate: "*" },
       lessons: {
         populate: "*",
       },
@@ -76,6 +77,29 @@ export default async function DropletRoute({ params }: Props) {
       <div className="w-full max-w-2xl py-8 mx-auto">
         <div>
           <h2 className="text-2xl font-bold text-slate-900">
+            Learning Objectives
+          </h2>
+          <p className="text-slate-500">
+            By completing this Droplet, you should:
+          </p>
+
+          <div className="mt-4 rounded-md bg-slate-100">
+            <ul className="flex flex-col mt-2 divide-y divide-slate-200">
+              {droplet.learningObjectives.map((objective) => (
+                <li
+                  key={objective.id}
+                  className="inline-flex leading-snug items-center [&:not(:first-child)]:pt-3 rounded-md py-2.5 px-4 gap-2"
+                >
+                  <GoalIcon className="w-5 h-5 mr-0.5 shrink-0" />
+                  {objective.objective}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+
+        <div className="mt-8 md:mt-12">
+          <h2 className="text-2xl font-bold text-slate-900">
             What&rsquo;s Inside
           </h2>
           <p className="text-slate-500">
@@ -88,9 +112,9 @@ export default async function DropletRoute({ params }: Props) {
                 {droplet.lessons.map((lesson) => (
                   <li
                     key={lesson.id}
-                    className="inline-flex items-center [&:not(:first-child)]:pt-3 rounded-md py-2 px-4 gap-2"
+                    className="inline-flex leading-snug items-center [&:not(:first-child)]:pt-3 rounded-md py-2.5 px-4 gap-2"
                   >
-                    <BookTextIcon className="w-5 h-5 mr-0.5" />
+                    <BookTextIcon className="w-5 h-5 mr-0.5 shrink-0" />
                     {lesson.name}
                   </li>
                 ))}

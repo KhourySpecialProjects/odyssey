@@ -957,6 +957,11 @@ export interface ApiDropletDroplet extends Schema.CollectionType {
     isHidden: Attribute.Boolean &
       Attribute.Required &
       Attribute.DefaultTo<false>;
+    learningObjectives: Attribute.Component<
+      'droplets.learning-objectives',
+      true
+    > &
+      Attribute.Required;
     createdAt: Attribute.DateTime;
     updatedAt: Attribute.DateTime;
     publishedAt: Attribute.DateTime;

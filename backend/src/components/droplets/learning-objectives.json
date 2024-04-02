@@ -1,0 +1,12 @@
+{
+  "collectionName": "components_droplets_learning_objectives",
+  "info": {
+    "displayName": "Learning Objectives"
+  },
+  "options": {},
+  "attributes": {
+    "objective": {
+      "type": "string"
+    }
+  }
+}
