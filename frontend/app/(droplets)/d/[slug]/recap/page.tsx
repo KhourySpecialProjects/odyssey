@@ -2,7 +2,7 @@ import { DropletTile } from "@/components/droplets/droplet-tile";
 import { GradientBackground } from "@/components/gradient-bg";
 import { getDropletBySlug, getDroplets } from "@/lib/requests/droplet";
 import { Droplet } from "@/types";
-import { GoalIcon, LinkIcon } from "lucide-react";
+import { GoalIcon, Link2Icon } from "lucide-react";
 import { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -46,6 +46,7 @@ export default async function DropletRecapRoute({ params }: Props) {
         },
       ],
     },
+    populate: { tags: { populate: "*" } },
   });
 
   return (
@@ -100,7 +101,7 @@ export default async function DropletRecapRoute({ params }: Props) {
                       href={resource.url}
                       className="inline-flex items-center gap-2 px-4 py-3 leading-snug transition-colors hover:text-sky-700"
                     >
-                      <LinkIcon className="w-5 h-5 mr-0.5 shrink-0" />
+                      <Link2Icon className="w-5 h-5 mr-0.5 shrink-0" />
                       {resource.label ?? resource.url}
                     </Link>
                   </li>
