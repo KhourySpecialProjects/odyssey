@@ -28,7 +28,7 @@ export function LessonRenderer({ lesson }: { lesson: Lesson }) {
 
       <div className="h-8"></div>
 
-      <div className="px-8 py-6 -mx-8 border rounded-md bg-sky-50 border-sky-200">
+      <div className="p-6 border rounded-md md:px-8 lg:-mx-8 bg-slate-50 border-slate-200">
         <h2 className="text-xl font-bold">Contents</h2>
         <ul className="mt-3 ml-4 list-disc list-inside">
           {headings.map((heading, index) => (
@@ -64,7 +64,7 @@ function LessonBlockRenderer({ block }: { block: any }) {
     case "droplets.generic":
       return (
         <div
-          className="mt-4 prose prose-lg prose-sky"
+          className="mt-4 prose prose-lg prose-sky prose-table:block prose-table:overflow-x-scroll"
           dangerouslySetInnerHTML={{ __html: block.content }}
         ></div>
       );

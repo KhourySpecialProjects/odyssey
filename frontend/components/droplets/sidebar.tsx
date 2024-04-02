@@ -121,7 +121,7 @@ export default function Sidebar({
                   }
                 >
                   <TargetIcon />
-                  <span className="ms-3">Overview</span>
+                  <span className="leading-snug ms-3">Overview</span>
                 </Link>
               </li>
 
@@ -140,7 +140,7 @@ export default function Sidebar({
                     ) : (
                       <BookTextIcon className="shrink-0" />
                     )}
-                    <span className="ms-3">{lesson.name}</span>
+                    <span className="leading-snug ms-3">{lesson.name}</span>
                   </Link>
                 </li>
               ))}

@@ -72,8 +72,8 @@ export default function DropletFooter({
       {pathSegments.length > 3 &&
       pathSegments.at(-1)?.toLowerCase() !== "introduction" &&
       !pathSegments.at(-1)?.toLowerCase().includes("recap") ? (
-        <div className="flex flex-col items-center w-full gap-4 p-8 mx-auto mt-8 border rounded-md max-w-prose border-sky-200">
-          <h2 className="text-lg font-bold text-sky-700">
+        <div className="flex flex-col items-center w-full gap-4 p-8 mx-auto mt-8 border rounded-md max-w-prose border-slate-200">
+          <h2 className="text-lg font-bold text-slate-800">
             Was this lesson informative?
           </h2>
           <div className="flex gap-2">
