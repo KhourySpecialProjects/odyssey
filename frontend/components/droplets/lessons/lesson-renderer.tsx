@@ -1,20 +1,15 @@
-"use client";
-
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { extractHeadings } from "@/lib/utils";
-import useDebugStore from "@/stores/debug-toggle-store";
 import { Lesson } from "@/types";
 import { BlocksRenderer } from "@strapi/blocks-react-renderer";
 import { ArrowDownFromLineIcon } from "lucide-react";
 import { QuizBlock } from "./quiz";
 
 export function LessonRenderer({ lesson }: { lesson: Lesson }) {
-  const isDebugEnabled = useDebugStore((state) => state.debugModeEnabled);
-
   let headings: any[] = [];
   lesson.blocks
     .filter((b: any) => b.__component === "droplets.generic")
@@ -24,37 +19,31 @@ export function LessonRenderer({ lesson }: { lesson: Lesson }) {
 
   return (
     <div className="w-full py-8 mx-auto max-w-prose">
-      <h1 className="text-4xl font-extrabold">{lesson.name}</h1>
+      <h1 className="mt-8 text-4xl font-extrabold text-balance">
+        {lesson.name}
+      </h1>
 
-      <div className="h-8"></div>
+      {headings.length > 2 && (
+        <div className="p-6 mt-8 border rounded-md md:px-8 lg:-mx-8 bg-slate-50 border-slate-200">
+          <h2 className="text-xl font-bold">Contents</h2>
+          <ul className="mt-3 ml-4 list-disc list-inside">
+            {headings.map((heading, index) => (
+              <li
+                key={index}
+                style={{ marginLeft: `${(heading.level - 2) * 25}px` }}
+              >
+                {heading.text}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
-      <div className="p-6 border rounded-md md:px-8 lg:-mx-8 bg-slate-50 border-slate-200">
-        <h2 className="text-xl font-bold">Contents</h2>
-        <ul className="mt-3 ml-4 list-disc list-inside">
-          {headings.map((heading, index) => (
-            <li
-              key={index}
-              style={{ marginLeft: `${(heading.level - 2) * 25}px` }}
-            >
-              {heading.text}
-            </li>
-          ))}
-        </ul>
-      </div>
-
-      <div className="h-8"></div>
-
-      <div className="space-y-12">
+      <div className="mt-8 space-y-12">
         {lesson.blocks.map((b: any, i: number) => (
           <LessonBlockRenderer key={i} block={b} />
         ))}
       </div>
-
-      {isDebugEnabled ? (
-        <pre className="p-4 mt-4 text-sm break-words whitespace-pre rounded-md bg-slate-100 text-wrap">
-          {JSON.stringify(lesson, null, 2)}
-        </pre>
-      ) : null}
     </div>
   );
 }
