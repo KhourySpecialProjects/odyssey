@@ -46,6 +46,10 @@ export default async function DropletRecapRoute({ params }: Props) {
         },
       ],
     },
+    pagination: {
+      page: 1,
+      pageSize: 4,
+    },
     populate: { tags: { populate: "*" } },
   });
 
