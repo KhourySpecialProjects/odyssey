@@ -74,8 +74,8 @@ export interface DropletsVideo extends Schema.Component {
   };
 }
 
-export interface QuizzesAnswer extends Schema.Component {
-  collectionName: 'components_quiz_answer';
+export interface QuizzesAnsweroption extends Schema.Component {
+  collectionName: 'components_quiz_answer_option';
   info: {
     displayName: 'Quiz Answer Option';
     description: '';
@@ -118,7 +118,7 @@ declare module '@strapi/types' {
       'droplets.generic': DropletsGeneric;
       'droplets.quiz': DropletsQuiz;
       'droplets.video': DropletsVideo;
-      'quizzes.answer': QuizzesAnswer;
+      'quizzes.answeroption': QuizzesAnsweroption;
       'quizzes.question': QuizzesQuestion;
     }
   }
