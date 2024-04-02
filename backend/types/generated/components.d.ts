@@ -102,7 +102,7 @@ export interface QuizzesQuestion extends Schema.Component {
         'plugin::ckeditor.CKEditor',
         {
           output: 'HTML';
-          preset: 'standard';
+          preset: 'rich';
         }
       >;
     answerOptions: Attribute.Component<'quizzes.answer', true> &
