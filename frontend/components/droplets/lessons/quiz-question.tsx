@@ -53,7 +53,7 @@ export function QuizQuestionBlock({ question }: { question: QuizQuestion }) {
   return (
     <>
       <div
-        className="text-center text-pretty"
+        className="prose prose-sky prose-table:text-left"
         dangerouslySetInnerHTML={{ __html: question.content }}
       ></div>
 
@@ -136,9 +136,9 @@ export function QuizQuestionBlock({ question }: { question: QuizQuestion }) {
                           </FormControl>
                           <FormLabel
                             htmlFor={String(answer.id)}
-                            className="flex cursor-pointer flex-row items-center gap-4 rounded-md border border-slate-200 hover:border-sky-700 bg-popover p-4 hover:bg-slate-50 transition-colors hover:text-sky-700 peer-data-[state=checked]:border-sky-700 [&:has([data-state=checked])]:border-sky-700"
+                            className="flex cursor-pointer flex-row items-center gap-3 rounded-md border border-slate-200 hover:border-sky-700 bg-popover p-4 leading-5 hover:bg-slate-50 transition-colors hover:text-sky-700 peer-data-[state=checked]:border-sky-700 [&:has([data-state=checked])]:border-sky-700"
                           >
-                            <span className="flex items-center justify-center w-8 h-8 text-sm font-bold border rounded-full border-sky-700 bg-slate-100 text-sky-700">
+                            <span className="flex items-center justify-center w-8 h-8 text-sm font-bold border rounded-full aspect-square border-sky-700 bg-slate-100 text-sky-700">
                               {number === 0
                                 ? "A"
                                 : number === 1

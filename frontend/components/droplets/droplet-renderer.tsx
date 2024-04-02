@@ -14,11 +14,9 @@ export function DropletRenderer({ droplet }: any) {
 
       <div className="h-8"></div>
 
-      <div className="prose">
-        {droplet.lessons[0].blocks.map((b: any, i: number) => (
-          <LessonBlockRenderer key={i} block={b} />
-        ))}
-      </div>
+      {droplet.lessons[0].blocks.map((b: any, i: number) => (
+        <LessonBlockRenderer key={i} block={b} />
+      ))}
 
       {isDebugEnabled ? (
         <pre className="p-4 mt-4 text-sm break-words whitespace-pre rounded-md bg-slate-100 text-wrap">
