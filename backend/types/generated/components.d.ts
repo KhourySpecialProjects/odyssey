@@ -44,6 +44,7 @@ export interface DropletsGeneric extends Schema.Component {
   };
   attributes: {
     content: Attribute.RichText &
+      Attribute.Required &
       Attribute.CustomField<
         'plugin::ckeditor.CKEditor',
         {
