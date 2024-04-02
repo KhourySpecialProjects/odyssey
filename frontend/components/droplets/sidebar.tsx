@@ -7,6 +7,7 @@ import {
   BookTextIcon,
   ChevronDownIcon,
   CogIcon,
+  HammerIcon,
   HistoryIcon,
   LogOutIcon,
   MenuIcon,
@@ -135,8 +136,8 @@ export default function Sidebar({
                         : inactiveLinkClasses
                     }
                   >
-                    {lesson.name.toLowerCase() === "recap" ? (
-                      <HistoryIcon className="shrink-0" />
+                    {lesson.name.toLowerCase().startsWith("activity") ? (
+                      <HammerIcon className="shrink-0" />
                     ) : (
                       <BookTextIcon className="shrink-0" />
                     )}

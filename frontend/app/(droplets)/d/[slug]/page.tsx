@@ -5,7 +5,12 @@ import { Button } from "@/components/ui/button";
 import { getDropletBySlug } from "@/lib/requests/droplet";
 import { uppercaseFirstChar } from "@/lib/utils";
 import { Droplet } from "@/types";
-import { ArrowRightIcon, BookTextIcon, GoalIcon } from "lucide-react";
+import {
+  ArrowRightIcon,
+  BookTextIcon,
+  GoalIcon,
+  HammerIcon,
+} from "lucide-react";
 import { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -121,7 +126,11 @@ export default async function DropletRoute({ params }: Props) {
                     key={lesson.id}
                     className="inline-flex items-center gap-2 px-4 py-3 leading-snug"
                   >
-                    <BookTextIcon className="w-5 h-5 mr-0.5 shrink-0" />
+                    {lesson.name.toLowerCase().startsWith("activity") ? (
+                      <HammerIcon className="w-5 h-5 mr-0.5 shrink-0" />
+                    ) : (
+                      <BookTextIcon className="w-5 h-5 mr-0.5 shrink-0" />
+                    )}
                     {lesson.name}
                   </li>
                 ))}
