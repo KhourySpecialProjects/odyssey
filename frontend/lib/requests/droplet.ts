@@ -10,6 +10,7 @@ import { fetchAPI } from "../utils";
 export async function getDroplets({
   sort,
   filters = { isHidden: false },
+  pagination = { pageSize: 25, page: 1 },
   populate,
   fields = ["id", "name", "slug", "type", "focusArea"],
 }: StrapiRequestParams = {}): Promise<Droplet[]> {
@@ -19,10 +20,7 @@ export async function getDroplets({
     filters,
     populate,
     fields,
-    pagination: {
-      pageSize: 25,
-      page: 1,
-    },
+    pagination,
   };
 
   return await fetchAPI<Droplet[]>(path, { urlParams });
