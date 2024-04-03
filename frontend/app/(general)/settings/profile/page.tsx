@@ -1,3 +1,5 @@
+import { DropletsSkeleton } from "@/components/explore/droplets-skeleton";
+import { AuthorDroplets } from "@/components/settings/author-droplets";
 import { BioCard } from "@/components/settings/bio-card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -12,6 +14,7 @@ import { getCurrentUser } from "@/lib/auth/session";
 import { getAuthorByAuthorizedUserEmail } from "@/lib/requests/author";
 import { getInitials } from "@/lib/utils";
 import { notFound } from "next/navigation";
+import { Suspense } from "react";
 
 export default async function AuthorProfileSettings() {
   const user = await getCurrentUser();
@@ -39,6 +42,7 @@ export default async function AuthorProfileSettings() {
             <div className="text-lg font-medium">{author.name}</div>
           </div>
         </CardContent>
+
         <CardFooter className="px-6 py-4 border-t">
           <p className="text-sm text-slate-600">
             To make changes, contact an Odyssey Administrator.
@@ -46,7 +50,13 @@ export default async function AuthorProfileSettings() {
         </CardFooter>
       </Card>
 
-      <BioCard author={author} />
+      <Suspense fallback={<DropletsSkeleton />}>
+        <BioCard author={author} />
+      </Suspense>
+
+      <Suspense fallback={<DropletsSkeleton />}>
+        <AuthorDroplets authorId={author.id} />
+      </Suspense>
     </>
   );
 }

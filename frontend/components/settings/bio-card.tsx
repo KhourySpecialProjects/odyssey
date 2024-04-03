@@ -70,6 +70,7 @@ export function BioCard({ author }: { author: Author }) {
               Your public biography, shown on Droplets you authored.
             </CardDescription>
           </CardHeader>
+
           <CardContent>
             <FormField
               control={form.control}
@@ -91,6 +92,7 @@ export function BioCard({ author }: { author: Author }) {
               )}
             />
           </CardContent>
+
           <CardFooter className="px-6 py-4 border-t">
             <Button
               type="submit"
