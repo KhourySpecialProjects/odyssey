@@ -10,5 +10,9 @@ export const generalConfig: GeneralConfig = {
       href: "/explore",
       label: "Explore Droplets",
     },
+    {
+      href: "/dashboard",
+      label: "My Droplets",
+    },
   ],
 };

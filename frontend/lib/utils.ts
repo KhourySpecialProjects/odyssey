@@ -44,6 +44,7 @@ export async function fetchAPI<T>(
   config: {
     urlParams?: Object;
     options?: Object;
+    next?: Object;
     revalidate?: number;
     flattenResponse?: boolean;
   }
@@ -51,7 +52,7 @@ export async function fetchAPI<T>(
   try {
     // Merge default and user options
     const mergedOptions = {
-      next: { revalidate: config.revalidate ?? 60 },
+      next: { ...config.next, revalidate: config.revalidate ?? 60 },
       headers: {
         "Content-Type": "application/json",
         Authorization: "Bearer " + process.env.STRAPI_ACCESS_TOKEN,

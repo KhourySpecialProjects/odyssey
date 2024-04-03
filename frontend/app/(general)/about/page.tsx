@@ -56,9 +56,9 @@ export default async function AboutPage() {
     <GradientBackground>
       <>
         <div className="max-w-2xl mx-auto text-center">
-          <h2 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
+          <h1 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
             About Odyssey
-          </h2>
+          </h1>
           <p className="mt-4 text-lg leading-normal text-slate-600 text-balance">
             Odyssey is an all-new on-demand learning platform built by Khoury
             College, for Khoury College.

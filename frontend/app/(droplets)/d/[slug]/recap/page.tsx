@@ -124,13 +124,11 @@ export default async function DropletRecapRoute({ params }: Props) {
               Have you explored these Droplets yet?
             </p>
 
-            <div className="mt-4">
-              <ul className="grid grid-flow-row grid-cols-1 gap-4 sm:grid-cols-2">
-                {dropletRecommendations.map((droplet) => (
-                  <DropletTile key={droplet.id} droplet={droplet} />
-                ))}
-              </ul>
-            </div>
+            <ul className="grid grid-flow-row grid-cols-1 gap-4 mt-4 sm:grid-cols-2">
+              {dropletRecommendations.map((droplet) => (
+                <DropletTile key={droplet.id} droplet={droplet} />
+              ))}
+            </ul>
           </section>
         ) : null}
 

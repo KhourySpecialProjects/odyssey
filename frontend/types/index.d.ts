@@ -15,6 +15,7 @@ export type AuthorizedUser = {
   email: string;
   isAdmin: boolean;
   isEnabled: boolean;
+  enrollments?: Enrollment[];
 };
 
 export type NavItem = {
@@ -97,6 +98,7 @@ export type Quiz = {
 };
 
 export type Enrollment = {
+  id: string;
   authorizedUser: AuthorizedUser;
   droplet: Droplet;
   viewedLessons: Lesson[];

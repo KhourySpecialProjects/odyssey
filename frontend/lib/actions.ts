@@ -1,18 +1,16 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { getCurrentUser } from "./auth/session";
 import { getAuthorByAuthorizedUserEmail } from "./requests/author";
 import { getAuthorizedUserByEmail } from "./requests/authorized-user";
-import { getIsEnrolled } from "./requests/enrollment";
-import {
-  accessRequestSchema,
-  BioFormSchema,
-  EnrollFormSchema,
-} from "./validations/access-request";
+import { getEnrollmentsByAuthorizedUser } from "./requests/enrollment";
+import { accessRequestSchema } from "./validations/access-request";
+import { BioFormSchema } from "./validations/author";
 import { AuthorizedUserSchema } from "./validations/authorized-user";
+import { DropletEnrollmentSchema } from "./validations/enrollment";
 import { reportSchema } from "./validations/report";
 
 const STRAPI_API_URL = process.env.STRAPI_API_URL;
@@ -237,35 +235,39 @@ export async function updateAuthorBio(formData: z.infer<typeof BioFormSchema>) {
 }
 
 export async function createEnrollment(
-  formData: z.infer<typeof EnrollFormSchema>
+  formData: z.infer<typeof DropletEnrollmentSchema>
 ) {
   try {
     const user = await getCurrentUser();
     if (!user?.email) throw new Error("No email identified");
     const authorizedUser = await getAuthorizedUserByEmail(user.email);
-    const isAlreadyEnrolled = await getIsEnrolled(
-      authorizedUser.id,
-      formData.droplet
-    );
+    const enrollments = await getEnrollmentsByAuthorizedUser(authorizedUser.id);
 
-    if (isAlreadyEnrolled) return;
+    if (
+      !enrollments
+        .map((enrollment) => enrollment.droplet.id)
+        .includes(formData.droplet)
+    ) {
+      const response = await fetch(STRAPI_API_URL + "/api/enrollments", {
+        method: "POST",
+        body: JSON.stringify({
+          data: { ...formData, authorizedUser: authorizedUser.id },
+        }),
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+        },
+      });
+      const data = await response.json();
 
-    const response = await fetch(STRAPI_API_URL + "/api/enrollments", {
-      method: "POST",
-      body: JSON.stringify({
-        data: { ...formData, authorizedUser: authorizedUser.id },
-      }),
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
-      },
-    });
-    const data = await response.json();
+      if (!response.ok || (response.ok && data.error)) {
+        const errorPath = data.error.details.errors[0].path[0];
+        const errorMessage = `${data.error.message} (${errorPath})`;
+        return { ok: false, error: errorMessage, data: null };
+      }
 
-    if (!response.ok || (response.ok && data.error)) {
-      const errorPath = data.error.details.errors[0].path[0];
-      const errorMessage = `${data.error.message} (${errorPath})`;
-      return { ok: false, error: errorMessage, data: null };
+      revalidateTag("enrollments");
+      revalidatePath("/(general)/dashboard", "page");
     }
   } catch (err) {
     console.error(err);
