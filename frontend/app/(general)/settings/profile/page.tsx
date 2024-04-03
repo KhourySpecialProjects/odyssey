@@ -16,7 +16,9 @@ import { notFound } from "next/navigation";
 export default async function AuthorProfileSettings() {
   const user = await getCurrentUser();
   if (!user?.email) return notFound();
+
   const author = await getAuthorByAuthorizedUserEmail(user.email);
+  if (!author) return notFound();
 
   return (
     <>
@@ -34,7 +36,7 @@ export default async function AuthorProfileSettings() {
             <AvatarFallback>{getInitials(author.name)}</AvatarFallback>
           </Avatar>
           <div>
-            <div className="font-medium">{author.name}</div>
+            <div className="text-lg font-medium">{author.name}</div>
           </div>
         </CardContent>
         <CardFooter className="px-6 py-4 border-t">

@@ -12,6 +12,7 @@ export type User = {
 export type NavItem = {
   href: string;
   label: string;
+  isHidden?: boolean;
 };
 
 export type GeneralConfig = {
