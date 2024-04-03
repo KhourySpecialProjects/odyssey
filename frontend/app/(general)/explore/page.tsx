@@ -29,13 +29,13 @@ export default async function ExplorePage({
 
   return (
     <>
-      <div className="my-4 w-full max-w-5xl p-8 mx-auto text-center">
+      <div className="w-full p-8 mx-auto my-4 text-center max-w-7xl">
         <h1 className="text-5xl font-bold">Explore Droplets</h1>
       </div>
 
-      <div className="mt-4 mb-8 max-w-5xl mx-auto w-full bg-slate-50 p-4 rounded-md">
-        <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
-          <div className="flex flex-col sm:flex-row flex-1 items-center gap-2">
+      <div className="w-full px-4 mx-auto mt-4 mb-8 max-w-7xl xl:p-0">
+        <div className="flex flex-col gap-2 p-4 border rounded-md bg-slate-50 md:flex-row md:items-center border-slate-200">
+          <div className="flex flex-row flex-wrap items-center flex-1 gap-2">
             {DROPLET_FILTERS.map((filter) => (
               <Filter
                 key={filter.name}
@@ -52,15 +52,17 @@ export default async function ExplorePage({
         </div>
       </div>
 
-      <Suspense fallback={<DropletsSkeleton />}>
-        <DropletsGrid
-          searchValue={searchValue}
-          type={type}
-          focusArea={focusArea}
-          tags={tags}
-          sortKey={sortKey}
-        />
-      </Suspense>
+      <div className="w-full px-4 mx-auto mb-8 max-w-7xl xl:p-0">
+        <Suspense fallback={<DropletsSkeleton />}>
+          <DropletsGrid
+            searchValue={searchValue}
+            type={type}
+            focusArea={focusArea}
+            tags={tags}
+            sortKey={sortKey}
+          />
+        </Suspense>
+      </div>
     </>
   );
 }

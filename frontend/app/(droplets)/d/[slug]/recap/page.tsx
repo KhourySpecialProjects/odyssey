@@ -55,7 +55,7 @@ export default async function DropletRecapRoute({ params }: Props) {
 
   return (
     <>
-      <GradientBackground>
+      <GradientBackground className="px-0">
         <div className="max-w-2xl mx-auto">
           <h1 className="mt-3 text-6xl font-black text-slate-900">Recap</h1>
           <p className="mt-3 text-slate-500 text-pretty md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed dark:text-slate-400">

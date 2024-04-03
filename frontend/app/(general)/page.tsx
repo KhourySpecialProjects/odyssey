@@ -34,7 +34,7 @@ export default function HomeRoute() {
             modern knowledge and skills pertinent to {"today’s"} undergraduate
             Khoury students.
           </p>
-          <div className="flex items-center justify-center mt-10 gap-x-6">
+          <div className="flex flex-col items-center justify-center mt-10 md:flex-row gap-x-6 gap-y-3">
             <Button size="lg" after={<ArrowRightIcon />} asChild>
               <Link href="/explore">Explore Droplets</Link>
             </Button>

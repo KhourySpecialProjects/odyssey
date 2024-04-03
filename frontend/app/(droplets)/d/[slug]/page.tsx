@@ -47,7 +47,7 @@ export default async function DropletRoute({ params }: Props) {
 
   return (
     <>
-      <GradientBackground>
+      <GradientBackground className="px-0">
         <div className="max-w-2xl mx-auto">
           <div className="flex flex-row flex-0 gap-1.5">
             <Badge size="lg" variant="outline">
@@ -73,7 +73,7 @@ export default async function DropletRoute({ params }: Props) {
         </div>
       </GradientBackground>
 
-      <div className="w-full max-w-2xl py-8 mx-auto space-y-8 md:space-y-12">
+      <div className="w-full max-w-2xl py-4 mx-auto space-y-8 lg:py-8 md:space-y-12">
         {droplet.overview ? (
           <section>
             <h2 className="text-2xl font-bold text-slate-900">Overview</h2>
@@ -99,7 +99,7 @@ export default async function DropletRoute({ params }: Props) {
             <ul className="flex flex-col divide-y divide-slate-200">
               {droplet.learningObjectives.map((objective) => (
                 <li
-                  key={objective.id}
+                  key={`objective-${objective.id}`}
                   className="inline-flex items-center gap-2 px-4 py-3 leading-snug"
                 >
                   <GoalIcon className="w-5 h-5 mr-0.5 shrink-0" />
@@ -123,7 +123,7 @@ export default async function DropletRoute({ params }: Props) {
               <ul className="flex flex-col divide-y divide-slate-200">
                 {droplet.lessons.map((lesson) => (
                   <li
-                    key={lesson.id}
+                    key={`lesson-${lesson.id}`}
                     className="inline-flex items-center gap-2 px-4 py-3 leading-snug"
                   >
                     {lesson.name.toLowerCase().startsWith("activity") ? (
@@ -153,7 +153,7 @@ export default async function DropletRoute({ params }: Props) {
 
           <ul className="flex flex-col mt-4 border divide-y rounded-md bg-slate-50 border-slate-200 divide-slate-200">
             {droplet.authors?.map((author) => (
-              <li key={author.id} className="inline-flex gap-4 p-4">
+              <li key={`author-${author.id}`} className="inline-flex gap-4 p-4">
                 <Avatar variant="round" className="border border-sky-800">
                   <AvatarImage src={author.photo?.formats?.medium.url} />
                   <AvatarFallback>{getInitials(author.name)}</AvatarFallback>

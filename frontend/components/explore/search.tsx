@@ -16,7 +16,7 @@ export function Search() {
 
   return (
     <form
-      className="flex w-full max-w-sm items-center space-x-2"
+      className="flex items-center space-x-2 xs:max-w-sm"
       onSubmit={(e) => {
         e.preventDefault();
         setQuery(tempQuery);
@@ -25,12 +25,12 @@ export function Search() {
       <Input
         type="search"
         placeholder="Search..."
-        className="md:w-[100px] lg:w-[300px]"
+        className="w-full md:w-[125px] lg:w-[300px]"
         value={tempQuery || ""}
         onChange={(e) => setTempQuery(e.target.value)}
       />
       <Button before={<SearchIcon />} onClick={() => setQuery(tempQuery)}>
-        Search
+        <span className="sr-only md:not-sr-only">Search</span>
       </Button>
     </form>
   );

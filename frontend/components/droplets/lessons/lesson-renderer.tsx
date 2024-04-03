@@ -18,10 +18,8 @@ export function LessonRenderer({ lesson }: { lesson: Lesson }) {
     });
 
   return (
-    <div className="w-full py-8 mx-auto max-w-prose">
-      <h1 className="mt-8 text-4xl font-extrabold text-balance">
-        {lesson.name}
-      </h1>
+    <div className="w-full mx-auto lg:py-8 max-w-prose">
+      <h1 className="text-4xl font-extrabold text-balance">{lesson.name}</h1>
 
       {headings.length > 2 && (
         <div className="p-6 mt-8 border rounded-md md:px-8 lg:-mx-8 bg-slate-50 border-slate-200">
