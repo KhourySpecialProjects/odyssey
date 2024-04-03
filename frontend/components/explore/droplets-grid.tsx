@@ -4,10 +4,7 @@ import {
   MessageHeader,
 } from "@/components/message";
 import { getDroplets } from "@/lib/requests/droplet";
-import { uppercaseFirstChar } from "@/lib/utils";
-import { Droplet } from "@/types";
-import Link from "next/link";
-import { Badge } from "../ui/badge";
+import { DropletTile } from "../droplets/droplet-tile";
 
 export async function DropletsGrid({
   sortKey,
@@ -63,35 +60,8 @@ export async function DropletsGrid({
 
   return (
     <ul className="grid grid-flow-row grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-      {droplets.map((droplet: Droplet) => (
-        <li
-          key={droplet.id}
-          className="transition-colors border rounded-md bg-slate-50 aspect-video border-slate-200 hover:border-slate-300"
-        >
-          <Link
-            className="relative inline-flex w-full h-full p-8"
-            href={`/d/${droplet.slug}`}
-          >
-            <div className="flex flex-col justify-end gap-2">
-              <div className="flex flex-row flex-0 gap-1.5">
-                <Badge variant="outline">
-                  {uppercaseFirstChar(droplet.focusArea)}
-                </Badge>
-                <Badge variant="outline">
-                  {uppercaseFirstChar(droplet.type)}
-                </Badge>
-                {droplet.tags?.map((tag) => (
-                  <Badge key={tag.id} variant="outline">
-                    {tag.name}
-                  </Badge>
-                ))}
-              </div>
-              <span className="block w-full text-4xl font-black place-self-end">
-                {droplet.name}
-              </span>
-            </div>
-          </Link>
-        </li>
+      {droplets.map((droplet) => (
+        <DropletTile key={droplet.id} droplet={droplet} />
       ))}
     </ul>
   );
