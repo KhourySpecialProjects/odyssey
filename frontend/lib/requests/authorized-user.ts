@@ -1,10 +1,11 @@
 import { flattenAttributes } from "@/lib/utils";
+import { AuthorizedUser } from "@/types";
 import qs from "qs";
 
 const STRAPI_API_URL = process.env.STRAPI_API_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
 
-export async function fetchAuthorizedUsers() {
+export async function fetchAuthorizedUsers(): Promise<AuthorizedUser[]> {
   try {
     const query = qs.stringify({
       sort: ["email"],

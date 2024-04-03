@@ -1,3 +1,4 @@
+import { AuthorizedUser } from "@/components/admin/users/authorized-users";
 import { type StrapiMediaParams } from "./strapi";
 
 export type User = {
@@ -7,6 +8,13 @@ export type User = {
   nuid?: string;
   jobTitle?: string;
   isAdmin: boolean;
+};
+
+export type AuthorizedUser = {
+  id: number;
+  email: string;
+  isAdmin: boolean;
+  isEnabled: boolean;
 };
 
 export type NavItem = {
@@ -86,4 +94,11 @@ export type QuizQuestion = {
 export type Quiz = {
   id: number;
   questions: QuizQuestion[];
+};
+
+export type Enrollment = {
+  authorizedUser: AuthorizedUser;
+  droplet: Droplet;
+  lessons: Lesson[];
+  isComplete: boolean;
 };
