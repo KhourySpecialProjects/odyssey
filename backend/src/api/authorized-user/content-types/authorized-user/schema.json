@@ -32,6 +32,12 @@
       "relation": "oneToOne",
       "target": "api::author.author",
       "mappedBy": "authorizedUser"
+    },
+    "enrollments": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::enrollment.enrollment",
+      "mappedBy": "authorizedUser"
     }
   }
 }

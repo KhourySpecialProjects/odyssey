@@ -38,6 +38,12 @@
       "relation": "manyToMany",
       "target": "api::droplet.droplet",
       "mappedBy": "lessons"
+    },
+    "enrollments": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::enrollment.enrollment",
+      "mappedBy": "lessons"
     }
   }
 }

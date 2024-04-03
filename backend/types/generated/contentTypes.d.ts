@@ -909,6 +909,11 @@ export interface ApiAuthorizedUserAuthorizedUser extends Schema.CollectionType {
       'oneToOne',
       'api::author.author'
     >;
+    enrollments: Attribute.Relation<
+      'api::authorized-user.authorized-user',
+      'oneToMany',
+      'api::enrollment.enrollment'
+    >;
     createdAt: Attribute.DateTime;
     updatedAt: Attribute.DateTime;
     createdBy: Attribute.Relation<
@@ -991,6 +996,11 @@ export interface ApiDropletDroplet extends Schema.CollectionType {
       'manyToMany',
       'api::droplet.droplet'
     >;
+    enrollments: Attribute.Relation<
+      'api::droplet.droplet',
+      'oneToMany',
+      'api::enrollment.enrollment'
+    >;
     createdAt: Attribute.DateTime;
     updatedAt: Attribute.DateTime;
     publishedAt: Attribute.DateTime;
@@ -1002,6 +1012,52 @@ export interface ApiDropletDroplet extends Schema.CollectionType {
       Attribute.Private;
     updatedBy: Attribute.Relation<
       'api::droplet.droplet',
+      'oneToOne',
+      'admin::user'
+    > &
+      Attribute.Private;
+  };
+}
+
+export interface ApiEnrollmentEnrollment extends Schema.CollectionType {
+  collectionName: 'enrollments';
+  info: {
+    singularName: 'enrollment';
+    pluralName: 'enrollments';
+    displayName: 'Enrollment';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    authorizedUser: Attribute.Relation<
+      'api::enrollment.enrollment',
+      'manyToOne',
+      'api::authorized-user.authorized-user'
+    >;
+    droplet: Attribute.Relation<
+      'api::enrollment.enrollment',
+      'manyToOne',
+      'api::droplet.droplet'
+    >;
+    lessons: Attribute.Relation<
+      'api::enrollment.enrollment',
+      'manyToMany',
+      'api::lesson.lesson'
+    >;
+    isComplete: Attribute.Boolean &
+      Attribute.Required &
+      Attribute.DefaultTo<false>;
+    createdAt: Attribute.DateTime;
+    updatedAt: Attribute.DateTime;
+    createdBy: Attribute.Relation<
+      'api::enrollment.enrollment',
+      'oneToOne',
+      'admin::user'
+    > &
+      Attribute.Private;
+    updatedBy: Attribute.Relation<
+      'api::enrollment.enrollment',
       'oneToOne',
       'admin::user'
     > &
@@ -1041,6 +1097,11 @@ export interface ApiLessonLesson extends Schema.CollectionType {
       'api::lesson.lesson',
       'manyToMany',
       'api::droplet.droplet'
+    >;
+    enrollments: Attribute.Relation<
+      'api::lesson.lesson',
+      'manyToMany',
+      'api::enrollment.enrollment'
     >;
     createdAt: Attribute.DateTime;
     updatedAt: Attribute.DateTime;
@@ -1144,6 +1205,7 @@ declare module '@strapi/types' {
       'api::author.author': ApiAuthorAuthor;
       'api::authorized-user.authorized-user': ApiAuthorizedUserAuthorizedUser;
       'api::droplet.droplet': ApiDropletDroplet;
+      'api::enrollment.enrollment': ApiEnrollmentEnrollment;
       'api::lesson.lesson': ApiLessonLesson;
       'api::report.report': ApiReportReport;
       'api::tag.tag': ApiTagTag;
