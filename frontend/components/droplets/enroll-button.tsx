@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { createEnrollment } from "@/lib/actions";
-import { EnrollFormSchema } from "@/lib/validations/access-request";
+import { DropletEnrollmentSchema } from "@/lib/validations/enrollment";
 import { Droplet } from "@/types";
 import { ArrowRightIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -21,7 +21,7 @@ export function EnrollButton({ droplet }: { droplet: Droplet }) {
 
   function enroll() {
     if (droplet.lessons && droplet.lessons.length > 0) {
-      const values: z.infer<typeof EnrollFormSchema> = {
+      const values: z.infer<typeof DropletEnrollmentSchema> = {
         droplet: droplet.id,
         viewedLessons: [droplet.lessons[0].id],
       };

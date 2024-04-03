@@ -19,10 +19,7 @@ import {
 } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
 import { updateAuthorBio } from "@/lib/actions";
-import {
-  BIO_MAX_LENGTH,
-  BioFormSchema,
-} from "@/lib/validations/access-request";
+import { BIO_MAX_LENGTH, BioFormSchema } from "@/lib/validations/author";
 import { Author } from "@/types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowRightIcon, LoaderIcon } from "lucide-react";
