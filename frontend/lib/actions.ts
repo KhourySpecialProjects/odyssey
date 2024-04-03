@@ -6,6 +6,7 @@ import { z } from "zod";
 import { getCurrentUser } from "./auth/session";
 import { getAuthorByAuthorizedUserEmail } from "./requests/author";
 import { getAuthorizedUserByEmail } from "./requests/authorized-user";
+import { getIsEnrolled } from "./requests/enrollment";
 import {
   accessRequestSchema,
   BioFormSchema,
@@ -242,6 +243,12 @@ export async function createEnrollment(
     const user = await getCurrentUser();
     if (!user?.email) throw new Error("No email identified");
     const authorizedUser = await getAuthorizedUserByEmail(user.email);
+    const isAlreadyEnrolled = await getIsEnrolled(
+      authorizedUser.id,
+      formData.droplet
+    );
+
+    if (isAlreadyEnrolled) return;
 
     const response = await fetch(STRAPI_API_URL + "/api/enrollments", {
       method: "POST",

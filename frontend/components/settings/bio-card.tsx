@@ -26,13 +26,13 @@ import {
 import { Author } from "@/types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowRightIcon, LoaderIcon } from "lucide-react";
-import { startTransition, useState } from "react";
+import { useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
 export function BioCard({ author }: { author: Author }) {
-  const [submitting, setSubmitting] = useState(false);
+  const [isPending, startTransition] = useTransition();
 
   const form = useForm<z.infer<typeof BioFormSchema>>({
     resolver: zodResolver(BioFormSchema),
@@ -42,7 +42,6 @@ export function BioCard({ author }: { author: Author }) {
   });
 
   function onSubmit(values: z.infer<typeof BioFormSchema>) {
-    setSubmitting(true);
     startTransition(() => {
       updateAuthorBio(values).then((r) => {
         if (r && !r.ok) {
@@ -52,7 +51,6 @@ export function BioCard({ author }: { author: Author }) {
         } else {
           toast.success("Your bio has been successfully updated.");
         }
-        setSubmitting(false);
       });
     });
   }
@@ -97,7 +95,7 @@ export function BioCard({ author }: { author: Author }) {
             <Button
               type="submit"
               after={
-                submitting ? (
+                isPending ? (
                   <LoaderIcon className="animate-spin" />
                 ) : (
                   <ArrowRightIcon />
