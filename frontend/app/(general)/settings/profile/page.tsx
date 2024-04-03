@@ -35,7 +35,7 @@ export default async function AuthorProfileSettings() {
 
         <CardContent className="flex items-center space-x-4">
           <Avatar variant="round">
-            <AvatarImage src={author.photo?.formats?.small.url} />
+            <AvatarImage src={author.photo?.formats?.small?.url ?? undefined} />
             <AvatarFallback>{getInitials(author.name)}</AvatarFallback>
           </Avatar>
           <div>
