@@ -7,9 +7,9 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { deleteAuthorizedUser, updateAuthorizedUser } from "@/lib/actions";
+import { AuthorizedUser } from "@/types";
 import { TrashIcon } from "lucide-react";
 import { useFormStatus } from "react-dom";
-import { AuthorizedUser } from "./authorized-users";
 
 export function AuthorizedUserBlock({ user }: { user: AuthorizedUser }) {
   return (
