@@ -2,15 +2,9 @@
 
 import { cn } from "@/lib/utils";
 import { Droplet } from "@/types";
-import {
-  ArrowLeftIcon,
-  ArrowRightIcon,
-  ThumbsDownIcon,
-  ThumbsUpIcon,
-} from "lucide-react";
+import { ArrowLeftIcon, ArrowRightIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Button } from "../ui/button";
 
 type PaginationProps = {
   link: string;
@@ -72,7 +66,7 @@ export default function DropletFooter({
 
   return (
     <>
-      {pathSegments.length > 3 &&
+      {/* {pathSegments.length > 3 &&
         pathSegments.at(-1)?.toLowerCase() !== "introduction" &&
         !pathSegments.at(-1)?.toLowerCase().includes("recap") && (
           <div className="flex flex-col items-center w-full gap-4 p-8 mx-auto mt-8 border rounded-md max-w-prose border-slate-200">
@@ -88,7 +82,7 @@ export default function DropletFooter({
               </Button>
             </div>
           </div>
-        )}
+        )} */}
 
       <div className="flex flex-col gap-2 pb-2 mx-auto mt-8 max-w-prose md:flex-row md:justify-between">
         {previous ? (
