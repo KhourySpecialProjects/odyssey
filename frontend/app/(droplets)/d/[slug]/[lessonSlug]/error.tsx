@@ -1,11 +1,6 @@
 "use client";
 
-import {
-  Message,
-  MessageActions,
-  MessageDescription,
-  MessageHeader,
-} from "@/components/message";
+import { Message, MessageActions, MessageHeader } from "@/components/message";
 import { Button } from "@/components/ui/button";
 import { ArrowRightIcon, RefreshCwIcon } from "lucide-react";
 import Link from "next/link";
@@ -26,7 +21,6 @@ export default function Error({
   return (
     <Message>
       <MessageHeader subtitle={error.name} title="Something went wrong!" />
-      <MessageDescription>{error.message}</MessageDescription>
       <MessageActions>
         <Button
           size="lg"
