@@ -1,3 +1,4 @@
+import { DropletTile } from "@/components/droplets/droplet-tile";
 import { GradientBackground } from "@/components/gradient-bg";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -41,6 +42,8 @@ export default async function DropletRoute({ params }: Props) {
       learningObjectives: { populate: "*" },
       lessons: { populate: "*" },
       tags: { populate: "*" },
+      prerequisites: { populate: ["id", "name", "slug"] },
+      postrequisites: { populate: ["id", "name", "slug"] },
     },
   });
   if (!droplet) return notFound();
@@ -84,6 +87,23 @@ export default async function DropletRoute({ params }: Props) {
                 dangerouslySetInnerHTML={{ __html: droplet.overview }}
               ></div>
             </div>
+          </section>
+        ) : null}
+
+        {droplet.prerequisites && droplet.prerequisites.length > 0 ? (
+          <section>
+            <h2 className="text-2xl font-bold text-slate-900">
+              Recommended Background
+            </h2>
+            <p className="text-slate-500">
+              Before beginning, we recommend completing the following Droplets:
+            </p>
+
+            <ul className="grid grid-flow-row grid-cols-1 gap-4 mt-4 sm:grid-cols-2">
+              {droplet.prerequisites.map((droplet) => (
+                <DropletTile key={droplet.id} droplet={droplet} />
+              ))}
+            </ul>
           </section>
         ) : null}
 

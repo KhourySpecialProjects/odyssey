@@ -981,6 +981,16 @@ export interface ApiDropletDroplet extends Schema.CollectionType {
         }
       >;
     nextSteps: Attribute.Component<'droplets.resource', true>;
+    prerequisites: Attribute.Relation<
+      'api::droplet.droplet',
+      'manyToMany',
+      'api::droplet.droplet'
+    >;
+    postrequisites: Attribute.Relation<
+      'api::droplet.droplet',
+      'manyToMany',
+      'api::droplet.droplet'
+    >;
     createdAt: Attribute.DateTime;
     updatedAt: Attribute.DateTime;
     publishedAt: Attribute.DateTime;

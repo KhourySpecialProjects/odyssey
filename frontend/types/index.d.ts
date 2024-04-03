@@ -66,6 +66,8 @@ export type Droplet = {
   lessons?: Lesson[];
   authors?: Author[];
   nextSteps?: Resource[];
+  prerequisites?: Droplet[];
+  postrequisites?: Droplet[];
   isHidden: boolean;
 };
 
