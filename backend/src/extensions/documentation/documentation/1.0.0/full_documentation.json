@@ -11,7 +11,7 @@
       "url": "https://khouryodyssey.org"
     },
     "license": null,
-    "x-generation-date": "2024-04-03T21:20:44.386Z"
+    "x-generation-date": "2024-04-03T21:38:11.486Z"
   },
   "x-strapi-config": {
     "plugins": [
@@ -1753,6 +1753,14 @@
                                                                                   }
                                                                                 }
                                                                               },
+                                                                              "type": {
+                                                                                "type": "string",
+                                                                                "enum": [
+                                                                                  "general",
+                                                                                  "setup",
+                                                                                  "activity"
+                                                                                ]
+                                                                              },
                                                                               "createdAt": {
                                                                                 "type": "string",
                                                                                 "format": "date-time"
@@ -3486,6 +3494,14 @@
                                                       }
                                                     }
                                                   },
+                                                  "type": {
+                                                    "type": "string",
+                                                    "enum": [
+                                                      "general",
+                                                      "setup",
+                                                      "activity"
+                                                    ]
+                                                  },
                                                   "createdAt": {
                                                     "type": "string",
                                                     "format": "date-time"
@@ -5206,6 +5222,14 @@
                                                         }
                                                       }
                                                     },
+                                                    "type": {
+                                                      "type": "string",
+                                                      "enum": [
+                                                        "general",
+                                                        "setup",
+                                                        "activity"
+                                                      ]
+                                                    },
                                                     "createdAt": {
                                                       "type": "string",
                                                       "format": "date-time"
@@ -6891,6 +6915,14 @@
                                                                   }
                                                                 }
                                                               },
+                                                              "type": {
+                                                                "type": "string",
+                                                                "enum": [
+                                                                  "general",
+                                                                  "setup",
+                                                                  "activity"
+                                                                ]
+                                                              },
                                                               "createdAt": {
                                                                 "type": "string",
                                                                 "format": "date-time"
@@ -7494,6 +7526,14 @@
                   ],
                   "example": "string or id"
                 }
+              },
+              "type": {
+                "type": "string",
+                "enum": [
+                  "general",
+                  "setup",
+                  "activity"
+                ]
               }
             }
           }
@@ -8527,6 +8567,14 @@
                                                                                   }
                                                                                 }
                                                                               },
+                                                                              "type": {
+                                                                                "type": "string",
+                                                                                "enum": [
+                                                                                  "general",
+                                                                                  "setup",
+                                                                                  "activity"
+                                                                                ]
+                                                                              },
                                                                               "createdAt": {
                                                                                 "type": "string",
                                                                                 "format": "date-time"
@@ -9021,6 +9069,14 @@
                 }
               }
             }
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "general",
+              "setup",
+              "activity"
+            ]
           },
           "createdAt": {
             "type": "string",
@@ -10674,6 +10730,14 @@
                                                                                     }
                                                                                   }
                                                                                 }
+                                                                              },
+                                                                              "type": {
+                                                                                "type": "string",
+                                                                                "enum": [
+                                                                                  "general",
+                                                                                  "setup",
+                                                                                  "activity"
+                                                                                ]
                                                                               },
                                                                               "createdAt": {
                                                                                 "type": "string",

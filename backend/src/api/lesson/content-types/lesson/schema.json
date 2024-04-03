@@ -44,6 +44,15 @@
       "relation": "manyToMany",
       "target": "api::enrollment.enrollment",
       "mappedBy": "viewedLessons"
+    },
+    "type": {
+      "type": "enumeration",
+      "enum": [
+        "general",
+        "setup",
+        "activity"
+      ],
+      "default": "general"
     }
   }
 }
