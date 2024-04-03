@@ -2,7 +2,13 @@
 
 import { getInitials } from "@/lib/utils";
 import { User } from "@/types";
-import { ChevronDownIcon, CogIcon, LogOutIcon, User2Icon } from "lucide-react";
+import {
+  ChevronDownIcon,
+  CogIcon,
+  LogOutIcon,
+  TowerControlIcon,
+  User2Icon,
+} from "lucide-react";
 import { signOut } from "next-auth/react";
 import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
@@ -58,10 +64,17 @@ export function UserDropdown(user: User) {
 
         <DropdownMenuSeparator />
 
+        <DropdownMenuItem asChild>
+          <Link href="/settings">
+            <CogIcon className="w-4 h-4 mr-2" />
+            <span>Settings</span>
+          </Link>
+        </DropdownMenuItem>
+
         {user.isAdmin ? (
           <DropdownMenuItem asChild>
             <Link href="/admin">
-              <CogIcon className="w-4 h-4 mr-2" />
+              <TowerControlIcon className="w-4 h-4 mr-2" />
               <span>Admin</span>
             </Link>
           </DropdownMenuItem>

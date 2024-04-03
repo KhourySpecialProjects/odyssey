@@ -13,6 +13,7 @@ import {
   MenuIcon,
   ShipIcon,
   TargetIcon,
+  TowerControlIcon,
 } from "lucide-react";
 import { signOut } from "next-auth/react";
 import Image from "next/image";
@@ -217,10 +218,18 @@ export default function Sidebar({
                     <span>Explore Droplets</span>
                   </Link>
                 </DropdownMenuItem>
+
+                <DropdownMenuItem asChild>
+                  <Link href="/settings">
+                    <CogIcon className="w-4 h-4 mr-2" />
+                    <span>Admin</span>
+                  </Link>
+                </DropdownMenuItem>
+
                 {user.isAdmin ? (
                   <DropdownMenuItem asChild>
                     <Link href="/admin">
-                      <CogIcon className="w-4 h-4 mr-2" />
+                      <TowerControlIcon className="w-4 h-4 mr-2" />
                       <span>Admin</span>
                     </Link>
                   </DropdownMenuItem>
