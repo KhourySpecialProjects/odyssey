@@ -68,7 +68,8 @@ export default async function Settings() {
             >
               Northeastern profile
             </Link>
-            .
+            . You may need to log out and back into Odyssey for changes to take
+            effect.
           </p>
         </CardFooter>
       </Card>

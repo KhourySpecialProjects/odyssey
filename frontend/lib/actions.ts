@@ -3,7 +3,12 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import { accessRequestSchema } from "./validations/access-request";
+import { getCurrentUser } from "./auth/session";
+import { getAuthorByAuthorizedUserEmail } from "./requests/author";
+import {
+  accessRequestSchema,
+  BioFormSchema,
+} from "./validations/access-request";
 import { AuthorizedUserSchema } from "./validations/authorized-user";
 import { reportSchema } from "./validations/report";
 
@@ -194,4 +199,36 @@ export async function createBugReport(formData: z.infer<typeof reportSchema>) {
   }
 
   redirect(formData.path + "?ts=" + Date.now());
+}
+
+export async function updateAuthorBio(formData: z.infer<typeof BioFormSchema>) {
+  try {
+    const user = await getCurrentUser();
+    if (!user?.email) throw new Error("No email identified");
+    const author = await getAuthorByAuthorizedUserEmail(user.email);
+
+    const response = await fetch(STRAPI_API_URL + "/api/authors/" + author.id, {
+      method: "PUT",
+      body: JSON.stringify({ data: { bio: formData.bio } }),
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+      },
+    });
+    const data = await response.json();
+
+    if (!response.ok || (response.ok && data.error)) {
+      const errorPath = data.error.details.errors[0].path[0];
+      const errorMessage = `${data.error.message} (${errorPath})`;
+      return { ok: false, error: errorMessage, data: null };
+    }
+  } catch (err) {
+    console.error(err);
+    return { error: "Database Error: Failed to update author." };
+  }
+
+  revalidatePath("/(general)/settings/profile", "page");
+  revalidatePath("/(droplets)/d/[slug]", "page");
+  revalidatePath("/(droplets)/d/[slug]/recap", "page");
+  redirect("/settings/profile");
 }

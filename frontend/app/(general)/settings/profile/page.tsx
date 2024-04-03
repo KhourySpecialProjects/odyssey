@@ -1,4 +1,5 @@
-import { Button } from "@/components/ui/button";
+import { BioCard } from "@/components/settings/bio-card";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Card,
   CardContent,
@@ -7,40 +8,33 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-// import { Checkbox } from "@/components/ui/checkbox";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Input } from "@/components/ui/input";
 import { getCurrentUser } from "@/lib/auth/session";
+import { getAuthorByAuthorizedUserEmail } from "@/lib/requests/author";
 import { getInitials } from "@/lib/utils";
-import { User2Icon } from "lucide-react";
+import { notFound } from "next/navigation";
 
 export default async function AuthorProfileSettings() {
   const user = await getCurrentUser();
+  if (!user?.email) return notFound();
+  const author = await getAuthorByAuthorizedUserEmail(user.email);
 
   return (
     <>
       <Card>
         <CardHeader>
           <CardTitle>Author Profile</CardTitle>
-          <CardDescription>Your personal profile information.</CardDescription>
+          <CardDescription>
+            Your public profile information, shown on Droplets you authored.
+          </CardDescription>
         </CardHeader>
 
-        <CardContent className="flex items-center space-x-3">
-          <Avatar variant="round" size="sm">
-            <AvatarImage src={user?.image ?? undefined} />
-            <AvatarFallback>
-              {user?.name ? (
-                getInitials(user.name)
-              ) : (
-                <User2Icon className="w-4 h-4" />
-              )}
-            </AvatarFallback>
+        <CardContent className="flex items-center space-x-4">
+          <Avatar variant="round">
+            <AvatarImage src={author.photo?.formats?.medium.url} />
+            <AvatarFallback>{getInitials(author.name)}</AvatarFallback>
           </Avatar>
           <div>
-            <div className="font-medium">{user?.name}</div>
-            <div className="text-sm text-slate-500 dark:text-slate-400">
-              {user?.email}
-            </div>
+            <div className="font-medium">{author.name}</div>
           </div>
         </CardContent>
         <CardFooter className="px-6 py-4 border-t">
@@ -50,32 +44,7 @@ export default async function AuthorProfileSettings() {
         </CardFooter>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Bio</CardTitle>
-          <CardDescription>
-            The directory within your project, in which your plugins are
-            located.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form className="flex flex-col gap-4">
-            <Input placeholder="Project Name" defaultValue="/content/plugins" />
-            {/* <div className="flex items-center space-x-2">
-                    <Checkbox id="include" defaultChecked />
-                    <label
-                      htmlFor="include"
-                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                    >
-                      Allow administrators to change the directory.
-                    </label>
-                  </div> */}
-          </form>
-        </CardContent>
-        <CardFooter className="px-6 py-4 border-t">
-          <Button>Save</Button>
-        </CardFooter>
-      </Card>
+      <BioCard author={author} />
     </>
   );
 }

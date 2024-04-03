@@ -21,9 +21,9 @@ export type GeneralConfig = {
 export type Author = {
   id: number;
   name: string;
-  bio: string;
-  photo: StrapiMediaParams;
-  droplets: Droplet[];
+  bio?: string;
+  photo?: StrapiMediaParams;
+  droplets?: Droplet[];
 };
 
 export type Lesson = {
