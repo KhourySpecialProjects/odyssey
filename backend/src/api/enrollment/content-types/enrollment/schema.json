@@ -4,7 +4,8 @@
   "info": {
     "singularName": "enrollment",
     "pluralName": "enrollments",
-    "displayName": "Enrollment"
+    "displayName": "Enrollment",
+    "description": ""
   },
   "options": {
     "draftAndPublish": false
@@ -23,7 +24,7 @@
       "target": "api::droplet.droplet",
       "inversedBy": "enrollments"
     },
-    "lessons": {
+    "viewedLessons": {
       "type": "relation",
       "relation": "manyToMany",
       "target": "api::lesson.lesson",

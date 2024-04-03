@@ -1,19 +1,13 @@
 import { DropletTile } from "@/components/droplets/droplet-tile";
+import { EnrollButton } from "@/components/droplets/enroll-button";
 import { GradientBackground } from "@/components/gradient-bg";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { getDropletBySlug } from "@/lib/requests/droplet";
 import { getInitials, uppercaseFirstChar } from "@/lib/utils";
 import { Droplet } from "@/types";
-import {
-  ArrowRightIcon,
-  BookTextIcon,
-  GoalIcon,
-  HammerIcon,
-} from "lucide-react";
+import { BookTextIcon, GoalIcon, HammerIcon } from "lucide-react";
 import { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 
 type Props = {
@@ -197,11 +191,7 @@ export default async function DropletRoute({ params }: Props) {
 
         {droplet.lessons && droplet.lessons.length > 0 ? (
           <section>
-            <Button size="lg" after={<ArrowRightIcon />} asChild>
-              <Link href={`/d/${droplet.slug}/${droplet.lessons[0].slug}`}>
-                Begin Droplet
-              </Link>
-            </Button>
+            <EnrollButton droplet={droplet} />
           </section>
         ) : null}
       </div>

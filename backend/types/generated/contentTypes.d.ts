@@ -1025,6 +1025,7 @@ export interface ApiEnrollmentEnrollment extends Schema.CollectionType {
     singularName: 'enrollment';
     pluralName: 'enrollments';
     displayName: 'Enrollment';
+    description: '';
   };
   options: {
     draftAndPublish: false;
@@ -1040,7 +1041,7 @@ export interface ApiEnrollmentEnrollment extends Schema.CollectionType {
       'manyToOne',
       'api::droplet.droplet'
     >;
-    lessons: Attribute.Relation<
+    viewedLessons: Attribute.Relation<
       'api::enrollment.enrollment',
       'manyToMany',
       'api::lesson.lesson'

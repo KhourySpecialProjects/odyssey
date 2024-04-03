@@ -1,9 +1,42 @@
-import { flattenAttributes } from "@/lib/utils";
+import { fetchAPI, flattenAttributes } from "@/lib/utils";
 import { AuthorizedUser } from "@/types";
+import { StrapiRequestParams } from "@/types/strapi";
 import qs from "qs";
 
 const STRAPI_API_URL = process.env.STRAPI_API_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
+
+/**
+ * Gets the desired authorized user by its unique email.
+ * @param email The unique email of the desired authorized user.
+ * @param options Strapi query modifiers.
+ * @returns The authorized user.
+ */
+export async function getAuthorizedUserByEmail<
+  T extends Partial<AuthorizedUser> = AuthorizedUser
+>(
+  email: string,
+  { sort, filters, populate = "*", fields = ["*"] }: StrapiRequestParams = {}
+): Promise<T> {
+  const path = `/authorized-users`;
+  const urlParams = {
+    sort,
+    filters: {
+      ...filters,
+      email: { $eq: email },
+    },
+    populate,
+    fields,
+    pagination: {
+      pageSize: 1,
+      page: 1,
+    },
+  };
+
+  return await fetchAPI<T[]>(path, { urlParams }).then(
+    (authorizedUsers) => authorizedUsers[0]
+  );
+}
 
 export async function fetchAuthorizedUsers(): Promise<AuthorizedUser[]> {
   try {

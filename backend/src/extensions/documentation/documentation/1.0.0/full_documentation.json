@@ -11,7 +11,7 @@
       "url": "https://khouryodyssey.org"
     },
     "license": null,
-    "x-generation-date": "2024-04-03T19:40:32.101Z"
+    "x-generation-date": "2024-04-03T20:06:18.236Z"
   },
   "x-strapi-config": {
     "plugins": [
@@ -1580,7 +1580,7 @@
                                                                     }
                                                                   }
                                                                 },
-                                                                "lessons": {
+                                                                "viewedLessons": {
                                                                   "type": "object",
                                                                   "properties": {
                                                                     "data": {
@@ -3414,7 +3414,7 @@
                                                                     }
                                                                   }
                                                                 },
-                                                                "lessons": {
+                                                                "viewedLessons": {
                                                                   "type": "object",
                                                                   "properties": {
                                                                     "data": {
@@ -5134,7 +5134,7 @@
                                                                       }
                                                                     }
                                                                   },
-                                                                  "lessons": {
+                                                                  "viewedLessons": {
                                                                     "type": "object",
                                                                     "properties": {
                                                                       "data": {
@@ -5828,7 +5828,7 @@
                 ],
                 "example": "string or id"
               },
-              "lessons": {
+              "viewedLessons": {
                 "type": "array",
                 "items": {
                   "oneOf": [
@@ -6819,7 +6819,7 @@
                                                                                 }
                                                                               }
                                                                             },
-                                                                            "lessons": {
+                                                                            "viewedLessons": {
                                                                               "type": "object",
                                                                               "properties": {
                                                                                 "data": {
@@ -7336,7 +7336,7 @@
               }
             }
           },
-          "lessons": {
+          "viewedLessons": {
             "type": "object",
             "properties": {
               "data": {
@@ -8354,7 +8354,7 @@
                                                                     }
                                                                   }
                                                                 },
-                                                                "lessons": {
+                                                                "viewedLessons": {
                                                                   "type": "object",
                                                                   "properties": {
                                                                     "data": {
@@ -10502,7 +10502,7 @@
                                                                     }
                                                                   }
                                                                 },
-                                                                "lessons": {
+                                                                "viewedLessons": {
                                                                   "type": "object",
                                                                   "properties": {
                                                                     "data": {

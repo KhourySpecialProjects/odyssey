@@ -99,6 +99,6 @@ export type Quiz = {
 export type Enrollment = {
   authorizedUser: AuthorizedUser;
   droplet: Droplet;
-  lessons: Lesson[];
+  viewedLessons: Lesson[];
   isComplete: boolean;
 };

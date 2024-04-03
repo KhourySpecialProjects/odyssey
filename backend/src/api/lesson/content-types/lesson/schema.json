@@ -43,7 +43,7 @@
       "type": "relation",
       "relation": "manyToMany",
       "target": "api::enrollment.enrollment",
-      "mappedBy": "lessons"
+      "mappedBy": "viewedLessons"
     }
   }
 }

@@ -5,9 +5,11 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { getCurrentUser } from "./auth/session";
 import { getAuthorByAuthorizedUserEmail } from "./requests/author";
+import { getAuthorizedUserByEmail } from "./requests/authorized-user";
 import {
   accessRequestSchema,
   BioFormSchema,
+  EnrollFormSchema,
 } from "./validations/access-request";
 import { AuthorizedUserSchema } from "./validations/authorized-user";
 import { reportSchema } from "./validations/report";
@@ -231,4 +233,35 @@ export async function updateAuthorBio(formData: z.infer<typeof BioFormSchema>) {
   revalidatePath("/(droplets)/d/[slug]", "page");
   revalidatePath("/(droplets)/d/[slug]/recap", "page");
   redirect("/settings/profile");
+}
+
+export async function createEnrollment(
+  formData: z.infer<typeof EnrollFormSchema>
+) {
+  try {
+    const user = await getCurrentUser();
+    if (!user?.email) throw new Error("No email identified");
+    const authorizedUser = await getAuthorizedUserByEmail(user.email);
+
+    const response = await fetch(STRAPI_API_URL + "/api/enrollments", {
+      method: "POST",
+      body: JSON.stringify({
+        data: { ...formData, authorizedUser: authorizedUser.id },
+      }),
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+      },
+    });
+    const data = await response.json();
+
+    if (!response.ok || (response.ok && data.error)) {
+      const errorPath = data.error.details.errors[0].path[0];
+      const errorMessage = `${data.error.message} (${errorPath})`;
+      return { ok: false, error: errorMessage, data: null };
+    }
+  } catch (err) {
+    console.error(err);
+    return { error: "Database Error: Failed to enroll." };
+  }
 }
