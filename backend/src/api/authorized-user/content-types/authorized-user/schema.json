@@ -26,6 +26,12 @@
       "type": "boolean",
       "default": true,
       "required": true
+    },
+    "author": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::author.author",
+      "mappedBy": "authorizedUser"
     }
   }
 }

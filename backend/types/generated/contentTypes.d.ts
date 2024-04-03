@@ -863,6 +863,11 @@ export interface ApiAuthorAuthor extends Schema.CollectionType {
       'manyToMany',
       'api::droplet.droplet'
     >;
+    authorizedUser: Attribute.Relation<
+      'api::author.author',
+      'oneToOne',
+      'api::authorized-user.authorized-user'
+    >;
     createdAt: Attribute.DateTime;
     updatedAt: Attribute.DateTime;
     createdBy: Attribute.Relation<
@@ -899,6 +904,11 @@ export interface ApiAuthorizedUserAuthorizedUser extends Schema.CollectionType {
     isEnabled: Attribute.Boolean &
       Attribute.Required &
       Attribute.DefaultTo<true>;
+    author: Attribute.Relation<
+      'api::authorized-user.authorized-user',
+      'oneToOne',
+      'api::author.author'
+    >;
     createdAt: Attribute.DateTime;
     updatedAt: Attribute.DateTime;
     createdBy: Attribute.Relation<
