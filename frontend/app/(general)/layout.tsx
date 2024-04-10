@@ -12,13 +12,16 @@ export default function GeneralLayout({
     <>
       <DebugBanner />
 
-      <Suspense>
-        <Header />
-      </Suspense>
+      <div className="z-10 sticky top-0">
+        <Suspense>
+          <Header />
+        </Suspense>
 
-      <Suspense>
-        <AccessRequestBanner />
-      </Suspense>
+        <Suspense>
+          <AccessRequestBanner />
+        </Suspense>
+      </div>
+
       <main>{children}</main>
     </>
   );
