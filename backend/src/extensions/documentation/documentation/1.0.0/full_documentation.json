@@ -11,7 +11,7 @@
       "url": "https://khouryodyssey.org"
     },
     "license": null,
-    "x-generation-date": "2024-04-10T18:28:25.932Z"
+    "x-generation-date": "2024-04-24T19:40:14.213Z"
   },
   "x-strapi-config": {
     "plugins": [
@@ -1758,7 +1758,8 @@
                                                                                 "enum": [
                                                                                   "general",
                                                                                   "setup",
-                                                                                  "activity"
+                                                                                  "activity",
+                                                                                  "caseStudy"
                                                                                 ]
                                                                               },
                                                                               "createdAt": {
@@ -3499,7 +3500,8 @@
                                                     "enum": [
                                                       "general",
                                                       "setup",
-                                                      "activity"
+                                                      "activity",
+                                                      "caseStudy"
                                                     ]
                                                   },
                                                   "createdAt": {
@@ -5227,7 +5229,8 @@
                                                       "enum": [
                                                         "general",
                                                         "setup",
-                                                        "activity"
+                                                        "activity",
+                                                        "caseStudy"
                                                       ]
                                                     },
                                                     "createdAt": {
@@ -6920,7 +6923,8 @@
                                                                 "enum": [
                                                                   "general",
                                                                   "setup",
-                                                                  "activity"
+                                                                  "activity",
+                                                                  "caseStudy"
                                                                 ]
                                                               },
                                                               "createdAt": {
@@ -7532,7 +7536,8 @@
                 "enum": [
                   "general",
                   "setup",
-                  "activity"
+                  "activity",
+                  "caseStudy"
                 ]
               }
             }
@@ -8572,7 +8577,8 @@
                                                                                 "enum": [
                                                                                   "general",
                                                                                   "setup",
-                                                                                  "activity"
+                                                                                  "activity",
+                                                                                  "caseStudy"
                                                                                 ]
                                                                               },
                                                                               "createdAt": {
@@ -9075,7 +9081,8 @@
             "enum": [
               "general",
               "setup",
-              "activity"
+              "activity",
+              "caseStudy"
             ]
           },
           "createdAt": {
@@ -10736,7 +10743,8 @@
                                                                                 "enum": [
                                                                                   "general",
                                                                                   "setup",
-                                                                                  "activity"
+                                                                                  "activity",
+                                                                                  "caseStudy"
                                                                                 ]
                                                                               },
                                                                               "createdAt": {

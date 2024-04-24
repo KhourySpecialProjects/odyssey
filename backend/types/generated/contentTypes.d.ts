@@ -1104,7 +1104,7 @@ export interface ApiLessonLesson extends Schema.CollectionType {
       'manyToMany',
       'api::enrollment.enrollment'
     >;
-    type: Attribute.Enumeration<['general', 'setup', 'activity']> &
+    type: Attribute.Enumeration<['general', 'setup', 'activity', 'caseStudy']> &
       Attribute.DefaultTo<'general'>;
     createdAt: Attribute.DateTime;
     updatedAt: Attribute.DateTime;

@@ -40,7 +40,7 @@ export type Lesson = {
   id: number;
   name: string;
   slug: string;
-  type?: "general" | "setup" | "activity";
+  type?: "general" | "setup" | "activity" | "caseStudy";
   blocks: any[];
   droplets: Droplet[];
 };

@@ -6,7 +6,12 @@ import { Badge } from "@/components/ui/badge";
 import { getDropletBySlug } from "@/lib/requests/droplet";
 import { getInitials, uppercaseFirstChar } from "@/lib/utils";
 import { Droplet } from "@/types";
-import { BookTextIcon, GoalIcon, HammerIcon } from "lucide-react";
+import {
+  BookTextIcon,
+  FilePieChartIcon,
+  GoalIcon,
+  HammerIcon,
+} from "lucide-react";
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
 
@@ -140,8 +145,10 @@ export default async function DropletRoute({ params }: Props) {
                     key={`lesson-${lesson.id}`}
                     className="inline-flex items-center gap-2 px-4 py-3 leading-snug"
                   >
-                    {lesson.name.toLowerCase().startsWith("activity") ? (
+                    {lesson.type === "activity" ? (
                       <HammerIcon className="w-5 h-5 mr-0.5 shrink-0" />
+                    ) : lesson.type === "caseStudy" ? (
+                      <FilePieChartIcon className="w-5 h-5 mr-0.5 shrink-0" />
                     ) : (
                       <BookTextIcon className="w-5 h-5 mr-0.5 shrink-0" />
                     )}

@@ -7,6 +7,7 @@ import {
   BookTextIcon,
   ChevronDownIcon,
   CogIcon,
+  FilePieChartIcon,
   HammerIcon,
   HistoryIcon,
   LogOutIcon,
@@ -152,8 +153,10 @@ export default function Sidebar({
                         : inactiveLinkClasses
                     }
                   >
-                    {lesson.name.toLowerCase().startsWith("activity") ? (
+                    {lesson.type === "activity" ? (
                       <HammerIcon className="shrink-0" />
+                    ) : lesson.type === "caseStudy" ? (
+                      <FilePieChartIcon className="w-5 h-5 mr-0.5 shrink-0" />
                     ) : (
                       <BookTextIcon className="shrink-0" />
                     )}
