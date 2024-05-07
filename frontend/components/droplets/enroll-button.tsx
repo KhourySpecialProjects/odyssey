@@ -52,7 +52,7 @@ export function EnrollButton({ droplet }: { droplet: Droplet }) {
         }
       }}
     >
-      Begin Droplet
+      Enroll and Continue
     </Button>
   );
 }
