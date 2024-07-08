@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "concurrently": "^8.2.2",
+    "install": "^0.13.0",
     "npm-check-updates": "^16.14.15"
-  }
+  }                         
 }

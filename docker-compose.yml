@@ -1,0 +1,68 @@
+services:
+  strapi:
+    container_name: strapi
+    build: 
+      context: ./backend
+      dockerfile: Dockerfile
+    image: strapi:latest
+    restart: unless-stopped
+    env_file:
+      - ./backend/.env
+      - ./backend/.docker.env
+    volumes:
+      - ./backend/config:/opt/app/config
+      - ./backend/types:/opt/app/types
+      - ./backend/src:/opt/app/src
+      - ./backend/package.json:/opt/package.json
+      - ./backend/yarn.lock:/opt/yarn.lock
+      - ./backend/.env:/opt/app/.env
+      - ./backend/public/uploads:/opt/app/public/uploads
+    ports:
+      - 1337:1337
+    networks:
+      - strapi
+    depends_on:
+      - strapiDB
+
+  strapiDB:
+    container_name: strapiDB
+    platform: linux/amd64 #for platform error on Apple M1 chips
+    restart: unless-stopped
+    env_file: ./backend/.docker.env
+    image: postgres:12.0-alpine
+    volumes:
+      - strapi-data:/var/lib/postgresql/data/ #using a volume
+      #- ./data:/var/lib/postgresql/data/ # if you want to use a bind folder
+
+    ports:
+      - 5432:5432
+    networks:
+      - strapi
+
+
+  frontend: 
+    build: 
+      context: ./frontend 
+      dockerfile: Dockerfile
+    container_name: frontend
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    env_file:
+      - ./frontend/.env.local
+      - ./frontend/.docker.env
+    ports:
+      - 3000:3000
+    
+    depends_on:
+      - strapi
+    networks:
+      - strapi
+
+volumes:
+  strapi-data:
+
+networks:
+  strapi:
+    name: Strapi
+    driver: bridge

@@ -1,0 +1,8 @@
+node_modules
+.next 
+.eslintrc.json
+.gitignore 
+Dockerfile 
+next-env.d.ts
+README.md
+.env.local
