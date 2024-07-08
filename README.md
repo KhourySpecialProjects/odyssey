@@ -2,15 +2,25 @@
 
 # Khoury Odyssey Monorepo
 
-This monorepo contains the repositories for Khoury Odyssey's NextJS-powered frontend (in [`frontend`](/frontend)) and Strapi-powered CMS backend (in [`backend`](/backend)).
+This monorepo contains the repositories for Khoury Odyssey's NextJS-powered frontend (in [`/frontend`](/frontend)) and Strapi-powered CMS backend (in [`/backend`](/backend)).
 
-See each subsection for installation instructions and additional details.
+See each subdirectory's README for installation instructions and additional information.
 
 ## Table of Contents
 
-1. [Installation](#installation)
-2. [Contributing](#contributing)
-3. [Contributors](#contributors)
+1. [About](#about)
+2. [Installation](#installation)
+   - [Architecture](#architecture)
+3. [Contributing](#contributing)
+4. [Contributors](#contributors)
+
+## About
+
+Odyssey is a new platform designed to provide on-demand access to modern knowledge and skills pertinent to today’s undergraduate Khoury students.
+
+### Architecture
+
+The frontend and backend are both deployed through Digital Ocean. Assets are uploaded to Digital Ocean Spaces. Platform content—managed through the backend—is stored in a Digital Ocean Postgres database.
 
 ## Installation
 
@@ -24,6 +34,7 @@ To install Odyssey locally, follow these steps:
 6. Start the application: `npm run dev`
 
 ## Contributing
+
 To contribute to Odyssey's source code:
 
 - Create a new branch: `git checkout -b feature/[description]`, where `[description]` is a concise name for the feature being implemented
@@ -33,4 +44,6 @@ To contribute to Odyssey's source code:
 
 ## Contributors
 
-This repo was set up by Jay Sella ([@jaysella](https://github.com/jaysella)).
+Sponsor: [@MarkFontenot](https://github.com/MarkFontenot)
+
+This platform was built by Jay Sella ([@jaysella](https://github.com/jaysella)).
