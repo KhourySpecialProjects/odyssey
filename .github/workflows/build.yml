@@ -35,6 +35,8 @@ jobs:
           npm ci 
 
       - name: Build frontend
+        env:
+          DO_CDN_URL: ${{ secrets.DO_CDN_URL }}
         run: |
           cd ./frontend 
           npm run build
