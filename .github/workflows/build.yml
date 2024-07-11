@@ -1,0 +1,63 @@
+name: Build frontend and backend
+
+on: 
+  push:
+    branches:
+      - main
+      - develop
+      - 'feature/**'
+    
+  pull_request:
+    branches:
+      - main
+      - develop
+      - 'feature/**'
+
+jobs:
+  frontend-build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      
+
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install frontend dependencies
+        run: npm run ci-setup:frontend
+
+      - name: Build frontend
+        run: npm run build:frontend
+        
+  backend-build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        
+        
+
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+            node-version: '18'
+
+      - name: Install backend dependencies
+        run: npm run ci-setup:backend
+
+      - name: Build backend
+        run: npm run build:backend
+
+      
+
+     
+      
+      
