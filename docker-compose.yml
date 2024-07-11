@@ -19,9 +19,11 @@ services:
       - ./backend/public/uploads:/opt/app/public/uploads
     ports:
       - 1337:1337
-    
     depends_on:
       - strapiDB
+    networks:
+      - db
+      - frontend
 
   strapiDB:
     container_name: strapiDB
@@ -32,9 +34,10 @@ services:
     volumes:
       - ./initdb:/docker-entrypoint-initdb.d
       - strapi-data:/var/lib/postgresql/data/ #using a volume
-
     ports:
       - 5432:5432
+    networks:
+      - db
     
 
 
@@ -52,13 +55,20 @@ services:
       - ./frontend/.docker.env
     ports:
       - 3000:3000
-    
     depends_on:
       - strapi
+    networks:
+      - frontend
     
 
 volumes:
   strapi-data:
   frontend_node_modules:
   frontend_cache:
+
+networks:
+  frontend:
+    driver: bridge
+  db:
+    driver: bridge
 
