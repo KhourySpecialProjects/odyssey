@@ -1,0 +1,8 @@
+.git 
+.gitignore 
+*.sql 
+README.md
+/backend
+.github 
+docker-compose.yml
+**/*.json

@@ -6,10 +6,17 @@
     "setup:frontend": "cd frontend && npm install",
     "setup:backend": "cd backend && npm install",
     "setup": "npm install install && npm run setup:frontend && npm run setup:backend",
-    "dev": "npm run clear && concurrently \"cd frontend && npm run dev\" \"cd backend && npm run dev\""
+    "dev": "npm run clear && concurrently \"cd frontend && npm run dev\" \"cd backend && npm run dev\"",
+    "prettier-check": "npx prettier . --check",
+    "prettier-write": "npx prettier . --write"
+
   },
   "dependencies": {
     "concurrently": "^8.2.2",
+    "install": "^0.13.0",
     "npm-check-updates": "^16.14.15"
+  },
+  "devDependencies": {
+    "prettier": "3.3.2"
   }
 }

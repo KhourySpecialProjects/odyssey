@@ -16,9 +16,9 @@ const useDebugStore = create<DebugState>()(
       }),
       {
         name: "debug-toggle-storage",
-      }
-    )
-  )
+      },
+    ),
+  ),
 );
 
 export default useDebugStore;

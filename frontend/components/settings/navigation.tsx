@@ -19,7 +19,7 @@ export function SettingsNavigation({ items }: { items: NavItem[] }) {
             href={item.href}
             className={cn(
               "font-semibold",
-              pathname == item.href && "text-sky-600"
+              pathname == item.href && "text-sky-600",
             )}
           >
             {item.label}

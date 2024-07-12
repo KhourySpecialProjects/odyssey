@@ -11,7 +11,7 @@ export function DebugBanner({ className }: { className?: string }) {
     <div
       className={cn(
         "relative py-1 z-10 w-full text-center text-xs uppercase font-mono font-medium text-white bg-sky-800",
-        className
+        className,
       )}
     >
       <p className="inline-flex flex-row items-center gap-2">
