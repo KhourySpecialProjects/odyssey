@@ -49,7 +49,7 @@ export async function fetchAccessRequests() {
       {
         headers: { Authorization: "Bearer " + STRAPI_ACCESS_TOKEN },
         cache: "no-store",
-      }
+      },
     );
     const data = await response.json();
     const accessRequests = flattenAttributes(data.data);

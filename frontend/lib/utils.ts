@@ -47,7 +47,7 @@ export async function fetchAPI<T>(
     next?: Object;
     revalidate?: number;
     flattenResponse?: boolean;
-  }
+  },
 ): Promise<T> {
   try {
     // Merge default and user options
@@ -65,7 +65,7 @@ export async function fetchAPI<T>(
       encodeValuesOnly: true,
     });
     const requestUrl = `${getStrapiURL(
-      `/api${path}${queryString ? `?${queryString}` : ""}`
+      `/api${path}${queryString ? `?${queryString}` : ""}`,
     )}`;
 
     // Trigger API call
@@ -82,7 +82,7 @@ export async function fetchAPI<T>(
   } catch (error) {
     console.error(error);
     throw new Error(
-      `Please check if your server is running and you set all the required tokens.`
+      `Please check if your server is running and you set all the required tokens.`,
     );
   }
 }
@@ -133,7 +133,7 @@ export function extractHeadings(html: string): any[] {
 
   const root = parse(html);
   const headings = Array.from(
-    root.querySelectorAll("h1, h2, h3, h4, h5, h6")
+    root.querySelectorAll("h1, h2, h3, h4, h5, h6"),
   ).map((heading) => ({
     level: parseInt(heading.tagName[1]),
     text: heading.textContent?.trim(),

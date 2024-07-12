@@ -11,7 +11,7 @@ export async function TagFilter() {
           count: tag.droplets.length,
         };
       });
-    }
+    },
   );
 
   return <Filter name="tags" label="Tags" options={tags} />;

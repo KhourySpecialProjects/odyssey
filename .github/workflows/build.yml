@@ -1,0 +1,73 @@
+name: Build frontend and backend
+
+on: 
+  push:
+    branches:
+      - main
+      - develop
+      - 'feature/**'
+    
+  pull_request:
+    branches:
+      - main
+      - develop
+      - 'feature/**'
+
+jobs:
+  frontend-build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      
+
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install frontend dependencies
+        run: |
+          cd ./frontend 
+          npm ci 
+
+      - name: Build frontend
+        env:
+          DO_CDN_URL: ${{ secrets.DO_CDN_URL }}
+        run: |
+          cd ./frontend 
+          npm run build
+        
+  backend-build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        
+        
+
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+            node-version: '18'
+
+      - name: Install backend dependencies
+        run: |
+          cd ./backend 
+          npm ci
+
+      - name: Build backend
+        run: |
+          cd ./backend 
+          npm run build
+
+      
+
+     
+      
+      
