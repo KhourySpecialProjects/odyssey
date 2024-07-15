@@ -25,7 +25,7 @@ export function AdminSelector({ content }: { content: AdminContent }) {
       <div className="flex align-center justify-center">
         <DropdownMenu>
           <DropdownMenuTrigger
-            className="w-min cursor-pointer select-none text-md  transition-colors duration-100 wg-antialiased hover:bg-slate-100 dark:hover:bg-white/5 px-2 py-2 rounded-xl border-inherit border-2 hover:border-transparent"
+            className="w-min cursor-pointer select-none text-md  transition-colors duration-100 wg-antialiased hover:bg-slate-100 dark:hover:bg-white/5 px-2 py-2 rounded-xl shadow"
             asChild
           >
             <div className="flex flex-row items-center">
