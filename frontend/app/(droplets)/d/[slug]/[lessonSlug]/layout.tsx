@@ -17,7 +17,7 @@ export default async function RootLayout({ params, children }: Props) {
     {
       fields: ["slug"],
       populate: ["lessons"],
-    },
+    }
   );
   if (!droplet) return notFound();
 

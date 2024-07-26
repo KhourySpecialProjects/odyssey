@@ -24,7 +24,7 @@ export function NavLinks({
               "block px-3 py-2",
               item.href.startsWith(`/${segment}`)
                 ? "font-bold text-white bg-sky-700 rounded md:bg-transparent md:text-sky-700 md:p-0 md:dark:text-sky-500"
-                : "text-slate-900 rounded hover:bg-slate-100 md:hover:bg-transparent md:hover:text-sky-700 md:p-0 md:dark:hover:text-sky-500 dark:text-white dark:hover:bg-slate-700 dark:hover:text-white md:dark:hover:bg-transparent dark:border-slate-700",
+                : "text-slate-900 rounded hover:bg-slate-100 md:hover:bg-transparent md:hover:text-sky-700 md:p-0 md:dark:hover:text-sky-500 dark:text-white dark:hover:bg-slate-700 dark:hover:text-white md:dark:hover:bg-transparent dark:border-slate-700"
             )}
             aria-current={item.href.startsWith(`/${segment}`)}
           >

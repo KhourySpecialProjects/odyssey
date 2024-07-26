@@ -13,10 +13,10 @@ const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
  * @returns The authorized user.
  */
 export async function getAuthorizedUserByEmail<
-  T extends Partial<AuthorizedUser> = AuthorizedUser,
+  T extends Partial<AuthorizedUser> = AuthorizedUser
 >(
   email: string,
-  { sort, filters, populate, fields = ["*"] }: StrapiRequestParams = {},
+  { sort, filters, populate, fields = ["*"] }: StrapiRequestParams = {}
 ): Promise<T> {
   const path = `/authorized-users`;
   const urlParams = {
@@ -34,7 +34,7 @@ export async function getAuthorizedUserByEmail<
   };
 
   return await fetchAPI<T[]>(path, { urlParams }).then(
-    (authorizedUsers) => authorizedUsers[0],
+    (authorizedUsers) => authorizedUsers[0]
   );
 }
 
@@ -53,7 +53,7 @@ export async function fetchAuthorizedUsers(): Promise<AuthorizedUser[]> {
       {
         headers: { Authorization: "Bearer " + STRAPI_ACCESS_TOKEN },
         cache: "no-store",
-      },
+      }
     );
     const data = await response.json();
     const authorizedUsers = flattenAttributes(data.data);
@@ -83,7 +83,7 @@ export async function fetchIsAuthorizedUser(email: string) {
       {
         headers: { Authorization: "Bearer " + STRAPI_ACCESS_TOKEN },
         cache: "no-store",
-      },
+      }
     );
     const data = await response.json();
     const authorizedUsers = flattenAttributes(data.data);
@@ -113,7 +113,7 @@ export async function fetchIsAdmin(email: string): Promise<boolean> {
       {
         headers: { Authorization: "Bearer " + STRAPI_ACCESS_TOKEN },
         cache: "no-store",
-      },
+      }
     );
     const data = await response.json();
     const authorizedUsers = flattenAttributes(data.data);

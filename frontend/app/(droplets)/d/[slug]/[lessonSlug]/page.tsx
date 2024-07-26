@@ -14,7 +14,7 @@ type Props = {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const lesson = await getLessonBySlug<Pick<Lesson, "name">>(
     params.lessonSlug,
-    { fields: ["name"], populate: undefined },
+    { fields: ["name"], populate: undefined }
   );
   if (!lesson) return {};
 

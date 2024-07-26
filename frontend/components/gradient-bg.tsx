@@ -11,7 +11,7 @@ export function GradientBackground({
     <div
       className={cn(
         "relative bg-white isolate px-6 py-12 sm:py-16 lg:px-8",
-        className,
+        className
       )}
     >
       <div

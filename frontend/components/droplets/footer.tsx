@@ -136,7 +136,7 @@ const PaginationLinkWrapper = ({
     <div
       className={cn(
         "inline-flex items-center h-full gap-3 text-sky-700",
-        className,
+        className
       )}
     >
       {children}

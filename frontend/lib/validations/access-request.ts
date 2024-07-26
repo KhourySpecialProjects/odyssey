@@ -36,5 +36,5 @@ export const accessRequestSchema = z
     {
       message: `Email must be @${PERMITTED_EMAIL_DOMAINS.join(" or @")}`,
       path: ["email"],
-    },
+    }
   );

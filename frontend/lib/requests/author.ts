@@ -9,10 +9,10 @@ import { fetchAPI } from "../utils";
  * @returns The author.
  */
 export async function getAuthorByAuthorizedUserEmail<
-  T extends Partial<Author> = Author,
+  T extends Partial<Author> = Author
 >(
   authorizedUserEmail: string,
-  { sort, filters, populate = "*", fields = ["*"] }: StrapiRequestParams = {},
+  { sort, filters, populate = "*", fields = ["*"] }: StrapiRequestParams = {}
 ): Promise<T> {
   const path = `/authors`;
   const urlParams = {
