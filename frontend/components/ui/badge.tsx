@@ -32,7 +32,7 @@ const badgeVariants = cva(
       size: "default",
       radius: "full",
     },
-  },
+  }
 );
 
 export interface BadgeProps

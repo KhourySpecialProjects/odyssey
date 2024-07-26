@@ -30,7 +30,7 @@ export function QuizQuestionBlock({ question }: { question: QuizQuestion }) {
   const [showResult, setShowResult] = useState(false);
   const correctAnswer = useMemo(
     () => question.answerOptions.find((option) => option.isCorrect),
-    [question],
+    [question]
   );
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -73,8 +73,7 @@ export function QuizQuestionBlock({ question }: { question: QuizQuestion }) {
               <p className="mt-4 font-bold text-pretty">
                 {
                   question.answerOptions.find(
-                    (option) =>
-                      String(option.id) === form.getValues("answerId"),
+                    (option) => String(option.id) === form.getValues("answerId")
                   )!.content
                 }
               </p>
@@ -97,7 +96,7 @@ export function QuizQuestionBlock({ question }: { question: QuizQuestion }) {
                   {
                     question.answerOptions.find(
                       (option) =>
-                        String(option.id) === form.getValues("answerId"),
+                        String(option.id) === form.getValues("answerId")
                     )!.content
                   }
                 </p>
@@ -144,12 +143,12 @@ export function QuizQuestionBlock({ question }: { question: QuizQuestion }) {
                               {number === 0
                                 ? "A"
                                 : number === 1
-                                  ? "B"
-                                  : number === 2
-                                    ? "C"
-                                    : number === 3
-                                      ? "D"
-                                      : "?"}
+                                ? "B"
+                                : number === 2
+                                ? "C"
+                                : number === 3
+                                ? "D"
+                                : "?"}
                             </span>
                             {answer.content}
                           </FormLabel>

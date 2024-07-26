@@ -62,7 +62,7 @@ export default function Sidebar({
   }
 
   const dropletProgress = Math.round(
-    ((pageSlugIndex + 2) / totalPages) * 100, // offset for intro and 0-index
+    ((pageSlugIndex + 2) / totalPages) * 100 // offset for intro and 0-index
   );
 
   useLayoutEffect(() => {
@@ -77,7 +77,7 @@ export default function Sidebar({
       <div
         className={cn(
           "bg-slate-900/50 dark:bg-slate-900/80 fixed inset-0 transition-opacity",
-          expanded ? "opacity-1 z-30" : "opacity-0 -z-10",
+          expanded ? "opacity-1 z-30" : "opacity-0 -z-10"
         )}
         onClick={() => setExpanded(false)}
       ></div>
@@ -106,7 +106,7 @@ export default function Sidebar({
           "fixed top-0 left-0 z-40 w-64 h-screen transition-transform",
           expanded
             ? "md:translate-x-80 -transform-none"
-            : "md:translate-x-0 -translate-x-full",
+            : "md:translate-x-0 -translate-x-full"
         )}
         aria-label="Sidebar"
       >
