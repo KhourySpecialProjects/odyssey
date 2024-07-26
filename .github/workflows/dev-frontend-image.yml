@@ -34,3 +34,24 @@ jobs:
         run: |
           docker tag ${{ secrets.ECR_DEV_FRONTEND_REPOSITORY }}:latest ${{ steps.login-ecr.outputs.registry }}/${{ secrets.ECR_DEV_FRONTEND_REPOSITORY }}:latest
           docker push ${{ steps.login-ecr.outputs.registry }}/${{ secrets.ECR_DEV_FRONTEND_REPOSITORY }}:latest
+      
+      - name: Set up kubectl
+        run: |
+          curl -LO "https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl"
+          chmod +x ./kubectl
+          sudo mv ./kubectl /usr/local/bin/kubectl
+
+      - name: Verify kubectl installation
+        run: kubectl version --client
+
+      - name: Configure kubectl
+        env:
+          KUBECONFIG: ${{ secrets.KUBECONFIG }}
+        run: |
+          mkdir -p $HOME/.kube
+          echo "${{ secrets.KUBECONFIG }}" > $HOME/.kube/config
+
+      - name: Apply Kubernetes configuration
+        run: kubectl rollout restart deployment/frontend-deployment
+      
+          
