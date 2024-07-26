@@ -25,7 +25,7 @@ export async function getTags({
 
 export async function getTagBySlug(
   slug: string,
-  populate?: PopulateValue
+  populate?: PopulateValue,
 ): Promise<Tag> {
   const path = `/tags`;
   const urlParams = {

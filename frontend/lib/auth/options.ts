@@ -43,7 +43,7 @@ export const authOptions: NextAuthOptions = {
       if (user) {
         // Fetch additional user data from Microsoft Graph
         const graphProfile = await getUserProfile(
-          account?.access_token as string
+          account?.access_token as string,
         );
 
         // Fetch additional user data from Microsoft Graph
