@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend-deployment
+  labels:
+    app: strapi
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: strapi
+  template:
+    metadata:
+      labels:
+        app: strapi
+    spec:
+      serviceAccountName: backend-sa
+      volumes:
+        - name: backend-secrets
+          csi:
+            driver: secrets-store.csi.k8s.io
+            readOnly: true
+            volumeAttributes:
+              secretProviderClass: "backend-secrets"
+      containers:
+        - name: strapi
+          image: 851725173181.dkr.ecr.us-east-2.amazonaws.com/odyssey-dev-backend:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 1337
+          volumeMounts:
+            - name: backend-secrets
+              mountPath: "/mnt/secrets"
+          
+
+
+
