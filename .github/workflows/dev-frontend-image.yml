@@ -52,6 +52,6 @@ jobs:
           echo "${{ secrets.KUBECONFIG }}" > $HOME/.kube/config
 
       - name: Apply Kubernetes configuration
-        run: kubectl rollout restart deployment/frontend-deployment
+        run: kubectl rollout restart deployment/frontend-deployment 
       
           
