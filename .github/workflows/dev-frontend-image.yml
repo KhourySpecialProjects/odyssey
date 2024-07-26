@@ -30,7 +30,7 @@ jobs:
           docker build -t ${{ secrets.ECR_DEV_FRONTEND_REPOSITORY }}:latest -f kubernetes.Dockerfile .
 
 
-      - name: Push Docker image to ECR
+      - name: Push Docker image to ECR 
         run: |
           docker tag ${{ secrets.ECR_DEV_FRONTEND_REPOSITORY }}:latest ${{ steps.login-ecr.outputs.registry }}/${{ secrets.ECR_DEV_FRONTEND_REPOSITORY }}:latest
           docker push ${{ steps.login-ecr.outputs.registry }}/${{ secrets.ECR_DEV_FRONTEND_REPOSITORY }}:latest
