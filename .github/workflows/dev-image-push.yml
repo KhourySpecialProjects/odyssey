@@ -3,7 +3,7 @@ name: Redeploy pods for development EKS cluster
 on:
   push:
     branches:
-      - 'feature/kubernetes-dev'
+      - 'develop'
 
 jobs:
   build-and-push-frontend-to-dev:
