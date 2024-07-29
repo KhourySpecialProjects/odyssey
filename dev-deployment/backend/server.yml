@@ -31,7 +31,3 @@ spec:
           volumeMounts:
             - name: backend-secrets
               mountPath: "/mnt/secrets"
-          
-
-
-
