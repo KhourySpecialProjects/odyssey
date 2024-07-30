@@ -22,31 +22,21 @@ export function AdminSelector({ content }: { content: AdminContent }) {
 
   return (
     <>
-      <div className="flex align-center justify-center">
-        <DropdownMenu>
-          <DropdownMenuTrigger
-            className="w-min cursor-pointer select-none text-md  transition-colors duration-100 wg-antialiased hover:bg-slate-100 dark:hover:bg-white/5 px-2 py-2 rounded-xl shadow"
-            asChild
-          >
-            <div className="flex flex-row items-center">
-              <div className="min-w-40 flex justify-start items-center pl-2">
-                <span className="font-medium text-nowrap">{selected}</span>
-              </div>
-              <ChevronDownIcon className="h-6 w-6 trigger-icon text-slate-400" />
+      <div className="flex align-center justify-center select-none">
+        <div className="flex flex-row flex-nowrap px-2 py-2 shadow rounded-lg w-max space-x-2">
+          {keys.map((key) => (
+            <div
+              key={key}
+              className={
+                "px-2 py-1 cursor-pointer rounded-lg " +
+                (selected == key ? "bg-slate-200" : "hover:bg-slate-100")
+              }
+              onClick={() => setSelected(key)}
+            >
+              {key}
             </div>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent className="w-full">
-            {keys.map((key) => (
-              <DropdownMenuItem
-                className="text-md flex min-w-36"
-                key={key}
-                onClick={() => setSelected(key)}
-              >
-                {key}
-              </DropdownMenuItem>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
+          ))}
+        </div>
       </div>
 
       {content[selected]}
