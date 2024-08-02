@@ -42,9 +42,9 @@ export const authOptions: NextAuthOptions = {
       // Add extra properties to the JWT token
       if (user) {
         // Fetch additional user data from Microsoft Graph
-        const graphProfile = await getUserProfile(
-          account?.access_token as string,
-        );
+        //const graphProfile = await getUserProfile(
+        //  account?.access_token as string,
+        //);
 
         // Fetch additional user data from Microsoft Graph
         const isAdmin = await fetchIsAdmin(user.email as string);
@@ -54,7 +54,7 @@ export const authOptions: NextAuthOptions = {
           name: user.name,
           email: user.email,
           image: user.image,
-          nuid: graphProfile.nuid,
+          nuid: "0",
           jobTitle: "Person",
           isAdmin: isAdmin,
         };
