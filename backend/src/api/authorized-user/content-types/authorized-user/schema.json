@@ -17,11 +17,6 @@
       "required": true,
       "unique": true
     },
-    "isAdmin": {
-      "type": "boolean",
-      "default": false,
-      "required": true
-    },
     "isEnabled": {
       "type": "boolean",
       "default": true,
@@ -38,6 +33,12 @@
       "relation": "oneToMany",
       "target": "api::enrollment.enrollment",
       "mappedBy": "authorizedUser"
+    },
+    "roles": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::authorized-user-role.authorized-user-role",
+      "mappedBy": "authorizedUsers"
     }
   }
 }

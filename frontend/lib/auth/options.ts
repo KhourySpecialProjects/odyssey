@@ -1,9 +1,11 @@
 import { User } from "@/types";
+import { AuthorizedUserAdminRoles } from "../globals";
+import { isAuthorizedUserAdmin } from '../utils'
 import { NextAuthOptions } from "next-auth";
 import AzureADProvider from "next-auth/providers/azure-ad";
 import {
-  fetchIsAdmin,
   fetchIsAuthorizedUser as fetchIsAuthorized,
+  getAuthorizedUserByEmail,
 } from "../requests/authorized-user";
 import { getUserProfile } from "./azure";
 
@@ -41,13 +43,14 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, user, account, profile }) {
       // Add extra properties to the JWT token
       if (user) {
+
         // Fetch additional user data from Microsoft Graph
         const graphProfile = await getUserProfile(
           account?.access_token as string,
         );
 
-        // Fetch additional user data from Microsoft Graph
-        const isAdmin = await fetchIsAdmin(user.email as string);
+        // Fetch user data from Strapi
+        const authorizedUser = await getAuthorizedUserByEmail(user.email as string, {populate: {roles : {fields: ["title"]}}});
 
         // Enrich token with user details
         token.user = {
@@ -55,8 +58,7 @@ export const authOptions: NextAuthOptions = {
           email: user.email,
           image: user.image,
           nuid: graphProfile.nuid,
-          jobTitle: graphProfile.jobTitle,
-          isAdmin: isAdmin,
+          roles: authorizedUser.roles.map((elem) => elem.title), //only need the string title
         };
       }
 
