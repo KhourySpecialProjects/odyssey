@@ -10,7 +10,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { getCurrentUser } from "@/lib/auth/session";
-import { getInitials } from "@/lib/utils";
+import { getInitials, condenseRoleTitles } from "@/lib/utils";
 import { User2Icon } from "lucide-react";
 
 export default async function Settings() {
@@ -55,7 +55,9 @@ export default async function Settings() {
               <div className="text-sm text-slate-500 dark:text-slate-400">
                 Title
               </div>
-              <div className="font-medium">{user?.jobTitle}</div>
+              <div className="font-medium">
+                {condenseRoleTitles(user!.roles)}
+              </div>
             </div>
           </div>
         </CardContent>

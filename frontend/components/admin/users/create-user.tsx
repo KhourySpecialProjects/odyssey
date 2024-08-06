@@ -66,15 +66,6 @@ export function CreateUser() {
           />
 
           <Switch
-            id="isAdmin"
-            name="isAdmin"
-            alignLabel="end"
-            label="Admin?"
-            helperText="Admins can manage authorized users."
-            defaultChecked={false}
-          />
-
-          <Switch
             id="isEnabled"
             name="isEnabled"
             alignLabel="end"

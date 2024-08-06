@@ -1,19 +1,25 @@
 import { AuthorizedUser } from "@/components/admin/users/authorized-users";
 import { type StrapiMediaParams } from "./strapi";
+import { AuthorizedUserRoleTitle } from "@/lib/globals";
+
+export type AuthorizedUserRole = {
+  id: number;
+  title: AuthorizedUserRoleTitle;
+  authorizedUsers?: AuthorizedUser[];
+};
 
 export type User = {
   name?: string | null;
   email?: string | null;
   image?: string | null;
   nuid?: string;
-  jobTitle?: string;
-  isAdmin: boolean;
+  roles: AuthorizedUserRoleTitle[];
 };
 
 export type AuthorizedUser = {
   id: number;
   email: string;
-  isAdmin: boolean;
+  roles: AuthorizedUserRole[];
   isEnabled: boolean;
   enrollments?: Enrollment[];
 };

@@ -1,3 +1,17 @@
+export enum AuthorizedUserRoleTitle {
+  SysAdmin = "System Admin",
+  AcadAdmin = "Academic Admin",
+  ContentCreator = "Content Creator",
+  User = "User",
+  ContentEditor = "Content Editor",
+  Faculty = "Faculty",
+}
+
+export const AuthorizedUserAdminRoles = [
+  AuthorizedUserRoleTitle.SysAdmin,
+  AuthorizedUserRoleTitle.AcadAdmin,
+];
+
 type College = {
   value: string;
   label: string;

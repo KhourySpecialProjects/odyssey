@@ -10,8 +10,10 @@ import { deleteAuthorizedUser, updateAuthorizedUser } from "@/lib/actions";
 import { AuthorizedUser } from "@/types";
 import { TrashIcon } from "lucide-react";
 import { useFormStatus } from "react-dom";
+import { isAuthorizedUserAdmin } from "@/lib/utils";
 
 export function AuthorizedUserBlock({ user }: { user: AuthorizedUser }) {
+  const isAdmin = isAuthorizedUserAdmin(user.roles.map((role) => role.title));
   return (
     <li className="py-0 [&:not(:first-child)]:pt-3">
       <div className="flex items-center space-x-4">
@@ -21,7 +23,7 @@ export function AuthorizedUserBlock({ user }: { user: AuthorizedUser }) {
             {!user.isEnabled ? " (Disabled)" : ""}
           </p>
           <p className="text-sm truncate text-slate-500 dark:text-slate-400">
-            {user.isAdmin ? "Admin" : ""}
+            {isAdmin ? "Admin" : ""}
           </p>
         </div>
 
@@ -41,44 +43,8 @@ export function AuthorizedUserBlock({ user }: { user: AuthorizedUser }) {
               defaultValue={String(!user.isEnabled)}
               hidden
             />
-            <input
-              id="isAdmin"
-              name="isAdmin"
-              type="text"
-              defaultValue={String(user.isAdmin)}
-              hidden
-            />
             <SubmitButton destructive={user.isEnabled}>
               {user.isEnabled ? "Disable Access" : "Enable Access"}
-            </SubmitButton>
-          </form>
-
-          <form action={updateAuthorizedUser}>
-            <input
-              id="id"
-              name="id"
-              type="number"
-              defaultValue={user.id}
-              hidden
-            />
-            <input
-              id="isEnabled"
-              name="isEnabled"
-              type="text"
-              defaultValue={String(user.isEnabled)}
-              hidden
-            />
-            <input
-              id="isAdmin"
-              name="isAdmin"
-              type="text"
-              defaultValue={String(!user.isAdmin)}
-              hidden
-            />
-            <SubmitButton destructive={user.isAdmin}>
-              {user.isAdmin
-                ? "Revoke Admin Permissions"
-                : "Grant Admin Permissions"}
             </SubmitButton>
           </form>
 
