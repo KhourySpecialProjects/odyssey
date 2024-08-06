@@ -898,9 +898,6 @@ export interface ApiAuthorizedUserAuthorizedUser extends Schema.CollectionType {
   };
   attributes: {
     email: Attribute.Email & Attribute.Required & Attribute.Unique;
-    isAdmin: Attribute.Boolean &
-      Attribute.Required &
-      Attribute.DefaultTo<false>;
     isEnabled: Attribute.Boolean &
       Attribute.Required &
       Attribute.DefaultTo<true>;
@@ -914,6 +911,11 @@ export interface ApiAuthorizedUserAuthorizedUser extends Schema.CollectionType {
       'oneToMany',
       'api::enrollment.enrollment'
     >;
+    roles: Attribute.Relation<
+      'api::authorized-user.authorized-user',
+      'manyToMany',
+      'api::authorized-user-role.authorized-user-role'
+    >;
     createdAt: Attribute.DateTime;
     updatedAt: Attribute.DateTime;
     createdBy: Attribute.Relation<
@@ -924,6 +926,42 @@ export interface ApiAuthorizedUserAuthorizedUser extends Schema.CollectionType {
       Attribute.Private;
     updatedBy: Attribute.Relation<
       'api::authorized-user.authorized-user',
+      'oneToOne',
+      'admin::user'
+    > &
+      Attribute.Private;
+  };
+}
+
+export interface ApiAuthorizedUserRoleAuthorizedUserRole
+  extends Schema.CollectionType {
+  collectionName: 'authorized_user_roles';
+  info: {
+    singularName: 'authorized-user-role';
+    pluralName: 'authorized-user-roles';
+    displayName: 'Authorized User Role';
+    description: '';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    title: Attribute.String;
+    authorizedUsers: Attribute.Relation<
+      'api::authorized-user-role.authorized-user-role',
+      'manyToMany',
+      'api::authorized-user.authorized-user'
+    >;
+    createdAt: Attribute.DateTime;
+    updatedAt: Attribute.DateTime;
+    createdBy: Attribute.Relation<
+      'api::authorized-user-role.authorized-user-role',
+      'oneToOne',
+      'admin::user'
+    > &
+      Attribute.Private;
+    updatedBy: Attribute.Relation<
+      'api::authorized-user-role.authorized-user-role',
       'oneToOne',
       'admin::user'
     > &
@@ -1207,6 +1245,7 @@ declare module '@strapi/types' {
       'api::access-request.access-request': ApiAccessRequestAccessRequest;
       'api::author.author': ApiAuthorAuthor;
       'api::authorized-user.authorized-user': ApiAuthorizedUserAuthorizedUser;
+      'api::authorized-user-role.authorized-user-role': ApiAuthorizedUserRoleAuthorizedUserRole;
       'api::droplet.droplet': ApiDropletDroplet;
       'api::enrollment.enrollment': ApiEnrollmentEnrollment;
       'api::lesson.lesson': ApiLessonLesson;
