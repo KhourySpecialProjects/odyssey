@@ -20,8 +20,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
+import { isAuthorizedUserAdmin, condenseRoleTitles } from "@/lib/utils";
 
 export function UserDropdown(user: User) {
+  const isAdmin = isAuthorizedUserAdmin(user.roles);
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -56,8 +58,8 @@ export function UserDropdown(user: User) {
             <p className="text-xs leading-none text-muted-foreground">
               {user.email}
             </p>
-            <p className="text-xs leading-none text-muted-foreground">
-              Title: {user.jobTitle}
+            <p className="text-xs leading-none text-muted-foreground max-w-40">
+              Role(s): {condenseRoleTitles(user.roles)}
             </p>
           </div>
         </DropdownMenuLabel>
@@ -71,7 +73,7 @@ export function UserDropdown(user: User) {
           </Link>
         </DropdownMenuItem>
 
-        {user.isAdmin ? (
+        {isAdmin ? (
           <DropdownMenuItem asChild>
             <Link href="/admin">
               <TowerControlIcon className="w-4 h-4 mr-2" />

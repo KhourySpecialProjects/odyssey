@@ -1,7 +1,13 @@
 "use client";
 
 import UnauthorizedRoute from "@/app/(general)/unauthorized/page";
-import { cn, getInitials, getPath } from "@/lib/utils";
+import {
+  cn,
+  getInitials,
+  getPath,
+  isAuthorizedUserAdmin,
+  condenseRoleTitles,
+} from "@/lib/utils";
 import { Droplet, User } from "@/types";
 import {
   BookTextIcon,
@@ -43,6 +49,8 @@ export default function Sidebar({
 }) {
   const [expanded, setExpanded] = useState(false);
   const pathname = usePathname();
+
+  const isAdmin = user && isAuthorizedUserAdmin(user.roles);
 
   const activeLinkClasses =
     "flex font-bold items-center p-2 bg-slate-200 [&>svg]:text-sky-700 rounded-lg dark:text-white dark:hover:bg-slate-700 group text-sky-700 transition-colors";
@@ -213,7 +221,7 @@ export default function Sidebar({
                 <DropdownMenuLabel className="text-xs">
                   NUID: {user.nuid || "unknown"}
                   <br />
-                  Title: {user.jobTitle || "unknown"}
+                  Role: {condenseRoleTitles(user.roles) || "unknown"}
                 </DropdownMenuLabel>
                 <DropdownMenuItem asChild>
                   <Link href="/explore">
@@ -229,7 +237,7 @@ export default function Sidebar({
                   </Link>
                 </DropdownMenuItem>
 
-                {user.isAdmin ? (
+                {isAdmin ? (
                   <DropdownMenuItem asChild>
                     <Link href="/admin">
                       <TowerControlIcon className="w-4 h-4 mr-2" />
