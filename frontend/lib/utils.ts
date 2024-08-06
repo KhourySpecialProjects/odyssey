@@ -2,8 +2,11 @@ import { clsx, type ClassValue } from "clsx";
 import { parse } from "node-html-parser";
 import qs from "qs";
 import { twMerge } from "tailwind-merge";
-import { AuthorizedUserRoleTitle, AuthorizedUserAdminRoles } from "@/lib/globals";
-import{ AuthorizedUserRole } from "@/types";
+import {
+  AuthorizedUserRoleTitle,
+  AuthorizedUserAdminRoles,
+} from "@/lib/globals";
+import { AuthorizedUserRole } from "@/types";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -151,9 +154,9 @@ export function getPath(type: "droplet", slug: string): string {
   }
 }
 
-
-
-export function isAuthorizedUserAdmin(roles: AuthorizedUserRoleTitle[]) : boolean {
+export function isAuthorizedUserAdmin(
+  roles: AuthorizedUserRoleTitle[],
+): boolean {
   for (const role of roles) {
     if (AuthorizedUserAdminRoles.includes(role)) {
       return true;

@@ -1,7 +1,13 @@
 "use client";
 
 import UnauthorizedRoute from "@/app/(general)/unauthorized/page";
-import { cn, getInitials, getPath, isAuthorizedUserAdmin, condenseRoleTitles } from "@/lib/utils";
+import {
+  cn,
+  getInitials,
+  getPath,
+  isAuthorizedUserAdmin,
+  condenseRoleTitles,
+} from "@/lib/utils";
 import { Droplet, User } from "@/types";
 import {
   BookTextIcon,
@@ -43,9 +49,8 @@ export default function Sidebar({
 }) {
   const [expanded, setExpanded] = useState(false);
   const pathname = usePathname();
-  
-  const isAdmin = user && isAuthorizedUserAdmin(user.roles)
 
+  const isAdmin = user && isAuthorizedUserAdmin(user.roles);
 
   const activeLinkClasses =
     "flex font-bold items-center p-2 bg-slate-200 [&>svg]:text-sky-700 rounded-lg dark:text-white dark:hover:bg-slate-700 group text-sky-700 transition-colors";

@@ -1,6 +1,6 @@
 import { User } from "@/types";
 import { AuthorizedUserAdminRoles } from "../globals";
-import { isAuthorizedUserAdmin } from '../utils'
+import { isAuthorizedUserAdmin } from "../utils";
 import { NextAuthOptions } from "next-auth";
 import AzureADProvider from "next-auth/providers/azure-ad";
 import {
@@ -43,14 +43,16 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, user, account, profile }) {
       // Add extra properties to the JWT token
       if (user) {
-
         // Fetch additional user data from Microsoft Graph
         const graphProfile = await getUserProfile(
           account?.access_token as string,
         );
 
         // Fetch user data from Strapi
-        const authorizedUser = await getAuthorizedUserByEmail(user.email as string, {populate: {roles : {fields: ["title"]}}});
+        const authorizedUser = await getAuthorizedUserByEmail(
+          user.email as string,
+          { populate: { roles: { fields: ["title"] } } },
+        );
 
         // Enrich token with user details
         token.user = {

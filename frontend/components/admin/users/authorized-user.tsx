@@ -10,7 +10,7 @@ import { deleteAuthorizedUser, updateAuthorizedUser } from "@/lib/actions";
 import { AuthorizedUser } from "@/types";
 import { TrashIcon } from "lucide-react";
 import { useFormStatus } from "react-dom";
-import { isAuthorizedUserAdmin } from '@/lib/utils'
+import { isAuthorizedUserAdmin } from "@/lib/utils";
 
 export function AuthorizedUserBlock({ user }: { user: AuthorizedUser }) {
   const isAdmin = isAuthorizedUserAdmin(user.roles.map((role) => role.title));
@@ -47,8 +47,6 @@ export function AuthorizedUserBlock({ user }: { user: AuthorizedUser }) {
               {user.isEnabled ? "Disable Access" : "Enable Access"}
             </SubmitButton>
           </form>
-
-          
 
           <form action={deleteAuthorizedUser}>
             <input

@@ -44,7 +44,7 @@ export async function fetchAuthorizedUsers(): Promise<AuthorizedUser[]> {
       sort: ["email"],
       fields: ["id", "email", "isEnabled"],
       populate: {
-        roles : {fields: ["title"]}
+        roles: { fields: ["title"] },
       },
       pagination: {
         pageSize: 25,
@@ -96,5 +96,3 @@ export async function fetchIsAuthorizedUser(email: string) {
     throw new Error("Failed to fetch authorized users data.");
   }
 }
-
-
