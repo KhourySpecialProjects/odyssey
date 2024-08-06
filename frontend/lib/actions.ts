@@ -13,15 +13,20 @@ import { AuthorizedUserSchema } from "./validations/authorized-user";
 import { DropletEnrollmentSchema } from "./validations/enrollment";
 import { reportSchema } from "./validations/report";
 import { AuthorizedUserRole } from "@/types";
-import { AuthorizedUserRoleTitle } from './globals'
+import { AuthorizedUserRoleTitle } from "./globals";
 import { getAuthorizedUserRoleIdByTitle } from "./requests/authorized-user-roles";
 
 const STRAPI_API_URL = process.env.STRAPI_API_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
 
-const CreateAuthorizedUser = AuthorizedUserSchema.omit({ id: true, roles: true });
+const CreateAuthorizedUser = AuthorizedUserSchema.omit({
+  id: true,
+  roles: true,
+});
 export async function createAuthorizedUser(prevState: any, formData: FormData) {
-  const roleID = await getAuthorizedUserRoleIdByTitle(AuthorizedUserRoleTitle.User);
+  const roleID = await getAuthorizedUserRoleIdByTitle(
+    AuthorizedUserRoleTitle.User,
+  );
   const { email, isEnabled } = CreateAuthorizedUser.parse({
     email: formData.get("email"),
     isEnabled: formData.get("isEnabled"),
@@ -32,8 +37,8 @@ export async function createAuthorizedUser(prevState: any, formData: FormData) {
       email,
       isEnabled,
       roles: {
-        set: [{id: roleID}], //4 is harcoded for the role of "user", will change later when adding dropdown
-      } 
+        set: [{ id: roleID }], //4 is harcoded for the role of "user", will change later when adding dropdown
+      },
     },
   };
 

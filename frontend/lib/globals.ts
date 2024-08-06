@@ -7,7 +7,10 @@ export enum AuthorizedUserRoleTitle {
   Faculty = "Faculty",
 }
 
-export const AuthorizedUserAdminRoles  = [AuthorizedUserRoleTitle.SysAdmin, AuthorizedUserRoleTitle.AcadAdmin]
+export const AuthorizedUserAdminRoles = [
+  AuthorizedUserRoleTitle.SysAdmin,
+  AuthorizedUserRoleTitle.AcadAdmin,
+];
 
 type College = {
   value: string;

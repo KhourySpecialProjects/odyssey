@@ -65,8 +65,6 @@ export function CreateUser() {
             required
           />
 
-
-
           <Switch
             id="isEnabled"
             name="isEnabled"

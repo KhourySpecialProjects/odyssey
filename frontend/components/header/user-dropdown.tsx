@@ -23,7 +23,7 @@ import {
 import { isAuthorizedUserAdmin, condenseRoleTitles } from "@/lib/utils";
 
 export function UserDropdown(user: User) {
-  const isAdmin = isAuthorizedUserAdmin(user.roles)
+  const isAdmin = isAuthorizedUserAdmin(user.roles);
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
