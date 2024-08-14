@@ -9,6 +9,7 @@ import { Menu } from "lucide-react";
 import { LoginButton } from "./login-button";
 import { NavLinks } from "./nav-links";
 import { UserDropdown } from "./user-dropdown";
+import { isContentCreator } from "@/lib/utils";
 
 export async function Header() {
   const user = await getCurrentUser();
@@ -45,7 +46,11 @@ export async function Header() {
                   </Link>
 
                   <NavLinks
-                    items={generalConfig.mainNav}
+                    items={
+                      user && isContentCreator(user.roles)
+                        ? generalConfig.contentCreatorNav
+                        : generalConfig.mainNav
+                    }
                     className="flex-col space-y-2"
                   />
                 </nav>
@@ -68,7 +73,11 @@ export async function Header() {
 
           <nav className="flex-row items-center hidden md:flex">
             <NavLinks
-              items={generalConfig.mainNav}
+              items={
+                user && isContentCreator(user.roles)
+                  ? generalConfig.contentCreatorNav
+                  : generalConfig.mainNav
+              }
               className="flex-row space-x-8 space-y-0"
             />
           </nav>

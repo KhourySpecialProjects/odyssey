@@ -11,7 +11,7 @@
       "url": "https://khouryodyssey.org"
     },
     "license": null,
-    "x-generation-date": "2024-08-06T13:26:34.805Z"
+    "x-generation-date": "2024-08-14T17:44:12.973Z"
   },
   "x-strapi-config": {
     "plugins": [
@@ -2267,6 +2267,14 @@
                             }
                           }
                         },
+                        "status": {
+                          "type": "string",
+                          "enum": [
+                            "draft",
+                            "edit",
+                            "published"
+                          ]
+                        },
                         "createdAt": {
                           "type": "string",
                           "format": "date-time"
@@ -3918,6 +3926,14 @@
                                         }
                                       }
                                     },
+                                    "status": {
+                                      "type": "string",
+                                      "enum": [
+                                        "draft",
+                                        "edit",
+                                        "published"
+                                      ]
+                                    },
                                     "createdAt": {
                                       "type": "string",
                                       "format": "date-time"
@@ -5464,6 +5480,14 @@
                                                       }
                                                     }
                                                   },
+                                                  "status": {
+                                                    "type": "string",
+                                                    "enum": [
+                                                      "draft",
+                                                      "edit",
+                                                      "published"
+                                                    ]
+                                                  },
                                                   "createdAt": {
                                                     "type": "string",
                                                     "format": "date-time"
@@ -5816,7 +5840,8 @@
               "slug",
               "focusArea",
               "isHidden",
-              "learningObjectives"
+              "learningObjectives",
+              "status"
             ],
             "type": "object",
             "properties": {
@@ -5945,6 +5970,14 @@
                   ],
                   "example": "string or id"
                 }
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "draft",
+                  "edit",
+                  "published"
+                ]
               }
             }
           }
@@ -6004,7 +6037,8 @@
           "slug",
           "focusArea",
           "isHidden",
-          "learningObjectives"
+          "learningObjectives",
+          "status"
         ],
         "properties": {
           "name": {
@@ -7411,6 +7445,14 @@
                                           }
                                         }
                                       },
+                                      "status": {
+                                        "type": "string",
+                                        "enum": [
+                                          "draft",
+                                          "edit",
+                                          "published"
+                                        ]
+                                      },
                                       "createdAt": {
                                         "type": "string",
                                         "format": "date-time"
@@ -7661,6 +7703,14 @@
                 }
               }
             }
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "edit",
+              "published"
+            ]
           },
           "createdAt": {
             "type": "string",
@@ -9101,6 +9151,14 @@
                                                       }
                                                     }
                                                   }
+                                                },
+                                                "status": {
+                                                  "type": "string",
+                                                  "enum": [
+                                                    "draft",
+                                                    "edit",
+                                                    "published"
+                                                  ]
                                                 },
                                                 "createdAt": {
                                                   "type": "string",
@@ -11104,6 +11162,14 @@
                               }
                             }
                           }
+                        },
+                        "status": {
+                          "type": "string",
+                          "enum": [
+                            "draft",
+                            "edit",
+                            "published"
+                          ]
                         },
                         "createdAt": {
                           "type": "string",
@@ -13354,6 +13420,14 @@
                             }
                           }
                         },
+                        "status": {
+                          "type": "string",
+                          "enum": [
+                            "draft",
+                            "edit",
+                            "published"
+                          ]
+                        },
                         "createdAt": {
                           "type": "string",
                           "format": "date-time"
@@ -13691,7 +13765,8 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object"
+              "type": "object",
+              "additionalProperties": true
             },
             "style": "deepObject"
           },
@@ -14196,7 +14271,8 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object"
+              "type": "object",
+              "additionalProperties": true
             },
             "style": "deepObject"
           },
@@ -14701,7 +14777,8 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object"
+              "type": "object",
+              "additionalProperties": true
             },
             "style": "deepObject"
           },
@@ -15206,7 +15283,8 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object"
+              "type": "object",
+              "additionalProperties": true
             },
             "style": "deepObject"
           },
@@ -15711,7 +15789,8 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object"
+              "type": "object",
+              "additionalProperties": true
             },
             "style": "deepObject"
           },
@@ -16216,7 +16295,8 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object"
+              "type": "object",
+              "additionalProperties": true
             },
             "style": "deepObject"
           },
@@ -16721,7 +16801,8 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object"
+              "type": "object",
+              "additionalProperties": true
             },
             "style": "deepObject"
           },
@@ -17226,7 +17307,8 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object"
+              "type": "object",
+              "additionalProperties": true
             },
             "style": "deepObject"
           },
@@ -17731,7 +17813,8 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object"
+              "type": "object",
+              "additionalProperties": true
             },
             "style": "deepObject"
           },

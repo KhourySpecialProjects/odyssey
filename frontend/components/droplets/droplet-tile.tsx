@@ -8,10 +8,16 @@ export function DropletTile({ droplet }: { droplet: Droplet }) {
     <li className="transition-colors border rounded-md bg-slate-50 border-slate-200 hover:border-slate-300">
       <Link
         className="relative inline-flex w-full h-full p-6"
-        href={`/d/${droplet.slug}`}
+        href={
+          (droplet.status == "draft" ? `/draft` : "") + `/d/${droplet.slug}`
+        }
       >
         <div className="flex flex-col justify-end gap-3">
           <div className="flex flex-row flex-wrap flex-0 gap-1.5">
+            {droplet.status == "draft" ? (
+              <Badge variant="destructive">Draft</Badge>
+            ) : null}
+
             <Badge variant="outline">
               {uppercaseFirstChar(droplet.focusArea)}
             </Badge>

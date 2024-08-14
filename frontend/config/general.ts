@@ -15,4 +15,23 @@ export const generalConfig: GeneralConfig = {
       label: "My Droplets",
     },
   ],
+
+  contentCreatorNav: [
+    {
+      href: "/about",
+      label: "About",
+    },
+    {
+      href: "/explore",
+      label: "Explore Droplets",
+    },
+    {
+      href: "/dashboard",
+      label: "My Droplets",
+    },
+    {
+      href: "/draft",
+      label: "Draft",
+    },
+  ],
 };
