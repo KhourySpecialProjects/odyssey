@@ -13,6 +13,7 @@ export function NavLinks({
   className?: string;
 }) {
   const segment = useSelectedLayoutSegment();
+  console.log(segment)
 
   return (
     <ul className={cn("flex", className)}>
