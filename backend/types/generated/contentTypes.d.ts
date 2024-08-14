@@ -857,7 +857,7 @@ export interface ApiAuthorAuthor extends Schema.CollectionType {
       Attribute.SetMinMaxLength<{
         maxLength: 400;
       }>;
-    photo: Attribute.Media;
+    photo: Attribute.Media<'images'>;
     droplets: Attribute.Relation<
       'api::author.author',
       'manyToMany',
@@ -1039,6 +1039,9 @@ export interface ApiDropletDroplet extends Schema.CollectionType {
       'oneToMany',
       'api::enrollment.enrollment'
     >;
+    status: Attribute.Enumeration<['draft', 'edit', 'published']> &
+      Attribute.Required &
+      Attribute.DefaultTo<'draft'>;
     createdAt: Attribute.DateTime;
     updatedAt: Attribute.DateTime;
     publishedAt: Attribute.DateTime;
