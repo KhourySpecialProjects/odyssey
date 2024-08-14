@@ -1,6 +1,5 @@
 import { getDropletBySlug } from "@/lib/requests/droplet";
-import type { Droplet} from "@/types";
-
+import type { Droplet } from "@/types";
 
 type Props = {
   params: {
