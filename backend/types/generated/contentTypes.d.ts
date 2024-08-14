@@ -857,7 +857,7 @@ export interface ApiAuthorAuthor extends Schema.CollectionType {
       Attribute.SetMinMaxLength<{
         maxLength: 400;
       }>;
-    photo: Attribute.Media<'images'>;
+    photo: Attribute.Media;
     droplets: Attribute.Relation<
       'api::author.author',
       'manyToMany',

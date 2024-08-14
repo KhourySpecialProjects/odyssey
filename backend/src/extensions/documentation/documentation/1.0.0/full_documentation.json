@@ -11,7 +11,7 @@
       "url": "https://khouryodyssey.org"
     },
     "license": null,
-    "x-generation-date": "2024-08-14T17:44:12.973Z"
+    "x-generation-date": "2024-08-14T20:41:46.825Z"
   },
   "x-strapi-config": {
     "plugins": [
@@ -13765,8 +13765,7 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object",
-              "additionalProperties": true
+              "type": "object"
             },
             "style": "deepObject"
           },
@@ -14271,8 +14270,7 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object",
-              "additionalProperties": true
+              "type": "object"
             },
             "style": "deepObject"
           },
@@ -14777,8 +14775,7 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object",
-              "additionalProperties": true
+              "type": "object"
             },
             "style": "deepObject"
           },
@@ -15283,8 +15280,7 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object",
-              "additionalProperties": true
+              "type": "object"
             },
             "style": "deepObject"
           },
@@ -15789,8 +15785,7 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object",
-              "additionalProperties": true
+              "type": "object"
             },
             "style": "deepObject"
           },
@@ -16295,8 +16290,7 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object",
-              "additionalProperties": true
+              "type": "object"
             },
             "style": "deepObject"
           },
@@ -16801,8 +16795,7 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object",
-              "additionalProperties": true
+              "type": "object"
             },
             "style": "deepObject"
           },
@@ -17307,8 +17300,7 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object",
-              "additionalProperties": true
+              "type": "object"
             },
             "style": "deepObject"
           },
@@ -17813,8 +17805,7 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object",
-              "additionalProperties": true
+              "type": "object"
             },
             "style": "deepObject"
           },

@@ -34,15 +34,6 @@ export default async function CreateRoute() {
   });
   return (
     <>
-      <div className="z-10 sticky top-0">
-        <Suspense>
-          <Header />
-        </Suspense>
-
-        <Suspense>
-          <AccessRequestBanner />
-        </Suspense>
-      </div>
       <div className="w-full p-8 mx-auto my-4 text-center max-w-7xl">
         <h1 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
           Drafts

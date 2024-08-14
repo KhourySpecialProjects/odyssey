@@ -30,8 +30,8 @@ export const generalConfig: GeneralConfig = {
       label: "My Droplets",
     },
     {
-      href: "/draft",
-      label: "Draft",
+      href: "/drafts",
+      label: "Drafts",
     },
   ],
 };
