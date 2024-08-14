@@ -10,15 +10,14 @@ import { DropletTile } from "@/components/droplets/droplet-tile";
 import { DropletsSkeleton } from "@/components/explore/droplets-skeleton";
 import { Separator } from "@/components/ui/separator";
 import { Header } from "@/components/header";
-import  AccessRequestBanner  from "@/components/access-request-banner";
+import AccessRequestBanner from "@/components/access-request-banner";
 
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-    title: "Create",
-    description: "Share your experience to the other users on Odyssey.",
-  };
-
+  title: "Create",
+  description: "Share your experience to the other users on Odyssey.",
+};
 
 export default async function CreateRoute() {
   const user = await getCurrentUser();
@@ -35,7 +34,7 @@ export default async function CreateRoute() {
   });
   return (
     <>
-    <div className="z-10 sticky top-0">
+      <div className="z-10 sticky top-0">
         <Suspense>
           <Header />
         </Suspense>
