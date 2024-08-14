@@ -1,8 +1,6 @@
 import { getDropletBySlug } from "@/lib/requests/droplet";
-import { Droplet } from "@/types";
-import { notFound } from "next/navigation";
-import { getCurrentUser } from "@/lib/auth/session";
-import { getAuthorByAuthorizedUserEmail } from "@/lib/requests/author";
+import type { Droplet} from "@/types";
+
 
 type Props = {
   params: {
@@ -23,7 +21,6 @@ export async function generateMetadata({ params }: Props) {
 }
 
 export default async function Droplet({ params }: Props) {
-  const user = await getCurrentUser();
   const droplet = await getDropletBySlug<Droplet>(params.slug, {
     fields: ["*"],
     populate: {
