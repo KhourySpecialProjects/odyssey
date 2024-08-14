@@ -9,6 +9,16 @@ import { getAuthorByAuthorizedUserEmail } from "@/lib/requests/author";
 import { DropletTile } from "@/components/droplets/droplet-tile";
 import { DropletsSkeleton } from "@/components/explore/droplets-skeleton";
 import { Separator } from "@/components/ui/separator";
+import { Header } from "@/components/header";
+import  AccessRequestBanner  from "@/components/access-request-banner";
+
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+    title: "Create",
+    description: "Share your experience to the other users on Odyssey.",
+  };
+
 
 export default async function CreateRoute() {
   const user = await getCurrentUser();
@@ -25,6 +35,15 @@ export default async function CreateRoute() {
   });
   return (
     <>
+    <div className="z-10 sticky top-0">
+        <Suspense>
+          <Header />
+        </Suspense>
+
+        <Suspense>
+          <AccessRequestBanner />
+        </Suspense>
+      </div>
       <div className="w-full p-8 mx-auto my-4 text-center max-w-7xl">
         <h1 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
           Drafts
