@@ -94,74 +94,71 @@ export function CreateDropletForm({ tags }: { tags: Tag[] }) {
   }
 
   return (
-    
-      <form
-        className="w-5/6 flex flex-col items-center justify-center space-y-4 h-min"
-        action={addDroplet}
-        autoComplete="off"
-      >
-        <div>
-          <div className="font-semibold text-sm py-1.5 pb-2">Droplet Name</div>
-          <Input
-            id="name"
-            name="name"
-            placeholder="Droplet Name"
-            className="w-56"
-            onChange={(e) => setDropletName(e.target.value)}
-          />
-        </div>
-
-        <MultiSelect
-          label="Tags"
-          items={tags}
-          selected={selectedTags}
-          setSelected={setSelectedTags}
+    <form
+      className="w-5/6 flex flex-col items-center justify-center space-y-4 h-min"
+      action={addDroplet}
+      autoComplete="off"
+    >
+      <div>
+        <div className="font-semibold text-sm py-1.5 pb-2">Droplet Name</div>
+        <Input
+          id="name"
+          name="name"
+          placeholder="Droplet Name"
+          className="w-56"
+          onChange={(e) => setDropletName(e.target.value)}
         />
-        {DROPLET_FILTERS.map((filter, index) => (
-          <Select
-            key={filter.name}
-            name={filter.name}
-            onValueChange={states[index].setValue}
-          >
-            <SelectGroup className="flex flex-col items-start">
-              <SelectLabel className="pl-0 pb-2">{filter.label}</SelectLabel>
-              <SelectTrigger className="w-56">
-                <SelectValue placeholder="Select" />
-              </SelectTrigger>
-            </SelectGroup>
+      </div>
 
-            <SelectContent>
-              {filter.options.map((option) => (
-                <SelectItem value={option.value} key={option.value}>
-                  {option.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        ))}
+      <MultiSelect
+        label="Tags"
+        items={tags}
+        selected={selectedTags}
+        setSelected={setSelectedTags}
+      />
+      {DROPLET_FILTERS.map((filter, index) => (
+        <Select
+          key={filter.name}
+          name={filter.name}
+          onValueChange={states[index].setValue}
+        >
+          <SelectGroup className="flex flex-col items-start">
+            <SelectLabel className="pl-0 pb-2">{filter.label}</SelectLabel>
+            <SelectTrigger className="w-56">
+              <SelectValue placeholder="Select" />
+            </SelectTrigger>
+          </SelectGroup>
 
-        <LearningObjectivesInput
-          learningObjectives={learningObjectives}
-          setLearningObjectives={setLearningObjectives}
-        />
+          <SelectContent>
+            {filter.options.map((option) => (
+              <SelectItem value={option.value} key={option.value}>
+                {option.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      ))}
 
-        <div className="flex items-center justify-center space-x-4">
-          <Button
-            variant="outline"
-            before={<MoveLeftIcon />}
-            onClick={() => router.back()}
-          >
-            <div className="w-20 flex items-center justify-center">Cancel</div>
-          </Button>
+      <LearningObjectivesInput
+        learningObjectives={learningObjectives}
+        setLearningObjectives={setLearningObjectives}
+      />
 
-          <SubmitButton />
-        </div>
-        {submissionState.error ? (
+      <div className="flex items-center justify-center space-x-4">
+        <Button
+          variant="outline"
+          before={<MoveLeftIcon />}
+          onClick={() => router.back()}
+        >
+          <div className="w-20 flex items-center justify-center">Cancel</div>
+        </Button>
+
+        <SubmitButton />
+      </div>
+      {submissionState.error ? (
         <p className="text-red-500">{submissionState.error}</p>
       ) : null}
-      </form>
-      
-    
+    </form>
   );
 }
 
@@ -180,5 +177,3 @@ function SubmitButton() {
     </Button>
   );
 }
-
-
