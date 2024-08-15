@@ -85,10 +85,8 @@ export function CreateDropletForm({ tags }: { tags: Tag[] }) {
     setSubmissionState({ error: null });
 
     const response = await createDroplet(data);
-    console.log(response);
 
     if (!response.error && response.data) {
-      console.log("cmon");
       router.push("/draft/d/" + response.data.attributes.slug);
     } else {
       setSubmissionState({ error: response.error });
@@ -96,15 +94,12 @@ export function CreateDropletForm({ tags }: { tags: Tag[] }) {
   }
 
   return (
-    <div className="w-full flex items-center justify-center flex-col select-none h-screen">
+    
       <form
         className="w-5/6 flex flex-col items-center justify-center space-y-4 h-min"
         action={addDroplet}
         autoComplete="off"
       >
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-4xl mb-7">
-          Create a Droplet
-        </h1>
         <div>
           <div className="font-semibold text-sm py-1.5 pb-2">Droplet Name</div>
           <Input
@@ -161,11 +156,12 @@ export function CreateDropletForm({ tags }: { tags: Tag[] }) {
 
           <SubmitButton />
         </div>
-      </form>
-      {submissionState.error ? (
+        {submissionState.error ? (
         <p className="text-red-500">{submissionState.error}</p>
       ) : null}
-    </div>
+      </form>
+      
+    
   );
 }
 
@@ -184,3 +180,5 @@ function SubmitButton() {
     </Button>
   );
 }
+
+
