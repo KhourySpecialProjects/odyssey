@@ -60,8 +60,5 @@
     "postcss": "^8.4.34",
     "tailwindcss": "^3.4.3",
     "typescript": "^5.3.3"
-  },
-  "browser": {
-    "crypto": false
   }
 }

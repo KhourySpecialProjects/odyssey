@@ -9,7 +9,6 @@
     "dev": "npm run clear && concurrently \"cd frontend && npm run dev\" \"cd backend && npm run dev\"",
     "prettier-check": "npx prettier . --check",
     "prettier-write": "npx prettier . --write"
-
   },
   "dependencies": {
     "concurrently": "^8.2.2",

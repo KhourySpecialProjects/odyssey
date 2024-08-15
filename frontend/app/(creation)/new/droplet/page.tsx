@@ -1,14 +1,13 @@
-import { getTags } from "@/lib/requests/tag";
-import { CreateDropletForm } from "@/components/new/new-droplet-form";
-
-export const runtime = "edge";
+import { CreateDroplet } from "@/components/new/new-droplet";
 
 
-export default async function CreateDroplet() {
-  const tags = await getTags({ fields: ["name", "slug"] });
+export default async function CreateDropletRoute() {
   return (
-   
-      <CreateDropletForm tags={tags} />
+   <>
+      <div className="w-full flex items-center justify-center flex-col select-none h-screen">
+        <CreateDroplet/>
+      </div>
+    </>
     
   );
 }
