@@ -21,6 +21,7 @@ import {
   ShipIcon,
   TargetIcon,
   TowerControlIcon,
+  SettingsIcon,
 } from "lucide-react";
 import { signOut } from "next-auth/react";
 import Image from "next/image";
@@ -37,16 +38,18 @@ import {
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
 import { Separator } from "../ui/separator";
+import { AddLesson } from "@/components/draft/add-lesson";
 
 export function Sidebar({
   user,
   droplet,
 }: {
   user: User;
-  droplet: Pick<Droplet, "name" | "slug" | "lessons">;
+  droplet: Pick<Droplet, "id" | "name" | "slug" | "lessons">;
 }) {
   const [expanded, setExpanded] = useState(false);
   const pathname = usePathname();
+  console.log(pathname);
 
   const isAdmin = user && isAuthorizedUserAdmin(user.roles);
 
@@ -121,24 +124,30 @@ export function Sidebar({
             <ul className="space-y-2 font-medium">
               <li>
                 <Link
-                  href={`/d/${droplet.slug}`}
+                  href={`/draft/d/${droplet.slug}`}
                   className={
-                    pathname == `/d/${droplet.slug}`
+                    pathname == `/draft/d/${droplet.slug}`
                       ? activeLinkClasses
                       : inactiveLinkClasses
                   }
                 >
-                  <TargetIcon className="shrink-0" />
-                  <span className="leading-snug ms-3">Overview</span>
+                  <SettingsIcon className="shrink-0" />
+                  <span className="leading-snug ms-3">Metadata</span>
                 </Link>
               </li>
+            </ul>
 
+            <Separator orientation="horizontal" className="my-2" />
+
+            <AddLesson droplet={droplet} />
+
+            <ul>
               {droplet.lessons?.map((lesson) => (
                 <li key={lesson.id}>
                   <Link
-                    href={`/d/${droplet.slug}/${lesson.slug}`}
+                    href={`/draft/d/${droplet.slug}/${lesson.slug}`}
                     className={
-                      pathname == `/d/${droplet.slug}/${lesson.slug}`
+                      pathname == `/draft/d/${droplet.slug}/${lesson.slug}`
                         ? activeLinkClasses
                         : inactiveLinkClasses
                     }
@@ -154,20 +163,6 @@ export function Sidebar({
                   </Link>
                 </li>
               ))}
-
-              <li>
-                <Link
-                  href={`/d/${droplet.slug}/recap`}
-                  className={
-                    pathname == `/d/${droplet.slug}/recap`
-                      ? activeLinkClasses
-                      : inactiveLinkClasses
-                  }
-                >
-                  <HistoryIcon className="shrink-0" />
-                  <span className="leading-snug ms-3">Recap</span>
-                </Link>
-              </li>
             </ul>
           </div>
 
