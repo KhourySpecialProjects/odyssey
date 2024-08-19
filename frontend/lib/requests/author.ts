@@ -29,5 +29,8 @@ export async function getAuthorByAuthorizedUserEmail<
     },
   };
 
-  return await fetchAPI<T[]>(path, { urlParams }).then((authors) => authors[0]);
+  return await fetchAPI<T[]>(path, {
+    urlParams,
+    next: { tags: ["authors"] },
+  }).then((authors) => authors[0]);
 }

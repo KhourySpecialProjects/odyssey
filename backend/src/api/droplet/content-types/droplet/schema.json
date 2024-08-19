@@ -104,6 +104,16 @@
       "relation": "oneToMany",
       "target": "api::enrollment.enrollment",
       "mappedBy": "droplet"
+    },
+    "status": {
+      "type": "enumeration",
+      "enum": [
+        "draft",
+        "edit",
+        "published"
+      ],
+      "default": "draft",
+      "required": true
     }
   }
 }

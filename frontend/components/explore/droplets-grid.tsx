@@ -23,6 +23,7 @@ export async function DropletsGrid({
     sort: sortKey,
     filters: {
       $and: [
+        { status: { $eq: "published" } },
         { isHidden: false },
         searchValue ? { name: { $containsi: searchValue } } : {},
         type

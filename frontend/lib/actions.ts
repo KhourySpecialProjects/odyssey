@@ -15,6 +15,7 @@ import { reportSchema } from "./validations/report";
 import { AuthorizedUserRole } from "@/types";
 import { AuthorizedUserRoleTitle } from "./globals";
 import { getAuthorizedUserRoleIdByTitle } from "./requests/authorized-user-roles";
+import { DropletSchema } from "./validations/droplet";
 
 const STRAPI_API_URL = process.env.STRAPI_API_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
@@ -37,7 +38,7 @@ export async function createAuthorizedUser(prevState: any, formData: FormData) {
       email,
       isEnabled,
       roles: {
-        set: [{ id: roleID }], //4 is harcoded for the role of "user", will change later when adding dropdown
+        set: [{ id: roleID }],
       },
     },
   };
@@ -279,5 +280,61 @@ export async function createEnrollment(
   } catch (err) {
     console.error(err);
     return { error: "Database Error: Failed to enroll." };
+  }
+}
+
+export async function createDroplet(data: z.infer<typeof DropletSchema>) {
+  try {
+    const user = await getCurrentUser();
+    if (!user?.email) throw new Error("No email identified");
+    const author = await getAuthorByAuthorizedUserEmail(user.email, {
+      populate: {},
+    });
+    if (!author) throw new Error("No author identified");
+
+    const dataToSend = {
+      name: data.name,
+      slug: "random", // this gets overwritten when created, but just has to be defined as something
+      focusArea: data.focusArea,
+      type: data.type,
+      tags: {
+        connect: data.tagIds,
+      },
+      authors: {
+        connect: [author.id],
+      },
+
+      learningObjectives: data.learningObjectives.map((obj) => ({
+        objective: obj,
+      })),
+    };
+
+    const response = await fetch(STRAPI_API_URL + "/api/droplets", {
+      method: "POST",
+      body: JSON.stringify({ data: dataToSend }),
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+      },
+    });
+
+    const responseData = await response.json();
+
+    if (!response.ok || (response.ok && responseData.error)) {
+      const errorPath = responseData.error.details.errors[0].path[0];
+      const errorMessage = `${responseData.error.message} (${errorPath})`;
+      return { ok: false, error: errorMessage, data: null };
+    }
+    revalidateTag("authors");
+    revalidateTag("droplets");
+    revalidatePath("(general)/create", "page");
+    return { ok: true, error: null, data: responseData.data };
+  } catch (err) {
+    console.error(err);
+    return {
+      ok: false,
+      error: "Database Error: Failed to create droplet.",
+      data: null,
+    };
   }
 }

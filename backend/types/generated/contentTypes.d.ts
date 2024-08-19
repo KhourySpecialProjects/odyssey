@@ -1039,6 +1039,9 @@ export interface ApiDropletDroplet extends Schema.CollectionType {
       'oneToMany',
       'api::enrollment.enrollment'
     >;
+    status: Attribute.Enumeration<['draft', 'edit', 'published']> &
+      Attribute.Required &
+      Attribute.DefaultTo<'draft'>;
     createdAt: Attribute.DateTime;
     updatedAt: Attribute.DateTime;
     publishedAt: Attribute.DateTime;
