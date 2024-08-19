@@ -73,6 +73,7 @@ export function AddLesson({
             <form
               action={add}
               className="flex flex-row justify-between items-center"
+              autoComplete="off"
             >
               <input
                 ref={inputRef}
