@@ -32,6 +32,7 @@ export default async function CreateRoute() {
       },
     },
   });
+  if (!author) return redirect("/unauthorized");
   return (
     <>
       <div className="w-full p-8 mx-auto my-4 text-center max-w-7xl">
