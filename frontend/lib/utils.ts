@@ -165,6 +165,15 @@ export function isAuthorizedUserAdmin(
   return false;
 }
 
+export function isContentCreator(roles: AuthorizedUserRoleTitle[]): boolean {
+  for (const role of roles) {
+    if (role === AuthorizedUserRoleTitle.ContentCreator) {
+      return true;
+    }
+  }
+  return false;
+}
+
 export function condenseRoleTitles(roles: AuthorizedUserRoleTitle[]): string {
   return roles.join(", ");
 }

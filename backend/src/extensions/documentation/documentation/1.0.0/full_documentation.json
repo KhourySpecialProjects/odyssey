@@ -11,7 +11,7 @@
       "url": "https://khouryodyssey.org"
     },
     "license": null,
-    "x-generation-date": "2024-08-06T13:26:34.805Z"
+    "x-generation-date": "2024-08-15T15:17:23.402Z"
   },
   "x-strapi-config": {
     "plugins": [
@@ -2267,6 +2267,14 @@
                             }
                           }
                         },
+                        "status": {
+                          "type": "string",
+                          "enum": [
+                            "draft",
+                            "edit",
+                            "published"
+                          ]
+                        },
                         "createdAt": {
                           "type": "string",
                           "format": "date-time"
@@ -3918,6 +3926,14 @@
                                         }
                                       }
                                     },
+                                    "status": {
+                                      "type": "string",
+                                      "enum": [
+                                        "draft",
+                                        "edit",
+                                        "published"
+                                      ]
+                                    },
                                     "createdAt": {
                                       "type": "string",
                                       "format": "date-time"
@@ -5464,6 +5480,14 @@
                                                       }
                                                     }
                                                   },
+                                                  "status": {
+                                                    "type": "string",
+                                                    "enum": [
+                                                      "draft",
+                                                      "edit",
+                                                      "published"
+                                                    ]
+                                                  },
                                                   "createdAt": {
                                                     "type": "string",
                                                     "format": "date-time"
@@ -5816,7 +5840,8 @@
               "slug",
               "focusArea",
               "isHidden",
-              "learningObjectives"
+              "learningObjectives",
+              "status"
             ],
             "type": "object",
             "properties": {
@@ -5945,6 +5970,14 @@
                   ],
                   "example": "string or id"
                 }
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "draft",
+                  "edit",
+                  "published"
+                ]
               }
             }
           }
@@ -6004,7 +6037,8 @@
           "slug",
           "focusArea",
           "isHidden",
-          "learningObjectives"
+          "learningObjectives",
+          "status"
         ],
         "properties": {
           "name": {
@@ -7411,6 +7445,14 @@
                                           }
                                         }
                                       },
+                                      "status": {
+                                        "type": "string",
+                                        "enum": [
+                                          "draft",
+                                          "edit",
+                                          "published"
+                                        ]
+                                      },
                                       "createdAt": {
                                         "type": "string",
                                         "format": "date-time"
@@ -7661,6 +7703,14 @@
                 }
               }
             }
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "edit",
+              "published"
+            ]
           },
           "createdAt": {
             "type": "string",
@@ -9101,6 +9151,14 @@
                                                       }
                                                     }
                                                   }
+                                                },
+                                                "status": {
+                                                  "type": "string",
+                                                  "enum": [
+                                                    "draft",
+                                                    "edit",
+                                                    "published"
+                                                  ]
                                                 },
                                                 "createdAt": {
                                                   "type": "string",
@@ -11104,6 +11162,14 @@
                               }
                             }
                           }
+                        },
+                        "status": {
+                          "type": "string",
+                          "enum": [
+                            "draft",
+                            "edit",
+                            "published"
+                          ]
                         },
                         "createdAt": {
                           "type": "string",
@@ -13353,6 +13419,14 @@
                               }
                             }
                           }
+                        },
+                        "status": {
+                          "type": "string",
+                          "enum": [
+                            "draft",
+                            "edit",
+                            "published"
+                          ]
                         },
                         "createdAt": {
                           "type": "string",

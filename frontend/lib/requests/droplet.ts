@@ -12,7 +12,7 @@ export async function getDroplets({
   filters = { isHidden: false },
   pagination = { pageSize: 25, page: 1 },
   populate,
-  fields = ["id", "name", "slug", "type", "focusArea"],
+  fields = ["id", "name", "slug", "type", "focusArea", "status"],
 }: StrapiRequestParams = {}): Promise<Droplet[]> {
   const path = `/droplets`;
   const urlParams = {
@@ -23,7 +23,10 @@ export async function getDroplets({
     pagination,
   };
 
-  return await fetchAPI<Droplet[]>(path, { urlParams });
+  return await fetchAPI<Droplet[]>(path, {
+    urlParams,
+    next: { tags: ["droplets"] },
+  });
 }
 
 /**
@@ -48,7 +51,8 @@ export async function getDropletBySlug<T extends Partial<Droplet> = Droplet>(
     },
   };
 
-  return await fetchAPI<T[]>(path, { urlParams }).then(
-    (droplets) => droplets[0],
-  );
+  return await fetchAPI<T[]>(path, {
+    urlParams,
+    next: { tags: ["droplets"] },
+  }).then((droplets) => droplets[0]);
 }

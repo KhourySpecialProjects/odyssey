@@ -2,6 +2,12 @@ import { AuthorizedUser } from "@/components/admin/users/authorized-users";
 import { type StrapiMediaParams } from "./strapi";
 import { AuthorizedUserRoleTitle } from "@/lib/globals";
 
+export type FocusArea = "personal" | "professional" | "technical";
+
+export type DropletType = "knowledge" | "skill";
+
+export type DropletStatus = "draft" | "edit" | "published";
+
 export type AuthorizedUserRole = {
   id: number;
   title: AuthorizedUserRoleTitle;
@@ -32,6 +38,7 @@ export type NavItem = {
 
 export type GeneralConfig = {
   mainNav: NavItem[];
+  contentCreatorNav: NavItem[];
 };
 
 export type Author = {
@@ -75,8 +82,8 @@ export type Droplet = {
   name: string;
   description?: string;
   overview?: string;
-  type: "knowledge" | "skill";
-  focusArea: "personal" | "professional" | "technical";
+  type: DropletType;
+  focusArea: FocusArea;
   tags?: Tag[];
   learningObjectives: LearningObjective[];
   lessons?: Lesson[];
@@ -85,6 +92,7 @@ export type Droplet = {
   prerequisites?: Droplet[];
   postrequisites?: Droplet[];
   isHidden: boolean;
+  status: DropletStatus;
 };
 
 export type QuizAnswerOption = {
