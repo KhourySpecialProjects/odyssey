@@ -10,6 +10,7 @@ import { ArrowDownFromLineIcon } from "lucide-react";
 import { QuizBlock } from "./quiz";
 
 export function LessonRenderer({ lesson }: { lesson: Lesson }) {
+  console.log(lesson.blocks)
   let headings: any[] = [];
   lesson.blocks
     .filter((b: any) => b.__component === "droplets.generic")

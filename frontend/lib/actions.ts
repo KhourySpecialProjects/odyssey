@@ -284,7 +284,8 @@ export async function createEnrollment(
   }
 }
 
-export async function createDroplet(data: z.infer<typeof DropletSchema>) {
+const CreateDropletSchema = DropletSchema.pick({ name: true, focusArea: true, type: true, tagIds: true, learningObjectives: true });
+export async function createDroplet(data: z.infer<typeof CreateDropletSchema>) {
   try {
     const user = await getCurrentUser();
     if (!user?.email) throw new Error("No email identified");
@@ -328,7 +329,7 @@ export async function createDroplet(data: z.infer<typeof DropletSchema>) {
     }
     revalidateTag("authors");
     revalidateTag("droplets");
-    revalidatePath("(general)/create", "page");
+    revalidatePath("(general)/drafts", "page");
     return { ok: true, error: null, data: responseData.data };
   } catch (err) {
     console.error(err);
@@ -369,5 +370,61 @@ export async function addLesson(formData: z.infer<typeof LessonSchema>) {
   } catch (err) {
     console.error(err);
     return { error: "Database Error: Failed to Delete Authorized User." };
+  }
+}
+
+export async function updateDroplet(
+  id: number,
+  data: Partial<z.infer<typeof DropletSchema>>,
+) {
+  try {
+
+    const dataToSend: any = {
+      ...data.name && { name: data.name },
+      ...data.focusArea && { focusArea: data.focusArea },
+      ...data.type && { type: data.type },
+      ...data.tagIds && { tags: data.tagIds },
+      ...data.learningObjectives && { learningObjectives: data.learningObjectives.map((obj) => ({
+        objective: obj,
+      })) },
+      ...data.prerequisiteIds && { prerequisites: data.prerequisiteIds },
+      ...data.postrequisiteIds && { postrequisites: data.postrequisiteIds },
+      ...data.nextSteps && { nextSteps: data.nextSteps },
+      ...data.description && { description: data.description },
+      ...data.overview && { overview: data.overview },
+    }
+
+    
+
+    console.log(dataToSend)
+
+    const response = await fetch(STRAPI_API_URL + "/api/droplets/" + id, {
+      method: "PUT",
+      body: JSON.stringify({ data: dataToSend }),
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+      },
+    });
+    const responseData = await response.json();
+
+    if (!response.ok || (response.ok && responseData.error)) {
+      console.log(responseData)
+      const errorPath = responseData.error.details.errors[0].path[0];
+      const errorMessage = `${responseData.error.message} (${errorPath})`;
+      return { ok: false, error: errorMessage, data: null };
+    }
+    console.log(responseData)
+    revalidateTag("droplets");
+    revalidateTag("authors")
+    revalidatePath("(general)/drafts", "page");
+    return { ok: true, error: null, data: responseData.data };
+  } catch (err) {
+    console.error(err);
+    return {
+      ok: false,
+      error: "Database Error: Failed to update droplet.",
+      data: null,
+    };
   }
 }

@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 
-export interface MultiSelectItems {
+export interface MultiSelectItem {
   id: number;
   name: string;
 }
@@ -32,11 +32,13 @@ export function MultiSelect({
   items,
   selected,
   setSelected,
+  align = "center",
 }: {
   label: string;
-  items: MultiSelectItems[];
-  selected: MultiSelectItems[];
-  setSelected: (selected: MultiSelectItems[]) => void;
+  items: MultiSelectItem[];
+  selected: MultiSelectItem[];
+  setSelected: (selected: MultiSelectItem[]) => void;
+  align?: "center" | "start" | "end";
 }) {
   return (
     <>
@@ -67,20 +69,21 @@ export function MultiSelect({
             )}
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="p-0">
+        <PopoverContent className="p-0" align={align}>
           <Command>
             <CommandInput placeholder={label} />
             <CommandList>
               <CommandGroup>
                 {items.map((option) => {
-                  const isSelected = selected.includes(option);
+                  //is the item in the selected list
+                  const isSelected = selected.filter((item) => item.id === option.id).length > 0;
 
                   return (
                     <CommandItem
                       key={option.id}
                       onSelect={() => {
                         if (isSelected) {
-                          setSelected(selected.filter((val) => val !== option));
+                          setSelected(selected.filter((val) => val.id !== option.id));
                         } else {
                           setSelected([...selected, option]);
                         }

@@ -44,7 +44,7 @@ export default async function CheckPermission({ params, children }: Props) {
     <>
       <Sidebar droplet={droplet} user={user} />
       <div className="md:ml-64">
-        <div className="p-6 rounded-lg sm:p-8 md:py-10 md:m-4 md:border-dashed md:border-2 md:border-slate-200 md:dark:border-slate-700">
+        <div className="p-6 rounded-lg sm:p-8 md:py-10 md:m-4 md:border-dashed md:border-2 md:border-slate-200 md:dark:border-slate-700 mx-auto flex flex-col items-center justify-center">
           {children}
         </div>
       </div>
