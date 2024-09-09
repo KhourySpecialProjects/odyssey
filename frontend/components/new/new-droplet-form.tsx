@@ -115,6 +115,7 @@ export function CreateDropletForm({ tags }: { tags: Tag[] }) {
         items={tags}
         selected={selectedTags}
         setSelected={setSelectedTags}
+        className="max-w-96"
       />
       {DROPLET_FILTERS.map((filter, index) => (
         <Select
