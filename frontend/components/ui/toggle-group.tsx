@@ -11,7 +11,10 @@ const ToggleGroup = React.forwardRef<
 >(({ className, ...props }, ref) => {
   return (
     <ToggleGroupPrimitive.Root
-      className={cn("rounded-3xl px-2 py-2 space-x-2 border border-slate-200 w-fit", className)}
+      className={cn(
+        "rounded-3xl px-2 py-2 space-x-2 border border-slate-200 w-fit",
+        className,
+      )}
       {...props}
       ref={ref}
     />
@@ -31,8 +34,7 @@ const ToggleGroupItem = React.forwardRef<
         className,
       )}
       {...props}
-    >
-    </ToggleGroupPrimitive.Item>
+    ></ToggleGroupPrimitive.Item>
   );
 });
 ToggleGroupItem.displayName = ToggleGroupPrimitive.Item.displayName;

@@ -179,5 +179,8 @@ export function condenseRoleTitles(roles: AuthorizedUserRoleTitle[]): string {
 }
 
 export function htmlToText(text: string): string {
-  return text.replace(/<[^>]*>?/gm, "").replace("&nbsp;", " ").trim();
+  return text
+    .replace(/<[^>]*>?/gm, "")
+    .replace("&nbsp;", " ")
+    .trim();
 }

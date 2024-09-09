@@ -64,7 +64,7 @@ export async function getDropletById<T extends Partial<Droplet> = Droplet>(
   const path = `/droplets/${id}`;
   const urlParams = {
     sort,
-    filters: { ...filters},
+    filters: { ...filters },
     populate,
     fields,
     pagination: {
@@ -77,5 +77,3 @@ export async function getDropletById<T extends Partial<Droplet> = Droplet>(
     urlParams,
   }).then((droplet) => droplet);
 }
-
-
