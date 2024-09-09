@@ -49,7 +49,6 @@ export function Sidebar({
 }) {
   const [expanded, setExpanded] = useState(false);
   const pathname = usePathname();
-  console.log(pathname);
 
   const isAdmin = user && isAuthorizedUserAdmin(user.roles);
 

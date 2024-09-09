@@ -177,3 +177,10 @@ export function isContentCreator(roles: AuthorizedUserRoleTitle[]): boolean {
 export function condenseRoleTitles(roles: AuthorizedUserRoleTitle[]): string {
   return roles.join(", ");
 }
+
+export function htmlToText(text: string): string {
+  return text
+    .replace(/<[^>]*>?/gm, "")
+    .replace("&nbsp;", " ")
+    .trim();
+}

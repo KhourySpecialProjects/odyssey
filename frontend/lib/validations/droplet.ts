@@ -13,4 +13,14 @@ export const DropletSchema = z.object({
   type: z.enum(types),
   tagIds: z.number().array(),
   learningObjectives: z.string().min(2).max(200).array(),
+  prerequisiteIds: z.number().array(),
+  postrequisiteIds: z.number().array(),
+  nextSteps: z
+    .object({
+      label: z.string().min(2).max(100).optional(),
+      url: z.string().url(),
+    })
+    .array(),
+  overview: z.string(),
+  description: z.string(),
 });
