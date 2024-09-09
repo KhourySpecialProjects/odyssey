@@ -56,3 +56,24 @@ export async function getDropletBySlug<T extends Partial<Droplet> = Droplet>(
     next: { tags: ["droplets"] },
   }).then((droplets) => droplets[0]);
 }
+
+export async function getDropletById<T extends Partial<Droplet> = Droplet>(
+  id: number,
+  { sort, filters, populate, fields = ["*"] }: StrapiRequestParams = {},
+): Promise<T> {
+  const path = `/droplets/${id}`;
+  const urlParams = {
+    sort,
+    filters: { ...filters },
+    populate,
+    fields,
+    pagination: {
+      pageSize: 1,
+      page: 1,
+    },
+  };
+
+  return await fetchAPI<T>(path, {
+    urlParams,
+  }).then((droplet) => droplet);
+}

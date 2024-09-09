@@ -1,15 +1,17 @@
 "use client";
-import { useState } from "react";
-import { Input } from "../ui/input";
+
 import { Button } from "../ui/button";
-import { PlusIcon, XIcon } from "lucide-react";
+import { XIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export function LearningObjectivesInput({
   learningObjectives,
   setLearningObjectives,
+  className,
 }: {
   learningObjectives: string[];
   setLearningObjectives: (learningObjectives: string[]) => void;
+  className?: string;
 }) {
   function addEmptyLearningObjective() {
     if (!learningObjectives.includes("")) {
@@ -17,7 +19,12 @@ export function LearningObjectivesInput({
     }
   }
   return (
-    <div className="select-none min-w-fit flex flex-col items-center justify-center">
+    <div
+      className={cn(
+        "select-none w-min flex flex-col items-center justify-center",
+        className,
+      )}
+    >
       <div className="w-56 flex items-center justify-between mb-2">
         <h2 className="font-semibold text-sm">Learning Objectives</h2>
         <Button
@@ -41,6 +48,7 @@ export function LearningObjectivesInput({
               name={`learning-objective-${index}`}
               value={objective}
               placeholder="New Learning Objective"
+              autoComplete="off"
               className="w-56 text-sm rounded-md border-0 outline-0 ring-0 focus-visible:ring-0 focus-visible:outline-2 px-3 py-2 "
               onChange={(e) => {
                 const newObjectives = [...learningObjectives];

@@ -10,7 +10,7 @@ import {
   SelectLabel,
   SelectGroup,
 } from "@/components/ui/select";
-import { MultiSelect, MultiSelectItems } from "@/components/new/multi-select";
+import { MultiSelect, MultiSelectItem } from "@/components/new/multi-select";
 import { LearningObjectivesInput } from "@/components/new/learning-objectives-input";
 import { DROPLET_FILTERS } from "@/lib/globals";
 import { Tag } from "@/types";
@@ -35,7 +35,7 @@ export function CreateDropletForm({ tags }: { tags: Tag[] }) {
   const initArr1: string[] = [""];
   const [learningObjectives, setLearningObjectives] = useState(initArr1);
 
-  const initArr2: MultiSelectItems[] = [];
+  const initArr2: MultiSelectItem[] = [];
   const [selectedTags, setSelectedTags] = useState(initArr2);
 
   const [submissionState, setSubmissionState] = useState(
@@ -115,6 +115,7 @@ export function CreateDropletForm({ tags }: { tags: Tag[] }) {
         items={tags}
         selected={selectedTags}
         setSelected={setSelectedTags}
+        className="max-w-96"
       />
       {DROPLET_FILTERS.map((filter, index) => (
         <Select

@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 
-export interface MultiSelectItems {
+export interface MultiSelectItem {
   id: number;
   name: string;
 }
@@ -32,27 +32,28 @@ export function MultiSelect({
   items,
   selected,
   setSelected,
+  align = "center",
+  className = "",
 }: {
   label: string;
-  items: MultiSelectItems[];
-  selected: MultiSelectItems[];
-  setSelected: (selected: MultiSelectItems[]) => void;
+  items: MultiSelectItem[];
+  selected: MultiSelectItem[];
+  setSelected: (selected: MultiSelectItem[]) => void;
+  align?: "center" | "start" | "end";
+  className?: string;
 }) {
   return (
     <>
       <Popover>
         <PopoverTrigger asChild>
-          <Button
-            variant="outline"
-            before={<ChevronDown />}
-            className="max-w-96 h-fit"
-          >
-            {label}
-            {selected?.length > 0 && (
+          <Button variant="outline" className={cn("h-fit", className)}>
+            <div className="flex flex-row items-center justify-center gap-2">
+              <ChevronDown />
+              {label}
+            </div>
+            {selected?.length > 0 ? (
               <>
-                <Separator orientation="vertical" className="h-4 mx-2" />
-
-                <div className="gap-1 flex flex-wrap items-center justify-center max-w-48">
+                <div className="gap-1 flex flex-wrap items-center justify-center w-48">
                   {selected.map((option) => (
                     <Badge
                       variant="secondary"
@@ -64,23 +65,29 @@ export function MultiSelect({
                   ))}
                 </div>
               </>
+            ) : (
+              <p className="text-slate-400 w-48">Nothing yet...</p>
             )}
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="p-0">
+        <PopoverContent className="p-0" align={align}>
           <Command>
             <CommandInput placeholder={label} />
             <CommandList>
               <CommandGroup>
                 {items.map((option) => {
-                  const isSelected = selected.includes(option);
+                  //is the item in the selected list
+                  const isSelected =
+                    selected.filter((item) => item.id === option.id).length > 0;
 
                   return (
                     <CommandItem
                       key={option.id}
                       onSelect={() => {
                         if (isSelected) {
-                          setSelected(selected.filter((val) => val !== option));
+                          setSelected(
+                            selected.filter((val) => val.id !== option.id),
+                          );
                         } else {
                           setSelected([...selected, option]);
                         }
