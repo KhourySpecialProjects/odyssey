@@ -50,7 +50,7 @@ const Tiptap = ( { updateContent, initialContent, variant } : { updateContent: (
             extensions = [Document, Paragraph,
             Placeholder.configure({
                 placeholder: "Nothing here yet...",
-                emptyEditorClass: "before:content-[attr(data-placeholder)] before:text-gray-500 before:absolute before:top-2 before:left-4 before:pointer-events-none before:select-none",
+                emptyEditorClass: "before:content-[attr(data-placeholder)] before:text-gray-500 before:absolute before:top-8 before:left-8 before:pointer-events-none before:select-none",
             }),
             Text];
             editorProps = {
