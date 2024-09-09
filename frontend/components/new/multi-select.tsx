@@ -46,19 +46,13 @@ export function MultiSelect({
     <>
       <Popover>
         <PopoverTrigger asChild>
-          <Button
-            variant="outline"
-            
-            className={cn("h-fit", className)}
-          >
+          <Button variant="outline" className={cn("h-fit", className)}>
             <div className="flex flex-row items-center justify-center gap-2">
-            <ChevronDown />
-            {label}
+              <ChevronDown />
+              {label}
             </div>
             {selected?.length > 0 ? (
               <>
-                
-
                 <div className="gap-1 flex flex-wrap items-center justify-center w-48">
                   {selected.map((option) => (
                     <Badge
@@ -71,7 +65,9 @@ export function MultiSelect({
                   ))}
                 </div>
               </>
-            ) : <p className="text-slate-400 w-48">Nothing yet...</p>}
+            ) : (
+              <p className="text-slate-400 w-48">Nothing yet...</p>
+            )}
           </Button>
         </PopoverTrigger>
         <PopoverContent className="p-0" align={align}>
@@ -81,14 +77,17 @@ export function MultiSelect({
               <CommandGroup>
                 {items.map((option) => {
                   //is the item in the selected list
-                  const isSelected = selected.filter((item) => item.id === option.id).length > 0;
+                  const isSelected =
+                    selected.filter((item) => item.id === option.id).length > 0;
 
                   return (
                     <CommandItem
                       key={option.id}
                       onSelect={() => {
                         if (isSelected) {
-                          setSelected(selected.filter((val) => val.id !== option.id));
+                          setSelected(
+                            selected.filter((val) => val.id !== option.id),
+                          );
                         } else {
                           setSelected([...selected, option]);
                         }

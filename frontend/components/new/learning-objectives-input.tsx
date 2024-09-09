@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "../ui/button";
-import {  XIcon } from "lucide-react";
+import { XIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export function LearningObjectivesInput({
@@ -11,7 +11,7 @@ export function LearningObjectivesInput({
 }: {
   learningObjectives: string[];
   setLearningObjectives: (learningObjectives: string[]) => void;
-  className ?: string;
+  className?: string;
 }) {
   function addEmptyLearningObjective() {
     if (!learningObjectives.includes("")) {
@@ -19,7 +19,12 @@ export function LearningObjectivesInput({
     }
   }
   return (
-    <div className={cn("select-none w-min flex flex-col items-center justify-center", className)}>
+    <div
+      className={cn(
+        "select-none w-min flex flex-col items-center justify-center",
+        className,
+      )}
+    >
       <div className="w-56 flex items-center justify-between mb-2">
         <h2 className="font-semibold text-sm">Learning Objectives</h2>
         <Button

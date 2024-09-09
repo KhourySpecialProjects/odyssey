@@ -1,14 +1,14 @@
 import { getDropletBySlug } from "@/lib/requests/droplet";
 import type { Droplet } from "@/types";
-import { DropletName } from '@/components/draft/metadata/droplet-name';
-import { LearningObjectives } from '@/components/draft/metadata/learning-objectives/learning-objectives';
-import { Selection } from '@/components/draft/metadata/selection';
+import { DropletName } from "@/components/draft/metadata/droplet-name";
+import { LearningObjectives } from "@/components/draft/metadata/learning-objectives/learning-objectives";
+import { Selection } from "@/components/draft/metadata/selection";
 import { getDroplets } from "@/lib/requests/droplet";
-import { getTags } from '@/lib/requests/tag';
-import { NextSteps } from '@/components/draft/metadata/next-steps/next-steps';
-import { Overview } from '@/components/draft/metadata/overview';
-import { Filter } from '@/components/draft/metadata/filter';
-import { Description } from '@/components/draft/metadata/description';
+import { getTags } from "@/lib/requests/tag";
+import { NextSteps } from "@/components/draft/metadata/next-steps/next-steps";
+import { Overview } from "@/components/draft/metadata/overview";
+import { Filter } from "@/components/draft/metadata/filter";
+import { Description } from "@/components/draft/metadata/description";
 import { uppercaseFirstChar } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 
@@ -44,15 +44,11 @@ export default async function Droplet({ params }: Props) {
     },
   });
   const droplets = await getDroplets({
-    
     filters: {
-      $and: [
-        { status: { $eq: "published" } },
-        { isHidden: false },
-      ]
-    }
-  }, );
-  
+      $and: [{ status: { $eq: "published" } }, { isHidden: false }],
+    },
+  });
+
   const tags = await getTags();
 
   if (!droplet) {
@@ -63,51 +59,79 @@ export default async function Droplet({ params }: Props) {
     <>
       <div className="w-full max-w-2xl">
         <div className="flex flex-row flex-0 flex-wrap gap-1.5">
-            <Badge size="lg" variant="outline">
-              {uppercaseFirstChar(droplet.focusArea)}
+          <Badge size="lg" variant="outline">
+            {uppercaseFirstChar(droplet.focusArea)}
+          </Badge>
+          <Badge size="lg" variant="outline">
+            {uppercaseFirstChar(droplet.type)}
+          </Badge>
+          {droplet.tags?.map((tag) => (
+            <Badge key={tag.id} size="lg" variant="outline">
+              {tag.name}
             </Badge>
-            <Badge size="lg" variant="outline">
-              {uppercaseFirstChar(droplet.type)}
-            </Badge>
-            {droplet.tags?.map((tag) => (
-              <Badge key={tag.id} size="lg" variant="outline">
-                {tag.name}
-              </Badge>
-            ))}
+          ))}
         </div>
         <DropletName dropletId={droplet.id} startingName={droplet.name} />
-        <Description dropletId={droplet.id} initialContent={droplet.description ?? ""} />
+        <Description
+          dropletId={droplet.id}
+          initialContent={droplet.description ?? ""}
+        />
       </div>
-      
+
       <div className="w-full max-w-2xl space-y-10 mt-10">
-        <Overview dropletId={droplet.id} initialContent={droplet.overview ?? ""}/>
+        <Overview
+          dropletId={droplet.id}
+          initialContent={droplet.overview ?? ""}
+        />
 
-        <LearningObjectives dropletId={droplet.id} learningObjectives={droplet.learningObjectives}/>
-        
+        <LearningObjectives
+          dropletId={droplet.id}
+          learningObjectives={droplet.learningObjectives}
+        />
 
-        <NextSteps dropletId={droplet.id} nextSteps={droplet.nextSteps ?? []}/>
+        <NextSteps dropletId={droplet.id} nextSteps={droplet.nextSteps ?? []} />
 
-        <section >
+        <section>
           <h1 className="text-2xl font-bold text-slate-900 ">General Info</h1>
-          <p className="text-slate-500 mb-8">Information that users will see when they view the droplet </p>
+          <p className="text-slate-500 mb-8">
+            Information that users will see when they view the droplet{" "}
+          </p>
           <div className="w-full flex flex-col space-y-4">
             <div className="flex items-center justify-center">
               <div className="flex flex-row space-x-5">
-                <Filter dropletId={droplet.id} initial={droplet.focusArea}  variant="focusArea"/>
-                <Filter dropletId={droplet.id} initial={droplet.type}  variant="type"/>
+                <Filter
+                  dropletId={droplet.id}
+                  initial={droplet.focusArea}
+                  variant="focusArea"
+                />
+                <Filter
+                  dropletId={droplet.id}
+                  initial={droplet.type}
+                  variant="type"
+                />
               </div>
             </div>
-            <Selection variant="tag" dropletId={droplet.id} items={tags} selectedItems={droplet.tags ?? []}/>
-            <Selection variant="prerequisite" dropletId={droplet.id} items={droplets} selectedItems={droplet.prerequisites ?? []}/>
-            <Selection variant="postrequisite" dropletId={droplet.id} items={droplets} selectedItems={droplet.postrequisites ?? []}/>
+            <Selection
+              variant="tag"
+              dropletId={droplet.id}
+              items={tags}
+              selectedItems={droplet.tags ?? []}
+            />
+            <Selection
+              variant="prerequisite"
+              dropletId={droplet.id}
+              items={droplets}
+              selectedItems={droplet.prerequisites ?? []}
+            />
+            <Selection
+              variant="postrequisite"
+              dropletId={droplet.id}
+              items={droplets}
+              selectedItems={droplet.postrequisites ?? []}
+            />
           </div>
-          
         </section>
-        
-        
-        
       </div>
-
     </>
   );
 }
