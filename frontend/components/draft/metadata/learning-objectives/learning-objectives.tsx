@@ -1,15 +1,13 @@
 'use client';
 
 import { useState } from "react";
-import { useDropletUpdate} from './hooks/useDropletUpdate';
-import { GoalIcon, LoaderIcon, CornerDownLeft } from 'lucide-react';
+import { useDropletUpdate} from '../hooks/useDropletUpdate';
 import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
 import { LearningObjectiveDisplay } from '@/components/draft/metadata/learning-objectives/learning-objective';
 import { updateDroplet } from '@/lib/actions';
 import { LearningObjective } from '@/types';
+import { AddButton } from "../form-buttons";
 
-import { useFormStatus } from 'react-dom';
 
 
 
@@ -26,7 +24,6 @@ export function LearningObjectives({ dropletId, learningObjectives } : {dropletI
         if (!response.error && response.data) {
             setNewObjective('');
         }
-        
     }
 
     const updateLearningObjective = (id: number) => {
@@ -45,11 +42,11 @@ export function LearningObjectives({ dropletId, learningObjectives } : {dropletI
     }
     
     return (
-        <> 
-        <h2 className="text-2xl font-bold text-slate-900 mt-4">
+        <div> 
+        <h2 className="text-2xl font-bold text-slate-900 mb-2">
             Learning Objectives
           </h2>
-          <p className="text-slate-500">
+          <p className="text-slate-500 mb-4">
             By completing this Droplet, you should:
           </p>
             <div className="mt-4 border rounded-md bg-slate-50 border-slate-200">
@@ -60,23 +57,16 @@ export function LearningObjectives({ dropletId, learningObjectives } : {dropletI
               <li className="px-4 py-3 ">
                 <form action={addLearningObjective} className="flex flex-row items-center justify-between flex-nowrap w-full space-x-1.5">
                     <Input name="objective" value={newObjective} onChange={(e) => {setNewObjective(e.target.value)}} placeholder="New Learning Objective..." autoComplete="off"/>
-                    <AddObjectiveButton/>
+                    <AddButton/>
 
                 </form>
               </li>
                 </ul>
             </div>
             {error && <div className="text-red-500 mt-2">{error}</div>}
-        </>
+        </div>
     );  
 }
 
-function AddObjectiveButton() {
-    const { pending } = useFormStatus();
 
-    return (
-        <Button size="sm" >{ pending ? <LoaderIcon className="animate-spin"/> : <CornerDownLeft/> }</Button>
-    )
-    
-}
 

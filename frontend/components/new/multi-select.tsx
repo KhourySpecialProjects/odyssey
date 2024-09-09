@@ -33,12 +33,14 @@ export function MultiSelect({
   selected,
   setSelected,
   align = "center",
+  className = "",
 }: {
   label: string;
   items: MultiSelectItem[];
   selected: MultiSelectItem[];
   setSelected: (selected: MultiSelectItem[]) => void;
   align?: "center" | "start" | "end";
+  className?: string;
 }) {
   return (
     <>
@@ -46,15 +48,18 @@ export function MultiSelect({
         <PopoverTrigger asChild>
           <Button
             variant="outline"
-            before={<ChevronDown />}
-            className="max-w-96 h-fit"
+            
+            className={cn("h-fit", className)}
           >
+            <div className="flex flex-row items-center justify-center gap-2">
+            <ChevronDown />
             {label}
-            {selected?.length > 0 && (
+            </div>
+            {selected?.length > 0 ? (
               <>
-                <Separator orientation="vertical" className="h-4 mx-2" />
+                
 
-                <div className="gap-1 flex flex-wrap items-center justify-center max-w-48">
+                <div className="gap-1 flex flex-wrap items-center justify-center w-48">
                   {selected.map((option) => (
                     <Badge
                       variant="secondary"
@@ -66,7 +71,7 @@ export function MultiSelect({
                   ))}
                 </div>
               </>
-            )}
+            ) : <p className="text-slate-400 w-48">Nothing yet...</p>}
           </Button>
         </PopoverTrigger>
         <PopoverContent className="p-0" align={align}>
