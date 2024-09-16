@@ -12,7 +12,7 @@ export function EnvironmentBanner({ className }: {className?: string }) {
             )}
         >
             <p className="inline-flex flex-row items-center gap-2">
-                {app_env} ENVIRONMENT
+                &lt; {app_env} ENVIRONMENT &gt;
             </p>
         </div>
     );
