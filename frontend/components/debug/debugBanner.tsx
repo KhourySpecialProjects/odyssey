@@ -20,5 +20,3 @@ export function DebugBanner({ className }: { className?: string }) {
     </div>
   );
 }
-
-
