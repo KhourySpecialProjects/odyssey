@@ -1,5 +1,6 @@
 import AccessRequestBanner from "@/components/access-request-banner";
-import { DebugBanner, EnvironmentBanner } from "@/components/debug/banner";
+import { DebugBanner } from "@/components/debug/debugBanner";
+import { EnvironmentBanner } from "@/components/debug/environmentBanner";
 import { Header } from "@/components/header";
 import { Suspense } from "react";
 
