@@ -1,5 +1,5 @@
 import AccessRequestBanner from "@/components/access-request-banner";
-import { DebugBanner } from "@/components/debug/banner";
+import { DebugBanner, EnvironmentBanner } from "@/components/debug/banner";
 import { Header } from "@/components/header";
 import { Suspense } from "react";
 
@@ -11,6 +11,7 @@ export default function GeneralLayout({
   return (
     <>
       <DebugBanner />
+      <EnvironmentBanner />
 
       <div className="z-10 sticky top-0">
         <Suspense>
