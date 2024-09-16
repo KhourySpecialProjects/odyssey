@@ -1,4 +1,5 @@
-import { DebugBanner, EnvironmentBanner } from "@/components/debug/banner";
+import { DebugBanner } from "@/components/debug/debugBanner";
+import { EnvironmentBanner } from "@/components/debug/environmentBanner";
 import { ReportBugDialog } from "@/components/droplets/reports/bug/dialog";
 import Sidebar from "@/components/droplets/sidebar";
 import { getCurrentUser } from "@/lib/auth/session";
