@@ -7,6 +7,7 @@ import {
   AuthorizedUserAdminRoles,
 } from "@/lib/globals";
 import { AuthorizedUserRole } from "@/types";
+import { JSONContent } from "@tiptap/react";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -183,4 +184,39 @@ export function htmlToText(text: string): string {
     .replace(/<[^>]*>?/gm, "")
     .replace("&nbsp;", " ")
     .trim();
+}
+
+export function strapiJSONToTiptapJSON(level : any[]) : JSONContent {
+  level = level.map((node) => {
+    // Base case: if there are no children, return the node as is
+    if (!node.children) return node;
+
+    // Recursively apply the transformation on the children
+    const transformedNode: JSONContent = {
+      ...node,
+      content: strapiJSONToTiptapJSON(node.children), // Convert each child node recursively
+    };
+
+    delete transformedNode.children; // Remove the "children" key
+    return transformedNode;
+  })
+  
+  return level as JSONContent;
+  
+}
+
+export function tiptapJSONToStrapiJSON(node : JSONContent[]) : any {
+  return node.map((node) => {
+    // Base case: if there are no children, return the node as is
+    if (!node.content) return node;
+
+    // Recursively apply the transformation on the children
+    const transformedNode = {
+      ...node,
+      children: tiptapJSONToStrapiJSON(node.content), // Convert each child node recursively
+    };
+
+    delete transformedNode.content; // Remove the "content" key
+    return transformedNode;
+  });
 }
