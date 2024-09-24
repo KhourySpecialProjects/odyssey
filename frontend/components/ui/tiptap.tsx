@@ -9,7 +9,7 @@ import Text from "@tiptap/extension-text";
 import OrderedList from "@tiptap/extension-ordered-list";
 import Heading from "@tiptap/extension-heading";
 import Placeholder from "@tiptap/extension-placeholder";
-import Image from '@tiptap/extension-image'
+import Image from "@tiptap/extension-image";
 import StartingKit from "@tiptap/starter-kit";
 import { Star } from "lucide-react";
 
@@ -19,14 +19,15 @@ const Tiptap = ({
   variant,
   className,
   json,
+  revalidate,
 }: {
   updateContent: ((content: string) => void) | ((content: JSONContent) => void);
   initialContent: string | JSONContent;
   variant?: string;
   className?: string;
   json?: boolean;
+  revalidate?: () => void;
 }) => {
-  
   let extensions = [];
   let editorProps: any = {};
   switch (variant) {
@@ -99,15 +100,13 @@ const Tiptap = ({
         Placeholder.configure({
           placeholder: "Nothing here yet...",
           emptyEditorClass:
-            "before:content-[attr(data-placeholder)] before:text-gray-500 before:absolute before:top-2 before:left-2 before:pointer-events-none before:select-none",
+            "before:content-[attr(data-placeholder)] before:text-gray-500 before:absolute before:top-3 before:left-3 before:pointer-events-none before:select-none",
         }),
-        
-        
       ];
       editorProps = {
         attributes: {
           class:
-            "w-full  p-2 prose prose-lg prose-sky prose-table:block prose-table:overflow-x-scroll rounded-md hover:shadow focus:shadow-lg outline-none",
+            "w-full border min-h-32 border-slate-200 p-3 prose prose-lg prose-sky prose-table:block prose-table:overflow-x-scroll rounded-md hover:shadow focus:shadow-lg outline-none",
         },
       };
       break;
@@ -123,7 +122,6 @@ const Tiptap = ({
           emptyEditorClass:
             "before:content-[attr(data-placeholder)] before:text-gray-500 before:absolute before:top-2 before:left-2 before:pointer-events-none before:select-none",
         }),
-        
       ];
       editorProps = {
         attributes: {
@@ -144,21 +142,19 @@ const Tiptap = ({
           emptyEditorClass:
             "before:content-[attr(data-placeholder)] before:text-gray-500 before:absolute before:top-2 before:left-2 before:pointer-events-none before:select-none",
         }),
-        
       ];
       editorProps = {
         attributes: {
           class:
-            "prose prose-sky  p-2 w-full min-h-20 border rounded-md border-slate-200 hover:shadow focus:shadow-lg outline-none",
+            "prose prose-sky  p-2 max-w-full min-h-20 border rounded-md border-slate-200 hover:shadow focus:shadow-lg outline-none",
         },
       };
       break;
 
     default:
       extensions = [
-        
         StartingKit,
-        
+
         Placeholder.configure({
           placeholder: "Nothing here yet...",
           emptyEditorClass:
@@ -179,19 +175,23 @@ const Tiptap = ({
 
     onUpdate: ({ editor }) => {
       if (json) {
-        (updateContent as ((content: JSONContent) => void))(editor.getJSON())
+        (updateContent as (content: JSONContent) => void)(editor.getJSON());
       } else {
-        (updateContent as ((content: string) => void))(editor.getHTML())
+        (updateContent as (content: string) => void)(editor.getHTML());
       }
-
     },
-    
+
+    onDestroy: () => {
+      if (revalidate) {
+        revalidate();
+      }
+    },
     content: initialContent,
     editorProps: editorProps,
     immediatelyRender: false,
   });
 
-  return <EditorContent className={className}  name="tiptap" editor={editor} />;
+  return <EditorContent className={className} name="tiptap" editor={editor} />;
 };
 
 export default Tiptap;

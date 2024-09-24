@@ -347,7 +347,7 @@ export async function createDroplet(data: z.infer<typeof CreateDropletSchema>) {
   }
 }
 
-const CreateLessonSchema = LessonSchema.pick({name: true, dropletId: true});
+const CreateLessonSchema = LessonSchema.pick({ name: true, dropletId: true });
 export async function addLesson(formData: z.infer<typeof CreateLessonSchema>) {
   try {
     const dataToSend = {
@@ -438,9 +438,13 @@ export async function updateDroplet(
 export async function updateLesson(
   id: number,
   data: Partial<z.infer<typeof LessonSchema>>,
+  reload: boolean,
 ) {
   try {
-    
+    if (data.blocks) {
+      data.blocks = data.blocks.map(({ id, ...rest }) => rest);
+    }
+
     const dataToSend: any = {
       ...(data.name && { name: data.name }),
       ...(data.blocks && { blocks: data.blocks }),
@@ -467,8 +471,13 @@ export async function updateLesson(
       return { ok: false, error: errorMessage, data: null };
     }
     console.log(responseData);
-    revalidateTag("lesson");
+    if (reload) {
+      revalidateTag("lesson");
+      revalidatePath("(editing)/draft/d/[slug]/[lessonSlug]", "page");
+    }
+
     revalidatePath("(editing)/draft/d/[slug]/[lessonSlug]", "page");
+
     return { ok: true, error: null, data: responseData.data };
   } catch (err) {
     console.error(err);
@@ -478,4 +487,9 @@ export async function updateLesson(
       data: null,
     };
   }
+}
+
+export async function revalidateLesson() {
+  revalidateTag("lesson");
+  revalidatePath("(editing)/draft/d/[slug]/[lessonSlug]", "page");
 }
