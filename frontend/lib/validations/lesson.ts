@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 const BlockSchema = z.object({
+  id: z.number().int().optional(),
   __component: z.string(),
   content: z.string(),
   title: z.string().optional(),
@@ -14,6 +15,3 @@ export const LessonSchema = z.object({
   dropletId: z.number().int(),
   blocks: BlockSchema.array(),
 });
-
-
-

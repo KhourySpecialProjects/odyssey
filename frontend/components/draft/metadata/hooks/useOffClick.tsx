@@ -2,7 +2,10 @@
 
 import { useEffect, useState } from "react";
 
-export function useOffClick(ref: React.RefObject<HTMLElement>, func: () => void = () => {}) {
+export function useOffClick(
+  ref: React.RefObject<HTMLElement>,
+  func: () => void = () => {},
+) {
   const [open, setOpen] = useState(false);
 
   const handleClickOutside = (event: any) => {

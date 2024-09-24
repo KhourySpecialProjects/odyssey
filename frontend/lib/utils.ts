@@ -186,7 +186,7 @@ export function htmlToText(text: string): string {
     .trim();
 }
 
-export function strapiJSONToTiptapJSON(level : any[]) : JSONContent {
+export function strapiJSONToTiptapJSON(level: any[]): JSONContent {
   level = level.map((node) => {
     // Base case: if there are no children, return the node as is
     if (!node.children) return node;
@@ -199,13 +199,12 @@ export function strapiJSONToTiptapJSON(level : any[]) : JSONContent {
 
     delete transformedNode.children; // Remove the "children" key
     return transformedNode;
-  })
-  
+  });
+
   return level as JSONContent;
-  
 }
 
-export function tiptapJSONToStrapiJSON(node : JSONContent[]) : any {
+export function tiptapJSONToStrapiJSON(node: JSONContent[]): any {
   return node.map((node) => {
     // Base case: if there are no children, return the node as is
     if (!node.content) return node;
