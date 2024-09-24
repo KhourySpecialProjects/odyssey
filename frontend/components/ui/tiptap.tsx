@@ -1,6 +1,6 @@
 "use client";
 
-import { useEditor, EditorContent } from "@tiptap/react";
+import { useEditor, EditorContent, JSONContent } from "@tiptap/react";
 import Document from "@tiptap/extension-document";
 import Paragraph from "@tiptap/extension-paragraph";
 import ListItem from "@tiptap/extension-list-item";
@@ -9,16 +9,24 @@ import Text from "@tiptap/extension-text";
 import OrderedList from "@tiptap/extension-ordered-list";
 import Heading from "@tiptap/extension-heading";
 import Placeholder from "@tiptap/extension-placeholder";
+import Image from "@tiptap/extension-image";
 import StartingKit from "@tiptap/starter-kit";
+import { Star } from "lucide-react";
 
 const Tiptap = ({
   updateContent,
   initialContent,
   variant,
+  className,
+  json,
+  revalidate,
 }: {
-  updateContent: (content: string) => void;
-  initialContent: string;
+  updateContent: ((content: string) => void) | ((content: JSONContent) => void);
+  initialContent: string | JSONContent;
   variant?: string;
+  className?: string;
+  json?: boolean;
+  revalidate?: () => void;
 }) => {
   let extensions = [];
   let editorProps: any = {};
@@ -82,21 +90,76 @@ const Tiptap = ({
         },
       };
       break;
-    default:
+    case "lesson-generic":
       extensions = [
-        Document,
+        Image.configure({
+          inline: true,
+          allowBase64: true,
+        }),
         StartingKit,
-        Heading,
-        Paragraph,
-        ListItem,
-        BulletList,
+        Placeholder.configure({
+          placeholder: "Nothing here yet...",
+          emptyEditorClass:
+            "before:content-[attr(data-placeholder)] before:text-gray-500 before:absolute before:top-3 before:left-3 before:pointer-events-none before:select-none",
+        }),
+      ];
+      editorProps = {
+        attributes: {
+          class:
+            "w-full border min-h-32 border-slate-200 p-3 prose prose-lg prose-sky prose-table:block prose-table:overflow-x-scroll rounded-md hover:shadow focus:shadow-lg outline-none",
+        },
+      };
+      break;
+    case "lesson-expandable-body":
+      extensions = [
+        StartingKit,
+        Image.configure({
+          inline: true,
+          allowBase64: true,
+        }),
         Placeholder.configure({
           placeholder: "Nothing here yet...",
           emptyEditorClass:
             "before:content-[attr(data-placeholder)] before:text-gray-500 before:absolute before:top-2 before:left-2 before:pointer-events-none before:select-none",
         }),
-        Text,
-        OrderedList,
+      ];
+      editorProps = {
+        attributes: {
+          class:
+            "prose prose-sky  p-2 max-w-full min-h-32 border rounded-md border-slate-200 hover:shadow focus:shadow-lg outline-none",
+        },
+      };
+      break;
+    case "lesson-callout":
+      extensions = [
+        StartingKit,
+        Image.configure({
+          inline: true,
+          allowBase64: true,
+        }),
+        Placeholder.configure({
+          placeholder: "Nothing here yet...",
+          emptyEditorClass:
+            "before:content-[attr(data-placeholder)] before:text-gray-500 before:absolute before:top-2 before:left-2 before:pointer-events-none before:select-none",
+        }),
+      ];
+      editorProps = {
+        attributes: {
+          class:
+            "prose prose-sky  p-2 max-w-full min-h-20 border rounded-md border-slate-200 hover:shadow focus:shadow-lg outline-none",
+        },
+      };
+      break;
+
+    default:
+      extensions = [
+        StartingKit,
+
+        Placeholder.configure({
+          placeholder: "Nothing here yet...",
+          emptyEditorClass:
+            "before:content-[attr(data-placeholder)] before:text-gray-500 before:absolute before:top-2 before:left-2 before:pointer-events-none before:select-none",
+        }),
       ];
       editorProps = {
         attributes: {
@@ -111,14 +174,24 @@ const Tiptap = ({
     extensions: extensions,
 
     onUpdate: ({ editor }) => {
-      updateContent(editor.getHTML());
+      if (json) {
+        (updateContent as (content: JSONContent) => void)(editor.getJSON());
+      } else {
+        (updateContent as (content: string) => void)(editor.getHTML());
+      }
+    },
+
+    onDestroy: () => {
+      if (revalidate) {
+        revalidate();
+      }
     },
     content: initialContent,
     editorProps: editorProps,
     immediatelyRender: false,
   });
 
-  return <EditorContent name="tiptap" editor={editor} />;
+  return <EditorContent className={className} name="tiptap" editor={editor} />;
 };
 
 export default Tiptap;
