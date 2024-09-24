@@ -1,6 +1,6 @@
 import { LessonRenderer } from "@/components/draft/lesson/lesson-renderer";
 import { getLessonBySlug } from "@/lib/requests/lesson";
-import { Lesson } from "@/types";
+import  {type Lesson } from "@/types";
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
 
