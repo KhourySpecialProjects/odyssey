@@ -347,7 +347,8 @@ export async function createDroplet(data: z.infer<typeof CreateDropletSchema>) {
   }
 }
 
-export async function addLesson(formData: z.infer<typeof LessonSchema>) {
+const CreateLessonSchema = LessonSchema.pick({ name: true, dropletId: true });
+export async function addLesson(formData: z.infer<typeof CreateLessonSchema>) {
   try {
     const dataToSend = {
       name: formData.name,
@@ -432,4 +433,63 @@ export async function updateDroplet(
       data: null,
     };
   }
+}
+
+export async function updateLesson(
+  id: number,
+  data: Partial<z.infer<typeof LessonSchema>>,
+  reload: boolean,
+) {
+  try {
+    if (data.blocks) {
+      data.blocks = data.blocks.map(({ id, ...rest }) => rest);
+    }
+
+    const dataToSend: any = {
+      ...(data.name && { name: data.name }),
+      ...(data.blocks && { blocks: data.blocks }),
+    };
+
+    console.log(dataToSend);
+
+    console.log(dataToSend);
+
+    const response = await fetch(STRAPI_API_URL + "/api/lessons/" + id, {
+      method: "PUT",
+      body: JSON.stringify({ data: dataToSend }),
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+      },
+    });
+    const responseData = await response.json();
+
+    if (!response.ok || (response.ok && responseData.error)) {
+      console.log(responseData);
+      const errorPath = responseData.error.details.errors[0].path[0];
+      const errorMessage = `${responseData.error.message} (${errorPath})`;
+      return { ok: false, error: errorMessage, data: null };
+    }
+    console.log(responseData);
+    if (reload) {
+      revalidateTag("lesson");
+      revalidatePath("(editing)/draft/d/[slug]/[lessonSlug]", "page");
+    }
+
+    revalidatePath("(editing)/draft/d/[slug]/[lessonSlug]", "page");
+
+    return { ok: true, error: null, data: responseData.data };
+  } catch (err) {
+    console.error(err);
+    return {
+      ok: false,
+      error: "Database Error: Failed to update droplet.",
+      data: null,
+    };
+  }
+}
+
+export async function revalidateLesson() {
+  revalidateTag("lesson");
+  revalidatePath("(editing)/draft/d/[slug]/[lessonSlug]", "page");
 }

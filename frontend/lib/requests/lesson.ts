@@ -24,5 +24,8 @@ export async function getLessonBySlug<T extends Partial<Lesson> = Lesson>(
     },
   };
 
-  return await fetchAPI<T[]>(path, { urlParams }).then((lessons) => lessons[0]);
+  return await fetchAPI<T[]>(path, {
+    urlParams,
+    next: { tags: ["lesson"] },
+  }).then((lessons) => lessons[0]);
 }

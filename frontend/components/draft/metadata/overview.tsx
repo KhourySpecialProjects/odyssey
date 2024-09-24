@@ -17,7 +17,7 @@ export function Overview({
     <section className="w-full max-w-2xl">
       <h2 className="text-2xl font-bold text-slate-900">Overview</h2>
       <TipTap
-        updateContent={(content) => handleChange({ overview: content })}
+        updateContent={(content: any) => handleChange({ overview: content })}
         initialContent={initialContent}
         variant="droplet-overview"
       />
