@@ -471,12 +471,14 @@ export async function updateLesson(
       return { ok: false, error: errorMessage, data: null };
     }
     console.log(responseData);
+
+    
+    
     if (reload) {
-      revalidateTag("lesson");
       revalidatePath("(editing)/draft/d/[slug]/[lessonSlug]", "page");
     }
-
-    revalidatePath("(editing)/draft/d/[slug]/[lessonSlug]", "page");
+    
+    
 
     return { ok: true, error: null, data: responseData.data };
   } catch (err) {

@@ -53,18 +53,25 @@ export async function fetchAPI<T>(
     next?: Object;
     revalidate?: number;
     flattenResponse?: boolean;
+    cache?: "no-store" | "force-cache";
   },
 ): Promise<T> {
   try {
     // Merge default and user options
+    
     const mergedOptions = {
-      next: { ...config.next, revalidate: config.revalidate ?? 60 },
+      
       headers: {
         "Content-Type": "application/json",
-        Authorization: "Bearer " + process.env.STRAPI_ACCESS_TOKEN,
+        Authorization: "Bearer " + process.env.STRAPI_ACCESS_TOKEN, 
+        
       },
-      ...config.options,
+      ...config.options, 
+      ...config.cache && { cache: config.cache },
+      ...config.next && {next: { ...config.next, revalidate: config.revalidate ?? 60 }},
+      
     };
+    console.log(mergedOptions);
 
     // Build request URL
     const queryString = qs.stringify(config.urlParams, {
