@@ -146,7 +146,7 @@ const Tiptap = ({
       editorProps = {
         attributes: {
           class:
-            "prose prose-sky  p-2 max-w-full min-h-20 border rounded-md border-slate-200 hover:shadow focus:shadow-lg outline-none",
+            "prose prose-sky  p-2 min-w-full max-w-2xl min-h-20 border rounded-md border-slate-200 hover:shadow focus:shadow-lg outline-none",
         },
       };
       break;

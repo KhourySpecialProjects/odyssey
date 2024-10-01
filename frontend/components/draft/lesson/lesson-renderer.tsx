@@ -17,7 +17,7 @@ export function LessonRenderer({ lesson }: { lesson: Lesson }) {
       </h1>
       <div className="space-y-12"></div>
 
-      <div className="space-y-4">
+      <div className="space-y-4 w-full flex flex-col items-center justify-center">
         <AddBlock blocks={lesson.blocks} lessonId={lesson.id} index={0} />
         {lesson.blocks.map((block, i) => (
           <div
