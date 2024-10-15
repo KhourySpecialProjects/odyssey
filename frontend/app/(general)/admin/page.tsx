@@ -17,7 +17,7 @@ export default async function Page() {
       <AdminSelector
         content={{
           "Authorized Users": <AuthorizedUsers />,
-          "Access Manager": <AccessManager />,
+          "Access Manager": <AccessManager user={user}/>,
           Reports: <Reports />,
         }}
       />
