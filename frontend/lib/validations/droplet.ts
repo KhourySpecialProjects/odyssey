@@ -23,7 +23,9 @@ export const DropletSchema = z.object({
     .array(),
   overview: z.string(),
   description: z.string(),
-  lessons: z.object({
-    id: z.number()
-  }).array(),
+  lessons: z
+    .object({
+      id: z.number(),
+    })
+    .array(),
 });

@@ -1,9 +1,9 @@
-import React from 'react';
-import Link from 'next/link';
-import { useSortable } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
+import React from "react";
+import Link from "next/link";
+import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { cn } from "@/lib/utils";
-import { Lesson, Droplet } from '@/types';
+import { Lesson, Droplet } from "@/types";
 import { GripVertical, Hammer, FilePieChart, BookText } from "lucide-react";
 
 interface SortableLessonProps {
@@ -13,7 +13,12 @@ interface SortableLessonProps {
   classes: string;
 }
 
-export function SortableLesson({ lesson, droplet, pathname, classes }: SortableLessonProps) {
+export function SortableLesson({
+  lesson,
+  droplet,
+  pathname,
+  classes,
+}: SortableLessonProps) {
   const {
     attributes,
     listeners,
@@ -36,7 +41,7 @@ export function SortableLesson({ lesson, droplet, pathname, classes }: SortableL
       {...listeners}
       className={cn(
         "group relative rounded-lg transition-colors cursor-grab active:cursor-grabbing",
-        isDragging && "shadow-lg cursor-grabbing z-10"
+        isDragging && "shadow-lg cursor-grabbing z-10",
       )}
     >
       <div className="flex items-center">
