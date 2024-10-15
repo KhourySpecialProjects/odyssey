@@ -7,10 +7,12 @@ module.exports = {
       })
     },
     async beforeUpdate(event) {
-      event.params.data.slug = await strapi.service('plugin::content-manager.uid').generateUIDField({
-          contentTypeUID: "api::lesson.lesson",
-          field: "slug",
-          data: event.params.data
-      })
+      if (event.params.data.name){ 
+        event.params.data.slug = await strapi.service('plugin::content-manager.uid').generateUIDField({
+            contentTypeUID: "api::lesson.lesson",
+            field: "slug",
+            data: event.params.data
+        })
+      }
     },
   };
