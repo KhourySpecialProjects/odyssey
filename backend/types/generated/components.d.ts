@@ -93,6 +93,7 @@ export interface DropletsVideo extends Schema.Component {
   info: {
     displayName: 'Video';
     icon: 'play';
+    description: '';
   };
   attributes: {
     url: Attribute.String & Attribute.Required;
