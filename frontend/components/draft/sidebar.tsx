@@ -42,13 +42,13 @@ import {
   useSensor,
   useSensors,
   DragEndEvent,
-} from '@dnd-kit/core';
+} from "@dnd-kit/core";
 import {
   arrayMove,
   SortableContext,
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
-} from '@dnd-kit/sortable';
+} from "@dnd-kit/sortable";
 import { SortableLesson } from "@/components/draft/sortable-lesson";
 import { updateDroplet } from "@/lib/actions";
 
@@ -79,7 +79,7 @@ export function Sidebar({
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
-    })
+    }),
   );
 
   const handleDragEnd = async (event: DragEndEvent) => {
@@ -94,11 +94,15 @@ export function Sidebar({
 
       const oldIndex = lessons.findIndex((item) => item.id === active.id);
       const newIndex = lessons.findIndex((item) => item.id === over?.id);
-      const newLessonIdOrder = arrayMove(lessons, oldIndex, newIndex).map(lesson => ({ id: lesson.id }));
-      const result = await updateDroplet(droplet.id, { lessons: newLessonIdOrder });
+      const newLessonIdOrder = arrayMove(lessons, oldIndex, newIndex).map(
+        (lesson) => ({ id: lesson.id }),
+      );
+      const result = await updateDroplet(droplet.id, {
+        lessons: newLessonIdOrder,
+      });
 
       if (!result.ok) {
-        console.error('Error updating lesson order:', result.error);
+        console.error("Error updating lesson order:", result.error);
       }
     }
   };
@@ -167,7 +171,8 @@ export function Sidebar({
                   href={`/draft/d/${droplet.slug}`}
                   className={cn(
                     classes.link,
-                    pathname == `/draft/d/${droplet.slug}` && classes.activeLink
+                    pathname == `/draft/d/${droplet.slug}` &&
+                      classes.activeLink,
                   )}
                 >
                   <SettingsIcon className="shrink-0" />
@@ -191,10 +196,10 @@ export function Sidebar({
               >
                 <ul className="space-y-1">
                   {lessons.map((lesson) => (
-                    <SortableLesson 
-                      key={lesson.id} 
-                      lesson={lesson} 
-                      droplet={droplet} 
+                    <SortableLesson
+                      key={lesson.id}
+                      lesson={lesson}
+                      droplet={droplet}
                       pathname={pathname}
                       classes={classes.link}
                     />

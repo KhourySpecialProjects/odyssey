@@ -386,26 +386,26 @@ export async function updateDroplet(
 ) {
   try {
     const dataToSend: any = {
-      ...(data.name && {name: data.name}),
-      ...(data.focusArea && {focusArea: data.focusArea}),
-      ...(data.type && {type: data.type}),
-      ...(data.tagIds && {tags: data.tagIds}),
+      ...(data.name && { name: data.name }),
+      ...(data.focusArea && { focusArea: data.focusArea }),
+      ...(data.type && { type: data.type }),
+      ...(data.tagIds && { tags: data.tagIds }),
       ...(data.learningObjectives && {
         learningObjectives: data.learningObjectives.map((obj) => ({
           objective: obj,
         })),
       }),
-      ...(data.prerequisiteIds && {prerequisites: data.prerequisiteIds}),
-      ...(data.postrequisiteIds && {postrequisites: data.postrequisiteIds}),
-      ...(data.nextSteps && {nextSteps: data.nextSteps}),
-      ...(data.description && {description: data.description}),
-      ...(data.overview && {overview: data.overview}),
-      ...(data.lessons && {lessons: data.lessons}),
+      ...(data.prerequisiteIds && { prerequisites: data.prerequisiteIds }),
+      ...(data.postrequisiteIds && { postrequisites: data.postrequisiteIds }),
+      ...(data.nextSteps && { nextSteps: data.nextSteps }),
+      ...(data.description && { description: data.description }),
+      ...(data.overview && { overview: data.overview }),
+      ...(data.lessons && { lessons: data.lessons }),
     };
 
     const response = await fetch(STRAPI_API_URL + "/api/droplets/" + id, {
       method: "PUT",
-      body: JSON.stringify({data: dataToSend}),
+      body: JSON.stringify({ data: dataToSend }),
       headers: {
         "Content-Type": "application/json",
         Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
@@ -417,13 +417,13 @@ export async function updateDroplet(
       console.log(responseData);
       const errorPath = responseData.error.details.errors[0].path[0];
       const errorMessage = `${responseData.error.message} (${errorPath})`;
-      return {ok: false, error: errorMessage, data: null};
+      return { ok: false, error: errorMessage, data: null };
     }
     console.log(responseData);
     revalidateTag("droplets");
     revalidateTag("authors");
     revalidatePath("(general)/drafts", "page");
-    return {ok: true, error: null, data: responseData.data};
+    return { ok: true, error: null, data: responseData.data };
   } catch (err) {
     console.error(err);
     return {
