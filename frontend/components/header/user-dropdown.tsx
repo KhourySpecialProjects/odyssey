@@ -4,7 +4,7 @@ import {
   getInitials,
   isAuthorizedUserAdmin,
   isAuthorizedUserFaculty,
-  condenseRoleTitles
+  condenseRoleTitles,
 } from "@/lib/utils";
 import { User } from "@/types";
 import {
@@ -89,12 +89,12 @@ export function UserDropdown(user: User) {
         ) : null}
 
         {isFaculty ? (
-            <DropdownMenuItem asChild>
-              <Link href="/faculty">
-                <BookIcon className="w-4 h-4 mr-2" />
-                <span>Faculty</span>
-              </Link>
-            </DropdownMenuItem>
+          <DropdownMenuItem asChild>
+            <Link href="/faculty">
+              <BookIcon className="w-4 h-4 mr-2" />
+              <span>Faculty</span>
+            </Link>
+          </DropdownMenuItem>
         ) : null}
 
         <DropdownMenuItem
