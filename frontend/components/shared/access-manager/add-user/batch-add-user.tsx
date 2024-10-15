@@ -8,119 +8,129 @@ import { Input } from "@/components/ui/input";
 import { useFormStatus } from "react-dom";
 
 export function BatchAddUser() {
-    const [emails, setEmails] = useState("");
-    const [csvFiles, setCsvFiles] = useState<File[]>([]);
-    const fileInputRef = useRef<HTMLInputElement>(null);
+  const [emails, setEmails] = useState("");
+  const [csvFiles, setCsvFiles] = useState<File[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-    const removeFile = (index: number) => {
-        setCsvFiles(prevFiles => prevFiles.filter((_, i) => i !== index));
-    };
+  const removeFile = (index: number) => {
+    setCsvFiles((prevFiles) => prevFiles.filter((_, i) => i !== index));
+  };
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        let emailList: string[] = [];
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    let emailList: string[] = [];
 
-        if (emails) {
-            emailList = emails.split(/[\n,]+/).map(email => email.trim()).filter(Boolean);
-        }
+    if (emails) {
+      emailList = emails
+        .split(/[\n,]+/)
+        .map((email) => email.trim())
+        .filter(Boolean);
+    }
 
-        for (const file of csvFiles) {
-            const text = await file.text();
-            const fileEmails = text.split(/[\n,]+/).map(email => email.trim()).filter(Boolean);
-            emailList = [...emailList, ...fileEmails];
-        }
+    for (const file of csvFiles) {
+      const text = await file.text();
+      const fileEmails = text
+        .split(/[\n,]+/)
+        .map((email) => email.trim())
+        .filter(Boolean);
+      emailList = [...emailList, ...fileEmails];
+    }
 
-        if (emailList.length > 0) {
-            // await sendBatchAccessRequests(emailList);
-            setEmails("");
-            setCsvFiles([]);
-            if (fileInputRef.current) fileInputRef.current.value = "";
-        }
-    };
+    if (emailList.length > 0) {
+      // await sendBatchAccessRequests(emailList);
+      setEmails("");
+      setCsvFiles([]);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
 
-    return (
-        <section className="mt-8">
-            <h2 className="font-bold">Batch Add Users</h2>
-            <p>Enter multiple email addresses or upload a CSV file.</p>
+  return (
+    <section className="mt-8">
+      <h2 className="font-bold">Batch Add Users</h2>
+      <p>Enter multiple email addresses or upload a CSV file.</p>
 
-            <form onSubmit={handleSubmit} className="mt-4">
-                <div className="space-y-4">
-                    <div>
-                        <Textarea
-                            placeholder="Enter email addresses separated by commas or new lines..."
-                            value={emails}
-                            onChange={(e) => setEmails(e.target.value)}
-                            rows={5}
-                            className="mb-2"
-                        />
-                    </div>
-                    <div
-                        className="relative border-2 border-dashed border-gray-300 rounded-lg p-6 hover:border-gray-400 transition-colors duration-200 ease-in-out"
-                        onDragOver={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                        }}
-                        onDrop={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            const files = Array.from(e.dataTransfer.files).filter(file => file.type === "text/csv");
-                            setCsvFiles(prevFiles => [...prevFiles, ...files]);
-                        }}
+      <form onSubmit={handleSubmit} className="mt-4">
+        <div className="space-y-4">
+          <div>
+            <Textarea
+              placeholder="Enter email addresses separated by commas or new lines..."
+              value={emails}
+              onChange={(e) => setEmails(e.target.value)}
+              rows={5}
+              className="mb-2"
+            />
+          </div>
+          <div
+            className="relative border-2 border-dashed border-gray-300 rounded-lg p-6 hover:border-gray-400 transition-colors duration-200 ease-in-out"
+            onDragOver={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+            }}
+            onDrop={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              const files = Array.from(e.dataTransfer.files).filter(
+                (file) => file.type === "text/csv",
+              );
+              setCsvFiles((prevFiles) => [...prevFiles, ...files]);
+            }}
+          >
+            <input
+              type="file"
+              accept=".csv"
+              multiple
+              onChange={(e) => {
+                const files = Array.from(e.target.files || []);
+                setCsvFiles((prevFiles) => [...prevFiles, ...files]);
+              }}
+              ref={fileInputRef}
+              className="hidden"
+              id="csv-file-input"
+            />
+            <label
+              htmlFor="csv-file-input"
+              className="inline-flex items-center px-4 py-2 bg-slate-100 border border-gray-300 rounded-md font-semibold text-xs text-gray-700 uppercase tracking-widest shadow-sm hover:bg-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-25 transition ease-in-out duration-150 cursor-pointer"
+            >
+              Choose Files
+            </label>
+            <p className="mt-2 text-sm text-gray-500">
+              {csvFiles.length > 0
+                ? `${csvFiles.length} file(s) selected`
+                : "Drag and drop CSV files here"}
+            </p>
+            {csvFiles.length > 0 && (
+              <ul className="mt-2 text-sm text-gray-600">
+                {csvFiles.map((file, index) => (
+                  <li key={index} className="flex items-center space-x-2 mb-1">
+                    <button
+                      type="button"
+                      onClick={() => removeFile(index)}
+                      className="w-4 h-4 bg-red-500 rounded-full flex items-center justify-center hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
                     >
-                        <input
-                            type="file"
-                            accept=".csv"
-                            multiple
-                            onChange={(e) => {
-                                const files = Array.from(e.target.files || []);
-                                setCsvFiles(prevFiles => [...prevFiles, ...files]);
-                            }}
-                            ref={fileInputRef}
-                            className="hidden"
-                            id="csv-file-input"
-                        />
-                        <label
-                            htmlFor="csv-file-input"
-                            className="inline-flex items-center px-4 py-2 bg-slate-100 border border-gray-300 rounded-md font-semibold text-xs text-gray-700 uppercase tracking-widest shadow-sm hover:bg-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-25 transition ease-in-out duration-150 cursor-pointer"
-                        >
-                            Choose Files
-                        </label>
-                        <p className="mt-2 text-sm text-gray-500">
-                            {csvFiles.length > 0 ? `${csvFiles.length} file(s) selected` : "Drag and drop CSV files here"}
-                        </p>
-                        {csvFiles.length > 0 && (
-                            <ul className="mt-2 text-sm text-gray-600">
-                                {csvFiles.map((file, index) => (
-                                    <li key={index} className="flex items-center space-x-2 mb-1">
-                                        <button
-                                            type="button"
-                                            onClick={() => removeFile(index)}
-                                            className="w-4 h-4 bg-red-500 rounded-full flex items-center justify-center hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
-                                        >
-                                            <span className="w-2 h-0.5 bg-white"></span>
-                                        </button>
-                                        <span>{file.name}</span>
-                                    </li>
-                                ))}
-                            </ul>
-                        )}
-                    </div>
-                    <div className="flex items-center space-x-2">
-                        <div className="flex-grow"></div>
-                        <SubmitButton />
-                    </div>
-                </div>
-            </form>
-        </section>
-    );
+                      <span className="w-2 h-0.5 bg-white"></span>
+                    </button>
+                    <span>{file.name}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+          <div className="flex items-center space-x-2">
+            <div className="flex-grow"></div>
+            <SubmitButton />
+          </div>
+        </div>
+      </form>
+    </section>
+  );
 }
 
 function SubmitButton() {
-    const { pending } = useFormStatus();
+  const { pending } = useFormStatus();
 
-    return (
-        <Button type="submit" disabled={pending}>
-            {pending ? "Sending..." : "Send Invites"}
-        </Button>
-    );
+  return (
+    <Button type="submit" disabled={pending}>
+      {pending ? "Sending..." : "Send Invites"}
+    </Button>
+  );
 }
