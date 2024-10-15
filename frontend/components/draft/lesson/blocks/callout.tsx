@@ -7,38 +7,28 @@ import { updateLesson } from "@/lib/actions";
 import { strapiJSONToTiptapJSON, tiptapJSONToStrapiJSON } from "@/lib/utils";
 import { useCallback } from "react";
 import { debounce } from "lodash";
+import type { BlockNode } from "@/types/strapi";
 
 export function CalloutEditor({
-  blocks,
-  id,
-  lessonId,
+  block,
+  updateBlock,
 }: {
-  blocks: any;
-  id: number;
-  lessonId: number;
+  block: any,
+  updateBlock: (block: any) => void;
 }) {
-  const block = blocks.find((b: any) => b.id === id);
 
-  const updateBackend = async (content: any) => {
-    const updatedBlocks = blocks.map((b: any) => {
-      if (b.id === id) {
-        return {
-          __component: "droplets.callout",
-          content: content,
-          type: "info",
-        };
-      }
-      return b;
-    });
-    const response = await updateLesson(
-      lessonId,
-      { blocks: updatedBlocks },
-      false,
-    );
-    console.log(response);
-  };
 
-  const debounceUpdate = useCallback(debounce(updateBackend, 1000), []);
+  const handleUpdate = useCallback((content : any) => {
+    let temp : any = JSON.parse(JSON.stringify(tiptapJSONToStrapiJSON(content.content ?? [])))
+
+    updateBlock({
+        __component: "droplets.callout",
+        content: temp,
+        type: "info",})
+    
+  }, [])
+
+  const debounceUpdate = useCallback(debounce(handleUpdate, 1000), []);
 
   return (
     <>
@@ -46,7 +36,7 @@ export function CalloutEditor({
         <h2 className="text-lg mb-4">Callout Block</h2>
         <TipTap
           updateContent={(content: JSONContent) => {
-            debounceUpdate(tiptapJSONToStrapiJSON(content.content!));
+            handleUpdate(content);
           }}
           initialContent={
             {

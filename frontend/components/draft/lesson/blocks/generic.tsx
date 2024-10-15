@@ -5,45 +5,23 @@ import { updateLesson, revalidateLesson } from "@/lib/actions";
 import TipTap from "@/components/ui/tiptap";
 
 export function GenericEditor({
-  blocks,
-  id,
-  lessonId,
+  block,
+  updateBlock,
 }: {
-  blocks: any;
-  id: number;
-  lessonId: number;
+  block: any;
+  updateBlock: (block: any) => void;
 }) {
-  const block = blocks.find((b: any) => b.id === id);
-  const [blockState, setBlockState] = useState(block);
+  
+  //const [blockState, setBlockState] = useState(block);
 
-  const updateBackend = async (updatedBlocks: any) => {
-    const response = await updateLesson(
-      lessonId,
-      { blocks: updatedBlocks },
-      false,
-    );
-    console.log(response);
-  };
+  const handleChange = (content : string) => {
+    updateBlock({
+        __component: 'droplets.generic',
+        content: content,
+    })
+  }
 
-  const debounceUpdate = useCallback(debounce(updateBackend, 1000), []);
-
-  const handleChange = (content: string) => {
-    const updatedBlocks = blocks.map((b: any) => {
-      if (b.id === id) {
-        return {
-          __component: "droplets.generic",
-          content: content,
-        };
-      }
-      return b;
-    });
-    setBlockState({
-      id: blockState.id,
-      __component: "droplets.generic",
-      content: content,
-    });
-    debounceUpdate(updatedBlocks);
-  };
+  
 
   return (
     <div className="w-full rounded-md border border-slate-200 p-4 hover:shadow-md">
@@ -51,7 +29,7 @@ export function GenericEditor({
       <TipTap
         revalidate={revalidateLesson}
         variant="lesson-generic"
-        initialContent={blockState.content}
+        initialContent={block.content}
         updateContent={handleChange}
       />
     </div>

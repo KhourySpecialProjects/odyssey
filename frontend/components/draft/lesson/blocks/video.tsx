@@ -4,22 +4,20 @@ import { PencilIcon, CheckIcon } from "lucide-react";
 import { useRef, useState } from "react";
 import { useOffClick } from "../../metadata/hooks/useOffClick";
 import { updateLesson } from "@/lib/actions";
+import { youtubeUrlToEmbeddedUrl, embeddedUrlToYoutubeUrl } from "@/lib/utils";
 
 export function VideoEditor({
-  blocks,
-  id,
-  lessonId,
+  block, 
+  updateBlock
 }: {
-  blocks: any;
-  id: number;
-  lessonId: number;
+  block : any,
+  updateBlock: (block : any) => void
 }) {
   const ref = useRef(null);
   const { open, setOpen } = useOffClick(ref);
-  const block = blocks.find((b: any) => b.id === id);
-  const [url, setUrl] = useState(block.url);
-  console.log(url);
+  const [url, setUrl] = useState(embeddedUrlToYoutubeUrl(block.url));
 
+  /*
   const updateBackend = async (url: string) => {
     const updatedBlocks = blocks.map((b: any) => {
       if (b.id === id) {
@@ -37,6 +35,7 @@ export function VideoEditor({
     );
     console.log(response);
   };
+  */
 
   return (
     <div
@@ -53,7 +52,10 @@ export function VideoEditor({
             className="cursor-pointer text-slate-700 hover:text-slate-800"
             onClick={() => {
               setOpen(false);
-              updateBackend(url);
+              updateBlock( {
+                __component: "droplets.video",
+                url: youtubeUrlToEmbeddedUrl(url),
+              });
             }}
           />
         ) : (
