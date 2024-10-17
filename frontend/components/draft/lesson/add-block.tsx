@@ -70,7 +70,7 @@ export function AddBlock({
               const updatedBlocks = [...blocks];
               updatedBlocks.splice(index, 0, {
                 __component: "droplets.callout",
-                content: [],
+                content: [{type: "paragraph", children: [{type: "text", text: ""}]}],
                 type: "info",
               });
               updateBackend(updatedBlocks);

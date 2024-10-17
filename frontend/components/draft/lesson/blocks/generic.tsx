@@ -16,6 +16,7 @@ export function GenericEditor({
 
   const handleChange = (content : string) => {
     updateBlock({
+        id: block.id,
         __component: 'droplets.generic',
         content: content,
     })
