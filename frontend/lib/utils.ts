@@ -195,87 +195,6 @@ export function htmlToText(text: string): string {
 }
 
 
-/*
-export function strapiJSONToTiptapJSON(level: BlockNode[], parent: BlockNode): JSONContent {
-  level = level.map((node) => {
-
-    if (node.type == "list") {
-      if (node.format == "unordered") {
-        node.type = "bulletList"
-        delete node.format
-      }
-    }
-
-    if (node.type == "list-item") {
-      node.type = "listItem"
-    }
-    
-    if (node.type == "text" && parent.type != "paragraph") {
-      const transformedNode: JSONContent = {
-        type: "paragraph",
-        content: [node]
-      }
-      return transformedNode;
-    }
-    
-    // Base case: if there are no children, return the node as is
-    if (!node.children) return node;
-
-    // Recursively apply the transformation on the children
-    const transformedNode: JSONContent = {
-      ...node,
-      content: strapiJSONToTiptapJSON(node.children, node), // Convert each child node recursively
-    };
-
-    delete transformedNode.children; // Remove the "children" key
-    return transformedNode;
-  });
-
-  return level as JSONContent;
-}
-*/
-
-
-
-/*
-export function tiptapJSONToStrapiJSON(node: JSONContent[], parent:JSONContent): BlockNode[] {
-  return node.map((node) => {
-    // Base case: if there are no children, return the node as is
-    
-    let type : string | undefined = undefined
-    let format : string | undefined = undefined
-
-    if (node.type == "bulletList") {
-      type = "list"
-      format = "unordered"
-    }
-
-    else if (node.type == "listItem") {
-      type = "list-item"
-    }
-
-    else if (node.type == "paragraph" && parent.type == "list-item") {
-      return tiptapJSONToStrapiJSON(node.content!, node);
-    } 
-    else {
-      type = node.type
-      format = node.format
-    }
-
-  
-    if (!node.content) return node;
-    // Recursively apply the transformation on the children
-    const transformedNode = {
-      type: type,
-      format: format,
-      children: tiptapJSONToStrapiJSON(node.content!, node), // Convert each child node recursively
-    };
-
-    //delete transformedNode.content; // Remove the "content" key
-    return transformedNode;
-  }) as BlockNode[];
-}
-*/
 
 export function strapiJSONToTiptapJSON(blockNodes: BlockNode[]) : JSONContent[] {
   
@@ -340,6 +259,11 @@ export function strapiJSONToTiptapJSON(blockNodes: BlockNode[]) : JSONContent[] 
           };
   
         case 'paragraph':
+          if( node.children.length === 1 && node.children[0].type === 'text' && node.children[0].text === '') {
+            return {
+              type: 'paragraph',
+            };
+          }
           return {
             type: 'paragraph',
             content: strapiJSONToTiptapJSON(node.children)
@@ -423,10 +347,19 @@ export function tiptapJSONToStrapiJSON (jsonContent : JSONContent[]) : BlockNode
         };
 
       case 'paragraph':
-        return {
-          type: 'paragraph',
-          children: tiptapJSONToStrapiJSON(node.content || [])
-        };
+        if (node.content && node.content.length > 0) {
+          return {
+            type: 'paragraph',
+            children: tiptapJSONToStrapiJSON(node.content || [])
+          };
+        } else {
+          console.log("got here!!!")
+          return {
+            type: 'paragraph',
+            children: [{ type: 'text', text: '' }]
+          }
+        }
+        
 
       case 'blockquote':
         return {

@@ -13,10 +13,9 @@ import { updateLesson } from "@/lib/actions";
 
 export function LessonRenderer({ lesson }: { lesson: Lesson }) {
   
-  const [blocks, setBlocks] = useState(lesson.blocks.map((block) => { 
-    delete block.id;
-    return block;
-  })); 
+  const [blocks, setBlocks] = useState(lesson.blocks)
+  console.log(blocks)
+  
 
   const setBlock = useCallback(
     (index: number) => {
@@ -44,7 +43,12 @@ export function LessonRenderer({ lesson }: { lesson: Lesson }) {
     debounceUpdate(blocks);
   }, [blocks])
 
+  useEffect(() => {
+    setBlocks(lesson.blocks);
+  }, [lesson]);
+
   const updateBackend = async (blocks: any) => {
+    console.log(blocks)
     const response = await updateLesson(
         lesson.id,
         { blocks: blocks },
@@ -66,7 +70,7 @@ export function LessonRenderer({ lesson }: { lesson: Lesson }) {
         <AddBlock blocks={lesson.blocks} lessonId={lesson.id} index={0} />
         {blocks.map((block, i) => (
           <div
-            key={i}
+            key={block.__component + block.id}
             className="w-full flex flex-col items-center justify-center max-w-2xl space-y-4"
           >
             {block.__component === "droplets.generic" && (
