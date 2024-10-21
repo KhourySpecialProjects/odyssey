@@ -7,13 +7,13 @@ import { updateLesson } from "@/lib/actions";
 import { youtubeUrlToEmbeddedUrl, embeddedUrlToYoutubeUrl } from "@/lib/utils";
 
 export function VideoEditor({
-  block, 
+  block,
   updateBlock,
-  deleteBlock
+  deleteBlock,
 }: {
-  block : any,
-  updateBlock: (block : any) => void,
-  deleteBlock: () => void
+  block: any;
+  updateBlock: (block: any) => void;
+  deleteBlock: () => void;
 }) {
   const ref = useRef(null);
   const { open, setOpen } = useOffClick(ref);
@@ -48,32 +48,35 @@ export function VideoEditor({
       ref={ref}
     >
       <div className="flex items-center justify-between mb-4">
-      <div className="w-full flex flex-row  mb-4 justify-between items-center">
-        <div className="w-full flex flex-row justify-between items-center mr-4">
+        <div className="w-full flex flex-row  mb-4 justify-between items-center">
+          <div className="w-full flex flex-row justify-between items-center mr-4">
             <h2 className="text-lg">Video Block</h2>
-            <Trash2Icon className="cursor-pointer text-red-600 hover:text-red-700" onClick={deleteBlock}/>
+            <Trash2Icon
+              className="cursor-pointer text-red-600 hover:text-red-700"
+              onClick={deleteBlock}
+            />
+          </div>
+
+          {open ? (
+            <CheckIcon
+              className="cursor-pointer text-slate-700 hover:text-slate-800"
+              onClick={() => {
+                setOpen(false);
+                updateBlock({
+                  __component: "droplets.video",
+                  url: youtubeUrlToEmbeddedUrl(url),
+                });
+              }}
+            />
+          ) : (
+            <PencilIcon
+              className="cursor-pointer text-slate-700 hover:text-slate-800"
+              onClick={() => setOpen(true)}
+            />
+          )}
         </div>
-      
-        {open ? (
-          <CheckIcon
-            className="cursor-pointer text-slate-700 hover:text-slate-800"
-            onClick={() => {
-              setOpen(false);
-              updateBlock( {
-                __component: "droplets.video",
-                url: youtubeUrlToEmbeddedUrl(url),
-              });
-            }}
-          />
-        ) : (
-          <PencilIcon
-            className="cursor-pointer text-slate-700 hover:text-slate-800"
-            onClick={() => setOpen(true)}
-          />
-        )}
       </div>
-      </div>
-      
+
       {open ? (
         <Input value={url} onChange={(e) => setUrl(e.target.value)} />
       ) : (
