@@ -403,7 +403,9 @@ export async function updateDroplet(
       ...(data.nextSteps && { nextSteps: data.nextSteps }),
       ...(data.description && { description: data.description }),
       ...(data.overview && { overview: data.overview }),
+      ...(data.lessons && { lessons: data.lessons }),
     };
+
 
     dataToSend.regenerateSlug = options.regenerateSlug;
 
