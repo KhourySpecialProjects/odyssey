@@ -17,6 +17,8 @@ import { AuthorizedUserRoleTitle } from "./globals";
 import { getAuthorizedUserRoleIdByTitle } from "./requests/authorized-user-roles";
 import { DropletSchema } from "./validations/droplet";
 import { LessonSchema } from "./validations/lesson";
+import type { Droplet } from "@/types";
+import { getDropletById } from "./requests/droplet";
 
 const STRAPI_API_URL = process.env.STRAPI_API_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
@@ -383,6 +385,7 @@ export async function addLesson(formData: z.infer<typeof CreateLessonSchema>) {
 export async function updateDroplet(
   id: number,
   data: Partial<z.infer<typeof DropletSchema>>,
+  options : {regenerateSlug ?: boolean} = {regenerateSlug: false}
 ) {
   try {
     const dataToSend: any = {
@@ -402,6 +405,8 @@ export async function updateDroplet(
       ...(data.overview && { overview: data.overview }),
     };
 
+    dataToSend.regenerateSlug = options.regenerateSlug;
+
     console.log(dataToSend);
 
     const response = await fetch(STRAPI_API_URL + "/api/droplets/" + id, {
@@ -420,8 +425,12 @@ export async function updateDroplet(
       const errorMessage = `${responseData.error.message} (${errorPath})`;
       return { ok: false, error: errorMessage, data: null };
     }
+
+    if (dataToSend.name) {
+      revalidateTag("droplets");
+    }
+
     console.log(responseData);
-    revalidateTag("droplets");
     revalidateTag("authors");
     revalidatePath("(general)/drafts", "page");
     return { ok: true, error: null, data: responseData.data };
@@ -438,7 +447,7 @@ export async function updateDroplet(
 export async function updateLesson(
   id: number,
   data: Partial<z.infer<typeof LessonSchema>>,
-  reload: boolean,
+  options : {reload ?: boolean, regenerateSlug ?: boolean} = {reload: false, regenerateSlug: false},
 ) {
   try {
     if (data.blocks) {
@@ -449,6 +458,10 @@ export async function updateLesson(
       ...(data.name && { name: data.name }),
       ...(data.blocks && { blocks: data.blocks }),
     };
+
+    dataToSend.regenerateSlug = options.regenerateSlug
+
+    
 
     console.log(dataToSend);
 
@@ -474,8 +487,12 @@ export async function updateLesson(
 
     
     
-    if (reload) {
+    if (options.reload) {
       revalidatePath("(editing)/draft/d/[slug]/[lessonSlug]", "page");
+    }
+
+    if (data.name) {
+      revalidateTag("droplets");
     }
     
     
@@ -495,3 +512,75 @@ export async function revalidateLesson() {
   revalidateTag("lesson");
   revalidatePath("(editing)/draft/d/[slug]/[lessonSlug]", "page");
 }
+
+export async function deleteLesson(id : number, revalidate: boolean = true) {
+  try {
+    const response = await fetch(STRAPI_API_URL + "/api/lessons/" + id, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+      },
+    });
+    const data = await response.json();
+    if (!response.ok || (response.ok && data.error))
+      return { ok: false, error: data.error.message, data: null };
+
+    if (revalidate) {
+      revalidateTag("droplets");
+    }
+    
+    return {ok: true, error: null, data: data.data}
+  } catch (err) {
+    console.error(err);
+    return { error: "Database Error: Failed to Delete Authorized User." };
+  }
+}
+
+export async function deepDeleteDroplet(id: number) {
+  try {
+
+    const droplet = await getDropletById<Droplet>(id, {
+      fields: ["*"],
+      populate: {
+        authors: { populate: "*" },
+        learningObjectives: { populate: "*" },
+        lessons: { populate: "*" },
+        tags: { populate: "*" },
+        prerequisites: { populate: ["id", "name", "slug"] },
+        postrequisites: { populate: ["id", "name", "slug"] },
+        nextSteps: { fields: ["label", "url"] },
+      },
+    });
+
+
+    if (droplet.lessons) {
+      droplet.lessons.forEach((lesson) => {
+        deleteLesson(lesson.id, false);
+      })
+    }
+
+    const response = await fetch(STRAPI_API_URL + "/api/droplets/" + id, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+      },
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      return { ok: false, error: "Failed to delete droplet.", data: null };
+    }
+    
+    revalidateTag("authors");
+    revalidateTag("droplets");
+    revalidatePath("(general)/drafts", "page");
+    return {ok: true, error: null, data: data.data}
+  } catch (err) {
+    console.error(err);
+    return { error: "Database Error: Failed to Delete Droplet." };
+  }
+}
+

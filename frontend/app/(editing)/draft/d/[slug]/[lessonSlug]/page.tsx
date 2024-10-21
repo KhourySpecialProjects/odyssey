@@ -54,7 +54,7 @@ export default async function Lesson({ params }: Props) {
   if (!lesson) return notFound();
   return (
     <>
-      <LessonRenderer lesson={lesson} />
+      <LessonRenderer lesson={lesson} dropletSlug={params.slug}/>
     </>
   );
 }
