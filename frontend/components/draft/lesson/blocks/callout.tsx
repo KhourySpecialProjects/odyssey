@@ -8,13 +8,16 @@ import { strapiJSONToTiptapJSON, tiptapJSONToStrapiJSON } from "@/lib/utils";
 import { useCallback } from "react";
 import { debounce } from "lodash";
 import type { BlockNode } from "@/types/strapi";
+import { Trash2Icon } from "lucide-react";
 
 export function CalloutEditor({
   block,
   updateBlock,
+  deleteBlock,
 }: {
   block: any,
   updateBlock: (block: any) => void;
+  deleteBlock: () => void;
 }) {
 
 
@@ -32,8 +35,11 @@ export function CalloutEditor({
 
   return (
     <>
-      <div className="px-6 py-6 border rounded-md w-full bg-sky-50 border-sky-200">
-        <h2 className="text-lg mb-4">Callout Block</h2>
+      <div className="hover:shadow-md px-6 py-6 border rounded-md w-full bg-sky-50 border-sky-200">
+        <div className="w-full flex flex-row  mb-4 justify-between items-center">
+            <h2 className="text-lg">Callout Block</h2>
+            <Trash2Icon className="cursor-pointer text-red-600 hover:text-red-700" onClick={deleteBlock}/>
+        </div>
         <TipTap
           updateContent={(content: JSONContent) => {
             handleUpdate(content);

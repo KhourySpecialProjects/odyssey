@@ -79,7 +79,7 @@ const Tiptap = ({
         Placeholder.configure({
           placeholder: "Nothing here yet...",
           emptyEditorClass:
-            "before:content-[attr(data-placeholder)] before:text-gray-500 before:absolute before:top-8 before:left-8 before:pointer-events-none before:select-none",
+            "before:content-[attr(data-placeholder)] before:text-gray-500 before:absolute before:top-8 before:left-8 before:pointer-events-none before:select-none",  
         }),
         Text,
       ];
@@ -150,6 +150,24 @@ const Tiptap = ({
         },
       };
       break;
+      case "lesson-name":
+        extensions = [
+          Document,
+          Heading.configure({
+            levels: [1],
+            HTMLAttributes: {
+              class: "text-4xl font-extrabold text-balance",
+            },
+          }),
+          Text,
+        ];
+        editorProps = {
+          attributes: {
+            class:
+              "hover:shadow focus:shadow-lg outline-none rounded-md px-4 py-2",
+          },
+        };
+        break;
 
     default:
       extensions = [
