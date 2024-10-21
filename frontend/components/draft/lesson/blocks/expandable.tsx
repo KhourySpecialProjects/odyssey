@@ -13,47 +13,40 @@ export function ExpandableEditor({
   updateBlock,
   deleteBlock,
 }: {
-  block : any,
+  block: any;
   updateBlock: (block: any) => void;
   deleteBlock: () => void;
 }) {
-  const [content, setContent] = useState(
-    block.content
-  );
-  const [title, setTitle] = useState(
-    block.title
-  );
-  
+  const [content, setContent] = useState(block.content);
+  const [title, setTitle] = useState(block.title);
 
   const updateTitle = (e: any) => {
     setTitle(e.target.value);
     updateBlock({
-        __component: "droplets.expandable",
-          content: content,
-          title: e.target.value,
-    })
+      __component: "droplets.expandable",
+      content: content,
+      title: e.target.value,
+    });
   };
 
   const updateContent = (content: string) => {
     setContent(content);
     updateBlock({
-        __component: "droplets.expandable",
-          content: content,
-          title: title,
-    })
-    
+      __component: "droplets.expandable",
+      content: content,
+      title: title,
+    });
   };
-
-
-
-  
 
   return (
     <div className="w-full p-4 border rounded-md border-slate-200">
       <div className="w-full flex flex-row  mb-4 justify-between items-center">
-            <h2 className="text-lg">Expandable Block</h2>
-            <Trash2Icon className="cursor-pointer text-red-600 hover:text-red-700" onClick={deleteBlock}/>
-        </div>
+        <h2 className="text-lg">Expandable Block</h2>
+        <Trash2Icon
+          className="cursor-pointer text-red-600 hover:text-red-700"
+          onClick={deleteBlock}
+        />
+      </div>
       <div className="inline-flex flex-row items-center gap-2 font-bold text-sky-600 w-full">
         <Input
           className="mb-3"

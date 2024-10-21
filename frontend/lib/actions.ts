@@ -385,7 +385,7 @@ export async function addLesson(formData: z.infer<typeof CreateLessonSchema>) {
 export async function updateDroplet(
   id: number,
   data: Partial<z.infer<typeof DropletSchema>>,
-  options : {regenerateSlug ?: boolean} = {regenerateSlug: false}
+  options: { regenerateSlug?: boolean } = { regenerateSlug: false },
 ) {
   try {
     const dataToSend: any = {
@@ -447,7 +447,10 @@ export async function updateDroplet(
 export async function updateLesson(
   id: number,
   data: Partial<z.infer<typeof LessonSchema>>,
-  options : {reload ?: boolean, regenerateSlug ?: boolean} = {reload: false, regenerateSlug: false},
+  options: { reload?: boolean; regenerateSlug?: boolean } = {
+    reload: false,
+    regenerateSlug: false,
+  },
 ) {
   try {
     if (data.blocks) {
@@ -459,9 +462,7 @@ export async function updateLesson(
       ...(data.blocks && { blocks: data.blocks }),
     };
 
-    dataToSend.regenerateSlug = options.regenerateSlug
-
-    
+    dataToSend.regenerateSlug = options.regenerateSlug;
 
     console.log(dataToSend);
 
@@ -485,8 +486,6 @@ export async function updateLesson(
     }
     console.log(responseData);
 
-    
-    
     if (options.reload) {
       revalidatePath("(editing)/draft/d/[slug]/[lessonSlug]", "page");
     }
@@ -494,8 +493,6 @@ export async function updateLesson(
     if (data.name) {
       revalidateTag("droplets");
     }
-    
-    
 
     return { ok: true, error: null, data: responseData.data };
   } catch (err) {
@@ -513,7 +510,7 @@ export async function revalidateLesson() {
   revalidatePath("(editing)/draft/d/[slug]/[lessonSlug]", "page");
 }
 
-export async function deleteLesson(id : number, revalidate: boolean = true) {
+export async function deleteLesson(id: number, revalidate: boolean = true) {
   try {
     const response = await fetch(STRAPI_API_URL + "/api/lessons/" + id, {
       method: "DELETE",
@@ -529,8 +526,8 @@ export async function deleteLesson(id : number, revalidate: boolean = true) {
     if (revalidate) {
       revalidateTag("droplets");
     }
-    
-    return {ok: true, error: null, data: data.data}
+
+    return { ok: true, error: null, data: data.data };
   } catch (err) {
     console.error(err);
     return { error: "Database Error: Failed to Delete Authorized User." };
@@ -539,7 +536,6 @@ export async function deleteLesson(id : number, revalidate: boolean = true) {
 
 export async function deepDeleteDroplet(id: number) {
   try {
-
     const droplet = await getDropletById<Droplet>(id, {
       fields: ["*"],
       populate: {
@@ -553,11 +549,10 @@ export async function deepDeleteDroplet(id: number) {
       },
     });
 
-
     if (droplet.lessons) {
       droplet.lessons.forEach((lesson) => {
         deleteLesson(lesson.id, false);
-      })
+      });
     }
 
     const response = await fetch(STRAPI_API_URL + "/api/droplets/" + id, {
@@ -573,14 +568,13 @@ export async function deepDeleteDroplet(id: number) {
     if (!response.ok) {
       return { ok: false, error: "Failed to delete droplet.", data: null };
     }
-    
+
     revalidateTag("authors");
     revalidateTag("droplets");
     revalidatePath("(general)/drafts", "page");
-    return {ok: true, error: null, data: data.data}
+    return { ok: true, error: null, data: data.data };
   } catch (err) {
     console.error(err);
     return { error: "Database Error: Failed to Delete Droplet." };
   }
 }
-

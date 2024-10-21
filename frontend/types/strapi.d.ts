@@ -42,7 +42,7 @@ export interface StrapiMediaParams {
 
 export interface TextNode {
   text: string;
-  type: 'text';
+  type: "text";
   bold?: boolean;
   underline?: boolean;
   italic?: boolean;
@@ -52,12 +52,12 @@ export interface TextNode {
 
 export interface LinkNode {
   url: string;
-  type: 'link';
+  type: "link";
   children: BlockNode[]; //should be TextNode[]
 }
 
 export interface ListItemNode {
-  type: 'list-item';
+  type: "list-item";
   children: BlockNode[]; //should be (TextNode | LinkNode)[]
 }
 
@@ -74,55 +74,61 @@ export interface ImageFormat {
 }
 
 export interface ImageNode {
-  type: 'image';
+  type: "image";
   image: {
-      ext: string;
-      url: string;
-      hash: string;
-      mime: string;
-      name: string;
-      size: number;
-      width: number;
-      height: number;
-      caption: string;
-      formats: {
-          large?: ImageFormat;
-          small?: ImageFormat;
-          medium?: ImageFormat;
-          thumbnail?: ImageFormat;
-      };
-      provider: string;
-      createdAt: string;
-      updatedAt: string;
-      previewUrl: null | string;
-      alternativeText: string;
-      provider_metadata: null | any;
+    ext: string;
+    url: string;
+    hash: string;
+    mime: string;
+    name: string;
+    size: number;
+    width: number;
+    height: number;
+    caption: string;
+    formats: {
+      large?: ImageFormat;
+      small?: ImageFormat;
+      medium?: ImageFormat;
+      thumbnail?: ImageFormat;
+    };
+    provider: string;
+    createdAt: string;
+    updatedAt: string;
+    previewUrl: null | string;
+    alternativeText: string;
+    provider_metadata: null | any;
   };
   children: BlockNode[]; //should be TextNode[]
 }
 
 export interface ListNode {
-  type: 'list';
-  format: 'unordered' | 'ordered';
+  type: "list";
+  format: "unordered" | "ordered";
   children: BlockNode[];
 }
 
 export interface HeadingNode {
-  type: 'heading';
+  type: "heading";
   level: number;
   children: BlockNode[];
 }
 
 export interface ParagraphNode {
-  type: 'paragraph';
+  type: "paragraph";
   children: BlockNode[];
 }
 
 export interface QuoteNode {
-  type: 'quote';
+  type: "quote";
   children: BlockNode[];
 }
 
-export type BlockNode = TextNode | LinkNode | ListItemNode | ImageNode | ListNode | HeadingNode | ParagraphNode | QuoteNode;
-
-
+export type BlockNode =
+  | TextNode
+  | LinkNode
+  | ListItemNode
+  | ImageNode
+  | ListNode
+  | HeadingNode
+  | ParagraphNode
+  | QuoteNode;

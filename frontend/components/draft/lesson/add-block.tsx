@@ -10,11 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 
-export function AddBlock({
-  add
-}: {
-  add : (block : any) => void
-}) {
+export function AddBlock({ add }: { add: (block: any) => void }) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -29,10 +25,10 @@ export function AddBlock({
         <PopoverContent className="space-y-1">
           <Button
             onClick={() => {
-              setOpen(false)
+              setOpen(false);
               add({
-                    __component: "droplets.generic",
-                    content: "",
+                __component: "droplets.generic",
+                content: "",
               });
             }}
             variant="ghost"
@@ -42,12 +38,12 @@ export function AddBlock({
           </Button>
           <Button
             onClick={() => {
-              setOpen(false)
-                add({
-                    __component: "droplets.expandable",
-                    title: "",
-                    content: "",
-                });
+              setOpen(false);
+              add({
+                __component: "droplets.expandable",
+                title: "",
+                content: "",
+              });
             }}
             variant="ghost"
             className="w-full border border-slate-200"
@@ -56,12 +52,14 @@ export function AddBlock({
           </Button>
           <Button
             onClick={() => {
-              setOpen(false)
-                add({
-                    __component: "droplets.callout",
-                    content: [{type: "paragraph", children: [{type: "text", text: ""}]}],
-                    type: "info",
-                });
+              setOpen(false);
+              add({
+                __component: "droplets.callout",
+                content: [
+                  { type: "paragraph", children: [{ type: "text", text: "" }] },
+                ],
+                type: "info",
+              });
             }}
             variant="ghost"
             className="w-full border border-slate-200"
@@ -70,11 +68,11 @@ export function AddBlock({
           </Button>
           <Button
             onClick={() => {
-              setOpen(false)
-              add( {
+              setOpen(false);
+              add({
                 __component: "droplets.video",
                 url: "https://www.youtube.com/asdfgsfd",
-              })
+              });
             }}
             variant="ghost"
             className="w-full border border-slate-200"

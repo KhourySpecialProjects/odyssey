@@ -74,7 +74,7 @@ export default async function Droplet({ params }: Props) {
           ))}
         </div>
         <DropletName dropletId={droplet.id} startingName={droplet.name} />
-        <RegenerateSlugButton dropletId={droplet.id} name={droplet.name}/>
+        <RegenerateSlugButton dropletId={droplet.id} name={droplet.name} />
         <DeleteDropletButton dropletId={droplet.id} />
         <Description
           dropletId={droplet.id}
