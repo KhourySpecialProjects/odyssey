@@ -400,9 +400,8 @@ export async function updateDroplet(
       ...(data.nextSteps && { nextSteps: data.nextSteps }),
       ...(data.description && { description: data.description }),
       ...(data.overview && { overview: data.overview }),
+      ...(data.lessons && { lessons: data.lessons }),
     };
-
-    console.log(dataToSend);
 
     const response = await fetch(STRAPI_API_URL + "/api/droplets/" + id, {
       method: "PUT",
