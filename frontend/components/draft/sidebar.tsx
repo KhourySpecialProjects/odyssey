@@ -10,11 +10,16 @@ import {
 } from "@/lib/utils";
 import { Droplet, User } from "@/types";
 import {
+  BookTextIcon,
   ChevronDownIcon,
   CogIcon,
+  FilePieChartIcon,
+  HammerIcon,
+  HistoryIcon,
   LogOutIcon,
   MenuIcon,
   ShipIcon,
+  TargetIcon,
   TowerControlIcon,
   SettingsIcon,
 } from "lucide-react";
@@ -22,7 +27,7 @@ import { signOut } from "next-auth/react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import React, { useLayoutEffect, useState, useRef } from "react";
+import { useLayoutEffect, useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import {
   DropdownMenu,
@@ -34,23 +39,6 @@ import {
 } from "../ui/dropdown-menu";
 import { Separator } from "../ui/separator";
 import { AddLesson } from "@/components/draft/add-lesson";
-import {
-  DndContext,
-  closestCenter,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  DragEndEvent,
-} from "@dnd-kit/core";
-import {
-  arrayMove,
-  SortableContext,
-  sortableKeyboardCoordinates,
-  verticalListSortingStrategy,
-} from "@dnd-kit/sortable";
-import { SortableLesson } from "@/components/draft/sortable-lesson";
-import { updateDroplet } from "@/lib/actions";
 
 export function Sidebar({
   user,
@@ -60,52 +48,19 @@ export function Sidebar({
   droplet: Pick<Droplet, "id" | "name" | "slug" | "lessons">;
 }) {
   const [expanded, setExpanded] = useState(false);
-  const [lessons, setLessons] = useState(droplet.lessons || []);
   const pathname = usePathname();
 
   const isAdmin = user && isAuthorizedUserAdmin(user.roles);
 
-  const classes = {
-    link: "flex items-center p-2 rounded-lg text-slate-900 dark:text-white hover:bg-slate-100 dark:hover:bg-slate-700 group transition-colors",
-    activeLink: "font-bold bg-slate-200 [&>svg]:text-sky-700 text-sky-700",
-  };
+  const activeLinkClasses =
+    "flex font-bold items-center p-2 bg-slate-200 [&>svg]:text-sky-700 rounded-lg dark:text-white dark:hover:bg-slate-700 group text-sky-700 transition-colors";
+  const inactiveLinkClasses =
+    "flex items-center p-2 rounded-lg text-slate-900 dark:text-white hover:bg-slate-100 dark:hover:bg-slate-700 group transition-colors";
 
   useLayoutEffect(() => {
     window.addEventListener("resize", () => setExpanded(false));
     return () => window.removeEventListener("resize", () => setExpanded(false));
   }, []);
-
-  const sensors = useSensors(
-    useSensor(PointerSensor),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    }),
-  );
-
-  const handleDragEnd = async (event: DragEndEvent) => {
-    const { active, over } = event;
-
-    if (active.id !== over?.id) {
-      setLessons((items) => {
-        const oldIndex = items.findIndex((item) => item.id === active.id);
-        const newIndex = items.findIndex((item) => item.id === over?.id);
-        return arrayMove(items, oldIndex, newIndex);
-      });
-
-      const oldIndex = lessons.findIndex((item) => item.id === active.id);
-      const newIndex = lessons.findIndex((item) => item.id === over?.id);
-      const newLessonIdOrder = arrayMove(lessons, oldIndex, newIndex).map(
-        (lesson) => ({ id: lesson.id }),
-      );
-      const result = await updateDroplet(droplet.id, {
-        lessons: newLessonIdOrder,
-      });
-
-      if (!result.ok) {
-        console.error("Error updating lesson order:", result.error);
-      }
-    }
-  };
 
   if (!user) return <UnauthorizedRoute />;
 
@@ -169,11 +124,11 @@ export function Sidebar({
               <li>
                 <Link
                   href={`/draft/d/${droplet.slug}`}
-                  className={cn(
-                    classes.link,
-                    pathname == `/draft/d/${droplet.slug}` &&
-                      classes.activeLink,
-                  )}
+                  className={
+                    pathname == `/draft/d/${droplet.slug}`
+                      ? activeLinkClasses
+                      : inactiveLinkClasses
+                  }
                 >
                   <SettingsIcon className="shrink-0" />
                   <span className="leading-snug ms-3">Metadata</span>
@@ -185,28 +140,29 @@ export function Sidebar({
 
             <AddLesson droplet={droplet} />
 
-            <DndContext
-              sensors={sensors}
-              collisionDetection={closestCenter}
-              onDragEnd={handleDragEnd}
-            >
-              <SortableContext
-                items={lessons.map((lesson) => lesson.id)}
-                strategy={verticalListSortingStrategy}
-              >
-                <ul className="space-y-1">
-                  {lessons.map((lesson) => (
-                    <SortableLesson
-                      key={lesson.id}
-                      lesson={lesson}
-                      droplet={droplet}
-                      pathname={pathname}
-                      classes={classes.link}
-                    />
-                  ))}
-                </ul>
-              </SortableContext>
-            </DndContext>
+            <ul>
+              {droplet.lessons?.map((lesson) => (
+                <li key={lesson.id}>
+                  <Link
+                    href={`/draft/d/${droplet.slug}/${lesson.slug}`}
+                    className={
+                      pathname == `/draft/d/${droplet.slug}/${lesson.slug}`
+                        ? activeLinkClasses
+                        : inactiveLinkClasses
+                    }
+                  >
+                    {lesson.type === "activity" ? (
+                      <HammerIcon className="shrink-0" />
+                    ) : lesson.type === "caseStudy" ? (
+                      <FilePieChartIcon className="w-5 h-5 mr-0.5 shrink-0" />
+                    ) : (
+                      <BookTextIcon className="shrink-0" />
+                    )}
+                    <span className="leading-snug ms-3">{lesson.name}</span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
           </div>
 
           <div className="bottom-0 left-0 w-full p-2 mt-4 space-y-4 border-t bg-slate-50 border-t-slate-200 md:sticky md:px-3 md:mb-0 md:flex-col dark:bg-slate-800">
