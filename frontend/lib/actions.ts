@@ -385,10 +385,7 @@ export async function addLesson(formData: z.infer<typeof CreateLessonSchema>) {
 export async function updateDroplet(
   id: number,
   data: Partial<z.infer<typeof DropletSchema>>,
-  options: { regenerateSlug?: boolean; revalidate?: boolean } = {
-    regenerateSlug: false,
-    revalidate: false,
-  },
+  options: { regenerateSlug?: boolean } = { regenerateSlug: false },
 ) {
   try {
     const dataToSend: any = {
@@ -408,6 +405,7 @@ export async function updateDroplet(
       ...(data.overview && { overview: data.overview }),
       ...(data.lessons && { lessons: data.lessons }),
     };
+
 
     dataToSend.regenerateSlug = options.regenerateSlug;
 
@@ -430,7 +428,7 @@ export async function updateDroplet(
       return { ok: false, error: errorMessage, data: null };
     }
 
-    if (dataToSend.name || options.revalidate) {
+    if (dataToSend.name) {
       revalidateTag("droplets");
     }
 
