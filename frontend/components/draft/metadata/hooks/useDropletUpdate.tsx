@@ -17,7 +17,7 @@ export function useDropletUpdate(dropletId: number) {
     if (!response.error && response.data) {
       setError("");
       if (data.name) {
-        router.replace(`/draft/d/${response.data.attributes.slug}`);
+        router.push(`/draft/d/${response.data.attributes.slug}`);
       }
     } else {
       setError("Error updating droplet");
