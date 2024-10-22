@@ -3,40 +3,55 @@ import { useCallback, useState } from "react";
 import { debounce } from "lodash";
 import { updateLesson, revalidateLesson } from "@/lib/actions";
 import TipTap from "@/components/ui/tiptap";
-import { Trash2Icon } from "lucide-react";
 
 export function GenericEditor({
-  block,
-  updateBlock,
-  deleteBlock,
+  blocks,
+  id,
+  lessonId,
 }: {
-  block: any;
-  updateBlock: (block: any) => void;
-  deleteBlock: () => void;
+  blocks: any;
+  id: number;
+  lessonId: number;
 }) {
-  //const [blockState, setBlockState] = useState(block);
+  const block = blocks.find((b: any) => b.id === id);
+  const [blockState, setBlockState] = useState(block);
+
+  const updateBackend = async (updatedBlocks: any) => {
+    const response = await updateLesson(
+      lessonId,
+      { blocks: updatedBlocks },
+      false,
+    );
+    console.log(response);
+  };
+
+  const debounceUpdate = useCallback(debounce(updateBackend, 1000), []);
 
   const handleChange = (content: string) => {
-    updateBlock({
-      id: block.id,
+    const updatedBlocks = blocks.map((b: any) => {
+      if (b.id === id) {
+        return {
+          __component: "droplets.generic",
+          content: content,
+        };
+      }
+      return b;
+    });
+    setBlockState({
+      id: blockState.id,
       __component: "droplets.generic",
       content: content,
     });
+    debounceUpdate(updatedBlocks);
   };
 
   return (
     <div className="w-full rounded-md border border-slate-200 p-4 hover:shadow-md">
-      <div className="w-full flex flex-row  mb-4 justify-between items-center">
-        <h2 className="text-lg">Generic Rich Text Block</h2>
-        <Trash2Icon
-          className="cursor-pointer text-red-600 hover:text-red-700"
-          onClick={deleteBlock}
-        />
-      </div>
+      <h2 className="text-lg mb-4">Generic Rich Text Block</h2>
       <TipTap
         revalidate={revalidateLesson}
         variant="lesson-generic"
-        initialContent={block.content}
+        initialContent={blockState.content}
         updateContent={handleChange}
       />
     </div>
