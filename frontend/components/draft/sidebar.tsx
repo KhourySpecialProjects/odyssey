@@ -22,7 +22,7 @@ import { signOut } from "next-auth/react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import React, { useLayoutEffect, useState, useRef, useEffect } from "react";
+import React, { useLayoutEffect, useState, useRef } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import {
   DropdownMenu,
@@ -97,13 +97,9 @@ export function Sidebar({
       const newLessonIdOrder = arrayMove(lessons, oldIndex, newIndex).map(
         (lesson) => ({ id: lesson.id }),
       );
-      const result = await updateDroplet(
-        droplet.id,
-        {
-          lessons: newLessonIdOrder,
-        },
-        { revalidate: true },
-      );
+      const result = await updateDroplet(droplet.id, {
+        lessons: newLessonIdOrder,
+      });
 
       if (!result.ok) {
         console.error("Error updating lesson order:", result.error);
