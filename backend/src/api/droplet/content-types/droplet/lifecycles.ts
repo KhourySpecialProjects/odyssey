@@ -7,13 +7,12 @@ module.exports = {
     })
   },
   async beforeUpdate(event) {
-    if(event.params.data.regenerateSlug) {
+    if(event.params.data.name) {
       event.params.data.slug = await strapi.service('plugin::content-manager.uid').generateUIDField({
         contentTypeUID: "api::droplet.droplet",
         field: "slug",
         data: event.params.data
       })
     }
-    delete event.params.data.regenerateSlug;
   },
 };
