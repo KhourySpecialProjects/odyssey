@@ -1,4 +1,5 @@
-import { DebugBanner } from "@/components/debug/banner";
+import { DebugBanner } from "@/components/debug/debugBanner";
+import { EnvironmentBanner } from "@/components/debug/environmentBanner";
 import { ReportBugDialog } from "@/components/droplets/reports/bug/dialog";
 import Sidebar from "@/components/droplets/sidebar";
 import { getCurrentUser } from "@/lib/auth/session";
@@ -46,7 +47,8 @@ export default async function RootLayout({ params, children }: Props) {
       <Sidebar user={user} droplet={droplet} />
 
       <div className="md:ml-64">
-        <DebugBanner className="mb-2" />
+        <DebugBanner />
+        <EnvironmentBanner className="mb-2" />
 
         <div className="p-6 rounded-lg sm:p-8 md:py-10 md:m-4 md:border-dashed md:border-2 md:border-slate-200 md:dark:border-slate-700">
           {children}
