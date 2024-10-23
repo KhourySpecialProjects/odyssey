@@ -146,7 +146,25 @@ const Tiptap = ({
       editorProps = {
         attributes: {
           class:
-            "prose prose-sky  p-2 max-w-full min-h-20 border rounded-md border-slate-200 hover:shadow focus:shadow-lg outline-none",
+            "prose prose-sky  p-2 min-w-full max-w-2xl min-h-20 border rounded-md border-slate-200 hover:shadow focus:shadow-lg outline-none",
+        },
+      };
+      break;
+    case "lesson-name":
+      extensions = [
+        Document,
+        Heading.configure({
+          levels: [1],
+          HTMLAttributes: {
+            class: "text-4xl font-extrabold text-balance",
+          },
+        }),
+        Text,
+      ];
+      editorProps = {
+        attributes: {
+          class:
+            "hover:shadow focus:shadow-lg outline-none rounded-md px-4 py-2",
         },
       };
       break;

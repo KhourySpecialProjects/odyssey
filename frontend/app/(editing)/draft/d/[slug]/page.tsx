@@ -11,6 +11,8 @@ import { Filter } from "@/components/draft/metadata/filter";
 import { Description } from "@/components/draft/metadata/description";
 import { uppercaseFirstChar } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
+import { RegenerateSlugButton } from "@/components/draft/metadata/regenerate-slug";
+import { DeleteDropletButton } from "@/components/draft/metadata/delete-droplet";
 
 type Props = {
   params: {
@@ -72,6 +74,8 @@ export default async function Droplet({ params }: Props) {
           ))}
         </div>
         <DropletName dropletId={droplet.id} startingName={droplet.name} />
+        <RegenerateSlugButton dropletId={droplet.id} name={droplet.name} />
+        <DeleteDropletButton dropletId={droplet.id} />
         <Description
           dropletId={droplet.id}
           initialContent={droplet.description ?? ""}

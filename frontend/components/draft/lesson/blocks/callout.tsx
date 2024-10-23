@@ -7,46 +7,45 @@ import { updateLesson } from "@/lib/actions";
 import { strapiJSONToTiptapJSON, tiptapJSONToStrapiJSON } from "@/lib/utils";
 import { useCallback } from "react";
 import { debounce } from "lodash";
+import type { BlockNode } from "@/types/strapi";
+import { Trash2Icon } from "lucide-react";
 
 export function CalloutEditor({
-  blocks,
-  id,
-  lessonId,
+  block,
+  updateBlock,
+  deleteBlock,
 }: {
-  blocks: any;
-  id: number;
-  lessonId: number;
+  block: any;
+  updateBlock: (block: any) => void;
+  deleteBlock: () => void;
 }) {
-  const block = blocks.find((b: any) => b.id === id);
-
-  const updateBackend = async (content: any) => {
-    const updatedBlocks = blocks.map((b: any) => {
-      if (b.id === id) {
-        return {
-          __component: "droplets.callout",
-          content: content,
-          type: "info",
-        };
-      }
-      return b;
-    });
-    const response = await updateLesson(
-      lessonId,
-      { blocks: updatedBlocks },
-      false,
+  const handleUpdate = useCallback((content: any) => {
+    let temp: any = JSON.parse(
+      JSON.stringify(tiptapJSONToStrapiJSON(content.content ?? [])),
     );
-    console.log(response);
-  };
 
-  const debounceUpdate = useCallback(debounce(updateBackend, 1000), []);
+    updateBlock({
+      __component: "droplets.callout",
+      content: temp,
+      type: "info",
+    });
+  }, []);
+
+  const debounceUpdate = useCallback(debounce(handleUpdate, 1000), []);
 
   return (
     <>
-      <div className="px-6 py-6 border rounded-md w-full bg-sky-50 border-sky-200">
-        <h2 className="text-lg mb-4">Callout Block</h2>
+      <div className="hover:shadow-md px-6 py-6 border rounded-md w-full bg-sky-50 border-sky-200">
+        <div className="w-full flex flex-row  mb-4 justify-between items-center">
+          <h2 className="text-lg">Callout Block</h2>
+          <Trash2Icon
+            className="cursor-pointer text-red-600 hover:text-red-700"
+            onClick={deleteBlock}
+          />
+        </div>
         <TipTap
           updateContent={(content: JSONContent) => {
-            debounceUpdate(tiptapJSONToStrapiJSON(content.content!));
+            handleUpdate(content);
           }}
           initialContent={
             {
