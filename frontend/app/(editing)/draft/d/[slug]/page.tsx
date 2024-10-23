@@ -74,8 +74,10 @@ export default async function Droplet({ params }: Props) {
           ))}
         </div>
         <DropletName dropletId={droplet.id} startingName={droplet.name} />
-        <RegenerateSlugButton dropletId={droplet.id} name={droplet.name} />
-        <DeleteDropletButton dropletId={droplet.id} />
+        <div className="flex flex-row w-full  items-center space-x-10 my-3">
+          <RegenerateSlugButton dropletId={droplet.id} name={droplet.name} />
+          <DeleteDropletButton dropletId={droplet.id} />
+        </div>
         <Description
           dropletId={droplet.id}
           initialContent={droplet.description ?? ""}
