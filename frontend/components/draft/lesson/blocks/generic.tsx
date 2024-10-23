@@ -3,55 +3,40 @@ import { useCallback, useState } from "react";
 import { debounce } from "lodash";
 import { updateLesson, revalidateLesson } from "@/lib/actions";
 import TipTap from "@/components/ui/tiptap";
+import { Trash2Icon } from "lucide-react";
 
 export function GenericEditor({
-  blocks,
-  id,
-  lessonId,
+  block,
+  updateBlock,
+  deleteBlock,
 }: {
-  blocks: any;
-  id: number;
-  lessonId: number;
+  block: any;
+  updateBlock: (block: any) => void;
+  deleteBlock: () => void;
 }) {
-  const block = blocks.find((b: any) => b.id === id);
-  const [blockState, setBlockState] = useState(block);
-
-  const updateBackend = async (updatedBlocks: any) => {
-    const response = await updateLesson(
-      lessonId,
-      { blocks: updatedBlocks },
-      false,
-    );
-    console.log(response);
-  };
-
-  const debounceUpdate = useCallback(debounce(updateBackend, 1000), []);
+  //const [blockState, setBlockState] = useState(block);
 
   const handleChange = (content: string) => {
-    const updatedBlocks = blocks.map((b: any) => {
-      if (b.id === id) {
-        return {
-          __component: "droplets.generic",
-          content: content,
-        };
-      }
-      return b;
-    });
-    setBlockState({
-      id: blockState.id,
+    updateBlock({
+      id: block.id,
       __component: "droplets.generic",
       content: content,
     });
-    debounceUpdate(updatedBlocks);
   };
 
   return (
     <div className="w-full rounded-md border border-slate-200 p-4 hover:shadow-md">
-      <h2 className="text-lg mb-4">Generic Rich Text Block</h2>
+      <div className="w-full flex flex-row  mb-4 justify-between items-center">
+        <h2 className="text-lg">Generic Rich Text Block</h2>
+        <Trash2Icon
+          className="cursor-pointer text-red-600 hover:text-red-700"
+          onClick={deleteBlock}
+        />
+      </div>
       <TipTap
         revalidate={revalidateLesson}
         variant="lesson-generic"
-        initialContent={blockState.content}
+        initialContent={block.content}
         updateContent={handleChange}
       />
     </div>
