@@ -8,42 +8,28 @@ import {
   PopoverClose,
 } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
+import { useState } from "react";
 
-export function AddBlock({
-  blocks,
-  lessonId,
-  index,
-}: {
-  blocks: any;
-  lessonId: number;
-  index: number;
-}) {
-  const updateBackend = async (updatedBlocks: any) => {
-    const response = await updateLesson(
-      lessonId,
-      { blocks: updatedBlocks },
-      true,
-    );
-    console.log(response);
-  };
+export function AddBlock({ add }: { add: (block: any) => void }) {
+  const [open, setOpen] = useState(false);
+
   return (
     <div className="w-full flex justify-center items-center gap-3 flex-wrap max-w-2xl">
-      <Popover>
-        <PopoverTrigger asChild>
-          <button className="bg-slate-600 text-white px-3 py-2 rounded-xl hover:bg-slate-700">
+      <Popover open={open}>
+        <PopoverTrigger asChild onClick={() => setOpen(true)}>
+          <Button className="bg-slate-600 text-white px-3 py-2 rounded-md hover:bg-slate-700">
             Add Block
-          </button>
+          </Button>
         </PopoverTrigger>
 
         <PopoverContent className="space-y-1">
           <Button
             onClick={() => {
-              const updatedBlocks = [...blocks];
-              updatedBlocks.splice(index, 0, {
+              setOpen(false);
+              add({
                 __component: "droplets.generic",
                 content: "",
               });
-              updateBackend(updatedBlocks);
             }}
             variant="ghost"
             className="w-full border border-slate-200"
@@ -52,13 +38,12 @@ export function AddBlock({
           </Button>
           <Button
             onClick={() => {
-              const updatedBlocks = [...blocks];
-              updatedBlocks.splice(index, 0, {
+              setOpen(false);
+              add({
                 __component: "droplets.expandable",
                 title: "",
                 content: "",
               });
-              updateBackend(updatedBlocks);
             }}
             variant="ghost"
             className="w-full border border-slate-200"
@@ -67,13 +52,14 @@ export function AddBlock({
           </Button>
           <Button
             onClick={() => {
-              const updatedBlocks = [...blocks];
-              updatedBlocks.splice(index, 0, {
+              setOpen(false);
+              add({
                 __component: "droplets.callout",
-                content: [],
+                content: [
+                  { type: "paragraph", children: [{ type: "text", text: "" }] },
+                ],
                 type: "info",
               });
-              updateBackend(updatedBlocks);
             }}
             variant="ghost"
             className="w-full border border-slate-200"
@@ -82,12 +68,11 @@ export function AddBlock({
           </Button>
           <Button
             onClick={() => {
-              const updatedBlocks = [...blocks];
-              updatedBlocks.splice(index, 0, {
+              setOpen(false);
+              add({
                 __component: "droplets.video",
-                url: "https://www.youtube.com/asdfasjkgasdfj",
+                url: "https://www.youtube.com/asdfgsfd",
               });
-              updateBackend(updatedBlocks);
             }}
             variant="ghost"
             className="w-full border border-slate-200"
