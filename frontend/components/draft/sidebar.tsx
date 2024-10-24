@@ -17,13 +17,23 @@ import {
   ShipIcon,
   TowerControlIcon,
   SettingsIcon,
+  Hammer,
+  FilePieChart,
+  BookText,
 } from "lucide-react";
 import { signOut } from "next-auth/react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import React, { useLayoutEffect, useState, useRef, useEffect } from "react";
+import React, {
+  useLayoutEffect,
+  useState,
+  useRef,
+  useEffect,
+  useCallback,
+} from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
+import { debounce } from "lodash";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -63,6 +73,10 @@ export function Sidebar({
   const [lessons, setLessons] = useState(droplet.lessons || []);
   const pathname = usePathname();
 
+  useEffect(() => {
+    setLessons(droplet.lessons || []);
+  }, [droplet.lessons]);
+
   const isAdmin = user && isAuthorizedUserAdmin(user.roles);
 
   const classes = {
@@ -82,7 +96,7 @@ export function Sidebar({
     }),
   );
 
-  const handleDragEnd = async (event: DragEndEvent) => {
+  const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
 
     if (active.id !== over?.id) {
@@ -97,19 +111,25 @@ export function Sidebar({
       const newLessonIdOrder = arrayMove(lessons, oldIndex, newIndex).map(
         (lesson) => ({ id: lesson.id }),
       );
-      const result = await updateDroplet(
-        droplet.id,
-        {
-          lessons: newLessonIdOrder,
-        },
-        { revalidate: true },
-      );
-
-      if (!result.ok) {
-        console.error("Error updating lesson order:", result.error);
-      }
+      debouncedUpdate(newLessonIdOrder);
     }
   };
+
+  const updateLessonOrder = async (lessonIds: { id: number }[]) => {
+    const result = await updateDroplet(
+      droplet.id,
+      {
+        lessons: lessonIds,
+      },
+      { revalidate: true },
+    );
+
+    if (!result.ok) {
+      console.error("Error updating lesson order:", result.error);
+    }
+  };
+
+  const debouncedUpdate = useCallback(debounce(updateLessonOrder, 3000), []);
 
   if (!user) return <UnauthorizedRoute />;
 
