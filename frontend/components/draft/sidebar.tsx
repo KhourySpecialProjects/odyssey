@@ -16,13 +16,22 @@ import {
   MenuIcon,
   ShipIcon,
   TowerControlIcon,
-  SettingsIcon, Hammer, FilePieChart, BookText,
+  SettingsIcon,
+  Hammer,
+  FilePieChart,
+  BookText,
 } from "lucide-react";
 import { signOut } from "next-auth/react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import React, {useLayoutEffect, useState, useRef, useEffect, useCallback} from "react";
+import React, {
+  useLayoutEffect,
+  useState,
+  useRef,
+  useEffect,
+  useCallback,
+} from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { debounce } from "lodash";
 import {
@@ -64,14 +73,9 @@ export function Sidebar({
   const [lessons, setLessons] = useState(droplet.lessons || []);
   const pathname = usePathname();
 
-
   useEffect(() => {
-    setLessons(droplet.lessons || [])
+    setLessons(droplet.lessons || []);
   }, [droplet.lessons]);
-
-
-
-
 
   const isAdmin = user && isAuthorizedUserAdmin(user.roles);
 
@@ -108,25 +112,22 @@ export function Sidebar({
         (lesson) => ({ id: lesson.id }),
       );
       debouncedUpdate(newLessonIdOrder);
-
-
     }
   };
 
-  const updateLessonOrder = async (lessonIds : {id : number}[]) => {
+  const updateLessonOrder = async (lessonIds: { id: number }[]) => {
     const result = await updateDroplet(
-        droplet.id,
-        {
-          lessons: lessonIds,
-        },
-        { revalidate: true },
+      droplet.id,
+      {
+        lessons: lessonIds,
+      },
+      { revalidate: true },
     );
 
     if (!result.ok) {
       console.error("Error updating lesson order:", result.error);
     }
-
-  }
+  };
 
   const debouncedUpdate = useCallback(debounce(updateLessonOrder, 3000), []);
 
@@ -208,31 +209,28 @@ export function Sidebar({
 
             <AddLesson droplet={droplet} />
 
-
-
             <DndContext
-                sensors={sensors}
-                collisionDetection={closestCenter}
-                onDragEnd={handleDragEnd}
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleDragEnd}
             >
               <SortableContext
-                  items={lessons.map((lesson) => lesson.id)}
-                  strategy={verticalListSortingStrategy}
+                items={lessons.map((lesson) => lesson.id)}
+                strategy={verticalListSortingStrategy}
               >
                 <ul className="space-y-1">
                   {lessons.map((lesson) => (
-                      <SortableLesson
-                          key={lesson.id}
-                          lesson={lesson}
-                          droplet={droplet}
-                          pathname={pathname}
-                          classes={classes.link}
-                      />
+                    <SortableLesson
+                      key={lesson.id}
+                      lesson={lesson}
+                      droplet={droplet}
+                      pathname={pathname}
+                      classes={classes.link}
+                    />
                   ))}
                 </ul>
               </SortableContext>
             </DndContext>
-
           </div>
 
           <div className="bottom-0 left-0 w-full p-2 mt-4 space-y-4 border-t bg-slate-50 border-t-slate-200 md:sticky md:px-3 md:mb-0 md:flex-col dark:bg-slate-800">
