@@ -50,6 +50,7 @@ export function SortableLesson({
           href={`/draft/d/${droplet.slug}/${lesson.slug}`}
           className={cn(classes, "flex-grow flex items-center")}
           onClick={(e) => e.stopPropagation()}
+          passHref
         >
           {lesson.type === "activity" ? (
             <Hammer className="shrink-0" />
