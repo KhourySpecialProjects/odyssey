@@ -25,8 +25,15 @@ import { signOut } from "next-auth/react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import React, { useLayoutEffect, useState } from "react";
+import React, {
+  useLayoutEffect,
+  useState,
+  useRef,
+  useEffect,
+  useCallback,
+} from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
+import { debounce } from "lodash";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -53,7 +60,7 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { SortableLesson } from "@/components/draft/sortable-lesson";
-import { useLessonOrder } from "./metadata/hooks/useLessonOrder";
+import { updateDroplet } from "@/lib/actions";
 
 export function Sidebar({
   user,
@@ -63,9 +70,12 @@ export function Sidebar({
   droplet: Pick<Droplet, "id" | "name" | "slug" | "lessons">;
 }) {
   const [expanded, setExpanded] = useState(false);
+  const [lessons, setLessons] = useState(droplet.lessons || []);
   const pathname = usePathname();
-  const { lessons, handleLessonReorder, isProcessing } =
-    useLessonOrder(droplet);
+
+  useEffect(() => {
+    setLessons(droplet.lessons || []);
+  }, [droplet.lessons]);
 
   const isAdmin = user && isAuthorizedUserAdmin(user.roles);
 
@@ -74,14 +84,11 @@ export function Sidebar({
     activeLink: "font-bold bg-slate-200 [&>svg]:text-sky-700 text-sky-700",
   };
 
-  // Handle window resize
   useLayoutEffect(() => {
-    const handleResize = () => setExpanded(false);
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
+    window.addEventListener("resize", () => setExpanded(false));
+    return () => window.removeEventListener("resize", () => setExpanded(false));
   }, []);
 
-  // DnD sensors setup
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
@@ -89,33 +96,53 @@ export function Sidebar({
     }),
   );
 
-  // Handle drag end and reorder
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
 
     if (active.id !== over?.id) {
+      setLessons((items) => {
+        const oldIndex = items.findIndex((item) => item.id === active.id);
+        const newIndex = items.findIndex((item) => item.id === over?.id);
+        return arrayMove(items, oldIndex, newIndex);
+      });
+
       const oldIndex = lessons.findIndex((item) => item.id === active.id);
       const newIndex = lessons.findIndex((item) => item.id === over?.id);
-      const newLessons = arrayMove(lessons, oldIndex, newIndex);
-
-      handleLessonReorder(newLessons);
+      const newLessonIdOrder = arrayMove(lessons, oldIndex, newIndex).map(
+        (lesson) => ({ id: lesson.id }),
+      );
+      debouncedUpdate(newLessonIdOrder);
     }
   };
+
+  const updateLessonOrder = async (lessonIds: { id: number }[]) => {
+    const result = await updateDroplet(
+      droplet.id,
+      {
+        lessons: lessonIds,
+      },
+      { revalidate: true },
+    );
+
+    if (!result.ok) {
+      console.error("Error updating lesson order:", result.error);
+    }
+  };
+
+  const debouncedUpdate = useCallback(debounce(updateLessonOrder, 3000), []);
 
   if (!user) return <UnauthorizedRoute />;
 
   return (
     <>
-      {/* Mobile overlay */}
       <div
         className={cn(
           "bg-slate-900/50 dark:bg-slate-900/80 fixed inset-0 transition-opacity",
           expanded ? "opacity-1 z-30" : "opacity-0 -z-10",
         )}
         onClick={() => setExpanded(false)}
-      />
+      ></div>
 
-      {/* Mobile header */}
       <div className="z-20 inline-flex items-center w-full gap-2 px-3 py-2 text-sm border-b md:hidden border-b-slate-200">
         <button
           aria-controls="sidebar"
@@ -134,7 +161,6 @@ export function Sidebar({
         </Link>
       </div>
 
-      {/* Sidebar */}
       <aside
         id="sidebar"
         className={cn(
@@ -146,9 +172,7 @@ export function Sidebar({
         aria-label="Sidebar"
       >
         <div className="flex flex-col h-full py-4 overflow-y-auto md:justify-between md:pb-0 bg-slate-50 dark:bg-slate-800">
-          {/* Top section */}
           <div className="px-3">
-            {/* Logo */}
             <Link href="/explore" className="block p-2 mb-4">
               <Image
                 src="/logo.svg"
@@ -161,19 +185,17 @@ export function Sidebar({
 
             <Separator />
 
-            {/* Droplet name */}
             <p className="p-2 my-2 text-lg font-extrabold leading-7">
               {droplet.name}
             </p>
 
-            {/* Metadata link */}
             <ul className="space-y-2 font-medium">
               <li>
                 <Link
                   href={`/draft/d/${droplet.slug}`}
                   className={cn(
                     classes.link,
-                    pathname === `/draft/d/${droplet.slug}` &&
+                    pathname == `/draft/d/${droplet.slug}` &&
                       classes.activeLink,
                   )}
                 >
@@ -185,10 +207,8 @@ export function Sidebar({
 
             <Separator orientation="horizontal" className="my-2" />
 
-            {/* Add lesson section */}
             <AddLesson droplet={droplet} />
 
-            {/* Sortable lessons list */}
             <DndContext
               sensors={sensors}
               collisionDetection={closestCenter}
@@ -211,16 +231,8 @@ export function Sidebar({
                 </ul>
               </SortableContext>
             </DndContext>
-
-            {/* Loading indicator when processing updates */}
-            {isProcessing && (
-              <div className="text-sm text-slate-500 dark:text-slate-400 p-2 text-center">
-                Updating lesson order...
-              </div>
-            )}
           </div>
 
-          {/* User menu section */}
           <div className="bottom-0 left-0 w-full p-2 mt-4 space-y-4 border-t bg-slate-50 border-t-slate-200 md:sticky md:px-3 md:mb-0 md:flex-col dark:bg-slate-800">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -250,7 +262,6 @@ export function Sidebar({
                   <br />
                   Role(s): {condenseRoleTitles(user.roles) || "unknown"}
                 </DropdownMenuLabel>
-
                 <DropdownMenuItem asChild>
                   <Link href="/explore">
                     <ShipIcon className="w-4 h-4 mr-2" />
