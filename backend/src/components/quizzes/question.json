@@ -1,0 +1,26 @@
+{
+  "collectionName": "components_quiz_questions",
+  "info": {
+    "displayName": "Quiz Question",
+    "icon": "question",
+    "description": ""
+  },
+  "options": {},
+  "attributes": {
+    "content": {
+      "type": "customField",
+      "options": {
+        "output": "HTML",
+        "preset": "rich"
+      },
+      "customField": "plugin::ckeditor.CKEditor",
+      "required": true
+    },
+    "answerOptions": {
+      "type": "component",
+      "repeatable": true,
+      "component": "quizzes.answer-option",
+      "required": true
+    }
+  }
+}

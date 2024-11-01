@@ -1,0 +1,119 @@
+{
+  "kind": "collectionType",
+  "collectionName": "droplets",
+  "info": {
+    "singularName": "droplet",
+    "pluralName": "droplets",
+    "displayName": "Droplet",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "name": {
+      "type": "string",
+      "required": true,
+      "unique": true
+    },
+    "type": {
+      "type": "enumeration",
+      "enum": [
+        "knowledge",
+        "skill"
+      ],
+      "required": true
+    },
+    "authors": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::author.author",
+      "inversedBy": "droplets"
+    },
+    "slug": {
+      "type": "uid",
+      "targetField": "name",
+      "required": true
+    },
+    "focusArea": {
+      "type": "enumeration",
+      "enum": [
+        "personal",
+        "professional",
+        "technical"
+      ],
+      "required": true
+    },
+    "lessons": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::lesson.lesson",
+      "inversedBy": "droplets"
+    },
+    "tags": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::tag.tag",
+      "inversedBy": "droplets"
+    },
+    "description": {
+      "type": "text",
+      "maxLength": 500
+    },
+    "isHidden": {
+      "type": "boolean",
+      "default": false,
+      "required": true
+    },
+    "learningObjectives": {
+      "displayName": "Learning Objectives",
+      "type": "component",
+      "repeatable": true,
+      "component": "droplets.learning-objective",
+      "required": true
+    },
+    "overview": {
+      "type": "customField",
+      "options": {
+        "output": "HTML",
+        "preset": "light"
+      },
+      "required": false,
+      "customField": "plugin::ckeditor.CKEditor"
+    },
+    "nextSteps": {
+      "type": "component",
+      "repeatable": true,
+      "component": "droplets.resource"
+    },
+    "prerequisites": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::droplet.droplet",
+      "inversedBy": "postrequisites"
+    },
+    "postrequisites": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::droplet.droplet",
+      "inversedBy": "prerequisites"
+    },
+    "enrollments": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::enrollment.enrollment",
+      "mappedBy": "droplet"
+    },
+    "status": {
+      "type": "enumeration",
+      "enum": [
+        "draft",
+        "edit",
+        "published"
+      ],
+      "default": "draft",
+      "required": true
+    }
+  }
+}
