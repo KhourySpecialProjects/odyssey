@@ -1,0 +1,39 @@
+{
+  "kind": "collectionType",
+  "collectionName": "enrollments",
+  "info": {
+    "singularName": "enrollment",
+    "pluralName": "enrollments",
+    "displayName": "Enrollment",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "authorizedUser": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::authorized-user.authorized-user",
+      "inversedBy": "enrollments"
+    },
+    "droplet": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::droplet.droplet",
+      "inversedBy": "enrollments"
+    },
+    "viewedLessons": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::lesson.lesson",
+      "inversedBy": "enrollments"
+    },
+    "isComplete": {
+      "type": "boolean",
+      "default": false,
+      "required": true
+    }
+  }
+}

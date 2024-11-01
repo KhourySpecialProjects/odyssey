@@ -1,0 +1,59 @@
+{
+  "kind": "collectionType",
+  "collectionName": "lessons",
+  "info": {
+    "singularName": "lesson",
+    "pluralName": "lessons",
+    "displayName": "Lesson",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "name": {
+      "type": "string",
+      "required": true,
+      "maxLength": 100
+    },
+    "slug": {
+      "type": "uid",
+      "targetField": "name",
+      "required": true
+    },
+    "blocks": {
+      "type": "dynamiczone",
+      "components": [
+        "droplets.generic",
+        "droplets.video",
+        "droplets.quiz",
+        "droplets.callout",
+        "droplets.expandable"
+      ],
+      "required": true
+    },
+    "droplets": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::droplet.droplet",
+      "mappedBy": "lessons"
+    },
+    "enrollments": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::enrollment.enrollment",
+      "mappedBy": "viewedLessons"
+    },
+    "type": {
+      "type": "enumeration",
+      "enum": [
+        "general",
+        "setup",
+        "activity",
+        "caseStudy"
+      ],
+      "default": "general"
+    }
+  }
+}
