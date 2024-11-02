@@ -8,16 +8,20 @@ import { Sidebar } from "@/components/draft/sidebar";
 import { EnvironmentBanner } from "@/components/debug/environmentBanner";
 import { DebugBanner } from "@/components/debug/debugBanner";
 
+type params = {
+  slug: string;
+};
+
 type Props = {
-  params: {
-    slug: string;
-  };
+  params: Promise<params>;
   children: React.ReactNode;
 };
 
 export default async function CheckPermission({ params, children }: Props) {
   const user = await getCurrentUser();
-  const droplet = await getDropletBySlug<Droplet>(params.slug, {
+  const p = await params;
+
+  const droplet = await getDropletBySlug<Droplet>(p.slug, {
     fields: ["*"],
     populate: {
       authors: { populate: "*" },

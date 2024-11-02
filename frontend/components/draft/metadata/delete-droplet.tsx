@@ -33,18 +33,23 @@ export function DeleteDropletButton({ dropletId }: { dropletId: number }) {
         <DialogHeader>
           <DialogTitle>Delete Droplet</DialogTitle>
 
-          <DialogDescription className="my-4 text-lg text-black flex flex-col items-center justify-center">
-            <p>Are you sure you want to delete this Droplet?</p>
-            <p>
-              This action <span className="font-extrabold">cannot</span> be
-              undone.
-            </p>
-            <p>
-              This will also delete all lessons associated with this droplet.
-            </p>
+          <DialogDescription
+            className="my-4 text-lg text-black flex flex-col items-center justify-center"
+            asChild
+          >
+            <div>
+              <p>Are you sure you want to delete this Droplet?</p>
+              <p>
+                This action <span className="font-extrabold">cannot</span> be
+                undone.
+              </p>
+              <p>
+                This will also delete all lessons associated with this droplet.
+              </p>
+            </div>
           </DialogDescription>
           <div className="flex flex-row items-center justify-center space-x-4">
-            <DialogClose>
+            <DialogClose asChild>
               <Button before={<ArrowLeftIcon />} variant="outline">
                 Cancel
               </Button>
