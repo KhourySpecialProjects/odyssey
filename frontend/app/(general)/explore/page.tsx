@@ -24,7 +24,7 @@ export default async function ExplorePage({
     type,
     focusArea,
     tags,
-  } = await searchParams as { [key: string]: string };
+  } = (await searchParams) as { [key: string]: string };
   const { sortKey } = sorting.find((item) => item.slug === sort) || defaultSort;
 
   return (

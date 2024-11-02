@@ -10,14 +10,12 @@ import { DebugBanner } from "@/components/debug/debugBanner";
 
 type params = {
   slug: string;
-}
+};
 
 type Props = {
   params: Promise<params>;
   children: React.ReactNode;
 };
-
-
 
 export default async function CheckPermission({ params, children }: Props) {
   const user = await getCurrentUser();

@@ -11,7 +11,7 @@ type Props = {
 type Params = {
   slug: string;
   lessonSlug?: string;
-}
+};
 
 export default async function RootLayout({ params, children }: Props) {
   const p = await params;
