@@ -11,14 +11,14 @@ type Props = {
 type Params = {
   slug: string;
   lessonSlug: string;
-}
+};
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const p = await params;
-  const lesson = await getLessonBySlug<Pick<Lesson, "name">>(
-    p.lessonSlug,
-    { fields: ["name"], populate: undefined },
-  );
+  const lesson = await getLessonBySlug<Pick<Lesson, "name">>(p.lessonSlug, {
+    fields: ["name"],
+    populate: undefined,
+  });
   if (!lesson) return {};
 
   return {

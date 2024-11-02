@@ -7,11 +7,9 @@ import { Droplet } from "@/types";
 import { useRouter } from "next/navigation";
 import { CornerDownLeftIcon, LoaderIcon } from "lucide-react";
 
-
-
 export function AddLesson({
   droplet,
-  execute
+  execute,
 }: {
   droplet: Pick<Droplet, "id" | "name" | "slug" | "lessons">;
   execute: () => void;
@@ -21,8 +19,6 @@ export function AddLesson({
   const router = useRouter();
   const { addNewLesson } = useLessons(droplet);
   const [pending, setPending] = useState(false);
-
-
 
   const showInput = () => {
     setIsHidden(false);
@@ -92,9 +88,12 @@ export function AddLesson({
               />
               <input type="hidden" name="dropletId" value={droplet.id} />
               <button type="submit" className="hidden" />
-              {pending ? <LoaderIcon className={"animate-spin"} /> : <CornerDownLeftIcon/> }
+              {pending ? (
+                <LoaderIcon className={"animate-spin"} />
+              ) : (
+                <CornerDownLeftIcon />
+              )}
             </form>
-
           </li>
         ) : null}
       </ul>

@@ -13,7 +13,7 @@ export function useLessons(droplet: Pick<Droplet, "id" | "lessons">) {
     const response = await addLesson({ ...lessonData, dropletId: droplet.id });
     if (response.ok) {
       setLessons((prevLessons) => [...prevLessons, response.data]);
-      return {slug: response.data.attributes.slug};
+      return { slug: response.data.attributes.slug };
     } else {
       console.error("Failed to add lesson:", response.error);
     }

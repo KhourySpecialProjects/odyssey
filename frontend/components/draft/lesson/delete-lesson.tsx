@@ -25,13 +25,18 @@ export function DeleteLessonButton({
         <DialogHeader>
           <DialogTitle>Delete Lesson</DialogTitle>
 
-          <DialogDescription className="my-4 text-lg text-black flex flex-col items-center justify-center" asChild>
+          <DialogDescription
+            className="my-4 text-lg text-black flex flex-col items-center justify-center"
+            asChild
+          >
             <div>
               <p>Are you sure you want to delete this lesson? </p>
-              <p> This action <span className="font-extrabold">cannot</span> be
-                undone.</p>
+              <p>
+                {" "}
+                This action <span className="font-extrabold">cannot</span> be
+                undone.
+              </p>
             </div>
-
           </DialogDescription>
           <div className="flex flex-row items-center justify-center space-x-4">
             <DialogClose asChild>

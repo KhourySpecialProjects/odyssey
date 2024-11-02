@@ -34,9 +34,7 @@ export default function RootLayout({
         <AuthSessionProvider>
           <PHProvider>
             <TooltipProvider delayDuration={250}>
-              <NuqsAdapter>
-              {children}
-              </NuqsAdapter>
+              <NuqsAdapter>{children}</NuqsAdapter>
               <DebugToggle />
             </TooltipProvider>
           </PHProvider>

@@ -87,9 +87,9 @@ export function Sidebar({
 
   const scrollToBottom = () => {
     if (bottom.current) {
-      bottom.current.scrollIntoView({behavior: "smooth"});
+      bottom.current.scrollIntoView({ behavior: "smooth" });
     }
-  }
+  };
 
   useLayoutEffect(() => {
     window.addEventListener("resize", () => setExpanded(false));
@@ -214,38 +214,39 @@ export function Sidebar({
 
             <Separator orientation="horizontal" className="my-2" />
 
-            <AddLesson droplet={droplet} execute={scrollToBottom}/>
+            <AddLesson droplet={droplet} execute={scrollToBottom} />
 
             <ul className="space-y-1">
-            {lessons.map((lesson) => (
-              <li key={lesson.id}>
-                <Link
-                  href={`/draft/d/${droplet.slug}/${lesson.slug}`}
-                  className={cn(
-                    classes.link,
-                    pathname == `/draft/d/${droplet.slug}/${lesson.slug}` &&
-                    classes.activeLink,
-                  )}
-                  onClick={(e) => e.stopPropagation()}
-                  passHref
-                >
-                  {lesson.type === "activity" ? (
-                    <Hammer className="shrink-0" />
-                  ) : lesson.type === "caseStudy" ? (
-                    <FilePieChart className="w-5 h-5 mr-0.5 shrink-0" />
-                  ) : (
-                    <BookText className="shrink-0" />
-                  )}
-                  <span className="leading-snug ml-3">{lesson.name}</span>
-                </Link>
-              </li>
-            ))}
+              {lessons.map((lesson) => (
+                <li key={lesson.id}>
+                  <Link
+                    href={`/draft/d/${droplet.slug}/${lesson.slug}`}
+                    className={cn(
+                      classes.link,
+                      pathname == `/draft/d/${droplet.slug}/${lesson.slug}` &&
+                        classes.activeLink,
+                    )}
+                    onClick={(e) => e.stopPropagation()}
+                    passHref
+                  >
+                    {lesson.type === "activity" ? (
+                      <Hammer className="shrink-0" />
+                    ) : lesson.type === "caseStudy" ? (
+                      <FilePieChart className="w-5 h-5 mr-0.5 shrink-0" />
+                    ) : (
+                      <BookText className="shrink-0" />
+                    )}
+                    <span className="leading-snug ml-3">{lesson.name}</span>
+                  </Link>
+                </li>
+              ))}
             </ul>
-
-
           </div>
 
-          <div ref={bottom} className="bottom-0 left-0 w-full p-2 mt-4 space-y-4 border-t bg-slate-50 border-t-slate-200 md:sticky md:px-3 md:mb-0 md:flex-col dark:bg-slate-800">
+          <div
+            ref={bottom}
+            className="bottom-0 left-0 w-full p-2 mt-4 space-y-4 border-t bg-slate-50 border-t-slate-200 md:sticky md:px-3 md:mb-0 md:flex-col dark:bg-slate-800"
+          >
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <div className="w-full group flex shrink cursor-pointer select-none items-center justify-between gap-1 rounded-lg p-1.5 px-2 text-sm text-slate-600 transition-colors duration-100 wg-antialiased hover:bg-slate-100 dark:hover:bg-white/5">
