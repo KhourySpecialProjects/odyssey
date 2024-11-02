@@ -15,10 +15,12 @@ import { RegenerateSlugButton } from "@/components/draft/metadata/regenerate-slu
 import { DeleteDropletButton } from "@/components/draft/metadata/delete-droplet";
 
 type Props = {
-  params: {
-    slug: string;
-  };
+  params: Promise<Params>;
 };
+
+type Params = {
+  slug: string;
+}
 
 export async function generateMetadata({ params }: Props) {
   const p = await params;

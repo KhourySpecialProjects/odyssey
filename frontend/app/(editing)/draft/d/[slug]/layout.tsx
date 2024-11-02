@@ -8,12 +8,16 @@ import { Sidebar } from "@/components/draft/sidebar";
 import { EnvironmentBanner } from "@/components/debug/environmentBanner";
 import { DebugBanner } from "@/components/debug/debugBanner";
 
+type params = {
+  slug: string;
+}
+
 type Props = {
-  params: {
-    slug: string;
-  };
+  params: Promise<params>;
   children: React.ReactNode;
 };
+
+
 
 export default async function CheckPermission({ params, children }: Props) {
   const user = await getCurrentUser();

@@ -5,11 +5,13 @@ import { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 type Props = {
-  params: {
-    slug: string;
-    lessonSlug: string;
-  };
+  params: Promise<Params>;
 };
+
+type Params = {
+  slug: string;
+  lessonSlug: string;
+}
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const p = await params;
