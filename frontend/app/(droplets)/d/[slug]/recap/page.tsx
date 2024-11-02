@@ -8,13 +8,16 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 type Props = {
-  params: {
-    slug: string;
-  };
+  params: Promise<Params>;
 };
 
+type Params = {
+  slug: string;
+}
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const droplet = await getDropletBySlug<Pick<Droplet, "name">>(params.slug, {
+  const p = await params;
+  const droplet = await getDropletBySlug<Pick<Droplet, "name">>(p.slug, {
     fields: ["name"],
     populate: undefined,
   });
@@ -26,7 +29,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function DropletRecapRoute({ params }: Props) {
-  const droplet = await getDropletBySlug<Droplet>(params.slug, {
+  const p = await params;
+  const droplet = await getDropletBySlug<Droplet>(p.slug, {
     fields: ["*"],
     populate: {
       learningObjectives: { populate: "*" },
@@ -40,7 +44,7 @@ export default async function DropletRecapRoute({ params }: Props) {
     fields: ["*"],
     filters: {
       $and: [
-        { slug: { $nei: params.slug } },
+        { slug: { $nei: p.slug } },
         droplet.tags && {
           tags: { slug: { $in: droplet.tags.map((tag) => tag.slug) } },
         },

@@ -16,13 +16,16 @@ import { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 type Props = {
-  params: {
-    slug: string;
-  };
+  params: Promise<params>;
 };
 
+type params = {
+  slug: string;
+}
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const droplet = await getDropletBySlug<Pick<Droplet, "name">>(params.slug, {
+  const p = await params;
+  const droplet = await getDropletBySlug<Pick<Droplet, "name">>(p.slug, {
     fields: ["name"],
     populate: undefined,
   });
@@ -34,7 +37,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function DropletRoute({ params }: Props) {
-  const droplet = await getDropletBySlug<Droplet>(params.slug, {
+  const p = await params;
+  const droplet = await getDropletBySlug<Droplet>(p.slug, {
     fields: ["*"],
     populate: {
       authors: { populate: "*" },

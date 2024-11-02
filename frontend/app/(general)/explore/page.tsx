@@ -16,7 +16,7 @@ export const metadata: Metadata = {
 export default async function ExplorePage({
   searchParams,
 }: {
-  searchParams?: { [key: string]: string | string[] | undefined };
+  searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
   const {
     sort,
@@ -24,7 +24,7 @@ export default async function ExplorePage({
     type,
     focusArea,
     tags,
-  } = searchParams as { [key: string]: string };
+  } = await searchParams as { [key: string]: string };
   const { sortKey } = sorting.find((item) => item.slug === sort) || defaultSort;
 
   return (
