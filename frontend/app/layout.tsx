@@ -3,6 +3,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { PHProvider } from "@/providers/PHProvider";
 import AuthSessionProvider from "@/providers/SessionProvider";
+import { NuqsAdapter } from "nuqs/adapters/react";
 import type { Metadata } from "next";
 import { Lato } from "next/font/google";
 import "./globals.css";
@@ -33,7 +34,7 @@ export default function RootLayout({
         <AuthSessionProvider>
           <PHProvider>
             <TooltipProvider delayDuration={250}>
-              {children}
+              <NuqsAdapter>{children}</NuqsAdapter>
               <DebugToggle />
             </TooltipProvider>
           </PHProvider>

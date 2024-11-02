@@ -71,6 +71,7 @@ export function Sidebar({
 }) {
   const [expanded, setExpanded] = useState(false);
   const [lessons, setLessons] = useState(droplet.lessons || []);
+  const bottom = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
 
   useEffect(() => {
@@ -82,6 +83,12 @@ export function Sidebar({
   const classes = {
     link: "flex items-center p-2 rounded-lg text-slate-900 dark:text-white hover:bg-slate-100 dark:hover:bg-slate-700 group transition-colors",
     activeLink: "font-bold bg-slate-200 [&>svg]:text-sky-700 text-sky-700",
+  };
+
+  const scrollToBottom = () => {
+    if (bottom.current) {
+      bottom.current.scrollIntoView({ behavior: "smooth" });
+    }
   };
 
   useLayoutEffect(() => {
@@ -207,33 +214,39 @@ export function Sidebar({
 
             <Separator orientation="horizontal" className="my-2" />
 
-            <AddLesson droplet={droplet} />
+            <AddLesson droplet={droplet} execute={scrollToBottom} />
 
-            <DndContext
-              sensors={sensors}
-              collisionDetection={closestCenter}
-              onDragEnd={handleDragEnd}
-            >
-              <SortableContext
-                items={lessons.map((lesson) => lesson.id)}
-                strategy={verticalListSortingStrategy}
-              >
-                <ul className="space-y-1">
-                  {lessons.map((lesson) => (
-                    <SortableLesson
-                      key={lesson.id}
-                      lesson={lesson}
-                      droplet={droplet}
-                      pathname={pathname}
-                      classes={classes.link}
-                    />
-                  ))}
-                </ul>
-              </SortableContext>
-            </DndContext>
+            <ul className="space-y-1">
+              {lessons.map((lesson) => (
+                <li key={lesson.id}>
+                  <Link
+                    href={`/draft/d/${droplet.slug}/${lesson.slug}`}
+                    className={cn(
+                      classes.link,
+                      pathname == `/draft/d/${droplet.slug}/${lesson.slug}` &&
+                        classes.activeLink,
+                    )}
+                    onClick={(e) => e.stopPropagation()}
+                    passHref
+                  >
+                    {lesson.type === "activity" ? (
+                      <Hammer className="shrink-0" />
+                    ) : lesson.type === "caseStudy" ? (
+                      <FilePieChart className="w-5 h-5 mr-0.5 shrink-0" />
+                    ) : (
+                      <BookText className="shrink-0" />
+                    )}
+                    <span className="leading-snug ml-3">{lesson.name}</span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
           </div>
 
-          <div className="bottom-0 left-0 w-full p-2 mt-4 space-y-4 border-t bg-slate-50 border-t-slate-200 md:sticky md:px-3 md:mb-0 md:flex-col dark:bg-slate-800">
+          <div
+            ref={bottom}
+            className="bottom-0 left-0 w-full p-2 mt-4 space-y-4 border-t bg-slate-50 border-t-slate-200 md:sticky md:px-3 md:mb-0 md:flex-col dark:bg-slate-800"
+          >
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <div className="w-full group flex shrink cursor-pointer select-none items-center justify-between gap-1 rounded-lg p-1.5 px-2 text-sm text-slate-600 transition-colors duration-100 wg-antialiased hover:bg-slate-100 dark:hover:bg-white/5">

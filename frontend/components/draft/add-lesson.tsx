@@ -5,16 +5,20 @@ import { PlusIcon } from "lucide-react";
 import { useLessons } from "./metadata/hooks/useLessons"; // Assuming this hook is created
 import { Droplet } from "@/types";
 import { useRouter } from "next/navigation";
+import { CornerDownLeftIcon, LoaderIcon } from "lucide-react";
 
 export function AddLesson({
   droplet,
+  execute,
 }: {
   droplet: Pick<Droplet, "id" | "name" | "slug" | "lessons">;
+  execute: () => void;
 }) {
   const [isHidden, setIsHidden] = useState(true);
   const inputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
   const { addNewLesson } = useLessons(droplet);
+  const [pending, setPending] = useState(false);
 
   const showInput = () => {
     setIsHidden(false);
@@ -44,14 +48,18 @@ export function AddLesson({
   }, []);
 
   const handleSubmit = async (event: React.FormEvent) => {
+    setPending(true);
     event.preventDefault();
     const lessonName = inputRef.current?.value.trim();
     if (lessonName) {
       const response = await addNewLesson({ name: lessonName });
       setIsHidden(true);
       inputRef.current!.value = "";
-      router.push(`/draft/d/${droplet.slug}`);
+      console.log(response);
+      execute();
+      router.push(`/draft/d/${droplet.slug}/${response!.slug}`);
     }
+    setPending(false);
   };
 
   return (
@@ -65,7 +73,7 @@ export function AddLesson({
 
       <ul>
         {!isHidden ? (
-          <li className="w-full rounded shadow mb-2">
+          <li className="w-full rounded shadow mb-2 pr-2">
             <form
               onSubmit={handleSubmit}
               className="flex flex-row justify-between items-center"
@@ -80,6 +88,11 @@ export function AddLesson({
               />
               <input type="hidden" name="dropletId" value={droplet.id} />
               <button type="submit" className="hidden" />
+              {pending ? (
+                <LoaderIcon className={"animate-spin"} />
+              ) : (
+                <CornerDownLeftIcon />
+              )}
             </form>
           </li>
         ) : null}
