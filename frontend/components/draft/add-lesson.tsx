@@ -1,24 +1,23 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { PlusIcon } from "lucide-react";
-import { useLessons } from "./metadata/hooks/useLessons"; // Assuming this hook is created
-import { Droplet } from "@/types";
+import { useFormStatus } from "react-dom";
+import { PlusIcon, CornerDownLeftIcon, LoaderIcon } from "lucide-react";
+import { addLesson } from "@/lib/actions";
+import { Droplet, Lesson } from "@/types";
 import { useRouter } from "next/navigation";
-import { CornerDownLeftIcon, LoaderIcon } from "lucide-react";
 
 export function AddLesson({
   droplet,
-  execute,
+  onAddLesson,
 }: {
   droplet: Pick<Droplet, "id" | "name" | "slug" | "lessons">;
-  execute: () => void;
+  onAddLesson: (newLesson: Lesson) => void;
 }) {
   const [isHidden, setIsHidden] = useState(true);
   const inputRef = useRef<HTMLInputElement>(null);
+  const ref = useRef<HTMLLIElement>(null);
   const router = useRouter();
-  const { addNewLesson } = useLessons(droplet);
-  const [pending, setPending] = useState(false);
 
   const showInput = () => {
     setIsHidden(false);
@@ -34,8 +33,8 @@ export function AddLesson({
     }, 0);
   };
 
-  const handleClickOutside = (event: MouseEvent) => {
-    if (inputRef.current && !inputRef.current.contains(event.target as Node)) {
+  const handleClickOutside = (event: any) => {
+    if (ref.current && !ref.current.contains(event.target)) {
       setIsHidden(true);
     }
   };
@@ -47,20 +46,37 @@ export function AddLesson({
     };
   }, []);
 
-  const handleSubmit = async (event: React.FormEvent) => {
-    setPending(true);
-    event.preventDefault();
-    const lessonName = inputRef.current?.value.trim();
-    if (lessonName) {
-      const response = await addNewLesson({ name: lessonName });
+  async function add(formData: FormData) {
+    const response = await addLesson({
+      name: formData.get("name") as string,
+      dropletId: parseInt(formData.get("dropletId") as string),
+    });
+
+    if (response && !response.error) {
+      const newLesson: Lesson = {
+        id: response.data.id,
+        name: response.data.attributes.name,
+        slug: response.data.attributes.slug,
+        type: response.data.attributes.type || "general",
+        blocks: [],
+        droplets: [{
+          id: droplet.id,
+          name: droplet.name,
+          slug: droplet.slug,
+          type: response.data.attributes.type || "",
+          focusArea: response.data.attributes.focusArea || "", 
+          learningObjectives: [],
+          isHidden: false,
+          status: "draft",
+          lessons: droplet.lessons || []
+        }]
+      };
+      
+      onAddLesson(newLesson);
       setIsHidden(true);
-      inputRef.current!.value = "";
-      console.log(response);
-      execute();
-      router.push(`/draft/d/${droplet.slug}/${response!.slug}`);
+      router.push(`/draft/d/${droplet.slug}/${newLesson.slug}`);
     }
-    setPending(false);
-  };
+  }
 
   return (
     <>
@@ -73,9 +89,9 @@ export function AddLesson({
 
       <ul>
         {!isHidden ? (
-          <li className="w-full rounded shadow mb-2 pr-2">
+          <li ref={ref} className="w-full rounded shadow mb-2">
             <form
-              onSubmit={handleSubmit}
+              action={add}
               className="flex flex-row justify-between items-center"
               autoComplete="off"
             >
@@ -86,17 +102,31 @@ export function AddLesson({
                 placeholder="Lesson Name"
                 name="name"
               />
-              <input type="hidden" name="dropletId" value={droplet.id} />
-              <button type="submit" className="hidden" />
-              {pending ? (
-                <LoaderIcon className={"animate-spin"} />
-              ) : (
-                <CornerDownLeftIcon />
-              )}
+              <input
+                type="submit"
+                name="dropletId"
+                hidden
+                readOnly
+                value={droplet.id}
+              />
+              <InputIcon />
             </form>
           </li>
         ) : null}
       </ul>
+    </>
+  );
+}
+
+function InputIcon() {
+  const { pending } = useFormStatus();
+  return (
+    <>
+      {pending ? (
+        <LoaderIcon className="mr-2 animate-spin" />
+      ) : (
+        <CornerDownLeftIcon className="mr-2" />
+      )}
     </>
   );
 }
