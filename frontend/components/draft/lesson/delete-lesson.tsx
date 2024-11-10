@@ -10,18 +10,35 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { ArrowLeftIcon, Trash, Trash2Icon } from "lucide-react";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 export function DeleteLessonButton({
   deleteLesson,
+  dropletSlug,
 }: {
   deleteLesson: () => void;
+  dropletSlug: string;
 }) {
+  const router = useRouter();
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleDelete = async () => {
+    setIsDeleting(true);
+    try {
+      deleteLesson();
+      router.push(`/draft/d/${dropletSlug}`);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   return (
     <Dialog>
       <DialogTrigger asChild>
         <Button variant="destructive">Delete Lesson</Button>
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent className={isDeleting ? 'opacity-50' : ''}>
         <DialogHeader>
           <DialogTitle>Delete Lesson</DialogTitle>
 
@@ -40,16 +57,25 @@ export function DeleteLessonButton({
           </DialogDescription>
           <div className="flex flex-row items-center justify-center space-x-4">
             <DialogClose asChild>
-              <Button before={<ArrowLeftIcon />} variant="outline">
+              <Button 
+                before={<ArrowLeftIcon />} 
+                variant="outline"
+                disabled={isDeleting}
+              >
                 Cancel
               </Button>
             </DialogClose>
             <Button
-              onClick={deleteLesson}
+              onClick={handleDelete}
               variant="destructive"
-              after={<Trash2Icon />}
+              disabled={isDeleting}
+              after={isDeleting ? (
+                <span className="animate-spin">⟳</span>
+              ) : (
+                <Trash2Icon />
+              )}
             >
-              Delete
+              {isDeleting ? 'Deleting...' : 'Delete'}
             </Button>
           </div>
         </DialogHeader>
