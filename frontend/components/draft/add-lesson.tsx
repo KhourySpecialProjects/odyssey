@@ -59,19 +59,21 @@ export function AddLesson({
         slug: response.data.attributes.slug,
         type: response.data.attributes.type || "general",
         blocks: [],
-        droplets: [{
-          id: droplet.id,
-          name: droplet.name,
-          slug: droplet.slug,
-          type: response.data.attributes.type || "",
-          focusArea: response.data.attributes.focusArea || "", 
-          learningObjectives: [],
-          isHidden: false,
-          status: "draft",
-          lessons: droplet.lessons || []
-        }]
+        droplets: [
+          {
+            id: droplet.id,
+            name: droplet.name,
+            slug: droplet.slug,
+            type: response.data.attributes.type || "",
+            focusArea: response.data.attributes.focusArea || "",
+            learningObjectives: [],
+            isHidden: false,
+            status: "draft",
+            lessons: droplet.lessons || [],
+          },
+        ],
       };
-      
+
       onAddLesson(newLesson);
       setIsHidden(true);
       router.push(`/draft/d/${droplet.slug}/${newLesson.slug}`);
