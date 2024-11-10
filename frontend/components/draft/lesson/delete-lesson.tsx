@@ -38,7 +38,7 @@ export function DeleteLessonButton({
       <DialogTrigger asChild>
         <Button variant="destructive">Delete Lesson</Button>
       </DialogTrigger>
-      <DialogContent className={isDeleting ? 'opacity-50' : ''}>
+      <DialogContent className={isDeleting ? "opacity-50" : ""}>
         <DialogHeader>
           <DialogTitle>Delete Lesson</DialogTitle>
 
@@ -57,8 +57,8 @@ export function DeleteLessonButton({
           </DialogDescription>
           <div className="flex flex-row items-center justify-center space-x-4">
             <DialogClose asChild>
-              <Button 
-                before={<ArrowLeftIcon />} 
+              <Button
+                before={<ArrowLeftIcon />}
                 variant="outline"
                 disabled={isDeleting}
               >
@@ -69,13 +69,15 @@ export function DeleteLessonButton({
               onClick={handleDelete}
               variant="destructive"
               disabled={isDeleting}
-              after={isDeleting ? (
-                <span className="animate-spin">⟳</span>
-              ) : (
-                <Trash2Icon />
-              )}
+              after={
+                isDeleting ? (
+                  <span className="animate-spin">⟳</span>
+                ) : (
+                  <Trash2Icon />
+                )
+              }
             >
-              {isDeleting ? 'Deleting...' : 'Delete'}
+              {isDeleting ? "Deleting..." : "Delete"}
             </Button>
           </div>
         </DialogHeader>

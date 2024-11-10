@@ -1,5 +1,5 @@
 // useLessonOrder.tsx
-import {useRef, useEffect } from "react";
+import { useRef, useEffect } from "react";
 import { updateDroplet } from "@/lib/actions";
 import { useState, useCallback } from "react";
 import { addLesson } from "@/lib/actions";
@@ -11,7 +11,7 @@ interface QueueItem {
 }
 
 export function useLessonOrder(
-    droplet: Pick<Droplet, "id" | "name" | "slug" | "lessons">,
+  droplet: Pick<Droplet, "id" | "name" | "slug" | "lessons">,
 ) {
   const [lessons, setLessons] = useState(droplet.lessons || []);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -37,11 +37,11 @@ export function useLessonOrder(
       });
 
       const result = await updateDroplet(
-          droplet.id,
-          {
-            lessons: latestOrder.lessonIds,
-          },
-          { revalidate: true },
+        droplet.id,
+        {
+          lessons: latestOrder.lessonIds,
+        },
+        { revalidate: true },
       );
 
       if (!result.ok) {
@@ -50,7 +50,7 @@ export function useLessonOrder(
       }
 
       orderQueue.current = orderQueue.current.filter(
-          (item) => item.timestamp > latestOrder.timestamp,
+        (item) => item.timestamp > latestOrder.timestamp,
       );
     } finally {
       setIsProcessing(false);
@@ -61,24 +61,23 @@ export function useLessonOrder(
   }, [droplet.id, droplet.lessons, isProcessing]);
 
   const handleLessonReorder = useCallback(
-      (newLessons: Lesson[]) => {
-        setLessons(newLessons);
+    (newLessons: Lesson[]) => {
+      setLessons(newLessons);
 
-        const orderItem: QueueItem = {
-          lessonIds: newLessons.map((lesson) => ({ id: lesson.id })),
-          timestamp: Date.now(),
-        };
+      const orderItem: QueueItem = {
+        lessonIds: newLessons.map((lesson) => ({ id: lesson.id })),
+        timestamp: Date.now(),
+      };
 
-        latestOrderTimestamp.current = orderItem.timestamp;
-        orderQueue.current.push(orderItem);
+      latestOrderTimestamp.current = orderItem.timestamp;
+      orderQueue.current.push(orderItem);
 
-        if (!isProcessing) {
-          processQueue();
-        }
-      },
-      [processQueue, isProcessing]
+      if (!isProcessing) {
+        processQueue();
+      }
+    },
+    [processQueue, isProcessing],
   );
-
 
   return {
     lessons,
