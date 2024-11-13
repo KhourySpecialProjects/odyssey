@@ -13,7 +13,7 @@ import { createAuthorizedUser } from "@/lib/actions";
 import { Input, Switch } from "@lemonsqueezy/wedges";
 import { DialogClose } from "@radix-ui/react-dialog";
 import { ArrowRightIcon, PlusIcon, XIcon } from "lucide-react";
-import { useFormState, useFormStatus } from "react-dom";
+import { useActionState } from "react";
 
 const initialState: any = {
   email: "",
@@ -22,7 +22,10 @@ const initialState: any = {
 };
 
 export function CreateUser() {
-  const [state, formAction] = useFormState(createAuthorizedUser, initialState);
+  const [state, formAction, isPending] = useActionState(
+    createAuthorizedUser,
+    initialState,
+  );
 
   return (
     <Dialog>
@@ -84,19 +87,15 @@ export function CreateUser() {
             </p>
           ) : null}
 
-          <SubmitButton />
+          <Button
+            type="submit"
+            after={<ArrowRightIcon />}
+            aria-disabled={isPending}
+          >
+            Submit
+          </Button>
         </form>
       </DialogContent>
     </Dialog>
-  );
-}
-
-function SubmitButton() {
-  const { pending } = useFormStatus();
-
-  return (
-    <Button type="submit" after={<ArrowRightIcon />} aria-disabled={pending}>
-      Submit
-    </Button>
   );
 }

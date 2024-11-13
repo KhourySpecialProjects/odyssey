@@ -5,17 +5,20 @@ import { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 type Props = {
-  params: {
-    slug: string;
-    lessonSlug: string;
-  };
+  params: Promise<Params>;
+};
+
+type Params = {
+  slug: string;
+  lessonSlug: string;
 };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const lesson = await getLessonBySlug<Pick<Lesson, "name">>(
-    params.lessonSlug,
-    { fields: ["name"], populate: undefined },
-  );
+  const p = await params;
+  const lesson = await getLessonBySlug<Pick<Lesson, "name">>(p.lessonSlug, {
+    fields: ["name"],
+    populate: undefined,
+  });
   if (!lesson) return {};
 
   return {
@@ -24,7 +27,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function Lesson({ params }: Props) {
-  const lesson = await getLessonBySlug(params.lessonSlug, {
+  const p = await params;
+  const lesson = await getLessonBySlug(p.lessonSlug, {
     populate: {
       blocks: {
         on: {
@@ -54,7 +58,7 @@ export default async function Lesson({ params }: Props) {
   if (!lesson) return notFound();
   return (
     <>
-      <LessonRenderer lesson={lesson} />
+      <LessonRenderer lesson={lesson} dropletSlug={p.slug} />
     </>
   );
 }
