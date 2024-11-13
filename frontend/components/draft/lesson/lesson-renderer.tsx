@@ -7,56 +7,187 @@ import { VideoEditor } from "@/components/draft/lesson/blocks/video";
 import { CalloutEditor } from "./blocks/callout";
 import { GenericEditor } from "./blocks/generic";
 import { AddBlock } from "./add-block";
+import { useState, useCallback, useEffect } from "react";
+import { debounce } from "lodash";
+import { updateLesson } from "@/lib/actions";
+import { useRouter } from "next/navigation";
+import { htmlToText } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { DeleteLessonButton } from "./delete-lesson";
+import { deleteLesson } from "@/lib/actions";
+import { Separator } from "@/components/ui/separator";
 
-export function LessonRenderer({ lesson }: { lesson: Lesson }) {
-  console.log(lesson.blocks);
+export function LessonRenderer({
+  lesson,
+  dropletSlug,
+}: {
+  lesson: Lesson;
+  dropletSlug: string;
+}) {
+  const router = useRouter();
+
+  const [blocks, setBlocks] = useState(lesson.blocks);
+  const [name, setName] = useState(lesson.name);
+  console.log(blocks);
+
+  const setBlock = useCallback(
+    (index: number) => {
+      return (block: any) => {
+        setBlocks((prevBlocks) =>
+          prevBlocks.map((b, i) => (i === index ? { ...b, ...block } : b)),
+        );
+      };
+    },
+    [], // Add blocks as a dependency
+  );
+
+  const deleteBlock = useCallback(
+    (index: number) => {
+      return () => {
+        const updatedBlocks = [...blocks];
+        updatedBlocks.splice(index, 1);
+        updateBlocksBackendReload(updatedBlocks);
+      };
+    },
+    [blocks],
+  );
+
+  const addBlock = useCallback(
+    (index: number) => {
+      return (block: any) => {
+        const updatedBlocks = [...blocks];
+        updatedBlocks.splice(index, 0, block);
+        updateBlocksBackendReload(updatedBlocks);
+      };
+    },
+    [blocks],
+  );
+
+  useEffect(() => {
+    debounceUpdate(blocks);
+  }, [blocks]);
+
+  useEffect(() => {
+    setBlocks(lesson.blocks);
+  }, [lesson]);
+
+  const updateBlocksBackend = async (blocks: any) => {
+    console.log(blocks);
+    const response = await updateLesson(lesson.id, { blocks: blocks });
+    console.log(response);
+  };
+
+  const updateNameBackend = async (name: string) => {
+    const response = await updateLesson(lesson.id, { name: name });
+    if (response && !response.error) {
+      const slug = response.data.attributes.slug;
+      router.replace("/draft/d/" + dropletSlug + "/" + slug);
+    }
+  };
+
+  const regenerateSlug = async (name: string) => {
+    const response = await updateLesson(
+      lesson.id,
+      { name: name },
+      { regenerateSlug: true },
+    );
+    if (response && !response.error) {
+      const slug = response.data.attributes.slug;
+      router.replace("/draft/d/" + dropletSlug + "/" + slug);
+    }
+  };
+
+  const updateBlocksBackendReload = async (blocks: any) => {
+    console.log(blocks);
+    const response = await updateLesson(
+      lesson.id,
+      { blocks: blocks },
+      { reload: true },
+    );
+    console.log(response);
+  };
+
+  const deleteLessonBackend = async () => {
+    const response = await deleteLesson(lesson.id);
+    console.log("helllloooo");
+    console.log(response);
+    if (response && !response.error) {
+      router.replace("/draft/d/" + dropletSlug);
+    }
+  };
+
+  const debounceUpdate = useCallback(
+    debounce(updateBlocksBackend, 1000, { maxWait: 3000 }),
+    [],
+  );
+  const debouncedNameUpdate = useCallback(
+    debounce(updateNameBackend, 1000),
+    [],
+  );
+
   return (
     <>
-      <h1 className="text-4xl font-extrabold text-balance mb-10">
-        {lesson.name}
-      </h1>
-      <div className="space-y-12"></div>
+      <div className="flex flex-col justify-center items-center border border-slate-200 rounded-md pt-4 px-4 pb-7 mb-5">
+        <TipTap
+          className="w-[700px] max-w-2xl mb-3"
+          variant="lesson-name"
+          initialContent={"<h1>" + name + "</h1>"}
+          updateContent={(content: string) => {
+            content = htmlToText(content);
+            setName(content);
+            debouncedNameUpdate(content);
+            debouncedNameUpdate;
+          }}
+        />
+        <div className="flex flex-row items-center justif-center space-x-10">
+          <Button
+            variant="outline"
+            onClick={() => {
+              regenerateSlug(name);
+            }}
+          >
+            Regenerate URL Slug
+          </Button>
+          <DeleteLessonButton deleteLesson={deleteLessonBackend} />
+        </div>
+      </div>
 
-      <div className="space-y-4">
-        <AddBlock blocks={lesson.blocks} lessonId={lesson.id} index={0} />
-        {lesson.blocks.map((block, i) => (
+      <div className="space-y-4 w-full flex flex-col items-center justify-center">
+        <AddBlock add={addBlock(0)} />
+        {blocks.map((block, i) => (
           <div
-            key={block.id}
+            key={block.__component + block.id}
             className="w-full flex flex-col items-center justify-center max-w-2xl space-y-4"
           >
             {block.__component === "droplets.generic" && (
               <GenericEditor
-                blocks={lesson.blocks}
-                id={block.id}
-                lessonId={lesson.id}
+                block={block}
+                updateBlock={setBlock(i)}
+                deleteBlock={deleteBlock(i)}
               />
             )}
             {block.__component === "droplets.expandable" && (
               <ExpandableEditor
-                blocks={lesson.blocks}
-                id={block.id}
-                lessonId={lesson.id}
+                block={block}
+                updateBlock={setBlock(i)}
+                deleteBlock={deleteBlock(i)}
               />
             )}
             {block.__component === "droplets.video" && (
               <VideoEditor
-                blocks={lesson.blocks}
-                id={block.id}
-                lessonId={lesson.id}
+                block={block}
+                updateBlock={setBlock(i)}
+                deleteBlock={deleteBlock(i)}
               />
             )}
             {block.__component === "droplets.callout" && (
               <CalloutEditor
-                blocks={lesson.blocks}
-                id={block.id}
-                lessonId={lesson.id}
+                block={block}
+                updateBlock={setBlock(i)}
+                deleteBlock={deleteBlock(i)}
               />
             )}
-            <AddBlock
-              blocks={lesson.blocks}
-              lessonId={lesson.id}
-              index={i + 1}
-            />
+            <AddBlock add={addBlock(i + 1)} />
           </div>
         ))}
       </div>

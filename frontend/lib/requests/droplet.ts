@@ -25,7 +25,6 @@ export async function getDroplets({
 
   return await fetchAPI<Droplet[]>(path, {
     urlParams,
-    next: { tags: ["droplets"] },
   });
 }
 
@@ -53,7 +52,6 @@ export async function getDropletBySlug<T extends Partial<Droplet> = Droplet>(
 
   return await fetchAPI<T[]>(path, {
     urlParams,
-    next: { tags: ["droplets"] },
   }).then((droplets) => droplets[0]);
 }
 

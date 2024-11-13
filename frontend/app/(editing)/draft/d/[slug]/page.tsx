@@ -11,15 +11,20 @@ import { Filter } from "@/components/draft/metadata/filter";
 import { Description } from "@/components/draft/metadata/description";
 import { uppercaseFirstChar } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
+import { RegenerateSlugButton } from "@/components/draft/metadata/regenerate-slug";
+import { DeleteDropletButton } from "@/components/draft/metadata/delete-droplet";
 
 type Props = {
-  params: {
-    slug: string;
-  };
+  params: Promise<Params>;
+};
+
+type Params = {
+  slug: string;
 };
 
 export async function generateMetadata({ params }: Props) {
-  const droplet = await getDropletBySlug<Pick<Droplet, "name">>(params.slug, {
+  const p = await params;
+  const droplet = await getDropletBySlug<Pick<Droplet, "name">>(p.slug, {
     fields: ["name"],
     populate: undefined,
   });
@@ -31,7 +36,8 @@ export async function generateMetadata({ params }: Props) {
 }
 
 export default async function Droplet({ params }: Props) {
-  const droplet = await getDropletBySlug<Droplet>(params.slug, {
+  const p = await params;
+  const droplet = await getDropletBySlug<Droplet>(p.slug, {
     fields: ["*"],
     populate: {
       authors: { populate: "*" },
@@ -72,6 +78,10 @@ export default async function Droplet({ params }: Props) {
           ))}
         </div>
         <DropletName dropletId={droplet.id} startingName={droplet.name} />
+        <div className="flex flex-row w-full  items-center space-x-10 my-3">
+          <RegenerateSlugButton dropletId={droplet.id} name={droplet.name} />
+          <DeleteDropletButton dropletId={droplet.id} />
+        </div>
         <Description
           dropletId={droplet.id}
           initialContent={droplet.description ?? ""}

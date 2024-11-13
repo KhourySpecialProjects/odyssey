@@ -10,25 +10,30 @@ import {
 } from "@/lib/utils";
 import { Droplet, User } from "@/types";
 import {
-  BookTextIcon,
   ChevronDownIcon,
   CogIcon,
-  FilePieChartIcon,
-  HammerIcon,
-  HistoryIcon,
   LogOutIcon,
   MenuIcon,
   ShipIcon,
-  TargetIcon,
   TowerControlIcon,
   SettingsIcon,
+  Hammer,
+  FilePieChart,
+  BookText,
 } from "lucide-react";
 import { signOut } from "next-auth/react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useLayoutEffect, useState } from "react";
+import React, {
+  useLayoutEffect,
+  useState,
+  useRef,
+  useEffect,
+  useCallback,
+} from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
+import { debounce } from "lodash";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -39,6 +44,23 @@ import {
 } from "../ui/dropdown-menu";
 import { Separator } from "../ui/separator";
 import { AddLesson } from "@/components/draft/add-lesson";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { SortableLesson } from "@/components/draft/sortable-lesson";
+import { updateDroplet } from "@/lib/actions";
 
 export function Sidebar({
   user,
@@ -48,19 +70,73 @@ export function Sidebar({
   droplet: Pick<Droplet, "id" | "name" | "slug" | "lessons">;
 }) {
   const [expanded, setExpanded] = useState(false);
+  const [lessons, setLessons] = useState(droplet.lessons || []);
+  const bottom = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
+
+  useEffect(() => {
+    setLessons(droplet.lessons || []);
+  }, [droplet.lessons]);
 
   const isAdmin = user && isAuthorizedUserAdmin(user.roles);
 
-  const activeLinkClasses =
-    "flex font-bold items-center p-2 bg-slate-200 [&>svg]:text-sky-700 rounded-lg dark:text-white dark:hover:bg-slate-700 group text-sky-700 transition-colors";
-  const inactiveLinkClasses =
-    "flex items-center p-2 rounded-lg text-slate-900 dark:text-white hover:bg-slate-100 dark:hover:bg-slate-700 group transition-colors";
+  const classes = {
+    link: "flex items-center p-2 rounded-lg text-slate-900 dark:text-white hover:bg-slate-100 dark:hover:bg-slate-700 group transition-colors",
+    activeLink: "font-bold bg-slate-200 [&>svg]:text-sky-700 text-sky-700",
+  };
+
+  const scrollToBottom = () => {
+    if (bottom.current) {
+      bottom.current.scrollIntoView({ behavior: "smooth" });
+    }
+  };
 
   useLayoutEffect(() => {
     window.addEventListener("resize", () => setExpanded(false));
     return () => window.removeEventListener("resize", () => setExpanded(false));
   }, []);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    }),
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (active.id !== over?.id) {
+      setLessons((items) => {
+        const oldIndex = items.findIndex((item) => item.id === active.id);
+        const newIndex = items.findIndex((item) => item.id === over?.id);
+        return arrayMove(items, oldIndex, newIndex);
+      });
+
+      const oldIndex = lessons.findIndex((item) => item.id === active.id);
+      const newIndex = lessons.findIndex((item) => item.id === over?.id);
+      const newLessonIdOrder = arrayMove(lessons, oldIndex, newIndex).map(
+        (lesson) => ({ id: lesson.id }),
+      );
+      debouncedUpdate(newLessonIdOrder);
+    }
+  };
+
+  const updateLessonOrder = async (lessonIds: { id: number }[]) => {
+    const result = await updateDroplet(
+      droplet.id,
+      {
+        lessons: lessonIds,
+      },
+      { revalidate: true },
+    );
+
+    if (!result.ok) {
+      console.error("Error updating lesson order:", result.error);
+    }
+  };
+
+  const debouncedUpdate = useCallback(debounce(updateLessonOrder, 3000), []);
 
   if (!user) return <UnauthorizedRoute />;
 
@@ -124,11 +200,11 @@ export function Sidebar({
               <li>
                 <Link
                   href={`/draft/d/${droplet.slug}`}
-                  className={
-                    pathname == `/draft/d/${droplet.slug}`
-                      ? activeLinkClasses
-                      : inactiveLinkClasses
-                  }
+                  className={cn(
+                    classes.link,
+                    pathname == `/draft/d/${droplet.slug}` &&
+                      classes.activeLink,
+                  )}
                 >
                   <SettingsIcon className="shrink-0" />
                   <span className="leading-snug ms-3">Metadata</span>
@@ -138,34 +214,39 @@ export function Sidebar({
 
             <Separator orientation="horizontal" className="my-2" />
 
-            <AddLesson droplet={droplet} />
+            <AddLesson droplet={droplet} execute={scrollToBottom} />
 
-            <ul>
-              {droplet.lessons?.map((lesson) => (
+            <ul className="space-y-1">
+              {lessons.map((lesson) => (
                 <li key={lesson.id}>
                   <Link
                     href={`/draft/d/${droplet.slug}/${lesson.slug}`}
-                    className={
-                      pathname == `/draft/d/${droplet.slug}/${lesson.slug}`
-                        ? activeLinkClasses
-                        : inactiveLinkClasses
-                    }
+                    className={cn(
+                      classes.link,
+                      pathname == `/draft/d/${droplet.slug}/${lesson.slug}` &&
+                        classes.activeLink,
+                    )}
+                    onClick={(e) => e.stopPropagation()}
+                    passHref
                   >
                     {lesson.type === "activity" ? (
-                      <HammerIcon className="shrink-0" />
+                      <Hammer className="shrink-0" />
                     ) : lesson.type === "caseStudy" ? (
-                      <FilePieChartIcon className="w-5 h-5 mr-0.5 shrink-0" />
+                      <FilePieChart className="w-5 h-5 mr-0.5 shrink-0" />
                     ) : (
-                      <BookTextIcon className="shrink-0" />
+                      <BookText className="shrink-0" />
                     )}
-                    <span className="leading-snug ms-3">{lesson.name}</span>
+                    <span className="leading-snug ml-3">{lesson.name}</span>
                   </Link>
                 </li>
               ))}
             </ul>
           </div>
 
-          <div className="bottom-0 left-0 w-full p-2 mt-4 space-y-4 border-t bg-slate-50 border-t-slate-200 md:sticky md:px-3 md:mb-0 md:flex-col dark:bg-slate-800">
+          <div
+            ref={bottom}
+            className="bottom-0 left-0 w-full p-2 mt-4 space-y-4 border-t bg-slate-50 border-t-slate-200 md:sticky md:px-3 md:mb-0 md:flex-col dark:bg-slate-800"
+          >
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <div className="w-full group flex shrink cursor-pointer select-none items-center justify-between gap-1 rounded-lg p-1.5 px-2 text-sm text-slate-600 transition-colors duration-100 wg-antialiased hover:bg-slate-100 dark:hover:bg-white/5">
