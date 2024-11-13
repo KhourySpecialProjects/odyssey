@@ -4,7 +4,7 @@ import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
-// import { sendBatchAccessRequests } from "@/lib/actions";
+import { createBatchAuthorizedUsers } from "@/lib/actions";
 import { useFormStatus } from "react-dom";
 
 export function BatchAddUser() {
@@ -37,10 +37,25 @@ export function BatchAddUser() {
     }
 
     if (emailList.length > 0) {
-      // await sendBatchAccessRequests(emailList);
-      setEmails("");
-      setCsvFiles([]);
-      if (fileInputRef.current) fileInputRef.current.value = "";
+      const result = await createBatchAuthorizedUsers(emailList);
+      
+      if (result.ok && result.data) {
+        // Clear form
+        setEmails("");
+        setCsvFiles([]);
+        if (fileInputRef.current) fileInputRef.current.value = "";
+        
+        // Show results
+        const { successful, failed } = result.data;
+        const failedDetails = failed.map(f => `${f.email} (${f.reason})`).join('\n');
+        
+        alert(
+          `${result.message}\n\n` + 
+          (failed.length > 0 ? `Failed emails:\n${failedDetails}` : '')
+        );
+      } else {
+        alert(`Error: ${result.error}`);
+      }
     }
   };
 
