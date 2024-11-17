@@ -49,11 +49,10 @@ export function MultiSelect({
           <Button variant="outline" className={cn("h-fit", className)}>
             <div className="flex flex-row items-center justify-center gap-2">
               <ChevronDown />
-              {label}
             </div>
             {selected?.length > 0 ? (
               <>
-                <div className="gap-1 flex flex-wrap items-center justify-center w-48">
+                <div className="gap-1 flex flex-wrap items-center justify-start w-48">
                   {selected.map((option) => (
                     <Badge
                       variant="secondary"
@@ -66,7 +65,9 @@ export function MultiSelect({
                 </div>
               </>
             ) : (
-              <p className="text-slate-400 w-48">Nothing yet...</p>
+              <p className="flex justify-start text-slate-400 w-48">
+                Select...
+              </p>
             )}
           </Button>
         </PopoverTrigger>
@@ -86,7 +87,7 @@ export function MultiSelect({
                       onSelect={() => {
                         if (isSelected) {
                           setSelected(
-                            selected.filter((val) => val.id !== option.id),
+                            selected.filter((val) => val.id !== option.id)
                           );
                         } else {
                           setSelected([...selected, option]);
@@ -98,7 +99,7 @@ export function MultiSelect({
                           "mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-sky-600",
                           isSelected
                             ? "bg-sky-600 text-white"
-                            : "opacity-50 [&_svg]:invisible",
+                            : "opacity-50 [&_svg]:invisible"
                         )}
                       >
                         <CheckIcon className="w-4 h-4" />
