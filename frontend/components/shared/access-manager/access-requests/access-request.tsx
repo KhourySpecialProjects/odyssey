@@ -15,7 +15,7 @@ export function AccessRequestBlock({ request }: { request: AccessRequest }) {
       formData.append("isEnabled", "true");
 
       const result = await createAuthorizedUser(null, formData);
-      
+
       if (result.ok) {
         const deleteFormData = new FormData();
         deleteFormData.append("id", request.id);
@@ -43,7 +43,7 @@ export function AccessRequestBlock({ request }: { request: AccessRequest }) {
         >
           Accept
         </Button>
-        
+
         <form action={deleteAccessRequest}>
           <input type="hidden" name="id" value={request.id} />
           <Button variant="destructive" disabled={isPending}>
