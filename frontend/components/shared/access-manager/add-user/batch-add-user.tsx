@@ -38,20 +38,22 @@ export function BatchAddUser() {
 
     if (emailList.length > 0) {
       const result = await createBatchAuthorizedUsers(emailList);
-      
+
       if (result.ok && result.data) {
         // Clear form
         setEmails("");
         setCsvFiles([]);
         if (fileInputRef.current) fileInputRef.current.value = "";
-        
+
         // Show results
         const { successful, failed } = result.data;
-        const failedDetails = failed.map(f => `${f.email} (${f.reason})`).join('\n');
-        
+        const failedDetails = failed
+          .map((f) => `${f.email} (${f.reason})`)
+          .join("\n");
+
         alert(
-          `${result.message}\n\n` + 
-          (failed.length > 0 ? `Failed emails:\n${failedDetails}` : '')
+          `${result.message}\n\n` +
+            (failed.length > 0 ? `Failed emails:\n${failedDetails}` : ""),
         );
       } else {
         alert(`Error: ${result.error}`);

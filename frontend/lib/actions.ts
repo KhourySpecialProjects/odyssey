@@ -522,7 +522,7 @@ export async function createBatchAuthorizedUsers(emails: string[]) {
 
     const results = {
       successful: [] as string[],
-      failed: [] as { email: string; reason: string }[]
+      failed: [] as { email: string; reason: string }[],
     };
 
     const createUserPromises = emails.map(async (email) => {
@@ -548,17 +548,17 @@ export async function createBatchAuthorizedUsers(emails: string[]) {
         const data = await response.json();
 
         if (!response.ok || (response.ok && data.error)) {
-          results.failed.push({ 
-            email, 
-            reason: data.error?.message || `HTTP ${response.status}` 
+          results.failed.push({
+            email,
+            reason: data.error?.message || `HTTP ${response.status}`,
           });
         } else {
           results.successful.push(email);
         }
       } catch (error) {
-        results.failed.push({ 
-          email, 
-          reason: error instanceof Error ? error.message : 'Unknown error' 
+        results.failed.push({
+          email,
+          reason: error instanceof Error ? error.message : "Unknown error",
         });
       }
     });
@@ -566,17 +566,17 @@ export async function createBatchAuthorizedUsers(emails: string[]) {
     await Promise.all(createUserPromises);
 
     revalidatePath("/admin");
-    return { 
-      ok: true, 
+    return {
+      ok: true,
       data: results,
-      message: `Successfully created ${results.successful.length} users, ${results.failed.length} failed`
+      message: `Successfully created ${results.successful.length} users, ${results.failed.length} failed`,
     };
   } catch (err) {
     console.error(err);
-    return { 
+    return {
       ok: false,
       error: "Database Error: Failed to create batch authorized users.",
-      data: null 
+      data: null,
     };
   }
 }
