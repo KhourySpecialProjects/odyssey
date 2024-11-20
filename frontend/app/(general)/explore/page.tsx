@@ -7,10 +7,12 @@ import { TagFilter } from "@/components/explore/tag-filter";
 import { defaultSort, DROPLET_FILTERS, sorting } from "@/lib/globals";
 import { Metadata } from "next";
 import { Suspense } from "react";
+import { ContentTypeSelector } from "@/components/explore/content-type-selector";
+import { PlaylistsGrid } from "@/components/explore/playlists-grid";
 
 export const metadata: Metadata = {
   title: "Explore",
-  description: "Discover which Droplets are available on Khoury Odyssey.",
+  description: "Discover content on Khoury Odyssey.",
 };
 
 export default async function ExplorePage({
@@ -24,6 +26,7 @@ export default async function ExplorePage({
     type,
     focusArea,
     tags,
+    contentType = "droplets",
   } = (await searchParams) as { [key: string]: string };
   const { sortKey } = sorting.find((item) => item.slug === sort) || defaultSort;
 
@@ -34,34 +37,43 @@ export default async function ExplorePage({
       </div>
 
       <div className="w-full px-4 mx-auto mt-4 mb-8 max-w-7xl xl:p-0">
-        <div className="flex flex-col gap-2 p-4 border rounded-md bg-slate-50 md:flex-row md:items-center border-slate-200">
-          <div className="flex flex-row flex-wrap items-center flex-1 gap-2">
-            {DROPLET_FILTERS.map((filter) => (
-              <Filter
-                key={filter.name}
-                name={filter.name}
-                label={filter.label}
-                options={filter.options}
-              />
-            ))}
-            <TagFilter />
-            <Sort options={sorting} defaultValue={defaultSort} />
-          </div>
-
-          <Search />
+        <div className="flex flex-col gap-4 p-4 border rounded-md bg-slate-50 border-slate-200">
+          <ContentTypeSelector />
+          
+          {contentType === "droplets" && (
+            <div className="flex flex-col gap-2 md:flex-row md:items-center">
+              <div className="flex flex-row flex-wrap items-center flex-1 gap-2">
+                {DROPLET_FILTERS.map((filter) => (
+                  <Filter
+                    key={filter.name}
+                    name={filter.name}
+                    label={filter.label}
+                    options={filter.options}
+                  />
+                ))}
+                <TagFilter />
+                <Sort options={sorting} defaultValue={defaultSort} />
+              </div>
+              <Search />
+            </div>
+          )}
         </div>
       </div>
 
       <div className="w-full px-4 mx-auto mb-8 max-w-7xl xl:p-0">
-        <Suspense fallback={<DropletsSkeleton />}>
-          <DropletsGrid
-            searchValue={searchValue}
-            type={type}
-            focusArea={focusArea}
-            tags={tags}
-            sortKey={sortKey}
-          />
-        </Suspense>
+        {contentType === "droplets" ? (
+          <Suspense fallback={<DropletsSkeleton />}>
+            <DropletsGrid
+              searchValue={searchValue}
+              type={type}
+              focusArea={focusArea}
+              tags={tags}
+              sortKey={sortKey}
+            />
+          </Suspense>
+        ) : (
+          <PlaylistsGrid />
+        )}
       </div>
     </>
   );
