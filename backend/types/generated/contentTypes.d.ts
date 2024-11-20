@@ -1165,6 +1165,43 @@ export interface ApiLessonLesson extends Schema.CollectionType {
   };
 }
 
+export interface ApiPlaylistPlaylist extends Schema.CollectionType {
+  collectionName: 'playlists';
+  info: {
+    singularName: 'playlist';
+    pluralName: 'playlists';
+    displayName: 'Playlist';
+  };
+  options: {
+    draftAndPublish: true;
+  };
+  attributes: {
+    droplets: Attribute.Relation<
+      'api::playlist.playlist',
+      'oneToMany',
+      'api::droplet.droplet'
+    >;
+    name: Attribute.String;
+    slug: Attribute.UID<'api::playlist.playlist', 'name'>;
+    isPublic: Attribute.Boolean;
+    createdAt: Attribute.DateTime;
+    updatedAt: Attribute.DateTime;
+    publishedAt: Attribute.DateTime;
+    createdBy: Attribute.Relation<
+      'api::playlist.playlist',
+      'oneToOne',
+      'admin::user'
+    > &
+      Attribute.Private;
+    updatedBy: Attribute.Relation<
+      'api::playlist.playlist',
+      'oneToOne',
+      'admin::user'
+    > &
+      Attribute.Private;
+  };
+}
+
 export interface ApiReportReport extends Schema.CollectionType {
   collectionName: 'reports';
   info: {
@@ -1252,6 +1289,7 @@ declare module '@strapi/types' {
       'api::droplet.droplet': ApiDropletDroplet;
       'api::enrollment.enrollment': ApiEnrollmentEnrollment;
       'api::lesson.lesson': ApiLessonLesson;
+      'api::playlist.playlist': ApiPlaylistPlaylist;
       'api::report.report': ApiReportReport;
       'api::tag.tag': ApiTagTag;
     }

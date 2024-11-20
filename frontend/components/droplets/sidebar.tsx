@@ -226,7 +226,7 @@ export default function Sidebar({
                 <DropdownMenuItem asChild>
                   <Link href="/explore">
                     <ShipIcon className="w-4 h-4 mr-2" />
-                    <span>Explore Droplets</span>
+                    <span>Explore</span>
                   </Link>
                 </DropdownMenuItem>
 

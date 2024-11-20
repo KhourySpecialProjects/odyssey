@@ -1,0 +1,30 @@
+{
+  "kind": "collectionType",
+  "collectionName": "playlists",
+  "info": {
+    "singularName": "playlist",
+    "pluralName": "playlists",
+    "displayName": "Playlist"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "droplets": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::droplet.droplet"
+    },
+    "name": {
+      "type": "string"
+    },
+    "slug": {
+      "type": "uid",
+      "targetField": "name"
+    },
+    "isPublic": {
+      "type": "boolean"
+    }
+  }
+}
