@@ -55,7 +55,6 @@ export function ExpandableEditor({
         ></Input>
         <ArrowDownFromLineIcon className="w-4 h-4 text-sky-400" />
       </div>
-      
 
       <TipTap
         variant="lesson-expandable-body"

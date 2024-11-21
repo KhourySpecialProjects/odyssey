@@ -19,8 +19,12 @@ import { DropletSchema } from "./validations/droplet";
 import { LessonSchema } from "./validations/lesson";
 import type { Droplet } from "@/types";
 import { getDropletById } from "./requests/droplet";
-import { S3Client, PutObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
-import { v4 as uuidv4 } from 'uuid';
+import {
+  S3Client,
+  PutObjectCommand,
+  DeleteObjectCommand,
+} from "@aws-sdk/client-s3";
+import { v4 as uuidv4 } from "uuid";
 
 const STRAPI_API_URL = process.env.STRAPI_API_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
@@ -594,9 +598,13 @@ const s3 = new S3Client({
   },
 });
 
-export async function uploadImage(formData : FormData) {
-  if (!formData.get("image") || formData.get("image") == undefined || (formData.get("image") as File).size == 0) {
-    return {ok: false, error: "no image", url: null};
+export async function uploadImage(formData: FormData) {
+  if (
+    !formData.get("image") ||
+    formData.get("image") == undefined ||
+    (formData.get("image") as File).size == 0
+  ) {
+    return { ok: false, error: "no image", url: null };
   }
   try {
     const file = formData.get("image") as File;
@@ -604,7 +612,7 @@ export async function uploadImage(formData : FormData) {
     const bucketName = process.env.AWS_S3_BUCKET_NAME!;
     const rootPath = process.env.AWS_S3_BUCKET_ROOT!;
     const buffer = Buffer.from(await file.arrayBuffer());
-    
+
     const uploadParams = {
       Bucket: bucketName,
       Key: `${rootPath}/${fileName}`, // Upload to the specified directory
@@ -612,48 +620,48 @@ export async function uploadImage(formData : FormData) {
       ContentType: file.type,
     };
 
-
     const response = await s3.send(new PutObjectCommand(uploadParams));
-    console.log(fileName)
+    console.log(fileName);
     console.log(response);
     if (response["$metadata"].httpStatusCode != 200) {
-      return { ok: false, error: "Failed to upload image.", url: null};
+      return { ok: false, error: "Failed to upload image.", url: null };
     }
-    return { ok: true, error: null, url: `${process.env.AWS_S3_BUCKET_URL}/${rootPath}/${fileName}`};
-
+    return {
+      ok: true,
+      error: null,
+      url: `${process.env.AWS_S3_BUCKET_URL}/${rootPath}/${fileName}`,
+    };
   } catch (err) {
     console.error(err);
-    return { ok: false, error: "Database Error: Failed to upload image.", url: null};
+    return {
+      ok: false,
+      error: "Database Error: Failed to upload image.",
+      url: null,
+    };
   }
-  
 }
 
-export async function deleteImage(fileName : string) {
+export async function deleteImage(fileName: string) {
   try {
-    
     const bucketName = process.env.AWS_S3_BUCKET_NAME!;
     const rootPath = process.env.AWS_S3_BUCKET_ROOT!;
-    
+
     const uploadParams = {
       Bucket: bucketName,
       Key: `${rootPath}/${fileName}`, // Upload to the specified directory
     };
 
-
     const response = await s3.send(new DeleteObjectCommand(uploadParams));
     console.log(response);
 
     if (response["$metadata"].httpStatusCode != 204) {
-      return { ok: false, error: "Failed to delete image"};
+      return { ok: false, error: "Failed to delete image" };
     }
 
-    console.log("Deleted Image")
-    return { ok: true, error: null};
-    
-  
+    console.log("Deleted Image");
+    return { ok: true, error: null };
   } catch (err) {
-    console.log(err)
-    return {ok : false, error: "Failed to delete image"};
+    console.log(err);
+    return { ok: false, error: "Failed to delete image" };
   }
-
 }

@@ -1,6 +1,6 @@
-import { NextResponse } from 'next/server';
-import AWS from 'aws-sdk';
-import { getSession } from 'next-auth/react';
+import { NextResponse } from "next/server";
+import AWS from "aws-sdk";
+import { getSession } from "next-auth/react";
 import { v4 as uuidv4 } from "uuid";
 
 const STRAPI_API_URL = process.env.STRAPI_API_URL;
@@ -19,23 +19,23 @@ const s3 = new AWS.S3({
 export async function POST(request: Request) {
   const session = await getSession(); // Check if the user is authenticated
 
-  console.log(request)
+  console.log(request);
   if (!session) {
-    return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
+    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }
 
   const formData = await request.formData();
-  const file = formData.get('file') as File;
+  const file = formData.get("file") as File;
 
   // Validate file type and size
-  const validFileTypes = ['image/jpeg', 'image/png', 'image/gif'];
+  const validFileTypes = ["image/jpeg", "image/png", "image/gif"];
   if (!validFileTypes.includes(file.type)) {
-    return NextResponse.json({ message: 'Invalid file type' }, { status: 400 });
+    return NextResponse.json({ message: "Invalid file type" }, { status: 400 });
   }
-  if (file.size > 5 * 1024 * 1024) { // Limit file size to 5MB
-    return NextResponse.json({ message: 'File too large' }, { status: 400 });
+  if (file.size > 5 * 1024 * 1024) {
+    // Limit file size to 5MB
+    return NextResponse.json({ message: "File too large" }, { status: 400 });
   }
-
 
   const fileName = encodeURIComponent(file.name);
   const fileType = file.type;
@@ -47,7 +47,6 @@ export async function POST(request: Request) {
     ContentType: fileType,
   };
 
-
   try {
     const signedUrl = await s3.getSignedUrlPromise("putObject", params);
     const uploadResponse = await fetch(signedUrl, {
@@ -55,11 +54,11 @@ export async function POST(request: Request) {
       headers: {
         "Content-Type": fileType,
       },
-      body: file
-    })
+      body: file,
+    });
 
     if (uploadResponse.ok) {
-      const publicImageURL =  `https://${AWS_S3_BUCKET_NAME}.s3.${AWS_S3_BUCKET_REGION}.amazonaws.com/${fileEndpoint}`;
+      const publicImageURL = `https://${AWS_S3_BUCKET_NAME}.s3.${AWS_S3_BUCKET_REGION}.amazonaws.com/${fileEndpoint}`;
       return NextResponse.json(publicImageURL);
     } else {
       return NextResponse.error();

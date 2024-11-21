@@ -19,7 +19,6 @@ export function CalloutEditor({
   updateBlock: (block: any) => void;
   deleteBlock: () => void;
 }) {
-  
   const handleUpdate = useCallback((content: any) => {
     let temp: any = JSON.parse(
       JSON.stringify(tiptapJSONToStrapiJSON(content.content ?? [])),
