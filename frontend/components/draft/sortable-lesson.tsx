@@ -1,5 +1,6 @@
 import React from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { cn } from "@/lib/utils";
@@ -10,7 +11,10 @@ interface SortableLessonProps {
   lesson: Lesson;
   droplet: Pick<Droplet, "id" | "name" | "slug" | "lessons">;
   pathname: string;
-  classes: string;
+  classes: {
+    link?: string;
+    activeLink?: string;
+  };
 }
 
 export function SortableLesson({
@@ -19,6 +23,8 @@ export function SortableLesson({
   pathname,
   classes,
 }: SortableLessonProps) {
+  const router = useRouter();
+
   const {
     attributes,
     listeners,
@@ -26,30 +32,47 @@ export function SortableLesson({
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: lesson.id });
+  } = useSortable({
+    id: lesson.id,
+  });
 
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
   };
 
+  const handleLessonClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    router.push(`/draft/d/${droplet.slug}/${lesson.slug}`);
+  };
+
   return (
     <li
       ref={setNodeRef}
       style={style}
-      {...attributes}
-      {...listeners}
       className={cn(
-        "group relative rounded-lg transition-colors cursor-grab active:cursor-grabbing",
-        isDragging && "shadow-lg cursor-grabbing z-10",
+        "group relative rounded-lg transition-colors",
+        isDragging && "shadow-lg z-10",
       )}
     >
       <div className="flex items-center">
-        <GripVertical className="w-4 h-4 text-slate-400 mr-2 shrink-0 pointer-events-none" />
+        <div
+          {...attributes}
+          {...listeners}
+          className="cursor-grab active:cursor-grabbing"
+        >
+          <GripVertical className="w-4 h-4 text-slate-400 mr-2 shrink-0" />
+        </div>
+
         <Link
           href={`/draft/d/${droplet.slug}/${lesson.slug}`}
-          className={cn(classes, "flex-grow flex items-center")}
-          onClick={(e) => e.stopPropagation()}
+          onClick={handleLessonClick}
+          className={cn(
+            classes.link,
+            "flex-grow flex items-center",
+            pathname === `/draft/d/${droplet.slug}/${lesson.slug}` &&
+              classes.activeLink,
+          )}
           passHref
         >
           {lesson.type === "activity" ? (
