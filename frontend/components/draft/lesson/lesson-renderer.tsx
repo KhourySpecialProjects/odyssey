@@ -82,18 +82,21 @@ export function LessonRenderer({
 
   const updateBlocksBackend = async (blocks: any) => {
     const response = await updateLesson(lesson.id, { blocks: blocks });
-    
+
     if (!response || response.error || !response.ok) {
-      console.log("Error updating Lesson")
-      const updatedBlocks = lastSavedBlocksRef.current.map((block) => ({ ...block }));
+      console.log("Error updating Lesson");
+      const updatedBlocks = lastSavedBlocksRef.current.map((block) => ({
+        ...block,
+      }));
       startTransition(() => {
         updateBlocksBackendReload(updatedBlocks).then((res) => {
-          toast.error("Failed to save lesson. Reverting to last saved version.");
-        })
-
+          toast.error(
+            "Failed to save lesson. Reverting to last saved version.",
+          );
+        });
       });
     } else {
-      console.log("Updated Lesson Succesfully")
+      console.log("Updated Lesson Succesfully");
       setLastSavedBlocks(blocks);
     }
   };
@@ -124,7 +127,7 @@ export function LessonRenderer({
       { blocks: blocks },
       { reload: true },
     );
-    console.log("Updated Blocks while reloading")
+    console.log("Updated Blocks while reloading");
   };
 
   const deleteLessonBackend = async () => {
