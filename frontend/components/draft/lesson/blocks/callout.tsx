@@ -1,6 +1,6 @@
 "use client";
 
-import TipTap from "@/components/ui/tiptap";
+import TipTap from "@/components/ui/tiptap/tiptap";
 
 import { JSONContent } from "@tiptap/react";
 import { updateLesson } from "@/lib/actions";
@@ -19,6 +19,7 @@ export function CalloutEditor({
   updateBlock: (block: any) => void;
   deleteBlock: () => void;
 }) {
+  
   const handleUpdate = useCallback((content: any) => {
     let temp: any = JSON.parse(
       JSON.stringify(tiptapJSONToStrapiJSON(content.content ?? [])),
