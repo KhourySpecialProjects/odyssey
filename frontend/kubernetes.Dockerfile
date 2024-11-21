@@ -13,7 +13,7 @@ COPY set_env.sh /usr/local/bin/set_env.sh
 # Make the script executable
 RUN chmod +x /usr/local/bin/set_env.sh
 
-ENV DO_CDN_URL=https://cdn.digitalocean.com
+ENV AWS_CDN_URL=https://odyssey-dev-bucket.s3.us-east-2.amazonaws.com
 
 # Copy package.json and package-lock.json to the working directory
 COPY package*.json ./
