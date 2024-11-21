@@ -132,11 +132,13 @@ export function LessonRenderer({
 
   const deleteLessonBackend = async () => {
     const response = await deleteLesson(lesson.id);
+
     if (response && !response.error) {
       router.replace("/draft/d/" + dropletSlug);
       console.log("Deleted Lesson");
     }
     console.log("Failed to delete lesson");
+
   };
 
   const debounceUpdate = useCallback(
@@ -171,7 +173,10 @@ export function LessonRenderer({
           >
             Regenerate URL Slug
           </Button>
-          <DeleteLessonButton deleteLesson={deleteLessonBackend} />
+          <DeleteLessonButton
+            deleteLesson={deleteLessonBackend}
+            dropletSlug={dropletSlug}
+          />
         </div>
       </div>
 
