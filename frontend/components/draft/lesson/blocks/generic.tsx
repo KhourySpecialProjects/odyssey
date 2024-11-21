@@ -2,7 +2,7 @@
 import { useCallback, useState } from "react";
 import { debounce } from "lodash";
 import { updateLesson, revalidateLesson } from "@/lib/actions";
-import TipTap from "@/components/ui/tiptap";
+import TipTap from "@/components/ui/tiptap/tiptap";
 import { Trash2Icon } from "lucide-react";
 
 export function GenericEditor({

@@ -1,6 +1,6 @@
 "use client";
 
-import TipTap from "../../ui/tiptap";
+import TipTap from "../../ui/tiptap/tiptap";
 import { debounce } from "lodash";
 import { useDropletUpdate } from "./hooks/useDropletUpdate";
 
