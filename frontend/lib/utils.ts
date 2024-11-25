@@ -77,7 +77,6 @@ export async function fetchAPI<T>(
         next: { ...config.next, revalidate: config.revalidate ?? 60 },
       }),
     };
-    console.log(mergedOptions);
 
     // Build request URL
     const queryString = qs.stringify(config.urlParams, {
@@ -217,12 +216,27 @@ export function strapiJSONToTiptapJSON(blockNodes: BlockNode[]): JSONContent[] {
 
       case "link":
         return {
+          type: "text",
+          text: (node.children[0] as TextNode).text,
+          marks: [
+            {
+              type: "link",
+              attrs: {
+                href: node.url,
+                target: "_blank",
+              },
+            },
+          ],
+        };
+      /*
+        return {
           type: "link",
           attrs: {
             href: node.url,
           },
           content: strapiJSONToTiptapJSON(node.children),
         };
+        */
 
       case "list-item":
         return {
@@ -238,12 +252,39 @@ export function strapiJSONToTiptapJSON(blockNodes: BlockNode[]): JSONContent[] {
       case "image":
         return {
           type: "image",
+          content: [],
           attrs: {
             src: node.image.url,
             alt: node.image.alternativeText,
             title: node.image.name,
+            name: node.image.name,
           },
         };
+
+      /*
+        if (node.children.length > 0 && node.children[0].type === "text" && node.children[0].text === "") {
+          return {
+            type: "paragraph", content: [ {
+            type: "image",
+            attrs: {
+              src: node.image.url,
+              alt: node.image.alternativeText,
+              title: node.image.name,
+            }},],
+          
+          };
+        }
+        return {
+          type: "paragraph", content: ([ {
+          type: "image",
+          attrs: {
+            src: node.image.url,
+            alt: node.image.alternativeText,
+            title: node.image.name,
+          }},] as JSONContent).concat(strapiJSONToTiptapJSON(node.children)),
+        
+        };
+        */
 
       case "list":
         return {
@@ -261,11 +302,19 @@ export function strapiJSONToTiptapJSON(blockNodes: BlockNode[]): JSONContent[] {
         };
 
       case "paragraph":
+        //node.children = node.children.filter((child) => !(child.type == "text" && child.text == ""));
+
         if (
           node.children.length === 1 &&
           node.children[0].type === "text" &&
           node.children[0].text === ""
         ) {
+          return {
+            type: "paragraph",
+          };
+        }
+
+        if (node.children.length == 0) {
           return {
             type: "paragraph",
           };
@@ -293,6 +342,19 @@ export function tiptapJSONToStrapiJSON(
   return jsonContent.map((node) => {
     switch (node.type) {
       case "text":
+        //if it's a lnk
+        if (node.marks?.some((mark) => mark.type === "link")) {
+          const mark = node.marks?.filter((mark) => mark.type === "link")[0];
+          return {
+            type: "link",
+            url:
+              node.marks?.filter((mark) => mark.type === "link")[0].attrs
+                ?.href || "",
+            children: [{ type: "text", text: node.text || "" }],
+          };
+        }
+
+        //if it's normal text
         return {
           type: "text",
           text: node.text || "",
@@ -312,11 +374,14 @@ export function tiptapJSONToStrapiJSON(
           children: tiptapJSONToStrapiJSON(node.content || []),
         };
 
+      //if its a list item
       case "listItem":
         return {
           type: "list-item",
           children:
             node.content?.flatMap((listItemNode) => {
+              return tiptapJSONToStrapiJSON(listItemNode.content || []);
+              //check here
               if (listItemNode.type === "paragraph") {
                 return tiptapJSONToStrapiJSON(listItemNode.content || []);
               }
@@ -324,28 +389,29 @@ export function tiptapJSONToStrapiJSON(
             }) || [],
         };
 
+      //if it's an image
       case "image":
         return {
           type: "image",
           image: {
-            url: node.attrs?.src || "",
-            alternativeText: node.attrs?.alt || "",
-            name: node.attrs?.title || "",
-            ext: "",
-            hash: "",
-            mime: "",
-            size: 0,
-            width: 0,
-            height: 0,
-            caption: "",
-            formats: {},
-            provider: "",
-            createdAt: "",
-            updatedAt: "",
-            previewUrl: null,
-            provider_metadata: null,
+            url: node.attrs?.src || "default_url",
+            alternativeText: node.attrs?.alt || "default_alt",
+            name: node.attrs?.title || "default_title",
+            ext: node.attrs?.ext || "jpg",
+            hash: node.attrs?.hash || "default_hash",
+            mime: node.attrs?.mine || "image/jpeg",
+            size: node.attrs?.size || 0,
+            width: node.attrs?.width || 0,
+            height: node.attrs?.height || 0,
+            caption: node.attrs?.caption || "",
+            formats: node.attrs?.formats || {},
+            provider: node.attrs?.provider || "default_provider",
+            createdAt: node.attrs?.createdAt || new Date().toISOString(),
+            updatedAt: node.attrs?.updatedAt || new Date().toISOString(),
+            previewUrl: node.attrs?.previewUrl || null,
+            provider_metadata: node.attrs?.provider_metadata || null,
           },
-          children: [],
+          children: [{ type: "text", text: "" }],
         };
 
       case "bulletList":
@@ -370,17 +436,49 @@ export function tiptapJSONToStrapiJSON(
         };
 
       case "paragraph":
+        //node.content = node.content?.filter((child) => !(child.type == "text" && child.text == "")) || [];
+
         if (node.content && node.content.length > 0) {
+          /*
+          if (node.content[0].type === "image") {
+            return {
+              type: "image",
+              image: {
+                url: node.content[0].attrs?.src || "default_url",
+                alternativeText: node.content[0].attrs?.alt || "default_alt",
+                name: node.content[0].attrs?.title || "default_title",
+                ext: node.content[0].attrs?.ext ||  "jpg",
+                hash: node.content[0].attrs?.hash || "default_hash",
+                mime: node.content[0].attrs?.mine ||  "image/jpeg",
+                size: node.content[0].attrs?.size || 0,
+                width: node.content[0].attrs?.width || 0,
+                height: node.content[0].attrs?.height || 0,
+                caption: node.content[0].attrs?.caption || "",
+                formats: node.content[0].attrs?.formats || {},
+                provider: node.content[0].attrs?.provider || "default_provider",
+                createdAt: node.content[0].attrs?.createdAt || new Date().toISOString(),
+                updatedAt: node.content[0].attrs?.updatedAt || new Date().toISOString(),
+                previewUrl: node.content[0].attrs?.previewUrl || null,
+                provider_metadata: node.content[0].attrs?.provider_metadata || null,
+              },
+              children: node.content.slice(1).length == 0 ? [{type: "text", text:""}] : tiptapJSONToStrapiJSON(node.content.slice(1)),
+            };
+          }
+          */
+
           return {
             type: "paragraph",
             children: tiptapJSONToStrapiJSON(node.content || []),
           };
         } else {
-          console.log("got here!!!");
-          return {
+          const ret = {
             type: "paragraph",
-            children: [{ type: "text", text: "" }],
+            children: [
+              { type: "text", text: "" },
+              ...tiptapJSONToStrapiJSON(node.content || []),
+            ],
           };
+          return ret as BlockNode;
         }
 
       case "blockquote":

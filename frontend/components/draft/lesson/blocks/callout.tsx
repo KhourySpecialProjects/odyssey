@@ -1,6 +1,6 @@
 "use client";
 
-import TipTap from "@/components/ui/tiptap";
+import TipTap from "@/components/ui/tiptap/tiptap";
 
 import { JSONContent } from "@tiptap/react";
 import { updateLesson } from "@/lib/actions";

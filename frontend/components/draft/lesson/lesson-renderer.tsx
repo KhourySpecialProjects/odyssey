@@ -1,13 +1,13 @@
 "use client";
 
 import { Lesson } from "@/types";
-import TipTap from "@/components/ui/tiptap";
+import TipTap from "@/components/ui/tiptap/tiptap";
 import { ExpandableEditor } from "@/components/draft/lesson/blocks/expandable";
 import { VideoEditor } from "@/components/draft/lesson/blocks/video";
 import { CalloutEditor } from "./blocks/callout";
 import { GenericEditor } from "./blocks/generic";
 import { AddBlock } from "./add-block";
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { debounce } from "lodash";
 import { updateLesson } from "@/lib/actions";
 import { useRouter } from "next/navigation";
@@ -15,6 +15,10 @@ import { htmlToText } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { DeleteLessonButton } from "./delete-lesson";
 import { deleteLesson } from "@/lib/actions";
+import { Separator } from "@/components/ui/separator";
+import { toast } from "sonner";
+import { useTransition } from "react";
+
 
 export function LessonRenderer({
   lesson,
@@ -26,8 +30,10 @@ export function LessonRenderer({
   const router = useRouter();
 
   const [blocks, setBlocks] = useState(lesson.blocks);
+  const [lastSavedBlocks, setLastSavedBlocks] = useState(lesson.blocks);
+  const lastSavedBlocksRef = useRef(lastSavedBlocks);
   const [name, setName] = useState(lesson.name);
-  console.log(blocks);
+  const [isPending, startTransition] = useTransition();
 
   const setBlock = useCallback(
     (index: number) => {
@@ -68,12 +74,32 @@ export function LessonRenderer({
 
   useEffect(() => {
     setBlocks(lesson.blocks);
+    setLastSavedBlocks(lesson.blocks);
   }, [lesson]);
 
+  useEffect(() => {
+    lastSavedBlocksRef.current = lastSavedBlocks;
+  }, [lastSavedBlocks]);
+
   const updateBlocksBackend = async (blocks: any) => {
-    console.log(blocks);
     const response = await updateLesson(lesson.id, { blocks: blocks });
-    console.log(response);
+
+    if (!response || response.error || !response.ok) {
+      console.log("Error updating Lesson");
+      const updatedBlocks = lastSavedBlocksRef.current.map((block) => ({
+        ...block,
+      }));
+      startTransition(() => {
+        updateBlocksBackendReload(updatedBlocks).then((res) => {
+          toast.error(
+            "Failed to save lesson. Reverting to last saved version.",
+          );
+        });
+      });
+    } else {
+      console.log("Updated Lesson Succesfully");
+      setLastSavedBlocks(blocks);
+    }
   };
 
   const updateNameBackend = async (name: string) => {
@@ -97,22 +123,23 @@ export function LessonRenderer({
   };
 
   const updateBlocksBackendReload = async (blocks: any) => {
-    console.log(blocks);
     const response = await updateLesson(
       lesson.id,
       { blocks: blocks },
       { reload: true }
     );
-    console.log(response);
+    console.log("Updated Blocks while reloading");
   };
 
   const deleteLessonBackend = async () => {
     const response = await deleteLesson(lesson.id);
-    console.log("helllloooo");
-    console.log(response);
+
     if (response && !response.error) {
       router.replace("/draft/d/" + dropletSlug);
+      console.log("Deleted Lesson");
     }
+    console.log("Failed to delete lesson");
+
   };
 
   const debounceUpdate = useCallback(
@@ -147,7 +174,10 @@ export function LessonRenderer({
           >
             Regenerate URL Slug
           </Button>
-          <DeleteLessonButton deleteLesson={deleteLessonBackend} />
+          <DeleteLessonButton
+            deleteLesson={deleteLessonBackend}
+            dropletSlug={dropletSlug}
+          />
         </div>
       </div>
 

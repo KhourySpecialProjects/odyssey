@@ -1,7 +1,7 @@
 "use client";
 
 import { ArrowDownFromLineIcon, Trash2Icon } from "lucide-react";
-import TipTap from "@/components/ui/tiptap";
+import TipTap from "@/components/ui/tiptap/tiptap";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { useState, useCallback, useEffect, useRef } from "react";
@@ -47,19 +47,16 @@ export function ExpandableEditor({
           onClick={deleteBlock}
         />
       </div>
-      <div className="inline-flex flex-row items-center gap-2 font-bold text-sky-600 w-full">
+      <div className="inline-flex mb-4 flex-row items-center gap-2 font-bold text-sky-600 w-full">
         <Input
-          className="mb-3"
           value={title}
           onChange={updateTitle}
           placeholder={"Title"}
         ></Input>
         <ArrowDownFromLineIcon className="w-4 h-4 text-sky-400" />
       </div>
-      <Separator />
 
       <TipTap
-        className="mt-3"
         variant="lesson-expandable-body"
         initialContent={content}
         updateContent={updateContent}

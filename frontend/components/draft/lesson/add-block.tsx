@@ -9,9 +9,12 @@ import {
 } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
+import { useRef } from "react";
+import { useOffClick } from "../metadata/hooks/useOffClick";
 
 export function AddBlock({ add }: { add: (block: any) => void }) {
-  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+  const { open, setOpen } = useOffClick(ref);
 
   return (
     <div className="w-full flex justify-center items-center gap-3 flex-wrap max-w-2xl">
@@ -22,7 +25,7 @@ export function AddBlock({ add }: { add: (block: any) => void }) {
           </Button>
         </PopoverTrigger>
 
-        <PopoverContent className="space-y-1">
+        <PopoverContent className="space-y-1" ref={ref}>
           <Button
             onClick={() => {
               setOpen(false);
