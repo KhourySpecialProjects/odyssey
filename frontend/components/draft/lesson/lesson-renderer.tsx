@@ -138,7 +138,6 @@ export function LessonRenderer({
       console.log("Deleted Lesson");
     }
     console.log("Failed to delete lesson");
-
   };
 
   const debounceUpdate = useCallback(

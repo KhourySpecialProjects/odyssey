@@ -12,7 +12,6 @@ import { BioFormSchema } from "./validations/author";
 import { AuthorizedUserSchema } from "./validations/authorized-user";
 import { DropletEnrollmentSchema } from "./validations/enrollment";
 import { reportSchema } from "./validations/report";
-import { AuthorizedUserRole } from "@/types";
 import { AuthorizedUserRoleTitle } from "./globals";
 import { getAuthorizedUserRoleIdByTitle } from "./requests/authorized-user-roles";
 import { DropletSchema } from "./validations/droplet";
