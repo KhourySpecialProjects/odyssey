@@ -35,7 +35,7 @@ jobs:
 
       - name: Build frontend
         env:
-          DO_CDN_URL: ${{ secrets.DO_CDN_URL }}
+          AWS_CDN_URL: ${{ secrets.AWS_CDN_URL }}
         run: |
           cd ./frontend 
           npm run build

@@ -40,15 +40,15 @@ export default ({ env }) => ({
     config: {
       provider: "aws-s3",
       providerOptions: {
-        baseUrl: env("DO_CDN_URL"),
-        rootPath: env("DO_CDN_ROOT_PATH"),
+        baseUrl: env("AWS_CDN_URL"),
+        rootPath: env("AWS_CDN_ROOT_PATH"),
         s3Options: {
-          accessKeyId: env("DO_SPACE_ACCESS_KEY"),
-          secretAccessKey: env("DO_SPACE_SECRET_KEY"),
-          region: env("DO_SPACE_REGION"),
-          endpoint: env("DO_SPACE_ENDPOINT"),
+          accessKeyId: env("AWS_S3_ACCESS_KEY"),
+          secretAccessKey: env("AWS_S3_SECRET_KEY"),
+          region: env("AWS_S3_REGION"),
+          endpoint: env("AWS_S3_ENDPOINT"),
           params: {
-            Bucket: env("DO_SPACE_BUCKET"),
+            Bucket: env("AWS_S3_BUCKET"),
           },
         },
       },
