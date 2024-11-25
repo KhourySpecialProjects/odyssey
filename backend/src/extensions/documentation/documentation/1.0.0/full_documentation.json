@@ -11,7 +11,7 @@
       "url": "https://khouryodyssey.org"
     },
     "license": null,
-    "x-generation-date": "2024-11-25T04:52:17.614Z"
+    "x-generation-date": "2024-11-25T05:47:37.573Z"
   },
   "x-strapi-config": {
     "plugins": [
@@ -13869,6 +13869,9 @@
         ],
         "properties": {
           "data": {
+            "required": [
+              "duration"
+            ],
             "type": "object",
             "properties": {
               "droplets": {
@@ -13893,6 +13896,17 @@
               },
               "isPublic": {
                 "type": "boolean"
+              },
+              "description": {
+                "type": "string"
+              },
+              "duration": {
+                "type": "string",
+                "enum": [
+                  "short",
+                  "medium",
+                  "long"
+                ]
               }
             }
           }
@@ -13946,6 +13960,9 @@
       },
       "Playlist": {
         "type": "object",
+        "required": [
+          "duration"
+        ],
         "properties": {
           "droplets": {
             "type": "object",
@@ -15577,6 +15594,17 @@
           },
           "isPublic": {
             "type": "boolean"
+          },
+          "description": {
+            "type": "string"
+          },
+          "duration": {
+            "type": "string",
+            "enum": [
+              "short",
+              "medium",
+              "long"
+            ]
           },
           "createdAt": {
             "type": "string",

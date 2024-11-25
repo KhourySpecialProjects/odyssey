@@ -126,6 +126,8 @@ export type Playlist = {
   slug: string;
   isPublic: boolean;
   droplets?: Droplet[];
+  duration: "short" | "medium" | "long";
+  description?: string;
 };
 
 export type PlaylistListResponse = {

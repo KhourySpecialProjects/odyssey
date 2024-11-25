@@ -4,7 +4,8 @@
   "info": {
     "singularName": "playlist",
     "pluralName": "playlists",
-    "displayName": "Playlist"
+    "displayName": "Playlist",
+    "description": ""
   },
   "options": {
     "draftAndPublish": true
@@ -25,6 +26,19 @@
     },
     "isPublic": {
       "type": "boolean"
+    },
+    "description": {
+      "type": "text"
+    },
+    "duration": {
+      "type": "enumeration",
+      "enum": [
+        "short",
+        "medium",
+        "long"
+      ],
+      "required": true,
+      "default": "medium"
     }
   }
 }

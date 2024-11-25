@@ -19,9 +19,6 @@ export function DropletTile({
   const completedLessons = droplet.lessons?.filter(lesson => 
     completedLessonIds.includes(lesson.id)
   ).length || 0;
-
-  console.log(completedLessonIds);
-  console.log(totalLessons);
   
   const getBackgroundColor = () => {
     if (!isEnrolled) return "bg-slate-50"; // Default gray

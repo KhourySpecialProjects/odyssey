@@ -1217,6 +1217,7 @@ export interface ApiPlaylistPlaylist extends Schema.CollectionType {
     singularName: 'playlist';
     pluralName: 'playlists';
     displayName: 'Playlist';
+    description: '';
   };
   options: {
     draftAndPublish: true;
@@ -1230,6 +1231,10 @@ export interface ApiPlaylistPlaylist extends Schema.CollectionType {
     name: Attribute.String;
     slug: Attribute.UID<'api::playlist.playlist', 'name'>;
     isPublic: Attribute.Boolean;
+    description: Attribute.Text;
+    duration: Attribute.Enumeration<['short', 'medium', 'long']> &
+      Attribute.Required &
+      Attribute.DefaultTo<'medium'>;
     createdAt: Attribute.DateTime;
     updatedAt: Attribute.DateTime;
     publishedAt: Attribute.DateTime;
