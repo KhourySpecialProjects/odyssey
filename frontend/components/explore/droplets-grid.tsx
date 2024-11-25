@@ -3,7 +3,11 @@ import {
   MessageDescription,
   MessageHeader,
 } from "@/components/message";
+import { getCurrentUser } from "@/lib/auth/session";
+import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
+import { getAuthorizedUserActivity } from "@/lib/requests/authorized-user-activity";
 import { getDroplets } from "@/lib/requests/droplet";
+import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
 import { DropletTile } from "../droplets/droplet-tile";
 
 export async function DropletsGrid({
@@ -45,8 +49,26 @@ export async function DropletsGrid({
           : {},
       ],
     },
-    populate: "tags",
+    populate: {
+      tags: true,
+      lessons: {
+        fields: ['id', 'name', 'slug']
+      }
+    },
   });
+
+  const user = await getCurrentUser();
+  let enrolledDropletIds: number[] = [];
+  let completedLessonIds: number[] = [];
+
+  if (user?.email) {
+    const authorizedUser = await getAuthorizedUserByEmail(user.email);
+    const enrollments = await getEnrollmentsByAuthorizedUser(authorizedUser.id);
+    enrolledDropletIds = enrollments.map(e => e.droplet.id);
+    
+    const activity = await getAuthorizedUserActivity(authorizedUser.id);
+    completedLessonIds = activity?.lessons?.map(l => l.id) || [];
+  }
 
   if (!droplets || droplets.length === 0) {
     return (
@@ -62,7 +84,12 @@ export async function DropletsGrid({
   return (
     <ul className="grid grid-flow-row grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
       {droplets.map((droplet) => (
-        <DropletTile key={droplet.id} droplet={droplet} />
+        <DropletTile 
+          key={droplet.id} 
+          droplet={droplet}
+          isEnrolled={enrolledDropletIds.includes(droplet.id)}
+          completedLessonIds={completedLessonIds}
+        />
       ))}
     </ul>
   );

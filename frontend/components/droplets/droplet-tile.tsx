@@ -1,11 +1,48 @@
 import { Badge } from "@/components/ui/badge";
-import { uppercaseFirstChar } from "@/lib/utils";
+import { cn, uppercaseFirstChar } from "@/lib/utils";
 import { Droplet } from "@/types";
 import Link from "next/link";
 
-export function DropletTile({ droplet }: { droplet: Droplet }) {
+interface DropletTileProps {
+  droplet: Droplet;
+  isEnrolled?: boolean;
+  completedLessonIds?: number[];
+}
+
+export function DropletTile({ 
+  droplet, 
+  isEnrolled = false,
+  completedLessonIds = [] 
+}: DropletTileProps) {
+
+  const totalLessons = droplet.lessons?.length ?? 0;
+  const completedLessons = droplet.lessons?.filter(lesson => 
+    completedLessonIds.includes(lesson.id)
+  ).length || 0;
+
+  console.log(completedLessonIds);
+  console.log(totalLessons);
+  
+  const getBackgroundColor = () => {
+    if (!isEnrolled) return "bg-slate-50"; // Default gray
+    if (completedLessons === 0) return "bg-red-50"; // No lessons completed
+    if (completedLessons < totalLessons) return "bg-amber-50"; // Some lessons completed
+    return "bg-emerald-50"; // All lessons completed
+  };
+
+  const getBorderColor = () => {
+    if (!isEnrolled) return "border-slate-200 hover:border-slate-300";
+    if (completedLessons === 0) return "border-red-200 hover:border-red-300";
+    if (completedLessons < totalLessons) return "border-amber-200 hover:border-amber-300";
+    return "border-emerald-200 hover:border-emerald-300";
+  };
+
   return (
-    <li className="transition-colors border rounded-md bg-slate-50 border-slate-200 hover:border-slate-300">
+    <li className={cn(
+      "transition-colors border rounded-md",
+      getBackgroundColor(),
+      getBorderColor()
+    )}>
       <Link
         className="relative inline-flex w-full h-full p-6"
         href={
