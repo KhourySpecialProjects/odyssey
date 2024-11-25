@@ -21,7 +21,7 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export function getStrapiURL(path = "") {
-  return `${process.env.STRAPI_API_URL || "http://localhost:1337"}${path}`;
+  return `${process.env.NEXT_PUBLIC_STRAPI_API_URL || "http://localhost:1337"}${path}`;
 }
 
 /**
@@ -56,7 +56,7 @@ export async function fetchAPI<T>(
   path: string,
   config: {
     urlParams?: Object;
-    options?: Object;
+    options?: RequestInit;
     next?: Object;
     revalidate?: number;
     flattenResponse?: boolean;
@@ -64,8 +64,6 @@ export async function fetchAPI<T>(
   },
 ): Promise<T> {
   try {
-    // Merge default and user options
-
     const mergedOptions = {
       headers: {
         "Content-Type": "application/json",
@@ -77,31 +75,38 @@ export async function fetchAPI<T>(
         next: { ...config.next, revalidate: config.revalidate ?? 60 },
       }),
     };
-    console.log(mergedOptions);
 
-    // Build request URL
     const queryString = qs.stringify(config.urlParams, {
       encodeValuesOnly: true,
     });
-    const requestUrl = `${getStrapiURL(
-      `/api${path}${queryString ? `?${queryString}` : ""}`,
-    )}`;
 
-    // Trigger API call
-    return await fetch(requestUrl, mergedOptions).then(async (response) => {
-      let data = await response.json();
-      if (
-        config.flattenResponse ||
-        typeof config.flattenResponse === "undefined"
-      ) {
-        data = flattenAttributes(data.data);
-      }
-      return data;
-    });
+    // Use different base URLs for client and server
+    const baseUrl = process.env.NEXT_PUBLIC_STRAPI_API_URL;
+    const requestUrl = `${baseUrl}/api${path}${queryString ? `?${queryString}` : ""}`;
+
+    console.log('Fetching from:', requestUrl);
+    
+    const response = await fetch(requestUrl, mergedOptions);
+    
+    if (!response.ok) {
+      console.error('Response status:', response.status);
+      console.error('Response status text:', response.statusText);
+      const errorText = await response.text();
+      console.error('Response body:', errorText);
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    
+    if (config.flattenResponse || typeof config.flattenResponse === "undefined") {
+      return flattenAttributes(data.data);
+    }
+    
+    return data;
   } catch (error) {
-    console.error(error);
+    console.error('Fetch error:', error);
     throw new Error(
-      `Please check if your server is running and you set all the required tokens.`,
+      `Failed to fetch data: ${error instanceof Error ? error.message : 'Unknown error'}`,
     );
   }
 }
@@ -169,8 +174,10 @@ export function getPath(type: "droplet", slug: string): string {
 }
 
 export function isAuthorizedUserAdmin(
-  roles: AuthorizedUserRoleTitle[],
+  roles?: AuthorizedUserRoleTitle[] | null,
 ): boolean {
+  if (!roles) return false;
+  
   for (const role of roles) {
     if (AuthorizedUserAdminRoles.includes(role)) {
       return true;
@@ -179,7 +186,9 @@ export function isAuthorizedUserAdmin(
   return false;
 }
 
-export function isContentCreator(roles: AuthorizedUserRoleTitle[]): boolean {
+export function isContentCreator(roles?: AuthorizedUserRoleTitle[] | null): boolean {
+  if (!roles) return false;
+
   for (const role of roles) {
     if (role === AuthorizedUserRoleTitle.ContentCreator) {
       return true;
@@ -188,7 +197,8 @@ export function isContentCreator(roles: AuthorizedUserRoleTitle[]): boolean {
   return false;
 }
 
-export function condenseRoleTitles(roles: AuthorizedUserRoleTitle[]): string {
+export function condenseRoleTitles(roles?: AuthorizedUserRoleTitle[] | null): string {
+  if (!roles) return "";
   return roles.join(", ");
 }
 

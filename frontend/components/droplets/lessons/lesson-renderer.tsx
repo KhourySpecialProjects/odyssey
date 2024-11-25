@@ -1,3 +1,5 @@
+"use client";
+
 import {
   Collapsible,
   CollapsibleContent,
@@ -8,9 +10,29 @@ import { Lesson } from "@/types";
 import { BlocksRenderer } from "@strapi/blocks-react-renderer";
 import { ArrowDownFromLineIcon } from "lucide-react";
 import { QuizBlock } from "./quiz";
+import { completeLesson } from "@/lib/actions";
+import { useTransition } from "react";
 
-export function LessonRenderer({ lesson }: { lesson: Lesson }) {
-  console.log(lesson.blocks);
+export function LessonRenderer({ 
+  lesson,
+  activityId,
+  completedLessonIds 
+}: { 
+  lesson: Lesson;
+  activityId?: number;
+  completedLessonIds: number[];
+}) {
+  const [isPending, startTransition] = useTransition();
+
+  const handleComplete = () => {
+    if (!activityId) return;
+    
+    startTransition(async () => {
+      const newLessonIds = [...completedLessonIds, lesson.id];
+      await completeLesson(activityId, newLessonIds);
+    });
+  };
+
   let headings: any[] = [];
   lesson.blocks
     .filter((b: any) => b.__component === "droplets.generic")
@@ -42,6 +64,21 @@ export function LessonRenderer({ lesson }: { lesson: Lesson }) {
         {lesson.blocks.map((b: any, i: number) => (
           <LessonBlockRenderer key={i} block={b} />
         ))}
+      </div>
+
+      <div className="mt-8 flex justify-between items-center">
+        <button
+          onClick={handleComplete}
+          disabled={isPending || !activityId || completedLessonIds.includes(lesson.id)}
+          className="px-4 py-2 bg-sky-600 text-white rounded-lg hover:bg-sky-700 disabled:opacity-50"
+        >
+          {isPending 
+            ? 'Marking as complete...' 
+            : completedLessonIds.includes(lesson.id)
+            ? 'Completed'
+            : 'Mark as complete'
+          }
+        </button>
       </div>
     </div>
   );
