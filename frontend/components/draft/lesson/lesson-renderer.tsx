@@ -15,7 +15,6 @@ import { htmlToText } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { DeleteLessonButton } from "./delete-lesson";
 import { deleteLesson } from "@/lib/actions";
-import { Separator } from "@/components/ui/separator";
 
 export function LessonRenderer({
   lesson,
@@ -34,11 +33,11 @@ export function LessonRenderer({
     (index: number) => {
       return (block: any) => {
         setBlocks((prevBlocks) =>
-          prevBlocks.map((b, i) => (i === index ? { ...b, ...block } : b)),
+          prevBlocks.map((b, i) => (i === index ? { ...b, ...block } : b))
         );
       };
     },
-    [], // Add blocks as a dependency
+    [] // Add blocks as a dependency
   );
 
   const deleteBlock = useCallback(
@@ -49,7 +48,7 @@ export function LessonRenderer({
         updateBlocksBackendReload(updatedBlocks);
       };
     },
-    [blocks],
+    [blocks]
   );
 
   const addBlock = useCallback(
@@ -60,7 +59,7 @@ export function LessonRenderer({
         updateBlocksBackendReload(updatedBlocks);
       };
     },
-    [blocks],
+    [blocks]
   );
 
   useEffect(() => {
@@ -89,7 +88,7 @@ export function LessonRenderer({
     const response = await updateLesson(
       lesson.id,
       { name: name },
-      { regenerateSlug: true },
+      { regenerateSlug: true }
     );
     if (response && !response.error) {
       const slug = response.data.attributes.slug;
@@ -102,7 +101,7 @@ export function LessonRenderer({
     const response = await updateLesson(
       lesson.id,
       { blocks: blocks },
-      { reload: true },
+      { reload: true }
     );
     console.log(response);
   };
@@ -118,11 +117,11 @@ export function LessonRenderer({
 
   const debounceUpdate = useCallback(
     debounce(updateBlocksBackend, 1000, { maxWait: 3000 }),
-    [],
+    []
   );
   const debouncedNameUpdate = useCallback(
     debounce(updateNameBackend, 1000),
-    [],
+    []
   );
 
   return (
