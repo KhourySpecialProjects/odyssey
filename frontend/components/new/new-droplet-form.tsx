@@ -112,7 +112,7 @@ export function CreateDropletForm({
 
   return (
     <form
-      className="w-full flex flex-col items-center justify-center space-y-4 h-min p-5"
+      className="w-4/5 flex flex-col items-center justify-center space-y-4 h-min p-5"
       action={addDroplet}
       autoComplete="off"
     >
@@ -131,7 +131,7 @@ export function CreateDropletForm({
               onChange={(e) => setDropletName(e.target.value)}
             />
           </div>
-          <div className="flex lg:flex-row xs:flex-col items-start justify-start gap-y-8 gap-x-14">
+          <div className="flex lg:flex-row xs:flex-col items-start justify-start gap-y-8 gap-x-10">
             {focusAreaFilter && (
               <Select
                 key={focusAreaFilter.name}
@@ -175,7 +175,7 @@ export function CreateDropletForm({
               setSelected={setTypeValue}
             />
           </div>
-          <div className="flex lg:flex-row xs:flex-col items-start justify-start gap-y-8 gap-x-14">
+          <div className="flex lg:flex-row xs:flex-col items-start justify-start gap-y-8 gap-x-10">
             <div className="lg:w-1/2 xs:w-full">
               <div className="font-semibold text-sm py-1.5">Tags</div>
               <MultiSelect
