@@ -52,7 +52,7 @@ export function MultiSelect({
             </div>
             {selected?.length > 0 ? (
               <>
-                <div className="gap-1 flex flex-wrap items-center justify-start w-48">
+                <div className="gap-1 flex flex-wrap items-center justify-start w-full">
                   {selected.map((option) => (
                     <Badge
                       variant="secondary"

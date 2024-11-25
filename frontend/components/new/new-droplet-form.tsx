@@ -116,11 +116,11 @@ export function CreateDropletForm({
       action={addDroplet}
       autoComplete="off"
     >
-      <div className="w-full flex lg:flex-row xs:flex-col items-start justify-between gap-2">
-        <div className="lg:w-1/5 xs:w-0 font-semibold text-sm py-0.5 pb-2 text-slate-400">
+      <div className="w-full flex flex-col items-start justify-between gap-2">
+        <div className="w-full font-semibold text-sm py-0.5 pb-2 text-slate-400">
           Metadata
         </div>
-        <div className="lg:w-3/5 xs:w-full flex flex-col gap-3 border rounded-md border-slate-200 p-8 bg-white">
+        <div className="w-full flex flex-col gap-3 border rounded-md border-slate-200 p-8 bg-white">
           <div>
             <div className="font-semibold text-sm py-0.5 pb-2">Name</div>
             <Input
@@ -131,7 +131,7 @@ export function CreateDropletForm({
               onChange={(e) => setDropletName(e.target.value)}
             />
           </div>
-          <div className="flex lg:flex-row xs:flex-col items-start justify-start gap-8">
+          <div className="flex lg:flex-row xs:flex-col items-start justify-start gap-y-8 gap-x-14">
             {focusAreaFilter && (
               <Select
                 key={focusAreaFilter.name}
@@ -175,7 +175,7 @@ export function CreateDropletForm({
               setSelected={setTypeValue}
             />
           </div>
-          <div className="flex lg:flex-row xs:flex-col items-start justify-start gap-8">
+          <div className="flex lg:flex-row xs:flex-col items-start justify-start gap-y-8 gap-x-14">
             <div className="lg:w-1/2 xs:w-full">
               <div className="font-semibold text-sm py-1.5">Tags</div>
               <MultiSelect
@@ -208,12 +208,12 @@ export function CreateDropletForm({
         </div>
       </div>
 
-      <div className="w-full flex lg:flex-row xs:flex-col items-start justify-between gap-2">
-        <div className="lg:w-1/5 xs:w-0 font-semibold text-sm py-0.5 pb-2 text-slate-400">
+      <div className="w-full flex flex-col items-start justify-between gap-2">
+        <div className="w-full font-semibold text-sm py-0.5 pb-2 text-slate-400">
           Overview
         </div>
         <LearningObjectivesInput
-          className="lg:w-3/5 xs:w-full flex flex-col gap-3 border rounded-md border-slate-200 p-8 bg-white"
+          className="w-full flex flex-col gap-3 border rounded-md border-slate-200 p-8 bg-white"
           learningObjectives={learningObjectives}
           setLearningObjectives={setLearningObjectives}
         />
