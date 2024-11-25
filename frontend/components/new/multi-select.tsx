@@ -1,16 +1,12 @@
 "use client";
 
-import { useState } from "react";
-import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import {
   Command,
-  CommandEmpty,
   CommandGroup,
   CommandInput,
   CommandItem,
   CommandList,
-  CommandSeparator,
 } from "@/components/ui/command";
 import {
   Popover,
@@ -49,11 +45,10 @@ export function MultiSelect({
           <Button variant="outline" className={cn("h-fit", className)}>
             <div className="flex flex-row items-center justify-center gap-2">
               <ChevronDown />
-              {label}
             </div>
             {selected?.length > 0 ? (
               <>
-                <div className="gap-1 flex flex-wrap items-center justify-center w-48">
+                <div className="gap-1 flex flex-wrap items-center justify-start w-full">
                   {selected.map((option) => (
                     <Badge
                       variant="secondary"
@@ -66,7 +61,9 @@ export function MultiSelect({
                 </div>
               </>
             ) : (
-              <p className="text-slate-400 w-48">Nothing yet...</p>
+              <p className="flex justify-start text-slate-400 w-48">
+                Select...
+              </p>
             )}
           </Button>
         </PopoverTrigger>

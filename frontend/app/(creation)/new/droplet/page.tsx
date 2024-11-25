@@ -2,10 +2,8 @@ import { CreateDroplet } from "@/components/new/new-droplet";
 
 export default async function CreateDropletRoute() {
   return (
-    <>
-      <div className="w-full flex items-center justify-center flex-col select-none h-screen">
-        <CreateDroplet />
-      </div>
-    </>
+    <div className="relative bg-slate-100 isolate px-6 py-12 sm:py-16 lg:px-8">
+      <CreateDroplet />
+    </div>
   );
 }
