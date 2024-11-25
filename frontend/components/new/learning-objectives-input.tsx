@@ -22,7 +22,7 @@ export function LearningObjectivesInput({
     <div
       className={cn(
         "select-none w-min flex flex-col items-start justify-center",
-        className
+        className,
       )}
     >
       <div className="w-full flex items-center justify-between mb-0">
