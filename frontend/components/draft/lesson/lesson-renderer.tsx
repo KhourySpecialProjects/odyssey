@@ -15,9 +15,6 @@ import { htmlToText } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { DeleteLessonButton } from "./delete-lesson";
 import { deleteLesson } from "@/lib/actions";
-import { Separator } from "@/components/ui/separator";
-import { toast } from "sonner";
-import { useTransition } from "react";
 
 export function LessonRenderer({
   lesson,
