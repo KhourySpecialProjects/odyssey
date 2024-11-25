@@ -1,61 +1,54 @@
 import { LessonRenderer } from "@/components/droplets/lessons/lesson-renderer";
+import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
+import { getAuthorizedUserActivity } from "@/lib/requests/authorized-user-activity";
 import { getLessonBySlug } from "@/lib/requests/lesson";
-import { Lesson } from "@/types";
-import { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { getServerSession } from "next-auth";
 
-type Props = {
-  params: Promise<Params>;
-};
+export default async function LessonPage({ 
+  params 
+}: { 
+  params: { slug: string; lessonSlug: string } 
+}) {
+  const session = await getServerSession();
+  let activityId: number | undefined;
+  let completedLessonIds: number[] = [];
 
-type Params = {
-  slug: string;
-  lessonSlug?: string;
-};
-
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const p = await params;
-  const lesson = await getLessonBySlug<Pick<Lesson, "name">>(
-    p.lessonSlug?.toString() || "",
-    { fields: ["name"], populate: undefined },
-  );
-  if (!lesson) return {};
-
-  return {
-    title: lesson.name,
-  };
-}
-
-export default async function LessonRoute({ params }: Props) {
-  const p = await params;
-  const lesson = await getLessonBySlug(p.lessonSlug || "", {
-    populate: {
-      blocks: {
-        on: {
-          "droplets.generic": {
-            populate: "*",
-          },
-          "droplets.video": {
-            populate: "*",
-          },
-          "droplets.quiz": {
-            populate: {
-              questions: {
-                populate: { answerOptions: "*" },
-              },
-            },
-          },
-          "droplets.callout": {
-            populate: "*",
-          },
-          "droplets.expandable": {
-            populate: "*",
-          },
+  if (session?.user?.email) {
+    const user = await getAuthorizedUserByEmail(session.user.email);
+    const activity = await getAuthorizedUserActivity(user.id);
+    if (activity) {
+      activityId = activity.id;
+      completedLessonIds = activity.lessons?.map(l => l.id) || [];
+    } else {
+      // Create a new activity record if one doesn't exist
+      const response = await fetch(`${process.env.NEXT_PUBLIC_STRAPI_API_URL}/api/authorized-user-activities`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${process.env.STRAPI_ACCESS_TOKEN}`,
         },
-      },
-    },
-  });
-  if (!lesson) return notFound();
+        body: JSON.stringify({
+          data: {
+            authorized_user: user.id,
+            lessons: []
+          }
+        })
+      });
 
-  return <LessonRenderer lesson={lesson} />;
+      if (response.ok) {
+        const newActivity = await response.json();
+        activityId = newActivity.data.id;
+      }
+    }
+  }
+
+  const lesson = await getLessonBySlug(params.lessonSlug);
+
+  return (
+    <LessonRenderer 
+      lesson={lesson} 
+      activityId={activityId}
+      completedLessonIds={completedLessonIds}
+    />
+  );
 }

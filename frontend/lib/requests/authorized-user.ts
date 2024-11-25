@@ -3,7 +3,7 @@ import { AuthorizedUser } from "@/types";
 import { StrapiRequestParams } from "@/types/strapi";
 import qs from "qs";
 
-const STRAPI_API_URL = process.env.STRAPI_API_URL;
+const NEXT_PUBLIC_STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
 
 /**
@@ -52,7 +52,7 @@ export async function fetchAuthorizedUsers(): Promise<AuthorizedUser[]> {
       },
     });
     const response = await fetch(
-      STRAPI_API_URL + "/api/authorized-users?" + query,
+      NEXT_PUBLIC_STRAPI_API_URL + "/api/authorized-users?" + query,
       {
         headers: { Authorization: "Bearer " + STRAPI_ACCESS_TOKEN },
         cache: "no-store",
@@ -82,7 +82,7 @@ export async function fetchIsAuthorizedUser(email: string) {
       },
     });
     const response = await fetch(
-      STRAPI_API_URL + "/api/authorized-users?" + query,
+      NEXT_PUBLIC_STRAPI_API_URL + "/api/authorized-users?" + query,
       {
         headers: { Authorization: "Bearer " + STRAPI_ACCESS_TOKEN },
         cache: "no-store",

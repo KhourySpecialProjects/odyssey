@@ -1,0 +1,27 @@
+{
+  "kind": "collectionType",
+  "collectionName": "authorized_user_activities",
+  "info": {
+    "singularName": "authorized-user-activity",
+    "pluralName": "authorized-user-activities",
+    "displayName": "Authorized User Activity",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "authorized_user": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::authorized-user.authorized-user",
+      "inversedBy": "authorized_user_activity"
+    },
+    "lessons": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::lesson.lesson"
+    }
+  }
+}

@@ -119,3 +119,30 @@ export type Enrollment = {
   viewedLessons: Lesson[];
   isComplete: boolean;
 };
+
+export type Playlist = {
+  id: number;
+  name: string;
+  slug: string;
+  isPublic: boolean;
+  droplets?: Droplet[];
+};
+
+export type PlaylistListResponse = {
+  data: Playlist[];
+  meta: {
+    pagination: {
+      page: number;
+      pageSize: number;
+      pageCount: number;
+      total: number;
+    };
+  };
+};
+
+export type AuthorizedUserActivity = {
+  id: number;
+  authorized_user: AuthorizedUser;
+  lessons: Lesson[];
+  publishedAt?: string;
+};

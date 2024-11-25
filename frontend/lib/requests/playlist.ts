@@ -1,0 +1,133 @@
+import { Playlist } from "@/types";
+import { StrapiRequestParams } from "@/types/strapi";
+import { fetchAPI, flattenAttributes } from "@/lib/utils";
+import qs from "qs";
+
+const NEXT_PUBLIC_STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
+const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
+
+// TODO: When we call from the client, it doesn't call from the docker container
+//  to fix this, we have to call it from a server component
+
+/**
+ * Gets the first 25 Playlists matching the specified criteria, unless overridden by `options`.
+ * @param options Strapi query modifiers.
+ * @returns The matching Playlists.
+ */
+export async function getPlaylists({
+  sort,
+  filters = { isPublic: true },
+  pagination = { pageSize: 25, page: 1 },
+  populate = {
+    droplets: {
+      fields: ["id", "name"]
+    }
+  },
+  fields = ["name", "slug", "isPublic"],
+}: StrapiRequestParams = {}): Promise<Playlist[]> {
+  try {
+    const query = qs.stringify({
+      sort,
+      filters,
+      populate,
+      fields,
+      pagination,
+    });
+
+
+    console.log(NEXT_PUBLIC_STRAPI_API_URL + "/api/playlists?" + query)
+
+    const response = await fetch(
+      NEXT_PUBLIC_STRAPI_API_URL + "/api/playlists?" + query,
+      {
+        headers: { Authorization: "Bearer " + STRAPI_ACCESS_TOKEN },
+        cache: "no-store",
+      }
+    );
+    
+    const data = await response.json();
+    return flattenAttributes(data.data);
+  } catch (error) {
+    console.error("Database Error:", error);
+    throw new Error("Failed to fetch playlists data.");
+  }
+}
+
+/**
+ * Gets the desired Playlist by its unique slug.
+ * @param slug The unique slug of the desired Playlist.
+ * @param options Strapi query modifiers.
+ * @returns The Playlist.
+ */
+export async function getPlaylistBySlug(
+  slug: string,
+): Promise<Playlist | null> {
+  try {
+    const query = qs.stringify({
+      filters: { 
+        slug: {
+          $eq: slug
+        }
+      },
+      populate: {
+        droplets: {
+          populate: ["tags", "authors", "learningObjectives"]
+        }
+      }
+    });
+
+    const response = await fetch(
+      `${NEXT_PUBLIC_STRAPI_API_URL}/api/playlists?${query}`,
+      {
+        headers: { Authorization: "Bearer " + STRAPI_ACCESS_TOKEN },
+        cache: "no-store",
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error("Failed to fetch playlist");
+    }
+
+    const data = await response.json();
+    const playlists = flattenAttributes(data.data);
+    
+    return playlists[0] || null;
+  } catch (error) {
+    console.error("Error fetching playlist:", error);
+    return null;
+  }
+}
+
+/**
+ * Gets the desired Playlist by its ID.
+ * @param id The ID of the desired Playlist.
+ * @param options Strapi query modifiers.
+ * @returns The Playlist.
+ */
+export async function getPlaylistById<T extends Partial<Playlist> = Playlist>(
+  id: number,
+  { sort, filters, populate, fields = ["*"] }: StrapiRequestParams = {},
+): Promise<T> {
+  try {
+    const query = qs.stringify({
+      sort,
+      filters: { ...filters },
+      populate,
+      fields,
+    });
+    
+    const response = await fetch(
+      NEXT_PUBLIC_STRAPI_API_URL + "/api/playlists/" + id + "?" + query,
+      {
+        headers: { Authorization: "Bearer " + STRAPI_ACCESS_TOKEN },
+        cache: "no-store",
+      }
+    );
+    
+    const data = await response.json();
+    return flattenAttributes(data.data) as T;
+  } catch (error) {
+    console.error("Database Error:", error);
+    throw new Error("Failed to fetch playlist by id.");
+  }
+} 

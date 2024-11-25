@@ -39,6 +39,12 @@
       "relation": "manyToMany",
       "target": "api::authorized-user-role.authorized-user-role",
       "mappedBy": "authorizedUsers"
+    },
+    "authorized_user_activity": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::authorized-user-activity.authorized-user-activity",
+      "mappedBy": "authorized_user"
     }
   }
 }

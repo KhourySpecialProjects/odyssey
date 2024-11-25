@@ -1,7 +1,7 @@
 import { flattenAttributes } from "@/lib/utils";
 import qs from "qs";
 
-const STRAPI_API_URL = process.env.STRAPI_API_URL;
+const NEXT_PUBLIC_STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
 
 export async function fetchDroplets() {
@@ -14,7 +14,7 @@ export async function fetchDroplets() {
         page: 1,
       },
     });
-    const response = await fetch(STRAPI_API_URL + "/api/droplets?" + query, {
+    const response = await fetch(NEXT_PUBLIC_STRAPI_API_URL + "/api/droplets?" + query, {
       headers: { Authorization: "Bearer " + STRAPI_ACCESS_TOKEN },
       next: { revalidate: 3600 },
     });
@@ -45,7 +45,7 @@ export async function fetchAccessRequests() {
       },
     });
     const response = await fetch(
-      STRAPI_API_URL + "/api/access-requests?" + query,
+      NEXT_PUBLIC_STRAPI_API_URL + "/api/access-requests?" + query,
       {
         headers: { Authorization: "Bearer " + STRAPI_ACCESS_TOKEN },
         cache: "no-store",
@@ -70,7 +70,7 @@ export async function fetchReports() {
         page: 1,
       },
     });
-    const response = await fetch(STRAPI_API_URL + "/api/reports?" + query, {
+    const response = await fetch(NEXT_PUBLIC_STRAPI_API_URL + "/api/reports?" + query, {
       headers: { Authorization: "Bearer " + STRAPI_ACCESS_TOKEN },
       cache: "no-store",
     });

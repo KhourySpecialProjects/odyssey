@@ -20,7 +20,7 @@ import { LessonSchema } from "./validations/lesson";
 import type { Droplet } from "@/types";
 import { getDropletById } from "./requests/droplet";
 
-const STRAPI_API_URL = process.env.STRAPI_API_URL;
+const NEXT_PUBLIC_STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
 
 const CreateAuthorizedUser = AuthorizedUserSchema.omit({
@@ -47,7 +47,7 @@ export async function createAuthorizedUser(prevState: any, formData: FormData) {
   };
 
   try {
-    const response = await fetch(STRAPI_API_URL + "/api/authorized-users", {
+    const response = await fetch(NEXT_PUBLIC_STRAPI_API_URL + "/api/authorized-users", {
       method: "POST",
       body: JSON.stringify(dataToSend),
       headers: {
@@ -82,7 +82,7 @@ export async function updateAuthorizedUser(formData: FormData) {
 
   try {
     const response = await fetch(
-      STRAPI_API_URL + "/api/authorized-users/" + id,
+      NEXT_PUBLIC_STRAPI_API_URL + "/api/authorized-users/" + id,
       {
         method: "PUT",
         body: JSON.stringify(dataToSend),
@@ -113,7 +113,7 @@ export async function deleteAuthorizedUser(formData: FormData) {
 
   try {
     const response = await fetch(
-      STRAPI_API_URL + "/api/authorized-users/" + id,
+      NEXT_PUBLIC_STRAPI_API_URL + "/api/authorized-users/" + id,
       {
         method: "DELETE",
         headers: {
@@ -137,7 +137,7 @@ export async function createAccessRequest(
   formData: z.infer<typeof accessRequestSchema>,
 ) {
   try {
-    const response = await fetch(STRAPI_API_URL + "/api/access-requests", {
+    const response = await fetch(NEXT_PUBLIC_STRAPI_API_URL + "/api/access-requests", {
       method: "POST",
       body: JSON.stringify({ data: formData }),
       headers: {
@@ -168,7 +168,7 @@ export async function deleteAccessRequest(formData: FormData) {
 
   try {
     const response = await fetch(
-      STRAPI_API_URL + "/api/access-requests/" + id,
+      NEXT_PUBLIC_STRAPI_API_URL + "/api/access-requests/" + id,
       {
         method: "DELETE",
         headers: {
@@ -190,7 +190,7 @@ export async function deleteAccessRequest(formData: FormData) {
 
 export async function createBugReport(formData: z.infer<typeof reportSchema>) {
   try {
-    const response = await fetch(STRAPI_API_URL + "/api/reports", {
+    const response = await fetch(NEXT_PUBLIC_STRAPI_API_URL + "/api/reports", {
       method: "POST",
       body: JSON.stringify({ data: { ...formData, type: "bug" } }),
       headers: {
@@ -219,7 +219,7 @@ export async function updateAuthorBio(formData: z.infer<typeof BioFormSchema>) {
     if (!user?.email) throw new Error("No email identified");
     const author = await getAuthorByAuthorizedUserEmail(user.email);
 
-    const response = await fetch(STRAPI_API_URL + "/api/authors/" + author.id, {
+    const response = await fetch(NEXT_PUBLIC_STRAPI_API_URL + "/api/authors/" + author.id, {
       method: "PUT",
       body: JSON.stringify({ data: { bio: formData.bio } }),
       headers: {
@@ -259,7 +259,7 @@ export async function createEnrollment(
         .map((enrollment) => enrollment.droplet.id)
         .includes(formData.droplet)
     ) {
-      const response = await fetch(STRAPI_API_URL + "/api/enrollments", {
+      const response = await fetch(NEXT_PUBLIC_STRAPI_API_URL + "/api/enrollments", {
         method: "POST",
         body: JSON.stringify({
           data: { ...formData, authorizedUser: authorizedUser.id },
@@ -319,7 +319,7 @@ export async function createDroplet(data: z.infer<typeof CreateDropletSchema>) {
       })),
     };
 
-    const response = await fetch(STRAPI_API_URL + "/api/droplets", {
+    const response = await fetch(NEXT_PUBLIC_STRAPI_API_URL + "/api/droplets", {
       method: "POST",
       body: JSON.stringify({ data: dataToSend }),
       headers: {
@@ -360,7 +360,7 @@ export async function addLesson(formData: z.infer<typeof CreateLessonSchema>) {
         connect: [formData.dropletId],
       },
     };
-    const response = await fetch(STRAPI_API_URL + "/api/lessons", {
+    const response = await fetch(NEXT_PUBLIC_STRAPI_API_URL + "/api/lessons", {
       method: "POST",
       body: JSON.stringify({ data: dataToSend }),
       headers: {
@@ -413,7 +413,7 @@ export async function updateDroplet(
 
     console.log(dataToSend);
 
-    const response = await fetch(STRAPI_API_URL + "/api/droplets/" + id, {
+    const response = await fetch(NEXT_PUBLIC_STRAPI_API_URL + "/api/droplets/" + id, {
       method: "PUT",
       body: JSON.stringify({ data: dataToSend }),
       headers: {
@@ -472,7 +472,7 @@ export async function updateLesson(
 
     console.log(dataToSend);
 
-    const response = await fetch(STRAPI_API_URL + "/api/lessons/" + id, {
+    const response = await fetch(NEXT_PUBLIC_STRAPI_API_URL + "/api/lessons/" + id, {
       method: "PUT",
       body: JSON.stringify({ data: dataToSend }),
       headers: {
@@ -516,7 +516,7 @@ export async function revalidateLesson() {
 
 export async function deleteLesson(id: number, revalidate: boolean = true) {
   try {
-    const response = await fetch(STRAPI_API_URL + "/api/lessons/" + id, {
+    const response = await fetch(NEXT_PUBLIC_STRAPI_API_URL + "/api/lessons/" + id, {
       method: "DELETE",
       headers: {
         "Content-Type": "application/json",
@@ -559,7 +559,7 @@ export async function deepDeleteDroplet(id: number) {
       });
     }
 
-    const response = await fetch(STRAPI_API_URL + "/api/droplets/" + id, {
+    const response = await fetch(NEXT_PUBLIC_STRAPI_API_URL + "/api/droplets/" + id, {
       method: "DELETE",
       headers: {
         "Content-Type": "application/json",
@@ -580,5 +580,35 @@ export async function deepDeleteDroplet(id: number) {
   } catch (err) {
     console.error(err);
     return { error: "Database Error: Failed to Delete Droplet." };
+  }
+}
+
+export async function completeLesson(activityId: number, lessonIds: number[]) {
+  try {
+    const response = await fetch(
+      NEXT_PUBLIC_STRAPI_API_URL + `/api/authorized-user-activities/${activityId}`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+        },
+        body: JSON.stringify({
+          data: {
+            lessons: lessonIds,
+          },
+        }),
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error("Failed to complete lesson");
+    }
+
+    revalidatePath("/(droplets)/d/[slug]/[lessonSlug]");
+    return { success: true };
+  } catch (error) {
+    console.error("Error completing lesson:", error);
+    return { success: false, error };
   }
 }
