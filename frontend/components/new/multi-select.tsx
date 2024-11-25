@@ -83,7 +83,7 @@ export function MultiSelect({
                       onSelect={() => {
                         if (isSelected) {
                           setSelected(
-                            selected.filter((val) => val.id !== option.id)
+                            selected.filter((val) => val.id !== option.id),
                           );
                         } else {
                           setSelected([...selected, option]);
@@ -95,7 +95,7 @@ export function MultiSelect({
                           "mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-sky-600",
                           isSelected
                             ? "bg-sky-600 text-white"
-                            : "opacity-50 [&_svg]:invisible"
+                            : "opacity-50 [&_svg]:invisible",
                         )}
                       >
                         <CheckIcon className="w-4 h-4" />

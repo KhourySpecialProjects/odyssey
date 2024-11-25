@@ -34,7 +34,7 @@ const CreateAuthorizedUser = AuthorizedUserSchema.omit({
 });
 export async function createAuthorizedUser(prevState: any, formData: FormData) {
   const roleID = await getAuthorizedUserRoleIdByTitle(
-    AuthorizedUserRoleTitle.User
+    AuthorizedUserRoleTitle.User,
   );
   const { email, isEnabled } = CreateAuthorizedUser.parse({
     email: formData.get("email"),
@@ -95,7 +95,7 @@ export async function updateAuthorizedUser(formData: FormData) {
           "Content-Type": "application/json",
           Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
         },
-      }
+      },
     );
     const data = await response.json();
     if (!response.ok || (response.ok && data.error))
@@ -125,7 +125,7 @@ export async function deleteAuthorizedUser(formData: FormData) {
           "Content-Type": "application/json",
           Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
         },
-      }
+      },
     );
     const data = await response.json();
     if (!response.ok || (response.ok && data.error))
@@ -139,7 +139,7 @@ export async function deleteAuthorizedUser(formData: FormData) {
 }
 
 export async function createAccessRequest(
-  formData: z.infer<typeof accessRequestSchema>
+  formData: z.infer<typeof accessRequestSchema>,
 ) {
   try {
     const response = await fetch(STRAPI_API_URL + "/api/access-requests", {
@@ -180,7 +180,7 @@ export async function deleteAccessRequest(formData: FormData) {
           "Content-Type": "application/json",
           Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
         },
-      }
+      },
     );
     const data = await response.json();
     if (!response.ok || (response.ok && data.error))
@@ -251,7 +251,7 @@ export async function updateAuthorBio(formData: z.infer<typeof BioFormSchema>) {
 }
 
 export async function createEnrollment(
-  formData: z.infer<typeof DropletEnrollmentSchema>
+  formData: z.infer<typeof DropletEnrollmentSchema>,
 ) {
   try {
     const user = await getCurrentUser();
@@ -393,7 +393,7 @@ export async function updateDroplet(
   options: { regenerateSlug?: boolean; revalidate?: boolean } = {
     regenerateSlug: false,
     revalidate: false,
-  }
+  },
 ) {
   try {
     const dataToSend: any = {
@@ -459,7 +459,7 @@ export async function updateLesson(
   options: { reload?: boolean; regenerateSlug?: boolean } = {
     reload: false,
     regenerateSlug: false,
-  }
+  },
 ) {
   try {
     if (data.blocks) {

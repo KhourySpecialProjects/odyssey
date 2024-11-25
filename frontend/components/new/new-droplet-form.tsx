@@ -52,7 +52,7 @@ export function CreateDropletForm({
   const [selectedTags, setSelectedTags] = useState(initArr2);
 
   const [submissionState, setSubmissionState] = useState(
-    initialSubmissionState
+    initialSubmissionState,
   );
 
   const states = [
@@ -78,7 +78,7 @@ export function CreateDropletForm({
       type: typeValue as DropletType,
       tagIds: selectedTags.map((tag) => tag.id),
       learningObjectives: learningObjectives.filter(
-        (objective) => objective !== ""
+        (objective) => objective !== "",
       ),
     };
 
@@ -107,7 +107,7 @@ export function CreateDropletForm({
   }
 
   const focusAreaFilter = DROPLET_FILTERS.find(
-    (filter) => filter.name === "focusArea"
+    (filter) => filter.name === "focusArea",
   );
 
   return (
@@ -164,7 +164,7 @@ export function CreateDropletForm({
               label="Type"
               items={
                 DROPLET_FILTERS.find(
-                  (filter) => filter.name === "type"
+                  (filter) => filter.name === "type",
                 )?.options.map((option, index) => ({
                   id: index,
                   name: option.label,
