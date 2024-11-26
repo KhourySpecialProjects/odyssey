@@ -6,9 +6,6 @@ import qs from "qs";
 const NEXT_PUBLIC_STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
 
-// TODO: When we call from the client, it doesn't call from the docker container
-//  to fix this, we have to call it from a server component
-
 /**
  * Gets the first 25 Playlists matching the specified criteria, unless overridden by `options`.
  * @param options Strapi query modifiers.

@@ -20,26 +20,14 @@ export function DropletTile({
     completedLessonIds.includes(lesson.id)
   ).length || 0;
   
-  const getBackgroundColor = () => {
-    if (!isEnrolled) return "bg-slate-50"; // Default gray
-    if (completedLessons === 0) return "bg-red-50"; // No lessons completed
-    if (completedLessons < totalLessons) return "bg-amber-50"; // Some lessons completed
-    return "bg-emerald-50"; // All lessons completed
-  };
-
-  const getBorderColor = () => {
-    if (!isEnrolled) return "border-slate-200 hover:border-slate-300";
-    if (completedLessons === 0) return "border-red-200 hover:border-red-300";
-    if (completedLessons < totalLessons) return "border-amber-200 hover:border-amber-300";
-    return "border-emerald-200 hover:border-emerald-300";
+  const getCompletionBadgeColor = () => {
+    if (completedLessons === 0) return "bg-red-100 text-red-800 border-red-200";
+    if (completedLessons < totalLessons) return "bg-amber-100 text-amber-800 border-amber-200";
+    return "bg-emerald-100 text-emerald-800 border-emerald-200";
   };
 
   return (
-    <li className={cn(
-      "transition-colors border rounded-md",
-      getBackgroundColor(),
-      getBorderColor()
-    )}>
+    <li className="transition-colors border rounded-md border-slate-200 hover:border-slate-300 bg-slate-50">
       <Link
         className="relative inline-flex w-full h-full p-6"
         href={
@@ -51,6 +39,15 @@ export function DropletTile({
             {droplet.status == "draft" ? (
               <Badge variant="destructive">Draft</Badge>
             ) : null}
+
+            {isEnrolled && totalLessons > 0 && (
+              <Badge 
+                className={getCompletionBadgeColor()}
+                variant="outline"
+              >
+                {Math.round((completedLessons / totalLessons) * 100)}% Complete
+              </Badge>
+            )}
 
             <Badge variant="outline">
               {uppercaseFirstChar(droplet.focusArea)}
