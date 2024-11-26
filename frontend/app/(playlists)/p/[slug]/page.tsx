@@ -7,6 +7,8 @@ import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
 import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
+import Image from "next/image";
+import Link from "next/link";
 
 export default async function PlaylistPage({  
   params,
@@ -85,6 +87,16 @@ export default async function PlaylistPage({
   return (
     <div className="container py-8">
       <div className="max-w-4xl mx-auto">
+        <Link href="/explore?contentType=playlists" className="block mb-8">
+          <Image
+            src="/logo.svg"
+            alt="Khoury Odyssey Logo"
+            width={165}
+            height={45}
+            priority
+          />
+        </Link>
+
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold mb-4">{playlist.name}</h1>
           <div className="flex justify-center gap-4 mb-6">
