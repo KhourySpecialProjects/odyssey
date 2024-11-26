@@ -141,10 +141,3 @@ export type PlaylistListResponse = {
     };
   };
 };
-
-export type AuthorizedUserActivity = {
-  id: number;
-  authorized_user: AuthorizedUser;
-  lessons: Lesson[];
-  publishedAt?: string;
-};

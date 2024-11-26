@@ -1,7 +1,7 @@
 import Sidebar from "@/components/droplets/sidebar";
 import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
-import { getAuthorizedUserActivity } from "@/lib/requests/authorized-user-activity";
 import { getDropletBySlug } from "@/lib/requests/droplet";
+import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
 import { getServerSession } from "next-auth";
 
 export default async function DropletLayout({
@@ -16,10 +16,10 @@ export default async function DropletLayout({
 
   if (session?.user?.email) {
     const user = await getAuthorizedUserByEmail(session.user.email);
-    const activity = await getAuthorizedUserActivity(user.id);
-    if (activity?.lessons) {
-      completedLessonIds = activity.lessons.map(l => l.id);
-    }
+    const enrollments = await getEnrollmentsByAuthorizedUser(user.id);
+    completedLessonIds = enrollments.flatMap(enrollment => 
+      enrollment.viewedLessons?.map(lesson => lesson.id) || []
+    );
   }
 
   const droplet = await getDropletBySlug(params.slug);

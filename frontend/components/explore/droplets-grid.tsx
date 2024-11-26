@@ -5,7 +5,6 @@ import {
 } from "@/components/message";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
-import { getAuthorizedUserActivity } from "@/lib/requests/authorized-user-activity";
 import { getDroplets } from "@/lib/requests/droplet";
 import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
 import { DropletTile } from "../droplets/droplet-tile";
@@ -65,9 +64,9 @@ export async function DropletsGrid({
     const authorizedUser = await getAuthorizedUserByEmail(user.email);
     const enrollments = await getEnrollmentsByAuthorizedUser(authorizedUser.id);
     enrolledDropletIds = enrollments.map(e => e.droplet.id);
-    
-    const activity = await getAuthorizedUserActivity(authorizedUser.id);
-    completedLessonIds = activity?.lessons?.map(l => l.id) || [];
+    completedLessonIds = enrollments.flatMap(enrollment => 
+      enrollment.viewedLessons?.map(lesson => lesson.id) || []
+    );
   }
 
   if (!droplets || droplets.length === 0) {

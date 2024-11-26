@@ -4,12 +4,11 @@ import { notFound } from "next/navigation";
 import { DropletTile } from "@/components/droplets/droplet-tile";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
-import { getAuthorizedUserActivity } from "@/lib/requests/authorized-user-activity";
 import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 
-export default async function PlaylistPage({
+export default async function PlaylistPage({  
   params,
 }: {
   params: { slug: string };
@@ -39,8 +38,10 @@ export default async function PlaylistPage({
     const enrollments = await getEnrollmentsByAuthorizedUser(authorizedUser.id);
     enrolledDropletIds = enrollments.map(e => e.droplet.id);
     
-    const activity = await getAuthorizedUserActivity(authorizedUser.id);
-    completedLessonIds = activity?.lessons?.map(l => l.id) || [];
+    // Get completed lessons from enrollments
+    completedLessonIds = enrollments.flatMap(enrollment => 
+      enrollment.viewedLessons?.map(lesson => lesson.id) || []
+    );
   }
 
   // Get all lesson IDs from the playlist's droplets
@@ -96,8 +97,7 @@ export default async function PlaylistPage({
           </div>
           {user && (
             <div className="max-w-md mx-auto mb-4">
-              <div className="flex justify-between text-sm text-slate-600 mb-2">
-                <span>Progress</span>
+              <div className="flex justify-center text-sm text-slate-600 mb-2">
                 <span>{progressPercentage}% Complete</span>
               </div>
               <Progress value={progressPercentage} className="h-2" />

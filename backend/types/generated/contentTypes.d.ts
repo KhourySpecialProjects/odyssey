@@ -916,11 +916,6 @@ export interface ApiAuthorizedUserAuthorizedUser extends Schema.CollectionType {
       'manyToMany',
       'api::authorized-user-role.authorized-user-role'
     >;
-    authorized_user_activity: Attribute.Relation<
-      'api::authorized-user.authorized-user',
-      'oneToOne',
-      'api::authorized-user-activity.authorized-user-activity'
-    >;
     createdAt: Attribute.DateTime;
     updatedAt: Attribute.DateTime;
     createdBy: Attribute.Relation<
@@ -931,47 +926,6 @@ export interface ApiAuthorizedUserAuthorizedUser extends Schema.CollectionType {
       Attribute.Private;
     updatedBy: Attribute.Relation<
       'api::authorized-user.authorized-user',
-      'oneToOne',
-      'admin::user'
-    > &
-      Attribute.Private;
-  };
-}
-
-export interface ApiAuthorizedUserActivityAuthorizedUserActivity
-  extends Schema.CollectionType {
-  collectionName: 'authorized_user_activities';
-  info: {
-    singularName: 'authorized-user-activity';
-    pluralName: 'authorized-user-activities';
-    displayName: 'Authorized User Activity';
-    description: '';
-  };
-  options: {
-    draftAndPublish: true;
-  };
-  attributes: {
-    authorized_user: Attribute.Relation<
-      'api::authorized-user-activity.authorized-user-activity',
-      'oneToOne',
-      'api::authorized-user.authorized-user'
-    >;
-    lessons: Attribute.Relation<
-      'api::authorized-user-activity.authorized-user-activity',
-      'oneToMany',
-      'api::lesson.lesson'
-    >;
-    createdAt: Attribute.DateTime;
-    updatedAt: Attribute.DateTime;
-    publishedAt: Attribute.DateTime;
-    createdBy: Attribute.Relation<
-      'api::authorized-user-activity.authorized-user-activity',
-      'oneToOne',
-      'admin::user'
-    > &
-      Attribute.Private;
-    updatedBy: Attribute.Relation<
-      'api::authorized-user-activity.authorized-user-activity',
       'oneToOne',
       'admin::user'
     > &
@@ -1336,7 +1290,6 @@ declare module '@strapi/types' {
       'api::access-request.access-request': ApiAccessRequestAccessRequest;
       'api::author.author': ApiAuthorAuthor;
       'api::authorized-user.authorized-user': ApiAuthorizedUserAuthorizedUser;
-      'api::authorized-user-activity.authorized-user-activity': ApiAuthorizedUserActivityAuthorizedUserActivity;
       'api::authorized-user-role.authorized-user-role': ApiAuthorizedUserRoleAuthorizedUserRole;
       'api::droplet.droplet': ApiDropletDroplet;
       'api::enrollment.enrollment': ApiEnrollmentEnrollment;
