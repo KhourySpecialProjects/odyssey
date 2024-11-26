@@ -23,7 +23,7 @@ export function EnrollButton({ droplet }: { droplet: Droplet }) {
     if (droplet.lessons && droplet.lessons.length > 0) {
       const values: z.infer<typeof DropletEnrollmentSchema> = {
         droplet: droplet.id,
-        viewedLessons: [droplet.lessons[0].id],
+        viewedLessons: [],
       };
 
       startTransition(() => {
