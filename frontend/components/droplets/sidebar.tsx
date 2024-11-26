@@ -175,7 +175,7 @@ export default function Sidebar({
                     )}
                     <span className="leading-snug ms-3">{lesson.name}</span>
                     {completedLessonIds.includes(lesson.id) && (
-                      <CheckCircle2 className="ml-auto w-4 h-4 text-green-500" />
+                      <CheckCircle2 className="ml-auto w-4 h-4 text-green-500 shrink-0" />
                     )}
                   </Link>
                 </li>

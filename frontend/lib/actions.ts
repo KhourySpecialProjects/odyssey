@@ -612,3 +612,44 @@ export async function completeLesson(activityId: number, lessonIds: number[]) {
     return { success: false, error };
   }
 }
+
+export async function markLessonAsComplete(enrollmentId: string, completedLessonIds: number[], lessonId: number) {
+  try {
+    // First get the current enrollment to ensure we have the latest data
+    const enrollmentResponse = await fetch(`${process.env.NEXT_PUBLIC_STRAPI_API_URL}/api/enrollments/${enrollmentId}?populate=viewedLessons`, {
+      headers: {
+        Authorization: `Bearer ${process.env.STRAPI_ACCESS_TOKEN}`,
+      },
+    });
+    
+    const enrollment = await enrollmentResponse.json();
+    const currentViewedLessonIds = enrollment.data.attributes.viewedLessons.data.map((l: any) => l.id);
+    
+    // Only add the lesson if it's not already marked as complete
+    if (!currentViewedLessonIds.includes(lessonId)) {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_STRAPI_API_URL}/api/enrollments/${enrollmentId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${process.env.STRAPI_ACCESS_TOKEN}`,
+        },
+        body: JSON.stringify({
+          data: {
+            viewedLessons: {
+              connect: [...currentViewedLessonIds, lessonId]
+            }
+          }
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to mark lesson as complete');
+      }
+    }
+
+    return true;
+  } catch (error) {
+    console.error('Error marking lesson as complete:', error);
+    return false;
+  }
+}

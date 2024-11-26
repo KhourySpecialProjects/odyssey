@@ -10,28 +10,30 @@ import { Lesson } from "@/types";
 import { BlocksRenderer } from "@strapi/blocks-react-renderer";
 import { ArrowDownFromLineIcon } from "lucide-react";
 import { QuizBlock } from "./quiz";
-import { completeLesson } from "@/lib/actions";
 import { useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { markLessonAsComplete } from "@/lib/actions";
 
-export function LessonRenderer({ 
-  lesson,
-  activityId,
-  completedLessonIds 
-}: { 
+interface LessonRendererProps {
   lesson: Lesson;
-  activityId?: number;
+  enrollmentId?: string;
   completedLessonIds: number[];
-}) {
-  const [isPending, startTransition] = useTransition();
+}
 
-  const handleComplete = () => {
-    if (!activityId) return;
-    
+export function LessonRenderer({ lesson, enrollmentId, completedLessonIds }: LessonRendererProps) {
+  const [isPending, startTransition] = useTransition();
+  const router = useRouter();
+
+  async function handleMarkAsComplete() {
+    if (!enrollmentId) return;
+
     startTransition(async () => {
-      const newLessonIds = [...completedLessonIds, lesson.id];
-      await completeLesson(activityId, newLessonIds);
+      const success = await markLessonAsComplete(enrollmentId, completedLessonIds, lesson.id);
+      if (success) {
+        router.refresh();
+      }
     });
-  };
+  }
 
   let headings: any[] = [];
   lesson.blocks
@@ -68,8 +70,8 @@ export function LessonRenderer({
 
       <div className="mt-8 flex justify-between items-center">
         <button
-          onClick={handleComplete}
-          disabled={isPending || !activityId || completedLessonIds.includes(lesson.id)}
+          onClick={handleMarkAsComplete}
+          disabled={isPending || !enrollmentId || completedLessonIds.includes(lesson.id)}
           className="px-4 py-2 bg-sky-600 text-white rounded-lg hover:bg-sky-700 disabled:opacity-50"
         >
           {isPending 

@@ -14,6 +14,9 @@ import {
 } from "lucide-react";
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { getCurrentUser } from "@/lib/auth/session";
+import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
+import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
 
 type Props = {
   params: Promise<params>;
@@ -51,19 +54,29 @@ export default async function DropletRoute({ params }: Props) {
   });
   if (!droplet) return notFound();
 
+  // Get enrollment status
+  let isEnrolled = false;
+  const user = await getCurrentUser();
+  
+  if (user?.email) {
+    const authorizedUser = await getAuthorizedUserByEmail(user.email);
+    const enrollments = await getEnrollmentsByAuthorizedUser(authorizedUser.id);
+    isEnrolled = enrollments.some(e => e.droplet.id === droplet.id);
+  }
+
   return (
     <>
       <GradientBackground className="px-0">
         <div className="max-w-2xl mx-auto">
           <div className="flex flex-row flex-0 flex-wrap gap-1.5">
-            <Badge size="lg" variant="outline">
+            <Badge variant="outline" className="text-sm">
               {uppercaseFirstChar(droplet.focusArea)}
             </Badge>
-            <Badge size="lg" variant="outline">
+            <Badge variant="outline" className="text-sm">
               {uppercaseFirstChar(droplet.type)}
             </Badge>
             {droplet.tags?.map((tag) => (
-              <Badge key={tag.id} size="lg" variant="outline">
+              <Badge key={tag.id} variant="outline" className="text-sm">
                 {tag.name}
               </Badge>
             ))}
@@ -204,7 +217,7 @@ export default async function DropletRoute({ params }: Props) {
 
         {droplet.lessons && droplet.lessons.length > 0 ? (
           <section>
-            <EnrollButton droplet={droplet} />
+            <EnrollButton droplet={droplet} isEnrolled={isEnrolled} />
           </section>
         ) : null}
       </div>

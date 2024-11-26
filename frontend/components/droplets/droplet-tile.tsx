@@ -14,15 +14,18 @@ export function DropletTile({
   isEnrolled = false,
   completedLessonIds = [] 
 }: DropletTileProps) {
-
-  const totalLessons = droplet.lessons?.length ?? 0;
-  const completedLessons = droplet.lessons?.filter(lesson => 
-    completedLessonIds.includes(lesson.id)
-  ).length || 0;
+  // Calculate completion percentage
+  const dropletLessonIds = droplet.lessons?.map(l => l.id) || [];
+  const completedLessonsInDroplet = completedLessonIds.filter(id => 
+    dropletLessonIds.includes(id)
+  );
+  const completionPercentage = dropletLessonIds.length > 0 
+    ? Math.round((completedLessonsInDroplet.length / dropletLessonIds.length) * 100)
+    : 0;
   
   const getCompletionBadgeColor = () => {
-    if (completedLessons === 0) return "bg-red-100 text-red-800 border-red-200";
-    if (completedLessons < totalLessons) return "bg-amber-100 text-amber-800 border-amber-200";
+    if (completionPercentage === 0) return "bg-red-100 text-red-800 border-red-200";
+    if (completionPercentage < 100) return "bg-amber-100 text-amber-800 border-amber-200";
     return "bg-emerald-100 text-emerald-800 border-emerald-200";
   };
 
@@ -40,12 +43,12 @@ export function DropletTile({
               <Badge variant="destructive">Draft</Badge>
             ) : null}
 
-            {isEnrolled && totalLessons > 0 && (
+            {isEnrolled && dropletLessonIds.length > 0 && (
               <Badge 
                 className={getCompletionBadgeColor()}
                 variant="outline"
               >
-                {Math.round((completedLessons / totalLessons) * 100)}% Complete
+                {completionPercentage}% Complete
               </Badge>
             )}
 

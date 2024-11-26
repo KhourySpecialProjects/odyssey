@@ -1,6 +1,7 @@
 import { LessonRenderer } from "@/components/droplets/lessons/lesson-renderer";
 import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
-import { getAuthorizedUserActivity } from "@/lib/requests/authorized-user-activity";
+import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
+import { getDropletBySlug } from "@/lib/requests/droplet";
 import { getLessonBySlug } from "@/lib/requests/lesson";
 import { getServerSession } from "next-auth";
 
@@ -10,35 +11,20 @@ export default async function LessonPage({
   params: { slug: string; lessonSlug: string } 
 }) {
   const session = await getServerSession();
-  let activityId: number | undefined;
+  let enrollmentId: string | undefined;
   let completedLessonIds: number[] = [];
 
   if (session?.user?.email) {
     const user = await getAuthorizedUserByEmail(session.user.email);
-    const activity = await getAuthorizedUserActivity(user.id);
-    if (activity) {
-      activityId = activity.id;
-      completedLessonIds = activity.lessons?.map(l => l.id) || [];
-    } else {
-      // Create a new activity record if one doesn't exist
-      const response = await fetch(`${process.env.NEXT_PUBLIC_STRAPI_API_URL}/api/authorized-user-activities`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${process.env.STRAPI_ACCESS_TOKEN}`,
-        },
-        body: JSON.stringify({
-          data: {
-            authorized_user: user.id,
-            lessons: []
-          }
-        })
-      });
-
-      if (response.ok) {
-        const newActivity = await response.json();
-        activityId = newActivity.data.id;
-      }
+    const enrollments = await getEnrollmentsByAuthorizedUser(user.id);
+    
+    // Find the enrollment for this droplet
+    const droplet = await getDropletBySlug(params.slug);
+    const enrollment = enrollments.find(e => e.droplet.id === droplet.id);
+    
+    if (enrollment) {
+      enrollmentId = enrollment.id;
+      completedLessonIds = enrollment.viewedLessons?.map(l => l.id) || [];
     }
   }
 
@@ -47,7 +33,7 @@ export default async function LessonPage({
   return (
     <LessonRenderer 
       lesson={lesson} 
-      activityId={activityId}
+      enrollmentId={enrollmentId}
       completedLessonIds={completedLessonIds}
     />
   );
