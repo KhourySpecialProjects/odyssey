@@ -12,7 +12,7 @@ export const generalConfig: GeneralConfig = {
     },
     {
       href: "/dashboard",
-      label: "My Droplets",
+      label: "My Content",
     },
   ],
 
@@ -27,7 +27,7 @@ export const generalConfig: GeneralConfig = {
     },
     {
       href: "/dashboard",
-      label: "My Droplets",
+      label: "My Content",
     },
     {
       href: "/drafts",

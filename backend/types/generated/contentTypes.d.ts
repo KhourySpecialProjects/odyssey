@@ -868,6 +868,11 @@ export interface ApiAuthorAuthor extends Schema.CollectionType {
       'oneToOne',
       'api::authorized-user.authorized-user'
     >;
+    playlists: Attribute.Relation<
+      'api::author.author',
+      'oneToMany',
+      'api::playlist.playlist'
+    >;
     createdAt: Attribute.DateTime;
     updatedAt: Attribute.DateTime;
     createdBy: Attribute.Relation<
@@ -915,6 +920,11 @@ export interface ApiAuthorizedUserAuthorizedUser extends Schema.CollectionType {
       'api::authorized-user.authorized-user',
       'manyToMany',
       'api::authorized-user-role.authorized-user-role'
+    >;
+    playlists: Attribute.Relation<
+      'api::authorized-user.authorized-user',
+      'manyToMany',
+      'api::playlist.playlist'
     >;
     createdAt: Attribute.DateTime;
     updatedAt: Attribute.DateTime;
@@ -1189,6 +1199,16 @@ export interface ApiPlaylistPlaylist extends Schema.CollectionType {
     duration: Attribute.Enumeration<['short', 'medium', 'long']> &
       Attribute.Required &
       Attribute.DefaultTo<'medium'>;
+    author: Attribute.Relation<
+      'api::playlist.playlist',
+      'manyToOne',
+      'api::author.author'
+    >;
+    authorized_users: Attribute.Relation<
+      'api::playlist.playlist',
+      'manyToMany',
+      'api::authorized-user.authorized-user'
+    >;
     createdAt: Attribute.DateTime;
     updatedAt: Attribute.DateTime;
     publishedAt: Attribute.DateTime;

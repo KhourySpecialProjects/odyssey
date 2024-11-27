@@ -9,6 +9,19 @@ interface PlaylistsGridProps {
   sortKey?: string;
 }
 
+interface Lesson {
+  id: number;
+  name: string;
+  slug: string;
+}
+
+interface Droplet {
+  id: number;
+  name: string;
+  slug: string;
+  lessons?: Lesson[];
+}
+
 export async function PlaylistsGrid({ searchValue, sortKey }: PlaylistsGridProps) {
   // Only use server-side sorting for name
   const [field, direction] = (sortKey || '').split(':');
@@ -41,13 +54,15 @@ export async function PlaylistsGrid({ searchValue, sortKey }: PlaylistsGridProps
     const authorizedUser = await getAuthorizedUserByEmail(user.email);
     const enrollments = await getEnrollmentsByAuthorizedUser(authorizedUser.id);
     completedLessonIds = enrollments.flatMap(enrollment => 
-      enrollment.viewedLessons?.map(lesson => lesson.id) || []
+      enrollment.viewedLessons?.map((lesson: Lesson) => lesson.id) || []
     );
   }
 
   // Calculate completion percentage for each playlist
   let playlistsWithCompletion = playlists.map(playlist => {
-    const allLessonIds = playlist.droplets?.flatMap(d => d.lessons?.map(l => l.id) || []) || [];
+    const allLessonIds = playlist.droplets?.flatMap((d: Droplet) => 
+      d.lessons?.map((l: Lesson) => l.id) || []
+    ) || [];
     const completedLessons = completedLessonIds.filter(id => allLessonIds.includes(id));
     const completionPercentage = allLessonIds.length > 0 
       ? (completedLessons.length / allLessonIds.length) * 100 

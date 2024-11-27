@@ -9,6 +9,12 @@ import { getDroplets } from "@/lib/requests/droplet";
 import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
 import { DropletTile } from "../droplets/droplet-tile";
 
+interface Lesson {
+  id: number;
+  name: string;
+  slug: string;
+}
+
 export async function DropletsGrid({
   sortKey,
   searchValue,
@@ -68,12 +74,12 @@ export async function DropletsGrid({
     const enrollments = await getEnrollmentsByAuthorizedUser(authorizedUser.id);
     enrolledDropletIds = enrollments.map(e => e.droplet.id);
     completedLessonIds = enrollments.flatMap(enrollment => 
-      enrollment.viewedLessons?.map(lesson => lesson.id) || []
+      enrollment.viewedLessons?.map((lesson: Lesson) => lesson.id) || []
     );
   }
 
   let dropletsWithCompletion = droplets.map(droplet => {
-    const dropletLessonIds = droplet.lessons?.map(l => l.id) || [];
+    const dropletLessonIds = droplet.lessons?.map((l: Lesson) => l.id) || [];
     const completedLessonsInDroplet = completedLessonIds.filter(id => 
       dropletLessonIds.includes(id)
     );

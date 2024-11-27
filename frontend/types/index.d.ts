@@ -120,15 +120,32 @@ export type Enrollment = {
   isComplete: boolean;
 };
 
-export type Playlist = {
+export interface Playlist {
   id: number;
   name: string;
   slug: string;
   isPublic: boolean;
-  droplets?: Droplet[];
-  duration: "short" | "medium" | "long";
   description?: string;
-};
+  duration: 'short' | 'medium' | 'long';
+  droplets?: {
+    id: number;
+    name: string;
+    slug: string;
+    lessons?: {
+      id: number;
+      name: string;
+      slug: string;
+    }[];
+  }[];
+  authorized_users?: {
+    id: number;
+    email: string;
+  }[];
+  author?: {
+    id: number;
+    name: string;
+  };
+}
 
 export type PlaylistListResponse = {
   data: Playlist[];

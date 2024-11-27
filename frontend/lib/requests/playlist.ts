@@ -18,6 +18,9 @@ export async function getPlaylists({
   populate = {
     droplets: {
       fields: ["id", "name"]
+    },
+    authorized_users: {
+      fields: ['id']
     }
   },
   fields = ["name", "slug", "isPublic"],
@@ -121,4 +124,21 @@ export async function getPlaylistById<T extends Partial<Playlist> = Playlist>(
     console.error("Database Error:", error);
     throw new Error("Failed to fetch playlist by id.");
   }
+}
+
+export async function getPlaylistsByAuthor(
+  authorId: number,
+  { filters = {}, populate = "*", fields = ["*"] }: StrapiRequestParams = {}
+): Promise<Playlist[]> {
+  const path = `/playlists`;
+  const urlParams = {
+    filters: {
+      ...filters,
+      author: { id: { $eq: authorId } }
+    },
+    populate,
+    fields,
+  };
+
+  return await fetchAPI<Playlist[]>(path, { urlParams });
 } 
