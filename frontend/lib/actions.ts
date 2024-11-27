@@ -520,6 +520,73 @@ export async function revalidateLesson() {
   revalidatePath("(editing)/draft/d/[slug]/[lessonSlug]", "page");
 }
 
+export async function createBatchAuthorizedUsers(emails: string[]) {
+  try {
+    const roleID = await getAuthorizedUserRoleIdByTitle(
+      AuthorizedUserRoleTitle.User,
+    );
+
+    const results = {
+      successful: [] as string[],
+      failed: [] as { email: string; reason: string }[],
+    };
+
+    const createUserPromises = emails.map(async (email) => {
+      try {
+        const dataToSend = {
+          data: {
+            email,
+            isEnabled: true,
+            roles: {
+              set: [{ id: roleID }],
+            },
+          },
+        };
+
+        const response = await fetch(STRAPI_API_URL + "/api/authorized-users", {
+          method: "POST",
+          body: JSON.stringify(dataToSend),
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+          },
+        });
+        const data = await response.json();
+
+        if (!response.ok || (response.ok && data.error)) {
+          results.failed.push({
+            email,
+            reason: data.error?.message || `HTTP ${response.status}`,
+          });
+        } else {
+          results.successful.push(email);
+        }
+      } catch (error) {
+        results.failed.push({
+          email,
+          reason: error instanceof Error ? error.message : "Unknown error",
+        });
+      }
+    });
+
+    await Promise.all(createUserPromises);
+
+    revalidatePath("/admin");
+    return {
+      ok: true,
+      data: results,
+      message: `Successfully created ${results.successful.length} users, ${results.failed.length} failed`,
+    };
+  } catch (err) {
+    console.error(err);
+    return {
+      ok: false,
+      error: "Database Error: Failed to create batch authorized users.",
+      data: null,
+    };
+  }
+}
+
 export async function deleteLesson(id: number, revalidate: boolean = true) {
   try {
     const response = await fetch(STRAPI_API_URL + "/api/lessons/" + id, {
