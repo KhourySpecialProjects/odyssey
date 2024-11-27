@@ -1,8 +1,6 @@
 import { AccessManager } from "@/components/shared/access-manager/access-manager";
-import { Reports } from "@/components/admin/reports/reports";
 import { Session } from "@/components/shared/session";
 import { AdminSelector } from "@/components/shared/selector";
-import { AuthorizedUsers } from "@/components/admin/users/authorized-users";
 import { getCurrentUser } from "@/lib/auth/session";
 import { notFound } from "next/navigation";
 import { isAuthorizedUserAdmin } from "@/lib/utils";
@@ -16,9 +14,7 @@ export default async function Page() {
       <Session />
       <AdminSelector
         content={{
-          "Authorized Users": <AuthorizedUsers />,
           "Access Manager": <AccessManager user={user} />,
-          Reports: <Reports />,
         }}
       />
     </div>
