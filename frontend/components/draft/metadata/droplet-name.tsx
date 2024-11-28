@@ -4,7 +4,7 @@ import { Input } from "../../ui/input";
 import { useState } from "react";
 import { Label } from "../../ui/label";
 import { useDropletUpdate } from "./hooks/useDropletUpdate";
-import Tiptap from "../../ui/tiptap";
+import Tiptap from "../../ui/tiptap/tiptap";
 
 export function DropletName({
   startingName,

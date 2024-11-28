@@ -1,8 +1,14 @@
 "use client";
 
-import { getInitials } from "@/lib/utils";
+import {
+  getInitials,
+  isAuthorizedUserAdmin,
+  isAuthorizedUserFaculty,
+  condenseRoleTitles,
+} from "@/lib/utils";
 import { User } from "@/types";
 import {
+  BookIcon,
   ChevronDownIcon,
   CogIcon,
   LogOutIcon,
@@ -20,10 +26,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
-import { isAuthorizedUserAdmin, condenseRoleTitles } from "@/lib/utils";
 
 export function UserDropdown(user: User) {
   const isAdmin = isAuthorizedUserAdmin(user.roles);
+  const isFaculty = isAuthorizedUserFaculty(user.roles);
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -78,6 +84,15 @@ export function UserDropdown(user: User) {
             <Link href="/admin">
               <TowerControlIcon className="w-4 h-4 mr-2" />
               <span>Admin</span>
+            </Link>
+          </DropdownMenuItem>
+        ) : null}
+
+        {isFaculty ? (
+          <DropdownMenuItem asChild>
+            <Link href="/faculty">
+              <BookIcon className="w-4 h-4 mr-2" />
+              <span>Faculty</span>
             </Link>
           </DropdownMenuItem>
         ) : null}

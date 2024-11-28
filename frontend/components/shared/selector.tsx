@@ -1,16 +1,6 @@
 "use client";
 
 import React from "react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "../ui/dropdown-menu";
-
-import { ChevronDownIcon } from "lucide-react";
 
 export interface AdminContent {
   [name: string]: React.ReactNode;

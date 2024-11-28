@@ -3,7 +3,7 @@
 import { Textarea } from "@/components/ui/textarea";
 import { useState } from "react";
 import { useDropletUpdate } from "./hooks/useDropletUpdate";
-import Tiptap from "@/components/ui/tiptap";
+import Tiptap from "@/components/ui/tiptap/tiptap";
 import { htmlToText } from "@/lib/utils";
 
 export function Description({

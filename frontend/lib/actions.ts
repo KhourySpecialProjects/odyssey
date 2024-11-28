@@ -18,6 +18,12 @@ import { DropletSchema } from "./validations/droplet";
 import { LessonSchema } from "./validations/lesson";
 import type { Droplet } from "@/types";
 import { getDropletById } from "./requests/droplet";
+import {
+  S3Client,
+  PutObjectCommand,
+  DeleteObjectCommand,
+} from "@aws-sdk/client-s3";
+import { v4 as uuidv4 } from "uuid";
 
 const NEXT_PUBLIC_STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
@@ -483,6 +489,7 @@ export async function updateLesson(
 
     if (!response.ok || (response.ok && responseData.error)) {
       console.log(responseData);
+      console.log(responseData.error.details);
       const errorPath = responseData.error.details.errors[0].path[0];
       const errorMessage = `${responseData.error.message} (${errorPath})`;
       return { ok: false, error: errorMessage, data: null };
@@ -511,6 +518,73 @@ export async function updateLesson(
 export async function revalidateLesson() {
   revalidateTag("lesson");
   revalidatePath("(editing)/draft/d/[slug]/[lessonSlug]", "page");
+}
+
+export async function createBatchAuthorizedUsers(emails: string[]) {
+  try {
+    const roleID = await getAuthorizedUserRoleIdByTitle(
+      AuthorizedUserRoleTitle.User,
+    );
+
+    const results = {
+      successful: [] as string[],
+      failed: [] as { email: string; reason: string }[],
+    };
+
+    const createUserPromises = emails.map(async (email) => {
+      try {
+        const dataToSend = {
+          data: {
+            email,
+            isEnabled: true,
+            roles: {
+              set: [{ id: roleID }],
+            },
+          },
+        };
+
+        const response = await fetch(NEXT_PUBLIC_STRAPI_API_URL + "/api/authorized-users", {
+          method: "POST",
+          body: JSON.stringify(dataToSend),
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+          },
+        });
+        const data = await response.json();
+
+        if (!response.ok || (response.ok && data.error)) {
+          results.failed.push({
+            email,
+            reason: data.error?.message || `HTTP ${response.status}`,
+          });
+        } else {
+          results.successful.push(email);
+        }
+      } catch (error) {
+        results.failed.push({
+          email,
+          reason: error instanceof Error ? error.message : "Unknown error",
+        });
+      }
+    });
+
+    await Promise.all(createUserPromises);
+
+    revalidatePath("/admin");
+    return {
+      ok: true,
+      data: results,
+      message: `Successfully created ${results.successful.length} users, ${results.failed.length} failed`,
+    };
+  } catch (err) {
+    console.error(err);
+    return {
+      ok: false,
+      error: "Database Error: Failed to create batch authorized users.",
+      data: null,
+    };
+  }
 }
 
 export async function deleteLesson(id: number, revalidate: boolean = true) {
@@ -620,10 +694,10 @@ export async function markLessonAsComplete(enrollmentId: string, completedLesson
         Authorization: `Bearer ${process.env.STRAPI_ACCESS_TOKEN}`,
       },
     });
-    
+
     const enrollment = await enrollmentResponse.json();
     const currentViewedLessonIds = enrollment.data.attributes.viewedLessons.data.map((l: any) => l.id);
-    
+
     // Only add the lesson if it's not already marked as complete
     if (!currentViewedLessonIds.includes(lessonId)) {
       const response = await fetch(`${process.env.NEXT_PUBLIC_STRAPI_API_URL}/api/enrollments/${enrollmentId}`, {
@@ -650,5 +724,81 @@ export async function markLessonAsComplete(enrollmentId: string, completedLesson
   } catch (error) {
     console.error('Error marking lesson as complete:', error);
     return false;
+  }
+}
+
+const s3 = new S3Client({
+  region: process.env.AWS_S3_BUCKET_REGION,
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
+  },
+});
+
+export async function uploadImage(formData: FormData) {
+  if (
+    !formData.get("image") ||
+    formData.get("image") == undefined ||
+    (formData.get("image") as File).size == 0
+  ) {
+    return { ok: false, error: "no image", url: null };
+  }
+  try {
+    const file = formData.get("image") as File;
+    const fileName = `${uuidv4()}-${encodeURIComponent(file.name)}`;
+    const bucketName = process.env.AWS_S3_BUCKET_NAME!;
+    const rootPath = process.env.AWS_S3_BUCKET_ROOT!;
+    const buffer = Buffer.from(await file.arrayBuffer());
+
+    const uploadParams = {
+      Bucket: bucketName,
+      Key: `${rootPath}/${fileName}`, // Upload to the specified directory
+      Body: buffer,
+      ContentType: file.type,
+    };
+
+    const response = await s3.send(new PutObjectCommand(uploadParams));
+    console.log(fileName);
+    console.log(response);
+    if (response["$metadata"].httpStatusCode != 200) {
+      return { ok: false, error: "Failed to upload image.", url: null };
+    }
+    return {
+      ok: true,
+      error: null,
+      url: `${process.env.AWS_S3_BUCKET_URL}/${rootPath}/${fileName}`,
+    };
+  } catch (err) {
+    console.error(err);
+    return {
+      ok: false,
+      error: "Database Error: Failed to upload image.",
+      url: null,
+    };
+  }
+}
+
+export async function deleteImage(fileName: string) {
+  try {
+    const bucketName = process.env.AWS_S3_BUCKET_NAME!;
+    const rootPath = process.env.AWS_S3_BUCKET_ROOT!;
+
+    const uploadParams = {
+      Bucket: bucketName,
+      Key: `${rootPath}/${fileName}`, // Upload to the specified directory
+    };
+
+    const response = await s3.send(new DeleteObjectCommand(uploadParams));
+    console.log(response);
+
+    if (response["$metadata"].httpStatusCode != 204) {
+      return { ok: false, error: "Failed to delete image" };
+    }
+
+    console.log("Deleted Image");
+    return { ok: true, error: null };
+  } catch (err) {
+    console.log(err);
+    return { ok: false, error: "Failed to delete image" };
   }
 }

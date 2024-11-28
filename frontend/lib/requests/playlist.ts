@@ -3,9 +3,8 @@ import { StrapiRequestParams } from "@/types/strapi";
 import { fetchAPI, flattenAttributes } from "@/lib/utils";
 import qs from "qs";
 
-const NEXT_PUBLIC_STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
-const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
-
+const NEXT_PUBLIC_STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL || 'http://localhost:1337';
+const NEXT_PUBLIC_STRAPI_API_TOKEN = process.env.NEXT_PUBLIC_STRAPI_API_TOKEN || '';
 /**
  * Gets the first 25 Playlists matching the specified criteria, unless overridden by `options`.
  * @param options Strapi query modifiers.
@@ -40,7 +39,7 @@ export async function getPlaylists({
     const response = await fetch(
       NEXT_PUBLIC_STRAPI_API_URL + "/api/playlists?" + query,
       {
-        headers: { Authorization: "Bearer " + STRAPI_ACCESS_TOKEN },
+        headers: { Authorization: "Bearer " + NEXT_PUBLIC_STRAPI_API_TOKEN },
         cache: "no-store",
       }
     );
@@ -113,7 +112,7 @@ export async function getPlaylistById<T extends Partial<Playlist> = Playlist>(
     const response = await fetch(
       NEXT_PUBLIC_STRAPI_API_URL + "/api/playlists/" + id + "?" + query,
       {
-        headers: { Authorization: "Bearer " + STRAPI_ACCESS_TOKEN },
+        headers: { Authorization: "Bearer " + NEXT_PUBLIC_STRAPI_API_TOKEN },
         cache: "no-store",
       }
     );

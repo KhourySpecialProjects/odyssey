@@ -6,7 +6,6 @@ import {
   AuthorizedUserRoleTitle,
   AuthorizedUserAdminRoles,
 } from "@/lib/globals";
-import { AuthorizedUserRole } from "@/types";
 import { JSONContent } from "@tiptap/react";
 import type {
   BlockNode,
@@ -227,11 +226,17 @@ export function strapiJSONToTiptapJSON(blockNodes: BlockNode[]): JSONContent[] {
 
       case "link":
         return {
-          type: "link",
-          attrs: {
-            href: node.url,
-          },
-          content: strapiJSONToTiptapJSON(node.children),
+          type: "text",
+          text: (node.children[0] as TextNode).text,
+          marks: [
+            {
+              type: "link",
+              attrs: {
+                href: node.url,
+                target: "_blank",
+              },
+            },
+          ],
         };
 
       case "list-item":
@@ -337,25 +342,13 @@ export function tiptapJSONToStrapiJSON(
       case "image":
         return {
           type: "image",
-          image: {
-            url: node.attrs?.src || "",
-            alternativeText: node.attrs?.alt || "",
-            name: node.attrs?.title || "",
-            ext: "",
-            hash: "",
-            mime: "",
-            size: 0,
-            width: 0,
-            height: 0,
-            caption: "",
-            formats: {},
-            provider: "",
-            createdAt: "",
-            updatedAt: "",
-            previewUrl: null,
-            provider_metadata: null,
+          content: [],
+          attrs: {
+            src: node.attrs?.src || "",
+            alt: node.attrs?.alt || "",
+            title: node.attrs?.title || "",
+            name: node.attrs?.name || "",
           },
-          children: [],
         };
 
       case "bulletList":
@@ -428,4 +421,17 @@ export function embeddedUrlToYoutubeUrl(embedUrl: string): string {
   }
 
   return "https://www.youtube.com/";
+}
+
+export function isAuthorizedUserFaculty(
+  roles?: AuthorizedUserRoleTitle[] | null,
+): boolean {
+  if (!roles) return false;
+  
+  for (const role of roles) {
+    if (role === AuthorizedUserRoleTitle.Faculty) {
+      return true;
+    }
+  }
+  return false;
 }

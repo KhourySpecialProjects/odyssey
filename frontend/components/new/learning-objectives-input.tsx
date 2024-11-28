@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "../ui/button";
-import { XIcon } from "lucide-react";
+import { Trash } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export function LearningObjectivesInput({
@@ -21,11 +21,11 @@ export function LearningObjectivesInput({
   return (
     <div
       className={cn(
-        "select-none w-min flex flex-col items-center justify-center",
+        "select-none w-min flex flex-col items-start justify-center",
         className,
       )}
     >
-      <div className="w-56 flex items-center justify-between mb-2">
+      <div className="w-full flex items-center justify-between mb-0">
         <h2 className="font-semibold text-sm">Learning Objectives</h2>
         <Button
           type="button"
@@ -37,11 +37,28 @@ export function LearningObjectivesInput({
           +{" "}
         </Button>
       </div>
-      <div className="space-y-1.5 h-40 overflow-y-scroll border border-slate-100 rounded p-2">
+      <div className="w-full space-y-1.5 h-40 overflow-y-scroll rounded p-2">
+        <style jsx>{`
+          div::-webkit-scrollbar {
+            width: 10px;
+          }
+          div::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+          }
+          div::-webkit-scrollbar-thumb {
+            background-color: #888;
+            border-radius: 10px;
+            border: 2px solid #f1f1f1;
+          }
+          div::-webkit-scrollbar-thumb:hover {
+            background: #555;
+          }
+        `}</style>
         {learningObjectives.map((objective, index) => (
           <div
             key={index}
-            className="w-56 flex flex-row justify-between items-center relative rounded-md border border-slate-200"
+            className="w-full flex flex-row justify-between items-center relative rounded-md gap-1"
           >
             <input
               id={`learning-objective-${index}`}
@@ -49,15 +66,17 @@ export function LearningObjectivesInput({
               value={objective}
               placeholder="New Learning Objective"
               autoComplete="off"
-              className="w-56 text-sm rounded-md border-0 outline-0 ring-0 focus-visible:ring-0 focus-visible:outline-2 px-3 py-2 "
+              className="w-full text-sm rounded-md border-1 border-slate-200 outline-0 ring-0 focus-visible:ring-0 focus-visible:outline-2 px-3 py-2 "
               onChange={(e) => {
                 const newObjectives = [...learningObjectives];
                 newObjectives[index] = e.target.value;
                 setLearningObjectives(newObjectives);
               }}
             />
-            <XIcon
-              className="text-red-500 hover:text-red-600 cursor-pointer mr-1"
+            <Trash
+              width={37}
+              height={37}
+              className="text-slate-500 hover:text-slate-600 bg-slate-200 cursor-pointer rounded-md border border-slate-200 p-1.5"
               onClick={() => {
                 const newObjectives = [...learningObjectives];
                 newObjectives.splice(index, 1);
