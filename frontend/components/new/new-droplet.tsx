@@ -10,11 +10,11 @@ export async function CreateDroplet() {
   const tags = await getTags({ fields: ["name", "slug"] });
 
   return (
-    <>
+    <div className="flex flex-col w-full bg-slate-100 px-24 justify-center items-center">
       <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-4xl mb-7">
         Create a Droplet
       </h1>
-      <CreateDropletForm tags={tags} />
-    </>
+      <CreateDropletForm tags={tags} author={user} />
+    </div>
   );
 }

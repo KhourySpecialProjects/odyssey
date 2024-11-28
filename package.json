@@ -11,6 +11,7 @@
     "prettier-write": "npx prettier . --write"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.701.0",
     "concurrently": "^8.2.2",
     "install": "^0.13.0",
     "npm-check-updates": "^16.14.15"
