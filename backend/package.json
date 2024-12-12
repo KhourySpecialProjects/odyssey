@@ -18,10 +18,12 @@
     "@strapi/plugin-users-permissions": "^4.22.0",
     "@strapi/provider-upload-aws-s3": "^4.22.0",
     "@strapi/strapi": "^4.22.0",
+    "package.json": "^2.0.1",
     "pg": "^8.11.5",
     "react": "^18.0.0",
     "react-dom": "^18.0.0",
     "react-router-dom": "5.3.4",
+    "react-scripts": "^5.0.1",
     "styled-components": "5.3.3"
   },
   "author": {
