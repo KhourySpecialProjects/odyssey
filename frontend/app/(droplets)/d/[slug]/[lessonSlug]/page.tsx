@@ -13,12 +13,6 @@ interface PageParams {
   };
 }
 
-export async function generateMetadata({
-  params,
-}: PageParams): Promise<Metadata> {
-  // ... metadata generation code
-}
-
 export default async function Page({ params }: PageParams) {
   const { slug, lessonSlug } = params;
 
