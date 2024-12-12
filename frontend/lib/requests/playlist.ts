@@ -16,40 +16,31 @@ export async function getPlaylists({
   pagination = { pageSize: 25, page: 1 },
   populate = {
     droplets: {
-      fields: ["id", "name"]
+      populate: {
+        lessons: {
+          fields: ['id', 'name', 'slug']
+        }
+      }
     },
     authorized_users: {
       fields: ['id']
     }
   },
-  fields = ["name", "slug", "isPublic"],
+  fields = ["id", "name", "slug", "isPublic"],
 }: StrapiRequestParams = {}): Promise<Playlist[]> {
-  try {
-    const query = qs.stringify({
-      sort,
-      filters,
-      populate,
-      fields,
-      pagination,
-    });
+  const path = `/playlists`;
+  const urlParams = {
+    sort,
+    filters,
+    populate,
+    fields,
+    pagination,
+  };
 
-
-    console.log(NEXT_PUBLIC_STRAPI_API_URL + "/api/playlists?" + query)
-
-    const response = await fetch(
-      NEXT_PUBLIC_STRAPI_API_URL + "/api/playlists?" + query,
-      {
-        headers: { Authorization: "Bearer " + NEXT_PUBLIC_STRAPI_API_TOKEN },
-        cache: "no-store",
-      }
-    );
-    
-    const data = await response.json();
-    return flattenAttributes(data.data);
-  } catch (error) {
-    console.error("Database Error:", error);
-    throw new Error("Failed to fetch playlists data.");
-  }
+  return await fetchAPI<Playlist[]>(path, {
+    urlParams,
+    cache: 'no-store'
+  });
 }
 
 /**

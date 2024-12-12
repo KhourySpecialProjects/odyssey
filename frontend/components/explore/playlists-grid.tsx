@@ -3,6 +3,7 @@ import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
 import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
 import { getPlaylists } from "@/lib/requests/playlist";
 import { PlaylistCard } from "../playlists/playlist-card";
+import { Message, MessageDescription, MessageHeader } from "@/components/message";
 
 interface PlaylistsGridProps {
   searchValue?: string;
@@ -45,6 +46,8 @@ export async function PlaylistsGrid({ searchValue, sortKey }: PlaylistsGridProps
       }
     }
   });
+
+  console.log("Playlists droplets:", playlists.map(p => p.droplets));
 
   // Get user completion data
   const user = await getCurrentUser();
@@ -94,21 +97,26 @@ export async function PlaylistsGrid({ searchValue, sortKey }: PlaylistsGridProps
 
   if (!playlistsWithCompletion || playlistsWithCompletion.length === 0) {
     return (
-      <div className="text-center py-8 text-gray-500">
-        No public playlists available
-      </div>
+      <Message className="mb-8 border border-dashed rounded-md border-slate-200">
+        <MessageHeader subtitle="No Results" title="No Public Playlists" />
+        <MessageDescription>
+          There are no public playlists available at this time.
+        </MessageDescription>
+      </Message>
     );
   }
 
   return (
-    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-      {playlistsWithCompletion.map((playlist) => (
-        <PlaylistCard 
-          key={playlist.id} 
-          playlist={playlist} 
-          completedLessonIds={completedLessonIds}
-        />
-      ))}
-    </div>
+    <section>
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {playlistsWithCompletion.map((playlist) => (
+          <PlaylistCard 
+            key={playlist.id} 
+            playlist={playlist} 
+            completedLessonIds={completedLessonIds}
+          />
+        ))}
+      </div>
+    </section>
   );
 } 
