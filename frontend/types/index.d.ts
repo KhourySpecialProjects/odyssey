@@ -28,6 +28,7 @@ export type AuthorizedUser = {
   roles: AuthorizedUserRole[];
   isEnabled: boolean;
   enrollments?: Enrollment[];
+  playlists?: Playlist[];
 };
 
 export type NavItem = {
@@ -127,16 +128,7 @@ export interface Playlist {
   isPublic: boolean;
   description?: string;
   duration: "short" | "medium" | "long";
-  droplets?: {
-    id: number;
-    name: string;
-    slug: string;
-    lessons?: {
-      id: number;
-      name: string;
-      slug: string;
-    }[];
-  }[];
+  droplets?: Droplet[];
   authorized_users?: {
     id: number;
     email: string;

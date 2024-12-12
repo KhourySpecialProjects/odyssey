@@ -22,12 +22,17 @@ interface Lesson {
   slug: string;
 }
 
-export default async function PlaylistPage({
-  params,
-}: {
-  params: { slug: string };
-}) {
-  const playlist = await getPlaylistBySlug(params.slug, {
+type Props = {
+  params: Promise<Params>;
+};
+
+type Params = {
+  slug: string;
+};
+
+export default async function PlaylistPage({ params }: Props) {
+  const p = await params;
+  const playlist = await getPlaylistBySlug(p.slug, {
     populate: {
       droplets: {
         populate: {
@@ -35,6 +40,16 @@ export default async function PlaylistPage({
           lessons: {
             fields: ["id", "name", "slug"],
           },
+          fields: [
+            "id",
+            "name",
+            "slug",
+            "type",
+            "focusArea",
+            "learningObjectives",
+            "isHidden",
+            "status"
+          ],
         },
       },
       authorized_users: {
@@ -56,14 +71,12 @@ export default async function PlaylistPage({
     const enrollments = await getEnrollmentsByAuthorizedUser(authorizedUser.id);
     enrolledDropletIds = enrollments.map((e) => e.droplet.id);
 
-    // Get completed lessons from enrollments
     completedLessonIds = enrollments.flatMap(
       (enrollment) =>
         enrollment.viewedLessons?.map((lesson: { id: number }) => lesson.id) ||
         [],
     );
 
-    // Check if user is enrolled in this playlist
     isEnrolled =
       playlist.authorized_users?.some(
         (p: AuthorizedUser) => p.id === authorizedUser.id,

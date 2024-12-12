@@ -16,11 +16,16 @@ import { Button } from "@/components/ui/button";
 import { DeleteLessonButton } from "./delete-lesson";
 import { toast } from "sonner";
 import { useTransition } from "react";
+import { useMemo } from "react";
 
 interface Block {
-  id: string;
   __component: string;
-  [key: string]: any;
+  content: string;
+  id?: number;
+  title?: string;
+  type?: string;
+  label?: string;
+  url?: string;
 }
 
 interface LessonRendererProps {
@@ -46,22 +51,10 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
 
       if (!response || response.error || !response.ok) {
         console.log("Error updating Lesson");
-        const updatedBlocks = lastSavedBlocksRef.current.map((block) => ({
-          ...block,
-        }));
-        startTransition(() => {
-          updateBlocksBackendReload(updatedBlocks).then(() => {
-            toast.error(
-              "Failed to save lesson. Reverting to last saved version.",
-            );
-          });
-        });
-      } else {
-        console.log("Updated Lesson Successfully");
-        setLastSavedBlocks(blocks);
+        return;
       }
     },
-    [lesson.id, startTransition],
+    [lesson.id],
   );
 
   const updateBlocksBackendReload = useCallback(

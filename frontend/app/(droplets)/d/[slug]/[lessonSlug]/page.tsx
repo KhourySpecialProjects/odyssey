@@ -6,25 +6,28 @@ import { getDropletBySlug } from "@/lib/requests/droplet";
 import { getLessonBySlug } from "@/lib/requests/lesson";
 import { getServerSession } from "next-auth";
 
-interface PageParams {
-  params: {
-    slug: string;
-    lessonSlug: string;
-  };
-  searchParams?: { [key: string]: string | string[] | undefined };
-}
+type Props = {
+  params: Promise<Params>;
+};
 
-export async function generateMetadata({
-  params,
-}: PageParams): Promise<Metadata> {
+type Params = {
+  slug: string;
+  lessonSlug: string;
+};
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const p = await params;
+  const lesson = await getLessonBySlug(p.lessonSlug);
+  if (!lesson) return {};
+
   return {
-    title: `Lesson ${params.lessonSlug}`,
-    description: `Learning content for ${params.slug}`,
+    title: lesson.name,
   };
 }
 
-export default async function Page({ params }: PageParams) {
-  const { slug, lessonSlug } = params;
+export default async function Page({ params }: Props) {
+  const p = await params;
+  const { slug, lessonSlug } = p;
 
   const session = await getServerSession();
   let enrollmentId: string | undefined;
