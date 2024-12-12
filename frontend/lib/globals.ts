@@ -75,14 +75,28 @@ export const DROPLET_FILTERS = [
 export type SortFilterItem = {
   label: string;
   slug: string;
-  sortKey: "name:asc" | "name:desc" | "createdAt:asc" | "createdAt:desc" | "completion:asc" | "completion:desc";
+  sortKey:
+    | "name:asc"
+    | "name:desc"
+    | "createdAt:asc"
+    | "createdAt:desc"
+    | "completion:asc"
+    | "completion:desc";
 };
 
 export const sorting: SortFilterItem[] = [
   { label: "A-Z", slug: "name:asc", sortKey: "name:asc" },
   { label: "Z-A", slug: "name:desc", sortKey: "name:desc" },
-  { label: "Most Complete", slug: "completion:desc", sortKey: "completion:desc" },
-  { label: "Least Complete", slug: "completion:asc", sortKey: "completion:asc" },
+  {
+    label: "Most Complete",
+    slug: "completion:desc",
+    sortKey: "completion:desc",
+  },
+  {
+    label: "Least Complete",
+    slug: "completion:asc",
+    sortKey: "completion:asc",
+  },
 ];
 
 export const defaultSort: SortFilterItem = sorting[0];

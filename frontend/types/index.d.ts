@@ -126,7 +126,7 @@ export interface Playlist {
   slug: string;
   isPublic: boolean;
   description?: string;
-  duration: 'short' | 'medium' | 'long';
+  duration: "short" | "medium" | "long";
   droplets?: {
     id: number;
     name: string;

@@ -9,23 +9,28 @@ interface DropletTileProps {
   completedLessonIds?: number[];
 }
 
-export function DropletTile({ 
-  droplet, 
+export function DropletTile({
+  droplet,
   isEnrolled = false,
-  completedLessonIds = [] 
+  completedLessonIds = [],
 }: DropletTileProps) {
   // Calculate completion percentage
-  const dropletLessonIds = droplet.lessons?.map(l => l.id) || [];
-  const completedLessonsInDroplet = completedLessonIds.filter(id => 
-    dropletLessonIds.includes(id)
+  const dropletLessonIds = droplet.lessons?.map((l) => l.id) || [];
+  const completedLessonsInDroplet = completedLessonIds.filter((id) =>
+    dropletLessonIds.includes(id),
   );
-  const completionPercentage = dropletLessonIds.length > 0 
-    ? Math.round((completedLessonsInDroplet.length / dropletLessonIds.length) * 100)
-    : 0;
-  
+  const completionPercentage =
+    dropletLessonIds.length > 0
+      ? Math.round(
+          (completedLessonsInDroplet.length / dropletLessonIds.length) * 100,
+        )
+      : 0;
+
   const getCompletionBadgeColor = () => {
-    if (completionPercentage === 0) return "bg-red-100 text-red-800 border-red-200";
-    if (completionPercentage < 100) return "bg-amber-100 text-amber-800 border-amber-200";
+    if (completionPercentage === 0)
+      return "bg-red-100 text-red-800 border-red-200";
+    if (completionPercentage < 100)
+      return "bg-amber-100 text-amber-800 border-amber-200";
     return "bg-emerald-100 text-emerald-800 border-emerald-200";
   };
 
@@ -44,10 +49,7 @@ export function DropletTile({
             ) : null}
 
             {isEnrolled && dropletLessonIds.length > 0 && (
-              <Badge 
-                className={getCompletionBadgeColor()}
-                variant="outline"
-              >
+              <Badge className={getCompletionBadgeColor()} variant="outline">
                 {completionPercentage}% Complete
               </Badge>
             )}

@@ -83,29 +83,32 @@ export async function fetchAPI<T>(
     const baseUrl = process.env.NEXT_PUBLIC_STRAPI_API_URL;
     const requestUrl = `${baseUrl}/api${path}${queryString ? `?${queryString}` : ""}`;
 
-    console.log('Fetching from:', requestUrl);
-    
+    console.log("Fetching from:", requestUrl);
+
     const response = await fetch(requestUrl, mergedOptions);
-    
+
     if (!response.ok) {
-      console.error('Response status:', response.status);
-      console.error('Response status text:', response.statusText);
+      console.error("Response status:", response.status);
+      console.error("Response status text:", response.statusText);
       const errorText = await response.text();
-      console.error('Response body:', errorText);
+      console.error("Response body:", errorText);
       throw new Error(`HTTP error! status: ${response.status}`);
     }
-    
+
     const data = await response.json();
-    
-    if (config.flattenResponse || typeof config.flattenResponse === "undefined") {
+
+    if (
+      config.flattenResponse ||
+      typeof config.flattenResponse === "undefined"
+    ) {
       return flattenAttributes(data.data);
     }
-    
+
     return data;
   } catch (error) {
-    console.error('Fetch error:', error);
+    console.error("Fetch error:", error);
     throw new Error(
-      `Failed to fetch data: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      `Failed to fetch data: ${error instanceof Error ? error.message : "Unknown error"}`,
     );
   }
 }
@@ -176,7 +179,7 @@ export function isAuthorizedUserAdmin(
   roles?: AuthorizedUserRoleTitle[] | null,
 ): boolean {
   if (!roles) return false;
-  
+
   for (const role of roles) {
     if (AuthorizedUserAdminRoles.includes(role)) {
       return true;
@@ -185,7 +188,9 @@ export function isAuthorizedUserAdmin(
   return false;
 }
 
-export function isContentCreator(roles?: AuthorizedUserRoleTitle[] | null): boolean {
+export function isContentCreator(
+  roles?: AuthorizedUserRoleTitle[] | null,
+): boolean {
   if (!roles) return false;
 
   for (const role of roles) {
@@ -196,7 +201,9 @@ export function isContentCreator(roles?: AuthorizedUserRoleTitle[] | null): bool
   return false;
 }
 
-export function condenseRoleTitles(roles?: AuthorizedUserRoleTitle[] | null): string {
+export function condenseRoleTitles(
+  roles?: AuthorizedUserRoleTitle[] | null,
+): string {
   if (!roles) return "";
   return roles.join(", ");
 }
@@ -427,7 +434,7 @@ export function isAuthorizedUserFaculty(
   roles?: AuthorizedUserRoleTitle[] | null,
 ): boolean {
   if (!roles) return false;
-  
+
   for (const role of roles) {
     if (role === AuthorizedUserRoleTitle.Faculty) {
       return true;

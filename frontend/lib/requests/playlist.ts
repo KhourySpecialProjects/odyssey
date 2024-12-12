@@ -3,8 +3,10 @@ import { StrapiRequestParams } from "@/types/strapi";
 import { fetchAPI, flattenAttributes } from "@/lib/utils";
 import qs from "qs";
 
-const NEXT_PUBLIC_STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL || 'http://localhost:1337';
-const NEXT_PUBLIC_STRAPI_API_TOKEN = process.env.NEXT_PUBLIC_STRAPI_API_TOKEN || '';
+const NEXT_PUBLIC_STRAPI_API_URL =
+  process.env.NEXT_PUBLIC_STRAPI_API_URL || "http://localhost:1337";
+const NEXT_PUBLIC_STRAPI_API_TOKEN =
+  process.env.NEXT_PUBLIC_STRAPI_API_TOKEN || "";
 /**
  * Gets the first 25 Playlists matching the specified criteria, unless overridden by `options`.
  * @param options Strapi query modifiers.
@@ -18,13 +20,13 @@ export async function getPlaylists({
     droplets: {
       populate: {
         lessons: {
-          fields: ['id', 'name', 'slug']
-        }
-      }
+          fields: ["id", "name", "slug"],
+        },
+      },
     },
     authorized_users: {
-      fields: ['id']
-    }
+      fields: ["id"],
+    },
   },
   fields = ["id", "name", "slug", "isPublic"],
 }: StrapiRequestParams = {}): Promise<Playlist[]> {
@@ -39,7 +41,7 @@ export async function getPlaylists({
 
   return await fetchAPI<Playlist[]>(path, {
     urlParams,
-    cache: 'no-store'
+    cache: "no-store",
   });
 }
 
@@ -51,23 +53,25 @@ export async function getPlaylists({
  */
 export async function getPlaylistBySlug(
   slug: string,
-  { populate = {
-    droplets: {
-      populate: {
-        tags: true,
-        lessons: {
-          fields: ['id', 'name', 'slug']
-        }
-      }
-    }
-  } }: StrapiRequestParams = {}
+  {
+    populate = {
+      droplets: {
+        populate: {
+          tags: true,
+          lessons: {
+            fields: ["id", "name", "slug"],
+          },
+        },
+      },
+    },
+  }: StrapiRequestParams = {},
 ): Promise<Playlist | null> {
   const path = `/playlists`;
   const urlParams = {
-    filters: { 
+    filters: {
       slug: {
-        $eq: slug
-      }
+        $eq: slug,
+      },
     },
     populate,
     pagination: {
@@ -78,8 +82,8 @@ export async function getPlaylistBySlug(
 
   return await fetchAPI<Playlist[]>(path, {
     urlParams,
-    cache: 'no-store'
-  }).then(playlists => playlists[0] || null);
+    cache: "no-store",
+  }).then((playlists) => playlists[0] || null);
 }
 
 /**
@@ -99,15 +103,15 @@ export async function getPlaylistById<T extends Partial<Playlist> = Playlist>(
       populate,
       fields,
     });
-    
+
     const response = await fetch(
       NEXT_PUBLIC_STRAPI_API_URL + "/api/playlists/" + id + "?" + query,
       {
         headers: { Authorization: "Bearer " + NEXT_PUBLIC_STRAPI_API_TOKEN },
         cache: "no-store",
-      }
+      },
     );
-    
+
     const data = await response.json();
     return flattenAttributes(data.data) as T;
   } catch (error) {
@@ -118,17 +122,17 @@ export async function getPlaylistById<T extends Partial<Playlist> = Playlist>(
 
 export async function getPlaylistsByAuthor(
   authorId: number,
-  { filters = {}, populate = "*", fields = ["*"] }: StrapiRequestParams = {}
+  { filters = {}, populate = "*", fields = ["*"] }: StrapiRequestParams = {},
 ): Promise<Playlist[]> {
   const path = `/playlists`;
   const urlParams = {
     filters: {
       ...filters,
-      author: { id: { $eq: authorId } }
+      author: { id: { $eq: authorId } },
     },
     populate,
     fields,
   };
 
   return await fetchAPI<Playlist[]>(path, { urlParams });
-} 
+}

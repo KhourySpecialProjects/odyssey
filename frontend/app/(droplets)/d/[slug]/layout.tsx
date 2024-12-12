@@ -17,8 +17,9 @@ export default async function DropletLayout({
   if (session?.user?.email) {
     const user = await getAuthorizedUserByEmail(session.user.email);
     const enrollments = await getEnrollmentsByAuthorizedUser(user.id);
-    completedLessonIds = enrollments.flatMap(enrollment => 
-      enrollment.viewedLessons?.map(lesson => lesson.id) || []
+    completedLessonIds = enrollments.flatMap(
+      (enrollment) =>
+        enrollment.viewedLessons?.map((lesson) => lesson.id) || [],
     );
   }
 
@@ -26,9 +27,9 @@ export default async function DropletLayout({
 
   return (
     <div className="flex flex-col md:flex-row">
-      <Sidebar 
-        user={session?.user} 
-        droplet={droplet} 
+      <Sidebar
+        user={session?.user}
+        droplet={droplet}
         completedLessonIds={completedLessonIds}
       />
       <main className="flex-1 px-4 py-8 md:px-8">{children}</main>

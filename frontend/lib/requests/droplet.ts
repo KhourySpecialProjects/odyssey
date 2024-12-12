@@ -14,7 +14,7 @@ export async function getDroplets({
   populate = {
     tags: true,
     lessons: {
-      fields: ['id', 'name', 'slug']
+      fields: ["id", "name", "slug"],
     },
   },
   fields = ["id", "name", "slug", "type", "focusArea", "status"],

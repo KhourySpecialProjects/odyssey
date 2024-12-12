@@ -22,7 +22,7 @@ interface Lesson {
   slug: string;
 }
 
-export default async function PlaylistPage({  
+export default async function PlaylistPage({
   params,
 }: {
   params: { slug: string };
@@ -33,14 +33,14 @@ export default async function PlaylistPage({
         populate: {
           tags: true,
           lessons: {
-            fields: ['id', 'name', 'slug']
-          }
-        }
+            fields: ["id", "name", "slug"],
+          },
+        },
       },
       authorized_users: {
-        fields: ['id']
-      }
-    }
+        fields: ["id"],
+      },
+    },
   });
   if (!playlist) {
     notFound();
@@ -54,15 +54,20 @@ export default async function PlaylistPage({
   if (user?.email) {
     const authorizedUser = await getAuthorizedUserByEmail(user.email);
     const enrollments = await getEnrollmentsByAuthorizedUser(authorizedUser.id);
-    enrolledDropletIds = enrollments.map(e => e.droplet.id);
-    
+    enrolledDropletIds = enrollments.map((e) => e.droplet.id);
+
     // Get completed lessons from enrollments
-    completedLessonIds = enrollments.flatMap(enrollment => 
-      enrollment.viewedLessons?.map((lesson: { id: number }) => lesson.id) || []
+    completedLessonIds = enrollments.flatMap(
+      (enrollment) =>
+        enrollment.viewedLessons?.map((lesson: { id: number }) => lesson.id) ||
+        [],
     );
 
     // Check if user is enrolled in this playlist
-    isEnrolled = playlist.authorized_users?.some((p: AuthorizedUser) => p.id === authorizedUser.id) || false;
+    isEnrolled =
+      playlist.authorized_users?.some(
+        (p: AuthorizedUser) => p.id === authorizedUser.id,
+      ) || false;
   }
 
   // Check if user can access this playlist
@@ -71,29 +76,35 @@ export default async function PlaylistPage({
   }
 
   // Get all lesson IDs from the playlist's droplets
-  const playlistLessonIds = playlist.droplets?.flatMap(droplet => 
-    droplet.lessons?.map((lesson: Lesson) => lesson.id) || []
-  ) || [];
+  const playlistLessonIds =
+    playlist.droplets?.flatMap(
+      (droplet) => droplet.lessons?.map((lesson: Lesson) => lesson.id) || [],
+    ) || [];
 
   // Calculate completion status for each droplet while preserving order
-  const dropletStatus = playlist.droplets?.map((droplet, index) => {
-    const dropletLessonIds = droplet.lessons?.map((l: Lesson) => l.id) || [];
-    const completedLessonsInDroplet = completedLessonIds.filter(id => 
-      dropletLessonIds.includes(id)
-    );
-    return {
-      droplet,
-      index,
-      isComplete: dropletLessonIds.length > 0 && 
-                  completedLessonsInDroplet.length === dropletLessonIds.length,
-      progress: dropletLessonIds.length > 0 ? 
-                (completedLessonsInDroplet.length / dropletLessonIds.length) * 100 : 0
-    };
-  }) || [];
+  const dropletStatus =
+    playlist.droplets?.map((droplet, index) => {
+      const dropletLessonIds = droplet.lessons?.map((l: Lesson) => l.id) || [];
+      const completedLessonsInDroplet = completedLessonIds.filter((id) =>
+        dropletLessonIds.includes(id),
+      );
+      return {
+        droplet,
+        index,
+        isComplete:
+          dropletLessonIds.length > 0 &&
+          completedLessonsInDroplet.length === dropletLessonIds.length,
+        progress:
+          dropletLessonIds.length > 0
+            ? (completedLessonsInDroplet.length / dropletLessonIds.length) * 100
+            : 0,
+      };
+    }) || [];
 
   // Organize droplets by status while preserving original order
-  const completedDroplets = dropletStatus.filter(d => d.isComplete);
-  const incompleteDroplets = dropletStatus.filter(d => !d.isComplete)
+  const completedDroplets = dropletStatus.filter((d) => d.isComplete);
+  const incompleteDroplets = dropletStatus
+    .filter((d) => !d.isComplete)
     .sort((a, b) => a.index - b.index);
 
   // The first incomplete droplet is "Pick Up Where "
@@ -103,10 +114,12 @@ export default async function PlaylistPage({
 
   // Calculate overall progress
   const totalLessons = playlistLessonIds.length;
-  const completedLessons = completedLessonIds.filter(id =>
-    playlistLessonIds.includes(id)
+  const completedLessons = completedLessonIds.filter((id) =>
+    playlistLessonIds.includes(id),
   ).length;
-  const progressPercentage = Math.round((completedLessons / totalLessons) * 100);
+  const progressPercentage = Math.round(
+    (completedLessons / totalLessons) * 100,
+  );
 
   return (
     <div className="container py-8">
@@ -128,7 +141,7 @@ export default async function PlaylistPage({
               {playlist.duration}
             </Badge>
             <Badge variant="outline" className="bg-slate-100">
-              {totalLessons} {totalLessons === 1 ? 'Lesson' : 'Lessons'}
+              {totalLessons} {totalLessons === 1 ? "Lesson" : "Lessons"}
             </Badge>
             {!playlist.isPublic && (
               <Badge variant="outline" className="bg-slate-100">
@@ -154,7 +167,9 @@ export default async function PlaylistPage({
             </div>
           )}
           {playlist.description && (
-            <p className="text-lg text-slate-600 mb-4">{playlist.description}</p>
+            <p className="text-lg text-slate-600 mb-4">
+              {playlist.description}
+            </p>
           )}
         </div>
 
@@ -162,12 +177,16 @@ export default async function PlaylistPage({
           <div className="space-y-8">
             {pickUpWhereYouLeftOffDroplet && (
               <section>
-                <h2 className="text-xl font-semibold mb-4">Pick Up Where You Left Off</h2>
+                <h2 className="text-xl font-semibold mb-4">
+                  Pick Up Where You Left Off
+                </h2>
                 <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
                   <DropletTile
                     key={pickUpWhereYouLeftOffDroplet.droplet.id}
                     droplet={pickUpWhereYouLeftOffDroplet.droplet}
-                    isEnrolled={enrolledDropletIds.includes(pickUpWhereYouLeftOffDroplet.droplet.id)}
+                    isEnrolled={enrolledDropletIds.includes(
+                      pickUpWhereYouLeftOffDroplet.droplet.id,
+                    )}
                     completedLessonIds={completedLessonIds}
                   />
                 </ul>
@@ -176,11 +195,13 @@ export default async function PlaylistPage({
 
             {startSomethingNewDroplets.length > 0 && (
               <section>
-                <h2 className="text-xl font-semibold mb-4">Start Something New</h2>
+                <h2 className="text-xl font-semibold mb-4">
+                  Start Something New
+                </h2>
                 <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
                   {startSomethingNewDroplets.map(({ droplet }) => (
-                    <DropletTile 
-                      key={droplet.id} 
+                    <DropletTile
+                      key={droplet.id}
                       droplet={droplet}
                       isEnrolled={enrolledDropletIds.includes(droplet.id)}
                       completedLessonIds={completedLessonIds}
@@ -192,11 +213,13 @@ export default async function PlaylistPage({
 
             {completedDroplets.length > 0 && (
               <section>
-                <h2 className="text-xl font-semibold mb-4">Completed Droplets</h2>
+                <h2 className="text-xl font-semibold mb-4">
+                  Completed Droplets
+                </h2>
                 <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
                   {completedDroplets.map(({ droplet }) => (
-                    <DropletTile 
-                      key={droplet.id} 
+                    <DropletTile
+                      key={droplet.id}
                       droplet={droplet}
                       isEnrolled={enrolledDropletIds.includes(droplet.id)}
                       completedLessonIds={completedLessonIds}
@@ -207,9 +230,11 @@ export default async function PlaylistPage({
             )}
           </div>
         ) : (
-          <p className="text-center text-slate-600">No droplets in this playlist yet.</p>
+          <p className="text-center text-slate-600">
+            No droplets in this playlist yet.
+          </p>
         )}
       </div>
     </div>
   );
-} 
+}

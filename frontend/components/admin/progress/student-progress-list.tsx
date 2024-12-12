@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -30,32 +30,38 @@ export function StudentProgressList({ playlists }: StudentProgressListProps) {
   const [openPlaylists, setOpenPlaylists] = useState<number[]>([]);
 
   const togglePlaylist = (playlistId: number) => {
-    setOpenPlaylists(current => 
+    setOpenPlaylists((current) =>
       current.includes(playlistId)
-        ? current.filter(id => id !== playlistId)
-        : [...current, playlistId]
+        ? current.filter((id) => id !== playlistId)
+        : [...current, playlistId],
     );
   };
 
-  const exportProgress = (playlistName: string, users: { email: string; progress: number }[]) => {
+  const exportProgress = (
+    playlistName: string,
+    users: { email: string; progress: number }[],
+  ) => {
     // Convert progress to decimal (e.g., 31% becomes 0.31)
-    const data = users.map(user => ({
+    const data = users.map((user) => ({
       email: user.email,
-      progress: (user.progress / 100).toFixed(2)
+      progress: (user.progress / 100).toFixed(2),
     }));
 
     // Create CSV content
     const csvContent = [
-      'email,progress',
-      ...data.map(row => `${row.email},${row.progress}`)
-    ].join('\n');
+      "email,progress",
+      ...data.map((row) => `${row.email},${row.progress}`),
+    ].join("\n");
 
     // Create and trigger download
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
     const url = URL.createObjectURL(blob);
-    link.setAttribute('href', url);
-    link.setAttribute('download', `${playlistName.toLowerCase().replace(/\s+/g, '-')}-progress.csv`);
+    link.setAttribute("href", url);
+    link.setAttribute(
+      "download",
+      `${playlistName.toLowerCase().replace(/\s+/g, "-")}-progress.csv`,
+    );
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -84,13 +90,16 @@ export function StudentProgressList({ playlists }: StudentProgressListProps) {
                 <div>
                   <h3 className="font-medium">{playlist.name}</h3>
                   <p className="text-sm text-muted-foreground">
-                    {playlist.authorized_users.length} enrolled student{playlist.authorized_users.length !== 1 ? 's' : ''}
+                    {playlist.authorized_users.length} enrolled student
+                    {playlist.authorized_users.length !== 1 ? "s" : ""}
                   </p>
                 </div>
-                <ChevronDown 
+                <ChevronDown
                   className={cn(
                     "h-4 w-4 transition-transform duration-200",
-                    openPlaylists.includes(playlist.id) ? "transform rotate-180" : ""
+                    openPlaylists.includes(playlist.id)
+                      ? "transform rotate-180"
+                      : "",
                   )}
                 />
               </CardHeader>
@@ -98,8 +107,8 @@ export function StudentProgressList({ playlists }: StudentProgressListProps) {
             <CollapsibleContent>
               <CardContent className="pt-0">
                 <div className="space-y-4">
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     size="sm"
                     onClick={(e) => {
                       e.preventDefault(); // Prevent collapsible from toggling
@@ -127,4 +136,4 @@ export function StudentProgressList({ playlists }: StudentProgressListProps) {
       ))}
     </div>
   );
-} 
+}

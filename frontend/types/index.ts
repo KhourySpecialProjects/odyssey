@@ -8,6 +8,6 @@ export interface Playlist {
     name: string;
     slug: string;
   }>;
-  duration: 'short' | 'medium' | 'long';
+  duration: "short" | "medium" | "long";
   isPublic: boolean;
-} 
+}

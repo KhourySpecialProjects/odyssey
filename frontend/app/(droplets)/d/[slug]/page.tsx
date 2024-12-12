@@ -57,11 +57,11 @@ export default async function DropletRoute({ params }: Props) {
   // Get enrollment status
   let isEnrolled = false;
   const user = await getCurrentUser();
-  
+
   if (user?.email) {
     const authorizedUser = await getAuthorizedUserByEmail(user.email);
     const enrollments = await getEnrollmentsByAuthorizedUser(authorizedUser.id);
-    isEnrolled = enrollments.some(e => e.droplet.id === droplet.id);
+    isEnrolled = enrollments.some((e) => e.droplet.id === droplet.id);
   }
 
   return (

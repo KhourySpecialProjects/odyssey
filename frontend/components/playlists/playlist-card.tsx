@@ -18,14 +18,17 @@ interface PlaylistCardProps {
         slug: string;
       }[];
     }[];
-    duration: 'short' | 'medium' | 'long';
+    duration: "short" | "medium" | "long";
     isPublic: boolean;
     completionPercentage?: number;
   };
   completedLessonIds: number[];
 }
 
-export function PlaylistCard({ playlist, completedLessonIds }: PlaylistCardProps) {
+export function PlaylistCard({
+  playlist,
+  completedLessonIds,
+}: PlaylistCardProps) {
   return (
     <Link href={`/p/${playlist.slug}`}>
       <Card className="bg-slate-50 border-slate-200">
@@ -38,4 +41,4 @@ export function PlaylistCard({ playlist, completedLessonIds }: PlaylistCardProps
       </Card>
     </Link>
   );
-} 
+}

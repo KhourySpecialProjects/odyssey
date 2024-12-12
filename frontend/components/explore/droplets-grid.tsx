@@ -28,8 +28,8 @@ export async function DropletsGrid({
   focusArea?: string;
   tags?: string;
 }) {
-  const [field, direction] = (sortKey || '').split(':');
-  const serverSortKey = field === 'name' ? sortKey : undefined;
+  const [field, direction] = (sortKey || "").split(":");
+  const serverSortKey = field === "name" ? sortKey : undefined;
 
   const droplets = await getDroplets({
     sort: serverSortKey,
@@ -60,8 +60,8 @@ export async function DropletsGrid({
     populate: {
       tags: true,
       lessons: {
-        fields: ['id', 'name', 'slug']
-      }
+        fields: ["id", "name", "slug"],
+      },
     },
   });
 
@@ -72,30 +72,32 @@ export async function DropletsGrid({
   if (user?.email) {
     const authorizedUser = await getAuthorizedUserByEmail(user.email);
     const enrollments = await getEnrollmentsByAuthorizedUser(authorizedUser.id);
-    enrolledDropletIds = enrollments.map(e => e.droplet.id);
-    completedLessonIds = enrollments.flatMap(enrollment => 
-      enrollment.viewedLessons?.map((lesson: Lesson) => lesson.id) || []
+    enrolledDropletIds = enrollments.map((e) => e.droplet.id);
+    completedLessonIds = enrollments.flatMap(
+      (enrollment) =>
+        enrollment.viewedLessons?.map((lesson: Lesson) => lesson.id) || [],
     );
   }
 
-  let dropletsWithCompletion = droplets.map(droplet => {
+  let dropletsWithCompletion = droplets.map((droplet) => {
     const dropletLessonIds = droplet.lessons?.map((l: Lesson) => l.id) || [];
-    const completedLessonsInDroplet = completedLessonIds.filter(id => 
-      dropletLessonIds.includes(id)
+    const completedLessonsInDroplet = completedLessonIds.filter((id) =>
+      dropletLessonIds.includes(id),
     );
-    const completionPercentage = dropletLessonIds.length > 0 
-      ? (completedLessonsInDroplet.length / dropletLessonIds.length) * 100 
-      : 0;
-    
+    const completionPercentage =
+      dropletLessonIds.length > 0
+        ? (completedLessonsInDroplet.length / dropletLessonIds.length) * 100
+        : 0;
+
     return {
       ...droplet,
-      completionPercentage
+      completionPercentage,
     };
   });
 
-  if (field === 'completion') {
+  if (field === "completion") {
     dropletsWithCompletion.sort((a, b) => {
-      return direction === 'asc'
+      return direction === "asc"
         ? a.completionPercentage - b.completionPercentage
         : b.completionPercentage - a.completionPercentage;
     });
@@ -115,8 +117,8 @@ export async function DropletsGrid({
   return (
     <ul className="grid grid-flow-row grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
       {dropletsWithCompletion.map((droplet) => (
-        <DropletTile 
-          key={droplet.id} 
+        <DropletTile
+          key={droplet.id}
           droplet={droplet}
           isEnrolled={enrolledDropletIds.includes(droplet.id)}
           completedLessonIds={completedLessonIds}

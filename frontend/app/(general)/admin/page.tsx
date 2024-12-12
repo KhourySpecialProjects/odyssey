@@ -9,19 +9,19 @@ import { notFound } from "next/navigation";
 import { isAuthorizedUserAdmin } from "@/lib/utils";
 
 export default async function Page() {
-    const user = await getCurrentUser();
-    if (!user || !isAuthorizedUserAdmin(user.roles)) return notFound();
+  const user = await getCurrentUser();
+  if (!user || !isAuthorizedUserAdmin(user.roles)) return notFound();
 
-    return (
-        <div className="w-full max-w-5xl p-8 mx-auto space-y-12">
-            <Session />
-            <AdminSelector
-                content={{
-                    "Authorized Users": <AuthorizedUsers />,
-                    "Access Manager": <AccessManager user={user} />,
-                    Reports: <Reports />,
-                }}
-            />
-        </div>
-    );
+  return (
+    <div className="w-full max-w-5xl p-8 mx-auto space-y-12">
+      <Session />
+      <AdminSelector
+        content={{
+          "Authorized Users": <AuthorizedUsers />,
+          "Access Manager": <AccessManager user={user} />,
+          Reports: <Reports />,
+        }}
+      />
+    </div>
+  );
 }

@@ -39,17 +39,18 @@ export default async function ExplorePage({
       <div className="w-full px-4 mx-auto mt-4 mb-8 max-w-7xl xl:p-0">
         <div className="flex flex-col gap-4 p-4 border rounded-md bg-slate-50 border-slate-200">
           <ContentTypeSelector />
-          
+
           <div className="flex flex-col gap-2 md:flex-row md:items-center">
             <div className="flex flex-row flex-wrap items-center flex-1 gap-2">
-              {contentType === "droplets" && DROPLET_FILTERS.map((filter) => (
-                <Filter
-                  key={filter.name}
-                  name={filter.name}
-                  label={filter.label}
-                  options={filter.options}
-                />
-              ))}
+              {contentType === "droplets" &&
+                DROPLET_FILTERS.map((filter) => (
+                  <Filter
+                    key={filter.name}
+                    name={filter.name}
+                    label={filter.label}
+                    options={filter.options}
+                  />
+                ))}
               {contentType === "droplets" && <TagFilter />}
               <Sort options={sorting} defaultValue={defaultSort} />
             </div>
@@ -71,10 +72,7 @@ export default async function ExplorePage({
           </Suspense>
         ) : (
           <Suspense fallback={<DropletsSkeleton />}>
-            <PlaylistsGrid
-              searchValue={searchValue}
-              sortKey={sortKey}
-            />
+            <PlaylistsGrid searchValue={searchValue} sortKey={sortKey} />
           </Suspense>
         )}
       </div>
