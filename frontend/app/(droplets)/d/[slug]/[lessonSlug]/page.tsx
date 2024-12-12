@@ -11,6 +11,16 @@ interface PageParams {
     slug: string;
     lessonSlug: string;
   };
+  searchParams?: { [key: string]: string | string[] | undefined };
+}
+
+export async function generateMetadata({
+  params,
+}: PageParams): Promise<Metadata> {
+  return {
+    title: `Lesson ${params.lessonSlug}`,
+    description: `Learning content for ${params.slug}`,
+  };
 }
 
 export default async function Page({ params }: PageParams) {
@@ -30,7 +40,7 @@ export default async function Page({ params }: PageParams) {
 
     if (enrollment) {
       enrollmentId = enrollment.id;
-      completedLessonIds = enrollment.viewedLessons?.map((l) => l.id) || [];
+      completedLessonIds = enrollment.viewedLessons?.map((l: { id: number }) => l.id) || [];
     }
   }
 
