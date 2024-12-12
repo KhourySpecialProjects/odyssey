@@ -689,18 +689,25 @@ export async function completeLesson(activityId: number, lessonIds: number[]) {
 export async function markLessonAsComplete(enrollmentId: string, completedLessonIds: number[], lessonId: number) {
   try {
     // First get the current enrollment to ensure we have the latest data
-    const enrollmentResponse = await fetch(`${process.env.NEXT_PUBLIC_STRAPI_API_URL}/api/enrollments/${enrollmentId}?populate=viewedLessons`, {
-      headers: {
-        Authorization: `Bearer ${process.env.STRAPI_ACCESS_TOKEN}`,
-      },
-    });
+    const enrollmentResponse = await fetch(
+      `${process.env.NEXT_PUBLIC_STRAPI_API_URL}/api/enrollments/${enrollmentId}?populate=viewedLessons`, 
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.STRAPI_ACCESS_TOKEN}`,
+        },
+      }
+    );
+
+    if (!enrollmentResponse.ok) {
+      throw new Error('Failed to fetch enrollment');
+    }
 
     const enrollment = await enrollmentResponse.json();
-    const currentViewedLessonIds = enrollment.data.attributes.viewedLessons.data.map((l: any) => l.id);
-
-    // Only add the lesson if it's not already marked as complete
-    if (!currentViewedLessonIds.includes(lessonId)) {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_STRAPI_API_URL}/api/enrollments/${enrollmentId}`, {
+    
+    // Update the enrollment with the new lesson
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_STRAPI_API_URL}/api/enrollments/${enrollmentId}`, 
+      {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -709,17 +716,24 @@ export async function markLessonAsComplete(enrollmentId: string, completedLesson
         body: JSON.stringify({
           data: {
             viewedLessons: {
-              connect: [...currentViewedLessonIds, lessonId]
+              connect: [lessonId]
             }
           }
         }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to mark lesson as complete');
       }
+    );
+
+    if (!response.ok) {
+      const error = await response.json();
+      console.error('Error response:', error);
+      throw new Error('Failed to mark lesson as complete');
     }
 
+    // Update revalidation paths to be more generic
+    revalidatePath('/dashboard');
+    revalidatePath('/(droplets)/d/[slug]/[lessonSlug]', 'page');
+    revalidatePath('/(playlists)/p/[slug]', 'page');
+    
     return true;
   } catch (error) {
     console.error('Error marking lesson as complete:', error);
