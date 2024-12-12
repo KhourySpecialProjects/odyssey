@@ -1,4 +1,8 @@
-import { Message, MessageDescription, MessageHeader } from "@/components/message";
+import {
+  Message,
+  MessageDescription,
+  MessageHeader,
+} from "@/components/message";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
 import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
@@ -21,33 +25,35 @@ export async function EnrolledDropletsGrid() {
         populate: {
           tags: true,
           lessons: {
-            fields: ['id', 'name', 'slug']
-          }
-        }
+            fields: ["id", "name", "slug"],
+          },
+        },
       },
       viewedLessons: {
-        fields: ['id', 'name', 'slug']
-      }
-    }
+        fields: ["id", "name", "slug"],
+      },
+    },
   });
 
-  const completedLessonIds = enrollments.flatMap(enrollment => 
-    enrollment.viewedLessons?.map((lesson: Lesson) => lesson.id) || []
+  const completedLessonIds = enrollments.flatMap(
+    (enrollment) =>
+      enrollment.viewedLessons?.map((lesson: Lesson) => lesson.id) || [],
   );
 
-  const dropletsWithCompletion = enrollments.map(enrollment => {
+  const dropletsWithCompletion = enrollments.map((enrollment) => {
     const droplet = enrollment.droplet;
     const dropletLessonIds = droplet.lessons?.map((l: Lesson) => l.id) || [];
-    const completedLessonsInDroplet = completedLessonIds.filter(id => 
-      dropletLessonIds.includes(id)
+    const completedLessonsInDroplet = completedLessonIds.filter((id) =>
+      dropletLessonIds.includes(id),
     );
-    const completionPercentage = dropletLessonIds.length > 0 
-      ? (completedLessonsInDroplet.length / dropletLessonIds.length) * 100 
-      : 0;
-    
+    const completionPercentage =
+      dropletLessonIds.length > 0
+        ? (completedLessonsInDroplet.length / dropletLessonIds.length) * 100
+        : 0;
+
     return {
       ...droplet,
-      completionPercentage
+      completionPercentage,
     };
   });
 
@@ -65,8 +71,8 @@ export async function EnrolledDropletsGrid() {
   return (
     <ul className="grid grid-flow-row grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {dropletsWithCompletion.map((droplet) => (
-        <DropletTile 
-          key={droplet.id} 
+        <DropletTile
+          key={droplet.id}
           droplet={droplet}
           isEnrolled={true}
           completedLessonIds={completedLessonIds}
@@ -74,4 +80,4 @@ export async function EnrolledDropletsGrid() {
       ))}
     </ul>
   );
-} 
+}

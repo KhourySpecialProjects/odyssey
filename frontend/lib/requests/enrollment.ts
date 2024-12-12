@@ -13,17 +13,17 @@ export async function getEnrollmentsByAuthorizedUser(
     sort,
     filters,
     pagination = { pageSize: 25, page: 1 },
-    populate = { 
-      droplet: { 
+    populate = {
+      droplet: {
         populate: {
           lessons: {
-            fields: ['id', 'name', 'slug']
-          }
-        }
+            fields: ["id", "name", "slug"],
+          },
+        },
       },
-      viewedLessons: { 
-        fields: ['id', 'name', 'slug'] 
-      }
+      viewedLessons: {
+        fields: ["id", "name", "slug"],
+      },
     },
     fields = ["id"],
   }: StrapiRequestParams = {},

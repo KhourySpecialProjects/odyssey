@@ -14,10 +14,13 @@ export async function fetchDroplets() {
         page: 1,
       },
     });
-    const response = await fetch(NEXT_PUBLIC_STRAPI_API_URL + "/api/droplets?" + query, {
-      headers: { Authorization: "Bearer " + STRAPI_ACCESS_TOKEN },
-      next: { revalidate: 3600 },
-    });
+    const response = await fetch(
+      NEXT_PUBLIC_STRAPI_API_URL + "/api/droplets?" + query,
+      {
+        headers: { Authorization: "Bearer " + STRAPI_ACCESS_TOKEN },
+        next: { revalidate: 3600 },
+      },
+    );
     const data = await response.json();
     const droplets = flattenAttributes(data.data);
     return droplets;
@@ -70,10 +73,13 @@ export async function fetchReports() {
         page: 1,
       },
     });
-    const response = await fetch(NEXT_PUBLIC_STRAPI_API_URL + "/api/reports?" + query, {
-      headers: { Authorization: "Bearer " + STRAPI_ACCESS_TOKEN },
-      cache: "no-store",
-    });
+    const response = await fetch(
+      NEXT_PUBLIC_STRAPI_API_URL + "/api/reports?" + query,
+      {
+        headers: { Authorization: "Bearer " + STRAPI_ACCESS_TOKEN },
+        cache: "no-store",
+      },
+    );
     const data = await response.json();
     const reports = flattenAttributes(data.data);
     return reports;

@@ -2,7 +2,11 @@ import { getCurrentUser } from "@/lib/auth/session";
 import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
 import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
 import { PlaylistCard } from "../playlists/playlist-card";
-import { Message, MessageDescription, MessageHeader } from "@/components/message";
+import {
+  Message,
+  MessageDescription,
+  MessageHeader,
+} from "@/components/message";
 
 interface Lesson {
   id: number;
@@ -22,7 +26,7 @@ interface Playlist {
   name: string;
   slug: string;
   droplets?: Droplet[];
-  duration: 'short' | 'medium' | 'long';
+  duration: "short" | "medium" | "long";
   isPublic: boolean;
 }
 
@@ -37,36 +41,43 @@ export async function UserPlaylistsGrid() {
           droplets: {
             populate: {
               lessons: {
-                fields: ['id', 'name', 'slug']
-              }
-            }
-          }
-        }
-      }
-    }
+                fields: ["id", "name", "slug"],
+              },
+            },
+          },
+        },
+      },
+    },
   });
 
   // Get completion data if available
   const enrollments = await getEnrollmentsByAuthorizedUser(authorizedUser.id);
-  const completedLessonIds = enrollments.flatMap(enrollment => 
-    enrollment.viewedLessons?.map((lesson: Lesson) => lesson.id) || []
+  const completedLessonIds = enrollments.flatMap(
+    (enrollment) =>
+      enrollment.viewedLessons?.map((lesson: Lesson) => lesson.id) || [],
   );
 
   // Map all playlists and calculate completion
-  const allPlaylists = (authorizedUser.playlists || []).map((playlist: Playlist) => {
-    const allLessonIds = playlist.droplets?.flatMap(d => 
-      d.lessons?.map(l => l.id) || []
-    ) || [];
-    
-    const completionPercentage = allLessonIds.length > 0 
-      ? (completedLessonIds.filter(id => allLessonIds.includes(id)).length / allLessonIds.length) * 100 
-      : 0;
-    
-    return {
-      ...playlist,
-      completionPercentage
-    };
-  });
+  const allPlaylists = (authorizedUser.playlists || []).map(
+    (playlist: Playlist) => {
+      const allLessonIds =
+        playlist.droplets?.flatMap((d) => d.lessons?.map((l) => l.id) || []) ||
+        [];
+
+      const completionPercentage =
+        allLessonIds.length > 0
+          ? (completedLessonIds.filter((id) => allLessonIds.includes(id))
+              .length /
+              allLessonIds.length) *
+            100
+          : 0;
+
+      return {
+        ...playlist,
+        completionPercentage,
+      };
+    },
+  );
 
   // Separate playlists into public and custom
   const publicPlaylists = allPlaylists.filter((p: Playlist) => p.isPublic);
@@ -77,7 +88,8 @@ export async function UserPlaylistsGrid() {
       <Message className="mb-8 border border-dashed rounded-md border-slate-200">
         <MessageHeader subtitle="No Results" title="No Saved Playlists" />
         <MessageDescription>
-          You haven&apos;t saved any playlists yet. Browse the explore page to find playlists to save.
+          You haven&apos;t saved any playlists yet. Browse the explore page to
+          find playlists to save.
         </MessageDescription>
       </Message>
     );
@@ -90,9 +102,9 @@ export async function UserPlaylistsGrid() {
           <h2 className="text-xl font-semibold mb-4">Custom Playlists</h2>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
             {customPlaylists.map((playlist: Playlist) => (
-              <PlaylistCard 
-                key={playlist.id} 
-                playlist={playlist} 
+              <PlaylistCard
+                key={playlist.id}
+                playlist={playlist}
                 completedLessonIds={completedLessonIds}
               />
             ))}
@@ -105,9 +117,9 @@ export async function UserPlaylistsGrid() {
           <h2 className="text-xl font-semibold mb-4">Public Playlists</h2>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
             {publicPlaylists.map((playlist: Playlist) => (
-              <PlaylistCard 
-                key={playlist.id} 
-                playlist={playlist} 
+              <PlaylistCard
+                key={playlist.id}
+                playlist={playlist}
                 completedLessonIds={completedLessonIds}
               />
             ))}
@@ -116,4 +128,4 @@ export async function UserPlaylistsGrid() {
       )}
     </div>
   );
-} 
+}

@@ -15,24 +15,25 @@ export async function Enrollments() {
         populate: {
           tags: true,
           lessons: {
-            fields: ['id', 'name', 'slug']
-          }
-        }
+            fields: ["id", "name", "slug"],
+          },
+        },
       },
       viewedLessons: {
-        fields: ['id', 'name', 'slug']
-      }
-    }
+        fields: ["id", "name", "slug"],
+      },
+    },
   });
 
   return (
     <ul className="grid grid-flow-row grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
       {enrollments.map((enrollment) => {
-        const completedLessonIds = enrollment.viewedLessons?.map(l => l.id) || [];
+        const completedLessonIds =
+          enrollment.viewedLessons?.map((l) => l.id) || [];
         return (
-          <DropletTile 
-            key={enrollment.id} 
-            droplet={enrollment.droplet} 
+          <DropletTile
+            key={enrollment.id}
+            droplet={enrollment.droplet}
             isEnrolled={true}
             completedLessonIds={completedLessonIds}
           />

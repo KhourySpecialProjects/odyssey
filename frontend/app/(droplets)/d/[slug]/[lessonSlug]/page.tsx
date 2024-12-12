@@ -13,13 +13,15 @@ interface PageParams {
   };
 }
 
-export async function generateMetadata({ params }: PageParams): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+}: PageParams): Promise<Metadata> {
   // ... metadata generation code
 }
 
 export default async function Page({ params }: PageParams) {
   const { slug, lessonSlug } = params;
-  
+
   const session = await getServerSession();
   let enrollmentId: string | undefined;
   let completedLessonIds: number[] = [];
@@ -27,22 +29,22 @@ export default async function Page({ params }: PageParams) {
   if (session?.user?.email) {
     const user = await getAuthorizedUserByEmail(session.user.email);
     const enrollments = await getEnrollmentsByAuthorizedUser(user.id);
-    
+
     // Find the enrollment for this droplet
     const droplet = await getDropletBySlug(slug);
-    const enrollment = enrollments.find(e => e.droplet.id === droplet.id);
-    
+    const enrollment = enrollments.find((e) => e.droplet.id === droplet.id);
+
     if (enrollment) {
       enrollmentId = enrollment.id;
-      completedLessonIds = enrollment.viewedLessons?.map(l => l.id) || [];
+      completedLessonIds = enrollment.viewedLessons?.map((l) => l.id) || [];
     }
   }
 
   const lesson = await getLessonBySlug(lessonSlug);
 
   return (
-    <LessonRenderer 
-      lesson={lesson} 
+    <LessonRenderer
+      lesson={lesson}
       enrollmentId={enrollmentId}
       completedLessonIds={completedLessonIds}
     />

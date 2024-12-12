@@ -20,7 +20,11 @@ interface LessonRendererProps {
   completedLessonIds: number[];
 }
 
-export function LessonRenderer({ lesson, enrollmentId, completedLessonIds }: LessonRendererProps) {
+export function LessonRenderer({
+  lesson,
+  enrollmentId,
+  completedLessonIds,
+}: LessonRendererProps) {
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
 
@@ -28,7 +32,11 @@ export function LessonRenderer({ lesson, enrollmentId, completedLessonIds }: Les
     if (!enrollmentId) return;
 
     startTransition(async () => {
-      const success = await markLessonAsComplete(enrollmentId, completedLessonIds, lesson.id);
+      const success = await markLessonAsComplete(
+        enrollmentId,
+        completedLessonIds,
+        lesson.id,
+      );
       if (success) {
         router.refresh();
       }
@@ -71,15 +79,16 @@ export function LessonRenderer({ lesson, enrollmentId, completedLessonIds }: Les
       <div className="mt-8 flex justify-between items-center">
         <button
           onClick={handleMarkAsComplete}
-          disabled={isPending || !enrollmentId || completedLessonIds.includes(lesson.id)}
+          disabled={
+            isPending || !enrollmentId || completedLessonIds.includes(lesson.id)
+          }
           className="px-4 py-2 bg-sky-600 text-white rounded-lg hover:bg-sky-700 disabled:opacity-50"
         >
-          {isPending 
-            ? 'Marking as complete...' 
+          {isPending
+            ? "Marking as complete..."
             : completedLessonIds.includes(lesson.id)
-            ? 'Completed'
-            : 'Mark as complete'
-          }
+              ? "Completed"
+              : "Mark as complete"}
         </button>
       </div>
     </div>

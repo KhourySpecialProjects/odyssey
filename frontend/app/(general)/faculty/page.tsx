@@ -4,7 +4,7 @@ import { AdminSelector } from "@/components/shared/selector";
 import { getCurrentUser } from "@/lib/auth/session";
 import { notFound } from "next/navigation";
 import { isAuthorizedUserAdmin } from "@/lib/utils";
-import {StudentProgress} from "@/components/admin/progress/student-progress";
+import { StudentProgress } from "@/components/admin/progress/student-progress";
 
 export default async function Page() {
   const user = await getCurrentUser();

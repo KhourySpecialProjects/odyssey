@@ -1,7 +1,14 @@
-'use client';
+"use client";
 
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { togglePlaylistEnrollment } from "@/lib/requests/playlist-enrollment";
@@ -12,10 +19,10 @@ interface PlaylistEnrollButtonProps {
   isPublic: boolean;
 }
 
-export function PlaylistEnrollButton({ 
-  playlistId, 
+export function PlaylistEnrollButton({
+  playlistId,
   isEnrolled,
-  isPublic
+  isPublic,
 }: PlaylistEnrollButtonProps) {
   const [isPending, setIsPending] = useState(false);
   const [showWarning, setShowWarning] = useState(false);
@@ -43,7 +50,7 @@ export function PlaylistEnrollButton({
       }
       router.refresh();
     } catch (error) {
-      console.error('Error updating enrollment:', error);
+      console.error("Error updating enrollment:", error);
     } finally {
       setIsPending(false);
       setShowWarning(false);
@@ -63,13 +70,11 @@ export function PlaylistEnrollButton({
         variant={isEnrolled ? "destructive" : "default"}
         className="w-full sm:w-auto"
       >
-        {isPending ? (
-          "Loading..."
-        ) : isEnrolled ? (
-          "Remove from My Playlists"
-        ) : (
-          "Add to My Playlists"
-        )}
+        {isPending
+          ? "Loading..."
+          : isEnrolled
+            ? "Remove from My Playlists"
+            : "Add to My Playlists"}
       </Button>
 
       <Dialog open={showWarning} onOpenChange={setShowWarning}>
@@ -77,21 +82,16 @@ export function PlaylistEnrollButton({
           <DialogHeader>
             <DialogTitle>Remove Private Playlist?</DialogTitle>
             <DialogDescription>
-              This is a private playlist. If you remove it, you will need to contact the playlist creator to regain access.
-              Are you sure you want to continue?
+              This is a private playlist. If you remove it, you will need to
+              contact the playlist creator to regain access. Are you sure you
+              want to continue?
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setShowWarning(false)}
-            >
+            <Button variant="outline" onClick={() => setShowWarning(false)}>
               Cancel
             </Button>
-            <Button
-              variant="destructive"
-              onClick={handleEnrollmentChange}
-            >
+            <Button variant="destructive" onClick={handleEnrollmentChange}>
               Remove Playlist
             </Button>
           </DialogFooter>
@@ -99,4 +99,4 @@ export function PlaylistEnrollButton({
       </Dialog>
     </>
   );
-} 
+}

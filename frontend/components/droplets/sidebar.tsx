@@ -40,7 +40,7 @@ import {
 import { Label } from "../ui/label";
 import { Progress } from "../ui/progress";
 import { Separator } from "../ui/separator";
-import { useSession } from 'next-auth/react';
+import { useSession } from "next-auth/react";
 
 export default function Sidebar({
   user,
