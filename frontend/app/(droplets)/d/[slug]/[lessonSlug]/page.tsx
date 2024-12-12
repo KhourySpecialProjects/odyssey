@@ -1,3 +1,4 @@
+import { Metadata } from "next";
 import { LessonRenderer } from "@/components/droplets/lessons/lesson-renderer";
 import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
 import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
@@ -5,11 +6,20 @@ import { getDropletBySlug } from "@/lib/requests/droplet";
 import { getLessonBySlug } from "@/lib/requests/lesson";
 import { getServerSession } from "next-auth";
 
-export default async function LessonPage({ 
-  params 
-}: { 
-  params: { slug: string; lessonSlug: string } 
-}) {
+interface PageParams {
+  params: {
+    slug: string;
+    lessonSlug: string;
+  };
+}
+
+export async function generateMetadata({ params }: PageParams): Promise<Metadata> {
+  // ... metadata generation code
+}
+
+export default async function Page({ params }: PageParams) {
+  const { slug, lessonSlug } = params;
+  
   const session = await getServerSession();
   let enrollmentId: string | undefined;
   let completedLessonIds: number[] = [];
@@ -19,7 +29,7 @@ export default async function LessonPage({
     const enrollments = await getEnrollmentsByAuthorizedUser(user.id);
     
     // Find the enrollment for this droplet
-    const droplet = await getDropletBySlug(params.slug);
+    const droplet = await getDropletBySlug(slug);
     const enrollment = enrollments.find(e => e.droplet.id === droplet.id);
     
     if (enrollment) {
@@ -28,7 +38,7 @@ export default async function LessonPage({
     }
   }
 
-  const lesson = await getLessonBySlug(params.lessonSlug);
+  const lesson = await getLessonBySlug(lessonSlug);
 
   return (
     <LessonRenderer 
