@@ -63,8 +63,6 @@ export function QuizQuestionBlock({ question }: { question: QuizQuestion }) {
           {form.getValues("answerId") === String(correctAnswer.id) ? (
             <>
               <Badge
-                size="xl"
-                before={<CircleCheckIcon />}
                 className="text-green-700 bg-green-100"
               >
                 That&rsquo;s Right!
@@ -82,8 +80,6 @@ export function QuizQuestionBlock({ question }: { question: QuizQuestion }) {
           ) : (
             <>
               <Badge
-                size="xl"
-                before={<CircleXIcon />}
                 className="text-orange-700 bg-orange-100"
               >
                 Not Quite

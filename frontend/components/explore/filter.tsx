@@ -55,7 +55,6 @@ export function Filter({
 
               <Badge
                 variant="secondary"
-                radius="md"
                 className="px-1 font-normal lg:hidden"
               >
                 {selectedValues.length}
@@ -65,7 +64,6 @@ export function Filter({
                 {selectedValues.length > 2 ? (
                   <Badge
                     variant="secondary"
-                    radius="md"
                     className="px-1 font-normal"
                   >
                     {selectedValues.length} selected
