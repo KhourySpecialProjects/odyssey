@@ -48,7 +48,7 @@ export default async function PlaylistPage({ params }: Props) {
             "focusArea",
             "learningObjectives",
             "isHidden",
-            "status"
+            "status",
           ],
         },
       },

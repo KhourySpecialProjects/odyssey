@@ -43,7 +43,8 @@ export default async function Page({ params }: Props) {
 
     if (enrollment) {
       enrollmentId = enrollment.id;
-      completedLessonIds = enrollment.viewedLessons?.map((l: { id: number }) => l.id) || [];
+      completedLessonIds =
+        enrollment.viewedLessons?.map((l: { id: number }) => l.id) || [];
     }
   }
 
