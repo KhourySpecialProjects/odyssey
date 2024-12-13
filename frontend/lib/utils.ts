@@ -320,47 +320,67 @@ export function tiptapJSONToStrapiJSON(
           text: node.text || "",
           bold: node.marks?.some((mark) => mark.type === "bold") || false,
           italic: node.marks?.some((mark) => mark.type === "italic") || false,
-          underline: node.marks?.some((mark) => mark.type === "underline") || false,
-          strikethrough: node.marks?.some((mark) => mark.type === "strike") || false,
+          underline:
+            node.marks?.some((mark) => mark.type === "underline") || false,
+          strikethrough:
+            node.marks?.some((mark) => mark.type === "strike") || false,
           code: node.marks?.some((mark) => mark.type === "code") || false,
-        };
-
-      case "image":
-        const imageUrl = node.attrs?.src || "";
-        const altText = node.attrs?.alt || "";
-        const imageName = node.attrs?.title || "";
-        
-        return {
-          type: "image",
-          image: {
-            url: imageUrl,
-            alternativeText: altText,
-            name: imageName,
-            formats: {},
-            provider: "local",
-            width: 0,
-            height: 0,
-          },
-          children: [],
         };
 
       case "link":
         return {
           type: "link",
           url: node.attrs?.href || "",
-          children: node.content ? tiptapJSONToStrapiJSON(node.content) : [],
+          children: tiptapJSONToStrapiJSON(node.content || []),
         };
 
       case "listItem":
         return {
           type: "list-item",
-          children: node.content?.flatMap((listItemNode) => {
-            if (listItemNode.type === "paragraph") {
-              return tiptapJSONToStrapiJSON(listItemNode.content || []);
-            }
-            return [];
-          }) || [],
+          children:
+            node.content?.flatMap((listItemNode) => {
+              if (listItemNode.type === "paragraph") {
+                return tiptapJSONToStrapiJSON(listItemNode.content || []);
+              }
+              return [];
+            }) || [],
         };
+
+      case "image":
+        return {
+          type: "image",
+          image: {
+            ext: ".jpg",
+            url: node.attrs?.src || "",
+            hash: "",
+            mime: "image/jpeg",
+            name: node.attrs?.title || "",
+            size: 0,
+            width: 0,
+            height: 0,
+            caption: node.attrs?.alt || "",
+            formats: {
+              thumbnail: {
+                ext: ".jpg",
+                url: node.attrs?.src || "",
+                hash: "",
+                mime: "image/jpeg",
+                name: node.attrs?.title || "",
+                path: null,
+                size: 0,
+                width: 0,
+                height: 0,
+              }
+            },
+            alternativeText: node.attrs?.alt || "",
+            provider: "local",
+            provider_metadata: null,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+            previewUrl: null,
+          },
+          children: [],
+        } as BlockNode;
 
       case "bulletList":
         return {
@@ -390,6 +410,7 @@ export function tiptapJSONToStrapiJSON(
             children: tiptapJSONToStrapiJSON(node.content || []),
           };
         } else {
+          console.log("got here!!!");
           return {
             type: "paragraph",
             children: [{ type: "text", text: "" }],
