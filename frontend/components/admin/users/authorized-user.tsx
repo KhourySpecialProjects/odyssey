@@ -14,6 +14,15 @@ import { isAuthorizedUserAdmin } from "@/lib/utils";
 
 export function AuthorizedUserBlock({ user }: { user: AuthorizedUser }) {
   const isAdmin = isAuthorizedUserAdmin(user.roles.map((role) => role.title));
+
+  const handleUpdateUser = async (formData: FormData) => {
+    await updateAuthorizedUser(formData);
+  };
+
+  const handleDeleteUser = async (formData: FormData) => {
+    await deleteAuthorizedUser(formData);
+  };
+
   return (
     <li className="py-0 [&:not(:first-child)]:pt-3">
       <div className="flex items-center space-x-4">
@@ -28,7 +37,7 @@ export function AuthorizedUserBlock({ user }: { user: AuthorizedUser }) {
         </div>
 
         <div className="inline-flex items-center gap-2">
-          <form action={updateAuthorizedUser}>
+          <form action={handleUpdateUser}>
             <input
               id="id"
               name="id"
@@ -48,7 +57,7 @@ export function AuthorizedUserBlock({ user }: { user: AuthorizedUser }) {
             </SubmitButton>
           </form>
 
-          <form action={deleteAuthorizedUser}>
+          <form action={handleDeleteUser}>
             <input
               id="id"
               name="id"

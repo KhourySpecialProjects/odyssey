@@ -320,42 +320,46 @@ export function tiptapJSONToStrapiJSON(
           text: node.text || "",
           bold: node.marks?.some((mark) => mark.type === "bold") || false,
           italic: node.marks?.some((mark) => mark.type === "italic") || false,
-          underline:
-            node.marks?.some((mark) => mark.type === "underline") || false,
-          strikethrough:
-            node.marks?.some((mark) => mark.type === "strike") || false,
+          underline: node.marks?.some((mark) => mark.type === "underline") || false,
+          strikethrough: node.marks?.some((mark) => mark.type === "strike") || false,
           code: node.marks?.some((mark) => mark.type === "code") || false,
+        };
+
+      case "image":
+        const imageUrl = node.attrs?.src || "";
+        const altText = node.attrs?.alt || "";
+        const imageName = node.attrs?.title || "";
+        
+        return {
+          type: "image",
+          image: {
+            url: imageUrl,
+            alternativeText: altText,
+            name: imageName,
+            formats: {},
+            provider: "local",
+            width: 0,
+            height: 0,
+          },
+          children: [],
         };
 
       case "link":
         return {
           type: "link",
           url: node.attrs?.href || "",
-          children: tiptapJSONToStrapiJSON(node.content || []),
+          children: node.content ? tiptapJSONToStrapiJSON(node.content) : [],
         };
 
       case "listItem":
         return {
           type: "list-item",
-          children:
-            node.content?.flatMap((listItemNode) => {
-              if (listItemNode.type === "paragraph") {
-                return tiptapJSONToStrapiJSON(listItemNode.content || []);
-              }
-              return [];
-            }) || [],
-        };
-
-      case "image":
-        return {
-          type: "image",
-          content: [],
-          attrs: {
-            src: node.attrs?.src || "",
-            alt: node.attrs?.alt || "",
-            title: node.attrs?.title || "",
-            name: node.attrs?.name || "",
-          },
+          children: node.content?.flatMap((listItemNode) => {
+            if (listItemNode.type === "paragraph") {
+              return tiptapJSONToStrapiJSON(listItemNode.content || []);
+            }
+            return [];
+          }) || [],
         };
 
       case "bulletList":
@@ -386,7 +390,6 @@ export function tiptapJSONToStrapiJSON(
             children: tiptapJSONToStrapiJSON(node.content || []),
           };
         } else {
-          console.log("got here!!!");
           return {
             type: "paragraph",
             children: [{ type: "text", text: "" }],

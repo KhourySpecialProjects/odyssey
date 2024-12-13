@@ -30,7 +30,6 @@ const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
 
 const CreateAuthorizedUser = AuthorizedUserSchema.omit({
   id: true,
-  roles: true,
 });
 export async function createAuthorizedUser(prevState: any, formData: FormData) {
   const roleID = await getAuthorizedUserRoleIdByTitle(
