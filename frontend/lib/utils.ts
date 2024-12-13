@@ -370,7 +370,7 @@ export function tiptapJSONToStrapiJSON(
                 size: 0,
                 width: 0,
                 height: 0,
-              }
+              },
             },
             alternativeText: node.attrs?.alt || "",
             provider: "local",

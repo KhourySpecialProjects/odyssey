@@ -68,9 +68,7 @@ export default async function Droplet({ params }: Props) {
           <Badge variant="outline">
             {uppercaseFirstChar(droplet.focusArea)}
           </Badge>
-          <Badge variant="outline">
-            {uppercaseFirstChar(droplet.type)}
-          </Badge>
+          <Badge variant="outline">{uppercaseFirstChar(droplet.type)}</Badge>
           {droplet.tags?.map((tag) => (
             <Badge key={tag.id} variant="outline">
               {tag.name}
