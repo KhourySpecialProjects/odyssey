@@ -75,3 +75,10 @@ export async function getDropletById<T extends Partial<Droplet> = Droplet>(
     urlParams,
   }).then((droplet) => droplet);
 }
+
+// get all droplets that are in draft status
+export async function getDraftDroplets(): Promise<Droplet[]> {
+  return await getDroplets({
+    filters: { status: "draft" },
+  });
+}
