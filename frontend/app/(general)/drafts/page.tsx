@@ -3,9 +3,10 @@ import { PlusIcon } from "lucide-react";
 import Link from "next/link";
 import { Suspense } from "react";
 import { getCurrentUser } from "@/lib/auth/session";
-import { isContentCreator } from "@/lib/utils";
+import { isContentCreator, isAuthorizedUserAdmin } from "@/lib/utils";
 import { redirect } from "next/navigation";
 import { getAuthorByAuthorizedUserEmail } from "@/lib/requests/author";
+import { getDraftDroplets } from "@/lib/requests/droplet";
 import { DropletTile } from "@/components/droplets/droplet-tile";
 import { DropletsSkeleton } from "@/components/explore/droplets-skeleton";
 import { Separator } from "@/components/ui/separator";
@@ -20,6 +21,7 @@ export const metadata: Metadata = {
 };
 
 export default async function CreateRoute() {
+  //get the current user's drafts
   const user = await getCurrentUser();
   if (!user || !user.email || !isContentCreator(user.roles))
     redirect("/unauthorized");
@@ -33,6 +35,14 @@ export default async function CreateRoute() {
     },
   });
   if (!author) return redirect("/unauthorized");
+
+  //get all draft droplets
+  let allDroplets: Awaited<ReturnType<typeof getDraftDroplets>> = [];
+  if(isAuthorizedUserAdmin(user.roles)) {
+    allDroplets = await getDraftDroplets();
+    console.log(allDroplets);
+  }
+
   return (
     <>
       <div className="w-full p-8 mx-auto my-4 text-center max-w-7xl">
@@ -66,6 +76,19 @@ export default async function CreateRoute() {
               ))}
             </ul>
           </Suspense>
+        )}
+        <Separator orientation="horizontal" className="mt-8 mb-4" />
+        {isAuthorizedUserAdmin(user.roles) && (
+          <>
+            <h2 className="text-lg">All Drafts</h2>
+            <Suspense fallback={<DropletsSkeleton />}>
+              <ul className="grid grid-flow-row grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                {allDroplets.map((droplet) => (
+                  <DropletTile key={droplet.id} droplet={droplet} />
+                ))}
+              </ul>
+            </Suspense>
+          </>
         )}
       </div>
     </>
