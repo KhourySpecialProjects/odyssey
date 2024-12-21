@@ -1,6 +1,6 @@
 import { getCurrentUser } from "@/lib/auth/session";
 import { notFound } from "next/navigation";
-import { isContentCreator } from "@/lib/utils";
+import { isContentCreator, isAuthorizedUserAdmin } from "@/lib/utils";
 import { getDropletBySlug } from "@/lib/requests/droplet";
 import { Droplet } from "@/types";
 import { getAuthorByAuthorizedUserEmail } from "@/lib/requests/author";
@@ -42,7 +42,7 @@ export default async function CheckPermission({ params, children }: Props) {
     return notFound();
   const userAuthor = await getAuthorByAuthorizedUserEmail(user.email);
 
-  if (!droplet.authors.map((author) => author.id).includes(userAuthor.id)) {
+  if (!isAuthorizedUserAdmin(user.roles) && !droplet.authors.map((author) => author.id).includes(userAuthor.id)) {
     return notFound();
   }
 

@@ -60,7 +60,7 @@ export default async function Droplet({ params }: Props) {
   if (!droplet) {
     return <div>Droplet not found</div>;
   }
-
+  
   return (
     <>
       <div className="w-full max-w-2xl">
@@ -82,6 +82,23 @@ export default async function Droplet({ params }: Props) {
           <RegenerateSlugButton dropletId={droplet.id} name={droplet.name} />
           <DeleteDropletButton dropletId={droplet.id} />
         </div>
+        
+        {/* TODO: Turn this into a component */}
+        {droplet.authors && droplet.authors.length > 0 && (
+          <div
+            className={`mt-4 rounded-lg border p-4 border-gray-300`}
+          >
+            <h2 className="text-xl font-semibold">
+              {droplet.authors.length > 1 ? "Authors" : "Author"}
+            </h2>
+            <ul className="list-disc list-inside">
+              {droplet.authors.map((author) => (
+          <li key={author.id}>{author.name}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+
         <Description
           dropletId={droplet.id}
           initialContent={droplet.description ?? ""}
