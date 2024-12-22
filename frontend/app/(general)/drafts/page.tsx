@@ -40,7 +40,6 @@ export default async function CreateRoute() {
   let allDroplets: Awaited<ReturnType<typeof getDraftDroplets>> = [];
   if(isAuthorizedUserAdmin(user.roles)) {
     allDroplets = await getDraftDroplets();
-    console.log(allDroplets);
   }
 
   return (
