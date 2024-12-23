@@ -3,8 +3,8 @@
 import { Textarea } from "@/components/ui/textarea";
 import { useState } from "react";
 import { useDropletUpdate } from "./hooks/useDropletUpdate";
-import Tiptap from "@/components/ui/tiptap/tiptap";
 import { htmlToText } from "@/lib/utils";
+import { DropletDescriptionInput } from "@/components/ui/tiptap/droplet-description-input";
 
 export function Description({
   dropletId,
@@ -24,11 +24,11 @@ export function Description({
 
   return (
     <div>
-      <Tiptap
+      <DropletDescriptionInput
         initialContent={initialContent}
         updateContent={updateDescription}
-        variant="droplet-description"
       />
+
       {error && <div className="text-red-500 mt-2">{error}</div>}
     </div>
   );
