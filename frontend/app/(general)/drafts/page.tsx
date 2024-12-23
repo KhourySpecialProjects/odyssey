@@ -38,7 +38,7 @@ export default async function CreateRoute() {
 
   //get all draft droplets
   let allDroplets: Awaited<ReturnType<typeof getDraftDroplets>> = [];
-  if(isAuthorizedUserAdmin(user.roles)) {
+  if (isAuthorizedUserAdmin(user.roles)) {
     allDroplets = await getDraftDroplets();
   }
 
