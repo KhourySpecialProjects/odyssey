@@ -1,6 +1,12 @@
 "use client";
 
-import { useEditor, EditorContent, ReactNodeViewRenderer, JSONContent, Editor } from "@tiptap/react";
+import {
+  useEditor,
+  EditorContent,
+  ReactNodeViewRenderer,
+  JSONContent,
+  Editor,
+} from "@tiptap/react";
 import Document from "@tiptap/extension-document";
 import Paragraph from "@tiptap/extension-paragraph";
 import ListItem from "@tiptap/extension-list-item";
@@ -11,7 +17,7 @@ import Heading from "@tiptap/extension-heading";
 import Placeholder from "@tiptap/extension-placeholder";
 import Image from "@tiptap/extension-image";
 import StartingKit from "@tiptap/starter-kit";
-import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight'
+import CodeBlockLowlight from "@tiptap/extension-code-block-lowlight";
 import { Bold, Star } from "lucide-react";
 import { Suspense, useState, useActionState, useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
@@ -29,7 +35,7 @@ import { Input } from "../input";
 import { createAuthorizedUser, uploadImage } from "@/lib/actions";
 import { LoaderIcon, ArrowUpToLineIcon, XIcon } from "lucide-react";
 import CustomImage from "./CustomImage";
-import { all, createLowlight } from 'lowlight'; 
+import { all, createLowlight } from "lowlight";
 
 //added this component for the language dropdown in the code block
 import { CodeEditorComponent } from "./CodeEditorComponent";
@@ -64,24 +70,24 @@ const Tiptap = ({
     //Adding a handler to deal with Tab key actually indenting
     //rather than navigating focus to the next screen element.
     handleKeyDown: (view: any, event: KeyboardEvent) => {
-      if (event.key === 'Tab') {
+      if (event.key === "Tab") {
         event.preventDefault();
-        
-        if (view.state.selection.$from.parent.type.name === 'codeBlock') {
-          view.dispatch(view.state.tr.insertText('\t'));
+
+        if (view.state.selection.$from.parent.type.name === "codeBlock") {
+          view.dispatch(view.state.tr.insertText("\t"));
           return true;
         }
-        
+
         if (event.shiftKey) {
-          view.dispatch(view.state.tr.insertText('    '));
+          view.dispatch(view.state.tr.insertText("    "));
         } else {
-          view.dispatch(view.state.tr.insertText('    '));
+          view.dispatch(view.state.tr.insertText("    "));
         }
         return true;
       }
       return false;
-    }
-  }; 
+    },
+  };
   switch (variant) {
     case "droplet-name":
       extensions = [
@@ -154,10 +160,10 @@ const Tiptap = ({
         CodeBlockLowlight.extend({
           addNodeView() {
             return ReactNodeViewRenderer(CodeEditorComponent);
-          }
+          },
         }).configure({
           lowlight,
-          defaultLanguage: 'python'
+          defaultLanguage: "python",
         }),
         Placeholder.configure({
           placeholder: "Nothing here yet...",
@@ -376,7 +382,7 @@ const Tiptap = ({
 
           <button
             className={cn(
-              editor?.isActive('codeBlock') ? "bg-slate-200" : "",
+              editor?.isActive("codeBlock") ? "bg-slate-200" : "",
               "p-2.5 rounded-md border border-transparent hover:border-slate-200",
             )}
             onClick={() => editor?.chain().focus().toggleCodeBlock().run()}

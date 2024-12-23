@@ -130,7 +130,7 @@ export function Sidebar({
       <div
         className={cn(
           "bg-slate-900/50 dark:bg-slate-900/80 fixed inset-0 transition-opacity",
-          expanded ? "opacity-1 z-30" : "opacity-0 -z-10"
+          expanded ? "opacity-1 z-30" : "opacity-0 -z-10",
         )}
         onClick={() => setExpanded(false)}
       />
@@ -161,7 +161,7 @@ export function Sidebar({
           "fixed top-0 left-0 z-40 w-64 h-screen transition-transform",
           expanded
             ? "md:translate-x-80 -transform-none"
-            : "md:translate-x-0 -translate-x-full"
+            : "md:translate-x-0 -translate-x-full",
         )}
         aria-label="Sidebar"
       >
@@ -183,9 +183,7 @@ export function Sidebar({
 
             {/* Droplet name */}
             <div className="flex items-center justify-between p-2 my-2">
-              <p className="text-lg font-extrabold leading-7">
-                {droplet.name}
-              </p>
+              <p className="text-lg font-extrabold leading-7">{droplet.name}</p>
               <Link
                 href="/drafts"
                 className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-950 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 dark:ring-offset-slate-950 dark:focus-visible:ring-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 h-9 w-9"
@@ -203,7 +201,7 @@ export function Sidebar({
                   className={cn(
                     classes.link,
                     pathname === `/draft/d/${droplet.slug}` &&
-                      classes.activeLink
+                      classes.activeLink,
                   )}
                 >
                   <SettingsIcon className="shrink-0" />
