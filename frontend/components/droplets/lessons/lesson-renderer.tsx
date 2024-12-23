@@ -1,3 +1,5 @@
+"use client";
+
 import {
   Collapsible,
   CollapsibleContent,
@@ -8,9 +10,10 @@ import { Lesson } from "@/types";
 import { BlocksRenderer } from "@strapi/blocks-react-renderer";
 import { ArrowDownFromLineIcon } from "lucide-react";
 import { QuizBlock } from "./quiz";
+import GenericBlockRenderer from "./GenericBlockRenderer";
 
 export function LessonRenderer({ lesson }: { lesson: Lesson }) {
-  console.log(lesson.blocks);
+  // console.log(lesson.blocks);
   let headings: any[] = [];
   lesson.blocks
     .filter((b: any) => b.__component === "droplets.generic")
@@ -50,12 +53,7 @@ export function LessonRenderer({ lesson }: { lesson: Lesson }) {
 function LessonBlockRenderer({ block }: { block: any }) {
   switch (block.__component) {
     case "droplets.generic":
-      return (
-        <div
-          className="mt-4 prose prose-lg prose-sky prose-table:block prose-table:overflow-x-scroll"
-          dangerouslySetInnerHTML={{ __html: block.content }}
-        ></div>
-      );
+      return <GenericBlockRenderer block={block} />;
 
     case "droplets.video":
       return (

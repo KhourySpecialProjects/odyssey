@@ -8,16 +8,26 @@ import { Droplet } from "@/types";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
+// type Props = {
+//   params: {
+//     slug: string;
+//     lessonSlug?: string;
+//   };
+//   children: React.ReactNode;
+// };
 type Props = {
-  params: {
-    slug: string;
-    lessonSlug?: string;
-  };
+  params: Promise<Params>;
   children: React.ReactNode;
-};
+}
+
+type Params = {
+  slug: string;
+  lessonSlug?: string;
+}
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const droplet = await getDropletBySlug<Pick<Droplet, "name">>(params.slug, {
+  const p = await params;
+  const droplet = await getDropletBySlug<Pick<Droplet, "name">>(p.slug, {
     fields: ["name"],
     populate: undefined,
   });
@@ -32,11 +42,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function RootLayout({ params, children }: Props) {
+  const { slug } = await params;
   const user = await getCurrentUser();
 
   const droplet = await getDropletBySlug<
     Pick<Droplet, "name" | "slug" | "lessons">
-  >(params.slug, {
+  >(slug, {
     fields: ["name", "slug"],
     populate: ["lessons"],
   });
