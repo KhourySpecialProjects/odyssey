@@ -4,6 +4,7 @@ import { debounce } from "lodash";
 import { updateLesson, revalidateLesson } from "@/lib/actions";
 import TipTap from "@/components/ui/tiptap/tiptap";
 import { Trash2Icon } from "lucide-react";
+import { GenericBlockInput } from "@/components/ui/tiptap/generic-block-input";
 
 export function GenericEditor({
   block,
@@ -33,9 +34,8 @@ export function GenericEditor({
           onClick={deleteBlock}
         />
       </div>
-      <TipTap
+      <GenericBlockInput
         revalidate={revalidateLesson}
-        variant="lesson-generic"
         initialContent={block.content}
         updateContent={handleChange}
       />
