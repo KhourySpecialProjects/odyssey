@@ -1,6 +1,5 @@
 "use client";
 
-import TipTap from "../../ui/tiptap/tiptap";
 import { debounce } from "lodash";
 import { useDropletUpdate } from "./hooks/useDropletUpdate";
 import { Droplet } from "lucide-react";
