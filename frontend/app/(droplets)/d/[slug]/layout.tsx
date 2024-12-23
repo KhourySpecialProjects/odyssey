@@ -18,12 +18,12 @@ import { notFound } from "next/navigation";
 type Props = {
   params: Promise<Params>;
   children: React.ReactNode;
-}
+};
 
 type Params = {
   slug: string;
   lessonSlug?: string;
-}
+};
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const p = await params;
