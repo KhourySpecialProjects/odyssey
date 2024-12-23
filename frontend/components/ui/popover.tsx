@@ -11,7 +11,8 @@ const PopoverTrigger = PopoverPrimitive.Trigger;
 const PopoverClose = PopoverPrimitive.Close;
 
 const PopoverContent = React.forwardRef<
-  React.ElementRef<typeof PopoverPrimitive.Content>,
+  // React.ElementRef<typeof PopoverPrimitive.Content>,
+  HTMLDivElement,
   React.ComponentPropsWithoutRef<typeof PopoverPrimitive.Content>
 >(({ className, align = "center", sideOffset = 4, ...props }, ref) => (
   <PopoverPrimitive.Portal>
