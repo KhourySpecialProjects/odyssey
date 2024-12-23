@@ -1,6 +1,6 @@
 "use client";
 
-import { useEditor, EditorContent, JSONContent, Editor } from "@tiptap/react";
+import { useEditor, EditorContent, ReactNodeViewRenderer, JSONContent, Editor } from "@tiptap/react";
 import Document from "@tiptap/extension-document";
 import Paragraph from "@tiptap/extension-paragraph";
 import ListItem from "@tiptap/extension-list-item";
@@ -11,6 +11,7 @@ import Heading from "@tiptap/extension-heading";
 import Placeholder from "@tiptap/extension-placeholder";
 import Image from "@tiptap/extension-image";
 import StartingKit from "@tiptap/starter-kit";
+import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight'
 import { Bold, Star } from "lucide-react";
 import { Suspense, useState, useActionState, useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
@@ -28,6 +29,19 @@ import { Input } from "../input";
 import { createAuthorizedUser, uploadImage } from "@/lib/actions";
 import { LoaderIcon, ArrowUpToLineIcon, XIcon } from "lucide-react";
 import CustomImage from "./CustomImage";
+import { all, createLowlight } from 'lowlight'; 
+
+//added this component for the language dropdown in the code block
+import { CodeEditorComponent } from "./CodeEditorComponent";
+
+//removed the code block from the tiptap starter kit of extensions
+const CustomStarterKit = StartingKit.configure({
+  codeBlock: false,
+});
+
+//Lowlight is used by the code block extension to syntax highlight the code.
+//Note that it requires highlight.js to be installed
+const lowlight = createLowlight(all);
 
 const Tiptap = ({
   updateContent,
@@ -45,7 +59,29 @@ const Tiptap = ({
   revalidate?: () => void;
 }) => {
   let extensions = [];
-  let editorProps: any = {};
+  //
+  let editorProps: any = {
+    //Adding a handler to deal with Tab key actually indenting
+    //rather than navigating focus to the next screen element.
+    handleKeyDown: (view: any, event: KeyboardEvent) => {
+      if (event.key === 'Tab') {
+        event.preventDefault();
+        
+        if (view.state.selection.$from.parent.type.name === 'codeBlock') {
+          view.dispatch(view.state.tr.insertText('\t'));
+          return true;
+        }
+        
+        if (event.shiftKey) {
+          view.dispatch(view.state.tr.insertText('    '));
+        } else {
+          view.dispatch(view.state.tr.insertText('    '));
+        }
+        return true;
+      }
+      return false;
+    }
+  }; 
   switch (variant) {
     case "droplet-name":
       extensions = [
@@ -114,7 +150,15 @@ const Tiptap = ({
           allowBase64: true,
         }),
         Underline,
-        StartingKit,
+        CustomStarterKit,
+        CodeBlockLowlight.extend({
+          addNodeView() {
+            return ReactNodeViewRenderer(CodeEditorComponent);
+          }
+        }).configure({
+          lowlight,
+          defaultLanguage: 'python'
+        }),
         Placeholder.configure({
           placeholder: "Nothing here yet...",
           emptyEditorClass:
@@ -122,6 +166,7 @@ const Tiptap = ({
         }),
       ];
       editorProps = {
+        ...editorProps,
         attributes: {
           class:
             "w-full border min-h-32 border-slate-200 p-3 prose prose-lg prose-sky prose-table:block prose-table:overflow-x-scroll rounded-b-md hover:shadow focus:shadow-lg outline-none",
@@ -165,6 +210,7 @@ const Tiptap = ({
         }),
       ];
       editorProps = {
+        ...editorProps,
         attributes: {
           class:
             "prose prose-sky  p-2 min-w-full max-w-2xl min-h-20 border rounded-b-md border-slate-200 hover:shadow focus:shadow-lg outline-none",
@@ -324,6 +370,27 @@ const Tiptap = ({
               <path
                 fill="#32324D"
                 d="M16.39 2.17c.68.1 1.17.2 1.46.39.39.2.58.39.78.58.2.3.3.78.39 1.18l.78 3.5h1.95V1H2.84l-.59 6.83H4l.98-3.9a5 5 0 0 1 .39-.98c.2-.2.49-.39.88-.58.39-.1.88-.3 1.56-.3.58 0 1.36-.1 2.34-.1v8.78h-7.8v1.95h7.8v7.41c0 .2.1.3-.1.39-.2.1-.39.2-.88.2l-2.04.39-.1 1.36h9.94l-.1-1.36-2.04-.3c-.49 0-.69-.1-.78-.2-.2-.09-.1-.19-.1-.38V12.7h7.8v-1.95h-7.8V1.97c.98 0 1.85.1 2.44.2Z"
+              ></path>
+            </svg>
+          </button>
+
+          <button
+            className={cn(
+              editor?.isActive('codeBlock') ? "bg-slate-200" : "",
+              "p-2.5 rounded-md border border-transparent hover:border-slate-200",
+            )}
+            onClick={() => editor?.chain().focus().toggleCodeBlock().run()}
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="1rem"
+              height="1rem"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <path
+                fill="#32324D"
+                d="M9.4 16.6L4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0l4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4z"
               ></path>
             </svg>
           </button>
