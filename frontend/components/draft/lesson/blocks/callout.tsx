@@ -1,7 +1,5 @@
 "use client";
 
-import TipTap from "@/components/ui/tiptap/tiptap";
-
 import { JSONContent } from "@tiptap/react";
 import { updateLesson } from "@/lib/actions";
 import { strapiJSONToTiptapJSON, tiptapJSONToStrapiJSON } from "@/lib/utils";
@@ -9,6 +7,7 @@ import { useCallback } from "react";
 import { debounce } from "lodash";
 import type { BlockNode } from "@/types/strapi";
 import { Trash2Icon } from "lucide-react";
+import { CalloutBlockInput } from "@/components/ui/tiptap/callout-block-input";
 
 export function CalloutEditor({
   block,
@@ -43,7 +42,7 @@ export function CalloutEditor({
             onClick={deleteBlock}
           />
         </div>
-        <TipTap
+        <CalloutBlockInput
           updateContent={(content: JSONContent) => {
             handleUpdate(content);
           }}
@@ -53,8 +52,6 @@ export function CalloutEditor({
               content: strapiJSONToTiptapJSON(block.content),
             } as JSONContent
           }
-          json
-          variant="lesson-callout"
         />
       </div>
     </>
