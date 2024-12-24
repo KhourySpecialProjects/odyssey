@@ -190,7 +190,6 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
       <div className="flex flex-col justify-center items-center border border-slate-200 rounded-md pt-4 px-4 pb-7 mb-5">
         <LessonNameInput
           className="w-[700px] max-w-2xl mb-3"
-          variant="lesson-name"
           initialContent={`<h1>${name}</h1>`}
           updateContent={(content: string) => {
             const textContent = htmlToText(content);
