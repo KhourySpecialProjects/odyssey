@@ -39,6 +39,12 @@
       "relation": "oneToOne",
       "target": "api::authorized-user.authorized-user",
       "inversedBy": "author"
+    },
+    "playlists": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::playlist.playlist",
+      "mappedBy": "author"
     }
   }
 }

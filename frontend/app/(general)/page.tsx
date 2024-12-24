@@ -36,7 +36,7 @@ export default function HomeRoute() {
           </p>
           <div className="flex flex-col items-center justify-center mt-10 md:flex-row gap-x-6 gap-y-3">
             <Button size="lg" after={<ArrowRightIcon />} asChild>
-              <Link href="/explore">Explore Droplets</Link>
+              <Link href="/explore">Explore</Link>
             </Button>
             <Button size="lg" variant="link" after={<ArrowRightIcon />} asChild>
               <Link href="/request-access">Request Access</Link>

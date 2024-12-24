@@ -1,0 +1,56 @@
+{
+  "kind": "collectionType",
+  "collectionName": "playlists",
+  "info": {
+    "singularName": "playlist",
+    "pluralName": "playlists",
+    "displayName": "Playlist",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "droplets": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::droplet.droplet"
+    },
+    "name": {
+      "type": "string"
+    },
+    "slug": {
+      "type": "uid",
+      "targetField": "name"
+    },
+    "isPublic": {
+      "type": "boolean"
+    },
+    "description": {
+      "type": "text"
+    },
+    "duration": {
+      "type": "enumeration",
+      "enum": [
+        "short",
+        "medium",
+        "long"
+      ],
+      "required": true,
+      "default": "medium"
+    },
+    "author": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::author.author",
+      "inversedBy": "playlists"
+    },
+    "authorized_users": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::authorized-user.authorized-user",
+      "inversedBy": "playlists"
+    }
+  }
+}

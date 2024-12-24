@@ -1,11 +1,41 @@
 import { Badge } from "@/components/ui/badge";
-import { uppercaseFirstChar } from "@/lib/utils";
+import { cn, uppercaseFirstChar } from "@/lib/utils";
 import { Droplet } from "@/types";
 import Link from "next/link";
 
-export function DropletTile({ droplet }: { droplet: Droplet }) {
+interface DropletTileProps {
+  droplet: Droplet;
+  isEnrolled?: boolean;
+  completedLessonIds?: number[];
+}
+
+export function DropletTile({
+  droplet,
+  isEnrolled = false,
+  completedLessonIds = [],
+}: DropletTileProps) {
+  // Calculate completion percentage
+  const dropletLessonIds = droplet.lessons?.map((l) => l.id) || [];
+  const completedLessonsInDroplet = completedLessonIds.filter((id) =>
+    dropletLessonIds.includes(id),
+  );
+  const completionPercentage =
+    dropletLessonIds.length > 0
+      ? Math.round(
+          (completedLessonsInDroplet.length / dropletLessonIds.length) * 100,
+        )
+      : 0;
+
+  const getCompletionBadgeColor = () => {
+    if (completionPercentage === 0)
+      return "bg-red-100 text-red-800 border-red-200";
+    if (completionPercentage < 100)
+      return "bg-amber-100 text-amber-800 border-amber-200";
+    return "bg-emerald-100 text-emerald-800 border-emerald-200";
+  };
+
   return (
-    <li className="transition-colors border rounded-md bg-slate-50 border-slate-200 hover:border-slate-300">
+    <li className="transition-colors border rounded-md border-slate-200 hover:border-slate-300 bg-slate-50">
       <Link
         className="relative inline-flex w-full h-full p-6"
         href={
@@ -17,6 +47,12 @@ export function DropletTile({ droplet }: { droplet: Droplet }) {
             {droplet.status == "draft" ? (
               <Badge variant="destructive">Draft</Badge>
             ) : null}
+
+            {isEnrolled && dropletLessonIds.length > 0 && (
+              <Badge className={getCompletionBadgeColor()} variant="outline">
+                {completionPercentage}% Complete
+              </Badge>
+            )}
 
             <Badge variant="outline">
               {uppercaseFirstChar(droplet.focusArea)}
