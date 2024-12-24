@@ -8,11 +8,11 @@ export const generalConfig: GeneralConfig = {
     },
     {
       href: "/explore",
-      label: "Explore Droplets",
+      label: "Explore",
     },
     {
       href: "/dashboard",
-      label: "My Droplets",
+      label: "My Content",
     },
   ],
 
@@ -23,11 +23,11 @@ export const generalConfig: GeneralConfig = {
     },
     {
       href: "/explore",
-      label: "Explore Droplets",
+      label: "Explore",
     },
     {
       href: "/dashboard",
-      label: "My Droplets",
+      label: "My Content",
     },
     {
       href: "/drafts",

@@ -161,7 +161,7 @@ export default async function AboutPage() {
               <Link href="/request-access">Request Access</Link>
             </Button>
             <Button size="lg" variant="link" after={<ArrowRightIcon />} asChild>
-              <Link href="/explore">Explore Droplets</Link>
+              <Link href="/explore">Explore</Link>
             </Button>
           </div>
         </div>

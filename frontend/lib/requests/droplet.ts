@@ -11,7 +11,12 @@ export async function getDroplets({
   sort,
   filters = { isHidden: false },
   pagination = { pageSize: 25, page: 1 },
-  populate,
+  populate = {
+    tags: true,
+    lessons: {
+      fields: ["id", "name", "slug"],
+    },
+  },
   fields = ["id", "name", "slug", "type", "focusArea", "status"],
 }: StrapiRequestParams = {}): Promise<Droplet[]> {
   const path = `/droplets`;
