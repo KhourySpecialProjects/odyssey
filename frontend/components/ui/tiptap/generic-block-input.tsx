@@ -1,6 +1,12 @@
 "use client";
 
-import { useEditor, EditorContent, ReactNodeViewRenderer, JSONContent, Editor } from "@tiptap/react";
+import {
+  useEditor,
+  EditorContent,
+  ReactNodeViewRenderer,
+  JSONContent,
+  Editor,
+} from "@tiptap/react";
 import Document from "@tiptap/extension-document";
 import Paragraph from "@tiptap/extension-paragraph";
 import ListItem from "@tiptap/extension-list-item";
@@ -50,7 +56,7 @@ export function GenericBlockInput({
       }).configure({
         lowlight,
         HTMLAttributes: {
-          class: 'hljs',
+          class: "hljs",
         },
         defaultLanguage: "python",
       }),

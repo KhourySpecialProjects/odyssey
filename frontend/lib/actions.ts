@@ -485,8 +485,14 @@ export async function updateLesson(
       console.log(" ----> F");
       console.log("responseData: ", responseData);
       console.log("responseData.error.details: ", responseData.error.details);
-      console.log("responseData.error.details.errors: ", responseData.error.details.errors);
-      console.log("responseData.error.details.errors[0].path[0]: ", responseData.error.details.errors[0].path[0]);
+      console.log(
+        "responseData.error.details.errors: ",
+        responseData.error.details.errors,
+      );
+      console.log(
+        "responseData.error.details.errors[0].path[0]: ",
+        responseData.error.details.errors[0].path[0],
+      );
       const errorPath = responseData.error.details.errors[0].path[0];
       const errorMessage = `${responseData.error.message} (${errorPath})`;
       return { ok: false, error: errorMessage, data: null };
