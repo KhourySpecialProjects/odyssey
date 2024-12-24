@@ -374,7 +374,7 @@ export async function addLesson(formData: z.infer<typeof CreateLessonSchema>) {
       },
     });
     const data = await response.json();
-    console.log(data);
+    // console.log(data);
     if (!response.ok || (response.ok && data.error)) {
       console.log(data.error.details);
       return { ok: false, error: data.error.message, data: null };
@@ -416,7 +416,7 @@ export async function updateDroplet(
 
     dataToSend.regenerateSlug = options.regenerateSlug;
 
-    console.log(dataToSend);
+    // console.log(dataToSend);
 
     const response = await fetch(STRAPI_API_URL + "/api/droplets/" + id, {
       method: "PUT",
@@ -439,7 +439,7 @@ export async function updateDroplet(
       revalidateTag("droplets");
     }
 
-    console.log(responseData);
+    // console.log(responseData);
     revalidateTag("authors");
     revalidatePath("(general)/drafts", "page");
     return { ok: true, error: null, data: responseData.data };
@@ -461,22 +461,16 @@ export async function updateLesson(
     regenerateSlug: false,
   },
 ) {
+  console.log(" --> actions.ts: updateLesson() function called");
   try {
     if (data.blocks) {
       data.blocks = data.blocks.map(({ id, ...rest }) => rest);
     }
-
     const dataToSend: any = {
       ...(data.name && { name: data.name }),
       ...(data.blocks && { blocks: data.blocks }),
     };
-
     dataToSend.regenerateSlug = options.regenerateSlug;
-
-    console.log(dataToSend);
-
-    console.log(dataToSend);
-
     const response = await fetch(STRAPI_API_URL + "/api/lessons/" + id, {
       method: "PUT",
       body: JSON.stringify({ data: dataToSend }),
@@ -488,13 +482,15 @@ export async function updateLesson(
     const responseData = await response.json();
 
     if (!response.ok || (response.ok && responseData.error)) {
-      console.log(responseData);
-      console.log(responseData.error.details);
+      console.log(" ----> F");
+      console.log("responseData: ", responseData);
+      console.log("responseData.error.details: ", responseData.error.details);
+      console.log("responseData.error.details.errors: ", responseData.error.details.errors);
+      console.log("responseData.error.details.errors[0].path[0]: ", responseData.error.details.errors[0].path[0]);
       const errorPath = responseData.error.details.errors[0].path[0];
       const errorMessage = `${responseData.error.message} (${errorPath})`;
       return { ok: false, error: errorMessage, data: null };
     }
-    console.log(responseData);
 
     if (options.reload) {
       revalidatePath("(editing)/draft/d/[slug]/[lessonSlug]", "page");
@@ -516,6 +512,7 @@ export async function updateLesson(
 }
 
 export async function revalidateLesson() {
+  console.log(" --> actions.ts: revalidateLesson() function called");
   revalidateTag("lesson");
   revalidatePath("(editing)/draft/d/[slug]/[lessonSlug]", "page");
 }
