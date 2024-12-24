@@ -18,6 +18,7 @@ import Underline from "@tiptap/extension-underline";
 import Strike from "@tiptap/extension-strike";
 import Link from "@tiptap/extension-link";
 import CustomImage from "./custom-image";
+import GeneralToolbar from "./toolbar/general-toolbar";
 
 export function GenericBlockInput({
   initialContent,
@@ -61,5 +62,10 @@ export function GenericBlockInput({
     },
   });
 
-  return <EditorContent name="lesson-generic" editor={editor} />;
+  return (
+    <div>
+      <GeneralToolbar editor={editor!} />
+      <EditorContent name="lesson-generic" editor={editor} />
+    </div>
+  );
 }
