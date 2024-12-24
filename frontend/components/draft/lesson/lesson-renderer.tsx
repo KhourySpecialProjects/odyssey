@@ -18,7 +18,6 @@ import { useTransition } from "react";
 import { useMemo } from "react";
 import { LessonNameInput } from "@/components/ui/tiptap/lesson-name-input";
 
-
 interface Block {
   __component: string;
   content: string;
