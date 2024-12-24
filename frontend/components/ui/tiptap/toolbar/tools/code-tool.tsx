@@ -57,7 +57,7 @@ function CodeTool({ editor }: { editor: Editor }) {
       onClick={() => editor.chain().focus().toggleCodeBlock().run()}
       className={cn(
         editor?.isActive("codeBlock") ? "bg-slate-200" : "",
-        "p-2.5 rounded-md border border-transparent hover:border-slate-200"
+        "p-2.5 rounded-md border border-transparent hover:border-slate-200",
       )}
     >
       <CodeIcon size={17} />
