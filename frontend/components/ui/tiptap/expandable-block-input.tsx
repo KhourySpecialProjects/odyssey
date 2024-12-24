@@ -18,6 +18,7 @@ import Underline from "@tiptap/extension-underline";
 import Strike from "@tiptap/extension-strike";
 import Link from "@tiptap/extension-link";
 import CustomImage from "./custom-image";
+import GeneralToolbar from "./toolbar/general-toolbar";
 
 export function ExpandableBlockInput({
   initialContent,
@@ -55,5 +56,12 @@ export function ExpandableBlockInput({
     immediatelyRender: false,
   });
 
-  return <EditorContent name="lesson-expandable-body" editor={editor} />;
+  return (
+    <div>
+      <div>
+        <GeneralToolbar editor={editor!} />
+        <EditorContent name="lesson-expandable-body" editor={editor} />
+      </div>
+    </div>
+  );
 }
