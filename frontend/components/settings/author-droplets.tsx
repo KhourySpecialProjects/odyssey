@@ -47,7 +47,7 @@ export async function AuthorDroplets({ authorId }: { authorId: number }) {
 
       <CardFooter className="px-6 py-4 border-t">
         <Button after={<ArrowRightIcon />} asChild>
-          <Link href="/explore">Explore Droplets</Link>
+          <Link href="/explore">Explore</Link>
         </Button>
       </CardFooter>
     </Card>

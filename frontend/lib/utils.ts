@@ -6,7 +6,6 @@ import {
   AuthorizedUserRoleTitle,
   AuthorizedUserAdminRoles,
 } from "@/lib/globals";
-import { AuthorizedUserRole } from "@/types";
 import { JSONContent } from "@tiptap/react";
 import type {
   BlockNode,
@@ -21,7 +20,7 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export function getStrapiURL(path = "") {
-  return `${process.env.STRAPI_API_URL || "http://localhost:1337"}${path}`;
+  return `${process.env.NEXT_PUBLIC_STRAPI_API_URL || "http://localhost:1337"}${path}`;
 }
 
 /**
@@ -56,7 +55,7 @@ export async function fetchAPI<T>(
   path: string,
   config: {
     urlParams?: Object;
-    options?: Object;
+    options?: RequestInit;
     next?: Object;
     revalidate?: number;
     flattenResponse?: boolean;
@@ -64,8 +63,6 @@ export async function fetchAPI<T>(
   },
 ): Promise<T> {
   try {
-    // Merge default and user options
-
     const mergedOptions = {
       headers: {
         "Content-Type": "application/json",
@@ -78,29 +75,40 @@ export async function fetchAPI<T>(
       }),
     };
 
-    // Build request URL
     const queryString = qs.stringify(config.urlParams, {
       encodeValuesOnly: true,
     });
-    const requestUrl = `${getStrapiURL(
-      `/api${path}${queryString ? `?${queryString}` : ""}`,
-    )}`;
 
-    // Trigger API call
-    return await fetch(requestUrl, mergedOptions).then(async (response) => {
-      let data = await response.json();
-      if (
-        config.flattenResponse ||
-        typeof config.flattenResponse === "undefined"
-      ) {
-        data = flattenAttributes(data.data);
-      }
-      return data;
-    });
+    // Use different base URLs for client and server
+    const baseUrl = process.env.NEXT_PUBLIC_STRAPI_API_URL;
+    const requestUrl = `${baseUrl}/api${path}${queryString ? `?${queryString}` : ""}`;
+
+    console.log("Fetching from:", requestUrl);
+
+    const response = await fetch(requestUrl, mergedOptions);
+
+    if (!response.ok) {
+      console.error("Response status:", response.status);
+      console.error("Response status text:", response.statusText);
+      const errorText = await response.text();
+      console.error("Response body:", errorText);
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    if (
+      config.flattenResponse ||
+      typeof config.flattenResponse === "undefined"
+    ) {
+      return flattenAttributes(data.data);
+    }
+
+    return data;
   } catch (error) {
-    console.error(error);
+    console.error("Fetch error:", error);
     throw new Error(
-      `Please check if your server is running and you set all the required tokens.`,
+      `Failed to fetch data: ${error instanceof Error ? error.message : "Unknown error"}`,
     );
   }
 }
@@ -168,8 +176,10 @@ export function getPath(type: "droplet", slug: string): string {
 }
 
 export function isAuthorizedUserAdmin(
-  roles: AuthorizedUserRoleTitle[],
+  roles?: AuthorizedUserRoleTitle[] | null,
 ): boolean {
+  if (!roles) return false;
+
   for (const role of roles) {
     if (AuthorizedUserAdminRoles.includes(role)) {
       return true;
@@ -178,18 +188,11 @@ export function isAuthorizedUserAdmin(
   return false;
 }
 
-export function isAuthorizedUserFaculty(
-  roles: AuthorizedUserRoleTitle[],
+export function isContentCreator(
+  roles?: AuthorizedUserRoleTitle[] | null,
 ): boolean {
-  for (const role of roles) {
-    if (role === AuthorizedUserRoleTitle.Faculty) {
-      return true;
-    }
-  }
-  return false;
-}
+  if (!roles) return false;
 
-export function isContentCreator(roles: AuthorizedUserRoleTitle[]): boolean {
   for (const role of roles) {
     if (role === AuthorizedUserRoleTitle.ContentCreator) {
       return true;
@@ -198,7 +201,10 @@ export function isContentCreator(roles: AuthorizedUserRoleTitle[]): boolean {
   return false;
 }
 
-export function condenseRoleTitles(roles: AuthorizedUserRoleTitle[]): string {
+export function condenseRoleTitles(
+  roles?: AuthorizedUserRoleTitle[] | null,
+): string {
+  if (!roles) return "";
   return roles.join(", ");
 }
 
@@ -239,15 +245,6 @@ export function strapiJSONToTiptapJSON(blockNodes: BlockNode[]): JSONContent[] {
             },
           ],
         };
-      /*
-        return {
-          type: "link",
-          attrs: {
-            href: node.url,
-          },
-          content: strapiJSONToTiptapJSON(node.children),
-        };
-        */
 
       case "list-item":
         return {
@@ -263,39 +260,12 @@ export function strapiJSONToTiptapJSON(blockNodes: BlockNode[]): JSONContent[] {
       case "image":
         return {
           type: "image",
-          content: [],
           attrs: {
             src: node.image.url,
             alt: node.image.alternativeText,
             title: node.image.name,
-            name: node.image.name,
           },
         };
-
-      /*
-        if (node.children.length > 0 && node.children[0].type === "text" && node.children[0].text === "") {
-          return {
-            type: "paragraph", content: [ {
-            type: "image",
-            attrs: {
-              src: node.image.url,
-              alt: node.image.alternativeText,
-              title: node.image.name,
-            }},],
-          
-          };
-        }
-        return {
-          type: "paragraph", content: ([ {
-          type: "image",
-          attrs: {
-            src: node.image.url,
-            alt: node.image.alternativeText,
-            title: node.image.name,
-          }},] as JSONContent).concat(strapiJSONToTiptapJSON(node.children)),
-        
-        };
-        */
 
       case "list":
         return {
@@ -313,19 +283,11 @@ export function strapiJSONToTiptapJSON(blockNodes: BlockNode[]): JSONContent[] {
         };
 
       case "paragraph":
-        //node.children = node.children.filter((child) => !(child.type == "text" && child.text == ""));
-
         if (
           node.children.length === 1 &&
           node.children[0].type === "text" &&
           node.children[0].text === ""
         ) {
-          return {
-            type: "paragraph",
-          };
-        }
-
-        if (node.children.length == 0) {
           return {
             type: "paragraph",
           };
@@ -362,19 +324,6 @@ export function tiptapJSONToStrapiJSON(
   return jsonContent.map((node) => {
     switch (node.type) {
       case "text":
-        //if it's a lnk
-        if (node.marks?.some((mark) => mark.type === "link")) {
-          const mark = node.marks?.filter((mark) => mark.type === "link")[0];
-          return {
-            type: "link",
-            url:
-              node.marks?.filter((mark) => mark.type === "link")[0].attrs
-                ?.href || "",
-            children: [{ type: "text", text: node.text || "" }],
-          };
-        }
-
-        //if it's normal text
         return {
           type: "text",
           text: node.text || "",
@@ -394,14 +343,11 @@ export function tiptapJSONToStrapiJSON(
           children: tiptapJSONToStrapiJSON(node.content || []),
         };
 
-      //if its a list item
       case "listItem":
         return {
           type: "list-item",
           children:
             node.content?.flatMap((listItemNode) => {
-              return tiptapJSONToStrapiJSON(listItemNode.content || []);
-              //check here
               if (listItemNode.type === "paragraph") {
                 return tiptapJSONToStrapiJSON(listItemNode.content || []);
               }
@@ -409,30 +355,41 @@ export function tiptapJSONToStrapiJSON(
             }) || [],
         };
 
-      //if it's an image
       case "image":
         return {
           type: "image",
           image: {
-            url: node.attrs?.src || "default_url",
-            alternativeText: node.attrs?.alt || "default_alt",
-            name: node.attrs?.title || "default_title",
-            ext: node.attrs?.ext || "jpg",
-            hash: node.attrs?.hash || "default_hash",
-            mime: node.attrs?.mine || "image/jpeg",
-            size: node.attrs?.size || 0,
-            width: node.attrs?.width || 0,
-            height: node.attrs?.height || 0,
-            caption: node.attrs?.caption || "",
-            formats: node.attrs?.formats || {},
-            provider: node.attrs?.provider || "default_provider",
-            createdAt: node.attrs?.createdAt || new Date().toISOString(),
-            updatedAt: node.attrs?.updatedAt || new Date().toISOString(),
-            previewUrl: node.attrs?.previewUrl || null,
-            provider_metadata: node.attrs?.provider_metadata || null,
+            ext: ".jpg",
+            url: node.attrs?.src || "",
+            hash: "",
+            mime: "image/jpeg",
+            name: node.attrs?.title || "",
+            size: 0,
+            width: 0,
+            height: 0,
+            caption: node.attrs?.alt || "",
+            formats: {
+              thumbnail: {
+                ext: ".jpg",
+                url: node.attrs?.src || "",
+                hash: "",
+                mime: "image/jpeg",
+                name: node.attrs?.title || "",
+                path: null,
+                size: 0,
+                width: 0,
+                height: 0,
+              },
+            },
+            alternativeText: node.attrs?.alt || "",
+            provider: "local",
+            provider_metadata: null,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+            previewUrl: null,
           },
-          children: [{ type: "text", text: "" }],
-        };
+          children: [],
+        } as BlockNode;
 
       case "bulletList":
         return {
@@ -456,49 +413,17 @@ export function tiptapJSONToStrapiJSON(
         };
 
       case "paragraph":
-        //node.content = node.content?.filter((child) => !(child.type == "text" && child.text == "")) || [];
-
         if (node.content && node.content.length > 0) {
-          /*
-          if (node.content[0].type === "image") {
-            return {
-              type: "image",
-              image: {
-                url: node.content[0].attrs?.src || "default_url",
-                alternativeText: node.content[0].attrs?.alt || "default_alt",
-                name: node.content[0].attrs?.title || "default_title",
-                ext: node.content[0].attrs?.ext ||  "jpg",
-                hash: node.content[0].attrs?.hash || "default_hash",
-                mime: node.content[0].attrs?.mine ||  "image/jpeg",
-                size: node.content[0].attrs?.size || 0,
-                width: node.content[0].attrs?.width || 0,
-                height: node.content[0].attrs?.height || 0,
-                caption: node.content[0].attrs?.caption || "",
-                formats: node.content[0].attrs?.formats || {},
-                provider: node.content[0].attrs?.provider || "default_provider",
-                createdAt: node.content[0].attrs?.createdAt || new Date().toISOString(),
-                updatedAt: node.content[0].attrs?.updatedAt || new Date().toISOString(),
-                previewUrl: node.content[0].attrs?.previewUrl || null,
-                provider_metadata: node.content[0].attrs?.provider_metadata || null,
-              },
-              children: node.content.slice(1).length == 0 ? [{type: "text", text:""}] : tiptapJSONToStrapiJSON(node.content.slice(1)),
-            };
-          }
-          */
-
           return {
             type: "paragraph",
             children: tiptapJSONToStrapiJSON(node.content || []),
           };
         } else {
-          const ret = {
+          console.log("got here!!!");
+          return {
             type: "paragraph",
-            children: [
-              { type: "text", text: "" },
-              ...tiptapJSONToStrapiJSON(node.content || []),
-            ],
+            children: [{ type: "text", text: "" }],
           };
-          return ret as BlockNode;
         }
 
       case "blockquote":
@@ -545,4 +470,17 @@ export function embeddedUrlToYoutubeUrl(embedUrl: string): string {
   }
 
   return "https://www.youtube.com/";
+}
+
+export function isAuthorizedUserFaculty(
+  roles?: AuthorizedUserRoleTitle[] | null,
+): boolean {
+  if (!roles) return false;
+
+  for (const role of roles) {
+    if (role === AuthorizedUserRoleTitle.Faculty) {
+      return true;
+    }
+  }
+  return false;
 }
