@@ -1,7 +1,6 @@
 "use client";
 
 import { Lesson } from "@/types";
-import TipTap from "@/components/ui/tiptap/tiptap";
 import { ExpandableEditor } from "@/components/draft/lesson/blocks/expandable";
 import { VideoEditor } from "@/components/draft/lesson/blocks/video";
 import { CalloutEditor } from "./blocks/callout";
@@ -187,7 +186,7 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
   return (
     <>
       <div className="flex flex-col justify-center items-center border border-slate-200 rounded-md pt-4 px-4 pb-7 mb-5">
-        <TipTap
+        <LessonNameInput
           className="w-[700px] max-w-2xl mb-3"
           variant="lesson-name"
           initialContent={`<h1>${name}</h1>`}
