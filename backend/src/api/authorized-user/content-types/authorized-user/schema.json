@@ -39,6 +39,12 @@
       "relation": "manyToMany",
       "target": "api::authorized-user-role.authorized-user-role",
       "mappedBy": "authorizedUsers"
+    },
+    "playlists": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::playlist.playlist",
+      "inversedBy": "authorized_users"
     }
   }
 }

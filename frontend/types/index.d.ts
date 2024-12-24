@@ -28,6 +28,7 @@ export type AuthorizedUser = {
   roles: AuthorizedUserRole[];
   isEnabled: boolean;
   enrollments?: Enrollment[];
+  playlists?: Playlist[];
 };
 
 export type NavItem = {
@@ -118,4 +119,34 @@ export type Enrollment = {
   droplet: Droplet;
   viewedLessons: Lesson[];
   isComplete: boolean;
+};
+
+export interface Playlist {
+  id: number;
+  name: string;
+  slug: string;
+  isPublic: boolean;
+  description?: string;
+  duration: "short" | "medium" | "long";
+  droplets?: Droplet[];
+  authorized_users?: {
+    id: number;
+    email: string;
+  }[];
+  author?: {
+    id: number;
+    name: string;
+  };
+}
+
+export type PlaylistListResponse = {
+  data: Playlist[];
+  meta: {
+    pagination: {
+      page: number;
+      pageSize: number;
+      pageCount: number;
+      total: number;
+    };
+  };
 };

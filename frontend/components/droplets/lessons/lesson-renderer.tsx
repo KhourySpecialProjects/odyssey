@@ -11,9 +11,38 @@ import { BlocksRenderer } from "@strapi/blocks-react-renderer";
 import { ArrowDownFromLineIcon } from "lucide-react";
 import { QuizBlock } from "./quiz";
 import GenericBlockRenderer from "./GenericBlockRenderer";
+import { useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { markLessonAsComplete } from "@/lib/actions";
 
-export function LessonRenderer({ lesson }: { lesson: Lesson }) {
-  // console.log(lesson.blocks);
+interface LessonRendererProps {
+  lesson: Lesson;
+  enrollmentId?: string;
+  completedLessonIds: number[];
+}
+
+export function LessonRenderer({
+  lesson,
+  enrollmentId,
+  completedLessonIds,
+}: LessonRendererProps) {
+  const [isPending, startTransition] = useTransition();
+  const router = useRouter();
+
+  async function handleMarkAsComplete() {
+    if (!enrollmentId) return;
+
+    startTransition(async () => {
+      const success = await markLessonAsComplete(
+        enrollmentId,
+        completedLessonIds,
+        lesson.id,
+      );
+      if (success) {
+        router.refresh();
+      }
+    });
+  }
   let headings: any[] = [];
   lesson.blocks
     .filter((b: any) => b.__component === "droplets.generic")
@@ -45,6 +74,22 @@ export function LessonRenderer({ lesson }: { lesson: Lesson }) {
         {lesson.blocks.map((b: any, i: number) => (
           <LessonBlockRenderer key={i} block={b} />
         ))}
+      </div>
+
+      <div className="mt-8 flex justify-between items-center">
+        <button
+          onClick={handleMarkAsComplete}
+          disabled={
+            isPending || !enrollmentId || completedLessonIds.includes(lesson.id)
+          }
+          className="px-4 py-2 bg-sky-600 text-white rounded-lg hover:bg-sky-700 disabled:opacity-50"
+        >
+          {isPending
+            ? "Marking as complete..."
+            : completedLessonIds.includes(lesson.id)
+              ? "Completed"
+              : "Mark as complete"}
+        </button>
       </div>
     </div>
   );

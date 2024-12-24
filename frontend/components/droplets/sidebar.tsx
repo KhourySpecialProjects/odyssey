@@ -8,7 +8,7 @@ import {
   isAuthorizedUserAdmin,
   condenseRoleTitles,
 } from "@/lib/utils";
-import { Droplet, User } from "@/types";
+import { Droplet, Lesson, User } from "@/types";
 import {
   BookTextIcon,
   ChevronDownIcon,
@@ -21,6 +21,7 @@ import {
   ShipIcon,
   TargetIcon,
   TowerControlIcon,
+  CheckCircle2,
 } from "lucide-react";
 import { signOut } from "next-auth/react";
 import Image from "next/image";
@@ -39,16 +40,20 @@ import {
 import { Label } from "../ui/label";
 import { Progress } from "../ui/progress";
 import { Separator } from "../ui/separator";
+import { useSession } from "next-auth/react";
 
 export default function Sidebar({
   user,
   droplet,
+  completedLessonIds = [],
 }: {
   user?: User | null;
   droplet: Pick<Droplet, "name" | "slug" | "lessons">;
+  completedLessonIds: number[];
 }) {
   const [expanded, setExpanded] = useState(false);
   const pathname = usePathname();
+  const { data: session } = useSession();
 
   const isAdmin = user && isAuthorizedUserAdmin(user.roles);
 
@@ -169,6 +174,9 @@ export default function Sidebar({
                       <BookTextIcon className="shrink-0" />
                     )}
                     <span className="leading-snug ms-3">{lesson.name}</span>
+                    {completedLessonIds.includes(lesson.id) && (
+                      <CheckCircle2 className="ml-auto w-4 h-4 text-green-500 shrink-0" />
+                    )}
                   </Link>
                 </li>
               ))}
@@ -226,7 +234,7 @@ export default function Sidebar({
                 <DropdownMenuItem asChild>
                   <Link href="/explore">
                     <ShipIcon className="w-4 h-4 mr-2" />
-                    <span>Explore Droplets</span>
+                    <span>Explore</span>
                   </Link>
                 </DropdownMenuItem>
 

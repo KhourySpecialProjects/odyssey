@@ -65,14 +65,12 @@ export default async function Droplet({ params }: Props) {
     <>
       <div className="w-full max-w-2xl">
         <div className="flex flex-row flex-0 flex-wrap gap-1.5">
-          <Badge size="lg" variant="outline">
+          <Badge variant="outline">
             {uppercaseFirstChar(droplet.focusArea)}
           </Badge>
-          <Badge size="lg" variant="outline">
-            {uppercaseFirstChar(droplet.type)}
-          </Badge>
+          <Badge variant="outline">{uppercaseFirstChar(droplet.type)}</Badge>
           {droplet.tags?.map((tag) => (
-            <Badge key={tag.id} size="lg" variant="outline">
+            <Badge key={tag.id} variant="outline">
               {tag.name}
             </Badge>
           ))}

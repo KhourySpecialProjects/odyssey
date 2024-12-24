@@ -53,21 +53,13 @@ export function Filter({
             <>
               <Separator orientation="vertical" className="h-4 mx-2" />
 
-              <Badge
-                variant="secondary"
-                radius="md"
-                className="px-1 font-normal lg:hidden"
-              >
+              <Badge variant="secondary" className="px-1 font-normal lg:hidden">
                 {selectedValues.length}
               </Badge>
 
               <div className="hidden space-x-1 lg:flex">
                 {selectedValues.length > 2 ? (
-                  <Badge
-                    variant="secondary"
-                    radius="md"
-                    className="px-1 font-normal"
-                  >
+                  <Badge variant="secondary" className="px-1 font-normal">
                     {selectedValues.length} selected
                   </Badge>
                 ) : (

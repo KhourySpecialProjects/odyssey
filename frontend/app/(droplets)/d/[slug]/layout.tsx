@@ -1,20 +1,11 @@
-import { DebugBanner } from "@/components/debug/debugBanner";
-import { EnvironmentBanner } from "@/components/debug/environmentBanner";
-import { ReportBugDialog } from "@/components/droplets/reports/bug/dialog";
 import Sidebar from "@/components/droplets/sidebar";
-import { getCurrentUser } from "@/lib/auth/session";
+import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
 import { getDropletBySlug } from "@/lib/requests/droplet";
-import { Droplet } from "@/types";
-import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
+import { getServerSession } from "next-auth";
 
-// type Props = {
-//   params: {
-//     slug: string;
-//     lessonSlug?: string;
-//   };
-//   children: React.ReactNode;
-// };
+
+
 type Props = {
   params: Promise<Params>;
   children: React.ReactNode;
@@ -54,21 +45,13 @@ export default async function RootLayout({ params, children }: Props) {
   if (!droplet) return notFound();
 
   return (
-    <>
-      <Sidebar user={user} droplet={droplet} />
-
-      <div className="md:ml-64">
-        <DebugBanner />
-        <EnvironmentBanner className="mb-2" />
-
-        <div className="p-6 rounded-lg sm:p-8 md:py-10 md:m-4 md:border-dashed md:border-2 md:border-slate-200 md:dark:border-slate-700">
-          {children}
-        </div>
-      </div>
-
-      <div className="fixed bottom-8 right-8">
-        <ReportBugDialog user={user} />
-      </div>
-    </>
+    <div className="flex flex-col md:flex-row">
+      <Sidebar
+        user={session?.user}
+        droplet={droplet}
+        completedLessonIds={completedLessonIds}
+      />
+      <main className="flex-1 px-4 py-8 md:px-8">{children}</main>
+    </div>
   );
 }
