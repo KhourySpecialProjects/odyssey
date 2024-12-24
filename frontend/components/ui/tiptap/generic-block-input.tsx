@@ -1,6 +1,6 @@
 "use client";
 
-import { useEditor, EditorContent, JSONContent, Editor } from "@tiptap/react";
+import { useEditor, EditorContent, ReactNodeViewRenderer, JSONContent, Editor } from "@tiptap/react";
 import Document from "@tiptap/extension-document";
 import Paragraph from "@tiptap/extension-paragraph";
 import ListItem from "@tiptap/extension-list-item";
@@ -18,7 +18,12 @@ import Underline from "@tiptap/extension-underline";
 import Strike from "@tiptap/extension-strike";
 import Link from "@tiptap/extension-link";
 import CustomImage from "./custom-image";
+import CodeBlockLowlight from "@tiptap/extension-code-block-lowlight";
+import { CodeBlockComponent } from "./toolbar/tools/code-tool";
+import { all, createLowlight } from "lowlight";
 import GeneralToolbar from "./toolbar/general-toolbar";
+
+const lowlight = createLowlight(all);
 
 export function GenericBlockInput({
   initialContent,
@@ -38,6 +43,17 @@ export function GenericBlockInput({
       }),
       Underline,
       StartingKit,
+      CodeBlockLowlight.extend({
+        addNodeView() {
+          return ReactNodeViewRenderer(CodeBlockComponent);
+        },
+      }).configure({
+        lowlight,
+        HTMLAttributes: {
+          class: 'hljs',
+        },
+        defaultLanguage: "python",
+      }),
       Placeholder.configure({
         placeholder: "Nothing here yet...",
         emptyEditorClass:

@@ -123,6 +123,12 @@ export interface QuoteNode {
   children: BlockNode[];
 }
 
+export interface CodeNode {
+  type: "code";
+  language: string;
+  children: BlockNode[];
+}
+
 export type BlockNode =
   | TextNode
   | LinkNode
@@ -131,4 +137,5 @@ export type BlockNode =
   | ListNode
   | HeadingNode
   | ParagraphNode
-  | QuoteNode;
+  | QuoteNode
+  | CodeNode;
