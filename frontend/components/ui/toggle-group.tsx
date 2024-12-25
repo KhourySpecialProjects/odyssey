@@ -23,7 +23,8 @@ const ToggleGroup = React.forwardRef<
 ToggleGroup.displayName = ToggleGroupPrimitive.Root.displayName;
 
 const ToggleGroupItem = React.forwardRef<
-  React.ElementRef<typeof ToggleGroupPrimitive.Item>,
+  // React.ElementRef<typeof ToggleGroupPrimitive.Item>,
+  HTMLButtonElement,
   React.ComponentProps<typeof ToggleGroupPrimitive.Item>
 >(({ className, ...props }, ref) => {
   return (

@@ -303,6 +303,15 @@ export function strapiJSONToTiptapJSON(blockNodes: BlockNode[]): JSONContent[] {
           content: strapiJSONToTiptapJSON(node.children),
         };
 
+      case "code":
+        return {
+          type: "codeBlock",
+          attrs: {
+            language: node.language,
+          },
+          content: strapiJSONToTiptapJSON(node.children),
+        };
+
       default:
         return {};
     }
@@ -421,6 +430,15 @@ export function tiptapJSONToStrapiJSON(
         return {
           type: "quote",
           children: tiptapJSONToStrapiJSON(node.content || []),
+        };
+
+      case "codeBlock":
+        return {
+          type: "code",
+          language: node.attrs?.language || "plaintext",
+          children: node.content
+            ? tiptapJSONToStrapiJSON(node.content)
+            : [{ type: "text", text: "" }],
         };
 
       default:

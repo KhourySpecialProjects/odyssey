@@ -10,6 +10,7 @@ import { Lesson } from "@/types";
 import { BlocksRenderer } from "@strapi/blocks-react-renderer";
 import { ArrowDownFromLineIcon } from "lucide-react";
 import { QuizBlock } from "./quiz";
+import GenericBlockRenderer from "./GenericBlockRenderer";
 import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { markLessonAsComplete } from "@/lib/actions";
@@ -42,7 +43,6 @@ export function LessonRenderer({
       }
     });
   }
-
   let headings: any[] = [];
   lesson.blocks
     .filter((b: any) => b.__component === "droplets.generic")
@@ -98,12 +98,7 @@ export function LessonRenderer({
 function LessonBlockRenderer({ block }: { block: any }) {
   switch (block.__component) {
     case "droplets.generic":
-      return (
-        <div
-          className="mt-4 prose prose-lg prose-sky prose-table:block prose-table:overflow-x-scroll"
-          dangerouslySetInnerHTML={{ __html: block.content }}
-        ></div>
-      );
+      return <GenericBlockRenderer block={block} />;
 
     case "droplets.video":
       return (

@@ -1,7 +1,7 @@
 "use client";
 
 import { JSONContent } from "@tiptap/react";
-import { updateLesson } from "@/lib/actions";
+import { updateLesson, revalidateLesson } from "@/lib/actions";
 import { strapiJSONToTiptapJSON, tiptapJSONToStrapiJSON } from "@/lib/utils";
 import { useCallback } from "react";
 import { debounce } from "lodash";
@@ -19,6 +19,7 @@ export function CalloutEditor({
   deleteBlock: () => void;
 }) {
   const handleUpdate = useCallback((content: any) => {
+    console.log(" --> callout.tsx: handleUpdate useCallback handler");
     let temp: any = JSON.parse(
       JSON.stringify(tiptapJSONToStrapiJSON(content.content ?? [])),
     );
@@ -43,6 +44,7 @@ export function CalloutEditor({
           />
         </div>
         <CalloutBlockInput
+          revalidate={revalidateLesson}
           updateContent={(content: JSONContent) => {
             handleUpdate(content);
           }}
