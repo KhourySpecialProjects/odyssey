@@ -471,6 +471,10 @@ export async function updateLesson(
     };
     dataToSend.regenerateSlug = options.regenerateSlug;
 
+    console.log(dataToSend);
+
+    console.log(dataToSend);
+
     const response = await fetch(STRAPI_API_URL + "/api/lessons/" + id, {
       method: "PUT",
       body: JSON.stringify({ data: dataToSend }),
