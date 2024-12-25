@@ -9,7 +9,6 @@ import type { BlockNode } from "@/types/strapi";
 import { Trash2Icon } from "lucide-react";
 import { CalloutBlockInput } from "@/components/ui/tiptap/callout-block-input";
 
-
 export function CalloutEditor({
   block,
   updateBlock,
