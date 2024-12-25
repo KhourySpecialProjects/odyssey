@@ -3,6 +3,10 @@ import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
 import { getDropletBySlug } from "@/lib/requests/droplet";
 import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
 import { getServerSession } from "next-auth";
+import { Metadata } from "next/types";
+import { Droplet } from "@/types";
+import { getCurrentUser } from "@/lib/auth/session";
+import { notFound } from "next/navigation";
 
 type Props = {
   params: Promise<Params>;
@@ -32,14 +36,19 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function RootLayout({ params, children }: Props) {
   const { slug } = await params;
-  const user = await getCurrentUser();
+  const session = await getServerSession();
+  let completedLessonIds: number[] = [];
 
-  const droplet = await getDropletBySlug<
-    Pick<Droplet, "name" | "slug" | "lessons">
-  >(slug, {
-    fields: ["name", "slug"],
-    populate: ["lessons"],
-  });
+  if (session?.user?.email) {
+    const user = await getAuthorizedUserByEmail(session.user.email);
+    const enrollments = await getEnrollmentsByAuthorizedUser(user.id);
+    completedLessonIds = enrollments.flatMap(
+      (enrollment) =>
+        enrollment.viewedLessons?.map((lesson) => lesson.id) || [],
+    );
+  }
+
+  const droplet = await getDropletBySlug(slug);
   if (!droplet) return notFound();
 
   return (
