@@ -4,8 +4,6 @@ import { getDropletBySlug } from "@/lib/requests/droplet";
 import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
 import { getServerSession } from "next-auth";
 
-
-
 type Props = {
   params: Promise<Params>;
   children: React.ReactNode;
