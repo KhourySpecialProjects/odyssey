@@ -78,6 +78,18 @@ export function CalloutBlockInput({
         class:
           "prose prose-sky  p-2 min-w-full max-w-2xl min-h-20 border rounded-b-md border-slate-200 hover:shadow focus:shadow-lg outline-none",
       },
+      handleKeyDown: (view: any, event: KeyboardEvent) => {
+        if (event.key === "Tab") {
+          if (view.state.selection.$from.parent.type.name === "codeBlock") {
+            event.preventDefault();
+            view.dispatch(view.state.tr.insertText("\t"));
+            return true;
+          }
+
+          return false;
+        }
+        return false;
+      },
     },
     immediatelyRender: false,
     onDestroy: () => {

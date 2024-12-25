@@ -77,6 +77,18 @@ export function GenericBlockInput({
         class:
           "w-full border min-h-32 border-slate-200 p-3 prose prose-lg prose-sky prose-table:block prose-table:overflow-x-scroll rounded-b-md hover:shadow focus:shadow-lg outline-none",
       },
+      handleKeyDown: (view: any, event: KeyboardEvent) => {
+        if (event.key === "Tab") {
+          if (view.state.selection.$from.parent.type.name === "codeBlock") {
+            event.preventDefault();
+            view.dispatch(view.state.tr.insertText("\t"));
+            return true;
+          }
+
+          return false;
+        }
+        return false;
+      },
     },
     immediatelyRender: false,
     onDestroy: () => {
