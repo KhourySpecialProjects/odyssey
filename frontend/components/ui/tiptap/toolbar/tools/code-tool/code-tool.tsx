@@ -7,7 +7,7 @@ import { NodeViewProps } from "@tiptap/react";
 interface CodeBlockProps extends NodeViewProps {
   node: NodeViewProps["node"] & {
     attrs: {
-      language: string;
+      language?: string;
     };
   };
   extension: NodeViewProps["extension"] & {

@@ -25,7 +25,7 @@ import Strike from "@tiptap/extension-strike";
 import Link from "@tiptap/extension-link";
 import CustomImage from "./custom-image";
 import CodeBlockLowlight from "@tiptap/extension-code-block-lowlight";
-import { CodeBlockComponent } from "./toolbar/tools/code-tool";
+import { CodeBlockComponent } from "./toolbar/tools/code-tool/code-tool";
 import { all, createLowlight } from "lowlight";
 import GeneralToolBar from "./toolbar/general-toolbar";
 
