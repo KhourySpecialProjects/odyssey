@@ -47,11 +47,18 @@ export default async function CreateRoute() {
       <div className="w-full max-w-5xl px-4 mx-auto mb-8 xl:p-0 s">
         <div className="w-full flex justify-between items-end">
           <h2 className="text-lg">Your Drafts</h2>
-          <Link href="/new/droplet">
-            <Button after={<PlusIcon />} className="select-none" size="sm">
-              New
-            </Button>
-          </Link>
+          <div className="flex items-center gap-2">
+            <Link href="/new/droplet">
+              <Button after={<PlusIcon />} className="select-none" size="sm">
+                New Droplet
+              </Button>
+            </Link>
+            <Link href="/new/playlist">
+              <Button after={<PlusIcon />} className="select-none" size="sm">
+                New Playlist
+              </Button>
+            </Link>
+          </div>
         </div>
         <Separator orientation="horizontal" className="mt-2 mb-4" />
         {!author.droplets || author.droplets.length === 0 ? (
