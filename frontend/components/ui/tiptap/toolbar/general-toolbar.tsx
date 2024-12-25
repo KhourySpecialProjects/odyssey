@@ -9,6 +9,7 @@ import UnorderedListTool from "./tools/unordered-list-tool";
 import OrderedListTool from "./tools/ordered-list-tool";
 import LinkTool from "./tools/link-tool";
 import ImageTool from "./tools/image-tool";
+import CodeTool from "./tools/code-tool/code-tool";
 
 export default function DefaultToolbar({ editor }: { editor: Editor }) {
   return (
@@ -21,6 +22,7 @@ export default function DefaultToolbar({ editor }: { editor: Editor }) {
       <OrderedListTool editor={editor} />
       <LinkTool editor={editor} />
       <ImageTool editor={editor} />
+      <CodeTool editor={editor} />
     </div>
   );
 }
