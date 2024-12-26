@@ -194,8 +194,8 @@ export function Sidebar({
             </div>
 
             {/* Metadata link */}
-            <ul className="space-y-2 font-medium">
-              <li>
+            <ul className="space-y-4 w-full font-medium flex flex-col items-center">
+              <li className="w-full">
                 <Link
                   href={`/draft/d/${droplet.slug}`}
                   className={cn(
@@ -206,6 +206,14 @@ export function Sidebar({
                 >
                   <SettingsIcon className="shrink-0" />
                   <span className="leading-snug ms-3">Metadata</span>
+                </Link>
+              </li>
+              <li className="pb-2 w-full text-center">
+                <Link
+                  className="w-full px-6 py-2 rounded-full text-white bg-purple-500 hover:bg-purple-600"
+                  href={`/d/${droplet.slug}`}
+                >
+                  Preview
                 </Link>
               </li>
             </ul>
