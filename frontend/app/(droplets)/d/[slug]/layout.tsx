@@ -7,6 +7,7 @@ import { Metadata } from "next/types";
 import { Droplet } from "@/types";
 import { getCurrentUser } from "@/lib/auth/session";
 import { notFound } from "next/navigation";
+import { getAuthorByAuthorizedUserEmail } from "@/lib/requests/author";
 
 type Props = {
   params: Promise<Params>;
@@ -37,6 +38,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function RootLayout({ params, children }: Props) {
   const { slug } = await params;
   const session = await getServerSession();
+  const user = await getCurrentUser();
   let completedLessonIds: number[] = [];
 
   if (session?.user?.email) {
@@ -48,12 +50,31 @@ export default async function RootLayout({ params, children }: Props) {
     );
   }
 
-  const droplet = await getDropletBySlug(slug);
-  if (!droplet) return notFound();
+  const droplet = await getDropletBySlug<Droplet>(slug, {
+    fields: ["*"],
+    populate: {
+      authors: { populate: "*" },
+      learningObjectives: { populate: "*" },
+      lessons: { populate: "*" },
+      tags: { populate: "*" },
+      prerequisites: { populate: ["id", "name", "slug"] },
+      postrequisites: { populate: ["id", "name", "slug"] },
+    },
+  });
+
+  if (!droplet || !user) return notFound();
+
+  const userAuthor = await getAuthorByAuthorizedUserEmail(user.email || "");
+
+  const isAuthor =
+    userAuthor &&
+    droplet.authors &&
+    droplet.authors.map((author) => author.id).includes(userAuthor.id);
 
   return (
     <div className="flex flex-col md:flex-row">
       <Sidebar
+        author={isAuthor || false}
         user={session?.user}
         droplet={droplet}
         completedLessonIds={completedLessonIds}
