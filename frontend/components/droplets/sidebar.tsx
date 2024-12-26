@@ -44,10 +44,12 @@ import { useSession } from "next-auth/react";
 
 export default function Sidebar({
   user,
+  author = false,
   droplet,
   completedLessonIds = [],
 }: {
   user?: User | null;
+  author: boolean;
   droplet: Pick<Droplet, "name" | "slug" | "lessons">;
   completedLessonIds: number[];
 }) {
@@ -58,9 +60,9 @@ export default function Sidebar({
   const isAdmin = user && isAuthorizedUserAdmin(user.roles);
 
   const activeLinkClasses =
-    "flex font-bold items-center p-2 bg-slate-200 [&>svg]:text-sky-700 rounded-lg dark:text-white dark:hover:bg-slate-700 group text-sky-700 transition-colors";
+    "w-full flex font-bold items-center p-2 bg-slate-200 [&>svg]:text-sky-700 rounded-lg dark:text-white dark:hover:bg-slate-700 group text-sky-700 transition-colors";
   const inactiveLinkClasses =
-    "flex items-center p-2 rounded-lg text-slate-900 dark:text-white hover:bg-slate-100 dark:hover:bg-slate-700 group transition-colors";
+    "w-full flex items-center p-2 rounded-lg text-slate-900 dark:text-white hover:bg-slate-100 dark:hover:bg-slate-700 group transition-colors";
 
   const totalLessons = droplet.lessons?.length ?? 0;
   const totalPages = totalLessons + 2;
@@ -141,8 +143,19 @@ export default function Sidebar({
               {droplet.name}
             </p>
 
-            <ul className="space-y-2 font-medium">
-              <li>
+            {author && (
+              <div className="pb-4 w-full text-center">
+                <Link
+                  className="w-full px-6 py-2 rounded-full text-white bg-green-600 hover:bg-green-700"
+                  href={`/draft/d/${droplet.slug}`}
+                >
+                  Edit
+                </Link>
+              </div>
+            )}
+
+            <ul className="flex flex-col items-center space-y-2 font-medium">
+              <li className="w-full">
                 <Link
                   href={`/d/${droplet.slug}`}
                   className={
@@ -157,7 +170,7 @@ export default function Sidebar({
               </li>
 
               {droplet.lessons?.map((lesson) => (
-                <li key={lesson.id}>
+                <li key={lesson.id} className="w-full">
                   <Link
                     href={`/d/${droplet.slug}/${lesson.slug}`}
                     className={
@@ -181,7 +194,7 @@ export default function Sidebar({
                 </li>
               ))}
 
-              <li>
+              <li className="w-full">
                 <Link
                   href={`/d/${droplet.slug}/recap`}
                   className={
