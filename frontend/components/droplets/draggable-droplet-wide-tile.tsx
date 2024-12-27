@@ -1,5 +1,5 @@
-import {useDrag, useDrop} from 'react-dnd';
-import { Droplet } from '@/types/index.d';
+import { useDrag, useDrop } from "react-dnd";
+import { Droplet } from "@/types/index.d";
 import { Badge } from "@/components/ui/badge";
 import { GripVertical, XIcon } from "lucide-react";
 import { cn, uppercaseFirstChar } from "@/lib/utils";
@@ -11,17 +11,20 @@ interface DraggableDropletWideTileProps {
   sourceList: string;
 }
 
-export default function DraggableDropletWideTile({droplet, index, moveCard, sourceList}: 
-  DraggableDropletWideTileProps) {
-
-  const [{isDragging}, drag] = useDrag({
-    type: 'DROPTILE',
-    item: {index, droplet, sourceList},
+export default function DraggableDropletWideTile({
+  droplet,
+  index,
+  moveCard,
+  sourceList,
+}: DraggableDropletWideTileProps) {
+  const [{ isDragging }, drag] = useDrag({
+    type: "DROPTILE",
+    item: { index, droplet, sourceList },
     collect: (monitor) => ({
       isDragging: monitor.isDragging(),
     }),
     end: (item, monitor) => {
-      const dropResult = monitor.getDropResult<{moved: boolean }>();
+      const dropResult = monitor.getDropResult<{ moved: boolean }>();
       if (!dropResult) {
         return;
       }
@@ -29,35 +32,33 @@ export default function DraggableDropletWideTile({droplet, index, moveCard, sour
   });
 
   const [, drop] = useDrop({
-    accept: 'DROPTILE',
-    hover: (item: {index: number; sourceList: string}) => {
+    accept: "DROPTILE",
+    hover: (item: { index: number; sourceList: string }) => {
       if (item.index === index || item.sourceList !== sourceList) {
         return;
       }
       moveCard(item.index, index);
       item.index = index;
     },
-  })
+  });
 
   return (
     <div
       ref={(node) => {
-        if(node) {
+        if (node) {
           drag(node);
           drop(node);
         }
       }}
       className={cn(
         "relative transition-colors border rounded-md border-slate-200 hover:border-slate-300 bg-slate-50",
-        isDragging && "opacity-50"
+        isDragging && "opacity-50",
       )}
     >
       <div className="p-4">
         <div className="flex flex-col justify-end gap-2">
           <div className="flex flex-row flex-wrap flex-0 gap-1.5">
-            <div
-              className="cursor-grab active:cursor-grabbing text-slate-400 hover:text-slate-600 z-10"
-            >
+            <div className="cursor-grab active:cursor-grabbing text-slate-400 hover:text-slate-600 z-10">
               <GripVertical size={20} />
             </div>
             {droplet.status === "draft" && (
