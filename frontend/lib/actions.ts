@@ -868,7 +868,7 @@ export async function createPlaylist(data: {
         connect: [data.author.id],
       },
     };
-    console.log("data to send: ", dataToSend);
+    // console.log("data to send: ", dataToSend);
 
     const response = await fetch(
       `${process.env.NEXT_PUBLIC_STRAPI_API_URL}/api/playlists`,
