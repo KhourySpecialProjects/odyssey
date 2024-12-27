@@ -11,6 +11,7 @@ import { Separator } from "@/components/ui/separator";
 import DraggableTileList from "@/components/droplets/draggable_tile_list";
 import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
+import { createPlaylist } from "@/lib/actions";
 
 interface PlaylistFormProps {
   droplets: any[];
@@ -70,9 +71,29 @@ export function PlaylistForm({ droplets, author }: PlaylistFormProps) {
       setError("Please select at least one droplet");
       return;
     }
-    // TODO: Add API call to create playlist
     console.log(` --> New playlist name: ${name}`);
     console.log(`   --> Playlist selected Droplets are: `, selectedDroplets);
+    console.log(`   --> isPublic: ${isPublic}`);
+    console.log(`   --> Author: ${author.name}`);
+
+    const playlistData = {
+      name,
+      isPublic,
+      // droplets: selectedDroplets,
+      droplets: selectedDroplets.map(droplet =>({id: droplet.id})),
+      author
+    } 
+
+    console.log("playlistData: ", playlistData)
+
+    const response = await createPlaylist(playlistData);
+    
+    if (response.ok) {
+      router.push(`/p/${response.data.attributes.slug}`);
+    } else {
+      setError(response.error || "Failed to create Playlist!");
+    }
+    
   };
 
   return (
