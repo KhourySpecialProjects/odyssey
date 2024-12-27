@@ -24,6 +24,7 @@ import {
   DeleteObjectCommand,
 } from "@aws-sdk/client-s3";
 import { v4 as uuidv4 } from "uuid";
+import { Buffer } from "node:buffer";
 
 const NEXT_PUBLIC_STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
@@ -845,5 +846,62 @@ export async function deleteImage(fileName: string) {
   } catch (err) {
     console.log(err);
     return { ok: false, error: "Failed to delete image" };
+  }
+}
+
+
+export async function createPlaylist(data: {
+  name: string;
+  isPublic: boolean;
+  droplets: { id: number }[];
+  author: { id: number };
+}) {
+
+  const tempSlug = Math.random().toString(36).substring(2, 10);
+  try {
+    const dataToSend = {
+      name: data.name,
+      slug: tempSlug, // this gets overwritten by Strapi
+      isPublic: data.isPublic,
+      droplets: {
+        connect: data.droplets
+      },
+      authorized_users: {
+        connect: [data.author.id]
+      }
+    };
+    console.log("data to send: ", dataToSend);
+
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_STRAPI_API_URL}/api/playlists`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${process.env.STRAPI_ACCESS_TOKEN}`,
+        },
+        body: JSON.stringify({ data: dataToSend }),
+      }
+    );
+
+    const responseData = await response.json();
+
+    if (!response.ok || (response.ok && responseData.error)) {
+      return { 
+        ok: false, 
+        error: responseData.error?.message || "Failed to create playlist", 
+        data: null 
+      };
+    }
+
+    revalidateTag("playlists");
+    return { ok: true, error: null, data: responseData.data };
+  } catch (err) {
+    console.error(err);
+    return { 
+      ok: false, 
+      error: "Database Error: Failed to create playlist.", 
+      data: null 
+    };
   }
 }
