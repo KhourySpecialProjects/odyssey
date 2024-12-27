@@ -17,21 +17,24 @@ export default function DraggableTileList({
   onReorder,
   listType,
 }: DraggableCardListProps) {
-  const moveCard = useCallback((dragIndex: number, hoverIndex: number) => {
-    onReorder(dragIndex, hoverIndex);
-  }, [onReorder]);
+  const moveCard = useCallback(
+    (dragIndex: number, hoverIndex: number) => {
+      onReorder(dragIndex, hoverIndex);
+    },
+    [onReorder],
+  );
 
-  interface DragItem{
+  interface DragItem {
     sourceList: string;
     droplet: Droplet;
   }
 
-  const [{isOver}, drop] = useDrop<DragItem, unknown, {isOver: boolean}>({
-    accept: 'DROPTILE',
-    canDrop: (item: {sourceList: string}) => {
+  const [{ isOver }, drop] = useDrop<DragItem, unknown, { isOver: boolean }>({
+    accept: "DROPTILE",
+    canDrop: (item: { sourceList: string }) => {
       return item.sourceList !== listType;
     },
-    drop: (item: {droplet: Droplet, sourceList: string}) => {
+    drop: (item: { droplet: Droplet; sourceList: string }) => {
       onDropToOther(item.droplet);
       return { moved: true };
     },
@@ -41,21 +44,26 @@ export default function DraggableTileList({
   });
 
   return (
-    <div ref={node => {
-      if (node) {
-        drop(node);
-      }
-    }}
-    className={cn(
-      "min-h-[200px] p-4 border-2 border-dashed rounded-lg transition-colors",
-      isOver 
-        ? "border-slate-400 bg-slate-100/50" 
-        : "border-slate-200"
-    )}
+    <div
+      ref={(node) => {
+        if (node) {
+          drop(node);
+        }
+      }}
+      className={cn(
+        "min-h-[200px] p-4 border-2 border-dashed rounded-lg transition-colors",
+        isOver ? "border-slate-400 bg-slate-100/50" : "border-slate-200",
+      )}
     >
       <div className="space-y-4">
         {droplets.map((droplet, index) => (
-          <DraggableDropletWideTile key={droplet.id} droplet={droplet} index={index} moveCard={moveCard} sourceList={listType} />
+          <DraggableDropletWideTile
+            key={droplet.id}
+            droplet={droplet}
+            index={index}
+            moveCard={moveCard}
+            sourceList={listType}
+          />
         ))}
       </div>
     </div>

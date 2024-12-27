@@ -2,16 +2,17 @@ import { getCurrentUser } from "@/lib/auth/session";
 import { redirect } from "next/navigation";
 import { isContentCreator } from "@/lib/utils";
 import { getDroplets } from "@/lib/requests/droplet";
-import { PlaylistForm } from "@/components/playlists/playlist-form"
+import { PlaylistForm } from "@/components/playlists/playlist-form";
 import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
 
 export default async function NewPlaylist() {
   const user = await getCurrentUser();
-  if (!user || !user?.email || !isContentCreator(user.roles)) return redirect("/");
+  if (!user || !user?.email || !isContentCreator(user.roles))
+    return redirect("/");
   const authUser = await getAuthorizedUserByEmail(user.email);
 
   //TODO: Fix logic here to get all droplets and get droplets in "current" playlist
-  // so that this page can be used for creating a new playlist or editing a playlist. 
+  // so that this page can be used for creating a new playlist or editing a playlist.
   const droplets = await getDroplets({
     filters: {
       $and: [{ status: { $eq: "published" } }, { isHidden: false }],

@@ -849,14 +849,12 @@ export async function deleteImage(fileName: string) {
   }
 }
 
-
 export async function createPlaylist(data: {
   name: string;
   isPublic: boolean;
   droplets: { id: number }[];
   author: { id: number };
 }) {
-
   const tempSlug = Math.random().toString(36).substring(2, 10);
   try {
     const dataToSend = {
@@ -864,11 +862,11 @@ export async function createPlaylist(data: {
       slug: tempSlug, // this gets overwritten by Strapi
       isPublic: data.isPublic,
       droplets: {
-        connect: data.droplets
+        connect: data.droplets,
       },
       authorized_users: {
-        connect: [data.author.id]
-      }
+        connect: [data.author.id],
+      },
     };
     console.log("data to send: ", dataToSend);
 
@@ -881,16 +879,16 @@ export async function createPlaylist(data: {
           Authorization: `Bearer ${process.env.STRAPI_ACCESS_TOKEN}`,
         },
         body: JSON.stringify({ data: dataToSend }),
-      }
+      },
     );
 
     const responseData = await response.json();
 
     if (!response.ok || (response.ok && responseData.error)) {
-      return { 
-        ok: false, 
-        error: responseData.error?.message || "Failed to create playlist", 
-        data: null 
+      return {
+        ok: false,
+        error: responseData.error?.message || "Failed to create playlist",
+        data: null,
       };
     }
 
@@ -898,10 +896,10 @@ export async function createPlaylist(data: {
     return { ok: true, error: null, data: responseData.data };
   } catch (err) {
     console.error(err);
-    return { 
-      ok: false, 
-      error: "Database Error: Failed to create playlist.", 
-      data: null 
+    return {
+      ok: false,
+      error: "Database Error: Failed to create playlist.",
+      data: null,
     };
   }
 }

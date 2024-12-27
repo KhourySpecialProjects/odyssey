@@ -28,7 +28,7 @@ export function PlaylistForm({ droplets, author }: PlaylistFormProps) {
 
   const totalLessons = selectedDroplets.reduce(
     (sum, droplet) => sum + (droplet.lessons?.length || 0),
-    0
+    0,
   );
 
   const handleDropToSelected = useCallback((droplet: any) => {
@@ -38,7 +38,7 @@ export function PlaylistForm({ droplets, author }: PlaylistFormProps) {
 
   const handleDropToSource = useCallback((droplet: any) => {
     setSelectedDroplets((current) =>
-      current.filter((d) => d.id !== droplet.id)
+      current.filter((d) => d.id !== droplet.id),
     );
     setSourceDroplets((current) => [...current, droplet]);
   }, []);
@@ -80,20 +80,19 @@ export function PlaylistForm({ droplets, author }: PlaylistFormProps) {
       name,
       isPublic,
       // droplets: selectedDroplets,
-      droplets: selectedDroplets.map(droplet =>({id: droplet.id})),
-      author
-    } 
+      droplets: selectedDroplets.map((droplet) => ({ id: droplet.id })),
+      author,
+    };
 
-    console.log("playlistData: ", playlistData)
+    console.log("playlistData: ", playlistData);
 
     const response = await createPlaylist(playlistData);
-    
+
     if (response.ok) {
       router.push(`/p/${response.data.attributes.slug}`);
     } else {
       setError(response.error || "Failed to create Playlist!");
     }
-    
   };
 
   return (
