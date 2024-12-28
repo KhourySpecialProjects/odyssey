@@ -7,9 +7,9 @@ import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
 import { getPlaylistBySlug } from "@/lib/requests/playlist";
 
 interface Props {
-  params: {
+  params: Promise<{
     slug: string;
-  };
+  }>;
 }
 
 export default async function EditPlaylistPage({ params }: Props) {
@@ -19,8 +19,8 @@ export default async function EditPlaylistPage({ params }: Props) {
   
   const authUser = await getAuthorizedUserByEmail(user.email);
   
-
-  const playlist = await getPlaylistBySlug(params.slug, {
+  const p = await params;
+  const playlist = await getPlaylistBySlug(p.slug, {
     populate: {
       droplets: {
         populate: {
