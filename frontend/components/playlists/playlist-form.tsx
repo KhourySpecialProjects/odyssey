@@ -26,17 +26,23 @@ interface PlaylistFormProps {
   };
 }
 
-export function PlaylistForm({ droplets, author, existingPlaylist }: PlaylistFormProps) {
+export function PlaylistForm({
+  droplets,
+  author,
+  existingPlaylist,
+}: PlaylistFormProps) {
   const router = useRouter();
   const [name, setName] = useState(existingPlaylist?.name || "");
   const [isPublic, setIsPublic] = useState(existingPlaylist?.isPublic || false);
-  const [selectedDroplets, setSelectedDroplets] = useState(existingPlaylist?.droplets || []);
-  const [slug, setSlug] = useState(existingPlaylist?.slug || "")
+  const [selectedDroplets, setSelectedDroplets] = useState(
+    existingPlaylist?.droplets || [],
+  );
+  const [slug, setSlug] = useState(existingPlaylist?.slug || "");
   const [error, setError] = useState("");
   const [sourceDroplets, setSourceDroplets] = useState(() => {
     if (existingPlaylist?.droplets) {
       return droplets.filter(
-        (d) => !existingPlaylist.droplets?.some((pd) => pd.id === d.id)
+        (d) => !existingPlaylist.droplets?.some((pd) => pd.id === d.id),
       );
     }
     return droplets;
@@ -93,18 +99,18 @@ export function PlaylistForm({ droplets, author, existingPlaylist }: PlaylistFor
     console.log(`   --> Author: ${author.name}`);
 
     const updatePlaylistData = {
-      name, 
+      name,
       isPublic,
-      droplets: selectedDroplets.map((droplet) => ({id: droplet.id })),
+      droplets: selectedDroplets.map((droplet) => ({ id: droplet.id })),
       author,
-      slug
-    }
+      slug,
+    };
     const playlistData = {
       name,
       isPublic,
       droplets: selectedDroplets.map((droplet) => ({ id: droplet.id })),
       author,
-    };  
+    };
 
     console.log("updatePlaylistData: ", updatePlaylistData);
     console.log("playlistData: ", playlistData);
@@ -112,7 +118,10 @@ export function PlaylistForm({ droplets, author, existingPlaylist }: PlaylistFor
     try {
       let response;
       if (existingPlaylist) {
-        response = await updatePlaylist(existingPlaylist.id, updatePlaylistData);
+        response = await updatePlaylist(
+          existingPlaylist.id,
+          updatePlaylistData,
+        );
         if (response.ok) {
           router.push(`/p/${response.data.attributes.slug}`);
         } else {
@@ -130,7 +139,6 @@ export function PlaylistForm({ droplets, author, existingPlaylist }: PlaylistFor
       console.error("Error saving playlist:", error);
       setError("An unexpected error occurred");
     }
-
 
     // const response = await createPlaylist(playlistData);
 

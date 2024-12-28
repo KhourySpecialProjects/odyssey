@@ -16,9 +16,9 @@ export default async function EditPlaylistPage({ params }: Props) {
   const user = await getCurrentUser();
   if (!user || !user?.email || !isContentCreator(user.roles))
     return redirect("/");
-  
+
   const authUser = await getAuthorizedUserByEmail(user.email);
-  
+
   const p = await params;
   const playlist = await getPlaylistBySlug(p.slug, {
     populate: {
@@ -43,8 +43,8 @@ export default async function EditPlaylistPage({ params }: Props) {
       author: {
         fields: ["id", "name"],
         populate: {
-          authorizedUser: true
-        }
+          authorizedUser: true,
+        },
       },
     },
   });
@@ -58,7 +58,9 @@ export default async function EditPlaylistPage({ params }: Props) {
 
   // Verify the user has permission to edit this playlist
   if ((playlist.author as any)?.authorizedUser.id !== authUser.id) {
-    console.log("Redirecting to drafts because author and current user aren't the same");
+    console.log(
+      "Redirecting to drafts because author and current user aren't the same",
+    );
     console.log(" playlist.author?.id = ", playlist.author?.id);
     console.log(" authUser.id = ", authUser.id);
     return redirect("/drafts");
@@ -78,7 +80,7 @@ export default async function EditPlaylistPage({ params }: Props) {
 
   // Filter out droplets that are already in the playlist
   const availableDroplets = allDroplets.filter(
-    (droplet) => !playlist.droplets?.some((pd) => pd.id === droplet.id)
+    (droplet) => !playlist.droplets?.some((pd) => pd.id === droplet.id),
   );
 
   return (
@@ -86,8 +88,8 @@ export default async function EditPlaylistPage({ params }: Props) {
       <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-4xl mb-7">
         Edit Playlist
       </h1>
-      <PlaylistForm 
-        droplets={availableDroplets} 
+      <PlaylistForm
+        droplets={availableDroplets}
         author={authUser}
         existingPlaylist={playlist}
       />
