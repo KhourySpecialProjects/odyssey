@@ -12,19 +12,35 @@ import DraggableTileList from "@/components/droplets/draggable_tile_list";
 import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import { createPlaylist } from "@/lib/actions";
+import { updatePlaylist } from "@/lib/actions";
 
 interface PlaylistFormProps {
   droplets: any[];
   author: any;
+  existingPlaylist?: {
+    id: number;
+    name: string;
+    slug: string;
+    isPublic: boolean;
+    droplets?: any[];
+  };
 }
 
-export function PlaylistForm({ droplets, author }: PlaylistFormProps) {
+export function PlaylistForm({ droplets, author, existingPlaylist }: PlaylistFormProps) {
   const router = useRouter();
-  const [name, setName] = useState("");
-  const [isPublic, setIsPublic] = useState(false);
-  const [sourceDroplets, setSourceDroplets] = useState(droplets);
-  const [selectedDroplets, setSelectedDroplets] = useState<any[]>([]);
+  const [name, setName] = useState(existingPlaylist?.name || "");
+  const [isPublic, setIsPublic] = useState(existingPlaylist?.isPublic || false);
+  const [selectedDroplets, setSelectedDroplets] = useState(existingPlaylist?.droplets || []);
+  const [slug, setSlug] = useState(existingPlaylist?.slug || "")
   const [error, setError] = useState("");
+  const [sourceDroplets, setSourceDroplets] = useState(() => {
+    if (existingPlaylist?.droplets) {
+      return droplets.filter(
+        (d) => !existingPlaylist.droplets?.some((pd) => pd.id === d.id)
+      );
+    }
+    return droplets;
+  });
 
   const totalLessons = selectedDroplets.reduce(
     (sum, droplet) => sum + (droplet.lessons?.length || 0),
@@ -76,23 +92,53 @@ export function PlaylistForm({ droplets, author }: PlaylistFormProps) {
     console.log(`   --> isPublic: ${isPublic}`);
     console.log(`   --> Author: ${author.name}`);
 
+    const updatePlaylistData = {
+      name, 
+      isPublic,
+      droplets: selectedDroplets.map((droplet) => ({id: droplet.id })),
+      author,
+      slug
+    }
     const playlistData = {
       name,
       isPublic,
-      // droplets: selectedDroplets,
       droplets: selectedDroplets.map((droplet) => ({ id: droplet.id })),
       author,
-    };
+    };  
 
+    console.log("updatePlaylistData: ", updatePlaylistData);
     console.log("playlistData: ", playlistData);
 
-    const response = await createPlaylist(playlistData);
-
-    if (response.ok) {
-      router.push(`/p/${response.data.attributes.slug}`);
-    } else {
-      setError(response.error || "Failed to create Playlist!");
+    try {
+      let response;
+      if (existingPlaylist) {
+        response = await updatePlaylist(existingPlaylist.id, updatePlaylistData);
+        if (response.ok) {
+          router.push(`/p/${response.data.attributes.slug}`);
+        } else {
+          setError(response.error || "Failed to update Playlist!");
+        }
+      } else {
+        response = await createPlaylist(playlistData);
+        if (response.ok) {
+          router.push(`/p/${response.data.attributes.slug}`);
+        } else {
+          setError(response.error || "Failed to create Playlist!");
+        }
+      }
+    } catch (error) {
+      console.error("Error saving playlist:", error);
+      setError("An unexpected error occurred");
     }
+
+
+    // const response = await createPlaylist(playlistData);
+
+    // if (response.ok) {
+    //   router.push(`/p/${response.data.attributes.slug}`);
+    // } else {
+    //   setError(response.error || "Failed to create Playlist!");
+    // }
   };
 
   return (
