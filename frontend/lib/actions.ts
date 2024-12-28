@@ -891,18 +891,18 @@ export async function updatePlaylist(
     isPublic: boolean;
     droplets: { id: number }[];
     author: { id: number };
-    slug?: string;  //TODO Should slug be optional for updating a playlist?
-  }
+    slug?: string; //TODO Should slug be optional for updating a playlist?
+  },
 ) {
   try {
     const dataToSend = {
       name: data.name,
       isPublic: data.isPublic,
       droplets: {
-        set: data.droplets,  // 'set' replaces all existing relationships
+        set: data.droplets, // 'set' replaces all existing relationships
       },
       authorized_users: {
-        set: [data.author.id],  // ensure author remains connected
+        set: [data.author.id], // ensure author remains connected
       },
       slug: data.slug,
     };

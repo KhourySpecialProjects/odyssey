@@ -40,7 +40,7 @@ export default async function CreateRoute() {
   console.log("user = ", user);
   //get the current user's playlists
   const playlists = await getPlaylistsByAuthor(author.id);
-  console.log("playlists = ", playlists)
+  console.log("playlists = ", playlists);
 
   //get all draft droplets
   let allDroplets: Awaited<ReturnType<typeof getDraftDroplets>> = [];
@@ -96,18 +96,27 @@ export default async function CreateRoute() {
             <Suspense fallback={<DropletsSkeleton />}>
               <ul className="grid grid-flow-row grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                 {playlists.map((playlist) => (
-                  <PlaylistCard key={playlist.id} playlist={playlist} completedLessonIds={[]} toDraft={true}/>
+                  <PlaylistCard
+                    key={playlist.id}
+                    playlist={playlist}
+                    completedLessonIds={[]}
+                    toDraft={true}
+                  />
                 ))}
               </ul>
-            </Suspense> 
+            </Suspense>
           </>
         )}
         {isAuthorizedUserAdmin(user.roles) && (
           <>
             <h2 className="text-2xl pt-10 text-center font-bold flex items-center justify-center">
-            <ShieldAlertIcon className="mr-2 text-red-500" /> Admin Access <ShieldAlertIcon className="ml-2 text-red-500" />
+              <ShieldAlertIcon className="mr-2 text-red-500" /> Admin Access{" "}
+              <ShieldAlertIcon className="ml-2 text-red-500" />
             </h2>
-            <Separator orientation="horizontal" className="mt-2 mb-2 bg-red-300"  />
+            <Separator
+              orientation="horizontal"
+              className="mt-2 mb-2 bg-red-300"
+            />
             <h2 className="text-lg mb-2 mt-2">All Droplet Drafts</h2>
             <Separator orientation="horizontal" className="mt-2 mb-4" />
             <Suspense fallback={<DropletsSkeleton />}>
