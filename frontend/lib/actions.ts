@@ -883,3 +883,60 @@ export async function createPlaylist(data: {
     };
   }
 }
+
+export async function updatePlaylist(
+  id: number,
+  data: {
+    name: string;
+    isPublic: boolean;
+    droplets: { id: number }[];
+    author: { id: number };
+    slug?: string;  //TODO Should slug be optional for updating a playlist?
+  }
+) {
+  try {
+    const dataToSend = {
+      name: data.name,
+      isPublic: data.isPublic,
+      droplets: {
+        set: data.droplets,  // 'set' replaces all existing relationships
+      },
+      authorized_users: {
+        set: [data.author.id],  // ensure author remains connected
+      },
+      slug: data.slug,
+    };
+
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_STRAPI_API_URL}/api/playlists/${id}`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${process.env.STRAPI_ACCESS_TOKEN}`,
+        },
+        body: JSON.stringify({ data: dataToSend }),
+      },
+    );
+
+    const responseData = await response.json();
+
+    if (!response.ok || (response.ok && responseData.error)) {
+      return {
+        ok: false,
+        error: responseData.error?.message || "Failed to update playlist",
+        data: null,
+      };
+    }
+
+    revalidateTag("playlists");
+    return { ok: true, error: null, data: responseData.data };
+  } catch (err) {
+    console.error(err);
+    return {
+      ok: false,
+      error: "Database Error: Failed to update playlist.",
+      data: null,
+    };
+  }
+}

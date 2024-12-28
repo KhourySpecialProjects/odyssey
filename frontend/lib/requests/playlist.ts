@@ -63,8 +63,14 @@ export async function getPlaylistBySlug(
           },
         },
       },
+      author: {
+        fields: ["id", "name"],
+        populate: {
+          authorizedUser: true
+        }
+      },
     },
-  }: StrapiRequestParams = {},
+  }: StrapiRequestParams = {}
 ): Promise<Playlist | null> {
   const path = `/playlists`;
   const urlParams = {
@@ -80,10 +86,17 @@ export async function getPlaylistBySlug(
     },
   };
 
-  return await fetchAPI<Playlist[]>(path, {
+  // console.log("urlParams = ", urlParams);
+
+  const playlists = await fetchAPI<Playlist[]>(path, {
     urlParams,
     cache: "no-store",
-  }).then((playlists) => playlists[0] || null);
+  });
+
+  // console.log("search for playlist by slug playlists = ", playlists);
+
+  return playlists[0] || null;
+
 }
 
 /**
@@ -94,7 +107,7 @@ export async function getPlaylistBySlug(
  */
 export async function getPlaylistById<T extends Partial<Playlist> = Playlist>(
   id: number,
-  { sort, filters, populate, fields = ["*"] }: StrapiRequestParams = {},
+  { sort, filters, populate, fields = ["*"] }: StrapiRequestParams = {}
 ): Promise<T> {
   try {
     const query = qs.stringify({
@@ -109,7 +122,7 @@ export async function getPlaylistById<T extends Partial<Playlist> = Playlist>(
       {
         headers: { Authorization: "Bearer " + NEXT_PUBLIC_STRAPI_API_TOKEN },
         cache: "no-store",
-      },
+      }
     );
 
     const data = await response.json();
@@ -122,7 +135,7 @@ export async function getPlaylistById<T extends Partial<Playlist> = Playlist>(
 
 export async function getPlaylistsByAuthor(
   authorId: number,
-  { filters = {}, populate = "*", fields = ["*"] }: StrapiRequestParams = {},
+  { filters = {}, populate = "*", fields = ["*"] }: StrapiRequestParams = {}
 ): Promise<Playlist[]> {
   const path = `/playlists`;
   const urlParams = {
