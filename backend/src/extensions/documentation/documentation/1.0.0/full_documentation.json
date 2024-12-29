@@ -11,7 +11,7 @@
       "url": "https://khouryodyssey.org"
     },
     "license": null,
-    "x-generation-date": "2024-12-29T10:55:51.094Z"
+    "x-generation-date": "2024-12-29T14:04:25.648Z"
   },
   "x-strapi-config": {
     "plugins": [
@@ -2212,7 +2212,7 @@
                                                                 "slug": {
                                                                   "type": "string"
                                                                 },
-                                                                "Archived": {
+                                                                "isArchived": {
                                                                   "type": "boolean"
                                                                 },
                                                                 "creator": {
@@ -2237,10 +2237,6 @@
                                                                   "format": "date-time"
                                                                 },
                                                                 "updatedAt": {
-                                                                  "type": "string",
-                                                                  "format": "date-time"
-                                                                },
-                                                                "publishedAt": {
                                                                   "type": "string",
                                                                   "format": "date-time"
                                                                 },
@@ -4291,7 +4287,7 @@
                                                                                           "slug": {
                                                                                             "type": "string"
                                                                                           },
-                                                                                          "Archived": {
+                                                                                          "isArchived": {
                                                                                             "type": "boolean"
                                                                                           },
                                                                                           "creator": {
@@ -4316,10 +4312,6 @@
                                                                                             "format": "date-time"
                                                                                           },
                                                                                           "updatedAt": {
-                                                                                            "type": "string",
-                                                                                            "format": "date-time"
-                                                                                          },
-                                                                                          "publishedAt": {
                                                                                             "type": "string",
                                                                                             "format": "date-time"
                                                                                           },
@@ -6986,7 +6978,7 @@
                                       "slug": {
                                         "type": "string"
                                       },
-                                      "Archived": {
+                                      "isArchived": {
                                         "type": "boolean"
                                       },
                                       "creator": {
@@ -7011,10 +7003,6 @@
                                         "format": "date-time"
                                       },
                                       "updatedAt": {
-                                        "type": "string",
-                                        "format": "date-time"
-                                      },
-                                      "publishedAt": {
                                         "type": "string",
                                         "format": "date-time"
                                       },
@@ -8712,7 +8700,7 @@
                                                                                             "slug": {
                                                                                               "type": "string"
                                                                                             },
-                                                                                            "Archived": {
+                                                                                            "isArchived": {
                                                                                               "type": "boolean"
                                                                                             },
                                                                                             "creator": {
@@ -8737,10 +8725,6 @@
                                                                                               "format": "date-time"
                                                                                             },
                                                                                             "updatedAt": {
-                                                                                              "type": "string",
-                                                                                              "format": "date-time"
-                                                                                            },
-                                                                                            "publishedAt": {
                                                                                               "type": "string",
                                                                                               "format": "date-time"
                                                                                             },
@@ -11460,7 +11444,7 @@
                                     "slug": {
                                       "type": "string"
                                     },
-                                    "Archived": {
+                                    "isArchived": {
                                       "type": "boolean"
                                     },
                                     "creator": {
@@ -11485,10 +11469,6 @@
                                       "format": "date-time"
                                     },
                                     "updatedAt": {
-                                      "type": "string",
-                                      "format": "date-time"
-                                    },
-                                    "publishedAt": {
                                       "type": "string",
                                       "format": "date-time"
                                     },
@@ -11832,7 +11812,7 @@
               "slug": {
                 "type": "string"
               },
-              "Archived": {
+              "isArchived": {
                 "type": "boolean"
               },
               "creator": {
@@ -13649,7 +13629,7 @@
                                       "slug": {
                                         "type": "string"
                                       },
-                                      "Archived": {
+                                      "isArchived": {
                                         "type": "boolean"
                                       },
                                       "creator": {
@@ -13674,10 +13654,6 @@
                                         "format": "date-time"
                                       },
                                       "updatedAt": {
-                                        "type": "string",
-                                        "format": "date-time"
-                                      },
-                                      "publishedAt": {
                                         "type": "string",
                                         "format": "date-time"
                                       },
@@ -13895,7 +13871,7 @@
           "slug": {
             "type": "string"
           },
-          "Archived": {
+          "isArchived": {
             "type": "boolean"
           },
           "creator": {
@@ -13920,10 +13896,6 @@
             "format": "date-time"
           },
           "updatedAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "publishedAt": {
             "type": "string",
             "format": "date-time"
           },
@@ -15541,7 +15513,7 @@
                                                                 "slug": {
                                                                   "type": "string"
                                                                 },
-                                                                "Archived": {
+                                                                "isArchived": {
                                                                   "type": "boolean"
                                                                 },
                                                                 "creator": {
@@ -15566,10 +15538,6 @@
                                                                   "format": "date-time"
                                                                 },
                                                                 "updatedAt": {
-                                                                  "type": "string",
-                                                                  "format": "date-time"
-                                                                },
-                                                                "publishedAt": {
                                                                   "type": "string",
                                                                   "format": "date-time"
                                                                 },
@@ -17798,7 +17766,7 @@
                                                                 "slug": {
                                                                   "type": "string"
                                                                 },
-                                                                "Archived": {
+                                                                "isArchived": {
                                                                   "type": "boolean"
                                                                 },
                                                                 "creator": {
@@ -17823,10 +17791,6 @@
                                                                   "format": "date-time"
                                                                 },
                                                                 "updatedAt": {
-                                                                  "type": "string",
-                                                                  "format": "date-time"
-                                                                },
-                                                                "publishedAt": {
                                                                   "type": "string",
                                                                   "format": "date-time"
                                                                 },
@@ -20375,7 +20339,7 @@
                                                                 "slug": {
                                                                   "type": "string"
                                                                 },
-                                                                "Archived": {
+                                                                "isArchived": {
                                                                   "type": "boolean"
                                                                 },
                                                                 "creator": {
@@ -20400,10 +20364,6 @@
                                                                   "format": "date-time"
                                                                 },
                                                                 "updatedAt": {
-                                                                  "type": "string",
-                                                                  "format": "date-time"
-                                                                },
-                                                                "publishedAt": {
                                                                   "type": "string",
                                                                   "format": "date-time"
                                                                 },
