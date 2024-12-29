@@ -42,4 +42,15 @@ export const generalConfig: GeneralConfig = {
       label: "Drafts",
     },
   ],
+
+  nonAuthedNav: [
+    {
+      href: "/about",
+      label: "About",
+    },
+    {
+      href: "/explore",
+      label: "Explore",
+    },
+  ],
 };
