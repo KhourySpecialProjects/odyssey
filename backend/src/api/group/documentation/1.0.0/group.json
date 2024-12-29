@@ -1,5 +1,5 @@
 {
-  "/authorized-user-roles": {
+  "/groups": {
     "get": {
       "responses": {
         "200": {
@@ -7,7 +7,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/AuthorizedUserRoleListResponse"
+                "$ref": "#/components/schemas/GroupListResponse"
               }
             }
           }
@@ -64,7 +64,7 @@
         }
       },
       "tags": [
-        "Authorized-user-role"
+        "Group"
       ],
       "parameters": [
         {
@@ -169,7 +169,7 @@
           }
         }
       ],
-      "operationId": "get/authorized-user-roles"
+      "operationId": "get/groups"
     },
     "post": {
       "responses": {
@@ -178,7 +178,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/AuthorizedUserRoleResponse"
+                "$ref": "#/components/schemas/GroupResponse"
               }
             }
           }
@@ -235,23 +235,23 @@
         }
       },
       "tags": [
-        "Authorized-user-role"
+        "Group"
       ],
       "parameters": [],
-      "operationId": "post/authorized-user-roles",
+      "operationId": "post/groups",
       "requestBody": {
         "required": true,
         "content": {
           "application/json": {
             "schema": {
-              "$ref": "#/components/schemas/AuthorizedUserRoleRequest"
+              "$ref": "#/components/schemas/GroupRequest"
             }
           }
         }
       }
     }
   },
-  "/authorized-user-roles/{id}": {
+  "/groups/{id}": {
     "get": {
       "responses": {
         "200": {
@@ -259,7 +259,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/AuthorizedUserRoleResponse"
+                "$ref": "#/components/schemas/GroupResponse"
               }
             }
           }
@@ -316,7 +316,7 @@
         }
       },
       "tags": [
-        "Authorized-user-role"
+        "Group"
       ],
       "parameters": [
         {
@@ -330,7 +330,7 @@
           }
         }
       ],
-      "operationId": "get/authorized-user-roles/{id}"
+      "operationId": "get/groups/{id}"
     },
     "put": {
       "responses": {
@@ -339,7 +339,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/AuthorizedUserRoleResponse"
+                "$ref": "#/components/schemas/GroupResponse"
               }
             }
           }
@@ -396,7 +396,7 @@
         }
       },
       "tags": [
-        "Authorized-user-role"
+        "Group"
       ],
       "parameters": [
         {
@@ -410,13 +410,13 @@
           }
         }
       ],
-      "operationId": "put/authorized-user-roles/{id}",
+      "operationId": "put/groups/{id}",
       "requestBody": {
         "required": true,
         "content": {
           "application/json": {
             "schema": {
-              "$ref": "#/components/schemas/AuthorizedUserRoleRequest"
+              "$ref": "#/components/schemas/GroupRequest"
             }
           }
         }
@@ -487,7 +487,7 @@
         }
       },
       "tags": [
-        "Authorized-user-role"
+        "Group"
       ],
       "parameters": [
         {
@@ -501,7 +501,7 @@
           }
         }
       ],
-      "operationId": "delete/authorized-user-roles/{id}"
+      "operationId": "delete/groups/{id}"
     }
   }
 }
