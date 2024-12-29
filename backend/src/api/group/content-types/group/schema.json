@@ -73,6 +73,18 @@
       "relation": "manyToOne",
       "target": "api::authorized-user.authorized-user",
       "inversedBy": "groupsCreated"
+    },
+    "droplets": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::droplet.droplet",
+      "inversedBy": "groups"
+    },
+    "playlists": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::playlist.playlist",
+      "inversedBy": "groups"
     }
   }
 }
