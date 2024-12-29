@@ -45,6 +45,30 @@
       "relation": "manyToMany",
       "target": "api::playlist.playlist",
       "inversedBy": "authorized_users"
+    },
+    "groupAdmin": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::group.group",
+      "mappedBy": "admins"
+    },
+    "groupManager": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::group.group",
+      "mappedBy": "managers"
+    },
+    "groupsCreated": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::group.group",
+      "mappedBy": "creator"
+    },
+    "groups": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::group.group",
+      "mappedBy": "members"
     }
   }
 }
