@@ -30,6 +30,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <link
+        rel="icon"
+        href="/icon.svg"
+        type="image/svg+xml"
+        sizes="any"
+      />
       <body className={lato.className}>
         <AuthSessionProvider>
           <PHProvider>
