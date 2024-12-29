@@ -272,3 +272,54 @@ export async function createGroup(
     },
   });
 }
+
+export async function getGroupBySlugV2(
+  slug: string,
+  {
+    populate = {
+      members: {
+        fields: ["id", "email"],
+      },
+      admins: {
+        fields: ["id", "email"],
+      },
+      managers: {
+        fields: ["id", "email"],
+      },
+      creator: {
+        fields: ["id", "email"],
+      },
+      droplets: {
+        fields: ["id", "name", "slug", "status", "focusArea","type"],
+        populate: {
+          lessons: {
+            fields: ["id", "name", "slug", "type"]
+          }
+        }
+      }, 
+      playlists: {
+        fields: ["id", "name", "slug", "isPublic"],
+        populate: {
+          droplets: {
+            fields: ["id", "name", "slug", "type"]
+          }
+        }
+      }
+    },
+  }: StrapiRequestParams = {}
+): Promise<Group | null> {
+  const path = `/groups`;
+  const urlParams = {
+    filters: {
+      slug: { $eq: slug },
+    },
+    populate,
+  };
+
+  const groups = await fetchAPI<Group[]>(path, {
+    urlParams,
+    cache: "no-store",
+  });
+
+  return groups[0] || null;
+}
