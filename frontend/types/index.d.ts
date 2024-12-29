@@ -40,6 +40,7 @@ export type NavItem = {
 export type GeneralConfig = {
   mainNav: NavItem[];
   contentCreatorNav: NavItem[];
+  nonAuthedNav: NavItem[];
 };
 
 export type Author = {
@@ -180,6 +181,8 @@ export type Group = {
   admins?: AuthorizedUser[];
   managers?: AuthorizedUser[];
   members?: AuthorizedUser[];
+  droplets?: Droplet[];
+  playlists?: Playlist[];
 };
 
 export type GroupListResponse = {
