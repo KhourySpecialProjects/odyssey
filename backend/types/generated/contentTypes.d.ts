@@ -1146,7 +1146,7 @@ export interface ApiGroupGroup extends Schema.CollectionType {
     description: '';
   };
   options: {
-    draftAndPublish: true;
+    draftAndPublish: false;
   };
   attributes: {
     groupName: Attribute.String & Attribute.Required;
@@ -1188,7 +1188,7 @@ export interface ApiGroupGroup extends Schema.CollectionType {
     > &
       Attribute.DefaultTo<'Open Membership'>;
     slug: Attribute.UID<'api::group.group', 'groupName'> & Attribute.Required;
-    Archived: Attribute.Boolean & Attribute.DefaultTo<false>;
+    isArchived: Attribute.Boolean & Attribute.DefaultTo<false>;
     creator: Attribute.Relation<
       'api::group.group',
       'manyToOne',
@@ -1196,7 +1196,6 @@ export interface ApiGroupGroup extends Schema.CollectionType {
     >;
     createdAt: Attribute.DateTime;
     updatedAt: Attribute.DateTime;
-    publishedAt: Attribute.DateTime;
     createdBy: Attribute.Relation<
       'api::group.group',
       'oneToOne',
