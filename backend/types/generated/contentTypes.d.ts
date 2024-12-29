@@ -1072,6 +1072,11 @@ export interface ApiDropletDroplet extends Schema.CollectionType {
     status: Attribute.Enumeration<['draft', 'edit', 'published']> &
       Attribute.Required &
       Attribute.DefaultTo<'draft'>;
+    groups: Attribute.Relation<
+      'api::droplet.droplet',
+      'manyToMany',
+      'api::group.group'
+    >;
     createdAt: Attribute.DateTime;
     updatedAt: Attribute.DateTime;
     publishedAt: Attribute.DateTime;
@@ -1194,6 +1199,16 @@ export interface ApiGroupGroup extends Schema.CollectionType {
       'manyToOne',
       'api::authorized-user.authorized-user'
     >;
+    droplets: Attribute.Relation<
+      'api::group.group',
+      'manyToMany',
+      'api::droplet.droplet'
+    >;
+    playlists: Attribute.Relation<
+      'api::group.group',
+      'manyToMany',
+      'api::playlist.playlist'
+    >;
     createdAt: Attribute.DateTime;
     updatedAt: Attribute.DateTime;
     createdBy: Attribute.Relation<
@@ -1302,6 +1317,11 @@ export interface ApiPlaylistPlaylist extends Schema.CollectionType {
       'api::playlist.playlist',
       'manyToMany',
       'api::authorized-user.authorized-user'
+    >;
+    groups: Attribute.Relation<
+      'api::playlist.playlist',
+      'manyToMany',
+      'api::group.group'
     >;
     createdAt: Attribute.DateTime;
     updatedAt: Attribute.DateTime;
