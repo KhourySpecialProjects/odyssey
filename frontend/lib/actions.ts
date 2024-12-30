@@ -854,17 +854,14 @@ export async function createPlaylist(data: {
     };
     // console.log("data to send: ", dataToSend);
 
-    const response = await fetch(
-      `${STRAPI_API_URL}/api/playlists`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
-        },
-        body: JSON.stringify({ data: dataToSend }),
+    const response = await fetch(`${STRAPI_API_URL}/api/playlists`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
       },
-    );
+      body: JSON.stringify({ data: dataToSend }),
+    });
 
     const responseData = await response.json();
 
