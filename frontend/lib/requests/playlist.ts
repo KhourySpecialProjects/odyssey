@@ -63,6 +63,12 @@ export async function getPlaylistBySlug(
           },
         },
       },
+      author: {
+        fields: ["id", "name"],
+        populate: {
+          authorizedUser: true,
+        },
+      },
     },
   }: StrapiRequestParams = {},
 ): Promise<Playlist | null> {
@@ -80,10 +86,16 @@ export async function getPlaylistBySlug(
     },
   };
 
-  return await fetchAPI<Playlist[]>(path, {
+  // console.log("urlParams = ", urlParams);
+
+  const playlists = await fetchAPI<Playlist[]>(path, {
     urlParams,
     cache: "no-store",
-  }).then((playlists) => playlists[0] || null);
+  });
+
+  // console.log("search for playlist by slug playlists = ", playlists);
+
+  return playlists[0] || null;
 }
 
 /**

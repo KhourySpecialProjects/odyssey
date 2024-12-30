@@ -24,6 +24,7 @@ import {
   DeleteObjectCommand,
 } from "@aws-sdk/client-s3";
 import { v4 as uuidv4 } from "uuid";
+import { Buffer } from "node:buffer";
 
 const STRAPI_API_URL = process.env.STRAPI_API_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
@@ -825,5 +826,120 @@ export async function deleteImage(fileName: string) {
   } catch (err) {
     console.log(err);
     return { ok: false, error: "Failed to delete image" };
+  }
+}
+
+export async function createPlaylist(data: {
+  name: string;
+  isPublic: boolean;
+  droplets: { id: number }[];
+  author: { id: number };
+  userId: number;
+}) {
+  const tempSlug = "random";
+  try {
+    const dataToSend = {
+      name: data.name,
+      author: {
+        set: [data.author.id],
+      },
+      slug: tempSlug, // this gets overwritten by Strapi
+      isPublic: data.isPublic,
+      droplets: {
+        connect: data.droplets,
+      },
+      authorized_users: {
+        connect: [data.userId],
+      },
+    };
+    // console.log("data to send: ", dataToSend);
+
+    const response = await fetch(`${STRAPI_API_URL}/api/playlists`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+      },
+      body: JSON.stringify({ data: dataToSend }),
+    });
+
+    const responseData = await response.json();
+
+    if (!response.ok || (response.ok && responseData.error)) {
+      return {
+        ok: false,
+        error: responseData.error?.message || "Failed to create playlist",
+        data: null,
+      };
+    }
+
+    revalidateTag("playlists");
+    return { ok: true, error: null, data: responseData.data };
+  } catch (err) {
+    console.error(err);
+    return {
+      ok: false,
+      error: "Database Error: Failed to create playlist.",
+      data: null,
+    };
+  }
+}
+
+export async function updatePlaylist(
+  id: number,
+  data: {
+    name: string;
+    isPublic: boolean;
+    droplets: { id: number }[];
+    author: { id: number };
+    userId: number;
+    slug?: string; //TODO Should slug be optional for updating a playlist?
+  },
+) {
+  try {
+    const dataToSend = {
+      name: data.name,
+      isPublic: data.isPublic,
+      droplets: {
+        set: data.droplets, // 'set' replaces all existing relationships
+      },
+      authorized_users: {
+        set: [data.userId], // ensure author remains connected
+      },
+      slug: data.slug,
+      regenerateSlug: false,
+    };
+
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_STRAPI_API_URL}/api/playlists/${id}`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${process.env.STRAPI_ACCESS_TOKEN}`,
+        },
+        body: JSON.stringify({ data: dataToSend }),
+      },
+    );
+
+    const responseData = await response.json();
+
+    if (!response.ok || (response.ok && responseData.error)) {
+      return {
+        ok: false,
+        error: responseData.error?.message || "Failed to update playlist",
+        data: null,
+      };
+    }
+
+    revalidateTag("playlists");
+    return { ok: true, error: null, data: responseData.data };
+  } catch (err) {
+    console.error(err);
+    return {
+      ok: false,
+      error: "Database Error: Failed to update playlist.",
+      data: null,
+    };
   }
 }

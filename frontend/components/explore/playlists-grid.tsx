@@ -54,11 +54,6 @@ export async function PlaylistsGrid({
     },
   });
 
-  console.log(
-    "Playlists droplets:",
-    playlists.map((p) => p.droplets),
-  );
-
   // Get user completion data
   const user = await getCurrentUser();
   let completedLessonIds: number[] = [];
