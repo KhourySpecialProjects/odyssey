@@ -4,12 +4,17 @@ import { isContentCreator } from "@/lib/utils";
 import { getDroplets } from "@/lib/requests/droplet";
 import { PlaylistForm } from "@/components/playlists/playlist-form";
 import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
+import { getAuthorByAuthorizedUserEmail } from "@/lib/requests/author";
 
 export default async function NewPlaylist() {
   const user = await getCurrentUser();
   if (!user || !user?.email || !isContentCreator(user.roles))
     return redirect("/");
   const authUser = await getAuthorizedUserByEmail(user.email);
+  console.log(authUser);
+
+  const author = await getAuthorByAuthorizedUserEmail(user.email);
+  console.log(author);
 
   //TODO: Fix logic here to get all droplets and get droplets in "current" playlist
   // so that this page can be used for creating a new playlist or editing a playlist.
@@ -29,7 +34,7 @@ export default async function NewPlaylist() {
       <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-4xl mb-7">
         Create New Playlist
       </h1>
-      <PlaylistForm droplets={droplets} author={authUser} />
+      <PlaylistForm userId={authUser.id} droplets={droplets} author={author} />
     </div>
   );
 }
