@@ -17,8 +17,8 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
-import { fetchAuthorizedUsers } from "@/lib/requests/authorized-user";
 import { AuthorizedUser } from "@/types";
+import { fetchAllUsers } from "@/lib/requests/users";
 
 interface UserMultiSelectProps {
   selectedIds: number[];
@@ -31,18 +31,14 @@ export function UserMultiSelect({ selectedIds, onChange }: UserMultiSelectProps)
 
   useEffect(() => {
     const fetchUsers = async() => {
-        const fetchedUsers = await fetchAuthorizedUsers();
+        const fetchedUsers = await fetchAllUsers();
         setUsers(fetchedUsers);
+        // console.log('inside useEffect fetchedUsers = ', fetchedUsers);
     };
     fetchUsers();
   }, []);
-//   // TODO: Replace with actual user data fetch
-//   const users = [
-//     { id: 1, name: "User 1", email: "user1@example.com" },
-//     { id: 2, name: "User 2", email: "user2@example.com" },
-//     // Add more mock users
-//   ];
 
+  
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
@@ -53,8 +49,11 @@ export function UserMultiSelect({ selectedIds, onChange }: UserMultiSelectProps)
           className="w-full justify-between"
         >
           {selectedIds.length > 0
-            ? `${selectedIds.length} selected`
-            : "Select users..."}
+              ? users
+                  .filter(user => selectedIds.includes(user.id))
+                  .map(user => user.email)
+                  .join(", ")
+              : "Select users..."}
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>

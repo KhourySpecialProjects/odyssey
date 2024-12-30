@@ -8,7 +8,7 @@ import { GroupHeader } from "@/components/group/group-header";
 import { Separator } from "@/components/ui/separator";
 import { GroupDropletTile } from "@/components/group/group-droplet-tile";
 import { PlaylistCard } from "@/components/playlists/playlist-card";
-
+import createDOMPurifier from 'isomorphic-dompurify';
 type Props = {
   params: {
     slug: string;
@@ -25,11 +25,14 @@ export default async function GroupDetailPage({ params }: Props) {
   const p = await params;
   const group = await getGroupBySlugV2(p.slug);
   if (!group) notFound();
-  // console.log("group detail = ", group);
+
+  const isCreator = group.creator?.id === authorizedUser.id;
+  const isAdmin = group.admins?.some((admin) => admin.id === authorizedUser.id);
+  const canEdit = isCreator || isAdmin;
 
   return (
     <div className="w-full max-w-7xl p-8 mx-auto space-y-12">
-      <GroupHeader group={group} />
+      <GroupHeader group={group} canEdit={canEdit} />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Sidebar with member information */}
@@ -74,7 +77,14 @@ export default async function GroupDetailPage({ params }: Props) {
         <div className="lg:col-span-2 space-y-12">
           <ContentSection
             title="Group Description"
-            content={group.description || "No description provided."}
+            content={createDOMPurifier.sanitize(group.description || "No Description Provided.")}
+            // content={
+            //   <div
+            //     dangerouslySetInnerHTML={{
+            //       __html: group.description || "No description provided.",
+            //     }}
+            //   />
+            // }
           />
 
           <Separator />
