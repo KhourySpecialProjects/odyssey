@@ -104,7 +104,7 @@ export function PlaylistForm({
       name,
       isPublic,
       droplets: selectedDroplets.map((droplet) => ({ id: droplet.id })),
-      author: { id: author.id},
+      author: { id: author.id },
       userId,
       slug,
     };
