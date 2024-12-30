@@ -788,9 +788,9 @@ export interface ApiPlaylistPlaylist extends Schema.CollectionType {
       Attribute.Required &
       Attribute.DefaultTo<'medium'>;
     isPublic: Attribute.Boolean;
-    name: Attribute.String;
+    name: Attribute.String & Attribute.Required;
     publishedAt: Attribute.DateTime;
-    slug: Attribute.UID<'api::playlist.playlist', 'name'>;
+    slug: Attribute.UID<'api::playlist.playlist', 'name'> & Attribute.Required;
     updatedAt: Attribute.DateTime;
     updatedBy: Attribute.Relation<
       'api::playlist.playlist',

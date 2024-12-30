@@ -9,7 +9,7 @@ export async function MyContent({
 }: {
   searchParams?: { [key: string]: string | string[] | undefined };
 }) {
-  const tab = searchParams?.tab || "droplets";
+  const tab = (await searchParams)?.tab || "droplets";
   const user = await getCurrentUser();
 
   if (!user?.email) return null;
