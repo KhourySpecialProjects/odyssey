@@ -1,6 +1,6 @@
 "use client";
 
-import { AuthorizedUser, Group } from "@/types";
+import { AuthorizedUser, Droplet, Group } from "@/types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
@@ -24,9 +24,49 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { ContentSection } from "@/components/group/content-section";
 import { UserMultiSelect } from "@/components/ui/user-multi-select";
-import { GenericBlockInput as TipTapEditor } from "@/components/ui/tiptap/generic-block-input";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { DropletList } from "@/components/group/group-management-droplet-list";
+import { GeneralTextEditor } from "../ui/tiptap/general-text-editor";
+import { GroupSemester, Playlist } from "@/types";
+import { PlaylistList } from "@/components/group/group-management-playlist-list";
+import { updateGroup } from "@/lib/requests/groups";
+
+const SEMESTER_OPTIONS: GroupSemester[] = [
+  "Open Membership",
+  "Spring 2025",
+  "Summer 1 2025",
+  "Summer 2 2025",
+  "Summer 2025",
+  "Fall 2025",
+  "Spring 2026",
+  "Summer 1 2026",
+  "Summer 2 2026",
+  "Summer 2026",
+  "Fall 2026",
+  "Spring 2027",
+  "Summer 1 2027",
+  "Summer 2 2027",
+  "Summer 2027",
+  "Fall 2027",
+];
+
+// const formSchema = z.object({
+//   groupName: z.string().min(1, "Group name is required"),
+//   description: z.string().optional(),
+//   semester: z.string(),
+//   admins: z.array(z.number()),
+//   managers: z.array(z.number()),
+//   droplets: z.array(z.object({
+//     id: z.number(),
+//     order: z.number().optional(), // Optional order for sorting
+//   })).optional(),
+  
+//   playlists: z.array(z.object({
+//     id: z.number(),
+//     order: z.number().optional(), // Optional order for sorting
+//   })).optional(),
+// });
 
 const formSchema = z.object({
   groupName: z.string().min(1, "Group name is required"),
@@ -34,16 +74,50 @@ const formSchema = z.object({
   semester: z.string(),
   admins: z.array(z.number()),
   managers: z.array(z.number()),
+  droplets: z.array(z.object({
+    id: z.number(),
+    name: z.string(),
+    slug: z.string(),
+    focusArea: z.string(),
+    type: z.string(),
+    order: z.number().optional(),
+    lessons: z.array(z.object({
+      id: z.number(),
+      name: z.string(),
+      slug: z.string(),
+    })).optional(),
+  })).optional(),
+  
+  playlists: z.array(z.object({
+    id: z.number(),
+    name: z.string(),
+    slug: z.string(),
+    isPublic: z.boolean(),
+    duration: z.string().optional(),
+    order: z.number().optional(),
+    droplets: z.array(z.object({
+      id: z.number(),
+      name: z.string(),
+    })).optional(),
+  })).optional(),
 });
-
 interface GroupManagementFormProps {
   currentUser: AuthorizedUser;
   existingGroup?: Group | null;
 }
 
-export function GroupManagementForm({ currentUser, existingGroup }: GroupManagementFormProps) {
+export function GroupManagementForm({
+  currentUser,
+  existingGroup,
+}: GroupManagementFormProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [droplets, setDroplets] = useState<Droplet[]>(
+    existingGroup?.droplets || []
+  );
+  const [playlists, setPlaylists] = useState<Playlist[]>(
+    existingGroup?.playlists || []
+  );
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -51,27 +125,140 @@ export function GroupManagementForm({ currentUser, existingGroup }: GroupManagem
       groupName: existingGroup?.groupName || "",
       description: existingGroup?.description || "",
       semester: existingGroup?.semester || "Open Membership",
-      admins: existingGroup?.admins?.map(admin => admin.id) || [],
-      managers: existingGroup?.managers?.map(manager => manager.id) || [],
+      admins: existingGroup?.admins?.map((admin) => admin.id) || [],
+      managers: existingGroup?.managers?.map((manager) => manager.id) || [],
+      droplets: existingGroup?.droplets?.map((droplet, index) => ({
+        id: droplet.id,
+        name: droplet.name,
+        slug: droplet.slug,
+        focusArea: droplet.focusArea,
+        type: droplet.type,
+        order: index,
+        lessons: droplet.lessons?.map(lesson => ({
+          id: lesson.id,
+          name: lesson.name,
+          slug: lesson.slug,
+        })),
+      })) || [],
+      
+      playlists: existingGroup?.playlists?.map((playlist, index) => ({
+        id: playlist.id,
+        name: playlist.name,
+        slug: playlist.slug,
+        isPublic: playlist.isPublic,
+        duration: playlist.duration,
+        order: index,
+        droplets: playlist.droplets?.map(droplet => ({
+          id: droplet.id,
+          name: droplet.name,
+        })),
+      })) || [],
     },
   });
 
-  async function onSubmit(values: z.infer<typeof formSchema>) {
-    setIsSubmitting(true);
+  // async function onSubmit(values: z.infer<typeof formSchema>) {
+  //   setIsSubmitting(true);
+  //   try {
+  //     // TODO: Implement group creation/update logic
+  //     console.log(" ---> new/updated group info: ", values);
+  //     console.log("  ---> droplets: ", droplets);
+  //     console.log("  ---> playlists: ", playlists);
+
+  //     if (existingGroup) {
+  //       router.push(`/g/${existingGroup.slug}`);
+  //     }
+  //     // } else {
+  //     //   const slug = response.slug;
+  //     //   router.push(`/g/${slug}`);
+  //     // }
+  //   } catch (error) {
+  //     console.error("Failed to save group:", error);
+  //   } finally {
+  //     setIsSubmitting(false);
+  //   }
+  // }
+
+  const onSubmit = async (data: z.infer<typeof formSchema>) => {
     try {
-      // TODO: Implement group creation/update logic
-      console.log(" ---> new group info: ", values)
-      router.push("/g/dashboard");
+      // Prepare data for backend submission
+      const submissionData = {
+        ...data,
+        droplets: data.droplets?.map((droplet, index) => ({
+          ...droplet,
+          order: index, // Update order based on current array position
+        })),
+        playlists: data.playlists?.map((playlist, index) => ({
+          ...playlist,
+          order: index, // Update order based on current array position
+        })),
+      };
+
+      console.log(" submissionData = ", submissionData);
+      console.log("");
+      console.log("form getValues = ", form.getValues().droplets);
+
+      if (existingGroup) {
+        const response = await updateGroup(existingGroup.id, submissionData);
+        router.push(`/g/${response.slug}`);
+      } else {}
+
     } catch (error) {
-      console.error("Failed to save group:", error);
-    } finally {
-      setIsSubmitting(false);
+      // Handle error
+      console.error("Failed to update group", error);
     }
-  }
+  };
+
+  const handleDropletReorder = (reorderedDroplets: Droplet[]) => {
+    console.debug("  --> Group Mgmt - reordering droplets ", reorderedDroplets);
+    const updatedDroplets = reorderedDroplets.map((droplet, index) => ({
+      // id: droplet.id,
+      ...droplet,
+      order: index,
+    }));
+
+    form.setValue('droplets', updatedDroplets);
+    setDroplets(updatedDroplets)
+  };
+
+  const handleDropletRemove = (dropletId: number) => {
+    console.debug("  --> Group Mgmt - removing droplet ", dropletId);
+    const currentDroplets = form.getValues('droplets') || [];
+    const updatedDroplets = currentDroplets.filter(d => d.id !== dropletId);
+    form.setValue('droplets', updatedDroplets);
+    setDroplets(updatedDroplets as Droplet[]);
+  };
+
+  const handlePlaylistReorder = (reorderedPlaylists: Playlist[]) => {
+    console.debug(
+      "  --> Group Mgmt - reordering playlist ",
+      reorderedPlaylists
+    );
+    const updatedPlaylists = reorderedPlaylists.map((playlist, index) => ({
+      ...playlist,
+      order: index,
+    }));
+    form.setValue('playlists', updatedPlaylists);
+    setPlaylists(updatedPlaylists)
+  };
+
+  const handlePlaylistRemove = (playlistId: number) => {
+    console.debug("  --> Group Mgmt - removing playlist ", playlistId);
+    const currentPlaylists = form.getValues('playlists') || [];
+    const updatedPlaylists = currentPlaylists.filter(p => p.id !== playlistId);
+    
+    form.setValue('playlists', updatedPlaylists);
+    setPlaylists(updatedPlaylists as Playlist[]);
+  };
+
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-12">
+      <form onSubmit={form.handleSubmit(
+        onSubmit,
+        (errors) => console.error("Form validation failed ", errors)
+        )} 
+        className="space-y-12"
+      >
         <div className="space-y-8">
           <FormField
             control={form.control}
@@ -93,16 +280,21 @@ export function GroupManagementForm({ currentUser, existingGroup }: GroupManagem
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Semester</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <Select
+                  onValueChange={field.onChange}
+                  defaultValue={field.value}
+                >
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder="Select a semester" />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="Open Membership">Open Membership</SelectItem>
-                    <SelectItem value="Spring 2025">Spring 2025</SelectItem>
-                    {/* Add other semester options */}
+                    {SEMESTER_OPTIONS.map((semester) => (
+                      <SelectItem key={semester} value={semester}>
+                        {semester}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
                 <FormMessage />
@@ -116,15 +308,15 @@ export function GroupManagementForm({ currentUser, existingGroup }: GroupManagem
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Description</FormLabel>
-                <FormControl>
+                <FormControl className="w-full">
                   {/* <TipTapEditor
                     content={field.value}
                     onChange={field.onChange}
                   /> */}
-                  <TipTapEditor
+                  <GeneralTextEditor
                     initialContent={field.value || ""}
                     updateContent={field.onChange}
-                    revalidate={() => {}}
+                    placeholder="Enter group description..."
                   />
                 </FormControl>
                 <FormMessage />
@@ -176,7 +368,7 @@ export function GroupManagementForm({ currentUser, existingGroup }: GroupManagem
         <Separator />
 
         <ContentSection
-          title="Member Management"
+          title="Members"
           emptyMessage="Member management functionality coming soon"
         >
           <div className="p-8 text-center text-slate-500 border border-dashed rounded-lg">
@@ -184,26 +376,41 @@ export function GroupManagementForm({ currentUser, existingGroup }: GroupManagem
           </div>
         </ContentSection>
 
-        <Separator />
-
         <ContentSection
           title="Droplets"
-          emptyMessage="Droplet management functionality coming soon"
+          emptyMessage="No droplets added to this group yet"
         >
-          <div className="p-8 text-center text-slate-500 border border-dashed rounded-lg">
-            Droplet management will be available in a future update
-          </div>
+          {droplets.length > 0 ? (
+            <DropletList
+              droplets={droplets}
+              // droplets={form.getValues("droplets")}
+              onReorder={handleDropletReorder}
+              onRemove={handleDropletRemove}
+            />
+          ) : (
+            <div className="p-8 text-center text-slate-500 border border-dashed rounded-lg">
+              No droplets have been added to this group yet
+            </div>
+          )}
         </ContentSection>
 
         <Separator />
 
         <ContentSection
           title="Playlists"
-          emptyMessage="Playlist management functionality coming soon"
+          emptyMessage="No playlists have been added to this group yet"
         >
-          <div className="p-8 text-center text-slate-500 border border-dashed rounded-lg">
-            Playlist management will be available in a future update
-          </div>
+          {playlists.length > 0 ? (
+            <PlaylistList
+              playlists={playlists}
+              onReorder={handlePlaylistReorder}
+              onRemove={handlePlaylistRemove}
+            />
+          ) : (
+            <div className="p-8 text-center text-slate-500 border border-dashed rounded-lg">
+              No playlists have been added to this group yet
+            </div>
+          )}
         </ContentSection>
 
         <div className="flex justify-end gap-4">
@@ -215,7 +422,11 @@ export function GroupManagementForm({ currentUser, existingGroup }: GroupManagem
             Cancel
           </Button>
           <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? "Saving..." : (existingGroup ? "Update Group" : "Create Group")}
+            {isSubmitting
+              ? "Saving..."
+              : existingGroup
+                ? "Update Group"
+                : "Create Group"}
           </Button>
         </div>
       </form>

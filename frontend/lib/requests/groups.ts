@@ -1,3 +1,5 @@
+"use server";
+
 import { Group, GroupListResponse, GroupSemester } from "@/types";
 import { StrapiRequestParams } from "@/types/strapi";
 import { fetchAPI } from "@/lib/utils";
@@ -322,4 +324,71 @@ export async function getGroupBySlugV2(
   });
 
   return groups[0] || null;
+}
+
+export async function updateGroup(
+  groupId: number, 
+  data: {
+    groupName?: string;
+    description?: string;
+    semester?: string;
+    admins?: number[];
+    managers?: number[];
+    droplets?: Array<{
+      id: number;
+      order?: number;
+    }>;
+    playlists?: Array<{
+      id: number;
+      order?: number;
+    }>;
+  }
+): Promise<Group> {
+  const path = `/groups/${groupId}`;
+  
+  // Prepare the data object for Strapi
+  const dataToSend: any = {};
+
+  // Map basic fields
+  if (data.groupName) dataToSend.name = data.groupName;
+  if (data.description) dataToSend.description = data.description;
+  if (data.semester) dataToSend.semester = data.semester;
+
+  // Handle admins and managers
+  if (data.admins) {
+    dataToSend.admins = { 
+      connect: data.admins.map(id => ({ id })) 
+    };
+  }
+
+  if (data.managers) {
+    dataToSend.managers = { 
+      connect: data.managers.map(id => ({ id })) 
+    };
+  }
+
+  // Handle droplets
+  if (data.droplets) {
+    dataToSend.droplets = {
+      connect: data.droplets.map(droplet => ({ 
+        id: droplet.id 
+      }))
+    };
+  }
+
+  // Handle playlists
+  if (data.playlists) {
+    dataToSend.playlists = {
+      connect: data.playlists.map(playlist => ({ 
+        id: playlist.id 
+      }))
+    };
+  }
+
+  return await fetchAPI<Group>(path, {
+    options: { 
+      method: "PUT",
+      body: JSON.stringify({ data: dataToSend }),
+    },
+  });
 }

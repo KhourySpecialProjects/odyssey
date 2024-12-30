@@ -7,17 +7,22 @@ type ContentSectionProps = {
   children?: ReactNode;
 };
 
-export function ContentSection({ 
-  title, 
-  content, 
+export function ContentSection({
+  title,
+  content,
   emptyMessage,
-  children 
+  children,
 }: ContentSectionProps) {
   return (
     <section className="space-y-4">
       <h2 className="text-2xl font-semibold">{title}</h2>
       {content ? (
-        <p className="text-slate-600 leading-relaxed">{content}</p>
+        // <p className="text-slate-600 leading-relaxed">{content}</p>
+        <div
+          dangerouslySetInnerHTML={{
+            __html: content || "No description provided.",
+          }}
+        />
       ) : children ? (
         children
       ) : emptyMessage ? (
