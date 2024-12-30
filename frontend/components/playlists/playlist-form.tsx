@@ -17,6 +17,7 @@ import { updatePlaylist } from "@/lib/actions";
 interface PlaylistFormProps {
   droplets: any[];
   author: any;
+  userId: number;
   existingPlaylist?: {
     id: number;
     name: string;
@@ -29,6 +30,7 @@ interface PlaylistFormProps {
 export function PlaylistForm({
   droplets,
   author,
+  userId,
   existingPlaylist,
 }: PlaylistFormProps) {
   const router = useRouter();
@@ -96,20 +98,22 @@ export function PlaylistForm({
     console.log(` --> New playlist name: ${name}`);
     console.log(`   --> Playlist selected Droplets are: `, selectedDroplets);
     console.log(`   --> isPublic: ${isPublic}`);
-    console.log(`   --> Author: ${author.name}`);
+    console.log(`   --> Author: ${author}`);
 
     const updatePlaylistData = {
       name,
       isPublic,
       droplets: selectedDroplets.map((droplet) => ({ id: droplet.id })),
-      author,
+      author: { id: author.id},
+      userId,
       slug,
     };
     const playlistData = {
       name,
       isPublic,
       droplets: selectedDroplets.map((droplet) => ({ id: droplet.id })),
-      author,
+      author: { id: author.id },
+      userId,
     };
 
     console.log("updatePlaylistData: ", updatePlaylistData);
@@ -129,6 +133,7 @@ export function PlaylistForm({
         }
       } else {
         response = await createPlaylist(playlistData);
+        console.log(response);
         if (response.ok) {
           router.push(`/p/${response.data.attributes.slug}`);
         } else {

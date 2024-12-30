@@ -834,29 +834,33 @@ export async function createPlaylist(data: {
   isPublic: boolean;
   droplets: { id: number }[];
   author: { id: number };
+  userId: number;
 }) {
-  const tempSlug = Math.random().toString(36).substring(2, 10);
+  const tempSlug = "random";
   try {
     const dataToSend = {
       name: data.name,
+      author: {
+        set: [data.author.id],
+      },
       slug: tempSlug, // this gets overwritten by Strapi
       isPublic: data.isPublic,
       droplets: {
         connect: data.droplets,
       },
       authorized_users: {
-        connect: [data.author.id],
+        connect: [data.userId],
       },
     };
     // console.log("data to send: ", dataToSend);
 
     const response = await fetch(
-      `${process.env.NEXT_PUBLIC_STRAPI_API_URL}/api/playlists`,
+      `${STRAPI_API_URL}/api/playlists`,
       {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${process.env.STRAPI_ACCESS_TOKEN}`,
+          Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
         },
         body: JSON.stringify({ data: dataToSend }),
       },
@@ -891,6 +895,7 @@ export async function updatePlaylist(
     isPublic: boolean;
     droplets: { id: number }[];
     author: { id: number };
+    userId: number;
     slug?: string; //TODO Should slug be optional for updating a playlist?
   },
 ) {
@@ -902,9 +907,10 @@ export async function updatePlaylist(
         set: data.droplets, // 'set' replaces all existing relationships
       },
       authorized_users: {
-        set: [data.author.id], // ensure author remains connected
+        set: [data.userId], // ensure author remains connected
       },
       slug: data.slug,
+      regenerateSlug: false,
     };
 
     const response = await fetch(

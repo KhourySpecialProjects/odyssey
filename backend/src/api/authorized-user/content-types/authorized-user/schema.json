@@ -44,7 +44,7 @@
       "type": "relation",
       "relation": "manyToMany",
       "target": "api::playlist.playlist",
-      "inversedBy": "authorized_users"
+      "mappedBy": "authorized_users"
     }
   }
 }
