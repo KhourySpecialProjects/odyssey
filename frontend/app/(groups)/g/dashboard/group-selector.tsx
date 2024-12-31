@@ -12,11 +12,11 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button"
 
 const tabs = [
-  { name: "Favs", value: "favorites", icon: StarIcon },
-  { name: "Created", value: "creator", icon: PlusCircleIcon },
+  { name: "Creator", value: "creator", icon: PlusCircleIcon },
   { name: "Admin", value: "admin", icon: ShieldIcon },
   { name: "Manager", value: "manager", icon: CircleUserIcon },
   { name: "Member", value: "member", icon: UserIcon },
+  { name: "Favs", value: "favorites", icon: StarIcon },
 ];
 
 export function GroupsSelector() {

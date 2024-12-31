@@ -58,6 +58,14 @@ export default async function GroupsPage({ searchParams }: Props) {
     member: "bg-green-100 text-green-800",
   };
 
+  const roleMessages = {
+    creator: "You haven't created any groups yet.",
+    admin: "You aren't an administrator of any groups.",
+    manager: "You aren't a manager of any groups.",
+    member: "You aren't a member of any groups.",
+    favorites: "You haven't added any groups to favorites yet.",
+  };
+
   return (
     <div className="w-full max-w-7xl p-8 mx-auto space-y-12">
       <div className="text-center">
@@ -80,36 +88,23 @@ export default async function GroupsPage({ searchParams }: Props) {
             </MessageDescription>
           </Message>
         ) : (
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {groupsByRole[tab as keyof typeof groupsByRole]?.map(({ group, role }) => (
-              <GroupCard 
-                key={group.id}
-                group={group}
-                role={role}
-                roleColors={roleColors}
-              />
-          
-              // <Card key={group.id} className="hover:shadow-md transition-shadow">
-              //   <CardHeader>
-              //     <div className="flex items-start justify-between">
-              //       <h3 className="text-lg font-semibold">{group.groupName}</h3>
-              //       <Badge className={roleColors[role]}>{role}</Badge>
-              //     </div>
-              //   </CardHeader>
-              //   <CardContent>
-              //     {(role === "creator" || role === "admin" || role === "manager") && (
-              //       <div className="flex items-center gap-4 text-sm text-slate-600">
-              //         <UsersIcon className="h-4 w-4" />
-              //         <div className="flex gap-3">
-              //           <span>Admins: {group.admins?.length || 0}</span>
-              //           <span>Managers: {group.managers?.length || 0}</span>
-              //           <span>Members: {group.members?.length || 0}</span>
-              //         </div>
-              //       </div>
-              //     )}
-              //   </CardContent>
-              // </Card>
-            ))}
+          <div>
+            {groupsByRole[tab as keyof typeof groupsByRole].length > 0 ? (
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {groupsByRole[tab as keyof typeof groupsByRole].map(({ group, role }) => (
+                  <GroupCard 
+                    key={group.id}
+                    group={group}
+                    role={role}
+                    roleColors={roleColors}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="p-8 text-center text-slate-500 border border-dashed rounded-lg">
+                <p className="text-lg">{roleMessages[tab as keyof typeof roleMessages]}</p>
+              </div>
+            )}
           </div>
         )}
       </div>
