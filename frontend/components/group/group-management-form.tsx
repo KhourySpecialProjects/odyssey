@@ -25,7 +25,7 @@ import { Separator } from "@/components/ui/separator";
 import { ContentSection } from "@/components/group/content-section";
 import { UserMultiSelect } from "@/components/ui/user-multi-select";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { DropletList } from "@/components/group/group-management-droplet-list";
 import { GeneralTextEditor } from "../ui/tiptap/general-text-editor";
 import { GroupSemester, Playlist } from "@/types";
@@ -129,6 +129,7 @@ export function GroupManagementForm({
   currentUser,
   existingGroup,
 }: GroupManagementFormProps) {
+
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [droplets, setDroplets] = useState<Droplet[]>(
@@ -138,6 +139,9 @@ export function GroupManagementForm({
     existingGroup?.playlists || []
   );
   const [members, setMembers] = useState<User[]>(existingGroup?.members || []);
+  const [hasChanges, setHasChanges] = useState(false);
+
+
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -183,6 +187,27 @@ export function GroupManagementForm({
         })) || [],
     },
   });
+
+  useEffect(() => {
+    const subscription = form.watch(() => {
+      setHasChanges(true);
+    });
+    return () => subscription.unsubscribe();
+  }, [form]);
+
+  const handleCancel = () => {
+    if (hasChanges) {
+      const confirmed = window.confirm(
+        "You have unsaved changes.  Are you sure you want to leave?"
+      );
+      if (!confirmed) return;
+    }
+    router.push(
+      existingGroup
+      ? `/g/${existingGroup.slug}`
+      : "/g/dashboard"
+    );
+  };
 
   const onSubmit = async (data: z.infer<typeof formSchema>) => {
     try {
@@ -538,7 +563,7 @@ export function GroupManagementForm({
           <Button
             type="button"
             variant="outline"
-            onClick={() => router.push("/g/dashboard")}
+            onClick={handleCancel}
           >
             Cancel
           </Button>

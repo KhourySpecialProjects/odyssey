@@ -39,9 +39,11 @@ export default async function GroupManagementPage({ searchParams }: Props) {
             ? "Modify your group settings and manage members" 
             : "Set up a new group and invite members"}
         </p>
-      <Badge variant="outline">
-        Created by: {group?.creator?.email || "Unknown"}
-      </Badge>
+      {group && (
+        <Badge variant="outline">
+          Created by: {group.creator?.email || "Unknown"}
+        </Badge>
+      )}
       </div>
 
       <GroupManagementForm 
