@@ -196,11 +196,11 @@ export type GroupListResponse = {
       total: number;
     };
   };
-}
+};
 
-export type ActionResponse<T=any> = {
+export type ActionResponse<T = any> = {
   ok: boolean;
   data?: T | null;
   error?: any;
   message?: string;
-}
+};

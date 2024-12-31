@@ -97,7 +97,6 @@ export async function fetchIsAuthorizedUser(email: string) {
   }
 }
 
-
 export async function getAllAuthorizedUsers(): Promise<AuthorizedUser[]> {
   try {
     const query = qs.stringify({

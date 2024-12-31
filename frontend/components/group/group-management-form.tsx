@@ -71,9 +71,7 @@ const formSchema = z.object({
   //     })
   //     .partial() // Makes all fields optional to match User type
   // ),
-  members: z.array(
-    z.custom<User>()
-  ),
+  members: z.array(z.custom<User>()),
   droplets: z
     .array(
       z.object({
@@ -89,10 +87,10 @@ const formSchema = z.object({
               id: z.number(),
               name: z.string(),
               slug: z.string(),
-            })
+            }),
           )
           .optional(),
-      })
+      }),
     )
     .optional(),
 
@@ -110,10 +108,10 @@ const formSchema = z.object({
             z.object({
               id: z.number(),
               name: z.string(),
-            })
+            }),
           )
           .optional(),
-      })
+      }),
     )
     .optional(),
 });
@@ -129,19 +127,16 @@ export function GroupManagementForm({
   currentUser,
   existingGroup,
 }: GroupManagementFormProps) {
-
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [droplets, setDroplets] = useState<Droplet[]>(
-    existingGroup?.droplets || []
+    existingGroup?.droplets || [],
   );
   const [playlists, setPlaylists] = useState<Playlist[]>(
-    existingGroup?.playlists || []
+    existingGroup?.playlists || [],
   );
   const [members, setMembers] = useState<User[]>(existingGroup?.members || []);
   const [hasChanges, setHasChanges] = useState(false);
-
-
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -198,15 +193,11 @@ export function GroupManagementForm({
   const handleCancel = () => {
     if (hasChanges) {
       const confirmed = window.confirm(
-        "You have unsaved changes.  Are you sure you want to leave?"
+        "You have unsaved changes.  Are you sure you want to leave?",
       );
       if (!confirmed) return;
     }
-    router.push(
-      existingGroup
-      ? `/g/${existingGroup.slug}`
-      : "/g/dashboard"
-    );
+    router.push(existingGroup ? `/g/${existingGroup.slug}` : "/g/dashboard");
   };
 
   const onSubmit = async (data: z.infer<typeof formSchema>) => {
@@ -242,16 +233,24 @@ export function GroupManagementForm({
         description: data.description,
         semester: data.semester as GroupSemester,
         initialMembers: {
-          admins: data.admins.map(id => 
-            existingGroup?.admins?.find(admin => admin.id === id)?.email ?? ''
-          ).filter(Boolean),
-          managers: data.managers.map(id => 
-            existingGroup?.managers?.find(manager => manager.id === id)?.email ?? ''
-          ).filter(Boolean),
-          members: data.members?.map(m => m.email ?? '').filter(Boolean),  // Just get the emails
+          admins: data.admins
+            .map(
+              (id) =>
+                existingGroup?.admins?.find((admin) => admin.id === id)
+                  ?.email ?? "",
+            )
+            .filter(Boolean),
+          managers: data.managers
+            .map(
+              (id) =>
+                existingGroup?.managers?.find((manager) => manager.id === id)
+                  ?.email ?? "",
+            )
+            .filter(Boolean),
+          members: data.members?.map((m) => m.email ?? "").filter(Boolean), // Just get the emails
         },
-        droplets: data.droplets?.map(d => d.id),
-        playlists: data.playlists?.map(p => p.id),
+        droplets: data.droplets?.map((d) => d.id),
+        playlists: data.playlists?.map((p) => p.id),
       };
 
       console.log(" -------> submissionData2 = ", submissionData2);
@@ -290,7 +289,7 @@ export function GroupManagementForm({
   const handlePlaylistReorder = (reorderedPlaylists: Playlist[]) => {
     console.debug(
       "  --> Group Mgmt - reordering playlist ",
-      reorderedPlaylists
+      reorderedPlaylists,
     );
     const updatedPlaylists = reorderedPlaylists.map((playlist, index) => ({
       ...playlist,
@@ -304,7 +303,7 @@ export function GroupManagementForm({
     console.debug("  --> Group Mgmt - removing playlist ", playlistId);
     const currentPlaylists = form.getValues("playlists") || [];
     const updatedPlaylists = currentPlaylists.filter(
-      (p) => p.id !== playlistId
+      (p) => p.id !== playlistId,
     );
 
     form.setValue("playlists", updatedPlaylists);
@@ -315,7 +314,7 @@ export function GroupManagementForm({
     console.debug("  --> Group Mgmt - removing member ", emailToRemove);
     const currentMembers = form.getValues("members") || [];
     const updatedMembers = currentMembers.filter(
-      (m) => m.email !== emailToRemove
+      (m) => m.email !== emailToRemove,
     );
 
     form.setValue("members", updatedMembers);
@@ -324,7 +323,7 @@ export function GroupManagementForm({
         ...member,
         roles: [],
         isActive: member.isActive ?? true,
-      }))
+      })),
     );
   };
 
@@ -332,7 +331,7 @@ export function GroupManagementForm({
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(onSubmit, (errors) =>
-          console.error("Form validation failed ", errors)
+          console.error("Form validation failed ", errors),
         )}
         className="space-y-12"
       >
@@ -459,7 +458,7 @@ export function GroupManagementForm({
                       email,
                       roles: [],
                       isActive: true,
-                    }) as User
+                    }) as User,
                 );
                 const updatedMembers = [...members, ...newMembers];
                 setMembers(updatedMembers);
@@ -478,11 +477,11 @@ export function GroupManagementForm({
                     member.email === existingGroup?.creator.email
                       ? "admin"
                       : existingGroup?.admins?.find(
-                            (a) => a.email === member.email
+                            (a) => a.email === member.email,
                           )
                         ? "admin"
                         : existingGroup?.managers?.find(
-                              (m) => m.email === member.email
+                              (m) => m.email === member.email,
                             )
                           ? "manager"
                           : "member"
@@ -560,11 +559,7 @@ export function GroupManagementForm({
         </ContentSection>
 
         <div className="flex justify-end gap-4">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={handleCancel}
-          >
+          <Button type="button" variant="outline" onClick={handleCancel}>
             Cancel
           </Button>
           <Button type="submit" disabled={isSubmitting}>

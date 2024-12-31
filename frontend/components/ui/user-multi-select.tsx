@@ -25,20 +25,22 @@ interface UserMultiSelectProps {
   onChange: (value: number[]) => void;
 }
 
-export function UserMultiSelect({ selectedIds, onChange }: UserMultiSelectProps) {
+export function UserMultiSelect({
+  selectedIds,
+  onChange,
+}: UserMultiSelectProps) {
   const [open, setOpen] = useState(false);
   const [users, setUsers] = useState<AuthorizedUser[]>([]);
 
   useEffect(() => {
-    const fetchUsers = async() => {
-        const fetchedUsers = await fetchAllUsers();
-        setUsers(fetchedUsers);
-        // console.log('inside useEffect fetchedUsers = ', fetchedUsers);
+    const fetchUsers = async () => {
+      const fetchedUsers = await fetchAllUsers();
+      setUsers(fetchedUsers);
+      // console.log('inside useEffect fetchedUsers = ', fetchedUsers);
     };
     fetchUsers();
   }, []);
 
-  
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
@@ -49,11 +51,11 @@ export function UserMultiSelect({ selectedIds, onChange }: UserMultiSelectProps)
           className="w-full justify-between"
         >
           {selectedIds.length > 0
-              ? users
-                  .filter(user => selectedIds.includes(user.id))
-                  .map(user => user.email)
-                  .join(", ")
-              : "Select users..."}
+            ? users
+                .filter((user) => selectedIds.includes(user.id))
+                .map((user) => user.email)
+                .join(", ")
+            : "Select users..."}
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>

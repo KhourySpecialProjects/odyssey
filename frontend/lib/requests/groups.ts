@@ -38,7 +38,7 @@ export async function getManagedGroups(
       },
     },
     fields = ["id", "groupName", "slug", "semester", "isArchived"],
-  }: StrapiRequestParams = {}
+  }: StrapiRequestParams = {},
 ): Promise<Group[]> {
   const path = `/groups`;
   const urlParams = {
@@ -87,7 +87,7 @@ export async function getGroupBySlug(
         fields: ["id", "email"],
       },
     },
-  }: StrapiRequestParams = {}
+  }: StrapiRequestParams = {},
 ): Promise<Group | null> {
   const path = `/groups`;
   const urlParams = {
@@ -139,7 +139,7 @@ export async function getUserGroups(
       },
     },
     fields = ["id", "groupName", "slug", "semester", "isArchived"],
-  }: StrapiRequestParams = {}
+  }: StrapiRequestParams = {},
 ): Promise<Group[]> {
   const path = `/groups`;
   const urlParams = {
@@ -175,7 +175,7 @@ export async function updateGroupMembers(
   updates: {
     connect?: { role: "members" | "managers" | "admins"; userIds: number[] };
     disconnect?: { role: "members" | "managers" | "admins"; userIds: number[] };
-  }
+  },
 ): Promise<Group> {
   const path = `/groups/${groupId}`;
   const { connect, disconnect } = updates;
@@ -206,7 +206,7 @@ export async function updateGroupMembers(
 export async function addGroupMembers(
   groupId: number,
   userIds: number[],
-  role: "members" | "managers" | "admins" = "members"
+  role: "members" | "managers" | "admins" = "members",
 ): Promise<Group> {
   return updateGroupMembers(groupId, {
     connect: { role, userIds },
@@ -219,7 +219,7 @@ export async function addGroupMembers(
 export async function removeGroupMembers(
   groupId: number,
   userIds: number[],
-  role: "members" | "managers" | "admins" = "members"
+  role: "members" | "managers" | "admins" = "members",
 ): Promise<Group> {
   return updateGroupMembers(groupId, {
     disconnect: { role, userIds },
@@ -233,7 +233,7 @@ export async function changeGroupMemberRole(
   groupId: number,
   userId: number,
   fromRole: "members" | "managers" | "admins",
-  toRole: "members" | "managers" | "admins"
+  toRole: "members" | "managers" | "admins",
 ): Promise<Group> {
   return updateGroupMembers(groupId, {
     disconnect: { role: fromRole, userIds: [userId] },
@@ -261,7 +261,7 @@ export async function createGroup(
     // Add additional fields as needed for the new group creation form
     droplets?: number[];
     playlists?: number[];
-  }
+  },
 ): Promise<Group> {
   const path = `/groups`;
   const {
@@ -278,17 +278,14 @@ export async function createGroup(
     const authorizedMembers = await ensureAuthorizedUsers(emails);
     return authorizedMembers.map((member) => ({ id: member.id }));
   };
-  
+
   // Process initial members
-  const [
-    processedAdmins, 
-    processedManagers, 
-    processedMembers
-  ] = await Promise.all([
-    processMembers(initialMembers?.admins),
-    processMembers(initialMembers?.managers),
-    processMembers(initialMembers?.members)
-  ]);
+  const [processedAdmins, processedManagers, processedMembers] =
+    await Promise.all([
+      processMembers(initialMembers?.admins),
+      processMembers(initialMembers?.managers),
+      processMembers(initialMembers?.members),
+    ]);
 
   // Build the creation data object
   const createData = {
@@ -307,14 +304,17 @@ export async function createGroup(
       members: { set: processedMembers },
     }),
     ...(droplets && {
-      droplets: { connect: droplets.map(id => ({ id })) },
+      droplets: { connect: droplets.map((id) => ({ id })) },
     }),
     ...(playlists && {
-      playlists: { connect: playlists.map(id => ({ id })) },
+      playlists: { connect: playlists.map((id) => ({ id })) },
     }),
   };
 
-  console.log("    ----> createGroup createData = ", JSON.stringify(createData));
+  console.log(
+    "    ----> createGroup createData = ",
+    JSON.stringify(createData),
+  );
 
   return await fetchAPI<Group>(path, {
     options: {
@@ -357,7 +357,7 @@ export async function getGroupBySlugV2(
         },
       },
     },
-  }: StrapiRequestParams = {}
+  }: StrapiRequestParams = {},
 ): Promise<Group | null> {
   const path = `/groups`;
   const urlParams = {
@@ -414,7 +414,7 @@ export async function updateGroup(
         name?: string;
       }>;
     }>;
-  }
+  },
 ): Promise<Group> {
   const path = `/groups/${groupId}`;
 
@@ -444,7 +444,7 @@ export async function updateGroup(
   if (data.members) {
     // Ensure all members are authorized users first
     const authorizedMembers = await ensureAuthorizedUsers(
-      data.members.map((m) => m.email).filter((e): e is string => e != null)
+      data.members.map((m) => m.email).filter((e): e is string => e != null),
     );
 
     dataToSend.members = {
@@ -482,7 +482,7 @@ export async function updateGroup(
 
 //TODO this should probably be moved to lib/actions.ts
 async function ensureAuthorizedUsers(
-  emails: string[]
+  emails: string[],
 ): Promise<Array<{ id: number; email: string }>> {
   const results = [];
 
@@ -508,17 +508,15 @@ async function ensureAuthorizedUsers(
   return results;
 }
 
-
 //TODO This function and CreateAuthorizedUser function in actions.ts
-// should be merged into one function. But currently, the actions.ts version 
-// requires a form object. 
+// should be merged into one function. But currently, the actions.ts version
+// requires a form object.
 export async function createAuthorizedUserInGroup(
-  email: string, 
-  isEnabled: boolean = true
+  email: string,
+  isEnabled: boolean = true,
 ): Promise<ActionResponse<{ id: number }>> {
-  
   const roleID = await getAuthorizedUserRoleIdByTitle(
-    AuthorizedUserRoleTitle.User
+    AuthorizedUserRoleTitle.User,
   );
   console.log("    ----> createAuthorizedUserInGroup roleID = ", roleID);
   const dataToSend = {
@@ -546,26 +544,24 @@ export async function createAuthorizedUserInGroup(
     console.log("    ----> data = ", data);
 
     if (!response.ok || (response.ok && data.error)) {
-      return { 
-        ok: false, 
-        error: data.error?.message || "Failed to create authorized user", 
-        data: null 
+      return {
+        ok: false,
+        error: data.error?.message || "Failed to create authorized user",
+        data: null,
       };
     }
 
-    return { 
-      ok: true, 
-      message: `User ${email} created!`, 
-      data: { id: data.data.id } 
+    return {
+      ok: true,
+      message: `User ${email} created!`,
+      data: { id: data.data.id },
     };
   } catch (err) {
     console.error(err);
-    return { 
-      ok: false, 
-      error: "Database Error: Failed to Create Authorized User.", 
-      data: null 
+    return {
+      ok: false,
+      error: "Database Error: Failed to Create Authorized User.",
+      data: null,
     };
   }
 }
-
-

@@ -24,7 +24,9 @@ export default async function GroupManagementPage({ searchParams }: Props) {
   // Only allow editing if user is creator or admin
   if (group) {
     const isCreator = group.creator?.id === authorizedUser.id;
-    const isAdmin = group.admins?.some(admin => admin.id === authorizedUser.id);
+    const isAdmin = group.admins?.some(
+      (admin) => admin.id === authorizedUser.id,
+    );
     if (!isCreator && !isAdmin) notFound();
   }
 
@@ -35,21 +37,18 @@ export default async function GroupManagementPage({ searchParams }: Props) {
           {group ? "Edit Group" : "Create New Group"}
         </h1>
         <p className="mt-4 text-lg leading-normal text-slate-600 text-balance">
-          {group 
-            ? "Modify your group settings and manage members" 
+          {group
+            ? "Modify your group settings and manage members"
             : "Set up a new group and invite members"}
         </p>
-      {group && (
-        <Badge variant="outline">
-          Created by: {group.creator?.email || "Unknown"}
-        </Badge>
-      )}
+        {group && (
+          <Badge variant="outline">
+            Created by: {group.creator?.email || "Unknown"}
+          </Badge>
+        )}
       </div>
 
-      <GroupManagementForm 
-        currentUser={authorizedUser}
-        existingGroup={group}
-      />
+      <GroupManagementForm currentUser={authorizedUser} existingGroup={group} />
     </div>
   );
 }

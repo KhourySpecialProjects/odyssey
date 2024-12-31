@@ -12,7 +12,11 @@ interface MemberTileProps {
   onRemove?: (email: string) => void;
 }
 
-export function MemberTile({ member, role = "member", onRemove }: MemberTileProps) {
+export function MemberTile({
+  member,
+  role = "member",
+  onRemove,
+}: MemberTileProps) {
   const initials = (member.email ?? "")
     .split("@")[0]
     .split(".")
