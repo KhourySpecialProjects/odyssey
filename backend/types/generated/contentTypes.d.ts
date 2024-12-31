@@ -1302,7 +1302,7 @@ export interface ApiPlaylistPlaylist extends Schema.CollectionType {
       'api::droplet.droplet'
     >;
     name: Attribute.String;
-    slug: Attribute.UID<'api::playlist.playlist', 'name'>;
+    slug: Attribute.UID<'api::playlist.playlist', 'name'> & Attribute.Required;
     isPublic: Attribute.Boolean;
     description: Attribute.Text;
     duration: Attribute.Enumeration<['short', 'medium', 'long']> &
