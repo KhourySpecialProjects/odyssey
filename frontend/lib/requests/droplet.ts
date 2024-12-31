@@ -1,3 +1,5 @@
+"use server";
+
 import { Droplet } from "@/types";
 import { StrapiRequestParams } from "@/types/strapi";
 import { fetchAPI } from "../utils";

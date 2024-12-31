@@ -1,3 +1,5 @@
+"use server";
+
 import { Playlist } from "@/types";
 import { StrapiRequestParams } from "@/types/strapi";
 import { fetchAPI, flattenAttributes } from "@/lib/utils";

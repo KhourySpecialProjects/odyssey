@@ -3,7 +3,14 @@
 import { Group, GroupListResponse, GroupSemester } from "@/types";
 import { StrapiRequestParams } from "@/types/strapi";
 import { fetchAPI } from "@/lib/utils";
+import { getAuthorizedUserByEmail } from "./authorized-user";
+// import { createAuthorizedUser } from "../actions";
+import type { ActionResponse } from "@/types";
+import { AuthorizedUserRoleTitle } from "../globals";
+import { getAuthorizedUserRoleIdByTitle } from "./authorized-user-roles";
 
+const STRAPI_API_URL = process.env.STRAPI_API_URL;
+const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
 /**
  * Gets all groups where the authorized user has a management role (creator, admin, or manager).
  * @param authorizedUserId The ID of the authorized user
@@ -172,20 +179,21 @@ export async function updateGroupMembers(
 ): Promise<Group> {
   const path = `/groups/${groupId}`;
   const { connect, disconnect } = updates;
-  
+
   // Build the data object based on provided updates
-  const data: Record<string, { connect?: number[]; disconnect?: number[] }> = {};
-  
+  const data: Record<string, { connect?: number[]; disconnect?: number[] }> =
+    {};
+
   if (connect) {
     data[connect.role] = { connect: connect.userIds };
   }
-  
+
   if (disconnect) {
     data[disconnect.role] = { disconnect: disconnect.userIds };
   }
 
   return await fetchAPI<Group>(path, {
-    options: { 
+    options: {
       method: "PUT",
       body: JSON.stringify({ data }),
     },
@@ -253,7 +261,12 @@ export async function createGroup(
   }
 ): Promise<Group> {
   const path = `/groups`;
-  const { groupName, description, semester = "Open Membership", initialMembers } = data;
+  const {
+    groupName,
+    description,
+    semester = "Open Membership",
+    initialMembers,
+  } = data;
 
   // Build the creation data object
   const createData = {
@@ -262,13 +275,19 @@ export async function createGroup(
     semester,
     creator: authorizedUserId,
     // Initialize relationships if provided
-    ...(initialMembers?.admins && { admins: { connect: initialMembers.admins } }),
-    ...(initialMembers?.managers && { managers: { connect: initialMembers.managers } }),
-    ...(initialMembers?.members && { members: { connect: initialMembers.members } }),
+    ...(initialMembers?.admins && {
+      admins: { connect: initialMembers.admins },
+    }),
+    ...(initialMembers?.managers && {
+      managers: { connect: initialMembers.managers },
+    }),
+    ...(initialMembers?.members && {
+      members: { connect: initialMembers.members },
+    }),
   };
 
   return await fetchAPI<Group>(path, {
-    options: { 
+    options: {
       method: "POST",
       body: JSON.stringify({ data: createData }),
     },
@@ -292,21 +311,21 @@ export async function getGroupBySlugV2(
         fields: ["id", "email"],
       },
       droplets: {
-        fields: ["id", "name", "slug", "status", "focusArea","type"],
+        fields: ["id", "name", "slug", "status", "focusArea", "type"],
         populate: {
           lessons: {
-            fields: ["id", "name", "slug", "type"]
-          }
-        }
-      }, 
+            fields: ["id", "name", "slug", "type"],
+          },
+        },
+      },
       playlists: {
         fields: ["id", "name", "slug", "isPublic"],
         populate: {
           droplets: {
-            fields: ["id", "name", "slug", "type"]
-          }
-        }
-      }
+            fields: ["id", "name", "slug", "type"],
+          },
+        },
+      },
     },
   }: StrapiRequestParams = {}
 ): Promise<Group | null> {
@@ -326,28 +345,75 @@ export async function getGroupBySlugV2(
   return groups[0] || null;
 }
 
+// export async function updateGroup(
+//   groupId: number,
+//   data: {
+//     groupName?: string;
+//     description?: string;
+//     semester?: string;
+//     admins?: number[];
+//     managers?: number[];
+//     members?: Array<{
+//       email: string | null | undefined;
+//       roles: string[];
+//       isActive: boolean;
+//     }>;
+//     droplets?: Array<{
+//       id: number;
+//       order?: number;
+//     }>;
+//     playlists?: Array<{
+//       id: number;
+//       order?: number;
+//     }>;
+//   }
 export async function updateGroup(
-  groupId: number, 
+  groupId: number,
   data: {
     groupName?: string;
     description?: string;
     semester?: string;
     admins?: number[];
     managers?: number[];
+    members?: Array<{
+      email: string | null;
+      roles?: string[];
+      isActive?: boolean;
+      id?: number;
+    }>;
     droplets?: Array<{
       id: number;
+      name?: string;
+      slug?: string;
+      focusArea?: string;
+      type?: string;
       order?: number;
+      lessons?: Array<{
+        id: number;
+        name?: string;
+        slug?: string;
+      }>;
     }>;
     playlists?: Array<{
       id: number;
+      name?: string;
+      slug?: string;
+      isPublic?: boolean;
+      duration?: string;
       order?: number;
+      droplets?: Array<{
+        id: number;
+        name?: string;
+      }>;
     }>;
   }
 ): Promise<Group> {
   const path = `/groups/${groupId}`;
-  
+
   // Prepare the data object for Strapi
   const dataToSend: any = {};
+
+  console.log("  --> updateGroup data = ", data);
 
   // Map basic fields
   if (data.groupName) dataToSend.name = data.groupName;
@@ -356,39 +422,149 @@ export async function updateGroup(
 
   // Handle admins and managers
   if (data.admins) {
-    dataToSend.admins = { 
-      connect: data.admins.map(id => ({ id })) 
+    dataToSend.admins = {
+      connect: data.admins.map((id) => ({ id })),
     };
   }
 
   if (data.managers) {
-    dataToSend.managers = { 
-      connect: data.managers.map(id => ({ id })) 
+    dataToSend.managers = {
+      connect: data.managers.map((id) => ({ id })),
+    };
+  }
+
+  //TODO: If a new member is being added (email address is not in authorized users yet), they
+  // need to be added to authorized users first and then added to the group.
+  // Handle members
+  // if (data.members) {
+  //   dataToSend.members = {
+  //     set: data.members.map((member) => ({
+  //       email: member.email,
+  //     })),
+  //   };
+  // }
+  // Update the members handling in updateGroup
+  if (data.members) {
+    // Ensure all members are authorized users first
+    const authorizedMembers = await ensureAuthorizedUsers(
+      data.members.map((m) => m.email).filter((e): e is string => e != null)
+    );
+
+    dataToSend.members = {
+      connect: authorizedMembers.map((member) => ({ id: member.id })),
     };
   }
 
   // Handle droplets
   if (data.droplets) {
     dataToSend.droplets = {
-      connect: data.droplets.map(droplet => ({ 
-        id: droplet.id 
-      }))
+      set: data.droplets.map((droplet) => ({
+        id: droplet.id,
+      })),
     };
   }
 
   // Handle playlists
   if (data.playlists) {
     dataToSend.playlists = {
-      connect: data.playlists.map(playlist => ({ 
-        id: playlist.id 
-      }))
+      set: data.playlists.map((playlist) => ({
+        id: playlist.id,
+      })),
     };
   }
 
+  console.log("  --> updateGroup dataToSend = ", JSON.stringify(dataToSend));
+
   return await fetchAPI<Group>(path, {
-    options: { 
+    options: {
       method: "PUT",
       body: JSON.stringify({ data: dataToSend }),
     },
   });
+}
+
+//TODO this should probably be moved to lib/actions.ts
+async function ensureAuthorizedUsers(
+  emails: string[]
+): Promise<Array<{ id: number; email: string }>> {
+  const results = [];
+
+  for (const email of emails) {
+    console.log("  --> ensureAuthorizedUsers email = ", email);
+    try {
+      // Try to find existing authorized user
+      const existingUser = await getAuthorizedUserByEmail(email);
+      if (existingUser) {
+        results.push({ id: existingUser.id, email });
+      } else {
+        // Create new authorized user if doesn't exist
+        const newUser = await createAuthorizedUserInGroup(email);
+        if (newUser.ok && newUser.data) {
+          results.push({ id: newUser.data.id, email });
+        }
+      }
+    } catch (error) {
+      console.error(`Failed to process email: ${email}`, error);
+    }
+  }
+
+  return results;
+}
+
+
+//TODO This function and CreateAuthorizedUser function in actions.ts
+// should be merged into one function. But currently, the actions.ts version 
+// requires a form object. 
+export async function createAuthorizedUserInGroup(
+  email: string, 
+  isEnabled: boolean = true
+): Promise<ActionResponse<{ id: number }>> {
+  
+  const roleID = await getAuthorizedUserRoleIdByTitle(
+    AuthorizedUserRoleTitle.User
+  );
+  console.log("    ----> createAuthorizedUserInGroup roleID = ", roleID);
+  const dataToSend = {
+    data: {
+      email,
+      isEnabled,
+      roles: {
+        set: [{ id: roleID }],
+      },
+    },
+  };
+
+  try {
+    const response = await fetch(`${STRAPI_API_URL}/api/authorized-users`, {
+      method: "POST",
+      body: JSON.stringify(dataToSend),
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+      },
+    });
+
+    const data = await response.json();
+
+    if (!response.ok || (response.ok && data.error)) {
+      return { 
+        ok: false, 
+        error: data.error?.message || "Failed to create authorized user", 
+        data: null 
+      };
+    }
+
+    return { 
+      ok: true, 
+      message: `User ${email} created!`, 
+      data: { id: data.data.id } 
+    };
+  } catch (err) {
+    console.error(err);
+    return { 
+      ok: false, 
+      error: "Database Error: Failed to Create Authorized User.", 
+      data: null 
+    };
+  }
 }
