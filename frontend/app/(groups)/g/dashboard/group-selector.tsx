@@ -3,6 +3,7 @@
 import { cn } from "@/lib/utils";
 import {
   CircleUserIcon,
+  PlusCircle,
   PlusCircleIcon,
   ShieldIcon,
   StarIcon,
@@ -34,7 +35,7 @@ export function GroupsSelector() {
   // TODO: Break this tabbed UI setup into its own reusable component. We are using it in a few different
   // places and it would be nice to abstract it out. 
   return (
-    <div className="border-b border-gray-200">
+    <div className="border-b border-gray-200 flex items-center justify-between">
       <nav className="-mb-px flex space-x-8" aria-label="Tabs">
         {tabs.map((tab) => (
           <button
@@ -54,6 +55,15 @@ export function GroupsSelector() {
           </button>
         ))}
       </nav>
+      <Button 
+        variant="default" 
+        size="sm" 
+        onClick={() => router.push("/g/management")}
+        className="mr-4"
+      >
+        <PlusCircle className="h-4 w-4 mr-2" />
+        Create Group
+      </Button>
     </div>
   );
 }

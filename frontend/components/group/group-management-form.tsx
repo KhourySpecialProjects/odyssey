@@ -35,6 +35,7 @@ import { AddDropletDialog } from "./add-droplet-dialog";
 import { AddPlaylistDialog } from "./add-playlist-dialog";
 import { AddMemberDialog } from "./add-member-dialog";
 import { MemberTile } from "./member-tile";
+import { createGroup } from "@/lib/requests/groups";
 
 const SEMESTER_OPTIONS: GroupSemester[] = [
   "Open Membership",
@@ -61,13 +62,17 @@ const formSchema = z.object({
   semester: z.string(),
   admins: z.array(z.number()),
   managers: z.array(z.number()),
+  // members: z.array(
+  //   z.object({
+  //       email: z.string(),
+  //       roles: z.array(z.string()).optional(),
+  //       isActive: z.boolean().optional(),
+  //       id: z.number().optional(),
+  //     })
+  //     .partial() // Makes all fields optional to match User type
+  // ),
   members: z.array(
-    z.object({
-      email: z.string(),
-      roles: z.array(z.string()).optional(),
-      isActive: z.boolean().optional(),
-      id: z.number().optional(),
-    })
+    z.custom<User>()
   ),
   droplets: z
     .array(
@@ -116,10 +121,10 @@ interface GroupManagementFormProps {
   currentUser: AuthorizedUser;
   existingGroup?: Group | null;
 }
-// TODO: Technical debt abounds.  There are some minor differences between 
-// several different user types that have caused some headaches.  
+// TODO: Technical debt abounds.  There are some minor differences between
+// several different user types that have caused some headaches.
 // Currently, just trying to get the functionality done.  Will refactor
-// later. 
+// later.
 export function GroupManagementForm({
   currentUser,
   existingGroup,
@@ -181,9 +186,13 @@ export function GroupManagementForm({
 
   const onSubmit = async (data: z.infer<typeof formSchema>) => {
     try {
+      console.log(" ---> on submit data: ", data);
+
       // Prepare data for backend submission
       const submissionData = {
-        ...data,
+        groupName: data.groupName,
+        description: data.description,
+        semester: data.semester,
         members: data.members?.map((member) => ({
           email: member.email ?? null,
           roles: member.roles,
@@ -199,13 +208,33 @@ export function GroupManagementForm({
         })),
       };
 
-      console.log(" submissionData = ", submissionData);
+      console.log(" -------> submissionData = ", submissionData);
+
+      const submissionData2 = {
+        groupName: data.groupName,
+        description: data.description,
+        semester: data.semester as GroupSemester,
+        initialMembers: {
+          admins: data.admins.map(id => 
+            existingGroup?.admins?.find(admin => admin.id === id)?.email ?? ''
+          ).filter(Boolean),
+          managers: data.managers.map(id => 
+            existingGroup?.managers?.find(manager => manager.id === id)?.email ?? ''
+          ).filter(Boolean),
+          members: data.members?.map(m => m.email ?? '').filter(Boolean),  // Just get the emails
+        },
+        droplets: data.droplets?.map(d => d.id),
+        playlists: data.playlists?.map(p => p.id),
+      };
+
+      console.log(" -------> submissionData2 = ", submissionData2);
 
       if (existingGroup) {
         const response = await updateGroup(existingGroup.id, submissionData);
         router.push(`/g/${response.slug}`);
       } else {
-        //TODO handle new group creation here
+        const newGroup = await createGroup(currentUser.id, submissionData2);
+        router.push(`/g/${newGroup.slug}`);
       }
     } catch (error) {
       // Handle error
@@ -258,14 +287,18 @@ export function GroupManagementForm({
   const handleMemberRemove = (emailToRemove: string) => {
     console.debug("  --> Group Mgmt - removing member ", emailToRemove);
     const currentMembers = form.getValues("members") || [];
-    const updatedMembers = currentMembers.filter((m) => m.email !== emailToRemove);
-    
+    const updatedMembers = currentMembers.filter(
+      (m) => m.email !== emailToRemove
+    );
+
     form.setValue("members", updatedMembers);
-    setMembers(updatedMembers.map(member => ({
-      ...member,
-      roles: [],
-      isActive: member.isActive ?? true
-    })));
+    setMembers(
+      updatedMembers.map((member) => ({
+        ...member,
+        roles: [],
+        isActive: member.isActive ?? true,
+      }))
+    );
   };
 
   return (
@@ -389,18 +422,21 @@ export function GroupManagementForm({
           emptyMessage="No members in this group yet"
           action={
             <AddMemberDialog
-              existingMembers={members.map(member => ({ email: member.email ?? "" }))}
+              existingMembers={members.map((member) => ({
+                email: member.email ?? "",
+              }))}
               onAddMembers={(emails) => {
                 const newMembers = emails.map(
                   (email) =>
                     ({
                       email,
-                      roles: [], 
+                      roles: [],
                       isActive: true,
                     }) as User
                 );
                 const updatedMembers = [...members, ...newMembers];
                 setMembers(updatedMembers);
+                form.setValue("members", updatedMembers);
               }}
             />
           }
@@ -426,8 +462,8 @@ export function GroupManagementForm({
                   }
                   onRemove={
                     // Prevent removal of group creator
-                    member.email !== existingGroup?.creator.email 
-                      ? handleMemberRemove 
+                    member.email !== existingGroup?.creator.email
+                      ? handleMemberRemove
                       : undefined
                   }
                 />

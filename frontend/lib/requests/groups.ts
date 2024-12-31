@@ -252,12 +252,15 @@ export async function createGroup(
   data: {
     groupName: string;
     description?: string;
-    semester?: GroupSemester;
+    semester?: string;
     initialMembers?: {
-      admins?: number[];
-      managers?: number[];
-      members?: number[];
+      admins?: string[];
+      managers?: string[];
+      members?: string[];
     };
+    // Add additional fields as needed for the new group creation form
+    droplets?: number[];
+    playlists?: number[];
   }
 ): Promise<Group> {
   const path = `/groups`;
@@ -266,25 +269,52 @@ export async function createGroup(
     description,
     semester = "Open Membership",
     initialMembers,
+    droplets,
+    playlists,
   } = data;
+
+  const processMembers = async (emails?: string[]) => {
+    if (!emails || emails.length === 0) return undefined;
+    const authorizedMembers = await ensureAuthorizedUsers(emails);
+    return authorizedMembers.map((member) => ({ id: member.id }));
+  };
+  
+  // Process initial members
+  const [
+    processedAdmins, 
+    processedManagers, 
+    processedMembers
+  ] = await Promise.all([
+    processMembers(initialMembers?.admins),
+    processMembers(initialMembers?.managers),
+    processMembers(initialMembers?.members)
+  ]);
 
   // Build the creation data object
   const createData = {
     groupName,
     description,
     semester,
+    slug: `random-slug-${Math.floor(Math.random() * 90000) + 10000}`,
     creator: authorizedUserId,
-    // Initialize relationships if provided
-    ...(initialMembers?.admins && {
-      admins: { connect: initialMembers.admins },
+    ...(processedAdmins && {
+      admins: { connect: processedAdmins },
     }),
-    ...(initialMembers?.managers && {
-      managers: { connect: initialMembers.managers },
+    ...(processedManagers && {
+      managers: { connect: processedManagers },
     }),
-    ...(initialMembers?.members && {
-      members: { connect: initialMembers.members },
+    ...(processedMembers && {
+      members: { connect: processedMembers },
+    }),
+    ...(droplets && {
+      droplets: { connect: droplets.map(id => ({ id })) },
+    }),
+    ...(playlists && {
+      playlists: { connect: playlists.map(id => ({ id })) },
     }),
   };
+
+  console.log("    ----> createGroup createData = ", JSON.stringify(createData));
 
   return await fetchAPI<Group>(path, {
     options: {
@@ -345,28 +375,6 @@ export async function getGroupBySlugV2(
   return groups[0] || null;
 }
 
-// export async function updateGroup(
-//   groupId: number,
-//   data: {
-//     groupName?: string;
-//     description?: string;
-//     semester?: string;
-//     admins?: number[];
-//     managers?: number[];
-//     members?: Array<{
-//       email: string | null | undefined;
-//       roles: string[];
-//       isActive: boolean;
-//     }>;
-//     droplets?: Array<{
-//       id: number;
-//       order?: number;
-//     }>;
-//     playlists?: Array<{
-//       id: number;
-//       order?: number;
-//     }>;
-//   }
 export async function updateGroup(
   groupId: number,
   data: {
@@ -535,6 +543,8 @@ export async function createAuthorizedUserInGroup(
 
     const data = await response.json();
 
+    console.log("    ----> data = ", data);
+
     if (!response.ok || (response.ok && data.error)) {
       return { 
         ok: false, 
@@ -557,3 +567,5 @@ export async function createAuthorizedUserInGroup(
     };
   }
 }
+
+
