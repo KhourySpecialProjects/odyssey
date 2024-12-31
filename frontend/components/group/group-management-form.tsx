@@ -1,6 +1,6 @@
 "use client";
 
-import { AuthorizedUser, Droplet, Group } from "@/types";
+import { AuthorizedUser, Droplet, Group, User } from "@/types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
@@ -31,6 +31,10 @@ import { GeneralTextEditor } from "../ui/tiptap/general-text-editor";
 import { GroupSemester, Playlist } from "@/types";
 import { PlaylistList } from "@/components/group/group-management-playlist-list";
 import { updateGroup } from "@/lib/requests/groups";
+import { AddDropletDialog } from "./add-droplet-dialog";
+import { AddPlaylistDialog } from "./add-playlist-dialog";
+import { AddMemberDialog } from "./add-member-dialog";
+import { MemberTile } from "./member-tile";
 
 const SEMESTER_OPTIONS: GroupSemester[] = [
   "Open Membership",
@@ -51,55 +55,62 @@ const SEMESTER_OPTIONS: GroupSemester[] = [
   "Fall 2027",
 ];
 
-// const formSchema = z.object({
-//   groupName: z.string().min(1, "Group name is required"),
-//   description: z.string().optional(),
-//   semester: z.string(),
-//   admins: z.array(z.number()),
-//   managers: z.array(z.number()),
-//   droplets: z.array(z.object({
-//     id: z.number(),
-//     order: z.number().optional(), // Optional order for sorting
-//   })).optional(),
-  
-//   playlists: z.array(z.object({
-//     id: z.number(),
-//     order: z.number().optional(), // Optional order for sorting
-//   })).optional(),
-// });
-
 const formSchema = z.object({
   groupName: z.string().min(1, "Group name is required"),
   description: z.string().optional(),
   semester: z.string(),
   admins: z.array(z.number()),
   managers: z.array(z.number()),
-  droplets: z.array(z.object({
-    id: z.number(),
-    name: z.string(),
-    slug: z.string(),
-    focusArea: z.string(),
-    type: z.string(),
-    order: z.number().optional(),
-    lessons: z.array(z.object({
-      id: z.number(),
-      name: z.string(),
-      slug: z.string(),
-    })).optional(),
-  })).optional(),
-  
-  playlists: z.array(z.object({
-    id: z.number(),
-    name: z.string(),
-    slug: z.string(),
-    isPublic: z.boolean(),
-    duration: z.string().optional(),
-    order: z.number().optional(),
-    droplets: z.array(z.object({
-      id: z.number(),
-      name: z.string(),
-    })).optional(),
-  })).optional(),
+  members: z.array(
+    z.object({
+      email: z.string(),
+      roles: z.array(z.string()).optional(),
+      isActive: z.boolean().optional(),
+      id: z.number().optional(),
+    })
+  ),
+  droplets: z
+    .array(
+      z.object({
+        id: z.number(),
+        name: z.string(),
+        slug: z.string(),
+        focusArea: z.string(),
+        type: z.string(),
+        order: z.number().optional(),
+        lessons: z
+          .array(
+            z.object({
+              id: z.number(),
+              name: z.string(),
+              slug: z.string(),
+            })
+          )
+          .optional(),
+      })
+    )
+    .optional(),
+
+  playlists: z
+    .array(
+      z.object({
+        id: z.number(),
+        name: z.string(),
+        slug: z.string(),
+        isPublic: z.boolean(),
+        duration: z.string().optional(),
+        order: z.number().optional(),
+        droplets: z
+          .array(
+            z.object({
+              id: z.number(),
+              name: z.string(),
+            })
+          )
+          .optional(),
+      })
+    )
+    .optional(),
 });
 interface GroupManagementFormProps {
   currentUser: AuthorizedUser;
@@ -118,6 +129,7 @@ export function GroupManagementForm({
   const [playlists, setPlaylists] = useState<Playlist[]>(
     existingGroup?.playlists || []
   );
+  const [members, setMembers] = useState<User[]>(existingGroup?.members || []);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -127,62 +139,53 @@ export function GroupManagementForm({
       semester: existingGroup?.semester || "Open Membership",
       admins: existingGroup?.admins?.map((admin) => admin.id) || [],
       managers: existingGroup?.managers?.map((manager) => manager.id) || [],
-      droplets: existingGroup?.droplets?.map((droplet, index) => ({
-        id: droplet.id,
-        name: droplet.name,
-        slug: droplet.slug,
-        focusArea: droplet.focusArea,
-        type: droplet.type,
-        order: index,
-        lessons: droplet.lessons?.map(lesson => ({
-          id: lesson.id,
-          name: lesson.name,
-          slug: lesson.slug,
-        })),
-      })) || [],
-      
-      playlists: existingGroup?.playlists?.map((playlist, index) => ({
-        id: playlist.id,
-        name: playlist.name,
-        slug: playlist.slug,
-        isPublic: playlist.isPublic,
-        duration: playlist.duration,
-        order: index,
-        droplets: playlist.droplets?.map(droplet => ({
+      members:
+        existingGroup?.members?.map((member) => ({
+          email: member.email,
+          roles: member.roles || [],
+          isActive: member.isActive ?? true,
+        })) || [],
+      droplets:
+        existingGroup?.droplets?.map((droplet, index) => ({
           id: droplet.id,
           name: droplet.name,
-        })),
-      })) || [],
+          slug: droplet.slug,
+          focusArea: droplet.focusArea,
+          type: droplet.type,
+          order: index,
+          lessons: droplet.lessons?.map((lesson) => ({
+            id: lesson.id,
+            name: lesson.name,
+            slug: lesson.slug,
+          })),
+        })) || [],
+
+      playlists:
+        existingGroup?.playlists?.map((playlist, index) => ({
+          id: playlist.id,
+          name: playlist.name,
+          slug: playlist.slug,
+          isPublic: playlist.isPublic,
+          duration: playlist.duration,
+          order: index,
+          droplets: playlist.droplets?.map((droplet) => ({
+            id: droplet.id,
+            name: droplet.name,
+          })),
+        })) || [],
     },
   });
-
-  // async function onSubmit(values: z.infer<typeof formSchema>) {
-  //   setIsSubmitting(true);
-  //   try {
-  //     // TODO: Implement group creation/update logic
-  //     console.log(" ---> new/updated group info: ", values);
-  //     console.log("  ---> droplets: ", droplets);
-  //     console.log("  ---> playlists: ", playlists);
-
-  //     if (existingGroup) {
-  //       router.push(`/g/${existingGroup.slug}`);
-  //     }
-  //     // } else {
-  //     //   const slug = response.slug;
-  //     //   router.push(`/g/${slug}`);
-  //     // }
-  //   } catch (error) {
-  //     console.error("Failed to save group:", error);
-  //   } finally {
-  //     setIsSubmitting(false);
-  //   }
-  // }
 
   const onSubmit = async (data: z.infer<typeof formSchema>) => {
     try {
       // Prepare data for backend submission
       const submissionData = {
         ...data,
+        members: data.members?.map((member) => ({
+          email: member.email ?? null,
+          roles: member.roles,
+          isActive: member.isActive,
+        })),
         droplets: data.droplets?.map((droplet, index) => ({
           ...droplet,
           order: index, // Update order based on current array position
@@ -200,8 +203,9 @@ export function GroupManagementForm({
       if (existingGroup) {
         const response = await updateGroup(existingGroup.id, submissionData);
         router.push(`/g/${response.slug}`);
-      } else {}
-
+      } else {
+        //TODO handle new group creation here
+      }
     } catch (error) {
       // Handle error
       console.error("Failed to update group", error);
@@ -216,15 +220,15 @@ export function GroupManagementForm({
       order: index,
     }));
 
-    form.setValue('droplets', updatedDroplets);
-    setDroplets(updatedDroplets)
+    form.setValue("droplets", updatedDroplets);
+    setDroplets(updatedDroplets);
   };
 
   const handleDropletRemove = (dropletId: number) => {
     console.debug("  --> Group Mgmt - removing droplet ", dropletId);
-    const currentDroplets = form.getValues('droplets') || [];
-    const updatedDroplets = currentDroplets.filter(d => d.id !== dropletId);
-    form.setValue('droplets', updatedDroplets);
+    const currentDroplets = form.getValues("droplets") || [];
+    const updatedDroplets = currentDroplets.filter((d) => d.id !== dropletId);
+    form.setValue("droplets", updatedDroplets);
     setDroplets(updatedDroplets as Droplet[]);
   };
 
@@ -237,26 +241,27 @@ export function GroupManagementForm({
       ...playlist,
       order: index,
     }));
-    form.setValue('playlists', updatedPlaylists);
-    setPlaylists(updatedPlaylists)
+    form.setValue("playlists", updatedPlaylists);
+    setPlaylists(updatedPlaylists);
   };
 
   const handlePlaylistRemove = (playlistId: number) => {
     console.debug("  --> Group Mgmt - removing playlist ", playlistId);
-    const currentPlaylists = form.getValues('playlists') || [];
-    const updatedPlaylists = currentPlaylists.filter(p => p.id !== playlistId);
-    
-    form.setValue('playlists', updatedPlaylists);
+    const currentPlaylists = form.getValues("playlists") || [];
+    const updatedPlaylists = currentPlaylists.filter(
+      (p) => p.id !== playlistId
+    );
+
+    form.setValue("playlists", updatedPlaylists);
     setPlaylists(updatedPlaylists as Playlist[]);
   };
 
-
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(
-        onSubmit,
-        (errors) => console.error("Form validation failed ", errors)
-        )} 
+      <form
+        onSubmit={form.handleSubmit(onSubmit, (errors) =>
+          console.error("Form validation failed ", errors)
+        )}
         className="space-y-12"
       >
         <div className="space-y-8">
@@ -369,21 +374,72 @@ export function GroupManagementForm({
 
         <ContentSection
           title="Members"
-          emptyMessage="Member management functionality coming soon"
+          emptyMessage="No members in this group yet"
+          action={
+            <AddMemberDialog
+              onAddMembers={(emails) => {
+                const newMembers = emails.map(
+                  (email) =>
+                    ({
+                      email,
+                      roles: [], // Add required User properties
+                      isActive: true,
+                    }) as User
+                );
+                console.log("newMembers = ", newMembers)
+                const updatedMembers = [...members, ...newMembers];
+                setMembers(updatedMembers);
+                //form.setValue("members", updatedMembers);
+              }}
+            />
+          }
         >
-          <div className="p-8 text-center text-slate-500 border border-dashed rounded-lg">
-            Member management will be available in a future update
-          </div>
+          {members.length > 0 ? (
+            <div className="grid grid-cols-3 gap-4">
+              {members.map((member) => (
+                <MemberTile
+                  key={member.email}
+                  member={member}
+                  role={
+                    member.email === existingGroup?.creator.email
+                      ? "admin"
+                      : existingGroup?.admins?.find(
+                            (a) => a.email === member.email
+                          )
+                        ? "admin"
+                        : existingGroup?.managers?.find(
+                              (m) => m.email === member.email
+                            )
+                          ? "manager"
+                          : "member"
+                  }
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="p-8 text-center text-slate-500 border border-dashed rounded-lg">
+              No members have been added to this group yet
+            </div>
+          )}
         </ContentSection>
 
         <ContentSection
           title="Droplets"
           emptyMessage="No droplets added to this group yet"
+          action={
+            <AddDropletDialog
+              currentDroplets={droplets}
+              onAddDroplets={(newDroplet) => {
+                const updatedDroplets = [...droplets, ...newDroplet];
+                setDroplets(updatedDroplets);
+                form.setValue("droplets", updatedDroplets);
+              }}
+            />
+          }
         >
           {droplets.length > 0 ? (
             <DropletList
               droplets={droplets}
-              // droplets={form.getValues("droplets")}
               onReorder={handleDropletReorder}
               onRemove={handleDropletRemove}
             />
@@ -398,7 +454,17 @@ export function GroupManagementForm({
 
         <ContentSection
           title="Playlists"
-          emptyMessage="No playlists have been added to this group yet"
+          emptyMessage="No playlists added to this group yet"
+          action={
+            <AddPlaylistDialog
+              currentPlaylists={playlists}
+              onAddPlaylists={(newPlaylists) => {
+                const updatedPlaylists = [...playlists, ...newPlaylists];
+                setPlaylists(updatedPlaylists);
+                form.setValue("playlists", updatedPlaylists);
+              }}
+            />
+          }
         >
           {playlists.length > 0 ? (
             <PlaylistList

@@ -5,6 +5,7 @@ type ContentSectionProps = {
   content?: string;
   emptyMessage?: string;
   children?: ReactNode;
+  action?: ReactNode;
 };
 
 export function ContentSection({
@@ -12,10 +13,14 @@ export function ContentSection({
   content,
   emptyMessage,
   children,
+  action
 }: ContentSectionProps) {
   return (
     <section className="space-y-4">
+      <div className="flex justify-between items-center mb-4">
       <h2 className="text-2xl font-semibold">{title}</h2>
+      {action}
+      </div>
       {content ? (
         // <p className="text-slate-600 leading-relaxed">{content}</p>
         <div

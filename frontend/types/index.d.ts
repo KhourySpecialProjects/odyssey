@@ -20,6 +20,7 @@ export type User = {
   image?: string | null;
   nuid?: string;
   roles: AuthorizedUserRoleTitle[];
+  isActive: boolean;
 };
 
 export type AuthorizedUser = {
@@ -195,4 +196,11 @@ export type GroupListResponse = {
       total: number;
     };
   };
+}
+
+export type ActionResponse<T=any> = {
+  ok: boolean;
+  data?: T | null;
+  error?: any;
+  message?: string;
 }
