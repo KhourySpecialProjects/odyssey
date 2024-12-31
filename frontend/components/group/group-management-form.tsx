@@ -193,6 +193,8 @@ export function GroupManagementForm({
         groupName: data.groupName,
         description: data.description,
         semester: data.semester,
+        admins: data.admins,
+        managers: data.managers,
         members: data.members?.map((member) => ({
           email: member.email ?? null,
           roles: member.roles,

@@ -298,13 +298,13 @@ export async function createGroup(
     slug: `random-slug-${Math.floor(Math.random() * 90000) + 10000}`,
     creator: authorizedUserId,
     ...(processedAdmins && {
-      admins: { connect: processedAdmins },
+      admins: { set: processedAdmins },
     }),
     ...(processedManagers && {
-      managers: { connect: processedManagers },
+      managers: { set: processedManagers },
     }),
     ...(processedMembers && {
-      members: { connect: processedMembers },
+      members: { set: processedMembers },
     }),
     ...(droplets && {
       droplets: { connect: droplets.map(id => ({ id })) },
@@ -431,13 +431,13 @@ export async function updateGroup(
   // Handle admins and managers
   if (data.admins) {
     dataToSend.admins = {
-      connect: data.admins.map((id) => ({ id })),
+      set: data.admins.map((id) => ({ id })),
     };
   }
 
   if (data.managers) {
     dataToSend.managers = {
-      connect: data.managers.map((id) => ({ id })),
+      set: data.managers.map((id) => ({ id })),
     };
   }
 
