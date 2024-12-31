@@ -433,17 +433,6 @@ export async function updateGroup(
     };
   }
 
-  //TODO: If a new member is being added (email address is not in authorized users yet), they
-  // need to be added to authorized users first and then added to the group.
-  // Handle members
-  // if (data.members) {
-  //   dataToSend.members = {
-  //     set: data.members.map((member) => ({
-  //       email: member.email,
-  //     })),
-  //   };
-  // }
-  // Update the members handling in updateGroup
   if (data.members) {
     // Ensure all members are authorized users first
     const authorizedMembers = await ensureAuthorizedUsers(
@@ -451,7 +440,7 @@ export async function updateGroup(
     );
 
     dataToSend.members = {
-      connect: authorizedMembers.map((member) => ({ id: member.id })),
+      set: authorizedMembers.map((member) => ({ id: member.id })),
     };
   }
 

@@ -116,7 +116,10 @@ interface GroupManagementFormProps {
   currentUser: AuthorizedUser;
   existingGroup?: Group | null;
 }
-
+// TODO: Technical debt abounds.  There are some minor differences between 
+// several different user types that have caused some headaches.  
+// Currently, just trying to get the functionality done.  Will refactor
+// later. 
 export function GroupManagementForm({
   currentUser,
   existingGroup,
@@ -197,8 +200,6 @@ export function GroupManagementForm({
       };
 
       console.log(" submissionData = ", submissionData);
-      console.log("");
-      console.log("form getValues = ", form.getValues().droplets);
 
       if (existingGroup) {
         const response = await updateGroup(existingGroup.id, submissionData);
@@ -215,11 +216,9 @@ export function GroupManagementForm({
   const handleDropletReorder = (reorderedDroplets: Droplet[]) => {
     console.debug("  --> Group Mgmt - reordering droplets ", reorderedDroplets);
     const updatedDroplets = reorderedDroplets.map((droplet, index) => ({
-      // id: droplet.id,
       ...droplet,
       order: index,
     }));
-
     form.setValue("droplets", updatedDroplets);
     setDroplets(updatedDroplets);
   };
@@ -254,6 +253,19 @@ export function GroupManagementForm({
 
     form.setValue("playlists", updatedPlaylists);
     setPlaylists(updatedPlaylists as Playlist[]);
+  };
+
+  const handleMemberRemove = (emailToRemove: string) => {
+    console.debug("  --> Group Mgmt - removing member ", emailToRemove);
+    const currentMembers = form.getValues("members") || [];
+    const updatedMembers = currentMembers.filter((m) => m.email !== emailToRemove);
+    
+    form.setValue("members", updatedMembers);
+    setMembers(updatedMembers.map(member => ({
+      ...member,
+      roles: [],
+      isActive: member.isActive ?? true
+    })));
   };
 
   return (
@@ -377,19 +389,18 @@ export function GroupManagementForm({
           emptyMessage="No members in this group yet"
           action={
             <AddMemberDialog
+              existingMembers={members.map(member => ({ email: member.email ?? "" }))}
               onAddMembers={(emails) => {
                 const newMembers = emails.map(
                   (email) =>
                     ({
                       email,
-                      roles: [], // Add required User properties
+                      roles: [], 
                       isActive: true,
                     }) as User
                 );
-                console.log("newMembers = ", newMembers)
                 const updatedMembers = [...members, ...newMembers];
                 setMembers(updatedMembers);
-                //form.setValue("members", updatedMembers);
               }}
             />
           }
@@ -412,6 +423,12 @@ export function GroupManagementForm({
                             )
                           ? "manager"
                           : "member"
+                  }
+                  onRemove={
+                    // Prevent removal of group creator
+                    member.email !== existingGroup?.creator.email 
+                      ? handleMemberRemove 
+                      : undefined
                   }
                 />
               ))}
