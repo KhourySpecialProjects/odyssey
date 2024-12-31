@@ -26,7 +26,7 @@ export function MemberList({ title, members, variant }: MemberListProps) {
             key={member.id}
             className={cn(
               "flex items-center gap-3 p-2 rounded-lg",
-              variantStyles[variant]
+              variantStyles[variant],
             )}
           >
             <Avatar className="h-8 w-8">

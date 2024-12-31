@@ -12,19 +12,19 @@ import { uppercaseFirstChar } from "@/lib/utils";
 
 function useCombinedRefs(...refs: any[]) {
   const targetRef = useRef(null);
-  
+
   React.useEffect(() => {
-    refs.forEach(ref => {
+    refs.forEach((ref) => {
       if (!ref) return;
-      
-      if (typeof ref === 'function') {
+
+      if (typeof ref === "function") {
         ref(targetRef.current);
       } else {
         ref.current = targetRef.current;
       }
     });
   }, [refs]);
-  
+
   return targetRef;
 }
 
@@ -35,7 +35,12 @@ interface PlaylistItemProps {
   onRemove: (playlistId: number) => void;
 }
 
-const PlaylistItem = ({ playlist, index, movePlaylist, onRemove }: PlaylistItemProps) => {
+const PlaylistItem = ({
+  playlist,
+  index,
+  movePlaylist,
+  onRemove,
+}: PlaylistItemProps) => {
   const [{ isDragging }, drag] = useDrag({
     type: "playlist",
     item: { index },
@@ -64,13 +69,10 @@ const PlaylistItem = ({ playlist, index, movePlaylist, onRemove }: PlaylistItemP
       }`}
     >
       <div className="flex items-center p-4">
-        <div 
-          {...drag} 
-          className="cursor-grab active:cursor-grabbing mr-4"
-        >
+        <div {...drag} className="cursor-grab active:cursor-grabbing mr-4">
           <GripVertical className="w-5 h-5 text-slate-400 shrink-0" />
         </div>
-        
+
         <div className="flex-grow">
           <div className="flex flex-row flex-wrap flex-0 gap-1.5 mb-2">
             <Badge variant="outline">
@@ -80,18 +82,18 @@ const PlaylistItem = ({ playlist, index, movePlaylist, onRemove }: PlaylistItemP
               {uppercaseFirstChar(playlist.duration || "medium")}
             </Badge>
           </div>
-          
+
           <span className="block text-xl font-bold text-slate-950">
             {playlist.name}
           </span>
-          
+
           {playlist.droplets && (
             <p className="text-sm text-muted-foreground mt-1">
               {playlist.droplets.length} droplets
             </p>
           )}
         </div>
-        
+
         <Button
           variant="ghost"
           size="sm"
@@ -111,7 +113,11 @@ interface PlaylistListProps {
   onRemove: (playlistId: number) => void;
 }
 
-export function PlaylistList({ playlists, onReorder, onRemove }: PlaylistListProps) {
+export function PlaylistList({
+  playlists,
+  onReorder,
+  onRemove,
+}: PlaylistListProps) {
   const movePlaylist = (dragIndex: number, hoverIndex: number) => {
     const reorderedPlaylists = [...playlists];
     const [draggedItem] = reorderedPlaylists.splice(dragIndex, 1);

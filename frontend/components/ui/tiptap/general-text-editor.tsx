@@ -19,8 +19,8 @@ interface GeneralTextEditorProps {
 }
 
 export function GeneralTextEditor({
-  initialContent, 
-  updateContent, 
+  initialContent,
+  updateContent,
   placeholder = "Enter text...",
   className = "",
 }: GeneralTextEditorProps) {
@@ -37,7 +37,7 @@ export function GeneralTextEditor({
       }),
       Placeholder.configure({
         placeholder: placeholder,
-        emptyEditorClass: 
+        emptyEditorClass:
           "before:content-[attr(data-placeholder)] before:text-gray-500 before:absolute before:top-2 before:left-2 before:pointer-events-none before:select-none",
       }),
     ],
@@ -53,10 +53,10 @@ export function GeneralTextEditor({
     //   },
     // },
     editorProps: {
-        attributes: {
-          class: `prose prose-sky w-full max-w-none border rounded-b-md border-slate-200 hover:shadow focus:shadow-lg outline-none p-4 ${className}`,
-        },
+      attributes: {
+        class: `prose prose-sky w-full max-w-none border rounded-b-md border-slate-200 hover:shadow focus:shadow-lg outline-none p-4 ${className}`,
       },
+    },
     immediatelyRender: false,
   });
 
@@ -65,10 +65,10 @@ export function GeneralTextEditor({
   return (
     <div className="w-full">
       <GeneralToolbar editor={editor} />
-      <EditorContent 
-        name="general-text-editor" 
-        editor={editor} 
-        className="w-full" 
+      <EditorContent
+        name="general-text-editor"
+        editor={editor}
+        className="w-full"
       />
     </div>
   );

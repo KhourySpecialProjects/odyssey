@@ -34,16 +34,16 @@ export function AddMemberDialog({
 
   const emailCount = parseEmails(emailInput).length;
   const existingMemberEmails = existingMembers.map((m) =>
-    m.email.toLowerCase()
+    m.email.toLowerCase(),
   );
 
   const duplicateEmails = parseEmails(emailInput).filter((email) =>
-    existingMemberEmails.includes(email)
+    existingMemberEmails.includes(email),
   );
 
   const handleDone = () => {
     const emails = parseEmails(emailInput).filter(
-      (email) => !existingMemberEmails.includes(email)
+      (email) => !existingMemberEmails.includes(email),
     );
 
     if (emails.length > 0) {

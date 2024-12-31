@@ -34,7 +34,7 @@ export function AddPlaylistDialog({
     if (open) {
       getPlaylists().then((playlists) => {
         const filtered = playlists.filter(
-          (p) => !currentPlaylists.find((cp) => cp.id === p.id)
+          (p) => !currentPlaylists.find((cp) => cp.id === p.id),
         );
         setAvailablePlaylists(filtered);
       });
@@ -42,7 +42,7 @@ export function AddPlaylistDialog({
   }, [open, currentPlaylists]);
 
   const filteredPlaylists = availablePlaylists.filter((playlist) =>
-    playlist.name.toLowerCase().includes(search.toLowerCase())
+    playlist.name.toLowerCase().includes(search.toLowerCase()),
   );
 
   const handleAddPlaylist = (playlist: Playlist) => {

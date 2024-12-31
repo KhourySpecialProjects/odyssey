@@ -12,22 +12,21 @@ import { uppercaseFirstChar } from "@/lib/utils";
 
 function useCombinedRefs(...refs: any[]) {
   const targetRef = useRef(null);
-  
+
   React.useEffect(() => {
-    refs.forEach(ref => {
+    refs.forEach((ref) => {
       if (!ref) return;
-      
-      if (typeof ref === 'function') {
+
+      if (typeof ref === "function") {
         ref(targetRef.current);
       } else {
         ref.current = targetRef.current;
       }
     });
   }, [refs]);
-  
+
   return targetRef;
 }
-
 
 interface DropletItemProps {
   droplet: Droplet;
@@ -36,7 +35,12 @@ interface DropletItemProps {
   onRemove: (dropletId: number) => void;
 }
 
-const DropletItem = ({ droplet, index, moveDroplet, onRemove }: DropletItemProps) => {
+const DropletItem = ({
+  droplet,
+  index,
+  moveDroplet,
+  onRemove,
+}: DropletItemProps) => {
   const [{ isDragging }, drag] = useDrag({
     type: "droplet",
     item: { index },
@@ -65,13 +69,10 @@ const DropletItem = ({ droplet, index, moveDroplet, onRemove }: DropletItemProps
       }`}
     >
       <div className="flex items-center p-4">
-        <div 
-          {...drag} 
-          className="cursor-grab active:cursor-grabbing mr-4"
-        >
+        <div {...drag} className="cursor-grab active:cursor-grabbing mr-4">
           <GripVertical className="w-5 h-5 text-slate-400 shrink-0" />
         </div>
-        
+
         <div className="flex-grow">
           <div className="flex flex-row flex-wrap flex-0 gap-1.5 mb-2">
             <Badge variant="default">
@@ -81,18 +82,18 @@ const DropletItem = ({ droplet, index, moveDroplet, onRemove }: DropletItemProps
               {uppercaseFirstChar(droplet.type)}
             </Badge>
           </div>
-          
+
           <span className="block text-xl font-bold text-slate-950">
             {droplet.name}
           </span>
-          
+
           {droplet.lessons && (
             <p className="text-sm text-muted-foreground mt-1">
               {droplet.lessons.length} lessons
             </p>
           )}
         </div>
-        
+
         <Button
           variant="ghost"
           size="sm"
@@ -112,7 +113,11 @@ interface DropletListProps {
   onRemove: (dropletId: number) => void;
 }
 
-export function DropletList({ droplets, onReorder, onRemove }: DropletListProps) {
+export function DropletList({
+  droplets,
+  onReorder,
+  onRemove,
+}: DropletListProps) {
   const moveDroplet = (dragIndex: number, hoverIndex: number) => {
     const reorderedDroplets = [...droplets];
     const [draggedItem] = reorderedDroplets.splice(dragIndex, 1);

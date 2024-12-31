@@ -33,7 +33,7 @@ export function AddDropletDialog({
     if (open) {
       getDroplets().then((droplets) => {
         const filtered = droplets.filter(
-          (d) => !currentDroplets.find((cd) => cd.id === d.id)
+          (d) => !currentDroplets.find((cd) => cd.id === d.id),
         );
         setAvailableDroplets(filtered);
       });
@@ -41,7 +41,7 @@ export function AddDropletDialog({
   }, [open, currentDroplets]);
 
   const filteredDroplets = availableDroplets.filter((droplet) =>
-    droplet.name.toLowerCase().includes(search.toLowerCase())
+    droplet.name.toLowerCase().includes(search.toLowerCase()),
   );
 
   const handleAddDroplet = (droplet: Droplet) => {
@@ -50,7 +50,7 @@ export function AddDropletDialog({
   };
 
   const handleDone = () => {
-    onAddDroplets(selectedDroplets);  // Pass all selected droplets at once
+    onAddDroplets(selectedDroplets); // Pass all selected droplets at once
     setSelectedDroplets([]);
     setOpen(false);
   };

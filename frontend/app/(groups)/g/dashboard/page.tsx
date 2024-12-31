@@ -3,12 +3,16 @@ import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
 import { getUserGroups } from "@/lib/requests/groups";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
-import { UsersIcon, StarIcon} from "lucide-react";
+import { UsersIcon, StarIcon } from "lucide-react";
 import { Group } from "@/types";
 import { GroupsSelector } from "./group-selector";
-import { Message, MessageHeader, MessageDescription } from "@/components/message";
+import {
+  Message,
+  MessageHeader,
+  MessageDescription,
+} from "@/components/message";
 import { redirect } from "next/navigation";
-import { GroupCard } from "@/components/group/group-card"
+import { GroupCard } from "@/components/group/group-card";
 
 type GroupWithRole = {
   group: Group;
@@ -44,9 +48,13 @@ export default async function GroupsPage({ searchParams }: Props) {
       groupsByRole.creator.push({ group, role: "creator" });
     } else if (group.admins?.some((admin) => admin.id === authorizedUser.id)) {
       groupsByRole.admin.push({ group, role: "admin" });
-    } else if (group.managers?.some((manager) => manager.id === authorizedUser.id)) {
+    } else if (
+      group.managers?.some((manager) => manager.id === authorizedUser.id)
+    ) {
       groupsByRole.manager.push({ group, role: "manager" });
-    } else if (group.members?.some((member) => member.id === authorizedUser.id)) {
+    } else if (
+      group.members?.some((member) => member.id === authorizedUser.id)
+    ) {
       groupsByRole.member.push({ group, role: "member" });
     }
   });
@@ -82,27 +90,35 @@ export default async function GroupsPage({ searchParams }: Props) {
       <div className="mt-6">
         {tab === "favorites" ? (
           <Message className="mb-8 border border-dashed rounded-md border-slate-200">
-            <MessageHeader title="Favorites Coming Soon" subtitle="Future enhancements on the way!" />
+            <MessageHeader
+              title="Favorites Coming Soon"
+              subtitle="Future enhancements on the way!"
+            />
             <MessageDescription>
-              The ability to favorite groups will be available in a future update.
+              The ability to favorite groups will be available in a future
+              update.
             </MessageDescription>
           </Message>
         ) : (
           <div>
             {groupsByRole[tab as keyof typeof groupsByRole].length > 0 ? (
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {groupsByRole[tab as keyof typeof groupsByRole].map(({ group, role }) => (
-                  <GroupCard 
-                    key={group.id}
-                    group={group}
-                    role={role}
-                    roleColors={roleColors}
-                  />
-                ))}
+                {groupsByRole[tab as keyof typeof groupsByRole].map(
+                  ({ group, role }) => (
+                    <GroupCard
+                      key={group.id}
+                      group={group}
+                      role={role}
+                      roleColors={roleColors}
+                    />
+                  ),
+                )}
               </div>
             ) : (
               <div className="p-8 text-center text-slate-500 border border-dashed rounded-lg">
-                <p className="text-lg">{roleMessages[tab as keyof typeof roleMessages]}</p>
+                <p className="text-lg">
+                  {roleMessages[tab as keyof typeof roleMessages]}
+                </p>
               </div>
             )}
           </div>
@@ -111,4 +127,3 @@ export default async function GroupsPage({ searchParams }: Props) {
     </div>
   );
 }
-

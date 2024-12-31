@@ -8,7 +8,7 @@ import { GroupHeader } from "@/components/group/group-header";
 import { Separator } from "@/components/ui/separator";
 import { GroupDropletTile } from "@/components/group/group-droplet-tile";
 import { PlaylistCard } from "@/components/playlists/playlist-card";
-import createDOMPurifier from 'isomorphic-dompurify';
+import createDOMPurifier from "isomorphic-dompurify";
 type Props = {
   params: {
     slug: string;
@@ -77,7 +77,9 @@ export default async function GroupDetailPage({ params }: Props) {
         <div className="lg:col-span-2 space-y-12">
           <ContentSection
             title="Group Description"
-            content={createDOMPurifier.sanitize(group.description || "No Description Provided.")}
+            content={createDOMPurifier.sanitize(
+              group.description || "No Description Provided.",
+            )}
             // content={
             //   <div
             //     dangerouslySetInnerHTML={{
