@@ -27,8 +27,10 @@ export function GroupsSelector() {
   const pathname = usePathname();
   const router = useRouter();
   const { data: session } = useSession();
-  const canCreateGroup = session?.user?.roles && 
-    (isContentCreator(session.user.roles) || isAuthorizedUserFaculty(session.user.roles));
+  const canCreateGroup =
+    session?.user?.roles &&
+    (isContentCreator(session.user.roles) ||
+      isAuthorizedUserFaculty(session.user.roles));
 
   const currentTab = searchParams.get("tab") || "creator";
 
