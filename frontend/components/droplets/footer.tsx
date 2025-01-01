@@ -14,11 +14,12 @@ type PaginationProps = {
 export default function DropletFooter({
   droplet,
 }: {
-  droplet: Pick<Droplet, "slug" | "lessons">;
+  droplet: Pick<Droplet, "slug" | "droplet_lessons">;
 }) {
   const pathname = usePathname();
 
-  if (!droplet.lessons || droplet.lessons.length === 0) return null;
+  // if (!droplet.lessons || droplet.lessons.length === 0) return null;
+  if (!droplet.droplet_lessons || droplet.droplet_lessons.length === 0) return null;
 
   let previous: PaginationProps | null = null;
   let next: PaginationProps | null = null;
@@ -27,9 +28,11 @@ export default function DropletFooter({
 
   if (pathSegments.length > 3) {
     const lessonSlug = pathname.split("/").at(-1);
-    const currentLessonSlugIndex = droplet.lessons
-      .map((l: any) => l.slug)
-      .indexOf(lessonSlug);
+    // const currentLessonSlugIndex = droplet.droplet_lessons
+    //   .map((l: any) => l.slug)
+    //   .indexOf(lessonSlug);
+    const lessonSlugs = droplet.droplet_lessons.map((l: any) => l.lesson.slug);
+    const currentLessonSlugIndex = lessonSlugs.indexOf(lessonSlug);
 
     if (currentLessonSlugIndex === 0) {
       previous = {
@@ -37,30 +40,30 @@ export default function DropletFooter({
         name: "Overview",
       };
     } else {
-      const prevLesson = droplet.lessons[currentLessonSlugIndex - 1];
+      const prevLesson = droplet.droplet_lessons[currentLessonSlugIndex - 1];
       previous = {
-        link: `/d/${droplet.slug}/${prevLesson.slug}`,
-        name: prevLesson.name,
+        link: `/d/${droplet.slug}/${prevLesson.lesson.slug}`,
+        name: prevLesson.lesson.name,
       };
     }
 
-    if (currentLessonSlugIndex === droplet.lessons.length - 1) {
+    if (currentLessonSlugIndex === droplet.droplet_lessons.length - 1) {
       next = {
         link: `/d/${droplet.slug}/recap`,
         name: "Recap",
       };
     } else {
-      const nextLesson = droplet.lessons[currentLessonSlugIndex + 1];
+      const nextLesson = droplet.droplet_lessons[currentLessonSlugIndex + 1];
       next = {
-        link: `/d/${droplet.slug}/${nextLesson.slug}`,
-        name: nextLesson.name,
+        link: `/d/${droplet.slug}/${nextLesson.lesson.slug}`,
+        name: nextLesson.lesson.name,
       };
     }
   } else {
-    const nextLesson = droplet.lessons[0];
+    const nextLesson = droplet.droplet_lessons[0];
     next = {
-      link: `/d/${droplet.slug}/${nextLesson.slug}`,
-      name: nextLesson.name,
+      link: `/d/${droplet.slug}/${nextLesson.lesson.slug}`,
+      name: nextLesson.lesson.name,
     };
   }
 

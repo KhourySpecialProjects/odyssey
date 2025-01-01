@@ -6,7 +6,7 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { extractHeadings } from "@/lib/utils";
-import { Lesson } from "@/types";
+import { Droplet, Lesson } from "@/types";
 import { BlocksRenderer } from "@strapi/blocks-react-renderer";
 import { ArrowDownFromLineIcon } from "lucide-react";
 import { QuizBlock } from "./quiz";
@@ -14,20 +14,51 @@ import GenericBlockRenderer from "./GenericBlockRenderer";
 import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { markLessonAsComplete } from "@/lib/actions";
+import { LockIcon } from "lucide-react";
 
 interface LessonRendererProps {
   lesson: Lesson;
+  droplet: Pick<Droplet, "id" | "droplet_lessons">;
   enrollmentId?: string;
   completedLessonIds: number[];
 }
 
 export function LessonRenderer({
   lesson,
+  droplet,
   enrollmentId,
   completedLessonIds,
 }: LessonRendererProps) {
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
+
+  // Find the current lesson's position in this droplet
+  const currentLessonOrder = droplet.droplet_lessons.find(
+    (dl) => dl.lesson.id === lesson.id
+  )?.orderIndex;
+
+  // Find the previous lesson in this droplet
+  const previousLesson = droplet.droplet_lessons.find(
+    (dl) => dl.orderIndex === (currentLessonOrder as number) - 1
+  )?.lesson;
+
+  // Check if this lesson should be locked
+  const isLocked =
+    previousLesson && !completedLessonIds.includes(previousLesson.id);
+
+  if (isLocked) {
+    return (
+      <div className="w-full mx-auto lg:py-8 max-w-prose">
+        <div className="p-6 text-center border rounded-md bg-slate-50 border-slate-200">
+          <LockIcon className="w-12 h-12 mx-auto mb-4 text-slate-400" />
+          <h2 className="text-xl font-bold text-slate-900">Lesson Locked</h2>
+          <p className="mt-2 text-slate-600">
+            Complete {previousLesson.name} to unlock this content.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   async function handleMarkAsComplete() {
     if (!enrollmentId) return;
@@ -36,7 +67,7 @@ export function LessonRenderer({
       const success = await markLessonAsComplete(
         enrollmentId,
         completedLessonIds,
-        lesson.id,
+        lesson.id
       );
       if (success) {
         router.refresh();

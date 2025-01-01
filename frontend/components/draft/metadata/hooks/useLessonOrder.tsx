@@ -6,25 +6,21 @@ import { addLesson } from "@/lib/actions";
 import { Droplet, Lesson } from "@/types";
 
 interface QueueItem {
-  lessonIds: { id: number }[];
+  dropletLessons: { id: number; orderIndex: number }[];
   timestamp: number;
 }
 
 export function useLessonOrder(
-  droplet: Pick<Droplet, "id" | "name" | "slug" | "lessons">,
+  droplet: Pick<Droplet, "id" | "droplet_lessons">,
 ) {
-  const [lessons, setLessons] = useState(droplet.lessons || []);
+  const [dropletLessons, setDropletLessons] = useState(droplet.droplet_lessons || []);
   const [isProcessing, setIsProcessing] = useState(false);
   const orderQueue = useRef<QueueItem[]>([]);
   const latestOrderTimestamp = useRef<number>(Date.now());
 
   useEffect(() => {
-    setLessons(droplet.lessons || []);
-  }, [droplet.lessons]);
-
-  const updateLessons = useCallback((newLessons: Lesson[]) => {
-    setLessons(newLessons);
-  }, []);
+    setDropletLessons(droplet.droplet_lessons || []);
+  }, [droplet.droplet_lessons]);
 
   const processQueue = useCallback(async () => {
     if (isProcessing || orderQueue.current.length === 0) return;
@@ -39,14 +35,14 @@ export function useLessonOrder(
       const result = await updateDroplet(
         droplet.id,
         {
-          lessons: latestOrder.lessonIds,
+          droplet_lessons: latestOrder.dropletLessons,
         },
         { revalidate: true },
       );
 
       if (!result.ok) {
         console.error("Error updating lesson order:", result.error);
-        setLessons(droplet.lessons || []);
+        setDropletLessons(droplet.droplet_lessons || []);
       }
 
       orderQueue.current = orderQueue.current.filter(
@@ -58,14 +54,17 @@ export function useLessonOrder(
         processQueue();
       }
     }
-  }, [droplet.id, droplet.lessons, isProcessing]);
+  }, [droplet.id, droplet.droplet_lessons, isProcessing]);
 
   const handleLessonReorder = useCallback(
-    (newLessons: Lesson[]) => {
-      setLessons(newLessons);
+    (newOrder: typeof dropletLessons) => {
+      setDropletLessons(newOrder);
 
       const orderItem: QueueItem = {
-        lessonIds: newLessons.map((lesson) => ({ id: lesson.id })),
+        dropletLessons: newOrder.map((dl, index) => ({
+          id: dl.id,
+          orderIndex: index,
+        })),
         timestamp: Date.now(),
       };
 
@@ -80,9 +79,9 @@ export function useLessonOrder(
   );
 
   return {
-    lessons,
+    dropletLessons,
     handleLessonReorder,
-    updateLessons,
+    updateDropletLessons: setDropletLessons,
     isProcessing,
   };
 }

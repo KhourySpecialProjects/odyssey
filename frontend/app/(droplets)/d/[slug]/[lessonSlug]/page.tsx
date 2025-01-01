@@ -29,30 +29,37 @@ export default async function Page({ params }: Props) {
   const p = await params;
   const { slug, lessonSlug } = p;
 
+  const droplet = await getDropletBySlug(slug, {
+    populate: {
+      droplet_lessons: {
+        populate: ["lesson"],
+        sort: ["orderIndex:asc"],
+      },
+    },
+  });
+
+  const lesson = await getLessonBySlug(lessonSlug);
+  
+  // Get completed lessons
   const session = await getServerSession();
-  let enrollmentId: string | undefined;
   let completedLessonIds: number[] = [];
+  let enrollmentId: string | undefined;
 
   if (session?.user?.email) {
     const user = await getAuthorizedUserByEmail(session.user.email);
     const enrollments = await getEnrollmentsByAuthorizedUser(user.id);
-
-    // Find the enrollment for this droplet
-    const droplet = await getDropletBySlug(slug);
     const enrollment = enrollments.find((e) => e.droplet.id === droplet.id);
 
     if (enrollment) {
       enrollmentId = enrollment.id;
-      completedLessonIds =
-        enrollment.viewedLessons?.map((l: { id: number }) => l.id) || [];
+      completedLessonIds = enrollment.viewedLessons?.map((l: { id: number }) => l.id) || [];
     }
   }
-
-  const lesson = await getLessonBySlug(lessonSlug);
 
   return (
     <LessonRenderer
       lesson={lesson}
+      droplet={droplet}
       enrollmentId={enrollmentId}
       completedLessonIds={completedLessonIds}
     />

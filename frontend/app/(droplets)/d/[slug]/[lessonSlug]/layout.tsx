@@ -15,7 +15,7 @@ type Params = {
 
 export default async function RootLayout({ params, children }: Props) {
   const p = await params;
-  const droplet = await getDropletBySlug<Pick<Droplet, "slug" | "lessons">>(
+  const droplet = await getDropletBySlug<Pick<Droplet, "slug" | "droplet_lessons">>(
     p.slug,
     {
       fields: ["slug"],
