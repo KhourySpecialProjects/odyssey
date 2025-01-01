@@ -11,6 +11,8 @@ import {
 } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { isContentCreator, isAuthorizedUserFaculty } from "@/lib/utils";
+import { useSession } from "next-auth/react";
 
 const tabs = [
   { name: "Creator", value: "creator", icon: PlusCircleIcon },
@@ -24,6 +26,9 @@ export function GroupsSelector() {
   const searchParams = useSearchParams();
   const pathname = usePathname();
   const router = useRouter();
+  const { data: session } = useSession();
+  const canCreateGroup = session?.user?.roles && 
+    (isContentCreator(session.user.roles) || isAuthorizedUserFaculty(session.user.roles));
 
   const currentTab = searchParams.get("tab") || "creator";
 
@@ -55,15 +60,17 @@ export function GroupsSelector() {
           </button>
         ))}
       </nav>
-      <Button
-        variant="default"
-        size="sm"
-        onClick={() => router.push("/g/management")}
-        className="mr-4"
-      >
-        <PlusCircle className="h-4 w-4 mr-2" />
-        Create Group
-      </Button>
+      {canCreateGroup && (
+        <Button
+          variant="default"
+          size="sm"
+          onClick={() => router.push("/g/management")}
+          className="mr-4"
+        >
+          <PlusCircle className="h-4 w-4 mr-2" />
+          Create Group
+        </Button>
+      )}
     </div>
   );
 }

@@ -24,16 +24,25 @@ type Props = {
 };
 
 export default async function GroupsPage({ searchParams }: Props) {
+
+  
   const params = await searchParams;
   if (!params) {
     redirect("/dashboard");
   }
   const tab = params.tab || "creator";
+  
   const user = await getCurrentUser();
-  if (!user?.email) return null;
+  if (!user?.email) {
+    redirect("/not-found");
+    return null;
+  }
 
   const authorizedUser = await getAuthorizedUserByEmail(user.email);
-  if (!authorizedUser) return null;
+  if (!authorizedUser) {
+    redirect("/not-found");
+    return null;
+  }
 
   const allGroups = await getUserGroups(authorizedUser.id);
   const groupsByRole: Record<string, GroupWithRole[]> = {
