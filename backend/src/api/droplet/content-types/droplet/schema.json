@@ -91,7 +91,7 @@
       "type": "relation",
       "relation": "manyToMany",
       "target": "api::droplet.droplet",
-      "inversedBy": "postrequisites"
+      "mappedBy": "postrequisites"
     },
     "postrequisites": {
       "type": "relation",
@@ -114,6 +114,12 @@
       ],
       "default": "draft",
       "required": true
+    },
+    "droplet_lessons": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::droplet-lesson.droplet-lesson",
+      "mappedBy": "droplet"
     }
   }
 }
