@@ -25,7 +25,7 @@ export function GroupsSelector() {
   const pathname = usePathname();
   const router = useRouter();
 
-  const currentTab = searchParams.get("tab") || "favorites";
+  const currentTab = searchParams.get("tab") || "creator";
 
   const createQueryString = (name: string, value: string) => {
     const params = new URLSearchParams(searchParams);
