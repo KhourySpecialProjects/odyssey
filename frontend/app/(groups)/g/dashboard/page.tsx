@@ -24,14 +24,12 @@ type Props = {
 };
 
 export default async function GroupsPage({ searchParams }: Props) {
-
-  
   const params = await searchParams;
   if (!params) {
     redirect("/dashboard");
   }
   const tab = params.tab || "creator";
-  
+
   const user = await getCurrentUser();
   if (!user?.email) {
     redirect("/not-found");
@@ -115,8 +113,8 @@ export default async function GroupsPage({ searchParams }: Props) {
               subtitle="Get started with Khoury Odyssey groups!"
             />
             <MessageDescription>
-              Groups help you organize and share content with others. 
-              Create your first group today to get started.
+              Groups help you organize and share content with others. Create
+              your first group today to get started.
             </MessageDescription>
           </Message>
         ) : (
