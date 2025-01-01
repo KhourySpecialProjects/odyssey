@@ -69,7 +69,8 @@ export function AddLesson({
             learningObjectives: [],
             isHidden: false,
             status: "draft",
-            lessons: droplet.lessons || [],
+            droplet_lessons: []
+            // lessons: droplet.lessons || [],
           },
         ],
       };
