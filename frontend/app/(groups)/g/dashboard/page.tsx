@@ -28,7 +28,7 @@ export default async function GroupsPage({ searchParams }: Props) {
   if (!params) {
     redirect("/dashboard");
   }
-  const tab = params.tab || "favorites";
+  const tab = params.tab || "creator";
   const user = await getCurrentUser();
   if (!user?.email) return null;
 
@@ -97,6 +97,17 @@ export default async function GroupsPage({ searchParams }: Props) {
             <MessageDescription>
               The ability to favorite groups will be available in a future
               update.
+            </MessageDescription>
+          </Message>
+        ) : tab === "creator" && groupsByRole.creator.length === 0 ? (
+          <Message className="mb-8 border border-dashed rounded-md border-slate-200">
+            <MessageHeader
+              title="Create Your First Group"
+              subtitle="Get started with Khoury Odyssey groups!"
+            />
+            <MessageDescription>
+              Groups help you organize and share content with others. 
+              Create your first group today to get started.
             </MessageDescription>
           </Message>
         ) : (
