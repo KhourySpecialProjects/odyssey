@@ -62,15 +62,7 @@ const formSchema = z.object({
   semester: z.string(),
   admins: z.array(z.number()),
   managers: z.array(z.number()),
-  // members: z.array(
-  //   z.object({
-  //       email: z.string(),
-  //       roles: z.array(z.string()).optional(),
-  //       isActive: z.boolean().optional(),
-  //       id: z.number().optional(),
-  //     })
-  //     .partial() // Makes all fields optional to match User type
-  // ),
+
   members: z.array(z.custom<User>()),
   droplets: z
     .array(
@@ -205,7 +197,7 @@ export function GroupManagementForm({
       console.log(" ---> on submit data: ", data);
 
       // Prepare data for backend submission
-      const submissionData = {
+      const updateGroupData = {
         groupName: data.groupName,
         description: data.description,
         semester: data.semester,
@@ -226,40 +218,42 @@ export function GroupManagementForm({
         })),
       };
 
-      console.log(" -------> submissionData = ", submissionData);
+      console.log(" -------> submissionData = ", updateGroupData);
 
-      const submissionData2 = {
+      const createGroupData = {
         groupName: data.groupName,
         description: data.description,
         semester: data.semester as GroupSemester,
         initialMembers: {
-          admins: data.admins
-            .map(
-              (id) =>
-                existingGroup?.admins?.find((admin) => admin.id === id)
-                  ?.email ?? "",
-            )
-            .filter(Boolean),
-          managers: data.managers
-            .map(
-              (id) =>
-                existingGroup?.managers?.find((manager) => manager.id === id)
-                  ?.email ?? "",
-            )
-            .filter(Boolean),
+          admins: data.admins,
+          managers: data.managers,
+          // admins: data.admins
+          //   .map(
+          //     (id) =>
+          //       existingGroup?.admins?.find((admin) => admin.id === id)
+          //         ?.email ?? "",
+          //   )
+          //   .filter(Boolean),
+          // managers: data.managers
+          //   .map(
+          //     (id) =>
+          //       existingGroup?.managers?.find((manager) => manager.id === id)
+          //         ?.email ?? "",
+          //   )
+          //   .filter(Boolean),
           members: data.members?.map((m) => m.email ?? "").filter(Boolean), // Just get the emails
         },
         droplets: data.droplets?.map((d) => d.id),
         playlists: data.playlists?.map((p) => p.id),
       };
 
-      console.log(" -------> submissionData2 = ", submissionData2);
+      console.log(" -------> submissionData2 = ", createGroupData);
 
       if (existingGroup) {
-        const response = await updateGroup(existingGroup.id, submissionData);
+        const response = await updateGroup(existingGroup.id, updateGroupData);
         router.push(`/g/${response.slug}`);
       } else {
-        const newGroup = await createGroup(currentUser.id, submissionData2);
+        const newGroup = await createGroup(currentUser.id, createGroupData);
         router.push(`/g/${newGroup.slug}`);
       }
     } catch (error) {

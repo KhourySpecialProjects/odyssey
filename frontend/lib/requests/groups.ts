@@ -254,8 +254,10 @@ export async function createGroup(
     description?: string;
     semester?: string;
     initialMembers?: {
-      admins?: string[];
-      managers?: string[];
+      // admins?: string[];
+      // managers?: string[];
+      admins?: number[];
+      managers?: number[];
       members?: string[];
     };
     // Add additional fields as needed for the new group creation form
@@ -282,8 +284,10 @@ export async function createGroup(
   // Process initial members
   const [processedAdmins, processedManagers, processedMembers] =
     await Promise.all([
-      processMembers(initialMembers?.admins),
-      processMembers(initialMembers?.managers),
+      // processMembers(initialMembers?.admins),
+      // processMembers(initialMembers?.managers),
+      initialMembers?.admins,
+      initialMembers?.managers,
       processMembers(initialMembers?.members),
     ]);
 
