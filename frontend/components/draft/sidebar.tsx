@@ -58,13 +58,23 @@ export function Sidebar({
   onLessonsUpdate,
 }: {
   user: User;
-  droplet: Pick<Droplet, "id" | "name" | "slug" | "lessons">;
+  droplet: Pick<Droplet, "id" | "name" | "slug" | "droplet_lessons">;
   onLessonsUpdate?: (lessons: Lesson[]) => void;
 }) {
   const [expanded, setExpanded] = useState(false);
   const pathname = usePathname();
-  const { lessons, handleLessonReorder, updateLessons, isProcessing } =
-    useLessonOrder(droplet);
+
+  // Convert droplet_lessons to lessons for existing logic
+  const lessons = droplet.droplet_lessons
+    .sort((a, b) => a.orderIndex - b.orderIndex)
+    .map((dl) => dl.lesson);
+
+  const {
+    dropletLessons,
+    handleLessonReorder,
+    updateDropletLessons,
+    isProcessing,
+  } = useLessonOrder(droplet);
 
   const isAdmin = user && isAuthorizedUserAdmin(user.roles);
 
@@ -83,10 +93,9 @@ export function Sidebar({
   // DnD sensors setup
   const sensors = useSensors(
     useSensor(PointerSensor),
-    useSensor(KeyboardSensor),
+    useSensor(KeyboardSensor)
   );
 
-  // Handle drag end and reorder
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
 
@@ -95,20 +104,62 @@ export function Sidebar({
       const newIndex = lessons.findIndex((item) => item.id === over?.id);
       const newLessons = arrayMove(lessons, oldIndex, newIndex);
 
-      handleLessonReorder(newLessons);
+      // Convert lessons back to droplet_lessons format
+      const newDropletLessons = newLessons.map((lesson, index) => ({
+        id: dropletLessons.find((dl) => dl.lesson.id === lesson.id)?.id,
+        lesson,
+        orderIndex: index,
+      }));
+
+      handleLessonReorder(
+        newDropletLessons.map((dl) => ({
+          id: dl.id ?? 0, // Provide a default value if id is undefined
+          lesson: dl.lesson,
+          orderIndex: dl.orderIndex,
+        }))
+      );
     }
   };
+  // // Handle drag end and reorder
+  // const handleDragEnd = (event: DragEndEvent) => {
+  //   const { active, over } = event;
+
+  //   if (active.id !== over?.id) {
+  //     const oldIndex = lessons.findIndex((item) => item.id === active.id);
+  //     const newIndex = lessons.findIndex((item) => item.id === over?.id);
+  //     const newLessons = arrayMove(lessons, oldIndex, newIndex);
+
+  //     handleLessonReorder(newLessons);
+  //   }
+  // };
 
   const addLessonCallback = (newLesson: Lesson) => {
-    updateLessons([...lessons, newLesson]);
+    // updateDropletLessons([...lessons, newLesson]);
+    const addLessonCallback = (newLesson: Lesson) => {
+      updateDropletLessons([
+        ...dropletLessons, 
+        { 
+          id: 0, 
+          lesson: newLesson, 
+          orderIndex: dropletLessons.length 
+        }
+      ]);
+    };
   };
 
   const handleLessonDelete = (lessonId: string) => {
     console.log("deleting lesson from frontend");
     const newLessons = lessons.filter(
-      (lesson) => lesson.id.toString() !== lessonId,
+      (lesson) => lesson.id.toString() !== lessonId
     );
-    updateLessons(newLessons);
+    // updateDropletLessons(newLessons);
+    updateDropletLessons(
+      newLessons.map((lesson, index) => ({
+        id: 0,
+        lesson,
+        orderIndex: index
+      }))
+    );
   };
 
   // Add this state to ensure consistent mounting
@@ -130,7 +181,7 @@ export function Sidebar({
       <div
         className={cn(
           "bg-slate-900/50 dark:bg-slate-900/80 fixed inset-0 transition-opacity",
-          expanded ? "opacity-1 z-30" : "opacity-0 -z-10",
+          expanded ? "opacity-1 z-30" : "opacity-0 -z-10"
         )}
         onClick={() => setExpanded(false)}
       />
@@ -161,7 +212,7 @@ export function Sidebar({
           "fixed top-0 left-0 z-40 w-64 h-screen transition-transform",
           expanded
             ? "md:translate-x-80 -transform-none"
-            : "md:translate-x-0 -translate-x-full",
+            : "md:translate-x-0 -translate-x-full"
         )}
         aria-label="Sidebar"
       >
@@ -201,7 +252,7 @@ export function Sidebar({
                   className={cn(
                     classes.link,
                     pathname === `/draft/d/${droplet.slug}` &&
-                      classes.activeLink,
+                      classes.activeLink
                   )}
                 >
                   <SettingsIcon className="shrink-0" />
