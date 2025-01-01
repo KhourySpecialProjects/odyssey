@@ -23,14 +23,18 @@ interface PlaylistCardProps {
     completionPercentage?: number;
   };
   completedLessonIds: number[];
+  toDraft?: boolean;
 }
 
 export function PlaylistCard({
   playlist,
   completedLessonIds,
+  toDraft = false,
 }: PlaylistCardProps) {
+  const linkTo = toDraft ? `/draft/p/${playlist.slug}` : `/p/${playlist.slug}`;
   return (
-    <Link href={`/p/${playlist.slug}`}>
+    // <Link href={`/p/${playlist.slug}`}>
+    <Link href={linkTo}>
       <Card className="bg-slate-50 border-slate-200">
         <CardHeader>
           <CardTitle>{playlist.name}</CardTitle>

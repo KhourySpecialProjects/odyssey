@@ -1332,6 +1332,20 @@ export interface ApiPlaylistPlaylist extends Schema.CollectionType {
       'admin::user'
     > &
       Attribute.Private;
+    description: Attribute.Text;
+    droplets: Attribute.Relation<
+      'api::playlist.playlist',
+      'oneToMany',
+      'api::droplet.droplet'
+    >;
+    duration: Attribute.Enumeration<['short', 'medium', 'long']> &
+      Attribute.Required &
+      Attribute.DefaultTo<'medium'>;
+    isPublic: Attribute.Boolean;
+    name: Attribute.String & Attribute.Required;
+    publishedAt: Attribute.DateTime;
+    slug: Attribute.UID<'api::playlist.playlist', 'name'> & Attribute.Required;
+    updatedAt: Attribute.DateTime;
     updatedBy: Attribute.Relation<
       'api::playlist.playlist',
       'oneToOne',

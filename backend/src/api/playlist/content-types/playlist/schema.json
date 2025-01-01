@@ -18,7 +18,8 @@
       "target": "api::droplet.droplet"
     },
     "name": {
-      "type": "string"
+      "type": "string",
+      "required": true
     },
     "slug": {
       "type": "uid",
