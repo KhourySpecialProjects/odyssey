@@ -1052,6 +1052,11 @@ export interface ApiDropletDroplet extends Schema.CollectionType {
     status: Attribute.Enumeration<['draft', 'edit', 'published']> &
       Attribute.Required &
       Attribute.DefaultTo<'draft'>;
+    droplet_lessons: Attribute.Relation<
+      'api::droplet.droplet',
+      'oneToMany',
+      'api::droplet-lesson.droplet-lesson'
+    >;
     createdAt: Attribute.DateTime;
     updatedAt: Attribute.DateTime;
     publishedAt: Attribute.DateTime;
@@ -1063,6 +1068,53 @@ export interface ApiDropletDroplet extends Schema.CollectionType {
       Attribute.Private;
     updatedBy: Attribute.Relation<
       'api::droplet.droplet',
+      'oneToOne',
+      'admin::user'
+    > &
+      Attribute.Private;
+  };
+}
+
+export interface ApiDropletLessonDropletLesson extends Schema.CollectionType {
+  collectionName: 'droplet_lessons';
+  info: {
+    singularName: 'droplet-lesson';
+    pluralName: 'droplet-lessons';
+    displayName: 'DropletLesson';
+    description: '';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    droplet: Attribute.Relation<
+      'api::droplet-lesson.droplet-lesson',
+      'manyToOne',
+      'api::droplet.droplet'
+    >;
+    lesson: Attribute.Relation<
+      'api::droplet-lesson.droplet-lesson',
+      'manyToOne',
+      'api::lesson.lesson'
+    >;
+    orderIndex: Attribute.Integer &
+      Attribute.Required &
+      Attribute.SetMinMax<
+        {
+          min: 0;
+        },
+        number
+      >;
+    createdAt: Attribute.DateTime;
+    updatedAt: Attribute.DateTime;
+    createdBy: Attribute.Relation<
+      'api::droplet-lesson.droplet-lesson',
+      'oneToOne',
+      'admin::user'
+    > &
+      Attribute.Private;
+    updatedBy: Attribute.Relation<
+      'api::droplet-lesson.droplet-lesson',
       'oneToOne',
       'admin::user'
     > &
@@ -1157,6 +1209,11 @@ export interface ApiLessonLesson extends Schema.CollectionType {
     >;
     type: Attribute.Enumeration<['general', 'setup', 'activity', 'caseStudy']> &
       Attribute.DefaultTo<'general'>;
+    droplet_lessons: Attribute.Relation<
+      'api::lesson.lesson',
+      'oneToMany',
+      'api::droplet-lesson.droplet-lesson'
+    >;
     createdAt: Attribute.DateTime;
     updatedAt: Attribute.DateTime;
     publishedAt: Attribute.DateTime;
@@ -1312,6 +1369,7 @@ declare module '@strapi/types' {
       'api::authorized-user.authorized-user': ApiAuthorizedUserAuthorizedUser;
       'api::authorized-user-role.authorized-user-role': ApiAuthorizedUserRoleAuthorizedUserRole;
       'api::droplet.droplet': ApiDropletDroplet;
+      'api::droplet-lesson.droplet-lesson': ApiDropletLessonDropletLesson;
       'api::enrollment.enrollment': ApiEnrollmentEnrollment;
       'api::lesson.lesson': ApiLessonLesson;
       'api::playlist.playlist': ApiPlaylistPlaylist;
