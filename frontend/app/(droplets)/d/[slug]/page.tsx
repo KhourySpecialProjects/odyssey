@@ -154,7 +154,40 @@ export default async function DropletRoute({ params }: Props) {
             This Droplet contains the following lessons:
           </p>
 
-          {droplet.lessons && droplet.lessons.length > 0 ? (
+          {droplet.droplet_lessons && droplet.droplet_lessons.length > 0 ? (
+            <div className="mt-4 border rounded-md bg-slate-50 border-slate-200">
+              <ul className="flex flex-col divide-y divide-slate-200">
+                {droplet.droplet_lessons
+                  .sort(
+                    (a, b) => a.orderIndex - b.orderIndex
+                  )
+                  .map((dropletLesson) => {
+                    const lesson = dropletLesson.lesson;
+                    return (
+                      <li
+                        key={`lesson-${lesson.id}`}
+                        className="inline-flex items-center gap-2 px-4 py-3 leading-snug"
+                      >
+                        {lesson.type === "activity" ? (
+                          <HammerIcon className="w-5 h-5 mr-0.5 shrink-0" />
+                        ) : lesson.type === "caseStudy" ? (
+                          <FilePieChartIcon className="w-5 h-5 mr-0.5 shrink-0" />
+                        ) : (
+                          <BookTextIcon className="w-5 h-5 mr-0.5 shrink-0" />
+                        )}
+                        {lesson.name}
+                      </li>
+                    );
+                  })}
+              </ul>
+            </div>
+          ) : (
+            <div className="p-4 mt-2 border rounded-md bg-slate-50 border-slate-200">
+              This Droplet does not have any lessons yet. Check back soon!
+            </div>
+          )}
+
+          {/* {droplet.lessons && droplet.lessons.length > 0 ? (
             <div className="mt-4 border rounded-md bg-slate-50 border-slate-200">
               <ul className="flex flex-col divide-y divide-slate-200">
                 {droplet.lessons.map((lesson) => (
@@ -178,7 +211,7 @@ export default async function DropletRoute({ params }: Props) {
             <div className="p-4 mt-2 border rounded-md bg-slate-50 border-slate-200">
               This Droplet does not have any lessons yet. Check back soon!
             </div>
-          )}
+          )} */}
         </section>
 
         <section>

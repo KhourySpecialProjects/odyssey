@@ -28,4 +28,8 @@ export const DropletSchema = z.object({
       id: z.number(),
     })
     .array(),
+  droplet_lessons: z.array(z.object({
+    id: z.number(),
+    orderIndex: z.number()
+  })).optional(),
 });
