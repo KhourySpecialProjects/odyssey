@@ -78,7 +78,7 @@ export default async function GroupDetailPage({ params }: Props) {
           <ContentSection
             title="Group Description"
             content={createDOMPurifier.sanitize(
-              group.description || "No Description Provided."
+              group.description || "No Description Provided.",
             )}
             // content={
             //   <div

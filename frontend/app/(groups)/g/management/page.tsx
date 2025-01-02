@@ -25,7 +25,7 @@ export default async function GroupManagementPage({ searchParams }: Props) {
   if (group) {
     const isCreator = group.creator?.id === authorizedUser.id;
     const isAdmin = group.admins?.some(
-      (admin) => admin.id === authorizedUser.id
+      (admin) => admin.id === authorizedUser.id,
     );
     if (!isCreator && !isAdmin) notFound();
   }

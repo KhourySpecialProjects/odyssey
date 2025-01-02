@@ -45,13 +45,13 @@ export const authOptions: NextAuthOptions = {
       if (user) {
         // Fetch additional user data from Microsoft Graph
         const graphProfile = await getUserProfile(
-          account?.access_token as string
+          account?.access_token as string,
         );
 
         // Fetch user data from Strapi
         const authorizedUser = await getAuthorizedUserByEmail(
           user.email as string,
-          { populate: { roles: { fields: ["title"] } } }
+          { populate: { roles: { fields: ["title"] } } },
         );
 
         // Enrich token with user details
