@@ -6,7 +6,7 @@ import { getGroupBySlugV2 } from "@/lib/requests/groups";
 import { Badge } from "@/components/ui/badge";
 
 type Props = {
-  searchParams?: { [key: string]: string | string[] | undefined };
+  searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
 };
 
 export default async function GroupManagementPage({ searchParams }: Props) {
@@ -25,7 +25,7 @@ export default async function GroupManagementPage({ searchParams }: Props) {
   if (group) {
     const isCreator = group.creator?.id === authorizedUser.id;
     const isAdmin = group.admins?.some(
-      (admin) => admin.id === authorizedUser.id,
+      (admin) => admin.id === authorizedUser.id
     );
     if (!isCreator && !isAdmin) notFound();
   }
