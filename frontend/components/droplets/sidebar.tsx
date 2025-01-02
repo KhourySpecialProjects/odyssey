@@ -60,6 +60,8 @@ export default function Sidebar({
   const { data: session } = useSession();
 
   const isAdmin = user && isAuthorizedUserAdmin(user.roles);
+  console.log(" ----> user roles = ", user?.roles);
+  console.log(" ----> isAdmin = ", isAdmin);
 
   const activeLinkClasses =
     "w-full flex font-bold items-center p-2 bg-slate-200 [&>svg]:text-sky-700 rounded-lg dark:text-white dark:hover:bg-slate-700 group text-sky-700 transition-colors";
@@ -67,31 +69,14 @@ export default function Sidebar({
     "w-full flex items-center p-2 rounded-lg text-slate-900 dark:text-white hover:bg-slate-100 dark:hover:bg-slate-700 group transition-colors";
 
   const totalLessons = droplet.droplet_lessons?.length ?? 0;
-  // const totalPages = totalLessons + 2;
-  const totalPages = totalLessons;
-  const pageSlug = pathname.split("/").at(-1);
+  // const totalPages = totalLessons;
+  // const pageSlug = pathname.split("/").at(-1);
 
-  console.log(" ---> totalLessons = ", totalLessons);
-  console.log(" ---> totalPages = ", totalPages);
-  console.log(" ---> pageSlug = ", pageSlug);
-  console.log(" --- Droplet lessons = ", droplet.droplet_lessons);
-  console.log(" ---> Droplet = ", droplet);
+  const totalLessonsCompleted = completedLessonIds.filter(id => 
+    droplet.droplet_lessons?.some(lesson => lesson.lesson.id === id)
+  ).length;
 
-  let pageSlugIndex = 0;
-  if(pageSlug === droplet.slug) {
-    pageSlugIndex = 0;
-  } else if (pageSlug === "recap" || pageSlug === droplet.slug) {
-    pageSlugIndex = totalLessons;
-  } else {
-    droplet.droplet_lessons?.map((l: any) => console.log(" -------> l.slug = ", l.lesson.slug));
-    pageSlugIndex =
-      droplet.droplet_lessons?.map((l: any) => l.lesson.slug).indexOf(pageSlug) ?? 0;
-  }
-  console.log(" ---> pageSlugIndex = ", pageSlugIndex);
-  const dropletProgress = Math.round(
-    // ((pageSlugIndex + 2) / totalPages) * 100 // offset for intro and 0-index
-    ((pageSlugIndex) / totalPages) * 100 // offset for intro and 0-index
-  );
+  const dropletProgress = Math.round(totalLessonsCompleted / totalLessons * 100);
 
   useLayoutEffect(() => {
     window.addEventListener("resize", () => setExpanded(false));
