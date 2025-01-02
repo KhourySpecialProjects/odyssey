@@ -3,7 +3,7 @@ import { User } from "@/types";
 type UserProfile = Omit<User, "roles">;
 
 export async function getUserProfile(
-  accessToken: string,
+  accessToken: string
 ): Promise<UserProfile> {
   try {
     const response = await fetch(
@@ -12,14 +12,16 @@ export async function getUserProfile(
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },
-      },
+      }
     );
 
     const data = await response.json();
 
     // Extract relevant information from the response
     const { employeeId } = data;
-    return { nuid: employeeId };
+    // return { nuid: employeeId };
+    // TODO: Not sure why the build is only now requiring the isActive attribute???
+    return { nuid: employeeId, isActive: true };
   } catch (error) {
     // Handle errors appropriately
     console.error("Error fetching user profile:", error);

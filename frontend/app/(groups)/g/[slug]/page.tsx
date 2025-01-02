@@ -10,9 +10,9 @@ import { GroupDropletTile } from "@/components/group/group-droplet-tile";
 import { PlaylistCard } from "@/components/playlists/playlist-card";
 import createDOMPurifier from "isomorphic-dompurify";
 type Props = {
-  params: {
+  params: Promise<{
     slug: string;
-  };
+  }>;
 };
 
 export default async function GroupDetailPage({ params }: Props) {
@@ -23,7 +23,7 @@ export default async function GroupDetailPage({ params }: Props) {
   if (!authorizedUser) return null;
 
   const p = await params;
-  const group = await getGroupBySlugV2(p.slug);
+  const group = await getGroupBySlugV2(p?.slug);
   if (!group) notFound();
 
   const isCreator = group.creator?.id === authorizedUser.id;
@@ -78,7 +78,7 @@ export default async function GroupDetailPage({ params }: Props) {
           <ContentSection
             title="Group Description"
             content={createDOMPurifier.sanitize(
-              group.description || "No Description Provided.",
+              group.description || "No Description Provided."
             )}
             // content={
             //   <div

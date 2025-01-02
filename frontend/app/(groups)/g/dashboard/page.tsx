@@ -20,9 +20,10 @@ type GroupWithRole = {
 };
 
 type Props = {
-  searchParams?: { [key: string]: string | string[] | undefined };
+  searchParams:
+    | Promise<{ [key: string]: string | string[] | undefined }>
+    | undefined;
 };
-
 export default async function GroupsPage({ searchParams }: Props) {
   const params = await searchParams;
   if (!params) {
@@ -129,7 +130,7 @@ export default async function GroupsPage({ searchParams }: Props) {
                       role={role}
                       roleColors={roleColors}
                     />
-                  ),
+                  )
                 )}
               </div>
             ) : (
