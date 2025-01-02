@@ -39,12 +39,12 @@ export function LessonRenderer({
 
   // Find the current lesson's position in this droplet
   const currentLessonOrder = droplet.droplet_lessons.find(
-    (dl) => dl.lesson.id === lesson.id
+    (dl) => dl.lesson.id === lesson.id,
   )?.orderIndex;
 
   // Find the previous lesson in this droplet
   const previousLesson = droplet.droplet_lessons.find(
-    (dl) => dl.orderIndex === (currentLessonOrder as number) - 1
+    (dl) => dl.orderIndex === (currentLessonOrder as number) - 1,
   )?.lesson;
 
   // Check if this lesson should be locked
@@ -75,7 +75,7 @@ export function LessonRenderer({
       const success = await markLessonAsComplete(
         enrollmentId,
         completedLessonIds,
-        lesson.id
+        lesson.id,
       );
       if (success) {
         router.refresh();

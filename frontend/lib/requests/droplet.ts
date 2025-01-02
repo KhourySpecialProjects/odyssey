@@ -48,7 +48,7 @@ export async function getDropletBySlug<T extends Partial<Droplet> = Droplet>(
     sort,
     filters: { ...filters, slug },
     populate: {
-      ...((typeof populate === 'object') ? populate : { populate: '*' }),
+      ...(typeof populate === "object" ? populate : { populate: "*" }),
       droplet_lessons: {
         populate: ["lesson"],
         sort: ["orderIndex:asc"],
@@ -91,7 +91,6 @@ export async function getDropletBySlug<T extends Partial<Droplet> = Droplet>(
 //     urlParams,
 //   }).then((droplets) => droplets[0]);
 // }
-
 
 // export async function getDropletBySlug<T extends Partial<Droplet> = Droplet>(
 //   slug: string,

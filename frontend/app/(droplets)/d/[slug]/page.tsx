@@ -158,9 +158,7 @@ export default async function DropletRoute({ params }: Props) {
             <div className="mt-4 border rounded-md bg-slate-50 border-slate-200">
               <ul className="flex flex-col divide-y divide-slate-200">
                 {droplet.droplet_lessons
-                  .sort(
-                    (a, b) => a.orderIndex - b.orderIndex
-                  )
+                  .sort((a, b) => a.orderIndex - b.orderIndex)
                   .map((dropletLesson) => {
                     const lesson = dropletLesson.lesson;
                     return (

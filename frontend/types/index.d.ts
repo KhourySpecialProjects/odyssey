@@ -83,7 +83,7 @@ interface DropletLesson {
   lesson: Lesson;
 }
 
-// TODO: fully migrate from lessons to droplet_lessons. 
+// TODO: fully migrate from lessons to droplet_lessons.
 export type Droplet = {
   id: number;
   slug: string;
