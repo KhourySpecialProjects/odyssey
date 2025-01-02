@@ -103,7 +103,7 @@ export function Sidebar({
       const oldIndex = lessons.findIndex((item) => item.id === active.id);
       const newIndex = lessons.findIndex((item) => item.id === over?.id);
       const newLessons = arrayMove(lessons, oldIndex, newIndex);
-      
+
       // Convert lessons back to droplet_lessons format
       const newDropletLessons = newLessons.map((lesson, index) => ({
         id: dropletLessons.find((dl) => dl.lesson.id === lesson.id)?.id,
@@ -137,12 +137,12 @@ export function Sidebar({
     // updateDropletLessons([...lessons, newLesson]);
     const addLessonCallback = (newLesson: Lesson) => {
       updateDropletLessons([
-        ...dropletLessons, 
-        { 
-          id: 0, 
-          lesson: newLesson, 
-          orderIndex: dropletLessons.length 
-        }
+        ...dropletLessons,
+        {
+          id: 0,
+          lesson: newLesson,
+          orderIndex: dropletLessons.length,
+        },
       ]);
     };
   };
@@ -157,7 +157,7 @@ export function Sidebar({
       newLessons.map((lesson, index) => ({
         id: 0,
         lesson,
-        orderIndex: index
+        orderIndex: index,
       }))
     );
   };
@@ -343,6 +343,22 @@ export function Sidebar({
                     <span>Explore</span>
                   </Link>
                 </DropdownMenuItem>
+
+                <DropdownMenuItem asChild>
+                  <Link href="/settings">
+                    <CogIcon className="w-4 h-4 mr-2" />
+                    <span>Settings</span>
+                  </Link>
+                </DropdownMenuItem>
+
+                {isAdmin ? (
+                  <DropdownMenuItem asChild>
+                    <Link href="/admin">
+                      <TowerControlIcon className="w-4 h-4 mr-2" />
+                      <span>Admin</span>
+                    </Link>
+                  </DropdownMenuItem>
+                ) : null}
 
                 <DropdownMenuItem
                   onClick={() => signOut()}
