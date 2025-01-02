@@ -49,7 +49,7 @@ export function LessonRenderer({
 
   // Check if this lesson should be locked
   const isLocked =
-    previousLesson && 
+    previousLesson &&
     !completedLessonIds.includes(previousLesson.id) &&
     !author &&
     !(user && isAuthorizedUserAdmin(user.roles));

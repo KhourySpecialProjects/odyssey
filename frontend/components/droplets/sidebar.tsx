@@ -78,7 +78,7 @@ export default function Sidebar({
   }
 
   const dropletProgress = Math.round(
-    ((pageSlugIndex + 2) / totalPages) * 100, // offset for intro and 0-index
+    ((pageSlugIndex + 2) / totalPages) * 100 // offset for intro and 0-index
   );
 
   useLayoutEffect(() => {
@@ -93,7 +93,7 @@ export default function Sidebar({
       <div
         className={cn(
           "bg-slate-900/50 dark:bg-slate-900/80 fixed inset-0 transition-opacity",
-          expanded ? "opacity-1 z-30" : "opacity-0 -z-10",
+          expanded ? "opacity-1 z-30" : "opacity-0 -z-10"
         )}
         onClick={() => setExpanded(false)}
       ></div>
@@ -122,7 +122,7 @@ export default function Sidebar({
           "fixed top-0 left-0 z-40 w-64 h-screen transition-transform",
           expanded
             ? "md:translate-x-80 -transform-none"
-            : "md:translate-x-0 -translate-x-full",
+            : "md:translate-x-0 -translate-x-full"
         )}
         aria-label="Sidebar"
       >
@@ -144,7 +144,8 @@ export default function Sidebar({
               {droplet.name}
             </p>
 
-            {author && (
+            {/*Both Authors and Admins should be able to see the edit button  */}
+            {(author || isAdmin) && (
               <div className="pb-4 w-full text-center">
                 <Link
                   className="w-full px-6 py-2 rounded-full text-white bg-green-600 hover:bg-green-700"
@@ -174,13 +175,17 @@ export default function Sidebar({
                 .sort((a, b) => a.orderIndex - b.orderIndex)
                 .map((dropletLesson, index) => {
                   const lesson = dropletLesson.lesson;
-                  const previousLesson = index > 0 
-                    ? droplet.droplet_lessons[index - 1].lesson 
-                    : null;
-                  const isLocked = previousLesson && 
+                  const previousLesson =
+                    index > 0
+                      ? droplet.droplet_lessons[index - 1].lesson
+                      : null;
+                  const isLocked =
+                    previousLesson &&
                     !completedLessonIds.includes(previousLesson.id) &&
                     !author &&
                     !isAdmin;
+
+                  console.log(" ---> isLocked = ", isLocked);
 
                   return (
                     <li key={lesson.id} className="w-full">
@@ -272,7 +277,7 @@ export default function Sidebar({
                 <DropdownMenuItem asChild>
                   <Link href="/settings">
                     <CogIcon className="w-4 h-4 mr-2" />
-                    <span>Admin</span>
+                    <span>Settings</span>
                   </Link>
                 </DropdownMenuItem>
 
