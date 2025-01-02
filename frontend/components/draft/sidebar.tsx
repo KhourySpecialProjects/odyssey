@@ -103,7 +103,7 @@ export function Sidebar({
       const oldIndex = lessons.findIndex((item) => item.id === active.id);
       const newIndex = lessons.findIndex((item) => item.id === over?.id);
       const newLessons = arrayMove(lessons, oldIndex, newIndex);
-
+      
       // Convert lessons back to droplet_lessons format
       const newDropletLessons = newLessons.map((lesson, index) => ({
         id: dropletLessons.find((dl) => dl.lesson.id === lesson.id)?.id,
@@ -236,11 +236,11 @@ export function Sidebar({
             <div className="flex items-center justify-between p-2 my-2">
               <p className="text-lg font-extrabold leading-7">{droplet.name}</p>
               <Link
-                href="/drafts"
+                href={`/draft/d/${droplet.slug}`}
                 className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-950 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 dark:ring-offset-slate-950 dark:focus-visible:ring-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 h-9 w-9"
                 aria-label="Back to Drafts"
               >
-                <ArrowLeftIcon className="w-4 h-4" />
+                <ArrowLeftIcon className="w-6 h-6" />
               </Link>
             </div>
 
