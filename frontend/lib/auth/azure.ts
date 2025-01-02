@@ -3,7 +3,7 @@ import { User } from "@/types";
 type UserProfile = Omit<User, "roles">;
 
 export async function getUserProfile(
-  accessToken: string
+  accessToken: string,
 ): Promise<UserProfile> {
   try {
     const response = await fetch(
@@ -12,7 +12,7 @@ export async function getUserProfile(
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },
-      }
+      },
     );
 
     const data = await response.json();

@@ -130,7 +130,7 @@ export default async function GroupsPage({ searchParams }: Props) {
                       role={role}
                       roleColors={roleColors}
                     />
-                  )
+                  ),
                 )}
               </div>
             ) : (
