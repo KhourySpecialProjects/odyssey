@@ -66,7 +66,7 @@ export default async function Page({ params }: Props) {
 
   const currentUser = await getCurrentUser();
   const userAuthor = await getAuthorByAuthorizedUserEmail(
-    session?.user.email || ""
+    session?.user.email || "",
   );
   const isAuthor =
     userAuthor &&

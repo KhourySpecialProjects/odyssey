@@ -93,7 +93,7 @@ export function Sidebar({
   // DnD sensors setup
   const sensors = useSensors(
     useSensor(PointerSensor),
-    useSensor(KeyboardSensor)
+    useSensor(KeyboardSensor),
   );
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -116,7 +116,7 @@ export function Sidebar({
           id: dl.id ?? 0, // Provide a default value if id is undefined
           lesson: dl.lesson,
           orderIndex: dl.orderIndex,
-        }))
+        })),
       );
     }
   };
@@ -150,7 +150,7 @@ export function Sidebar({
   const handleLessonDelete = (lessonId: string) => {
     console.log("deleting lesson from frontend");
     const newLessons = lessons.filter(
-      (lesson) => lesson.id.toString() !== lessonId
+      (lesson) => lesson.id.toString() !== lessonId,
     );
     // updateDropletLessons(newLessons);
     updateDropletLessons(
@@ -158,7 +158,7 @@ export function Sidebar({
         id: 0,
         lesson,
         orderIndex: index,
-      }))
+      })),
     );
   };
 
@@ -181,7 +181,7 @@ export function Sidebar({
       <div
         className={cn(
           "bg-slate-900/50 dark:bg-slate-900/80 fixed inset-0 transition-opacity",
-          expanded ? "opacity-1 z-30" : "opacity-0 -z-10"
+          expanded ? "opacity-1 z-30" : "opacity-0 -z-10",
         )}
         onClick={() => setExpanded(false)}
       />
@@ -212,7 +212,7 @@ export function Sidebar({
           "fixed top-0 left-0 z-40 w-64 h-screen transition-transform",
           expanded
             ? "md:translate-x-80 -transform-none"
-            : "md:translate-x-0 -translate-x-full"
+            : "md:translate-x-0 -translate-x-full",
         )}
         aria-label="Sidebar"
       >
@@ -252,7 +252,7 @@ export function Sidebar({
                   className={cn(
                     classes.link,
                     pathname === `/draft/d/${droplet.slug}` &&
-                      classes.activeLink
+                      classes.activeLink,
                   )}
                 >
                   <SettingsIcon className="shrink-0" />

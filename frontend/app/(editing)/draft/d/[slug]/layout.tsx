@@ -38,7 +38,7 @@ export default async function CheckPermission({ params, children }: Props) {
     !droplet.authors ||
     !user.email ||
     !(isContentCreator(user.roles) || isAuthorizedUserAdmin(user.roles))
-  ){ 
+  ) {
     return notFound();
   }
   const userAuthor = await getAuthorByAuthorizedUserEmail(user.email);

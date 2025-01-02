@@ -72,11 +72,13 @@ export default function Sidebar({
   // const totalPages = totalLessons;
   // const pageSlug = pathname.split("/").at(-1);
 
-  const totalLessonsCompleted = completedLessonIds.filter(id => 
-    droplet.droplet_lessons?.some(lesson => lesson.lesson.id === id)
+  const totalLessonsCompleted = completedLessonIds.filter((id) =>
+    droplet.droplet_lessons?.some((lesson) => lesson.lesson.id === id),
   ).length;
 
-  const dropletProgress = Math.round(totalLessonsCompleted / totalLessons * 100);
+  const dropletProgress = Math.round(
+    (totalLessonsCompleted / totalLessons) * 100,
+  );
 
   useLayoutEffect(() => {
     window.addEventListener("resize", () => setExpanded(false));
@@ -90,7 +92,7 @@ export default function Sidebar({
       <div
         className={cn(
           "bg-slate-900/50 dark:bg-slate-900/80 fixed inset-0 transition-opacity",
-          expanded ? "opacity-1 z-30" : "opacity-0 -z-10"
+          expanded ? "opacity-1 z-30" : "opacity-0 -z-10",
         )}
         onClick={() => setExpanded(false)}
       ></div>
@@ -119,7 +121,7 @@ export default function Sidebar({
           "fixed top-0 left-0 z-40 w-64 h-screen transition-transform",
           expanded
             ? "md:translate-x-80 -transform-none"
-            : "md:translate-x-0 -translate-x-full"
+            : "md:translate-x-0 -translate-x-full",
         )}
         aria-label="Sidebar"
       >
@@ -192,7 +194,7 @@ export default function Sidebar({
                           pathname == `/d/${droplet.slug}/${lesson.slug}`
                             ? activeLinkClasses
                             : inactiveLinkClasses,
-                          isLocked && "opacity-50"
+                          isLocked && "opacity-50",
                         )}
                       >
                         {lesson.type === "activity" ? (

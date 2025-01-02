@@ -45,7 +45,8 @@ export default async function RootLayout({ params, children }: Props) {
     const user = await getAuthorizedUserByEmail(session.user.email);
     const enrollments = await getEnrollmentsByAuthorizedUser(user.id);
     completedLessonIds = enrollments.flatMap(
-      (enrollment) => enrollment.viewedLessons?.map((lesson) => lesson.id) || []
+      (enrollment) =>
+        enrollment.viewedLessons?.map((lesson) => lesson.id) || [],
     );
   }
 

@@ -13,7 +13,9 @@ interface QueueItem {
 export function useLessonOrder(
   droplet: Pick<Droplet, "id" | "droplet_lessons">,
 ) {
-  const [dropletLessons, setDropletLessons] = useState(droplet.droplet_lessons || []);
+  const [dropletLessons, setDropletLessons] = useState(
+    droplet.droplet_lessons || [],
+  );
   const [isProcessing, setIsProcessing] = useState(false);
   const orderQueue = useRef<QueueItem[]>([]);
   const latestOrderTimestamp = useRef<number>(Date.now());
