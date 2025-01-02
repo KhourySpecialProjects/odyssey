@@ -5,8 +5,8 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { extractHeadings } from "@/lib/utils";
-import { Droplet, Lesson } from "@/types";
+import { extractHeadings, isAuthorizedUserAdmin } from "@/lib/utils";
+import { User, Droplet, Lesson } from "@/types";
 import { BlocksRenderer } from "@strapi/blocks-react-renderer";
 import { ArrowDownFromLineIcon } from "lucide-react";
 import { QuizBlock } from "./quiz";
@@ -15,12 +15,15 @@ import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { markLessonAsComplete } from "@/lib/actions";
 import { LockIcon } from "lucide-react";
+import { getCurrentUser } from "@/lib/auth/session";
 
 interface LessonRendererProps {
   lesson: Lesson;
   droplet: Pick<Droplet, "id" | "droplet_lessons">;
   enrollmentId?: string;
   completedLessonIds: number[];
+  user?: User | null;
+  author?: boolean;
 }
 
 export function LessonRenderer({
@@ -28,6 +31,8 @@ export function LessonRenderer({
   droplet,
   enrollmentId,
   completedLessonIds,
+  user,
+  author = false,
 }: LessonRendererProps) {
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
@@ -44,7 +49,10 @@ export function LessonRenderer({
 
   // Check if this lesson should be locked
   const isLocked =
-    previousLesson && !completedLessonIds.includes(previousLesson.id);
+    previousLesson && 
+    !completedLessonIds.includes(previousLesson.id) &&
+    !author &&
+    !(user && isAuthorizedUserAdmin(user.roles));
 
   if (isLocked) {
     return (

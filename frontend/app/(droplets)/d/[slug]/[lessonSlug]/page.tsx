@@ -5,6 +5,8 @@ import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
 import { getDropletBySlug } from "@/lib/requests/droplet";
 import { getLessonBySlug } from "@/lib/requests/lesson";
 import { getServerSession } from "next-auth";
+import { AuthorizedUser, User } from "@/types";
+import { getAuthorByAuthorizedUserEmail } from "@/lib/requests/author";
 
 type Props = {
   params: Promise<Params>;
@@ -31,6 +33,7 @@ export default async function Page({ params }: Props) {
 
   const droplet = await getDropletBySlug(slug, {
     populate: {
+      authors: { populate: "*"},
       droplet_lessons: {
         populate: ["lesson"],
         sort: ["orderIndex:asc"],
@@ -44,6 +47,14 @@ export default async function Page({ params }: Props) {
   const session = await getServerSession();
   let completedLessonIds: number[] = [];
   let enrollmentId: string | undefined;
+
+  const userAuthor = await getAuthorByAuthorizedUserEmail(session?.user.email || "");
+  const isAuthor = 
+    userAuthor &&
+    droplet.authors &&
+    droplet.authors.map((author) => author.id).includes(userAuthor.id);
+
+
 
   if (session?.user?.email) {
     const user = await getAuthorizedUserByEmail(session.user.email);
@@ -62,6 +73,8 @@ export default async function Page({ params }: Props) {
       droplet={droplet}
       enrollmentId={enrollmentId}
       completedLessonIds={completedLessonIds}
+      user={session?.user}
+      author={isAuthor || false}
     />
   );
 }

@@ -177,7 +177,10 @@ export default function Sidebar({
                   const previousLesson = index > 0 
                     ? droplet.droplet_lessons[index - 1].lesson 
                     : null;
-                  const isLocked = previousLesson && !completedLessonIds.includes(previousLesson.id);
+                  const isLocked = previousLesson && 
+                    !completedLessonIds.includes(previousLesson.id) &&
+                    !author &&
+                    !isAdmin;
 
                   return (
                     <li key={lesson.id} className="w-full">
