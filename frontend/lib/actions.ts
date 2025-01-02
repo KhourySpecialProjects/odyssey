@@ -441,8 +441,39 @@ export async function updateDroplet(
 
     dataToSend.regenerateSlug = options.regenerateSlug;
 
-    // console.log(dataToSend);
+    // Handle updating droplet_lessons collection updates separately if they exist
+    if (data.droplet_lessons) {
+      console.log(" --> data.droplet_lessons = ", data.droplet_lessons);
+      const dropletLessonsResponse = await Promise.all(
+        data.droplet_lessons.map(async (dl) => {
+          const response = await fetch(
+            STRAPI_API_URL + "/api/droplet-lessons/" + dl.id,
+            {
+              method: "PUT",
+              body: JSON.stringify({
+                data: {
+                  orderIndex: dl.orderIndex,
+                },
+              }),
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+              },
+            }
+          );
+          return response.ok;
+        })
+      );
 
+      if (!dropletLessonsResponse.every(Boolean)) {
+        return {
+          ok: false,
+          error: "Failed to update droplet lessons order",
+          data: null,
+        };
+      }
+    }
+    // Handle updating the main droplets collection 
     const response = await fetch(STRAPI_API_URL + "/api/droplets/" + id, {
       method: "PUT",
       body: JSON.stringify({ data: dataToSend }),
@@ -464,7 +495,6 @@ export async function updateDroplet(
       revalidateTag("droplets");
     }
 
-    // console.log(responseData);
     revalidateTag("authors");
     revalidatePath("(general)/drafts", "page");
     return { ok: true, error: null, data: responseData.data };
