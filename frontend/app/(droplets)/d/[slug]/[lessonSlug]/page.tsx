@@ -7,6 +7,7 @@ import { getLessonBySlug } from "@/lib/requests/lesson";
 import { getServerSession } from "next-auth";
 import { AuthorizedUser, User } from "@/types";
 import { getAuthorByAuthorizedUserEmail } from "@/lib/requests/author";
+import { getCurrentUser } from "@/lib/auth/session";
 
 type Props = {
   params: Promise<Params>;
@@ -33,7 +34,7 @@ export default async function Page({ params }: Props) {
 
   const droplet = await getDropletBySlug(slug, {
     populate: {
-      authors: { populate: "*"},
+      authors: { populate: "*" },
       droplet_lessons: {
         populate: ["lesson"],
         sort: ["orderIndex:asc"],
@@ -42,19 +43,14 @@ export default async function Page({ params }: Props) {
   });
 
   const lesson = await getLessonBySlug(lessonSlug);
-  
+
+  //TODO: Clean up this section - there are too many accesses to
+  // user functions
+
   // Get completed lessons
   const session = await getServerSession();
   let completedLessonIds: number[] = [];
   let enrollmentId: string | undefined;
-
-  const userAuthor = await getAuthorByAuthorizedUserEmail(session?.user.email || "");
-  const isAuthor = 
-    userAuthor &&
-    droplet.authors &&
-    droplet.authors.map((author) => author.id).includes(userAuthor.id);
-
-
 
   if (session?.user?.email) {
     const user = await getAuthorizedUserByEmail(session.user.email);
@@ -63,9 +59,19 @@ export default async function Page({ params }: Props) {
 
     if (enrollment) {
       enrollmentId = enrollment.id;
-      completedLessonIds = enrollment.viewedLessons?.map((l: { id: number }) => l.id) || [];
+      completedLessonIds =
+        enrollment.viewedLessons?.map((l: { id: number }) => l.id) || [];
     }
   }
+
+  const currentUser = await getCurrentUser();
+  const userAuthor = await getAuthorByAuthorizedUserEmail(
+    session?.user.email || ""
+  );
+  const isAuthor =
+    userAuthor &&
+    droplet.authors &&
+    droplet.authors.map((author) => author.id).includes(userAuthor.id);
 
   return (
     <LessonRenderer
@@ -73,7 +79,7 @@ export default async function Page({ params }: Props) {
       droplet={droplet}
       enrollmentId={enrollmentId}
       completedLessonIds={completedLessonIds}
-      user={session?.user}
+      user={currentUser}
       author={isAuthor || false}
     />
   );

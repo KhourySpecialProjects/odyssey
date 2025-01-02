@@ -45,8 +45,7 @@ export default async function RootLayout({ params, children }: Props) {
     const user = await getAuthorizedUserByEmail(session.user.email);
     const enrollments = await getEnrollmentsByAuthorizedUser(user.id);
     completedLessonIds = enrollments.flatMap(
-      (enrollment) =>
-        enrollment.viewedLessons?.map((lesson) => lesson.id) || [],
+      (enrollment) => enrollment.viewedLessons?.map((lesson) => lesson.id) || []
     );
   }
 
@@ -75,7 +74,7 @@ export default async function RootLayout({ params, children }: Props) {
     <div className="flex flex-col md:flex-row">
       <Sidebar
         author={isAuthor || false}
-        user={session?.user}
+        user={user}
         droplet={droplet}
         completedLessonIds={completedLessonIds}
       />
