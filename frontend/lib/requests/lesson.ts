@@ -10,7 +10,7 @@ import { fetchAPI } from "../utils";
  */
 export async function getLessonBySlug<T extends Partial<Lesson> = Lesson>(
   slug: string,
-  { sort, filters, populate = "*", fields = ["*"] }: StrapiRequestParams = {}
+  { sort, filters, populate = "*", fields = ["*"] }: StrapiRequestParams = {},
 ): Promise<T> {
   const path = `/lessons`;
   const urlParams = {

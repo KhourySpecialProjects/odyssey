@@ -22,7 +22,7 @@ export function QuizQuestionEditor({
 
   const updateAnswer = (index: number, content: string) => {
     const updatedAnswers = question.answerOptions.map((answer, i) =>
-      i === index ? { ...answer, content } : answer
+      i === index ? { ...answer, content } : answer,
     );
     onUpdate({ ...question, answerOptions: updatedAnswers });
   };
