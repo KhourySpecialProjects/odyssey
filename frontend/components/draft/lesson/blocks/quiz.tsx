@@ -28,7 +28,7 @@ export function QuizEditor({
   deleteBlock,
 }: QuizEditorProps) {
   const [questions, setQuestions] = useState<QuizQuestion[]>(
-    block.questions || []
+    block.questions || [],
   );
 
   const addQuestion = () => {
@@ -48,7 +48,7 @@ export function QuizEditor({
 
   const updateQuestion = (index: number, updatedQuestion: QuizQuestion) => {
     const updatedQuestions = questions.map((q, i) =>
-      i === index ? updatedQuestion : q
+      i === index ? updatedQuestion : q,
     );
     setQuestions(updatedQuestions);
     updateBlock({ questions: updatedQuestions });
