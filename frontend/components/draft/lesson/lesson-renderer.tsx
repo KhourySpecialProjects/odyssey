@@ -17,6 +17,8 @@ import { toast } from "sonner";
 import { useTransition } from "react";
 import { useMemo } from "react";
 import { LessonNameInput } from "@/components/ui/tiptap/lesson-name-input";
+import { QuizEditor } from "./blocks/quiz";
+import { QuizQuestion } from "@/types";
 
 interface Block {
   __component: string;
@@ -26,6 +28,7 @@ interface Block {
   type?: string;
   label?: string;
   url?: string;
+  questions?: QuizQuestion[];
 }
 
 interface LessonRendererProps {
@@ -39,7 +42,7 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
 
   const [blocks, setBlocks] = useState<Block[]>(lesson.blocks);
   const [lastSavedBlocks, setLastSavedBlocks] = useState<Block[]>(
-    lesson.blocks,
+    lesson.blocks
   );
   const lastSavedBlocksRef = useRef<Block[]>(lastSavedBlocks);
   const [name, setName] = useState(lesson.name);
@@ -54,7 +57,7 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
         return;
       }
     },
-    [lesson.id],
+    [lesson.id]
   );
 
   const updateBlocksBackendReload = useCallback(
@@ -62,7 +65,7 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
       await updateLesson(lesson.id, { blocks }, { reload: true });
       console.log("Updated Blocks while reloading");
     },
-    [lesson.id],
+    [lesson.id]
   );
 
   const updateNameBackend = useCallback(
@@ -73,7 +76,7 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
         router.replace(`/draft/d/${dropletSlug}/${slug}`);
       }
     },
-    [lesson.id, dropletSlug, router],
+    [lesson.id, dropletSlug, router]
   );
 
   const regenerateSlug = useCallback(
@@ -81,14 +84,14 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
       const response = await updateLesson(
         lesson.id,
         { name },
-        { regenerateSlug: true },
+        { regenerateSlug: true }
       );
       if (response && !response.error) {
         const slug = response.data.attributes.slug;
         router.replace(`/draft/d/${dropletSlug}/${slug}`);
       }
     },
-    [lesson.id, dropletSlug, router],
+    [lesson.id, dropletSlug, router]
   );
 
   const deleteLessonBackend = useCallback(async () => {
@@ -105,7 +108,7 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
   const setBlock = useCallback((index: number) => {
     return (block: Partial<Block>) => {
       setBlocks((prevBlocks) =>
-        prevBlocks.map((b, i) => (i === index ? { ...b, ...block } : b)),
+        prevBlocks.map((b, i) => (i === index ? { ...b, ...block } : b))
       );
     };
   }, []);
@@ -118,7 +121,7 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
         updateBlocksBackendReload(updatedBlocks);
       };
     },
-    [blocks, updateBlocksBackendReload],
+    [blocks, updateBlocksBackendReload]
   );
 
   const addBlock = useCallback(
@@ -129,18 +132,18 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
         updateBlocksBackendReload(updatedBlocks);
       };
     },
-    [blocks, updateBlocksBackendReload],
+    [blocks, updateBlocksBackendReload]
   );
 
   // Debounced updates
   const debounceUpdate = useMemo(
     () => debounce(updateBlocksBackend, 1000, { maxWait: 3000 }),
-    [updateBlocksBackend],
+    [updateBlocksBackend]
   );
 
   const debouncedNameUpdate = useMemo(
     () => debounce(updateNameBackend, 1000),
-    [updateNameBackend],
+    [updateNameBackend]
   );
 
   // Effects
@@ -177,11 +180,22 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
           return <VideoEditor {...props} />;
         case "droplets.callout":
           return <CalloutEditor {...props} />;
+        case "droplets.quiz":
+          return (
+            <QuizEditor
+              block={{
+                ...props.block,
+                questions: props.block.questions || [],
+              }}
+              updateBlock={props.updateBlock}
+              deleteBlock={props.deleteBlock}
+            />
+          );
         default:
           return null;
       }
     },
-    [setBlock, deleteBlock],
+    [setBlock, deleteBlock]
   );
 
   return (
