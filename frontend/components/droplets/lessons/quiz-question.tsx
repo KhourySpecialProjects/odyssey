@@ -30,7 +30,7 @@ export function QuizQuestionBlock({ question }: { question: QuizQuestion }) {
   const [showResult, setShowResult] = useState(false);
   const correctAnswer = useMemo(
     () => question.answerOptions.find((option) => option.isCorrect),
-    [question],
+    [question]
   );
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -62,35 +62,38 @@ export function QuizQuestionBlock({ question }: { question: QuizQuestion }) {
         <div className="px-8 py-12 mt-4 text-center border rounded-md border-slate-200">
           {form.getValues("answerId") === String(correctAnswer.id) ? (
             <>
-              <Badge className="text-green-700 bg-green-100">
+              <Badge className="text-green-700 bg-green-100 text-lg">
                 That&rsquo;s Right!
               </Badge>
 
-              <p className="mt-4 font-bold text-pretty">
-                {
-                  question.answerOptions.find(
-                    (option) =>
-                      String(option.id) === form.getValues("answerId"),
-                  )!.content
-                }
-              </p>
+              <p
+                className="mt-0.5 font-bold text-pretty prose prose-lg"
+                dangerouslySetInnerHTML={{
+                  __html: question.answerOptions.find(
+                    (option) => String(option.id) === form.getValues("answerId")
+                  )!.content,
+                }}
+              />
             </>
           ) : (
             <>
-              <Badge className="text-orange-700 bg-orange-100">Not Quite</Badge>
+              <Badge className="text-orange-700 bg-orange-100 text-lg">
+                Not Quite
+              </Badge>
 
               <div className="my-8">
                 <span className="text-sm font-bold uppercase text-sky-700">
                   You selected:
                 </span>
-                <p className="mt-0.5 font-bold text-pretty">
-                  {
-                    question.answerOptions.find(
+                <p
+                  className="mt-0.5 font-bold text-pretty prose prose-lg"
+                  dangerouslySetInnerHTML={{
+                    __html: question.answerOptions.find(
                       (option) =>
-                        String(option.id) === form.getValues("answerId"),
-                    )!.content
-                  }
-                </p>
+                        String(option.id) === form.getValues("answerId")
+                    )!.content,
+                  }}
+                />
               </div>
 
               <Button
