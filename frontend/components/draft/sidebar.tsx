@@ -17,6 +17,7 @@ import {
   ShipIcon,
   TowerControlIcon,
   SettingsIcon,
+  ArrowLeftIcon,
 } from "lucide-react";
 import { signOut } from "next-auth/react";
 import Image from "next/image";
@@ -181,13 +182,20 @@ export function Sidebar({
             <Separator />
 
             {/* Droplet name */}
-            <p className="p-2 my-2 text-lg font-extrabold leading-7">
-              {droplet.name}
-            </p>
+            <div className="flex items-center justify-between p-2 my-2">
+              <p className="text-lg font-extrabold leading-7">{droplet.name}</p>
+              <Link
+                href="/drafts"
+                className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-950 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 dark:ring-offset-slate-950 dark:focus-visible:ring-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 h-9 w-9"
+                aria-label="Back to Drafts"
+              >
+                <ArrowLeftIcon className="w-4 h-4" />
+              </Link>
+            </div>
 
             {/* Metadata link */}
-            <ul className="space-y-2 font-medium">
-              <li>
+            <ul className="space-y-4 w-full font-medium flex flex-col items-center">
+              <li className="w-full">
                 <Link
                   href={`/draft/d/${droplet.slug}`}
                   className={cn(
@@ -198,6 +206,14 @@ export function Sidebar({
                 >
                   <SettingsIcon className="shrink-0" />
                   <span className="leading-snug ms-3">Metadata</span>
+                </Link>
+              </li>
+              <li className="pb-2 w-full text-center">
+                <Link
+                  className="w-full px-6 py-2 rounded-full text-white bg-purple-500 hover:bg-purple-600"
+                  href={`/d/${droplet.slug}`}
+                >
+                  Preview
                 </Link>
               </li>
             </ul>

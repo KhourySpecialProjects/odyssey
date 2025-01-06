@@ -1,8 +1,10 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRightIcon } from "lucide-react";
 import Link from "next/link";
+import { getCurrentUser } from "@/lib/auth/session";
 
-export default function HomeRoute() {
+export default async function HomeRoute() {
+  const user = await getCurrentUser();
   return (
     <div className="relative px-6 bg-white isolate lg:px-8">
       <div
@@ -20,9 +22,11 @@ export default function HomeRoute() {
 
       <div className="max-w-2xl py-20 mx-auto sm:py-36 lg:py-44">
         <div className="hidden sm:mb-8 sm:flex sm:justify-center">
-          <div className="relative px-3 py-1 text-sm leading-6 rounded-full text-slate-600 ring-1 ring-slate-900/10 hover:ring-slate-900/20">
-            <strong>Coming soon</strong> &mdash; request access today!
-          </div>
+          {!user && (
+            <div className="relative px-3 py-1 text-sm leading-6 rounded-full text-slate-600 ring-1 ring-slate-900/10 hover:ring-slate-900/20">
+              <strong>Coming soon</strong> &mdash; request access today!
+            </div>
+          )}
         </div>
 
         <div className="text-center">
@@ -36,11 +40,18 @@ export default function HomeRoute() {
           </p>
           <div className="flex flex-col items-center justify-center mt-10 md:flex-row gap-x-6 gap-y-3">
             <Button size="lg" after={<ArrowRightIcon />} asChild>
-              <Link href="/explore">Explore Droplets</Link>
+              <Link href="/explore">Explore</Link>
             </Button>
-            <Button size="lg" variant="link" after={<ArrowRightIcon />} asChild>
-              <Link href="/request-access">Request Access</Link>
-            </Button>
+            {!user && (
+              <Button
+                size="lg"
+                variant="link"
+                after={<ArrowRightIcon />}
+                asChild
+              >
+                <Link href="/request-access">Request Access</Link>
+              </Button>
+            )}
           </div>
         </div>
       </div>

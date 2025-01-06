@@ -24,6 +24,10 @@ export function AccessRequestBlock({ request }: { request: AccessRequest }) {
     });
   };
 
+  const handleDeleteRequest = async (formData: FormData) => {
+    await deleteAccessRequest(formData);
+  };
+
   return (
     <li className="flex items-center justify-between py-4">
       <div>
@@ -44,7 +48,7 @@ export function AccessRequestBlock({ request }: { request: AccessRequest }) {
           Accept
         </Button>
 
-        <form action={deleteAccessRequest}>
+        <form action={handleDeleteRequest}>
           <input type="hidden" name="id" value={request.id} />
           <Button variant="destructive" disabled={isPending}>
             Reject
