@@ -8,7 +8,7 @@ import {
   isAuthorizedUserAdmin,
   condenseRoleTitles,
 } from "@/lib/utils";
-import { Droplet, User } from "@/types";
+import { Droplet, Lesson, User } from "@/types";
 import {
   BookTextIcon,
   ChevronDownIcon,
@@ -21,6 +21,7 @@ import {
   ShipIcon,
   TargetIcon,
   TowerControlIcon,
+  CheckCircle2,
 } from "lucide-react";
 import { signOut } from "next-auth/react";
 import Image from "next/image";
@@ -39,23 +40,29 @@ import {
 import { Label } from "../ui/label";
 import { Progress } from "../ui/progress";
 import { Separator } from "../ui/separator";
+import { useSession } from "next-auth/react";
 
 export default function Sidebar({
   user,
+  author = false,
   droplet,
+  completedLessonIds = [],
 }: {
   user?: User | null;
+  author: boolean;
   droplet: Pick<Droplet, "name" | "slug" | "lessons">;
+  completedLessonIds: number[];
 }) {
   const [expanded, setExpanded] = useState(false);
   const pathname = usePathname();
+  const { data: session } = useSession();
 
   const isAdmin = user && isAuthorizedUserAdmin(user.roles);
 
   const activeLinkClasses =
-    "flex font-bold items-center p-2 bg-slate-200 [&>svg]:text-sky-700 rounded-lg dark:text-white dark:hover:bg-slate-700 group text-sky-700 transition-colors";
+    "w-full flex font-bold items-center p-2 bg-slate-200 [&>svg]:text-sky-700 rounded-lg dark:text-white dark:hover:bg-slate-700 group text-sky-700 transition-colors";
   const inactiveLinkClasses =
-    "flex items-center p-2 rounded-lg text-slate-900 dark:text-white hover:bg-slate-100 dark:hover:bg-slate-700 group transition-colors";
+    "w-full flex items-center p-2 rounded-lg text-slate-900 dark:text-white hover:bg-slate-100 dark:hover:bg-slate-700 group transition-colors";
 
   const totalLessons = droplet.lessons?.length ?? 0;
   const totalPages = totalLessons + 2;
@@ -136,8 +143,19 @@ export default function Sidebar({
               {droplet.name}
             </p>
 
-            <ul className="space-y-2 font-medium">
-              <li>
+            {author && (
+              <div className="pb-4 w-full text-center">
+                <Link
+                  className="w-full px-6 py-2 rounded-full text-white bg-green-600 hover:bg-green-700"
+                  href={`/draft/d/${droplet.slug}`}
+                >
+                  Edit
+                </Link>
+              </div>
+            )}
+
+            <ul className="flex flex-col items-center space-y-2 font-medium">
+              <li className="w-full">
                 <Link
                   href={`/d/${droplet.slug}`}
                   className={
@@ -152,7 +170,7 @@ export default function Sidebar({
               </li>
 
               {droplet.lessons?.map((lesson) => (
-                <li key={lesson.id}>
+                <li key={lesson.id} className="w-full">
                   <Link
                     href={`/d/${droplet.slug}/${lesson.slug}`}
                     className={
@@ -169,11 +187,14 @@ export default function Sidebar({
                       <BookTextIcon className="shrink-0" />
                     )}
                     <span className="leading-snug ms-3">{lesson.name}</span>
+                    {completedLessonIds.includes(lesson.id) && (
+                      <CheckCircle2 className="ml-auto w-4 h-4 text-green-500 shrink-0" />
+                    )}
                   </Link>
                 </li>
               ))}
 
-              <li>
+              <li className="w-full">
                 <Link
                   href={`/d/${droplet.slug}/recap`}
                   className={
@@ -226,7 +247,7 @@ export default function Sidebar({
                 <DropdownMenuItem asChild>
                   <Link href="/explore">
                     <ShipIcon className="w-4 h-4 mr-2" />
-                    <span>Explore Droplets</span>
+                    <span>Explore</span>
                   </Link>
                 </DropdownMenuItem>
 

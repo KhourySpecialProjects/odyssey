@@ -24,13 +24,13 @@ import {
   DeleteObjectCommand,
 } from "@aws-sdk/client-s3";
 import { v4 as uuidv4 } from "uuid";
+import { Buffer } from "node:buffer";
 
 const STRAPI_API_URL = process.env.STRAPI_API_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
 
 const CreateAuthorizedUser = AuthorizedUserSchema.omit({
   id: true,
-  roles: true,
 });
 export async function createAuthorizedUser(prevState: any, formData: FormData) {
   const roleID = await getAuthorizedUserRoleIdByTitle(
@@ -374,7 +374,7 @@ export async function addLesson(formData: z.infer<typeof CreateLessonSchema>) {
       },
     });
     const data = await response.json();
-    console.log(data);
+    // console.log(data);
     if (!response.ok || (response.ok && data.error)) {
       console.log(data.error.details);
       return { ok: false, error: data.error.message, data: null };
@@ -416,7 +416,7 @@ export async function updateDroplet(
 
     dataToSend.regenerateSlug = options.regenerateSlug;
 
-    console.log(dataToSend);
+    // console.log(dataToSend);
 
     const response = await fetch(STRAPI_API_URL + "/api/droplets/" + id, {
       method: "PUT",
@@ -439,7 +439,7 @@ export async function updateDroplet(
       revalidateTag("droplets");
     }
 
-    console.log(responseData);
+    // console.log(responseData);
     revalidateTag("authors");
     revalidatePath("(general)/drafts", "page");
     return { ok: true, error: null, data: responseData.data };
@@ -461,16 +461,15 @@ export async function updateLesson(
     regenerateSlug: false,
   },
 ) {
+  console.log(" --> actions.ts: updateLesson() function called");
   try {
     if (data.blocks) {
       data.blocks = data.blocks.map(({ id, ...rest }) => rest);
     }
-
     const dataToSend: any = {
       ...(data.name && { name: data.name }),
       ...(data.blocks && { blocks: data.blocks }),
     };
-
     dataToSend.regenerateSlug = options.regenerateSlug;
 
     console.log(dataToSend);
@@ -488,13 +487,21 @@ export async function updateLesson(
     const responseData = await response.json();
 
     if (!response.ok || (response.ok && responseData.error)) {
-      console.log(responseData);
-      console.log(responseData.error.details);
+      console.log(" ----> F");
+      console.log("responseData: ", responseData);
+      console.log("responseData.error.details: ", responseData.error.details);
+      console.log(
+        "responseData.error.details.errors: ",
+        responseData.error.details.errors,
+      );
+      console.log(
+        "responseData.error.details.errors[0].path[0]: ",
+        responseData.error.details.errors[0].path[0],
+      );
       const errorPath = responseData.error.details.errors[0].path[0];
       const errorMessage = `${responseData.error.message} (${errorPath})`;
       return { ok: false, error: errorMessage, data: null };
     }
-    console.log(responseData);
 
     if (options.reload) {
       revalidatePath("(editing)/draft/d/[slug]/[lessonSlug]", "page");
@@ -516,6 +523,7 @@ export async function updateLesson(
 }
 
 export async function revalidateLesson() {
+  console.log(" --> actions.ts: revalidateLesson() function called");
   revalidateTag("lesson");
   revalidatePath("(editing)/draft/d/[slug]/[lessonSlug]", "page");
 }
@@ -656,6 +664,95 @@ export async function deepDeleteDroplet(id: number) {
   }
 }
 
+export async function completeLesson(activityId: number, lessonIds: number[]) {
+  try {
+    const response = await fetch(
+      STRAPI_API_URL + `/api/authorized-user-activities/${activityId}`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+        },
+        body: JSON.stringify({
+          data: {
+            lessons: lessonIds,
+          },
+        }),
+      },
+    );
+
+    if (!response.ok) {
+      throw new Error("Failed to complete lesson");
+    }
+
+    revalidatePath("/(droplets)/d/[slug]/[lessonSlug]");
+    return { success: true };
+  } catch (error) {
+    console.error("Error completing lesson:", error);
+    return { success: false, error };
+  }
+}
+
+export async function markLessonAsComplete(
+  enrollmentId: string,
+  completedLessonIds: number[],
+  lessonId: number,
+) {
+  try {
+    // First get the current enrollment to ensure we have the latest data
+    const enrollmentResponse = await fetch(
+      `${process.env.STRAPI_API_URL}/api/enrollments/${enrollmentId}?populate=viewedLessons`,
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.STRAPI_ACCESS_TOKEN}`,
+        },
+      },
+    );
+
+    if (!enrollmentResponse.ok) {
+      throw new Error("Failed to fetch enrollment");
+    }
+
+    const enrollment = await enrollmentResponse.json();
+
+    // Update the enrollment with the new lesson
+    const response = await fetch(
+      `${process.env.STRAPI_API_URL}/api/enrollments/${enrollmentId}`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${process.env.STRAPI_ACCESS_TOKEN}`,
+        },
+        body: JSON.stringify({
+          data: {
+            viewedLessons: {
+              connect: [lessonId],
+            },
+          },
+        }),
+      },
+    );
+
+    if (!response.ok) {
+      const error = await response.json();
+      console.error("Error response:", error);
+      throw new Error("Failed to mark lesson as complete");
+    }
+
+    // Update revalidation paths to be more generic
+    revalidatePath("/dashboard");
+    revalidatePath("/(droplets)/d/[slug]/[lessonSlug]", "page");
+    revalidatePath("/(playlists)/p/[slug]", "page");
+
+    return true;
+  } catch (error) {
+    console.error("Error marking lesson as complete:", error);
+    return false;
+  }
+}
+
 const s3 = new S3Client({
   region: process.env.AWS_S3_BUCKET_REGION,
   credentials: {
@@ -729,5 +826,120 @@ export async function deleteImage(fileName: string) {
   } catch (err) {
     console.log(err);
     return { ok: false, error: "Failed to delete image" };
+  }
+}
+
+export async function createPlaylist(data: {
+  name: string;
+  isPublic: boolean;
+  droplets: { id: number }[];
+  author: { id: number };
+  userId: number;
+}) {
+  const tempSlug = "random";
+  try {
+    const dataToSend = {
+      name: data.name,
+      author: {
+        set: [data.author.id],
+      },
+      slug: tempSlug, // this gets overwritten by Strapi
+      isPublic: data.isPublic,
+      droplets: {
+        connect: data.droplets,
+      },
+      authorized_users: {
+        connect: [data.userId],
+      },
+    };
+    // console.log("data to send: ", dataToSend);
+
+    const response = await fetch(`${STRAPI_API_URL}/api/playlists`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+      },
+      body: JSON.stringify({ data: dataToSend }),
+    });
+
+    const responseData = await response.json();
+
+    if (!response.ok || (response.ok && responseData.error)) {
+      return {
+        ok: false,
+        error: responseData.error?.message || "Failed to create playlist",
+        data: null,
+      };
+    }
+
+    revalidateTag("playlists");
+    return { ok: true, error: null, data: responseData.data };
+  } catch (err) {
+    console.error(err);
+    return {
+      ok: false,
+      error: "Database Error: Failed to create playlist.",
+      data: null,
+    };
+  }
+}
+
+export async function updatePlaylist(
+  id: number,
+  data: {
+    name: string;
+    isPublic: boolean;
+    droplets: { id: number }[];
+    author: { id: number };
+    userId: number;
+    slug?: string; //TODO Should slug be optional for updating a playlist?
+  },
+) {
+  try {
+    const dataToSend = {
+      name: data.name,
+      isPublic: data.isPublic,
+      droplets: {
+        set: data.droplets, // 'set' replaces all existing relationships
+      },
+      authorized_users: {
+        set: [data.userId], // ensure author remains connected
+      },
+      slug: data.slug,
+      regenerateSlug: false,
+    };
+
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_STRAPI_API_URL}/api/playlists/${id}`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${process.env.STRAPI_ACCESS_TOKEN}`,
+        },
+        body: JSON.stringify({ data: dataToSend }),
+      },
+    );
+
+    const responseData = await response.json();
+
+    if (!response.ok || (response.ok && responseData.error)) {
+      return {
+        ok: false,
+        error: responseData.error?.message || "Failed to update playlist",
+        data: null,
+      };
+    }
+
+    revalidateTag("playlists");
+    return { ok: true, error: null, data: responseData.data };
+  } catch (err) {
+    console.error(err);
+    return {
+      ok: false,
+      error: "Database Error: Failed to update playlist.",
+      data: null,
+    };
   }
 }

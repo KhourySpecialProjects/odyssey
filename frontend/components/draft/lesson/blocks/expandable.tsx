@@ -1,12 +1,12 @@
 "use client";
 
 import { ArrowDownFromLineIcon, Trash2Icon } from "lucide-react";
-import TipTap from "@/components/ui/tiptap/tiptap";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { useState, useCallback, useEffect, useRef } from "react";
 import { updateLesson } from "@/lib/actions";
 import { debounce } from "lodash";
+import { ExpandableBlockInput } from "@/components/ui/tiptap/expandable-block-input";
 
 export function ExpandableEditor({
   block,
@@ -56,8 +56,7 @@ export function ExpandableEditor({
         <ArrowDownFromLineIcon className="w-4 h-4 text-sky-400" />
       </div>
 
-      <TipTap
-        variant="lesson-expandable-body"
+      <ExpandableBlockInput
         initialContent={content}
         updateContent={updateContent}
       />

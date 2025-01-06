@@ -10,9 +10,13 @@ import { useTransition } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
 
-export function EnrollButton({ droplet }: { droplet: Droplet }) {
-  const router = useRouter();
+interface EnrollButtonProps {
+  droplet: Droplet;
+  isEnrolled?: boolean;
+}
 
+export function EnrollButton({ droplet, isEnrolled }: EnrollButtonProps) {
+  const router = useRouter();
   const [_, startTransition] = useTransition();
 
   if (!droplet.lessons || droplet.lessons.length === 0) {
@@ -23,7 +27,7 @@ export function EnrollButton({ droplet }: { droplet: Droplet }) {
     if (droplet.lessons && droplet.lessons.length > 0) {
       const values: z.infer<typeof DropletEnrollmentSchema> = {
         droplet: droplet.id,
-        viewedLessons: [droplet.lessons[0].id],
+        viewedLessons: [],
       };
 
       startTransition(() => {
@@ -51,8 +55,10 @@ export function EnrollButton({ droplet }: { droplet: Droplet }) {
           router.push(`/d/${droplet.slug}/${droplet.lessons[0].slug}`);
         }
       }}
+      disabled={isEnrolled}
+      variant={isEnrolled ? "secondary" : "default"}
     >
-      Enroll and Continue
+      {isEnrolled ? "Already Enrolled" : "Enroll and Continue"}
     </Button>
   );
 }

@@ -9,13 +9,36 @@ export async function Enrollments() {
   if (!user?.email) return notFound();
 
   const authorizedUser = await getAuthorizedUserByEmail(user.email);
-  const enrollments = await getEnrollmentsByAuthorizedUser(authorizedUser.id);
+  const enrollments = await getEnrollmentsByAuthorizedUser(authorizedUser.id, {
+    populate: {
+      droplet: {
+        populate: {
+          tags: true,
+          lessons: {
+            fields: ["id", "name", "slug"],
+          },
+        },
+      },
+      viewedLessons: {
+        fields: ["id", "name", "slug"],
+      },
+    },
+  });
 
   return (
     <ul className="grid grid-flow-row grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
-      {enrollments.map((enrollment) => (
-        <DropletTile key={enrollment.id} droplet={enrollment.droplet} />
-      ))}
+      {enrollments.map((enrollment) => {
+        const completedLessonIds =
+          enrollment.viewedLessons?.map((l) => l.id) || [];
+        return (
+          <DropletTile
+            key={enrollment.id}
+            droplet={enrollment.droplet}
+            isEnrolled={true}
+            completedLessonIds={completedLessonIds}
+          />
+        );
+      })}
     </ul>
   );
 }

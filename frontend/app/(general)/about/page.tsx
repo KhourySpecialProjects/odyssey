@@ -1,5 +1,6 @@
 import { GradientBackground } from "@/components/gradient-bg";
 import { Button } from "@/components/ui/button";
+import { getCurrentUser } from "@/lib/auth/session";
 import {
   ArrowRightIcon,
   BinaryIcon,
@@ -52,6 +53,7 @@ const focusAreas = [
 ];
 
 export default async function AboutPage() {
+  const user = await getCurrentUser();
   return (
     <GradientBackground>
       <>
@@ -152,19 +154,26 @@ export default async function AboutPage() {
           </div>
         </div>
 
-        <div className="w-full max-w-2xl px-6 py-8 mx-auto mt-16 text-center border rounded-md lg:px-8 md:py-16 sm:mt-20 bg-slate-50 border-slate-600">
-          <h2 className="text-2xl font-bold tracking-tight sm:text-3xl text-slate-900">
-            Ready to join the Odyssey?
-          </h2>
-          <div className="flex flex-col items-center justify-center mt-10 md:flex-row gap-x-4 gap-y-3">
-            <Button size="lg" after={<ArrowRightIcon />} asChild>
-              <Link href="/request-access">Request Access</Link>
-            </Button>
-            <Button size="lg" variant="link" after={<ArrowRightIcon />} asChild>
-              <Link href="/explore">Explore Droplets</Link>
-            </Button>
+        {!user && (
+          <div className="w-full max-w-2xl px-6 py-8 mx-auto mt-16 text-center border rounded-md lg:px-8 md:py-16 sm:mt-20 bg-slate-50 border-slate-600">
+            <h2 className="text-2xl font-bold tracking-tight sm:text-3xl text-slate-900">
+              Ready to join the Odyssey?
+            </h2>
+            <div className="flex flex-col items-center justify-center mt-10 md:flex-row gap-x-4 gap-y-3">
+              <Button size="lg" after={<ArrowRightIcon />} asChild>
+                <Link href="/request-access">Request Access</Link>
+              </Button>
+              <Button
+                size="lg"
+                variant="link"
+                after={<ArrowRightIcon />}
+                asChild
+              >
+                <Link href="/explore">Explore</Link>
+              </Button>
+            </div>
           </div>
-        </div>
+        )}
       </>
     </GradientBackground>
   );

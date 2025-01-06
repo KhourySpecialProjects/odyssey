@@ -11,7 +11,12 @@ export async function getDroplets({
   sort,
   filters = { isHidden: false },
   pagination = { pageSize: 25, page: 1 },
-  populate,
+  populate = {
+    tags: true,
+    lessons: {
+      fields: ["id", "name", "slug"],
+    },
+  },
   fields = ["id", "name", "slug", "type", "focusArea", "status"],
 }: StrapiRequestParams = {}): Promise<Droplet[]> {
   const path = `/droplets`;
@@ -74,4 +79,11 @@ export async function getDropletById<T extends Partial<Droplet> = Droplet>(
   return await fetchAPI<T>(path, {
     urlParams,
   }).then((droplet) => droplet);
+}
+
+// get all droplets that are in draft status
+export async function getDraftDroplets(): Promise<Droplet[]> {
+  return await getDroplets({
+    filters: { status: "draft" },
+  });
 }

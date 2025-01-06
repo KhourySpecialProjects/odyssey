@@ -1,23 +1,27 @@
-import { DebugBanner } from "@/components/debug/debugBanner";
-import { EnvironmentBanner } from "@/components/debug/environmentBanner";
-import { ReportBugDialog } from "@/components/droplets/reports/bug/dialog";
 import Sidebar from "@/components/droplets/sidebar";
-import { getCurrentUser } from "@/lib/auth/session";
+import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
 import { getDropletBySlug } from "@/lib/requests/droplet";
+import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
+import { getServerSession } from "next-auth";
+import { Metadata } from "next/types";
 import { Droplet } from "@/types";
-import type { Metadata } from "next";
+import { getCurrentUser } from "@/lib/auth/session";
 import { notFound } from "next/navigation";
+import { getAuthorByAuthorizedUserEmail } from "@/lib/requests/author";
 
 type Props = {
-  params: {
-    slug: string;
-    lessonSlug?: string;
-  };
+  params: Promise<Params>;
   children: React.ReactNode;
 };
 
+type Params = {
+  slug: string;
+  lessonSlug?: string;
+};
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const droplet = await getDropletBySlug<Pick<Droplet, "name">>(params.slug, {
+  const p = await params;
+  const droplet = await getDropletBySlug<Pick<Droplet, "name">>(p.slug, {
     fields: ["name"],
     populate: undefined,
   });
@@ -32,32 +36,50 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function RootLayout({ params, children }: Props) {
+  const { slug } = await params;
+  const session = await getServerSession();
   const user = await getCurrentUser();
+  let completedLessonIds: number[] = [];
 
-  const droplet = await getDropletBySlug<
-    Pick<Droplet, "name" | "slug" | "lessons">
-  >(params.slug, {
-    fields: ["name", "slug"],
-    populate: ["lessons"],
+  if (session?.user?.email) {
+    const user = await getAuthorizedUserByEmail(session.user.email);
+    const enrollments = await getEnrollmentsByAuthorizedUser(user.id);
+    completedLessonIds = enrollments.flatMap(
+      (enrollment) =>
+        enrollment.viewedLessons?.map((lesson) => lesson.id) || [],
+    );
+  }
+
+  const droplet = await getDropletBySlug<Droplet>(slug, {
+    fields: ["*"],
+    populate: {
+      authors: { populate: "*" },
+      learningObjectives: { populate: "*" },
+      lessons: { populate: "*" },
+      tags: { populate: "*" },
+      prerequisites: { populate: ["id", "name", "slug"] },
+      postrequisites: { populate: ["id", "name", "slug"] },
+    },
   });
-  if (!droplet) return notFound();
+
+  if (!droplet || !user) return notFound();
+
+  const userAuthor = await getAuthorByAuthorizedUserEmail(user.email || "");
+
+  const isAuthor =
+    userAuthor &&
+    droplet.authors &&
+    droplet.authors.map((author) => author.id).includes(userAuthor.id);
 
   return (
-    <>
-      <Sidebar user={user} droplet={droplet} />
-
-      <div className="md:ml-64">
-        <DebugBanner />
-        <EnvironmentBanner className="mb-2" />
-
-        <div className="p-6 rounded-lg sm:p-8 md:py-10 md:m-4 md:border-dashed md:border-2 md:border-slate-200 md:dark:border-slate-700">
-          {children}
-        </div>
-      </div>
-
-      <div className="fixed bottom-8 right-8">
-        <ReportBugDialog user={user} />
-      </div>
-    </>
+    <div className="flex flex-col md:flex-row">
+      <Sidebar
+        author={isAuthor || false}
+        user={session?.user}
+        droplet={droplet}
+        completedLessonIds={completedLessonIds}
+      />
+      <main className="flex-1 px-4 py-8 md:px-8">{children}</main>
+    </div>
   );
 }
