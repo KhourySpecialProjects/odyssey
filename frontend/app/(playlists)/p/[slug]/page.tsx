@@ -101,6 +101,8 @@ export default async function PlaylistPage({ params }: Props) {
       const completedLessonsInDroplet = completedLessonIds.filter((id) =>
         dropletLessonIds.includes(id),
       );
+      console.log(dropletLessonIds.length);
+      console.log(completedLessonsInDroplet.length);
       return {
         droplet,
         index,
