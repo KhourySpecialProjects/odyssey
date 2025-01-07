@@ -12,9 +12,24 @@ import {
 import { getCurrentUser } from "@/lib/auth/session";
 import { getInitials, condenseRoleTitles } from "@/lib/utils";
 import { User2Icon } from "lucide-react";
+import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
+import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
+import { Droplet, Enrollment } from "@/types";
 
 export default async function Settings() {
   const user = await getCurrentUser();
+  let completedDropletNames: string[] = [];
+  let enrollmentDropletNames: string[] = [];
+  let enrollmentDroplets = 0;
+  let completedDroplets = 0;
+  if (user?.email) {
+    const authorizedUser = await getAuthorizedUserByEmail(user.email);
+    const enrollments = await getEnrollmentsByAuthorizedUser(authorizedUser.id);
+    enrollmentDropletNames = enrollments.map((e) => e.droplet.name)
+    completedDropletNames = enrollments.filter((e) => e.viewedLessons.length === e.droplet.lessons?.length).map((d) => d.droplet.name)
+    enrollmentDroplets = enrollmentDropletNames.length;
+    completedDroplets = completedDropletNames.length;
+  }
 
   return (
     <>
@@ -53,7 +68,7 @@ export default async function Settings() {
             </div>
             <div>
               <div className="text-sm text-slate-500 dark:text-slate-400">
-                Title
+                Role(s)
               </div>
               <div className="font-medium">
                 {condenseRoleTitles(user!.roles)}
@@ -74,6 +89,60 @@ export default async function Settings() {
             effect.
           </p>
         </CardFooter>
+      </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle>Completed Droplets</CardTitle>
+          <CardDescription>All of the droplets that you have finished.</CardDescription>
+        </CardHeader>
+
+        <CardContent className="flex flex-col items-start gap-x-8 gap-y-6 sm:flex-row">
+          <div className="flex items-center space-x-3">
+            <div>
+              <div className="font-medium">Completed Droplets</div>
+              <div className="text-sm text-slate-500 dark:text-slate-400">
+              {enrollmentDropletNames.map((droplet, index) => (
+                <div key={index}>
+                  {droplet}
+                </div>
+              ))}
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle>Statistics</CardTitle>
+          <CardDescription>Information about droplets that you have interacted with.</CardDescription>
+        </CardHeader>
+
+        <CardContent className="flex flex-col items-start gap-x-8 gap-y-6 sm:flex-row">
+          <div className="flex items-center space-x-3">
+            <div>
+              <div className="font-medium">Number of Completed Droplets</div>
+              <div className="text-sm text-slate-500 dark:text-slate-400">
+              {completedDroplets}
+              </div>
+            </div>
+          </div>
+          <div className="flex items-center space-x-3">
+            <div>
+              <div className="font-medium">Number of In-Progress Droplets</div>
+              <div className="text-sm text-slate-500 dark:text-slate-400">
+              {enrollmentDroplets}
+              </div>
+            </div>
+          </div>
+          <div className="flex items-center space-x-3">
+            <div>
+              <div className="font-medium">Other Statistic</div>
+              <div className="text-sm text-slate-500 dark:text-slate-400">
+                placeholder
+              </div>
+            </div>
+          </div>
+        </CardContent>
       </Card>
     </>
   );

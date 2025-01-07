@@ -11,7 +11,7 @@ import {
 import { Droplet, Lesson, User } from "@/types";
 import {
   ChevronDownIcon,
-  CogIcon,
+  PersonStanding,
   LogOutIcon,
   MenuIcon,
   ShipIcon,

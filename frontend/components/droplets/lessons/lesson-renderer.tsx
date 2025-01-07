@@ -41,6 +41,9 @@ export function LessonRenderer({
       if (success) {
         router.refresh();
       }
+      // } else {
+      //   alert("no success");
+      // }
     });
   }
   let headings: any[] = [];
