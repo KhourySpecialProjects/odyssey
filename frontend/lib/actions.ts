@@ -301,10 +301,12 @@ const CreateDropletSchema = DropletSchema.pick({
 export async function createDroplet(data: z.infer<typeof CreateDropletSchema>) {
   try {
     const user = await getCurrentUser();
+    console.log("user: ", user);
     if (!user?.email) throw new Error("No email identified");
     const author = await getAuthorByAuthorizedUserEmail(user.email, {
       populate: {},
     });
+    console.log("author: ", author);
     if (!author) throw new Error("No author identified");
 
     const dataToSend = {
@@ -323,6 +325,7 @@ export async function createDroplet(data: z.infer<typeof CreateDropletSchema>) {
         objective: obj,
       })),
     };
+    console.log("data to send: ", dataToSend);
 
     const response = await fetch(STRAPI_API_URL + "/api/droplets", {
       method: "POST",
@@ -332,6 +335,7 @@ export async function createDroplet(data: z.infer<typeof CreateDropletSchema>) {
         Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
       },
     });
+    console.log("fetch response: ", response);
 
     const responseData = await response.json();
 
