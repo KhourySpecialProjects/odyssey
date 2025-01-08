@@ -26,7 +26,7 @@ import {
 import { v4 as uuidv4 } from "uuid";
 import { Buffer } from "node:buffer";
 
-const STRAPI_API_URL = process.env.STRAPI_API_URL;
+const STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
 
 const CreateAuthorizedUser = AuthorizedUserSchema.omit({

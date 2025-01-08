@@ -153,7 +153,7 @@ NEXT_PUBLIC_POSTHOG_KEY=
 NEXT_PUBLIC_POSTHOG_HOST=
 NEXT_PUBLIC_APP_ENV=local
 
-STRAPI_API_URL=http://localhost:1337
+NEXT_PUBLIC_STRAPI_API_URL=http://localhost:1337
 STRAPI_ACCESS_TOKEN=
 
 AWS_CDN_URL=
@@ -260,7 +260,7 @@ Copy the token that was created for you. The Token in the screenshot above will 
 Navigate back to **.docker.env** in the frontend directory and paste into the file like so, replacing **`<your_token>`** with your token
 
 ```bash
-STRAPI_API_URL=http://host.docker.internal:1337
+NEXT_PUBLIC_STRAPI_API_URL=http://host.docker.internal:1337
 STRAPI_ACCESS_TOKEN=<your_token>
 ```
 
