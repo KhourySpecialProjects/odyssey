@@ -30,7 +30,7 @@ export function QuizQuestionBlock({ question }: { question: QuizQuestion }) {
   const [showResult, setShowResult] = useState(false);
   const correctAnswer = useMemo(
     () => question.answerOptions.find((option) => option.isCorrect),
-    [question]
+    [question],
   );
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -70,7 +70,8 @@ export function QuizQuestionBlock({ question }: { question: QuizQuestion }) {
                 className="mt-0.5 font-bold text-pretty prose prose-lg"
                 dangerouslySetInnerHTML={{
                   __html: question.answerOptions.find(
-                    (option) => String(option.id) === form.getValues("answerId")
+                    (option) =>
+                      String(option.id) === form.getValues("answerId"),
                   )!.content,
                 }}
               />
@@ -90,7 +91,7 @@ export function QuizQuestionBlock({ question }: { question: QuizQuestion }) {
                   dangerouslySetInnerHTML={{
                     __html: question.answerOptions.find(
                       (option) =>
-                        String(option.id) === form.getValues("answerId")
+                        String(option.id) === form.getValues("answerId"),
                     )!.content,
                   }}
                 />
