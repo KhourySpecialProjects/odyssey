@@ -48,6 +48,9 @@ const StarRating: React.FC<StarRatingProps> = ({ value: initialValue, enrollment
                     </label>
                 );
             })}
+            <div className="">
+            <p className="ml-3 block w-full text-3xl font-black text-slate-950 text-3xl">{rating.toFixed(1)}</p>
+            </div>
         </div>
         );
     }
