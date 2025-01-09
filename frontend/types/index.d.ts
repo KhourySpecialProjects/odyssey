@@ -30,6 +30,10 @@ export type AuthorizedUser = {
   enrollments?: Enrollment[];
   playlists?: Playlist[];
   firstTime: boolean;
+  author?: Author;
+  firstName: string;
+  lastName: string;
+  bio: string;
 };
 
 export type NavItem = {
