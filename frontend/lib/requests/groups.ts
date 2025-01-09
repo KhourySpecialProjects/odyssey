@@ -428,7 +428,7 @@ export async function updateGroup(
   console.log("  --> updateGroup data = ", data);
 
   // Map basic fields
-  if (data.groupName) dataToSend.name = data.groupName;
+  if (data.groupName) dataToSend.groupName = data.groupName;
   if (data.description) dataToSend.description = data.description;
   if (data.semester) dataToSend.semester = data.semester;
 
