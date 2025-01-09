@@ -11,7 +11,7 @@
       "url": "https://khouryodyssey.org"
     },
     "license": null,
-    "x-generation-date": "2025-01-09T18:55:35.966Z"
+    "x-generation-date": "2025-01-09T19:18:14.212Z"
   },
   "x-strapi-config": {
     "plugins": [
@@ -2108,6 +2108,12 @@
                                                       }
                                                     }
                                                   },
+                                                  "linkedin": {
+                                                    "type": "string"
+                                                  },
+                                                  "github": {
+                                                    "type": "string"
+                                                  },
                                                   "createdAt": {
                                                     "type": "string",
                                                     "format": "date-time"
@@ -2681,6 +2687,12 @@
                   ],
                   "example": "string or id"
                 }
+              },
+              "linkedin": {
+                "type": "string"
+              },
+              "github": {
+                "type": "string"
               }
             }
           }
@@ -3894,6 +3906,12 @@
                                                                                 }
                                                                               }
                                                                             },
+                                                                            "linkedin": {
+                                                                              "type": "string"
+                                                                            },
+                                                                            "github": {
+                                                                              "type": "string"
+                                                                            },
                                                                             "createdAt": {
                                                                               "type": "string",
                                                                               "format": "date-time"
@@ -4487,6 +4505,12 @@
                 }
               }
             }
+          },
+          "linkedin": {
+            "type": "string"
+          },
+          "github": {
+            "type": "string"
           },
           "createdAt": {
             "type": "string",
@@ -6272,6 +6296,12 @@
                             }
                           }
                         },
+                        "linkedin": {
+                          "type": "string"
+                        },
+                        "github": {
+                          "type": "string"
+                        },
                         "createdAt": {
                           "type": "string",
                           "format": "date-time"
@@ -7760,6 +7790,12 @@
                                                                                     }
                                                                                   }
                                                                                 }
+                                                                              },
+                                                                              "linkedin": {
+                                                                                "type": "string"
+                                                                              },
+                                                                              "github": {
+                                                                                "type": "string"
                                                                               },
                                                                               "createdAt": {
                                                                                 "type": "string",
@@ -10272,6 +10308,12 @@
                           }
                         }
                       },
+                      "linkedin": {
+                        "type": "string"
+                      },
+                      "github": {
+                        "type": "string"
+                      },
                       "createdAt": {
                         "type": "string",
                         "format": "date-time"
@@ -11877,6 +11919,12 @@
                                                         }
                                                       }
                                                     }
+                                                  },
+                                                  "linkedin": {
+                                                    "type": "string"
+                                                  },
+                                                  "github": {
+                                                    "type": "string"
                                                   },
                                                   "createdAt": {
                                                     "type": "string",
@@ -13901,6 +13949,12 @@
                                                         }
                                                       }
                                                     }
+                                                  },
+                                                  "linkedin": {
+                                                    "type": "string"
+                                                  },
+                                                  "github": {
+                                                    "type": "string"
                                                   },
                                                   "createdAt": {
                                                     "type": "string",
@@ -16241,6 +16295,12 @@
                                                         }
                                                       }
                                                     }
+                                                  },
+                                                  "linkedin": {
+                                                    "type": "string"
+                                                  },
+                                                  "github": {
+                                                    "type": "string"
                                                   },
                                                   "createdAt": {
                                                     "type": "string",

@@ -1,11 +1,11 @@
 import Link from "next/link";
+import { SocialForms } from "@/app/(general)/settings/social-forms";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -14,7 +14,11 @@ import { getInitials, condenseRoleTitles } from "@/lib/utils";
 import { User2Icon } from "lucide-react";
 import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
 import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
-import { Droplet, Enrollment } from "@/types";
+import { AuthorizedUser, AuthorizedUserRole, Droplet, Enrollment, Playlist } from "@/types";
+import { Input } from "@/components/ui/input";
+import { Button } from "@lemonsqueezy/wedges";
+import { toast } from "sonner";
+import { updateGithub, updateLinkedin } from "@/lib/actions";
 
 export default async function Settings() {
   const user = await getCurrentUser();
@@ -22,8 +26,12 @@ export default async function Settings() {
   let enrollmentDropletNames: string[] = [];
   let enrollmentDroplets = 0;
   let completedDroplets = 0;
+  let authorizedUser: AuthorizedUser | null = null;
   if (user?.email) {
-    const authorizedUser = await getAuthorizedUserByEmail(user.email);
+    authorizedUser = await getAuthorizedUserByEmail(user.email) as AuthorizedUser;
+    if (!authorizedUser?.id) {
+      throw new Error("Authorized user not found");
+    }
     const enrollments = await getEnrollmentsByAuthorizedUser(authorizedUser.id);
     enrollmentDropletNames = enrollments.map((e) => e.droplet.name)
     completedDropletNames = enrollments.filter((e) => e.viewedLessons.length === e.droplet.lessons?.length).map((d) => d.droplet.name)
@@ -76,7 +84,7 @@ export default async function Settings() {
             </div>
           </div>
         </CardContent>
-        <CardFooter className="px-6 py-4 border-t">
+        <div className="px-6 py-4 border-t">
           <p className="text-sm text-slate-600">
             To make changes, update your{" "}
             <Link
@@ -88,7 +96,8 @@ export default async function Settings() {
             . You may need to log out and back into Odyssey for changes to take
             effect.
           </p>
-        </CardFooter>
+        </div>
+        <SocialForms authorizedUser={authorizedUser} />
       </Card>
       <Card>
         <CardHeader>
