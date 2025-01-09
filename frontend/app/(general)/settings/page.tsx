@@ -134,14 +134,6 @@ export default async function Settings() {
               </div>
             </div>
           </div>
-          <div className="flex items-center space-x-3">
-            <div>
-              <div className="font-medium">Other Statistic</div>
-              <div className="text-sm text-slate-500 dark:text-slate-400">
-                placeholder
-              </div>
-            </div>
-          </div>
         </CardContent>
       </Card>
     </>
