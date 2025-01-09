@@ -530,9 +530,11 @@ export interface ApiAuthorizedUserAuthorizedUser extends Schema.CollectionType {
       'oneToMany',
       'api::enrollment.enrollment'
     >;
+    github: Attribute.String;
     isEnabled: Attribute.Boolean &
       Attribute.Required &
       Attribute.DefaultTo<true>;
+    linkedin: Attribute.String;
     playlists: Attribute.Relation<
       'api::authorized-user.authorized-user',
       'manyToMany',
