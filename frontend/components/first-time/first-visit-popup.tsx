@@ -1,49 +1,56 @@
 "use client"
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, startTransition } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "../ui/dialog";
 import { Button } from "../ui/button";
 import { Textarea } from "../ui/textarea";
 import { ArrowRightIcon } from "lucide-react";
 import { toast } from "sonner";
-import { updateFirstTimeStatus } from "@/lib/actions";
-import { AuthorizedUser, User } from "@/types";
+import { updateFirstTimeStatus, updateOnboardingInfo } from "@/lib/actions";
+import { AuthorizedUser } from "@/types";
+import { Input } from "../ui/input";
+import Image from "next/image";
 
 export function FirstVisitPopup({ user }: { user: AuthorizedUser | null }) {
   const [isOpen, setIsOpen] = useState(false);
-  const [name, setName] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [bio, setBio] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
+    console.log("user: ", user);
     if (user?.firstTime) {
         setIsOpen(true);
       }
   }, [user]);
 
   const handleClose = async () => {
-    if (!name.trim()) {
-      toast.error("Please enter your name before continuing");
+    if (!firstName.trim()) {
+      toast.error("Please enter your first name before continuing");
       return;
     }
-
-    setIsSubmitting(true);
+    if (!lastName.trim()) {
+      toast.error("Please enter your last name before continuing");
+      return;
+    }
     try {
       if (user) {
         await updateFirstTimeStatus(user.id);
-        // TODO: update name and bio here as well
+        await updateOnboardingInfo(firstName, lastName, bio, user.id)
         setIsOpen(false);
       }
     } catch (error) {
       console.error("Failed to save your information. Please try again.");
-    } finally {
-      setIsSubmitting(false);
-    }
+    } 
   };
 
   const onOpenChange = (open: boolean) => {
-    if (!open && !name.trim()) {
-      toast.error("Please enter your name before continuing");
+    if (!open && !firstName.trim()) {
+      toast.error("Please enter your first name before continuing");
+      return;
+    }
+    if (!open && !lastName.trim()) {
+      toast.error("Please enter your last name before continuing");
       return;
     }
     if (!open) {
@@ -58,6 +65,13 @@ export function FirstVisitPopup({ user }: { user: AuthorizedUser | null }) {
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[825px]">
+      <Image
+                src="/logo.svg"
+                alt="Khoury Odyssey Logo"
+                width={200}
+                height={55}
+                priority
+              />
         <DialogHeader>
           <DialogTitle>Welcome to Khoury Odyssey!</DialogTitle>
           <DialogDescription>
@@ -68,12 +82,23 @@ export function FirstVisitPopup({ user }: { user: AuthorizedUser | null }) {
         </DialogHeader>
         <div className="flex flex-col gap-4 mt-4">
           <p className="text-sm text-slate-600">
-            Enter your name here: <span className="text-red-500">*</span>
+            Enter your first name here: <span className="text-red-500">*</span>
           </p>
-          <Textarea 
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Your name (required)"
+          <Input 
+            value={firstName}
+            onChange={(e) => setFirstName(e.target.value)}
+            placeholder="First name (required)"
+            required
+          />
+        </div>
+        <div className="flex flex-col gap-4 mt-4">
+          <p className="text-sm text-slate-600">
+            Enter your last name here: <span className="text-red-500">*</span>
+          </p>
+          <Input 
+            value={lastName}
+            onChange={(e) => setLastName(e.target.value)}
+            placeholder="Last name (required)"
             required
           />
         </div>
