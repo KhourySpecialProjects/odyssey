@@ -3,13 +3,18 @@ import { cn, uppercaseFirstChar } from "@/lib/utils";
 import { Droplet } from "@/types";
 import Link from "next/link";
 
+
+import { StarRating } from "@/components/ui/rating-stars";
+import { getDropletAverageRating }  from "@/lib/requests/enrollment";
+
 interface DropletTileProps {
   droplet: Droplet;
   isEnrolled?: boolean;
   completedLessonIds?: number[];
 }
 
-export function DropletTile({
+
+export async function DropletTile({
   droplet,
   isEnrolled = false,
   completedLessonIds = [],
@@ -68,6 +73,11 @@ export function DropletTile({
           <span className="block w-full text-3xl font-black text-slate-950 place-self-end">
             {droplet.name}
           </span>
+        
+          <div className="flex items-start w-full scale-[0.55] origin-left">
+            <StarRating value={await getDropletAverageRating(droplet)} enrollmentID={""} average={true} />
+          </div>
+
         </div>
       </Link>
     </li>
