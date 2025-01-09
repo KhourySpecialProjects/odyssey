@@ -20,7 +20,7 @@ import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
 
 //Rating System imports
 import { StarRating } from "@/components/ui/rating-stars";
-import { getDropletAverageRating }  from "@/lib/requests/enrollment";
+import { getDropletAverageRating } from "@/lib/requests/enrollment";
 
 
 type Props = {
@@ -86,8 +86,10 @@ export default async function DropletRoute({ params }: Props) {
               </Badge>
             ))}
 
-<StarRating value = {await getDropletAverageRating(droplet)} enrollmentID = { "" } average = { true }>
-</StarRating>
+            {await getDropletAverageRating(droplet) != 0 ?
+              <StarRating value={await getDropletAverageRating(droplet)} enrollmentID={""} average={true}>
+              </StarRating>
+              : null}
 
           </div>
           <h1 className="mt-3 text-6xl font-black text-slate-900">
