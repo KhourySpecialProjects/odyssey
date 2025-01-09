@@ -7,7 +7,7 @@ import { NuqsAdapter } from "nuqs/adapters/react";
 import type { Metadata } from "next";
 import { Lato } from "next/font/google";
 import "./globals.css";
-import { FirstVisitPopup } from "@/components/first-time/first-visit-popup"
+import { FirstVisitPopup } from "@/components/first-time/first-visit-popup";
 import { getCurrentUser } from "../lib/auth/session";
 import { getAuthorizedUserByEmail } from "../lib/requests/authorized-user";
 
@@ -33,14 +33,14 @@ export default async function RootLayout({
 }>) {
   const user = await getCurrentUser();
   let authorizedUser = null;
-  
+
   if (user?.email) {
-  try {
-    authorizedUser = await getAuthorizedUserByEmail(user.email);
-  } catch (error) {
-    console.error("Error fetching authorized user:", error);
+    try {
+      authorizedUser = await getAuthorizedUserByEmail(user.email);
+    } catch (error) {
+      console.error("Error fetching authorized user:", error);
+    }
   }
-}
   return (
     <html lang="en">
       <link rel="icon" href="/icon.svg" type="image/svg+xml" sizes="any" />
