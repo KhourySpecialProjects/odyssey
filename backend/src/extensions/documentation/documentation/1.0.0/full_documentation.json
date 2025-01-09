@@ -11,8 +11,7 @@
       "url": "https://khouryodyssey.org"
     },
     "license": null,
-
-    "x-generation-date": "2024-12-29T17:39:48.088Z"
+    "x-generation-date": "2025-01-08T21:20:42.174Z"
   },
   "x-strapi-config": {
     "plugins": [
@@ -2109,6 +2108,9 @@
                                                       }
                                                     }
                                                   },
+                                                  "firstTime": {
+                                                    "type": "boolean"
+                                                  },
                                                   "createdAt": {
                                                     "type": "string",
                                                     "format": "date-time"
@@ -2682,6 +2684,9 @@
                   ],
                   "example": "string or id"
                 }
+              },
+              "firstTime": {
+                "type": "boolean"
               }
             }
           }
@@ -3895,6 +3900,9 @@
                                                                                 }
                                                                               }
                                                                             },
+                                                                            "firstTime": {
+                                                                              "type": "boolean"
+                                                                            },
                                                                             "createdAt": {
                                                                               "type": "string",
                                                                               "format": "date-time"
@@ -4488,6 +4496,9 @@
                 }
               }
             }
+          },
+          "firstTime": {
+            "type": "boolean"
           },
           "createdAt": {
             "type": "string",
@@ -6273,6 +6284,9 @@
                             }
                           }
                         },
+                        "firstTime": {
+                          "type": "boolean"
+                        },
                         "createdAt": {
                           "type": "string",
                           "format": "date-time"
@@ -7761,6 +7775,9 @@
                                                                                     }
                                                                                   }
                                                                                 }
+                                                                              },
+                                                                              "firstTime": {
+                                                                                "type": "boolean"
                                                                               },
                                                                               "createdAt": {
                                                                                 "type": "string",
@@ -10273,6 +10290,9 @@
                           }
                         }
                       },
+                      "firstTime": {
+                        "type": "boolean"
+                      },
                       "createdAt": {
                         "type": "string",
                         "format": "date-time"
@@ -11878,6 +11898,9 @@
                                                         }
                                                       }
                                                     }
+                                                  },
+                                                  "firstTime": {
+                                                    "type": "boolean"
                                                   },
                                                   "createdAt": {
                                                     "type": "string",
@@ -13902,6 +13925,9 @@
                                                         }
                                                       }
                                                     }
+                                                  },
+                                                  "firstTime": {
+                                                    "type": "boolean"
                                                   },
                                                   "createdAt": {
                                                     "type": "string",
@@ -16242,6 +16268,9 @@
                                                         }
                                                       }
                                                     }
+                                                  },
+                                                  "firstTime": {
+                                                    "type": "boolean"
                                                   },
                                                   "createdAt": {
                                                     "type": "string",
