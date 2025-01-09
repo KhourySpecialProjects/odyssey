@@ -77,7 +77,7 @@ export async function DropletTile({
           <div className="flex items-start w-full scale-[0.55] origin-left">
             <StarRating value={await getDropletAverageRating(droplet)} enrollmentID={""} average={true} />
           </div>
-
+          
         </div>
       </Link>
     </li>
