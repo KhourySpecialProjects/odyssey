@@ -14,7 +14,13 @@ import { getInitials, condenseRoleTitles } from "@/lib/utils";
 import { User2Icon } from "lucide-react";
 import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
 import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
-import { AuthorizedUser, AuthorizedUserRole, Droplet, Enrollment, Playlist } from "@/types";
+import {
+  AuthorizedUser,
+  AuthorizedUserRole,
+  Droplet,
+  Enrollment,
+  Playlist,
+} from "@/types";
 import { Input } from "@/components/ui/input";
 import { Button } from "@lemonsqueezy/wedges";
 import { toast } from "sonner";
@@ -28,13 +34,17 @@ export default async function Settings() {
   let completedDroplets = 0;
   let authorizedUser: AuthorizedUser | null = null;
   if (user?.email) {
-    authorizedUser = await getAuthorizedUserByEmail(user.email) as AuthorizedUser;
+    authorizedUser = (await getAuthorizedUserByEmail(
+      user.email,
+    )) as AuthorizedUser;
     if (!authorizedUser?.id) {
       throw new Error("Authorized user not found");
     }
     const enrollments = await getEnrollmentsByAuthorizedUser(authorizedUser.id);
-    enrollmentDropletNames = enrollments.map((e) => e.droplet.name)
-    completedDropletNames = enrollments.filter((e) => e.viewedLessons.length === e.droplet.lessons?.length).map((d) => d.droplet.name)
+    enrollmentDropletNames = enrollments.map((e) => e.droplet.name);
+    completedDropletNames = enrollments
+      .filter((e) => e.viewedLessons.length === e.droplet.lessons?.length)
+      .map((d) => d.droplet.name);
     enrollmentDroplets = enrollmentDropletNames.length;
     completedDroplets = completedDropletNames.length;
   }
@@ -102,7 +112,9 @@ export default async function Settings() {
       <Card>
         <CardHeader>
           <CardTitle>Completed Droplets</CardTitle>
-          <CardDescription>All of the droplets that you have finished.</CardDescription>
+          <CardDescription>
+            All of the droplets that you have finished.
+          </CardDescription>
         </CardHeader>
 
         <CardContent className="flex flex-col items-start gap-x-8 gap-y-6 sm:flex-row">
@@ -110,11 +122,9 @@ export default async function Settings() {
             <div>
               <div className="font-medium">Completed Droplets</div>
               <div className="text-sm text-slate-500 dark:text-slate-400">
-              {enrollmentDropletNames.map((droplet, index) => (
-                <div key={index}>
-                  {droplet}
-                </div>
-              ))}
+                {enrollmentDropletNames.map((droplet, index) => (
+                  <div key={index}>{droplet}</div>
+                ))}
               </div>
             </div>
           </div>
@@ -123,7 +133,9 @@ export default async function Settings() {
       <Card>
         <CardHeader>
           <CardTitle>Statistics</CardTitle>
-          <CardDescription>Information about droplets that you have interacted with.</CardDescription>
+          <CardDescription>
+            Information about droplets that you have interacted with.
+          </CardDescription>
         </CardHeader>
 
         <CardContent className="flex flex-col items-start gap-x-8 gap-y-6 sm:flex-row">
@@ -131,7 +143,7 @@ export default async function Settings() {
             <div>
               <div className="font-medium">Number of Completed Droplets</div>
               <div className="text-sm text-slate-500 dark:text-slate-400">
-              {completedDroplets}
+                {completedDroplets}
               </div>
             </div>
           </div>
@@ -139,7 +151,7 @@ export default async function Settings() {
             <div>
               <div className="font-medium">Number of In-Progress Droplets</div>
               <div className="text-sm text-slate-500 dark:text-slate-400">
-              {enrollmentDroplets}
+                {enrollmentDroplets}
               </div>
             </div>
           </div>
