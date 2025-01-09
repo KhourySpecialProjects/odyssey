@@ -10,10 +10,10 @@ export const generalConfig: GeneralConfig = {
       href: "/explore",
       label: "Explore",
     },
-    {
-      href: "/dashboard",
-      label: "My Content",
-    },
+    // {
+    //   href: "/dashboard",
+    //   label: "My Content",
+    // },
   ],
 
   contentCreatorNav: [
