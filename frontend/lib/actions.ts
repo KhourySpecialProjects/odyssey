@@ -386,7 +386,12 @@ export async function addLesson(formData: z.infer<typeof CreateLessonSchema>) {
   }
 }
 
-export async function updateOnboardingInfo(first: string, last: string, bio: string | null, userId: number) {
+export async function updateOnboardingInfo(
+  first: string,
+  last: string,
+  bio: string | null,
+  userId: number,
+) {
   try {
     const response = await fetch(
       `${STRAPI_API_URL}/api/authorized-users/${userId}`,
@@ -400,10 +405,10 @@ export async function updateOnboardingInfo(first: string, last: string, bio: str
           data: {
             firstName: first,
             lastName: last,
-            bio: bio
+            bio: bio,
           },
         }),
-      }
+      },
     );
 
     if (!response.ok) {
@@ -431,7 +436,7 @@ export async function updateFirstTimeStatus(userId: number) {
             firstTime: false,
           },
         }),
-      }
+      },
     );
 
     if (!response.ok) {

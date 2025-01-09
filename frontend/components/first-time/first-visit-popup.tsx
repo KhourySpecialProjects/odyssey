@@ -1,7 +1,13 @@
-"use client"
+"use client";
 
 import { useState, useEffect, startTransition } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "../ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "../ui/dialog";
 import { Button } from "../ui/button";
 import { Textarea } from "../ui/textarea";
 import { ArrowRightIcon } from "lucide-react";
@@ -20,8 +26,8 @@ export function FirstVisitPopup({ user }: { user: AuthorizedUser | null }) {
   useEffect(() => {
     console.log("user: ", user);
     if (user?.firstTime) {
-        setIsOpen(true);
-      }
+      setIsOpen(true);
+    }
   }, [user]);
 
   const handleClose = async () => {
@@ -36,12 +42,12 @@ export function FirstVisitPopup({ user }: { user: AuthorizedUser | null }) {
     try {
       if (user) {
         await updateFirstTimeStatus(user.id);
-        await updateOnboardingInfo(firstName, lastName, bio, user.id)
+        await updateOnboardingInfo(firstName, lastName, bio, user.id);
         setIsOpen(false);
       }
     } catch (error) {
       console.error("Failed to save your information. Please try again.");
-    } 
+    }
   };
 
   const onOpenChange = (open: boolean) => {
@@ -65,13 +71,13 @@ export function FirstVisitPopup({ user }: { user: AuthorizedUser | null }) {
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[825px]">
-      <Image
-                src="/logo.svg"
-                alt="Khoury Odyssey Logo"
-                width={200}
-                height={55}
-                priority
-              />
+        <Image
+          src="/logo.svg"
+          alt="Khoury Odyssey Logo"
+          width={200}
+          height={55}
+          priority
+        />
         <DialogHeader>
           <DialogTitle>Welcome to Khoury Odyssey!</DialogTitle>
           <DialogDescription>
@@ -84,7 +90,7 @@ export function FirstVisitPopup({ user }: { user: AuthorizedUser | null }) {
           <p className="text-sm text-slate-600">
             Enter your first name here: <span className="text-red-500">*</span>
           </p>
-          <Input 
+          <Input
             value={firstName}
             onChange={(e) => setFirstName(e.target.value)}
             placeholder="First name (required)"
@@ -95,7 +101,7 @@ export function FirstVisitPopup({ user }: { user: AuthorizedUser | null }) {
           <p className="text-sm text-slate-600">
             Enter your last name here: <span className="text-red-500">*</span>
           </p>
-          <Input 
+          <Input
             value={lastName}
             onChange={(e) => setLastName(e.target.value)}
             placeholder="Last name (required)"
@@ -103,10 +109,8 @@ export function FirstVisitPopup({ user }: { user: AuthorizedUser | null }) {
           />
         </div>
         <div className="flex flex-col gap-4 mt-4">
-          <p className="text-sm text-slate-600">
-            Enter a brief bio here:
-          </p>
-          <Textarea 
+          <p className="text-sm text-slate-600">Enter a brief bio here:</p>
+          <Textarea
             value={bio}
             onChange={(e) => setBio(e.target.value)}
             placeholder="Tell us about yourself (optional)"
@@ -114,10 +118,11 @@ export function FirstVisitPopup({ user }: { user: AuthorizedUser | null }) {
         </div>
         <div className="flex flex-col gap-4 mt-4">
           <p className="text-sm text-slate-600">
-            Get started by exploring our collection of Droplets - bite-sized learning
-            modules designed to help you succeed in your academic journey.
+            Get started by exploring our collection of Droplets - bite-sized
+            learning modules designed to help you succeed in your academic
+            journey.
           </p>
-          
+
           <Button onClick={() => handleClose()} after={<ArrowRightIcon />}>
             Start Exploring
           </Button>
