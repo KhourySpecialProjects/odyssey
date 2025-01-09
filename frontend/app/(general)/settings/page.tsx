@@ -14,17 +14,7 @@ import { getInitials, condenseRoleTitles } from "@/lib/utils";
 import { User2Icon } from "lucide-react";
 import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
 import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
-import {
-  AuthorizedUser,
-  AuthorizedUserRole,
-  Droplet,
-  Enrollment,
-  Playlist,
-} from "@/types";
-import { Input } from "@/components/ui/input";
-import { Button } from "@lemonsqueezy/wedges";
-import { toast } from "sonner";
-import { updateGithub, updateLinkedin } from "@/lib/actions";
+import { AuthorizedUser } from "@/types";
 
 export default async function Settings() {
   const user = await getCurrentUser();
@@ -94,7 +84,7 @@ export default async function Settings() {
             </div>
           </div>
         </CardContent>
-        <div className="px-6 py-4 border-t">
+        <div className="px-6 py-4 border-b">
           <p className="text-sm text-slate-600">
             To make changes, update your{" "}
             <Link
