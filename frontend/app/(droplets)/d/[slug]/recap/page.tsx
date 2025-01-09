@@ -6,6 +6,13 @@ import { GoalIcon, Link2Icon } from "lucide-react";
 import { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { StarRating } from "@/components/ui/rating-stars";
+
+import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
+
+import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
+import { getServerSession } from "next-auth";
+
 
 type Props = {
   params: Promise<Params>;
@@ -26,6 +33,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title: `Recap | ${droplet.name}`,
   };
+
 }
 
 export default async function DropletRecapRoute({ params }: Props) {
@@ -57,10 +65,22 @@ export default async function DropletRecapRoute({ params }: Props) {
     populate: { tags: { populate: "*" } },
   });
 
+  let enrollID: string = "";
+  const session = await getServerSession();
+
+  if (session?.user?.email) {
+    const user = await getAuthorizedUserByEmail(session.user.email);
+    const enrollments = await getEnrollmentsByAuthorizedUser(user.id);
+    const enrollment = enrollments.find((e) => e.droplet.id === droplet.id);
+
+    if (enrollment) {
+      enrollID = enrollment.id;
+    }
+
   return (
     <>
       <GradientBackground className="px-0">
-        <div className="max-w-2xl mx-auto">
+        <div className="mb-12 max-w-2xl mx-auto">
           <h1 className="mt-3 text-6xl font-black text-slate-900">Recap</h1>
           <p className="mt-3 text-slate-500 text-pretty md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed dark:text-slate-400">
             <strong>You did it!</strong> Congratulations on completing this
@@ -83,7 +103,7 @@ export default async function DropletRecapRoute({ params }: Props) {
             <ul className="flex flex-col divide-y divide-slate-200">
               {droplet.learningObjectives.map((objective) => (
                 <li
-                  key={objective.id}
+                 key={objective.id}              
                   className="inline-flex items-center gap-2 px-4 py-3 leading-snug"
                 >
                   <GoalIcon className="w-5 h-5 mr-0.5 shrink-0" />
@@ -145,7 +165,27 @@ export default async function DropletRecapRoute({ params }: Props) {
             </Button>
           </section>
         ) : null} */}
-      </div>
+
+
+        {enrollID ? (
+          <section>
+          <h2 className="mb-3 text-2xl font-bold text-slate-900">
+            Rate this Droplet!
+      </h2>
+          <StarRating value = {0} enrollmentID = { enrollID } average = { false } />
+        </section>
+        ) : null}
+        
+          </div>
     </>
+
   );
 }
+ 
+}
+
+
+
+
+
+
