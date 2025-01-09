@@ -399,10 +399,10 @@ export async function updateLinkedin(linkedIn: string, userId: number) {
         },
         body: JSON.stringify({
           data: {
-            linkedin: linkedIn
+            linkedin: linkedIn,
           },
         }),
-      }
+      },
     );
 
     if (!response.ok) {
@@ -427,10 +427,10 @@ export async function updateGithub(github: string, userId: number) {
         },
         body: JSON.stringify({
           data: {
-            github: github
+            github: github,
           },
         }),
-      }
+      },
     );
 
     if (!response.ok) {
