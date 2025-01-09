@@ -26,7 +26,7 @@ import {
 import { v4 as uuidv4 } from "uuid";
 import { Buffer } from "node:buffer";
 
-const STRAPI_API_URL = process.env.STRAPI_API_URL;
+const STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
 
 const CreateAuthorizedUser = AuthorizedUserSchema.omit({
@@ -374,7 +374,6 @@ export async function addLesson(formData: z.infer<typeof CreateLessonSchema>) {
       },
     });
     const data = await response.json();
-    // console.log(data);
     if (!response.ok || (response.ok && data.error)) {
       console.log(data.error.details);
       return { ok: false, error: data.error.message, data: null };
@@ -384,6 +383,34 @@ export async function addLesson(formData: z.infer<typeof CreateLessonSchema>) {
   } catch (err) {
     console.error(err);
     return { error: "Database Error: Failed to Delete Authorized User." };
+  }
+}
+
+export async function updateFirstTimeStatus(userId: number) {
+  try {
+    const response = await fetch(
+      `${STRAPI_API_URL}/api/authorized-users/${userId}`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+        },
+        body: JSON.stringify({
+          data: {
+            firstTime: false,
+          },
+        }),
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error("Failed to update first time status");
+    }
+    return { success: true };
+  } catch (error) {
+    console.error("Error updating first time status:", error);
+    return { success: false, error };
   }
 }
 
@@ -416,8 +443,6 @@ export async function updateDroplet(
 
     dataToSend.regenerateSlug = options.regenerateSlug;
 
-    // console.log(dataToSend);
-
     const response = await fetch(STRAPI_API_URL + "/api/droplets/" + id, {
       method: "PUT",
       body: JSON.stringify({ data: dataToSend }),
@@ -439,7 +464,6 @@ export async function updateDroplet(
       revalidateTag("droplets");
     }
 
-    // console.log(responseData);
     revalidateTag("authors");
     revalidatePath("(general)/drafts", "page");
     return { ok: true, error: null, data: responseData.data };

@@ -7,6 +7,9 @@ import { NuqsAdapter } from "nuqs/adapters/react";
 import type { Metadata } from "next";
 import { Lato } from "next/font/google";
 import "./globals.css";
+import { FirstVisitPopup } from "@/components/first-time/first-visit-popup"
+import { getCurrentUser } from "../lib/auth/session";
+import { getAuthorizedUserByEmail } from "../lib/requests/authorized-user";
 
 const lato = Lato({
   subsets: ["latin-ext"],
@@ -23,11 +26,21 @@ export const metadata: Metadata = {
     "Khoury Odyssey is a new platform designed to provide on-demand access to modern knowledge and skills pertinent to today’s undergraduate Khoury students.",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const user = await getCurrentUser();
+  let authorizedUser = null;
+  
+  if (user?.email) {
+  try {
+    authorizedUser = await getAuthorizedUserByEmail(user.email);
+  } catch (error) {
+    console.error("Error fetching authorized user:", error);
+  }
+}
   return (
     <html lang="en">
       <link rel="icon" href="/icon.svg" type="image/svg+xml" sizes="any" />
@@ -35,7 +48,10 @@ export default function RootLayout({
         <AuthSessionProvider>
           <PHProvider>
             <TooltipProvider delayDuration={250}>
-              <NuqsAdapter>{children}</NuqsAdapter>
+              <NuqsAdapter>
+                {children}
+                <FirstVisitPopup user={authorizedUser} />
+              </NuqsAdapter>
               <DebugToggle />
             </TooltipProvider>
           </PHProvider>
