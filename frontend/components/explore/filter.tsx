@@ -106,7 +106,7 @@ export function Filter({
                     onSelect={() => {
                       if (isSelected) {
                         updateQueryString(
-                          selectedValues.filter((val) => val !== option.value)
+                          selectedValues.filter((val) => val !== option.value),
                         );
                       } else {
                         updateQueryString([...selectedValues, option.value]);
@@ -118,7 +118,7 @@ export function Filter({
                         "mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-sky-600",
                         isSelected
                           ? "bg-sky-600 text-white"
-                          : "opacity-50 [&_svg]:invisible"
+                          : "opacity-50 [&_svg]:invisible",
                       )}
                     >
                       <CheckIcon className="w-4 h-4" />

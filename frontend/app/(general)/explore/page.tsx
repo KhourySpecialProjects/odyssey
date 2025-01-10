@@ -19,7 +19,7 @@ export const revalidate = 0;
 export default async function ExplorePage({
   searchParams,
 }: {
-  searchParams?: { [key: string]: string | string[] | undefined };
+  searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
   const {
     sort,

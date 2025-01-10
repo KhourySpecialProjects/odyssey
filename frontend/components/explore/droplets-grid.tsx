@@ -75,13 +75,13 @@ export async function DropletsGrid({
     enrolledDropletIds = enrollments.map((e) => e.droplet.id);
     completedLessonIds = enrollments.flatMap(
       (enrollment) =>
-        enrollment.viewedLessons?.map((lesson: Lesson) => lesson.id) || []
+        enrollment.viewedLessons?.map((lesson: Lesson) => lesson.id) || [],
     );
   }
   let dropletsWithCompletion = droplets.map((droplet) => {
     const dropletLessonIds = droplet.lessons?.map((l: Lesson) => l.id) || [];
     const completedLessonsInDroplet = completedLessonIds.filter((id) =>
-      dropletLessonIds.includes(id)
+      dropletLessonIds.includes(id),
     );
     const completionPercentage =
       dropletLessonIds.length > 0
