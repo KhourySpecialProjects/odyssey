@@ -3,7 +3,6 @@ import { cn, uppercaseFirstChar } from "@/lib/utils";
 import { Droplet } from "@/types";
 import Link from "next/link";
 
-
 import { StarRating } from "@/components/ui/rating-stars";
 import { getDropletAverageRating } from "@/lib/requests/enrollment";
 
@@ -12,7 +11,6 @@ interface DropletTileProps {
   isEnrolled?: boolean;
   completedLessonIds?: number[];
 }
-
 
 export async function DropletTile({
   droplet,
@@ -27,8 +25,8 @@ export async function DropletTile({
   const completionPercentage =
     dropletLessonIds.length > 0
       ? Math.round(
-        (completedLessonsInDroplet.length / dropletLessonIds.length) * 100,
-      )
+          (completedLessonsInDroplet.length / dropletLessonIds.length) * 100,
+        )
       : 0;
 
   const getCompletionBadgeColor = () => {
@@ -74,12 +72,15 @@ export async function DropletTile({
             {droplet.name}
           </span>
 
-          {await getDropletAverageRating(droplet) != 0 ?
+          {(await getDropletAverageRating(droplet)) != 0 ? (
             <div className="flex items-start w-full scale-[0.55] origin-left">
-              <StarRating value={await getDropletAverageRating(droplet)} enrollmentID={""} average={true} />
+              <StarRating
+                value={await getDropletAverageRating(droplet)}
+                enrollmentID={""}
+                average={true}
+              />
             </div>
-            : null}
-
+          ) : null}
         </div>
       </Link>
     </li>

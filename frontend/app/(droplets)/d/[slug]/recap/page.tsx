@@ -13,7 +13,6 @@ import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
 import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
 import { getServerSession } from "next-auth";
 
-
 type Props = {
   params: Promise<Params>;
 };
@@ -33,7 +32,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title: `Recap | ${droplet.name}`,
   };
-
 }
 
 export default async function DropletRecapRoute({ params }: Props) {
@@ -77,86 +75,86 @@ export default async function DropletRecapRoute({ params }: Props) {
       enrollID = enrollment.id;
     }
 
-  return (
-    <>
-      <GradientBackground className="px-0">
-        <div className="mb-12 max-w-2xl mx-auto">
-          <h1 className="mt-3 text-6xl font-black text-slate-900">Recap</h1>
-          <p className="mt-3 text-slate-500 text-pretty md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed dark:text-slate-400">
-            <strong>You did it!</strong> Congratulations on completing this
-            &ldquo;{droplet.name}
-            &rdquo; Droplet.
-          </p>
-        </div>
-      </GradientBackground>
-
-      <div className="w-full max-w-2xl py-8 mx-auto space-y-8 md:space-y-12">
-        <section>
-          <h2 className="text-2xl font-bold text-slate-900">
-            Learning Objectives
-          </h2>
-          <p className="text-slate-500">
-            Now that you have completed this Droplet, you should:
-          </p>
-
-          <div className="mt-4 border rounded-md bg-slate-50 border-slate-200">
-            <ul className="flex flex-col divide-y divide-slate-200">
-              {droplet.learningObjectives.map((objective) => (
-                <li
-                 key={objective.id}              
-                  className="inline-flex items-center gap-2 px-4 py-3 leading-snug"
-                >
-                  <GoalIcon className="w-5 h-5 mr-0.5 shrink-0" />
-                  {objective.objective}
-                </li>
-              ))}
-            </ul>
+    return (
+      <>
+        <GradientBackground className="px-0">
+          <div className="mb-12 max-w-2xl mx-auto">
+            <h1 className="mt-3 text-6xl font-black text-slate-900">Recap</h1>
+            <p className="mt-3 text-slate-500 text-pretty md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed dark:text-slate-400">
+              <strong>You did it!</strong> Congratulations on completing this
+              &ldquo;{droplet.name}
+              &rdquo; Droplet.
+            </p>
           </div>
-        </section>
+        </GradientBackground>
 
-        {droplet.nextSteps && droplet.nextSteps.length > 0 ? (
+        <div className="w-full max-w-2xl py-8 mx-auto space-y-8 md:space-y-12">
           <section>
-            <h2 className="text-2xl font-bold text-slate-900">Next Steps</h2>
+            <h2 className="text-2xl font-bold text-slate-900">
+              Learning Objectives
+            </h2>
             <p className="text-slate-500">
-              To further your understanding, we recommend exploring:
+              Now that you have completed this Droplet, you should:
             </p>
 
             <div className="mt-4 border rounded-md bg-slate-50 border-slate-200">
               <ul className="flex flex-col divide-y divide-slate-200">
-                {droplet.nextSteps.map((resource) => (
-                  <li key={resource.id}>
-                    <Link
-                      href={resource.url}
-                      className="inline-flex items-center gap-2 px-4 py-3 leading-snug transition-colors hover:text-sky-700"
-                    >
-                      <Link2Icon className="w-5 h-5 mr-0.5 shrink-0" />
-                      {resource.label ?? resource.url}
-                    </Link>
+                {droplet.learningObjectives.map((objective) => (
+                  <li
+                    key={objective.id}
+                    className="inline-flex items-center gap-2 px-4 py-3 leading-snug"
+                  >
+                    <GoalIcon className="w-5 h-5 mr-0.5 shrink-0" />
+                    {objective.objective}
                   </li>
                 ))}
               </ul>
             </div>
           </section>
-        ) : null}
 
-        {dropletRecommendations && dropletRecommendations.length > 0 ? (
-          <section>
-            <h2 className="text-2xl font-bold text-slate-900">
-              Extend Your Odyssey
-            </h2>
-            <p className="text-slate-500">
-              Have you explored these Droplets yet?
-            </p>
+          {droplet.nextSteps && droplet.nextSteps.length > 0 ? (
+            <section>
+              <h2 className="text-2xl font-bold text-slate-900">Next Steps</h2>
+              <p className="text-slate-500">
+                To further your understanding, we recommend exploring:
+              </p>
 
-            <ul className="grid grid-flow-row grid-cols-1 gap-4 mt-4 sm:grid-cols-2">
-              {dropletRecommendations.map((droplet) => (
-                <DropletTile key={droplet.id} droplet={droplet} />
-              ))}
-            </ul>
-          </section>
-        ) : null}
+              <div className="mt-4 border rounded-md bg-slate-50 border-slate-200">
+                <ul className="flex flex-col divide-y divide-slate-200">
+                  {droplet.nextSteps.map((resource) => (
+                    <li key={resource.id}>
+                      <Link
+                        href={resource.url}
+                        className="inline-flex items-center gap-2 px-4 py-3 leading-snug transition-colors hover:text-sky-700"
+                      >
+                        <Link2Icon className="w-5 h-5 mr-0.5 shrink-0" />
+                        {resource.label ?? resource.url}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </section>
+          ) : null}
 
-        {/* {droplet.lessons && droplet.lessons.length > 0 ? (
+          {dropletRecommendations && dropletRecommendations.length > 0 ? (
+            <section>
+              <h2 className="text-2xl font-bold text-slate-900">
+                Extend Your Odyssey
+              </h2>
+              <p className="text-slate-500">
+                Have you explored these Droplets yet?
+              </p>
+
+              <ul className="grid grid-flow-row grid-cols-1 gap-4 mt-4 sm:grid-cols-2">
+                {dropletRecommendations.map((droplet) => (
+                  <DropletTile key={droplet.id} droplet={droplet} />
+                ))}
+              </ul>
+            </section>
+          ) : null}
+
+          {/* {droplet.lessons && droplet.lessons.length > 0 ? (
           <section>
             <Button size="lg" after={<ArrowRightIcon />} asChild>
               <Link href={`/d/${droplet.slug}/${droplet.lessons[0].slug}`}>
@@ -166,26 +164,16 @@ export default async function DropletRecapRoute({ params }: Props) {
           </section>
         ) : null} */}
 
-
-        {enrollID ? (
-          <section>
-          <h2 className="mb-3 text-2xl font-bold text-slate-900">
-            Rate this Droplet!
-      </h2>
-          <StarRating value = {0} enrollmentID = { enrollID } average = { false } />
-        </section>
-        ) : null}
-        
-          </div>
-    </>
-
-  );
+          {enrollID ? (
+            <section>
+              <h2 className="mb-3 text-2xl font-bold text-slate-900">
+                Rate this Droplet!
+              </h2>
+              <StarRating value={0} enrollmentID={enrollID} average={false} />
+            </section>
+          ) : null}
+        </div>
+      </>
+    );
+  }
 }
- 
-}
-
-
-
-
-
-

@@ -9,7 +9,6 @@ import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
 import { revalidatePath } from "next/cache";
 import { Droplet } from "@/types";
 
-
 const NEXT_PUBLIC_STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
 
@@ -91,8 +90,10 @@ export async function getIsEnrolled(
   );
 }
 
-
-export async function changeEnrollmentRating(newRating : number, enrollmentID : string) {
+export async function changeEnrollmentRating(
+  newRating: number,
+  enrollmentID: string,
+) {
   try {
     const user = await getCurrentUser();
     if (!user?.email) {
@@ -108,10 +109,10 @@ export async function changeEnrollmentRating(newRating : number, enrollmentID : 
     });
 
     const userID = "" + authorizedUser.id;
-    console.log("THis is the enrollmentID" , enrollmentID);
+    console.log("THis is the enrollmentID", enrollmentID);
     const response = await fetch(
       `${process.env.NEXT_PUBLIC_STRAPI_API_URL}/api/enrollments/${enrollmentID}`,
-      { 
+      {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -119,8 +120,8 @@ export async function changeEnrollmentRating(newRating : number, enrollmentID : 
         },
         body: JSON.stringify({
           data: {
-            rating : newRating,
-            isComplete: true
+            rating: newRating,
+            isComplete: true,
           },
         }),
       },
@@ -140,16 +141,12 @@ export async function changeEnrollmentRating(newRating : number, enrollmentID : 
   }
 }
 
-
-
-
 /**
  * Gets the rating of the Enrollment with the given ID
  *  @param options Strapi query modifiers.
  * @returns The Enrollment with this ID..
  */
-export async function getEnrollByID<
-  T extends Partial<Enrollment> = Enrollment>(
+export async function getEnrollByID<T extends Partial<Enrollment> = Enrollment>(
   enrollID: string,
   { sort, filters, populate = "*", fields = ["*"] }: StrapiRequestParams = {},
 ): Promise<T> {
@@ -167,18 +164,16 @@ export async function getEnrollByID<
       page: 1,
     },
   };
-            
-try {
-  return await fetchAPI<T[]>(path, {
-    urlParams,
-  }).then((enrollments) => enrollments[0]);
-} catch (error) {
-  console.error("Error getting Enrollment from ID:", error);
-  return Promise.reject(new Error('Try again'));
-}
-}
 
-
+  try {
+    return await fetchAPI<T[]>(path, {
+      urlParams,
+    }).then((enrollments) => enrollments[0]);
+  } catch (error) {
+    console.error("Error getting Enrollment from ID:", error);
+    return Promise.reject(new Error("Try again"));
+  }
+}
 
 /**
  * Calculates the average rating of a given Droplet from all its enrollments.
@@ -192,7 +187,7 @@ export async function getDropletAverageRating(
   const urlParams = {
     filters: {
       droplet: { id: { $eq: droplet.id } },
-      rating: { $notNull: true }
+      rating: { $notNull: true },
     },
     fields: ["rating"],
     pagination: {
