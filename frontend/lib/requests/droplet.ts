@@ -30,7 +30,7 @@ export async function getDroplets({
   };
   const retVal = await fetchAPI<Droplet[]>(path, {
     urlParams,
-  }); 
+  });
   return retVal;
 }
 
