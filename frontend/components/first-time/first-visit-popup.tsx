@@ -82,7 +82,7 @@ export function FirstVisitPopup({ user }: { user: AuthorizedUser | null }) {
           <DialogTitle>Welcome to Khoury Odyssey!</DialogTitle>
           <DialogDescription>
             Odyssey is a new platform designed to provide on-demand access to
-            modern knowledge and skills pertinent to today's undergraduate
+            modern knowledge and skills pertinent to today&apos;s undergraduate
             Khoury students.
           </DialogDescription>
         </DialogHeader>
