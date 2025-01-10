@@ -416,7 +416,7 @@ export async function updateLinkedin(linkedIn: string, userId: number) {
 }
 
 export async function updateGithub(github: string, userId: number) {
-  console.log("github: ", github)
+  console.log("github: ", github);
   try {
     const response = await fetch(
       `${STRAPI_API_URL}/api/authorized-users/${userId}`,

@@ -7,13 +7,19 @@ import { updateGithub, updateLinkedin } from "@/lib/actions";
 import { AuthorizedUser } from "@/types";
 import { useState } from "react";
 
-export function SocialForms({ authorizedUser }: { authorizedUser: AuthorizedUser | null }) {
-  const [linkedinValue, setLinkedinValue] = useState(authorizedUser?.linkedin || '');
-  const [githubValue, setGithubValue] = useState(authorizedUser?.github || '');
+export function SocialForms({
+  authorizedUser,
+}: {
+  authorizedUser: AuthorizedUser | null;
+}) {
+  const [linkedinValue, setLinkedinValue] = useState(
+    authorizedUser?.linkedin || "",
+  );
+  const [githubValue, setGithubValue] = useState(authorizedUser?.github || "");
 
   return (
     <>
-      <form 
+      <form
         action={async (formData: FormData) => {
           const linkedin = formData.get("linkedin") as string;
           if (linkedin && authorizedUser?.id) {
@@ -28,9 +34,7 @@ export function SocialForms({ authorizedUser }: { authorizedUser: AuthorizedUser
         }}
         className="px-6 py-4 flex flex-row gap-4 items-center"
       >
-        <div>
-          LinkedIn:
-        </div>
+        <div>LinkedIn:</div>
         <Input
           name="linkedin"
           value={linkedinValue}
@@ -38,7 +42,9 @@ export function SocialForms({ authorizedUser }: { authorizedUser: AuthorizedUser
           placeholder="Enter your LinkedIn url"
           className="max-w-80"
         />
-        <Button type="submit" className="max-w-80">Save LinkedIn</Button>
+        <Button type="submit" className="max-w-80">
+          Save LinkedIn
+        </Button>
       </form>
 
       <form
@@ -55,9 +61,9 @@ export function SocialForms({ authorizedUser }: { authorizedUser: AuthorizedUser
           }
         }}
         className="px-6 py-4 flex flex-row gap-4 items-center"
-      > <div>
-        GitHub: 
-      </div>
+      >
+        {" "}
+        <div>GitHub:</div>
         <Input
           name="github"
           value={githubValue}
@@ -65,7 +71,9 @@ export function SocialForms({ authorizedUser }: { authorizedUser: AuthorizedUser
           placeholder="Enter your GitHub url"
           className="max-w-80"
         />
-        <Button type="submit" className="max-w-80">Save GitHub</Button>
+        <Button type="submit" className="max-w-80">
+          Save GitHub
+        </Button>
       </form>
     </>
   );

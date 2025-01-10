@@ -57,7 +57,7 @@ export async function DropletsGrid({
         { status: { $eq: "published" } },
         { isHidden: false },
         searchValue ? { name: { $containsi: searchValue } } : {},
-        completion ? { id: { $in: completedDropletIds}} : {},
+        completion ? { id: { $in: completedDropletIds } } : {},
         type
           ? { $or: type.split(",").map((val) => ({ type: { $eq: val } })) }
           : {},
@@ -123,17 +123,17 @@ export async function DropletsGrid({
   if (completion) {
     return (
       <ul className="grid grid-flow-row grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-      {dropletsWithCompletion.map((droplet) => (
-        <DropletTile
-          key={droplet.id}
-          droplet={droplet}
-          isEnrolled={enrolledDropletIds.includes(droplet.id)}
-          completedLessonIds={completedLessonIds}
-          profilePage={true}
-        />
-      ))}
-    </ul>
-    )
+        {dropletsWithCompletion.map((droplet) => (
+          <DropletTile
+            key={droplet.id}
+            droplet={droplet}
+            isEnrolled={enrolledDropletIds.includes(droplet.id)}
+            completedLessonIds={completedLessonIds}
+            profilePage={true}
+          />
+        ))}
+      </ul>
+    );
   }
 
   return (

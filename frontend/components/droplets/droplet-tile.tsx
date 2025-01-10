@@ -14,7 +14,7 @@ export function DropletTile({
   droplet,
   isEnrolled = false,
   completedLessonIds = [],
-  profilePage
+  profilePage,
 }: DropletTileProps) {
   // Calculate completion percentage
   const dropletLessonIds = droplet.lessons?.map((l) => l.id) || [];
@@ -39,20 +39,20 @@ export function DropletTile({
   if (profilePage) {
     return (
       <li className="transition-colors border rounded-md border-slate-200 hover:border-slate-300 bg-slate-50">
-      <Link
-        className="relative inline-flex w-full h-full p-6"
-        href={
-          (droplet.status == "draft" ? `/draft` : "") + `/d/${droplet.slug}`
-        }
-      >
-        <div className="flex flex-col items-center justify-center gap-3 w-full h-full">
-          <span className="block text-center text-3lg font-black text-slate-950">
-            {droplet.name}
-          </span>
-        </div>
-      </Link>
-    </li>
-    )
+        <Link
+          className="relative inline-flex w-full h-full p-6"
+          href={
+            (droplet.status == "draft" ? `/draft` : "") + `/d/${droplet.slug}`
+          }
+        >
+          <div className="flex flex-col items-center justify-center gap-3 w-full h-full">
+            <span className="block text-center text-3lg font-black text-slate-950">
+              {droplet.name}
+            </span>
+          </div>
+        </Link>
+      </li>
+    );
   }
 
   return (
