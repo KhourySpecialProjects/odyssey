@@ -14,12 +14,13 @@ import { getInitials, condenseRoleTitles } from "@/lib/utils";
 import { User2Icon } from "lucide-react";
 import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
 import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
-import { AuthorizedUser } from "@/types";
+import { AuthorizedUser, Droplet } from "@/types";
+import { DropletsGrid } from "@/components/explore/droplets-grid";
 
 export default async function Settings() {
   const user = await getCurrentUser();
   let completedDropletNames: string[] = [];
-  let enrollmentDropletNames: string[] = [];
+  let enrollmentDropletList: Droplet[] = [];
   let enrollmentDroplets = 0;
   let completedDroplets = 0;
   let authorizedUser: AuthorizedUser | null = null;
@@ -31,11 +32,11 @@ export default async function Settings() {
       throw new Error("Authorized user not found");
     }
     const enrollments = await getEnrollmentsByAuthorizedUser(authorizedUser.id);
-    enrollmentDropletNames = enrollments.map((e) => e.droplet.name);
+    enrollmentDropletList = enrollments.map((e) => e.droplet);
     completedDropletNames = enrollments
       .filter((e) => e.viewedLessons.length === e.droplet.lessons?.length)
       .map((d) => d.droplet.name);
-    enrollmentDroplets = enrollmentDropletNames.length;
+    enrollmentDroplets = enrollmentDropletList.length;
     completedDroplets = completedDropletNames.length;
   }
 
@@ -110,11 +111,10 @@ export default async function Settings() {
         <CardContent className="flex flex-col items-start gap-x-8 gap-y-6 sm:flex-row">
           <div className="flex items-center space-x-3">
             <div>
-              <div className="font-medium">Completed Droplets</div>
               <div className="text-sm text-slate-500 dark:text-slate-400">
-                {enrollmentDropletNames.map((droplet, index) => (
-                  <div key={index}>{droplet}</div>
-                ))}
+                <DropletsGrid
+                enrollment={true}
+              />
               </div>
             </div>
           </div>
