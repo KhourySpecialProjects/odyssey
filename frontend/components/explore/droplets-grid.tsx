@@ -39,7 +39,9 @@ export async function DropletsGrid({
         { status: { $eq: "published" } },
         { isHidden: { $eq: false } },
         searchValue ? { name: { $containsi: searchValue } } : {},
-        type ? { $or: type.split(",").map((val) => ({ type: { $eq: val } })) } : {},
+        type
+          ? { $or: type.split(",").map((val) => ({ type: { $eq: val } })) }
+          : {},
         focusArea
           ? {
               $or: focusArea
@@ -54,7 +56,7 @@ export async function DropletsGrid({
                 .map((val) => ({ tags: { slug: { $eq: val } } })),
             }
           : {},
-      ].filter(item => Object.keys(item).length > 0),
+      ].filter((item) => Object.keys(item).length > 0),
     },
     populate: {
       tags: true,
@@ -73,13 +75,13 @@ export async function DropletsGrid({
     enrolledDropletIds = enrollments.map((e) => e.droplet.id);
     completedLessonIds = enrollments.flatMap(
       (enrollment) =>
-        enrollment.viewedLessons?.map((lesson: Lesson) => lesson.id) || [],
+        enrollment.viewedLessons?.map((lesson: Lesson) => lesson.id) || []
     );
   }
   let dropletsWithCompletion = droplets.map((droplet) => {
     const dropletLessonIds = droplet.lessons?.map((l: Lesson) => l.id) || [];
     const completedLessonsInDroplet = completedLessonIds.filter((id) =>
-      dropletLessonIds.includes(id),
+      dropletLessonIds.includes(id)
     );
     const completionPercentage =
       dropletLessonIds.length > 0

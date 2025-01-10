@@ -14,11 +14,12 @@ export const metadata: Metadata = {
   title: "Explore",
   description: "Discover content on Khoury Odyssey.",
 };
-
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 export default async function ExplorePage({
   searchParams,
 }: {
-  searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
+  searchParams?: { [key: string]: string | string[] | undefined };
 }) {
   const {
     sort,
@@ -29,7 +30,6 @@ export default async function ExplorePage({
     contentType = "droplets",
   } = (await searchParams) as { [key: string]: string };
   const { sortKey } = sorting.find((item) => item.slug === sort) || defaultSort;
-
   return (
     <>
       <div className="w-full p-8 mx-auto my-4 text-center max-w-7xl">

@@ -20,6 +20,8 @@ import { Separator } from "@/components/ui/separator";
 import { FilterOption } from "@/lib/globals";
 import { cn } from "@/lib/utils";
 import { CheckIcon, PlusCircleIcon } from "lucide-react";
+import { usePathname, useSearchParams, useRouter } from "next/navigation";
+
 import { parseAsArrayOf, parseAsString, useQueryState } from "nuqs";
 
 export function Filter({
@@ -33,13 +35,20 @@ export function Filter({
   options: FilterOption[];
   defaultValue?: string[];
 }) {
-  const [selectedValues, setSelectedValues] = useQueryState(
-    name,
-    parseAsArrayOf(parseAsString).withDefault(defaultValue).withOptions({
-      shallow: false,
-      clearOnDefault: true,
-    }),
-  );
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const selectedValues = searchParams.get(name)?.split(",") || defaultValue;
+
+  const updateQueryString = (values: string[]) => {
+    const params = new URLSearchParams(searchParams);
+    if (values.length > 0) {
+      params.set(name, values.join(","));
+    } else {
+      params.delete(name);
+    }
+    router.push(`${pathname}?${params.toString()}`);
+  };
 
   return (
     <Popover>
@@ -96,11 +105,11 @@ export function Filter({
                     key={option.value}
                     onSelect={() => {
                       if (isSelected) {
-                        setSelectedValues((prev) =>
-                          prev.filter((val) => val !== option.value),
+                        updateQueryString(
+                          selectedValues.filter((val) => val !== option.value)
                         );
                       } else {
-                        setSelectedValues((prev) => [...prev, option.value]);
+                        updateQueryString([...selectedValues, option.value]);
                       }
                     }}
                   >
@@ -109,7 +118,7 @@ export function Filter({
                         "mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-sky-600",
                         isSelected
                           ? "bg-sky-600 text-white"
-                          : "opacity-50 [&_svg]:invisible",
+                          : "opacity-50 [&_svg]:invisible"
                       )}
                     >
                       <CheckIcon className="w-4 h-4" />
@@ -130,7 +139,7 @@ export function Filter({
                 <CommandSeparator />
                 <CommandGroup>
                   <CommandItem
-                    onSelect={() => setSelectedValues([])}
+                    onSelect={() => updateQueryString([])}
                     className="justify-center text-center"
                   >
                     Clear filters
