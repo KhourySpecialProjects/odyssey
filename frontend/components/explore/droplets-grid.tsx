@@ -21,19 +21,20 @@ export async function DropletsGrid({
   type,
   focusArea,
   tags,
-  enrollment,
+  completion,
 }: {
   searchValue?: string;
   sortKey?: string;
   type?: string;
   focusArea?: string;
   tags?: string;
-  enrollment?: boolean;
+  completion?: boolean;
 }) {
   const [field, direction] = (sortKey || "").split(":");
   const serverSortKey = field === "name" ? sortKey : undefined;
   const user = await getCurrentUser();
   let enrolledDropletIds: number[] = [];
+  let completedDropletIds: number[] = [];
   let completedLessonIds: number[] = [];
 
   if (user?.email) {
@@ -44,6 +45,9 @@ export async function DropletsGrid({
       (enrollment) =>
         enrollment.viewedLessons?.map((lesson: Lesson) => lesson.id) || [],
     );
+    completedDropletIds = enrollments
+      .filter((e) => e.viewedLessons.length === e.droplet.lessons?.length)
+      .map((d) => d.droplet.id);
   }
 
   const droplets = await getDroplets({
@@ -53,7 +57,7 @@ export async function DropletsGrid({
         { status: { $eq: "published" } },
         { isHidden: false },
         searchValue ? { name: { $containsi: searchValue } } : {},
-        enrollment ? { id: { $in: enrolledDropletIds}} : {},
+        completion ? { id: { $in: completedDropletIds}} : {},
         type
           ? { $or: type.split(",").map((val) => ({ type: { $eq: val } })) }
           : {},
@@ -116,7 +120,7 @@ export async function DropletsGrid({
     );
   }
 
-  if (enrollment) {
+  if (completion) {
     return (
       <ul className="grid grid-flow-row grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
       {dropletsWithCompletion.map((droplet) => (

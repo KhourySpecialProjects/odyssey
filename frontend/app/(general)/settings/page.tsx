@@ -113,7 +113,7 @@ export default async function Settings() {
             <div>
               <div className="text-sm text-slate-500 dark:text-slate-400">
                 <DropletsGrid
-                enrollment={true}
+                completion={true}
               />
               </div>
             </div>
@@ -129,6 +129,14 @@ export default async function Settings() {
         </CardHeader>
 
         <CardContent className="flex flex-col items-start gap-x-8 gap-y-6 sm:flex-row">
+        <div className="flex items-center space-x-3">
+            <div>
+              <div className="font-medium">Total Number of Droplets Interacted With</div>
+              <div className="text-sm text-slate-500 dark:text-slate-400">
+                {enrollmentDroplets}
+              </div>
+            </div>
+          </div>
           <div className="flex items-center space-x-3">
             <div>
               <div className="font-medium">Number of Completed Droplets</div>
@@ -141,7 +149,7 @@ export default async function Settings() {
             <div>
               <div className="font-medium">Number of In-Progress Droplets</div>
               <div className="text-sm text-slate-500 dark:text-slate-400">
-                {enrollmentDroplets}
+                {enrollmentDroplets - completedDroplets}
               </div>
             </div>
           </div>

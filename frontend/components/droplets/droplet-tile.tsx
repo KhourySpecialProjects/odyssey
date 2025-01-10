@@ -45,8 +45,8 @@ export function DropletTile({
           (droplet.status == "draft" ? `/draft` : "") + `/d/${droplet.slug}`
         }
       >
-        <div className="flex flex-col justify-end gap-3">
-          <span className="block w-full text-3lg font-black text-slate-950 place-self-end">
+        <div className="flex flex-col items-center justify-center gap-3 w-full h-full">
+          <span className="block text-center text-3lg font-black text-slate-950">
             {droplet.name}
           </span>
         </div>
