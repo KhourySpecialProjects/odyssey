@@ -21,15 +21,30 @@ export async function DropletsGrid({
   type,
   focusArea,
   tags,
+  enrollment,
 }: {
   searchValue?: string;
   sortKey?: string;
   type?: string;
   focusArea?: string;
   tags?: string;
+  enrollment?: boolean;
 }) {
   const [field, direction] = (sortKey || "").split(":");
   const serverSortKey = field === "name" ? sortKey : undefined;
+  const user = await getCurrentUser();
+  let enrolledDropletIds: number[] = [];
+  let completedLessonIds: number[] = [];
+
+  if (user?.email) {
+    const authorizedUser = await getAuthorizedUserByEmail(user.email);
+    const enrollments = await getEnrollmentsByAuthorizedUser(authorizedUser.id);
+    enrolledDropletIds = enrollments.map((e) => e.droplet.id);
+    completedLessonIds = enrollments.flatMap(
+      (enrollment) =>
+        enrollment.viewedLessons?.map((lesson: Lesson) => lesson.id) || [],
+    );
+  }
 
   const droplets = await getDroplets({
     sort: serverSortKey,
@@ -38,6 +53,7 @@ export async function DropletsGrid({
         { status: { $eq: "published" } },
         { isHidden: false },
         searchValue ? { name: { $containsi: searchValue } } : {},
+        enrollment ? { id: { $in: enrolledDropletIds}} : {},
         type
           ? { $or: type.split(",").map((val) => ({ type: { $eq: val } })) }
           : {},
@@ -64,20 +80,6 @@ export async function DropletsGrid({
       },
     },
   });
-
-  const user = await getCurrentUser();
-  let enrolledDropletIds: number[] = [];
-  let completedLessonIds: number[] = [];
-
-  if (user?.email) {
-    const authorizedUser = await getAuthorizedUserByEmail(user.email);
-    const enrollments = await getEnrollmentsByAuthorizedUser(authorizedUser.id);
-    enrolledDropletIds = enrollments.map((e) => e.droplet.id);
-    completedLessonIds = enrollments.flatMap(
-      (enrollment) =>
-        enrollment.viewedLessons?.map((lesson: Lesson) => lesson.id) || [],
-    );
-  }
 
   let dropletsWithCompletion = droplets.map((droplet) => {
     const dropletLessonIds = droplet.lessons?.map((l: Lesson) => l.id) || [];
@@ -112,6 +114,22 @@ export async function DropletsGrid({
         </MessageDescription>
       </Message>
     );
+  }
+
+  if (enrollment) {
+    return (
+      <ul className="grid grid-flow-row grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      {dropletsWithCompletion.map((droplet) => (
+        <DropletTile
+          key={droplet.id}
+          droplet={droplet}
+          isEnrolled={enrolledDropletIds.includes(droplet.id)}
+          completedLessonIds={completedLessonIds}
+          profilePage={true}
+        />
+      ))}
+    </ul>
+    )
   }
 
   return (
