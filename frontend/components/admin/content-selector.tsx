@@ -1,6 +1,7 @@
 "use client";
 
-import { cn } from "@/lib/utils";
+import { cn, isAuthorizedUserAdmin } from "@/lib/utils";
+import { User } from "@/types";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -10,8 +11,21 @@ const tabs = [
   { name: "Reports", href: "/admin/reports" },
 ];
 
-export function ContentSelector() {
+export function ContentSelector({ user } : { user: User }) {
   const pathname = usePathname();
+  const isAdmin = isAuthorizedUserAdmin(user.roles);
+
+  const tabs = [
+    ...(isAdmin 
+      ? [
+          { name: "Access Requests", href: "/admin" },
+          { name: "Student Progress", href: "/admin/progress" },
+          { name: "Reports", href: "/admin/reports" },
+        ]
+      : [])
+  ];
+
+  if (tabs.length === 0) return null;
 
   return (
     <div className="border-b border-gray-200">

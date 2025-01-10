@@ -26,7 +26,7 @@ import {
 import { v4 as uuidv4 } from "uuid";
 import { Buffer } from "node:buffer";
 
-const STRAPI_API_URL = process.env.STRAPI_API_URL;
+const STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
 
 const CreateAuthorizedUser = AuthorizedUserSchema.omit({
@@ -702,7 +702,7 @@ export async function markLessonAsComplete(
   try {
     // First get the current enrollment to ensure we have the latest data
     const enrollmentResponse = await fetch(
-      `${process.env.STRAPI_API_URL}/api/enrollments/${enrollmentId}?populate=viewedLessons`,
+      `${process.env.NEXT_PUBLIC_STRAPI_API_URL}/api/enrollments/${enrollmentId}?populate=viewedLessons`,
       {
         headers: {
           Authorization: `Bearer ${process.env.STRAPI_ACCESS_TOKEN}`,
@@ -718,7 +718,7 @@ export async function markLessonAsComplete(
 
     // Update the enrollment with the new lesson
     const response = await fetch(
-      `${process.env.STRAPI_API_URL}/api/enrollments/${enrollmentId}`,
+      `${process.env.NEXT_PUBLIC_STRAPI_API_URL}/api/enrollments/${enrollmentId}`,
       {
         method: "PUT",
         headers: {
