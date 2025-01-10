@@ -24,6 +24,34 @@ const StarRating: React.FC<StarRatingProps> = ({ value: initialValue, enrollment
     const [hover, setHover] = useState(0);
     const [rating, setRating] = useState(initialValue);
 
+    useEffect(() => {
+        const fetchRating = async () => {
+            if (!average && enrollmentID) {
+                try {
+                    const enrollment = await getEnrollByID(enrollmentID);
+                    if (enrollment?.rating) {
+                        setRating(enrollment.rating);
+                    }
+                } catch (error) {
+                    console.error("Error fetching rating:", error);
+                }
+            }
+        };
+        fetchRating();
+    }, [enrollmentID, average]);
+
+    const handleRatingClick = async (newRating: number) => {
+        if (!average && enrollmentID) {
+            try {
+                await changeEnrollmentRating(newRating, enrollmentID);
+                setRating(newRating);
+                setHover(newRating);
+            } catch (error) {
+                console.error("Error updating rating:", error);
+            }
+        }
+    };
+
 
     if (average == true) {
         return (
@@ -55,34 +83,6 @@ const StarRating: React.FC<StarRatingProps> = ({ value: initialValue, enrollment
         );
     }
     else {
-
-        useEffect(() => {
-            const fetchRating = async () => {
-                if (!average && enrollmentID) {
-                    try {
-                        const enrollment = await getEnrollByID(enrollmentID);
-                        if (enrollment?.rating) {
-                            setRating(enrollment.rating);
-                        }
-                    } catch (error) {
-                        console.error("Error fetching rating:", error);
-                    }
-                }
-            };
-            fetchRating();
-        }, [enrollmentID, average]);
-    
-        const handleRatingClick = async (newRating: number) => {
-            if (!average && enrollmentID) {
-                try {
-                    await changeEnrollmentRating(newRating, enrollmentID);
-                    setRating(newRating);
-                    setHover(newRating);
-                } catch (error) {
-                    console.error("Error updating rating:", error);
-                }
-            }
-        };
 
     return (
         <div className="flex space-x-1" >
