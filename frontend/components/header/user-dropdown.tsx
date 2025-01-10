@@ -79,14 +79,14 @@ export function UserDropdown(user: User) {
           </Link>
         </DropdownMenuItem>
 
-        {isAdmin ? (
+        {/* {isAdmin ? (
           <DropdownMenuItem asChild>
             <Link href="/admin">
               <TowerControlIcon className="w-4 h-4 mr-2" />
               <span>Admin</span>
             </Link>
           </DropdownMenuItem>
-        ) : null}
+        ) : null} */}
 
         {isFaculty ? (
           <DropdownMenuItem asChild>
