@@ -45,6 +45,16 @@
       "relation": "manyToMany",
       "target": "api::playlist.playlist",
       "mappedBy": "authorized_users"
+    },
+    "firstName": {
+      "type": "string"
+    },
+    "lastName": {
+      "type": "string"
+    },
+    "bio": {
+      "type": "text",
+      "maxLength": 400
     }
   }
 }

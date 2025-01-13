@@ -517,6 +517,10 @@ export interface ApiAuthorizedUserAuthorizedUser extends Schema.CollectionType {
       'oneToOne',
       'api::author.author'
     >;
+    bio: Attribute.Text &
+      Attribute.SetMinMaxLength<{
+        maxLength: 400;
+      }>;
     createdAt: Attribute.DateTime;
     createdBy: Attribute.Relation<
       'api::authorized-user.authorized-user',
@@ -530,9 +534,11 @@ export interface ApiAuthorizedUserAuthorizedUser extends Schema.CollectionType {
       'oneToMany',
       'api::enrollment.enrollment'
     >;
+    firstName: Attribute.String;
     isEnabled: Attribute.Boolean &
       Attribute.Required &
       Attribute.DefaultTo<true>;
+    lastName: Attribute.String;
     playlists: Attribute.Relation<
       'api::authorized-user.authorized-user',
       'manyToMany',

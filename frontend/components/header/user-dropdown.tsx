@@ -8,11 +8,9 @@ import {
 } from "@/lib/utils";
 import { User } from "@/types";
 import {
-  BookIcon,
   ChevronDownIcon,
   CogIcon,
   LogOutIcon,
-  TowerControlIcon,
   User2Icon,
 } from "lucide-react";
 import { signOut } from "next-auth/react";
@@ -78,24 +76,6 @@ export function UserDropdown(user: User) {
             <span>Settings</span>
           </Link>
         </DropdownMenuItem>
-
-        {/* {isAdmin ? (
-          <DropdownMenuItem asChild>
-            <Link href="/admin">
-              <TowerControlIcon className="w-4 h-4 mr-2" />
-              <span>Admin</span>
-            </Link>
-          </DropdownMenuItem>
-        ) : null} */}
-
-        {isFaculty ? (
-          <DropdownMenuItem asChild>
-            <Link href="/faculty">
-              <BookIcon className="w-4 h-4 mr-2" />
-              <span>Faculty</span>
-            </Link>
-          </DropdownMenuItem>
-        ) : null}
 
         <DropdownMenuItem
           onSelect={(e) => {

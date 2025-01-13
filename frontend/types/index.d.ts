@@ -29,6 +29,9 @@ export type AuthorizedUser = {
   isEnabled: boolean;
   enrollments?: Enrollment[];
   playlists?: Playlist[];
+  firstName?: string;
+  lastName?: string;
+  bio?: string;
 };
 
 export type NavItem = {

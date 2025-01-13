@@ -250,6 +250,48 @@ export async function updateAuthorBio(formData: z.infer<typeof BioFormSchema>) {
   redirect("/settings/profile");
 }
 
+export async function updateOnboardingInfo(
+  first: string | null,
+  last: string | null,
+  bio: string | null,
+  roles: AuthorizedUserRoleTitle[],
+  userId: number,
+) {
+  try {
+    const roleIds = await Promise.all(
+      roles.map(role => getAuthorizedUserRoleIdByTitle(role))
+    );
+    const response = await fetch(
+      `${STRAPI_API_URL}/api/authorized-users/${userId}`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+        },
+        body: JSON.stringify({
+          data: {
+            firstName: first,
+            lastName: last,
+            bio: bio,
+            roles: {
+              set: roleIds.map(id => ({ id }))
+            }
+          },
+        }),
+      },
+    );
+
+    if (!response.ok) {
+      throw new Error("Failed to update first time status");
+    }
+    return { success: true };
+  } catch (error) {
+    console.error("Error updating first time status:", error);
+    return { success: false, error };
+  }
+}
+
 export async function createEnrollment(
   formData: z.infer<typeof DropletEnrollmentSchema>,
 ) {

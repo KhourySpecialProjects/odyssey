@@ -11,7 +11,7 @@
       "url": "https://khouryodyssey.org"
     },
     "license": null,
-    "x-generation-date": "2025-01-10T16:42:21.131Z"
+    "x-generation-date": "2025-01-13T17:51:24.780Z"
   },
   "x-strapi-config": {
     "plugins": [
@@ -2108,6 +2108,15 @@
                                                       }
                                                     }
                                                   },
+                                                  "firstName": {
+                                                    "type": "string"
+                                                  },
+                                                  "lastName": {
+                                                    "type": "string"
+                                                  },
+                                                  "bio": {
+                                                    "type": "string"
+                                                  },
                                                   "createdAt": {
                                                     "type": "string",
                                                     "format": "date-time"
@@ -2681,6 +2690,15 @@
                   ],
                   "example": "string or id"
                 }
+              },
+              "firstName": {
+                "type": "string"
+              },
+              "lastName": {
+                "type": "string"
+              },
+              "bio": {
+                "type": "string"
               }
             }
           }
@@ -3894,6 +3912,15 @@
                                                                                 }
                                                                               }
                                                                             },
+                                                                            "firstName": {
+                                                                              "type": "string"
+                                                                            },
+                                                                            "lastName": {
+                                                                              "type": "string"
+                                                                            },
+                                                                            "bio": {
+                                                                              "type": "string"
+                                                                            },
                                                                             "createdAt": {
                                                                               "type": "string",
                                                                               "format": "date-time"
@@ -4487,6 +4514,15 @@
                 }
               }
             }
+          },
+          "firstName": {
+            "type": "string"
+          },
+          "lastName": {
+            "type": "string"
+          },
+          "bio": {
+            "type": "string"
           },
           "createdAt": {
             "type": "string",
@@ -6272,6 +6308,15 @@
                             }
                           }
                         },
+                        "firstName": {
+                          "type": "string"
+                        },
+                        "lastName": {
+                          "type": "string"
+                        },
+                        "bio": {
+                          "type": "string"
+                        },
                         "createdAt": {
                           "type": "string",
                           "format": "date-time"
@@ -7760,6 +7805,15 @@
                                                                                     }
                                                                                   }
                                                                                 }
+                                                                              },
+                                                                              "firstName": {
+                                                                                "type": "string"
+                                                                              },
+                                                                              "lastName": {
+                                                                                "type": "string"
+                                                                              },
+                                                                              "bio": {
+                                                                                "type": "string"
                                                                               },
                                                                               "createdAt": {
                                                                                 "type": "string",
@@ -10272,6 +10326,15 @@
                           }
                         }
                       },
+                      "firstName": {
+                        "type": "string"
+                      },
+                      "lastName": {
+                        "type": "string"
+                      },
+                      "bio": {
+                        "type": "string"
+                      },
                       "createdAt": {
                         "type": "string",
                         "format": "date-time"
@@ -11877,6 +11940,15 @@
                                                         }
                                                       }
                                                     }
+                                                  },
+                                                  "firstName": {
+                                                    "type": "string"
+                                                  },
+                                                  "lastName": {
+                                                    "type": "string"
+                                                  },
+                                                  "bio": {
+                                                    "type": "string"
                                                   },
                                                   "createdAt": {
                                                     "type": "string",
@@ -13901,6 +13973,15 @@
                                                         }
                                                       }
                                                     }
+                                                  },
+                                                  "firstName": {
+                                                    "type": "string"
+                                                  },
+                                                  "lastName": {
+                                                    "type": "string"
+                                                  },
+                                                  "bio": {
+                                                    "type": "string"
                                                   },
                                                   "createdAt": {
                                                     "type": "string",
@@ -16241,6 +16322,15 @@
                                                         }
                                                       }
                                                     }
+                                                  },
+                                                  "firstName": {
+                                                    "type": "string"
+                                                  },
+                                                  "lastName": {
+                                                    "type": "string"
+                                                  },
+                                                  "bio": {
+                                                    "type": "string"
                                                   },
                                                   "createdAt": {
                                                     "type": "string",
