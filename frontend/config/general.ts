@@ -1,4 +1,4 @@
-import { isAuthorizedUserAdmin } from "@/lib/utils";
+import { isAuthorizedUserAdmin, isAuthorizedUserFaculty } from "@/lib/utils";
 import { GeneralConfig, User } from "@/types";
 
 export const mainNav = [
@@ -37,6 +37,13 @@ export const getContentCreatorNav = (user: User) => {
       href: "/admin",
       label: "Admin"
     });
+  }
+
+  if (isAuthorizedUserFaculty(user.roles)) {
+    baseNav.push({
+      href: "/faculty",
+      label: "Faculty"
+    })
   }
 
   return baseNav;
