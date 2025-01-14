@@ -205,6 +205,10 @@ export async function getDropletAverageRating(
       return 0;
     }
 
+    if (enrollments.length < 5) {
+      return -1;
+    }
+
     const totalRating = enrollments.reduce((sum, enrollment) => {
       return sum + (enrollment.rating || 0);
     }, 0);
