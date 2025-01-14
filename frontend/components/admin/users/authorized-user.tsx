@@ -1,23 +1,18 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { updateAuthorizedUser, updateOnboardingInfo } from "@/lib/actions";
 import { AuthorizedUser } from "@/types";
 import { Pencil } from "lucide-react";
 import { useFormStatus } from "react-dom";
 import { isAuthorizedUserAdmin } from "@/lib/utils";
 import { useState } from "react";
-import { DialogHeader } from "@/components/ui/dialog";
-import { Dialog, DialogTrigger, DialogContent, DialogTitle, DialogDescription } from "@radix-ui/react-dialog";
+import { DialogHeader, Dialog, DialogTrigger, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { AuthorizedUserRoleTitle } from "@/lib/globals";
 import { Checkbox } from "@/components/ui/checkbox";
+import { type } from "os";
 
 export function AuthorizedUserBlock({ user }: { user: AuthorizedUser }) {
   const [open, setOpen] = useState(false);
@@ -28,6 +23,11 @@ export function AuthorizedUserBlock({ user }: { user: AuthorizedUser }) {
   const [selectedRoles, setSelectedRoles] = useState<AuthorizedUserRoleTitle[]>(
     user.roles.map(role => role.title)
   );
+
+  // console.log(user);
+  // console.log("first", user.firstName)
+  // console.log("last", user.lastName)
+  // console.log("bio", user.bio)
 
   const roleOptions = [
     { value: AuthorizedUserRoleTitle.AcadAdmin, label: "Academic Admin" },
@@ -51,9 +51,9 @@ export function AuthorizedUserBlock({ user }: { user: AuthorizedUser }) {
 
   const handleEditUser = async (formData: FormData) => {
     const result = await updateOnboardingInfo(
-      firstName,
-      lastName,
-      bio,
+      formData.get("firstName") as string,
+      formData.get("lastName") as string,
+      formData.get("bio") as string,
       selectedRoles,
       user.id
     );
@@ -143,8 +143,7 @@ export function AuthorizedUserBlock({ user }: { user: AuthorizedUser }) {
               </div>
                 <Button type="submit">Save Changes</Button>
               </form>
-            </DialogContent>
-          </Dialog>
+
           <form action={handleUpdateUser}>
             <input
               id="id"
@@ -164,6 +163,8 @@ export function AuthorizedUserBlock({ user }: { user: AuthorizedUser }) {
               {user.isEnabled ? "Disable Access" : "Enable Access"}
             </SubmitButton>
           </form>
+          </DialogContent>
+          </Dialog>
         </div>
       </div>
     </li>
