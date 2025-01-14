@@ -1,9 +1,10 @@
-import { fetchAuthorizedUsers } from "@/lib/requests/authorized-user";
 import { DropletBlock } from "./droplet-block";
 import { CreateDroplet } from "./create-droplet";
+import { fetchDroplets } from "@/lib/requests/data";
+import { Droplet } from "@/types"
 
 export async function Droplets() {
-  const authorizedUsers = await fetchAuthorizedUsers();
+  const droplets = await fetchDroplets();
 
   return (
     <section>
@@ -15,14 +16,14 @@ export async function Droplets() {
       </div>
 
       <div className="p-4 mt-4 rounded-md bg-slate-100">
-        {authorizedUsers.length > 0 ? (
+        {droplets.length > 0 ? (
           <ul className="divide-y divide-slate-200 dark:divide-slate-700 md:space-y-4">
-            {authorizedUsers.map((user) => (
-              <DropletBlock user={user} key={user.id} />
+            {droplets.map((d : Droplet) => (
+              <DropletBlock droplet={d} key={d.id} />
             ))}
           </ul>
         ) : (
-          <p>There are no authorized users.</p>
+          <p>There are no created droplets.</p>
         )}
       </div>
     </section>

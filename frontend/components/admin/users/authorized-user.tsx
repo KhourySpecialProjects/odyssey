@@ -6,8 +6,8 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { deleteAuthorizedUser, updateAuthorizedUser, updateOnboardingInfo } from "@/lib/actions";
-import { AuthorizedUser, AuthorizedUserRole } from "@/types";
+import { updateAuthorizedUser, updateOnboardingInfo } from "@/lib/actions";
+import { AuthorizedUser } from "@/types";
 import { Pencil } from "lucide-react";
 import { useFormStatus } from "react-dom";
 import { isAuthorizedUserAdmin } from "@/lib/utils";
@@ -16,7 +16,6 @@ import { DialogHeader } from "@/components/ui/dialog";
 import { Dialog, DialogTrigger, DialogContent, DialogTitle, DialogDescription } from "@radix-ui/react-dialog";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AuthorizedUserRoleTitle } from "@/lib/globals";
 import { Checkbox } from "@/components/ui/checkbox";
 
@@ -173,11 +172,9 @@ export function AuthorizedUserBlock({ user }: { user: AuthorizedUser }) {
 
 function SubmitButton({
   destructive,
-  variant,
   children,
 }: {
   destructive?: boolean;
-  variant?: "success" | "default"
   children: React.ReactNode;
 }) {
   const { pending } = useFormStatus();
