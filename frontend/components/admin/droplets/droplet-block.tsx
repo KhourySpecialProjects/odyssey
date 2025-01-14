@@ -6,27 +6,16 @@ import { Droplet } from "@/types";
 import { Pencil } from "lucide-react";
 import { useFormStatus } from "react-dom";
 import { useEffect, useState } from "react";
-import { DialogHeader, Dialog, DialogTrigger, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Checkbox } from "@/components/ui/checkbox";
 import Link from "next/link";
 
 export function DropletBlock({ droplet }: { droplet: Droplet }) {
     const linkTo = `/draft/d/${droplet.slug}`;
 
-
-  const [isDropletHidden, setIsDropletHidden] = useState(droplet.isHidden);
-
-  useEffect(() => {
-    setIsDropletHidden(droplet.isHidden);
-}, [droplet.isHidden]);
-
   const handleUpdateDroplet = async (formData: FormData) => {
-    const isHidden = formData.get("isHidden") === "true";
-    console.log("hidden: ", isHidden)
   
     const result = await updateDroplet(droplet.id, { 
-        isHidden: !isDropletHidden,  
+        isHidden: !droplet.isHidden,  
         name: droplet.name,
         focusArea: droplet.focusArea,
         type: droplet.type,
@@ -34,8 +23,7 @@ export function DropletBlock({ droplet }: { droplet: Droplet }) {
       }, {revalidate: true});
     
     if (result.ok) {
-        setIsDropletHidden(!isDropletHidden);
-        toast.success(`Droplet ${!isDropletHidden ? "hidden" : "shown"} successfully`);
+        toast.success(`Droplet ${!droplet.isHidden ? "hidden" : "shown"} successfully`);
     } else {
         toast.error("Failed to update droplet visibility");
         console.error(result.error);
@@ -48,7 +36,7 @@ export function DropletBlock({ droplet }: { droplet: Droplet }) {
         <div className="flex-1 min-w-0">
           <p className="font-medium truncate text-slate-900 dark:text-white">
             {droplet.name}
-            {isDropletHidden ? " (Hidden)" : ""}
+            {droplet.isHidden ? " (Hidden)" : ""}
           </p>
         </div>
 
@@ -63,7 +51,7 @@ export function DropletBlock({ droplet }: { droplet: Droplet }) {
                 </div>
               </Button>
         </Link>
-          <form action={handleUpdateDroplet}>
+        <form action={handleUpdateDroplet}>
             <input
               id="id"
               name="id"
@@ -75,11 +63,11 @@ export function DropletBlock({ droplet }: { droplet: Droplet }) {
               id="isHidden"
               name="isHidden"
               type="text"
-              defaultValue={String(isDropletHidden)}
+              defaultValue={String(!droplet.isHidden)}
               hidden
             />
-            <SubmitButton destructive={!isDropletHidden}>
-              {isDropletHidden ? "Show Droplet" : "Hide Droplet"}
+            <SubmitButton destructive={!droplet.isHidden}>
+              {droplet.isHidden ? "Show Droplet" : "Hide Droplet"}
             </SubmitButton>
           </form>
         </div>

@@ -8,7 +8,7 @@ export async function fetchDroplets() {
   try {
     const query = qs.stringify({
       sort: ["name"],
-      fields: ["id", "name", "type", "slug"],
+      fields: ["id", "name", "type", "slug", "isHidden"],
       pagination: {
         pageSize: 25,
         page: 1,

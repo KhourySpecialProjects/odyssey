@@ -17,17 +17,12 @@ import { type } from "os";
 export function AuthorizedUserBlock({ user }: { user: AuthorizedUser }) {
   const [open, setOpen] = useState(false);
   const isAdmin = isAuthorizedUserAdmin(user.roles.map((role) => role.title));
-  const [firstName, setFirstName] = useState(user.firstName || "");
-  const [lastName, setLastName] = useState(user.lastName || "");
-  const [bio, setBio] = useState(user.bio || "");
+  const [firstName, setFirstName] = useState(user.firstName);
+  const [lastName, setLastName] = useState(user.lastName);
+  const [bio, setBio] = useState(user.bio);
   const [selectedRoles, setSelectedRoles] = useState<AuthorizedUserRoleTitle[]>(
     user.roles.map(role => role.title)
   );
-
-  // console.log(user);
-  // console.log("first", user.firstName)
-  // console.log("last", user.lastName)
-  // console.log("bio", user.bio)
 
   const roleOptions = [
     { value: AuthorizedUserRoleTitle.AcadAdmin, label: "Academic Admin" },
