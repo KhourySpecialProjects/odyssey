@@ -178,7 +178,7 @@ export async function getEnrollByID<T extends Partial<Enrollment> = Enrollment>(
 /**
  * Calculates the average rating of a given Droplet from all its enrollments.
  * @param droplet The Droplet to calculate the average rating for
- * @returns The average rating or null if no ratings exist
+ * @returns The average rating or 0 if no ratings exist
  */
 export async function getDropletAverageRating(
   droplet: Droplet,
