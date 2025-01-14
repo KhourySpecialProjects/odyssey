@@ -447,6 +447,7 @@ export async function updateDroplet(
       ...(data.focusArea && { focusArea: data.focusArea }),
       ...(data.type && { type: data.type }),
       ...(data.tagIds && { tags: data.tagIds }),
+      ...(data.isHidden !== undefined && { isHidden: data.isHidden }),
       ...(data.learningObjectives && {
         learningObjectives: data.learningObjectives.map((obj) => ({
           objective: obj,
@@ -461,8 +462,6 @@ export async function updateDroplet(
     };
 
     dataToSend.regenerateSlug = options.regenerateSlug;
-
-    // console.log(dataToSend);
 
     const response = await fetch(STRAPI_API_URL + "/api/droplets/" + id, {
       method: "PUT",
@@ -481,11 +480,11 @@ export async function updateDroplet(
       return { ok: false, error: errorMessage, data: null };
     }
 
-    if (dataToSend.name || options.revalidate) {
+    if (dataToSend.isHidden !== undefined || dataToSend.name || options.revalidate) {
       revalidateTag("droplets");
+      revalidatePath("/admin");
     }
 
-    // console.log(responseData);
     revalidateTag("authors");
     revalidatePath("(general)/drafts", "page");
     return { ok: true, error: null, data: responseData.data };
@@ -936,9 +935,9 @@ export async function updatePlaylist(
   data: {
     name: string;
     isPublic: boolean;
-    droplets: { id: number }[];
-    author: { id: number };
-    userId: number;
+    droplets?: { id: number }[];
+    author?: { id: number };
+    userId?: number;
     slug?: string; //TODO Should slug be optional for updating a playlist?
   },
 ) {

@@ -1,26 +1,30 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { deleteAuthorizedUser, updateAuthorizedUser } from "@/lib/actions";
-import { AuthorizedUser } from "@/types";
-import { TrashIcon } from "lucide-react";
+import { updatePlaylist } from "@/lib/actions";
+import { Playlist } from "@/types";
 import { useFormStatus } from "react-dom";
-import { isAuthorizedUserAdmin } from "@/lib/utils";
+import { toast } from "sonner";
 
-export function PlaylistBlock({ user }: { user: AuthorizedUser }) {
-  const isAdmin = isAuthorizedUserAdmin(user.roles.map((role) => role.title));
-
-  const handleUpdateUser = async (formData: FormData) => {
-    await updateAuthorizedUser(formData);
-  };
-
-  const handleDeleteUser = async (formData: FormData) => {
-    await deleteAuthorizedUser(formData);
+export function PlaylistBlock({ playlist }: { playlist: Playlist }) {
+    
+  const handleUpdatePlaylist = async (formData: FormData) => {
+    const isPublic = formData.get("isPublic") === "true";
+    const result = await updatePlaylist(playlist.id, {
+        name: playlist.name,
+        isPublic: !isPublic,
+        droplets: playlist.droplets?.map(d => ({ id: d.id })) || [],
+        author: { id: playlist.author?.id || 0 },
+        userId: playlist.author?.id || 0,
+        slug: playlist.slug
+      });
+    
+    if (result.ok) {
+        toast.success(`Playlist updated successfully`);
+    } else {
+        toast.error("Failed to update playlist");
+        console.error(result.error);
+    }
   };
 
   return (
@@ -28,44 +32,30 @@ export function PlaylistBlock({ user }: { user: AuthorizedUser }) {
       <div className="flex items-center space-x-4">
         <div className="flex-1 min-w-0">
           <p className="font-medium truncate text-slate-900 dark:text-white">
-            {user.email}
-            {!user.isEnabled ? " (Disabled)" : ""}
-          </p>
-          <p className="text-sm truncate text-slate-500 dark:text-slate-400">
-            {isAdmin ? "Admin" : ""}
+            {playlist.name}
+            {playlist.isPublic ? " (Public)" : ""}
           </p>
         </div>
 
         <div className="inline-flex items-center gap-2">
-          <form action={handleUpdateUser}>
+          <form action={handleUpdatePlaylist}>
             <input
               id="id"
               name="id"
               type="number"
-              defaultValue={user.id}
+              defaultValue={playlist.id}
               hidden
             />
             <input
-              id="isEnabled"
-              name="isEnabled"
+              id="isPublic"
+              name="isPublic"
               type="text"
-              defaultValue={String(!user.isEnabled)}
+              defaultValue={String(playlist.isPublic)}
               hidden
             />
-            <SubmitButton destructive={user.isEnabled}>
-              {user.isEnabled ? "Disable Access" : "Enable Access"}
+            <SubmitButton destructive={!playlist.isPublic}>
+              {playlist.isPublic ? "Make Private" : "Make Public"}
             </SubmitButton>
-          </form>
-
-          <form action={handleDeleteUser}>
-            <input
-              id="id"
-              name="id"
-              type="number"
-              defaultValue={user.id}
-              hidden
-            />
-            <SubmitDeleteButton />
           </form>
         </div>
       </div>
@@ -91,27 +81,5 @@ function SubmitButton({
     >
       {children}
     </Button>
-  );
-}
-
-function SubmitDeleteButton() {
-  const { pending } = useFormStatus();
-
-  return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <Button
-          type="submit"
-          size="sm"
-          variant="destructive"
-          aria-disabled={pending}
-        >
-          <TrashIcon className="w-4" />
-        </Button>
-      </TooltipTrigger>
-      <TooltipContent>
-        <p>Delete user</p>
-      </TooltipContent>
-    </Tooltip>
   );
 }

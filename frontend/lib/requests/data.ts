@@ -18,7 +18,8 @@ export async function fetchDroplets() {
       NEXT_PUBLIC_STRAPI_API_URL + "/api/droplets?" + query,
       {
         headers: { Authorization: "Bearer " + STRAPI_ACCESS_TOKEN },
-        next: { revalidate: 3600 },
+        next: { tags: ['droplets'],
+          revalidate: 0 },
       },
     );
     const data = await response.json();

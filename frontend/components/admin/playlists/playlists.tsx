@@ -1,9 +1,24 @@
-import { fetchAuthorizedUsers } from "@/lib/requests/authorized-user";
 import { PlaylistBlock } from "./playlist-block";
 import { CreatePlaylist } from "./create-playlist";
+import { Playlist } from "@/types"
+import { getPlaylists } from "@/lib/requests/playlist";
 
 export async function Playlists() {
-  const authorizedUsers = await fetchAuthorizedUsers();
+    const playlists = await getPlaylists({
+        filters: {}, 
+        populate: {
+          droplets: {
+            populate: {
+              lessons: {
+                fields: ["id", "name", "slug"],
+              },
+            },
+          },
+          author: {
+            fields: ["id", "name"],
+          },
+        },
+      });
 
   return (
     <section>
@@ -15,14 +30,14 @@ export async function Playlists() {
       </div>
 
       <div className="p-4 mt-4 rounded-md bg-slate-100">
-        {authorizedUsers.length > 0 ? (
+        {playlists.length > 0 ? (
           <ul className="divide-y divide-slate-200 dark:divide-slate-700 md:space-y-4">
-            {authorizedUsers.map((user) => (
-              <PlaylistBlock user={user} key={user.id} />
+            {playlists.map((p : Playlist) => (
+              <PlaylistBlock playlist={p} key={p.id} />
             ))}
           </ul>
         ) : (
-          <p>There are no authorized users.</p>
+          <p>There are no created droplets.</p>
         )}
       </div>
     </section>
