@@ -1,31 +1,12 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { updatePlaylist } from "@/lib/actions";
 import { Playlist } from "@/types";
-import { useFormStatus } from "react-dom";
-import { toast } from "sonner";
+import { Pencil } from "lucide-react";
+import Link from "next/link";
 
 export function PlaylistBlock({ playlist }: { playlist: Playlist }) {
-    
-  const handleUpdatePlaylist = async (formData: FormData) => {
-    const isPublic = formData.get("isPublic") === "true";
-    const result = await updatePlaylist(playlist.id, {
-        name: playlist.name,
-        isPublic: !isPublic,
-        droplets: playlist.droplets?.map(d => ({ id: d.id })) || [],
-        author: { id: playlist.author?.id || 0 },
-        userId: playlist.author?.id || 0,
-        slug: playlist.slug
-      });
-    
-    if (result.ok) {
-        toast.success(`Playlist updated successfully`);
-    } else {
-        toast.error("Failed to update playlist");
-        console.error(result.error);
-    }
-  };
+    const linkTo = `/draft/p/${playlist.slug}`;
 
   return (
     <li className="py-0 [&:not(:first-child)]:pt-3">
@@ -38,48 +19,18 @@ export function PlaylistBlock({ playlist }: { playlist: Playlist }) {
         </div>
 
         <div className="inline-flex items-center gap-2">
-          <form action={handleUpdatePlaylist}>
-            <input
-              id="id"
-              name="id"
-              type="number"
-              defaultValue={playlist.id}
-              hidden
-            />
-            <input
-              id="isPublic"
-              name="isPublic"
-              type="text"
-              defaultValue={String(playlist.isPublic)}
-              hidden
-            />
-            <SubmitButton destructive={!playlist.isPublic}>
-              {playlist.isPublic ? "Make Private" : "Make Public"}
-            </SubmitButton>
-          </form>
+        <Link href={linkTo}>
+            <Button size="sm" variant="outline">
+                <div className="relative group">
+                  <Pencil className="text-sky-600" />
+                  <span className="absolute left-1/2 transform -translate-x-1/2 top-full mt-1 w-max px-2 py-1 text-xs text-white bg-gray-800 rounded opacity-0 group-hover:opacity-100 transition-opacity">
+                    Edit Playlist
+                  </span>
+                </div>
+              </Button>
+        </Link>
         </div>
       </div>
-    </li>
-  );
-}
-
-function SubmitButton({
-  destructive,
-  children,
-}: {
-  destructive?: boolean;
-  children: React.ReactNode;
-}) {
-  const { pending } = useFormStatus();
-
-  return (
-    <Button
-      type="submit"
-      size="sm"
-      variant={destructive ? "destructive" : "link"}
-      aria-disabled={pending}
-    >
-      {children}
-    </Button>
+    </li> 
   );
 }
