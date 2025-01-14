@@ -56,7 +56,7 @@ const StarRating: React.FC<StarRatingProps> = ({
     }
   };
 
-  if (average == true) {
+  if (average == true && initialValue != -1) {
     return (
       <div className="flex space-x-1">
         {[...Array(5)].map((_, index) => {
@@ -80,7 +80,7 @@ const StarRating: React.FC<StarRatingProps> = ({
         </div>
       </div>
     );
-  } else {
+  } else if (average == false) {
     return (
       <div className="flex space-x-1">
         {[...Array(5)].map((_, index) => {
@@ -111,6 +111,8 @@ const StarRating: React.FC<StarRatingProps> = ({
         })}
       </div>
     );
+  } else {
+    return null;
   }
 };
 
