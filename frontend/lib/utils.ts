@@ -75,6 +75,8 @@ export async function fetchAPI<T>(
       }),
     };
 
+    console.log("merge options", mergedOptions);
+
     const queryString = qs.stringify(config.urlParams, {
       encodeValuesOnly: true,
     });
@@ -83,9 +85,14 @@ export async function fetchAPI<T>(
     const baseUrl = process.env.NEXT_PUBLIC_STRAPI_API_URL;
     const requestUrl = `${baseUrl}/api${path}${queryString ? `?${queryString}` : ""}`;
 
-    // console.log("Fetching from:", requestUrl);
+    console.log("base", baseUrl);
+    console.log("request", requestUrl);
+
+    //console.log("Fetching from:", requestUrl);
 
     const response = await fetch(requestUrl, mergedOptions);
+
+    console.log("response", response);
 
     if (!response.ok) {
       console.error("Response status:", response.status);
@@ -97,11 +104,14 @@ export async function fetchAPI<T>(
 
     const data = await response.json();
 
+    console.log("data", data);
     if (
       config.flattenResponse ||
       typeof config.flattenResponse === "undefined"
     ) {
-      return flattenAttributes(data.data);
+      const temp = flattenAttributes(data.data);
+      console.log("flatten", temp);
+      return temp;
     }
 
     return data;

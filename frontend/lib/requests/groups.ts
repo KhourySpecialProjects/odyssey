@@ -8,8 +8,10 @@ import { getAuthorizedUserByEmail } from "./authorized-user";
 import type { ActionResponse } from "@/types";
 import { AuthorizedUserRoleTitle } from "../globals";
 import { getAuthorizedUserRoleIdByTitle } from "./authorized-user-roles";
-
-const STRAPI_API_URL = process.env.STRAPI_API_URL;
+import { createEnrollmentFromEmail } from "@/lib/actions"
+import { getEnrollmentsByAuthorizedUser } from "./enrollment";
+import { createEnrollment } from "@/lib/actions";
+const STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
 /**
  * Gets all groups where the authorized user has a management role (creator, admin, or manager).
@@ -110,6 +112,53 @@ export async function getGroupBySlug(
     urlParams,
     cache: "no-store",
   }).then((groups) => groups[0] || null);
+}
+
+
+/**
+ * Gets a specific group by its slug, including full member details if the user has permission.
+ * @param id The ID of the authorized user requesting access
+ * @param options Strapi query modifiers
+ * @returns The group if found and user has access, null otherwise
+ */
+export async function getGroupByID(
+  id: number,
+  {
+    populate = {
+      members: {
+        fields: ["id", "email"],
+      },
+      admins: {
+        fields: ["id", "email"],
+      },
+      managers: {
+        fields: ["id", "email"],
+      },
+      creator: {
+        fields: ["id", "email"],
+      },
+      droplets: {
+        fields: ["id"],
+      }
+    },
+  }: StrapiRequestParams = {},
+): Promise<Group> {
+  const path = `/groups`;
+  const urlParams = {
+    filters: {
+      id: { $eq: id },
+    },
+    populate,
+    pagination: {
+      pageSize: 1,
+      page: 1,
+    },
+  };
+
+  return await fetchAPI<Group[]>(path, {
+    urlParams,
+    cache: "no-store",
+  }).then((groups) => groups[0]);
 }
 
 /**
@@ -420,6 +469,7 @@ export async function updateGroup(
     }>;
   },
 ): Promise<Group> {
+
   const path = `/groups/${groupId}`;
 
   // Prepare the data object for Strapi
@@ -567,5 +617,30 @@ export async function createAuthorizedUserInGroup(
       error: "Database Error: Failed to Create Authorized User.",
       data: null,
     };
+  }
+}
+
+export async function enrollUsers(group: Group) {
+  console.log("enrolling users in these droplets");
+  console.log("member count ", group.members?.length);
+  console.log("droplet count ", group.droplets?.length);
+  try {
+    group.members?.map(async (member) => {
+      group.droplets?.map(async (droplet) => {
+        const enrollmentData = {
+          droplet: droplet.id,
+          viewedLessons: [],
+        };
+        console.log("inside the function");
+        console.log("enrollment data: ", enrollmentData)
+        console.log("member email: ", member.email)
+        console.log("member id", member.id)
+        return await createEnrollmentFromEmail(enrollmentData, member.email);
+        //return await createEnrollment(enrollmentData);
+      }) || []
+    }) || []
+  } catch (error) {
+    console.error("Error enrolling users:", error);
+    throw error;
   }
 }

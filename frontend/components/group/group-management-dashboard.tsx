@@ -10,13 +10,13 @@ import { PlaylistCard } from "@/components/playlists/playlist-card";
 import { Separator } from "@/components/ui/separator";
 import { GroupProgressGrid } from "@/components/group/group-progress-grid";
 
-
 interface RenderGroupDashboardProps {
     group: Group
   }
 
 
 export function RenderGroupDashboard( {group}: RenderGroupDashboardProps) {
+
     return (
         <Tabs title="">
         <TabList>

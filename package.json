@@ -12,9 +12,11 @@
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.701.0",
+    "@nextui-org/table": "^2.2.8",
     "concurrently": "^8.2.2",
     "install": "^0.13.0",
-    "npm-check-updates": "^16.14.15"
+    "npm-check-updates": "^16.14.15",
+    "react-tabs": "^6.1.0"
   },
   "devDependencies": {
     "prettier": "3.3.2"

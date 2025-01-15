@@ -36,6 +36,9 @@ import { AddPlaylistDialog } from "./add-playlist-dialog";
 import { AddMemberDialog } from "./add-member-dialog";
 import { MemberTile } from "./member-tile";
 import { createGroup } from "@/lib/requests/groups";
+import { enrollUsers } from "@/lib/requests/groups";
+import { getGroupByID } from "@/lib/requests/groups";
+import { revalidateTag } from "next/cache";
 
 const SEMESTER_OPTIONS: GroupSemester[] = [
   "Open Membership",
@@ -249,13 +252,21 @@ export function GroupManagementForm({
 
       console.log(" -------> submissionData2 = ", createGroupData);
 
+
       if (existingGroup) {
+        console.log("form being submitted soon!");
         const response = await updateGroup(existingGroup.id, updateGroupData);
+        await enrollUsers(await getGroupByID(existingGroup.id));
         router.push(`/g/${response.slug}`);
       } else {
+        console.log("form being submitted soon!");
         const newGroup = await createGroup(currentUser.id, createGroupData);
+        await enrollUsers(await getGroupByID(newGroup.id));
         router.push(`/g/${newGroup.slug}`);
       }
+
+
+
     } catch (error) {
       // Handle error
       console.error("Failed to update group", error);
@@ -446,6 +457,7 @@ export function GroupManagementForm({
                 email: member.email ?? "",
               }))}
               onAddMembers={(emails) => {
+
                 const newMembers = emails.map(
                   (email) =>
                     ({
@@ -510,6 +522,7 @@ export function GroupManagementForm({
             />
           }
         >
+
           {droplets.length > 0 ? (
             <DropletList
               droplets={droplets}

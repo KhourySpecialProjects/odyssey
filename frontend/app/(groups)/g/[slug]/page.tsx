@@ -9,6 +9,7 @@ import { Separator } from "@/components/ui/separator";
 import { GroupDropletTile } from "@/components/group/group-droplet-tile";
 import { PlaylistCard } from "@/components/playlists/playlist-card";
 import createDOMPurifier from "isomorphic-dompurify";
+import { RenderGroupDashboard } from "@/components/group/group-management-dashboard";
 type Props = {
   params: Promise<{
     slug: string;
@@ -80,57 +81,24 @@ export default async function GroupDetailPage({ params }: Props) {
             content={createDOMPurifier.sanitize(
               group.description || "No Description Provided.",
             )}
-            // content={
-            //   <div
-            //     dangerouslySetInnerHTML={{
-            //       __html: group.description || "No description provided.",
-            //     }}
-            //   />
-            // }
+          // content={
+          //   <div
+          //     dangerouslySetInnerHTML={{
+          //       __html: group.description || "No description provided.",
+          //     }}
+          //   />
+          // }
           />
 
           <Separator />
 
           <ContentSection
-            title="Droplets"
-            emptyMessage="No droplets have been added to this group yet."
-          >
-            {/* Droplet components will go here */}
-            {group.droplets && group.droplets.length > 0 ? (
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                {group.droplets.map((droplet) => (
-                  <GroupDropletTile key={droplet.id} droplet={droplet} />
-                ))}
-              </div>
-            ) : (
-              <div className="p-8 text-center text-slate-500 border border-dashed rounded-lg">
-                No droplets have been added to this group yet.
-              </div>
-            )}
+            title="">
+            <RenderGroupDashboard group={group} />
           </ContentSection>
 
           <Separator />
 
-          <ContentSection
-            title="Playlists"
-            emptyMessage="No playlists have been added to this group yet."
-          >
-            {group.playlists && group.playlists.length > 0 ? (
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                {group.playlists.map((playlist) => (
-                  <PlaylistCard
-                    key={playlist.id}
-                    playlist={playlist}
-                    completedLessonIds={[]} // We'll need to implement this later
-                  />
-                ))}
-              </div>
-            ) : (
-              <div className="p-8 text-center text-slate-500 border border-dashed rounded-lg">
-                No playlists have been added to this group yet.
-              </div>
-            )}
-          </ContentSection>
         </div>
       </div>
     </div>
