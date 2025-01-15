@@ -45,7 +45,9 @@ export default async function Settings() {
           </div>
 
           <div className="flex items-center w-full pt-4 space-x-8 border-t sm:pt-0 sm:pl-8 border-t-slate-200 sm:border-t-0 sm:border-l sm:border-l-slate-200">
-            <div>
+            <div className={`${
+              user?.nuid ? 'visibility: visible' : 'visibility: hidden'
+            }`}>
               <div className="text-sm text-slate-500 dark:text-slate-400">
                 NUID
               </div>
@@ -61,7 +63,9 @@ export default async function Settings() {
             </div>
           </div>
         </CardContent>
-        <CardFooter className="px-6 py-4 border-t">
+        <CardFooter className={`px-6 py-4 border-t ${
+          user?.nuid ? 'visibility: visible' : 'visibility: hidden'
+        }`}>
           <p className="text-sm text-slate-600">
             To make changes, update your{" "}
             <Link
