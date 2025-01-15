@@ -1,7 +1,7 @@
 import { Metadata } from "next";
 import { LessonRenderer } from "@/components/droplets/lessons/lesson-renderer";
 import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
-import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
+import { getEnrollmentsByAuthorizedUser, getIsEnrollComplete } from "@/lib/requests/enrollment";
 import { getDropletBySlug } from "@/lib/requests/droplet";
 import { getLessonBySlug } from "@/lib/requests/lesson";
 import { getServerSession } from "next-auth";
@@ -50,6 +50,8 @@ export default async function Page({ params }: Props) {
 
   const lesson = await getLessonBySlug(lessonSlug);
 
+
+  
   return (
     <LessonRenderer
       lesson={lesson}

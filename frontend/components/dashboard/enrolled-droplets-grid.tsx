@@ -34,6 +34,8 @@ export async function EnrolledDropletsGrid() {
       },
     },
   });
+  console.log("user id is ", authorizedUser.id);
+  console.log("droplet grid is filled with :" , enrollments);
 
   const completedLessonIds = enrollments.flatMap(
     (enrollment) =>
