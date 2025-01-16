@@ -18,11 +18,12 @@ import {
   TowerControlIcon,
   SettingsIcon,
   ArrowLeftIcon,
+  MoveLeftIcon,
 } from "lucide-react";
 import { signOut } from "next-auth/react";
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import React, { useLayoutEffect, useState, useEffect } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import {
@@ -51,6 +52,7 @@ import {
 } from "@dnd-kit/sortable";
 import { SortableLesson } from "@/components/draft/sortable-lesson";
 import { useLessonOrder } from "./metadata/hooks/useLessonOrder";
+import { Button } from "../ui/button";
 
 export function Sidebar({
   user,
@@ -113,6 +115,7 @@ export function Sidebar({
 
   // Add this state to ensure consistent mounting
   const [mounted, setMounted] = useState(false);
+  const router = useRouter();
 
   // Use useEffect to handle client-side mounting
   useEffect(() => {
@@ -184,28 +187,38 @@ export function Sidebar({
             {/* Droplet name */}
             <div className="flex items-center justify-between p-2 my-2">
               <p className="text-lg font-extrabold leading-7">{droplet.name}</p>
-              <Link
-                href="/drafts"
-                className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-950 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 dark:ring-offset-slate-950 dark:focus-visible:ring-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 h-9 w-9"
-                aria-label="Back to Drafts"
-              >
-                <ArrowLeftIcon className="w-4 h-4" />
-              </Link>
             </div>
 
             {/* Metadata link */}
             <ul className="space-y-4 w-full font-medium flex flex-col items-center">
-              <li className="w-full">
+              <li className="w-full space-y-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => router.back()}
+                className={cn(
+                  classes.link,
+                  "w-full flex items-center justify-start text-base px-4",
+                )}
+              >
+                <div className="w-6 flex justify-center"> 
+                  <ArrowLeftIcon className="shrink-0 w-5 h-5" /> 
+                </div>
+                <span className="leading-snug ms-2">Save Droplet</span>
+              </Button>
                 <Link
                   href={`/draft/d/${droplet.slug}`}
                   className={cn(
+                    "w-full flex items-center justify-start text-base px-4",
                     classes.link,
                     pathname === `/draft/d/${droplet.slug}` &&
                       classes.activeLink,
                   )}
                 >
-                  <SettingsIcon className="shrink-0" />
-                  <span className="leading-snug ms-3">Metadata</span>
+                  <div className="w-6 flex justify-center"> 
+                    <SettingsIcon className="shrink-0 w-5 h-5" /> 
+                  </div>
+                  <span className="leading-snug ms-2">Metadata</span>
                 </Link>
               </li>
               <li className="pb-2 w-full text-center">
