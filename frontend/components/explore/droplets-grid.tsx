@@ -8,6 +8,7 @@ import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
 import { getDroplets } from "@/lib/requests/droplet";
 import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
 import { DropletTile } from "../droplets/droplet-tile";
+import { SortedDropletsGrid } from "./sorted-droplets-grid";
 
 interface Lesson {
   id: number;
@@ -55,7 +56,7 @@ export async function DropletsGrid({
     filters: {
       $and: [
         { status: { $eq: "published" } },
-        { isHidden: false },
+        { isHidden: { $eq: false } },
         searchValue ? { name: { $containsi: searchValue } } : {},
         completion ? { id: { $in: completedDropletIds } } : {},
         type
@@ -75,7 +76,7 @@ export async function DropletsGrid({
                 .map((val) => ({ tags: { slug: { $eq: val } } })),
             }
           : {},
-      ],
+      ].filter((item) => Object.keys(item).length > 0),
     },
     populate: {
       tags: true,
@@ -85,6 +86,18 @@ export async function DropletsGrid({
     },
   });
 
+  const user = await getCurrentUser();
+  let enrolledDropletIds: number[] = [];
+  let completedLessonIds: number[] = [];
+  if (user?.email) {
+    const authorizedUser = await getAuthorizedUserByEmail(user.email);
+    const enrollments = await getEnrollmentsByAuthorizedUser(authorizedUser.id);
+    enrolledDropletIds = enrollments.map((e) => e.droplet.id);
+    completedLessonIds = enrollments.flatMap(
+      (enrollment) =>
+        enrollment.viewedLessons?.map((lesson: Lesson) => lesson.id) || [],
+    );
+  }
   let dropletsWithCompletion = droplets.map((droplet) => {
     const dropletLessonIds = droplet.lessons?.map((l: Lesson) => l.id) || [];
     const completedLessonsInDroplet = completedLessonIds.filter((id) =>
@@ -94,20 +107,11 @@ export async function DropletsGrid({
       dropletLessonIds.length > 0
         ? (completedLessonsInDroplet.length / dropletLessonIds.length) * 100
         : 0;
-
     return {
       ...droplet,
       completionPercentage,
     };
   });
-
-  if (field === "completion") {
-    dropletsWithCompletion.sort((a, b) => {
-      return direction === "asc"
-        ? a.completionPercentage - b.completionPercentage
-        : b.completionPercentage - a.completionPercentage;
-    });
-  }
 
   if (!dropletsWithCompletion || dropletsWithCompletion.length === 0) {
     return (
@@ -136,8 +140,9 @@ export async function DropletsGrid({
     );
   }
 
-  return (
-    <ul className="grid grid-flow-row grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+  if (completion) {
+    return (
+      <ul className="grid grid-flow-row grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
       {dropletsWithCompletion.map((droplet) => (
         <DropletTile
           key={droplet.id}
@@ -147,5 +152,15 @@ export async function DropletsGrid({
         />
       ))}
     </ul>
+    );
+  }
+
+  return (
+    <SortedDropletsGrid
+      droplets={dropletsWithCompletion}
+      sortKey={sortKey}
+      completedLessonIds={completedLessonIds}
+      enrolledDropletIds={enrolledDropletIds}
+    />
   );
 }

@@ -1,6 +1,7 @@
 import { Droplet } from "@/types";
 import { StrapiRequestParams } from "@/types/strapi";
 import { fetchAPI } from "../utils";
+import { url } from "inspector";
 
 /**
  * Gets the first 25 Droplets matching the specified criteria, unless overridden by `options`.
@@ -27,10 +28,10 @@ export async function getDroplets({
     fields,
     pagination,
   };
-
-  return await fetchAPI<Droplet[]>(path, {
+  const retVal = await fetchAPI<Droplet[]>(path, {
     urlParams,
   });
+  return retVal;
 }
 
 /**
