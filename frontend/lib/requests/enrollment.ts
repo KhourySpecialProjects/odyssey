@@ -1,3 +1,5 @@
+"use server";
+
 import { Enrollment } from "@/types";
 import { StrapiRequestParams } from "@/types/strapi";
 import { fetchAPI, flattenAttributes } from "../utils";
@@ -27,7 +29,7 @@ export async function getEnrollmentsByAuthorizedUser(
       },
     },
     fields = ["id"],
-  }: StrapiRequestParams = {},
+  }: StrapiRequestParams = {}
 ): Promise<Enrollment[]> {
   const path = `/enrollments`;
   const urlParams = {
@@ -56,7 +58,7 @@ export async function getEnrollmentsByAuthorizedUser(
 export async function getIsEnrolled(
   authorizedUserId: number,
   dropletId: number,
-  { sort, filters, populate = "*", fields = ["*"] }: StrapiRequestParams = {},
+  { sort, filters, populate = "*", fields = ["*"] }: StrapiRequestParams = {}
 ): Promise<boolean> {
   const path = `/enrollments`;
   const urlParams = {
@@ -77,10 +79,9 @@ export async function getIsEnrolled(
   };
 
   return await fetchAPI<Enrollment[]>(path, { urlParams }).then(
-    (enrollments) => enrollments.length > 0,
+    (enrollments) => enrollments.length > 0
   );
 }
-
 
 /**
  * Determines if the given authorized user is enrolled in the given Droplet.
@@ -92,28 +93,27 @@ export async function getIsEnrolled(
 
 export async function getIsEnrollComplete(
   authorizedUserId: number,
-  dropletId: number,
-  { sort, filters = {}, populate = "*", fields = ["isComplete"] }: StrapiRequestParams = {},
-): Promise<Enrollment[]> {
+  dropletId: number
+): Promise<boolean> {
   const path = `/enrollments`;
   const urlParams = {
-    sort,
     filters: {
       $and: [
-        {authorizedUser: { id: { $eq: authorizedUserId } }},
-        {droplet: { id: { $eq: dropletId } }},
+        { authorizedUser: { id: { $eq: authorizedUserId } } },
+        { droplet: { id: { $eq: dropletId } } },
       ],
     },
-    populate,
-    fields,
+    fields: ["isComplete"],
     pagination: {
       pageSize: 1,
       page: 1,
     },
   };
-
-  const fetchapi = await fetchAPI<Enrollment[]>(path, { urlParams })
-  console.log("api call", fetchapi);
-  return fetchapi;
+  try {
+    const enrollments = await fetchAPI<Enrollment[]>(path, { urlParams });
+    return enrollments[0]?.isComplete ?? false;
+  } catch (error) {
+    console.error("Error fetching enrollment status: ", error);
+    return false;
+  }
 }
-
