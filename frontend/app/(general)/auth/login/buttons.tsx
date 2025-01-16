@@ -16,7 +16,7 @@ export default function LoginButtons({
   if (!providers) throw new Error("No auth providers configured");
 
   return (
-    <>
+    <div className="space-y-3">
       {Object.values(providers).map((provider: any) => (
         <div key={provider.name}>
           <Button
@@ -27,6 +27,6 @@ export default function LoginButtons({
           </Button>
         </div>
       ))}
-    </>
+    </div>
   );
 }

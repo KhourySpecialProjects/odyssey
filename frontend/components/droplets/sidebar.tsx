@@ -22,11 +22,12 @@ import {
   TargetIcon,
   TowerControlIcon,
   CheckCircle2,
+  ArrowLeftIcon,
 } from "lucide-react";
 import { signOut } from "next-auth/react";
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useLayoutEffect, useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import {
@@ -41,6 +42,7 @@ import { Label } from "../ui/label";
 import { Progress } from "../ui/progress";
 import { Separator } from "../ui/separator";
 import { useSession } from "next-auth/react";
+import { Button } from "../ui/button";
 
 export default function Sidebar({
   user,
@@ -67,6 +69,7 @@ export default function Sidebar({
   const totalLessons = droplet.lessons?.length ?? 0;
   const totalPages = totalLessons + 2;
   const pageSlug = pathname.split("/").at(-1);
+  const router = useRouter();
 
   let pageSlugIndex = 0;
   if (pageSlug === "recap") {
@@ -137,7 +140,19 @@ export default function Sidebar({
               />
             </Link>
 
-            <Separator />
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => router.back()}
+              className={cn(
+                "w-full flex items-center justify-start text-base px-4",
+              )}
+            >
+              <div className="w-6 flex justify-center">
+                <ArrowLeftIcon className="shrink-0 w-5 h-5" />
+              </div>
+              <span className="leading-snug ms-2">Back</span>
+            </Button>
 
             <p className="p-2 my-2 text-lg font-extrabold leading-7">
               {droplet.name}
