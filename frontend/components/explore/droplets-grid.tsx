@@ -86,18 +86,6 @@ export async function DropletsGrid({
     },
   });
 
-  const user = await getCurrentUser();
-  let enrolledDropletIds: number[] = [];
-  let completedLessonIds: number[] = [];
-  if (user?.email) {
-    const authorizedUser = await getAuthorizedUserByEmail(user.email);
-    const enrollments = await getEnrollmentsByAuthorizedUser(authorizedUser.id);
-    enrolledDropletIds = enrollments.map((e) => e.droplet.id);
-    completedLessonIds = enrollments.flatMap(
-      (enrollment) =>
-        enrollment.viewedLessons?.map((lesson: Lesson) => lesson.id) || [],
-    );
-  }
   let dropletsWithCompletion = droplets.map((droplet) => {
     const dropletLessonIds = droplet.lessons?.map((l: Lesson) => l.id) || [];
     const completedLessonsInDroplet = completedLessonIds.filter((id) =>
@@ -143,15 +131,15 @@ export async function DropletsGrid({
   if (completion) {
     return (
       <ul className="grid grid-flow-row grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-      {dropletsWithCompletion.map((droplet) => (
-        <DropletTile
-          key={droplet.id}
-          droplet={droplet}
-          isEnrolled={enrolledDropletIds.includes(droplet.id)}
-          completedLessonIds={completedLessonIds}
-        />
-      ))}
-    </ul>
+        {dropletsWithCompletion.map((droplet) => (
+          <DropletTile
+            key={droplet.id}
+            droplet={droplet}
+            isEnrolled={enrolledDropletIds.includes(droplet.id)}
+            completedLessonIds={completedLessonIds}
+          />
+        ))}
+      </ul>
     );
   }
 
