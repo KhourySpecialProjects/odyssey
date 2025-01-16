@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { SortFilterItem } from "@/lib/globals";
 import { ArrowUpDownIcon } from "lucide-react";
-import { useQueryState } from "nuqs";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 export function Sort({
   options,
@@ -21,18 +21,26 @@ export function Sort({
   options: SortFilterItem[];
   defaultValue: SortFilterItem;
 }) {
-  const [selectedValue, setSelectedValue] = useQueryState("sort", {
-    defaultValue: defaultValue.slug,
-    shallow: false,
-    clearOnDefault: true,
-  });
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const selectedValue = searchParams.get("sort") || defaultValue.slug;
+
+  const updateQueryString = (value: string) => {
+    const params = new URLSearchParams(searchParams);
+    if (value !== defaultValue.slug) {
+      params.set("sort", value);
+    } else {
+      params.delete("sort");
+    }
+    router.push(`${pathname}?${params.toString()}`);
+  };
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="outline" size="sm" className="gap-0.25 border-dashed">
           <ArrowUpDownIcon className="mr-2 w-4 h-4" />
-
           {options.find((item) => item.slug === selectedValue)!.label}
         </Button>
       </DropdownMenuTrigger>
@@ -42,7 +50,7 @@ export function Sort({
         <DropdownMenuSeparator />
         <DropdownMenuRadioGroup
           value={selectedValue}
-          onValueChange={setSelectedValue}
+          onValueChange={updateQueryString}
         >
           {options.map((option) => (
             <DropdownMenuRadioItem key={option.slug} value={option.slug}>
