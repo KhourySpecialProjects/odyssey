@@ -1,7 +1,13 @@
+"use client";
+
 import { Badge } from "@/components/ui/badge";
 import { cn, uppercaseFirstChar } from "@/lib/utils";
 import { Droplet } from "@/types";
 import Link from "next/link";
+
+import { StarRating } from "@/components/ui/rating-stars";
+import { getDropletAverageRating } from "@/lib/requests/enrollment";
+import { useEffect, useState } from "react";
 
 interface DropletTileProps {
   droplet: Droplet;
@@ -14,6 +20,8 @@ export function DropletTile({
   isEnrolled = false,
   completedLessonIds = [],
 }: DropletTileProps) {
+  const [averageRating, setAverageRating] = useState<number>(0);
+
   // Calculate completion percentage
   const dropletLessonIds = droplet.lessons?.map((l) => l.id) || [];
   const completedLessonsInDroplet = completedLessonIds.filter((id) =>
@@ -25,6 +33,15 @@ export function DropletTile({
           (completedLessonsInDroplet.length / dropletLessonIds.length) * 100,
         )
       : 0;
+
+  useEffect(() => {
+    const fetchRating = async () => {
+      const rating = await getDropletAverageRating(droplet);
+      setAverageRating(rating);
+    };
+
+    fetchRating();
+  }, [droplet]);
 
   const getCompletionBadgeColor = () => {
     if (completionPercentage === 0)
@@ -68,6 +85,17 @@ export function DropletTile({
           <span className="block w-full text-3xl font-black text-slate-950 place-self-end">
             {droplet.name}
           </span>
+
+          {averageRating != 0 ? (
+            <div className="flex items-start w-full scale-[0.55] origin-left">
+              <StarRating
+                value={averageRating}
+                enrollmentID={""}
+                average={true}
+                uniqueId={droplet.id.toString()}
+              />
+            </div>
+          ) : null}
         </div>
       </Link>
     </li>
