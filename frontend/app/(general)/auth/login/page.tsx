@@ -30,8 +30,8 @@ export default async function SignIn() {
             Log In
           </h2>
           <p className="mt-4 text-lg leading-normal text-slate-600 text-balance">
-            Authenticate with your Northeastern University account via Azure
-            Active Directory to access Khoury Odyssey.
+            Authenticate with GitHub or with your Northeastern University
+            account via Azure Active Directory to access Khoury Odyssey.
           </p>
         </div>
 
