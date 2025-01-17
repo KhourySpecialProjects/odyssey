@@ -34,7 +34,7 @@ export default async function Settings() {
     const enrollments = await getEnrollmentsByAuthorizedUser(authorizedUser.id);
     enrollmentDropletList = enrollments.map((e) => e.droplet);
     completedDropletNames = enrollments
-      .filter((e) => e.isComplete)
+      .filter((e) => e.viewedLessons.length === e.droplet.lessons?.length)
       .map((d) => d.droplet.name);
     enrollmentDroplets = enrollmentDropletList.length;
     completedDroplets = completedDropletNames.length;
