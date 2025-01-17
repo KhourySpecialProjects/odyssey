@@ -51,6 +51,20 @@
     },
     "github": {
       "type": "string"
+    },
+    "firstTime": {
+      "type": "boolean",
+      "default": true
+    },
+    "firstName": {
+      "type": "string"
+    },
+    "lastName": {
+      "type": "string"
+    },
+    "bio": {
+      "type": "text",
+      "maxLength": 400
     }
   }
 }
