@@ -128,21 +128,6 @@ export async function DropletsGrid({
     );
   }
 
-  if (completion) {
-    return (
-      <ul className="grid grid-flow-row grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-        {dropletsWithCompletion.map((droplet) => (
-          <DropletTile
-            key={droplet.id}
-            droplet={droplet}
-            isEnrolled={enrolledDropletIds.includes(droplet.id)}
-            completedLessonIds={completedLessonIds}
-          />
-        ))}
-      </ul>
-    );
-  }
-
   return (
     <SortedDropletsGrid
       droplets={dropletsWithCompletion}
