@@ -34,7 +34,7 @@ export default async function Settings() {
     const enrollments = await getEnrollmentsByAuthorizedUser(authorizedUser.id);
     enrollmentDropletList = enrollments.map((e) => e.droplet);
     completedDropletNames = enrollments
-      .filter((e) => e.viewedLessons.length === e.droplet.lessons?.length)
+      .filter((e) => e.isComplete)
       .map((d) => d.droplet.name);
     enrollmentDroplets = enrollmentDropletList.length;
     completedDroplets = completedDropletNames.length;
@@ -112,7 +112,7 @@ export default async function Settings() {
           </CardDescription>
         </CardHeader>
 
-        {/* <CardContent className="flex flex-col items-start gap-x-8 gap-y-6 sm:flex-row">
+        <CardContent className="flex flex-col items-start gap-x-8 gap-y-6 sm:flex-row">
           <div className="flex items-center space-x-3">
             <div>
               <div className="text-sm text-slate-500 dark:text-slate-400">
@@ -120,7 +120,7 @@ export default async function Settings() {
               </div>
             </div>
           </div>
-        </CardContent> */}
+        </CardContent>
       </Card>
       <Card>
         <CardHeader>
