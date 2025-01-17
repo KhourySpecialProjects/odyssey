@@ -46,6 +46,12 @@
       "target": "api::playlist.playlist",
       "mappedBy": "authorized_users"
     },
+    "linkedin": {
+      "type": "string"
+    },
+    "github": {
+      "type": "string"
+    },
     "firstTime": {
       "type": "boolean",
       "default": true
