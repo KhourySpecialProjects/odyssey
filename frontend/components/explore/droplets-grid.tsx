@@ -121,7 +121,7 @@ export async function DropletsGrid({
         <Message className="mb-8 border border-dashed rounded-md border-slate-200">
           <MessageHeader subtitle="No Results" title="No Completed Droplets" />
           <MessageDescription>
-            You haven't completed any Droplets yet.
+            You haven&apos;t completed any Droplets yet.
           </MessageDescription>
         </Message>
       );
