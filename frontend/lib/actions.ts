@@ -391,6 +391,63 @@ export async function addLesson(formData: z.infer<typeof CreateLessonSchema>) {
   }
 }
 
+export async function updateLinkedin(linkedIn: string, userId: number) {
+  try {
+    const response = await fetch(
+      `${STRAPI_API_URL}/api/authorized-users/${userId}`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+        },
+        body: JSON.stringify({
+          data: {
+            linkedin: linkedIn,
+          },
+        }),
+      },
+    );
+
+    if (!response.ok) {
+      throw new Error("Failed to update first time status");
+    }
+    return { success: true };
+  } catch (error) {
+    console.error("Error updating first time status:", error);
+    return { success: false, error };
+  }
+}
+
+export async function updateGithub(github: string, userId: number) {
+  console.log("github: ", github);
+  try {
+    const response = await fetch(
+      `${STRAPI_API_URL}/api/authorized-users/${userId}`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+        },
+        body: JSON.stringify({
+          data: {
+            github: github,
+          },
+        }),
+      },
+    );
+
+    if (!response.ok) {
+      throw new Error("Failed to update first time status");
+    }
+    return { success: true };
+  } catch (error) {
+    console.error("Error updating first time status:", error);
+    return { success: false, error };
+  }
+}
+
 export async function updateDroplet(
   id: number,
   data: Partial<z.infer<typeof DropletSchema>>,
@@ -752,6 +809,7 @@ export async function markLessonAsComplete(
 
     return true;
   } catch (error) {
+    //throw new Error(`Failed to mark lesson as complete: ${error}`);
     console.error("Error marking lesson as complete:", error);
     return false;
   }

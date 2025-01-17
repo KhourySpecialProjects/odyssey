@@ -13,12 +13,14 @@ interface DropletTileProps {
   droplet: Droplet;
   isEnrolled?: boolean;
   completedLessonIds?: number[];
+  profilePage?: boolean;
 }
 
 export function DropletTile({
   droplet,
   isEnrolled = false,
   completedLessonIds = [],
+  profilePage,
 }: DropletTileProps) {
   const [averageRating, setAverageRating] = useState<number>(0);
 
@@ -50,6 +52,25 @@ export function DropletTile({
       return "bg-amber-100 text-amber-800 border-amber-200";
     return "bg-emerald-100 text-emerald-800 border-emerald-200";
   };
+
+  if (profilePage) {
+    return (
+      <li className="transition-colors border rounded-md border-slate-200 hover:border-slate-300 bg-slate-50">
+        <Link
+          className="relative inline-flex w-full h-full p-6"
+          href={
+            (droplet.status == "draft" ? `/draft` : "") + `/d/${droplet.slug}`
+          }
+        >
+          <div className="flex flex-col items-center justify-center gap-3 w-full h-full">
+            <span className="block text-center text-3lg font-black text-slate-950">
+              {droplet.name}
+            </span>
+          </div>
+        </Link>
+      </li>
+    );
+  }
 
   return (
     <li className="transition-colors border rounded-md border-slate-200 hover:border-slate-300 bg-slate-50">

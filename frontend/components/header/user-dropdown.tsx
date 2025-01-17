@@ -12,6 +12,7 @@ import {
   ChevronDownIcon,
   CogIcon,
   LogOutIcon,
+  PersonStanding,
   TowerControlIcon,
   User2Icon,
 } from "lucide-react";
@@ -74,8 +75,8 @@ export function UserDropdown(user: User) {
 
         <DropdownMenuItem asChild>
           <Link href="/settings">
-            <CogIcon className="w-4 h-4 mr-2" />
-            <span>Settings</span>
+            <PersonStanding className="w-4 h-4 mr-2" />
+            <span>Profile</span>
           </Link>
         </DropdownMenuItem>
 

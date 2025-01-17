@@ -12,7 +12,7 @@ import { Droplet, Lesson, User } from "@/types";
 import {
   BookTextIcon,
   ChevronDownIcon,
-  CogIcon,
+  PersonStanding,
   FilePieChartIcon,
   HammerIcon,
   HistoryIcon,
@@ -268,7 +268,7 @@ export default function Sidebar({
 
                 <DropdownMenuItem asChild>
                   <Link href="/settings">
-                    <CogIcon className="w-4 h-4 mr-2" />
+                    <PersonStanding className="w-4 h-4 mr-2" />
                     <span>Admin</span>
                   </Link>
                 </DropdownMenuItem>
