@@ -113,6 +113,19 @@ export async function DropletsGrid({
   }
 
   if (completion) {
+    const completedDroplets = dropletsWithCompletion.filter(
+      (droplet) => droplet.completionPercentage === 100,
+    );
+    if (completedDroplets.length === 0) {
+      return (
+        <Message className="mb-8 border border-dashed rounded-md border-slate-200">
+          <MessageHeader subtitle="No Results" title="No Completed Droplets" />
+          <MessageDescription>
+            You haven't completed any Droplets yet.
+          </MessageDescription>
+        </Message>
+      );
+    }
     return (
       <ul className="grid grid-flow-row grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {dropletsWithCompletion.map((droplet) => (
