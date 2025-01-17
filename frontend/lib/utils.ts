@@ -82,7 +82,6 @@ export async function fetchAPI<T>(
     // Use different base URLs for client and server
     const baseUrl = process.env.NEXT_PUBLIC_STRAPI_API_URL;
     const requestUrl = `${baseUrl}/api${path}${queryString ? `?${queryString}` : ""}`;
-
     console.log("Fetching from:", requestUrl);
 
     const response = await fetch(requestUrl, mergedOptions);
