@@ -678,6 +678,14 @@ export interface ApiEnrollmentEnrollment extends Schema.CollectionType {
     isComplete: Attribute.Boolean &
       Attribute.Required &
       Attribute.DefaultTo<false>;
+    rating: Attribute.Integer &
+      Attribute.SetMinMax<
+        {
+          max: 5;
+          min: 1;
+        },
+        number
+      >;
     updatedAt: Attribute.DateTime;
     updatedBy: Attribute.Relation<
       'api::enrollment.enrollment',

@@ -121,6 +121,7 @@ export type Enrollment = {
   droplet: Droplet;
   viewedLessons: Lesson[];
   isComplete: boolean;
+  rating: number;
 };
 
 export interface Playlist {

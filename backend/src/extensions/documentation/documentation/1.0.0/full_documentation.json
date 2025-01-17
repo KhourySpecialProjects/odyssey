@@ -11,7 +11,7 @@
       "url": "https://khouryodyssey.org"
     },
     "license": null,
-    "x-generation-date": "2025-01-10T16:42:21.131Z"
+    "x-generation-date": "2025-01-16T21:57:09.760Z"
   },
   "x-strapi-config": {
     "plugins": [
@@ -1828,6 +1828,9 @@
                                                                 },
                                                                 "isComplete": {
                                                                   "type": "boolean"
+                                                                },
+                                                                "rating": {
+                                                                  "type": "integer"
                                                                 },
                                                                 "createdAt": {
                                                                   "type": "string",
@@ -4000,6 +4003,9 @@
                                                                 "isComplete": {
                                                                   "type": "boolean"
                                                                 },
+                                                                "rating": {
+                                                                  "type": "integer"
+                                                                },
                                                                 "createdAt": {
                                                                   "type": "string",
                                                                   "format": "date-time"
@@ -5599,6 +5605,9 @@
                                                                               },
                                                                               "isComplete": {
                                                                                 "type": "boolean"
+                                                                              },
+                                                                              "rating": {
+                                                                                "type": "integer"
                                                                               },
                                                                               "createdAt": {
                                                                                 "type": "string",
@@ -7885,6 +7894,9 @@
                                                                   "isComplete": {
                                                                     "type": "boolean"
                                                                   },
+                                                                  "rating": {
+                                                                    "type": "integer"
+                                                                  },
                                                                   "createdAt": {
                                                                     "type": "string",
                                                                     "format": "date-time"
@@ -8617,6 +8629,9 @@
               },
               "isComplete": {
                 "type": "boolean"
+              },
+              "rating": {
+                "type": "integer"
               }
             }
           }
@@ -9612,6 +9627,9 @@
                                                                             "isComplete": {
                                                                               "type": "boolean"
                                                                             },
+                                                                            "rating": {
+                                                                              "type": "integer"
+                                                                            },
                                                                             "createdAt": {
                                                                               "type": "string",
                                                                               "format": "date-time"
@@ -10401,6 +10419,9 @@
           },
           "isComplete": {
             "type": "boolean"
+          },
+          "rating": {
+            "type": "integer"
           },
           "createdAt": {
             "type": "string",
@@ -11640,6 +11661,9 @@
                                                                 },
                                                                 "isComplete": {
                                                                   "type": "boolean"
+                                                                },
+                                                                "rating": {
+                                                                  "type": "integer"
                                                                 },
                                                                 "createdAt": {
                                                                   "type": "string",
@@ -13670,6 +13694,9 @@
                                                                 },
                                                                 "isComplete": {
                                                                   "type": "boolean"
+                                                                },
+                                                                "rating": {
+                                                                  "type": "integer"
                                                                 },
                                                                 "createdAt": {
                                                                   "type": "string",
@@ -16016,6 +16043,9 @@
                                                                 },
                                                                 "isComplete": {
                                                                   "type": "boolean"
+                                                                },
+                                                                "rating": {
+                                                                  "type": "integer"
                                                                 },
                                                                 "createdAt": {
                                                                   "type": "string",
