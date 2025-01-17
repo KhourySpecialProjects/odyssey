@@ -21,7 +21,6 @@ export default async function HomeRoute() {
       </div>
 
       <div className="max-w-2xl py-20 mx-auto sm:py-36 lg:py-44">
-
         <div className="text-center">
           <h1 className="text-4xl font-black tracking-tight text-slate-900 sm:text-6xl text-balance">
             Reinforce Your Learning and Fuel Your Future
