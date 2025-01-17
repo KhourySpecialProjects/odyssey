@@ -118,12 +118,9 @@ export async function DropletsGrid({
     );
     if (completedDroplets.length === 0) {
       return (
-        <Message className="mb-8 border border-dashed rounded-md border-slate-200">
-          <MessageHeader subtitle="No Results" title="No Completed Droplets" />
-          <MessageDescription>
-            You haven&apos;t completed any Droplets yet.
-          </MessageDescription>
-        </Message>
+        <div className="text-black">
+          You haven&apos;t completed any Droplets yet.
+        </div>
       );
     }
     return (
