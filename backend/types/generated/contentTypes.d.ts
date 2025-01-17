@@ -536,10 +536,12 @@ export interface ApiAuthorizedUserAuthorizedUser extends Schema.CollectionType {
     >;
     firstName: Attribute.String;
     firstTime: Attribute.Boolean & Attribute.DefaultTo<true>;
+    github: Attribute.String;
     isEnabled: Attribute.Boolean &
       Attribute.Required &
       Attribute.DefaultTo<true>;
     lastName: Attribute.String;
+    linkedin: Attribute.String;
     playlists: Attribute.Relation<
       'api::authorized-user.authorized-user',
       'manyToMany',
@@ -683,6 +685,14 @@ export interface ApiEnrollmentEnrollment extends Schema.CollectionType {
     isComplete: Attribute.Boolean &
       Attribute.Required &
       Attribute.DefaultTo<false>;
+    rating: Attribute.Integer &
+      Attribute.SetMinMax<
+        {
+          max: 5;
+          min: 1;
+        },
+        number
+      >;
     updatedAt: Attribute.DateTime;
     updatedBy: Attribute.Relation<
       'api::enrollment.enrollment',
