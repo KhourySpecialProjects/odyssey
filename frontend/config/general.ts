@@ -37,10 +37,6 @@ export const getContentCreatorNav = (user: User) => {
       href: "/admin",
       label: "Admin",
     });
-    mainNav.push({
-      href: "/admin",
-      label: "Admin",
-    })
   }
 
   // if (isAuthorizedUserFaculty(user.roles)) {
