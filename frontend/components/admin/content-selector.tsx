@@ -11,18 +11,18 @@ const tabs = [
   { name: "Reports", href: "/admin/reports" },
 ];
 
-export function ContentSelector({ user } : { user: User }) {
+export function ContentSelector({ user }: { user: User }) {
   const pathname = usePathname();
   const isAdmin = isAuthorizedUserAdmin(user.roles);
 
   const tabs = [
-    ...(isAdmin 
+    ...(isAdmin
       ? [
           { name: "Access Requests", href: "/admin" },
           { name: "Student Progress", href: "/admin/progress" },
           { name: "Reports", href: "/admin/reports" },
         ]
-      : [])
+      : []),
   ];
 
   if (tabs.length === 0) return null;

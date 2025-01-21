@@ -1,24 +1,24 @@
 import { PlaylistBlock } from "./playlist-block";
 import { CreatePlaylist } from "./create-playlist";
-import { Playlist } from "@/types"
+import { Playlist } from "@/types";
 import { getPlaylists } from "@/lib/requests/playlist";
 
 export async function Playlists() {
-    const playlists = await getPlaylists({
-        filters: {}, 
+  const playlists = await getPlaylists({
+    filters: {},
+    populate: {
+      droplets: {
         populate: {
-          droplets: {
-            populate: {
-              lessons: {
-                fields: ["id", "name", "slug"],
-              },
-            },
-          },
-          author: {
-            fields: ["id", "name"],
+          lessons: {
+            fields: ["id", "name", "slug"],
           },
         },
-      });
+      },
+      author: {
+        fields: ["id", "name"],
+      },
+    },
+  });
 
   return (
     <section>
@@ -32,7 +32,7 @@ export async function Playlists() {
       <div className="p-4 mt-4 rounded-md bg-slate-100">
         {playlists.length > 0 ? (
           <ul className="divide-y divide-slate-200 dark:divide-slate-700 md:space-y-4">
-            {playlists.map((p : Playlist) => (
+            {playlists.map((p: Playlist) => (
               <PlaylistBlock playlist={p} key={p.id} />
             ))}
           </ul>

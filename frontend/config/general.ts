@@ -35,7 +35,7 @@ export const getContentCreatorNav = (user: User) => {
   if (isAuthorizedUserAdmin(user.roles)) {
     baseNav.push({
       href: "/admin",
-      label: "Admin"
+      label: "Admin",
     });
   }
 

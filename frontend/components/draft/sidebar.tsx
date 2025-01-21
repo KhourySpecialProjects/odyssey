@@ -192,20 +192,20 @@ export function Sidebar({
             {/* Metadata link */}
             <ul className="space-y-4 w-full font-medium flex flex-col items-center">
               <li className="w-full space-y-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => router.back()}
-                className={cn(
-                  classes.link,
-                  "w-full flex items-center justify-start text-base px-4",
-                )}
-              >
-                <div className="w-6 flex justify-center"> 
-                  <ArrowLeftIcon className="shrink-0 w-5 h-5" /> 
-                </div>
-                <span className="leading-snug ms-2">Save Droplet</span>
-              </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => router.back()}
+                  className={cn(
+                    classes.link,
+                    "w-full flex items-center justify-start text-base px-4",
+                  )}
+                >
+                  <div className="w-6 flex justify-center">
+                    <ArrowLeftIcon className="shrink-0 w-5 h-5" />
+                  </div>
+                  <span className="leading-snug ms-2">Save Droplet</span>
+                </Button>
                 <Link
                   href={`/draft/d/${droplet.slug}`}
                   className={cn(
@@ -215,8 +215,8 @@ export function Sidebar({
                       classes.activeLink,
                   )}
                 >
-                  <div className="w-6 flex justify-center"> 
-                    <SettingsIcon className="shrink-0 w-5 h-5" /> 
+                  <div className="w-6 flex justify-center">
+                    <SettingsIcon className="shrink-0 w-5 h-5" />
                   </div>
                   <span className="leading-snug ms-2">Metadata</span>
                 </Link>

@@ -6,7 +6,7 @@ import { Pencil } from "lucide-react";
 import Link from "next/link";
 
 export function PlaylistBlock({ playlist }: { playlist: Playlist }) {
-    const linkTo = `/draft/p/${playlist.slug}`;
+  const linkTo = `/draft/p/${playlist.slug}`;
 
   return (
     <li className="py-0 [&:not(:first-child)]:pt-3">
@@ -19,18 +19,18 @@ export function PlaylistBlock({ playlist }: { playlist: Playlist }) {
         </div>
 
         <div className="inline-flex items-center gap-2">
-        <Link href={linkTo}>
+          <Link href={linkTo}>
             <Button size="sm" variant="outline">
-                <div className="relative group">
-                  <Pencil className="text-sky-600" />
-                  <span className="absolute left-1/2 transform -translate-x-1/2 top-full mt-1 w-max px-2 py-1 text-xs text-white bg-gray-800 rounded opacity-0 group-hover:opacity-100 transition-opacity">
-                    Edit Playlist
-                  </span>
-                </div>
-              </Button>
-        </Link>
+              <div className="relative group">
+                <Pencil className="text-sky-600" />
+                <span className="absolute left-1/2 transform -translate-x-1/2 top-full mt-1 w-max px-2 py-1 text-xs text-white bg-gray-800 rounded opacity-0 group-hover:opacity-100 transition-opacity">
+                  Edit Playlist
+                </span>
+              </div>
+            </Button>
+          </Link>
         </div>
       </div>
-    </li> 
+    </li>
   );
 }

@@ -1,13 +1,20 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { updateAuthorizedUser, updateOnboardingInfo } from "@/lib/actions";
+import { updateAuthorizedUser, updateUserInfo } from "@/lib/actions";
 import { AuthorizedUser } from "@/types";
 import { Pencil } from "lucide-react";
 import { useFormStatus } from "react-dom";
 import { isAuthorizedUserAdmin } from "@/lib/utils";
 import { useState } from "react";
-import { DialogHeader, Dialog, DialogTrigger, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import {
+  DialogHeader,
+  Dialog,
+  DialogTrigger,
+  DialogContent,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { AuthorizedUserRoleTitle } from "@/lib/globals";
@@ -21,7 +28,7 @@ export function AuthorizedUserBlock({ user }: { user: AuthorizedUser }) {
   const [lastName, setLastName] = useState(user.lastName || "");
   const [bio, setBio] = useState(user.bio || "");
   const [selectedRoles, setSelectedRoles] = useState<AuthorizedUserRoleTitle[]>(
-    user.roles.map(role => role.title)
+    user.roles.map((role) => role.title),
   );
 
   const roleOptions = [
@@ -33,10 +40,10 @@ export function AuthorizedUserBlock({ user }: { user: AuthorizedUser }) {
   ] as const;
 
   const toggleRole = (role: AuthorizedUserRoleTitle) => {
-    setSelectedRoles(current => 
-      current.includes(role) 
-        ? current.filter(r => r !== role)
-        : [...current, role]
+    setSelectedRoles((current) =>
+      current.includes(role)
+        ? current.filter((r) => r !== role)
+        : [...current, role],
     );
   };
 
@@ -45,17 +52,17 @@ export function AuthorizedUserBlock({ user }: { user: AuthorizedUser }) {
   };
 
   const handleEditUser = async (formData: FormData) => {
-    const result = await updateOnboardingInfo(
+    const result = await updateUserInfo(
       formData.get("firstName") as string,
       formData.get("lastName") as string,
       formData.get("bio") as string,
       selectedRoles,
-      user.id
+      user.id,
     );
     if (result.success) {
       toast.success("Information updated successfully");
     } else {
-      console.log(result)
+      console.log(result);
       toast.error("Failed to update information");
     }
     setOpen(false);
@@ -86,18 +93,16 @@ export function AuthorizedUserBlock({ user }: { user: AuthorizedUser }) {
                 </div>
               </Button>
             </DialogTrigger>
-            
+
             <DialogContent>
               <DialogHeader>
                 <DialogTitle>Edit User</DialogTitle>
-                <DialogDescription>
-                  Update user information
-                </DialogDescription>
+                <DialogDescription>Update user information</DialogDescription>
               </DialogHeader>
 
               <form action={handleEditUser} className="space-y-4">
                 <input type="hidden" name="id" value={user.id} />
-                <Input 
+                <Input
                   name="firstName"
                   value={firstName}
                   onChange={(e) => setFirstName(e.target.value)}
@@ -116,49 +121,52 @@ export function AuthorizedUserBlock({ user }: { user: AuthorizedUser }) {
                   placeholder="Bio"
                 />
                 <div className="space-y-2">
-                <label className="text-sm font-medium">Roles</label>
-                <div className="space-y-2">
-                  {roleOptions.map((role) => (
-                    <div key={role.value} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={role.value}
-                        checked={selectedRoles.includes(role.value)}
-                        onCheckedChange={() => toggleRole(role.value)}
-                        className="border-sky-500 data-[state=checked]:bg-sky-500 data-[state=checked]:border-sky-500 focus-visible:ring-sky-500"
-                      />
-                      <label
-                        htmlFor={role.value}
-                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                  <label className="text-sm font-medium">Roles</label>
+                  <div className="space-y-2">
+                    {roleOptions.map((role) => (
+                      <div
+                        key={role.value}
+                        className="flex items-center space-x-2"
                       >
-                        {role.label}
-                      </label>
-                    </div>
-                  ))}
+                        <Checkbox
+                          id={role.value}
+                          checked={selectedRoles.includes(role.value)}
+                          onCheckedChange={() => toggleRole(role.value)}
+                          className="border-sky-500 data-[state=checked]:bg-sky-500 data-[state=checked]:border-sky-500 focus-visible:ring-sky-500"
+                        />
+                        <label
+                          htmlFor={role.value}
+                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                        >
+                          {role.label}
+                        </label>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
                 <Button type="submit">Save Changes</Button>
               </form>
 
-          <form action={handleUpdateUser}>
-            <input
-              id="id"
-              name="id"
-              type="number"
-              defaultValue={user.id}
-              hidden
-            />
-            <input
-              id="isEnabled"
-              name="isEnabled"
-              type="text"
-              defaultValue={String(!user.isEnabled)}
-              hidden
-            />
-            <SubmitButton destructive={user.isEnabled}>
-              {user.isEnabled ? "Disable Access" : "Enable Access"}
-            </SubmitButton>
-          </form>
-          </DialogContent>
+              <form action={handleUpdateUser}>
+                <input
+                  id="id"
+                  name="id"
+                  type="number"
+                  defaultValue={user.id}
+                  hidden
+                />
+                <input
+                  id="isEnabled"
+                  name="isEnabled"
+                  type="text"
+                  defaultValue={String(!user.isEnabled)}
+                  hidden
+                />
+                <SubmitButton destructive={user.isEnabled}>
+                  {user.isEnabled ? "Disable Access" : "Enable Access"}
+                </SubmitButton>
+              </form>
+            </DialogContent>
           </Dialog>
         </div>
       </div>
