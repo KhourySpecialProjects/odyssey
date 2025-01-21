@@ -11,7 +11,7 @@
       "url": "https://khouryodyssey.org"
     },
     "license": null,
-    "x-generation-date": "2025-01-17T21:02:25.885Z"
+    "x-generation-date": "2025-01-21T15:41:17.495Z"
   },
   "x-strapi-config": {
     "plugins": [
@@ -2117,18 +2117,6 @@
                                                   "github": {
                                                     "type": "string"
                                                   },
-                                                  "firstTime": {
-                                                    "type": "boolean"
-                                                  },
-                                                  "firstName": {
-                                                    "type": "string"
-                                                  },
-                                                  "lastName": {
-                                                    "type": "string"
-                                                  },
-                                                  "bio": {
-                                                    "type": "string"
-                                                  },
                                                   "createdAt": {
                                                     "type": "string",
                                                     "format": "date-time"
@@ -2707,18 +2695,6 @@
                 "type": "string"
               },
               "github": {
-                "type": "string"
-              },
-              "firstTime": {
-                "type": "boolean"
-              },
-              "firstName": {
-                "type": "string"
-              },
-              "lastName": {
-                "type": "string"
-              },
-              "bio": {
                 "type": "string"
               }
             }
@@ -3939,18 +3915,6 @@
                                                                             "github": {
                                                                               "type": "string"
                                                                             },
-                                                                            "firstTime": {
-                                                                              "type": "boolean"
-                                                                            },
-                                                                            "firstName": {
-                                                                              "type": "string"
-                                                                            },
-                                                                            "lastName": {
-                                                                              "type": "string"
-                                                                            },
-                                                                            "bio": {
-                                                                              "type": "string"
-                                                                            },
                                                                             "createdAt": {
                                                                               "type": "string",
                                                                               "format": "date-time"
@@ -4552,18 +4516,6 @@
             "type": "string"
           },
           "github": {
-            "type": "string"
-          },
-          "firstTime": {
-            "type": "boolean"
-          },
-          "firstName": {
-            "type": "string"
-          },
-          "lastName": {
-            "type": "string"
-          },
-          "bio": {
             "type": "string"
           },
           "createdAt": {
@@ -6359,18 +6311,6 @@
                         "github": {
                           "type": "string"
                         },
-                        "firstTime": {
-                          "type": "boolean"
-                        },
-                        "firstName": {
-                          "type": "string"
-                        },
-                        "lastName": {
-                          "type": "string"
-                        },
-                        "bio": {
-                          "type": "string"
-                        },
                         "createdAt": {
                           "type": "string",
                           "format": "date-time"
@@ -7864,18 +7804,6 @@
                                                                                 "type": "string"
                                                                               },
                                                                               "github": {
-                                                                                "type": "string"
-                                                                              },
-                                                                              "firstTime": {
-                                                                                "type": "boolean"
-                                                                              },
-                                                                              "firstName": {
-                                                                                "type": "string"
-                                                                              },
-                                                                              "lastName": {
-                                                                                "type": "string"
-                                                                              },
-                                                                              "bio": {
                                                                                 "type": "string"
                                                                               },
                                                                               "createdAt": {
@@ -10404,18 +10332,6 @@
                       "github": {
                         "type": "string"
                       },
-                      "firstTime": {
-                        "type": "boolean"
-                      },
-                      "firstName": {
-                        "type": "string"
-                      },
-                      "lastName": {
-                        "type": "string"
-                      },
-                      "bio": {
-                        "type": "string"
-                      },
                       "createdAt": {
                         "type": "string",
                         "format": "date-time"
@@ -12032,18 +11948,6 @@
                                                     "type": "string"
                                                   },
                                                   "github": {
-                                                    "type": "string"
-                                                  },
-                                                  "firstTime": {
-                                                    "type": "boolean"
-                                                  },
-                                                  "firstName": {
-                                                    "type": "string"
-                                                  },
-                                                  "lastName": {
-                                                    "type": "string"
-                                                  },
-                                                  "bio": {
                                                     "type": "string"
                                                   },
                                                   "createdAt": {
@@ -14077,18 +13981,6 @@
                                                     "type": "string"
                                                   },
                                                   "github": {
-                                                    "type": "string"
-                                                  },
-                                                  "firstTime": {
-                                                    "type": "boolean"
-                                                  },
-                                                  "firstName": {
-                                                    "type": "string"
-                                                  },
-                                                  "lastName": {
-                                                    "type": "string"
-                                                  },
-                                                  "bio": {
                                                     "type": "string"
                                                   },
                                                   "createdAt": {
@@ -16438,18 +16330,6 @@
                                                     "type": "string"
                                                   },
                                                   "github": {
-                                                    "type": "string"
-                                                  },
-                                                  "firstTime": {
-                                                    "type": "boolean"
-                                                  },
-                                                  "firstName": {
-                                                    "type": "string"
-                                                  },
-                                                  "lastName": {
-                                                    "type": "string"
-                                                  },
-                                                  "bio": {
                                                     "type": "string"
                                                   },
                                                   "createdAt": {
