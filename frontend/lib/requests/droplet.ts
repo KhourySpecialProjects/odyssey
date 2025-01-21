@@ -18,7 +18,7 @@ export async function getDroplets({
       fields: ["id", "name", "slug"],
     },
   },
-  fields = ["id", "name", "slug", "type", "focusArea", "status"],
+  fields = ["id", "name", "slug", "type", "focusArea", "status", "isHidden"],
 }: StrapiRequestParams = {}): Promise<Droplet[]> {
   const path = `/droplets`;
   const urlParams = {
@@ -42,7 +42,12 @@ export async function getDroplets({
  */
 export async function getDropletBySlug<T extends Partial<Droplet> = Droplet>(
   slug: string,
-  { sort, filters, populate = "*", fields = ["*"] }: StrapiRequestParams = {},
+  {
+    sort,
+    filters,
+    populate = { "*": true },
+    fields = ["*", "isHidden"],
+  }: StrapiRequestParams = {},
 ): Promise<T> {
   const path = `/droplets`;
   const urlParams = {
@@ -63,7 +68,12 @@ export async function getDropletBySlug<T extends Partial<Droplet> = Droplet>(
 
 export async function getDropletById<T extends Partial<Droplet> = Droplet>(
   id: number,
-  { sort, filters, populate, fields = ["*"] }: StrapiRequestParams = {},
+  {
+    sort,
+    filters,
+    populate = { "*": true },
+    fields = ["*", "isHidden"],
+  }: StrapiRequestParams = {},
 ): Promise<T> {
   const path = `/droplets/${id}`;
   const urlParams = {
