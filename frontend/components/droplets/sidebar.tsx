@@ -22,6 +22,7 @@ import {
   TargetIcon,
   TowerControlIcon,
   CheckCircle2,
+  LockIcon,
   ArrowLeftIcon,
 } from "lucide-react";
 import { signOut } from "next-auth/react";
@@ -42,6 +43,7 @@ import { Label } from "../ui/label";
 import { Progress } from "../ui/progress";
 import { Separator } from "../ui/separator";
 import { useSession } from "next-auth/react";
+import { DROPLET_FILTERS } from "@/lib/globals";
 
 export default function Sidebar({
   user,
@@ -51,7 +53,7 @@ export default function Sidebar({
 }: {
   user?: User | null;
   author: boolean;
-  droplet: Pick<Droplet, "name" | "slug" | "lessons">;
+  droplet: Pick<Droplet, "name" | "slug" | "droplet_lessons">;
   completedLessonIds: number[];
 }) {
   const [expanded, setExpanded] = useState(false);
@@ -59,26 +61,24 @@ export default function Sidebar({
   const { data: session } = useSession();
 
   const isAdmin = user && isAuthorizedUserAdmin(user.roles);
+  // console.log(" ----> user roles = ", user?.roles);
+  // console.log(" ----> isAdmin = ", isAdmin);
 
   const activeLinkClasses =
     "w-full flex font-bold items-center p-2 bg-slate-200 [&>svg]:text-sky-700 rounded-lg dark:text-white dark:hover:bg-slate-700 group text-sky-700 transition-colors";
   const inactiveLinkClasses =
     "w-full flex items-center p-2 rounded-lg text-slate-900 dark:text-white hover:bg-slate-100 dark:hover:bg-slate-700 group transition-colors";
 
-  const totalLessons = droplet.lessons?.length ?? 0;
-  const totalPages = totalLessons + 2;
-  const pageSlug = pathname.split("/").at(-1);
+  const totalLessons = droplet.droplet_lessons?.length ?? 0;
+  // const totalPages = totalLessons;
+  // const pageSlug = pathname.split("/").at(-1);
 
-  let pageSlugIndex = 0;
-  if (pageSlug === "recap") {
-    pageSlugIndex = totalLessons;
-  } else {
-    pageSlugIndex =
-      droplet.lessons?.map((l: any) => l.slug).indexOf(pageSlug) ?? 0;
-  }
+  const totalLessonsCompleted = completedLessonIds.filter((id) =>
+    droplet.droplet_lessons?.some((lesson) => lesson.lesson.id === id),
+  ).length;
 
   const dropletProgress = Math.round(
-    ((pageSlugIndex + 2) / totalPages) * 100, // offset for intro and 0-index
+    (totalLessonsCompleted / totalLessons) * 100,
   );
 
   useLayoutEffect(() => {
@@ -155,7 +155,8 @@ export default function Sidebar({
               {droplet.name}
             </p>
 
-            {author && (
+            {/*Both Authors and Admins should be able to see the edit button  */}
+            {(author || isAdmin) && (
               <div className="pb-4 w-full text-center">
                 <Link
                   className="w-full px-6 py-2 rounded-full text-white bg-green-600 hover:bg-green-700"
@@ -181,30 +182,51 @@ export default function Sidebar({
                 </Link>
               </li>
 
-              {droplet.lessons?.map((lesson) => (
-                <li key={lesson.id} className="w-full">
-                  <Link
-                    href={`/d/${droplet.slug}/${lesson.slug}`}
-                    className={
-                      pathname == `/d/${droplet.slug}/${lesson.slug}`
-                        ? activeLinkClasses
-                        : inactiveLinkClasses
-                    }
-                  >
-                    {lesson.type === "activity" ? (
-                      <HammerIcon className="shrink-0" />
-                    ) : lesson.type === "caseStudy" ? (
-                      <FilePieChartIcon className="w-5 h-5 mr-0.5 shrink-0" />
-                    ) : (
-                      <BookTextIcon className="shrink-0" />
-                    )}
-                    <span className="leading-snug ms-3">{lesson.name}</span>
-                    {completedLessonIds.includes(lesson.id) && (
-                      <CheckCircle2 className="ml-auto w-4 h-4 text-green-500 shrink-0" />
-                    )}
-                  </Link>
-                </li>
-              ))}
+              {droplet.droplet_lessons
+                .sort((a, b) => a.orderIndex - b.orderIndex)
+                .map((dropletLesson, index) => {
+                  const lesson = dropletLesson.lesson;
+                  const previousLesson =
+                    index > 0
+                      ? droplet.droplet_lessons[index - 1].lesson
+                      : null;
+                  const isLocked =
+                    previousLesson &&
+                    !completedLessonIds.includes(previousLesson.id) &&
+                    !author &&
+                    !isAdmin;
+
+                  // console.log(" ---> isLocked = ", isLocked);
+
+                  return (
+                    <li key={lesson.id} className="w-full">
+                      <Link
+                        href={`/d/${droplet.slug}/${lesson.slug}`}
+                        className={cn(
+                          pathname == `/d/${droplet.slug}/${lesson.slug}`
+                            ? activeLinkClasses
+                            : inactiveLinkClasses,
+                          isLocked && "opacity-50",
+                        )}
+                      >
+                        {lesson.type === "activity" ? (
+                          <HammerIcon className="shrink-0" />
+                        ) : lesson.type === "caseStudy" ? (
+                          <FilePieChartIcon className="w-5 h-5 mr-0.5 shrink-0" />
+                        ) : (
+                          <BookTextIcon className="shrink-0" />
+                        )}
+                        <span className="leading-snug ms-3">{lesson.name}</span>
+                        {isLocked && (
+                          <LockIcon className="ml-auto w-4 h-4 text-slate-400 shrink-0" />
+                        )}
+                        {completedLessonIds.includes(lesson.id) && (
+                          <CheckCircle2 className="ml-auto w-4 h-4 text-green-500 shrink-0" />
+                        )}
+                      </Link>
+                    </li>
+                  );
+                })}
 
               <li className="w-full">
                 <Link

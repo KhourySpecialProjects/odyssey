@@ -562,6 +562,53 @@ export interface ApiAuthorizedUserAuthorizedUser extends Schema.CollectionType {
   };
 }
 
+export interface ApiDropletLessonDropletLesson extends Schema.CollectionType {
+  collectionName: 'droplet_lessons';
+  info: {
+    description: '';
+    displayName: 'DropletLesson';
+    pluralName: 'droplet-lessons';
+    singularName: 'droplet-lesson';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    createdAt: Attribute.DateTime;
+    createdBy: Attribute.Relation<
+      'api::droplet-lesson.droplet-lesson',
+      'oneToOne',
+      'admin::user'
+    > &
+      Attribute.Private;
+    droplet: Attribute.Relation<
+      'api::droplet-lesson.droplet-lesson',
+      'manyToOne',
+      'api::droplet.droplet'
+    >;
+    lesson: Attribute.Relation<
+      'api::droplet-lesson.droplet-lesson',
+      'manyToOne',
+      'api::lesson.lesson'
+    >;
+    orderIndex: Attribute.Integer &
+      Attribute.Required &
+      Attribute.SetMinMax<
+        {
+          min: 0;
+        },
+        number
+      >;
+    updatedAt: Attribute.DateTime;
+    updatedBy: Attribute.Relation<
+      'api::droplet-lesson.droplet-lesson',
+      'oneToOne',
+      'admin::user'
+    > &
+      Attribute.Private;
+  };
+}
+
 export interface ApiDropletDroplet extends Schema.CollectionType {
   collectionName: 'droplets';
   info: {
@@ -590,6 +637,11 @@ export interface ApiDropletDroplet extends Schema.CollectionType {
       Attribute.SetMinMaxLength<{
         maxLength: 500;
       }>;
+    droplet_lessons: Attribute.Relation<
+      'api::droplet.droplet',
+      'oneToMany',
+      'api::droplet-lesson.droplet-lesson'
+    >;
     enrollments: Attribute.Relation<
       'api::droplet.droplet',
       'oneToMany',
@@ -737,6 +789,11 @@ export interface ApiLessonLesson extends Schema.CollectionType {
       'admin::user'
     > &
       Attribute.Private;
+    droplet_lessons: Attribute.Relation<
+      'api::lesson.lesson',
+      'oneToMany',
+      'api::droplet-lesson.droplet-lesson'
+    >;
     droplets: Attribute.Relation<
       'api::lesson.lesson',
       'manyToMany',
@@ -1320,6 +1377,7 @@ declare module '@strapi/types' {
       'api::author.author': ApiAuthorAuthor;
       'api::authorized-user-role.authorized-user-role': ApiAuthorizedUserRoleAuthorizedUserRole;
       'api::authorized-user.authorized-user': ApiAuthorizedUserAuthorizedUser;
+      'api::droplet-lesson.droplet-lesson': ApiDropletLessonDropletLesson;
       'api::droplet.droplet': ApiDropletDroplet;
       'api::enrollment.enrollment': ApiEnrollmentEnrollment;
       'api::lesson.lesson': ApiLessonLesson;

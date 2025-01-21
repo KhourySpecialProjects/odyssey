@@ -84,6 +84,13 @@ export type Resource = {
   url: string;
 };
 
+interface DropletLesson {
+  id: number;
+  orderIndex: number;
+  lesson: Lesson;
+}
+
+// TODO: fully migrate from lessons to droplet_lessons.
 export type Droplet = {
   id: number;
   slug: string;
@@ -101,6 +108,7 @@ export type Droplet = {
   postrequisites?: Droplet[];
   isHidden: boolean;
   status: DropletStatus;
+  droplet_lessons: DropletLesson[];
 };
 
 export type QuizAnswerOption = {
