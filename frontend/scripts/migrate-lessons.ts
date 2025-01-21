@@ -120,12 +120,12 @@ async function migrateDropletLessons() {
             });
 
             console.log(
-              `Created DropletLesson for Droplet ${droplet.id}, Lesson ${lesson.id}, Order ${i}`
+              `Created DropletLesson for Droplet ${droplet.id}, Lesson ${lesson.id}, Order ${i}`,
             );
           } catch (createError) {
             console.error(
               `Error creating DropletLesson for Droplet ${droplet.id}, Lesson ${lesson.id}:`,
-              createError
+              createError,
             );
           }
         }
