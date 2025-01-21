@@ -36,6 +36,15 @@ export async function createAuthorizedUser(prevState: any, formData: FormData) {
   const roleID = await getAuthorizedUserRoleIdByTitle(
     AuthorizedUserRoleTitle.User,
   );
+
+  const emailRegex = /^[^\s@]+@northeastern\.edu$/;
+    if (!formData.get("email")) {
+      return { ok: false, error: "No email provided", data: null };
+    }
+  if (!emailRegex.test(formData.get("email") as string)) {
+    return { ok: false, error: "Not a valid email", data: null };
+  }
+
   const { email, isEnabled } = CreateAuthorizedUser.parse({
     email: formData.get("email"),
     isEnabled: formData.get("isEnabled"),
