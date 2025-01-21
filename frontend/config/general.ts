@@ -37,7 +37,7 @@ export const getContentCreatorNav = (user: User) => {
       href: "/admin",
       label: "Admin",
     });
-    baseNav.push({
+    mainNav.push({
       href: "/admin",
       label: "Admin",
     })
