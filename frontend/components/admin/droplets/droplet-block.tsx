@@ -10,23 +10,28 @@ import { toast } from "sonner";
 import Link from "next/link";
 
 export function DropletBlock({ droplet }: { droplet: Droplet }) {
-    const linkTo = `/draft/d/${droplet.slug}`;
+  const linkTo = `/draft/d/${droplet.slug}`;
 
   const handleUpdateDroplet = async (formData: FormData) => {
-  
-    const result = await updateDroplet(droplet.id, { 
-        isHidden: !droplet.isHidden,  
+    const result = await updateDroplet(
+      droplet.id,
+      {
+        isHidden: !droplet.isHidden,
         name: droplet.name,
         focusArea: droplet.focusArea,
         type: droplet.type,
-        tagIds: droplet.tags?.map(tag => tag.id) || []
-      }, {revalidate: true});
-    
+        tagIds: droplet.tags?.map((tag) => tag.id) || [],
+      },
+      { revalidate: true },
+    );
+
     if (result.ok) {
-        toast.success(`Droplet ${!droplet.isHidden ? "hidden" : "shown"} successfully`);
+      toast.success(
+        `Droplet ${!droplet.isHidden ? "hidden" : "shown"} successfully`,
+      );
     } else {
-        toast.error("Failed to update droplet visibility");
-        console.error(result.error);
+      toast.error("Failed to update droplet visibility");
+      console.error(result.error);
     }
   };
 
@@ -41,17 +46,17 @@ export function DropletBlock({ droplet }: { droplet: Droplet }) {
         </div>
 
         <div className="inline-flex items-center gap-2">
-        <Link href={linkTo}>
+          <Link href={linkTo}>
             <Button size="sm" variant="outline">
-                <div className="relative group">
-                  <Pencil className="text-sky-600" />
-                  <span className="absolute left-1/2 transform -translate-x-1/2 top-full mt-1 w-max px-2 py-1 text-xs text-white bg-gray-800 rounded opacity-0 group-hover:opacity-100 transition-opacity">
-                    Edit Droplet
-                  </span>
-                </div>
-              </Button>
-        </Link>
-        <form action={handleUpdateDroplet}>
+              <div className="relative group">
+                <Pencil className="text-sky-600" />
+                <span className="absolute left-1/2 transform -translate-x-1/2 top-full mt-1 w-max px-2 py-1 text-xs text-white bg-gray-800 rounded opacity-0 group-hover:opacity-100 transition-opacity">
+                  Edit Droplet
+                </span>
+              </div>
+            </Button>
+          </Link>
+          <form action={handleUpdateDroplet}>
             <input
               id="id"
               name="id"

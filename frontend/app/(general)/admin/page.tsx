@@ -36,43 +36,41 @@ export default async function Page() {
           View Odyssey statistics and edit existing information.
         </p>
       </div>
-        <h2 className="text-lg mb-2 mt-4">Statistics</h2>
-        <Separator orientation="horizontal" className="mt-2 mb-4" />
+      <h2 className="text-lg mb-2 mt-4">Statistics</h2>
+      <Separator orientation="horizontal" className="mt-2 mb-4" />
       <CardContent className="flex flex-col items-start gap-x-8 text-center gap-y-6 sm:flex-row">
-          <div className="flex items-center space-x-3">
-            <div>
-              <div className="font-medium">
-                Number of Users
-              </div>
-              <div className="text-sm text-slate-500 dark:text-slate-400">
-                {authorizedUsers.length}
-              </div>
+        <div className="flex items-center space-x-3">
+          <div>
+            <div className="font-medium">Number of Users</div>
+            <div className="text-sm text-slate-500 dark:text-slate-400">
+              {authorizedUsers.length}
             </div>
           </div>
-          <div className="flex items-center space-x-3">
-            <div>
-              <div className="font-medium">Number of Total Droplets</div>
-              <div className="text-sm text-slate-500 dark:text-slate-400">
-                {droplets.length}
-              </div>
+        </div>
+        <div className="flex items-center space-x-3">
+          <div>
+            <div className="font-medium">Number of Total Droplets</div>
+            <div className="text-sm text-slate-500 dark:text-slate-400">
+              {droplets.length}
             </div>
           </div>
-          <div className="flex items-center space-x-3">
-            <div>
-              <div className="font-medium">Number of Enrollments</div>
-              <div className="text-sm text-slate-500 dark:text-slate-400">
-                {totalEnrollments}
-              </div>
+        </div>
+        <div className="flex items-center space-x-3">
+          <div>
+            <div className="font-medium">Number of Enrollments</div>
+            <div className="text-sm text-slate-500 dark:text-slate-400">
+              {totalEnrollments}
             </div>
           </div>
-        </CardContent>
-        <Separator orientation="horizontal" className="mt-2 mb-4" />
+        </div>
+      </CardContent>
+      <Separator orientation="horizontal" className="mt-2 mb-4" />
       <Session />
       <AdminSelector
         content={{
-          "Users": <AuthorizedUsers />,
-          "Droplets": <Droplets />,
-          "Playlists": <Playlists />,
+          Users: <AuthorizedUsers />,
+          Droplets: <Droplets />,
+          Playlists: <Playlists />,
           "Access Manager": <AccessManager user={user} />,
           Reports: <Reports />,
         }}

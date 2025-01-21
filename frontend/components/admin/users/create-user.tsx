@@ -22,7 +22,10 @@ const initialState: any = {
 };
 
 export function CreateUser() {
-  const [state, formAction, isPending] = useActionState(createAuthorizedUser, initialState,);
+  const [state, formAction, isPending] = useActionState(
+    createAuthorizedUser,
+    initialState,
+  );
 
   return (
     <Dialog>

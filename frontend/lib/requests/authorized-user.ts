@@ -16,7 +16,12 @@ export async function getAuthorizedUserByEmail<
   T extends Partial<AuthorizedUser> = AuthorizedUser,
 >(
   email: string,
-  { sort, filters, populate, fields = ["*",  "firstName", "lastName", "bio"] }: StrapiRequestParams = {},
+  {
+    sort,
+    filters,
+    populate,
+    fields = ["*", "firstName", "lastName", "bio"],
+  }: StrapiRequestParams = {},
 ): Promise<T> {
   const path = `/authorized-users`;
   const urlParams = {
