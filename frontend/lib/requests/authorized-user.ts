@@ -16,7 +16,12 @@ export async function getAuthorizedUserByEmail<
   T extends Partial<AuthorizedUser> = AuthorizedUser,
 >(
   email: string,
-  { sort, filters, populate, fields = ["*"] }: StrapiRequestParams = {},
+  {
+    sort,
+    filters,
+    populate,
+    fields = ["*", "firstName", "lastName", "bio"],
+  }: StrapiRequestParams = {},
 ): Promise<T> {
   const path = `/authorized-users`;
   const urlParams = {
@@ -42,7 +47,7 @@ export async function fetchAuthorizedUsers(): Promise<AuthorizedUser[]> {
   try {
     const query = qs.stringify({
       sort: ["email"],
-      fields: ["id", "email", "isEnabled"],
+      fields: ["id", "email", "isEnabled", "firstName", "lastName", "bio"],
       populate: {
         roles: { fields: ["title"] },
       },

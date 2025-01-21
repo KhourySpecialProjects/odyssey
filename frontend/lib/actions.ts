@@ -36,6 +36,15 @@ export async function createAuthorizedUser(prevState: any, formData: FormData) {
   const roleID = await getAuthorizedUserRoleIdByTitle(
     AuthorizedUserRoleTitle.User,
   );
+
+  const emailRegex = /^[^\s@]+@northeastern\.edu$/;
+  if (!formData.get("email")) {
+    return { ok: false, error: "No email provided", data: null };
+  }
+  if (!emailRegex.test(formData.get("email") as string)) {
+    return { ok: false, error: "Not a valid email", data: null };
+  }
+
   const { email, isEnabled } = CreateAuthorizedUser.parse({
     email: formData.get("email"),
     isEnabled: formData.get("isEnabled"),
@@ -448,8 +457,8 @@ export async function updateGithub(github: string, userId: number) {
 }
 
 export async function updateOnboardingInfo(
-  first: string,
-  last: string,
+  first: string | null,
+  last: string | null,
   bio: string | null,
   userId: number,
 ) {
@@ -467,6 +476,49 @@ export async function updateOnboardingInfo(
             firstName: first,
             lastName: last,
             bio: bio,
+          },
+        }),
+      },
+    );
+
+    if (!response.ok) {
+      throw new Error("Failed to update first time status");
+    }
+    return { success: true };
+  } catch (error) {
+    console.error("Error updating first time status:", error);
+    return { success: false, error };
+  }
+}
+
+export async function updateUserInfo(
+  first: string | null,
+  last: string | null,
+  bio: string | null,
+  roles: AuthorizedUserRoleTitle[],
+  userId: number,
+) {
+  try {
+    const roleIds = await Promise.all(
+      roles.map((role) => getAuthorizedUserRoleIdByTitle(role)),
+    );
+
+    const response = await fetch(
+      `${STRAPI_API_URL}/api/authorized-users/${userId}`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+        },
+        body: JSON.stringify({
+          data: {
+            firstName: first,
+            lastName: last,
+            bio: bio,
+            roles: {
+              set: roleIds.map((id) => ({ id })),
+            },
           },
         }),
       },
@@ -524,6 +576,7 @@ export async function updateDroplet(
       ...(data.focusArea && { focusArea: data.focusArea }),
       ...(data.type && { type: data.type }),
       ...(data.tagIds && { tags: data.tagIds }),
+      ...(data.isHidden !== undefined && { isHidden: data.isHidden }),
       ...(data.learningObjectives && {
         learningObjectives: data.learningObjectives.map((obj) => ({
           objective: obj,
@@ -556,8 +609,13 @@ export async function updateDroplet(
       return { ok: false, error: errorMessage, data: null };
     }
 
-    if (dataToSend.name || options.revalidate) {
+    if (
+      dataToSend.isHidden !== undefined ||
+      dataToSend.name ||
+      options.revalidate
+    ) {
       revalidateTag("droplets");
+      revalidatePath("/admin");
     }
 
     revalidateTag("authors");
@@ -1011,9 +1069,9 @@ export async function updatePlaylist(
   data: {
     name: string;
     isPublic: boolean;
-    droplets: { id: number }[];
-    author: { id: number };
-    userId: number;
+    droplets?: { id: number }[];
+    author?: { id: number };
+    userId?: number;
     slug?: string; //TODO Should slug be optional for updating a playlist?
   },
 ) {
