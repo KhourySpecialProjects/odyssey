@@ -5,6 +5,9 @@ import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
 import { getDropletBySlug } from "@/lib/requests/droplet";
 import { getLessonBySlug } from "@/lib/requests/lesson";
 import { getServerSession } from "next-auth";
+import { AuthorizedUser, User } from "@/types";
+import { getAuthorByAuthorizedUserEmail } from "@/lib/requests/author";
+import { getCurrentUser } from "@/lib/auth/session";
 
 type Props = {
   params: Promise<Params>;
@@ -29,16 +32,29 @@ export default async function Page({ params }: Props) {
   const p = await params;
   const { slug, lessonSlug } = p;
 
+  const droplet = await getDropletBySlug(slug, {
+    populate: {
+      authors: { populate: "*" },
+      droplet_lessons: {
+        populate: ["lesson"],
+        sort: ["orderIndex:asc"],
+      },
+    },
+  });
+
+  const lesson = await getLessonBySlug(lessonSlug);
+
+  //TODO: Clean up this section - there are too many accesses to
+  // user functions
+
+  // Get completed lessons
   const session = await getServerSession();
-  let enrollmentId: string | undefined;
   let completedLessonIds: number[] = [];
+  let enrollmentId: string | undefined;
 
   if (session?.user?.email) {
     const user = await getAuthorizedUserByEmail(session.user.email);
     const enrollments = await getEnrollmentsByAuthorizedUser(user.id);
-
-    // Find the enrollment for this droplet
-    const droplet = await getDropletBySlug(slug);
     const enrollment = enrollments.find((e) => e.droplet.id === droplet.id);
 
     if (enrollment) {
@@ -48,13 +64,23 @@ export default async function Page({ params }: Props) {
     }
   }
 
-  const lesson = await getLessonBySlug(lessonSlug);
+  const currentUser = await getCurrentUser();
+  const userAuthor = await getAuthorByAuthorizedUserEmail(
+    session?.user.email || "",
+  );
+  const isAuthor =
+    userAuthor &&
+    droplet.authors &&
+    droplet.authors.map((author) => author.id).includes(userAuthor.id);
 
   return (
     <LessonRenderer
       lesson={lesson}
+      droplet={droplet}
       enrollmentId={enrollmentId}
       completedLessonIds={completedLessonIds}
+      user={currentUser}
+      author={isAuthor || false}
     />
   );
 }

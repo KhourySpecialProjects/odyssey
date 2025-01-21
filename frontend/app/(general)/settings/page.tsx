@@ -89,7 +89,11 @@ export default async function Settings() {
             </div>
           </div>
         </CardContent>
-        <div className="px-6 py-4 border-b">
+        <div
+          className={`px-6 py-4 border-b ${
+            user?.nuid ? "visibility: visible" : "visibility: hidden"
+          }`}
+        >
           <p className="text-sm text-slate-600">
             To make changes, update your{" "}
             <Link

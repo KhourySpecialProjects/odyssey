@@ -11,7 +11,7 @@ import { url } from "inspector";
 export async function getDroplets({
   sort,
   filters = { isHidden: false },
-  pagination = { pageSize: 25, page: 1 },
+  pagination = { pageSize: 100, page: 1 },
   populate = {
     tags: true,
     lessons: {
@@ -53,7 +53,13 @@ export async function getDropletBySlug<T extends Partial<Droplet> = Droplet>(
   const urlParams = {
     sort,
     filters: { ...filters, slug },
-    populate,
+    populate: {
+      ...(typeof populate === "object" ? populate : { populate: "*" }),
+      droplet_lessons: {
+        populate: ["lesson"],
+        sort: ["orderIndex:asc"],
+      },
+    },
     fields,
     pagination: {
       pageSize: 1,
@@ -65,6 +71,53 @@ export async function getDropletBySlug<T extends Partial<Droplet> = Droplet>(
     urlParams,
   }).then((droplets) => droplets[0]);
 }
+// // export async function getDropletBySlug<T extends Partial<Droplet> = Droplet>(
+// //   slug: string,
+// //   { sort, filters, populate = "*", fields = ["*"] }: StrapiRequestParams = {},
+// // ): Promise<T> {
+// //   const path = `/droplets`;
+// //   const urlParams = {
+// //     sort,
+// //     filters: { ...filters, slug },
+// //     populate: {
+// //       populate,  //confirm this doesn't need a spread
+// //       droplet_lessons: {
+// //         populate: ["lesson"],
+// //         sort: ["orderIndex:asc"], // Ensure lessons are returned in order
+// //       },
+// //     },
+// //     fields,
+// //     pagination: {
+// //       pageSize: 1,
+// //       page: 1,
+// //     },
+// //   };
+
+//   return await fetchAPI<T[]>(path, {
+//     urlParams,
+//   }).then((droplets) => droplets[0]);
+// }
+
+// export async function getDropletBySlug<T extends Partial<Droplet> = Droplet>(
+//   slug: string,
+//   { sort, filters, populate = "*", fields = ["*"] }: StrapiRequestParams = {},
+// ): Promise<T> {
+//   const path = `/droplets`;
+//   const urlParams = {
+//     sort,
+//     filters: { ...filters, slug },
+//     populate,
+//     fields,
+//     pagination: {
+//       pageSize: 1,
+//       page: 1,
+//     },
+//   };
+
+//   return await fetchAPI<T[]>(path, {
+//     urlParams,
+//   }).then((droplets) => droplets[0]);
+// }
 
 export async function getDropletById<T extends Partial<Droplet> = Droplet>(
   id: number,

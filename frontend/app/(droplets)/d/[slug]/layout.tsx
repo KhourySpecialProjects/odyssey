@@ -75,7 +75,7 @@ export default async function RootLayout({ params, children }: Props) {
     <div className="flex flex-col md:flex-row">
       <Sidebar
         author={isAuthor || false}
-        user={session?.user}
+        user={user}
         droplet={droplet}
         completedLessonIds={completedLessonIds}
       />
