@@ -39,12 +39,12 @@ export const getContentCreatorNav = (user: User) => {
     });
   }
 
-  if (isAuthorizedUserFaculty(user.roles)) {
-    baseNav.push({
-      href: "/faculty",
-      label: "Faculty"
-    })
-  }
+  // if (isAuthorizedUserFaculty(user.roles)) {
+  //   baseNav.push({
+  //     href: "/faculty",
+  //     label: "Faculty"
+  //   })
+  // }
 
   return baseNav;
 };
