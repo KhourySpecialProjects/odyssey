@@ -12,7 +12,7 @@ import { Droplet, Lesson, User } from "@/types";
 import {
   BookTextIcon,
   ChevronDownIcon,
-  CogIcon,
+  PersonStanding,
   FilePieChartIcon,
   HammerIcon,
   HistoryIcon,
@@ -23,6 +23,7 @@ import {
   TowerControlIcon,
   CheckCircle2,
   LockIcon,
+  ArrowLeftIcon,
 } from "lucide-react";
 import { signOut } from "next-auth/react";
 import Image from "next/image";
@@ -137,7 +138,18 @@ export default function Sidebar({
               />
             </Link>
 
-            <Separator />
+            <Link
+              type="button"
+              href="/explore"
+              className={cn(
+                "w-full flex items-center justify-start text-base px-4",
+              )}
+            >
+              <div className="w-6 flex justify-center">
+                <ArrowLeftIcon className="shrink-0 w-5 h-5" />
+              </div>
+              <span className="leading-snug ms-2">Back</span>
+            </Link>
 
             <p className="p-2 my-2 text-lg font-extrabold leading-7">
               {droplet.name}
@@ -275,8 +287,8 @@ export default function Sidebar({
 
                 <DropdownMenuItem asChild>
                   <Link href="/settings">
-                    <CogIcon className="w-4 h-4 mr-2" />
-                    <span>Settings</span>
+                    <PersonStanding className="w-4 h-4 mr-2" />
+                    <span>Admin</span>
                   </Link>
                 </DropdownMenuItem>
 

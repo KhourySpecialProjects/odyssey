@@ -3,16 +3,19 @@
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { User } from "@/types";
+import { isAuthorizedUserAdmin } from "@/lib/utils";
 
 const tabs = [
   { name: "Droplets", value: "droplets" },
   { name: "Playlists", value: "playlists" },
 ];
 
-export function ContentSelector() {
+export function ContentSelector({ user }: { user: User }) {
   const searchParams = useSearchParams();
   const pathname = usePathname();
   const router = useRouter();
+  const isAdmin = isAuthorizedUserAdmin(user.roles);
 
   const currentTab = searchParams.get("tab") || "droplets";
 

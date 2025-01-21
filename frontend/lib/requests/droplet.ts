@@ -1,6 +1,7 @@
 import { Droplet } from "@/types";
 import { StrapiRequestParams } from "@/types/strapi";
 import { fetchAPI } from "../utils";
+import { url } from "inspector";
 
 /**
  * Gets the first 25 Droplets matching the specified criteria, unless overridden by `options`.
@@ -17,7 +18,7 @@ export async function getDroplets({
       fields: ["id", "name", "slug"],
     },
   },
-  fields = ["id", "name", "slug", "type", "focusArea", "status"],
+  fields = ["id", "name", "slug", "type", "focusArea", "status", "isHidden"],
 }: StrapiRequestParams = {}): Promise<Droplet[]> {
   const path = `/droplets`;
   const urlParams = {
@@ -27,10 +28,10 @@ export async function getDroplets({
     fields,
     pagination,
   };
-
-  return await fetchAPI<Droplet[]>(path, {
+  const retVal = await fetchAPI<Droplet[]>(path, {
     urlParams,
   });
+  return retVal;
 }
 
 /**
@@ -41,7 +42,12 @@ export async function getDroplets({
  */
 export async function getDropletBySlug<T extends Partial<Droplet> = Droplet>(
   slug: string,
-  { sort, filters, populate = "*", fields = ["*"] }: StrapiRequestParams = {},
+  {
+    sort,
+    filters,
+    populate = { "*": true },
+    fields = ["*", "isHidden"],
+  }: StrapiRequestParams = {},
 ): Promise<T> {
   const path = `/droplets`;
   const urlParams = {
@@ -115,7 +121,12 @@ export async function getDropletBySlug<T extends Partial<Droplet> = Droplet>(
 
 export async function getDropletById<T extends Partial<Droplet> = Droplet>(
   id: number,
-  { sort, filters, populate, fields = ["*"] }: StrapiRequestParams = {},
+  {
+    sort,
+    filters,
+    populate = { "*": true },
+    fields = ["*", "isHidden"],
+  }: StrapiRequestParams = {},
 ): Promise<T> {
   const path = `/droplets/${id}`;
   const urlParams = {

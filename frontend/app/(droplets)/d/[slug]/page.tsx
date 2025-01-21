@@ -18,6 +18,10 @@ import { getCurrentUser } from "@/lib/auth/session";
 import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
 import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
 
+//Rating System imports
+import { StarRating } from "@/components/ui/rating-stars";
+import { getDropletAverageRating } from "@/lib/requests/enrollment";
+
 type Props = {
   params: Promise<params>;
 };
@@ -80,6 +84,14 @@ export default async function DropletRoute({ params }: Props) {
                 {tag.name}
               </Badge>
             ))}
+
+            {(await getDropletAverageRating(droplet)) != 0 ? (
+              <StarRating
+                value={await getDropletAverageRating(droplet)}
+                enrollmentID={""}
+                average={true}
+              ></StarRating>
+            ) : null}
           </div>
           <h1 className="mt-3 text-6xl font-black text-slate-900">
             {droplet.name}

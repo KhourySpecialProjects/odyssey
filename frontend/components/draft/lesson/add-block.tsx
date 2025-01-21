@@ -82,6 +82,28 @@ export function AddBlock({ add }: { add: (block: any) => void }) {
           >
             Video Block
           </Button>
+          <Button
+            onClick={() => {
+              setOpen(false);
+              add({
+                __component: "droplets.quiz",
+                questions: [
+                  {
+                    id: Math.random(),
+                    content: "",
+                    answerOptions: [
+                      { id: Math.random(), content: "", isCorrect: true },
+                      { id: Math.random(), content: "", isCorrect: false },
+                    ],
+                  },
+                ],
+              });
+            }}
+            variant="ghost"
+            className="w-full border border-slate-200"
+          >
+            Quiz Block
+          </Button>
         </PopoverContent>
       </Popover>
     </div>

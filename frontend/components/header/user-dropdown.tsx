@@ -8,10 +8,10 @@ import {
 } from "@/lib/utils";
 import { User } from "@/types";
 import {
-  BookIcon,
   ChevronDownIcon,
   CogIcon,
   LogOutIcon,
+  PersonStanding,
   TowerControlIcon,
   User2Icon,
 } from "lucide-react";
@@ -59,7 +59,7 @@ export function UserDropdown(user: User) {
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
             <p className="text-sm font-semibold leading-none">
-              {user.name} ({user.nuid})
+              {user.name} {user.nuid ? ` (${user.nuid})` : ""}
             </p>
             <p className="text-xs leading-none text-muted-foreground">
               {user.email}
@@ -74,28 +74,10 @@ export function UserDropdown(user: User) {
 
         <DropdownMenuItem asChild>
           <Link href="/settings">
-            <CogIcon className="w-4 h-4 mr-2" />
-            <span>Settings</span>
+            <PersonStanding className="w-4 h-4 mr-2" />
+            <span>Profile</span>
           </Link>
         </DropdownMenuItem>
-
-        {isAdmin ? (
-          <DropdownMenuItem asChild>
-            <Link href="/admin">
-              <TowerControlIcon className="w-4 h-4 mr-2" />
-              <span>Admin</span>
-            </Link>
-          </DropdownMenuItem>
-        ) : null}
-
-        {isFaculty ? (
-          <DropdownMenuItem asChild>
-            <Link href="/faculty">
-              <BookIcon className="w-4 h-4 mr-2" />
-              <span>Faculty</span>
-            </Link>
-          </DropdownMenuItem>
-        ) : null}
 
         <DropdownMenuItem
           onSelect={(e) => {

@@ -11,7 +11,7 @@
       "url": "https://khouryodyssey.org"
     },
     "license": null,
-    "x-generation-date": "2025-01-21T15:41:45.313Z"
+    "x-generation-date": "2025-01-21T15:41:17.495Z"
   },
   "x-strapi-config": {
     "plugins": [
@@ -1929,6 +1929,9 @@
                                                                 "isComplete": {
                                                                   "type": "boolean"
                                                                 },
+                                                                "rating": {
+                                                                  "type": "integer"
+                                                                },
                                                                 "createdAt": {
                                                                   "type": "string",
                                                                   "format": "date-time"
@@ -2207,6 +2210,24 @@
                                                         }
                                                       }
                                                     }
+                                                  },
+                                                  "linkedin": {
+                                                    "type": "string"
+                                                  },
+                                                  "github": {
+                                                    "type": "string"
+                                                  },
+                                                  "firstTime": {
+                                                    "type": "boolean"
+                                                  },
+                                                  "firstName": {
+                                                    "type": "string"
+                                                  },
+                                                  "lastName": {
+                                                    "type": "string"
+                                                  },
+                                                  "bio": {
+                                                    "type": "string"
                                                   },
                                                   "createdAt": {
                                                     "type": "string",
@@ -2801,6 +2822,24 @@
                   ],
                   "example": "string or id"
                 }
+              },
+              "linkedin": {
+                "type": "string"
+              },
+              "github": {
+                "type": "string"
+              },
+              "firstTime": {
+                "type": "boolean"
+              },
+              "firstName": {
+                "type": "string"
+              },
+              "lastName": {
+                "type": "string"
+              },
+              "bio": {
+                "type": "string"
               }
             }
           }
@@ -4014,6 +4053,24 @@
                                                                                 }
                                                                               }
                                                                             },
+                                                                            "linkedin": {
+                                                                              "type": "string"
+                                                                            },
+                                                                            "github": {
+                                                                              "type": "string"
+                                                                            },
+                                                                            "firstTime": {
+                                                                              "type": "boolean"
+                                                                            },
+                                                                            "firstName": {
+                                                                              "type": "string"
+                                                                            },
+                                                                            "lastName": {
+                                                                              "type": "string"
+                                                                            },
+                                                                            "bio": {
+                                                                              "type": "string"
+                                                                            },
                                                                             "createdAt": {
                                                                               "type": "string",
                                                                               "format": "date-time"
@@ -4101,6 +4158,9 @@
                                                                 },
                                                                 "isComplete": {
                                                                   "type": "boolean"
+                                                                },
+                                                                "rating": {
+                                                                  "type": "integer"
                                                                 },
                                                                 "createdAt": {
                                                                   "type": "string",
@@ -4727,6 +4787,24 @@
                 }
               }
             }
+          },
+          "linkedin": {
+            "type": "string"
+          },
+          "github": {
+            "type": "string"
+          },
+          "firstTime": {
+            "type": "boolean"
+          },
+          "firstName": {
+            "type": "string"
+          },
+          "lastName": {
+            "type": "string"
+          },
+          "bio": {
+            "type": "string"
           },
           "createdAt": {
             "type": "string",
@@ -5816,6 +5894,9 @@
                                                                               "isComplete": {
                                                                                 "type": "boolean"
                                                                               },
+                                                                              "rating": {
+                                                                                "type": "integer"
+                                                                              },
                                                                               "createdAt": {
                                                                                 "type": "string",
                                                                                 "format": "date-time"
@@ -6631,6 +6712,24 @@
                               }
                             }
                           }
+                        },
+                        "linkedin": {
+                          "type": "string"
+                        },
+                        "github": {
+                          "type": "string"
+                        },
+                        "firstTime": {
+                          "type": "boolean"
+                        },
+                        "firstName": {
+                          "type": "string"
+                        },
+                        "lastName": {
+                          "type": "string"
+                        },
+                        "bio": {
+                          "type": "string"
                         },
                         "createdAt": {
                           "type": "string",
@@ -8135,6 +8234,24 @@
                                                                                   }
                                                                                 }
                                                                               },
+                                                                              "linkedin": {
+                                                                                "type": "string"
+                                                                              },
+                                                                              "github": {
+                                                                                "type": "string"
+                                                                              },
+                                                                              "firstTime": {
+                                                                                "type": "boolean"
+                                                                              },
+                                                                              "firstName": {
+                                                                                "type": "string"
+                                                                              },
+                                                                              "lastName": {
+                                                                                "type": "string"
+                                                                              },
+                                                                              "bio": {
+                                                                                "type": "string"
+                                                                              },
                                                                               "createdAt": {
                                                                                 "type": "string",
                                                                                 "format": "date-time"
@@ -8222,6 +8339,9 @@
                                                                   },
                                                                   "isComplete": {
                                                                     "type": "boolean"
+                                                                  },
+                                                                  "rating": {
+                                                                    "type": "integer"
                                                                   },
                                                                   "createdAt": {
                                                                     "type": "string",
@@ -11076,6 +11196,9 @@
               },
               "isComplete": {
                 "type": "boolean"
+              },
+              "rating": {
+                "type": "integer"
               }
             }
           }
@@ -12071,6 +12194,9 @@
                                                                             "isComplete": {
                                                                               "type": "boolean"
                                                                             },
+                                                                            "rating": {
+                                                                              "type": "integer"
+                                                                            },
                                                                             "createdAt": {
                                                                               "type": "string",
                                                                               "format": "date-time"
@@ -12887,6 +13013,24 @@
                           }
                         }
                       },
+                      "linkedin": {
+                        "type": "string"
+                      },
+                      "github": {
+                        "type": "string"
+                      },
+                      "firstTime": {
+                        "type": "boolean"
+                      },
+                      "firstName": {
+                        "type": "string"
+                      },
+                      "lastName": {
+                        "type": "string"
+                      },
+                      "bio": {
+                        "type": "string"
+                      },
                       "createdAt": {
                         "type": "string",
                         "format": "date-time"
@@ -12974,6 +13118,9 @@
           },
           "isComplete": {
             "type": "boolean"
+          },
+          "rating": {
+            "type": "integer"
           },
           "createdAt": {
             "type": "string",
@@ -14328,6 +14475,9 @@
                                                                 "isComplete": {
                                                                   "type": "boolean"
                                                                 },
+                                                                "rating": {
+                                                                  "type": "integer"
+                                                                },
                                                                 "createdAt": {
                                                                   "type": "string",
                                                                   "format": "date-time"
@@ -14606,6 +14756,24 @@
                                                         }
                                                       }
                                                     }
+                                                  },
+                                                  "linkedin": {
+                                                    "type": "string"
+                                                  },
+                                                  "github": {
+                                                    "type": "string"
+                                                  },
+                                                  "firstTime": {
+                                                    "type": "boolean"
+                                                  },
+                                                  "firstName": {
+                                                    "type": "string"
+                                                  },
+                                                  "lastName": {
+                                                    "type": "string"
+                                                  },
+                                                  "bio": {
+                                                    "type": "string"
                                                   },
                                                   "createdAt": {
                                                     "type": "string",
@@ -16492,6 +16660,9 @@
                                                                 "isComplete": {
                                                                   "type": "boolean"
                                                                 },
+                                                                "rating": {
+                                                                  "type": "integer"
+                                                                },
                                                                 "createdAt": {
                                                                   "type": "string",
                                                                   "format": "date-time"
@@ -16770,6 +16941,24 @@
                                                         }
                                                       }
                                                     }
+                                                  },
+                                                  "linkedin": {
+                                                    "type": "string"
+                                                  },
+                                                  "github": {
+                                                    "type": "string"
+                                                  },
+                                                  "firstTime": {
+                                                    "type": "boolean"
+                                                  },
+                                                  "firstName": {
+                                                    "type": "string"
+                                                  },
+                                                  "lastName": {
+                                                    "type": "string"
+                                                  },
+                                                  "bio": {
+                                                    "type": "string"
                                                   },
                                                   "createdAt": {
                                                     "type": "string",
@@ -18952,6 +19141,9 @@
                                                                 "isComplete": {
                                                                   "type": "boolean"
                                                                 },
+                                                                "rating": {
+                                                                  "type": "integer"
+                                                                },
                                                                 "createdAt": {
                                                                   "type": "string",
                                                                   "format": "date-time"
@@ -19230,6 +19422,24 @@
                                                         }
                                                       }
                                                     }
+                                                  },
+                                                  "linkedin": {
+                                                    "type": "string"
+                                                  },
+                                                  "github": {
+                                                    "type": "string"
+                                                  },
+                                                  "firstTime": {
+                                                    "type": "boolean"
+                                                  },
+                                                  "firstName": {
+                                                    "type": "string"
+                                                  },
+                                                  "lastName": {
+                                                    "type": "string"
+                                                  },
+                                                  "bio": {
+                                                    "type": "string"
                                                   },
                                                   "createdAt": {
                                                     "type": "string",

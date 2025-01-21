@@ -17,6 +17,8 @@ import { toast } from "sonner";
 import { useTransition } from "react";
 import { useMemo } from "react";
 import { LessonNameInput } from "@/components/ui/tiptap/lesson-name-input";
+import { QuizEditor } from "./blocks/quiz";
+import { QuizQuestion } from "@/types";
 
 interface Block {
   __component: string;
@@ -26,6 +28,7 @@ interface Block {
   type?: string;
   label?: string;
   url?: string;
+  questions?: QuizQuestion[];
 }
 
 interface LessonRendererProps {
@@ -177,6 +180,17 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
           return <VideoEditor {...props} />;
         case "droplets.callout":
           return <CalloutEditor {...props} />;
+        case "droplets.quiz":
+          return (
+            <QuizEditor
+              block={{
+                ...props.block,
+                questions: props.block.questions || [],
+              }}
+              updateBlock={props.updateBlock}
+              deleteBlock={props.deleteBlock}
+            />
+          );
         default:
           return null;
       }
