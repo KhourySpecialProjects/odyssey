@@ -18,7 +18,7 @@ export async function MyContent({
 
   return (
     <div className="w-full">
-      <ContentSelector />
+      <ContentSelector user={user} />
       <div className="mt-6">
         {tab === "droplets" ? <EnrolledDropletsGrid /> : <UserPlaylistsGrid />}
       </div>

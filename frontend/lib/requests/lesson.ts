@@ -16,7 +16,15 @@ export async function getLessonBySlug<T extends Partial<Lesson> = Lesson>(
   const urlParams = {
     sort,
     filters: { ...filters, slug },
-    populate,
+    populate: {
+      blocks: {
+        populate: {
+          questions: {
+            populate: ["answerOptions"],
+          },
+        },
+      },
+    },
     fields,
     pagination: {
       pageSize: 1,

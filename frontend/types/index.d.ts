@@ -29,6 +29,13 @@ export type AuthorizedUser = {
   isEnabled: boolean;
   enrollments?: Enrollment[];
   playlists?: Playlist[];
+  linkedin: string;
+  github: string;
+  firstTime: boolean;
+  author?: Author;
+  firstName: string;
+  lastName: string;
+  bio: string;
 };
 
 export type NavItem = {
@@ -127,6 +134,7 @@ export type Enrollment = {
   droplet: Droplet;
   viewedLessons: Lesson[];
   isComplete: boolean;
+  rating: number;
 };
 
 export interface Playlist {

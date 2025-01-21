@@ -8,6 +8,7 @@ import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
 import { getDroplets } from "@/lib/requests/droplet";
 import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
 import { DropletTile } from "../droplets/droplet-tile";
+import { SortedDropletsGrid } from "./sorted-droplets-grid";
 
 interface Lesson {
   id: number;
@@ -21,23 +22,43 @@ export async function DropletsGrid({
   type,
   focusArea,
   tags,
+  completion,
 }: {
   searchValue?: string;
   sortKey?: string;
   type?: string;
   focusArea?: string;
   tags?: string;
+  completion?: boolean;
 }) {
   const [field, direction] = (sortKey || "").split(":");
   const serverSortKey = field === "name" ? sortKey : undefined;
+  const user = await getCurrentUser();
+  let enrolledDropletIds: number[] = [];
+  let completedDropletIds: number[] = [];
+  let completedLessonIds: number[] = [];
+
+  if (user?.email) {
+    const authorizedUser = await getAuthorizedUserByEmail(user.email);
+    const enrollments = await getEnrollmentsByAuthorizedUser(authorizedUser.id);
+    enrolledDropletIds = enrollments.map((e) => e.droplet.id);
+    completedLessonIds = enrollments.flatMap(
+      (enrollment) =>
+        enrollment.viewedLessons?.map((lesson: Lesson) => lesson.id) || [],
+    );
+    completedDropletIds = enrollments
+      .filter((e) => e.viewedLessons.length === e.droplet.lessons?.length)
+      .map((d) => d.droplet.id);
+  }
 
   const droplets = await getDroplets({
     sort: serverSortKey,
     filters: {
       $and: [
         { status: { $eq: "published" } },
-        { isHidden: false },
+        { isHidden: { $eq: false } },
         searchValue ? { name: { $containsi: searchValue } } : {},
+        completion ? { id: { $in: completedDropletIds } } : {},
         type
           ? { $or: type.split(",").map((val) => ({ type: { $eq: val } })) }
           : {},
@@ -55,7 +76,7 @@ export async function DropletsGrid({
                 .map((val) => ({ tags: { slug: { $eq: val } } })),
             }
           : {},
-      ],
+      ].filter((item) => Object.keys(item).length > 0),
     },
     populate: {
       tags: true,
@@ -64,20 +85,6 @@ export async function DropletsGrid({
       },
     },
   });
-
-  const user = await getCurrentUser();
-  let enrolledDropletIds: number[] = [];
-  let completedLessonIds: number[] = [];
-
-  if (user?.email) {
-    const authorizedUser = await getAuthorizedUserByEmail(user.email);
-    const enrollments = await getEnrollmentsByAuthorizedUser(authorizedUser.id);
-    enrolledDropletIds = enrollments.map((e) => e.droplet.id);
-    completedLessonIds = enrollments.flatMap(
-      (enrollment) =>
-        enrollment.viewedLessons?.map((lesson: Lesson) => lesson.id) || [],
-    );
-  }
 
   let dropletsWithCompletion = droplets.map((droplet) => {
     const dropletLessonIds = droplet.lessons?.map((l: Lesson) => l.id) || [];
@@ -88,20 +95,11 @@ export async function DropletsGrid({
       dropletLessonIds.length > 0
         ? (completedLessonsInDroplet.length / dropletLessonIds.length) * 100
         : 0;
-
     return {
       ...droplet,
       completionPercentage,
     };
   });
-
-  if (field === "completion") {
-    dropletsWithCompletion.sort((a, b) => {
-      return direction === "asc"
-        ? a.completionPercentage - b.completionPercentage
-        : b.completionPercentage - a.completionPercentage;
-    });
-  }
 
   if (!dropletsWithCompletion || dropletsWithCompletion.length === 0) {
     return (
@@ -114,16 +112,38 @@ export async function DropletsGrid({
     );
   }
 
+  if (completion) {
+    const completedDroplets = dropletsWithCompletion.filter(
+      (droplet) => droplet.completionPercentage === 100,
+    );
+    if (completedDroplets.length === 0) {
+      return (
+        <div className="text-black">
+          You haven&apos;t completed any Droplets yet.
+        </div>
+      );
+    }
+    return (
+      <ul className="grid grid-flow-row grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        {dropletsWithCompletion.map((droplet) => (
+          <DropletTile
+            key={droplet.id}
+            droplet={droplet}
+            isEnrolled={enrolledDropletIds.includes(droplet.id)}
+            completedLessonIds={completedLessonIds}
+            profilePage={true}
+          />
+        ))}
+      </ul>
+    );
+  }
+
   return (
-    <ul className="grid grid-flow-row grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-      {dropletsWithCompletion.map((droplet) => (
-        <DropletTile
-          key={droplet.id}
-          droplet={droplet}
-          isEnrolled={enrolledDropletIds.includes(droplet.id)}
-          completedLessonIds={completedLessonIds}
-        />
-      ))}
-    </ul>
+    <SortedDropletsGrid
+      droplets={dropletsWithCompletion}
+      sortKey={sortKey}
+      completedLessonIds={completedLessonIds}
+      enrolledDropletIds={enrolledDropletIds}
+    />
   );
 }

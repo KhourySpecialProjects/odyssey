@@ -979,6 +979,68 @@ export interface ApiAuthorizedUserRoleAuthorizedUserRole
   };
 }
 
+export interface ApiAuthorizedUserAuthorizedUser extends Schema.CollectionType {
+  collectionName: 'authorized_users';
+  info: {
+    description: '';
+    displayName: 'Authorized User';
+    pluralName: 'authorized-users';
+    singularName: 'authorized-user';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    author: Attribute.Relation<
+      'api::authorized-user.authorized-user',
+      'oneToOne',
+      'api::author.author'
+    >;
+    bio: Attribute.Text &
+      Attribute.SetMinMaxLength<{
+        maxLength: 400;
+      }>;
+    createdAt: Attribute.DateTime;
+    createdBy: Attribute.Relation<
+      'api::authorized-user.authorized-user',
+      'oneToOne',
+      'admin::user'
+    > &
+      Attribute.Private;
+    email: Attribute.Email & Attribute.Required & Attribute.Unique;
+    enrollments: Attribute.Relation<
+      'api::authorized-user.authorized-user',
+      'oneToMany',
+      'api::enrollment.enrollment'
+    >;
+    firstName: Attribute.String;
+    firstTime: Attribute.Boolean & Attribute.DefaultTo<true>;
+    github: Attribute.String;
+    isEnabled: Attribute.Boolean &
+      Attribute.Required &
+      Attribute.DefaultTo<true>;
+    lastName: Attribute.String;
+    linkedin: Attribute.String;
+    playlists: Attribute.Relation<
+      'api::authorized-user.authorized-user',
+      'manyToMany',
+      'api::playlist.playlist'
+    >;
+    roles: Attribute.Relation<
+      'api::authorized-user.authorized-user',
+      'manyToMany',
+      'api::authorized-user-role.authorized-user-role'
+    >;
+    updatedAt: Attribute.DateTime;
+    updatedBy: Attribute.Relation<
+      'api::authorized-user.authorized-user',
+      'oneToOne',
+      'admin::user'
+    > &
+      Attribute.Private;
+  };
+}
+
 export interface ApiDropletDroplet extends Schema.CollectionType {
   collectionName: 'droplets';
   info: {
@@ -1160,6 +1222,23 @@ export interface ApiEnrollmentEnrollment extends Schema.CollectionType {
       'admin::user'
     > &
       Attribute.Private;
+    droplet: Attribute.Relation<
+      'api::enrollment.enrollment',
+      'manyToOne',
+      'api::droplet.droplet'
+    >;
+    isComplete: Attribute.Boolean &
+      Attribute.Required &
+      Attribute.DefaultTo<false>;
+    rating: Attribute.Integer &
+      Attribute.SetMinMax<
+        {
+          max: 5;
+          min: 1;
+        },
+        number
+      >;
+    updatedAt: Attribute.DateTime;
     updatedBy: Attribute.Relation<
       'api::enrollment.enrollment',
       'oneToOne',
