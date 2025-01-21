@@ -429,7 +429,6 @@ export async function addLesson(formData: z.infer<typeof CreateLessonSchema>) {
       },
     });
     const data = await response.json();
-    // console.log(data);
     if (!response.ok || (response.ok && data.error)) {
       console.log(data.error.details);
       return { ok: false, error: data.error.message, data: null };
@@ -439,6 +438,126 @@ export async function addLesson(formData: z.infer<typeof CreateLessonSchema>) {
   } catch (err) {
     console.error(err);
     return { error: "Database Error: Failed to Delete Authorized User." };
+  }
+}
+
+export async function updateLinkedin(linkedIn: string, userId: number) {
+  try {
+    const response = await fetch(
+      `${STRAPI_API_URL}/api/authorized-users/${userId}`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+        },
+        body: JSON.stringify({
+          data: {
+            linkedin: linkedIn,
+          },
+        }),
+      },
+    );
+
+    if (!response.ok) {
+      throw new Error("Failed to update first time status");
+    }
+    return { success: true };
+  } catch (error) {
+    console.error("Error updating first time status:", error);
+    return { success: false, error };
+  }
+}
+
+export async function updateGithub(github: string, userId: number) {
+  console.log("github: ", github);
+  try {
+    const response = await fetch(
+      `${STRAPI_API_URL}/api/authorized-users/${userId}`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+        },
+        body: JSON.stringify({
+          data: {
+            github: github,
+          },
+        }),
+      },
+    );
+
+    if (!response.ok) {
+      throw new Error("Failed to update first time status");
+    }
+    return { success: true };
+  } catch (error) {
+    console.error("Error updating first time status:", error);
+    return { success: false, error };
+  }
+}
+
+export async function updateOnboardingInfo(
+  first: string,
+  last: string,
+  bio: string | null,
+  userId: number,
+) {
+  try {
+    const response = await fetch(
+      `${STRAPI_API_URL}/api/authorized-users/${userId}`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+        },
+        body: JSON.stringify({
+          data: {
+            firstName: first,
+            lastName: last,
+            bio: bio,
+          },
+        }),
+      },
+    );
+
+    if (!response.ok) {
+      throw new Error("Failed to update first time status");
+    }
+    return { success: true };
+  } catch (error) {
+    console.error("Error updating first time status:", error);
+    return { success: false, error };
+  }
+}
+
+export async function updateFirstTimeStatus(userId: number) {
+  try {
+    const response = await fetch(
+      `${STRAPI_API_URL}/api/authorized-users/${userId}`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+        },
+        body: JSON.stringify({
+          data: {
+            firstTime: false,
+          },
+        }),
+      },
+    );
+
+    if (!response.ok) {
+      throw new Error("Failed to update first time status");
+    }
+    return { success: true };
+  } catch (error) {
+    console.error("Error updating first time status:", error);
+    return { success: false, error };
   }
 }
 
@@ -802,6 +921,7 @@ export async function markLessonAsComplete(
 
     return true;
   } catch (error) {
+    //throw new Error(`Failed to mark lesson as complete: ${error}`);
     console.error("Error marking lesson as complete:", error);
     return false;
   }

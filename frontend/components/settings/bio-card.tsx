@@ -80,7 +80,7 @@ export function BioCard({ author }: { author: Author }) {
                     />
                   </FormControl>
                   <FormDescription className="text-right">
-                    {field.value.length}/{BIO_MAX_LENGTH} characters
+                    {field.value?.length}/{BIO_MAX_LENGTH} characters
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
