@@ -82,7 +82,10 @@ export function UserDropdown(user: User) {
         <DropdownMenuItem
           onSelect={(e) => {
             e.preventDefault();
-            signOut();
+            signOut({
+              callbackUrl: '/',
+              redirect: true
+            });
           }}
         >
           <LogOutIcon className="w-4 h-4 mr-2" />

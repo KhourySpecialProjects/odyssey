@@ -1,6 +1,6 @@
 import { getCurrentUser } from "@/lib/auth/session";
 import { redirect } from "next/navigation";
-import { isContentCreator } from "@/lib/utils";
+import { isAuthorizedUserAdmin, isContentCreator } from "@/lib/utils";
 import { getDroplets } from "@/lib/requests/droplet";
 import { PlaylistForm } from "@/components/playlists/playlist-form";
 import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
@@ -8,7 +8,7 @@ import { getAuthorByAuthorizedUserEmail } from "@/lib/requests/author";
 
 export default async function NewPlaylist() {
   const user = await getCurrentUser();
-  if (!user || !user?.email || !isContentCreator(user.roles))
+  if (!user || !user?.email || (!isContentCreator(user.roles) && !isAuthorizedUserAdmin(user.roles)))
     return redirect("/");
   const authUser = await getAuthorizedUserByEmail(user.email);
   console.log(authUser);
