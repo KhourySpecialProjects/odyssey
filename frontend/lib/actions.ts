@@ -987,22 +987,15 @@ export async function markLessonAsComplete(
     }
 
     // Update revalidation paths to be more generic
-    revalidatePath("/dashboard", "layout");
-    revalidatePath("/(droplets)/d/[slug]/[lessonSlug]", "layout");
-    revalidatePath("/(playlists)/p/[slug]", "layout");
+    revalidatePath("/dashboard");
+    revalidatePath("/(droplets)/d/[slug]/[lessonSlug]", "page");
+    revalidatePath("/(playlists)/p/[slug]", "page");
 
-    /*
     return true;
   } catch (error) {
     //throw new Error(`Failed to mark lesson as complete: ${error}`);
     console.error("Error marking lesson as complete:", error);
     return false;
-  }*/
-    const result = await response.json();
-    return { success: true, data: result };
-  } catch (error) {
-    console.error("Error marking lesson as complete:", error);
-    return { success: false, error };
   }
 }
 
