@@ -1003,7 +1003,6 @@ export async function markLessonAsComplete(
     console.error("Error marking lesson as complete:", error);
     return { success: false, error };
   }
-
 }
 
 const s3 = new S3Client({
