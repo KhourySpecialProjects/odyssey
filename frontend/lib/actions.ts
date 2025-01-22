@@ -976,7 +976,6 @@ export async function markLessonAsComplete(
             },
           },
         }),
-        cache: 'no-store',
       },
     );
 
