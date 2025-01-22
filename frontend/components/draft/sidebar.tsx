@@ -11,18 +11,20 @@ import {
 import { Droplet, Lesson, User } from "@/types";
 import {
   ChevronDownIcon,
-  CogIcon,
+  PersonStanding,
   LogOutIcon,
   MenuIcon,
   ShipIcon,
   TowerControlIcon,
   SettingsIcon,
   ArrowLeftIcon,
+  MoveLeftIcon,
+  CogIcon,
 } from "lucide-react";
 import { signOut } from "next-auth/react";
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import React, { useLayoutEffect, useState, useEffect } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import {
@@ -51,6 +53,7 @@ import {
 } from "@dnd-kit/sortable";
 import { SortableLesson } from "@/components/draft/sortable-lesson";
 import { useLessonOrder } from "./metadata/hooks/useLessonOrder";
+import { Button } from "../ui/button";
 
 export function Sidebar({
   user,
@@ -58,13 +61,23 @@ export function Sidebar({
   onLessonsUpdate,
 }: {
   user: User;
-  droplet: Pick<Droplet, "id" | "name" | "slug" | "lessons">;
+  droplet: Pick<Droplet, "id" | "name" | "slug" | "droplet_lessons">;
   onLessonsUpdate?: (lessons: Lesson[]) => void;
 }) {
   const [expanded, setExpanded] = useState(false);
   const pathname = usePathname();
-  const { lessons, handleLessonReorder, updateLessons, isProcessing } =
-    useLessonOrder(droplet);
+
+  // Convert droplet_lessons to lessons for existing logic
+  const lessons = droplet.droplet_lessons
+    .sort((a, b) => a.orderIndex - b.orderIndex)
+    .map((dl) => dl.lesson);
+
+  const {
+    dropletLessons,
+    handleLessonReorder,
+    updateDropletLessons,
+    isProcessing,
+  } = useLessonOrder(droplet);
 
   const isAdmin = user && isAuthorizedUserAdmin(user.roles);
 
@@ -86,7 +99,6 @@ export function Sidebar({
     useSensor(KeyboardSensor),
   );
 
-  // Handle drag end and reorder
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
 
@@ -95,12 +107,47 @@ export function Sidebar({
       const newIndex = lessons.findIndex((item) => item.id === over?.id);
       const newLessons = arrayMove(lessons, oldIndex, newIndex);
 
-      handleLessonReorder(newLessons);
+      // Convert lessons back to droplet_lessons format
+      const newDropletLessons = newLessons.map((lesson, index) => ({
+        id: dropletLessons.find((dl) => dl.lesson.id === lesson.id)?.id,
+        lesson,
+        orderIndex: index,
+      }));
+
+      handleLessonReorder(
+        newDropletLessons.map((dl) => ({
+          id: dl.id ?? 0, // Provide a default value if id is undefined
+          lesson: dl.lesson,
+          orderIndex: dl.orderIndex,
+        })),
+      );
     }
   };
+  // // Handle drag end and reorder
+  // const handleDragEnd = (event: DragEndEvent) => {
+  //   const { active, over } = event;
+
+  //   if (active.id !== over?.id) {
+  //     const oldIndex = lessons.findIndex((item) => item.id === active.id);
+  //     const newIndex = lessons.findIndex((item) => item.id === over?.id);
+  //     const newLessons = arrayMove(lessons, oldIndex, newIndex);
+
+  //     handleLessonReorder(newLessons);
+  //   }
+  // };
 
   const addLessonCallback = (newLesson: Lesson) => {
-    updateLessons([...lessons, newLesson]);
+    // updateDropletLessons([...lessons, newLesson]);
+    const addLessonCallback = (newLesson: Lesson) => {
+      updateDropletLessons([
+        ...dropletLessons,
+        {
+          id: 0,
+          lesson: newLesson,
+          orderIndex: dropletLessons.length,
+        },
+      ]);
+    };
   };
 
   const handleLessonDelete = (lessonId: string) => {
@@ -108,11 +155,19 @@ export function Sidebar({
     const newLessons = lessons.filter(
       (lesson) => lesson.id.toString() !== lessonId,
     );
-    updateLessons(newLessons);
+    // updateDropletLessons(newLessons);
+    updateDropletLessons(
+      newLessons.map((lesson, index) => ({
+        id: 0,
+        lesson,
+        orderIndex: index,
+      })),
+    );
   };
 
   // Add this state to ensure consistent mounting
   const [mounted, setMounted] = useState(false);
+  const router = useRouter();
 
   // Use useEffect to handle client-side mounting
   useEffect(() => {
@@ -185,27 +240,44 @@ export function Sidebar({
             <div className="flex items-center justify-between p-2 my-2">
               <p className="text-lg font-extrabold leading-7">{droplet.name}</p>
               <Link
-                href="/drafts"
+                href={`/draft/d/${droplet.slug}`}
                 className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-950 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 dark:ring-offset-slate-950 dark:focus-visible:ring-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 h-9 w-9"
                 aria-label="Back to Drafts"
               >
-                <ArrowLeftIcon className="w-4 h-4" />
+                <ArrowLeftIcon className="w-6 h-6" />
               </Link>
             </div>
 
             {/* Metadata link */}
             <ul className="space-y-4 w-full font-medium flex flex-col items-center">
-              <li className="w-full">
+              <li className="w-full space-y-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => router.back()}
+                  className={cn(
+                    classes.link,
+                    "w-full flex items-center justify-start text-base px-4",
+                  )}
+                >
+                  <div className="w-6 flex justify-center">
+                    <ArrowLeftIcon className="shrink-0 w-5 h-5" />
+                  </div>
+                  <span className="leading-snug ms-2">Save Droplet</span>
+                </Button>
                 <Link
                   href={`/draft/d/${droplet.slug}`}
                   className={cn(
+                    "w-full flex items-center justify-start text-base px-4",
                     classes.link,
                     pathname === `/draft/d/${droplet.slug}` &&
                       classes.activeLink,
                   )}
                 >
-                  <SettingsIcon className="shrink-0" />
-                  <span className="leading-snug ms-3">Metadata</span>
+                  <div className="w-6 flex justify-center">
+                    <SettingsIcon className="shrink-0 w-5 h-5" />
+                  </div>
+                  <span className="leading-snug ms-2">Metadata</span>
                 </Link>
               </li>
               <li className="pb-2 w-full text-center">
@@ -292,6 +364,22 @@ export function Sidebar({
                     <span>Explore</span>
                   </Link>
                 </DropdownMenuItem>
+
+                <DropdownMenuItem asChild>
+                  <Link href="/settings">
+                    <CogIcon className="w-4 h-4 mr-2" />
+                    <span>Settings</span>
+                  </Link>
+                </DropdownMenuItem>
+
+                {isAdmin ? (
+                  <DropdownMenuItem asChild>
+                    <Link href="/admin">
+                      <TowerControlIcon className="w-4 h-4 mr-2" />
+                      <span>Admin</span>
+                    </Link>
+                  </DropdownMenuItem>
+                ) : null}
 
                 <DropdownMenuItem
                   onClick={() => signOut()}

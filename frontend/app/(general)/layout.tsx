@@ -19,9 +19,9 @@ export default function GeneralLayout({
           <Header />
         </Suspense>
 
-        <Suspense>
+        {/* <Suspense>
           <AccessRequestBanner />
-        </Suspense>
+        </Suspense> */}
       </div>
 
       <main>{children}</main>

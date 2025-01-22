@@ -54,6 +54,12 @@
         "caseStudy"
       ],
       "default": "general"
+    },
+    "droplet_lessons": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::droplet-lesson.droplet-lesson",
+      "mappedBy": "lesson"
     }
   }
 }

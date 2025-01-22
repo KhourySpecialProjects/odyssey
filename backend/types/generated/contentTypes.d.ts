@@ -999,6 +999,115 @@ export interface ApiAuthorizedUserRoleAuthorizedUserRole
   };
 }
 
+export interface ApiAuthorizedUserAuthorizedUser extends Schema.CollectionType {
+  collectionName: 'authorized_users';
+  info: {
+    description: '';
+    displayName: 'Authorized User';
+    pluralName: 'authorized-users';
+    singularName: 'authorized-user';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    author: Attribute.Relation<
+      'api::authorized-user.authorized-user',
+      'oneToOne',
+      'api::author.author'
+    >;
+    bio: Attribute.Text &
+      Attribute.SetMinMaxLength<{
+        maxLength: 400;
+      }>;
+    createdAt: Attribute.DateTime;
+    createdBy: Attribute.Relation<
+      'api::authorized-user.authorized-user',
+      'oneToOne',
+      'admin::user'
+    > &
+      Attribute.Private;
+    email: Attribute.Email & Attribute.Required & Attribute.Unique;
+    enrollments: Attribute.Relation<
+      'api::authorized-user.authorized-user',
+      'oneToMany',
+      'api::enrollment.enrollment'
+    >;
+    firstName: Attribute.String;
+    firstTime: Attribute.Boolean & Attribute.DefaultTo<true>;
+    github: Attribute.String;
+    isEnabled: Attribute.Boolean &
+      Attribute.Required &
+      Attribute.DefaultTo<true>;
+    lastName: Attribute.String;
+    linkedin: Attribute.String;
+    playlists: Attribute.Relation<
+      'api::authorized-user.authorized-user',
+      'manyToMany',
+      'api::playlist.playlist'
+    >;
+    roles: Attribute.Relation<
+      'api::authorized-user.authorized-user',
+      'manyToMany',
+      'api::authorized-user-role.authorized-user-role'
+    >;
+    updatedAt: Attribute.DateTime;
+    updatedBy: Attribute.Relation<
+      'api::authorized-user.authorized-user',
+      'oneToOne',
+      'admin::user'
+    > &
+      Attribute.Private;
+  };
+}
+
+export interface ApiDropletLessonDropletLesson extends Schema.CollectionType {
+  collectionName: 'droplet_lessons';
+  info: {
+    description: '';
+    displayName: 'DropletLesson';
+    pluralName: 'droplet-lessons';
+    singularName: 'droplet-lesson';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    createdAt: Attribute.DateTime;
+    createdBy: Attribute.Relation<
+      'api::droplet-lesson.droplet-lesson',
+      'oneToOne',
+      'admin::user'
+    > &
+      Attribute.Private;
+    droplet: Attribute.Relation<
+      'api::droplet-lesson.droplet-lesson',
+      'manyToOne',
+      'api::droplet.droplet'
+    >;
+    lesson: Attribute.Relation<
+      'api::droplet-lesson.droplet-lesson',
+      'manyToOne',
+      'api::lesson.lesson'
+    >;
+    orderIndex: Attribute.Integer &
+      Attribute.Required &
+      Attribute.SetMinMax<
+        {
+          min: 0;
+        },
+        number
+      >;
+    updatedAt: Attribute.DateTime;
+    updatedBy: Attribute.Relation<
+      'api::droplet-lesson.droplet-lesson',
+      'oneToOne',
+      'admin::user'
+    > &
+      Attribute.Private;
+  };
+}
+
 export interface ApiDropletDroplet extends Schema.CollectionType {
   collectionName: 'droplets';
   info: {
@@ -1018,7 +1127,27 @@ export interface ApiDropletDroplet extends Schema.CollectionType {
       'manyToMany',
       'api::author.author'
     >;
-    slug: Attribute.UID<'api::droplet.droplet', 'name'> & Attribute.Required;
+    createdAt: Attribute.DateTime;
+    createdBy: Attribute.Relation<
+      'api::droplet.droplet',
+      'oneToOne',
+      'admin::user'
+    > &
+      Attribute.Private;
+    description: Attribute.Text &
+      Attribute.SetMinMaxLength<{
+        maxLength: 500;
+      }>;
+    droplet_lessons: Attribute.Relation<
+      'api::droplet.droplet',
+      'oneToMany',
+      'api::droplet-lesson.droplet-lesson'
+    >;
+    enrollments: Attribute.Relation<
+      'api::droplet.droplet',
+      'oneToMany',
+      'api::enrollment.enrollment'
+    >;
     focusArea: Attribute.Enumeration<
       ['personal', 'professional', 'technical']
     > &
@@ -1133,6 +1262,23 @@ export interface ApiEnrollmentEnrollment extends Schema.CollectionType {
       'admin::user'
     > &
       Attribute.Private;
+    droplet: Attribute.Relation<
+      'api::enrollment.enrollment',
+      'manyToOne',
+      'api::droplet.droplet'
+    >;
+    isComplete: Attribute.Boolean &
+      Attribute.Required &
+      Attribute.DefaultTo<false>;
+    rating: Attribute.Integer &
+      Attribute.SetMinMax<
+        {
+          max: 5;
+          min: 1;
+        },
+        number
+      >;
+    updatedAt: Attribute.DateTime;
     updatedBy: Attribute.Relation<
       'api::enrollment.enrollment',
       'oneToOne',
@@ -1254,6 +1400,18 @@ export interface ApiLessonLesson extends Schema.CollectionType {
       ]
     > &
       Attribute.Required;
+    createdAt: Attribute.DateTime;
+    createdBy: Attribute.Relation<
+      'api::lesson.lesson',
+      'oneToOne',
+      'admin::user'
+    > &
+      Attribute.Private;
+    droplet_lessons: Attribute.Relation<
+      'api::lesson.lesson',
+      'oneToMany',
+      'api::droplet-lesson.droplet-lesson'
+    >;
     droplets: Attribute.Relation<
       'api::lesson.lesson',
       'manyToMany',
@@ -1425,6 +1583,7 @@ declare module '@strapi/types' {
       'api::author.author': ApiAuthorAuthor;
       'api::authorized-user.authorized-user': ApiAuthorizedUserAuthorizedUser;
       'api::authorized-user-role.authorized-user-role': ApiAuthorizedUserRoleAuthorizedUserRole;
+      'api::droplet-lesson.droplet-lesson': ApiDropletLessonDropletLesson;
       'api::droplet.droplet': ApiDropletDroplet;
       'api::enrollment.enrollment': ApiEnrollmentEnrollment;
       'api::group.group': ApiGroupGroup;
