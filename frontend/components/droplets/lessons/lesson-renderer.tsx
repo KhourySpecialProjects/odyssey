@@ -11,7 +11,7 @@ import { BlocksRenderer } from "@strapi/blocks-react-renderer";
 import { ArrowDownFromLineIcon } from "lucide-react";
 import { QuizBlock } from "./quiz";
 import GenericBlockRenderer from "./GenericBlockRenderer";
-import { useTransition } from "react";
+import { useTransition, useState } from "react";
 import { useRouter } from "next/navigation";
 import { markLessonAsComplete } from "@/lib/actions";
 import { LockIcon } from "lucide-react";
@@ -30,11 +30,14 @@ export function LessonRenderer({
   lesson,
   droplet,
   enrollmentId,
-  completedLessonIds,
+  completedLessonIds: initialCompletedLessonIds,
   user,
   author = false,
 }: LessonRendererProps) {
   const [isPending, startTransition] = useTransition();
+  const [completedLessonIds, setCompletedLessonIds] = useState(
+    initialCompletedLessonIds,
+  );
   const router = useRouter();
 
   // Find the current lesson's position in this droplet
@@ -72,14 +75,25 @@ export function LessonRenderer({
     if (!enrollmentId) return;
 
     startTransition(async () => {
-      const success = await markLessonAsComplete(
+      const result = await markLessonAsComplete(
+        //result was success
         enrollmentId,
         completedLessonIds,
         lesson.id,
       );
+      /*
       if (success) {
         completedLessonIds.push(lesson.id);
         router.refresh();
+      }*/
+      if (result.success) {
+        // Update local state immediately
+        setCompletedLessonIds((prev) => [...prev, lesson.id]);
+
+        // Force a full router refresh to update all components
+        router.refresh();
+      } else {
+        console.error("Failed to mark lesson as complete");
       }
       // } else {
       //   alert("no success");
