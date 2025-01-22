@@ -3,33 +3,44 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { SearchIcon } from "lucide-react";
-import { useQueryState } from "nuqs";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 
 export function Search() {
-  const [tempQuery, setTempQuery] = useState("");
-  const [_, setQuery] = useQueryState("q", {
-    shallow: false,
-    throttleMs: 1000,
-    clearOnDefault: true,
-  });
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const [tempQuery, setTempQuery] = useState(searchParams.get("q") || "");
+
+  const updateQueryString = (value: string) => {
+    const params = new URLSearchParams(searchParams);
+    if (value) {
+      params.set("q", value);
+    } else {
+      params.delete("q");
+    }
+    router.push(`${pathname}?${params.toString()}`);
+  };
 
   return (
     <form
       className="flex items-center space-x-2 xs:max-w-sm"
       onSubmit={(e) => {
         e.preventDefault();
-        setQuery(tempQuery);
+        updateQueryString(tempQuery);
       }}
     >
       <Input
         type="search"
         placeholder="Search..."
         className="w-full md:w-[125px] lg:w-[300px]"
-        value={tempQuery || ""}
+        value={tempQuery}
         onChange={(e) => setTempQuery(e.target.value)}
       />
-      <Button before={<SearchIcon />} onClick={() => setQuery(tempQuery)}>
+      <Button
+        before={<SearchIcon />}
+        onClick={() => updateQueryString(tempQuery)}
+      >
         <span className="sr-only md:not-sr-only">Search</span>
       </Button>
     </form>

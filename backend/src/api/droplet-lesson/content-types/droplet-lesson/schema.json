@@ -1,0 +1,33 @@
+{
+  "kind": "collectionType",
+  "collectionName": "droplet_lessons",
+  "info": {
+    "singularName": "droplet-lesson",
+    "pluralName": "droplet-lessons",
+    "displayName": "DropletLesson",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "droplet": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::droplet.droplet",
+      "inversedBy": "droplet_lessons"
+    },
+    "lesson": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::lesson.lesson",
+      "inversedBy": "droplet_lessons"
+    },
+    "orderIndex": {
+      "type": "integer",
+      "required": true,
+      "min": 0
+    }
+  }
+}

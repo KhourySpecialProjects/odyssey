@@ -69,6 +69,26 @@
       "relation": "manyToMany",
       "target": "api::group.group",
       "mappedBy": "members"
+    },
+    "linkedin": {
+      "type": "string"
+    },
+    "github": {
+      "type": "string"
+    },
+    "firstTime": {
+      "type": "boolean",
+      "default": true
+    },
+    "firstName": {
+      "type": "string"
+    },
+    "lastName": {
+      "type": "string"
+    },
+    "bio": {
+      "type": "text",
+      "maxLength": 400
     }
   }
 }

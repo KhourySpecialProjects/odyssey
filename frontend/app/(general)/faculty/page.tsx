@@ -11,7 +11,12 @@ export default async function Page() {
   if (!user || !isAuthorizedUserAdmin(user.roles)) return notFound();
 
   return (
-    <div className="w-full max-w-5xl p-8 mx-auto space-y-12">
+    <div className="w-full max-w-5xl mx-auto">
+      <div className="w-full p-8 mx-auto my-4 text-center max-w-7xl">
+        <h1 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
+          Faculty
+        </h1>
+      </div>
       <Session />
       <AdminSelector
         content={{

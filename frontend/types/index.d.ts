@@ -30,6 +30,13 @@ export type AuthorizedUser = {
   isEnabled: boolean;
   enrollments?: Enrollment[];
   playlists?: Playlist[];
+  linkedin: string;
+  github: string;
+  firstTime: boolean;
+  author?: Author;
+  firstName: string;
+  lastName: string;
+  bio: string;
 };
 
 export type NavItem = {
@@ -79,6 +86,13 @@ export type Resource = {
   url: string;
 };
 
+interface DropletLesson {
+  id: number;
+  orderIndex: number;
+  lesson: Lesson;
+}
+
+// TODO: fully migrate from lessons to droplet_lessons.
 export type Droplet = {
   id: number;
   slug: string;
@@ -96,6 +110,7 @@ export type Droplet = {
   postrequisites?: Droplet[];
   isHidden: boolean;
   status: DropletStatus;
+  droplet_lessons: DropletLesson[];
 };
 
 export type QuizAnswerOption = {
@@ -121,6 +136,7 @@ export type Enrollment = {
   droplet: Droplet;
   viewedLessons: Lesson[];
   isComplete: boolean;
+  rating: number;
 };
 
 export interface Playlist {

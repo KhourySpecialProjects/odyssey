@@ -12,6 +12,7 @@ export const DropletSchema = z.object({
   focusArea: z.enum(focusAreas),
   type: z.enum(types),
   tagIds: z.number().array(),
+  isHidden: z.boolean().optional(),
   learningObjectives: z.string().min(2).max(200).array(),
   prerequisiteIds: z.number().array(),
   postrequisiteIds: z.number().array(),
@@ -28,4 +29,12 @@ export const DropletSchema = z.object({
       id: z.number(),
     })
     .array(),
+  droplet_lessons: z
+    .array(
+      z.object({
+        id: z.number(),
+        orderIndex: z.number(),
+      }),
+    )
+    .optional(),
 });

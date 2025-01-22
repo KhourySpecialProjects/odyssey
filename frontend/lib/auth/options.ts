@@ -3,6 +3,7 @@ import { AuthorizedUserAdminRoles } from "../globals";
 import { isAuthorizedUserAdmin } from "../utils";
 import { NextAuthOptions } from "next-auth";
 import AzureADProvider from "next-auth/providers/azure-ad";
+import GitHubProvider from "next-auth/providers/github";
 import {
   fetchIsAuthorizedUser as fetchIsAuthorized,
   getAuthorizedUserByEmail,
@@ -20,6 +21,10 @@ export const authOptions: NextAuthOptions = {
           scope: "openid email profile User.Read",
         },
       },
+    }),
+    GitHubProvider({
+      clientId: process.env.GITHUB_CLIENT_ID || "",
+      clientSecret: process.env.GITHUB_CLIENT_SECRET || "",
     }),
   ],
   pages: {

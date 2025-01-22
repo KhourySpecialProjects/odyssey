@@ -4,7 +4,7 @@ import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { generalConfig } from "@/config/general";
+import { getGeneralConfig } from "@/config/general";
 import { Menu } from "lucide-react";
 import { LoginButton } from "./login-button";
 import { NavLinks } from "./nav-links";
@@ -26,6 +26,7 @@ export async function Header() {
       ? generalConfig.contentCreatorNav
       : generalConfig.mainNav;
   };
+  const generalConfig = getGeneralConfig(user);
 
   return (
     <header className="sticky top-0 z-10 bg-white border-b border-slate-200 dark:bg-slate-900 md:px-6">

@@ -1,26 +1,19 @@
-import { GeneralConfig } from "@/types";
+import { isAuthorizedUserAdmin, isAuthorizedUserFaculty } from "@/lib/utils";
+import { GeneralConfig, User } from "@/types";
 
-export const generalConfig: GeneralConfig = {
-  mainNav: [
-    {
-      href: "/explore",
-      label: "Explore",
-    },
-    {
-      href: "/dashboard",
-      label: "My Content",
-    },
-    {
-      href: "/g/dashboard",
-      label: "My Groups",
-    },
-    {
-      href: "/about",
-      label: "About",
-    },
-  ],
+export const mainNav = [
+  {
+    href: "/about",
+    label: "About",
+  },
+  {
+    href: "/explore",
+    label: "Explore",
+  },
+];
 
-  contentCreatorNav: [
+export const getContentCreatorNav = (user: User) => {
+  const baseNav = [
     {
       href: "/about",
       label: "About",
@@ -41,16 +34,38 @@ export const generalConfig: GeneralConfig = {
       href: "/drafts",
       label: "Drafts",
     },
-  ],
+  ];
 
-  nonAuthedNav: [
-    {
-      href: "/about",
-      label: "About",
-    },
-    {
-      href: "/explore",
-      label: "Explore",
-    },
-  ],
+  if (isAuthorizedUserAdmin(user.roles)) {
+    baseNav.push({
+      href: "/admin",
+      label: "Admin",
+    });
+  }
+
+  // if (isAuthorizedUserFaculty(user.roles)) {
+  //   baseNav.push({
+  //     href: "/faculty",
+  //     label: "Faculty"
+  //   })
+  // }
+
+  return baseNav;
 };
+
+const nonAuthedNav = [
+  {
+    href: "/about",
+    label: "About",
+  },
+  {
+    href: "/explore",
+    label: "Explore",
+  },
+]
+
+export const getGeneralConfig = (user?: User): GeneralConfig => ({
+  mainNav,
+  contentCreatorNav: user ? getContentCreatorNav(user) : mainNav,
+  nonAuthedNav
+});
