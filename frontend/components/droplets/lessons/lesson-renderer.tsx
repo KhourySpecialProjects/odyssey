@@ -78,6 +78,7 @@ export function LessonRenderer({
         lesson.id,
       );
       if (success) {
+        completedLessonIds.push(lesson.id);
         router.refresh();
       }
       // } else {
