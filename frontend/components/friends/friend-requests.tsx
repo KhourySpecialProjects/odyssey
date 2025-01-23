@@ -1,8 +1,9 @@
 import { fetchAuthorizedUsers } from "@/lib/requests/authorized-user";
 import { FriendRequestBlock } from "./friend-request-block";
+import { fetchFriendRequests, fetchFriends } from "@/lib/requests/friends";
 
 export async function FriendRequests() {
-  const authorizedUsers = await fetchAuthorizedUsers();
+  const authorizedUsers = await fetchFriends();
 
   return (
     <section>
