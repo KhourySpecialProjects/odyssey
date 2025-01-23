@@ -69,23 +69,20 @@ export function LessonRenderer({
   }
 
   async function handleMarkAsComplete() {
-    if (!enrollmentId) throw new Error("not enrolled");
+    if (!enrollmentId) return;
 
     startTransition(async () => {
       const success = await markLessonAsComplete(
         enrollmentId,
-        completedLessonIds,
+        [...completedLessonIds],
         lesson.id,
       );
       if (success) {
-        completedLessonIds.push(lesson.id);
         router.refresh();
       }
-      // } else {
-      //   alert("no success");
-      // }
     });
   }
+
   let headings: any[] = [];
   lesson.blocks
     .filter((b: any) => b.__component === "droplets.generic")

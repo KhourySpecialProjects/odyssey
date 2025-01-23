@@ -23,24 +23,25 @@ export function EnrollButton({ droplet, isEnrolled }: EnrollButtonProps) {
     return null;
   }
 
-  function enroll() {
+  async function enroll() {
     if (droplet.lessons && droplet.lessons.length > 0) {
       const values: z.infer<typeof DropletEnrollmentSchema> = {
         droplet: droplet.id,
         viewedLessons: [],
       };
 
-      startTransition(() => {
-        toast.promise(createEnrollment(values), {
-          loading: "Enrolling...",
-          success: () => `You are now enrolled in ${droplet.name}!`,
-          error: (error) => (
-            <div>
-              <p>Uh oh! Something went wrong.</p>
-              <pre>{error}</pre>
-            </div>
-          ),
-        });
+      startTransition(async () => {
+        try {
+          await toast.promise(createEnrollment(values), {
+            loading: "Enrolling...",
+            success: () => `You are now enrolled in ${droplet.name}!`,
+            error: "Failed to enroll",
+          });
+
+          router.refresh();
+        } catch (error) {
+          console.error("Enrollment error:", error);
+        }
       });
     }
   }
