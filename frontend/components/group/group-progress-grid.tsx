@@ -13,7 +13,7 @@ import { AuthorizedUser } from "@/types";
 import React, { useTransition } from "react";
 import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
 import { getIsEnrollComplete, getIsEnrolled } from "@/lib/requests/enrollment";
-import { Check } from "lucide-react";
+import { Check, MoveLeft, MoveRight } from "lucide-react";
 import { useEffect } from "react";
 import { useState } from "react";
 
@@ -35,6 +35,25 @@ export function GroupProgressGrid({ group }: GroupProgressGridProps) {
     Record<string, boolean>
   >({});
   const [isPending, startTransition] = useTransition();
+  const [currentPage, setCurrentPage] = useState(0); // Track the current page
+  const lessonsPerPage = 5; // Number of lessons to show per page
+
+  // Calculate the start and end indices for the lessons on the current page
+  const startIndex = currentPage * lessonsPerPage;
+  const endIndex = startIndex + lessonsPerPage;
+  const paginatedLessons = group.droplets?.slice(startIndex, endIndex); // Slice the lessons array
+
+  // Calculate the total number of pages
+  const totalPages = Math.ceil((group.droplets?.length || 0) / lessonsPerPage);
+
+  // Handlers for navigation
+  const handleNextPage = () => {
+    if (currentPage < totalPages - 1) setCurrentPage(currentPage + 1);
+  };
+
+  const handlePrevPage = () => {
+    if (currentPage > 0) setCurrentPage(currentPage - 1);
+  };
 
   useEffect(() => {
     const fetchCompletionStatuses = async () => {
@@ -72,11 +91,36 @@ export function GroupProgressGrid({ group }: GroupProgressGridProps) {
   };
 
   return (
+
+    <div className="">
+
+      {/* Navigation Buttons */}
+    <div className="flex justify-end mt-2">
+      <div className="w-full">
+        
+      </div>
+        <button
+          onClick={handlePrevPage}
+          disabled={currentPage === 0}
+          className={`px-4 py-2 mr-4 w-22`}
+        >
+          <MoveLeft/>
+        </button>
+        <button
+          onClick={handleNextPage}
+          disabled={currentPage === totalPages - 1}
+          className={`px-4 py-2`}
+        >
+          <MoveRight/>
+        </button>
+      </div>
+    
     <ContentSection title="">
+
       {group.droplets && group.droplets.length > 0 ? (
         <div className="flex flex-row justify-start">
           <div className="flex flex-col justify-self-start">
-            <div className="transition-colors border rounded-md border-slate-200 hover:border-slate-300 bg-slate-50 p-4 h-24 w-55 flex items-center justify-center">
+            <div className="transition-colors border-slate-200 hover:border-slate-300 bg-white-50 p-4 h-24 w-55 flex items-center justify-center">
               <span className="text-center text-sm font-semibold text-slate-950 line-clamp-3">
                 {""}
               </span>
@@ -85,10 +129,10 @@ export function GroupProgressGrid({ group }: GroupProgressGridProps) {
             {group.members?.map((member) => (
               <div
                 key={member.id}
-                className="transition-colors border rounded-md border-slate-200 hover:border-slate-300 bg-slate-50 p-4 h-24 w-55 flex items-center justify-center"
+                className="transition-colors  border-slate-200 hover:border-slate-300 bg-white-50 p-4 h-24 w-55 flex items-center justify-center"
               >
                 <span className="text-center text-sm font-semibold text-slate-950 line-clamp-3">
-                  {member.email}
+                  {member.email.substring(0, member.email.length-17)}
                 </span>
               </div>
             ))}
@@ -96,12 +140,12 @@ export function GroupProgressGrid({ group }: GroupProgressGridProps) {
 
           <div>
             <div className="flex flex-row">
-              {group.droplets.map((droplet) => (
+              {paginatedLessons?.map((droplet, rowIndex) => (
                 <div
                   key={droplet.id}
-                  className="transition-colors border rounded-md border-slate-200 hover:border-slate-300 bg-slate-50 p-4 h-24 w-36 flex items-center justify-center"
+                  className="transition-colors  border-slate-200 hover:border-slate-300 bg-white-50 p-4 h-24 w-36 flex items-center justify-center"
                 >
-                  <span className="text-center text-sm font-semibold text-slate-950 line-clamp-3">
+                  <span title={droplet.name} className="text-center text-sm font-semibold text-slate-950 line-clamp-3" >
                     {droplet.name}
                   </span>
                 </div>
@@ -111,15 +155,15 @@ export function GroupProgressGrid({ group }: GroupProgressGridProps) {
             <div
               className="grid grid-flow-row gap-0"
               style={{
-                gridTemplateColumns: `repeat(${group.droplets?.length || 1}, minmax(0, 1fr))`,
+                gridTemplateColumns: `repeat(${paginatedLessons?.length || 1}, minmax(0, 1fr))`,
               }}
             >
-              {group.droplets?.map((droplet) => (
+              {paginatedLessons?.map((droplet) => (
                 <div className="" key={droplet.id * group.id}>
                   {group.members?.map((member) => (
                     <div
                       key={member.id * droplet.id * 100}
-                      className="transition-colors border rounded-md border-slate-200 hover:border-slate-300 bg-slate-50 p-4 h-24 w-36 flex items-center justify-center"
+                      className="transition-colors border border-slate-200 hover:border-slate-300 bg-white-50 p-4 h-24 w-36 flex items-center justify-center"
                     >
                       <span className="text-center text-sm font-semibold text-slate-950 line-clamp-3">
                         {getCompletionStatus(member.id, droplet.id) === true
@@ -135,10 +179,12 @@ export function GroupProgressGrid({ group }: GroupProgressGridProps) {
         </div>
       ) : (
         <div className="p-8 text-center text-slate-500 border border-dashed rounded-lg">
-          No playlists have been added to this group yet.
+          No droplets have been added to this group yet.
         </div>
       )}
     </ContentSection>
+
+</div>
   );
 }
 
