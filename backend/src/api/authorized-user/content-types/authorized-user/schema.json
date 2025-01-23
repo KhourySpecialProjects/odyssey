@@ -77,6 +77,12 @@
       "relation": "manyToMany",
       "target": "api::authorized-user.authorized-user",
       "inversedBy": "sent_requests"
+    },
+    "friendships": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::friendship.friendship",
+      "mappedBy": "friends"
     }
   }
 }
