@@ -70,11 +70,11 @@ export function LessonRenderer({
 
   async function handleMarkAsComplete() {
     if (!enrollmentId) return;
-  
+
     startTransition(async () => {
       const success = await markLessonAsComplete(
         enrollmentId,
-        [...completedLessonIds], 
+        [...completedLessonIds],
         lesson.id,
       );
       if (success) {
@@ -82,7 +82,7 @@ export function LessonRenderer({
       }
     });
   }
-  
+
   let headings: any[] = [];
   lesson.blocks
     .filter((b: any) => b.__component === "droplets.generic")

@@ -29,7 +29,7 @@ export function EnrollButton({ droplet, isEnrolled }: EnrollButtonProps) {
         droplet: droplet.id,
         viewedLessons: [],
       };
-  
+
       startTransition(async () => {
         try {
           await toast.promise(createEnrollment(values), {
@@ -37,7 +37,7 @@ export function EnrollButton({ droplet, isEnrolled }: EnrollButtonProps) {
             success: () => `You are now enrolled in ${droplet.name}!`,
             error: "Failed to enroll",
           });
-          
+
           router.refresh();
         } catch (error) {
           console.error("Enrollment error:", error);
