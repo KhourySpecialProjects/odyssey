@@ -10,6 +10,10 @@ export const mainNav = [
     href: "/explore",
     label: "Explore",
   },
+  {
+    href: "/g/dashboard",
+    label: "My Groups",
+  },
 ];
 
 export const getContentCreatorNav = (user: User) => {

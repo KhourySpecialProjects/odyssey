@@ -9,7 +9,7 @@ import { Separator } from "@/components/ui/separator";
 import { GroupDropletTile } from "@/components/group/group-droplet-tile";
 import { PlaylistCard } from "@/components/playlists/playlist-card";
 import createDOMPurifier from "isomorphic-dompurify";
-import { RenderGroupDashboard } from "@/components/group/group-management-dashboard";
+import { GroupDashboard } from "@/components/group/group-management-dashboard";
 type Props = {
   params: Promise<{
     slug: string;
@@ -94,7 +94,7 @@ export default async function GroupDetailPage({ params }: Props) {
 
           <ContentSection
             title="">
-            <RenderGroupDashboard group={group} />
+            <GroupDashboard group={group} />
           </ContentSection>
 
           <Separator />
