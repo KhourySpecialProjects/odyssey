@@ -2,10 +2,10 @@ import { isAuthorizedUserAdmin, isAuthorizedUserFaculty } from "@/lib/utils";
 import { GeneralConfig, User } from "@/types";
 
 export const mainNav = [
-  {
-    href: "/about",
-    label: "About",
-  },
+  // {
+  //   href: "/about",
+  //   label: "About",
+  // },
   {
     href: "/explore",
     label: "Explore",
@@ -14,10 +14,10 @@ export const mainNav = [
 
 export const getContentCreatorNav = (user: User) => {
   const baseNav = [
-    {
-      href: "/about",
-      label: "About",
-    },
+    // {
+    //   href: "/about",
+    //   label: "About",
+    // },
     {
       href: "/explore",
       label: "Explore",
