@@ -25,7 +25,11 @@ export const metadata: Metadata = {
 export default async function CreateRoute() {
   //get the current user's drafts
   const user = await getCurrentUser();
-  if (!user || !user.email || (!isAuthorizedUserAdmin(user.roles) && !isContentCreator(user.roles)))
+  if (
+    !user ||
+    !user.email ||
+    (!isAuthorizedUserAdmin(user.roles) && !isContentCreator(user.roles))
+  )
     redirect("/unauthorized");
   const author = await getAuthorByAuthorizedUserEmail(user.email, {
     populate: {

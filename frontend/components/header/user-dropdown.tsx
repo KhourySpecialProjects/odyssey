@@ -83,8 +83,8 @@ export function UserDropdown(user: User) {
           onSelect={(e) => {
             e.preventDefault();
             signOut({
-              callbackUrl: '/',
-              redirect: true
+              callbackUrl: "/",
+              redirect: true,
             });
           }}
         >
