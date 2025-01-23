@@ -1085,6 +1085,46 @@ export interface ApiDropletDroplet extends Schema.CollectionType {
       'admin::user'
     > &
       Attribute.Private;
+    email: Attribute.Email & Attribute.Required & Attribute.Unique;
+    enrollments: Attribute.Relation<
+      'api::authorized-user.authorized-user',
+      'oneToMany',
+      'api::enrollment.enrollment'
+    >;
+    firstName: Attribute.String;
+    firstTime: Attribute.Boolean & Attribute.DefaultTo<true>;
+    friendships: Attribute.Relation<
+      'api::authorized-user.authorized-user',
+      'oneToMany',
+      'api::friendship.friendship'
+    >;
+    github: Attribute.String;
+    isEnabled: Attribute.Boolean &
+      Attribute.Required &
+      Attribute.DefaultTo<true>;
+    lastName: Attribute.String;
+    linkedin: Attribute.String;
+    playlists: Attribute.Relation<
+      'api::authorized-user.authorized-user',
+      'manyToMany',
+      'api::playlist.playlist'
+    >;
+    received_requests: Attribute.Relation<
+      'api::authorized-user.authorized-user',
+      'manyToMany',
+      'api::authorized-user.authorized-user'
+    >;
+    roles: Attribute.Relation<
+      'api::authorized-user.authorized-user',
+      'manyToMany',
+      'api::authorized-user-role.authorized-user-role'
+    >;
+    sent_requests: Attribute.Relation<
+      'api::authorized-user.authorized-user',
+      'manyToMany',
+      'api::authorized-user.authorized-user'
+    >;
+    updatedAt: Attribute.DateTime;
     updatedBy: Attribute.Relation<
       'api::droplet.droplet',
       'oneToOne',
@@ -1199,6 +1239,9 @@ export interface ApiEnrollmentEnrollment extends Schema.CollectionType {
 export interface ApiFriendshipFriendship extends Schema.CollectionType {
   collectionName: 'friendships';
   info: {
+    description: '';
+    displayName: 'Friendship';
+    pluralName: 'friendships';
     singularName: 'friendship';
     pluralName: 'friendships';
     displayName: 'Friendship';
@@ -1216,6 +1259,13 @@ export interface ApiFriendshipFriendship extends Schema.CollectionType {
       'admin::user'
     > &
       Attribute.Private;
+    friends: Attribute.Relation<
+      'api::friendship.friendship',
+      'manyToOne',
+      'api::authorized-user.authorized-user'
+    >;
+    publishedAt: Attribute.DateTime;
+    updatedAt: Attribute.DateTime;
     updatedBy: Attribute.Relation<
       'api::friendship.friendship',
       'oneToOne',
