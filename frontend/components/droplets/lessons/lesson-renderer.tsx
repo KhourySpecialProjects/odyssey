@@ -78,7 +78,7 @@ export function LessonRenderer({
         lesson.id,
       );
       if (success) {
-        router.refresh();
+        await router.refresh();
       }
     });
   }
