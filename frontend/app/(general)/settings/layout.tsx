@@ -23,6 +23,10 @@ export default async function SettingsLayout({
       label: "Author Profile",
       isHidden: !author,
     },
+    {
+      href: "/settings/friends",
+      label: "Friends",
+    },
   ];
 
   return (
