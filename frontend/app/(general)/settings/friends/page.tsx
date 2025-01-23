@@ -1,6 +1,13 @@
+import { Droplets } from "@/components/admin/droplets/droplets";
+import { Playlists } from "@/components/admin/playlists/playlists";
+import { Reports } from "@/components/admin/reports/reports";
 import { DropletsSkeleton } from "@/components/explore/droplets-skeleton";
+import { FriendRequests } from "@/components/friends/friend-requests";
+import { FriendSuggestions } from "@/components/friends/friend-suggestions";
+import { Friends } from "@/components/friends/friends";
 import { AuthorDroplets } from "@/components/settings/author-droplets";
 import { BioCard } from "@/components/settings/bio-card";
+import { AdminSelector } from "@/components/shared/selector";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Card,
@@ -25,38 +32,15 @@ export default async function AuthorProfileSettings() {
 
   return (
     <>
-      <Card>
-        <CardHeader>
-          <CardTitle>Author Profile</CardTitle>
-          <CardDescription>
-            Your public profile information, shown on Droplets you authored.
-          </CardDescription>
-        </CardHeader>
+      <AdminSelector
+        content={{
+          "Friends": <Friends />,
+          "Friend Requests": <FriendRequests />,
+          "People You May Know": <FriendSuggestions />,
+        }}
+      />
 
-        <CardContent className="flex items-center space-x-4">
-          <Avatar variant="round">
-            <AvatarImage src={author.photo?.formats?.small?.url ?? undefined} />
-            <AvatarFallback>{getInitials(author.name)}</AvatarFallback>
-          </Avatar>
-          <div>
-            <div className="text-lg font-medium">{author.name}</div>
-          </div>
-        </CardContent>
-
-        <CardFooter className="px-6 py-4 border-t">
-          <p className="text-sm text-slate-600">
-            To make changes, contact an Odyssey Administrator.
-          </p>
-        </CardFooter>
-      </Card>
-
-      <Suspense fallback={<DropletsSkeleton />}>
-        <BioCard author={author} />
-      </Suspense>
-
-      <Suspense fallback={<DropletsSkeleton />}>
-        <AuthorDroplets authorId={author.id} />
-      </Suspense>
+      
     </>
   );
 }
