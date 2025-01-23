@@ -17,7 +17,7 @@ export async function Friends() {
             ))}
           </ul>
         ) : (
-          <p>There are no authorized users.</p>
+          <p>You have no friends &#58;&#40;.</p>
         )}
       </div>
     </section>
