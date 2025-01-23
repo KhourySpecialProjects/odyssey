@@ -44,9 +44,9 @@ export function Confetti() {
 
       myConfetti({
         ...defaults,
-        shapes: ['circle'],  // Use built-in shapes instead
-        colors: ['#297496'], // Use Oasis colors
-        particleCount: 100,
+        shapes: ['circle'],  
+        colors: ['#297496'], 
+        particleCount: 1000,
       });
       
       setTimeout(() => {
