@@ -15,7 +15,11 @@ interface Props {
 
 export default async function EditPlaylistPage({ params }: Props) {
   const user = await getCurrentUser();
-  if (!user || !user?.email || (!isContentCreator(user.roles) && !isAuthorizedUserAdmin(user.roles)))
+  if (
+    !user ||
+    !user?.email ||
+    (!isContentCreator(user.roles) && !isAuthorizedUserAdmin(user.roles))
+  )
     return redirect("/");
 
   const authUser = await getAuthorizedUserByEmail(user.email);

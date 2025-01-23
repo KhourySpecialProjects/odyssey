@@ -307,8 +307,8 @@ export default function Sidebar({
                   onSelect={(e) => {
                     e.preventDefault();
                     signOut({
-                      callbackUrl: '/',
-                      redirect: true
+                      callbackUrl: "/",
+                      redirect: true,
                     });
                   }}
                 >
