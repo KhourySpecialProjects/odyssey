@@ -17,7 +17,7 @@ export async function FriendRequests() {
             ))}
           </ul>
         ) : (
-          <p>There are no authorized users.</p>
+          <p>There are no friend requests.</p>
         )}
       </div>
     </section>
