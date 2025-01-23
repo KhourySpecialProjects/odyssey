@@ -538,7 +538,7 @@ export interface ApiAuthorizedUserAuthorizedUser extends Schema.CollectionType {
     firstTime: Attribute.Boolean & Attribute.DefaultTo<true>;
     friendships: Attribute.Relation<
       'api::authorized-user.authorized-user',
-      'oneToMany',
+      'manyToMany',
       'api::friendship.friendship'
     >;
     github: Attribute.String;
@@ -784,7 +784,7 @@ export interface ApiFriendshipFriendship extends Schema.CollectionType {
     singularName: 'friendship';
   };
   options: {
-    draftAndPublish: true;
+    draftAndPublish: false;
   };
   attributes: {
     createdAt: Attribute.DateTime;
@@ -796,10 +796,9 @@ export interface ApiFriendshipFriendship extends Schema.CollectionType {
       Attribute.Private;
     friends: Attribute.Relation<
       'api::friendship.friendship',
-      'manyToOne',
+      'manyToMany',
       'api::authorized-user.authorized-user'
     >;
-    publishedAt: Attribute.DateTime;
     updatedAt: Attribute.DateTime;
     updatedBy: Attribute.Relation<
       'api::friendship.friendship',

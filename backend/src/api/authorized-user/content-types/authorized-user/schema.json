@@ -80,7 +80,7 @@
     },
     "friendships": {
       "type": "relation",
-      "relation": "oneToMany",
+      "relation": "manyToMany",
       "target": "api::friendship.friendship",
       "mappedBy": "friends"
     }
