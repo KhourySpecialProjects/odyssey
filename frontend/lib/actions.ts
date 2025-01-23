@@ -988,6 +988,7 @@ export async function markLessonAsComplete(
     }
 
     // Update revalidation paths to be more generic
+    revalidatePath("/", "layout");
     revalidatePath("/dashboard");
     revalidatePath("/(droplets)/d/[slug]/[lessonSlug]", "page");
     revalidatePath("/(playlists)/p/[slug]", "page");
