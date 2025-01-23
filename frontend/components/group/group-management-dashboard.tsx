@@ -14,15 +14,17 @@ interface RenderGroupDashboardProps {
     group: Group
   }
 
+  const tabStyle = "px-4 py-2 cursor-pointer border-b-2 border-transparent focus:outline-none hover:border-gray-300"
 
-export function RenderGroupDashboard( {group}: RenderGroupDashboardProps) {
+
+export function GroupDashboard( {group}: RenderGroupDashboardProps) {
 
     return (
-        <Tabs title="">
-        <TabList>
-        <Tab>Droplets</Tab>
-        <Tab>Playlists</Tab>
-        <Tab>Progress</Tab>
+        <Tabs title="" forceRenderTabPanel>
+        <TabList className="flex border-b">
+        <Tab className={tabStyle}>Droplets</Tab>
+        <Tab className={tabStyle}>Playlists</Tab>
+        <Tab className={tabStyle}>Progress</Tab>
         </TabList>
         <TabPanel>
         <ContentSection

@@ -13,8 +13,7 @@ import { AuthorizedUser } from "@/types";
 import React, { useTransition } from "react";
 import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
 import { getIsEnrollComplete, getIsEnrolled } from "@/lib/requests/enrollment";
-import { CheckCircle2 } from "lucide-react";
-import { XCircle } from "lucide-react";
+import { Check } from "lucide-react";
 import { useEffect } from "react";
 import { useState } from "react";
 
@@ -44,21 +43,20 @@ export function GroupProgressGrid({ group }: GroupProgressGridProps) {
       try {
         await Promise.all(
           (group.members || []).map(async (member) => {
-            await Promise.all(
-              (group.droplets || []).map(async (droplet) => {
-                const key = `${member.id}-${droplet.id}`;
                 startTransition(async () => {
-                  const isComplete = await getIsEnrollComplete(
-                    member.id,
-                    droplet.id
-                  );
-                  setCompletionStatus((prev) => ({
-                    ...prev,
-                    [key]: isComplete,
-                  }));
+                  const enrollments = await getEnrollmentsByAuthorizedUser(member.id);
+
+                  console.log("enrollments are", enrollments)
+
+                  enrollments.map(async (enrollment) =>{
+                    console.log("enrollment is ", enrollment.isComplete)
+                    setCompletionStatus((prev) => ({
+                      ...prev,
+                      [`${member.id}-${enrollment.droplet.id}`]: enrollment.isComplete,
+                    }));
+                  });
                 });
-              })
-            );
+                
           })
         );
       } catch (error) {
@@ -125,8 +123,8 @@ export function GroupProgressGrid({ group }: GroupProgressGridProps) {
                     >
                       <span className="text-center text-sm font-semibold text-slate-950 line-clamp-3">
                         {getCompletionStatus(member.id, droplet.id) === true
-                          ? "X"
-                          : "O"}
+                          ? <Check/>
+                          : ""}
                       </span>
                     </div>
                   ))}
