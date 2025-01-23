@@ -65,6 +65,12 @@
     "bio": {
       "type": "text",
       "maxLength": 400
+    },
+    "friendships": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::friendship.friendship",
+      "mappedBy": "friends"
     }
   }
 }

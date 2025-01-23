@@ -1,5 +1,5 @@
 {
-  "/droplet-lessons": {
+  "/friendships": {
     "get": {
       "responses": {
         "200": {
@@ -7,7 +7,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/DropletLessonListResponse"
+                "$ref": "#/components/schemas/FriendshipListResponse"
               }
             }
           }
@@ -64,7 +64,7 @@
         }
       },
       "tags": [
-        "Droplet-lesson"
+        "Friendship"
       ],
       "parameters": [
         {
@@ -169,7 +169,7 @@
           }
         }
       ],
-      "operationId": "get/droplet-lessons"
+      "operationId": "get/friendships"
     },
     "post": {
       "responses": {
@@ -178,7 +178,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/DropletLessonResponse"
+                "$ref": "#/components/schemas/FriendshipResponse"
               }
             }
           }
@@ -235,23 +235,23 @@
         }
       },
       "tags": [
-        "Droplet-lesson"
+        "Friendship"
       ],
       "parameters": [],
-      "operationId": "post/droplet-lessons",
+      "operationId": "post/friendships",
       "requestBody": {
         "required": true,
         "content": {
           "application/json": {
             "schema": {
-              "$ref": "#/components/schemas/DropletLessonRequest"
+              "$ref": "#/components/schemas/FriendshipRequest"
             }
           }
         }
       }
     }
   },
-  "/droplet-lessons/{id}": {
+  "/friendships/{id}": {
     "get": {
       "responses": {
         "200": {
@@ -259,7 +259,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/DropletLessonResponse"
+                "$ref": "#/components/schemas/FriendshipResponse"
               }
             }
           }
@@ -316,7 +316,7 @@
         }
       },
       "tags": [
-        "Droplet-lesson"
+        "Friendship"
       ],
       "parameters": [
         {
@@ -330,7 +330,7 @@
           }
         }
       ],
-      "operationId": "get/droplet-lessons/{id}"
+      "operationId": "get/friendships/{id}"
     },
     "put": {
       "responses": {
@@ -339,7 +339,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/DropletLessonResponse"
+                "$ref": "#/components/schemas/FriendshipResponse"
               }
             }
           }
@@ -396,7 +396,7 @@
         }
       },
       "tags": [
-        "Droplet-lesson"
+        "Friendship"
       ],
       "parameters": [
         {
@@ -410,13 +410,13 @@
           }
         }
       ],
-      "operationId": "put/droplet-lessons/{id}",
+      "operationId": "put/friendships/{id}",
       "requestBody": {
         "required": true,
         "content": {
           "application/json": {
             "schema": {
-              "$ref": "#/components/schemas/DropletLessonRequest"
+              "$ref": "#/components/schemas/FriendshipRequest"
             }
           }
         }
@@ -487,7 +487,7 @@
         }
       },
       "tags": [
-        "Droplet-lesson"
+        "Friendship"
       ],
       "parameters": [
         {
@@ -501,7 +501,7 @@
           }
         }
       ],
-      "operationId": "delete/droplet-lessons/{id}"
+      "operationId": "delete/friendships/{id}"
     }
   }
 }
