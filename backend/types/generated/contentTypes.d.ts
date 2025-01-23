@@ -536,6 +536,11 @@ export interface ApiAuthorizedUserAuthorizedUser extends Schema.CollectionType {
     >;
     firstName: Attribute.String;
     firstTime: Attribute.Boolean & Attribute.DefaultTo<true>;
+    friendships: Attribute.Relation<
+      'api::authorized-user.authorized-user',
+      'oneToMany',
+      'api::friendship.friendship'
+    >;
     github: Attribute.String;
     isEnabled: Attribute.Boolean &
       Attribute.Required &
@@ -773,6 +778,7 @@ export interface ApiEnrollmentEnrollment extends Schema.CollectionType {
 export interface ApiFriendshipFriendship extends Schema.CollectionType {
   collectionName: 'friendships';
   info: {
+    description: '';
     displayName: 'Friendship';
     pluralName: 'friendships';
     singularName: 'friendship';
@@ -788,6 +794,11 @@ export interface ApiFriendshipFriendship extends Schema.CollectionType {
       'admin::user'
     > &
       Attribute.Private;
+    friends: Attribute.Relation<
+      'api::friendship.friendship',
+      'manyToOne',
+      'api::authorized-user.authorized-user'
+    >;
     publishedAt: Attribute.DateTime;
     updatedAt: Attribute.DateTime;
     updatedBy: Attribute.Relation<
