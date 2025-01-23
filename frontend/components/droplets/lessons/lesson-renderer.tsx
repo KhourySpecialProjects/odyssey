@@ -69,7 +69,7 @@ export function LessonRenderer({
   }
 
   async function handleMarkAsComplete() {
-    if (!enrollmentId) return;
+    if (!enrollmentId) throw new Error("not enrolled");;
 
     startTransition(async () => {
       const success = await markLessonAsComplete(

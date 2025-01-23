@@ -292,6 +292,7 @@ export async function createEnrollment(
       }
 
       revalidateTag("enrollments");
+      revalidatePath("/(droplets)/d/[slug]", "page");
       revalidatePath("/(general)/dashboard", "page");
     }
   } catch (err) {
