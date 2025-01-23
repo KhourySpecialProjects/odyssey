@@ -73,7 +73,7 @@ export function GroupDashboard( {group}: RenderGroupDashboardProps) {
                         emptyMessage="No students are enrolled in any droplets or playlists."
                       >
 
-                        {group.droplets && group.droplets.length > 0 ? (
+                        {group.droplets && group.droplets.length > 0 && group.members && group.members.length > 0 ? (
                           <div className="flex flex-row items-start">
                               <div className="" key={group.id}>
                                 <GroupProgressGrid group = {group} />
@@ -82,7 +82,7 @@ export function GroupDashboard( {group}: RenderGroupDashboardProps) {
                           </div>
                         ) : (
                           <div className="p-8 text-center text-slate-500 border border-dashed rounded-lg">
-                            No playlists have been added to this group yet.
+                            No droplets or members have been added to this group yet.
                           </div>
                         )}
                       </ContentSection>
