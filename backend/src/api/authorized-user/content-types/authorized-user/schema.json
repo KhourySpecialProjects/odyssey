@@ -66,11 +66,17 @@
       "type": "text",
       "maxLength": 400
     },
-    "friendships": {
+    "sent_requests": {
       "type": "relation",
       "relation": "manyToMany",
-      "target": "api::friendship.friendship",
-      "mappedBy": "friends"
+      "target": "api::authorized-user.authorized-user",
+      "inversedBy": "received_requests"
+    },
+    "received_requests": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::authorized-user.authorized-user",
+      "inversedBy": "sent_requests"
     }
   }
 }
