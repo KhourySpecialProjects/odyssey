@@ -306,7 +306,10 @@ export default function Sidebar({
                 <DropdownMenuItem
                   onSelect={(e) => {
                     e.preventDefault();
-                    signOut();
+                    signOut({
+                      callbackUrl: "/",
+                      redirect: true,
+                    });
                   }}
                 >
                   <LogOutIcon className="w-4 h-4 mr-2" />
