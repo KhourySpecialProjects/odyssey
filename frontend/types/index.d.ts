@@ -36,6 +36,9 @@ export type AuthorizedUser = {
   firstName: string;
   lastName: string;
   bio: string;
+  friendships: Friendship[];
+  sent_requests: AuthorizedUser[];
+  recieved_requests: AuthorizedUser[];
 };
 
 export type NavItem = {
@@ -166,3 +169,7 @@ export type PlaylistListResponse = {
     };
   };
 };
+
+export type Friendship = {
+  authorized_users: AuthorizedUser[];
+}

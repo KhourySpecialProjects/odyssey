@@ -1,7 +1,10 @@
-import { fetchAuthorizedUsers } from "@/lib/requests/authorized-user";
+import { fetchAuthorizedUsers, getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
 import { FriendSuggestionsBlock } from "./friend-suggestions-block";
+import { fetchFriendshipsById, fetchSuggestionsById
+ } from "@/lib/requests/friends";
+import { AuthorizedUser } from "@/types";
 
-export async function FriendSuggestions() {
+export async function FriendSuggestions({ user }: { user: AuthorizedUser }) {
   const authorizedUsers = await fetchAuthorizedUsers();
 
   return (
@@ -12,7 +15,7 @@ export async function FriendSuggestions() {
       <div className="p-4 mt-4 rounded-md bg-slate-100">
         {authorizedUsers.length > 0 ? (
           <ul className="divide-y divide-slate-200 dark:divide-slate-700 md:space-y-4">
-            {authorizedUsers.map((user) => (
+            {(await fetchSuggestionsById(user.id)).map((user) => (
               <FriendSuggestionsBlock user={user} key={user.id} />
             ))}
           </ul>

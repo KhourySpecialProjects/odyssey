@@ -30,7 +30,10 @@ export async function getAuthorizedUserByEmail<
       ...filters,
       email: { $eq: email },
     },
-    populate,
+    populate: {
+      friendships: { fields: ["authorized-users"] },
+      roles : { fields: ["title"] },
+    },
     fields,
     pagination: {
       pageSize: 1,
