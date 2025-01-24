@@ -56,6 +56,9 @@ export function FriendSuggestionsBlock({ suggUser, curUser }: { curUser: Authori
   
 
   return (
+    <div className={`${
+      requestSent === false ? "visibility: visible" : "visibility: hidden"
+    }`}>
     <li className="py-0 [&:not(:first-child)]:pt-3">
       <div className="flex items-center space-x-4">
         <div className="flex-1 min-w-0">
@@ -106,6 +109,7 @@ export function FriendSuggestionsBlock({ suggUser, curUser }: { curUser: Authori
           </div>
       </div>
     </li>
+    </div>
   );
 }
 
