@@ -8,7 +8,9 @@ import { toast } from "sonner";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "../ui/dialog";
 import { DialogTrigger } from "@radix-ui/react-dialog";
 import Link from "next/link";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Linkedin, Github } from "lucide-react";
+import { getInitials } from "@/lib/utils";
 
 
 
@@ -49,6 +51,15 @@ export function FriendBlock({ user, friend }: { user: AuthorizedUser, friend: Au
 
             <DialogContent>
               <DialogHeader>
+              {friend.firstName && friend.lastName ? (
+                      <div className="flex justify-center items-center">
+                      <Avatar variant="round" size="lg">
+                        <AvatarFallback className="text-3xl">
+                          {getInitials(friend.firstName + " " + friend.lastName ?? "")}
+                        </AvatarFallback>
+                      </Avatar>
+                    </div>
+                    ) : null}
               <DialogTitle style={{ fontSize: '2rem', textAlign: 'center' }}>
                 {friend.firstName} {friend.lastName}
               </DialogTitle>
