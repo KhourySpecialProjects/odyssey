@@ -1,43 +1,41 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { removeFriend } from "@/lib/requests/friends";
 import { AuthorizedUser } from "@/types";
-import { startTransition, useState } from "react";
-import { toast } from "sonner";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "../ui/dialog";
-import Link from "next/link";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Linkedin, Github } from "lucide-react";
+import { startTransition, useState } from "react";
+import { Avatar, AvatarFallback } from "../ui/avatar";
 import { getInitials } from "@/lib/utils";
+import Link from "next/link";
+import { Linkedin, Github, X } from "lucide-react";
+import { toast } from "sonner";
+import { cancelFriendRequest } from "@/lib/requests/friends";
 
+export function FriendSentRequestsBlock({ user, request }: { user: AuthorizedUser, request: AuthorizedUser }) {
+    const [open, setOpen] = useState(false);
+    const handleReject = () => {
+        startTransition(async () => {
+          const result = await cancelFriendRequest(user.id, request.id);
+          if (result.success) {
+            toast.success("Friend request rejected");
+          } else {
+            toast.error("Failed to reject friend request");
+          }
+        });
+      };
 
-
-export function FriendBlock({ user, friend }: { user: AuthorizedUser, friend: AuthorizedUser }) {
-  const [open, setOpen] = useState(false);
-
-  const handleRemove = () => {
-    startTransition(async () => {
-      const result = await removeFriend(user.id, friend.id);
-      if (result.success) {
-        toast.success("Friend removed");
-      } else {
-        toast.error("Failed to remove friend");
-      }
-    });
-  };
     return (
       <li className="py-0 [&:not(:first-child)]:pt-3">
         <div className="flex items-center space-x-4">
           <div className="flex-1 min-w-0">
             <p className="font-medium truncate text-slate-900 dark:text-white">
-              {friend.firstName && friend.lastName 
-                ? `${friend.firstName} ${friend.lastName}`
-                : friend.email}
+              {request.firstName && request.lastName 
+                ? `${request.firstName} ${request.lastName}`
+                : request.email}
             </p>
-            {friend.bio && (
+            {request.bio && (
               <p className="text-sm truncate text-slate-500 dark:text-slate-400">
-                {friend.bio}
+                {request.bio}
               </p>
             )}
           </div>
@@ -50,46 +48,51 @@ export function FriendBlock({ user, friend }: { user: AuthorizedUser, friend: Au
 
             <DialogContent>
               <DialogHeader>
-              {friend.firstName && friend.lastName ? (
+              {request.firstName && request.lastName ? (
                       <div className="flex justify-center items-center">
                       <Avatar variant="round" size="lg">
                         <AvatarFallback className="text-3xl">
-                          {getInitials(friend.firstName + " " + friend.lastName ?? "")}
+                          {getInitials(request.firstName + " " + request.lastName ?? "")}
                         </AvatarFallback>
                       </Avatar>
                     </div>
                     ) : null}
               <DialogTitle style={{ fontSize: '2rem', textAlign: 'center' }}>
-                {friend.firstName} {friend.lastName}
+                {request.firstName} {request.lastName}
               </DialogTitle>
                   <div className="flex justify-center space-x-2">
-                    {friend.linkedin && (
-                      <Link href={friend.linkedin} legacyBehavior>
+                    {request.linkedin && (
+                      <Link href={request.linkedin} legacyBehavior>
                         <a target="_blank" rel="noopener noreferrer">
                           <Linkedin />
                         </a>
                       </Link>
                     )}
-                    {friend.github && (
-                      <Link href={friend.github} legacyBehavior>
+                    {request.github && (
+                      <Link href={request.github} legacyBehavior>
                         <a target="_blank" rel="noopener noreferrer">
                           <Github />
                         </a>
                       </Link>
                     )}
                   </div>
-                <DialogDescription>Email: {friend.email}</DialogDescription>
-                {friend.bio && <DialogDescription>Bio: {friend.bio}</DialogDescription>}
+                <DialogDescription>Email: {request.email}</DialogDescription>
+                {request.bio && <DialogDescription>Bio: {request.bio}</DialogDescription>}
                 <DialogDescription>Completed Droplets: </DialogDescription>
               </DialogHeader>
             </DialogContent>
           </Dialog>
-          <div className="inline-flex items-center gap-2" onClick={handleRemove}>
-            <Button size="sm" variant="outline">
-              Remove Friend
-            </Button>
-          </div>
+          <Button variant="destructive" size="sm" onClick={handleReject}>
+            <div className="relative group">
+              <X />
+              <span className="absolute left-1/2 transform -translate-x-1/2 top-full mt-1 w-max px-2 py-1 text-xs text-white bg-gray-800 rounded opacity-0 group-hover:opacity-100 transition-opacity">
+                Cancel Request
+              </span>
+            </div>
+          </Button>
         </div>
       </li>
     );
   }
+
+  
