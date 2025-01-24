@@ -54,7 +54,7 @@ export function FriendBlock({ user, friend }: { user: AuthorizedUser, friend: Au
                       <div className="flex justify-center items-center">
                       <Avatar variant="round" size="lg">
                         <AvatarFallback className="text-3xl">
-                          {getInitials(friend.firstName + " " + friend.lastName ?? "")}
+                          {getInitials(friend.firstName + " " + friend.lastName)}
                         </AvatarFallback>
                       </Avatar>
                     </div>
