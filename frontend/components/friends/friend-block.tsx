@@ -3,12 +3,17 @@
 import { Button } from "@/components/ui/button";
 import { removeFriend } from "@/lib/requests/friends";
 import { AuthorizedUser } from "@/types";
-import { startTransition } from "react";
+import { startTransition, useState } from "react";
 import { toast } from "sonner";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "../ui/dialog";
+import { DialogTrigger } from "@radix-ui/react-dialog";
+import Link from "next/link";
+import { Linkedin, Github } from "lucide-react";
 
 
 
 export function FriendBlock({ user, friend }: { user: AuthorizedUser, friend: AuthorizedUser }) {
+  const [open, setOpen] = useState(false);
 
   const handleRemove = () => {
     startTransition(async () => {
@@ -35,11 +40,40 @@ export function FriendBlock({ user, friend }: { user: AuthorizedUser, friend: Au
               </p>
             )}
           </div>
-          <div className="inline-flex items-center gap-2">
-            <Button  size="sm" variant="outline" >
-              View Profile
-            </Button>
-          </div>
+          <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
+              <Button size="sm" variant="outline">
+                View Profile
+              </Button>
+            </DialogTrigger>
+
+            <DialogContent>
+              <DialogHeader>
+              <DialogTitle style={{ fontSize: '2rem', textAlign: 'center' }}>
+                {friend.firstName} {friend.lastName}
+              </DialogTitle>
+                  <div className="flex justify-center space-x-2">
+                    {friend.linkedin && (
+                      <Link href={friend.linkedin} legacyBehavior>
+                        <a target="_blank" rel="noopener noreferrer">
+                          <Linkedin />
+                        </a>
+                      </Link>
+                    )}
+                    {friend.github && (
+                      <Link href={friend.github} legacyBehavior>
+                        <a target="_blank" rel="noopener noreferrer">
+                          <Github />
+                        </a>
+                      </Link>
+                    )}
+                  </div>
+                <DialogDescription>Email: {friend.email}</DialogDescription>
+                {friend.bio && <DialogDescription>Bio: {friend.bio}</DialogDescription>}
+                <DialogDescription>Completed Droplets: </DialogDescription>
+              </DialogHeader>
+            </DialogContent>
+          </Dialog>
           <div className="inline-flex items-center gap-2" onClick={handleRemove}>
             <Button size="sm" variant="outline">
               Remove Friend
