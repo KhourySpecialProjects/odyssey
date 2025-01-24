@@ -22,13 +22,14 @@ import { getAuthorByAuthorizedUserEmail } from "@/lib/requests/author";
 import { getInitials } from "@/lib/utils";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
+import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
 
 export default async function AuthorProfileSettings() {
   const user = await getCurrentUser();
   if (!user?.email) return notFound();
 
-  const author = await getAuthorByAuthorizedUserEmail(user.email);
-  if (!author) return notFound();
+  const authorizedUser = await getAuthorizedUserByEmail(user.email);
+  if (!authorizedUser) return notFound();
 
   return (
     <>
@@ -36,7 +37,7 @@ export default async function AuthorProfileSettings() {
         content={{
           "Friends": <Friends />,
           "Friend Requests": <FriendRequests />,
-          "People You May Know": <FriendSuggestions />,
+          "People You May Know": <FriendSuggestions user={authorizedUser}/>,
         }}
       />
 
