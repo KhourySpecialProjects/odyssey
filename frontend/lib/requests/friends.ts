@@ -51,7 +51,7 @@ export async function fetchFriends(authorizedUser: AuthorizedUser): Promise<Auth
 
 
 
-export async function getSentRequest(requester: AuthorizedUser, requestee: AuthorizedUser): Promise<Boolean> {
+export async function getSentRequest(requester: AuthorizedUser, requestee: AuthorizedUser): Promise<boolean> {
     try {
       const query = qs.stringify({
         filters: {
