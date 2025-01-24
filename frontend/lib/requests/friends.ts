@@ -12,14 +12,14 @@ export async function fetchFriends(authorizedUser: AuthorizedUser): Promise<Auth
   try {
     const query = qs.stringify({
       filters: {
-        friends: {
+        authorized_users: {
           id: {
             $eq: authorizedUser.id
           }
         }
       },
       populate: {
-        friends: {
+        authorized_users: {
           fields: ["id", "email", "firstName", "lastName", "bio", "received_requests"]
         }
       },
