@@ -14,7 +14,6 @@ export async function FriendRequests() {
   )
   return redirect("/");
   const authUser = await getAuthorizedUserByEmail(user.email);
-  
   const friendRequests = authUser.received_requests;
 
   return (
