@@ -1,13 +1,10 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { getCurrentUser } from "@/lib/auth/session";
-import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
 import { acceptFriendRequest, rejectFriendRequest } from "@/lib/requests/friends";
 import { AuthorizedUser } from "@/types";
 import { Check, X } from "lucide-react";
 import { startTransition } from "react";
-import { useFormStatus } from "react-dom";
 import { toast } from "sonner";
 
 export function FriendRequestBlock({ user, request }: { user: AuthorizedUser, request: AuthorizedUser }) {

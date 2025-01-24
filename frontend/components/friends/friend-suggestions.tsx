@@ -1,6 +1,6 @@
 import { fetchAuthorizedUsers, getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
 import { FriendSuggestionsBlock } from "./friend-suggestions-block";
-import { fetchFriendshipsById, fetchSuggestionsById
+import { fetchSuggestionsById
  } from "@/lib/requests/friends";
 import { AuthorizedUser } from "@/types";
 

@@ -1,9 +1,7 @@
-import { fetchAuthorizedUsers, getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
+import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
 import { FriendRequestBlock } from "./friend-request-block";
 import { getCurrentUser } from "@/lib/auth/session";
 import { redirect } from "next/navigation";
-import { fetchFriends } from "@/lib/requests/friends";
-import { getAuthorByAuthorizedUserEmail } from "@/lib/requests/author";
 
 export async function FriendRequests() {
 
