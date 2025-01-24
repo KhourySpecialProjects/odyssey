@@ -142,14 +142,14 @@ export async function removeFriend(userId: number, friendId: number) {
       filters: {
         $and: [
           {
-            friends: {
+            authorized_users: {
               id: {
                 $eq: userId
               }
             }
           },
           {
-            friends: {
+            authorized_users: {
               id: {
                 $eq: friendId
               }
