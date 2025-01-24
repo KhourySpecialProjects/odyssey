@@ -20,7 +20,7 @@ export async function fetchFriends(authorizedUser: AuthorizedUser): Promise<Auth
       },
       populate: {
         authorized_users: {
-          fields: ["id", "email", "firstName", "lastName", "bio", "received_requests"]
+          fields: ["id", "email", "firstName", "lastName", "bio", "received_requests", "github", "linkedin"]
         }
       },
       pagination: {
