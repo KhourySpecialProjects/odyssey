@@ -49,6 +49,46 @@ export async function fetchFriends(authorizedUser: AuthorizedUser): Promise<Auth
   }
 }
 
+
+
+export async function getSentRequest(requester: AuthorizedUser, requestee: AuthorizedUser): Promise<Boolean> {
+    try {
+      const query = qs.stringify({
+        filters: {
+          sent_requests: {
+            id: {
+              $eq: requestee.id
+            }
+          }
+        },
+        populate: [],
+        pagination: {
+          pageSize: 25,
+          page: 1,
+        },
+      });
+  
+      const response = await fetch(
+        NEXT_PUBLIC_STRAPI_API_URL + "/api/authorized-users?" + query,
+        {
+          headers: { Authorization: "Bearer " + STRAPI_ACCESS_TOKEN },
+          cache: "no-store",
+        },
+      );
+      const data = await response.json();
+      const friendships = flattenAttributes(data.data);
+      
+      return friendships.length != 0
+    } catch (error) {
+      console.error("Database Error:", error);
+      throw new Error("Failed to fetch friends data.");
+    }
+  }
+  
+
+
+
+
 export async function acceptFriendRequest(userId: number, requestId: number) {
   const token = process.env.STRAPI_ACCESS_TOKEN;
   try {
@@ -101,6 +141,67 @@ export async function acceptFriendRequest(userId: number, requestId: number) {
     return { success: false, error };
   }
 }
+
+
+
+export async function sendFriendRequest(requester: AuthorizedUser, requestee: AuthorizedUser) {
+    const token = process.env.STRAPI_ACCESS_TOKEN;
+    try {
+      const sentToResponse = await fetch(
+        `${NEXT_PUBLIC_STRAPI_API_URL}/api/authorized-users/${requestee.id}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+          },
+          body: JSON.stringify({
+            data: {
+              received_requests: {
+                connect: [requester.id]
+              }
+            },
+          }),
+        }
+      );
+    
+      if (!sentToResponse.ok) {
+        console.error("Send Response:", await sentToResponse.text());
+        throw new Error("Failed to send friend request");
+      }
+
+      // Add requestee to requester's sent_requests
+      const sentFromResponse = await fetch(
+        `${NEXT_PUBLIC_STRAPI_API_URL}/api/authorized-users/${requester.id}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+          },
+          body: JSON.stringify({
+            data: {
+              sent_requests: {
+                connect: [requestee.id]
+              }
+            },
+          }),
+        }
+      );
+
+      if (!sentFromResponse.ok) {
+        console.error("Sent Response:", await sentFromResponse.text());
+        throw new Error("Failed to add to sent requests");
+      }
+
+      revalidatePath('/settings/friends');
+    return { success: true };
+    } catch (error) {
+      console.error("Error:", error);
+      return { success: false, error };
+    }
+  }
+  
 
 export async function rejectFriendRequest(userId: number, requestId: number) {
   const token = process.env.STRAPI_ACCESS_TOKEN;
