@@ -22,6 +22,9 @@ export async function getAuthorizedUserByEmail<
     populate = {
       received_requests: {
         fields: ["id", "email", "firstName", "lastName", "bio"]
+      },
+      sent_requests: {
+        fields: ["id", "email", "firstName", "lastName", "bio"]
       }
     },
     fields = ["*", "firstName", "lastName", "bio", "id"],

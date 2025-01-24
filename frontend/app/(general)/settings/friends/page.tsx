@@ -23,6 +23,7 @@ import { getInitials } from "@/lib/utils";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
+import { FriendSentRequests } from "@/components/friends/friend-sent-requests";
 
 export default async function AuthorProfileSettings() {
   const user = await getCurrentUser();
@@ -38,6 +39,7 @@ export default async function AuthorProfileSettings() {
           "Friends": <Friends />,
           "Friend Requests": <FriendRequests />,
           "People You May Know": <FriendSuggestions user={authorizedUser}/>,
+          "Sent Requests": <FriendSentRequests/>,
         }}
       />
 

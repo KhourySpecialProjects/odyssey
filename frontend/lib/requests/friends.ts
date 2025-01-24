@@ -236,6 +236,39 @@ export async function rejectFriendRequest(userId: number, requestId: number) {
   }
 }
 
+export async function cancelFriendRequest(userId: number, requestId: number) {
+  const token = process.env.STRAPI_ACCESS_TOKEN;
+  try {
+    const deleteResponse = await fetch(
+      `${NEXT_PUBLIC_STRAPI_API_URL}/api/authorized-users/${userId}`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+        },
+        body: JSON.stringify({
+          data: {
+            sent_requests: {
+              disconnect: [requestId]
+            }
+          },
+        }),
+      }
+    );
+  
+    if (!deleteResponse.ok) {
+      console.error("Delete Response:", await deleteResponse.text());
+      throw new Error("Failed to delete friend request");
+    }
+    revalidatePath('/settings/friends');
+  return { success: true };
+  } catch (error) {
+    console.error("Error:", error);
+    return { success: false, error };
+  }
+}
+
 export async function removeFriend(userId: number, friendId: number) {
   const token = process.env.STRAPI_ACCESS_TOKEN;
   try {
