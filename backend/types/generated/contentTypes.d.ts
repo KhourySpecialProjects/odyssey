@@ -784,7 +784,7 @@ export interface ApiFriendshipFriendship extends Schema.CollectionType {
     singularName: 'friendship';
   };
   options: {
-    draftAndPublish: true;
+    draftAndPublish: false;
   };
   attributes: {
     authorized_users: Attribute.Relation<
@@ -799,7 +799,6 @@ export interface ApiFriendshipFriendship extends Schema.CollectionType {
       'admin::user'
     > &
       Attribute.Private;
-    publishedAt: Attribute.DateTime;
     updatedAt: Attribute.DateTime;
     updatedBy: Attribute.Relation<
       'api::friendship.friendship',

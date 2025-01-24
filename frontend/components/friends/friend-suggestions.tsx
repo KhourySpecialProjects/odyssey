@@ -20,7 +20,7 @@ export async function FriendSuggestions({ user }: { user: AuthorizedUser }) {
             ))}
           </ul>
         ) : (
-          <p>There are no authorized users.</p>
+          <p>There are no friend suggestions.</p>
         )}
       </div>
     </section>

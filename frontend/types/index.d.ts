@@ -38,7 +38,7 @@ export type AuthorizedUser = {
   bio: string;
   friendships: Friendship[];
   sent_requests: AuthorizedUser[];
-  recieved_requests: AuthorizedUser[];
+  received_requests: AuthorizedUser[];
 };
 
 export type NavItem = {
