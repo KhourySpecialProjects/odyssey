@@ -1,70 +1,76 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { updateAuthorizedUser, updateUserInfo } from "@/lib/actions";
+import { getCurrentUser } from "@/lib/auth/session";
+import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
+import { acceptFriendRequest, rejectFriendRequest } from "@/lib/requests/friends";
 import { AuthorizedUser } from "@/types";
-import { Pencil } from "lucide-react";
+import { Check, X } from "lucide-react";
+import { startTransition } from "react";
 import { useFormStatus } from "react-dom";
-import { isAuthorizedUserAdmin } from "@/lib/utils";
-import { useState } from "react";
-import {
-  DialogHeader,
-  Dialog,
-  DialogTrigger,
-  DialogContent,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { AuthorizedUserRoleTitle } from "@/lib/globals";
-import { Checkbox } from "@/components/ui/checkbox";
-import { type } from "os";
 
-export function FriendRequestBlock({ user }: { user: AuthorizedUser }) {
+export function FriendRequestBlock({ user, request }: { user: AuthorizedUser, request: AuthorizedUser }) {
+  const handleApprove = () => {
+    startTransition(async () => {
+      const result = await acceptFriendRequest(user.id, request.id);
+      
+      if (result.success) {
+        toast.success("Friend request accepted!");
+      } else {
+        toast.error("Failed to accept friend request");
+      }
+    });
+  };
+
+  const handleReject = () => {
+    startTransition(async () => {
+      const result = await rejectFriendRequest(user.id, request.id);
+      if (result.success) {
+        toast.success("Friend request rejected");
+      } else {
+        toast.error("Failed to reject friend request");
+      }
+    });
+  };
+
+
+
+
     return (
       <li className="py-0 [&:not(:first-child)]:pt-3">
         <div className="flex items-center space-x-4">
           <div className="flex-1 min-w-0">
             <p className="font-medium truncate text-slate-900 dark:text-white">
-              {user.firstName && user.lastName 
-                ? `${user.firstName} ${user.lastName}`
-                : user.email}
+              {request.firstName && request.lastName 
+                ? `${request.firstName} ${request.lastName}`
+                : request.email}
             </p>
-            {user.bio && (
+            {request.bio && (
               <p className="text-sm truncate text-slate-500 dark:text-slate-400">
-                {user.bio}
+                {request.bio}
               </p>
             )}
           </div>
-  
-          <div className="inline-flex items-center gap-2">
-            <Button size="sm" variant="outline">
-              Remove Friend
-            </Button>
-          </div>
+          <Button className="bg-green-600 text-white hover:bg-green-700" size="sm" variant="outline" onClick={handleApprove}>
+            <div className="relative group">
+              <Check />
+              <span className="absolute left-1/2 transform -translate-x-1/2 top-full mt-1 w-max px-2 py-1 text-xs text-white bg-gray-800 rounded opacity-0 group-hover:opacity-100 transition-opacity">
+                Accept
+              </span>
+            </div>
+          </Button>
+          <Button variant="destructive" size="sm" onClick={handleReject}>
+            <div className="relative group">
+              <X />
+              <span className="absolute left-1/2 transform -translate-x-1/2 top-full mt-1 w-max px-2 py-1 text-xs text-white bg-gray-800 rounded opacity-0 group-hover:opacity-100 transition-opacity">
+                Reject
+              </span>
+            </div>
+          </Button>
         </div>
       </li>
     );
   }
 
-function SubmitButton({
-  destructive,
-  children,
-}: {
-  destructive?: boolean;
-  children: React.ReactNode;
-}) {
-  const { pending } = useFormStatus();
-
-  return (
-    <Button
-      type="submit"
-      size="sm"
-      variant={destructive ? "destructive" : "link"}
-      aria-disabled={pending}
-    >
-      {children}
-    </Button>
-  );
-}
+  
