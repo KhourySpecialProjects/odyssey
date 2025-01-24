@@ -15,8 +15,8 @@ export async function FriendSuggestions({ user }: { user: AuthorizedUser }) {
       <div className="p-4 mt-4 rounded-md bg-slate-100">
         {authorizedUsers.length > 0 ? (
           <ul className="divide-y divide-slate-200 dark:divide-slate-700 md:space-y-4">
-            {(await fetchSuggestionsById(user.id)).map((user) => (
-              <FriendSuggestionsBlock user={user} key={user.id} />
+            {(await fetchSuggestionsById(user.id)).map((suggestedUser) => (
+              <FriendSuggestionsBlock curUser={user} suggUser={suggestedUser} key={`${user.id} / ${suggestedUser.id}`} />
             ))}
           </ul>
         ) : (
