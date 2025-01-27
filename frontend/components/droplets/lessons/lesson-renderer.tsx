@@ -87,6 +87,7 @@ export function LessonRenderer({
       );
       console.log("lesson id for mark as complete", lesson.id);
       if (success) {
+        completedLessonIds.push(lesson.id);
         await router.refresh();
       }
     });
