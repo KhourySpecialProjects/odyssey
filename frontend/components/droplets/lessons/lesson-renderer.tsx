@@ -69,7 +69,10 @@ export function LessonRenderer({
   }
 
   async function handleMarkAsComplete() {
-    if (!enrollmentId) return;
+    if (!enrollmentId) {
+      console.log("no enrollment")
+      return;
+    }
 
     startTransition(async () => {
       const success = await markLessonAsComplete(
@@ -77,6 +80,9 @@ export function LessonRenderer({
         completedLessonIds,
         lesson.id,
       );
+      console.log("enrollment for mark as complete", enrollmentId)
+      console.log("completedlessonids for mark as complete", completedLessonIds)
+      console.log("lesson id for mark as complete", lesson.id)
       if (success) {
         router.refresh();
       }
