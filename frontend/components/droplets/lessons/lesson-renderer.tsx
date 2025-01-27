@@ -77,20 +77,18 @@ export function LessonRenderer({
     startTransition(async () => {
       const success = await markLessonAsComplete(
         enrollmentId,
-        completedLessonIds,
+        [...completedLessonIds],
         lesson.id,
       );
       console.log("enrollment for mark as complete", enrollmentId)
       console.log("completedlessonids for mark as complete", completedLessonIds)
       console.log("lesson id for mark as complete", lesson.id)
       if (success) {
-        router.refresh();
+        await router.refresh();
       }
-      // } else {
-      //   alert("no success");
-      // }
     });
   }
+
   let headings: any[] = [];
   lesson.blocks
     .filter((b: any) => b.__component === "droplets.generic")

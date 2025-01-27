@@ -292,6 +292,7 @@ export async function createEnrollment(
       }
 
       revalidateTag("enrollments");
+      revalidatePath("/(droplets)/d/[slug]", "page");
       revalidatePath("/(general)/dashboard", "page");
     }
   } catch (err) {
@@ -945,20 +946,20 @@ export async function markLessonAsComplete(
 ) {
   try {
     // First get the current enrollment to ensure we have the latest data
-    const enrollmentResponse = await fetch(
-      `${process.env.NEXT_PUBLIC_STRAPI_API_URL}/api/enrollments/${enrollmentId}?populate=viewedLessons`,
-      {
-        headers: {
-          Authorization: `Bearer ${process.env.STRAPI_ACCESS_TOKEN}`,
-        },
-      },
-    );
+    // const enrollmentResponse = await fetch(
+    //   `${process.env.NEXT_PUBLIC_STRAPI_API_URL}/api/enrollments/${enrollmentId}?populate=viewedLessons`,
+    //   {
+    //     headers: {
+    //       Authorization: `Bearer ${process.env.STRAPI_ACCESS_TOKEN}`,
+    //     },
+    //   },
+    // );
 
-    if (!enrollmentResponse.ok) {
-      throw new Error("Failed to fetch enrollment");
-    }
+    // if (!enrollmentResponse.ok) {
+    //   throw new Error("Failed to fetch enrollment");
+    // }
 
-    const enrollment = await enrollmentResponse.json();
+    // const enrollment = await enrollmentResponse.json();
 
     // Update the enrollment with the new lesson
     const response = await fetch(
@@ -969,6 +970,7 @@ export async function markLessonAsComplete(
           "Content-Type": "application/json",
           Authorization: `Bearer ${process.env.STRAPI_ACCESS_TOKEN}`,
         },
+        cache: "no-store",
         body: JSON.stringify({
           data: {
             viewedLessons: {
@@ -986,6 +988,7 @@ export async function markLessonAsComplete(
     }
 
     // Update revalidation paths to be more generic
+    revalidatePath("/", "layout");
     revalidatePath("/dashboard");
     revalidatePath("/(droplets)/d/[slug]/[lessonSlug]", "page");
     revalidatePath("/(playlists)/p/[slug]", "page");
