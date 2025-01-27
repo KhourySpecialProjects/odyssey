@@ -53,7 +53,7 @@ export function EnrollButton({ droplet, isEnrolled }: EnrollButtonProps) {
       onClick={() => {
         if (droplet.lessons && droplet.lessons[0]) {
           enroll();
-          router.push(`/d/${droplet.slug}/${droplet.lessons[0].slug}`);
+          //router.push(`/d/${droplet.slug}/${droplet.lessons[0].slug}`);
         }
       }}
       disabled={isEnrolled}
