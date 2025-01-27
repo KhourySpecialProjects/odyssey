@@ -70,7 +70,7 @@ export function LessonRenderer({
 
   async function handleMarkAsComplete() {
     if (!enrollmentId) {
-      console.log("no enrollment")
+      console.log("no enrollment");
       return;
     }
 
@@ -80,9 +80,12 @@ export function LessonRenderer({
         [...completedLessonIds],
         lesson.id,
       );
-      console.log("enrollment for mark as complete", enrollmentId)
-      console.log("completedlessonids for mark as complete", completedLessonIds)
-      console.log("lesson id for mark as complete", lesson.id)
+      console.log("enrollment for mark as complete", enrollmentId);
+      console.log(
+        "completedlessonids for mark as complete",
+        completedLessonIds,
+      );
+      console.log("lesson id for mark as complete", lesson.id);
       if (success) {
         await router.refresh();
       }
