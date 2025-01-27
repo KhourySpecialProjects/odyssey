@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { removeFriend } from "@/lib/requests/friends";
-import { AuthorizedUser } from "@/types";
+import { AuthorizedUser, Droplet } from "@/types";
 import { startTransition, useState } from "react";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "../ui/dialog";
@@ -10,6 +10,8 @@ import Link from "next/link";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Linkedin, Github } from "lucide-react";
 import { getInitials } from "@/lib/utils";
+import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
+import { FriendCompletedDroplets } from "./friend-completed-droplets";
 
 
 
@@ -81,6 +83,7 @@ export function FriendBlock({ user, friend }: { user: AuthorizedUser, friend: Au
                 <DialogDescription>Email: {friend.email}</DialogDescription>
                 {friend.bio && <DialogDescription>Bio: {friend.bio}</DialogDescription>}
                 <DialogDescription>Completed Droplets: </DialogDescription>
+                <FriendCompletedDroplets friend={friend} />
               </DialogHeader>
             </DialogContent>
           </Dialog>
