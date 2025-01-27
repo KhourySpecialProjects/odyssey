@@ -198,6 +198,7 @@ export default function Sidebar({
 
                   // console.log(" ---> isLocked = ", isLocked);
                   console.log("completed lessons", completedLessonIds);
+                  console.log("current lesson", lesson);
                   console.log("previous lesson", previousLesson);
                   if (previousLesson) {
                     console.log(
@@ -205,8 +206,9 @@ export default function Sidebar({
                       completedLessonIds.includes(previousLesson.id),
                     );
                   }
-                  console.log("author", author);
-                  console.log("is admin", isAdmin);
+                  console.log(
+                    "---------------------------------------------------",
+                  );
 
                   return (
                     <li key={lesson.id} className="w-full">
