@@ -197,13 +197,16 @@ export default function Sidebar({
                     !isAdmin;
 
                   // console.log(" ---> isLocked = ", isLocked);
-                  console.log("completed lessons", completedLessonIds)
-                  console.log("previous lesson", previousLesson)
+                  console.log("completed lessons", completedLessonIds);
+                  console.log("previous lesson", previousLesson);
                   if (previousLesson) {
-                    console.log("id included in completed lessons", completedLessonIds.includes(previousLesson.id))
+                    console.log(
+                      "id included in completed lessons",
+                      completedLessonIds.includes(previousLesson.id),
+                    );
                   }
-                  console.log("author", author)
-                  console.log("is admin", isAdmin)
+                  console.log("author", author);
+                  console.log("is admin", isAdmin);
 
                   return (
                     <li key={lesson.id} className="w-full">
