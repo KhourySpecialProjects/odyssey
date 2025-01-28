@@ -252,7 +252,6 @@ export function GroupManagementForm({
 
       console.log(" -------> submissionData2 = ", createGroupData);
 
-
       if (existingGroup) {
         console.log("form being submitted soon!");
         const response = await updateGroup(existingGroup.id, updateGroupData);
@@ -264,9 +263,6 @@ export function GroupManagementForm({
         await enrollUsers(await getGroupByID(newGroup.id));
         router.push(`/g/${newGroup.slug}`);
       }
-
-
-
     } catch (error) {
       // Handle error
       console.error("Failed to update group", error);
@@ -457,7 +453,6 @@ export function GroupManagementForm({
                 email: member.email ?? "",
               }))}
               onAddMembers={(emails) => {
-
                 const newMembers = emails.map(
                   (email) =>
                     ({
@@ -522,7 +517,6 @@ export function GroupManagementForm({
             />
           }
         >
-
           {droplets.length > 0 ? (
             <DropletList
               droplets={droplets}

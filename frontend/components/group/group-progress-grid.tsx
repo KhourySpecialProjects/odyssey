@@ -68,23 +68,21 @@ export function GroupProgressGrid({ group }: GroupProgressGridProps) {
         await Promise.all(
           (group.members || []).map(async (member) => {
             startTransition(async () => {
-              const enrollments = await getEnrollmentsByAuthorizedUser(member.id);
-
+              const enrollments = await getEnrollmentsByAuthorizedUser(
+                member.id,
+              );
 
               const completedLessonIds = enrollments.flatMap(
                 (enrollment) =>
                   enrollment.viewedLessons?.map((lesson) => lesson.id) || [],
               );
 
-
-
-
-
               enrollments.map(async (enrollment) => {
-
-                const completedLessons = enrollment.viewedLessons?.map((lesson) => lesson.id) || []
+                const completedLessons =
+                  enrollment.viewedLessons?.map((lesson) => lesson.id) || [];
                 const dropletLessons = enrollment.droplet.lessons?.length || 1;
-                const percentCompleted = (completedLessons?.length / dropletLessons) * 100 || 0;
+                const percentCompleted =
+                  (completedLessons?.length / dropletLessons) * 100 || 0;
 
                 setCompletionStatus((prev) => ({
                   ...prev,
@@ -92,8 +90,7 @@ export function GroupProgressGrid({ group }: GroupProgressGridProps) {
                 }));
               });
             });
-
-          })
+          }),
         );
       } catch (error) {
         console.error("Error fetching completion statuses:", error);
@@ -107,29 +104,24 @@ export function GroupProgressGrid({ group }: GroupProgressGridProps) {
     return completionStatus[`${memberId}-${dropletId}`] || 0;
   };
 
-  const getCompletedDropletColor = (completionStatus : number) => {
-    console.log("status ", completionStatus)
-    if (completionStatus === 100)
-      return "#6EE7B7"
+  const getCompletedDropletColor = (completionStatus: number) => {
+    console.log("status ", completionStatus);
+    if (completionStatus === 100) return "#6EE7B7";
     else if (completionStatus > 33) {
-      return '#FBBF24'
+      return "#FBBF24";
     }
-    if (completionStatus <= 33)
-      return '#EF4444';
+    if (completionStatus <= 33) return "#EF4444";
     if (completionStatus == 0) {
-      return '#FFFFFF';
+      return "#FFFFFF";
     } else {
-      return '#e4e5e9';
+      return "#e4e5e9";
     }
   };
 
   return (
-
     <div className="flex flex-col items-end">
-
       {/* Navigation Buttons */}
       <div className="">
-
         <button
           onClick={handlePrevPage}
           disabled={currentPage === 0}
@@ -147,7 +139,6 @@ export function GroupProgressGrid({ group }: GroupProgressGridProps) {
       </div>
 
       <ContentSection title="">
-
         {group.droplets && group.droplets.length > 0 ? (
           <div className="flex flex-row justify-start">
             <div className="flex flex-col justify-self-start">
@@ -162,12 +153,13 @@ export function GroupProgressGrid({ group }: GroupProgressGridProps) {
                   key={member.id}
                   className="transition-colors  border-slate-200 hover:border-slate-300 bg-white-50 p-4 h-24 w-55 flex items-center justify-center"
                 >
-                  <span title={member.email} className="text-center text-sm font-semibold text-slate-950 line-clamp-3">
-                    {
-                      (member.firstName || member.lastName)
-                        ? `${member.firstName ?? ''} ${member.lastName ?? ''}`.trim()
-                        : member.email
-                    }
+                  <span
+                    title={member.email}
+                    className="text-center text-sm font-semibold text-slate-950 line-clamp-3"
+                  >
+                    {member.firstName || member.lastName
+                      ? `${member.firstName ?? ""} ${member.lastName ?? ""}`.trim()
+                      : member.email}
                   </span>
                 </div>
               ))}
@@ -180,7 +172,10 @@ export function GroupProgressGrid({ group }: GroupProgressGridProps) {
                     key={droplet.id}
                     className="transition-colors  border-slate-200 hover:border-slate-300 bg-white-50 p-4 h-24 w-36 flex items-center justify-center"
                   >
-                    <span title={droplet.name} className="text-center text-sm font-semibold text-slate-950 line-clamp-3" >
+                    <span
+                      title={droplet.name}
+                      className="text-center text-sm font-semibold text-slate-950 line-clamp-3"
+                    >
                       {droplet.name}
                     </span>
                   </div>
@@ -200,26 +195,30 @@ export function GroupProgressGrid({ group }: GroupProgressGridProps) {
                         key={member.id * droplet.id * 100}
                         className="transition-colors border border-slate-200 hover:border-slate-300 bg-white-50 p-4 h-24 w-36 flex items-center justify-center"
                       >
-                          <div 
-                          title={getCompletionStatus(member.id, droplet.id) + "%"}
+                        <div
+                          title={
+                            getCompletionStatus(member.id, droplet.id) + "%"
+                          }
                           style={{
-                            width: '100%',
-                            height: '30px',
-                            backgroundColor: '#e4e5e9',
-                            borderRadius: '5px',
-                            overflow: 'hidden',
-                          }}>
-                            
-                            <div
-                              style={{
-                                width: `${getCompletionStatus(member.id, droplet.id)}%`,  // Set width based on the percentage
-                                height: '100%',
-                                //backgroundColor: '#ffc107',  // The color for the filled portion
-                                backgroundColor: getCompletedDropletColor(getCompletionStatus(member.id, droplet.id)),
-                                transition: 'width 0.3s ease',  // Smooth transition
-                              }}
-                            />
-                          </div>
+                            width: "100%",
+                            height: "30px",
+                            backgroundColor: "#e4e5e9",
+                            borderRadius: "5px",
+                            overflow: "hidden",
+                          }}
+                        >
+                          <div
+                            style={{
+                              width: `${getCompletionStatus(member.id, droplet.id)}%`, // Set width based on the percentage
+                              height: "100%",
+                              //backgroundColor: '#ffc107',  // The color for the filled portion
+                              backgroundColor: getCompletedDropletColor(
+                                getCompletionStatus(member.id, droplet.id),
+                              ),
+                              transition: "width 0.3s ease", // Smooth transition
+                            }}
+                          />
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -233,6 +232,6 @@ export function GroupProgressGrid({ group }: GroupProgressGridProps) {
           </div>
         )}
       </ContentSection>
-      </div>
+    </div>
   );
 }

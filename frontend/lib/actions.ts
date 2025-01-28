@@ -301,17 +301,16 @@ export async function createEnrollment(
   }
 }
 
-
 export async function createEnrollmentFromEmail(
-  formData: z.infer<typeof DropletEnrollmentSchema>, email: string
+  formData: z.infer<typeof DropletEnrollmentSchema>,
+  email: string,
 ) {
   try {
     const authorizedUser = await getAuthorizedUserByEmail(email);
     //console.log("authorized user id: ", authorizedUser.id);
     const enrollments = await getEnrollmentsByAuthorizedUser(authorizedUser.id);
 
-    const enrollIDs = enrollments
-    .map((enrollment) => enrollment.droplet.id);
+    const enrollIDs = enrollments.map((enrollment) => enrollment.droplet.id);
 
     // console.log("enroll ids: ", enrollIDs);
 

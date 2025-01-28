@@ -66,7 +66,7 @@ export async function getEnrollmentsByAuthorizedUser(
 export async function getIsEnrolled(
   authorizedUserId: number,
   dropletId: number,
-  { sort, filters, populate = "*", fields = ["*"] }: StrapiRequestParams = {}
+  { sort, filters, populate = "*", fields = ["*"] }: StrapiRequestParams = {},
 ): Promise<boolean> {
   const path = `/enrollments`;
   const urlParams = {
@@ -87,7 +87,7 @@ export async function getIsEnrolled(
   };
 
   return await fetchAPI<Enrollment[]>(path, { urlParams }).then(
-    (enrollments) => enrollments.length > 0
+    (enrollments) => enrollments.length > 0,
   );
 }
 
@@ -101,7 +101,7 @@ export async function getIsEnrolled(
 
 export async function getIsEnrollComplete(
   authorizedUserId: number,
-  dropletId: number
+  dropletId: number,
 ): Promise<boolean> {
   const path = `/enrollments`;
   const urlParams = {
