@@ -382,7 +382,7 @@ export async function getGroupBySlugV2(
   {
     populate = {
       members: {
-        fields: ["id", "email"],
+        fields: ["id", "email", "firstName", "lastName"],
       },
       admins: {
         fields: ["id", "email"],

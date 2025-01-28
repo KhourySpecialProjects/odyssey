@@ -41,6 +41,7 @@
     "@tiptap/react": "^2.6.6",
     "@tiptap/starter-kit": "^2.6.6",
     "@types/node-fetch": "^2.6.12",
+    "@types/react-tabs": "^5.0.4",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.0",
     "cmdk": "^1.0.0",
