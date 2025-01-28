@@ -1,7 +1,10 @@
-import { isAuthorizedUserAdmin, isAuthorizedUserFaculty } from "@/lib/utils";
+import {
+  isAuthorizedUserAdmin,
+  isAuthorizedUserFaculty,
+  isContentCreator,
+} from "@/lib/utils";
 import { GeneralConfig, User } from "@/types";
-
-export const mainNav = [
+export const originalNav = [
   {
     href: "/about",
     label: "About",
@@ -10,12 +13,30 @@ export const mainNav = [
     href: "/explore",
     label: "Explore",
   },
-  {
-    href: "/g/dashboard",
-    label: "My Groups",
-  },
 ];
-
+export const getMainNav = (user: User) => {
+  const mainNav = [
+    {
+      href: "/about",
+      label: "About",
+    },
+    {
+      href: "/explore",
+      label: "Explore",
+    },
+    {
+      href: "/dashboard",
+      label: "My Content",
+    },
+  ];
+  if (isAuthorizedUserAdmin(user.roles)) {
+    mainNav.push({
+      href: "/admin",
+      label: "Admin",
+    });
+  }
+  return mainNav;
+};
 export const getContentCreatorNav = (user: User) => {
   const baseNav = [
     {
@@ -31,45 +52,29 @@ export const getContentCreatorNav = (user: User) => {
       label: "My Content",
     },
     {
-      href: "/g/dashboard",
-      label: "My Groups",
-    },
-    {
       href: "/drafts",
       label: "Drafts",
     },
   ];
-
   if (isAuthorizedUserAdmin(user.roles)) {
     baseNav.push({
       href: "/admin",
       label: "Admin",
     });
   }
-
   // if (isAuthorizedUserFaculty(user.roles)) {
   //   baseNav.push({
   //     href: "/faculty",
   //     label: "Faculty"
   //   })
   // }
-
   return baseNav;
 };
-
-const nonAuthedNav = [
-  {
-    href: "/about",
-    label: "About",
-  },
-  {
-    href: "/explore",
-    label: "Explore",
-  },
-]
-
 export const getGeneralConfig = (user?: User): GeneralConfig => ({
-  mainNav,
-  contentCreatorNav: user ? getContentCreatorNav(user) : mainNav,
-  nonAuthedNav
+  contentCreatorNav: user
+    ? isContentCreator(user.roles)
+      ? getContentCreatorNav(user)
+      : getMainNav(user)
+    : originalNav,
+  mainNav: user ? getMainNav(user) : originalNav,
 });

@@ -197,6 +197,18 @@ export default function Sidebar({
                     !isAdmin;
 
                   // console.log(" ---> isLocked = ", isLocked);
+                  console.log("completed lessons", completedLessonIds);
+                  console.log("current lesson", lesson);
+                  console.log("previous lesson", previousLesson);
+                  if (previousLesson) {
+                    console.log(
+                      "id included in completed lessons",
+                      completedLessonIds.includes(previousLesson.id),
+                    );
+                  }
+                  console.log(
+                    "---------------------------------------------------",
+                  );
 
                   return (
                     <li key={lesson.id} className="w-full">
@@ -306,7 +318,10 @@ export default function Sidebar({
                 <DropdownMenuItem
                   onSelect={(e) => {
                     e.preventDefault();
-                    signOut();
+                    signOut({
+                      callbackUrl: "/",
+                      redirect: true,
+                    });
                   }}
                 >
                   <LogOutIcon className="w-4 h-4 mr-2" />
