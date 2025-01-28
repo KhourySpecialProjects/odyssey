@@ -10,9 +10,22 @@ import { LoginButton } from "./login-button";
 import { NavLinks } from "./nav-links";
 import { UserDropdown } from "./user-dropdown";
 import { isContentCreator } from "@/lib/utils";
+import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
 
 export async function Header() {
   const user = await getCurrentUser();
+  const authorizedUser = user?.email
+    ? await getAuthorizedUserByEmail(user.email)
+    : null;
+
+  const getNavLinks = () => {
+    if (!user || !authorizedUser) {
+      return generalConfig.mainNav;
+    }
+    return isContentCreator(user.roles)
+      ? generalConfig.contentCreatorNav
+      : generalConfig.mainNav;
+  };
   const generalConfig = getGeneralConfig(user);
 
   return (
@@ -45,13 +58,8 @@ export async function Header() {
                       Odyssey, a Khoury College Learning Platform
                     </span>
                   </Link>
-
                   <NavLinks
-                    items={
-                      user && isContentCreator(user.roles)
-                        ? generalConfig.contentCreatorNav
-                        : generalConfig.mainNav
-                    }
+                    items={getNavLinks()}
                     className="flex-col space-y-2"
                   />
                 </nav>
@@ -74,11 +82,7 @@ export async function Header() {
 
           <nav className="flex-row items-center hidden md:flex">
             <NavLinks
-              items={
-                user && isContentCreator(user.roles)
-                  ? generalConfig.contentCreatorNav
-                  : generalConfig.mainNav
-              }
+              items={getNavLinks()}
               className="flex-row space-x-8 space-y-0"
             />
           </nav>
