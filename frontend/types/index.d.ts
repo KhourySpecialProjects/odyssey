@@ -182,4 +182,4 @@ export type PlaylistListResponse = {
 
 export type Friendship = {
   authorized_users: AuthorizedUser[];
-}
+};

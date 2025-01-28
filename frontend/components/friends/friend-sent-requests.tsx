@@ -4,13 +4,8 @@ import { getCurrentUser } from "@/lib/auth/session";
 import { redirect } from "next/navigation";
 
 export async function FriendSentRequests() {
-
   const user = await getCurrentUser();
-  if (
-    !user ||
-    !user?.email 
-  )
-  return redirect("/");
+  if (!user || !user?.email) return redirect("/");
   const authUser = await getAuthorizedUserByEmail(user.email);
   const sentRequests = authUser.sent_requests;
 
@@ -23,7 +18,11 @@ export async function FriendSentRequests() {
         {sentRequests.length > 0 ? (
           <ul className="divide-y divide-slate-200 dark:divide-slate-700 md:space-y-4">
             {sentRequests.map((friendship) => (
-              <FriendSentRequestsBlock user={authUser} request={friendship} key={friendship.id} />
+              <FriendSentRequestsBlock
+                user={authUser}
+                request={friendship}
+                key={friendship.id}
+              />
             ))}
           </ul>
         ) : (

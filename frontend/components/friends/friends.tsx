@@ -1,4 +1,7 @@
-import { fetchAuthorizedUsers, getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
+import {
+  fetchAuthorizedUsers,
+  getAuthorizedUserByEmail,
+} from "@/lib/requests/authorized-user";
 import { FriendBlock } from "./friend-block";
 import { getCurrentUser } from "@/lib/auth/session";
 import { redirect } from "next/navigation";
@@ -6,15 +9,10 @@ import { fetchFriends } from "@/lib/requests/friends";
 import { getAuthorByAuthorizedUserEmail } from "@/lib/requests/author";
 
 export async function Friends() {
-
   const user = await getCurrentUser();
-  if (
-    !user ||
-    !user?.email 
-  )
-  return redirect("/");
+  if (!user || !user?.email) return redirect("/");
   const authUser = await getAuthorizedUserByEmail(user.email);
-  
+
   const friends = await fetchFriends(authUser);
 
   return (
@@ -26,7 +24,11 @@ export async function Friends() {
         {friends.length > 0 ? (
           <ul className="divide-y divide-slate-200 dark:divide-slate-700 md:space-y-4">
             {friends.map((friendship) => (
-              <FriendBlock user={authUser} friend={friendship} key={friendship.id} />
+              <FriendBlock
+                user={authUser}
+                friend={friendship}
+                key={friendship.id}
+              />
             ))}
           </ul>
         ) : (
