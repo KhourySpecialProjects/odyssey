@@ -94,7 +94,7 @@ export default async function GroupDetailPage({ params }: Props) {
 
           <ContentSection
             title="">
-            <GroupDashboard group={group} />
+            <GroupDashboard group={group} canEdit={canEdit}/>
           </ContentSection>
 
           <Separator />
