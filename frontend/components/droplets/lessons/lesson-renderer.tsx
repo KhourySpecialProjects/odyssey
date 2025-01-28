@@ -69,22 +69,32 @@ export function LessonRenderer({
   }
 
   async function handleMarkAsComplete() {
-    if (!enrollmentId) return;
+    if (!enrollmentId) {
+      console.log("no enrollment");
+      return;
+    }
 
     startTransition(async () => {
+      console.log("before success")
       const success = await markLessonAsComplete(
         enrollmentId,
         completedLessonIds,
         lesson.id,
       );
+      console.log("success status", success)
+      console.log("enrollment for mark as complete", enrollmentId);
+      console.log("lesson id for mark as complete", lesson.id);
       if (success) {
-        router.refresh();
+        completedLessonIds.push(lesson.id);
+        await router.refresh();
       }
-      // } else {
-      //   alert("no success");
-      // }
+      console.log(
+        "completedlessonids for mark as complete",
+        completedLessonIds,
+      );
     });
   }
+
   let headings: any[] = [];
   lesson.blocks
     .filter((b: any) => b.__component === "droplets.generic")

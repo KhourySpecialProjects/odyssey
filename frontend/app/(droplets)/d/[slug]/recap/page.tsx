@@ -7,6 +7,7 @@ import { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { StarRating } from "@/components/ui/rating-stars";
+import { Confetti } from "./confetti";
 
 import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
 
@@ -23,11 +24,29 @@ type Params = {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const p = await params;
-  const droplet = await getDropletBySlug<Pick<Droplet, "name">>(p.slug, {
-    fields: ["name"],
-    populate: undefined,
+  const droplet = await getDropletBySlug<Droplet>(p.slug, {
+    fields: ["*"],
+    populate: {
+      learningObjectives: { populate: "*" },
+      tags: { populate: "*" },
+      nextSteps: { populate: "*" },
+      lessons: {
+        fields: ["id", "name", "slug"],
+      },
+      droplet_lessons: {
+        populate: {
+          lesson: {
+            fields: ["id", "name", "slug"],
+          },
+        },
+      },
+    },
   });
-  if (!droplet) return {};
+
+  if (!droplet) {
+    console.error("not found");
+    return notFound();
+  }
 
   return {
     title: `Recap | ${droplet.name}`,
@@ -44,7 +63,10 @@ export default async function DropletRecapRoute({ params }: Props) {
       nextSteps: { populate: "*" },
     },
   });
-  if (!droplet) return notFound();
+  if (!droplet) {
+    console.error("not found");
+    return notFound();
+  }
 
   const dropletRecommendations = await getDroplets({
     fields: ["*"],
@@ -68,7 +90,21 @@ export default async function DropletRecapRoute({ params }: Props) {
 
   if (session?.user?.email) {
     const user = await getAuthorizedUserByEmail(session.user.email);
-    const enrollments = await getEnrollmentsByAuthorizedUser(user.id);
+    const enrollments = await getEnrollmentsByAuthorizedUser(user.id, {
+      populate: {
+        viewedLessons: {
+          fields: ["id", "name", "slug"],
+        },
+        droplet: {
+          populate: {
+            lessons: {
+              fields: ["id", "name", "slug"],
+            },
+          },
+        },
+      },
+    });
+
     const enrollment = enrollments.find((e) => e.droplet.id === droplet.id);
 
     if (enrollment) {
@@ -77,6 +113,9 @@ export default async function DropletRecapRoute({ params }: Props) {
 
     return (
       <>
+        {enrollment &&
+          enrollment?.viewedLessons.length ===
+            enrollment?.droplet.lessons?.length && <Confetti />}
         <GradientBackground className="px-0">
           <div className="mb-12 max-w-2xl mx-auto">
             <h1 className="mt-3 text-6xl font-black text-slate-900">Recap</h1>
