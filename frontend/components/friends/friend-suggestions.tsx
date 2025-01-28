@@ -21,6 +21,7 @@ export async function FriendSuggestions({ user }: { user: AuthorizedUser }) {
               <FriendSuggestionsBlock
                 curUser={user}
                 suggUser={suggestedUser}
+                display={false}
                 key={`${user.id} / ${suggestedUser.id}`}
               />
             ))}

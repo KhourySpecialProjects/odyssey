@@ -20,9 +20,11 @@ import { Github, Linkedin } from "lucide-react";
 export function FriendSuggestionsBlock({
   suggUser,
   curUser,
+  display,
 }: {
   curUser: AuthorizedUser;
   suggUser: AuthorizedUser;
+  display: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [requestSent, setRequestSent] = useState(false);
@@ -33,8 +35,10 @@ export function FriendSuggestionsBlock({
       if (result.success) {
         toast.success("Request sent!");
         setRequestSent(true);
+        console.log("request sent!")
       } else {
         toast.error("Failed to send request.");
+        console.log("request failed!")
       }
     });
   };
@@ -49,7 +53,7 @@ export function FriendSuggestionsBlock({
   return (
     <div
       className={`${
-        requestSent === false ? "visibility: visible" : "visibility: hidden"
+        requestSent === true && display === false ? "visibility: hidden" : "visibility: visible"
       }`}
     >
       <li className="py-0 [&:not(:first-child)]:pt-3">
