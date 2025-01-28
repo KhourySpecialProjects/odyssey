@@ -14,6 +14,7 @@ interface DropletTileProps {
   isEnrolled?: boolean;
   completedLessonIds?: number[];
   profilePage?: boolean;
+  compact?: boolean;
 }
 
 export function DropletTile({
@@ -21,6 +22,7 @@ export function DropletTile({
   isEnrolled = false,
   completedLessonIds = [],
   profilePage,
+  compact
 }: DropletTileProps) {
   const [averageRating, setAverageRating] = useState<number>(0);
 
@@ -52,6 +54,23 @@ export function DropletTile({
       return "bg-amber-100 text-amber-800 border-amber-200";
     return "bg-emerald-100 text-emerald-800 border-emerald-200";
   };
+
+  if (compact) {
+    return (
+      <li className="transition-colors border rounded-md border-slate-200 hover:border-slate-300 bg-slate-50">
+        <Link
+          className="relative inline-flex w-full h-full p-2"
+          href={`/d/${droplet.slug}`}
+        >
+          <div className="flex flex-col gap-1">
+            <span className="text-sm font-medium text-slate-900">
+              {droplet.name}
+            </span>
+          </div>
+        </Link>
+      </li>
+    );
+  }
 
   if (profilePage) {
     return (
