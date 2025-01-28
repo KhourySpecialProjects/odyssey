@@ -48,7 +48,6 @@ export type NavItem = {
 export type GeneralConfig = {
   mainNav: NavItem[];
   contentCreatorNav: NavItem[];
-  nonAuthedNav: NavItem[];
 };
 
 export type Author = {
