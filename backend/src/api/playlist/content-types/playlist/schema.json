@@ -53,6 +53,12 @@
       "relation": "manyToMany",
       "target": "api::authorized-user.authorized-user",
       "inversedBy": "playlists"
+    },
+    "groups": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::group.group",
+      "mappedBy": "playlists"
     }
   }
 }

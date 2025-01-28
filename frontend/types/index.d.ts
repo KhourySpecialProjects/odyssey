@@ -20,6 +20,7 @@ export type User = {
   image?: string | null;
   nuid?: string;
   roles: AuthorizedUserRoleTitle[];
+  isActive: boolean;
 };
 
 export type AuthorizedUser = {
@@ -165,4 +166,56 @@ export type PlaylistListResponse = {
       total: number;
     };
   };
+};
+
+export type GroupSemester =
+  | "Open Membership"
+  | "Spring 2025"
+  | "Summer 1 2025"
+  | "Summer 2 2025"
+  | "Summer 2025"
+  | "Fall 2025"
+  | "Spring 2026"
+  | "Summer 1 2026"
+  | "Summer 2 2026"
+  | "Summer 2026"
+  | "Fall 2026"
+  | "Spring 2027"
+  | "Summer 1 2027"
+  | "Summer 2 2027"
+  | "Summer 2027"
+  | "Fall 2027";
+
+export type Group = {
+  id: number;
+  groupName: string;
+  slug: string;
+  description?: string;
+  semester: GroupSemester;
+  isArchived: boolean;
+  creator?: AuthorizedUser;
+  admins?: AuthorizedUser[];
+  managers?: AuthorizedUser[];
+  members?: AuthorizedUser[];
+  droplets?: Droplet[];
+  playlists?: Playlist[];
+};
+
+export type GroupListResponse = {
+  data: Group[];
+  meta: {
+    pagination: {
+      page: number;
+      pageSize: number;
+      pageCount: number;
+      total: number;
+    };
+  };
+};
+
+export type ActionResponse<T = any> = {
+  ok: boolean;
+  data?: T | null;
+  error?: any;
+  message?: string;
 };

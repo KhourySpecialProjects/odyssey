@@ -75,6 +75,8 @@ export async function fetchAPI<T>(
       }),
     };
 
+    //console.log("merge options", mergedOptions);
+
     const queryString = qs.stringify(config.urlParams, {
       encodeValuesOnly: true,
     });
@@ -86,6 +88,8 @@ export async function fetchAPI<T>(
 
     const response = await fetch(requestUrl, mergedOptions);
 
+    //console.log("response", response);
+
     if (!response.ok) {
       console.error("Response status:", response.status);
       console.error("Response status text:", response.statusText);
@@ -96,11 +100,14 @@ export async function fetchAPI<T>(
 
     const data = await response.json();
 
+    //console.log("data", data);
     if (
       config.flattenResponse ||
       typeof config.flattenResponse === "undefined"
     ) {
-      return flattenAttributes(data.data);
+      const temp = flattenAttributes(data.data);
+      //console.log("flatten", temp);
+      return temp;
     }
 
     return data;
