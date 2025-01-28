@@ -66,7 +66,7 @@ export async function fetchAuthorizedUsers(): Promise<AuthorizedUser[]> {
         profilePhoto: "*",
       },
       pagination: {
-        pageSize: 25,
+        pageSize: 300,
         page: 1,
       },
     });
