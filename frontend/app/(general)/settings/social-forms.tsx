@@ -33,7 +33,9 @@ export function SocialForms({
     }
   };
 
-  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     const file = event.target.files?.[0];
     if (file && file.type.startsWith("image/")) {
       const compressedFile = await compressImage(file); // Compress the image
@@ -47,61 +49,66 @@ export function SocialForms({
   const compressImage = async (imageFile: File) => {
     const options = {
       maxSizeMB: 1,
-      maxWidthOrHeight: 1024, 
+      maxWidthOrHeight: 1024,
       useWebWorker: true,
     };
     try {
       return await imageCompression(imageFile, options);
     } catch (error) {
       console.error("Error compressing image:", error);
-      return imageFile; 
+      return imageFile;
     }
   };
 
   return (
     <>
-    <form
+      <form
         action={async (formData: FormData) => {
           if (profileFile && authorizedUser?.id) {
             const result = await updatePhoto(profileFile, authorizedUser.id);
             if (result.success) {
               toast.success("Profile photo updated successfully");
             } else {
-              console.error(result.error)
+              console.error(result.error);
               toast.error("Failed to update profile photo");
             }
           }
         }}
         className="px-6 py-4 flex flex-row gap-4 items-center"
       >
-    <div 
-        className="p-6 flex flex-col items-center border-2 border-dashed border-gray-400 rounded-lg cursor-pointer hover:border-gray-600"
-        onDrop={handleDrop}
-        onDragOver={(e) => e.preventDefault()}
-      >
-        {profileImage ? (
-          <img
-            src={profileImage}
-            alt="Profile"
-            className="w-32 h-32 object-cover rounded-full border"
+        <div
+          className="p-6 flex flex-col items-center border-2 border-dashed border-gray-400 rounded-lg cursor-pointer hover:border-gray-600"
+          onDrop={handleDrop}
+          onDragOver={(e) => e.preventDefault()}
+        >
+          {profileImage ? (
+            <img
+              src={profileImage}
+              alt="Profile"
+              className="w-32 h-32 object-cover rounded-full border"
+            />
+          ) : (
+            <p className="text-gray-500">
+              Drag & drop to update your profile photo here
+            </p>
+          )}
+          <input
+            type="file"
+            accept="image/*"
+            onChange={handleFileSelect}
+            className="hidden"
+            id="fileUpload"
           />
-        ) : (
-          <p className="text-gray-500">Drag & drop to update your profile photo here</p>
-        )}
-        <input
-          type="file"
-          accept="image/*"
-          onChange={handleFileSelect}
-          className="hidden"
-          id="fileUpload"
-        />
-        <label htmlFor="fileUpload" className="mt-2 px-4 py-2 bg-blue-500 text-white rounded-lg cursor-pointer">
-          Upload Photo
-        </label>
-      </div>
-      <Button type="submit" className="max-w-80">
+          <label
+            htmlFor="fileUpload"
+            className="mt-2 px-4 py-2 bg-blue-500 text-white rounded-lg cursor-pointer"
+          >
+            Upload Photo
+          </label>
+        </div>
+        <Button type="submit" className="max-w-80">
           Save Photo
-      </Button>
+        </Button>
       </form>
       <form
         action={async (formData: FormData) => {
