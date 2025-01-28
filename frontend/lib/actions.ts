@@ -2,6 +2,7 @@
 
 import { revalidatePath, revalidateTag } from "next/cache";
 import { redirect } from "next/navigation";
+import { Media } from "@/types";
 import { z } from "zod";
 import { getCurrentUser } from "./auth/session";
 import { getAuthorByAuthorizedUserEmail } from "./requests/author";
@@ -492,28 +493,61 @@ export async function updateGithub(github: string, userId: number) {
 
 export async function updatePhoto(photo: File, userId: number) {
   try {
+    const formData = new FormData();
+    formData.append('image', photo);
+
+    const uploadResult = await uploadImage(formData);
+    
+    if (!uploadResult.ok || !uploadResult.url) {
+      throw new Error(uploadResult.error || 'Failed to upload photo');
+    }
+
+    const mediaFormData = new FormData();
+    mediaFormData.append('files', photo);
+    mediaFormData.append('ref', 'plugin::users-permissions.user');
+    mediaFormData.append('refId', userId.toString());
+    mediaFormData.append('field', 'profilePhoto');
+
+    const mediaResponse = await fetch(`${STRAPI_API_URL}/api/upload`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+      },
+      body: mediaFormData,
+    });
+
+    if (!mediaResponse.ok) {
+      console.error('Media response:', await mediaResponse.text());
+      throw new Error('Failed to create media entry');
+    }
+
+    const mediaData = await mediaResponse.json();
+    const mediaId = mediaData[0].id;
+
+
+    // Then update the user with the file reference
     const response = await fetch(
       `${STRAPI_API_URL}/api/authorized-users/${userId}`,
       {
-        method: "PUT",
+        method: 'PUT',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
           Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
         },
         body: JSON.stringify({
           data: {
-            profilePhoto: photo,
+            profilePhoto: mediaId,
           },
         }),
       },
     );
 
     if (!response.ok) {
-      throw new Error("Failed to update photo");
+      throw new Error('Failed to update photo reference');
     }
     return { success: true };
   } catch (error) {
-    console.error("Error updating photo:", error);
+    console.error('Error updating photo:', error);
     return { success: false, error };
   }
 }

@@ -39,6 +39,16 @@ export type AuthorizedUser = {
   friendships: Friendship[];
   sent_requests: AuthorizedUser[];
   received_requests: AuthorizedUser[];
+  profilePhoto: Media;
+};
+
+export type Media = {
+  url: string;
+  formats?: {
+    thumbnail?: {
+      url: string;
+    };
+  };
 };
 
 export type NavItem = {

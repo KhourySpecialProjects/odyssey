@@ -42,13 +42,19 @@ export function FriendSuggestionsBlock({ suggUser, curUser }: { curUser: Authori
     handleSentRequest();
   }, [suggUser])
   
-
   return (
     <div className={`${
       requestSent === false ? "visibility: visible" : "visibility: hidden"
     }`}>
     <li className="py-0 [&:not(:first-child)]:pt-3">
       <div className="flex items-center space-x-4">
+      {suggUser.profilePhoto?.formats?.thumbnail?.url && (
+            <img 
+              src={suggUser.profilePhoto.formats.thumbnail.url}
+              alt={`${suggUser.firstName}'s profile`}
+              className="w-12 h-12 rounded-full object-cover"
+            />
+          )}
         <div className="flex-1 min-w-0">
           <p className="font-medium truncate text-slate-900 dark:text-white">
             {suggUser.email}

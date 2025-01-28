@@ -31,6 +31,14 @@ export function FriendBlock({ user, friend }: { user: AuthorizedUser, friend: Au
     return (
       <li className="py-0 [&:not(:first-child)]:pt-3">
         <div className="flex items-center space-x-4">
+          {friend.profilePhoto?.formats?.thumbnail?.url && (
+            <img 
+              src={friend.profilePhoto.formats.thumbnail.url}
+              alt={`${friend.firstName}'s profile`}
+              className="w-12 h-12 rounded-full object-cover"
+            />
+          )}
+
           <div className="flex-1 min-w-0">
             <p className="font-medium truncate text-slate-900 dark:text-white">
               {friend.firstName && friend.lastName 
@@ -43,6 +51,7 @@ export function FriendBlock({ user, friend }: { user: AuthorizedUser, friend: Au
               </p>
             )}
           </div>
+
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
               <Button size="sm" variant="outline">
@@ -52,15 +61,15 @@ export function FriendBlock({ user, friend }: { user: AuthorizedUser, friend: Au
 
             <DialogContent>
               <DialogHeader>
-              {friend.firstName && friend.lastName ? (
-                      <div className="flex justify-center items-center">
-                      <Avatar variant="round" size="lg">
-                        <AvatarFallback className="text-3xl">
-                          {getInitials(friend.firstName + " " + friend.lastName)}
-                        </AvatarFallback>
-                      </Avatar>
-                    </div>
-                    ) : null}
+              {friend.profilePhoto?.formats?.thumbnail?.url && (
+                <div className="flex justify-center items-center">
+                  <img 
+                    src={friend.profilePhoto.formats.thumbnail.url}
+                    alt={`${friend.firstName}'s profile`}
+                    className="w-12 h-12 rounded-full object-cover"
+                  />
+                  </div>
+                )}
               <DialogTitle style={{ fontSize: '2rem', textAlign: 'center' }}>
                 {friend.firstName} {friend.lastName}
               </DialogTitle>
