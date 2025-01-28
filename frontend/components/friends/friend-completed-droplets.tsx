@@ -1,28 +1,33 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import { AuthorizedUser, Droplet } from "@/types";
 import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
-import { DropletTile } from "../droplets/droplet-tile";
+import { FriendCompletedDropletsList } from "./friend-completed-droplets-list";
 
-export async function FriendCompletedDroplets({ friend }: { friend: AuthorizedUser }) {
-  const enrollments = await getEnrollmentsByAuthorizedUser(friend.id);
-  const completedDroplets = enrollments
-    .filter((e) => e.viewedLessons.length === e.droplet.lessons?.length)
-    .map((d) => d.droplet);
+export function FriendCompletedDroplets({ friend }: { friend: AuthorizedUser }) {
+  const [completedDroplets, setCompletedDroplets] = useState<Droplet[] | null>(null);
+
+  useEffect(() => {
+    async function fetchCompletedDroplets() {
+      const enrollments = await getEnrollmentsByAuthorizedUser(friend.id);
+      const completed = enrollments
+        .filter((e) => e.viewedLessons.length === e.droplet.lessons?.length)
+        .map((d) => d.droplet);
+      setCompletedDroplets(completed);
+    }
+
+    fetchCompletedDroplets();
+  }, [friend.id]);
 
   return (
-    <div>
-      <h3 className="text-sm font-medium text-slate-900">Completed Droplets:</h3>
-      {completedDroplets.length === 0 ? (
-        <p className="text-sm text-slate-500">No completed droplets yet.</p>
+    <div className="mt-4">
+      {completedDroplets === null ? (
+        <p className="text-sm text-slate-500">Loading...</p>
+      ) : completedDroplets.length > 0 ? (
+        <FriendCompletedDropletsList droplets={completedDroplets} />
       ) : (
-        <ul className="grid grid-cols-1 gap-4 mt-2 sm:grid-cols-2">
-          {completedDroplets.map((droplet) => (
-            <DropletTile
-              key={droplet.id}
-              droplet={droplet}
-              profilePage={true}
-            />
-          ))}
-        </ul>
+        <p className="text-sm text-slate-500">No completed droplets yet.</p>
       )}
     </div>
   );

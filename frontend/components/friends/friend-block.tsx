@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { removeFriend } from "@/lib/requests/friends";
 import { AuthorizedUser, Droplet } from "@/types";
-import { startTransition, useState } from "react";
+import { startTransition, Suspense, useState } from "react";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "../ui/dialog";
 import Link from "next/link";
