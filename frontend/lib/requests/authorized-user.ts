@@ -21,10 +21,16 @@ export async function getAuthorizedUserByEmail<
     filters,
     populate = {
       received_requests: {
-        fields: ["id", "email", "firstName", "lastName", "bio"]
+        fields: ["id", "email", "firstName", "lastName", "bio"],
+        populate: {
+          profilePhoto: "*"
+        }
       },
       sent_requests: {
-        fields: ["id", "email", "firstName", "lastName", "bio"]
+        fields: ["id", "email", "firstName", "lastName", "bio"],
+        populate: {
+          profilePhoto: "*"
+        }
       }
     },
     fields = ["*", "firstName", "lastName", "bio", "id"],
@@ -57,6 +63,7 @@ export async function fetchAuthorizedUsers(): Promise<AuthorizedUser[]> {
       fields: ["id", "email", "isEnabled", "firstName", "lastName", "bio"],
       populate: {
         roles: { fields: ["title"] },
+        profilePhoto: "*"
       },
       pagination: {
         pageSize: 25,
