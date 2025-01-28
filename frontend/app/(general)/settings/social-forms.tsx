@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { updateGithub, updateLinkedin, updatePhoto } from "@/lib/actions";
 import { AuthorizedUser } from "@/types";
 import { useState } from "react";
+import imageCompression from "browser-image-compression";
 
 export function SocialForms({
   authorizedUser,
@@ -19,25 +20,41 @@ export function SocialForms({
   const [profileImage, setProfileImage] = useState<string | null>(null);
   const [profileFile, setProfileFile] = useState<File | null>(null);
 
-  const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
+  const handleDrop = async (event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     const file = event.dataTransfer.files[0];
 
     if (file && file.type.startsWith("image/")) {
-      setProfileFile(file); 
-      setProfileImage(URL.createObjectURL(file)); 
+      const compressedFile = await compressImage(file); // Compress before storing
+      setProfileFile(compressedFile);
+      setProfileImage(URL.createObjectURL(compressedFile));
     } else {
       toast.error("Please upload a valid image file");
     }
   };
 
-  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file && file.type.startsWith("image/")) {
-      setProfileFile(file); 
-      setProfileImage(URL.createObjectURL(file));
+      const compressedFile = await compressImage(file); // Compress the image
+      setProfileFile(compressedFile);
+      setProfileImage(URL.createObjectURL(compressedFile));
     } else {
       toast.error("Please upload a valid image file");
+    }
+  };
+
+  const compressImage = async (imageFile: File) => {
+    const options = {
+      maxSizeMB: 1,
+      maxWidthOrHeight: 1024, 
+      useWebWorker: true,
+    };
+    try {
+      return await imageCompression(imageFile, options);
+    } catch (error) {
+      console.error("Error compressing image:", error);
+      return imageFile; 
     }
   };
 
@@ -50,6 +67,7 @@ export function SocialForms({
             if (result.success) {
               toast.success("Profile photo updated successfully");
             } else {
+              console.error(result.error)
               toast.error("Failed to update profile photo");
             }
           }

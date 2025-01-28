@@ -27,6 +27,13 @@ export function FriendSentRequestsBlock({ user, request }: { user: AuthorizedUse
     return (
       <li className="py-0 [&:not(:first-child)]:pt-3">
         <div className="flex items-center space-x-4">
+        {request.profilePhoto?.formats?.thumbnail?.url && (
+            <img 
+              src={request.profilePhoto.formats.thumbnail.url}
+              alt={`${request.firstName}'s profile`}
+              className="w-12 h-12 rounded-full object-cover"
+            />
+          )}
           <div className="flex-1 min-w-0">
             <p className="font-medium truncate text-slate-900 dark:text-white">
               {request.firstName && request.lastName 
