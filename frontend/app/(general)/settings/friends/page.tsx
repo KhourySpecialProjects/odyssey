@@ -22,10 +22,16 @@ import { getAuthorByAuthorizedUserEmail } from "@/lib/requests/author";
 import { getInitials } from "@/lib/utils";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
-import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
+import {
+  fetchAuthorizedUsers,
+  getAuthorizedUserByEmail,
+} from "@/lib/requests/authorized-user";
 import { FriendSentRequests } from "@/components/friends/friend-sent-requests";
+import { FriendSearch } from "@/components/friends/friend-search";
 
 export default async function AuthorProfileSettings() {
+  const authorizedUsers = await fetchAuthorizedUsers();
+
   const user = await getCurrentUser();
   if (!user?.email) return notFound();
 
@@ -33,17 +39,20 @@ export default async function AuthorProfileSettings() {
   if (!authorizedUser) return notFound();
 
   return (
-    <>
+    <div>
+      <FriendSearch
+        authUsers={authorizedUsers}
+        curUser={authorizedUser}
+      ></FriendSearch>
+
       <AdminSelector
         content={{
-          "Friends": <Friends />,
+          Friends: <Friends />,
           "Friend Requests": <FriendRequests />,
-          "People You May Know": <FriendSuggestions user={authorizedUser}/>,
-          "Sent Requests": <FriendSentRequests/>,
+          "People You May Know": <FriendSuggestions user={authorizedUser} />,
+          "Sent Requests": <FriendSentRequests />,
         }}
       />
-
-      
-    </>
+    </div>
   );
 }

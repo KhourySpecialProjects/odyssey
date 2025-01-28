@@ -23,15 +23,15 @@ export async function getAuthorizedUserByEmail<
       received_requests: {
         fields: ["id", "email", "firstName", "lastName", "bio"],
         populate: {
-          profilePhoto: "*"
-        }
+          profilePhoto: "*",
+        },
       },
       sent_requests: {
         fields: ["id", "email", "firstName", "lastName", "bio"],
         populate: {
-          profilePhoto: "*"
-        }
-      }
+          profilePhoto: "*",
+        },
+      },
     },
     fields = ["*", "firstName", "lastName", "bio", "id"],
   }: StrapiRequestParams = {},
@@ -63,7 +63,7 @@ export async function fetchAuthorizedUsers(): Promise<AuthorizedUser[]> {
       fields: ["id", "email", "isEnabled", "firstName", "lastName", "bio"],
       populate: {
         roles: { fields: ["title"] },
-        profilePhoto: "*"
+        profilePhoto: "*",
       },
       pagination: {
         pageSize: 25,
