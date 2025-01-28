@@ -26,6 +26,10 @@ export const getMainNav = (user: User) => {
       href: "/explore",
       label: "Explore",
     },
+    {
+      href: "/dashboard",
+      label: "My Content",
+    },
   ];
   if (isAuthorizedUserAdmin(user.roles)) {
     mainNav.push({
