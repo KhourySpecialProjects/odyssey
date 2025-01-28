@@ -11,7 +11,7 @@
       "url": "https://khouryodyssey.org"
     },
     "license": null,
-    "x-generation-date": "2025-01-28T17:08:01.220Z"
+    "x-generation-date": "2025-01-28T21:01:02.655Z"
   },
   "x-strapi-config": {
     "plugins": [
@@ -25004,8 +25004,7 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object",
-              "additionalProperties": true
+              "type": "object"
             },
             "style": "deepObject"
           },
@@ -25510,8 +25509,7 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object",
-              "additionalProperties": true
+              "type": "object"
             },
             "style": "deepObject"
           },
@@ -26016,8 +26014,7 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object",
-              "additionalProperties": true
+              "type": "object"
             },
             "style": "deepObject"
           },
@@ -26522,8 +26519,7 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object",
-              "additionalProperties": true
+              "type": "object"
             },
             "style": "deepObject"
           },
@@ -27028,8 +27024,7 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object",
-              "additionalProperties": true
+              "type": "object"
             },
             "style": "deepObject"
           },
@@ -27534,8 +27529,7 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object",
-              "additionalProperties": true
+              "type": "object"
             },
             "style": "deepObject"
           },
@@ -28040,8 +28034,7 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object",
-              "additionalProperties": true
+              "type": "object"
             },
             "style": "deepObject"
           },
@@ -28546,8 +28539,7 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object",
-              "additionalProperties": true
+              "type": "object"
             },
             "style": "deepObject"
           },
@@ -29052,8 +29044,7 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object",
-              "additionalProperties": true
+              "type": "object"
             },
             "style": "deepObject"
           },
@@ -29558,8 +29549,7 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object",
-              "additionalProperties": true
+              "type": "object"
             },
             "style": "deepObject"
           },
@@ -30064,8 +30054,7 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object",
-              "additionalProperties": true
+              "type": "object"
             },
             "style": "deepObject"
           },
@@ -30570,8 +30559,7 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object",
-              "additionalProperties": true
+              "type": "object"
             },
             "style": "deepObject"
           },
