@@ -81,24 +81,22 @@ export default async function GroupDetailPage({ params }: Props) {
             content={createDOMPurifier.sanitize(
               group.description || "No Description Provided.",
             )}
-          // content={
-          //   <div
-          //     dangerouslySetInnerHTML={{
-          //       __html: group.description || "No description provided.",
-          //     }}
-          //   />
-          // }
+            // content={
+            //   <div
+            //     dangerouslySetInnerHTML={{
+            //       __html: group.description || "No description provided.",
+            //     }}
+            //   />
+            // }
           />
 
           <Separator />
 
-          <ContentSection
-            title="">
-            <GroupDashboard group={group} canEdit={canEdit}/>
+          <ContentSection title="">
+            <GroupDashboard group={group} canEdit={canEdit} />
           </ContentSection>
 
           <Separator />
-
         </div>
       </div>
     </div>

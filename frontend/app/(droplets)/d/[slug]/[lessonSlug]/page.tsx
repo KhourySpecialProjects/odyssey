@@ -1,7 +1,10 @@
 import { Metadata } from "next";
 import { LessonRenderer } from "@/components/droplets/lessons/lesson-renderer";
 import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
-import { getEnrollmentsByAuthorizedUser, getIsEnrollComplete } from "@/lib/requests/enrollment";
+import {
+  getEnrollmentsByAuthorizedUser,
+  getIsEnrollComplete,
+} from "@/lib/requests/enrollment";
 import { getDropletBySlug } from "@/lib/requests/droplet";
 import { getLessonBySlug } from "@/lib/requests/lesson";
 import { getServerSession } from "next-auth";
@@ -73,8 +76,6 @@ export default async function Page({ params }: Props) {
     droplet.authors &&
     droplet.authors.map((author) => author.id).includes(userAuthor.id);
 
-
-  
   return (
     <LessonRenderer
       lesson={lesson}

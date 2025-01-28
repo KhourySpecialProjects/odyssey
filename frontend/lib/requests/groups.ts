@@ -8,7 +8,7 @@ import { getAuthorizedUserByEmail } from "./authorized-user";
 import type { ActionResponse } from "@/types";
 import { AuthorizedUserRoleTitle } from "../globals";
 import { getAuthorizedUserRoleIdByTitle } from "./authorized-user-roles";
-import { createEnrollmentFromEmail } from "@/lib/actions"
+import { createEnrollmentFromEmail } from "@/lib/actions";
 import { getEnrollmentsByAuthorizedUser } from "./enrollment";
 import { createEnrollment } from "@/lib/actions";
 const STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
@@ -114,7 +114,6 @@ export async function getGroupBySlug(
   }).then((groups) => groups[0] || null);
 }
 
-
 /**
  * Gets a specific group by its slug, including full member details if the user has permission.
  * @param id The ID of the authorized user requesting access
@@ -139,7 +138,7 @@ export async function getGroupByID(
       },
       droplets: {
         fields: ["id"],
-      }
+      },
     },
   }: StrapiRequestParams = {},
 ): Promise<Group> {
@@ -469,7 +468,6 @@ export async function updateGroup(
     }>;
   },
 ): Promise<Group> {
-
   const path = `/groups/${groupId}`;
 
   // Prepare the data object for Strapi
@@ -632,13 +630,13 @@ export async function enrollUsers(group: Group) {
           viewedLessons: [],
         };
         console.log("inside the function");
-        console.log("enrollment data: ", enrollmentData)
-        console.log("member email: ", member.email)
-        console.log("member id", member.id)
+        console.log("enrollment data: ", enrollmentData);
+        console.log("member email: ", member.email);
+        console.log("member id", member.id);
         return await createEnrollmentFromEmail(enrollmentData, member.email);
         //return await createEnrollment(enrollmentData);
-      }) || []
-    }) || []
+      }) || [];
+    }) || [];
   } catch (error) {
     console.error("Error enrolling users:", error);
     throw error;

@@ -21,8 +21,8 @@ type GroupWithRole = {
 
 type Props = {
   searchParams:
-  | Promise<{ [key: string]: string | string[] | undefined }>
-  | undefined;
+    | Promise<{ [key: string]: string | string[] | undefined }>
+    | undefined;
 };
 export default async function GroupsPage({ searchParams }: Props) {
   const params = await searchParams;
@@ -58,14 +58,10 @@ export default async function GroupsPage({ searchParams }: Props) {
     if (group.admins?.some((admin) => admin.id === authorizedUser.id)) {
       groupsByRole.admin.push({ group, role: "admin" });
     }
-    if (
-      group.managers?.some((manager) => manager.id === authorizedUser.id)
-    ) {
+    if (group.managers?.some((manager) => manager.id === authorizedUser.id)) {
       groupsByRole.manager.push({ group, role: "manager" });
     }
-    if (
-      group.members?.some((member) => member.id === authorizedUser.id)
-    ) {
+    if (group.members?.some((member) => member.id === authorizedUser.id)) {
       groupsByRole.member.push({ group, role: "member" });
     }
   });
