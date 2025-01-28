@@ -20,7 +20,7 @@ export async function Header() {
 
   const getNavLinks = () => {
     if (!user || !authorizedUser) {
-      return generalConfig.nonAuthedNav;
+      return generalConfig.mainNav;
     }
     return isContentCreator(user.roles)
       ? generalConfig.contentCreatorNav

@@ -28,6 +28,10 @@ export const getMainNav = (user: User) => {
       href: "/dashboard",
       label: "My Content",
     },
+    {
+      href: "/g/dashboard",
+      label: "My Groups",
+    },
   ];
   if (isAuthorizedUserAdmin(user.roles)) {
     mainNav.push({
@@ -50,6 +54,10 @@ export const getContentCreatorNav = (user: User) => {
     {
       href: "/dashboard",
       label: "My Content",
+    },
+    {
+      href: "/g/dashboard",
+      label: "My Groups",
     },
     {
       href: "/drafts",
