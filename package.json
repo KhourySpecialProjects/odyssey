@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.701.0",
+    "browser-image-compression": "^2.0.2",
     "canvas": "^3.1.0",
     "canvas-confetti": "^1.9.3",
     "concurrently": "^8.2.2",

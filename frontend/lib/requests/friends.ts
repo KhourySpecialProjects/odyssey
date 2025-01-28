@@ -20,7 +20,10 @@ export async function fetchFriends(authorizedUser: AuthorizedUser): Promise<Auth
       },
       populate: {
         authorized_users: {
-          fields: ["id", "email", "firstName", "lastName", "bio", "received_requests", "github", "linkedin"]
+          fields: ["id", "email", "firstName", "lastName", "bio", "received_requests", "github", "linkedin"],
+          populate: {
+            profilePhoto: "*"
+          }
         }
       },
       pagination: {
@@ -347,18 +350,12 @@ export async function fetchFriendshipsById(userId: number): Promise<Friendship[]
                 }
             },
             populate: {
-                authorized_users: { 
-                    populate: {
-                        friendships: {
-                            populate: {
-                                authorized_users: {
-                                    fields: ["id", "email"]
-                                }
-                            }
-                        }
-                    },
-                    fields: ["id", "email"] 
-                },
+              authorized_users: {
+                fields: ["id", "email", "firstName", "lastName", "bio", "github", "linkedin"],
+                populate: {
+                  profilePhoto: "*"
+                }
+              }
             },
             pagination: {
                 pageSize: 25,
