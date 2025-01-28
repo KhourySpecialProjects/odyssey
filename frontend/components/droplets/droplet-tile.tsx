@@ -22,7 +22,7 @@ export function DropletTile({
   isEnrolled = false,
   completedLessonIds = [],
   profilePage,
-  compact
+  compact,
 }: DropletTileProps) {
   const [averageRating, setAverageRating] = useState<number>(0);
 

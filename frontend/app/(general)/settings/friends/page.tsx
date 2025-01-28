@@ -22,7 +22,10 @@ import { getAuthorByAuthorizedUserEmail } from "@/lib/requests/author";
 import { getInitials } from "@/lib/utils";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
-import { fetchAuthorizedUsers, getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
+import {
+  fetchAuthorizedUsers,
+  getAuthorizedUserByEmail,
+} from "@/lib/requests/authorized-user";
 import { FriendSentRequests } from "@/components/friends/friend-sent-requests";
 import { FriendSearch } from "@/components/friends/friend-search";
 
@@ -37,19 +40,19 @@ export default async function AuthorProfileSettings() {
 
   return (
     <div>
-
-      <FriendSearch authUsers={authorizedUsers} curUser = {authorizedUser}></FriendSearch>
+      <FriendSearch
+        authUsers={authorizedUsers}
+        curUser={authorizedUser}
+      ></FriendSearch>
 
       <AdminSelector
         content={{
-          "Friends": <Friends />,
+          Friends: <Friends />,
           "Friend Requests": <FriendRequests />,
-          "People You May Know": <FriendSuggestions user={authorizedUser}/>,
-          "Sent Requests": <FriendSentRequests/>,
+          "People You May Know": <FriendSuggestions user={authorizedUser} />,
+          "Sent Requests": <FriendSentRequests />,
         }}
       />
-
-      
     </div>
-  )
+  );
 }

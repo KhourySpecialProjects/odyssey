@@ -494,22 +494,22 @@ export async function updateGithub(github: string, userId: number) {
 export async function updatePhoto(photo: File, userId: number) {
   try {
     const formData = new FormData();
-    formData.append('image', photo);
+    formData.append("image", photo);
 
     const uploadResult = await uploadImage(formData);
-    
+
     if (!uploadResult.ok || !uploadResult.url) {
-      throw new Error(uploadResult.error || 'Failed to upload photo');
+      throw new Error(uploadResult.error || "Failed to upload photo");
     }
 
     const mediaFormData = new FormData();
-    mediaFormData.append('files', photo);
-    mediaFormData.append('ref', 'plugin::users-permissions.user');
-    mediaFormData.append('refId', userId.toString());
-    mediaFormData.append('field', 'profilePhoto');
+    mediaFormData.append("files", photo);
+    mediaFormData.append("ref", "plugin::users-permissions.user");
+    mediaFormData.append("refId", userId.toString());
+    mediaFormData.append("field", "profilePhoto");
 
     const mediaResponse = await fetch(`${STRAPI_API_URL}/api/upload`, {
-      method: 'POST',
+      method: "POST",
       headers: {
         Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
       },
@@ -517,21 +517,20 @@ export async function updatePhoto(photo: File, userId: number) {
     });
 
     if (!mediaResponse.ok) {
-      console.error('Media response:', await mediaResponse.text());
-      throw new Error('Failed to create media entry');
+      console.error("Media response:", await mediaResponse.text());
+      throw new Error("Failed to create media entry");
     }
 
     const mediaData = await mediaResponse.json();
     const mediaId = mediaData[0].id;
 
-
     // Then update the user with the file reference
     const response = await fetch(
       `${STRAPI_API_URL}/api/authorized-users/${userId}`,
       {
-        method: 'PUT',
+        method: "PUT",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
           Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
         },
         body: JSON.stringify({
@@ -543,11 +542,11 @@ export async function updatePhoto(photo: File, userId: number) {
     );
 
     if (!response.ok) {
-      throw new Error('Failed to update photo reference');
+      throw new Error("Failed to update photo reference");
     }
     return { success: true };
   } catch (error) {
-    console.error('Error updating photo:', error);
+    console.error("Error updating photo:", error);
     return { success: false, error };
   }
 }

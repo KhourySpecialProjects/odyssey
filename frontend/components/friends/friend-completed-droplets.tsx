@@ -5,8 +5,14 @@ import { AuthorizedUser, Droplet } from "@/types";
 import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
 import { FriendCompletedDropletsList } from "./friend-completed-droplets-list";
 
-export function FriendCompletedDroplets({ friend }: { friend: AuthorizedUser }) {
-  const [completedDroplets, setCompletedDroplets] = useState<Droplet[] | null>(null);
+export function FriendCompletedDroplets({
+  friend,
+}: {
+  friend: AuthorizedUser;
+}) {
+  const [completedDroplets, setCompletedDroplets] = useState<Droplet[] | null>(
+    null,
+  );
 
   useEffect(() => {
     async function fetchCompletedDroplets() {
