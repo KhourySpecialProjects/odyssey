@@ -51,7 +51,9 @@ export function FriendSuggestionsBlock({ suggUser, curUser }: { curUser: Authori
       <div className="flex items-center space-x-4">
         <div className="flex-1 min-w-0">
           <p className="font-medium truncate text-slate-900 dark:text-white">
-            {suggUser.email}
+            {suggUser.firstName && suggUser.lastName ? 
+            suggUser.firstName + " " + suggUser.lastName :
+            suggUser.email}
           </p>
         </div>
 
