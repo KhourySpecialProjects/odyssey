@@ -21,38 +21,30 @@ export function FriendSuggestionsBlock({
   suggUser,
   curUser,
   display,
+  requested
 }: {
   curUser: AuthorizedUser;
   suggUser: AuthorizedUser;
   display: boolean;
+  requested: boolean
 }) {
   const [open, setOpen] = useState(false);
-  const [requestSent, setRequestSent] = useState(false);
 
   const handleRequest = () => {
     startTransition(async () => {
       const result = await sendFriendRequest(curUser, suggUser);
       if (result.success) {
         toast.success("Request sent!");
-        setRequestSent(true);
       } else {
         toast.error("Failed to send request.");
       }
     });
   };
 
-  useEffect(() => {
-    const handleSentRequest = async () => {
-      const result = await getSentRequest(curUser, suggUser);
-      setRequestSent(result);
-    };
-    handleSentRequest();
-  }, [curUser, suggUser]);
-
   return (
     <div
       className={`${
-        requestSent === true && display === false ? "visibility: hidden" : "visibility: visible"
+        requested === true && display === false ? "visibility: hidden" : "visibility: visible"
       }`}
     >
       <li className="py-0 [&:not(:first-child)]:pt-3">
@@ -113,11 +105,11 @@ export function FriendSuggestionsBlock({
             <Button
               size="sm"
               variant="outline"
-              disabled={requestSent}
+              disabled={requested}
               onClick={handleRequest}
               className="text-white bg-sky-600"
             >
-              {requestSent ? "Sent!" : "Send Request"}
+              {requested ? "Sent!" : "Send Request"}
             </Button>
           </div>
         </div>

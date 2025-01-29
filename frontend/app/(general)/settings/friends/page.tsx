@@ -42,13 +42,16 @@ export default async function AuthorProfileSettings() {
   const sentRequests = await getSentRequestIds(authorizedUser);
   const friends = (await fetchFriends(authorizedUser)).map((user) => user.id);
 
-  const filteredAuthUsers = authorizedUsers.filter((user) => !sentRequests.includes(user.id)).filter((user) => !friends.includes(user.id));
+  const requestedAuthUsers = authorizedUsers.filter((user) => !sentRequests.includes(user.id)).map((user) => user.id);
+  const friendedAuthUsers = authorizedUsers.filter((user) => !friends.includes(user.id)).map((user) => user.id);
 
   return (
     <div>
       <FriendSearch
         authUsers={authorizedUsers}
         curUser={authorizedUser}
+        requestIds={requestedAuthUsers}
+        friendIds={friendedAuthUsers}
       ></FriendSearch>
 
       <AdminSelector
