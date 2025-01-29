@@ -1,0 +1,90 @@
+{
+  "kind": "collectionType",
+  "collectionName": "groups",
+  "info": {
+    "singularName": "group",
+    "pluralName": "groups",
+    "displayName": "Group",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "groupName": {
+      "type": "string",
+      "required": true
+    },
+    "description": {
+      "type": "text"
+    },
+    "members": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::authorized-user.authorized-user",
+      "inversedBy": "groups"
+    },
+    "admins": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::authorized-user.authorized-user",
+      "inversedBy": "groupAdmin"
+    },
+    "managers": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::authorized-user.authorized-user",
+      "inversedBy": "groupManager"
+    },
+    "semester": {
+      "type": "enumeration",
+      "enum": [
+        "Open Membership",
+        "Spring 2025",
+        "Summer 1 2025",
+        "Summer 2 2025",
+        "Summer 2025",
+        "Fall 2025",
+        "Spring 2026",
+        "Summer 1 2026",
+        "Summer 2 2026",
+        "Summer 2026",
+        "Fall 2026",
+        "Spring 2027",
+        "Summer 1 2027",
+        "Summer 2 2027",
+        "Summer 2027",
+        "Fall 2027"
+      ],
+      "default": "Open Membership"
+    },
+    "slug": {
+      "type": "uid",
+      "targetField": "groupName",
+      "required": true
+    },
+    "isArchived": {
+      "type": "boolean",
+      "default": false
+    },
+    "creator": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::authorized-user.authorized-user",
+      "inversedBy": "groupsCreated"
+    },
+    "droplets": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::droplet.droplet",
+      "inversedBy": "groups"
+    },
+    "playlists": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::playlist.playlist",
+      "inversedBy": "groups"
+    }
+  }
+}

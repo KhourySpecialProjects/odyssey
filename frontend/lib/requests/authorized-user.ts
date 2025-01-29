@@ -116,3 +116,31 @@ export async function fetchIsAuthorizedUser(email: string) {
     throw new Error("Failed to fetch authorized users data.");
   }
 }
+
+export async function getAllAuthorizedUsers(): Promise<AuthorizedUser[]> {
+  try {
+    const query = qs.stringify({
+      sort: ["email:asc"],
+      fields: ["email"],
+      pagination: {
+        pageSize: 100,
+        page: 1,
+      },
+    });
+    // console.log(" ---> query = ", query);
+
+    const response = await fetch(
+      NEXT_PUBLIC_STRAPI_API_URL + "/api/authorized-users?" + query,
+      {
+        headers: { Authorization: "Bearer " + STRAPI_ACCESS_TOKEN },
+        cache: "no-store",
+      },
+    );
+    const data = await response.json();
+    const authorizedUsers = flattenAttributes(data.data);
+    return authorizedUsers;
+  } catch (error) {
+    console.error("Failed to fetch authorized users:", error);
+    return [];
+  }
+}

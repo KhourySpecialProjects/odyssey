@@ -115,6 +115,11 @@
       "default": "draft",
       "required": true
     },
+    "groups": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::group.group",
+      "mappedBy": "droplets"},
     "droplet_lessons": {
       "type": "relation",
       "relation": "oneToMany",

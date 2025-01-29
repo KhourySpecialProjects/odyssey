@@ -19,7 +19,9 @@ export async function getUserProfile(
 
     // Extract relevant information from the response
     const { employeeId } = data;
-    return { nuid: employeeId };
+    // return { nuid: employeeId };
+    // TODO: Not sure why the build is only now requiring the isActive attribute???
+    return { nuid: employeeId, isActive: true };
   } catch (error) {
     // Handle errors appropriately
     console.error("Error fetching user profile:", error);
