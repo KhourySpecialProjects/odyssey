@@ -37,6 +37,19 @@ export type AuthorizedUser = {
   firstName: string;
   lastName: string;
   bio: string;
+  friendships: Friendship[];
+  sent_requests: AuthorizedUser[];
+  received_requests: AuthorizedUser[];
+  profilePhoto: string;
+};
+
+export type Media = {
+  url: string;
+  formats?: {
+    thumbnail?: {
+      url: string;
+    };
+  };
 };
 
 export type NavItem = {
@@ -218,4 +231,8 @@ export type ActionResponse<T = any> = {
   data?: T | null;
   error?: any;
   message?: string;
+};
+
+export type Friendship = {
+  authorized_users: AuthorizedUser[];
 };

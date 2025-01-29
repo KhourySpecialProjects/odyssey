@@ -1,0 +1,22 @@
+{
+  "kind": "collectionType",
+  "collectionName": "friendships",
+  "info": {
+    "singularName": "friendship",
+    "pluralName": "friendships",
+    "displayName": "Friendship",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "authorized_users": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::authorized-user.authorized-user",
+      "inversedBy": "friendships"
+    }
+  }
+}

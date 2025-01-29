@@ -19,8 +19,15 @@ export async function getAuthorizedUserByEmail<
   {
     sort,
     filters,
-    populate,
-    fields = ["*", "firstName", "lastName", "bio"],
+    populate = {
+      received_requests: {
+        fields: ["id", "email", "firstName", "lastName", "bio", "profilePhoto"],
+      },
+      sent_requests: {
+        fields: ["id", "email", "firstName", "lastName", "bio", "profilePhoto"],
+      },
+    },
+    fields = ["*", "firstName", "lastName", "bio", "id"],
   }: StrapiRequestParams = {},
 ): Promise<T> {
   const path = `/authorized-users`;
@@ -47,12 +54,20 @@ export async function fetchAuthorizedUsers(): Promise<AuthorizedUser[]> {
   try {
     const query = qs.stringify({
       sort: ["email"],
-      fields: ["id", "email", "isEnabled", "firstName", "lastName", "bio"],
+      fields: [
+        "id",
+        "email",
+        "isEnabled",
+        "firstName",
+        "lastName",
+        "bio",
+        "profilePhoto",
+      ],
       populate: {
         roles: { fields: ["title"] },
       },
       pagination: {
-        pageSize: 25,
+        pageSize: 50,
         page: 1,
       },
     });

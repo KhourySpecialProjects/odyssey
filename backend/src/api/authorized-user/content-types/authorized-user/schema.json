@@ -89,6 +89,27 @@
     "bio": {
       "type": "text",
       "maxLength": 400
+    },
+    "sent_requests": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::authorized-user.authorized-user",
+      "inversedBy": "received_requests"
+    },
+    "received_requests": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::authorized-user.authorized-user",
+      "inversedBy": "sent_requests"
+    },
+    "friendships": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::friendship.friendship",
+      "mappedBy": "authorized_users"
+    },
+    "profilePhoto": {
+      "type": "text"
     }
   }
 }
