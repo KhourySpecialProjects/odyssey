@@ -22,6 +22,7 @@ export async function FriendSuggestions({ user }: { user: AuthorizedUser }) {
                 curUser={user}
                 suggUser={suggestedUser}
                 display={false}
+                requested={false}
                 key={`${user.id} / ${suggestedUser.id}`}
               />
             ))}

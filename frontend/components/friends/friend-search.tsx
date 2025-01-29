@@ -9,13 +9,16 @@ import { ChangeEvent } from "react";
 import { AuthorizedUser } from "@/types";
 import { AuthorizedUserBlock } from "../admin/users/authorized-user";
 import { FriendSuggestionsBlock } from "./friend-suggestions-block";
+import { FriendBlock } from "./friend-block";
 
 interface FriendSearchProps {
     authUsers: AuthorizedUser[];
     curUser: AuthorizedUser;
+    requestIds: number[];
+    friendIds: number[];
 }
 
-export function FriendSearch({ authUsers, curUser }: FriendSearchProps) {
+export function FriendSearch({ authUsers, curUser, requestIds, friendIds }: FriendSearchProps) {
     const [searchTerm, setSearchItem] = useState("");
     const [isHovered, setIsHovered] = useState(false);
     const [searchResults, setSearchResults] = useState<AuthorizedUser[]>([]);
@@ -74,14 +77,35 @@ export function FriendSearch({ authUsers, curUser }: FriendSearchProps) {
                     >
                         {searchResults.length > 0 ? (
                             <ul className="md:space-y-4 p-4">
-                                {searchResults.slice(0, 10).map((user) => (
-                                    <FriendSuggestionsBlock
-                                        suggUser={user}
-                                        curUser={curUser}
-                                        display={true}
-                                        key={user.id}
-                                    />
-                                ))}
+                                {searchResults.slice(0, 10).map((user) => {
+
+                                    if (!friendIds.includes(user.id)) {
+                                        return (
+                                            <FriendBlock
+                                                user={curUser}
+                                                friend={user}
+                                                key={user.id}
+                                            />
+                                        )
+                                    } else if (requestIds.includes(user.id)) {
+                                        return (<FriendSuggestionsBlock
+                                            suggUser={user}
+                                            curUser={curUser}
+                                            display={true}
+                                            requested={false}
+                                            key={user.id}
+                                        />)
+                                    } else {
+                                        return (<FriendSuggestionsBlock
+                                            suggUser={user}
+                                            curUser={curUser}
+                                            display={true}
+                                            requested={true}
+                                            key={user.id}
+                                        />)
+                                    }
+                                }
+                                )}
                             </ul>
                         ) : (
                             <p>There are no authorized users.</p>
