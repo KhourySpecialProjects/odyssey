@@ -302,6 +302,55 @@ export async function createEnrollment(
   }
 }
 
+export async function createEnrollmentFromEmail(
+  formData: z.infer<typeof DropletEnrollmentSchema>,
+  email: string,
+) {
+  try {
+    const authorizedUser = await getAuthorizedUserByEmail(email);
+    //console.log("authorized user id: ", authorizedUser.id);
+    const enrollments = await getEnrollmentsByAuthorizedUser(authorizedUser.id);
+
+    const enrollIDs = enrollments.map((enrollment) => enrollment.droplet.id);
+
+    // console.log("enroll ids: ", enrollIDs);
+
+    // console.log("-------------------");
+    // console.log("formdata: ", formData.droplet);
+
+    if (
+      !enrollments
+        .map((enrollment) => enrollment.droplet.id)
+        .includes(formData.droplet)
+    ) {
+      console.log("sending post request");
+      const response = await fetch(STRAPI_API_URL + "/api/enrollments", {
+        method: "POST",
+        body: JSON.stringify({
+          data: { ...formData, authorizedUser: authorizedUser.id },
+        }),
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+        },
+      });
+      const data = await response.json();
+
+      if (!response.ok || (response.ok && data.error)) {
+        const errorPath = data.error.details.errors[0].path[0];
+        const errorMessage = `${data.error.message} (${errorPath})`;
+        return { ok: false, error: errorMessage, data: null };
+      }
+
+      //revalidateTag("enrollments");
+      //revalidatePath("/(general)/dashboard", "page");
+    }
+  } catch (err) {
+    console.error(err);
+    return { error: "Database Error: Failed to enroll." };
+  }
+}
+
 const CreateDropletSchema = DropletSchema.pick({
   name: true,
   focusArea: true,

@@ -24,7 +24,6 @@ export function FirstVisitPopup({ user }: { user: AuthorizedUser | null }) {
   const [bio, setBio] = useState("");
 
   useEffect(() => {
-    console.log("user: ", user);
     if (user?.firstTime) {
       setIsOpen(true);
     }
