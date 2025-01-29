@@ -34,7 +34,7 @@ export function FriendSearch({ authUsers, curUser }: FriendSearchProps) {
                 user.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                 user.lastName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                 user.email
-                    ?.substring(0, user.email?.length - 17)
+                    ?.split("@")[0]
                     .toLowerCase()
                     .includes(searchTerm.toLowerCase()) ||
                 (
@@ -74,7 +74,7 @@ export function FriendSearch({ authUsers, curUser }: FriendSearchProps) {
                     >
                         {searchResults.length > 0 ? (
                             <ul className="md:space-y-4 p-4">
-                                {searchResults.slice(0,10).map((user) => (
+                                {searchResults.slice(0, 10).map((user) => (
                                     <FriendSuggestionsBlock
                                         suggUser={user}
                                         curUser={curUser}
