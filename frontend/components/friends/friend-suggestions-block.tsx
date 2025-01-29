@@ -21,12 +21,12 @@ export function FriendSuggestionsBlock({
   suggUser,
   curUser,
   display,
-  requested
+  requested,
 }: {
   curUser: AuthorizedUser;
   suggUser: AuthorizedUser;
   display: boolean;
-  requested: boolean
+  requested: boolean;
 }) {
   const [open, setOpen] = useState(false);
 
@@ -44,14 +44,16 @@ export function FriendSuggestionsBlock({
   return (
     <div
       className={`${
-        requested === true && display === false ? "visibility: hidden" : "visibility: visible"
+        requested === true && display === false
+          ? "visibility: hidden"
+          : "visibility: visible"
       }`}
     >
       <li className="py-0 [&:not(:first-child)]:pt-3">
         <div className="flex items-center space-x-4">
-          {suggUser.profilePhoto?.formats?.thumbnail?.url && (
+          {suggUser.profilePhoto && (
             <img
-              src={suggUser.profilePhoto.formats.thumbnail.url}
+              src={suggUser.profilePhoto}
               alt={`${suggUser.firstName}'s profile`}
               className="w-12 h-12 rounded-full object-cover"
             />
@@ -114,6 +116,6 @@ export function FriendSuggestionsBlock({
           </div>
         </div>
       </li>
-      </div>
+    </div>
   );
 }

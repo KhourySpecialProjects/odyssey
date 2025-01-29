@@ -552,7 +552,7 @@ export interface ApiAuthorizedUserAuthorizedUser extends Schema.CollectionType {
       'manyToMany',
       'api::playlist.playlist'
     >;
-    profilePhoto: Attribute.Media<'images' | 'files' | 'videos' | 'audios'>;
+    profilePhoto: Attribute.Text;
     received_requests: Attribute.Relation<
       'api::authorized-user.authorized-user',
       'manyToMany',

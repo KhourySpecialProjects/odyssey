@@ -31,10 +31,8 @@ export async function fetchFriends(
             "received_requests",
             "github",
             "linkedin",
+            "profilePhoto",
           ],
-          populate: {
-            profilePhoto: "*",
-          },
         },
       },
       pagination: {
@@ -109,15 +107,15 @@ export async function getSentRequestIds(
       filters: {
         received_requests: {
           id: {
-            $eq: requester.id
-          }
-        }
+            $eq: requester.id,
+          },
+        },
       },
       pagination: {
         pageSize: 100,
         page: 1,
       },
-      fields: ["id"]
+      fields: ["id"],
     });
 
     const response = await fetch(
@@ -136,8 +134,6 @@ export async function getSentRequestIds(
     throw new Error("Failed to fetch friends data.");
   }
 }
-
-
 
 export async function acceptFriendRequest(userId: number, requestId: number) {
   const token = process.env.STRAPI_ACCESS_TOKEN;
@@ -407,10 +403,8 @@ export async function fetchFriendshipsById(
             "bio",
             "github",
             "linkedin",
+            "profilePhoto",
           ],
-          populate: {
-            profilePhoto: "*",
-          },
         },
       },
       pagination: {

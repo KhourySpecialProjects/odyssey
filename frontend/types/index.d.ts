@@ -39,7 +39,7 @@ export type AuthorizedUser = {
   friendships: Friendship[];
   sent_requests: AuthorizedUser[];
   received_requests: AuthorizedUser[];
-  profilePhoto: Media;
+  profilePhoto: string;
 };
 
 export type Media = {

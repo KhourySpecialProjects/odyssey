@@ -54,9 +54,9 @@ export function FriendRequestBlock({
   return (
     <li className="py-0 [&:not(:first-child)]:pt-3">
       <div className="flex items-center space-x-4">
-        {request.profilePhoto?.formats?.thumbnail?.url && (
+        {request.profilePhoto && (
           <img
-            src={request.profilePhoto.formats.thumbnail.url}
+            src={request.profilePhoto}
             alt={`${request.firstName}'s profile`}
             className="w-12 h-12 rounded-full object-cover"
           />
@@ -82,10 +82,10 @@ export function FriendRequestBlock({
 
           <DialogContent>
             <DialogHeader>
-              {request.profilePhoto?.formats?.thumbnail?.url && (
+              {request.profilePhoto && (
                 <div className="flex justify-center items-center">
                   <img
-                    src={request.profilePhoto.formats.thumbnail.url}
+                    src={request.profilePhoto}
                     alt={`${request.firstName}'s profile`}
                     className="w-12 h-12 rounded-full object-cover"
                   />
