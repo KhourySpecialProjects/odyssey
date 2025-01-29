@@ -101,6 +101,44 @@ export async function getSentRequest(
   }
 }
 
+export async function getSentRequestIds(
+  requester: AuthorizedUser,
+): Promise<Number[]> {
+  try {
+    const query = qs.stringify({
+      filters: {
+        received_requests: {
+          id: {
+            $eq: requester.id
+          }
+        }
+      },
+      pagination: {
+        pageSize: 100,
+        page: 1,
+      },
+      fields: ["id"]
+    });
+
+    const response = await fetch(
+      NEXT_PUBLIC_STRAPI_API_URL + "/api/authorized-users?" + query,
+      {
+        headers: { Authorization: "Bearer " + STRAPI_ACCESS_TOKEN },
+        cache: "no-store",
+      },
+    );
+    const data = await response.json();
+    const friendships: AuthorizedUser[] = flattenAttributes(data.data);
+
+    return friendships.map((user) => user.id);
+  } catch (error) {
+    console.error("Database Error:", error);
+    throw new Error("Failed to fetch friends data.");
+  }
+}
+
+
+
 export async function acceptFriendRequest(userId: number, requestId: number) {
   const token = process.env.STRAPI_ACCESS_TOKEN;
   try {
