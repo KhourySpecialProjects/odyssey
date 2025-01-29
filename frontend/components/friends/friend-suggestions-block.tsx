@@ -35,20 +35,19 @@ export function FriendSuggestionsBlock({
       if (result.success) {
         toast.success("Request sent!");
         setRequestSent(true);
-        console.log("request sent!")
       } else {
         toast.error("Failed to send request.");
-        console.log("request failed!")
       }
     });
   };
 
   useEffect(() => {
     const handleSentRequest = async () => {
-      setRequestSent(await getSentRequest(curUser, suggUser));
+      const result = await getSentRequest(curUser, suggUser);
+      setRequestSent(result);
     };
     handleSentRequest();
-  }, [suggUser]);
+  }, [curUser, suggUser]);
 
   return (
     <div
@@ -114,7 +113,7 @@ export function FriendSuggestionsBlock({
             <Button
               size="sm"
               variant="outline"
-              disabled={requestSent === true}
+              disabled={requestSent}
               onClick={handleRequest}
               className="text-white bg-sky-600"
             >
@@ -123,6 +122,6 @@ export function FriendSuggestionsBlock({
           </div>
         </div>
       </li>
-    </div>
+      </div>
   );
 }
