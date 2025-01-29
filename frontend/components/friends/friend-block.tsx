@@ -42,9 +42,9 @@ export function FriendBlock({
   return (
     <li className="py-0 [&:not(:first-child)]:pt-3">
       <div className="flex items-center space-x-4">
-        {friend.profilePhoto?.formats?.thumbnail?.url && (
+        {friend.profilePhoto && (
           <img
-            src={friend.profilePhoto.formats.thumbnail.url}
+            src={friend.profilePhoto}
             alt={`${friend.firstName}'s profile`}
             className="w-12 h-12 rounded-full object-cover"
           />
@@ -72,10 +72,10 @@ export function FriendBlock({
 
           <DialogContent>
             <DialogHeader>
-              {friend.profilePhoto?.formats?.thumbnail?.url && (
+              {friend.profilePhoto && (
                 <div className="flex justify-center items-center">
                   <img
-                    src={friend.profilePhoto.formats.thumbnail.url}
+                    src={friend.profilePhoto}
                     alt={`${friend.firstName}'s profile`}
                     className="w-12 h-12 rounded-full object-cover"
                   />

@@ -58,9 +58,9 @@ export function FriendSuggestionsBlock({
     >
       <li className="py-0 [&:not(:first-child)]:pt-3">
         <div className="flex items-center space-x-4">
-          {suggUser.profilePhoto?.formats?.thumbnail?.url && (
+          {suggUser.profilePhoto && (
             <img
-              src={suggUser.profilePhoto.formats.thumbnail.url}
+              src={suggUser.profilePhoto}
               alt={`${suggUser.firstName}'s profile`}
               className="w-12 h-12 rounded-full object-cover"
             />

@@ -8,7 +8,7 @@ import {
   isAuthorizedUserAdmin,
   condenseRoleTitles,
 } from "@/lib/utils";
-import { Droplet, Lesson, User } from "@/types";
+import { AuthorizedUser, Droplet, Lesson, User } from "@/types";
 import {
   ChevronDownIcon,
   PersonStanding,
@@ -58,10 +58,12 @@ import { Button } from "../ui/button";
 export function Sidebar({
   user,
   droplet,
+  authorizedUser,
   onLessonsUpdate,
 }: {
   user: User;
   droplet: Pick<Droplet, "id" | "name" | "slug" | "droplet_lessons">;
+  authorizedUser: AuthorizedUser | null;
   onLessonsUpdate?: (lessons: Lesson[]) => void;
 }) {
   const [expanded, setExpanded] = useState(false);
@@ -239,13 +241,13 @@ export function Sidebar({
             {/* Droplet name */}
             <div className="flex items-center justify-between p-2 my-2">
               <p className="text-lg font-extrabold leading-7">{droplet.name}</p>
-              <Link
+              {/* <Link
                 href={`/draft/d/${droplet.slug}`}
                 className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-950 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 dark:ring-offset-slate-950 dark:focus-visible:ring-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 h-9 w-9"
                 aria-label="Back to Drafts"
               >
                 <ArrowLeftIcon className="w-6 h-6" />
-              </Link>
+              </Link> */}
             </div>
 
             {/* Metadata link */}
@@ -333,7 +335,11 @@ export function Sidebar({
               <DropdownMenuTrigger asChild>
                 <div className="w-full group flex shrink cursor-pointer select-none items-center justify-between gap-1 rounded-lg p-1.5 px-2 text-sm text-slate-600 transition-colors duration-100 wg-antialiased hover:bg-slate-100 dark:hover:bg-white/5">
                   <div className="inline-flex flex-row items-center justify-between">
-                    {user.image ? (
+                    {authorizedUser?.profilePhoto ? 
+                    <Avatar variant="round" size="xs">
+                      <AvatarImage src={authorizedUser?.profilePhoto || user?.image || undefined}  />
+                    </Avatar>  :
+                    user.image ? (
                       <Avatar variant="round" size="xs">
                         <AvatarImage src={user.image} />
                         <AvatarFallback>
@@ -367,19 +373,19 @@ export function Sidebar({
 
                 <DropdownMenuItem asChild>
                   <Link href="/settings">
-                    <CogIcon className="w-4 h-4 mr-2" />
-                    <span>Settings</span>
+                    <PersonStanding className="w-4 h-4 mr-2" />
+                    <span>Profile</span>
                   </Link>
                 </DropdownMenuItem>
 
-                {isAdmin ? (
+                {/* {isAdmin ? (
                   <DropdownMenuItem asChild>
                     <Link href="/admin">
                       <TowerControlIcon className="w-4 h-4 mr-2" />
                       <span>Admin</span>
                     </Link>
                   </DropdownMenuItem>
-                ) : null}
+                ) : null} */}
 
                 <DropdownMenuItem
                   onClick={() => signOut()}

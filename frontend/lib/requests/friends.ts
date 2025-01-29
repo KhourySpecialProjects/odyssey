@@ -31,10 +31,8 @@ export async function fetchFriends(
             "received_requests",
             "github",
             "linkedin",
+            "profilePhoto"
           ],
-          populate: {
-            profilePhoto: "*",
-          },
         },
       },
       pagination: {
@@ -369,10 +367,8 @@ export async function fetchFriendshipsById(
             "bio",
             "github",
             "linkedin",
+            "profilePhoto"
           ],
-          populate: {
-            profilePhoto: "*",
-          },
         },
       },
       pagination: {

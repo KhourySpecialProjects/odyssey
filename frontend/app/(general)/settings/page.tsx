@@ -51,7 +51,7 @@ export default async function Settings() {
         <CardContent className="flex flex-col items-start gap-x-8 gap-y-6 sm:flex-row">
           <div className="flex items-center space-x-3">
             <Avatar variant="round" size="sm">
-              <AvatarImage src={user?.image ?? undefined} />
+              <AvatarImage src={authorizedUser?.profilePhoto || user?.image || undefined} />
               <AvatarFallback>
                 {user?.name ? (
                   getInitials(user.name)

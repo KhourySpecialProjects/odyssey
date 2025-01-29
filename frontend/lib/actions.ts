@@ -491,40 +491,8 @@ export async function updateGithub(github: string, userId: number) {
   }
 }
 
-export async function updatePhoto(photo: File, userId: number) {
+export async function updatePhoto(imageUrl: string, userId: number) {
   try {
-    const formData = new FormData();
-    formData.append("image", photo);
-
-    const uploadResult = await uploadImage(formData);
-
-    if (!uploadResult.ok || !uploadResult.url) {
-      throw new Error(uploadResult.error || "Failed to upload photo");
-    }
-
-    const mediaFormData = new FormData();
-    mediaFormData.append("files", photo);
-    mediaFormData.append("ref", "plugin::users-permissions.user");
-    mediaFormData.append("refId", userId.toString());
-    mediaFormData.append("field", "profilePhoto");
-
-    const mediaResponse = await fetch(`${STRAPI_API_URL}/api/upload`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
-      },
-      body: mediaFormData,
-    });
-
-    if (!mediaResponse.ok) {
-      console.error("Media response:", await mediaResponse.text());
-      throw new Error("Failed to create media entry");
-    }
-
-    const mediaData = await mediaResponse.json();
-    const mediaId = mediaData[0].id;
-
-    // Then update the user with the file reference
     const response = await fetch(
       `${STRAPI_API_URL}/api/authorized-users/${userId}`,
       {
@@ -535,19 +503,22 @@ export async function updatePhoto(photo: File, userId: number) {
         },
         body: JSON.stringify({
           data: {
-            profilePhoto: mediaId,
+            profilePhoto: imageUrl,
           },
         }),
-      },
+      }
     );
 
     if (!response.ok) {
-      throw new Error("Failed to update photo reference");
+      console.error('Profile update failed:', await response.text());
+      return { success: false, error: 'Failed to update profile photo' };
     }
+
+    revalidatePath('/settings/profile');
     return { success: true };
   } catch (error) {
-    console.error("Error updating photo:", error);
-    return { success: false, error };
+    console.error('Error updating photo:', error);
+    return { success: false, error: 'Failed to process request' };
   }
 }
 

@@ -6,7 +6,7 @@ import {
   isAuthorizedUserFaculty,
   condenseRoleTitles,
 } from "@/lib/utils";
-import { User } from "@/types";
+import { AuthorizedUser, User } from "@/types";
 import {
   ChevronDownIcon,
   CogIcon,
@@ -26,17 +26,16 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
+import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
 
-export function UserDropdown(user: User) {
-  const isAdmin = isAuthorizedUserAdmin(user.roles);
-  const isFaculty = isAuthorizedUserFaculty(user.roles);
+export function UserDropdown({ user, authorizedUser }: { user: User; authorizedUser: AuthorizedUser | null }) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <div className="w-full group flex shrink cursor-pointer select-none items-center justify-between gap-1 rounded-lg p-1.5 px-2 text-sm text-slate-600 transition-colors duration-100 wg-antialiased hover:bg-slate-100 dark:hover:bg-white/5">
           <div className="inline-flex flex-row items-center justify-between">
             <Avatar variant="round" size="xs">
-              <AvatarImage src={user.image ?? undefined} />
+              <AvatarImage src={authorizedUser?.profilePhoto || user?.image || undefined}  />
               <AvatarFallback>
                 {user.name ? (
                   getInitials(user.name)
