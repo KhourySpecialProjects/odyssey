@@ -144,7 +144,7 @@ export async function acceptFriendRequest(userId: number, requestId: number) {
         method: "POST",
         body: JSON.stringify({
           data: {
-            friends: [requestId, userId],
+            authorized_users: [requestId, userId],
           },
         }),
         headers: {
