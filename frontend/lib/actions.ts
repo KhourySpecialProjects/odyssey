@@ -2,6 +2,7 @@
 
 import { revalidatePath, revalidateTag } from "next/cache";
 import { redirect } from "next/navigation";
+import { Media } from "@/types";
 import { z } from "zod";
 import { getCurrentUser } from "./auth/session";
 import { getAuthorByAuthorizedUserEmail } from "./requests/author";
@@ -501,11 +502,11 @@ export async function updateLinkedin(linkedIn: string, userId: number) {
     );
 
     if (!response.ok) {
-      throw new Error("Failed to update first time status");
+      throw new Error("Failed to update linkedin");
     }
     return { success: true };
   } catch (error) {
-    console.error("Error updating first time status:", error);
+    console.error("Error updating linkedin:", error);
     return { success: false, error };
   }
 }
@@ -530,12 +531,43 @@ export async function updateGithub(github: string, userId: number) {
     );
 
     if (!response.ok) {
-      throw new Error("Failed to update first time status");
+      throw new Error("Failed to update github");
     }
     return { success: true };
   } catch (error) {
-    console.error("Error updating first time status:", error);
+    console.error("Error updating github:", error);
     return { success: false, error };
+  }
+}
+
+export async function updatePhoto(imageUrl: string, userId: number) {
+  try {
+    const response = await fetch(
+      `${STRAPI_API_URL}/api/authorized-users/${userId}`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+        },
+        body: JSON.stringify({
+          data: {
+            profilePhoto: imageUrl,
+          },
+        }),
+      },
+    );
+
+    if (!response.ok) {
+      console.error("Profile update failed:", await response.text());
+      return { success: false, error: "Failed to update profile photo" };
+    }
+
+    revalidatePath("/settings/profile");
+    return { success: true };
+  } catch (error) {
+    console.error("Error updating photo:", error);
+    return { success: false, error: "Failed to process request" };
   }
 }
 

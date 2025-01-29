@@ -1,5 +1,5 @@
 {
-  "/enrollments": {
+  "/friendships": {
     "get": {
       "responses": {
         "200": {
@@ -7,7 +7,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/EnrollmentListResponse"
+                "$ref": "#/components/schemas/FriendshipListResponse"
               }
             }
           }
@@ -64,7 +64,7 @@
         }
       },
       "tags": [
-        "Enrollment"
+        "Friendship"
       ],
       "parameters": [
         {
@@ -170,7 +170,7 @@
           }
         }
       ],
-      "operationId": "get/enrollments"
+      "operationId": "get/friendships"
     },
     "post": {
       "responses": {
@@ -179,7 +179,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/EnrollmentResponse"
+                "$ref": "#/components/schemas/FriendshipResponse"
               }
             }
           }
@@ -236,23 +236,23 @@
         }
       },
       "tags": [
-        "Enrollment"
+        "Friendship"
       ],
       "parameters": [],
-      "operationId": "post/enrollments",
+      "operationId": "post/friendships",
       "requestBody": {
         "required": true,
         "content": {
           "application/json": {
             "schema": {
-              "$ref": "#/components/schemas/EnrollmentRequest"
+              "$ref": "#/components/schemas/FriendshipRequest"
             }
           }
         }
       }
     }
   },
-  "/enrollments/{id}": {
+  "/friendships/{id}": {
     "get": {
       "responses": {
         "200": {
@@ -260,7 +260,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/EnrollmentResponse"
+                "$ref": "#/components/schemas/FriendshipResponse"
               }
             }
           }
@@ -317,7 +317,7 @@
         }
       },
       "tags": [
-        "Enrollment"
+        "Friendship"
       ],
       "parameters": [
         {
@@ -331,7 +331,7 @@
           }
         }
       ],
-      "operationId": "get/enrollments/{id}"
+      "operationId": "get/friendships/{id}"
     },
     "put": {
       "responses": {
@@ -340,7 +340,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/EnrollmentResponse"
+                "$ref": "#/components/schemas/FriendshipResponse"
               }
             }
           }
@@ -397,7 +397,7 @@
         }
       },
       "tags": [
-        "Enrollment"
+        "Friendship"
       ],
       "parameters": [
         {
@@ -411,13 +411,13 @@
           }
         }
       ],
-      "operationId": "put/enrollments/{id}",
+      "operationId": "put/friendships/{id}",
       "requestBody": {
         "required": true,
         "content": {
           "application/json": {
             "schema": {
-              "$ref": "#/components/schemas/EnrollmentRequest"
+              "$ref": "#/components/schemas/FriendshipRequest"
             }
           }
         }
@@ -488,7 +488,7 @@
         }
       },
       "tags": [
-        "Enrollment"
+        "Friendship"
       ],
       "parameters": [
         {
@@ -502,7 +502,7 @@
           }
         }
       ],
-      "operationId": "delete/enrollments/{id}"
+      "operationId": "delete/friendships/{id}"
     }
   }
 }

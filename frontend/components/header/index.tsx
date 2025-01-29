@@ -10,13 +10,11 @@ import { LoginButton } from "./login-button";
 import { NavLinks } from "./nav-links";
 import { UserDropdown } from "./user-dropdown";
 import { isContentCreator } from "@/lib/utils";
+import { AuthorizedUser } from "@/types";
 import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
 
 export async function Header() {
   const user = await getCurrentUser();
-  const authorizedUser = user?.email
-    ? await getAuthorizedUserByEmail(user.email)
-    : null;
 
   const getNavLinks = () => {
     if (!user || !authorizedUser) {
@@ -27,6 +25,12 @@ export async function Header() {
       : generalConfig.mainNav;
   };
   const generalConfig = getGeneralConfig(user);
+  let authorizedUser: AuthorizedUser | null = null;
+  if (user?.email) {
+    authorizedUser = (await getAuthorizedUserByEmail(
+      user.email,
+    )) as AuthorizedUser;
+  }
 
   return (
     <header className="sticky top-0 z-10 bg-white border-b border-slate-200 dark:bg-slate-900 md:px-6">
@@ -90,7 +94,7 @@ export async function Header() {
           <div className="flex items-center gap-4 md:ml-auto md:gap-2 lg:gap-4">
             {user ? (
               <div className="flex items-center justify-center">
-                <UserDropdown {...user} />
+                <UserDropdown user={user} authorizedUser={authorizedUser} />
               </div>
             ) : (
               <LoginButton />

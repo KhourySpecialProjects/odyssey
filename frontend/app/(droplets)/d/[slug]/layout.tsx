@@ -4,7 +4,7 @@ import { getDropletBySlug } from "@/lib/requests/droplet";
 import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
 import { getServerSession } from "next-auth";
 import { Metadata } from "next/types";
-import { Droplet } from "@/types";
+import { AuthorizedUser, Droplet } from "@/types";
 import { getCurrentUser } from "@/lib/auth/session";
 import { notFound } from "next/navigation";
 import { getAuthorByAuthorizedUserEmail } from "@/lib/requests/author";
@@ -40,6 +40,12 @@ export default async function RootLayout({ params, children }: Props) {
   const session = await getServerSession();
   const user = await getCurrentUser();
   let completedLessonIds: number[] = [];
+  let authorizedUser: AuthorizedUser | null = null;
+  if (user?.email) {
+    authorizedUser = (await getAuthorizedUserByEmail(
+      user.email,
+    )) as AuthorizedUser;
+  }
 
   if (session?.user?.email) {
     const user = await getAuthorizedUserByEmail(session.user.email);
@@ -79,6 +85,7 @@ export default async function RootLayout({ params, children }: Props) {
         author={isAuthor || false}
         user={user}
         droplet={droplet}
+        authorizedUser={authorizedUser}
         completedLessonIds={completedLessonIds}
       />
       <main className="flex-1 px-4 py-8 md:px-8">{children}</main>
