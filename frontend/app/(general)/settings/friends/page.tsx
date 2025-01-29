@@ -28,7 +28,11 @@ import {
 } from "@/lib/requests/authorized-user";
 import { FriendSentRequests } from "@/components/friends/friend-sent-requests";
 import { FriendSearch } from "@/components/friends/friend-search";
-import { getSentRequest, getSentRequestIds, fetchFriends } from "@/lib/requests/friends";
+import {
+  getSentRequest,
+  getSentRequestIds,
+  fetchFriends,
+} from "@/lib/requests/friends";
 
 export default async function AuthorProfileSettings() {
   const authorizedUsers = await fetchAuthorizedUsers();
@@ -42,8 +46,12 @@ export default async function AuthorProfileSettings() {
   const sentRequests = await getSentRequestIds(authorizedUser);
   const friends = (await fetchFriends(authorizedUser)).map((user) => user.id);
 
-  const requestedAuthUsers = authorizedUsers.filter((user) => !sentRequests.includes(user.id)).map((user) => user.id);
-  const friendedAuthUsers = authorizedUsers.filter((user) => !friends.includes(user.id)).map((user) => user.id);
+  const requestedAuthUsers = authorizedUsers
+    .filter((user) => !sentRequests.includes(user.id))
+    .map((user) => user.id);
+  const friendedAuthUsers = authorizedUsers
+    .filter((user) => !friends.includes(user.id))
+    .map((user) => user.id);
 
   return (
     <div>
