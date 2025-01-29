@@ -18,14 +18,14 @@ interface FriendSearchProps {
 export function FriendSearch({ authUsers, curUser }: FriendSearchProps) {
     const [searchTerm, setSearchItem] = useState("");
     const [isHovered, setIsHovered] = useState(false);
-    const [searchResults, setSearchResults] = useState(authUsers);
+    const [searchResults, setSearchResults] = useState<AuthorizedUser[]>([]);
 
     const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
         const searchTerm = e.target.value;
         setSearchItem(searchTerm);
 
         if (!searchTerm.trim()) {
-            setSearchResults(authUsers);
+            setSearchResults([]);
             return;
         }
 
@@ -66,7 +66,7 @@ export function FriendSearch({ authUsers, curUser }: FriendSearchProps) {
                     onMouseLeave={() => setIsHovered(false)}
                 />
 
-                {isHovered && (
+                {isHovered && searchTerm != "" && (
                     <div
                         className="absolute z-50 w-full bg-white border border-gray-200 rounded-md shadow-lg"
                         onMouseEnter={() => setIsHovered(true)}
