@@ -8,7 +8,7 @@ import {
   isAuthorizedUserAdmin,
   condenseRoleTitles,
 } from "@/lib/utils";
-import { Droplet, Lesson, User } from "@/types";
+import { AuthorizedUser, Droplet, Lesson, User } from "@/types";
 import {
   BookTextIcon,
   ChevronDownIcon,
@@ -49,11 +49,13 @@ export default function Sidebar({
   user,
   author = false,
   droplet,
+  authorizedUser,
   completedLessonIds = [],
 }: {
   user?: User | null;
   author: boolean;
   droplet: Pick<Droplet, "name" | "slug" | "droplet_lessons">;
+  authorizedUser: AuthorizedUser | null
   completedLessonIds: number[];
 }) {
   const [expanded, setExpanded] = useState(false);
@@ -254,7 +256,11 @@ export default function Sidebar({
               <DropdownMenuTrigger asChild>
                 <div className="w-full group flex shrink cursor-pointer select-none items-center justify-between gap-1 rounded-lg p-1.5 px-2 text-sm text-slate-600 transition-colors duration-100 wg-antialiased hover:bg-slate-100 dark:hover:bg-white/5">
                   <div className="inline-flex flex-row items-center justify-between">
-                    {user.image ? (
+                  {authorizedUser?.profilePhoto ? 
+                    <Avatar variant="round" size="xs">
+                      <AvatarImage src={authorizedUser?.profilePhoto || user?.image || undefined}  />
+                    </Avatar> :
+                    user.image ? (
                       <Avatar variant="round" size="xs">
                         <AvatarImage src={user.image} />
                         <AvatarFallback>
@@ -288,18 +294,18 @@ export default function Sidebar({
                 <DropdownMenuItem asChild>
                   <Link href="/settings">
                     <PersonStanding className="w-4 h-4 mr-2" />
-                    <span>Admin</span>
+                    <span>Profile</span>
                   </Link>
                 </DropdownMenuItem>
 
-                {isAdmin ? (
+                {/* {isAdmin ? (
                   <DropdownMenuItem asChild>
                     <Link href="/admin">
                       <TowerControlIcon className="w-4 h-4 mr-2" />
                       <span>Admin</span>
                     </Link>
                   </DropdownMenuItem>
-                ) : null}
+                ) : null} */}
 
                 <DropdownMenuSeparator />
 

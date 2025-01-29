@@ -3,7 +3,7 @@
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { updateGithub, updateLinkedin, updatePhoto } from "@/lib/actions";
+import { updateGithub, updateLinkedin, updatePhoto, uploadImage } from "@/lib/actions";
 import { AuthorizedUser } from "@/types";
 import { useState } from "react";
 import imageCompression from "browser-image-compression";
@@ -60,53 +60,137 @@ export function SocialForms({
     }
   };
 
+  const FileUpload = ({
+    file,
+    setFile,
+    imagePreview,
+  }: {
+    file: File | null;
+    setFile: (file: File | null) => void;
+    imagePreview: string | null;
+  }) => {
+    const [isDragging, setIsDragging] = useState(false);
+  
+    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (file && file.type.startsWith("image/")) {
+        const compressedFile = await compressImage(file);
+        setFile(compressedFile);
+      }
+    };
+  
+    const handleDrop = async (e: React.DragEvent<HTMLDivElement>) => {
+      e.preventDefault();
+      setIsDragging(false);
+  
+      const file = e.dataTransfer.files[0];
+      if (file && file.type.startsWith("image/")) {
+        const compressedFile = await compressImage(file);
+        setFile(compressedFile);
+      } else {
+        toast.error("Please upload a valid image file");
+      }
+    };
+  
+    const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+      e.preventDefault();
+      setIsDragging(true);
+    };
+  
+    const handleDragLeave = () => {
+      setIsDragging(false);
+    };
+  
+    const handleRemoveFile = () => {
+      setFile(null);
+    };
+  
+    return (
+      <div
+        className={`flex flex-col items-center p-6 border-2 rounded-lg cursor-pointer 
+          ${isDragging ? "border-blue-500 bg-blue-50" : "border-gray-300 border-dashed"}`}
+        onDrop={handleDrop}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+      >
+        {imagePreview ? (
+          <img
+            src={imagePreview}
+            alt="Profile"
+            className="w-32 h-32 object-cover rounded-full border mb-4"
+          />
+        ) : (
+          <p className="text-gray-500 mb-4">
+            Drag & drop to update your profile photo here
+          </p>
+        )}
+        
+        <label className="bg-blue-500 text-white py-2 px-4 rounded cursor-pointer">
+          {file ? "Change Photo" : "Upload Photo"}
+          <input
+            name="profilePhoto"
+            type="file"
+            accept="image/*"
+            onChange={handleFileChange}
+            className="hidden"
+          />
+        </label>
+  
+        {file && (
+          <div className="flex items-center justify-between w-full mt-4">
+            <span className="truncate flex-grow">{file.name}</span>
+            <button
+              type="button"
+              className="bg-red-500 text-white py-1 px-2 rounded ml-2"
+              onClick={handleRemoveFile}
+            >
+              Remove
+            </button>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <>
       <form
         action={async (formData: FormData) => {
           if (profileFile && authorizedUser?.id) {
-            const result = await updatePhoto(profileFile, authorizedUser.id);
-            if (result.success) {
-              toast.success("Profile photo updated successfully");
+            const newFormData: FormData = new FormData();
+            newFormData.append("image", profileFile as Blob);
+      
+            const response = await uploadImage(newFormData);
+            if (response.ok && response.url) {
+              setProfileImage(response.url);
+              const updateResult = await updatePhoto(response.url, authorizedUser.id);
+              if (updateResult.success) {
+                toast.success("Profile photo updated successfully");
+              } else {
+                console.error(updateResult.error);
+                toast.error("Failed to update profile photo");
+              }
             } else {
-              console.error(result.error);
-              toast.error("Failed to update profile photo");
+              console.error(response.error);
+              toast.error("Failed to upload photo");
             }
           }
         }}
         className="px-6 py-4 flex flex-row gap-4 items-center"
       >
-        <div
-          className="p-6 flex flex-col items-center border-2 border-dashed border-gray-400 rounded-lg cursor-pointer hover:border-gray-600"
-          onDrop={handleDrop}
-          onDragOver={(e) => e.preventDefault()}
-        >
-          {profileImage ? (
-            <img
-              src={profileImage}
-              alt="Profile"
-              className="w-32 h-32 object-cover rounded-full border"
-            />
-          ) : (
-            <p className="text-gray-500">
-              Drag & drop to update your profile photo here
-            </p>
-          )}
-          <input
-            type="file"
-            accept="image/*"
-            onChange={handleFileSelect}
-            className="hidden"
-            id="fileUpload"
-          />
-          <label
-            htmlFor="fileUpload"
-            className="mt-2 px-4 py-2 bg-blue-500 text-white rounded-lg cursor-pointer"
-          >
-            Upload Photo
-          </label>
-        </div>
-        <Button type="submit" className="max-w-80">
+        <FileUpload 
+          file={profileFile}
+          setFile={(file) => {
+            setProfileFile(file);
+            if (file) {
+              setProfileImage(URL.createObjectURL(file));
+            } else {
+              setProfileImage(null);
+            }
+          }}
+          imagePreview={profileImage}
+        />
+        <Button type="submit" className="max-w-80" disabled={!profileFile}>
           Save Photo
         </Button>
       </form>
