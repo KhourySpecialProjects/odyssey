@@ -72,9 +72,7 @@ export function FriendSentRequestsBlock({
                 <div className="flex justify-center items-center">
                   <Avatar variant="round" size="lg">
                     <AvatarFallback className="text-3xl">
-                      {getInitials(
-                        request.firstName + " " + request.lastName ?? "",
-                      )}
+                      {getInitials(request.firstName + " " + request.lastName)}
                     </AvatarFallback>
                   </Avatar>
                 </div>
