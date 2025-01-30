@@ -1,6 +1,6 @@
 "use client";
 
-import { cn } from "@/lib/utils";
+import { cn, isAuthorizedUserAdmin } from "@/lib/utils";
 import {
   CircleUserIcon,
   PlusCircle,
@@ -30,6 +30,7 @@ export function GroupsSelector() {
   const canCreateGroup =
     session?.user?.roles &&
     (isContentCreator(session.user.roles) ||
+      isAuthorizedUserAdmin(session.user.roles) ||
       isAuthorizedUserFaculty(session.user.roles));
 
   const currentTab = searchParams.get("tab") || "creator";
