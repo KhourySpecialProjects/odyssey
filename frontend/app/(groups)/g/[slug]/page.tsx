@@ -10,6 +10,7 @@ import { GroupDropletTile } from "@/components/group/group-droplet-tile";
 import { PlaylistCard } from "@/components/playlists/playlist-card";
 import createDOMPurifier from "isomorphic-dompurify";
 import { GroupDashboard } from "@/components/group/group-management-dashboard";
+import { isAuthorizedUserAdmin } from "@/lib/utils";
 type Props = {
   params: Promise<{
     slug: string;
@@ -29,7 +30,7 @@ export default async function GroupDetailPage({ params }: Props) {
 
   const isCreator = group.creator?.id === authorizedUser.id;
   const isAdmin = group.admins?.some((admin) => admin.id === authorizedUser.id);
-  const canEdit = isCreator || isAdmin;
+  const canEdit = isCreator || isAdmin || isAuthorizedUserAdmin();
 
   return (
     <div className="w-full max-w-7xl p-8 mx-auto space-y-12">
