@@ -1,0 +1,90 @@
+import { AuthorizedUser } from "@/types";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "../ui/dialog";
+import { Button } from "../ui/button";
+import Link from "next/link";
+import { Github, Linkedin } from "lucide-react";
+import { FriendCompletedDroplets } from "./friend-completed-droplets";
+import { startTransition, useState } from "react";
+import { toast } from "sonner";
+import { BlockUser } from "@/lib/requests/friends";
+
+export function UserBlock({
+  user,
+  curUser,
+}: {
+  user: AuthorizedUser;
+  curUser: AuthorizedUser;
+}) {
+  const [open, setOpen] = useState(false);
+  const handleBlock = () => {
+    startTransition(async () => {
+      const result = await BlockUser(curUser.id, user.id);
+      if (result.success) {
+        toast.success("User blocked");
+      } else {
+        toast.error("Failed to block user");
+      }
+    });
+  };
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button size="sm" variant="outline">
+          View Profile
+        </Button>
+      </DialogTrigger>
+
+      <DialogContent>
+        <DialogHeader>
+          {user.profilePhoto && (
+            <div className="flex justify-center items-center">
+              <img
+                src={user.profilePhoto}
+                alt={`${user.firstName}'s profile`}
+                className="w-12 h-12 rounded-full object-cover"
+              />
+            </div>
+          )}
+          <DialogTitle style={{ fontSize: "2rem", textAlign: "center" }}>
+            {user.firstName} {user.lastName}
+          </DialogTitle>
+          <div className="flex justify-center space-x-2">
+            {user.linkedin && (
+              <Link href={user.linkedin} legacyBehavior>
+                <a target="_blank" rel="noopener noreferrer">
+                  <Linkedin />
+                </a>
+              </Link>
+            )}
+            {user.github && (
+              <Link href={user.github} legacyBehavior>
+                <a target="_blank" rel="noopener noreferrer">
+                  <Github />
+                </a>
+              </Link>
+            )}
+          </div>
+          <DialogDescription>Email: {user.email}</DialogDescription>
+          {user.bio && <DialogDescription>Bio: {user.bio}</DialogDescription>}
+          <DialogDescription>Completed Droplets: </DialogDescription>
+          <FriendCompletedDroplets friend={user} />
+          <div
+            className={`inline-flex items-center gap-2 ${curUser.blocked.includes(user) ? "visibility: hidden" : "visibility: visible"}`}
+            onClick={handleBlock}
+          >
+            <Button size="sm" variant="destructive">
+              Block user
+            </Button>
+          </div>
+        </DialogHeader>
+      </DialogContent>
+    </Dialog>
+  );
+}

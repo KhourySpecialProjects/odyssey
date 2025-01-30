@@ -13,6 +13,7 @@ import { fetchAuthorizedUsers } from "@/lib/requests/authorized-user";
 import { fetchDroplets } from "@/lib/requests/data";
 import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
 import { Droplets } from "@/components/admin/droplets/droplets";
+import { Groups } from "@/components/admin/groups/groups";
 import { Playlists } from "@/components/admin/playlists/playlists";
 
 export default async function Page() {
@@ -71,6 +72,7 @@ export default async function Page() {
           Users: <AuthorizedUsers />,
           Droplets: <Droplets />,
           Playlists: <Playlists />,
+          Groups: <Groups />,
           "Access Manager": <AccessManager user={user} />,
           Reports: <Reports />,
         }}

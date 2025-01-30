@@ -2,21 +2,11 @@
 
 import { Button } from "@/components/ui/button";
 import { AuthorizedUser } from "@/types";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "../ui/dialog";
 import { startTransition, useState } from "react";
-import { Avatar, AvatarFallback } from "../ui/avatar";
-import { getInitials } from "@/lib/utils";
-import Link from "next/link";
-import { Linkedin, Github, X } from "lucide-react";
+import { X } from "lucide-react";
 import { toast } from "sonner";
 import { cancelFriendRequest } from "@/lib/requests/friends";
+import { UserBlock } from "./user-block";
 
 export function FriendSentRequestsBlock({
   user,
@@ -59,51 +49,7 @@ export function FriendSentRequestsBlock({
             </p>
           )}
         </div>
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild>
-            <Button size="sm" variant="outline">
-              View Profile
-            </Button>
-          </DialogTrigger>
-
-          <DialogContent>
-            <DialogHeader>
-              {request.firstName && request.lastName ? (
-                <div className="flex justify-center items-center">
-                  <Avatar variant="round" size="lg">
-                    <AvatarFallback className="text-3xl">
-                      {getInitials(request.firstName + " " + request.lastName)}
-                    </AvatarFallback>
-                  </Avatar>
-                </div>
-              ) : null}
-              <DialogTitle style={{ fontSize: "2rem", textAlign: "center" }}>
-                {request.firstName} {request.lastName}
-              </DialogTitle>
-              <div className="flex justify-center space-x-2">
-                {request.linkedin && (
-                  <Link href={request.linkedin} legacyBehavior>
-                    <a target="_blank" rel="noopener noreferrer">
-                      <Linkedin />
-                    </a>
-                  </Link>
-                )}
-                {request.github && (
-                  <Link href={request.github} legacyBehavior>
-                    <a target="_blank" rel="noopener noreferrer">
-                      <Github />
-                    </a>
-                  </Link>
-                )}
-              </div>
-              <DialogDescription>Email: {request.email}</DialogDescription>
-              {request.bio && (
-                <DialogDescription>Bio: {request.bio}</DialogDescription>
-              )}
-              <DialogDescription>Completed Droplets: </DialogDescription>
-            </DialogHeader>
-          </DialogContent>
-        </Dialog>
+        <UserBlock user={request} curUser={user} />
         <Button variant="destructive" size="sm" onClick={handleReject}>
           <div className="relative group">
             <X />

@@ -67,6 +67,7 @@
     "react-dnd": "^16.0.1",
     "react-dnd-html5-backend": "^16.0.1",
     "react-dom": "^18.2.0",
+    "react-dropzone": "^14.3.5",
     "react-hook-form": "^7.51.2",
     "react-tabs": "^6.1.0",
     "sonner": "^1.4.41",

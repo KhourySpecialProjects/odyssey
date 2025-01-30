@@ -1,36 +1,28 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { updateDroplet } from "@/lib/actions";
-import { Droplet } from "@/types";
+import { updateGroup } from "@/lib/requests/groups";
+import { Group, Playlist } from "@/types";
 import { Pencil } from "lucide-react";
+import Link from "next/link";
 import { useFormStatus } from "react-dom";
 import { toast } from "sonner";
-import Link from "next/link";
 
-export function DropletBlock({ droplet }: { droplet: Droplet }) {
-  const linkTo = `/draft/d/${droplet.slug}`;
+export function GroupBlock({ group }: { group: Group }) {
+  const linkTo = `/g/management?slug=${group.slug}`;
 
-  const handleUpdateDroplet = async (formData: FormData) => {
-    const result = await updateDroplet(
-      droplet.id,
-      {
-        isHidden: !droplet.isHidden,
-        name: droplet.name,
-        focusArea: droplet.focusArea,
-        type: droplet.type,
-        tagIds: droplet.tags?.map((tag) => tag.id) || [],
-      },
-      { revalidate: true },
-    );
+  const handleUpdateGroup = async (formData: FormData) => {
+    const result = await updateGroup(group.id, {
+      isArchived: !group.isArchived,
+      groupName: group.groupName,
+    });
 
-    if (result.ok) {
+    if (result) {
       toast.success(
-        `Droplet ${!droplet.isHidden ? "hidden" : "shown"} successfully`,
+        `Group ${!group.isArchived ? "archived" : "unarchived"} successfully`,
       );
     } else {
-      toast.error("Failed to update droplet visibility");
-      console.error(result.error);
+      toast.error("Failed to update group visibility");
     }
   };
 
@@ -39,8 +31,8 @@ export function DropletBlock({ droplet }: { droplet: Droplet }) {
       <div className="flex items-center space-x-4">
         <div className="flex-1 min-w-0">
           <p className="font-medium truncate text-slate-900 dark:text-white">
-            {droplet.name}
-            {droplet.isHidden ? " (Hidden)" : ""}
+            {group.groupName}
+            {group.isArchived ? " (Archived)" : ""}
           </p>
         </div>
 
@@ -50,28 +42,28 @@ export function DropletBlock({ droplet }: { droplet: Droplet }) {
               <div className="relative group">
                 <Pencil className="text-sky-600" />
                 <span className="absolute left-1/2 transform -translate-x-1/2 top-full mt-1 w-max px-2 py-1 text-xs text-white bg-gray-800 rounded opacity-0 group-hover:opacity-100 transition-opacity">
-                  Edit Droplet
+                  Edit Group
                 </span>
               </div>
             </Button>
           </Link>
-          <form action={handleUpdateDroplet}>
+          <form action={handleUpdateGroup}>
             <input
               id="id"
               name="id"
               type="number"
-              defaultValue={droplet.id}
+              defaultValue={group.id}
               hidden
             />
             <input
-              id="isHidden"
-              name="isHidden"
+              id="isArchived"
+              name="isArchived"
               type="text"
-              defaultValue={String(!droplet.isHidden)}
+              defaultValue={String(!group.isArchived)}
               hidden
             />
-            <SubmitButton destructive={!droplet.isHidden}>
-              {droplet.isHidden ? "Show Droplet" : "Hide Droplet"}
+            <SubmitButton destructive={!group.isArchived}>
+              {group.isArchived ? "Unarchive Group" : "Archive Group"}
             </SubmitButton>
           </form>
         </div>

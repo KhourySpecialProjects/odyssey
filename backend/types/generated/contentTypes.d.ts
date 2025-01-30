@@ -521,6 +521,11 @@ export interface ApiAuthorizedUserAuthorizedUser extends Schema.CollectionType {
       Attribute.SetMinMaxLength<{
         maxLength: 400;
       }>;
+    blocked: Attribute.Relation<
+      'api::authorized-user.authorized-user',
+      'manyToMany',
+      'api::authorized-user.authorized-user'
+    >;
     createdAt: Attribute.DateTime;
     createdBy: Attribute.Relation<
       'api::authorized-user.authorized-user',
@@ -595,6 +600,11 @@ export interface ApiAuthorizedUserAuthorizedUser extends Schema.CollectionType {
       'admin::user'
     > &
       Attribute.Private;
+    was_blocked: Attribute.Relation<
+      'api::authorized-user.authorized-user',
+      'manyToMany',
+      'api::authorized-user.authorized-user'
+    >;
   };
 }
 

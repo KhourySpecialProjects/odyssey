@@ -26,6 +26,7 @@ import {
 } from "@aws-sdk/client-s3";
 import { v4 as uuidv4 } from "uuid";
 import { Buffer } from "node:buffer";
+import { GroupSchema } from "./validations/group";
 
 const STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
@@ -611,6 +612,7 @@ export async function updateUserInfo(
   last: string | null,
   bio: string | null,
   roles: AuthorizedUserRoleTitle[],
+  profilePhoto: string | null,
   userId: number,
 ) {
   try {
@@ -631,6 +633,7 @@ export async function updateUserInfo(
             firstName: first,
             lastName: last,
             bio: bio,
+            profilePhoto: profilePhoto,
             roles: {
               set: roleIds.map((id) => ({ id })),
             },
@@ -639,12 +642,13 @@ export async function updateUserInfo(
       },
     );
 
-    if (!response.ok) {
-      throw new Error("Failed to update first time status");
-    }
+    // if (!response.ok) {
+    //   throw new Error("Failed to update user info");
+    // }
+    revalidatePath("/admin");
     return { success: true };
   } catch (error) {
-    console.error("Error updating first time status:", error);
+    console.error("Error updating user info:", error);
     return { success: false, error };
   }
 }

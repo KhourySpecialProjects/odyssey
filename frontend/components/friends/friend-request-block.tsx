@@ -6,19 +6,10 @@ import {
   rejectFriendRequest,
 } from "@/lib/requests/friends";
 import { AuthorizedUser } from "@/types";
-import { Check, Github, Linkedin, X } from "lucide-react";
+import { Check, X } from "lucide-react";
 import { startTransition, useState } from "react";
 import { toast } from "sonner";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "../ui/dialog";
-import Link from "next/link";
-import { FriendCompletedDroplets } from "./friend-completed-droplets";
+import { UserBlock } from "./user-block";
 
 export function FriendRequestBlock({
   user,
@@ -27,7 +18,6 @@ export function FriendRequestBlock({
   user: AuthorizedUser;
   request: AuthorizedUser;
 }) {
-  const [open, setOpen] = useState(false);
   const handleApprove = () => {
     startTransition(async () => {
       const result = await acceptFriendRequest(user.id, request.id);
@@ -73,52 +63,7 @@ export function FriendRequestBlock({
             </p>
           )}
         </div>
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild>
-            <Button size="sm" variant="outline">
-              View Profile
-            </Button>
-          </DialogTrigger>
-
-          <DialogContent>
-            <DialogHeader>
-              {request.profilePhoto && (
-                <div className="flex justify-center items-center">
-                  <img
-                    src={request.profilePhoto}
-                    alt={`${request.firstName}'s profile`}
-                    className="w-12 h-12 rounded-full object-cover"
-                  />
-                </div>
-              )}
-              <DialogTitle style={{ fontSize: "2rem", textAlign: "center" }}>
-                {request.firstName} {request.lastName}
-              </DialogTitle>
-              <div className="flex justify-center space-x-2">
-                {request.linkedin && (
-                  <Link href={request.linkedin} legacyBehavior>
-                    <a target="_blank" rel="noopener noreferrer">
-                      <Linkedin />
-                    </a>
-                  </Link>
-                )}
-                {request.github && (
-                  <Link href={request.github} legacyBehavior>
-                    <a target="_blank" rel="noopener noreferrer">
-                      <Github />
-                    </a>
-                  </Link>
-                )}
-              </div>
-              <DialogDescription>Email: {request.email}</DialogDescription>
-              {request.bio && (
-                <DialogDescription>Bio: {request.bio}</DialogDescription>
-              )}
-              <DialogDescription>Completed Droplets: </DialogDescription>
-              <FriendCompletedDroplets friend={request} />
-            </DialogHeader>
-          </DialogContent>
-        </Dialog>
+        <UserBlock user={request} curUser={user} />
         <Button
           className="bg-green-600 text-white hover:bg-green-700"
           size="sm"

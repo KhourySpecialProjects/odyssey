@@ -30,6 +30,52 @@ export async function fetchDroplets() {
   }
 }
 
+export async function fetchGroups() {
+  try {
+    const query = qs.stringify({
+      sort: ["groupName:asc"],
+      fields: ["id", "groupName", "slug", "isArchived"],
+      populate: {
+        members: {
+          fields: ["id", "email"],
+        },
+        admins: {
+          fields: ["id", "email"],
+        },
+        managers: {
+          fields: ["id", "email"],
+        },
+        creator: {
+          fields: ["id", "email"],
+        },
+      },
+      pagination: {
+        pageSize: 25,
+        page: 1,
+      },
+    });
+
+    const response = await fetch(
+      `${NEXT_PUBLIC_STRAPI_API_URL}/api/groups?${query}`,
+      {
+        headers: { Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}` },
+        cache: "no-store",
+      },
+    );
+
+    if (!response.ok) {
+      throw new Error("Failed to fetch groups");
+    }
+
+    const data = await response.json();
+    const groups = flattenAttributes(data.data);
+    return groups;
+  } catch (error) {
+    console.error("Database Error:", error);
+    throw new Error("Failed to fetch groups.");
+  }
+}
+
 export async function fetchAccessRequests() {
   try {
     const query = qs.stringify({
