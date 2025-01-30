@@ -9,7 +9,8 @@ export async function FriendSentRequests() {
   const authUser = await getAuthorizedUserByEmail(user.email);
   const sentRequests = authUser.sent_requests.filter(
     (friend) =>
-      !authUser.blocked.some((blockedUser) => blockedUser.id === friend.id),
+      !authUser.blocked.some((blockedUser) => blockedUser.id === friend.id) &&
+      !authUser.was_blocked.some((blockedUser) => blockedUser.id === friend.id),
   );
 
   return (

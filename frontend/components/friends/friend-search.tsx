@@ -36,6 +36,9 @@ export function FriendSearch({
     const filtered = authUsers.filter(
       (user) =>
         !curUser.blocked.some((blockedUser) => blockedUser.id === user.id) &&
+        !curUser.was_blocked.some(
+          (blockedUser) => blockedUser.id === user.id,
+        ) &&
         (user.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
           user.lastName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
           user.email
