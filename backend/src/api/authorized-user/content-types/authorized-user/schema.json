@@ -46,6 +46,30 @@
       "target": "api::playlist.playlist",
       "mappedBy": "authorized_users"
     },
+    "groupAdmin": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::group.group",
+      "mappedBy": "admins"
+    },
+    "groupManager": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::group.group",
+      "mappedBy": "managers"
+    },
+    "groupsCreated": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::group.group",
+      "mappedBy": "creator"
+    },
+    "groups": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::group.group",
+      "mappedBy": "members"
+    },
     "linkedin": {
       "type": "string"
     },
@@ -65,6 +89,39 @@
     "bio": {
       "type": "text",
       "maxLength": 400
+    },
+    "sent_requests": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::authorized-user.authorized-user",
+      "inversedBy": "received_requests"
+    },
+    "received_requests": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::authorized-user.authorized-user",
+      "inversedBy": "sent_requests"
+    },
+    "friendships": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::friendship.friendship",
+      "mappedBy": "authorized_users"
+    },
+    "profilePhoto": {
+      "type": "text"
+    },
+    "was_blocked": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::authorized-user.authorized-user",
+      "inversedBy": "blocked"
+    },
+    "blocked": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::authorized-user.authorized-user",
+      "inversedBy": "was_blocked"
     }
   }
 }

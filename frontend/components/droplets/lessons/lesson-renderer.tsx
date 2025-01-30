@@ -69,17 +69,29 @@ export function LessonRenderer({
   }
 
   async function handleMarkAsComplete() {
-    if (!enrollmentId) return;
+    if (!enrollmentId) {
+      console.log("no enrollment");
+      return;
+    }
 
     startTransition(async () => {
+      console.log("before success");
       const success = await markLessonAsComplete(
         enrollmentId,
-        [...completedLessonIds],
+        completedLessonIds,
         lesson.id,
       );
+      console.log("success status", success);
+      console.log("enrollment for mark as complete", enrollmentId);
+      console.log("lesson id for mark as complete", lesson.id);
       if (success) {
+        completedLessonIds.push(lesson.id);
         await router.refresh();
       }
+      console.log(
+        "completedlessonids for mark as complete",
+        completedLessonIds,
+      );
     });
   }
 

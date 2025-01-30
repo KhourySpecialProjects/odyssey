@@ -521,6 +521,11 @@ export interface ApiAuthorizedUserAuthorizedUser extends Schema.CollectionType {
       Attribute.SetMinMaxLength<{
         maxLength: 400;
       }>;
+    blocked: Attribute.Relation<
+      'api::authorized-user.authorized-user',
+      'manyToMany',
+      'api::authorized-user.authorized-user'
+    >;
     createdAt: Attribute.DateTime;
     createdBy: Attribute.Relation<
       'api::authorized-user.authorized-user',
@@ -536,7 +541,32 @@ export interface ApiAuthorizedUserAuthorizedUser extends Schema.CollectionType {
     >;
     firstName: Attribute.String;
     firstTime: Attribute.Boolean & Attribute.DefaultTo<true>;
+    friendships: Attribute.Relation<
+      'api::authorized-user.authorized-user',
+      'manyToMany',
+      'api::friendship.friendship'
+    >;
     github: Attribute.String;
+    groupAdmin: Attribute.Relation<
+      'api::authorized-user.authorized-user',
+      'manyToMany',
+      'api::group.group'
+    >;
+    groupManager: Attribute.Relation<
+      'api::authorized-user.authorized-user',
+      'manyToMany',
+      'api::group.group'
+    >;
+    groups: Attribute.Relation<
+      'api::authorized-user.authorized-user',
+      'manyToMany',
+      'api::group.group'
+    >;
+    groupsCreated: Attribute.Relation<
+      'api::authorized-user.authorized-user',
+      'oneToMany',
+      'api::group.group'
+    >;
     isEnabled: Attribute.Boolean &
       Attribute.Required &
       Attribute.DefaultTo<true>;
@@ -547,10 +577,21 @@ export interface ApiAuthorizedUserAuthorizedUser extends Schema.CollectionType {
       'manyToMany',
       'api::playlist.playlist'
     >;
+    profilePhoto: Attribute.Text;
+    received_requests: Attribute.Relation<
+      'api::authorized-user.authorized-user',
+      'manyToMany',
+      'api::authorized-user.authorized-user'
+    >;
     roles: Attribute.Relation<
       'api::authorized-user.authorized-user',
       'manyToMany',
       'api::authorized-user-role.authorized-user-role'
+    >;
+    sent_requests: Attribute.Relation<
+      'api::authorized-user.authorized-user',
+      'manyToMany',
+      'api::authorized-user.authorized-user'
     >;
     updatedAt: Attribute.DateTime;
     updatedBy: Attribute.Relation<
@@ -559,6 +600,11 @@ export interface ApiAuthorizedUserAuthorizedUser extends Schema.CollectionType {
       'admin::user'
     > &
       Attribute.Private;
+    was_blocked: Attribute.Relation<
+      'api::authorized-user.authorized-user',
+      'manyToMany',
+      'api::authorized-user.authorized-user'
+    >;
   };
 }
 
@@ -651,6 +697,11 @@ export interface ApiDropletDroplet extends Schema.CollectionType {
       ['personal', 'professional', 'technical']
     > &
       Attribute.Required;
+    groups: Attribute.Relation<
+      'api::droplet.droplet',
+      'manyToMany',
+      'api::group.group'
+    >;
     isHidden: Attribute.Boolean &
       Attribute.Required &
       Attribute.DefaultTo<false>;
@@ -760,6 +811,124 @@ export interface ApiEnrollmentEnrollment extends Schema.CollectionType {
   };
 }
 
+export interface ApiFriendshipFriendship extends Schema.CollectionType {
+  collectionName: 'friendships';
+  info: {
+    description: '';
+    displayName: 'Friendship';
+    pluralName: 'friendships';
+    singularName: 'friendship';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    authorized_users: Attribute.Relation<
+      'api::friendship.friendship',
+      'manyToMany',
+      'api::authorized-user.authorized-user'
+    >;
+    createdAt: Attribute.DateTime;
+    createdBy: Attribute.Relation<
+      'api::friendship.friendship',
+      'oneToOne',
+      'admin::user'
+    > &
+      Attribute.Private;
+    updatedAt: Attribute.DateTime;
+    updatedBy: Attribute.Relation<
+      'api::friendship.friendship',
+      'oneToOne',
+      'admin::user'
+    > &
+      Attribute.Private;
+  };
+}
+
+export interface ApiGroupGroup extends Schema.CollectionType {
+  collectionName: 'groups';
+  info: {
+    description: '';
+    displayName: 'Group';
+    pluralName: 'groups';
+    singularName: 'group';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    admins: Attribute.Relation<
+      'api::group.group',
+      'manyToMany',
+      'api::authorized-user.authorized-user'
+    >;
+    createdAt: Attribute.DateTime;
+    createdBy: Attribute.Relation<
+      'api::group.group',
+      'oneToOne',
+      'admin::user'
+    > &
+      Attribute.Private;
+    creator: Attribute.Relation<
+      'api::group.group',
+      'manyToOne',
+      'api::authorized-user.authorized-user'
+    >;
+    description: Attribute.Text;
+    droplets: Attribute.Relation<
+      'api::group.group',
+      'manyToMany',
+      'api::droplet.droplet'
+    >;
+    groupName: Attribute.String & Attribute.Required;
+    isArchived: Attribute.Boolean & Attribute.DefaultTo<false>;
+    managers: Attribute.Relation<
+      'api::group.group',
+      'manyToMany',
+      'api::authorized-user.authorized-user'
+    >;
+    members: Attribute.Relation<
+      'api::group.group',
+      'manyToMany',
+      'api::authorized-user.authorized-user'
+    >;
+    playlists: Attribute.Relation<
+      'api::group.group',
+      'manyToMany',
+      'api::playlist.playlist'
+    >;
+    semester: Attribute.Enumeration<
+      [
+        'Open Membership',
+        'Spring 2025',
+        'Summer 1 2025',
+        'Summer 2 2025',
+        'Summer 2025',
+        'Fall 2025',
+        'Spring 2026',
+        'Summer 1 2026',
+        'Summer 2 2026',
+        'Summer 2026',
+        'Fall 2026',
+        'Spring 2027',
+        'Summer 1 2027',
+        'Summer 2 2027',
+        'Summer 2027',
+        'Fall 2027'
+      ]
+    > &
+      Attribute.DefaultTo<'Open Membership'>;
+    slug: Attribute.UID<'api::group.group', 'groupName'> & Attribute.Required;
+    updatedAt: Attribute.DateTime;
+    updatedBy: Attribute.Relation<
+      'api::group.group',
+      'oneToOne',
+      'admin::user'
+    > &
+      Attribute.Private;
+  };
+}
+
 export interface ApiLessonLesson extends Schema.CollectionType {
   collectionName: 'lessons';
   info: {
@@ -861,6 +1030,11 @@ export interface ApiPlaylistPlaylist extends Schema.CollectionType {
     duration: Attribute.Enumeration<['short', 'medium', 'long']> &
       Attribute.Required &
       Attribute.DefaultTo<'medium'>;
+    groups: Attribute.Relation<
+      'api::playlist.playlist',
+      'manyToMany',
+      'api::group.group'
+    >;
     isPublic: Attribute.Boolean;
     name: Attribute.String & Attribute.Required;
     publishedAt: Attribute.DateTime;
@@ -1380,6 +1554,8 @@ declare module '@strapi/types' {
       'api::droplet-lesson.droplet-lesson': ApiDropletLessonDropletLesson;
       'api::droplet.droplet': ApiDropletDroplet;
       'api::enrollment.enrollment': ApiEnrollmentEnrollment;
+      'api::friendship.friendship': ApiFriendshipFriendship;
+      'api::group.group': ApiGroupGroup;
       'api::lesson.lesson': ApiLessonLesson;
       'api::playlist.playlist': ApiPlaylistPlaylist;
       'api::report.report': ApiReportReport;

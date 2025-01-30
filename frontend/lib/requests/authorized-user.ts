@@ -19,8 +19,21 @@ export async function getAuthorizedUserByEmail<
   {
     sort,
     filters,
-    populate,
-    fields = ["*", "firstName", "lastName", "bio"],
+    populate = {
+      received_requests: {
+        fields: ["id", "email", "firstName", "lastName", "bio", "profilePhoto"],
+      },
+      sent_requests: {
+        fields: ["id", "email", "firstName", "lastName", "bio", "profilePhoto"],
+      },
+      blocked: {
+        fields: ["id", "email", "firstName", "lastName", "bio", "profilePhoto"],
+      },
+      was_blocked: {
+        fields: ["id", "email", "firstName", "lastName", "bio", "profilePhoto"],
+      },
+    },
+    fields = ["*", "firstName", "lastName", "bio", "id"],
   }: StrapiRequestParams = {},
 ): Promise<T> {
   const path = `/authorized-users`;
@@ -47,12 +60,20 @@ export async function fetchAuthorizedUsers(): Promise<AuthorizedUser[]> {
   try {
     const query = qs.stringify({
       sort: ["email"],
-      fields: ["id", "email", "isEnabled", "firstName", "lastName", "bio"],
+      fields: [
+        "id",
+        "email",
+        "isEnabled",
+        "firstName",
+        "lastName",
+        "bio",
+        "profilePhoto",
+      ],
       populate: {
         roles: { fields: ["title"] },
       },
       pagination: {
-        pageSize: 25,
+        pageSize: 50,
         page: 1,
       },
     });
@@ -99,5 +120,33 @@ export async function fetchIsAuthorizedUser(email: string) {
   } catch (error) {
     console.error("Database Error:", error);
     throw new Error("Failed to fetch authorized users data.");
+  }
+}
+
+export async function getAllAuthorizedUsers(): Promise<AuthorizedUser[]> {
+  try {
+    const query = qs.stringify({
+      sort: ["email:asc"],
+      fields: ["email"],
+      pagination: {
+        pageSize: 100,
+        page: 1,
+      },
+    });
+    // console.log(" ---> query = ", query);
+
+    const response = await fetch(
+      NEXT_PUBLIC_STRAPI_API_URL + "/api/authorized-users?" + query,
+      {
+        headers: { Authorization: "Bearer " + STRAPI_ACCESS_TOKEN },
+        cache: "no-store",
+      },
+    );
+    const data = await response.json();
+    const authorizedUsers = flattenAttributes(data.data);
+    return authorizedUsers;
+  } catch (error) {
+    console.error("Failed to fetch authorized users:", error);
+    return [];
   }
 }
