@@ -30,7 +30,7 @@ export default async function GroupDetailPage({ params }: Props) {
 
   const isCreator = group.creator?.id === authorizedUser.id;
   const isAdmin = group.admins?.some((admin) => admin.id === authorizedUser.id);
-  const canEdit = isCreator || isAdmin || isAuthorizedUserAdmin();
+  const canEdit = isCreator || isAdmin || isAuthorizedUserAdmin(user.roles);
 
   return (
     <div className="w-full max-w-7xl p-8 mx-auto space-y-12">
