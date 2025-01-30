@@ -2,6 +2,7 @@
 
 import { revalidatePath, revalidateTag } from "next/cache";
 import { redirect } from "next/navigation";
+import { Media } from "@/types";
 import { z } from "zod";
 import { getCurrentUser } from "./auth/session";
 import { getAuthorByAuthorizedUserEmail } from "./requests/author";
@@ -25,6 +26,7 @@ import {
 } from "@aws-sdk/client-s3";
 import { v4 as uuidv4 } from "uuid";
 import { Buffer } from "node:buffer";
+import { GroupSchema } from "./validations/group";
 
 const STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
@@ -301,6 +303,55 @@ export async function createEnrollment(
   }
 }
 
+export async function createEnrollmentFromEmail(
+  formData: z.infer<typeof DropletEnrollmentSchema>,
+  email: string,
+) {
+  try {
+    const authorizedUser = await getAuthorizedUserByEmail(email);
+    //console.log("authorized user id: ", authorizedUser.id);
+    const enrollments = await getEnrollmentsByAuthorizedUser(authorizedUser.id);
+
+    const enrollIDs = enrollments.map((enrollment) => enrollment.droplet.id);
+
+    // console.log("enroll ids: ", enrollIDs);
+
+    // console.log("-------------------");
+    // console.log("formdata: ", formData.droplet);
+
+    if (
+      !enrollments
+        .map((enrollment) => enrollment.droplet.id)
+        .includes(formData.droplet)
+    ) {
+      console.log("sending post request");
+      const response = await fetch(STRAPI_API_URL + "/api/enrollments", {
+        method: "POST",
+        body: JSON.stringify({
+          data: { ...formData, authorizedUser: authorizedUser.id },
+        }),
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+        },
+      });
+      const data = await response.json();
+
+      if (!response.ok || (response.ok && data.error)) {
+        const errorPath = data.error.details.errors[0].path[0];
+        const errorMessage = `${data.error.message} (${errorPath})`;
+        return { ok: false, error: errorMessage, data: null };
+      }
+
+      //revalidateTag("enrollments");
+      //revalidatePath("/(general)/dashboard", "page");
+    }
+  } catch (err) {
+    console.error(err);
+    return { error: "Database Error: Failed to enroll." };
+  }
+}
+
 const CreateDropletSchema = DropletSchema.pick({
   name: true,
   focusArea: true,
@@ -452,11 +503,11 @@ export async function updateLinkedin(linkedIn: string, userId: number) {
     );
 
     if (!response.ok) {
-      throw new Error("Failed to update first time status");
+      throw new Error("Failed to update linkedin");
     }
     return { success: true };
   } catch (error) {
-    console.error("Error updating first time status:", error);
+    console.error("Error updating linkedin:", error);
     return { success: false, error };
   }
 }
@@ -481,12 +532,43 @@ export async function updateGithub(github: string, userId: number) {
     );
 
     if (!response.ok) {
-      throw new Error("Failed to update first time status");
+      throw new Error("Failed to update github");
     }
     return { success: true };
   } catch (error) {
-    console.error("Error updating first time status:", error);
+    console.error("Error updating github:", error);
     return { success: false, error };
+  }
+}
+
+export async function updatePhoto(imageUrl: string, userId: number) {
+  try {
+    const response = await fetch(
+      `${STRAPI_API_URL}/api/authorized-users/${userId}`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+        },
+        body: JSON.stringify({
+          data: {
+            profilePhoto: imageUrl,
+          },
+        }),
+      },
+    );
+
+    if (!response.ok) {
+      console.error("Profile update failed:", await response.text());
+      return { success: false, error: "Failed to update profile photo" };
+    }
+
+    revalidatePath("/settings/profile");
+    return { success: true };
+  } catch (error) {
+    console.error("Error updating photo:", error);
+    return { success: false, error: "Failed to process request" };
   }
 }
 
@@ -530,6 +612,7 @@ export async function updateUserInfo(
   last: string | null,
   bio: string | null,
   roles: AuthorizedUserRoleTitle[],
+  profilePhoto: string | null,
   userId: number,
 ) {
   try {
@@ -550,6 +633,7 @@ export async function updateUserInfo(
             firstName: first,
             lastName: last,
             bio: bio,
+            profilePhoto: profilePhoto,
             roles: {
               set: roleIds.map((id) => ({ id })),
             },
@@ -558,12 +642,13 @@ export async function updateUserInfo(
       },
     );
 
-    if (!response.ok) {
-      throw new Error("Failed to update first time status");
-    }
+    // if (!response.ok) {
+    //   throw new Error("Failed to update user info");
+    // }
+    revalidatePath("/admin");
     return { success: true };
   } catch (error) {
-    console.error("Error updating first time status:", error);
+    console.error("Error updating user info:", error);
     return { success: false, error };
   }
 }

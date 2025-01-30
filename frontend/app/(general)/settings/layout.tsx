@@ -23,6 +23,10 @@ export default async function SettingsLayout({
       label: "Author Profile",
       isHidden: !author,
     },
+    {
+      href: "/settings/friends",
+      label: "Friends",
+    },
   ];
 
   return (
@@ -30,7 +34,7 @@ export default async function SettingsLayout({
       <div className="grid w-full max-w-6xl gap-2 mx-auto">
         <h1 className="text-3xl font-bold">
           {/* {navItems.find((section) => section.href === pathname)?.label}{" "} */}
-          Settings
+          Profile
         </h1>
       </div>
 

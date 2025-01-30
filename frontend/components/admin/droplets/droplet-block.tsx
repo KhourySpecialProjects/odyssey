@@ -5,7 +5,6 @@ import { updateDroplet } from "@/lib/actions";
 import { Droplet } from "@/types";
 import { Pencil } from "lucide-react";
 import { useFormStatus } from "react-dom";
-import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import Link from "next/link";
 

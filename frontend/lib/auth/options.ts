@@ -25,7 +25,6 @@ export const authOptions: NextAuthOptions = {
     GitHubProvider({
       clientId: process.env.GITHUB_CLIENT_ID || "",
       clientSecret: process.env.GITHUB_CLIENT_SECRET || "",
-      authorization: { params: { scope: "read:user user:email" } },
     }),
   ],
   pages: {
@@ -66,6 +65,7 @@ export const authOptions: NextAuthOptions = {
           email: user.email,
           image: user.image,
           nuid: graphProfile.nuid,
+          isActive: true, // TODO: Not sure why the build is only now requiring the isActive attribute???
           roles: authorizedUser.roles.map((elem) => elem.title), //only need the string title
         };
       }
