@@ -4,6 +4,7 @@ import { notFound, redirect } from "next/navigation";
 import { GroupManagementForm } from "@/components/group/group-management-form";
 import { getGroupBySlugV2 } from "@/lib/requests/groups";
 import { Badge } from "@/components/ui/badge";
+import { isAuthorizedUserAdmin } from "@/lib/utils";
 
 type Props = {
   searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
@@ -27,7 +28,7 @@ export default async function GroupManagementPage({ searchParams }: Props) {
     const isAdmin = group.admins?.some(
       (admin) => admin.id === authorizedUser.id,
     );
-    if (!isCreator && !isAdmin) notFound();
+    if (!isCreator && !isAdmin && !isAuthorizedUserAdmin()) notFound();
   }
 
   return (
