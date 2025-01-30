@@ -1,13 +1,9 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { SearchIcon } from "lucide-react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { ChangeEvent } from "react";
 import { AuthorizedUser } from "@/types";
-import { AuthorizedUserBlock } from "../admin/users/authorized-user";
 import { FriendSuggestionsBlock } from "./friend-suggestions-block";
 import { FriendBlock } from "./friend-block";
 
@@ -39,20 +35,22 @@ export function FriendSearch({
 
     const filtered = authUsers.filter(
       (user) =>
-        user.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        user.lastName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        user.email
-          ?.split("@")[0]
-          .toLowerCase()
-          .includes(searchTerm.toLowerCase()) ||
-        (
-          user.firstName?.toLowerCase() +
-          " " +
-          user.lastName?.toLowerCase()
-        ).includes(searchTerm.toLowerCase()),
+        !curUser.blocked.some((blockedUser) => blockedUser.id === user.id) &&
+        !curUser.was_blocked.some(
+          (blockedUser) => blockedUser.id === user.id,
+        ) &&
+        (user.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          user.lastName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          user.email
+            ?.split("@")[0]
+            .toLowerCase()
+            .includes(searchTerm.toLowerCase()) ||
+          (
+            user.firstName?.toLowerCase() +
+            " " +
+            user.lastName?.toLowerCase()
+          ).includes(searchTerm.toLowerCase())),
     );
-
-    //console.log("number of auth users", authUsers)
 
     if (filtered?.length === 0) {
       setSearchResults([]);
