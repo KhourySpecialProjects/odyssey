@@ -26,6 +26,12 @@ export async function getAuthorizedUserByEmail<
       sent_requests: {
         fields: ["id", "email", "firstName", "lastName", "bio", "profilePhoto"],
       },
+      blocked: {
+        fields: ["id", "email", "firstName", "lastName", "bio", "profilePhoto"],
+      },
+      was_blocked: {
+        fields: ["id", "email", "firstName", "lastName", "bio", "profilePhoto"],
+      },
     },
     fields = ["*", "firstName", "lastName", "bio", "id"],
   }: StrapiRequestParams = {},

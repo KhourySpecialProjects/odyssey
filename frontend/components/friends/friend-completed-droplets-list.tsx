@@ -1,5 +1,4 @@
 import { Droplet } from "@/types";
-import Link from "next/link";
 import { DropletTile } from "../droplets/droplet-tile";
 
 export function FriendCompletedDropletsList({

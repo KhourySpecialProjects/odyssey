@@ -33,6 +33,7 @@ import {
   getSentRequestIds,
   fetchFriends,
 } from "@/lib/requests/friends";
+import { BlockedUsers } from "@/components/friends/blocked-users";
 
 export default async function AuthorProfileSettings() {
   const authorizedUsers = await fetchAuthorizedUsers();
@@ -68,6 +69,7 @@ export default async function AuthorProfileSettings() {
           "Friend Requests": <FriendRequests />,
           "People You May Know": <FriendSuggestions user={authorizedUser} />,
           "Sent Requests": <FriendSentRequests />,
+          "Blocked Users": <BlockedUsers />,
         }}
       />
     </div>
