@@ -110,6 +110,18 @@
     },
     "profilePhoto": {
       "type": "text"
+    },
+    "was_blocked": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::authorized-user.authorized-user",
+      "inversedBy": "blocked"
+    },
+    "blocked": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::authorized-user.authorized-user",
+      "inversedBy": "was_blocked"
     }
   }
 }

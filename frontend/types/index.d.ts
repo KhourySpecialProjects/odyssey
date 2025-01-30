@@ -41,6 +41,8 @@ export type AuthorizedUser = {
   sent_requests: AuthorizedUser[];
   received_requests: AuthorizedUser[];
   profilePhoto: string;
+  blocked: AuthorizedUser[];
+  was_blocked: AuthorizedUser[];
 };
 
 export type Media = {

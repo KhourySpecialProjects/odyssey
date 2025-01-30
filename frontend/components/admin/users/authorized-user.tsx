@@ -1,12 +1,17 @@
 "use client";
 
+import { useState, useCallback } from "react";
+import { useDropzone } from "react-dropzone";
 import { Button } from "@/components/ui/button";
-import { updateAuthorizedUser, updateUserInfo } from "@/lib/actions";
+import {
+  updateAuthorizedUser,
+  updateUserInfo,
+  uploadImage,
+} from "@/lib/actions";
 import { AuthorizedUser } from "@/types";
-import { Pencil } from "lucide-react";
+import { Pencil, User2Icon } from "lucide-react";
 import { useFormStatus } from "react-dom";
-import { isAuthorizedUserAdmin } from "@/lib/utils";
-import { useState } from "react";
+import { getInitials, isAuthorizedUserAdmin } from "@/lib/utils";
 import {
   DialogHeader,
   Dialog,
@@ -20,6 +25,7 @@ import { toast } from "sonner";
 import { AuthorizedUserRoleTitle } from "@/lib/globals";
 import { Checkbox } from "@/components/ui/checkbox";
 import { type } from "os";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export function AuthorizedUserBlock({ user }: { user: AuthorizedUser }) {
   const [open, setOpen] = useState(false);
@@ -27,6 +33,7 @@ export function AuthorizedUserBlock({ user }: { user: AuthorizedUser }) {
   const [firstName, setFirstName] = useState(user.firstName || "");
   const [lastName, setLastName] = useState(user.lastName || "");
   const [bio, setBio] = useState(user.bio || "");
+  const [profilePhoto, setProfilePhoto] = useState(user.profilePhoto || "");
   const [selectedRoles, setSelectedRoles] = useState<AuthorizedUserRoleTitle[]>(
     user.roles.map((role) => role.title),
   );
@@ -47,6 +54,45 @@ export function AuthorizedUserBlock({ user }: { user: AuthorizedUser }) {
     );
   };
 
+  const onDrop = useCallback(
+    async (acceptedFiles: File[]) => {
+      const file = acceptedFiles[0];
+      if (file) {
+        const newFormData: FormData = new FormData();
+        newFormData.append("image", file as Blob);
+
+        const response = await uploadImage(newFormData);
+        if (response.ok && response.url) {
+          setProfilePhoto(response.url);
+          const updateResult = await updateUserInfo(
+            firstName,
+            lastName,
+            bio,
+            selectedRoles,
+            response.url,
+            user.id,
+          );
+          if (updateResult.success) {
+            toast.success("Profile photo updated successfully");
+          } else {
+            toast.error("Failed to update profile photo");
+          }
+        } else {
+          toast.error("Failed to upload image");
+        }
+      }
+    },
+    [firstName, lastName, bio, selectedRoles, user.id],
+  );
+
+  const { getRootProps, getInputProps } = useDropzone({
+    onDrop,
+    multiple: false,
+    onDragEnter: (e: React.DragEvent) => e.preventDefault(),
+    onDragOver: (e: React.DragEvent) => e.preventDefault(),
+    onDragLeave: (e: React.DragEvent) => e.preventDefault(),
+  });
+
   const handleUpdateUser = async (formData: FormData) => {
     await updateAuthorizedUser(formData);
   };
@@ -57,6 +103,7 @@ export function AuthorizedUserBlock({ user }: { user: AuthorizedUser }) {
       formData.get("lastName") as string,
       formData.get("bio") as string,
       selectedRoles,
+      formData.get("profilePhoto") as string,
       user.id,
     );
     if (result.success) {
@@ -72,13 +119,25 @@ export function AuthorizedUserBlock({ user }: { user: AuthorizedUser }) {
     <li className="py-0 [&:not(:first-child)]:pt-3">
       <div className="flex items-center space-x-4">
         <div className="flex-1 min-w-0">
-          <p className="font-medium truncate text-slate-900 dark:text-white">
-            {user.email}
-            {!user.isEnabled ? " (Disabled)" : ""}
-          </p>
-          <p className="text-sm truncate text-slate-500 dark:text-slate-400">
-            {isAdmin ? "Admin" : ""}
-          </p>
+          <div className="flex items-center space-x-3">
+            <Avatar variant="round" size="sm">
+              <AvatarImage src={user.profilePhoto || undefined} />
+              <AvatarFallback>
+                {user?.firstName ? (
+                  getInitials(user.firstName + user.lastName)
+                ) : (
+                  <User2Icon className="w-4 h-4" />
+                )}
+              </AvatarFallback>
+            </Avatar>
+            <p className="font-medium truncate text-slate-900 dark:text-white">
+              {user.email}
+              {!user.isEnabled ? " (Disabled)" : ""}
+            </p>
+            <p className="text-sm truncate text-slate-500 dark:text-slate-400">
+              {isAdmin ? "Admin" : ""}
+            </p>
+          </div>
         </div>
 
         <div className="inline-flex items-center gap-2">
@@ -99,9 +158,50 @@ export function AuthorizedUserBlock({ user }: { user: AuthorizedUser }) {
                 <DialogTitle>Edit User</DialogTitle>
                 <DialogDescription>Update user information</DialogDescription>
               </DialogHeader>
-
               <form action={handleEditUser} className="space-y-4">
                 <input type="hidden" name="id" value={user.id} />
+                <p>Profile Photo</p>
+                <div
+                  {...getRootProps()}
+                  className="border p-4 rounded-lg cursor-pointer text-center"
+                >
+                  <input {...getInputProps()} name="profilePhoto" />
+                  {profilePhoto ? (
+                    <div className="flex flex-col items-center gap-4">
+                      <img
+                        src={profilePhoto}
+                        alt="Profile"
+                        className="w-32 h-32 rounded-full object-cover mx-auto"
+                      />
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="sm"
+                        onClick={async (e) => {
+                          e.stopPropagation();
+                          const result = await updateUserInfo(
+                            firstName,
+                            lastName,
+                            bio,
+                            selectedRoles,
+                            "", // Empty string for profilePhoto
+                            user.id,
+                          );
+                          if (result.success) {
+                            setProfilePhoto("");
+                            toast.success("Profile photo removed successfully");
+                          } else {
+                            toast.error("Failed to remove profile photo");
+                          }
+                        }}
+                      >
+                        Remove Photo
+                      </Button>
+                    </div>
+                  ) : (
+                    <p>Drag & drop a photo here, or click to select one</p>
+                  )}
+                </div>
                 <Input
                   name="firstName"
                   value={firstName}

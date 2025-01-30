@@ -11,6 +11,7 @@ import { getAuthorizedUserRoleIdByTitle } from "./authorized-user-roles";
 import { createEnrollmentFromEmail } from "@/lib/actions";
 import { getEnrollmentsByAuthorizedUser } from "./enrollment";
 import { createEnrollment } from "@/lib/actions";
+import { revalidatePath } from "next/cache";
 const STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
 /**
@@ -433,6 +434,7 @@ export async function updateGroup(
     groupName?: string;
     description?: string;
     semester?: string;
+    isArchived?: boolean;
     admins?: number[];
     managers?: number[];
     members?: Array<{
@@ -479,6 +481,7 @@ export async function updateGroup(
   if (data.groupName) dataToSend.groupName = data.groupName;
   if (data.description) dataToSend.description = data.description;
   if (data.semester) dataToSend.semester = data.semester;
+  if (data.isArchived !== undefined) dataToSend.isArchived = data.isArchived;
 
   // Handle admins and managers
   if (data.admins) {
@@ -523,6 +526,7 @@ export async function updateGroup(
   }
 
   console.log("  --> updateGroup dataToSend = ", JSON.stringify(dataToSend));
+  revalidatePath("/admin");
 
   return await fetchAPI<Group>(path, {
     options: {

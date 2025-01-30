@@ -7,7 +7,10 @@ export async function FriendRequests() {
   const user = await getCurrentUser();
   if (!user || !user?.email) return redirect("/");
   const authUser = await getAuthorizedUserByEmail(user.email);
-  const friendRequests = authUser.received_requests;
+  const friendRequests = authUser.received_requests.filter(
+    (friend) =>
+      !authUser.blocked.some((blockedUser) => blockedUser.id === friend.id),
+  );
 
   return (
     <section>

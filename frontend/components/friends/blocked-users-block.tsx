@@ -1,56 +1,56 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { removeFriend } from "@/lib/requests/friends";
 import { AuthorizedUser } from "@/types";
 import { startTransition } from "react";
 import { toast } from "sonner";
+import { unblockUser } from "@/lib/requests/friends";
 import { UserBlock } from "./user-block";
 
-export function FriendBlock({
+export function BlockedUsersBlock({
   user,
-  friend,
+  blocked,
 }: {
   user: AuthorizedUser;
-  friend: AuthorizedUser;
+  blocked: AuthorizedUser;
 }) {
-  const handleRemove = () => {
+  const handleUnblock = () => {
     startTransition(async () => {
-      const result = await removeFriend(user.id, friend.id);
+      const result = await unblockUser(user.id, blocked.id);
       if (result.success) {
-        toast.success("Friend removed");
+        toast.success("User unblocked");
       } else {
-        toast.error("Failed to remove friend");
+        toast.error("Failed to unblock user");
       }
     });
   };
+
   return (
     <li className="py-0 [&:not(:first-child)]:pt-3">
       <div className="flex items-center space-x-4">
-        {friend.profilePhoto && (
+        {blocked.profilePhoto && (
           <img
-            src={friend.profilePhoto}
-            alt={`${friend.firstName}'s profile`}
+            src={blocked.profilePhoto}
+            alt={`${blocked.firstName}'s profile`}
             className="w-12 h-12 rounded-full object-cover"
           />
         )}
-
         <div className="flex-1 min-w-0">
           <p className="font-medium truncate text-slate-900 dark:text-white">
-            {friend.firstName && friend.lastName
-              ? `${friend.firstName} ${friend.lastName}`
-              : friend.email}
+            {blocked.firstName && blocked.lastName
+              ? `${blocked.firstName} ${blocked.lastName}`
+              : blocked.email}
           </p>
-          {friend.bio && (
+          {blocked.bio && (
             <p className="text-sm truncate text-slate-500 dark:text-slate-400">
-              {friend.bio}
+              {blocked.bio}
             </p>
           )}
         </div>
-        <UserBlock user={friend} curUser={user} />
-        <div className="inline-flex items-center gap-2" onClick={handleRemove}>
+        <UserBlock user={blocked} curUser={user} />
+        <div className="inline-flex items-center gap-2" onClick={handleUnblock}>
           <Button size="sm" variant="outline">
-            Remove Friend
+            Unblock
           </Button>
         </div>
       </div>

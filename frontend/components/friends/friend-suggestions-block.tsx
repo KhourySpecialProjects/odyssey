@@ -3,19 +3,10 @@
 import { Button } from "@/components/ui/button";
 import { AuthorizedUser } from "@/types";
 import { useState } from "react";
-import {
-  DialogHeader,
-  Dialog,
-  DialogTrigger,
-  DialogContent,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog";
 import { toast } from "sonner";
-import Link from "next/link";
-import { startTransition, useEffect } from "react";
-import { sendFriendRequest, getSentRequest } from "@/lib/requests/friends";
-import { Github, Linkedin } from "lucide-react";
+import { startTransition } from "react";
+import { sendFriendRequest } from "@/lib/requests/friends";
+import { UserBlock } from "./user-block";
 
 export function FriendSuggestionsBlock({
   suggUser,
@@ -66,42 +57,7 @@ export function FriendSuggestionsBlock({
             </p>
           </div>
 
-          <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-              <Button size="sm" variant="outline">
-                View Profile
-              </Button>
-            </DialogTrigger>
-
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle style={{ fontSize: "2rem", textAlign: "center" }}>
-                  {suggUser.firstName} {suggUser.lastName}
-                </DialogTitle>
-                <div className="flex justify-center space-x-2">
-                  {suggUser.linkedin && (
-                    <Link href={suggUser.linkedin} legacyBehavior>
-                      <a target="_blank" rel="noopener noreferrer">
-                        <Linkedin />
-                      </a>
-                    </Link>
-                  )}
-                  {suggUser.github && (
-                    <Link href={suggUser.github} legacyBehavior>
-                      <a target="_blank" rel="noopener noreferrer">
-                        <Github />
-                      </a>
-                    </Link>
-                  )}
-                </div>
-                <DialogDescription>Email: {suggUser.email}</DialogDescription>
-                {suggUser.bio && (
-                  <DialogDescription>Bio: {suggUser.bio}</DialogDescription>
-                )}
-                <DialogDescription>Completed Droplets: </DialogDescription>
-              </DialogHeader>
-            </DialogContent>
-          </Dialog>
+          <UserBlock user={suggUser} curUser={curUser} />
 
           <div className="inline-flex items-center gap-2">
             <Button

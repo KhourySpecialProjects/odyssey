@@ -28,11 +28,18 @@ export async function fetchFriends(
             "firstName",
             "lastName",
             "bio",
-            "received_requests",
             "github",
             "linkedin",
             "profilePhoto",
           ],
+          populate: {
+            blocked: {
+              fields: ["id"],
+            },
+            was_blocked: {
+              fields: ["id"],
+            },
+          },
         },
       },
       pagination: {
@@ -53,7 +60,11 @@ export async function fetchFriends(
 
     return friendships.flatMap((friendship: Friendship) =>
       friendship.authorized_users.filter(
-        (friend) => friend.id !== authorizedUser.id,
+        (friend) =>
+          friend.id !== authorizedUser.id &&
+          !authorizedUser.blocked.some(
+            (blockedUser) => blockedUser.id === friend.id,
+          ),
       ),
     );
   } catch (error) {
@@ -315,6 +326,72 @@ export async function cancelFriendRequest(userId: number, requestId: number) {
   }
 }
 
+export async function unblockUser(userId: number, requestId: number) {
+  const token = process.env.STRAPI_ACCESS_TOKEN;
+  try {
+    const deleteResponse = await fetch(
+      `${NEXT_PUBLIC_STRAPI_API_URL}/api/authorized-users/${userId}`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+        },
+        body: JSON.stringify({
+          data: {
+            blocked: {
+              disconnect: [requestId],
+            },
+          },
+        }),
+      },
+    );
+
+    if (!deleteResponse.ok) {
+      console.error("Delete Response:", await deleteResponse.text());
+      throw new Error("Failed to unblock user");
+    }
+    revalidatePath("/settings/friends");
+    return { success: true };
+  } catch (error) {
+    console.error("Error:", error);
+    return { success: false, error };
+  }
+}
+
+export async function BlockUser(userId: number, requestId: number) {
+  const token = process.env.STRAPI_ACCESS_TOKEN;
+  try {
+    const deleteResponse = await fetch(
+      `${NEXT_PUBLIC_STRAPI_API_URL}/api/authorized-users/${userId}`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+        },
+        body: JSON.stringify({
+          data: {
+            blocked: {
+              connect: [requestId],
+            },
+          },
+        }),
+      },
+    );
+
+    if (!deleteResponse.ok) {
+      console.error("Delete Response:", await deleteResponse.text());
+      throw new Error("Failed to block user");
+    }
+    revalidatePath("/settings/friends");
+    return { success: true };
+  } catch (error) {
+    console.error("Error:", error);
+    return { success: false, error };
+  }
+}
+
 export async function removeFriend(userId: number, friendId: number) {
   const token = process.env.STRAPI_ACCESS_TOKEN;
   try {
@@ -405,6 +482,14 @@ export async function fetchFriendshipsById(
             "linkedin",
             "profilePhoto",
           ],
+          populate: {
+            blocked: {
+              fields: ["id"],
+            },
+            was_blocked: {
+              fields: ["id"],
+            },
+          },
         },
       },
       pagination: {
@@ -437,7 +522,13 @@ export async function fetchSuggestionsById(
 
     // Get all direct friends (AuthorizedUsers that aren't the userId)
     const directFriends = userFriendships.flatMap((friendship) =>
-      friendship.authorized_users.filter((user) => user.id !== userId),
+      friendship.authorized_users.filter(
+        (user) =>
+          user.id !== userId &&
+          !user.was_blocked.some(
+            (blockedUser: AuthorizedUser) => blockedUser.id === userId,
+          ),
+      ),
     );
 
     // Get all friends of friends
@@ -449,7 +540,12 @@ export async function fetchSuggestionsById(
         // Return all users from these friendships except the direct friend and original user
         return friendFriendships.flatMap((friendship) =>
           friendship.authorized_users.filter(
-            (user) => user.id !== friend.id && user.id !== userId,
+            (user) =>
+              user.id !== friend.id &&
+              user.id !== userId &&
+              !user.was_blocked.some(
+                (blockedUser: AuthorizedUser) => blockedUser.id === userId,
+              ),
           ),
         );
       }),
