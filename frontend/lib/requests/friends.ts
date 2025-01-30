@@ -62,6 +62,9 @@ export async function fetchFriends(
       friendship.authorized_users.filter(
         (friend) =>
           friend.id !== authorizedUser.id &&
+          !authorizedUser.was_blocked.some(
+            (blockedUser) => blockedUser.id === friend.id,
+          ) &&
           !authorizedUser.blocked.some(
             (blockedUser) => blockedUser.id === friend.id,
           ),
@@ -525,8 +528,12 @@ export async function fetchSuggestionsById(
       friendship.authorized_users.filter(
         (user) =>
           user.id !== userId &&
-          !user.was_blocked.some(
-            (blockedUser: AuthorizedUser) => blockedUser.id === userId,
+          !user.blocked.some(
+            (blockedUser: AuthorizedUser) =>
+              blockedUser.id === userId &&
+              !user.was_blocked.some(
+                (blockedUser: AuthorizedUser) => blockedUser.id === userId,
+              ),
           ),
       ),
     );
