@@ -11,7 +11,7 @@
       "url": "https://khouryodyssey.org"
     },
     "license": null,
-    "x-generation-date": "2025-01-31T20:04:14.830Z"
+    "x-generation-date": "2025-01-31T20:47:31.853Z"
   },
   "x-strapi-config": {
     "plugins": [
@@ -35188,8 +35188,7 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object",
-              "additionalProperties": true
+              "type": "object"
             },
             "style": "deepObject"
           },
@@ -35694,8 +35693,7 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object",
-              "additionalProperties": true
+              "type": "object"
             },
             "style": "deepObject"
           },
@@ -36200,8 +36198,7 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object",
-              "additionalProperties": true
+              "type": "object"
             },
             "style": "deepObject"
           },
@@ -36706,8 +36703,7 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object",
-              "additionalProperties": true
+              "type": "object"
             },
             "style": "deepObject"
           },
@@ -37212,8 +37208,7 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object",
-              "additionalProperties": true
+              "type": "object"
             },
             "style": "deepObject"
           },
@@ -37718,8 +37713,7 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object",
-              "additionalProperties": true
+              "type": "object"
             },
             "style": "deepObject"
           },
@@ -38224,8 +38218,7 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object",
-              "additionalProperties": true
+              "type": "object"
             },
             "style": "deepObject"
           },
@@ -38730,8 +38723,7 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object",
-              "additionalProperties": true
+              "type": "object"
             },
             "style": "deepObject"
           },
@@ -39236,8 +39228,7 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object",
-              "additionalProperties": true
+              "type": "object"
             },
             "style": "deepObject"
           },
@@ -39742,8 +39733,7 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object",
-              "additionalProperties": true
+              "type": "object"
             },
             "style": "deepObject"
           },
@@ -40248,8 +40238,7 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object",
-              "additionalProperties": true
+              "type": "object"
             },
             "style": "deepObject"
           },
@@ -40754,8 +40743,7 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object",
-              "additionalProperties": true
+              "type": "object"
             },
             "style": "deepObject"
           },
@@ -41260,8 +41248,7 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object",
-              "additionalProperties": true
+              "type": "object"
             },
             "style": "deepObject"
           },
@@ -41766,8 +41753,7 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object",
-              "additionalProperties": true
+              "type": "object"
             },
             "style": "deepObject"
           },

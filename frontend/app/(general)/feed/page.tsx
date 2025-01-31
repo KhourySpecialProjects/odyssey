@@ -36,12 +36,22 @@ export default async function FeedPage({
       <div className="w-full p-8 mx-auto my-4 text-center max-w-7xl">
         <h1 className="text-5xl font-bold">My Feed</h1>
       </div>
-      <div className="flex flex-row bg-blue-200 justify-content ">
-      <div className="w-1/4 h-200 bg-red-200 text-center">
-        <FriendRequests></FriendRequests>
+      <div className="flex flex-row  justify-content">
+        <div className="flex justify-center w-1/3 h-200  text-center">
+
+
+          <div className="w-2/3 bg-slate-100 rounded-2xl p-4">
+            <FriendRequests></FriendRequests>
+          </div>
+
+
         </div>
-      <div className="w-1/2 h-200 bg-purple-200 text-center text-xl font-bold">General Feed</div>
-      <div className="w-1/4 h-200 bg-yellow-200 text-center text-xl font-bold">Filters</div>
+        <div className="w-1/2 h-200 bg-purple-200 text-center text-xl font-bold">
+          General Feed
+        </div>
+        <div className="w-1/6 h-200 bg-yellow-200 text-center text-xl font-bold">
+          Filters
+        </div>
       </div>
     </>
   );
