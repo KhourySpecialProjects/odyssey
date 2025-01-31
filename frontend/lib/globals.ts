@@ -7,6 +7,14 @@ export enum AuthorizedUserRoleTitle {
   Faculty = "Faculty",
 }
 
+export enum AnnouncementTypeTitle {
+  Droplet = "Droplet",
+  Playlist = "Playlist",
+  Group = "Group",
+  System = "System",
+  Friend = "Friend"
+}
+
 export const AuthorizedUserAdminRoles = [
   AuthorizedUserRoleTitle.SysAdmin,
   AuthorizedUserRoleTitle.AcadAdmin,

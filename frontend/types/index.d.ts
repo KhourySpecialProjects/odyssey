@@ -8,6 +8,8 @@ export type DropletType = "knowledge" | "skill";
 
 export type DropletStatus = "draft" | "edit" | "published";
 
+export type AnnouncementType = "playlist" | "droplet" | "friend" | "system" | "group";
+
 export type AuthorizedUserRole = {
   id: number;
   title: AuthorizedUserRoleTitle;
@@ -237,4 +239,15 @@ export type ActionResponse<T = any> = {
 
 export type Friendship = {
   authorized_users: AuthorizedUser[];
+};
+
+export type Announcement = {
+  id: number;
+  type: AnnouncementType;
+  firstCreated: Date;
+  content: string;
+  droplet?: Droplet;
+  group?: Group;
+  authorized_user?: AuthorizedUser;
+  playlist?: Playlist;
 };

@@ -1,15 +1,9 @@
-import { DropletsGrid } from "@/components/explore/droplets-grid";
-import { DropletsSkeleton } from "@/components/explore/droplets-skeleton";
-import { Filter } from "@/components/explore/filter";
-import { Search } from "@/components/explore/search";
-import { Sort } from "@/components/explore/sort";
-import { TagFilter } from "@/components/explore/tag-filter";
-import { defaultSort, DROPLET_FILTERS, sorting } from "@/lib/globals";
+
+import { defaultSort, sorting } from "@/lib/globals";
 import { Metadata } from "next";
-import { Suspense } from "react";
-import { ContentTypeSelector } from "@/components/explore/content-type-selector";
-import { PlaylistsGrid } from "@/components/explore/playlists-grid";
 import { FriendRequests } from "@/components/friends/friend-requests";
+import { Feed } from "@/components/feed/feed";
+import { FeedFilter } from "@/components/feed/feed-filter";
 
 export const metadata: Metadata = {
   title: "Feed",
@@ -36,12 +30,18 @@ export default async function FeedPage({
       <div className="w-full p-8 mx-auto my-4 text-center max-w-7xl">
         <h1 className="text-5xl font-bold">My Feed</h1>
       </div>
-      <div className="flex flex-row bg-blue-200 justify-content ">
-      <div className="w-1/4 h-200 bg-red-200 text-center">
-        <FriendRequests></FriendRequests>
+      <div className="flex flex-row justify-content ">
+      <div className="w-1/4 h-200 text-center">
+        <FriendRequests />
         </div>
-      <div className="w-1/2 h-200 bg-purple-200 text-center text-xl font-bold">General Feed</div>
-      <div className="w-1/4 h-200 bg-yellow-200 text-center text-xl font-bold">Filters</div>
+      <div className="w-1/2 h-200 text-center text-xl font-bold">
+        General Feed
+        <Feed />
+        </div>
+      <div className="w-1/4 h-200 text-center text-xl font-bold flex flex-col items-center justify-center">
+        Filters
+        <FeedFilter />
+        </div>
       </div>
     </>
   );
