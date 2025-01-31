@@ -17,6 +17,10 @@ export const originalNav = [
 export const getMainNav = (user: User) => {
   const mainNav = [
     {
+      href: "/feed",
+      label: "Feed",
+    },
+    {
       href: "/about",
       label: "About",
     },
@@ -43,6 +47,10 @@ export const getMainNav = (user: User) => {
 };
 export const getContentCreatorNav = (user: User) => {
   const baseNav = [
+    {
+      href: "/feed",
+      label: "Feed",
+    },
     {
       href: "/about",
       label: "About",
