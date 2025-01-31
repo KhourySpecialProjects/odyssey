@@ -5,6 +5,7 @@ export enum AuthorizedUserRoleTitle {
   User = "User",
   ContentEditor = "Content Editor",
   Faculty = "Faculty",
+  WebsiteEditor = "Website Editor"
 }
 
 export const AuthorizedUserAdminRoles = [
