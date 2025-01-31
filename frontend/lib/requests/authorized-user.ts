@@ -93,6 +93,110 @@ export async function fetchAuthorizedUsers(): Promise<AuthorizedUser[]> {
   }
 }
 
+export async function fetchContentCreators(): Promise<AuthorizedUser[]> {
+  try {
+    const query = qs.stringify({
+      filters: {
+        roles: {
+          title: {
+            $eq: "Content Creator"
+          }
+        }
+      },
+      fields: [
+        "id",
+        "email",
+        "isEnabled",
+        "firstName",
+        "lastName",
+        "bio",
+        "profilePhoto", 
+        "linkedin",
+        "github"
+      ],
+      populate: {
+        roles: {
+          fields: ["id", "title"]
+        },
+        blocked: {
+          fields: ["id"],
+        },
+        was_blocked: {
+          fields: ["id"],
+        },
+      },
+      pagination: {
+        pageSize: 100,
+        page: 1
+      }
+    });
+    const response = await fetch(
+      NEXT_PUBLIC_STRAPI_API_URL + "/api/authorized-users?" + query,
+      {
+        headers: { Authorization: "Bearer " + STRAPI_ACCESS_TOKEN },
+        cache: "no-store",
+      },
+    );
+    const data = await response.json();
+    return flattenAttributes(data.data);
+  } catch (error) {
+    console.error("Database Error:", error);
+    throw new Error("Failed to fetch content creators.");
+  }
+}
+
+export async function fetchWebsiteCreators(): Promise<AuthorizedUser[]> {
+  try {
+    const query = qs.stringify({
+      filters: {
+        roles: {
+          title: {
+            $eq: "Website Creator"
+          }
+        }
+      },
+      fields: [
+        "id",
+        "email",
+        "isEnabled",
+        "firstName",
+        "lastName",
+        "bio",
+        "profilePhoto", 
+        "linkedin",
+        "github"
+      ],
+      populate: {
+        roles: {
+          fields: ["id", "title"]
+        },
+        blocked: {
+          fields: ["id"],
+        },
+        was_blocked: {
+          fields: ["id"],
+        },
+      },
+      pagination: {
+        pageSize: 100,
+        page: 1
+      }
+    });
+    const response = await fetch(
+      NEXT_PUBLIC_STRAPI_API_URL + "/api/authorized-users?" + query,
+      {
+        headers: { Authorization: "Bearer " + STRAPI_ACCESS_TOKEN },
+        cache: "no-store",
+      },
+    );
+    const data = await response.json();
+    return flattenAttributes(data.data);
+  } catch (error) {
+    console.error("Database Error:", error);
+    throw new Error("Failed to fetch content creators.");
+  }
+}
+
 export async function fetchIsAuthorizedUser(email: string) {
   try {
     const query = qs.stringify({

@@ -48,7 +48,7 @@ export function UserBlock({
               <img
                 src={user.profilePhoto}
                 alt={`${user.firstName}'s profile`}
-                className="w-12 h-12 rounded-full object-cover"
+                className="w-20 h-20 rounded-full object-cover"
               />
             </div>
           )}
@@ -76,7 +76,7 @@ export function UserBlock({
           <DialogDescription>Completed Droplets: </DialogDescription>
           <FriendCompletedDroplets friend={user} />
           <div
-            className={`inline-flex items-center gap-2 ${curUser.blocked.includes(user) ? "visibility: hidden" : "visibility: visible"}`}
+            className={`inline-flex items-center gap-2 ${(curUser == user || curUser.blocked.includes(user)) ? "visibility: hidden" : "visibility: visible"}`}
             onClick={handleBlock}
           >
             <Button size="sm" variant="destructive">
