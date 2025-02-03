@@ -13,6 +13,7 @@ import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import { createPlaylist } from "@/lib/actions";
 import { updatePlaylist } from "@/lib/actions";
+import { createPlaylistAnnouncement } from "@/lib/requests/feed";
 
 interface PlaylistFormProps {
   droplets: any[];
@@ -55,6 +56,16 @@ export function PlaylistForm({
     0,
   );
 
+  const handlePlaylistPost = async () => {
+    try {
+      if (existingPlaylist) {
+        await createPlaylistAnnouncement(existingPlaylist.name, existingPlaylist?.id);
+      }
+    } catch (error) {
+      console.error("Failed to make playlist announcement: ", error);
+    }
+  };
+
   const handleDropToSelected = useCallback((droplet: any) => {
     setSourceDroplets((current) => current.filter((d) => d.id !== droplet.id));
     setSelectedDroplets((current) => [...current, droplet]);
@@ -95,10 +106,6 @@ export function PlaylistForm({
       setError("Please select at least one droplet");
       return;
     }
-    console.log(` --> New playlist name: ${name}`);
-    console.log(`   --> Playlist selected Droplets are: `, selectedDroplets);
-    console.log(`   --> isPublic: ${isPublic}`);
-    console.log(`   --> Author: ${author}`);
 
     const updatePlaylistData = {
       name,
@@ -115,9 +122,6 @@ export function PlaylistForm({
       author: { id: author.id },
       userId,
     };
-
-    console.log("updatePlaylistData: ", updatePlaylistData);
-    console.log("playlistData: ", playlistData);
 
     try {
       let response;
@@ -202,7 +206,7 @@ export function PlaylistForm({
             <MoveLeftIcon size={16} />
             Cancel
           </Button>
-          <Button type="submit" className="h-12">
+          <Button type="submit" className="h-12" onClick={handlePlaylistPost}>
             Save Playlist
           </Button>
         </div>

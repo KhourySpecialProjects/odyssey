@@ -39,6 +39,8 @@ import { createGroup } from "@/lib/requests/groups";
 import { enrollUsers } from "@/lib/requests/groups";
 import { getGroupByID } from "@/lib/requests/groups";
 import { revalidateTag } from "next/cache";
+import { group } from "console";
+import { createGroupAnnouncement } from "@/lib/requests/feed";
 
 const SEMESTER_OPTIONS: GroupSemester[] = [
   "Open Membership",
@@ -277,6 +279,16 @@ export function GroupManagementForm({
     }));
     form.setValue("droplets", updatedDroplets);
     setDroplets(updatedDroplets);
+  };
+
+  const handleGroupPost = async () => {
+    try {
+      if (existingGroup) {
+        await createGroupAnnouncement(existingGroup.groupName, existingGroup.id);
+      }
+    } catch (error) {
+      console.error("Failed to make playlist announcement: ", error);
+    }
   };
 
   const handleDropletRemove = (dropletId: number) => {
@@ -563,7 +575,7 @@ export function GroupManagementForm({
           <Button type="button" variant="outline" onClick={handleCancel}>
             Cancel
           </Button>
-          <Button type="submit" disabled={isSubmitting}>
+          <Button type="submit" disabled={isSubmitting} onClick={handleGroupPost}>
             {isSubmitting
               ? "Saving..."
               : existingGroup

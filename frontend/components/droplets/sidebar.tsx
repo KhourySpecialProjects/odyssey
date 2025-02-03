@@ -41,9 +41,7 @@ import {
 } from "../ui/dropdown-menu";
 import { Label } from "../ui/label";
 import { Progress } from "../ui/progress";
-import { Separator } from "../ui/separator";
 import { useSession } from "next-auth/react";
-import { DROPLET_FILTERS } from "@/lib/globals";
 
 export default function Sidebar({
   user,
@@ -63,8 +61,6 @@ export default function Sidebar({
   const { data: session } = useSession();
 
   const isAdmin = user && isAuthorizedUserAdmin(user.roles);
-  // console.log(" ----> user roles = ", user?.roles);
-  // console.log(" ----> isAdmin = ", isAdmin);
 
   const activeLinkClasses =
     "w-full flex font-bold items-center p-2 bg-slate-200 [&>svg]:text-sky-700 rounded-lg dark:text-white dark:hover:bg-slate-700 group text-sky-700 transition-colors";
@@ -197,20 +193,6 @@ export default function Sidebar({
                     !completedLessonIds.includes(previousLesson.id) &&
                     !author &&
                     !isAdmin;
-
-                  // console.log(" ---> isLocked = ", isLocked);
-                  console.log("completed lessons", completedLessonIds);
-                  console.log("current lesson", lesson);
-                  console.log("previous lesson", previousLesson);
-                  if (previousLesson) {
-                    console.log(
-                      "id included in completed lessons",
-                      completedLessonIds.includes(previousLesson.id),
-                    );
-                  }
-                  console.log(
-                    "---------------------------------------------------",
-                  );
 
                   return (
                     <li key={lesson.id} className="w-full">

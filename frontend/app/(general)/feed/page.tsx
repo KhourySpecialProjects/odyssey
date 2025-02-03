@@ -1,11 +1,11 @@
 import { Metadata } from "next";
 import { FriendRequests } from "@/components/friends/friend-requests";
 import { FeedContainer } from "@/components/feed/feed-container";
-import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
-import { getCurrentUser } from "@/lib/auth/session";
 import { redirect } from "next/navigation";
 import { RequestsPopupWrapper } from "@/components/friends/requests-popup-wrapper";
 import { fetchAnnouncements, fetchNewestAnnouncements } from "@/lib/requests/feed";
+import { getCurrentUser } from "@/lib/auth/session";
+import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
 
 export const metadata: Metadata = {
   title: "Feed",
@@ -13,11 +13,7 @@ export const metadata: Metadata = {
 };
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
-export default async function FeedPage({
-  searchParams,
-}: {
-  searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
-}) {
+export default async function FeedPage() {
   const newestAnnouncements = await fetchNewestAnnouncements();
   const announcements = await fetchAnnouncements();
 
