@@ -66,7 +66,7 @@ export default async function AuthorProfileSettings() {
       <AdminSelector
         content={{
           Friends: <Friends />,
-          "Friend Requests": <FriendRequests />,
+          "Friend Requests": <FriendRequests noProfile={false}/>,
           "People You May Know": <FriendSuggestions user={authorizedUser} />,
           "Sent Requests": <FriendSentRequests />,
           "Blocked Users": <BlockedUsers />,
