@@ -54,6 +54,8 @@ import {
 import { SortableLesson } from "@/components/draft/sortable-lesson";
 import { useLessonOrder } from "./metadata/hooks/useLessonOrder";
 import { Button } from "../ui/button";
+import { createDropletAnnouncement } from "@/lib/requests/feed";
+import { toast } from "sonner";
 
 export function Sidebar({
   user,
@@ -82,6 +84,15 @@ export function Sidebar({
   } = useLessonOrder(droplet);
 
   const isAdmin = user && isAuthorizedUserAdmin(user.roles);
+
+  const handleDropletPost = async () => {
+    try {
+      await createDropletAnnouncement(droplet.name, droplet.id);
+      router.back()
+    } catch (error) {
+      console.error("Failed to make playlist announcement: ", error);
+    }
+  };
 
   const classes = {
     link: "flex items-center p-2 rounded-lg text-slate-900 dark:text-white hover:bg-slate-100 dark:hover:bg-slate-700 group transition-colors",
@@ -256,7 +267,7 @@ export function Sidebar({
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => router.back()}
+                  onClick={handleDropletPost}
                   className={cn(
                     classes.link,
                     "w-full flex items-center justify-start text-base px-4",
