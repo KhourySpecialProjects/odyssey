@@ -1,11 +1,6 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import {
-  acceptFriendRequest,
-  rejectFriendRequest,
-} from "@/lib/requests/friends";
-import { Announcement, AuthorizedUser } from "@/types";
+import { Announcement } from "@/types";
 
 export function FeedBlock({
   announcement

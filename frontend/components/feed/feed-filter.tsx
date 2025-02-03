@@ -10,11 +10,11 @@ interface FeedFilterProps {
 
 export function FeedFilter({ onFilterChange }: FeedFilterProps) {
   const roleOptions = [
-    { value: AnnouncementTypeTitle.Droplet, label: "Droplet" },
-    { value: AnnouncementTypeTitle.Playlist, label: "Playlist" },
-    { value: AnnouncementTypeTitle.Group, label: "Group" },
-    { value: AnnouncementTypeTitle.System, label: "System" },
-    { value: AnnouncementTypeTitle.Friend, label: "Friend" },
+    { value: AnnouncementTypeTitle.Droplet, label: "Droplet", color: "bg-sky-100" },
+    { value: AnnouncementTypeTitle.Playlist, label: "Playlist", color: "bg-green-100" },
+    { value: AnnouncementTypeTitle.Group, label: "Group", color: "bg-purple-100" },
+    { value: AnnouncementTypeTitle.System, label: "System", color: "bg-red-100" },
+    { value: AnnouncementTypeTitle.Friend, label: "Friend", color: "bg-yellow-100" },
   ] as const;
   
   const [selectedRoles, setSelectedRoles] = useState<AnnouncementTypeTitle[]>(
@@ -35,7 +35,7 @@ export function FeedFilter({ onFilterChange }: FeedFilterProps) {
       {roleOptions.map((role) => (
         <div
           key={role.value}
-          className="flex items-center space-x-2"
+          className={`flex items-center space-x-2 ${role.color}`}
         >
           <Checkbox
             id={role.value}
