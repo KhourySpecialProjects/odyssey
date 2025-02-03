@@ -417,6 +417,7 @@ export interface ApiAccessRequestAccessRequest extends Schema.CollectionType {
 export interface ApiAnnouncementAnnouncement extends Schema.CollectionType {
   collectionName: 'announcements';
   info: {
+    description: '';
     displayName: 'Announcement';
     pluralName: 'announcements';
     singularName: 'announcement';
@@ -447,7 +448,7 @@ export interface ApiAnnouncementAnnouncement extends Schema.CollectionType {
       'manyToOne',
       'api::droplet.droplet'
     >;
-    firstCreated: Attribute.DateTime & Attribute.Required;
+    firstCreated: Attribute.Date & Attribute.Required;
     group: Attribute.Relation<
       'api::announcement.announcement',
       'manyToOne',
@@ -856,6 +857,7 @@ export interface ApiEnrollmentEnrollment extends Schema.CollectionType {
     isComplete: Attribute.Boolean &
       Attribute.Required &
       Attribute.DefaultTo<false>;
+    isFirstTime: Attribute.Boolean & Attribute.DefaultTo<true>;
     rating: Attribute.Integer &
       Attribute.SetMinMax<
         {
