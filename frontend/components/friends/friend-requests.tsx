@@ -2,7 +2,6 @@ import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
 import { FriendRequestBlock } from "./friend-request-block";
 import { getCurrentUser } from "@/lib/auth/session";
 import { redirect } from "next/navigation";
-import { useLocation } from "react-router-dom";
 import { FriendRequestFeedBlock } from "./friend-request-feed-block";
 
 export async function FriendRequests({
