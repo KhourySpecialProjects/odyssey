@@ -2,6 +2,8 @@ import { Metadata } from "next";
 import { FriendRequests } from "@/components/friends/friend-requests";
 import { FeedContainer } from "@/components/feed/feed-container";
 import { fetchAnnouncements, fetchNewestAnnouncements } from "@/lib/requests/feed";
+import { getCurrentUser } from "@/lib/auth/session";
+import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
 
 export const metadata: Metadata = {
   title: "Feed",
@@ -9,13 +11,19 @@ export const metadata: Metadata = {
 };
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
-export default async function FeedPage({
-  searchParams,
-}: {
-  searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
-}) {
+export default async function FeedPage() {
   const newestAnnouncements = await fetchNewestAnnouncements();
   const announcements = await fetchAnnouncements();
+  const user = await getCurrentUser();
+  let authorizedUser = null;
+
+  if (user?.email) {
+    try {
+      authorizedUser = await getAuthorizedUserByEmail(user.email);
+    } catch (error) {
+      console.error("Error fetching authorized user:", error);
+    }
+  }
   return (
     <>
       <div className="w-full p-8 mx-auto my-4 text-center max-w-7xl">

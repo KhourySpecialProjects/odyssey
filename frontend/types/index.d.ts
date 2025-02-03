@@ -153,6 +153,7 @@ export type Enrollment = {
   viewedLessons: Lesson[];
   isComplete: boolean;
   rating: number;
+  isFirstTime: boolean;
 };
 
 export interface Playlist {
