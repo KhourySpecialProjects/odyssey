@@ -1,13 +1,11 @@
 import { Metadata } from "next";
 import { FriendRequests } from "@/components/friends/friend-requests";
-import { Feed } from "@/components/feed/feed";
-import { FeedFilter } from "@/components/feed/feed-filter";
 import { FeedContainer } from "@/components/feed/feed-container";
-import { fetchAnnouncements } from "@/lib/requests/feed";
 import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
 import { getCurrentUser } from "@/lib/auth/session";
 import { redirect } from "next/navigation";
 import { RequestsPopupWrapper } from "@/components/friends/requests-popup-wrapper";
+import { fetchAnnouncements, fetchNewestAnnouncements } from "@/lib/requests/feed";
 
 export const metadata: Metadata = {
   title: "Feed",
@@ -20,6 +18,7 @@ export default async function FeedPage({
 }: {
   searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
+  const newestAnnouncements = await fetchNewestAnnouncements();
   const announcements = await fetchAnnouncements();
 
   const user = await getCurrentUser();
@@ -50,9 +49,9 @@ export default async function FeedPage({
 
           </div>
         </div>
-        <div className="w-3/4 h-200 text-center">
-          <FeedContainer announcements={announcements} />
-        </div>
+          <div className="w-3/4 h-200 text-center">
+          <FeedContainer announcements={announcements} newestAnnouncements={newestAnnouncements}/>
+          </div>
       </div>
     </>
   );
