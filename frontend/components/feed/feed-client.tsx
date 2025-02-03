@@ -9,11 +9,12 @@ import { filter } from "lodash";
 export function FeedClient({
   selectedRoles,
   announcements,
-  newestAnnouncements
+  newestAnnouncements,
 }: {
   selectedRoles: AnnouncementType[];
   announcements: Announcement[];
   newestAnnouncements: Announcement[];
+
 }) {
   const [toShow, setToShow] = useState(newestAnnouncements);
   const [buttonDisplay, setButtonDisplay] = useState(true)

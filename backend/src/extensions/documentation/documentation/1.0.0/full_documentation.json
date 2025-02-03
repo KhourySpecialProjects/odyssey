@@ -11,7 +11,7 @@
       "url": "https://khouryodyssey.org"
     },
     "license": null,
-    "x-generation-date": "2025-02-03T14:15:27.987Z"
+    "x-generation-date": "2025-02-03T19:27:53.332Z"
   },
   "x-strapi-config": {
     "plugins": [
@@ -578,7 +578,7 @@
               },
               "firstCreated": {
                 "type": "string",
-                "format": "date-time"
+                "format": "date"
               },
               "content": {
                 "type": "string"
@@ -697,7 +697,7 @@
           },
           "firstCreated": {
             "type": "string",
-            "format": "date-time"
+            "format": "date"
           },
           "content": {
             "type": "string"
@@ -1811,6 +1811,9 @@
                                                               "rating": {
                                                                 "type": "integer"
                                                               },
+                                                              "isFirstTime": {
+                                                                "type": "boolean"
+                                                              },
                                                               "createdAt": {
                                                                 "type": "string",
                                                                 "format": "date-time"
@@ -2227,7 +2230,7 @@
                                                                                           },
                                                                                           "firstCreated": {
                                                                                             "type": "string",
-                                                                                            "format": "date-time"
+                                                                                            "format": "date"
                                                                                           },
                                                                                           "content": {
                                                                                             "type": "string"
@@ -4709,6 +4712,9 @@
                                                                 "rating": {
                                                                   "type": "integer"
                                                                 },
+                                                                "isFirstTime": {
+                                                                  "type": "boolean"
+                                                                },
                                                                 "createdAt": {
                                                                   "type": "string",
                                                                   "format": "date-time"
@@ -5125,7 +5131,7 @@
                                                                                             },
                                                                                             "firstCreated": {
                                                                                               "type": "string",
-                                                                                              "format": "date-time"
+                                                                                              "format": "date"
                                                                                             },
                                                                                             "content": {
                                                                                               "type": "string"
@@ -7797,7 +7803,7 @@
                                                                                                                       },
                                                                                                                       "firstCreated": {
                                                                                                                         "type": "string",
-                                                                                                                        "format": "date-time"
+                                                                                                                        "format": "date"
                                                                                                                       },
                                                                                                                       "content": {
                                                                                                                         "type": "string"
@@ -8415,6 +8421,9 @@
                                                                 },
                                                                 "rating": {
                                                                   "type": "integer"
+                                                                },
+                                                                "isFirstTime": {
+                                                                  "type": "boolean"
                                                                 },
                                                                 "createdAt": {
                                                                   "type": "string",
@@ -10394,6 +10403,9 @@
                                                                               "rating": {
                                                                                 "type": "integer"
                                                                               },
+                                                                              "isFirstTime": {
+                                                                                "type": "boolean"
+                                                                              },
                                                                               "createdAt": {
                                                                                 "type": "string",
                                                                                 "format": "date-time"
@@ -11083,7 +11095,7 @@
                                                                                             },
                                                                                             "firstCreated": {
                                                                                               "type": "string",
-                                                                                              "format": "date-time"
+                                                                                              "format": "date"
                                                                                             },
                                                                                             "content": {
                                                                                               "type": "string"
@@ -13583,7 +13595,7 @@
                                                                                                                         },
                                                                                                                         "firstCreated": {
                                                                                                                           "type": "string",
-                                                                                                                          "format": "date-time"
+                                                                                                                          "format": "date"
                                                                                                                         },
                                                                                                                         "content": {
                                                                                                                           "type": "string"
@@ -14201,6 +14213,9 @@
                                                                   },
                                                                   "rating": {
                                                                     "type": "integer"
+                                                                  },
+                                                                  "isFirstTime": {
+                                                                    "type": "boolean"
                                                                   },
                                                                   "createdAt": {
                                                                     "type": "string",
@@ -16306,6 +16321,9 @@
                                                               "rating": {
                                                                 "type": "integer"
                                                               },
+                                                              "isFirstTime": {
+                                                                "type": "boolean"
+                                                              },
                                                               "createdAt": {
                                                                 "type": "string",
                                                                 "format": "date-time"
@@ -16722,7 +16740,7 @@
                                                                                           },
                                                                                           "firstCreated": {
                                                                                             "type": "string",
-                                                                                            "format": "date-time"
+                                                                                            "format": "date"
                                                                                           },
                                                                                           "content": {
                                                                                             "type": "string"
@@ -17846,6 +17864,9 @@
               },
               "rating": {
                 "type": "integer"
+              },
+              "isFirstTime": {
+                "type": "boolean"
               }
             }
           }
@@ -18844,6 +18865,9 @@
                                                                             "rating": {
                                                                               "type": "integer"
                                                                             },
+                                                                            "isFirstTime": {
+                                                                              "type": "boolean"
+                                                                            },
                                                                             "createdAt": {
                                                                               "type": "string",
                                                                               "format": "date-time"
@@ -19533,7 +19557,7 @@
                                                                                           },
                                                                                           "firstCreated": {
                                                                                             "type": "string",
-                                                                                            "format": "date-time"
+                                                                                            "format": "date"
                                                                                           },
                                                                                           "content": {
                                                                                             "type": "string"
@@ -20455,6 +20479,9 @@
           },
           "rating": {
             "type": "integer"
+          },
+          "isFirstTime": {
+            "type": "boolean"
           },
           "createdAt": {
             "type": "string",
@@ -21541,6 +21568,9 @@
                                                                               "rating": {
                                                                                 "type": "integer"
                                                                               },
+                                                                              "isFirstTime": {
+                                                                                "type": "boolean"
+                                                                              },
                                                                               "createdAt": {
                                                                                 "type": "string",
                                                                                 "format": "date-time"
@@ -22230,7 +22260,7 @@
                                                                                             },
                                                                                             "firstCreated": {
                                                                                               "type": "string",
-                                                                                              "format": "date-time"
+                                                                                              "format": "date"
                                                                                             },
                                                                                             "content": {
                                                                                               "type": "string"
@@ -24324,6 +24354,9 @@
                                                                               "rating": {
                                                                                 "type": "integer"
                                                                               },
+                                                                              "isFirstTime": {
+                                                                                "type": "boolean"
+                                                                              },
                                                                               "createdAt": {
                                                                                 "type": "string",
                                                                                 "format": "date-time"
@@ -25013,7 +25046,7 @@
                                                                                             },
                                                                                             "firstCreated": {
                                                                                               "type": "string",
-                                                                                              "format": "date-time"
+                                                                                              "format": "date"
                                                                                             },
                                                                                             "content": {
                                                                                               "type": "string"
@@ -27394,6 +27427,9 @@
                                                                 "rating": {
                                                                   "type": "integer"
                                                                 },
+                                                                "isFirstTime": {
+                                                                  "type": "boolean"
+                                                                },
                                                                 "createdAt": {
                                                                   "type": "string",
                                                                   "format": "date-time"
@@ -27810,7 +27846,7 @@
                                                                                             },
                                                                                             "firstCreated": {
                                                                                               "type": "string",
-                                                                                              "format": "date-time"
+                                                                                              "format": "date"
                                                                                             },
                                                                                             "content": {
                                                                                               "type": "string"
@@ -30294,6 +30330,9 @@
                                                                 "rating": {
                                                                   "type": "integer"
                                                                 },
+                                                                "isFirstTime": {
+                                                                  "type": "boolean"
+                                                                },
                                                                 "createdAt": {
                                                                   "type": "string",
                                                                   "format": "date-time"
@@ -30710,7 +30749,7 @@
                                                                                             },
                                                                                             "firstCreated": {
                                                                                               "type": "string",
-                                                                                              "format": "date-time"
+                                                                                              "format": "date"
                                                                                             },
                                                                                             "content": {
                                                                                               "type": "string"
@@ -33502,6 +33541,9 @@
                                                                 "rating": {
                                                                   "type": "integer"
                                                                 },
+                                                                "isFirstTime": {
+                                                                  "type": "boolean"
+                                                                },
                                                                 "createdAt": {
                                                                   "type": "string",
                                                                   "format": "date-time"
@@ -33918,7 +33960,7 @@
                                                                                             },
                                                                                             "firstCreated": {
                                                                                               "type": "string",
-                                                                                              "format": "date-time"
+                                                                                              "format": "date"
                                                                                             },
                                                                                             "content": {
                                                                                               "type": "string"
@@ -35188,7 +35230,8 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object"
+              "type": "object",
+              "additionalProperties": true
             },
             "style": "deepObject"
           },
@@ -35693,7 +35736,8 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object"
+              "type": "object",
+              "additionalProperties": true
             },
             "style": "deepObject"
           },
@@ -36198,7 +36242,8 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object"
+              "type": "object",
+              "additionalProperties": true
             },
             "style": "deepObject"
           },
@@ -36703,7 +36748,8 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object"
+              "type": "object",
+              "additionalProperties": true
             },
             "style": "deepObject"
           },
@@ -37208,7 +37254,8 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object"
+              "type": "object",
+              "additionalProperties": true
             },
             "style": "deepObject"
           },
@@ -37713,7 +37760,8 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object"
+              "type": "object",
+              "additionalProperties": true
             },
             "style": "deepObject"
           },
@@ -38218,7 +38266,8 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object"
+              "type": "object",
+              "additionalProperties": true
             },
             "style": "deepObject"
           },
@@ -38723,7 +38772,8 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object"
+              "type": "object",
+              "additionalProperties": true
             },
             "style": "deepObject"
           },
@@ -39228,7 +39278,8 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object"
+              "type": "object",
+              "additionalProperties": true
             },
             "style": "deepObject"
           },
@@ -39733,7 +39784,8 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object"
+              "type": "object",
+              "additionalProperties": true
             },
             "style": "deepObject"
           },
@@ -40238,7 +40290,8 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object"
+              "type": "object",
+              "additionalProperties": true
             },
             "style": "deepObject"
           },
@@ -40743,7 +40796,8 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object"
+              "type": "object",
+              "additionalProperties": true
             },
             "style": "deepObject"
           },
@@ -41248,7 +41302,8 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object"
+              "type": "object",
+              "additionalProperties": true
             },
             "style": "deepObject"
           },
@@ -41753,7 +41808,8 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object"
+              "type": "object",
+              "additionalProperties": true
             },
             "style": "deepObject"
           },
