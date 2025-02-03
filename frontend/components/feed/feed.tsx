@@ -7,7 +7,8 @@ import { fetchAnnouncements } from "@/lib/requests/feed";
 export async function Feed() {
   const user = await getCurrentUser();
   if (!user || !user?.email) return redirect("/");
-  const announcements = await fetchAnnouncements();
+  const announcements = await fetchAnnouncements()
+  //.filter((post) => selectedRoles.includes(post.type));
 
   return (
     <section>
