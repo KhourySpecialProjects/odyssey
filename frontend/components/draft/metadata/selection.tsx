@@ -1,10 +1,7 @@
 "use client";
 
-import { Droplet } from "@/types";
-import { debounce } from "lodash";
-import { useState, useCallback } from "react";
+import { useState } from "react";
 import { MultiSelect, MultiSelectItem } from "@/components/new/multi-select";
-import { updateDroplet } from "@/lib/actions";
 import { useDropletUpdate } from "./hooks/useDropletUpdate";
 import { uppercaseFirstChar } from "@/lib/utils";
 

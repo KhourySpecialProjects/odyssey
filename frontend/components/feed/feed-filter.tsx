@@ -10,13 +10,38 @@ interface FeedFilterProps {
 
 export function FeedFilter({ onFilterChange }: FeedFilterProps) {
   const roleOptions = [
-    { value: AnnouncementTypeTitle.Droplet, label: "Droplet", color: "bg-sky-100" },
-    { value: AnnouncementTypeTitle.Playlist, label: "Playlist", color: "bg-green-100" },
-    { value: AnnouncementTypeTitle.Group, label: "Group", color: "bg-purple-100" },
-    { value: AnnouncementTypeTitle.System, label: "System", color: "bg-red-100" },
-    { value: AnnouncementTypeTitle.Friend, label: "Friend", color: "bg-yellow-100" },
+    {
+      value: AnnouncementTypeTitle.Droplet,
+      label: "Droplet",
+      color: "bg-sky-100",
+    },
+    {
+      value: AnnouncementTypeTitle.Playlist,
+      label: "Playlist",
+      color: "bg-green-100",
+    },
+    {
+      value: AnnouncementTypeTitle.Group,
+      label: "Group",
+      color: "bg-purple-100",
+    },
+    {
+      value: AnnouncementTypeTitle.System,
+      label: "System",
+      color: "bg-red-100",
+    },
+    {
+      value: AnnouncementTypeTitle.Friend,
+      label: "Friend",
+      color: "bg-yellow-100",
+    },
+    {
+      value: AnnouncementTypeTitle.Kudos,
+      label: "Kudos",
+      color: "bg-orange-100",
+    },
   ] as const;
-  
+
   const [selectedRoles, setSelectedRoles] = useState<AnnouncementTypeTitle[]>(
     roleOptions.map((role) => role.value),
   );
@@ -25,12 +50,12 @@ export function FeedFilter({ onFilterChange }: FeedFilterProps) {
     const newSelectedRoles = selectedRoles.includes(role)
       ? selectedRoles.filter((r) => r !== role)
       : [...selectedRoles, role];
-    
+
     setSelectedRoles(newSelectedRoles);
     onFilterChange(newSelectedRoles);
   };
 
-  return ( 
+  return (
     <div className="space-y-2 pt-4">
       {roleOptions.map((role) => (
         <div
@@ -51,6 +76,6 @@ export function FeedFilter({ onFilterChange }: FeedFilterProps) {
           </label>
         </div>
       ))}
-    </div> 
+    </div>
   );
 }

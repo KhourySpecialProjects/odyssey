@@ -448,7 +448,7 @@ export interface ApiAnnouncementAnnouncement extends Schema.CollectionType {
       'manyToOne',
       'api::droplet.droplet'
     >;
-    firstCreated: Attribute.Date & Attribute.Required;
+    firstCreated: Attribute.DateTime & Attribute.Required;
     group: Attribute.Relation<
       'api::announcement.announcement',
       'manyToOne',
@@ -460,7 +460,7 @@ export interface ApiAnnouncementAnnouncement extends Schema.CollectionType {
       'api::playlist.playlist'
     >;
     type: Attribute.Enumeration<
-      ['playlist', 'droplet', 'friend', 'system', 'group']
+      ['playlist', 'droplet', 'friend', 'system', 'group', 'kudos']
     > &
       Attribute.Required;
     updatedAt: Attribute.DateTime;

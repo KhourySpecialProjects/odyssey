@@ -13,7 +13,8 @@ export enum AnnouncementTypeTitle {
   Playlist = "Playlist",
   Group = "Group",
   System = "System",
-  Friend = "Friend"
+  Friend = "Friend",
+  Kudos = "Kudos",
 }
 
 export const AuthorizedUserAdminRoles = [

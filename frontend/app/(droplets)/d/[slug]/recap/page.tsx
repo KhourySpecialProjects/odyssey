@@ -1,5 +1,4 @@
 import { DropletTile } from "@/components/droplets/droplet-tile";
-import { GradientBackground } from "@/components/gradient-bg";
 import { getDropletBySlug, getDroplets } from "@/lib/requests/droplet";
 import { Droplet } from "@/types";
 import { GoalIcon, Link2Icon } from "lucide-react";
@@ -13,7 +12,6 @@ import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
 
 import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
 import { getServerSession } from "next-auth";
-import { UserBlock } from "@/components/friends/user-block";
 import { CompletedDropletBlock } from "@/components/droplets/completed-droplet-block";
 
 type Props = {
@@ -113,25 +111,23 @@ export default async function DropletRecapRoute({ params }: Props) {
       enrollID = enrollment.id;
     }
 
-    
-
     const authUser = await getAuthorizedUserByEmail(user.email);
 
     return (
       <>
-          {enrollment && 
-            enrollment.viewedLessons.length === enrollment.droplet.lessons?.length && 
-            enrollment.isFirstTime && (
-              <>
-                <CompletedDropletBlock 
-                  droplet={droplet} 
-                  enrollmentId={enrollment.id}
-                  authUser={authUser}
-                />
-                <Confetti />
-              </>
+        {enrollment &&
+          enrollment.viewedLessons.length ===
+            enrollment.droplet.lessons?.length &&
+          enrollment.isFirstTime && (
+            <>
+              <CompletedDropletBlock
+                droplet={droplet}
+                enrollmentId={enrollment.id}
+                authUser={authUser}
+              />
+              <Confetti />
+            </>
           )}
-        
 
         <div className="max-w-2xl mx-auto">
           <h1 className="mt-3 text-6xl font-black text-slate-900">Recap</h1>

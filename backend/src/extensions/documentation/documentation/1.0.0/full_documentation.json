@@ -11,7 +11,7 @@
       "url": "https://khouryodyssey.org"
     },
     "license": null,
-    "x-generation-date": "2025-02-04T14:38:34.715Z"
+    "x-generation-date": "2025-02-04T15:58:34.901Z"
   },
   "x-strapi-config": {
     "plugins": [
@@ -573,12 +573,13 @@
                   "droplet",
                   "friend",
                   "system",
-                  "group"
+                  "group",
+                  "kudos"
                 ]
               },
               "firstCreated": {
                 "type": "string",
-                "format": "date"
+                "format": "date-time"
               },
               "content": {
                 "type": "string"
@@ -692,12 +693,13 @@
               "droplet",
               "friend",
               "system",
-              "group"
+              "group",
+              "kudos"
             ]
           },
           "firstCreated": {
             "type": "string",
-            "format": "date"
+            "format": "date-time"
           },
           "content": {
             "type": "string"
@@ -2225,12 +2227,13 @@
                                                                                               "droplet",
                                                                                               "friend",
                                                                                               "system",
-                                                                                              "group"
+                                                                                              "group",
+                                                                                              "kudos"
                                                                                             ]
                                                                                           },
                                                                                           "firstCreated": {
                                                                                             "type": "string",
-                                                                                            "format": "date"
+                                                                                            "format": "date-time"
                                                                                           },
                                                                                           "content": {
                                                                                             "type": "string"
@@ -5126,12 +5129,13 @@
                                                                                                 "droplet",
                                                                                                 "friend",
                                                                                                 "system",
-                                                                                                "group"
+                                                                                                "group",
+                                                                                                "kudos"
                                                                                               ]
                                                                                             },
                                                                                             "firstCreated": {
                                                                                               "type": "string",
-                                                                                              "format": "date"
+                                                                                              "format": "date-time"
                                                                                             },
                                                                                             "content": {
                                                                                               "type": "string"
@@ -7798,12 +7802,13 @@
                                                                                                                           "droplet",
                                                                                                                           "friend",
                                                                                                                           "system",
-                                                                                                                          "group"
+                                                                                                                          "group",
+                                                                                                                          "kudos"
                                                                                                                         ]
                                                                                                                       },
                                                                                                                       "firstCreated": {
                                                                                                                         "type": "string",
-                                                                                                                        "format": "date"
+                                                                                                                        "format": "date-time"
                                                                                                                       },
                                                                                                                       "content": {
                                                                                                                         "type": "string"
@@ -11090,12 +11095,13 @@
                                                                                                 "droplet",
                                                                                                 "friend",
                                                                                                 "system",
-                                                                                                "group"
+                                                                                                "group",
+                                                                                                "kudos"
                                                                                               ]
                                                                                             },
                                                                                             "firstCreated": {
                                                                                               "type": "string",
-                                                                                              "format": "date"
+                                                                                              "format": "date-time"
                                                                                             },
                                                                                             "content": {
                                                                                               "type": "string"
@@ -13590,12 +13596,13 @@
                                                                                                                             "droplet",
                                                                                                                             "friend",
                                                                                                                             "system",
-                                                                                                                            "group"
+                                                                                                                            "group",
+                                                                                                                            "kudos"
                                                                                                                           ]
                                                                                                                         },
                                                                                                                         "firstCreated": {
                                                                                                                           "type": "string",
-                                                                                                                          "format": "date"
+                                                                                                                          "format": "date-time"
                                                                                                                         },
                                                                                                                         "content": {
                                                                                                                           "type": "string"
@@ -16735,12 +16742,13 @@
                                                                                               "droplet",
                                                                                               "friend",
                                                                                               "system",
-                                                                                              "group"
+                                                                                              "group",
+                                                                                              "kudos"
                                                                                             ]
                                                                                           },
                                                                                           "firstCreated": {
                                                                                             "type": "string",
-                                                                                            "format": "date"
+                                                                                            "format": "date-time"
                                                                                           },
                                                                                           "content": {
                                                                                             "type": "string"
@@ -19552,12 +19560,13 @@
                                                                                               "droplet",
                                                                                               "friend",
                                                                                               "system",
-                                                                                              "group"
+                                                                                              "group",
+                                                                                              "kudos"
                                                                                             ]
                                                                                           },
                                                                                           "firstCreated": {
                                                                                             "type": "string",
-                                                                                            "format": "date"
+                                                                                            "format": "date-time"
                                                                                           },
                                                                                           "content": {
                                                                                             "type": "string"
@@ -22255,12 +22264,13 @@
                                                                                                 "droplet",
                                                                                                 "friend",
                                                                                                 "system",
-                                                                                                "group"
+                                                                                                "group",
+                                                                                                "kudos"
                                                                                               ]
                                                                                             },
                                                                                             "firstCreated": {
                                                                                               "type": "string",
-                                                                                              "format": "date"
+                                                                                              "format": "date-time"
                                                                                             },
                                                                                             "content": {
                                                                                               "type": "string"
@@ -25041,12 +25051,13 @@
                                                                                                 "droplet",
                                                                                                 "friend",
                                                                                                 "system",
-                                                                                                "group"
+                                                                                                "group",
+                                                                                                "kudos"
                                                                                               ]
                                                                                             },
                                                                                             "firstCreated": {
                                                                                               "type": "string",
-                                                                                              "format": "date"
+                                                                                              "format": "date-time"
                                                                                             },
                                                                                             "content": {
                                                                                               "type": "string"
@@ -27841,12 +27852,13 @@
                                                                                                 "droplet",
                                                                                                 "friend",
                                                                                                 "system",
-                                                                                                "group"
+                                                                                                "group",
+                                                                                                "kudos"
                                                                                               ]
                                                                                             },
                                                                                             "firstCreated": {
                                                                                               "type": "string",
-                                                                                              "format": "date"
+                                                                                              "format": "date-time"
                                                                                             },
                                                                                             "content": {
                                                                                               "type": "string"
@@ -30744,12 +30756,13 @@
                                                                                                 "droplet",
                                                                                                 "friend",
                                                                                                 "system",
-                                                                                                "group"
+                                                                                                "group",
+                                                                                                "kudos"
                                                                                               ]
                                                                                             },
                                                                                             "firstCreated": {
                                                                                               "type": "string",
-                                                                                              "format": "date"
+                                                                                              "format": "date-time"
                                                                                             },
                                                                                             "content": {
                                                                                               "type": "string"
@@ -33955,12 +33968,13 @@
                                                                                                 "droplet",
                                                                                                 "friend",
                                                                                                 "system",
-                                                                                                "group"
+                                                                                                "group",
+                                                                                                "kudos"
                                                                                               ]
                                                                                             },
                                                                                             "firstCreated": {
                                                                                               "type": "string",
-                                                                                              "format": "date"
+                                                                                              "format": "date-time"
                                                                                             },
                                                                                             "content": {
                                                                                               "type": "string"

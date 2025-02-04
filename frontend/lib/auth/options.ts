@@ -1,6 +1,4 @@
 import { User } from "@/types";
-import { AuthorizedUserAdminRoles } from "../globals";
-import { isAuthorizedUserAdmin } from "../utils";
 import { NextAuthOptions } from "next-auth";
 import AzureADProvider from "next-auth/providers/azure-ad";
 import GitHubProvider from "next-auth/providers/github";

@@ -1,11 +1,8 @@
 "use client";
 
 import { ArrowDownFromLineIcon, Trash2Icon } from "lucide-react";
-import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
-import { useState, useCallback, useEffect, useRef } from "react";
-import { updateLesson } from "@/lib/actions";
-import { debounce } from "lodash";
+import { useState } from "react";
 import { ExpandableBlockInput } from "@/components/ui/tiptap/expandable-block-input";
 
 export function ExpandableEditor({

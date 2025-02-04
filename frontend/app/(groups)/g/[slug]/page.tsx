@@ -6,8 +6,6 @@ import { MemberList } from "@/components/group/member-list";
 import { ContentSection } from "@/components/group/content-section";
 import { GroupHeader } from "@/components/group/group-header";
 import { Separator } from "@/components/ui/separator";
-import { GroupDropletTile } from "@/components/group/group-droplet-tile";
-import { PlaylistCard } from "@/components/playlists/playlist-card";
 import createDOMPurifier from "isomorphic-dompurify";
 import { GroupDashboard } from "@/components/group/group-management-dashboard";
 import { isAuthorizedUserAdmin } from "@/lib/utils";
