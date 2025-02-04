@@ -1,16 +1,13 @@
 "use server";
 
-import { Group, GroupListResponse, GroupSemester } from "@/types";
+import { Group } from "@/types";
 import { StrapiRequestParams } from "@/types/strapi";
 import { fetchAPI } from "@/lib/utils";
 import { getAuthorizedUserByEmail } from "./authorized-user";
-// import { createAuthorizedUser } from "../actions";
 import type { ActionResponse } from "@/types";
 import { AuthorizedUserRoleTitle } from "../globals";
 import { getAuthorizedUserRoleIdByTitle } from "./authorized-user-roles";
 import { createEnrollmentFromEmail } from "@/lib/actions";
-import { getEnrollmentsByAuthorizedUser } from "./enrollment";
-import { createEnrollment } from "@/lib/actions";
 import { revalidatePath } from "next/cache";
 const STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;

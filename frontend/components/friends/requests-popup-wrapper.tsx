@@ -16,20 +16,22 @@ export function RequestsPopupWrapper({
 
   return (
     <div className="flex flex-row relative">
-      <Button 
+      <Button
         onClick={() => setShowPopup(!showPopup)}
         variant="link"
         size="sm"
         className="text-sky-300"
       >
-        {showPopup ? 'Hide Requests' : 'Show All Requests'}
+        {showPopup ? "Hide Requests" : "Show All Requests"}
       </Button>
 
-      {showPopup && (
-        <div className="absolute top-[50px] left-[-15px] bg-slate-100 p-3 rounded-2xl w-full">
-          <RequestsPopup user={user} friendships={friendships} />
-        </div>
-      )}
+      <div className="absolute top-[50px] left-[-15px] bg-slate-100 p-3 rounded-2xl w-full">
+        <RequestsPopup
+          user={user}
+          friendships={friendships}
+          showPopup={showPopup}
+        />
+      </div>
     </div>
   );
 }

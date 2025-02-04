@@ -1,38 +1,16 @@
-import { Droplets } from "@/components/admin/droplets/droplets";
-import { Playlists } from "@/components/admin/playlists/playlists";
-import { Reports } from "@/components/admin/reports/reports";
-import { DropletsSkeleton } from "@/components/explore/droplets-skeleton";
 import { FriendRequests } from "@/components/friends/friend-requests";
 import { FriendSuggestions } from "@/components/friends/friend-suggestions";
 import { Friends } from "@/components/friends/friends";
-import { AuthorDroplets } from "@/components/settings/author-droplets";
-import { BioCard } from "@/components/settings/bio-card";
 import { AdminSelector } from "@/components/shared/selector";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { getCurrentUser } from "@/lib/auth/session";
-import { getAuthorByAuthorizedUserEmail } from "@/lib/requests/author";
-import { getInitials } from "@/lib/utils";
 import { notFound } from "next/navigation";
-import { Suspense } from "react";
 import {
   fetchAuthorizedUsers,
   getAuthorizedUserByEmail,
 } from "@/lib/requests/authorized-user";
 import { FriendSentRequests } from "@/components/friends/friend-sent-requests";
 import { FriendSearch } from "@/components/friends/friend-search";
-import {
-  getSentRequest,
-  getSentRequestIds,
-  fetchFriends,
-} from "@/lib/requests/friends";
+import { getSentRequestIds, fetchFriends } from "@/lib/requests/friends";
 import { BlockedUsers } from "@/components/friends/blocked-users";
 
 export default async function AuthorProfileSettings() {
@@ -66,7 +44,7 @@ export default async function AuthorProfileSettings() {
       <AdminSelector
         content={{
           Friends: <Friends />,
-          "Friend Requests": <FriendRequests noProfile={false}/>,
+          "Friend Requests": <FriendRequests noProfile={false} />,
           "People You May Know": <FriendSuggestions user={authorizedUser} />,
           "Sent Requests": <FriendSentRequests />,
           "Blocked Users": <BlockedUsers />,

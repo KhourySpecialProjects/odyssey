@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useCallback, useContext } from "react";
+import { useState, useCallback } from "react";
 import { z } from "zod";
 import { DropletSchema } from "@/lib/validations/droplet";
 import { debounce } from "lodash";
-import { usePathname, redirect, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { updateDroplet } from "@/lib/actions";
 
 export function useDropletUpdate(dropletId: number) {

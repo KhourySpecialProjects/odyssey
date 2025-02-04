@@ -8,7 +8,13 @@ export type DropletType = "knowledge" | "skill";
 
 export type DropletStatus = "draft" | "edit" | "published";
 
-export type AnnouncementType = "playlist" | "droplet" | "friend" | "system" | "group";
+export type AnnouncementType =
+  | "playlist"
+  | "droplet"
+  | "friend"
+  | "system"
+  | "group"
+  | "kudos";
 
 export type AuthorizedUserRole = {
   id: number;
@@ -73,6 +79,7 @@ export type Author = {
   bio?: string;
   photo?: StrapiMediaParams;
   droplets?: Droplet[];
+  authorizedUser?: AuthorizedUser;
 };
 
 export type Lesson = {
@@ -171,6 +178,7 @@ export interface Playlist {
   author?: {
     id: number;
     name: string;
+    authorizedUser: AuthorizedUser;
   };
 }
 

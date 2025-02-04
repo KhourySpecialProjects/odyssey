@@ -2,7 +2,6 @@
 
 import { DROPLET_FILTERS } from "@/lib/globals";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { useState } from "react";
 import { useDropletUpdate } from "./hooks/useDropletUpdate";
 
 export function Filter({

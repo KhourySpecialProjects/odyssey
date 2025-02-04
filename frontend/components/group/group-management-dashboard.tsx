@@ -5,10 +5,8 @@ import "react-tabs/style/react-tabs.css";
 
 import { ContentSection } from "@/components/group/content-section";
 import { GroupDropletTile } from "@/components/group/group-droplet-tile";
-import { Droplet } from "@/types";
 import { Group } from "@/types";
 import { PlaylistCard } from "@/components/playlists/playlist-card";
-import { Separator } from "@/components/ui/separator";
 import { GroupProgressGrid } from "@/components/group/group-progress-grid";
 
 interface RenderGroupDashboardProps {

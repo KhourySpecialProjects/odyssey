@@ -14,6 +14,7 @@ import { HTML5Backend } from "react-dnd-html5-backend";
 import { createPlaylist } from "@/lib/actions";
 import { updatePlaylist } from "@/lib/actions";
 import { createPlaylistAnnouncement } from "@/lib/requests/feed";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
 
 interface PlaylistFormProps {
   droplets: any[];
@@ -59,7 +60,11 @@ export function PlaylistForm({
   const handlePlaylistPost = async () => {
     try {
       if (existingPlaylist) {
-        await createPlaylistAnnouncement(existingPlaylist.name, existingPlaylist?.id);
+        await createPlaylistAnnouncement(
+          existingPlaylist.name,
+          existingPlaylist?.id,
+        );
+        router.back();
       }
     } catch (error) {
       console.error("Failed to make playlist announcement: ", error);
@@ -94,6 +99,15 @@ export function PlaylistForm({
       newItems.splice(toIndex, 0, removed);
       return newItems;
     });
+  };
+
+  const [isOpen, setIsOpen] = useState(false);
+  const onOpenChange = (open: boolean) => {
+    if (!open) {
+      setIsOpen(false);
+    } else {
+      setIsOpen(true);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -131,7 +145,7 @@ export function PlaylistForm({
           updatePlaylistData,
         );
         if (response.ok) {
-          router.push(`/p/${response.data.attributes.slug}`);
+          //router.push(`/p/${response.data.attributes.slug}`);
         } else {
           setError(response.error || "Failed to update Playlist!");
         }
@@ -206,9 +220,28 @@ export function PlaylistForm({
             <MoveLeftIcon size={16} />
             Cancel
           </Button>
-          <Button type="submit" className="h-12" onClick={handlePlaylistPost}>
+          <Button
+            type="submit"
+            className="h-12"
+            onClick={() => setIsOpen(true)}
+          >
             Save Playlist
           </Button>
+          <Dialog open={isOpen} onOpenChange={onOpenChange}>
+            <DialogContent className="sm:max-w-[825px]">
+              <DialogHeader>
+                <DialogTitle>
+                  Would you like to announce these changes to everyone enrolled
+                  in this droplet?
+                </DialogTitle>
+              </DialogHeader>
+
+              <div className="flex flex-col gap-4 mt-4">
+                <Button onClick={handlePlaylistPost}>Share</Button>
+                <Button onClick={() => router.back()}>Not Now</Button>
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
 
         <DndProvider backend={HTML5Backend}>

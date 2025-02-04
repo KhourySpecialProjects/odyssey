@@ -2,7 +2,6 @@
 
 import { revalidatePath, revalidateTag } from "next/cache";
 import { redirect } from "next/navigation";
-import { Media } from "@/types";
 import { z } from "zod";
 import { getCurrentUser } from "./auth/session";
 import { getAuthorByAuthorizedUserEmail } from "./requests/author";
@@ -26,7 +25,6 @@ import {
 } from "@aws-sdk/client-s3";
 import { v4 as uuidv4 } from "uuid";
 import { Buffer } from "node:buffer";
-import { GroupSchema } from "./validations/group";
 
 const STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
@@ -309,15 +307,7 @@ export async function createEnrollmentFromEmail(
 ) {
   try {
     const authorizedUser = await getAuthorizedUserByEmail(email);
-    //console.log("authorized user id: ", authorizedUser.id);
     const enrollments = await getEnrollmentsByAuthorizedUser(authorizedUser.id);
-
-    const enrollIDs = enrollments.map((enrollment) => enrollment.droplet.id);
-
-    // console.log("enroll ids: ", enrollIDs);
-
-    // console.log("-------------------");
-    // console.log("formdata: ", formData.droplet);
 
     if (
       !enrollments
@@ -785,26 +775,29 @@ export async function updateDroplet(
 
 export async function updateEnrollmentFirstTime(enrollmentId: string) {
   try {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_STRAPI_API_URL}/api/enrollments/${enrollmentId}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${process.env.STRAPI_ACCESS_TOKEN}`,
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_STRAPI_API_URL}/api/enrollments/${enrollmentId}`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${process.env.STRAPI_ACCESS_TOKEN}`,
+        },
+        body: JSON.stringify({
+          data: {
+            isFirstTime: false,
+          },
+        }),
       },
-      body: JSON.stringify({
-        data: {
-          isFirstTime: false
-        }
-      }),
-    });
+    );
 
     if (!response.ok) {
-      throw new Error('Failed to update enrollment');
+      throw new Error("Failed to update enrollment");
     }
 
     return await response.json();
   } catch (error) {
-    console.error('Error updating enrollment:', error);
+    console.error("Error updating enrollment:", error);
     throw error;
   }
 }
@@ -1211,7 +1204,6 @@ export async function createPlaylist(data: {
         connect: [data.userId],
       },
     };
-    // console.log("data to send: ", dataToSend);
 
     const response = await fetch(`${STRAPI_API_URL}/api/playlists`, {
       method: "POST",

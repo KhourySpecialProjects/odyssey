@@ -5,10 +5,6 @@ import {
 } from "@/lib/utils";
 import { GeneralConfig, User } from "@/types";
 export const originalNav = [
-  // {
-  //   href: "/about",
-  //   label: "About",
-  // },
   {
     href: "/explore",
     label: "Explore",

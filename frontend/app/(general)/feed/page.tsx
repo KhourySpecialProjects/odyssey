@@ -3,7 +3,7 @@ import { FriendRequests } from "@/components/friends/friend-requests";
 import { FeedContainer } from "@/components/feed/feed-container";
 import { redirect } from "next/navigation";
 import { RequestsPopupWrapper } from "@/components/friends/requests-popup-wrapper";
-import { fetchAnnouncements, fetchNewestAnnouncements } from "@/lib/requests/feed";
+import { fetchAnnouncements } from "@/lib/requests/feed";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
 
@@ -14,12 +14,10 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 export default async function FeedPage() {
-  const newestAnnouncements = await fetchNewestAnnouncements();
-  const announcements = await fetchAnnouncements();
-
   const user = await getCurrentUser();
   if (!user || !user?.email) return redirect("/");
   const authUser = await getAuthorizedUserByEmail(user.email);
+  const announcements = await fetchAnnouncements(authUser);
   const friendRequests = authUser.received_requests.filter(
     (friend) =>
       !authUser.blocked.some((blockedUser) => blockedUser.id === friend.id) &&
@@ -38,16 +36,19 @@ export default async function FeedPage() {
 
             {friendRequests.length ? (
               <div className="absolute top-[-50px] w-full">
-                <RequestsPopupWrapper user={authUser} friendships={friendRequests}></RequestsPopupWrapper>
-              </div>) : (
+                <RequestsPopupWrapper
+                  user={authUser}
+                  friendships={friendRequests}
+                ></RequestsPopupWrapper>
+              </div>
+            ) : (
               <div></div>
             )}
-
           </div>
         </div>
-          <div className="w-3/4 h-200 text-center">
-          <FeedContainer announcements={announcements} newestAnnouncements={newestAnnouncements}/>
-          </div>
+        <div className="w-3/4 h-200 text-center">
+          <FeedContainer announcements={announcements} curUser={authUser} />
+        </div>
       </div>
     </>
   );

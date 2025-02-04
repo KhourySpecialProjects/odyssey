@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { updateGroup } from "@/lib/requests/groups";
-import { Group, Playlist } from "@/types";
+import { Group } from "@/types";
 import { Pencil } from "lucide-react";
 import Link from "next/link";
 import { useFormStatus } from "react-dom";

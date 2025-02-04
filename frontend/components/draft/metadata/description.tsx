@@ -1,6 +1,5 @@
 "use client";
 
-import { Textarea } from "@/components/ui/textarea";
 import { useState } from "react";
 import { useDropletUpdate } from "./hooks/useDropletUpdate";
 import { htmlToText } from "@/lib/utils";

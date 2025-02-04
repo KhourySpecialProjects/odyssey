@@ -2,8 +2,7 @@
 
 import { Enrollment } from "@/types";
 import { StrapiRequestParams } from "@/types/strapi";
-import { fetchAPI, flattenAttributes } from "../utils";
-import qs from "qs";
+import { fetchAPI } from "../utils";
 
 import { getCurrentUser } from "@/lib/auth/session";
 import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";

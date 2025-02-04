@@ -7,23 +7,26 @@ import { FeedFilter } from "./feed-filter";
 import { Announcement, AnnouncementType, AuthorizedUser } from "@/types";
 
 export function FeedContainer({
-    announcements,
-    newestAnnouncements,
-} : {
-    announcements: Announcement[];
-    newestAnnouncements: Announcement[];
+  announcements,
+  curUser,
+}: {
+  announcements: Announcement[];
+  curUser: AuthorizedUser;
 }) {
   const [selectedRoles, setSelectedRoles] = useState<AnnouncementTypeTitle[]>(
-    Object.values(AnnouncementTypeTitle)
+    Object.values(AnnouncementTypeTitle),
   );
 
   return (
     <div className="flex flex-row justify-content">
       <div className="w-2/3 h-200 text-center text-xl font-bold">
-        <FeedClient 
-        selectedRoles={selectedRoles.map(role => role.toLowerCase() as AnnouncementType)} 
-        announcements={announcements} 
-        newestAnnouncements={newestAnnouncements}/>
+        <FeedClient
+          selectedRoles={selectedRoles.map(
+            (role) => role.toLowerCase() as AnnouncementType,
+          )}
+          announcements={announcements}
+          curUser={curUser}
+        />
       </div>
       <div className="w-1/3 h-200 text-center text-xl font-bold flex flex-col items-center justify-center">
         Filters

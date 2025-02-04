@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import {
   acceptFriendRequest,
   rejectFriendRequest,
+  removeFriend,
 } from "@/lib/requests/friends";
 import { AuthorizedUser } from "@/types";
 import { Check, X } from "lucide-react";
@@ -34,6 +35,7 @@ export function FriendRequestFeedBlock({
   const handleBlock = () => {
     startTransition(async () => {
       const result = await BlockUser(user.id, request.id);
+      await removeFriend(user.id, request.id);
       if (result.success) {
         toast.success("User blocked");
       } else {
@@ -41,7 +43,6 @@ export function FriendRequestFeedBlock({
       }
     });
   };
-
 
   const handleApprove = () => {
     startTransition(async () => {
@@ -68,7 +69,6 @@ export function FriendRequestFeedBlock({
 
   return (
     <div className="flex flex-col justify-center">
-
       <div className="flex flex-row justify-center mt-2">
         {request.profilePhoto && (
           <img
@@ -77,7 +77,7 @@ export function FriendRequestFeedBlock({
             className="w-9 h-9 rounded-full object-cover"
           />
         )}
-        
+
         <button onClick={() => setOpen(true)}>
           <div className="flex-1 min-w-0 pl-2 overflow-hidden">
             <p className="font-medium truncate text-slate-900 dark:text-white">
@@ -92,28 +92,32 @@ export function FriendRequestFeedBlock({
             )}
           </div>
         </button>
-        </div>
-      
+      </div>
 
       <div className="flex flex-row justify-center mt-2">
         <Button
           className="bg-green-600 text-white hover:bg-green-700 mr-3 flex items-center justify-center"
-          style={{height: '15px', width : '50px'}}
+          style={{ height: "15px", width: "50px" }}
           size="sm"
           variant="outline"
           onClick={handleApprove}
         >
           <div className="relative group">
-            <Check className="w-3 h-3 group-hover:scale-110 transition-transform"/>
+            <Check className="w-3 h-3 group-hover:scale-110 transition-transform" />
             <span className="absolute left-1/2 transform -translate-x-1/2 top-full mt-1 w-max px-2 py-1 text-xs text-white bg-gray-800 rounded opacity-0 group-hover:opacity-100 transition-opacity">
               Accept
             </span>
           </div>
         </Button>
-        <Button className="flex items-center justify-center" variant="destructive" size="sm" onClick={handleReject}  style={{height: '15px', width : '50px'}}
+        <Button
+          className="flex items-center justify-center"
+          variant="destructive"
+          size="sm"
+          onClick={handleReject}
+          style={{ height: "15px", width: "50px" }}
         >
           <div className="relative group">
-            <X className="w-3 h-3"/>
+            <X className="w-3 h-3" />
             <span className="absolute left-1/2 transform -translate-x-1/2 top-full mt-1 w-max px-2 py-1 text-xs text-white bg-gray-800 rounded opacity-0 group-hover:opacity-100 transition-opacity">
               Reject
             </span>
@@ -121,14 +125,9 @@ export function FriendRequestFeedBlock({
         </Button>
       </div>
 
-
-
-
       <div>
         <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild>
-
-          </DialogTrigger>
+          <DialogTrigger asChild></DialogTrigger>
 
           <DialogContent>
             <DialogHeader>
@@ -161,7 +160,9 @@ export function FriendRequestFeedBlock({
                 )}
               </div>
               <DialogDescription>Email: {request.email}</DialogDescription>
-              {request.bio && <DialogDescription>Bio: {request.bio}</DialogDescription>}
+              {request.bio && (
+                <DialogDescription>Bio: {request.bio}</DialogDescription>
+              )}
               <DialogDescription>Completed Droplets: </DialogDescription>
               <FriendCompletedDroplets friend={request} />
               <div
@@ -177,6 +178,5 @@ export function FriendRequestFeedBlock({
         </Dialog>
       </div>
     </div>
-
   );
 }

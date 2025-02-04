@@ -19,12 +19,13 @@
         "droplet",
         "friend",
         "system",
-        "group"
+        "group",
+        "kudos"
       ],
       "required": true
     },
     "firstCreated": {
-      "type": "date",
+      "type": "datetime",
       "required": true
     },
     "content": {

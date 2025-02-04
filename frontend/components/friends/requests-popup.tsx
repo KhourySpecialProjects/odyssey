@@ -1,45 +1,48 @@
-'use client'
+"use client";
 
-import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-    DialogDescription,
-} from "../ui/dialog";
-import { Button } from "../ui/button";
-import { Textarea } from "../ui/textarea";
-import { ArrowRightIcon } from "lucide-react";
-import { toast } from "sonner";
-import { updateFirstTimeStatus, updateOnboardingInfo } from "@/lib/actions";
 import { AuthorizedUser } from "@/types";
-import { Input } from "../ui/input";
-import Image from "next/image";
-import { FriendRequests } from "./friend-requests";
-import { FriendRequestBlock } from "./friend-request-block";
 import { FriendRequestFeedBlock } from "./friend-request-feed-block";
 
-export function RequestsPopup({ user, friendships }: { user: AuthorizedUser | null, friendships: AuthorizedUser[] | null }) {
+export function RequestsPopup({
+  user,
+  friendships,
+  showPopup,
+}: {
+  user: AuthorizedUser | null;
+  friendships: AuthorizedUser[] | null;
+  showPopup: boolean;
+}) {
+  if (!user || !friendships) return null;
 
-    if (!user) return null;
-
-    return (
-        <div  >
-            <ul className="divide-y divide-slate-200 dark:divide-slate-700 md:space-y-4">
-
-                {friendships?.length && friendships.length > 0 ? (
-                    friendships.map((friendship) => (
-                        <FriendRequestFeedBlock
-                            user={user}
-                            request={friendship}
-                            key={friendship.id}
-                        />
-                    ))
-                ) : (
-                    <p>You have no friends</p>
-                )}
-            </ul>
-        </div>
-
-    );
+  return (
+    <div className="flex flex-col relative">
+      <h1 className="font-bold">Friend Requests</h1>
+      <p>A list of your friend requests.</p>
+      <div className="p-4 mt-4 rounded-md bg-slate-100">
+        {friendships.length > 0 ? (
+          <ul className="divide-y divide-slate-200 dark:divide-slate-700 md:space-y-4">
+            {showPopup
+              ? friendships.map((friendship) => (
+                  <FriendRequestFeedBlock
+                    user={user}
+                    request={friendship}
+                    key={friendship.id}
+                  />
+                ))
+              : friendships
+                  .slice(0, 5)
+                  .map((friendship) => (
+                    <FriendRequestFeedBlock
+                      user={user}
+                      request={friendship}
+                      key={friendship.id}
+                    />
+                  ))}
+          </ul>
+        ) : (
+          <p>You have no friends</p>
+        )}
+      </div>
+    </div>
+  );
 }

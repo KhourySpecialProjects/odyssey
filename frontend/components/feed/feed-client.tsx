@@ -1,56 +1,86 @@
 "use client";
 
 import { useState } from "react";
-import { AnnouncementType, Announcement } from "@/types";
+import { AnnouncementType, Announcement, AuthorizedUser } from "@/types";
 import { FeedBlock } from "./feed-block";
 import { Button } from "../ui/button";
-import { filter } from "lodash";
+
+const ITEMS_PER_PAGE = 5;
 
 export function FeedClient({
   selectedRoles,
   announcements,
-  newestAnnouncements,
+  curUser,
 }: {
   selectedRoles: AnnouncementType[];
   announcements: Announcement[];
-  newestAnnouncements: Announcement[];
-
+  curUser: AuthorizedUser;
 }) {
-  const [toShow, setToShow] = useState(newestAnnouncements);
-  const [buttonDisplay, setButtonDisplay] = useState(true)
-  const filteredAnnouncements = toShow.filter((post) => 
-    selectedRoles.includes(post.type)
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const filteredAnnouncements = announcements.filter((post) =>
+    selectedRoles.includes(post.type),
   );
 
-  const handleLoadMore = () => {
-    if (buttonDisplay) {
-        setToShow(announcements);
-    } else {
-        setToShow(newestAnnouncements)
-    }
-    setButtonDisplay(!buttonDisplay)
+  const totalPages = Math.ceil(filteredAnnouncements.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const paginatedAnnouncements = filteredAnnouncements.slice(
+    startIndex,
+    startIndex + ITEMS_PER_PAGE,
+  );
 
+  const handleNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage((prev) => prev + 1);
+    }
+  };
+
+  const handlePrevPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage((prev) => prev - 1);
+    }
   };
 
   return (
     <section>
       <div className="p-4 mt-4 rounded-md bg-slate-100">
-        {filteredAnnouncements.length > 0 ? (
-          <ul className="divide-y divide-slate-200 dark:divide-slate-700 md:space-y-4">
-            {filteredAnnouncements.map((post) => (
-              <FeedBlock
-                key={post.id}
-                announcement={post}
-              />
-            ))}
-          </ul>
+        {paginatedAnnouncements.length > 0 ? (
+          <>
+            <ul className="divide-y divide-slate-200 dark:divide-slate-700 md:space-y-4">
+              {paginatedAnnouncements.map((post) => (
+                <FeedBlock
+                  key={post.id}
+                  announcement={post}
+                  curUser={curUser}
+                />
+              ))}
+            </ul>
+            <div className="flex justify-end items-center mt-4">
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={handlePrevPage}
+                  disabled={currentPage === 1}
+                  className={`${currentPage === 1 ? "visibility: hidden" : "visibility: visible"}`}
+                >
+                  Previous
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={handleNextPage}
+                  disabled={currentPage === totalPages}
+                  className={`${currentPage === totalPages ? "visibility: hidden" : "visibility: visible"}`}
+                >
+                  Next
+                </Button>
+              </div>
+            </div>
+          </>
         ) : (
-          <p>You have no posts in your feed</p>
+          <p className="text-center text-slate-500">No announcements found</p>
         )}
-        <Button size="sm"
-            variant="outline" className="mt-4" onClick={handleLoadMore}> 
-            {buttonDisplay ? "Load Older Announcements" : "Hide Older Announcements"}
-        </Button>
       </div>
     </section>
   );

@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { Playlist } from "@/types";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface PlaylistCardProps {

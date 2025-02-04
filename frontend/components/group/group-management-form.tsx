@@ -38,9 +38,8 @@ import { MemberTile } from "./member-tile";
 import { createGroup } from "@/lib/requests/groups";
 import { enrollUsers } from "@/lib/requests/groups";
 import { getGroupByID } from "@/lib/requests/groups";
-import { revalidateTag } from "next/cache";
-import { group } from "console";
 import { createGroupAnnouncement } from "@/lib/requests/feed";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
 
 const SEMESTER_OPTIONS: GroupSemester[] = [
   "Open Membership",
@@ -134,6 +133,15 @@ export function GroupManagementForm({
   );
   const [members, setMembers] = useState<User[]>(existingGroup?.members || []);
   const [hasChanges, setHasChanges] = useState(false);
+
+  const [isOpen, setIsOpen] = useState(false);
+  const onOpenChange = (open: boolean) => {
+    if (!open) {
+      setIsOpen(false);
+    } else {
+      setIsOpen(true);
+    }
+  };
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -258,7 +266,7 @@ export function GroupManagementForm({
         console.log("form being submitted soon!");
         const response = await updateGroup(existingGroup.id, updateGroupData);
         await enrollUsers(await getGroupByID(existingGroup.id));
-        router.push(`/g/${response.slug}`);
+        //router.push(`/g/${response.slug}`);
       } else {
         console.log("form being submitted soon!");
         const newGroup = await createGroup(currentUser.id, createGroupData);
@@ -284,7 +292,11 @@ export function GroupManagementForm({
   const handleGroupPost = async () => {
     try {
       if (existingGroup) {
-        await createGroupAnnouncement(existingGroup.groupName, existingGroup.id);
+        await createGroupAnnouncement(
+          existingGroup.groupName,
+          existingGroup.id,
+        );
+        router.back();
       }
     } catch (error) {
       console.error("Failed to make playlist announcement: ", error);
@@ -575,13 +587,32 @@ export function GroupManagementForm({
           <Button type="button" variant="outline" onClick={handleCancel}>
             Cancel
           </Button>
-          <Button type="submit" disabled={isSubmitting} onClick={handleGroupPost}>
+          <Button
+            type="submit"
+            disabled={isSubmitting}
+            onClick={() => setIsOpen(true)}
+          >
             {isSubmitting
               ? "Saving..."
               : existingGroup
                 ? "Update Group"
                 : "Create Group"}
           </Button>
+          <Dialog open={isOpen} onOpenChange={onOpenChange}>
+            <DialogContent className="sm:max-w-[825px]">
+              <DialogHeader>
+                <DialogTitle>
+                  Would you like to announce these changes to everyone enrolled
+                  in this droplet?
+                </DialogTitle>
+              </DialogHeader>
+
+              <div className="flex flex-col gap-4 mt-4">
+                <Button onClick={handleGroupPost}>Share</Button>
+                <Button onClick={() => router.back()}>Not Now</Button>
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
       </form>
     </Form>

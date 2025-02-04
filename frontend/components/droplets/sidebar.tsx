@@ -8,7 +8,7 @@ import {
   isAuthorizedUserAdmin,
   condenseRoleTitles,
 } from "@/lib/utils";
-import { AuthorizedUser, Droplet, Lesson, User } from "@/types";
+import { AuthorizedUser, Droplet, User } from "@/types";
 import {
   BookTextIcon,
   ChevronDownIcon,
@@ -20,7 +20,6 @@ import {
   MenuIcon,
   ShipIcon,
   TargetIcon,
-  TowerControlIcon,
   CheckCircle2,
   LockIcon,
   ArrowLeftIcon,
