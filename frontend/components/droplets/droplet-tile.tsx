@@ -62,8 +62,8 @@ export function DropletTile({
           className="relative inline-flex w-full h-full p-2"
           href={`/d/${droplet.slug}`}
         >
-          <div className="flex flex-col gap-1">
-            <span className="text-sm font-medium text-slate-900">
+          <div className="flex flex-col gap-1 justify-center items-center text-center">
+            <span className="text-sm font-medium text-slate-900 text-center">
               {droplet.name}
             </span>
           </div>
