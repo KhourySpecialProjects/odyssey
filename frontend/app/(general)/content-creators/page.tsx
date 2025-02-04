@@ -18,12 +18,9 @@ export default async function ContentCreatorsPage() {
           </h1>
         </div>
         <div>
-        <ul className=" divide-slate-200 dark:divide-slate-700 md:space-y-0">
+          <ul className=" divide-slate-200 dark:divide-slate-700 md:space-y-0">
             {(await fetchContentCreators()).map((creator) => (
-              <ContentCreatorBlock
-                contentCreator={creator}
-                key={creator.id}
-              />
+              <ContentCreatorBlock contentCreator={creator} key={creator.id} />
             ))}
           </ul>
         </div>

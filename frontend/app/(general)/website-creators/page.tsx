@@ -1,7 +1,10 @@
 import { ContentCreatorBlock } from "@/components/footer/content-creator-block";
 import { GradientBackground } from "@/components/gradient-bg";
 import { getCurrentUser } from "@/lib/auth/session";
-import { fetchContentCreators, fetchWebsiteCreators } from "@/lib/requests/authorized-user";
+import {
+  fetchContentCreators,
+  fetchWebsiteCreators,
+} from "@/lib/requests/authorized-user";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -18,12 +21,9 @@ export default async function WebsiteCreatorsPage() {
           </h1>
         </div>
         <div>
-        <ul className=" divide-slate-200 dark:divide-slate-700 md:space-y-0">
+          <ul className=" divide-slate-200 dark:divide-slate-700 md:space-y-0">
             {(await fetchWebsiteCreators()).map((creator) => (
-              <ContentCreatorBlock
-                contentCreator={creator}
-                key={creator.id}
-              />
+              <ContentCreatorBlock contentCreator={creator} key={creator.id} />
             ))}
           </ul>
         </div>

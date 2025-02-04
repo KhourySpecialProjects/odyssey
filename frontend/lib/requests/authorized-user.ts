@@ -99,9 +99,9 @@ export async function fetchContentCreators(): Promise<AuthorizedUser[]> {
       filters: {
         roles: {
           title: {
-            $eq: "Content Creator"
-          }
-        }
+            $eq: "Content Creator",
+          },
+        },
       },
       fields: [
         "id",
@@ -110,13 +110,13 @@ export async function fetchContentCreators(): Promise<AuthorizedUser[]> {
         "firstName",
         "lastName",
         "bio",
-        "profilePhoto", 
+        "profilePhoto",
         "linkedin",
-        "github"
+        "github",
       ],
       populate: {
         roles: {
-          fields: ["id", "title"]
+          fields: ["id", "title"],
         },
         blocked: {
           fields: ["id"],
@@ -127,8 +127,8 @@ export async function fetchContentCreators(): Promise<AuthorizedUser[]> {
       },
       pagination: {
         pageSize: 100,
-        page: 1
-      }
+        page: 1,
+      },
     });
     const response = await fetch(
       NEXT_PUBLIC_STRAPI_API_URL + "/api/authorized-users?" + query,
@@ -151,9 +151,9 @@ export async function fetchWebsiteCreators(): Promise<AuthorizedUser[]> {
       filters: {
         roles: {
           title: {
-            $eq: "Website Creator"
-          }
-        }
+            $eq: "Website Creator",
+          },
+        },
       },
       fields: [
         "id",
@@ -162,13 +162,13 @@ export async function fetchWebsiteCreators(): Promise<AuthorizedUser[]> {
         "firstName",
         "lastName",
         "bio",
-        "profilePhoto", 
+        "profilePhoto",
         "linkedin",
-        "github"
+        "github",
       ],
       populate: {
         roles: {
-          fields: ["id", "title"]
+          fields: ["id", "title"],
         },
         blocked: {
           fields: ["id"],
@@ -179,8 +179,8 @@ export async function fetchWebsiteCreators(): Promise<AuthorizedUser[]> {
       },
       pagination: {
         pageSize: 100,
-        page: 1
-      }
+        page: 1,
+      },
     });
     const response = await fetch(
       NEXT_PUBLIC_STRAPI_API_URL + "/api/authorized-users?" + query,
