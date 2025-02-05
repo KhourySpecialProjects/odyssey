@@ -1,5 +1,6 @@
 "use client";
 
+import { OpenEndedQuestionBlock } from "@/components/draft/lesson/blocks/open-ended-question";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -10,7 +11,7 @@ import {
   FormLabel,
 } from "@/components/ui/form";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { QuizQuestion } from "@/types";
+import { OpenEndedQuizQuestion, QuizQuestion } from "@/types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   ArrowLeftIcon,
@@ -26,12 +27,23 @@ const formSchema = z.object({
   answerId: z.string(),
 });
 
-export function QuizQuestionBlock({ question }: { question: QuizQuestion }) {
+export function QuizQuestionBlock({ question }: { question: QuizQuestion | OpenEndedQuizQuestion }) {
+  console.log('Question type in QuizQuestionBlock:', question);
+  console.log('Raw question in QuizQuestionBlock:', question);
+  console.log('Question properties:', Object.keys(question));
+  function isQuizQuestion(question: QuizQuestion | OpenEndedQuizQuestion): question is QuizQuestion {
+    console.log(question)
+    return 'answerOptions' in question;
+  }
+  if (!isQuizQuestion(question)) {
+    console.error("here")
+    return <OpenEndedQuestionBlock question={question} />;  // Return the open-ended component instead of null
+  }
   const [showResult, setShowResult] = useState(false);
   const correctAnswer = useMemo(
-    () => question.answerOptions.find((option) => option.isCorrect),
-    [question],
-  );
+      () => question.answerOptions.find((option) => option.isCorrect),
+      [question],
+    );
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),

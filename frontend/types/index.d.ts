@@ -139,9 +139,15 @@ export type QuizQuestion = {
   answerOptions: QuizAnswerOption[];
 };
 
+export type OpenEndedQuizQuestion = {
+  id: number;
+  content: string;
+  correctAnswer: string;
+};
+
 export type Quiz = {
   id: number;
-  questions: QuizQuestion[];
+  questions: (QuizQuestion | OpenEndedQuizQuestion)[];
 };
 
 export type Enrollment = {

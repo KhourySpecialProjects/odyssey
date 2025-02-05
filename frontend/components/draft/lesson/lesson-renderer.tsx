@@ -1,6 +1,6 @@
 "use client";
 
-import { Lesson } from "@/types";
+import { Lesson, OpenEndedQuizQuestion } from "@/types";
 import { ExpandableEditor } from "@/components/draft/lesson/blocks/expandable";
 import { VideoEditor } from "@/components/draft/lesson/blocks/video";
 import { CalloutEditor } from "./blocks/callout";
@@ -28,7 +28,7 @@ interface Block {
   type?: string;
   label?: string;
   url?: string;
-  questions?: QuizQuestion[];
+  questions?: (QuizQuestion | OpenEndedQuizQuestion)[];
 }
 
 interface LessonRendererProps {
@@ -222,7 +222,7 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
       </div>
 
       <div className="space-y-4 w-full flex flex-col items-center justify-center">
-        <AddBlock add={addBlock(0)} />
+        {/* <AddBlock add={addBlock(0)} /> */}
         {blocks.map((block, index) => (
           <div
             key={`${block.__component}-${block.id}`}

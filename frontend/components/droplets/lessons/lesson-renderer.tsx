@@ -168,6 +168,8 @@ function LessonBlockRenderer({ block }: { block: any }) {
       );
 
     case "droplets.quiz":
+      console.log("block information", block)
+      console.log("questions", block.questions)
       return <QuizBlock data={block} />;
 
     case "droplets.callout":
