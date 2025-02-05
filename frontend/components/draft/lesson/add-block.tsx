@@ -74,7 +74,7 @@ export function AddBlock({ add }: { add: (block: any) => void }) {
               setOpen(false);
               add({
                 __component: "droplets.video",
-                url: "https://www.youtube.com/asdfgsfd",
+                url: "https://www.youtube.com/watch?v=_ZCTvmaPgao",
               });
             }}
             variant="ghost"
@@ -87,16 +87,16 @@ export function AddBlock({ add }: { add: (block: any) => void }) {
               setOpen(false);
               add({
                 __component: "droplets.quiz",
-                questions: [
-                  {
-                    id: Math.random(),
-                    content: "",
-                    answerOptions: [
-                      { id: Math.random(), content: "", isCorrect: true },
-                      { id: Math.random(), content: "", isCorrect: false },
-                    ],
-                  },
-                ],
+                // questions: [
+                //   {
+                //     id: Math.random(),
+                //     content: "",
+                //     answerOptions: [
+                //       { id: Math.random(), content: "", isCorrect: true },
+                //       { id: Math.random(), content: "", isCorrect: false },
+                //     ],
+                //   },
+                // ],
               });
             }}
             variant="ghost"

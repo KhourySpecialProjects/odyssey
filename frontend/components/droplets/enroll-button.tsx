@@ -44,7 +44,6 @@ export function EnrollButton({ droplet, isEnrolled }: EnrollButtonProps) {
       });
     }
   }
-  console.log("is enrolled", isEnrolled);
 
   return (
     <Button

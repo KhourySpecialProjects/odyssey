@@ -41,7 +41,7 @@ export default async function Lesson({ params }: Props) {
           "droplets.quiz": {
             populate: {
               questions: {
-                populate: { answerOptions: "*" },
+                populate: { content: "*" },
               },
             },
           },

@@ -1,5 +1,6 @@
-import { Quiz } from "@/types";
+import { OpenEndedQuizQuestion, Quiz, QuizQuestion } from "@/types";
 import { QuizQuestionBlock } from "./quiz-question";
+import { OpenEndedQuestionBlock } from "@/components/draft/lesson/blocks/open-ended-question";
 
 export function QuizBlock({ data }: { data: Quiz }) {
   return (
@@ -12,14 +13,20 @@ export function QuizBlock({ data }: { data: Quiz }) {
       </div>
 
       <div>
-        {data.questions.map((question) => (
-          <div
-            key={question.id}
-            className="w-full max-w-lg p-6 mx-auto mt-8 bg-white border rounded-md divide-slate-200 border-slate-200"
-          >
-            <QuizQuestionBlock question={question} />
-          </div>
-        ))}
+        {data.questions.map((question) => {
+          console.log('Raw question:', question);
+          return (
+            <div
+              key={question.id}
+              className="w-full max-w-lg p-6 mx-auto mt-8 bg-white border rounded-md divide-slate-200 border-slate-200"
+            >
+            {('answerOptions' in question) ? (
+              <QuizQuestionBlock question={question} />
+            ) : (
+              <OpenEndedQuestionBlock question={question} />
+            )}
+            </div>
+       )} )}
       </div>
     </div>
   );
