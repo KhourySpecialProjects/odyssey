@@ -56,6 +56,9 @@
       "relation": "manyToOne",
       "target": "api::playlist.playlist",
       "inversedBy": "announcements"
+    },
+    "kudosGiven": {
+      "type": "boolean"
     }
   }
 }
