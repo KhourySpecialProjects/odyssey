@@ -2,6 +2,7 @@ import { PlaylistBlock } from "./playlist-block";
 import { CreatePlaylist } from "./create-playlist";
 import { Playlist } from "@/types";
 import { getPlaylists } from "@/lib/requests/playlist";
+import { PlaylistClient } from "./playlist-client";
 
 export async function Playlists() {
   const playlists = await getPlaylists({
@@ -29,17 +30,7 @@ export async function Playlists() {
         <CreatePlaylist />
       </div>
 
-      <div className="p-4 mt-4 rounded-md bg-slate-100">
-        {playlists.length > 0 ? (
-          <ul className="divide-y divide-slate-200 dark:divide-slate-700 md:space-y-4">
-            {playlists.map((p: Playlist) => (
-              <PlaylistBlock playlist={p} key={p.id} />
-            ))}
-          </ul>
-        ) : (
-          <p>There are no created droplets.</p>
-        )}
-      </div>
+      <PlaylistClient playlists={playlists}></PlaylistClient>
     </section>
   );
 }

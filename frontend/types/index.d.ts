@@ -265,4 +265,5 @@ export type Announcement = {
   group?: Group;
   authorized_user?: AuthorizedUser;
   playlist?: Playlist;
+  kudosGiven?: boolean;
 };

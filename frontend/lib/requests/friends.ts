@@ -42,7 +42,7 @@ export async function fetchFriends(
         },
       },
       pagination: {
-        pageSize: 25,
+        pageSize: 250,
         page: 1,
       },
     });
@@ -90,7 +90,7 @@ export async function getSentRequest(
       },
       populate: [],
       pagination: {
-        pageSize: 25,
+        pageSize: 250,
         page: 1,
       },
     });
@@ -125,7 +125,7 @@ export async function getSentRequestIds(
         },
       },
       pagination: {
-        pageSize: 100,
+        pageSize: 250,
         page: 1,
       },
       fields: ["id"],
@@ -495,7 +495,7 @@ export async function fetchFriendshipsById(
         },
       },
       pagination: {
-        pageSize: 25,
+        pageSize: 250,
         page: 1,
       },
     });
