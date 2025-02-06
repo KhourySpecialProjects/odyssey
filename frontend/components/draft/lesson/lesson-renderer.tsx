@@ -18,8 +18,9 @@ import { useMemo } from "react";
 import { LessonNameInput } from "@/components/ui/tiptap/lesson-name-input";
 import { QuizEditor } from "./blocks/quiz";
 import { QuizQuestion } from "@/types";
+import { OpenEndedQuizEditor } from "./blocks/open-ended-quiz";
 
-interface Block {
+export interface Block {
   __component: string;
   content: string;
   id?: number;
@@ -27,7 +28,8 @@ interface Block {
   type?: string;
   label?: string;
   url?: string;
-  questions?: (QuizQuestion | OpenEndedQuizQuestion)[];
+  questions?: QuizQuestion[];
+  openEndedQuestions?: OpenEndedQuizQuestion[];
 }
 
 interface LessonRendererProps {
@@ -190,6 +192,17 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
               deleteBlock={props.deleteBlock}
             />
           );
+          case "droplets.open_ended_quiz":
+            return (
+              <OpenEndedQuizEditor
+                block={{
+                  ...props.block,
+                  questions: props.block.openEndedQuestions || [],
+                }}
+                updateBlock={props.updateBlock}
+                deleteBlock={props.deleteBlock}
+              />
+            );
         default:
           return null;
       }

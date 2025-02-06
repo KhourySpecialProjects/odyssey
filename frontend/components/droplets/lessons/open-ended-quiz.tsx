@@ -1,7 +1,8 @@
-import { Quiz } from "@/types";
+import { OpenEndedQuiz, Quiz } from "@/types";
 import { QuizQuestionBlock } from "./quiz-question";
+import { OpenEndedQuizQuestionBlock } from "./open-ended-quiz-question-block";
 
-export function QuizBlock({ data }: { data: Quiz }) {
+export function OpenEndedQuizBlock({ data }: { data: OpenEndedQuiz }) {
   return (
     <div className="px-6 py-12 my-12 -mx-6 border rounded-md bg-slate-50 border-slate-200">
       <div className="text-center">
@@ -19,7 +20,7 @@ export function QuizBlock({ data }: { data: Quiz }) {
               key={question.id}
               className="w-full max-w-lg p-6 mx-auto mt-8 bg-white border rounded-md divide-slate-200 border-slate-200"
             >
-            <QuizQuestionBlock question={question} />
+            <OpenEndedQuizQuestionBlock question={question} />
             </div>
        )} )}
       </div>

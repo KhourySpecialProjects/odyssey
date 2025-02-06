@@ -83,23 +83,45 @@ export function AddBlock({ add }: { add: (block: any) => void }) {
             onClick={() => {
               setOpen(false);
               add({
-                __component: "droplets.quiz",
-                // questions: [
-                //   {
-                //     id: Math.random(),
-                //     content: "",
-                //     answerOptions: [
-                //       { id: Math.random(), content: "", isCorrect: true },
-                //       { id: Math.random(), content: "", isCorrect: false },
-                //     ],
-                //   },
-                // ],
+                __component: "droplets.open_ended_quiz",
+                questions: [
+                  {
+                    id: Math.random(),
+                    content: "",
+                    answerOptions: [
+                      { id: Math.random(), content: "", isCorrect: true },
+                      { id: Math.random(), content: "", isCorrect: false },
+                    ],
+                  },
+                ],
               });
             }}
             variant="ghost"
             className="w-full border border-slate-200"
           >
-            Quiz Block
+            Multiple Choice Quiz Block
+          </Button>
+          <Button
+            onClick={() => {
+              setOpen(false);
+              add({
+                __component: "droplets.quiz",
+                questions: [
+                  {
+                    id: Math.random(),
+                    content: "",
+                    answerOptions: [
+                      { id: Math.random(), content: "", isCorrect: true },
+                      { id: Math.random(), content: "", isCorrect: false },
+                    ],
+                  },
+                ],
+              });
+            }}
+            variant="ghost"
+            className="w-full border border-slate-200"
+          >
+            Open Ended Quiz Block
           </Button>
         </PopoverContent>
       </Popover>

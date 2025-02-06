@@ -66,6 +66,16 @@ export interface DropletsLearningObjective extends Schema.Component {
   };
 }
 
+export interface DropletsOpenEndedQuiz extends Schema.Component {
+  collectionName: 'components_droplets_open_ended_quizs';
+  info: {
+    displayName: 'Open Ended Quiz';
+  };
+  attributes: {
+    questions: Attribute.Component<'quizzes.open-ended-question', true>;
+  };
+}
+
 export interface DropletsQuiz extends Schema.Component {
   collectionName: 'components_droplets_quizzes';
   info: {
@@ -114,6 +124,24 @@ export interface QuizzesAnswerOption extends Schema.Component {
   };
 }
 
+export interface QuizzesOpenEndedQuestion extends Schema.Component {
+  collectionName: 'components_quizzes_open_ended_questions';
+  info: {
+    displayName: 'Open Ended Question';
+  };
+  attributes: {
+    content: Attribute.RichText &
+      Attribute.CustomField<
+        'plugin::ckeditor.CKEditor',
+        {
+          output: 'HTML';
+          preset: 'rich';
+        }
+      >;
+    correctAnswer: Attribute.String;
+  };
+}
+
 export interface QuizzesQuestion extends Schema.Component {
   collectionName: 'components_quiz_questions';
   info: {
@@ -143,10 +171,12 @@ declare module '@strapi/types' {
       'droplets.expandable': DropletsExpandable;
       'droplets.generic': DropletsGeneric;
       'droplets.learning-objective': DropletsLearningObjective;
+      'droplets.open-ended-quiz': DropletsOpenEndedQuiz;
       'droplets.quiz': DropletsQuiz;
       'droplets.resource': DropletsResource;
       'droplets.video': DropletsVideo;
       'quizzes.answer-option': QuizzesAnswerOption;
+      'quizzes.open-ended-question': QuizzesOpenEndedQuestion;
       'quizzes.question': QuizzesQuestion;
     }
   }

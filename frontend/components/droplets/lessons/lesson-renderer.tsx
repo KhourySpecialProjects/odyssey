@@ -15,6 +15,7 @@ import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { markLessonAsComplete } from "@/lib/actions";
 import { LockIcon } from "lucide-react";
+import { OpenEndedQuizBlock } from "./open-ended-quiz";
 
 interface LessonRendererProps {
   lesson: Lesson;
@@ -163,9 +164,10 @@ function LessonBlockRenderer({ block }: { block: any }) {
       );
 
     case "droplets.quiz":
-      console.log("block information", block)
-      console.log("questions", block.questions)
       return <QuizBlock data={block} />;
+
+    case "droplets.open_ended_quiz":
+      return <OpenEndedQuizBlock data={block} />;
 
     case "droplets.callout":
       return (
