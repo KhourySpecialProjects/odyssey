@@ -1,5 +1,4 @@
 import { getPlaylistBySlug } from "@/lib/requests/playlist";
-import { DropletsGrid } from "@/components/explore/droplets-grid";
 import { notFound } from "next/navigation";
 import { DropletTile } from "@/components/droplets/droplet-tile";
 import { getCurrentUser } from "@/lib/auth/session";
@@ -7,9 +6,9 @@ import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
 import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import Image from "next/image";
 import Link from "next/link";
 import { PlaylistEnrollButton } from "@/components/playlists/playlist-enroll-button";
+import { Button } from "@/components/ui/button";
 
 interface AuthorizedUser {
   id: number;
@@ -54,6 +53,14 @@ export default async function PlaylistPage({ params }: Props) {
       },
       authorized_users: {
         fields: ["id"],
+      },
+      author: {
+        fields: ["id", "name"],
+        populate: {
+          authorizedUser: {
+            fields: ["id", "email"],
+          },
+        },
       },
     },
   });
@@ -173,6 +180,13 @@ export default async function PlaylistPage({ params }: Props) {
               />
             </div>
           )}
+          <div
+            className={`pb-2 ${playlist?.author?.authorizedUser.email === user?.email ? "visibility: visible" : "visibility: hidden"}`}
+          >
+            <Link href={`/draft/p/${playlist.slug}`}>
+              <Button>Edit Playlist</Button>
+            </Link>
+          </div>
           {user && (
             <div className="max-w-md mx-auto mb-4">
               <div className="flex justify-center text-sm text-slate-600 mb-2">

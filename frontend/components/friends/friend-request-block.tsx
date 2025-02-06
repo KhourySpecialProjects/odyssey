@@ -7,7 +7,7 @@ import {
 } from "@/lib/requests/friends";
 import { AuthorizedUser } from "@/types";
 import { Check, X } from "lucide-react";
-import { startTransition, useState } from "react";
+import { startTransition } from "react";
 import { toast } from "sonner";
 import { UserBlock } from "./user-block";
 

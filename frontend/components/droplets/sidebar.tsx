@@ -8,7 +8,7 @@ import {
   isAuthorizedUserAdmin,
   condenseRoleTitles,
 } from "@/lib/utils";
-import { AuthorizedUser, Droplet, Lesson, User } from "@/types";
+import { AuthorizedUser, Droplet, User } from "@/types";
 import {
   BookTextIcon,
   ChevronDownIcon,
@@ -20,7 +20,6 @@ import {
   MenuIcon,
   ShipIcon,
   TargetIcon,
-  TowerControlIcon,
   CheckCircle2,
   LockIcon,
   ArrowLeftIcon,
@@ -41,9 +40,7 @@ import {
 } from "../ui/dropdown-menu";
 import { Label } from "../ui/label";
 import { Progress } from "../ui/progress";
-import { Separator } from "../ui/separator";
 import { useSession } from "next-auth/react";
-import { DROPLET_FILTERS } from "@/lib/globals";
 
 export default function Sidebar({
   user,
@@ -63,8 +60,6 @@ export default function Sidebar({
   const { data: session } = useSession();
 
   const isAdmin = user && isAuthorizedUserAdmin(user.roles);
-  // console.log(" ----> user roles = ", user?.roles);
-  // console.log(" ----> isAdmin = ", isAdmin);
 
   const activeLinkClasses =
     "w-full flex font-bold items-center p-2 bg-slate-200 [&>svg]:text-sky-700 rounded-lg dark:text-white dark:hover:bg-slate-700 group text-sky-700 transition-colors";

@@ -1,18 +1,11 @@
 "use client";
 
-import {
-  getInitials,
-  isAuthorizedUserAdmin,
-  isAuthorizedUserFaculty,
-  condenseRoleTitles,
-} from "@/lib/utils";
+import { getInitials, condenseRoleTitles } from "@/lib/utils";
 import { AuthorizedUser, User } from "@/types";
 import {
   ChevronDownIcon,
-  CogIcon,
   LogOutIcon,
   PersonStanding,
-  TowerControlIcon,
   User2Icon,
 } from "lucide-react";
 import { signOut } from "next-auth/react";
@@ -26,7 +19,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
-import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
 
 export function UserDropdown({
   user,

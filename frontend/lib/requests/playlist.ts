@@ -68,7 +68,9 @@ export async function getPlaylistBySlug(
       author: {
         fields: ["id", "name"],
         populate: {
-          authorizedUser: true,
+          authorizedUser: {
+            fields: ["id", "email"],
+          },
         },
       },
     },
@@ -88,14 +90,10 @@ export async function getPlaylistBySlug(
     },
   };
 
-  // console.log("urlParams = ", urlParams);
-
   const playlists = await fetchAPI<Playlist[]>(path, {
     urlParams,
     cache: "no-store",
   });
-
-  // console.log("search for playlist by slug playlists = ", playlists);
 
   return playlists[0] || null;
 }

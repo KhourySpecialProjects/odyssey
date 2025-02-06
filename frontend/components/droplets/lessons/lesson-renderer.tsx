@@ -15,7 +15,6 @@ import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { markLessonAsComplete } from "@/lib/actions";
 import { LockIcon } from "lucide-react";
-import { getCurrentUser } from "@/lib/auth/session";
 
 interface LessonRendererProps {
   lesson: Lesson;

@@ -1,4 +1,3 @@
-import AccessRequestBanner from "@/components/access-request-banner";
 import { DebugBanner } from "@/components/debug/debugBanner";
 import { EnvironmentBanner } from "@/components/debug/environmentBanner";
 import Footer from "@/components/footer/page";
