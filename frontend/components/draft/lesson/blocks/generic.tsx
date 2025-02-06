@@ -1,7 +1,5 @@
 "use client";
-import { useCallback, useState } from "react";
-import { debounce } from "lodash";
-import { updateLesson, revalidateLesson } from "@/lib/actions";
+import { revalidateLesson } from "@/lib/actions";
 import { Trash2Icon } from "lucide-react";
 import { GenericBlockInput } from "@/components/ui/tiptap/generic-block-input";
 

@@ -1,7 +1,7 @@
 import { useDrag, useDrop } from "react-dnd";
 import { Droplet } from "@/types/index.d";
 import { Badge } from "@/components/ui/badge";
-import { GripVertical, XIcon } from "lucide-react";
+import { GripVertical } from "lucide-react";
 import { cn, uppercaseFirstChar } from "@/lib/utils";
 
 interface DraggableDropletWideTileProps {

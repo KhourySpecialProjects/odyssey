@@ -13,7 +13,7 @@ import { Github, Linkedin } from "lucide-react";
 import { FriendCompletedDroplets } from "./friend-completed-droplets";
 import { startTransition, useState } from "react";
 import { toast } from "sonner";
-import { BlockUser } from "@/lib/requests/friends";
+import { BlockUser, removeFriend } from "@/lib/requests/friends";
 
 export function UserBlock({
   user,
@@ -26,6 +26,7 @@ export function UserBlock({
   const handleBlock = () => {
     startTransition(async () => {
       const result = await BlockUser(curUser.id, user.id);
+      await removeFriend(curUser.id, user.id);
       if (result.success) {
         toast.success("User blocked");
       } else {

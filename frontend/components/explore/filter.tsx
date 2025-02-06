@@ -22,8 +22,6 @@ import { cn } from "@/lib/utils";
 import { CheckIcon, PlusCircleIcon } from "lucide-react";
 import { usePathname, useSearchParams, useRouter } from "next/navigation";
 
-import { parseAsArrayOf, parseAsString, useQueryState } from "nuqs";
-
 export function Filter({
   name,
   label,

@@ -1,9 +1,6 @@
 "use client";
 
 import { useEditor, EditorContent } from "@tiptap/react";
-import Document from "@tiptap/extension-document";
-import Paragraph from "@tiptap/extension-paragraph";
-import Text from "@tiptap/extension-text";
 import Placeholder from "@tiptap/extension-placeholder";
 import StartingKit from "@tiptap/starter-kit";
 import Underline from "@tiptap/extension-underline";

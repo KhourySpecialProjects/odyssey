@@ -77,7 +77,6 @@ export default async function RootLayout({ params, children }: Props) {
     droplet.authors &&
     droplet.authors.map((author) => author.id).includes(userAuthor.id);
 
-
   return (
     <div className="flex flex-col md:flex-row">
       <Sidebar

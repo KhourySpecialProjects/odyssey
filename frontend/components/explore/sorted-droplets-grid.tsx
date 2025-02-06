@@ -2,7 +2,7 @@
 
 import { Droplet } from "@/types";
 import { DropletTile } from "../droplets/droplet-tile";
-import { useEffect, useState, useMemo } from "react";
+import { useMemo } from "react";
 import {
   Message,
   MessageDescription,
