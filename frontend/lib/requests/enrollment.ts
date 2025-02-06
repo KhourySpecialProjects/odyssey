@@ -22,7 +22,7 @@ export async function getEnrollmentsByAuthorizedUser(
   {
     sort,
     filters,
-    pagination = { pageSize: 25, page: 1 },
+    pagination = { pageSize: 250, page: 1 },
     populate = {
       droplet: {
         populate: {
@@ -225,7 +225,7 @@ export async function getDropletAverageRating(
     },
     fields: ["rating"],
     pagination: {
-      pageSize: 100,
+      pageSize: 1000,
       page: 1,
     },
   };

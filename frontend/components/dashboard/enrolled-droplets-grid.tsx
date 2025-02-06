@@ -6,7 +6,7 @@ import {
 import { getCurrentUser } from "@/lib/auth/session";
 import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
 import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
-import { DropletTile } from "../droplets/droplet-tile";
+import { EnrolledDropletsGridClient } from "./enrolled-droplets-grid-client";
 
 interface Lesson {
   id: number;
@@ -71,15 +71,9 @@ export async function EnrolledDropletsGrid() {
   }
 
   return (
-    <ul className="grid grid-flow-row grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-      {dropletsWithCompletion.map((droplet) => (
-        <DropletTile
-          key={droplet.id}
-          droplet={droplet}
-          isEnrolled={true}
-          completedLessonIds={completedLessonIds}
-        />
-      ))}
-    </ul>
+    <EnrolledDropletsGridClient
+      dropletsWithCompletion={dropletsWithCompletion}
+      completedLessonIds={completedLessonIds}
+    />
   );
 }

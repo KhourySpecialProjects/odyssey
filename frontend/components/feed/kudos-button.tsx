@@ -2,19 +2,19 @@
 
 import { Button } from "../ui/button";
 import { giveKudos } from "@/lib/kudos";
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
 
-export function KudosButton() {
+export function KudosButton({ announcementId }: { announcementId: number }) {
   const [isPending, startTransition] = useTransition();
   const [isVisible, setIsVisible] = useState(true);
 
   const handleClick = () => {
     startTransition(async () => {
-      const result = await giveKudos();
-      setIsVisible(false);
+      const result = await giveKudos(announcementId);
       if (result.success) {
         toast.success("Kudos given!");
+        setIsVisible(false);
       } else {
         toast.error("Failed to give kudos");
       }

@@ -454,6 +454,7 @@ export interface ApiAnnouncementAnnouncement extends Schema.CollectionType {
       'manyToOne',
       'api::group.group'
     >;
+    kudosGiven: Attribute.Boolean;
     playlist: Attribute.Relation<
       'api::announcement.announcement',
       'manyToOne',
