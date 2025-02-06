@@ -10,7 +10,7 @@ export async function fetchDroplets() {
       sort: ["name"],
       fields: ["id", "name", "type", "slug", "isHidden"],
       pagination: {
-        pageSize: 25,
+        pageSize: 250,
         page: 1,
       },
     });
@@ -50,7 +50,7 @@ export async function fetchGroups() {
         },
       },
       pagination: {
-        pageSize: 25,
+        pageSize: 250,
         page: 1,
       },
     });
@@ -89,7 +89,7 @@ export async function fetchAccessRequests() {
         "college",
       ],
       pagination: {
-        pageSize: 25,
+        pageSize: 250,
         page: 1,
       },
     });
@@ -115,7 +115,7 @@ export async function fetchReports() {
       sort: ["createdAt"],
       fields: "*",
       pagination: {
-        pageSize: 25,
+        pageSize: 250,
         page: 1,
       },
     });
