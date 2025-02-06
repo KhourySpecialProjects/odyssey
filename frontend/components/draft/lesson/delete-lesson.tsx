@@ -9,7 +9,7 @@ import {
   DialogClose,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { ArrowLeftIcon, Trash, Trash2Icon } from "lucide-react";
+import { ArrowLeftIcon, Trash2Icon } from "lucide-react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 

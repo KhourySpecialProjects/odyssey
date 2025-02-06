@@ -1,9 +1,7 @@
-import { useState, useEffect, useRef } from "react";
-import { GoalIcon, LoaderIcon } from "lucide-react";
+import { useState, useRef } from "react";
+import { GoalIcon } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { useFormStatus } from "react-dom";
 import { useOffClick } from "../hooks/useOffClick";
 import { DeleteButton } from "@/components/draft/metadata/form-buttons";
 

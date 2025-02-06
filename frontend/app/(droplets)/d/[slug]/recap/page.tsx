@@ -1,5 +1,4 @@
 import { DropletTile } from "@/components/droplets/droplet-tile";
-import { GradientBackground } from "@/components/gradient-bg";
 import { getDropletBySlug, getDroplets } from "@/lib/requests/droplet";
 import { Droplet } from "@/types";
 import { GoalIcon, Link2Icon } from "lucide-react";
@@ -13,6 +12,7 @@ import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
 
 import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
 import { getServerSession } from "next-auth";
+import { CompletedDropletBlock } from "@/components/droplets/completed-droplet-block";
 
 type Props = {
   params: Promise<Params>;
@@ -111,22 +111,27 @@ export default async function DropletRecapRoute({ params }: Props) {
       enrollID = enrollment.id;
     }
 
+    const authUser = await getAuthorizedUserByEmail(user.email);
+
     return (
       <>
         {enrollment &&
-          enrollment?.viewedLessons.length ===
-            enrollment?.droplet.lessons?.length && <Confetti />}
-        <GradientBackground className="px-0">
-          <div className="mb-12 max-w-2xl mx-auto">
-            <h1 className="mt-3 text-6xl font-black text-slate-900">Recap</h1>
-            <p className="mt-3 text-slate-500 text-pretty md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed dark:text-slate-400">
-              <strong>You did it!</strong> Congratulations on completing this
-              &ldquo;{droplet.name}
-              &rdquo; Droplet.
-            </p>
-          </div>
-        </GradientBackground>
+          enrollment.viewedLessons.length ===
+            enrollment.droplet.lessons?.length &&
+          enrollment.isFirstTime && (
+            <>
+              <CompletedDropletBlock
+                droplet={droplet}
+                enrollmentId={enrollment.id}
+                authUser={authUser}
+              />
+              <Confetti />
+            </>
+          )}
 
+        <div className="max-w-2xl mx-auto">
+          <h1 className="mt-3 text-6xl font-black text-slate-900">Recap</h1>
+        </div>
         <div className="w-full max-w-2xl py-8 mx-auto space-y-8 md:space-y-12">
           <section>
             <h2 className="text-2xl font-bold text-slate-900">

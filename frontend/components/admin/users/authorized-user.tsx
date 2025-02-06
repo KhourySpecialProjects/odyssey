@@ -24,7 +24,6 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { AuthorizedUserRoleTitle } from "@/lib/globals";
 import { Checkbox } from "@/components/ui/checkbox";
-import { type } from "os";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export function AuthorizedUserBlock({ user }: { user: AuthorizedUser }) {

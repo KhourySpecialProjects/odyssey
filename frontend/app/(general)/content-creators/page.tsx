@@ -1,6 +1,5 @@
 import { ContentCreatorBlock } from "@/components/footer/content-creator-block";
 import { GradientBackground } from "@/components/gradient-bg";
-import { getCurrentUser } from "@/lib/auth/session";
 import { fetchContentCreators } from "@/lib/requests/authorized-user";
 import { Metadata } from "next";
 

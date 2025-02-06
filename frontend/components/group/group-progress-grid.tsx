@@ -1,19 +1,13 @@
 "use client";
 
-import { Tab, Tabs, TabList, TabPanel } from "react-tabs";
 import "react-tabs/style/react-tabs.css";
 import { ContentSection } from "@/components/group/content-section";
-import { GroupDropletTile } from "@/components/group/group-droplet-tile";
 import { Droplet } from "@/types";
-import { Group } from "@/types";
-import { PlaylistCard } from "@/components/playlists/playlist-card";
-import { Enrollment } from "@/types";
 import { Playlist } from "@/types";
 import { AuthorizedUser } from "@/types";
 import React, { useTransition } from "react";
 import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
-import { getIsEnrollComplete, getIsEnrolled } from "@/lib/requests/enrollment";
-import { Check, MoveLeft, MoveRight } from "lucide-react";
+import { MoveLeft, MoveRight } from "lucide-react";
 import { useEffect } from "react";
 import { useState } from "react";
 

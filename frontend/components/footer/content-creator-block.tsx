@@ -1,12 +1,8 @@
 "use client";
 
 import { AuthorizedUser } from "@/types";
-import { UserBlock } from "../friends/user-block";
 import Link from "next/link";
 import { Github, Linkedin } from "lucide-react";
-import { FriendCompletedDroplets } from "../friends/friend-completed-droplets";
-import { Button } from "../ui/button";
-import { DialogDescription } from "../ui/dialog";
 
 export function ContentCreatorBlock({
   contentCreator,
