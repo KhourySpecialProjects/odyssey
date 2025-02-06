@@ -1,7 +1,6 @@
-import { fetchAPI, flattenAttributes } from "@/lib/utils";
+import { fetchAPI } from "@/lib/utils";
 import { AuthorizedUserRole } from "@/types";
 import { StrapiRequestParams } from "@/types/strapi";
-import qs from "qs";
 
 export async function getAuthorizedUserRoleIdByTitle(
   title: string,

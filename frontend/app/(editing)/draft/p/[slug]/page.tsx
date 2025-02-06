@@ -58,7 +58,6 @@ export default async function EditPlaylistPage({ params }: Props) {
   console.log("returned playlist = ", playlist);
 
   if (!playlist) {
-    // console.log("Redirecting to drafts b/c playlist isn't valid!")
     return redirect("/drafts");
   }
 

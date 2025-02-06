@@ -1,7 +1,7 @@
 "use client";
 
 import { Badge } from "@/components/ui/badge";
-import { cn, uppercaseFirstChar } from "@/lib/utils";
+import { uppercaseFirstChar } from "@/lib/utils";
 import { Droplet } from "@/types";
 import Link from "next/link";
 

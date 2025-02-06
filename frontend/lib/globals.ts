@@ -8,6 +8,15 @@ export enum AuthorizedUserRoleTitle {
   WebsiteEditor = "Website Editor",
 }
 
+export enum AnnouncementTypeTitle {
+  Droplet = "Droplet",
+  Playlist = "Playlist",
+  Group = "Group",
+  System = "System",
+  Friend = "Friend",
+  Kudos = "Kudos",
+}
+
 export const AuthorizedUserAdminRoles = [
   AuthorizedUserRoleTitle.SysAdmin,
   AuthorizedUserRoleTitle.AcadAdmin,

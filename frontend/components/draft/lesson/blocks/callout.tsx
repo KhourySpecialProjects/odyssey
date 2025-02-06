@@ -1,11 +1,10 @@
 "use client";
 
 import { JSONContent } from "@tiptap/react";
-import { updateLesson, revalidateLesson } from "@/lib/actions";
+import { revalidateLesson } from "@/lib/actions";
 import { strapiJSONToTiptapJSON, tiptapJSONToStrapiJSON } from "@/lib/utils";
 import { useCallback } from "react";
 import { debounce } from "lodash";
-import type { BlockNode } from "@/types/strapi";
 import { Trash2Icon } from "lucide-react";
 import { CalloutBlockInput } from "@/components/ui/tiptap/callout-block-input";
 

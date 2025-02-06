@@ -122,6 +122,12 @@
       "relation": "manyToMany",
       "target": "api::authorized-user.authorized-user",
       "inversedBy": "was_blocked"
+    },
+    "announcements": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::announcement.announcement",
+      "mappedBy": "authorized_user"
     }
   }
 }
