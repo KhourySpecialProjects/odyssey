@@ -58,7 +58,6 @@ export default async function ExplorePage({
           </div>
         </div>
       </div>
-
       <div className="w-full px-4 mx-auto mb-8 max-w-7xl xl:p-0">
         {contentType === "droplets" ? (
           <Suspense fallback={<DropletsSkeleton />}>
