@@ -156,7 +156,12 @@ export type OpenEndedQuizQuestion = {
 
 export type Quiz = {
   id: number;
-  questions: (QuizQuestion | OpenEndedQuizQuestion)[];
+  questions: QuizQuestion[];
+};
+
+export type OpenEndedQuiz = {
+  id: number;
+  questions: OpenEndedQuizQuestion[];
 };
 
 export type Enrollment = {

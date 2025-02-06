@@ -1,0 +1,20 @@
+{
+  "collectionName": "components_quizzes_open_ended_questions",
+  "info": {
+    "displayName": "Open Ended Question"
+  },
+  "options": {},
+  "attributes": {
+    "content": {
+      "type": "customField",
+      "options": {
+        "output": "HTML",
+        "preset": "rich"
+      },
+      "customField": "plugin::ckeditor.CKEditor"
+    },
+    "correctAnswer": {
+      "type": "string"
+    }
+  }
+}

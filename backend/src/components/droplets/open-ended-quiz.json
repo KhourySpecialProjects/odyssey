@@ -1,0 +1,15 @@
+{
+  "collectionName": "components_droplets_open_ended_quizs",
+  "info": {
+    "displayName": "Open Ended Quiz"
+  },
+  "options": {},
+  "attributes": {
+    "questions": {
+      "displayName": "Open Ended Question",
+      "type": "component",
+      "repeatable": true,
+      "component": "quizzes.open-ended-question"
+    }
+  }
+}
