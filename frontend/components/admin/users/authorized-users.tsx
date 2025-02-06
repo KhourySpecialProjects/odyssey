@@ -3,7 +3,6 @@ import { AuthorizedUserBlock } from "./authorized-user";
 import { CreateUser } from "./create-user";
 import { AuthorizedUserClient } from "./authorized-user-client";
 
-
 export async function AuthorizedUsers() {
   const authorizedUsers = await fetchAuthorizedUsers();
 

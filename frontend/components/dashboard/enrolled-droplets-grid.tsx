@@ -71,6 +71,9 @@ export async function EnrolledDropletsGrid() {
   }
 
   return (
-      <EnrolledDropletsGridClient dropletsWithCompletion={dropletsWithCompletion} completedLessonIds={completedLessonIds} />
+    <EnrolledDropletsGridClient
+      dropletsWithCompletion={dropletsWithCompletion}
+      completedLessonIds={completedLessonIds}
+    />
   );
 }

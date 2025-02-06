@@ -3,6 +3,7 @@
 import { Announcement, AuthorizedUser } from "@/types";
 import Link from "next/link";
 import { KudosButton } from "./kudos-button";
+import { useState } from "react";
 
 export function FeedBlock({
   announcement,
@@ -103,7 +104,9 @@ export function FeedBlock({
             <p className="font-medium truncate bg-yellow-100 text-slate-900 dark:text-white">
               {announcement.content}
             </p>
-            <KudosButton />
+            {!announcement.kudosGiven && (
+              <KudosButton announcementId={announcement.id} />
+            )}
           </div>
         </div>
       </li>
