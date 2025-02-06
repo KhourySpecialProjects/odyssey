@@ -8,6 +8,7 @@ import {
   MessageDescription,
   MessageHeader,
 } from "@/components/message";
+import { getDropletAverageRating } from "@/lib/requests/enrollment";
 
 interface SortedDropletsGridProps {
   droplets: Array<Droplet & { completionPercentage: number }>;
@@ -15,6 +16,7 @@ interface SortedDropletsGridProps {
   completedLessonIds: number[];
   enrolledDropletIds: number[];
   searchValue?: string;
+  ratingsMap: Map<number, number>;
 }
 
 export function SortedDropletsGrid({
@@ -23,13 +25,23 @@ export function SortedDropletsGrid({
   completedLessonIds,
   enrolledDropletIds,
   searchValue,
+  ratingsMap,
 }: SortedDropletsGridProps) {
+
   // Use useMemo to sort droplets whenever the dependencies change
   const sortedDroplets = useMemo(() => {
     let sorted = [...droplets];
     if (sortKey) {
       const [field, direction] = sortKey.split(":");
       sorted.sort((a, b) => {
+        let ratingA = ratingsMap.get(a.id);
+        let ratingB = ratingsMap.get(b.id);
+        if (!ratingA) {
+          ratingA = 0
+        }
+        if (!ratingB) {
+          ratingB = 0
+        }
         if (field === "name") {
           return direction === "asc"
             ? a.name.localeCompare(b.name)
@@ -38,12 +50,17 @@ export function SortedDropletsGrid({
           return direction === "asc"
             ? a.completionPercentage - b.completionPercentage
             : b.completionPercentage - a.completionPercentage;
+        } else if (field === "rating") {
+          return direction === "asc"
+            ? ratingA - ratingB
+            : ratingB - ratingA;
         }
         return 0;
       });
     }
     return sorted;
-  }, [droplets, sortKey]);
+  }, [droplets, sortKey, ratingsMap]);
+
 
   if (!sortedDroplets || sortedDroplets.length === 0) {
     return (

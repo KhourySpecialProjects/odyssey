@@ -82,7 +82,9 @@ export type SortFilterItem = {
     | "createdAt:asc"
     | "createdAt:desc"
     | "completion:asc"
-    | "completion:desc";
+    | "completion:desc"
+    | "rating:asc"
+    | "rating:desc";
 };
 
 export const sorting: SortFilterItem[] = [
@@ -97,6 +99,16 @@ export const sorting: SortFilterItem[] = [
     label: "Least Complete",
     slug: "completion:asc",
     sortKey: "completion:asc",
+  },
+  {
+    label: "Best Rating",
+    slug: "rating:desc",
+    sortKey: "rating:desc",
+  },
+  {
+    label: "Worst Rating",
+    slug: "rating:asc",
+    sortKey: "rating:asc",
   },
 ];
 

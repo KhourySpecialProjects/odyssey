@@ -6,7 +6,7 @@ import {
 import { getCurrentUser } from "@/lib/auth/session";
 import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
 import { getDroplets } from "@/lib/requests/droplet";
-import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
+import { getDropletAverageRating, getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
 import { DropletTile } from "../droplets/droplet-tile";
 import { SortedDropletsGrid } from "./sorted-droplets-grid";
 
@@ -112,6 +112,15 @@ export async function DropletsGrid({
     );
   }
 
+  const ratingsMap = new Map();
+  await Promise.all(
+    dropletsWithCompletion.map(async (droplet) => {
+      const rating = await getDropletAverageRating(droplet);
+      ratingsMap.set(droplet.id, rating)
+    })
+  )
+
+
   if (completion) {
     const completedDroplets = dropletsWithCompletion.filter(
       (droplet) => droplet.completionPercentage === 100,
@@ -144,6 +153,7 @@ export async function DropletsGrid({
       sortKey={sortKey}
       completedLessonIds={completedLessonIds}
       enrolledDropletIds={enrolledDropletIds}
+      ratingsMap={ratingsMap}
     />
   );
 }
