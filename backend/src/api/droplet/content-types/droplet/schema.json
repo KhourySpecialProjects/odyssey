@@ -119,11 +119,18 @@
       "type": "relation",
       "relation": "manyToMany",
       "target": "api::group.group",
-      "mappedBy": "droplets"},
+      "mappedBy": "droplets"
+    },
     "droplet_lessons": {
       "type": "relation",
       "relation": "oneToMany",
       "target": "api::droplet-lesson.droplet-lesson",
+      "mappedBy": "droplet"
+    },
+    "announcements": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::announcement.announcement",
       "mappedBy": "droplet"
     }
   }

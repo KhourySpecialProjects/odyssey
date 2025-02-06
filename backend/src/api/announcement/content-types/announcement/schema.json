@@ -1,0 +1,61 @@
+{
+  "kind": "collectionType",
+  "collectionName": "announcements",
+  "info": {
+    "singularName": "announcement",
+    "pluralName": "announcements",
+    "displayName": "Announcement",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "type": {
+      "type": "enumeration",
+      "enum": [
+        "playlist",
+        "droplet",
+        "friend",
+        "system",
+        "group",
+        "kudos"
+      ],
+      "required": true
+    },
+    "firstCreated": {
+      "type": "datetime",
+      "required": true
+    },
+    "content": {
+      "type": "text",
+      "required": true,
+      "minLength": 1
+    },
+    "droplet": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::droplet.droplet",
+      "inversedBy": "announcements"
+    },
+    "group": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::group.group",
+      "inversedBy": "announcements"
+    },
+    "authorized_user": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::authorized-user.authorized-user",
+      "inversedBy": "announcements"
+    },
+    "playlist": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::playlist.playlist",
+      "inversedBy": "announcements"
+    }
+  }
+}

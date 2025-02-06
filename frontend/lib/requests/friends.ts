@@ -1,7 +1,6 @@
 "use server";
-import { fetchAPI, flattenAttributes } from "@/lib/utils";
+import { flattenAttributes } from "@/lib/utils";
 import { AuthorizedUser, Friendship } from "@/types";
-import { StrapiRequestParams } from "@/types/strapi";
 import { revalidatePath } from "next/cache";
 import qs from "qs";
 

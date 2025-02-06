@@ -1,8 +1,7 @@
-import { Quiz, QuizQuestion } from "@/types";
+import { QuizQuestion } from "@/types";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { PlusIcon, TrashIcon } from "lucide-react";
-// import { QuizQuestionEditor } from "./quiz-question-editor";
 import { QuizQuestionEditor } from "./quiz-question-editor";
 
 interface QuizEditorProps {

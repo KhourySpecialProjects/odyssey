@@ -10,8 +10,6 @@ import { getDraftDroplets } from "@/lib/requests/droplet";
 import { DropletTile } from "@/components/droplets/droplet-tile";
 import { DropletsSkeleton } from "@/components/explore/droplets-skeleton";
 import { Separator } from "@/components/ui/separator";
-import { Header } from "@/components/header";
-import AccessRequestBanner from "@/components/access-request-banner";
 import { Metadata } from "next";
 import { getPlaylistsByAuthor } from "@/lib/requests/playlist";
 import { PlaylistCard } from "@/components/playlists/playlist-card";

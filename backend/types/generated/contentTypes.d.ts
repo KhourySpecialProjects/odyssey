@@ -414,6 +414,65 @@ export interface ApiAccessRequestAccessRequest extends Schema.CollectionType {
   };
 }
 
+export interface ApiAnnouncementAnnouncement extends Schema.CollectionType {
+  collectionName: 'announcements';
+  info: {
+    description: '';
+    displayName: 'Announcement';
+    pluralName: 'announcements';
+    singularName: 'announcement';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    authorized_user: Attribute.Relation<
+      'api::announcement.announcement',
+      'manyToOne',
+      'api::authorized-user.authorized-user'
+    >;
+    content: Attribute.Text &
+      Attribute.Required &
+      Attribute.SetMinMaxLength<{
+        minLength: 1;
+      }>;
+    createdAt: Attribute.DateTime;
+    createdBy: Attribute.Relation<
+      'api::announcement.announcement',
+      'oneToOne',
+      'admin::user'
+    > &
+      Attribute.Private;
+    droplet: Attribute.Relation<
+      'api::announcement.announcement',
+      'manyToOne',
+      'api::droplet.droplet'
+    >;
+    firstCreated: Attribute.DateTime & Attribute.Required;
+    group: Attribute.Relation<
+      'api::announcement.announcement',
+      'manyToOne',
+      'api::group.group'
+    >;
+    playlist: Attribute.Relation<
+      'api::announcement.announcement',
+      'manyToOne',
+      'api::playlist.playlist'
+    >;
+    type: Attribute.Enumeration<
+      ['playlist', 'droplet', 'friend', 'system', 'group', 'kudos']
+    > &
+      Attribute.Required;
+    updatedAt: Attribute.DateTime;
+    updatedBy: Attribute.Relation<
+      'api::announcement.announcement',
+      'oneToOne',
+      'admin::user'
+    > &
+      Attribute.Private;
+  };
+}
+
 export interface ApiAuthorAuthor extends Schema.CollectionType {
   collectionName: 'authors';
   info: {
@@ -512,6 +571,11 @@ export interface ApiAuthorizedUserAuthorizedUser extends Schema.CollectionType {
     draftAndPublish: false;
   };
   attributes: {
+    announcements: Attribute.Relation<
+      'api::authorized-user.authorized-user',
+      'oneToMany',
+      'api::announcement.announcement'
+    >;
     author: Attribute.Relation<
       'api::authorized-user.authorized-user',
       'oneToOne',
@@ -667,6 +731,11 @@ export interface ApiDropletDroplet extends Schema.CollectionType {
     draftAndPublish: true;
   };
   attributes: {
+    announcements: Attribute.Relation<
+      'api::droplet.droplet',
+      'oneToMany',
+      'api::announcement.announcement'
+    >;
     authors: Attribute.Relation<
       'api::droplet.droplet',
       'manyToMany',
@@ -788,6 +857,7 @@ export interface ApiEnrollmentEnrollment extends Schema.CollectionType {
     isComplete: Attribute.Boolean &
       Attribute.Required &
       Attribute.DefaultTo<false>;
+    isFirstTime: Attribute.Boolean & Attribute.DefaultTo<true>;
     rating: Attribute.Integer &
       Attribute.SetMinMax<
         {
@@ -861,6 +931,11 @@ export interface ApiGroupGroup extends Schema.CollectionType {
       'api::group.group',
       'manyToMany',
       'api::authorized-user.authorized-user'
+    >;
+    announcements: Attribute.Relation<
+      'api::group.group',
+      'oneToMany',
+      'api::announcement.announcement'
     >;
     createdAt: Attribute.DateTime;
     createdBy: Attribute.Relation<
@@ -1004,6 +1079,11 @@ export interface ApiPlaylistPlaylist extends Schema.CollectionType {
     draftAndPublish: true;
   };
   attributes: {
+    announcements: Attribute.Relation<
+      'api::playlist.playlist',
+      'oneToMany',
+      'api::announcement.announcement'
+    >;
     author: Attribute.Relation<
       'api::playlist.playlist',
       'manyToOne',
@@ -1548,6 +1628,7 @@ declare module '@strapi/types' {
       'admin::transfer-token-permission': AdminTransferTokenPermission;
       'admin::user': AdminUser;
       'api::access-request.access-request': ApiAccessRequestAccessRequest;
+      'api::announcement.announcement': ApiAnnouncementAnnouncement;
       'api::author.author': ApiAuthorAuthor;
       'api::authorized-user-role.authorized-user-role': ApiAuthorizedUserRoleAuthorizedUserRole;
       'api::authorized-user.authorized-user': ApiAuthorizedUserAuthorizedUser;

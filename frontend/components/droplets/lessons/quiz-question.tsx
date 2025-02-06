@@ -12,12 +12,7 @@ import {
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { QuizQuestion } from "@/types";
 import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  ArrowLeftIcon,
-  ArrowRightIcon,
-  CircleCheckIcon,
-  CircleXIcon,
-} from "lucide-react";
+import { ArrowLeftIcon, ArrowRightIcon } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";

@@ -1,10 +1,6 @@
 import { ContentCreatorBlock } from "@/components/footer/content-creator-block";
 import { GradientBackground } from "@/components/gradient-bg";
-import { getCurrentUser } from "@/lib/auth/session";
-import {
-  fetchContentCreators,
-  fetchWebsiteCreators,
-} from "@/lib/requests/authorized-user";
+import { fetchWebsiteCreators } from "@/lib/requests/authorized-user";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {

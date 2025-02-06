@@ -1,8 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Check, ChevronsUpDown } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { ChevronsUpDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Command,
@@ -36,7 +35,6 @@ export function UserMultiSelect({
     const fetchUsers = async () => {
       const fetchedUsers = await fetchAllUsers();
       setUsers(fetchedUsers);
-      // console.log('inside useEffect fetchedUsers = ', fetchedUsers);
     };
     fetchUsers();
   }, []);

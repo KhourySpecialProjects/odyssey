@@ -237,7 +237,6 @@ export async function getAllAuthorizedUsers(): Promise<AuthorizedUser[]> {
         page: 1,
       },
     });
-    // console.log(" ---> query = ", query);
 
     const response = await fetch(
       NEXT_PUBLIC_STRAPI_API_URL + "/api/authorized-users?" + query,
