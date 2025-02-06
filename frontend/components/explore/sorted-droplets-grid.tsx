@@ -30,20 +30,20 @@ export function SortedDropletsGrid({
 }: SortedDropletsGridProps) {
   const ITEMS_PER_PAGE = 9;
   const [currentPage, setCurrentPage] = useState(1);
-    const totalPages = Math.ceil(droplets.length / ITEMS_PER_PAGE);
-    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const totalPages = Math.ceil(droplets.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
 
-    const handleNextPage = () => {
-      if (currentPage < totalPages) {
-        setCurrentPage((prev) => prev + 1);
-      }
-    };
-  
-    const handlePrevPage = () => {
-      if (currentPage > 1) {
-        setCurrentPage((prev) => prev - 1);
-      }
-    };
+  const handleNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage((prev) => prev + 1);
+    }
+  };
+
+  const handlePrevPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage((prev) => prev - 1);
+    }
+  };
 
   // Use useMemo to sort droplets whenever the dependencies change
   const sortedDroplets = useMemo(() => {
@@ -54,10 +54,10 @@ export function SortedDropletsGrid({
         let ratingA = ratingsMap.get(a.id);
         let ratingB = ratingsMap.get(b.id);
         if (!ratingA) {
-          ratingA = 0
+          ratingA = 0;
         }
         if (!ratingB) {
-          ratingB = 0
+          ratingB = 0;
         }
         if (field === "name") {
           return direction === "asc"
@@ -68,9 +68,7 @@ export function SortedDropletsGrid({
             ? a.completionPercentage - b.completionPercentage
             : b.completionPercentage - a.completionPercentage;
         } else if (field === "rating") {
-          return direction === "asc"
-            ? ratingA - ratingB
-            : ratingB - ratingA;
+          return direction === "asc" ? ratingA - ratingB : ratingB - ratingA;
         }
         return 0;
       });
@@ -82,7 +80,6 @@ export function SortedDropletsGrid({
     startIndex,
     startIndex + ITEMS_PER_PAGE,
   );
-
 
   if (!sortedDroplets || sortedDroplets.length === 0) {
     return (
@@ -108,27 +105,27 @@ export function SortedDropletsGrid({
         ))}
       </ul>
       <div className="flex justify-end items-center mt-4 ">
-      <div className="flex gap-2">
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={handlePrevPage}
-          disabled={currentPage === 1}
-          className={`${currentPage === 1 ? "visibility: hidden" : "visibility: visible"}`}
-        >
-          Previous
-        </Button>
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={handleNextPage}
-          disabled={currentPage === totalPages}
-          className={`${currentPage === totalPages ? "visibility: hidden" : "visibility: visible"}`}
-        >
-          Next
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={handlePrevPage}
+            disabled={currentPage === 1}
+            className={`${currentPage === 1 ? "visibility: hidden" : "visibility: visible"}`}
+          >
+            Previous
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={handleNextPage}
+            disabled={currentPage === totalPages}
+            className={`${currentPage === totalPages ? "visibility: hidden" : "visibility: visible"}`}
+          >
+            Next
+          </Button>
+        </div>
       </div>
-    </div>
-  </>
+    </>
   );
 }

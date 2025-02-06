@@ -19,15 +19,26 @@ export function FriendRequestBlock({
   request: AuthorizedUser;
 }) {
   const handleApprove = () => {
-    startTransition(async () => {
-      const result = await acceptFriendRequest(user.id, request.id);
+    if (
+      user.friendships.map((friendship) =>
+        friendship.authorized_users.includes(request.id),
+      )
+    ) {
+      startTransition(async () => {
+        await rejectFriendRequest(user.id, request.id);
+        toast.error("Friendship already exists with this user");
+      });
+    } else {
+      startTransition(async () => {
+        const result = await acceptFriendRequest(user.id, request.id);
 
-      if (result.success) {
-        toast.success("Friend request accepted!");
-      } else {
-        toast.error("Failed to accept friend request");
-      }
-    });
+        if (result.success) {
+          toast.success("Friend request accepted!");
+        } else {
+          toast.error("Failed to accept friend request");
+        }
+      });
+    }
   };
 
   const handleReject = () => {

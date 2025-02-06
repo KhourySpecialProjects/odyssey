@@ -11,7 +11,7 @@
       "url": "https://khouryodyssey.org"
     },
     "license": null,
-    "x-generation-date": "2025-02-06T16:41:36.290Z"
+    "x-generation-date": "2025-02-06T19:20:36.991Z"
   },
   "x-strapi-config": {
     "plugins": [
@@ -627,6 +627,9 @@
                   }
                 ],
                 "example": "string or id"
+              },
+              "kudosGiven": {
+                "type": "boolean"
               }
             }
           }
@@ -2306,6 +2309,9 @@
                                                                                               }
                                                                                             }
                                                                                           },
+                                                                                          "kudosGiven": {
+                                                                                            "type": "boolean"
+                                                                                          },
                                                                                           "createdAt": {
                                                                                             "type": "string",
                                                                                             "format": "date-time"
@@ -3268,6 +3274,9 @@
                 }
               }
             }
+          },
+          "kudosGiven": {
+            "type": "boolean"
           },
           "createdAt": {
             "type": "string",
@@ -5207,6 +5216,9 @@
                                                                                                   }
                                                                                                 }
                                                                                               }
+                                                                                            },
+                                                                                            "kudosGiven": {
+                                                                                              "type": "boolean"
                                                                                             },
                                                                                             "createdAt": {
                                                                                               "type": "string",
@@ -7880,6 +7892,9 @@
                                                                                                                             }
                                                                                                                           }
                                                                                                                         }
+                                                                                                                      },
+                                                                                                                      "kudosGiven": {
+                                                                                                                        "type": "boolean"
                                                                                                                       },
                                                                                                                       "createdAt": {
                                                                                                                         "type": "string",
@@ -11174,6 +11189,9 @@
                                                                                                 }
                                                                                               }
                                                                                             },
+                                                                                            "kudosGiven": {
+                                                                                              "type": "boolean"
+                                                                                            },
                                                                                             "createdAt": {
                                                                                               "type": "string",
                                                                                               "format": "date-time"
@@ -13674,6 +13692,9 @@
                                                                                                                               }
                                                                                                                             }
                                                                                                                           }
+                                                                                                                        },
+                                                                                                                        "kudosGiven": {
+                                                                                                                          "type": "boolean"
                                                                                                                         },
                                                                                                                         "createdAt": {
                                                                                                                           "type": "string",
@@ -16821,6 +16842,9 @@
                                                                                               }
                                                                                             }
                                                                                           },
+                                                                                          "kudosGiven": {
+                                                                                            "type": "boolean"
+                                                                                          },
                                                                                           "createdAt": {
                                                                                             "type": "string",
                                                                                             "format": "date-time"
@@ -19639,6 +19663,9 @@
                                                                                               }
                                                                                             }
                                                                                           },
+                                                                                          "kudosGiven": {
+                                                                                            "type": "boolean"
+                                                                                          },
                                                                                           "createdAt": {
                                                                                             "type": "string",
                                                                                             "format": "date-time"
@@ -22342,6 +22369,9 @@
                                                                                                   }
                                                                                                 }
                                                                                               }
+                                                                                            },
+                                                                                            "kudosGiven": {
+                                                                                              "type": "boolean"
                                                                                             },
                                                                                             "createdAt": {
                                                                                               "type": "string",
@@ -25129,6 +25159,9 @@
                                                                                                   }
                                                                                                 }
                                                                                               }
+                                                                                            },
+                                                                                            "kudosGiven": {
+                                                                                              "type": "boolean"
                                                                                             },
                                                                                             "createdAt": {
                                                                                               "type": "string",
@@ -27930,6 +27963,9 @@
                                                                                                   }
                                                                                                 }
                                                                                               }
+                                                                                            },
+                                                                                            "kudosGiven": {
+                                                                                              "type": "boolean"
                                                                                             },
                                                                                             "createdAt": {
                                                                                               "type": "string",
@@ -30834,6 +30870,9 @@
                                                                                                   }
                                                                                                 }
                                                                                               }
+                                                                                            },
+                                                                                            "kudosGiven": {
+                                                                                              "type": "boolean"
                                                                                             },
                                                                                             "createdAt": {
                                                                                               "type": "string",
@@ -34046,6 +34085,9 @@
                                                                                                   }
                                                                                                 }
                                                                                               }
+                                                                                            },
+                                                                                            "kudosGiven": {
+                                                                                              "type": "boolean"
                                                                                             },
                                                                                             "createdAt": {
                                                                                               "type": "string",
