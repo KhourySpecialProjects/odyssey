@@ -1,20 +1,21 @@
 "use client"
-import { AuthorizedUser } from "@/types";
-import { AuthorizedUserBlock } from "./authorized-user";
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Group } from "@/types";
+import { GroupBlock } from "./group-block";
 
 const ITEMS_PER_PAGE = 10;
 
-export function AuthorizedUserClient({
-    authorizedUsers
+export function GroupClient({
+    groups
 } : {
-    authorizedUsers: AuthorizedUser[]
+    groups: Group[]
 }) {
     const [currentPage, setCurrentPage] = useState(1);
-    const totalPages = Math.ceil(authorizedUsers.length / ITEMS_PER_PAGE);
+    const totalPages = Math.ceil(groups.length / ITEMS_PER_PAGE);
     const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-    const paginatedUsers = authorizedUsers.slice(
+    const paginatedGroups = groups.slice(
       startIndex,
       startIndex + ITEMS_PER_PAGE,
     );
@@ -34,12 +35,12 @@ export function AuthorizedUserClient({
   
     return (
       <div className="p-4 mt-4 rounded-md bg-slate-100">
-          {authorizedUsers.length > 0 ? (
+          {paginatedGroups.length > 0 ? (
             <>
               <ul className="divide-y divide-slate-200 dark:divide-slate-700 md:space-y-4">
-                {paginatedUsers.map((user) => (
-                  <AuthorizedUserBlock user={user} key={user.id} />
-                ))}
+              {paginatedGroups.map((g: Group) => (
+              <GroupBlock group={g} key={g.id} />
+            ))}
               </ul>
               <hr className="h-px my-4 bg-gray-200 border-0 dark:bg-gray-700"></hr>
               <div className="flex justify-end items-center mt-4 ">
@@ -66,9 +67,12 @@ export function AuthorizedUserClient({
             </div>
           </>
           ) : (
-            <p>There are no authorized users.</p>
+            <p>There are no created groups.</p>
           )}
         </div>
     );
   }
   
+
+
+
