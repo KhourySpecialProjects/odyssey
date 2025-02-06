@@ -38,6 +38,7 @@ export async function fetchAnnouncements(
                   id: { $eq: user.id },
                 },
               },
+              id: { $ne: user.id },
             },
           },
           {
@@ -48,6 +49,7 @@ export async function fetchAnnouncements(
                   id: { $eq: user.id },
                 },
               },
+              id: { $ne: user.id },
             },
           },
           {
@@ -162,7 +164,35 @@ export async function createFriendAnnouncement(
   }
 }
 
-export async function createKudosAnnouncement(user: AuthorizedUser) {
+export async function createKudosAnnouncement(
+  user: AuthorizedUser,
+  announcementId: number,
+) {
+  try {
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_STRAPI_API_URL}/api/announcements/${announcementId}`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${process.env.STRAPI_ACCESS_TOKEN}`,
+        },
+        body: JSON.stringify({
+          data: {
+            kudosGiven: true,
+          },
+        }),
+      },
+    );
+
+    if (!response.ok) {
+      throw new Error("Failed to update kudos status");
+    }
+  } catch (error) {
+    console.error("Error updating kudos:", error);
+    throw error;
+  }
+
   try {
     const curDate = new Date();
     const response = await fetch(
