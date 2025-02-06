@@ -3,7 +3,6 @@ import { Input } from "@/components/ui/input";
 import { PencilIcon, CheckIcon, Trash2Icon } from "lucide-react";
 import { useRef, useState } from "react";
 import { useOffClick } from "../../metadata/hooks/useOffClick";
-import { updateLesson } from "@/lib/actions";
 import { youtubeUrlToEmbeddedUrl, embeddedUrlToYoutubeUrl } from "@/lib/utils";
 
 export function VideoEditor({

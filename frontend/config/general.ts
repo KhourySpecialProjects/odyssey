@@ -5,10 +5,6 @@ import {
 } from "@/lib/utils";
 import { GeneralConfig, User } from "@/types";
 export const originalNav = [
-  // {
-  //   href: "/about",
-  //   label: "About",
-  // },
   {
     href: "/explore",
     label: "Explore",
@@ -16,10 +12,10 @@ export const originalNav = [
 ];
 export const getMainNav = (user: User) => {
   const mainNav = [
-    // {
-    //   href: "/about",
-    //   label: "About",
-    // },
+    {
+      href: "/feed",
+      label: "Feed",
+    },
     {
       href: "/explore",
       label: "Explore",
@@ -43,10 +39,10 @@ export const getMainNav = (user: User) => {
 };
 export const getContentCreatorNav = (user: User) => {
   const baseNav = [
-    // {
-    //   href: "/about",
-    //   label: "About",
-    // },
+    {
+      href: "/feed",
+      label: "Feed",
+    },
     {
       href: "/explore",
       label: "Explore",

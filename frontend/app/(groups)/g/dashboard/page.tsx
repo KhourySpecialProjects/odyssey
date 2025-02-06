@@ -1,9 +1,6 @@
 import { getCurrentUser } from "@/lib/auth/session";
 import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
 import { getUserGroups } from "@/lib/requests/groups";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardHeader, CardContent } from "@/components/ui/card";
-import { UsersIcon, StarIcon } from "lucide-react";
 import { Group } from "@/types";
 import { GroupsSelector } from "./group-selector";
 import {

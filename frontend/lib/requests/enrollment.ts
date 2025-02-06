@@ -2,8 +2,7 @@
 
 import { Enrollment } from "@/types";
 import { StrapiRequestParams } from "@/types/strapi";
-import { fetchAPI, flattenAttributes } from "../utils";
-import qs from "qs";
+import { fetchAPI } from "../utils";
 
 import { getCurrentUser } from "@/lib/auth/session";
 import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
@@ -36,7 +35,7 @@ export async function getEnrollmentsByAuthorizedUser(
         fields: ["id", "name", "slug"],
       },
     },
-    fields = ["id", "rating", "isComplete"],
+    fields = ["id", "rating", "isComplete", "isFirstTime"],
   }: StrapiRequestParams = {},
 ): Promise<Enrollment[]> {
   const path = `/enrollments`;

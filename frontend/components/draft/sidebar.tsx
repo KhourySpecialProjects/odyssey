@@ -8,6 +8,7 @@ import {
   isAuthorizedUserAdmin,
   condenseRoleTitles,
 } from "@/lib/utils";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
 import { AuthorizedUser, Droplet, Lesson, User } from "@/types";
 import {
   ChevronDownIcon,
@@ -15,11 +16,8 @@ import {
   LogOutIcon,
   MenuIcon,
   ShipIcon,
-  TowerControlIcon,
   SettingsIcon,
   ArrowLeftIcon,
-  MoveLeftIcon,
-  CogIcon,
 } from "lucide-react";
 import { signOut } from "next-auth/react";
 import Image from "next/image";
@@ -32,7 +30,6 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
 import { Separator } from "../ui/separator";
@@ -54,6 +51,7 @@ import {
 import { SortableLesson } from "@/components/draft/sortable-lesson";
 import { useLessonOrder } from "./metadata/hooks/useLessonOrder";
 import { Button } from "../ui/button";
+import { createDropletAnnouncement } from "@/lib/requests/feed";
 
 export function Sidebar({
   user,
@@ -82,6 +80,24 @@ export function Sidebar({
   } = useLessonOrder(droplet);
 
   const isAdmin = user && isAuthorizedUserAdmin(user.roles);
+  const [isOpen, setIsOpen] = useState(false);
+
+  const handleDropletPost = async () => {
+    try {
+      await createDropletAnnouncement(droplet.name, droplet.id);
+      router.back();
+    } catch (error) {
+      console.error("Failed to make playlist announcement: ", error);
+    }
+  };
+
+  const onOpenChange = (open: boolean) => {
+    if (!open) {
+      setIsOpen(false);
+    } else {
+      setIsOpen(true);
+    }
+  };
 
   const classes = {
     link: "flex items-center p-2 rounded-lg text-slate-900 dark:text-white hover:bg-slate-100 dark:hover:bg-slate-700 group transition-colors",
@@ -256,7 +272,7 @@ export function Sidebar({
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => router.back()}
+                  onClick={() => setIsOpen(true)}
                   className={cn(
                     classes.link,
                     "w-full flex items-center justify-start text-base px-4",
@@ -267,6 +283,21 @@ export function Sidebar({
                   </div>
                   <span className="leading-snug ms-2">Save Droplet</span>
                 </Button>
+                <Dialog open={isOpen} onOpenChange={onOpenChange}>
+                  <DialogContent className="sm:max-w-[825px]">
+                    <DialogHeader>
+                      <DialogTitle>
+                        Would you like to announce these changes to everyone
+                        enrolled in this droplet?
+                      </DialogTitle>
+                    </DialogHeader>
+
+                    <div className="flex flex-col gap-4 mt-4">
+                      <Button onClick={handleDropletPost}>Share</Button>
+                      <Button onClick={() => router.back()}>Not Now</Button>
+                    </div>
+                  </DialogContent>
+                </Dialog>
                 <Link
                   href={`/draft/d/${droplet.slug}`}
                   className={cn(

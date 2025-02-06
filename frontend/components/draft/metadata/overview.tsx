@@ -1,8 +1,6 @@
 "use client";
 
-import { debounce } from "lodash";
 import { useDropletUpdate } from "./hooks/useDropletUpdate";
-import { Droplet } from "lucide-react";
 import { DropletOverviewInput } from "@/components/ui/tiptap/droplet-overview-input";
 
 export function Overview({
