@@ -17,7 +17,7 @@ const NEXT_PUBLIC_STRAPI_API_TOKEN =
 export async function getPlaylists({
   sort,
   filters = { isPublic: true },
-  pagination = { pageSize: 25, page: 1 },
+  pagination = { pageSize: 250, page: 1 },
   populate = {
     droplets: {
       populate: {

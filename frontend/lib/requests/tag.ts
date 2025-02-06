@@ -15,7 +15,7 @@ export async function getTags({
     fields,
     populate,
     pagination: {
-      pageSize: 25,
+      pageSize: 250,
       page: 1,
     },
   };

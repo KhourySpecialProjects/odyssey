@@ -73,7 +73,7 @@ export async function fetchAuthorizedUsers(): Promise<AuthorizedUser[]> {
         roles: { fields: ["title"] },
       },
       pagination: {
-        pageSize: 50,
+        pageSize: 500,
         page: 1,
       },
     });
@@ -233,7 +233,7 @@ export async function getAllAuthorizedUsers(): Promise<AuthorizedUser[]> {
       sort: ["email:asc"],
       fields: ["email"],
       pagination: {
-        pageSize: 100,
+        pageSize: 1000,
         page: 1,
       },
     });
