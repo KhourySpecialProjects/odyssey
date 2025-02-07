@@ -1023,7 +1023,8 @@ export interface ApiLessonLesson extends Schema.CollectionType {
         'droplets.video',
         'droplets.quiz',
         'droplets.callout',
-        'droplets.expandable'
+        'droplets.expandable',
+        'droplets.open-ended-quiz'
       ]
     > &
       Attribute.Required;

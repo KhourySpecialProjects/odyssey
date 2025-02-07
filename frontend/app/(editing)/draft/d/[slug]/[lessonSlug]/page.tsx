@@ -51,7 +51,7 @@ export default async function Lesson({ params }: Props) {
           "droplets.expandable": {
             populate: "*",
           },
-          "droplets.open_ended_quiz": {
+          "droplets.open-ended-quiz": {
             populate: {
               questions: {
                 populate: { content: "*" },

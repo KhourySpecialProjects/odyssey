@@ -67,7 +67,7 @@ export function QuizQuestionEditor({
         />
   
       <div className="space-y-4 pt-4">
-          <h5 className="font-semibold">Answer Options</h5>
+          <h5 className="font-semibold">{question.answerOptions[0].content=== "True" ? "Answer Options" : "Answer Options (choose multiple if applicable)"}</h5>
           <div className="space-y-4">
             {question.answerOptions.map((answer, index) => (
               <div key={answer.id} className="flex items-start space-x-3 w-full">
@@ -88,7 +88,8 @@ export function QuizQuestionEditor({
             ))}
           </div>
   
-          {question.answerOptions.length < 4 && (
+          {question.answerOptions.length < 4 && 
+          !(question.answerOptions.length === 2 && question.answerOptions[0].content === "True" && question.answerOptions[1].content === "False") && (
             <Button variant="outline" size="sm" onClick={addAnswer}>
               <PlusIcon className="w-4 h-4 mr-2" />
               Add Answer Option

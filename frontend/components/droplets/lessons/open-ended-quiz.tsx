@@ -1,5 +1,4 @@
-import { OpenEndedQuiz, Quiz } from "@/types";
-import { QuizQuestionBlock } from "./quiz-question";
+import { OpenEndedQuiz } from "@/types";
 import { OpenEndedQuizQuestionBlock } from "./open-ended-quiz-question-block";
 
 export function OpenEndedQuizBlock({ data }: { data: OpenEndedQuiz }) {
@@ -14,7 +13,6 @@ export function OpenEndedQuizBlock({ data }: { data: OpenEndedQuiz }) {
 
       <div>
         {data.questions.map((question) => {
-          console.log('Raw question:', question);
           return (
             <div
               key={question.id}
