@@ -122,7 +122,10 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
           if (b.__component === "droplets.quiz" && "questions" in block) {
             return { ...b, ...block } as QuizBlock;
           }
-          if (b.__component === "droplets.open_ended_quiz" && "questions" in block) {
+          if (
+            b.__component === "droplets.open_ended_quiz" &&
+            "questions" in block
+          ) {
             return { ...b, ...block } as OpenEndedQuizBlock;
           }
           return { ...b, ...block } as Block;
@@ -202,24 +205,25 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
           return (
             <QuizEditor
               block={{
-                ...props.block as QuizBlock,
-                questions: props.block.questions as QuizQuestion[] || [],
+                ...(props.block as QuizBlock),
+                questions: (props.block.questions as QuizQuestion[]) || [],
               }}
               updateBlock={props.updateBlock}
               deleteBlock={props.deleteBlock}
             />
           );
-          case "droplets.open-ended-quiz":
-            return (
-              <OpenEndedQuizEditor
-                block={{
-                  ...props.block as OpenEndedQuizBlock,
-                  questions: props.block.questions as OpenEndedQuizQuestion[] || [],
-                }}
-                updateBlock={props.updateBlock}
-                deleteBlock={props.deleteBlock}
-              />
-            ) ;
+        case "droplets.open-ended-quiz":
+          return (
+            <OpenEndedQuizEditor
+              block={{
+                ...(props.block as OpenEndedQuizBlock),
+                questions:
+                  (props.block.questions as OpenEndedQuizQuestion[]) || [],
+              }}
+              updateBlock={props.updateBlock}
+              deleteBlock={props.deleteBlock}
+            />
+          );
         default:
           return null;
       }

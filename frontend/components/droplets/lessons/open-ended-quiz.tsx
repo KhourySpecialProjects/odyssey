@@ -18,9 +18,10 @@ export function OpenEndedQuizBlock({ data }: { data: OpenEndedQuiz }) {
               key={question.id}
               className="w-full max-w-lg p-6 mx-auto mt-8 bg-white border rounded-md divide-slate-200 border-slate-200"
             >
-            <OpenEndedQuizQuestionBlock question={question} />
+              <OpenEndedQuizQuestionBlock question={question} />
             </div>
-       )} )}
+          );
+        })}
       </div>
     </div>
   );

@@ -4,7 +4,7 @@ import useDebugStore from "@/stores/debug-toggle-store";
 
 export function DropletRenderer({ droplet }: any) {
   const isDebugEnabled = useDebugStore((state) => state.debugModeEnabled);
-  console.log("renderer", droplet.lessons[0].blocks)
+  console.log("renderer", droplet.lessons[0].blocks);
 
   return (
     <div className="w-full mx-auto max-w-prose">
