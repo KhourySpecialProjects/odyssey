@@ -53,33 +53,41 @@ export function QuizEditor({
       };
       question = newQuestion;
     }
-    
 
     const updatedQuestions = [...questions, question];
     setQuestions(updatedQuestions);
-    updateBlock({ __component: block.__component, questions: updatedQuestions });
+    updateBlock({
+      __component: block.__component,
+      questions: updatedQuestions,
+    });
     setIsOpen(false);
   };
 
   const updateQuestion = (index: number, updatedQuestion: QuizQuestion) => {
     const updatedQuestions = questions.map((q, i) => {
       if (i === index) {
-          return {
-            id: updatedQuestion.id,
-            content: updatedQuestion.content,
-            answerOptions: updatedQuestion.answerOptions
-          } as QuizQuestion;
-        }
+        return {
+          id: updatedQuestion.id,
+          content: updatedQuestion.content,
+          answerOptions: updatedQuestion.answerOptions,
+        } as QuizQuestion;
+      }
       return q;
     });
     setQuestions(updatedQuestions);
-    updateBlock({ __component: block.__component, questions: updatedQuestions });
+    updateBlock({
+      __component: block.__component,
+      questions: updatedQuestions,
+    });
   };
 
   const removeQuestion = (index: number) => {
     const updatedQuestions = questions.filter((_, i) => i !== index);
     setQuestions(updatedQuestions);
-    updateBlock({ __component: block.__component, questions: updatedQuestions });
+    updateBlock({
+      __component: block.__component,
+      questions: updatedQuestions,
+    });
   };
 
   const [isOpen, setIsOpen] = useState(false);

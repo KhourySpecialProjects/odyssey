@@ -43,9 +43,6 @@ export function MultiSelect({
       <Popover>
         <PopoverTrigger asChild>
           <Button variant="outline" className={cn("h-fit", className)}>
-            <div className="flex flex-row items-center justify-center gap-2">
-              <ChevronDown />
-            </div>
             {selected?.length > 0 ? (
               <>
                 <div className="gap-1 flex flex-wrap items-center justify-start w-full">
@@ -61,8 +58,12 @@ export function MultiSelect({
                 </div>
               </>
             ) : (
-              <p className="flex justify-start text-slate-400 w-48">
-                Select...
+              <p className="text-slate-400">
+                {label === "Tags"
+                  ? "Select Tags..."
+                  : label === "Prerequisites"
+                    ? "Select Prerequisites..."
+                    : "Select Postrequisites..."}
               </p>
             )}
           </Button>

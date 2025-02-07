@@ -23,12 +23,11 @@ const formSchema = z.object({
 });
 
 export function QuizQuestionBlock({ question }: { question: QuizQuestion }) {
-
   const [showResult, setShowResult] = useState(false);
   const correctAnswers = useMemo(
-      () => question.answerOptions.filter((option) => option.isCorrect),
-      [question],
-    );
+    () => question.answerOptions.filter((option) => option.isCorrect),
+    [question],
+  );
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -51,8 +50,10 @@ export function QuizQuestionBlock({ question }: { question: QuizQuestion }) {
   function areAnswersCorrect(selectedAnswers: string[]) {
     return (
       selectedAnswers.length === correctAnswers.length &&
-      selectedAnswers.every((id) => correctAnswers.map(answer => String(answer.id)).includes(id))
-    )
+      selectedAnswers.every((id) =>
+        correctAnswers.map((answer) => String(answer.id)).includes(id),
+      )
+    );
   }
 
   return (
@@ -82,8 +83,12 @@ export function QuizQuestionBlock({ question }: { question: QuizQuestion }) {
                 </span>
                 <ul>
                   {form.getValues("answerIds").map((id) => {
-                    const selectedAnswer = question.answerOptions.find((opt) => String(opt.id) === id);
-                    return selectedAnswer ? <li key={id}>{selectedAnswer.content}</li> : null;
+                    const selectedAnswer = question.answerOptions.find(
+                      (opt) => String(opt.id) === id,
+                    );
+                    return selectedAnswer ? (
+                      <li key={id}>{selectedAnswer.content}</li>
+                    ) : null;
                   })}
                 </ul>
               </div>
@@ -98,22 +103,22 @@ export function QuizQuestionBlock({ question }: { question: QuizQuestion }) {
             </>
           )}
         </div>
-      ) : (
-        correctAnswers.length != 1 ?
-        (<Form {...form}>
+      ) : correctAnswers.length != 1 ? (
+        <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)}>
             <FormField
               control={form.control}
               name="answerIds"
               render={({ field }) => (
                 <FormItem>
-                  <div>
-                    Choose multiple answers
-                  </div>
+                  <div>Choose multiple answers</div>
                   <FormControl>
                     <div className="mt-4 space-y-3">
                       {question.answerOptions.map((answer, number: number) => (
-                        <FormItem key={answer.id} className="flex items-center space-x-3">
+                        <FormItem
+                          key={answer.id}
+                          className="flex items-center space-x-3"
+                        >
                           <FormControl>
                             <Checkbox
                               value={String(answer.id)}
@@ -122,7 +127,9 @@ export function QuizQuestionBlock({ question }: { question: QuizQuestion }) {
                                 field.onChange(
                                   checked
                                     ? [...field.value, String(answer.id)]
-                                    : field.value.filter((id) => id !== String(answer.id))
+                                    : field.value.filter(
+                                        (id) => id !== String(answer.id),
+                                      ),
                                 );
                               }}
                             />
@@ -131,7 +138,11 @@ export function QuizQuestionBlock({ question }: { question: QuizQuestion }) {
                             htmlFor={String(answer.id)}
                             className="cursor-pointer flex-1"
                           >
-                            <span dangerouslySetInnerHTML={{ __html: answer.content }} />
+                            <span
+                              dangerouslySetInnerHTML={{
+                                __html: answer.content,
+                              }}
+                            />
                           </FormLabel>
                         </FormItem>
                       ))}
@@ -147,22 +158,18 @@ export function QuizQuestionBlock({ question }: { question: QuizQuestion }) {
               </Button>
             </div>
           </form>
-        </Form>) :
-        (<Form {...form}>
+        </Form>
+      ) : (
+        <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)}>
             <FormField
               control={form.control}
               name="answerIds"
               render={({ field }) => (
                 <FormItem className="space-y-0">
-                  <div>
-                    Choose one answer
-                  </div>
+                  <div>Choose one answer</div>
                   <FormControl>
-                    <RadioGroup
-                      className="mt-4"
-                      onValueChange={field.onChange}
-                    >
+                    <RadioGroup className="mt-4" onValueChange={field.onChange}>
                       {question.answerOptions.map((answer, number: number) => (
                         <FormItem key={answer.id} className="space-y-0">
                           <FormControl>
@@ -208,7 +215,7 @@ export function QuizQuestionBlock({ question }: { question: QuizQuestion }) {
               </Button>
             </div>
           </form>
-        </Form>)
+        </Form>
       )}
     </>
   );

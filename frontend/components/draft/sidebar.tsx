@@ -294,7 +294,9 @@ export function Sidebar({
 
                     <div className="flex flex-col gap-4 mt-4">
                       <Button onClick={handleDropletPost}>Share</Button>
-                      <Button onClick={() => router.push(`/explore`)}>Not Now</Button>
+                      <Button onClick={() => router.push(`/explore`)}>
+                        Not Now
+                      </Button>
                     </div>
                   </DialogContent>
                 </Dialog>

@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { OpenEndedQuizQuestion } from "@/types";
 import { Button } from "@/components/ui/button";
@@ -6,13 +5,19 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeftIcon } from "lucide-react";
 
-export function OpenEndedQuizQuestionBlock({ question }: { question: OpenEndedQuizQuestion }) {
+export function OpenEndedQuizQuestionBlock({
+  question,
+}: {
+  question: OpenEndedQuizQuestion;
+}) {
   const [userAnswer, setUserAnswer] = useState("");
   const [showResult, setShowResult] = useState(false);
   const [isCorrect, setIsCorrect] = useState(false);
 
   const checkAnswer = () => {
-    const isAnswerCorrect = userAnswer.trim().toLowerCase() === question.correctAnswer.trim().toLowerCase();
+    const isAnswerCorrect =
+      userAnswer.trim().toLowerCase() ===
+      question.correctAnswer.trim().toLowerCase();
     setIsCorrect(isAnswerCorrect);
     setShowResult(true);
   };
@@ -31,7 +36,9 @@ export function OpenEndedQuizQuestionBlock({ question }: { question: OpenEndedQu
               <Badge className="text-green-700 bg-green-100 text-lg">
                 That&rsquo;s Right!
               </Badge>
-              <p className="mt-4 font-medium">Your answer matches the expected response.</p>
+              <p className="mt-4 font-medium">
+                Your answer matches the expected response.
+              </p>
             </>
           ) : (
             <>
