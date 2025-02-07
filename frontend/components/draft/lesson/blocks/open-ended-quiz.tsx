@@ -12,7 +12,7 @@ interface OpenEndedQuizBlock extends Omit<Block, 'questions'> {
 
 interface OpenEndedQuizEditorProps {
   block: OpenEndedQuizBlock;
-  updateBlock: (block: Partial<Block>) => void;
+  updateBlock: (block: Partial<OpenEndedQuizBlock>) => void;
   deleteBlock: () => void;
 }
 
@@ -33,7 +33,7 @@ export function OpenEndedQuizEditor({
     };
     const updatedQuestions = [...questions, question];
     setQuestions(updatedQuestions);
-    updateBlock({ __component: block.__component, openEndedQuestions: updatedQuestions });
+    updateBlock({ __component: block.__component, questions: updatedQuestions });
   };
 
   const updateQuestion = (index: number, updatedQuestion: OpenEndedQuizQuestion) => {
@@ -48,13 +48,13 @@ export function OpenEndedQuizEditor({
       return q;
     });
     setQuestions(updatedQuestions);
-    updateBlock({ __component: block.__component, openEndedQuestions: updatedQuestions });
+    updateBlock({ __component: block.__component, questions: updatedQuestions });
   };
 
   const removeQuestion = (index: number) => {
     const updatedQuestions = questions.filter((_, i) => i !== index);
     setQuestions(updatedQuestions);
-    updateBlock({ __component: block.__component, openEndedQuestions: updatedQuestions });
+    updateBlock({ __component: block.__component, questions: updatedQuestions });
   };
 
   return (

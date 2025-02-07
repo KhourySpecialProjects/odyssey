@@ -11,7 +11,7 @@
       "url": "https://khouryodyssey.org"
     },
     "license": null,
-    "x-generation-date": "2025-02-06T21:26:14.798Z"
+    "x-generation-date": "2025-02-07T16:45:22.442Z"
   },
   "x-strapi-config": {
     "plugins": [
@@ -1602,6 +1602,34 @@
                                                                                       },
                                                                                       "content": {
                                                                                         "type": "string"
+                                                                                      }
+                                                                                    }
+                                                                                  },
+                                                                                  {
+                                                                                    "type": "object",
+                                                                                    "properties": {
+                                                                                      "id": {
+                                                                                        "type": "number"
+                                                                                      },
+                                                                                      "__component": {
+                                                                                        "type": "string"
+                                                                                      },
+                                                                                      "questions": {
+                                                                                        "type": "array",
+                                                                                        "items": {
+                                                                                          "type": "object",
+                                                                                          "properties": {
+                                                                                            "id": {
+                                                                                              "type": "number"
+                                                                                            },
+                                                                                            "content": {
+                                                                                              "type": "string"
+                                                                                            },
+                                                                                            "correctAnswer": {
+                                                                                              "type": "string"
+                                                                                            }
+                                                                                          }
+                                                                                        }
                                                                                       }
                                                                                     }
                                                                                   }
@@ -4512,6 +4540,34 @@
                                                                                           "type": "string"
                                                                                         }
                                                                                       }
+                                                                                    },
+                                                                                    {
+                                                                                      "type": "object",
+                                                                                      "properties": {
+                                                                                        "id": {
+                                                                                          "type": "number"
+                                                                                        },
+                                                                                        "__component": {
+                                                                                          "type": "string"
+                                                                                        },
+                                                                                        "questions": {
+                                                                                          "type": "array",
+                                                                                          "items": {
+                                                                                            "type": "object",
+                                                                                            "properties": {
+                                                                                              "id": {
+                                                                                                "type": "number"
+                                                                                              },
+                                                                                              "content": {
+                                                                                                "type": "string"
+                                                                                              },
+                                                                                              "correctAnswer": {
+                                                                                                "type": "string"
+                                                                                              }
+                                                                                            }
+                                                                                          }
+                                                                                        }
+                                                                                      }
                                                                                     }
                                                                                   ]
                                                                                 }
@@ -7356,6 +7412,34 @@
                                                             },
                                                             "content": {
                                                               "type": "string"
+                                                            }
+                                                          }
+                                                        },
+                                                        {
+                                                          "type": "object",
+                                                          "properties": {
+                                                            "id": {
+                                                              "type": "number"
+                                                            },
+                                                            "__component": {
+                                                              "type": "string"
+                                                            },
+                                                            "questions": {
+                                                              "type": "array",
+                                                              "items": {
+                                                                "type": "object",
+                                                                "properties": {
+                                                                  "id": {
+                                                                    "type": "number"
+                                                                  },
+                                                                  "content": {
+                                                                    "type": "string"
+                                                                  },
+                                                                  "correctAnswer": {
+                                                                    "type": "string"
+                                                                  }
+                                                                }
+                                                              }
                                                             }
                                                           }
                                                         }
@@ -10325,6 +10409,34 @@
                                                                             "type": "string"
                                                                           }
                                                                         }
+                                                                      },
+                                                                      {
+                                                                        "type": "object",
+                                                                        "properties": {
+                                                                          "id": {
+                                                                            "type": "number"
+                                                                          },
+                                                                          "__component": {
+                                                                            "type": "string"
+                                                                          },
+                                                                          "questions": {
+                                                                            "type": "array",
+                                                                            "items": {
+                                                                              "type": "object",
+                                                                              "properties": {
+                                                                                "id": {
+                                                                                  "type": "number"
+                                                                                },
+                                                                                "content": {
+                                                                                  "type": "string"
+                                                                                },
+                                                                                "correctAnswer": {
+                                                                                  "type": "string"
+                                                                                }
+                                                                              }
+                                                                            }
+                                                                          }
+                                                                        }
                                                                       }
                                                                     ]
                                                                   }
@@ -13156,6 +13268,34 @@
                                                               },
                                                               "content": {
                                                                 "type": "string"
+                                                              }
+                                                            }
+                                                          },
+                                                          {
+                                                            "type": "object",
+                                                            "properties": {
+                                                              "id": {
+                                                                "type": "number"
+                                                              },
+                                                              "__component": {
+                                                                "type": "string"
+                                                              },
+                                                              "questions": {
+                                                                "type": "array",
+                                                                "items": {
+                                                                  "type": "object",
+                                                                  "properties": {
+                                                                    "id": {
+                                                                      "type": "number"
+                                                                    },
+                                                                    "content": {
+                                                                      "type": "string"
+                                                                    },
+                                                                    "correctAnswer": {
+                                                                      "type": "string"
+                                                                    }
+                                                                  }
+                                                                }
                                                               }
                                                             }
                                                           }
@@ -16137,6 +16277,34 @@
                                                                                         "type": "string"
                                                                                       }
                                                                                     }
+                                                                                  },
+                                                                                  {
+                                                                                    "type": "object",
+                                                                                    "properties": {
+                                                                                      "id": {
+                                                                                        "type": "number"
+                                                                                      },
+                                                                                      "__component": {
+                                                                                        "type": "string"
+                                                                                      },
+                                                                                      "questions": {
+                                                                                        "type": "array",
+                                                                                        "items": {
+                                                                                          "type": "object",
+                                                                                          "properties": {
+                                                                                            "id": {
+                                                                                              "type": "number"
+                                                                                            },
+                                                                                            "content": {
+                                                                                              "type": "string"
+                                                                                            },
+                                                                                            "correctAnswer": {
+                                                                                              "type": "string"
+                                                                                            }
+                                                                                          }
+                                                                                        }
+                                                                                      }
+                                                                                    }
                                                                                   }
                                                                                 ]
                                                                               }
@@ -18797,6 +18965,34 @@
                                                                         },
                                                                         "content": {
                                                                           "type": "string"
+                                                                        }
+                                                                      }
+                                                                    },
+                                                                    {
+                                                                      "type": "object",
+                                                                      "properties": {
+                                                                        "id": {
+                                                                          "type": "number"
+                                                                        },
+                                                                        "__component": {
+                                                                          "type": "string"
+                                                                        },
+                                                                        "questions": {
+                                                                          "type": "array",
+                                                                          "items": {
+                                                                            "type": "object",
+                                                                            "properties": {
+                                                                              "id": {
+                                                                                "type": "number"
+                                                                              },
+                                                                              "content": {
+                                                                                "type": "string"
+                                                                              },
+                                                                              "correctAnswer": {
+                                                                                "type": "string"
+                                                                              }
+                                                                            }
+                                                                          }
                                                                         }
                                                                       }
                                                                     }
@@ -21504,6 +21700,34 @@
                                                                           },
                                                                           "content": {
                                                                             "type": "string"
+                                                                          }
+                                                                        }
+                                                                      },
+                                                                      {
+                                                                        "type": "object",
+                                                                        "properties": {
+                                                                          "id": {
+                                                                            "type": "number"
+                                                                          },
+                                                                          "__component": {
+                                                                            "type": "string"
+                                                                          },
+                                                                          "questions": {
+                                                                            "type": "array",
+                                                                            "items": {
+                                                                              "type": "object",
+                                                                              "properties": {
+                                                                                "id": {
+                                                                                  "type": "number"
+                                                                                },
+                                                                                "content": {
+                                                                                  "type": "string"
+                                                                                },
+                                                                                "correctAnswer": {
+                                                                                  "type": "string"
+                                                                                }
+                                                                              }
+                                                                            }
                                                                           }
                                                                         }
                                                                       }
@@ -24296,6 +24520,34 @@
                                                                             "type": "string"
                                                                           }
                                                                         }
+                                                                      },
+                                                                      {
+                                                                        "type": "object",
+                                                                        "properties": {
+                                                                          "id": {
+                                                                            "type": "number"
+                                                                          },
+                                                                          "__component": {
+                                                                            "type": "string"
+                                                                          },
+                                                                          "questions": {
+                                                                            "type": "array",
+                                                                            "items": {
+                                                                              "type": "object",
+                                                                              "properties": {
+                                                                                "id": {
+                                                                                  "type": "number"
+                                                                                },
+                                                                                "content": {
+                                                                                  "type": "string"
+                                                                                },
+                                                                                "correctAnswer": {
+                                                                                  "type": "string"
+                                                                                }
+                                                                              }
+                                                                            }
+                                                                          }
+                                                                        }
                                                                       }
                                                                     ]
                                                                   }
@@ -26219,6 +26471,9 @@
                     },
                     {
                       "$ref": "#/components/schemas/DropletsExpandableComponent"
+                    },
+                    {
+                      "$ref": "#/components/schemas/DropletsOpenEndedQuizComponent"
                     }
                   ]
                 }
@@ -26356,6 +26611,9 @@
                 },
                 {
                   "$ref": "#/components/schemas/DropletsExpandableComponent"
+                },
+                {
+                  "$ref": "#/components/schemas/DropletsOpenEndedQuizComponent"
                 }
               ]
             }
@@ -27257,6 +27515,34 @@
                                                                                         },
                                                                                         "content": {
                                                                                           "type": "string"
+                                                                                        }
+                                                                                      }
+                                                                                    },
+                                                                                    {
+                                                                                      "type": "object",
+                                                                                      "properties": {
+                                                                                        "id": {
+                                                                                          "type": "number"
+                                                                                        },
+                                                                                        "__component": {
+                                                                                          "type": "string"
+                                                                                        },
+                                                                                        "questions": {
+                                                                                          "type": "array",
+                                                                                          "items": {
+                                                                                            "type": "object",
+                                                                                            "properties": {
+                                                                                              "id": {
+                                                                                                "type": "number"
+                                                                                              },
+                                                                                              "content": {
+                                                                                                "type": "string"
+                                                                                              },
+                                                                                              "correctAnswer": {
+                                                                                                "type": "string"
+                                                                                              }
+                                                                                            }
+                                                                                          }
                                                                                         }
                                                                                       }
                                                                                     }
@@ -29108,6 +29394,37 @@
           }
         }
       },
+      "QuizzesOpenEndedQuestionComponent": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "content": {
+            "type": "string"
+          },
+          "correctAnswer": {
+            "type": "string"
+          }
+        }
+      },
+      "DropletsOpenEndedQuizComponent": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "__component": {
+            "type": "string"
+          },
+          "questions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/QuizzesOpenEndedQuestionComponent"
+            }
+          }
+        }
+      },
       "PlaylistRequest": {
         "type": "object",
         "required": [
@@ -30164,6 +30481,34 @@
                                                                                         },
                                                                                         "content": {
                                                                                           "type": "string"
+                                                                                        }
+                                                                                      }
+                                                                                    },
+                                                                                    {
+                                                                                      "type": "object",
+                                                                                      "properties": {
+                                                                                        "id": {
+                                                                                          "type": "number"
+                                                                                        },
+                                                                                        "__component": {
+                                                                                          "type": "string"
+                                                                                        },
+                                                                                        "questions": {
+                                                                                          "type": "array",
+                                                                                          "items": {
+                                                                                            "type": "object",
+                                                                                            "properties": {
+                                                                                              "id": {
+                                                                                                "type": "number"
+                                                                                              },
+                                                                                              "content": {
+                                                                                                "type": "string"
+                                                                                              },
+                                                                                              "correctAnswer": {
+                                                                                                "type": "string"
+                                                                                              }
+                                                                                            }
+                                                                                          }
                                                                                         }
                                                                                       }
                                                                                     }
@@ -33379,6 +33724,34 @@
                                                                                         },
                                                                                         "content": {
                                                                                           "type": "string"
+                                                                                        }
+                                                                                      }
+                                                                                    },
+                                                                                    {
+                                                                                      "type": "object",
+                                                                                      "properties": {
+                                                                                        "id": {
+                                                                                          "type": "number"
+                                                                                        },
+                                                                                        "__component": {
+                                                                                          "type": "string"
+                                                                                        },
+                                                                                        "questions": {
+                                                                                          "type": "array",
+                                                                                          "items": {
+                                                                                            "type": "object",
+                                                                                            "properties": {
+                                                                                              "id": {
+                                                                                                "type": "number"
+                                                                                              },
+                                                                                              "content": {
+                                                                                                "type": "string"
+                                                                                              },
+                                                                                              "correctAnswer": {
+                                                                                                "type": "string"
+                                                                                              }
+                                                                                            }
+                                                                                          }
                                                                                         }
                                                                                       }
                                                                                     }

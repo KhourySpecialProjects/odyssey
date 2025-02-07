@@ -29,7 +29,8 @@
         "droplets.video",
         "droplets.quiz",
         "droplets.callout",
-        "droplets.expandable"
+        "droplets.expandable",
+        "droplets.open-ended-quiz"
       ],
       "required": true
     },

@@ -83,7 +83,7 @@ export function AddBlock({ add }: { add: (block: any) => void }) {
             onClick={() => {
               setOpen(false);
               add({
-                __component: "droplets.open_ended_quiz",
+                __component: "droplets.quiz",
                 questions: [
                   {
                     id: Math.random(),
@@ -105,15 +105,12 @@ export function AddBlock({ add }: { add: (block: any) => void }) {
             onClick={() => {
               setOpen(false);
               add({
-                __component: "droplets.quiz",
+                __component: "droplets.open-ended-quiz",
                 questions: [
                   {
                     id: Math.random(),
                     content: "",
-                    answerOptions: [
-                      { id: Math.random(), content: "", isCorrect: true },
-                      { id: Math.random(), content: "", isCorrect: false },
-                    ],
+                    correctAnswer: "",
                   },
                 ],
               });
@@ -122,6 +119,28 @@ export function AddBlock({ add }: { add: (block: any) => void }) {
             className="w-full border border-slate-200"
           >
             Open Ended Quiz Block
+          </Button>
+          <Button
+            onClick={() => {
+              setOpen(false);
+              add({
+                __component: "droplets.quiz",
+                questions: [
+                  {
+                    id: Math.random(),
+                    content: "",
+                    answerOptions: [
+                      { id: Math.random(), content: "True", isCorrect: true },
+                      { id: Math.random(), content: "False", isCorrect: false },
+                    ],
+                  },
+                ],
+              });
+            }}
+            variant="ghost"
+            className="w-full border border-slate-200"
+          >
+            True/False Quiz Block
           </Button>
         </PopoverContent>
       </Popover>

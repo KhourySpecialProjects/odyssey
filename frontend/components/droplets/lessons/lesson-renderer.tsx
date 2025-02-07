@@ -166,7 +166,7 @@ function LessonBlockRenderer({ block }: { block: any }) {
     case "droplets.quiz":
       return <QuizBlock data={block} />;
 
-    case "droplets.open_ended_quiz":
+    case "droplets.open-ended-quiz":
       return <OpenEndedQuizBlock data={block} />;
 
     case "droplets.callout":

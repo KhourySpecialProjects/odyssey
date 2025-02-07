@@ -31,14 +31,28 @@ export function QuizEditor({
   );
 
   const addQuestion = () => {
-    const question: QuizQuestion = {
-      id: Math.random(), // Temporary ID for new questions
-      content: "",
-      answerOptions: [
-        { id: Math.random(), content: "", isCorrect: true },
-        { id: Math.random(), content: "", isCorrect: false },
-      ],
-    };
+    let question = null;
+    if (questions[0].answerOptions[0].content === "True") {
+      const newQuestion: QuizQuestion = {
+        id: Math.random(), // Temporary ID for new questions
+        content: "",
+        answerOptions: [
+          { id: Math.random(), content: "True", isCorrect: true },
+          { id: Math.random(), content: "False", isCorrect: false },
+        ],
+      };
+      question = newQuestion;
+    } else {
+      const newQuestion: QuizQuestion = {
+        id: Math.random(), // Temporary ID for new questions
+        content: "",
+        answerOptions: [
+          { id: Math.random(), content: "", isCorrect: true },
+          { id: Math.random(), content: "", isCorrect: false },
+        ],
+      };
+      question = newQuestion;
+    }
     
 
     const updatedQuestions = [...questions, question];
@@ -73,7 +87,7 @@ export function QuizEditor({
   return (
     <div className="w-full max-w-2xl">
       <div className="flex justify-between items-center mb-4">
-        <h3 className="text-xl font-bold">Quiz</h3>
+        <h3 className="text-xl font-bold">Multiple Choice Quiz</h3>
         <Button variant="ghost" size="sm" onClick={deleteBlock}>
           <TrashIcon className="w-4 h-4" />
         </Button>
