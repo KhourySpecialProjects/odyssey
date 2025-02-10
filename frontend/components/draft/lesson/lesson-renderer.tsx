@@ -29,6 +29,7 @@ interface Block {
   label?: string;
   url?: string;
   questions?: QuizQuestion[];
+  color: string
 }
 
 interface LessonRendererProps {
@@ -226,7 +227,7 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
         {blocks.map((block, index) => (
           <div
             key={`${block.__component}-${block.id}`}
-            className="w-full flex flex-col items-center justify-center max-w-2xl space-y-4"
+            className={`w-full flex flex-col items-center justify-center max-w-2xl space-y-4 `}
           >
             {renderBlock(block, index)}
             <AddBlock add={addBlock(index + 1)} />

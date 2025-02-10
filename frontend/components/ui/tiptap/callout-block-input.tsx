@@ -76,7 +76,7 @@ export function CalloutBlockInput({
     editorProps: {
       attributes: {
         class:
-          "prose prose-sky  p-2 min-w-full max-w-2xl min-h-20 border rounded-b-md border-slate-200 hover:shadow focus:shadow-lg outline-none",
+          "prose prose-sky bg-white p-2 min-w-full max-w-2xl min-h-20 border rounded-b-md border-slate-200 hover:shadow focus:shadow-lg outline-none",
       },
       handleKeyDown: (view: any, event: KeyboardEvent) => {
         if (event.key === "Tab") {

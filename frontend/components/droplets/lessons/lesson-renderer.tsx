@@ -14,8 +14,9 @@ import GenericBlockRenderer from "./GenericBlockRenderer";
 import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { markLessonAsComplete } from "@/lib/actions";
-import { LockIcon } from "lucide-react";
+import { LockIcon, CircleAlert, CircleHelp, TriangleAlert, BookOpenText, BadgeInfo, Bell } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth/session";
+import { CalloutIcon } from "@/components/ui/callout-icons";
 
 interface LessonRendererProps {
   lesson: Lesson;
@@ -172,8 +173,9 @@ function LessonBlockRenderer({ block }: { block: any }) {
 
     case "droplets.callout":
       return (
-        <div className="px-6 py-6 border rounded-md md:-mx-8 bg-sky-50 border-sky-200">
-          <div className="mx-auto prose prose-sky">
+        <div className={`flex flex-row items-center px-6 py-6 border rounded-md md:-mx-8 ${block.color || 'bg-sky-50'}`}>        
+          <CalloutIcon color={block.color}></CalloutIcon>
+          <div className="pl-8 mx-auto prose prose-sky text-center">
             <BlocksRenderer content={block.content} />
           </div>
         </div>
