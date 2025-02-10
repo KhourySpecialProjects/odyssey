@@ -13,7 +13,7 @@ import { Github, Linkedin } from "lucide-react";
 import { FriendCompletedDroplets } from "./friend-completed-droplets";
 import { startTransition, useState } from "react";
 import { toast } from "sonner";
-import { BlockUser } from "@/lib/requests/friends";
+import { BlockUser, removeFriend } from "@/lib/requests/friends";
 
 export function UserBlock({
   user,
@@ -26,6 +26,7 @@ export function UserBlock({
   const handleBlock = () => {
     startTransition(async () => {
       const result = await BlockUser(curUser.id, user.id);
+      await removeFriend(curUser.id, user.id);
       if (result.success) {
         toast.success("User blocked");
       } else {
@@ -48,7 +49,7 @@ export function UserBlock({
               <img
                 src={user.profilePhoto}
                 alt={`${user.firstName}'s profile`}
-                className="w-12 h-12 rounded-full object-cover"
+                className="w-20 h-20 rounded-full object-cover"
               />
             </div>
           )}
@@ -76,7 +77,7 @@ export function UserBlock({
           <DialogDescription>Completed Droplets: </DialogDescription>
           <FriendCompletedDroplets friend={user} />
           <div
-            className={`inline-flex items-center gap-2 ${curUser.blocked.includes(user) ? "visibility: hidden" : "visibility: visible"}`}
+            className={`inline-flex items-center gap-2 ${curUser == user || curUser.blocked.includes(user) ? "visibility: hidden" : "visibility: visible"}`}
             onClick={handleBlock}
           >
             <Button size="sm" variant="destructive">

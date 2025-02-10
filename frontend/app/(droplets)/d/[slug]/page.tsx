@@ -17,8 +17,6 @@ import { notFound } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
 import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
-
-//Rating System imports
 import { StarRating } from "@/components/ui/rating-stars";
 import { getDropletAverageRating } from "@/lib/requests/enrollment";
 

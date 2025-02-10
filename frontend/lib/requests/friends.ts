@@ -1,7 +1,6 @@
 "use server";
-import { fetchAPI, flattenAttributes } from "@/lib/utils";
+import { flattenAttributes } from "@/lib/utils";
 import { AuthorizedUser, Friendship } from "@/types";
-import { StrapiRequestParams } from "@/types/strapi";
 import { revalidatePath } from "next/cache";
 import qs from "qs";
 
@@ -43,7 +42,7 @@ export async function fetchFriends(
         },
       },
       pagination: {
-        pageSize: 25,
+        pageSize: 250,
         page: 1,
       },
     });
@@ -91,7 +90,7 @@ export async function getSentRequest(
       },
       populate: [],
       pagination: {
-        pageSize: 25,
+        pageSize: 250,
         page: 1,
       },
     });
@@ -126,7 +125,7 @@ export async function getSentRequestIds(
         },
       },
       pagination: {
-        pageSize: 100,
+        pageSize: 250,
         page: 1,
       },
       fields: ["id"],
@@ -496,7 +495,7 @@ export async function fetchFriendshipsById(
         },
       },
       pagination: {
-        pageSize: 25,
+        pageSize: 250,
         page: 1,
       },
     });

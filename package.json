@@ -24,7 +24,9 @@
     "npm-check-updates": "^16.14.15",
     "react-confetti": "^6.2.2",
     "react-dropzone": "^14.3.5",
-    "react-tabs": "^6.1.0"
+    "react-router-dom": "^7.1.5",
+    "react-tabs": "^6.1.0",
+    "reactjs-popup": "^2.0.6"
   },
   "devDependencies": {
     "@types/canvas-confetti": "^1.9.0",

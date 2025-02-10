@@ -32,6 +32,30 @@ export async function getAuthorizedUserByEmail<
       was_blocked: {
         fields: ["id", "email", "firstName", "lastName", "bio", "profilePhoto"],
       },
+      friendships: {
+        populate: {
+          authorized_users: {
+            fields: [
+              "id",
+              "email",
+              "firstName",
+              "lastName",
+              "bio",
+              "github",
+              "linkedin",
+              "profilePhoto",
+            ],
+            populate: {
+              blocked: {
+                fields: ["id"],
+              },
+              was_blocked: {
+                fields: ["id"],
+              },
+            },
+          },
+        },
+      },
     },
     fields = ["*", "firstName", "lastName", "bio", "id"],
   }: StrapiRequestParams = {},
@@ -73,7 +97,7 @@ export async function fetchAuthorizedUsers(): Promise<AuthorizedUser[]> {
         roles: { fields: ["title"] },
       },
       pagination: {
-        pageSize: 50,
+        pageSize: 500,
         page: 1,
       },
     });
@@ -90,6 +114,110 @@ export async function fetchAuthorizedUsers(): Promise<AuthorizedUser[]> {
   } catch (error) {
     console.error("Database Error:", error);
     throw new Error("Failed to fetch authorized users data.");
+  }
+}
+
+export async function fetchContentCreators(): Promise<AuthorizedUser[]> {
+  try {
+    const query = qs.stringify({
+      filters: {
+        roles: {
+          title: {
+            $eq: "Content Creator",
+          },
+        },
+      },
+      fields: [
+        "id",
+        "email",
+        "isEnabled",
+        "firstName",
+        "lastName",
+        "bio",
+        "profilePhoto",
+        "linkedin",
+        "github",
+      ],
+      populate: {
+        roles: {
+          fields: ["id", "title"],
+        },
+        blocked: {
+          fields: ["id"],
+        },
+        was_blocked: {
+          fields: ["id"],
+        },
+      },
+      pagination: {
+        pageSize: 100,
+        page: 1,
+      },
+    });
+    const response = await fetch(
+      NEXT_PUBLIC_STRAPI_API_URL + "/api/authorized-users?" + query,
+      {
+        headers: { Authorization: "Bearer " + STRAPI_ACCESS_TOKEN },
+        cache: "no-store",
+      },
+    );
+    const data = await response.json();
+    return flattenAttributes(data.data);
+  } catch (error) {
+    console.error("Database Error:", error);
+    throw new Error("Failed to fetch content creators.");
+  }
+}
+
+export async function fetchWebsiteCreators(): Promise<AuthorizedUser[]> {
+  try {
+    const query = qs.stringify({
+      filters: {
+        roles: {
+          title: {
+            $eq: "Website Creator",
+          },
+        },
+      },
+      fields: [
+        "id",
+        "email",
+        "isEnabled",
+        "firstName",
+        "lastName",
+        "bio",
+        "profilePhoto",
+        "linkedin",
+        "github",
+      ],
+      populate: {
+        roles: {
+          fields: ["id", "title"],
+        },
+        blocked: {
+          fields: ["id"],
+        },
+        was_blocked: {
+          fields: ["id"],
+        },
+      },
+      pagination: {
+        pageSize: 100,
+        page: 1,
+      },
+    });
+    const response = await fetch(
+      NEXT_PUBLIC_STRAPI_API_URL + "/api/authorized-users?" + query,
+      {
+        headers: { Authorization: "Bearer " + STRAPI_ACCESS_TOKEN },
+        cache: "no-store",
+      },
+    );
+    const data = await response.json();
+    return flattenAttributes(data.data);
+  } catch (error) {
+    console.error("Database Error:", error);
+    throw new Error("Failed to fetch content creators.");
   }
 }
 
@@ -129,11 +257,10 @@ export async function getAllAuthorizedUsers(): Promise<AuthorizedUser[]> {
       sort: ["email:asc"],
       fields: ["email"],
       pagination: {
-        pageSize: 100,
+        pageSize: 1000,
         page: 1,
       },
     });
-    // console.log(" ---> query = ", query);
 
     const response = await fetch(
       NEXT_PUBLIC_STRAPI_API_URL + "/api/authorized-users?" + query,

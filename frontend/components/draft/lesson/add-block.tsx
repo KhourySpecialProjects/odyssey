@@ -1,14 +1,11 @@
 "use client";
 
-import { updateLesson } from "@/lib/actions";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-  PopoverClose,
 } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
 import { useRef } from "react";
 import { useOffClick } from "../metadata/hooks/useOffClick";
 import { CalloutIcon } from "@/components/ui/callout-icons";

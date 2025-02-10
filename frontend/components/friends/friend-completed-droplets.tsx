@@ -27,11 +27,13 @@ export function FriendCompletedDroplets({
   }, [friend.id]);
 
   return (
-    <div className="mt-4">
+    <div className="mt-4 text-center">
       {completedDroplets === null ? (
         <p className="text-sm text-slate-500">Loading...</p>
       ) : completedDroplets.length > 0 ? (
-        <FriendCompletedDropletsList droplets={completedDroplets} />
+        <div className="flex flex-col items-center">
+          <FriendCompletedDropletsList droplets={completedDroplets} />
+        </div>
       ) : (
         <p className="text-sm text-slate-500">No completed droplets yet.</p>
       )}

@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button";
 import { TrashIcon, PlusIcon } from "lucide-react";
 import { GenericBlockInput as TipTapEditor } from "@/components/ui/tiptap/generic-block-input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Label } from "@/components/ui/label";
 
 interface QuizQuestionEditorProps {
   question: QuizQuestion;

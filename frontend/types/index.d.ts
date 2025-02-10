@@ -8,6 +8,14 @@ export type DropletType = "knowledge" | "skill";
 
 export type DropletStatus = "draft" | "edit" | "published";
 
+export type AnnouncementType =
+  | "playlist"
+  | "droplet"
+  | "friend"
+  | "system"
+  | "group"
+  | "kudos";
+
 export type AuthorizedUserRole = {
   id: number;
   title: AuthorizedUserRoleTitle;
@@ -71,6 +79,7 @@ export type Author = {
   bio?: string;
   photo?: StrapiMediaParams;
   droplets?: Droplet[];
+  authorizedUser?: AuthorizedUser;
 };
 
 export type Lesson = {
@@ -151,6 +160,7 @@ export type Enrollment = {
   viewedLessons: Lesson[];
   isComplete: boolean;
   rating: number;
+  isFirstTime: boolean;
 };
 
 export interface Playlist {
@@ -168,6 +178,7 @@ export interface Playlist {
   author?: {
     id: number;
     name: string;
+    authorizedUser: AuthorizedUser;
   };
 }
 
@@ -237,4 +248,16 @@ export type ActionResponse<T = any> = {
 
 export type Friendship = {
   authorized_users: AuthorizedUser[];
+};
+
+export type Announcement = {
+  id: number;
+  type: AnnouncementType;
+  firstCreated: Date;
+  content: string;
+  droplet?: Droplet;
+  group?: Group;
+  authorized_user?: AuthorizedUser;
+  playlist?: Playlist;
+  kudosGiven?: boolean;
 };
