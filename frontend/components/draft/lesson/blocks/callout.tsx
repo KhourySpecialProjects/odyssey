@@ -12,7 +12,6 @@ import CalloutTypeTool from "@/components/ui/tiptap/toolbar/tools/callout-type-t
 import { Button } from "@lemonsqueezy/wedges";
 import { CalloutIcon } from "@/components/ui/callout-icons";
 
-
 export function CalloutEditor({
   block,
   updateBlock,
@@ -22,7 +21,6 @@ export function CalloutEditor({
   updateBlock: (block: any) => void;
   deleteBlock: () => void;
 }) {
-
   const handleUpdate = useCallback((content: any) => {
     console.log(" --> callout.tsx: handleUpdate useCallback handler");
     let temp: any = JSON.parse(
@@ -38,13 +36,15 @@ export function CalloutEditor({
 
   const debounceUpdate = useCallback(debounce(handleUpdate, 1000), []);
 
-
-
   return (
     <>
-      <div className={`hover:shadow-md px-6 py-6 border rounded-md w-full ${block.color || 'bg-sky-50'} `}>
-        <div className={`w-full flex flex-row  mb-4 justify-between items-center`}>
-          <div className="flex flex-row items-center">         
+      <div
+        className={`hover:shadow-md px-6 py-6 border rounded-md w-full ${block.color || "bg-sky-50"} `}
+      >
+        <div
+          className={`w-full flex flex-row  mb-4 justify-between items-center`}
+        >
+          <div className="flex flex-row items-center">
             <h2 className="text-lg font-bold text-white mr-3">Callout Block</h2>
             <CalloutIcon color={block.color}></CalloutIcon>
           </div>
