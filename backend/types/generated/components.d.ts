@@ -8,6 +8,9 @@ export interface DropletsCallout extends Schema.Component {
     icon: 'volumeUp';
   };
   attributes: {
+    color: Attribute.String &
+      Attribute.Required &
+      Attribute.DefaultTo<'bg-sky-50'>;
     content: Attribute.Blocks & Attribute.Required;
     type: Attribute.Enumeration<['info', 'warning']> &
       Attribute.Required &

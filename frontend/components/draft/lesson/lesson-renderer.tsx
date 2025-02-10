@@ -256,7 +256,7 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
       </div>
 
       <div className="space-y-4 w-full flex flex-col items-center justify-center">
-        {/* <AddBlock add={addBlock(0)} /> */}
+        {<AddBlock add={addBlock(0)} />}
         {blocks.map((block, index) => (
           <div
             key={`${block.__component}-${block.id}`}
