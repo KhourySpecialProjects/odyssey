@@ -12,6 +12,7 @@ import { Button } from "../ui/button";
 import { toast } from "sonner";
 import { archiveDroplet } from "@/lib/actions";
 import { useRouter } from "next/navigation";
+import { Archive } from "lucide-react";
 
 interface DropletTileProps {
   droplet: Droplet;
@@ -120,12 +121,16 @@ export function DropletTile({
 
   return (
     <li className="transition-colors border rounded-md border-slate-200 hover:border-slate-300 bg-slate-50 h-full">
-      <Button
-        onClick={changeVisibility}
-        className={`${isArchived === true || isArchived === false ? "visibility: visible" : "visibility: hidden"}`}
-      >
-        {isArchived ? "Unarchive" : "Archive"}
-      </Button>
+      <Button size="sm" variant="outline"
+      onClick={changeVisibility}
+      className={`${isArchived === true || isArchived === false ? "visibility: visible" : "visibility: hidden"}`}>
+              <div className="relative group">
+                <Archive className="text-purple-800" />
+                <span className="absolute left-1/2 transform -translate-x-1/2 top-full mt-1 w-max px-2 py-1 text-xs text-white bg-gray-800 rounded opacity-0 group-hover:opacity-100 transition-opacity">
+                {isArchived ? "Unarchive" : "Archive"}
+                </span>
+              </div>
+            </Button>
       <Link
         className="relative inline-flex w-full p-6"
         href={
