@@ -310,16 +310,21 @@ export async function deleteEnrollment(
     const authorizedUser = await getAuthorizedUserByEmail(user.email);
     const enrollments = await getEnrollmentsByAuthorizedUser(authorizedUser.id);
 
-    const toRemove = enrollments.filter((e) => e.droplet.id === formData.droplet)
+    const toRemove = enrollments.filter(
+      (e) => e.droplet.id === formData.droplet,
+    );
 
     if (toRemove.length > 0) {
-      const response = await fetch(STRAPI_API_URL + "/api/enrollments/" + toRemove[0].id, {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+      const response = await fetch(
+        STRAPI_API_URL + "/api/enrollments/" + toRemove[0].id,
+        {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+          },
         },
-      });
+      );
       const data = await response.json();
 
       if (!response.ok || (response.ok && data.error)) {
@@ -513,22 +518,19 @@ export async function addLesson(formData: z.infer<typeof CreateLessonSchema>) {
 
 export async function createNewTag(tag: string) {
   try {
-    const response = await fetch(
-      `${STRAPI_API_URL}/api/tags`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
-        },
-        body: JSON.stringify({
-          data: {
-            name: tag,
-            slug: tag.replace(/\s/g, ''),
-          },
-        }),
+    const response = await fetch(`${STRAPI_API_URL}/api/tags`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
       },
-    );
+      body: JSON.stringify({
+        data: {
+          name: tag,
+          slug: tag.replace(/\s/g, ""),
+        },
+      }),
+    });
 
     if (!response.ok) {
       console.error("adding tag failed:", await response.text());
@@ -748,7 +750,7 @@ export async function archiveDroplet(droplet: Droplet, archiveState: boolean) {
     const authorizedUser = await getAuthorizedUserByEmail(user.email);
     const enrollments = await getEnrollmentsByAuthorizedUser(authorizedUser.id);
 
-    const toArchive = enrollments.filter((e) => e.droplet.id === droplet.id)
+    const toArchive = enrollments.filter((e) => e.droplet.id === droplet.id);
     const response = await fetch(
       `${STRAPI_API_URL}/api/enrollments/${toArchive[0].id}`,
       {
@@ -769,11 +771,11 @@ export async function archiveDroplet(droplet: Droplet, archiveState: boolean) {
       throw new Error("Failed to archive droplet");
     }
     revalidateTag("dashboard");
-    revalidatePath('/');
-    revalidatePath('/draft');
+    revalidatePath("/");
+    revalidatePath("/draft");
     revalidatePath(`/d/${droplet.slug}`);
-    revalidatePath('/dashboard');
-revalidatePath('/dashboard/archived');
+    revalidatePath("/dashboard");
+    revalidatePath("/dashboard/archived");
     return { success: true };
   } catch (error) {
     console.error("Error archiving droplet:", error);

@@ -14,7 +14,7 @@ export function EnrolledDropletsGridClient({
 }: {
   dropletsWithCompletion: Droplet[];
   completedLessonIds: number[];
-  isArchived: boolean
+  isArchived: boolean;
 }) {
   const [currentPage, setCurrentPage] = useState(1);
   const totalPages = Math.ceil(dropletsWithCompletion.length / ITEMS_PER_PAGE);
