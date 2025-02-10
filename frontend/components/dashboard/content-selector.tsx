@@ -8,6 +8,7 @@ import { isAuthorizedUserAdmin } from "@/lib/utils";
 const tabs = [
   { name: "Droplets", value: "droplets" },
   { name: "Playlists", value: "playlists" },
+  { name: "Archived", value: "archived" },
 ];
 
 export function ContentSelector({ user }: { user: User }) {

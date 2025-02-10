@@ -244,7 +244,7 @@ export function AddBlock({ add }: { add: (block: any) => void }) {
               setOpen(false);
               add({
                 __component: "droplets.video",
-                url: "https://www.youtube.com/asdfgsfd",
+                url: "https://www.youtube.com/watch?v=_ZCTvmaPgao",
               });
             }}
             variant="ghost"
@@ -272,7 +272,48 @@ export function AddBlock({ add }: { add: (block: any) => void }) {
             variant="ghost"
             className="w-full border border-slate-200"
           >
-            Quiz Block
+            Multiple Choice Quiz Block
+          </Button>
+          <Button
+            onClick={() => {
+              setOpen(false);
+              add({
+                __component: "droplets.open-ended-quiz",
+                questions: [
+                  {
+                    id: Math.random(),
+                    content: "",
+                    correctAnswer: "",
+                  },
+                ],
+              });
+            }}
+            variant="ghost"
+            className="w-full border border-slate-200"
+          >
+            Open Ended Quiz Block
+          </Button>
+          <Button
+            onClick={() => {
+              setOpen(false);
+              add({
+                __component: "droplets.quiz",
+                questions: [
+                  {
+                    id: Math.random(),
+                    content: "",
+                    answerOptions: [
+                      { id: Math.random(), content: "True", isCorrect: true },
+                      { id: Math.random(), content: "False", isCorrect: false },
+                    ],
+                  },
+                ],
+              });
+            }}
+            variant="ghost"
+            className="w-full border border-slate-200"
+          >
+            True/False Quiz Block
           </Button>
         </PopoverContent>
       </Popover>

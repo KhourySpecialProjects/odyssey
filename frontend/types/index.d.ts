@@ -148,9 +148,20 @@ export type QuizQuestion = {
   answerOptions: QuizAnswerOption[];
 };
 
+export type OpenEndedQuizQuestion = {
+  id: number;
+  content: string;
+  correctAnswer: string;
+};
+
 export type Quiz = {
   id: number;
   questions: QuizQuestion[];
+};
+
+export type OpenEndedQuiz = {
+  id: number;
+  questions: OpenEndedQuizQuestion[];
 };
 
 export type Enrollment = {
@@ -161,6 +172,7 @@ export type Enrollment = {
   isComplete: boolean;
   rating: number;
   isFirstTime: boolean;
+  isArchived: boolean;
 };
 
 export interface Playlist {

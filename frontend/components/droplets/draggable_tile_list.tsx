@@ -3,6 +3,7 @@ import { Droplet } from "@/types/index.d";
 import DraggableDropletWideTile from "./draggable-droplet-wide-tile";
 import { useDrop } from "react-dnd";
 import { cn } from "@/lib/utils";
+import { DraggableTileListClient } from "./draggable_tile_list_client";
 
 interface DraggableCardListProps {
   droplets: Droplet[];
@@ -55,17 +56,11 @@ export default function DraggableTileList({
         isOver ? "border-slate-400 bg-slate-100/50" : "border-slate-200",
       )}
     >
-      <div className="space-y-4">
-        {droplets.map((droplet, index) => (
-          <DraggableDropletWideTile
-            key={droplet.id}
-            droplet={droplet}
-            index={index}
-            moveCard={moveCard}
-            sourceList={listType}
-          />
-        ))}
-      </div>
+      <DraggableTileListClient
+        droplets={droplets}
+        moveCard={moveCard}
+        listType={listType}
+      />
     </div>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { Lesson } from "@/types";
+import { Lesson, OpenEndedQuizQuestion } from "@/types";
 import { ExpandableEditor } from "@/components/draft/lesson/blocks/expandable";
 import { VideoEditor } from "@/components/draft/lesson/blocks/video";
 import { CalloutEditor } from "./blocks/callout";
@@ -18,8 +18,9 @@ import { useMemo } from "react";
 import { LessonNameInput } from "@/components/ui/tiptap/lesson-name-input";
 import { QuizEditor } from "./blocks/quiz";
 import { QuizQuestion } from "@/types";
+import { OpenEndedQuizEditor } from "./blocks/open-ended-quiz";
 
-interface Block {
+export interface BaseBlock {
   __component: string;
   content: string;
   id?: number;
@@ -27,9 +28,18 @@ interface Block {
   type?: string;
   label?: string;
   url?: string;
+}
+
+export interface QuizBlock extends BaseBlock {
   questions?: QuizQuestion[];
   color: string;
 }
+
+export interface OpenEndedQuizBlock extends BaseBlock {
+  questions?: OpenEndedQuizQuestion[];
+}
+
+export type Block = QuizBlock | OpenEndedQuizBlock;
 
 interface LessonRendererProps {
   lesson: Lesson;
@@ -108,7 +118,19 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
   const setBlock = useCallback((index: number) => {
     return (block: Partial<Block>) => {
       setBlocks((prevBlocks) =>
-        prevBlocks.map((b, i) => (i === index ? { ...b, ...block } : b)),
+        prevBlocks.map((b, i) => {
+          if (i !== index) return b;
+          if (b.__component === "droplets.quiz" && "questions" in block) {
+            return { ...b, ...block } as QuizBlock;
+          }
+          if (
+            b.__component === "droplets.open_ended_quiz" &&
+            "questions" in block
+          ) {
+            return { ...b, ...block } as OpenEndedQuizBlock;
+          }
+          return { ...b, ...block } as Block;
+        }),
       );
     };
   }, []);
@@ -184,8 +206,20 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
           return (
             <QuizEditor
               block={{
-                ...props.block,
-                questions: props.block.questions || [],
+                ...(props.block as QuizBlock),
+                questions: (props.block.questions as QuizQuestion[]) || [],
+              }}
+              updateBlock={props.updateBlock}
+              deleteBlock={props.deleteBlock}
+            />
+          );
+        case "droplets.open-ended-quiz":
+          return (
+            <OpenEndedQuizEditor
+              block={{
+                ...(props.block as OpenEndedQuizBlock),
+                questions:
+                  (props.block.questions as OpenEndedQuizQuestion[]) || [],
               }}
               updateBlock={props.updateBlock}
               deleteBlock={props.deleteBlock}
@@ -222,7 +256,7 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
       </div>
 
       <div className="space-y-4 w-full flex flex-col items-center justify-center">
-        <AddBlock add={addBlock(0)} />
+        {<AddBlock add={addBlock(0)} />}
         {blocks.map((block, index) => (
           <div
             key={`${block.__component}-${block.id}`}

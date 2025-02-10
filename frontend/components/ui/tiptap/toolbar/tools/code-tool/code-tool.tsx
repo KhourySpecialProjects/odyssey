@@ -20,6 +20,7 @@ interface CodeBlockProps extends NodeViewProps {
 }
 
 function CodeBlockComponent({
+  node,
   node: {
     attrs: { language: defaultLanguage },
   },
@@ -44,8 +45,19 @@ function CodeBlockComponent({
             </option>
           ))}
       </select>
-      <pre>
-        <NodeViewContent as="code" />
+      <pre className="pl-12 pr-4 py-3 overflow-x-auto">
+        <div className="absolute left-0 top-0 bottom-0 min-w-[2.5rem] flex flex-col text-slate-500 text-sm select-none border-r border-slate-300 bg-slate-50">
+          <div className="pt-3 pl-3">
+            {Array.from({
+              length: (node.textContent.match(/\n/g) || []).length + 1,
+            }).map((_, i) => (
+              <span key={i} className="text-right pr-2 py-0.5 leading-5 block">
+                {i + 1}
+              </span>
+            ))}
+          </div>
+        </div>
+        <NodeViewContent as="code" className="block" />
       </pre>
     </NodeViewWrapper>
   );

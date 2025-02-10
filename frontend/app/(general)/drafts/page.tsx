@@ -42,7 +42,6 @@ export default async function CreateRoute() {
   console.log("user = ", user);
   //get the current user's playlists
   const playlists = await getPlaylistsByAuthor(author.id);
-  console.log("playlists = ", playlists);
 
   //get all draft droplets
   let allDroplets: Awaited<ReturnType<typeof getDraftDroplets>> = [];

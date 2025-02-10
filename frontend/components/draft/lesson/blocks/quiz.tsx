@@ -31,38 +31,71 @@ export function QuizEditor({
   );
 
   const addQuestion = () => {
-    const newQuestion: QuizQuestion = {
-      id: Math.random(), // Temporary ID for new questions
-      content: "",
-      answerOptions: [
-        { id: Math.random(), content: "", isCorrect: true },
-        { id: Math.random(), content: "", isCorrect: false },
-      ],
-    };
+    let question = null;
+    if (questions[0].answerOptions[0].content === "True") {
+      const newQuestion: QuizQuestion = {
+        id: Math.random(), // Temporary ID for new questions
+        content: "",
+        answerOptions: [
+          { id: Math.random(), content: "True", isCorrect: true },
+          { id: Math.random(), content: "False", isCorrect: false },
+        ],
+      };
+      question = newQuestion;
+    } else {
+      const newQuestion: QuizQuestion = {
+        id: Math.random(), // Temporary ID for new questions
+        content: "",
+        answerOptions: [
+          { id: Math.random(), content: "", isCorrect: true },
+          { id: Math.random(), content: "", isCorrect: false },
+        ],
+      };
+      question = newQuestion;
+    }
 
-    const updatedQuestions = [...questions, newQuestion];
+    const updatedQuestions = [...questions, question];
     setQuestions(updatedQuestions);
-    updateBlock({ questions: updatedQuestions });
+    updateBlock({
+      __component: block.__component,
+      questions: updatedQuestions,
+    });
+    setIsOpen(false);
   };
 
   const updateQuestion = (index: number, updatedQuestion: QuizQuestion) => {
-    const updatedQuestions = questions.map((q, i) =>
-      i === index ? updatedQuestion : q,
-    );
+    const updatedQuestions = questions.map((q, i) => {
+      if (i === index) {
+        return {
+          id: updatedQuestion.id,
+          content: updatedQuestion.content,
+          answerOptions: updatedQuestion.answerOptions,
+        } as QuizQuestion;
+      }
+      return q;
+    });
     setQuestions(updatedQuestions);
-    updateBlock({ questions: updatedQuestions });
+    updateBlock({
+      __component: block.__component,
+      questions: updatedQuestions,
+    });
   };
 
   const removeQuestion = (index: number) => {
     const updatedQuestions = questions.filter((_, i) => i !== index);
     setQuestions(updatedQuestions);
-    updateBlock({ questions: updatedQuestions });
+    updateBlock({
+      __component: block.__component,
+      questions: updatedQuestions,
+    });
   };
+
+  const [isOpen, setIsOpen] = useState(false);
 
   return (
     <div className="w-full max-w-2xl">
       <div className="flex justify-between items-center mb-4">
-        <h3 className="text-xl font-bold">Quiz</h3>
+        <h3 className="text-xl font-bold">Multiple Choice Quiz</h3>
         <Button variant="ghost" size="sm" onClick={deleteBlock}>
           <TrashIcon className="w-4 h-4" />
         </Button>
@@ -81,7 +114,7 @@ export function QuizEditor({
         ))}
       </div>
 
-      <Button onClick={addQuestion} variant="outline" className="mt-4">
+      <Button onClick={() => addQuestion()} variant="outline" className="mt-4">
         <PlusIcon className="w-4 h-4 mr-2" />
         Add Question
       </Button>

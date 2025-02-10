@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth/session";
 import { CalloutIcon } from "@/components/ui/callout-icons";
+import { OpenEndedQuizBlock } from "./open-ended-quiz";
 
 interface LessonRendererProps {
   lesson: Lesson;
@@ -84,15 +85,11 @@ export function LessonRenderer({
     }
 
     startTransition(async () => {
-      console.log("before success");
       const success = await markLessonAsComplete(
         enrollmentId,
         completedLessonIds,
         lesson.id,
       );
-      console.log("success status", success);
-      console.log("enrollment for mark as complete", enrollmentId);
-      console.log("lesson id for mark as complete", lesson.id);
       if (success) {
         completedLessonIds.push(lesson.id);
         await router.refresh();
@@ -178,6 +175,9 @@ function LessonBlockRenderer({ block }: { block: any }) {
 
     case "droplets.quiz":
       return <QuizBlock data={block} />;
+
+    case "droplets.open-ended-quiz":
+      return <OpenEndedQuizBlock data={block} />;
 
     case "droplets.callout":
       return (

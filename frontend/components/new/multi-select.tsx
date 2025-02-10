@@ -14,14 +14,21 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
 
 export interface MultiSelectItem {
   id: number;
   name: string;
 }
 
-import { CheckIcon, ChevronDown } from "lucide-react";
+import { CheckIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useState } from "react";
+import { Input } from "../ui/input";
+import { createNewTag } from "@/lib/actions";
+import { result } from "lodash";
+import { toast } from "sonner";
 
 export function MultiSelect({
   label,
@@ -38,14 +45,37 @@ export function MultiSelect({
   align?: "center" | "start" | "end";
   className?: string;
 }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [tagName, setTagName] = useState("");
+  const onOpenChange = (open: boolean) => {
+    if (!open) {
+      setIsOpen(false);
+    } else {
+      setIsOpen(true);
+    }
+  };
+
+  const handleNewTag = async () => {
+    try {
+      if (tagName) {
+        const result = await createNewTag(tagName);
+        if (result.success) {
+          toast.success("tag created successfully");
+        } else {
+          console.error("failed to create tag", result.error);
+        }
+        setIsOpen(false);
+      }
+    } catch (error) {
+      console.error("Failed to create new tag: ", error);
+    }
+  };
+
   return (
     <>
       <Popover>
         <PopoverTrigger asChild>
           <Button variant="outline" className={cn("h-fit", className)}>
-            <div className="flex flex-row items-center justify-center gap-2">
-              <ChevronDown />
-            </div>
             {selected?.length > 0 ? (
               <>
                 <div className="gap-1 flex flex-wrap items-center justify-start w-full">
@@ -61,8 +91,12 @@ export function MultiSelect({
                 </div>
               </>
             ) : (
-              <p className="flex justify-start text-slate-400 w-48">
-                Select...
+              <p className="text-slate-400">
+                {label === "Tags"
+                  ? "Select Tags..."
+                  : label === "Prerequisites"
+                    ? "Select Prerequisites..."
+                    : "Select Postrequisites..."}
               </p>
             )}
           </Button>
@@ -104,6 +138,28 @@ export function MultiSelect({
                     </CommandItem>
                   );
                 })}
+                <div className="flex pt-3" onClick={() => setIsOpen(true)}>
+                  <Plus size={20} />
+                  Add Tag
+                </div>
+                <Dialog open={isOpen} onOpenChange={onOpenChange}>
+                  <DialogContent className="sm:max-w-[250px]">
+                    <DialogHeader>
+                      <DialogTitle>Enter the name of your new tag</DialogTitle>
+                    </DialogHeader>
+
+                    <div className="flex flex-col gap-4 mt-4">
+                      <Input
+                        id="name"
+                        value={tagName}
+                        onChange={(e) => setTagName(e.target.value)}
+                        placeholder="Enter new tag name"
+                        className="max-w-xl"
+                      />
+                      <Button onClick={handleNewTag}>Save</Button>
+                    </div>
+                  </DialogContent>
+                </Dialog>
               </CommandGroup>
             </CommandList>
           </Command>

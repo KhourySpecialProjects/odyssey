@@ -41,7 +41,7 @@ export default async function Lesson({ params }: Props) {
           "droplets.quiz": {
             populate: {
               questions: {
-                populate: { answerOptions: "*" },
+                populate: { content: "*" },
               },
             },
           },
@@ -50,6 +50,13 @@ export default async function Lesson({ params }: Props) {
           },
           "droplets.expandable": {
             populate: "*",
+          },
+          "droplets.open-ended-quiz": {
+            populate: {
+              questions: {
+                populate: { content: "*" },
+              },
+            },
           },
         },
       },
