@@ -185,12 +185,12 @@ function LessonBlockRenderer({ block }: { block: any }) {
           className={`flex flex-row items-center px-6 py-6 border rounded-md md:-mx-8 ${block.color || "bg-sky-50"}`}
         >
           <div className="">
-          <CalloutIcon color={block.color || "bg-sky-300"}></CalloutIcon>
+            <CalloutIcon color={block.color || "bg-sky-300"}></CalloutIcon>
           </div>
           <div className="">
-          <div className="pl-8 mx-auto prose prose-sky text-center">
-            <BlocksRenderer content={block.content} />
-          </div>
+            <div className="pl-8 mx-auto prose prose-sky text-center">
+              <BlocksRenderer content={block.content} />
+            </div>
           </div>
         </div>
       );
