@@ -1,11 +1,11 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { MoveLeftIcon } from "lucide-react";
+import { MoveLeftIcon, SearchIcon } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import DraggableTileList from "@/components/droplets/draggable_tile_list";
@@ -110,6 +110,20 @@ export function PlaylistForm({
     }
   };
 
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const [tempQuery, setTempQuery] = useState(searchParams.get("q") || "");
+
+  const updateQueryString = (value: string) => {
+    const params = new URLSearchParams(searchParams);
+    if (value) {
+      params.set("q", value);
+    } else {
+      params.delete("q");
+    }
+    router.push(`${pathname}?${params.toString()}`);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name) {
@@ -171,6 +185,9 @@ export function PlaylistForm({
     //   setError(response.error || "Failed to create Playlist!");
     // }
   };
+  const filteredDroplets = sourceDroplets.filter((droplet) =>
+    droplet.name.toLowerCase().includes(tempQuery.toLowerCase()),
+  );
 
   return (
     <form onSubmit={handleSubmit} className="w-full max-w-6xl space-y-8">
@@ -244,12 +261,39 @@ export function PlaylistForm({
           </Dialog>
         </div>
 
+        <div
+          className="flex items-center space-x-2 xs:max-w-sm"
+          onSubmit={(e) => {
+            e.preventDefault();
+            updateQueryString(tempQuery);
+          }}
+        >
+          <Input
+            type="search"
+            placeholder="Search Droplets..."
+            className="w-full md:w-[125px] lg:w-[300px]"
+            value={tempQuery}
+            onChange={(e) => setTempQuery(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+              }
+            }}
+          />
+          <Button
+            before={<SearchIcon />}
+            onClick={() => updateQueryString(tempQuery)}
+          >
+            <span className="sr-only md:not-sr-only">Search</span>
+          </Button>
+        </div>
+
         <DndProvider backend={HTML5Backend}>
-          <div className="grid grid-cols-2 gap-8">
+          <div className="grid grid-cols-2 gap-8 pt-4">
             <div className="space-y-4">
               <h3 className="font-semibold">Available Droplets</h3>
               <DraggableTileList
-                droplets={sourceDroplets}
+                droplets={filteredDroplets}
                 onDropToOther={handleDropToSource}
                 onReorder={handleReorderSource}
                 listType="source"

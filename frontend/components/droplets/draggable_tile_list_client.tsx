@@ -3,23 +3,23 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Droplet } from "@/types";
-import { DropletTile } from "../droplets/droplet-tile";
+import DraggableDropletWideTile from "./draggable-droplet-wide-tile";
 
-const ITEMS_PER_PAGE = 9;
+const ITEMS_PER_PAGE = 5;
 
-export function EnrolledDropletsGridClient({
-  dropletsWithCompletion,
-  completedLessonIds,
-  isArchived,
+export function DraggableTileListClient({
+  droplets,
+  moveCard,
+  listType,
 }: {
-  dropletsWithCompletion: Droplet[];
-  completedLessonIds: number[];
-  isArchived: boolean;
+  droplets: Droplet[];
+  moveCard: (dragIndex: number, hoverIndex: number) => void;
+  listType: "source" | "selected";
 }) {
   const [currentPage, setCurrentPage] = useState(1);
-  const totalPages = Math.ceil(dropletsWithCompletion.length / ITEMS_PER_PAGE);
+  const totalPages = Math.ceil(droplets.length / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const paginatedCompletedDroplets = dropletsWithCompletion.slice(
+  const paginatedDroplets = droplets.slice(
     startIndex,
     startIndex + ITEMS_PER_PAGE,
   );
@@ -38,17 +38,17 @@ export function EnrolledDropletsGridClient({
 
   return (
     <>
-      <ul className="grid grid-flow-row grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 auto-rows-fr">
-        {paginatedCompletedDroplets.map((droplet) => (
-          <DropletTile
+      <div className="space-y-4">
+        {paginatedDroplets.map((droplet, index) => (
+          <DraggableDropletWideTile
             key={droplet.id}
             droplet={droplet}
-            isEnrolled={true}
-            completedLessonIds={completedLessonIds}
-            isArchived={isArchived}
+            index={index}
+            moveCard={moveCard}
+            sourceList={listType}
           />
         ))}
-      </ul>
+      </div>
       <div className="flex justify-end items-center mt-4 ">
         <div className="flex gap-2">
           <Button

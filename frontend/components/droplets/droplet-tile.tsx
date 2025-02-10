@@ -7,7 +7,12 @@ import Link from "next/link";
 
 import { StarRating } from "@/components/ui/rating-stars";
 import { getDropletAverageRating } from "@/lib/requests/enrollment";
-import { useEffect, useState } from "react";
+import { startTransition, useEffect, useState } from "react";
+import { Button } from "../ui/button";
+import { toast } from "sonner";
+import { archiveDroplet } from "@/lib/actions";
+import { useRouter } from "next/navigation";
+import { Archive } from "lucide-react";
 
 interface DropletTileProps {
   droplet: Droplet;
@@ -15,6 +20,7 @@ interface DropletTileProps {
   completedLessonIds?: number[];
   profilePage?: boolean;
   compact?: boolean;
+  isArchived?: boolean;
 }
 
 export function DropletTile({
@@ -23,6 +29,7 @@ export function DropletTile({
   completedLessonIds = [],
   profilePage,
   compact,
+  isArchived,
 }: DropletTileProps) {
   const [averageRating, setAverageRating] = useState<number>(0);
 
@@ -54,6 +61,27 @@ export function DropletTile({
       return "bg-amber-100 text-amber-800 border-amber-200";
     return "bg-emerald-100 text-emerald-800 border-emerald-200";
   };
+
+  const router = useRouter();
+
+  async function changeVisibility() {
+    try {
+      const result = await archiveDroplet(droplet, isArchived ? false : true);
+      if (result.success) {
+        toast.success(
+          isArchived
+            ? `${droplet.name} is now unarchived!`
+            : `${droplet.name} is now archived!`,
+        );
+        //router.push('/dashboard');
+      } else {
+        toast.error("Failed to update droplet visibility");
+      }
+    } catch (error) {
+      toast.error("An error occurred while updating the droplet");
+      console.error(error);
+    }
+  }
 
   if (compact) {
     return (
@@ -92,9 +120,22 @@ export function DropletTile({
   }
 
   return (
-    <li className="transition-colors border rounded-md border-slate-200 hover:border-slate-300 bg-slate-50">
+    <li className="transition-colors border rounded-md border-slate-200 hover:border-slate-300 bg-slate-50 h-full">
+      <Button
+        size="sm"
+        variant="outline"
+        onClick={changeVisibility}
+        className={`${isArchived === true || isArchived === false ? "visibility: visible" : "visibility: hidden"}`}
+      >
+        <div className="relative group">
+          <Archive className="text-purple-800" />
+          <span className="absolute left-1/2 transform -translate-x-1/2 top-full mt-1 w-max px-2 py-1 text-xs text-white bg-gray-800 rounded opacity-0 group-hover:opacity-100 transition-opacity">
+            {isArchived ? "Unarchive" : "Archive"}
+          </span>
+        </div>
+      </Button>
       <Link
-        className="relative inline-flex w-full h-full p-6"
+        className="relative inline-flex w-full p-6"
         href={
           (droplet.status == "draft" ? `/draft` : "") + `/d/${droplet.slug}`
         }

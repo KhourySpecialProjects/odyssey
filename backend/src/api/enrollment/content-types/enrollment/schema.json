@@ -43,6 +43,10 @@
     "isFirstTime": {
       "type": "boolean",
       "default": true
+    },
+    "isArchived": {
+      "type": "boolean",
+      "default": false
     }
   }
 }

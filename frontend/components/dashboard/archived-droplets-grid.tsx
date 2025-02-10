@@ -14,14 +14,17 @@ interface Lesson {
   slug: string;
 }
 
-export async function EnrolledDropletsGrid() {
+export async function ArchivedDropletsGrid() {
   const user = await getCurrentUser();
   if (!user?.email) return null;
 
   const authorizedUser = await getAuthorizedUserByEmail(user.email);
   const enrollments = await getEnrollmentsByAuthorizedUser(authorizedUser.id);
 
-  const filteredEnrollments = enrollments.filter((e) => e.isArchived !== true);
+  console.log("enrollments: ", enrollments);
+  console.log("isArchived", enrollments[0].isArchived);
+
+  const filteredEnrollments = enrollments.filter((e) => e.isArchived === true);
 
   const completedLessonIds = filteredEnrollments.flatMap(
     (enrollment) =>
@@ -48,9 +51,9 @@ export async function EnrolledDropletsGrid() {
   if (!dropletsWithCompletion || dropletsWithCompletion.length === 0) {
     return (
       <Message className="mb-8 border border-dashed rounded-md border-slate-200">
-        <MessageHeader subtitle="No Results" title="No Enrolled Droplets" />
+        <MessageHeader subtitle="No Results" title="No Archived Droplets" />
         <MessageDescription>
-          You haven&apos;t enrolled in any Droplets yet.
+          You haven&apos;t archived any Droplets yet.
         </MessageDescription>
       </Message>
     );
@@ -60,7 +63,7 @@ export async function EnrolledDropletsGrid() {
     <EnrolledDropletsGridClient
       dropletsWithCompletion={dropletsWithCompletion}
       completedLessonIds={completedLessonIds}
-      isArchived={false}
+      isArchived={true}
     />
   );
 }

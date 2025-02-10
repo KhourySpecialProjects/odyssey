@@ -11,7 +11,7 @@
       "url": "https://khouryodyssey.org"
     },
     "license": null,
-    "x-generation-date": "2025-02-10T20:42:21.520Z"
+    "x-generation-date": "2025-02-10T21:09:50.443Z"
   },
   "x-strapi-config": {
     "plugins": [
@@ -1607,6 +1607,34 @@
                                                                                         "type": "string"
                                                                                       }
                                                                                     }
+                                                                                  },
+                                                                                  {
+                                                                                    "type": "object",
+                                                                                    "properties": {
+                                                                                      "id": {
+                                                                                        "type": "number"
+                                                                                      },
+                                                                                      "__component": {
+                                                                                        "type": "string"
+                                                                                      },
+                                                                                      "questions": {
+                                                                                        "type": "array",
+                                                                                        "items": {
+                                                                                          "type": "object",
+                                                                                          "properties": {
+                                                                                            "id": {
+                                                                                              "type": "number"
+                                                                                            },
+                                                                                            "content": {
+                                                                                              "type": "string"
+                                                                                            },
+                                                                                            "correctAnswer": {
+                                                                                              "type": "string"
+                                                                                            }
+                                                                                          }
+                                                                                        }
+                                                                                      }
+                                                                                    }
                                                                                   }
                                                                                 ]
                                                                               }
@@ -1820,6 +1848,9 @@
                                                                 "type": "integer"
                                                               },
                                                               "isFirstTime": {
+                                                                "type": "boolean"
+                                                              },
+                                                              "isArchived": {
                                                                 "type": "boolean"
                                                               },
                                                               "createdAt": {
@@ -4518,6 +4549,34 @@
                                                                                           "type": "string"
                                                                                         }
                                                                                       }
+                                                                                    },
+                                                                                    {
+                                                                                      "type": "object",
+                                                                                      "properties": {
+                                                                                        "id": {
+                                                                                          "type": "number"
+                                                                                        },
+                                                                                        "__component": {
+                                                                                          "type": "string"
+                                                                                        },
+                                                                                        "questions": {
+                                                                                          "type": "array",
+                                                                                          "items": {
+                                                                                            "type": "object",
+                                                                                            "properties": {
+                                                                                              "id": {
+                                                                                                "type": "number"
+                                                                                              },
+                                                                                              "content": {
+                                                                                                "type": "string"
+                                                                                              },
+                                                                                              "correctAnswer": {
+                                                                                                "type": "string"
+                                                                                              }
+                                                                                            }
+                                                                                          }
+                                                                                        }
+                                                                                      }
                                                                                     }
                                                                                   ]
                                                                                 }
@@ -4731,6 +4790,9 @@
                                                                   "type": "integer"
                                                                 },
                                                                 "isFirstTime": {
+                                                                  "type": "boolean"
+                                                                },
+                                                                "isArchived": {
                                                                   "type": "boolean"
                                                                 },
                                                                 "createdAt": {
@@ -7367,6 +7429,34 @@
                                                               "type": "string"
                                                             }
                                                           }
+                                                        },
+                                                        {
+                                                          "type": "object",
+                                                          "properties": {
+                                                            "id": {
+                                                              "type": "number"
+                                                            },
+                                                            "__component": {
+                                                              "type": "string"
+                                                            },
+                                                            "questions": {
+                                                              "type": "array",
+                                                              "items": {
+                                                                "type": "object",
+                                                                "properties": {
+                                                                  "id": {
+                                                                    "type": "number"
+                                                                  },
+                                                                  "content": {
+                                                                    "type": "string"
+                                                                  },
+                                                                  "correctAnswer": {
+                                                                    "type": "string"
+                                                                  }
+                                                                }
+                                                              }
+                                                            }
+                                                          }
                                                         }
                                                       ]
                                                     }
@@ -8452,6 +8542,9 @@
                                                                   "type": "integer"
                                                                 },
                                                                 "isFirstTime": {
+                                                                  "type": "boolean"
+                                                                },
+                                                                "isArchived": {
                                                                   "type": "boolean"
                                                                 },
                                                                 "createdAt": {
@@ -10337,6 +10430,34 @@
                                                                             "type": "string"
                                                                           }
                                                                         }
+                                                                      },
+                                                                      {
+                                                                        "type": "object",
+                                                                        "properties": {
+                                                                          "id": {
+                                                                            "type": "number"
+                                                                          },
+                                                                          "__component": {
+                                                                            "type": "string"
+                                                                          },
+                                                                          "questions": {
+                                                                            "type": "array",
+                                                                            "items": {
+                                                                              "type": "object",
+                                                                              "properties": {
+                                                                                "id": {
+                                                                                  "type": "number"
+                                                                                },
+                                                                                "content": {
+                                                                                  "type": "string"
+                                                                                },
+                                                                                "correctAnswer": {
+                                                                                  "type": "string"
+                                                                                }
+                                                                              }
+                                                                            }
+                                                                          }
+                                                                        }
                                                                       }
                                                                     ]
                                                                   }
@@ -10436,6 +10557,9 @@
                                                                                 "type": "integer"
                                                                               },
                                                                               "isFirstTime": {
+                                                                                "type": "boolean"
+                                                                              },
+                                                                              "isArchived": {
                                                                                 "type": "boolean"
                                                                               },
                                                                               "createdAt": {
@@ -13173,6 +13297,34 @@
                                                                 "type": "string"
                                                               }
                                                             }
+                                                          },
+                                                          {
+                                                            "type": "object",
+                                                            "properties": {
+                                                              "id": {
+                                                                "type": "number"
+                                                              },
+                                                              "__component": {
+                                                                "type": "string"
+                                                              },
+                                                              "questions": {
+                                                                "type": "array",
+                                                                "items": {
+                                                                  "type": "object",
+                                                                  "properties": {
+                                                                    "id": {
+                                                                      "type": "number"
+                                                                    },
+                                                                    "content": {
+                                                                      "type": "string"
+                                                                    },
+                                                                    "correctAnswer": {
+                                                                      "type": "string"
+                                                                    }
+                                                                  }
+                                                                }
+                                                              }
+                                                            }
                                                           }
                                                         ]
                                                       }
@@ -14258,6 +14410,9 @@
                                                                     "type": "integer"
                                                                   },
                                                                   "isFirstTime": {
+                                                                    "type": "boolean"
+                                                                  },
+                                                                  "isArchived": {
                                                                     "type": "boolean"
                                                                   },
                                                                   "createdAt": {
@@ -16155,6 +16310,34 @@
                                                                                         "type": "string"
                                                                                       }
                                                                                     }
+                                                                                  },
+                                                                                  {
+                                                                                    "type": "object",
+                                                                                    "properties": {
+                                                                                      "id": {
+                                                                                        "type": "number"
+                                                                                      },
+                                                                                      "__component": {
+                                                                                        "type": "string"
+                                                                                      },
+                                                                                      "questions": {
+                                                                                        "type": "array",
+                                                                                        "items": {
+                                                                                          "type": "object",
+                                                                                          "properties": {
+                                                                                            "id": {
+                                                                                              "type": "number"
+                                                                                            },
+                                                                                            "content": {
+                                                                                              "type": "string"
+                                                                                            },
+                                                                                            "correctAnswer": {
+                                                                                              "type": "string"
+                                                                                            }
+                                                                                          }
+                                                                                        }
+                                                                                      }
+                                                                                    }
                                                                                   }
                                                                                 ]
                                                                               }
@@ -16368,6 +16551,9 @@
                                                                 "type": "integer"
                                                               },
                                                               "isFirstTime": {
+                                                                "type": "boolean"
+                                                              },
+                                                              "isArchived": {
                                                                 "type": "boolean"
                                                               },
                                                               "createdAt": {
@@ -17917,6 +18103,9 @@
               },
               "isFirstTime": {
                 "type": "boolean"
+              },
+              "isArchived": {
+                "type": "boolean"
               }
             }
           }
@@ -18820,6 +19009,34 @@
                                                                           "type": "string"
                                                                         }
                                                                       }
+                                                                    },
+                                                                    {
+                                                                      "type": "object",
+                                                                      "properties": {
+                                                                        "id": {
+                                                                          "type": "number"
+                                                                        },
+                                                                        "__component": {
+                                                                          "type": "string"
+                                                                        },
+                                                                        "questions": {
+                                                                          "type": "array",
+                                                                          "items": {
+                                                                            "type": "object",
+                                                                            "properties": {
+                                                                              "id": {
+                                                                                "type": "number"
+                                                                              },
+                                                                              "content": {
+                                                                                "type": "string"
+                                                                              },
+                                                                              "correctAnswer": {
+                                                                                "type": "string"
+                                                                              }
+                                                                            }
+                                                                          }
+                                                                        }
+                                                                      }
                                                                     }
                                                                   ]
                                                                 }
@@ -18919,6 +19136,9 @@
                                                                               "type": "integer"
                                                                             },
                                                                             "isFirstTime": {
+                                                                              "type": "boolean"
+                                                                            },
+                                                                            "isArchived": {
                                                                               "type": "boolean"
                                                                             },
                                                                             "createdAt": {
@@ -20540,6 +20760,9 @@
           "isFirstTime": {
             "type": "boolean"
           },
+          "isArchived": {
+            "type": "boolean"
+          },
           "createdAt": {
             "type": "string",
             "format": "date-time"
@@ -21530,6 +21753,34 @@
                                                                             "type": "string"
                                                                           }
                                                                         }
+                                                                      },
+                                                                      {
+                                                                        "type": "object",
+                                                                        "properties": {
+                                                                          "id": {
+                                                                            "type": "number"
+                                                                          },
+                                                                          "__component": {
+                                                                            "type": "string"
+                                                                          },
+                                                                          "questions": {
+                                                                            "type": "array",
+                                                                            "items": {
+                                                                              "type": "object",
+                                                                              "properties": {
+                                                                                "id": {
+                                                                                  "type": "number"
+                                                                                },
+                                                                                "content": {
+                                                                                  "type": "string"
+                                                                                },
+                                                                                "correctAnswer": {
+                                                                                  "type": "string"
+                                                                                }
+                                                                              }
+                                                                            }
+                                                                          }
+                                                                        }
                                                                       }
                                                                     ]
                                                                   }
@@ -21629,6 +21880,9 @@
                                                                                 "type": "integer"
                                                                               },
                                                                               "isFirstTime": {
+                                                                                "type": "boolean"
+                                                                              },
+                                                                              "isArchived": {
                                                                                 "type": "boolean"
                                                                               },
                                                                               "createdAt": {
@@ -24323,6 +24577,34 @@
                                                                             "type": "string"
                                                                           }
                                                                         }
+                                                                      },
+                                                                      {
+                                                                        "type": "object",
+                                                                        "properties": {
+                                                                          "id": {
+                                                                            "type": "number"
+                                                                          },
+                                                                          "__component": {
+                                                                            "type": "string"
+                                                                          },
+                                                                          "questions": {
+                                                                            "type": "array",
+                                                                            "items": {
+                                                                              "type": "object",
+                                                                              "properties": {
+                                                                                "id": {
+                                                                                  "type": "number"
+                                                                                },
+                                                                                "content": {
+                                                                                  "type": "string"
+                                                                                },
+                                                                                "correctAnswer": {
+                                                                                  "type": "string"
+                                                                                }
+                                                                              }
+                                                                            }
+                                                                          }
+                                                                        }
                                                                       }
                                                                     ]
                                                                   }
@@ -24422,6 +24704,9 @@
                                                                                 "type": "integer"
                                                                               },
                                                                               "isFirstTime": {
+                                                                                "type": "boolean"
+                                                                              },
+                                                                              "isArchived": {
                                                                                 "type": "boolean"
                                                                               },
                                                                               "createdAt": {
@@ -26246,6 +26531,9 @@
                     },
                     {
                       "$ref": "#/components/schemas/DropletsExpandableComponent"
+                    },
+                    {
+                      "$ref": "#/components/schemas/DropletsOpenEndedQuizComponent"
                     }
                   ]
                 }
@@ -26383,6 +26671,9 @@
                 },
                 {
                   "$ref": "#/components/schemas/DropletsExpandableComponent"
+                },
+                {
+                  "$ref": "#/components/schemas/DropletsOpenEndedQuizComponent"
                 }
               ]
             }
@@ -27289,6 +27580,34 @@
                                                                                           "type": "string"
                                                                                         }
                                                                                       }
+                                                                                    },
+                                                                                    {
+                                                                                      "type": "object",
+                                                                                      "properties": {
+                                                                                        "id": {
+                                                                                          "type": "number"
+                                                                                        },
+                                                                                        "__component": {
+                                                                                          "type": "string"
+                                                                                        },
+                                                                                        "questions": {
+                                                                                          "type": "array",
+                                                                                          "items": {
+                                                                                            "type": "object",
+                                                                                            "properties": {
+                                                                                              "id": {
+                                                                                                "type": "number"
+                                                                                              },
+                                                                                              "content": {
+                                                                                                "type": "string"
+                                                                                              },
+                                                                                              "correctAnswer": {
+                                                                                                "type": "string"
+                                                                                              }
+                                                                                            }
+                                                                                          }
+                                                                                        }
+                                                                                      }
                                                                                     }
                                                                                   ]
                                                                                 }
@@ -27502,6 +27821,9 @@
                                                                   "type": "integer"
                                                                 },
                                                                 "isFirstTime": {
+                                                                  "type": "boolean"
+                                                                },
+                                                                "isArchived": {
                                                                   "type": "boolean"
                                                                 },
                                                                 "createdAt": {
@@ -29141,6 +29463,37 @@
           }
         }
       },
+      "QuizzesOpenEndedQuestionComponent": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "content": {
+            "type": "string"
+          },
+          "correctAnswer": {
+            "type": "string"
+          }
+        }
+      },
+      "DropletsOpenEndedQuizComponent": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "__component": {
+            "type": "string"
+          },
+          "questions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/QuizzesOpenEndedQuestionComponent"
+            }
+          }
+        }
+      },
       "PlaylistRequest": {
         "type": "object",
         "required": [
@@ -30202,6 +30555,34 @@
                                                                                           "type": "string"
                                                                                         }
                                                                                       }
+                                                                                    },
+                                                                                    {
+                                                                                      "type": "object",
+                                                                                      "properties": {
+                                                                                        "id": {
+                                                                                          "type": "number"
+                                                                                        },
+                                                                                        "__component": {
+                                                                                          "type": "string"
+                                                                                        },
+                                                                                        "questions": {
+                                                                                          "type": "array",
+                                                                                          "items": {
+                                                                                            "type": "object",
+                                                                                            "properties": {
+                                                                                              "id": {
+                                                                                                "type": "number"
+                                                                                              },
+                                                                                              "content": {
+                                                                                                "type": "string"
+                                                                                              },
+                                                                                              "correctAnswer": {
+                                                                                                "type": "string"
+                                                                                              }
+                                                                                            }
+                                                                                          }
+                                                                                        }
+                                                                                      }
                                                                                     }
                                                                                   ]
                                                                                 }
@@ -30415,6 +30796,9 @@
                                                                   "type": "integer"
                                                                 },
                                                                 "isFirstTime": {
+                                                                  "type": "boolean"
+                                                                },
+                                                                "isArchived": {
                                                                   "type": "boolean"
                                                                 },
                                                                 "createdAt": {
@@ -33420,6 +33804,34 @@
                                                                                           "type": "string"
                                                                                         }
                                                                                       }
+                                                                                    },
+                                                                                    {
+                                                                                      "type": "object",
+                                                                                      "properties": {
+                                                                                        "id": {
+                                                                                          "type": "number"
+                                                                                        },
+                                                                                        "__component": {
+                                                                                          "type": "string"
+                                                                                        },
+                                                                                        "questions": {
+                                                                                          "type": "array",
+                                                                                          "items": {
+                                                                                            "type": "object",
+                                                                                            "properties": {
+                                                                                              "id": {
+                                                                                                "type": "number"
+                                                                                              },
+                                                                                              "content": {
+                                                                                                "type": "string"
+                                                                                              },
+                                                                                              "correctAnswer": {
+                                                                                                "type": "string"
+                                                                                              }
+                                                                                            }
+                                                                                          }
+                                                                                        }
+                                                                                      }
                                                                                     }
                                                                                   ]
                                                                                 }
@@ -33633,6 +34045,9 @@
                                                                   "type": "integer"
                                                                 },
                                                                 "isFirstTime": {
+                                                                  "type": "boolean"
+                                                                },
+                                                                "isArchived": {
                                                                   "type": "boolean"
                                                                 },
                                                                 "createdAt": {
@@ -35325,7 +35740,8 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object"
+              "type": "object",
+              "additionalProperties": true
             },
             "style": "deepObject"
           },
@@ -35830,7 +36246,8 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object"
+              "type": "object",
+              "additionalProperties": true
             },
             "style": "deepObject"
           },
@@ -36335,7 +36752,8 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object"
+              "type": "object",
+              "additionalProperties": true
             },
             "style": "deepObject"
           },
@@ -36840,7 +37258,8 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object"
+              "type": "object",
+              "additionalProperties": true
             },
             "style": "deepObject"
           },
@@ -37345,7 +37764,8 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object"
+              "type": "object",
+              "additionalProperties": true
             },
             "style": "deepObject"
           },
@@ -37850,7 +38270,8 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object"
+              "type": "object",
+              "additionalProperties": true
             },
             "style": "deepObject"
           },
@@ -38355,7 +38776,8 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object"
+              "type": "object",
+              "additionalProperties": true
             },
             "style": "deepObject"
           },
@@ -38860,7 +39282,8 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object"
+              "type": "object",
+              "additionalProperties": true
             },
             "style": "deepObject"
           },
@@ -39365,7 +39788,8 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object"
+              "type": "object",
+              "additionalProperties": true
             },
             "style": "deepObject"
           },
@@ -39870,7 +40294,8 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object"
+              "type": "object",
+              "additionalProperties": true
             },
             "style": "deepObject"
           },
@@ -40375,7 +40800,8 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object"
+              "type": "object",
+              "additionalProperties": true
             },
             "style": "deepObject"
           },
@@ -40880,7 +41306,8 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object"
+              "type": "object",
+              "additionalProperties": true
             },
             "style": "deepObject"
           },
@@ -41385,7 +41812,8 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object"
+              "type": "object",
+              "additionalProperties": true
             },
             "style": "deepObject"
           },
@@ -41890,7 +42318,8 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object"
+              "type": "object",
+              "additionalProperties": true
             },
             "style": "deepObject"
           },

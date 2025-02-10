@@ -3,6 +3,7 @@ import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
 import { ContentSelector } from "./content-selector";
 import { EnrolledDropletsGrid } from "./enrolled-droplets-grid";
 import { UserPlaylistsGrid } from "./user-playlists-grid";
+import { ArchivedDropletsGrid } from "./archived-droplets-grid";
 
 export async function MyContent({
   searchParams,
@@ -20,7 +21,13 @@ export async function MyContent({
     <div className="w-full">
       <ContentSelector user={user} />
       <div className="mt-6">
-        {tab === "droplets" ? <EnrolledDropletsGrid /> : <UserPlaylistsGrid />}
+        {tab === "droplets" ? (
+          <EnrolledDropletsGrid />
+        ) : tab === "playlists" ? (
+          <UserPlaylistsGrid />
+        ) : (
+          <ArchivedDropletsGrid />
+        )}
       </div>
     </div>
   );

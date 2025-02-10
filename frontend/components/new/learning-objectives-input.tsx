@@ -15,7 +15,7 @@ export function LearningObjectivesInput({
 }) {
   function addEmptyLearningObjective() {
     if (!learningObjectives.includes("")) {
-      setLearningObjectives(["", ...learningObjectives]);
+      setLearningObjectives([...learningObjectives, ""]);
     }
   }
   return (
@@ -67,6 +67,14 @@ export function LearningObjectivesInput({
               placeholder="New Learning Objective"
               autoComplete="off"
               className="w-full text-sm rounded-md border-1 border-slate-200 outline-0 ring-0 focus-visible:ring-0 focus-visible:outline-2 px-3 py-2 "
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  if (!learningObjectives.includes("")) {
+                    setLearningObjectives([...learningObjectives, ""]);
+                  }
+                }
+              }}
               onChange={(e) => {
                 const newObjectives = [...learningObjectives];
                 newObjectives[index] = e.target.value;
