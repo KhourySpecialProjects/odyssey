@@ -21,7 +21,13 @@ export async function MyContent({
     <div className="w-full">
       <ContentSelector user={user} />
       <div className="mt-6">
-        {tab === "droplets" ? <EnrolledDropletsGrid /> : tab === "playlists" ? <UserPlaylistsGrid /> : <ArchivedDropletsGrid />}
+        {tab === "droplets" ? (
+          <EnrolledDropletsGrid />
+        ) : tab === "playlists" ? (
+          <UserPlaylistsGrid />
+        ) : (
+          <ArchivedDropletsGrid />
+        )}
       </div>
     </div>
   );

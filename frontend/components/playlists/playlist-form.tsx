@@ -111,18 +111,18 @@ export function PlaylistForm({
   };
 
   const pathname = usePathname();
-    const searchParams = useSearchParams();
-    const [tempQuery, setTempQuery] = useState(searchParams.get("q") || "");
+  const searchParams = useSearchParams();
+  const [tempQuery, setTempQuery] = useState(searchParams.get("q") || "");
 
-    const updateQueryString = (value: string) => {
-      const params = new URLSearchParams(searchParams);
-      if (value) {
-        params.set("q", value);
-      } else {
-        params.delete("q");
-      }
-      router.push(`${pathname}?${params.toString()}`);
-    };
+  const updateQueryString = (value: string) => {
+    const params = new URLSearchParams(searchParams);
+    if (value) {
+      params.set("q", value);
+    } else {
+      params.delete("q");
+    }
+    router.push(`${pathname}?${params.toString()}`);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -186,8 +186,8 @@ export function PlaylistForm({
     // }
   };
   const filteredDroplets = sourceDroplets.filter((droplet) =>
-  droplet.name.toLowerCase().includes(tempQuery.toLowerCase()),
-);
+    droplet.name.toLowerCase().includes(tempQuery.toLowerCase()),
+  );
 
   return (
     <form onSubmit={handleSubmit} className="w-full max-w-6xl space-y-8">

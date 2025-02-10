@@ -60,11 +60,11 @@ export function MultiSelect({
       if (tagName) {
         const result = await createNewTag(tagName);
         if (result.success) {
-          toast.success("tag created successfully")
+          toast.success("tag created successfully");
         } else {
-          console.error("failed to create tag", result.error)
+          console.error("failed to create tag", result.error);
         }
-        setIsOpen(false)
+        setIsOpen(false);
       }
     } catch (error) {
       console.error("Failed to create new tag: ", error);
@@ -136,29 +136,26 @@ export function MultiSelect({
                       </div>
                       <span>{option.name}</span>
                     </CommandItem>
-                    
                   );
                 })}
                 <div className="flex pt-3" onClick={() => setIsOpen(true)}>
-                  <Plus size={20}/>
+                  <Plus size={20} />
                   Add Tag
                 </div>
                 <Dialog open={isOpen} onOpenChange={onOpenChange}>
                   <DialogContent className="sm:max-w-[250px]">
                     <DialogHeader>
-                      <DialogTitle>
-                        Enter the name of your new tag
-                      </DialogTitle>
+                      <DialogTitle>Enter the name of your new tag</DialogTitle>
                     </DialogHeader>
 
                     <div className="flex flex-col gap-4 mt-4">
-                    <Input
-                      id="name"
-                      value={tagName}
-                      onChange={(e) => setTagName(e.target.value)}
-                      placeholder="Enter new tag name"
-                      className="max-w-xl"
-                    />
+                      <Input
+                        id="name"
+                        value={tagName}
+                        onChange={(e) => setTagName(e.target.value)}
+                        placeholder="Enter new tag name"
+                        className="max-w-xl"
+                      />
                       <Button onClick={handleNewTag}>Save</Button>
                     </div>
                   </DialogContent>

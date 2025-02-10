@@ -76,7 +76,7 @@ export function EnrollButton({ droplet, isEnrolled }: EnrollButtonProps) {
           enroll();
           router.push(`/d/${droplet.slug}/${droplet.lessons[0].slug}`);
         } else {
-          unenroll()
+          unenroll();
         }
       }}
       variant={isEnrolled ? "secondary" : "default"}

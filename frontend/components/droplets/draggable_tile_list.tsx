@@ -56,7 +56,11 @@ export default function DraggableTileList({
         isOver ? "border-slate-400 bg-slate-100/50" : "border-slate-200",
       )}
     >
-      <DraggableTileListClient droplets={droplets} moveCard={moveCard} listType={listType}/>
+      <DraggableTileListClient
+        droplets={droplets}
+        moveCard={moveCard}
+        listType={listType}
+      />
     </div>
   );
 }

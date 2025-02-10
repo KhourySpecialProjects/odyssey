@@ -67,7 +67,11 @@ export function DropletTile({
     try {
       const result = await archiveDroplet(droplet, isArchived ? false : true);
       if (result.success) {
-        toast.success(isArchived ? `${droplet.name} is now unarchived!` : `${droplet.name} is now archived!`);
+        toast.success(
+          isArchived
+            ? `${droplet.name} is now unarchived!`
+            : `${droplet.name} is now archived!`,
+        );
         //router.push('/dashboard');
       } else {
         toast.error("Failed to update droplet visibility");
@@ -116,7 +120,10 @@ export function DropletTile({
 
   return (
     <li className="transition-colors border rounded-md border-slate-200 hover:border-slate-300 bg-slate-50 h-full">
-      <Button onClick={changeVisibility} className={`${(isArchived === true || isArchived === false) ? "visibility: visible" : "visibility: hidden"}`}>
+      <Button
+        onClick={changeVisibility}
+        className={`${isArchived === true || isArchived === false ? "visibility: visible" : "visibility: hidden"}`}
+      >
         {isArchived ? "Unarchive" : "Archive"}
       </Button>
       <Link

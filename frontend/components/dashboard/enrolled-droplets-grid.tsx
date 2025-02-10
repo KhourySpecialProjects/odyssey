@@ -21,7 +21,7 @@ export async function EnrolledDropletsGrid() {
   const authorizedUser = await getAuthorizedUserByEmail(user.email);
   const enrollments = await getEnrollmentsByAuthorizedUser(authorizedUser.id);
 
-  const filteredEnrollments = enrollments.filter((e) => e.isArchived !== true)
+  const filteredEnrollments = enrollments.filter((e) => e.isArchived !== true);
 
   const completedLessonIds = filteredEnrollments.flatMap(
     (enrollment) =>
