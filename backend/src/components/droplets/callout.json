@@ -19,6 +19,11 @@
       ],
       "required": true,
       "default": "info"
+    },
+    "color": {
+      "type": "string",
+      "default": "bg-sky-50",
+      "required": true
     }
   }
 }
