@@ -35,6 +35,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@radix-ui/react-dropdown-menu";
+import { useState } from "react";
 
 export function AddBlock({ add }: { add: (block: any) => void }) {
   const ref = useRef(null);
