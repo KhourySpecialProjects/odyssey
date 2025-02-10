@@ -11,7 +11,7 @@
       "url": "https://khouryodyssey.org"
     },
     "license": null,
-    "x-generation-date": "2025-02-10T14:08:57.335Z"
+    "x-generation-date": "2025-02-10T19:44:22.052Z"
   },
   "x-strapi-config": {
     "plugins": [
@@ -1845,6 +1845,9 @@
                                                                 "type": "integer"
                                                               },
                                                               "isFirstTime": {
+                                                                "type": "boolean"
+                                                              },
+                                                              "isArchived": {
                                                                 "type": "boolean"
                                                               },
                                                               "createdAt": {
@@ -4781,6 +4784,9 @@
                                                                   "type": "integer"
                                                                 },
                                                                 "isFirstTime": {
+                                                                  "type": "boolean"
+                                                                },
+                                                                "isArchived": {
                                                                   "type": "boolean"
                                                                 },
                                                                 "createdAt": {
@@ -8529,6 +8535,9 @@
                                                                 "isFirstTime": {
                                                                   "type": "boolean"
                                                                 },
+                                                                "isArchived": {
+                                                                  "type": "boolean"
+                                                                },
                                                                 "createdAt": {
                                                                   "type": "string",
                                                                   "format": "date-time"
@@ -10536,6 +10545,9 @@
                                                                                 "type": "integer"
                                                                               },
                                                                               "isFirstTime": {
+                                                                                "type": "boolean"
+                                                                              },
+                                                                              "isArchived": {
                                                                                 "type": "boolean"
                                                                               },
                                                                               "createdAt": {
@@ -14385,6 +14397,9 @@
                                                                   "isFirstTime": {
                                                                     "type": "boolean"
                                                                   },
+                                                                  "isArchived": {
+                                                                    "type": "boolean"
+                                                                  },
                                                                   "createdAt": {
                                                                     "type": "string",
                                                                     "format": "date-time"
@@ -16520,6 +16535,9 @@
                                                               "isFirstTime": {
                                                                 "type": "boolean"
                                                               },
+                                                              "isArchived": {
+                                                                "type": "boolean"
+                                                              },
                                                               "createdAt": {
                                                                 "type": "string",
                                                                 "format": "date-time"
@@ -18067,6 +18085,9 @@
               },
               "isFirstTime": {
                 "type": "boolean"
+              },
+              "isArchived": {
+                "type": "boolean"
               }
             }
           }
@@ -19094,6 +19115,9 @@
                                                                               "type": "integer"
                                                                             },
                                                                             "isFirstTime": {
+                                                                              "type": "boolean"
+                                                                            },
+                                                                            "isArchived": {
                                                                               "type": "boolean"
                                                                             },
                                                                             "createdAt": {
@@ -20715,6 +20739,9 @@
           "isFirstTime": {
             "type": "boolean"
           },
+          "isArchived": {
+            "type": "boolean"
+          },
           "createdAt": {
             "type": "string",
             "format": "date-time"
@@ -21829,6 +21856,9 @@
                                                                                 "type": "integer"
                                                                               },
                                                                               "isFirstTime": {
+                                                                                "type": "boolean"
+                                                                              },
+                                                                              "isArchived": {
                                                                                 "type": "boolean"
                                                                               },
                                                                               "createdAt": {
@@ -24647,6 +24677,9 @@
                                                                                 "type": "integer"
                                                                               },
                                                                               "isFirstTime": {
+                                                                                "type": "boolean"
+                                                                              },
+                                                                              "isArchived": {
                                                                                 "type": "boolean"
                                                                               },
                                                                               "createdAt": {
@@ -27760,6 +27793,9 @@
                                                                 "isFirstTime": {
                                                                   "type": "boolean"
                                                                 },
+                                                                "isArchived": {
+                                                                  "type": "boolean"
+                                                                },
                                                                 "createdAt": {
                                                                   "type": "string",
                                                                   "format": "date-time"
@@ -30724,6 +30760,9 @@
                                                                   "type": "integer"
                                                                 },
                                                                 "isFirstTime": {
+                                                                  "type": "boolean"
+                                                                },
+                                                                "isArchived": {
                                                                   "type": "boolean"
                                                                 },
                                                                 "createdAt": {
@@ -33967,6 +34006,9 @@
                                                                   "type": "integer"
                                                                 },
                                                                 "isFirstTime": {
+                                                                  "type": "boolean"
+                                                                },
+                                                                "isArchived": {
                                                                   "type": "boolean"
                                                                 },
                                                                 "createdAt": {

@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { createEnrollment } from "@/lib/actions";
+import { createEnrollment, deleteEnrollment } from "@/lib/actions";
 import { DropletEnrollmentSchema } from "@/lib/validations/enrollment";
 import { Droplet } from "@/types";
 import { ArrowRightIcon } from "lucide-react";
@@ -45,20 +45,43 @@ export function EnrollButton({ droplet, isEnrolled }: EnrollButtonProps) {
     }
   }
 
+  function unenroll() {
+    if (droplet.lessons && droplet.lessons.length > 0) {
+      const values: z.infer<typeof DropletEnrollmentSchema> = {
+        droplet: droplet.id,
+        viewedLessons: [],
+      };
+
+      startTransition(() => {
+        toast.promise(deleteEnrollment(values), {
+          loading: "Unenrolling...",
+          success: () => `You are now unenrolled from ${droplet.name}!`,
+          error: (error) => (
+            <div>
+              <p>Uh oh! Something went wrong.</p>
+              <pre>{error}</pre>
+            </div>
+          ),
+        });
+      });
+    }
+  }
+
   return (
     <Button
       size="lg"
       after={<ArrowRightIcon />}
       onClick={() => {
-        if (droplet.lessons && droplet.lessons[0]) {
+        if (droplet.lessons && droplet.lessons[0] && !isEnrolled) {
           enroll();
           router.push(`/d/${droplet.slug}/${droplet.lessons[0].slug}`);
+        } else {
+          unenroll()
         }
       }}
-      disabled={isEnrolled}
       variant={isEnrolled ? "secondary" : "default"}
     >
-      {isEnrolled ? "Already Enrolled" : "Enroll and Continue"}
+      {isEnrolled ? "Unenroll" : "Enroll and Continue"}
     </Button>
   );
 }

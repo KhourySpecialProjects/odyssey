@@ -301,6 +301,43 @@ export async function createEnrollment(
   }
 }
 
+export async function deleteEnrollment(
+  formData: z.infer<typeof DropletEnrollmentSchema>,
+) {
+  try {
+    const user = await getCurrentUser();
+    if (!user?.email) throw new Error("No email identified");
+    const authorizedUser = await getAuthorizedUserByEmail(user.email);
+    const enrollments = await getEnrollmentsByAuthorizedUser(authorizedUser.id);
+
+    const toRemove = enrollments.filter((e) => e.droplet.id === formData.droplet)
+
+    if (toRemove.length > 0) {
+      const response = await fetch(STRAPI_API_URL + "/api/enrollments/" + toRemove[0].id, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+        },
+      });
+      const data = await response.json();
+
+      if (!response.ok || (response.ok && data.error)) {
+        const errorPath = data.error.details.errors[0].path[0];
+        const errorMessage = `${data.error.message} (${errorPath})`;
+        return { ok: false, error: errorMessage, data: null };
+      }
+
+      revalidateTag("enrollments");
+      revalidatePath("/(droplets)/d/[slug]", "page");
+      revalidatePath("/(general)/dashboard", "page");
+    }
+  } catch (err) {
+    console.error(err);
+    return { error: "Database Error: Failed to unenroll." };
+  }
+}
+
 export async function createEnrollmentFromEmail(
   formData: z.infer<typeof DropletEnrollmentSchema>,
   email: string,
@@ -704,6 +741,46 @@ export async function updateFirstTimeStatus(userId: number) {
   }
 }
 
+export async function archiveDroplet(droplet: Droplet, archiveState: boolean) {
+  try {
+    const user = await getCurrentUser();
+    if (!user?.email) throw new Error("No email identified");
+    const authorizedUser = await getAuthorizedUserByEmail(user.email);
+    const enrollments = await getEnrollmentsByAuthorizedUser(authorizedUser.id);
+
+    const toArchive = enrollments.filter((e) => e.droplet.id === droplet.id)
+    const response = await fetch(
+      `${STRAPI_API_URL}/api/enrollments/${toArchive[0].id}`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+        },
+        body: JSON.stringify({
+          data: {
+            isArchived: archiveState,
+          },
+        }),
+      },
+    );
+
+    if (!response.ok) {
+      throw new Error("Failed to archive droplet");
+    }
+    revalidateTag("dashboard");
+    revalidatePath('/');
+    revalidatePath('/draft');
+    revalidatePath(`/d/${droplet.slug}`);
+    revalidatePath('/dashboard');
+revalidatePath('/dashboard/archived');
+    return { success: true };
+  } catch (error) {
+    console.error("Error archiving droplet:", error);
+    return { success: false, error };
+  }
+}
+
 export async function updateDroplet(
   id: number,
   data: Partial<z.infer<typeof DropletSchema>>,
@@ -905,7 +982,6 @@ export async function updateLesson(
 }
 
 export async function revalidateLesson() {
-  console.log(" --> actions.ts: revalidateLesson() function called");
   revalidateTag("lesson");
   revalidatePath("(editing)/draft/d/[slug]/[lessonSlug]", "page");
 }

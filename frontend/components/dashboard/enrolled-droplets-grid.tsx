@@ -19,30 +19,16 @@ export async function EnrolledDropletsGrid() {
   if (!user?.email) return null;
 
   const authorizedUser = await getAuthorizedUserByEmail(user.email);
-  const enrollments = await getEnrollmentsByAuthorizedUser(authorizedUser.id, {
-    populate: {
-      droplet: {
-        populate: {
-          tags: true,
-          lessons: {
-            fields: ["id", "name", "slug"],
-          },
-        },
-      },
-      viewedLessons: {
-        fields: ["id", "name", "slug"],
-      },
-    },
-  });
-  console.log("user id is ", authorizedUser.id);
-  console.log("droplet grid is filled with :", enrollments);
+  const enrollments = await getEnrollmentsByAuthorizedUser(authorizedUser.id);
 
-  const completedLessonIds = enrollments.flatMap(
+  const filteredEnrollments = enrollments.filter((e) => e.isArchived !== true)
+
+  const completedLessonIds = filteredEnrollments.flatMap(
     (enrollment) =>
       enrollment.viewedLessons?.map((lesson: Lesson) => lesson.id) || [],
   );
 
-  const dropletsWithCompletion = enrollments.map((enrollment) => {
+  const dropletsWithCompletion = filteredEnrollments.map((enrollment) => {
     const droplet = enrollment.droplet;
     const dropletLessonIds = droplet.lessons?.map((l: Lesson) => l.id) || [];
     const completedLessonsInDroplet = completedLessonIds.filter((id) =>
@@ -74,6 +60,7 @@ export async function EnrolledDropletsGrid() {
     <EnrolledDropletsGridClient
       dropletsWithCompletion={dropletsWithCompletion}
       completedLessonIds={completedLessonIds}
+      isArchived={false}
     />
   );
 }

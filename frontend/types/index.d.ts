@@ -172,6 +172,7 @@ export type Enrollment = {
   isComplete: boolean;
   rating: number;
   isFirstTime: boolean;
+  isArchived: boolean;
 };
 
 export interface Playlist {
