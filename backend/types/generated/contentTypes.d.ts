@@ -855,6 +855,7 @@ export interface ApiEnrollmentEnrollment extends Schema.CollectionType {
       'manyToOne',
       'api::droplet.droplet'
     >;
+    isArchived: Attribute.Boolean & Attribute.DefaultTo<false>;
     isComplete: Attribute.Boolean &
       Attribute.Required &
       Attribute.DefaultTo<false>;

@@ -472,8 +472,6 @@ export async function updateGroup(
   // Prepare the data object for Strapi
   const dataToSend: any = {};
 
-  console.log("  --> updateGroup data = ", data);
-
   // Map basic fields
   if (data.groupName) dataToSend.groupName = data.groupName;
   if (data.description) dataToSend.description = data.description;
@@ -522,7 +520,6 @@ export async function updateGroup(
     };
   }
 
-  console.log("  --> updateGroup dataToSend = ", JSON.stringify(dataToSend));
   revalidatePath("/admin");
 
   return await fetchAPI<Group>(path, {
