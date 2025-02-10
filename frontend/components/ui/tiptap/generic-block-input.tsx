@@ -48,7 +48,7 @@ export function GenericBlockInput({
           "before:content-[attr(data-placeholder)] before:text-gray-500 before:absolute before:top-3 before:left-3 before:pointer-events-none before:select-none",
       }),
     ],
-    
+
     onUpdate: ({ editor }) => {
       (updateContent as (content: string) => void)(editor.getHTML());
     },

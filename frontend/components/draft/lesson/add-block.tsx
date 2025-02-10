@@ -10,7 +10,6 @@ import { useRef } from "react";
 import { useOffClick } from "../metadata/hooks/useOffClick";
 import { CalloutIcon } from "@/components/ui/callout-icons";
 
-
 import {
   getInitials,
   isAuthorizedUserAdmin,
@@ -29,11 +28,12 @@ import {
 import { signOut } from "next-auth/react";
 import Link from "next/link";
 import {
-  DropdownMenu, DropdownMenuContent,
+  DropdownMenu,
+  DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
-  DropdownMenuTrigger
+  DropdownMenuTrigger,
 } from "@radix-ui/react-dropdown-menu";
 
 export function AddBlock({ add }: { add: (block: any) => void }) {
@@ -41,15 +41,18 @@ export function AddBlock({ add }: { add: (block: any) => void }) {
   const { open, setOpen } = useOffClick(ref);
   const [dropdownVisible, setDropdownVisible] = useState(false);
 
-  const dropdownVariants = "outline"
+  const dropdownVariants = "outline";
 
   return (
     <div className="w-full flex justify-center items-center gap-3 flex-wrap max-w-2xl">
       <Popover open={open}>
-        <PopoverTrigger asChild onClick={() => {
-          setDropdownVisible(false);
-          setOpen(true);
-        }}>
+        <PopoverTrigger
+          asChild
+          onClick={() => {
+            setDropdownVisible(false);
+            setOpen(true);
+          }}
+        >
           <Button className="bg-slate-600 text-white px-3 py-2 rounded-md hover:bg-slate-700">
             Add Block
           </Button>
@@ -99,144 +102,141 @@ export function AddBlock({ add }: { add: (block: any) => void }) {
 
             <PopoverContent className="divide-y divide-slate-300 mb-3 min-w-[220px] bg-white cursor-pointer text-black text-center p-2 space-y-1 shadow-none">
               <div>
-              
-              <Button
-                onClick={(e) => {
-                  setOpen(false);
-                  e.preventDefault();
-                  add({
-                    __component: "droplets.callout",
-                    content: [
-                      {
-                        type: "paragraph", children: [{ type: "text", text: "" }],
-                      },
-                    ],
-                    color: "bg-red-300",
-                    type: "info",
-                  });
-                }}
-                variant={dropdownVariants}
-                className="w-full border border-slate-200 bg-red-300 mb-1"
-              >
-                Warning
-                {<CalloutIcon color={"bg-red-300"}></CalloutIcon>}
-              </Button>
-              <Button
-                onClick={(e) => {
-                  setOpen(false);
-                  e.preventDefault();
-                  add({
-                    __component: "droplets.callout",
-                    content: [
-                      {
-                        type: "paragraph", children: [{ type: "text", text: "" }],
-                      },
-                    ],
-                    color: "bg-blue-300",
-                    type: "info",
-                  });
-
-                }}
-                variant={dropdownVariants}
-                className="w-full border border-slate-200 bg-blue-300 mb-1"
-              >
-                Question
-                {<CalloutIcon color={"bg-blue-300"}></CalloutIcon>}
-              </Button>
-              <Button
-                onClick={(e) => {
-                  setOpen(false);
-                  e.preventDefault();
-                  add({
-                    __component: "droplets.callout",
-                    content: [
-                      {
-                        type: "paragraph", children: [{ type: "text", text: "" }],
-                      },
-                    ],
-                    color: "bg-orange-300",
-                    type: "info",
-                  });
-                }}
-                variant={dropdownVariants}
-                className="w-full border border-slate-200 bg-orange-300 mb-1"
-              >
-                Important
-                {<CalloutIcon color={"bg-orange-300"}></CalloutIcon>}
-              </Button>
-              <Button
-                onClick={(e) => {
-                  setOpen(false);
-                  e.preventDefault();
-                  add({
-                    __component: "droplets.callout",
-                    content: [
-                      {
-                        type: "paragraph", children: [{ type: "text", text: "" }],
-                      },
-                    ],
-                    color: "bg-green-300",
-                    type: "info",
-                  });
-                }}
-                variant={dropdownVariants}
-                className="w-full border border-slate-200 bg-green-300 mb-1"
-              >
-                Definition
-                {<CalloutIcon color={"bg-green-300"}></CalloutIcon>}
-              </Button>
-              <Button
-                onClick={(e) => {
-                  setOpen(false);
-                  e.preventDefault();
-                  add({
-                    __component: "droplets.callout",
-                    content: [
-                      {
-                        type: "paragraph", children: [{ type: "text", text: "" }],
-                      },
-                    ],
-                    color: "bg-purple-300",
-                    type: "info",
-                  });
-                }}
-                variant={dropdownVariants}
-                className="w-full border border-slate-200 bg-purple-300 mb-1"
-              >
-                More Information
-                {<CalloutIcon color={"bg-purple-300"}></CalloutIcon>}
-              </Button>
-              <Button
-                onClick={(e) => {
-                  setOpen(false);
-                  e.preventDefault();
-                  add({
-                    __component: "droplets.callout",
-                    content: [
-                      {
-                        type: "paragraph", children: [{ type: "text", text: "" }],
-                      },
-                    ],
-                    color: "bg-amber-300",
-                    type: "info",
-                  });
-                }}
-                variant={dropdownVariants}
-                className="w-full border border-slate-200 bg-amber-300"
-              >
-                Caution
-                {<CalloutIcon color={"bg-amber-300"}></CalloutIcon>}
-              </Button>
+                <Button
+                  onClick={(e) => {
+                    setOpen(false);
+                    e.preventDefault();
+                    add({
+                      __component: "droplets.callout",
+                      content: [
+                        {
+                          type: "paragraph",
+                          children: [{ type: "text", text: "" }],
+                        },
+                      ],
+                      color: "bg-red-300",
+                      type: "info",
+                    });
+                  }}
+                  variant={dropdownVariants}
+                  className="w-full border border-slate-200 bg-red-300 mb-1"
+                >
+                  Warning
+                  {<CalloutIcon color={"bg-red-300"}></CalloutIcon>}
+                </Button>
+                <Button
+                  onClick={(e) => {
+                    setOpen(false);
+                    e.preventDefault();
+                    add({
+                      __component: "droplets.callout",
+                      content: [
+                        {
+                          type: "paragraph",
+                          children: [{ type: "text", text: "" }],
+                        },
+                      ],
+                      color: "bg-blue-300",
+                      type: "info",
+                    });
+                  }}
+                  variant={dropdownVariants}
+                  className="w-full border border-slate-200 bg-blue-300 mb-1"
+                >
+                  Question
+                  {<CalloutIcon color={"bg-blue-300"}></CalloutIcon>}
+                </Button>
+                <Button
+                  onClick={(e) => {
+                    setOpen(false);
+                    e.preventDefault();
+                    add({
+                      __component: "droplets.callout",
+                      content: [
+                        {
+                          type: "paragraph",
+                          children: [{ type: "text", text: "" }],
+                        },
+                      ],
+                      color: "bg-orange-300",
+                      type: "info",
+                    });
+                  }}
+                  variant={dropdownVariants}
+                  className="w-full border border-slate-200 bg-orange-300 mb-1"
+                >
+                  Important
+                  {<CalloutIcon color={"bg-orange-300"}></CalloutIcon>}
+                </Button>
+                <Button
+                  onClick={(e) => {
+                    setOpen(false);
+                    e.preventDefault();
+                    add({
+                      __component: "droplets.callout",
+                      content: [
+                        {
+                          type: "paragraph",
+                          children: [{ type: "text", text: "" }],
+                        },
+                      ],
+                      color: "bg-green-300",
+                      type: "info",
+                    });
+                  }}
+                  variant={dropdownVariants}
+                  className="w-full border border-slate-200 bg-green-300 mb-1"
+                >
+                  Definition
+                  {<CalloutIcon color={"bg-green-300"}></CalloutIcon>}
+                </Button>
+                <Button
+                  onClick={(e) => {
+                    setOpen(false);
+                    e.preventDefault();
+                    add({
+                      __component: "droplets.callout",
+                      content: [
+                        {
+                          type: "paragraph",
+                          children: [{ type: "text", text: "" }],
+                        },
+                      ],
+                      color: "bg-purple-300",
+                      type: "info",
+                    });
+                  }}
+                  variant={dropdownVariants}
+                  className="w-full border border-slate-200 bg-purple-300 mb-1"
+                >
+                  More Information
+                  {<CalloutIcon color={"bg-purple-300"}></CalloutIcon>}
+                </Button>
+                <Button
+                  onClick={(e) => {
+                    setOpen(false);
+                    e.preventDefault();
+                    add({
+                      __component: "droplets.callout",
+                      content: [
+                        {
+                          type: "paragraph",
+                          children: [{ type: "text", text: "" }],
+                        },
+                      ],
+                      color: "bg-amber-300",
+                      type: "info",
+                    });
+                  }}
+                  variant={dropdownVariants}
+                  className="w-full border border-slate-200 bg-amber-300"
+                >
+                  Caution
+                  {<CalloutIcon color={"bg-amber-300"}></CalloutIcon>}
+                </Button>
               </div>
             </PopoverContent>
-            
           </Popover>
-
-
-
-
-
-
 
           <Button
             onClick={() => {

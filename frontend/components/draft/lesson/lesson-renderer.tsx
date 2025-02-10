@@ -28,7 +28,7 @@ interface Block {
   label?: string;
   url?: string;
   questions?: QuizQuestion[];
-  color: string
+  color: string;
 }
 
 interface LessonRendererProps {
