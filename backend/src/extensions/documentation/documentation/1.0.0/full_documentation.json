@@ -11,7 +11,7 @@
       "url": "https://khouryodyssey.org"
     },
     "license": null,
-    "x-generation-date": "2025-02-10T19:44:22.052Z"
+    "x-generation-date": "2025-02-10T20:42:21.520Z"
   },
   "x-strapi-config": {
     "plugins": [
@@ -1585,6 +1585,9 @@
                                                                                           "info",
                                                                                           "warning"
                                                                                         ]
+                                                                                      },
+                                                                                      "color": {
+                                                                                        "type": "string"
                                                                                       }
                                                                                     }
                                                                                   },
@@ -4524,6 +4527,9 @@
                                                                                             "info",
                                                                                             "warning"
                                                                                           ]
+                                                                                        },
+                                                                                        "color": {
+                                                                                          "type": "string"
                                                                                         }
                                                                                       }
                                                                                     },
@@ -7401,6 +7407,9 @@
                                                                 "info",
                                                                 "warning"
                                                               ]
+                                                            },
+                                                            "color": {
+                                                              "type": "string"
                                                             }
                                                           }
                                                         },
@@ -10399,6 +10408,9 @@
                                                                               "info",
                                                                               "warning"
                                                                             ]
+                                                                          },
+                                                                          "color": {
+                                                                            "type": "string"
                                                                           }
                                                                         }
                                                                       },
@@ -13263,6 +13275,9 @@
                                                                   "info",
                                                                   "warning"
                                                                 ]
+                                                              },
+                                                              "color": {
+                                                                "type": "string"
                                                               }
                                                             }
                                                           },
@@ -16273,6 +16288,9 @@
                                                                                           "info",
                                                                                           "warning"
                                                                                         ]
+                                                                                      },
+                                                                                      "color": {
+                                                                                        "type": "string"
                                                                                       }
                                                                                     }
                                                                                   },
@@ -18969,6 +18987,9 @@
                                                                             "info",
                                                                             "warning"
                                                                           ]
+                                                                        },
+                                                                        "color": {
+                                                                          "type": "string"
                                                                         }
                                                                       }
                                                                     },
@@ -21710,6 +21731,9 @@
                                                                               "info",
                                                                               "warning"
                                                                             ]
+                                                                          },
+                                                                          "color": {
+                                                                            "type": "string"
                                                                           }
                                                                         }
                                                                       },
@@ -24531,6 +24555,9 @@
                                                                               "info",
                                                                               "warning"
                                                                             ]
+                                                                          },
+                                                                          "color": {
+                                                                            "type": "string"
                                                                           }
                                                                         }
                                                                       },
@@ -27531,6 +27558,9 @@
                                                                                             "info",
                                                                                             "warning"
                                                                                           ]
+                                                                                        },
+                                                                                        "color": {
+                                                                                          "type": "string"
                                                                                         }
                                                                                       }
                                                                                     },
@@ -29410,6 +29440,9 @@
               "info",
               "warning"
             ]
+          },
+          "color": {
+            "type": "string"
           }
         }
       },
@@ -30500,6 +30533,9 @@
                                                                                             "info",
                                                                                             "warning"
                                                                                           ]
+                                                                                        },
+                                                                                        "color": {
+                                                                                          "type": "string"
                                                                                         }
                                                                                       }
                                                                                     },
@@ -33746,6 +33782,9 @@
                                                                                             "info",
                                                                                             "warning"
                                                                                           ]
+                                                                                        },
+                                                                                        "color": {
+                                                                                          "type": "string"
                                                                                         }
                                                                                       }
                                                                                     },
@@ -35701,8 +35740,7 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object",
-              "additionalProperties": true
+              "type": "object"
             },
             "style": "deepObject"
           },
@@ -36207,8 +36245,7 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object",
-              "additionalProperties": true
+              "type": "object"
             },
             "style": "deepObject"
           },
@@ -36713,8 +36750,7 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object",
-              "additionalProperties": true
+              "type": "object"
             },
             "style": "deepObject"
           },
@@ -37219,8 +37255,7 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object",
-              "additionalProperties": true
+              "type": "object"
             },
             "style": "deepObject"
           },
@@ -37725,8 +37760,7 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object",
-              "additionalProperties": true
+              "type": "object"
             },
             "style": "deepObject"
           },
@@ -38231,8 +38265,7 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object",
-              "additionalProperties": true
+              "type": "object"
             },
             "style": "deepObject"
           },
@@ -38737,8 +38770,7 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object",
-              "additionalProperties": true
+              "type": "object"
             },
             "style": "deepObject"
           },
@@ -39243,8 +39275,7 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object",
-              "additionalProperties": true
+              "type": "object"
             },
             "style": "deepObject"
           },
@@ -39749,8 +39780,7 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object",
-              "additionalProperties": true
+              "type": "object"
             },
             "style": "deepObject"
           },
