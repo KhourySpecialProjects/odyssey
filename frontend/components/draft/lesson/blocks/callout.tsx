@@ -46,7 +46,7 @@ export function CalloutEditor({
         >
           <div className="flex flex-row items-center">
             <h2 className="text-lg font-bold text-white mr-3">Callout Block</h2>
-            <CalloutIcon color={block.color}></CalloutIcon>
+            <CalloutIcon color={block.color || "bg-sky-300"}></CalloutIcon>
           </div>
           <div className="flex flex-row items-center">
             <CalloutTypeTool block={block} updateBlock={updateBlock} />
