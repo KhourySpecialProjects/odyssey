@@ -1,6 +1,6 @@
-import AccessRequestBanner from "@/components/access-request-banner";
 import { DebugBanner } from "@/components/debug/debugBanner";
 import { EnvironmentBanner } from "@/components/debug/environmentBanner";
+import Footer from "@/components/footer/page";
 import { Header } from "@/components/header";
 import { Suspense } from "react";
 
@@ -10,21 +10,19 @@ export default function GeneralLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <>
+    <div className="flex min-h-screen flex-col">
       <DebugBanner />
       <EnvironmentBanner />
 
-      <div className="z-10 sticky top-0">
+      <div className="sticky top-0 z-10">
         <Suspense>
           <Header />
         </Suspense>
-
-        {/* <Suspense>
-          <AccessRequestBanner />
-        </Suspense> */}
       </div>
 
-      <main>{children}</main>
-    </>
+      <main className="flex-grow">{children}</main>
+
+      <Footer />
+    </div>
   );
 }

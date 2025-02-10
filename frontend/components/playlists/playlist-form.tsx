@@ -13,6 +13,8 @@ import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import { createPlaylist } from "@/lib/actions";
 import { updatePlaylist } from "@/lib/actions";
+import { createPlaylistAnnouncement } from "@/lib/requests/feed";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
 
 interface PlaylistFormProps {
   droplets: any[];
@@ -55,6 +57,20 @@ export function PlaylistForm({
     0,
   );
 
+  const handlePlaylistPost = async () => {
+    try {
+      if (existingPlaylist) {
+        await createPlaylistAnnouncement(
+          existingPlaylist.name,
+          existingPlaylist?.id,
+        );
+        router.back();
+      }
+    } catch (error) {
+      console.error("Failed to make playlist announcement: ", error);
+    }
+  };
+
   const handleDropToSelected = useCallback((droplet: any) => {
     setSourceDroplets((current) => current.filter((d) => d.id !== droplet.id));
     setSelectedDroplets((current) => [...current, droplet]);
@@ -85,6 +101,15 @@ export function PlaylistForm({
     });
   };
 
+  const [isOpen, setIsOpen] = useState(false);
+  const onOpenChange = (open: boolean) => {
+    if (!open) {
+      setIsOpen(false);
+    } else {
+      setIsOpen(true);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name) {
@@ -95,10 +120,6 @@ export function PlaylistForm({
       setError("Please select at least one droplet");
       return;
     }
-    console.log(` --> New playlist name: ${name}`);
-    console.log(`   --> Playlist selected Droplets are: `, selectedDroplets);
-    console.log(`   --> isPublic: ${isPublic}`);
-    console.log(`   --> Author: ${author}`);
 
     const updatePlaylistData = {
       name,
@@ -116,9 +137,6 @@ export function PlaylistForm({
       userId,
     };
 
-    console.log("updatePlaylistData: ", updatePlaylistData);
-    console.log("playlistData: ", playlistData);
-
     try {
       let response;
       if (existingPlaylist) {
@@ -127,7 +145,7 @@ export function PlaylistForm({
           updatePlaylistData,
         );
         if (response.ok) {
-          router.push(`/p/${response.data.attributes.slug}`);
+          //router.push(`/p/${response.data.attributes.slug}`);
         } else {
           setError(response.error || "Failed to update Playlist!");
         }
@@ -202,9 +220,28 @@ export function PlaylistForm({
             <MoveLeftIcon size={16} />
             Cancel
           </Button>
-          <Button type="submit" className="h-12">
+          <Button
+            type="submit"
+            className="h-12"
+            onClick={() => setIsOpen(true)}
+          >
             Save Playlist
           </Button>
+          <Dialog open={isOpen} onOpenChange={onOpenChange}>
+            <DialogContent className="sm:max-w-[825px]">
+              <DialogHeader>
+                <DialogTitle>
+                  Would you like to announce these changes to everyone enrolled
+                  in this droplet?
+                </DialogTitle>
+              </DialogHeader>
+
+              <div className="flex flex-col gap-4 mt-4">
+                <Button onClick={handlePlaylistPost}>Share</Button>
+                <Button onClick={() => router.back()}>Not Now</Button>
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
 
         <DndProvider backend={HTML5Backend}>

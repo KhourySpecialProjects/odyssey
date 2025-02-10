@@ -840,6 +840,66 @@ export interface ApiAccessRequestAccessRequest extends Schema.CollectionType {
   };
 }
 
+export interface ApiAnnouncementAnnouncement extends Schema.CollectionType {
+  collectionName: 'announcements';
+  info: {
+    description: '';
+    displayName: 'Announcement';
+    pluralName: 'announcements';
+    singularName: 'announcement';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    authorized_user: Attribute.Relation<
+      'api::announcement.announcement',
+      'manyToOne',
+      'api::authorized-user.authorized-user'
+    >;
+    content: Attribute.Text &
+      Attribute.Required &
+      Attribute.SetMinMaxLength<{
+        minLength: 1;
+      }>;
+    createdAt: Attribute.DateTime;
+    createdBy: Attribute.Relation<
+      'api::announcement.announcement',
+      'oneToOne',
+      'admin::user'
+    > &
+      Attribute.Private;
+    droplet: Attribute.Relation<
+      'api::announcement.announcement',
+      'manyToOne',
+      'api::droplet.droplet'
+    >;
+    firstCreated: Attribute.DateTime & Attribute.Required;
+    group: Attribute.Relation<
+      'api::announcement.announcement',
+      'manyToOne',
+      'api::group.group'
+    >;
+    kudosGiven: Attribute.Boolean;
+    playlist: Attribute.Relation<
+      'api::announcement.announcement',
+      'manyToOne',
+      'api::playlist.playlist'
+    >;
+    type: Attribute.Enumeration<
+      ['playlist', 'droplet', 'friend', 'system', 'group', 'kudos']
+    > &
+      Attribute.Required;
+    updatedAt: Attribute.DateTime;
+    updatedBy: Attribute.Relation<
+      'api::announcement.announcement',
+      'oneToOne',
+      'admin::user'
+    > &
+      Attribute.Private;
+  };
+}
+
 export interface ApiAuthorAuthor extends Schema.CollectionType {
   collectionName: 'authors';
   info: {
@@ -1050,7 +1110,15 @@ export interface ApiDropletDroplet extends Schema.CollectionType {
     type: Attribute.Enumeration<['knowledge', 'skill']> & Attribute.Required;
     authors: Attribute.Relation<
       'api::droplet.droplet',
-      'manyToMany',
+      'manyToMany',>
+    announcements: Attribute.Relation<
+      'api::authorized-user.authorized-user',
+      'oneToMany',
+      'api::announcement.announcement'
+    >;
+    author: Attribute.Relation<
+      'api::authorized-user.authorized-user',
+      'oneToOne',
       'api::author.author'
     >;
     slug: Attribute.UID<'api::droplet.droplet', 'name'> & Attribute.Required;
@@ -1173,6 +1241,106 @@ export interface ApiDropletLessonDropletLesson extends Schema.CollectionType {
       'admin::user'
     > &
       Attribute.Private;
+  };
+}
+
+export interface ApiDropletDroplet extends Schema.CollectionType {
+  collectionName: 'droplets';
+  info: {
+    description: '';
+    displayName: 'Droplet';
+    pluralName: 'droplets';
+    singularName: 'droplet';
+  };
+  options: {
+    draftAndPublish: true;
+  };
+  attributes: {
+    announcements: Attribute.Relation<
+      'api::droplet.droplet',
+      'oneToMany',
+      'api::announcement.announcement'
+    >;
+    authors: Attribute.Relation<
+      'api::droplet.droplet',
+      'manyToMany',
+      'api::author.author'
+    >;
+    createdAt: Attribute.DateTime;
+    createdBy: Attribute.Relation<
+      'api::droplet.droplet',
+      'oneToOne',
+      'admin::user'
+    > &
+      Attribute.Private;
+    description: Attribute.Text &
+      Attribute.SetMinMaxLength<{
+        maxLength: 500;
+      }>;
+    droplet_lessons: Attribute.Relation<
+      'api::droplet.droplet',
+      'oneToMany',
+      'api::droplet-lesson.droplet-lesson'
+    >;
+    enrollments: Attribute.Relation<
+      'api::droplet.droplet',
+      'oneToMany',
+      'api::enrollment.enrollment'
+    >;
+    focusArea: Attribute.Enumeration<
+      ['personal', 'professional', 'technical']
+    > &
+      Attribute.Required;
+    groups: Attribute.Relation<
+      'api::droplet.droplet',
+      'manyToMany',
+      'api::group.group'
+    >;
+    isHidden: Attribute.Boolean &
+      Attribute.Required &
+      Attribute.DefaultTo<false>;
+    learningObjectives: Attribute.Component<
+      'droplets.learning-objective',
+      true
+    > &
+      Attribute.Required;
+    lessons: Attribute.Relation<
+      'api::droplet.droplet',
+      'manyToMany',
+      'api::lesson.lesson'
+    >;
+    name: Attribute.String & Attribute.Required & Attribute.Unique;
+    nextSteps: Attribute.Component<'droplets.resource', true>;
+    overview: Attribute.RichText &
+      Attribute.CustomField<
+        'plugin::ckeditor.CKEditor',
+        {
+          output: 'HTML';
+          preset: 'light';
+        }
+      >;
+    postrequisites: Attribute.Relation<
+      'api::droplet.droplet',
+      'manyToMany',
+      'api::droplet.droplet'
+    >;
+    prerequisites: Attribute.Relation<
+      'api::droplet.droplet',
+      'manyToMany',
+      'api::droplet.droplet'
+    >;
+    publishedAt: Attribute.DateTime;
+    slug: Attribute.UID<'api::droplet.droplet', 'name'> & Attribute.Required;
+    status: Attribute.Enumeration<['draft', 'edit', 'published']> &
+      Attribute.Required &
+      Attribute.DefaultTo<'draft'>;
+    tags: Attribute.Relation<
+      'api::droplet.droplet',
+      'manyToMany',
+      'api::tag.tag'
+    >;
+    type: Attribute.Enumeration<['knowledge', 'skill']> & Attribute.Required;
+    updatedAt: Attribute.DateTime;
     updatedBy: Attribute.Relation<
       'api::droplet-lesson.droplet-lesson',
       'oneToOne',
@@ -1212,6 +1380,7 @@ export interface ApiEnrollmentEnrollment extends Schema.CollectionType {
     isComplete: Attribute.Boolean &
       Attribute.Required &
       Attribute.DefaultTo<false>;
+    isFirstTime: Attribute.Boolean & Attribute.DefaultTo<true>;
     rating: Attribute.Integer &
       Attribute.SetMinMax<
         {
@@ -1283,6 +1452,34 @@ export interface ApiGroupGroup extends Schema.CollectionType {
     draftAndPublish: false;
   };
   attributes: {
+    admins: Attribute.Relation<
+      'api::group.group',
+      'manyToMany',
+      'api::authorized-user.authorized-user'
+    >;
+    announcements: Attribute.Relation<
+      'api::group.group',
+      'oneToMany',
+      'api::announcement.announcement'
+    >;
+    createdAt: Attribute.DateTime;
+    createdBy: Attribute.Relation<
+      'api::group.group',
+      'oneToOne',
+      'admin::user'
+    > &
+      Attribute.Private;
+    creator: Attribute.Relation<
+      'api::group.group',
+      'manyToOne',
+      'api::authorized-user.authorized-user'
+    >;
+    description: Attribute.Text;
+    droplets: Attribute.Relation<
+      'api::group.group',
+      'manyToMany',
+      'api::droplet.droplet'
+    >;
     groupName: Attribute.String & Attribute.Required;
     description: Attribute.Text;
     members: Attribute.Relation<
@@ -1442,6 +1639,11 @@ export interface ApiPlaylistPlaylist extends Schema.CollectionType {
     duration: Attribute.Enumeration<['short', 'medium', 'long']> &
       Attribute.Required &
       Attribute.DefaultTo<'medium'>;
+    announcements: Attribute.Relation<
+      'api::playlist.playlist',
+      'oneToMany',
+      'api::announcement.announcement'
+    >;
     author: Attribute.Relation<
       'api::playlist.playlist',
       'manyToOne',
@@ -1556,6 +1758,7 @@ declare module '@strapi/types' {
       'plugin::users-permissions.role': PluginUsersPermissionsRole;
       'plugin::users-permissions.user': PluginUsersPermissionsUser;
       'api::access-request.access-request': ApiAccessRequestAccessRequest;
+      'api::announcement.announcement': ApiAnnouncementAnnouncement;
       'api::author.author': ApiAuthorAuthor;
       'api::authorized-user.authorized-user': ApiAuthorizedUserAuthorizedUser;
       'api::authorized-user-role.authorized-user-role': ApiAuthorizedUserRoleAuthorizedUserRole;

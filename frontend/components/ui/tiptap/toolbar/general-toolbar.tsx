@@ -1,6 +1,6 @@
 "use client";
 
-import { useEditor, EditorContent, JSONContent, Editor } from "@tiptap/react";
+import { Editor } from "@tiptap/react";
 import BoldTool from "./tools/bold-tool";
 import ItalicTool from "./tools/italic-tool";
 import UnderlineTool from "./tools/underline-tool";
