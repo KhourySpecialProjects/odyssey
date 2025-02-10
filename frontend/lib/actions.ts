@@ -474,6 +474,39 @@ export async function addLesson(formData: z.infer<typeof CreateLessonSchema>) {
   }
 }
 
+export async function createNewTag(tag: string) {
+  try {
+    const response = await fetch(
+      `${STRAPI_API_URL}/api/tags`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+        },
+        body: JSON.stringify({
+          data: {
+            name: tag,
+            slug: tag.replace(/\s/g, ''),
+          },
+        }),
+      },
+    );
+
+    if (!response.ok) {
+      console.error("adding tag failed:", await response.text());
+      return { success: false, error: "Failed to add new tag" };
+    }
+
+    revalidatePath("/new/droplet");
+    revalidatePath("/draft/d/[slug]/[lessonSlug]", "page");
+    return { success: true };
+  } catch (error) {
+    console.error("Error adding tag:", error);
+    return { success: false, error: "Failed to process request" };
+  }
+}
+
 export async function updateLinkedin(linkedIn: string, userId: number) {
   try {
     const response = await fetch(
