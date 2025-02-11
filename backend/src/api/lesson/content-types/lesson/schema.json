@@ -61,6 +61,12 @@
       "relation": "oneToMany",
       "target": "api::droplet-lesson.droplet-lesson",
       "mappedBy": "lesson"
+    },
+    "notes": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::note.note",
+      "mappedBy": "lesson"
     }
   }
 }
