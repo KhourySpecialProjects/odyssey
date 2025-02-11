@@ -128,6 +128,12 @@
       "relation": "oneToMany",
       "target": "api::announcement.announcement",
       "mappedBy": "authorized_user"
+    },
+    "highlights": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::highlight.highlight",
+      "mappedBy": "authorized_user"
     }
   }
 }

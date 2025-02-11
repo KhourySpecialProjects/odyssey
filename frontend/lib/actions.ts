@@ -546,6 +546,37 @@ export async function createNewTag(tag: string) {
   }
 }
 
+export async function createNote(note: string, positionY: number, lessonId: number, enrollmentId: number) {
+  try {
+    const response = await fetch(`${STRAPI_API_URL}/api/notes`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+      },
+      body: JSON.stringify({
+        data: {
+          content: note,
+          positionY: positionY,
+          lesson: lessonId,
+          enrollment: enrollmentId
+        },
+      }),
+    });
+
+    if (!response.ok) {
+      console.error("adding note failed:", await response.text());
+      return { success: false, error: "Failed to add new note" };
+    }
+
+    revalidatePath("/draft/d/[slug]/[lessonSlug]", "page");
+    return { success: true };
+  } catch (error) {
+    console.error("Error adding note:", error);
+    return { success: false, error: "Failed to process request" };
+  }
+}
+
 export async function updateLinkedin(linkedIn: string, userId: number) {
   try {
     const response = await fetch(
@@ -741,6 +772,28 @@ export async function updateFirstTimeStatus(userId: number) {
     console.error("Error updating first time status:", error);
     return { success: false, error };
   }
+}
+
+export async function createHighlight(highlightData: any) {
+  console.error("data: ", highlightData)
+  const response = await fetch(`${STRAPI_API_URL}/api/highlights`, {
+    method: 'POST',
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+    },
+    body: JSON.stringify({ data: highlightData }),
+  });
+  
+  if (!response.ok) {
+    throw new Error('Failed to create highlight');
+  }
+  return response.json();
+}
+
+export async function getHighlightsForLesson(lessonId: number) {
+  const response = await fetch(`${STRAPI_API_URL}/api/highlights?lessonId=${lessonId}`);
+  return response.json();
 }
 
 export async function archiveDroplet(droplet: Droplet, archiveState: boolean) {
@@ -1247,8 +1300,6 @@ export async function uploadImage(formData: FormData) {
     };
 
     const response = await s3.send(new PutObjectCommand(uploadParams));
-    console.log(fileName);
-    console.log(response);
     if (response["$metadata"].httpStatusCode != 200) {
       return { ok: false, error: "Failed to upload image.", url: null };
     }

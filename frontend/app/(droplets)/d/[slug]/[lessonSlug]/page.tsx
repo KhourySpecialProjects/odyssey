@@ -7,6 +7,7 @@ import { getLessonBySlug } from "@/lib/requests/lesson";
 import { getServerSession } from "next-auth";
 import { getAuthorByAuthorizedUserEmail } from "@/lib/requests/author";
 import { getCurrentUser } from "@/lib/auth/session";
+import { redirect } from "next/navigation";
 
 type Props = {
   params: Promise<Params>;
@@ -64,6 +65,12 @@ export default async function Page({ params }: Props) {
   }
 
   const currentUser = await getCurrentUser();
+  if (
+    !currentUser ||
+    !currentUser?.email 
+  )
+    return redirect("/");
+  const authUser = await getAuthorizedUserByEmail(currentUser.email);
   const userAuthor = await getAuthorByAuthorizedUserEmail(
     session?.user.email || "",
   );
@@ -80,6 +87,7 @@ export default async function Page({ params }: Props) {
       completedLessonIds={completedLessonIds}
       user={currentUser}
       author={isAuthor || false}
+      authUser={authUser}
     />
   );
 }

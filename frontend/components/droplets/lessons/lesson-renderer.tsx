@@ -6,14 +6,15 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { extractHeadings, isAuthorizedUserAdmin } from "@/lib/utils";
-import { User, Droplet, Lesson } from "@/types";
+import { User, Droplet, Lesson, AuthorizedUser } from "@/types";
 import { BlocksRenderer } from "@strapi/blocks-react-renderer";
-import { ArrowDownFromLineIcon } from "lucide-react";
+import { ArrowDownFromLineIcon, Pencil } from "lucide-react";
 import { QuizBlock } from "./quiz";
 import GenericBlockRenderer from "./GenericBlockRenderer";
-import { useTransition } from "react";
-import { useRouter } from "next/navigation";
-import { markLessonAsComplete } from "@/lib/actions";
+import { useEffect, useState, useTransition } from "react";
+import { redirect, useRouter } from "next/navigation";
+import { createHighlight, createNote, getHighlightsForLesson, markLessonAsComplete } from "@/lib/actions";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../../ui/dialog";
 import {
   LockIcon,
   CircleAlert,
@@ -26,6 +27,11 @@ import {
 import { getCurrentUser } from "@/lib/auth/session";
 import { CalloutIcon } from "@/components/ui/callout-icons";
 import { OpenEndedQuizBlock } from "./open-ended-quiz";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { toast } from "sonner";
+import { Textarea } from "@/components/ui/textarea";
+import { Highlight } from "@/types";
 
 interface LessonRendererProps {
   lesson: Lesson;
@@ -34,6 +40,7 @@ interface LessonRendererProps {
   completedLessonIds: number[];
   user?: User | null;
   author?: boolean;
+  authUser?: AuthorizedUser;
 }
 
 export function LessonRenderer({
@@ -43,9 +50,67 @@ export function LessonRenderer({
   completedLessonIds,
   user,
   author = false,
+  authUser,
 }: LessonRendererProps) {
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
+  const [isOpen, setIsOpen] = useState(false);
+  const [note, setNote] = useState("");
+  const [highlights, setHighlights] = useState<Highlight[]>([]);
+  
+  useEffect(() => {
+    // Fetch highlights when component mounts
+    const fetchHighlights = async () => {
+      const response = await getHighlightsForLesson(lesson.id);
+      if (response.data) {
+        setHighlights(response.data);
+      }
+    };
+    fetchHighlights();
+  }, [lesson.id]);
+
+  const handleHighlight = async (highlight: any) => {
+    const response = await createHighlight({
+      data: {
+        text: highlight.text,
+        position: highlight.position,
+        color: highlight.color,
+        lesson: lesson.id,
+        authorized_user: authUser?.id
+      }
+    });
+    
+    if (response.data) {
+      setHighlights(prev => [...prev, response.data]);
+      toast.success("Highlight saved");
+    } else {
+      toast.error("Failed to save highlight");
+    }
+  };
+
+  const onOpenChange = (open: boolean) => {
+    if (!open) {
+      setIsOpen(false);
+    } else {
+      setIsOpen(true);
+    }
+  };
+
+  const handleNote = async (position: number) => {
+    try {
+      if (note && enrollmentId) {
+        const result = await createNote(note, position, lesson.id, Number(enrollmentId));
+        if (result.success) {
+          toast.success("note created successfully");
+        } else {
+          console.error("failed to create note", result.error);
+        }
+        setIsOpen(false);
+      }
+    } catch (error) {
+      console.error("Failed to create new note: ", error);
+    }
+  };
 
   // Find the current lesson's position in this droplet
   const currentLessonOrder = droplet.droplet_lessons.find(
@@ -109,7 +174,10 @@ export function LessonRenderer({
     });
 
   return (
+    <>
     <div className="w-full mx-auto lg:py-8 max-w-prose">
+    <div className="w-full mx-auto lg:py-8 max-w-prose relative">
+          
       <h1 className="text-4xl font-extrabold text-balance">{lesson.name}</h1>
 
       {headings.length > 2 && (
@@ -130,9 +198,39 @@ export function LessonRenderer({
 
       <div className="mt-8 space-y-12">
         {lesson.blocks.map((b: any, i: number) => (
-          <LessonBlockRenderer key={i} block={b} />
+            <LessonBlockRenderer key={i} block={b} highlights={highlights} onHighlight={handleHighlight} />
         ))}
       </div>
+      {/* <div className="fixed right-8 top-0 bottom-0 flex flex-col justify-evenly ">
+            {Array.from({ length: 10 }).map((_, index) => (
+              <div key={index} className="flex items-center gap-2">
+              <Button size="sm" variant="outline" onClick={() => setIsOpen(true)}>
+                <div className="relative group">
+                  <Pencil className="text-sky-600" />
+                  <span className="absolute left-1/2 transform -translate-x-1/2 top-full mt-1 w-max px-2 py-1 text-xs text-white bg-gray-800 rounded opacity-0 group-hover:opacity-100 transition-opacity">
+                    Take Notes
+                  </span>
+                </div>
+              </Button>
+              </div>
+            ))}
+          </div> */}
+          <Dialog open={isOpen} onOpenChange={onOpenChange}>
+            <DialogContent className="sm:max-w-[250px]">
+              <DialogHeader>
+                <DialogTitle>Enter your notes</DialogTitle>
+              </DialogHeader>
+
+              <div className="flex flex-col gap-4 mt-4">
+                <Textarea
+                  value={note}
+                  onChange={(e) => setNote(e.target.value)}
+                  placeholder="Write your note here"
+                />
+                <Button onClick={() => handleNote(window.scrollY)}>Save</Button>
+              </div>
+            </DialogContent>
+          </Dialog>
 
       <div className="mt-8 flex justify-between items-center">
         <button
@@ -150,13 +248,16 @@ export function LessonRenderer({
         </button>
       </div>
     </div>
+    </div>
+    </>
   );
 }
 
-function LessonBlockRenderer({ block }: { block: any }) {
+function LessonBlockRenderer({ block, highlights, onHighlight }: { block: any, highlights: any[], onHighlight: (highlight: any) => void }) {
   switch (block.__component) {
     case "droplets.generic":
-      return <GenericBlockRenderer block={block} />;
+      return <GenericBlockRenderer block={block} highlights={highlights}
+      onHighlight={onHighlight} />;
 
     case "droplets.video":
       return (
