@@ -89,6 +89,7 @@ export type Lesson = {
   type?: "general" | "setup" | "activity" | "caseStudy";
   blocks: any[];
   droplets: Droplet[];
+  notes: Note[];
 };
 
 export type Tag = {
@@ -173,6 +174,7 @@ export type Enrollment = {
   rating: number;
   isFirstTime: boolean;
   isArchived: boolean;
+  notes: Note[];
 };
 
 export interface Playlist {
@@ -273,3 +275,11 @@ export type Announcement = {
   playlist?: Playlist;
   kudosGiven?: boolean;
 };
+
+export type Note = {
+  id: number,
+  content: string;
+  lesson: Lesson;
+  enrollment: Enrollment;
+  positionY: number;
+}
