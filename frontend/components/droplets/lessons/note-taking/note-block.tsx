@@ -30,7 +30,7 @@ export function NoteBlock({
 
   return (
     <div className=" mx-4 pt-2 px-2 w-3/4 note-block bg-slate-200 rounded-xl">
-     
+
       <textarea
         id="simple-input"
         value={content}
@@ -44,7 +44,9 @@ export function NoteBlock({
         className=" w-full p-2 border-slate-300 rounded-xl focus:outline-none focus:border-slate-400 focus:ring-0 shadow-sm"
         placeholder="Type something..."
         rows={2}
-        
+        style={{
+          resize: "none"
+        }}
       />
     </div>
   );
