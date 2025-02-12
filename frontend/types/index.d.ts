@@ -277,9 +277,9 @@ export type Announcement = {
 };
 
 export type Note = {
-  id: number,
+  id: number;
   content: string;
   lesson: Lesson;
   enrollment: Enrollment;
   positionY: number;
-}
+};

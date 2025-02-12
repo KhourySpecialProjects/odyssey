@@ -8,9 +8,11 @@ import { getServerSession } from "next-auth";
 import { getAuthorByAuthorizedUserEmail } from "@/lib/requests/author";
 import { getCurrentUser } from "@/lib/auth/session";
 import { NotesBar } from "@/components/droplets/lessons/note-taking/notes-bar";
-import { getNotesByAuthorizedUserAndLesson, updateNoteContent } from "@/lib/requests/notes";
+import {
+  getNotesByAuthorizedUserAndLesson,
+  updateNoteContent,
+} from "@/lib/requests/notes";
 import { AuthorizedUser } from "@/types";
-
 
 type Props = {
   params: Promise<Params>;
@@ -55,12 +57,10 @@ export default async function Page({ params }: Props) {
   let completedLessonIds: number[] = [];
   let enrollmentId: string | undefined;
 
-
   if (session?.user?.email) {
     const user = await getAuthorizedUserByEmail(session.user.email);
     const enrollments = await getEnrollmentsByAuthorizedUser(user.id);
     const enrollment = enrollments.find((e) => e.droplet.id === droplet.id);
-
 
     if (enrollment) {
       enrollmentId = enrollment.id;
@@ -70,7 +70,7 @@ export default async function Page({ params }: Props) {
   }
 
   const currentUser = await getCurrentUser();
-  const curAuthUser = await getAuthorizedUserByEmail((currentUser?.email || ""));
+  const curAuthUser = await getAuthorizedUserByEmail(currentUser?.email || "");
   const userAuthor = await getAuthorByAuthorizedUserEmail(
     session?.user.email || "",
   );
@@ -79,11 +79,15 @@ export default async function Page({ params }: Props) {
     droplet.authors &&
     droplet.authors.map((author) => author.id).includes(userAuthor.id);
 
-    const notes = await getNotesByAuthorizedUserAndLesson(curAuthUser.id, lessonSlug);
+  const notes = await getNotesByAuthorizedUserAndLesson(
+    curAuthUser.id,
+    lessonSlug,
+  );
 
   return (
     <div className="flex flex-row w-full">
-      <div className="w-3/4 bg-yellow-100">
+      <div className="w-1/4"></div>
+      <div className="w-1/2 flex justify-center">
         <LessonRenderer
           lesson={lesson}
           droplet={droplet}
@@ -93,10 +97,13 @@ export default async function Page({ params }: Props) {
           author={isAuthor || false}
         />
       </div>
-      <div className="w-1/4">
-        <NotesBar userId={curAuthUser.id} lesson={lesson} enrollmentId={enrollmentId}></NotesBar>
+      <div className="w-1/4 bg-slate-50 rounded-lg border border-slate-200">
+        <NotesBar
+          userId={curAuthUser.id}
+          lesson={lesson}
+          enrollmentId={enrollmentId}
+        />
       </div>
     </div>
-
   );
 }
