@@ -13,7 +13,7 @@ import { QuizBlock } from "./quiz";
 import GenericBlockRenderer from "./GenericBlockRenderer";
 import { useEffect, useState, useTransition } from "react";
 import { redirect, useRouter } from "next/navigation";
-import { createHighlight, createNote, getHighlightsForLesson, markLessonAsComplete } from "@/lib/actions";
+import { createHighlight, deleteHighlight, getHighlightsForLesson, markLessonAsComplete } from "@/lib/actions";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../../ui/dialog";
 import {
   LockIcon,
@@ -32,6 +32,8 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { Textarea } from "@/components/ui/textarea";
 import { Highlight } from "@/types";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 
 interface LessonRendererProps {
   lesson: Lesson;
@@ -54,17 +56,22 @@ export function LessonRenderer({
 }: LessonRendererProps) {
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
-  const [isOpen, setIsOpen] = useState(false);
-  const [note, setNote] = useState("");
   const [highlights, setHighlights] = useState<Highlight[]>([]);
+  const [isHighlighting, setIsHighlighting] = useState(false);
   
   useEffect(() => {
     // Fetch highlights when component mounts
     const fetchHighlights = async () => {
       const response = await getHighlightsForLesson(lesson.id);
+      console.log("response", response.data)
       if (response.data) {
-        setHighlights(response.data);
+        const formattedHighlights = response.data.map((item: any) => ({
+          ...item.attributes,
+          id: item.id
+        }));
+        setHighlights(formattedHighlights);
       }
+      console.log("highlights", highlights)
     };
     fetchHighlights();
   }, [lesson.id]);
@@ -81,34 +88,24 @@ export function LessonRenderer({
     });
     
     if (response.data) {
-      setHighlights(prev => [...prev, response.data]);
+      const formattedHighlight = {
+        ...response.data.attributes,
+        id: response.data.id
+      };
+      setHighlights(prev => [...prev, formattedHighlight]);
       toast.success("Highlight saved");
     } else {
       toast.error("Failed to save highlight");
     }
   };
 
-  const onOpenChange = (open: boolean) => {
-    if (!open) {
-      setIsOpen(false);
+  const handleDeleteHighlight = async (highlightId: number) => {
+    const response = await deleteHighlight(highlightId);
+    if (response && !response.error) {
+      setHighlights(prev => prev.filter(h => h.id !== highlightId));
+      toast.success("Highlight removed");
     } else {
-      setIsOpen(true);
-    }
-  };
-
-  const handleNote = async (position: number) => {
-    try {
-      if (note && enrollmentId) {
-        const result = await createNote(note, position, lesson.id, Number(enrollmentId));
-        if (result.success) {
-          toast.success("note created successfully");
-        } else {
-          console.error("failed to create note", result.error);
-        }
-        setIsOpen(false);
-      }
-    } catch (error) {
-      console.error("Failed to create new note: ", error);
+      toast.error("Failed to remove highlight");
     }
   };
 
@@ -179,6 +176,14 @@ export function LessonRenderer({
     <div className="w-full mx-auto lg:py-8 max-w-prose relative">
           
       <h1 className="text-4xl font-extrabold text-balance">{lesson.name}</h1>
+      <div className="flex items-center space-x-2 pt-4">
+          <Switch
+            id="public"
+            checked={isHighlighting}
+            onCheckedChange={setIsHighlighting}
+          />
+          <Label htmlFor="public">Highlighting Mode</Label>
+        </div>
 
       {headings.length > 2 && (
         <div className="p-6 mt-8 border rounded-md md:px-8 lg:-mx-8 bg-slate-50 border-slate-200">
@@ -198,40 +203,9 @@ export function LessonRenderer({
 
       <div className="mt-8 space-y-12">
         {lesson.blocks.map((b: any, i: number) => (
-            <LessonBlockRenderer key={i} block={b} highlights={highlights} onHighlight={handleHighlight} />
+            <LessonBlockRenderer key={i} block={b} highlights={highlights} onHighlight={handleHighlight} onDeleteHighlight={handleDeleteHighlight} isHighlighting={isHighlighting}/>
         ))}
       </div>
-      {/* <div className="fixed right-8 top-0 bottom-0 flex flex-col justify-evenly ">
-            {Array.from({ length: 10 }).map((_, index) => (
-              <div key={index} className="flex items-center gap-2">
-              <Button size="sm" variant="outline" onClick={() => setIsOpen(true)}>
-                <div className="relative group">
-                  <Pencil className="text-sky-600" />
-                  <span className="absolute left-1/2 transform -translate-x-1/2 top-full mt-1 w-max px-2 py-1 text-xs text-white bg-gray-800 rounded opacity-0 group-hover:opacity-100 transition-opacity">
-                    Take Notes
-                  </span>
-                </div>
-              </Button>
-              </div>
-            ))}
-          </div> */}
-          <Dialog open={isOpen} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-[250px]">
-              <DialogHeader>
-                <DialogTitle>Enter your notes</DialogTitle>
-              </DialogHeader>
-
-              <div className="flex flex-col gap-4 mt-4">
-                <Textarea
-                  value={note}
-                  onChange={(e) => setNote(e.target.value)}
-                  placeholder="Write your note here"
-                />
-                <Button onClick={() => handleNote(window.scrollY)}>Save</Button>
-              </div>
-            </DialogContent>
-          </Dialog>
-
       <div className="mt-8 flex justify-between items-center">
         <button
           onClick={handleMarkAsComplete}
@@ -253,11 +227,12 @@ export function LessonRenderer({
   );
 }
 
-function LessonBlockRenderer({ block, highlights, onHighlight }: { block: any, highlights: any[], onHighlight: (highlight: any) => void }) {
+function LessonBlockRenderer({ block, highlights, onHighlight, onDeleteHighlight, isHighlighting }: 
+  { block: any, highlights: any[], onHighlight: (highlight: any) => void, onDeleteHighlight: (id: number) => void, isHighlighting: boolean }) {
   switch (block.__component) {
     case "droplets.generic":
       return <GenericBlockRenderer block={block} highlights={highlights}
-      onHighlight={onHighlight} />;
+      onHighlight={onHighlight} onDeleteHighlight={onDeleteHighlight} isHighlighting={isHighlighting}/>;
 
     case "droplets.video":
       return (

@@ -118,7 +118,7 @@ export default async function DropletRecapRoute({ params }: Props) {
         {enrollment &&
           enrollment.viewedLessons.length ===
             enrollment.droplet.lessons?.length &&
-          enrollment.isFirstTime && (
+          !(enrollment.isFirstTime === false) && (
             <>
               <CompletedDropletBlock
                 droplet={droplet}

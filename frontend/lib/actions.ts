@@ -775,14 +775,13 @@ export async function updateFirstTimeStatus(userId: number) {
 }
 
 export async function createHighlight(highlightData: any) {
-  console.error("data: ", highlightData)
   const response = await fetch(`${STRAPI_API_URL}/api/highlights`, {
     method: 'POST',
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
     },
-    body: JSON.stringify({ data: highlightData }),
+    body: JSON.stringify({ data: highlightData.data }),
   });
   
   if (!response.ok) {
@@ -791,8 +790,31 @@ export async function createHighlight(highlightData: any) {
   return response.json();
 }
 
+export async function deleteHighlight(id: number) {
+  const response = await fetch(`${STRAPI_API_URL}/api/highlights/${id}`, {
+    method: 'DELETE',
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+    },
+  });
+  
+  if (!response.ok) {
+    throw new Error('Failed to delete highlight');
+  }
+  return response.json();
+}
+
 export async function getHighlightsForLesson(lessonId: number) {
-  const response = await fetch(`${STRAPI_API_URL}/api/highlights?lessonId=${lessonId}`);
+  const user = await getCurrentUser();
+    if (!user?.email) throw new Error("No email identified");
+    const authorizedUser = await getAuthorizedUserByEmail(user.email);
+  const response = await fetch(`${STRAPI_API_URL}/api/highlights?filters[lesson][id][$eq]=${lessonId}&filters[authorized_user][id][$eq]=${authorizedUser.id}`, {
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+    },
+  });
   return response.json();
 }
 
