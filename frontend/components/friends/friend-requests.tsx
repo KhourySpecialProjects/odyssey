@@ -1,18 +1,45 @@
+
+"use client"
+
 import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
 import { FriendRequestBlock } from "./friend-request-block";
 import { getCurrentUser } from "@/lib/auth/session";
 import { redirect } from "next/navigation";
 import { FriendRequestFeedBlock } from "./friend-request-feed-block";
+import { MoveLeft, MoveRight } from "lucide-react";
+import { useTransition, useState } from "react";
+import { AuthorizedUser } from "@/types";
 
-export async function FriendRequests({ noProfile }: { noProfile: Boolean }) {
-  const user = await getCurrentUser();
-  if (!user || !user?.email) return redirect("/");
-  const authUser = await getAuthorizedUserByEmail(user.email);
+export function FriendRequests({ noProfile, friendsPerPage, authUser }: { noProfile: Boolean, friendsPerPage: number, authUser: AuthorizedUser }) {
+
   const friendRequests = authUser.received_requests.filter(
     (friend) =>
       !authUser.blocked.some((blockedUser) => blockedUser.id === friend.id) &&
       !authUser.was_blocked.some((blockedUser) => blockedUser.id === friend.id),
   );
+
+
+    const [currentPage, setCurrentPage] = useState(0); // Track the current page
+    const requestsPerPage = friendsPerPage; // Number of lessons to show per page
+  
+    // Calculate the start and end indices for the lessons on the current page
+    const startIndex = currentPage * requestsPerPage;
+    const endIndex = startIndex + requestsPerPage;
+    const paginatedRequests = friendRequests.slice(startIndex, endIndex); // Slice the lessons array
+    
+    // Calculate the total number of pages
+    const totalPages = Math.ceil((friendRequests.length || 0) / requestsPerPage);
+  
+    // Handlers for navigation
+    const handleNextPage = () => {
+      //if (currentPage < totalPages - 1) setCurrentPage(currentPage + 1);
+      setCurrentPage((prev) => Math.min(prev + 1, totalPages - 1));
+    };
+  
+    const handlePrevPage = () => {
+      //if (currentPage > 0) setCurrentPage(currentPage - 1);
+      setCurrentPage((prev) => Math.max(prev -1, 0));
+    };
 
   return (
     <div className="flex flex-col relative">
@@ -24,8 +51,7 @@ export async function FriendRequests({ noProfile }: { noProfile: Boolean }) {
           {friendRequests.length > 0 ? (
             <ul className="divide-y divide-slate-200 dark:divide-slate-700 md:space-y-4">
               {noProfile
-                ? friendRequests
-                    .slice(0, 5)
+                ? paginatedRequests
                     .map((friendship) => (
                       <FriendRequestFeedBlock
                         user={authUser}
@@ -33,7 +59,7 @@ export async function FriendRequests({ noProfile }: { noProfile: Boolean }) {
                         key={friendship.id}
                       />
                     ))
-                : friendRequests.map((friendship) => (
+                : paginatedRequests.map((friendship) => (
                     <FriendRequestBlock
                       user={authUser}
                       request={friendship}
@@ -45,6 +71,24 @@ export async function FriendRequests({ noProfile }: { noProfile: Boolean }) {
             <p>You have no friend requests</p>
           )}
         </div>
+        {totalPages > 1 && (
+        <div className="mt-4 flex justify-center">
+                      <button
+                        onClick={handlePrevPage}
+                        disabled={currentPage === 0}
+                        className={`px-4 py-2 mr-4 w-22`}
+                      >
+                        <MoveLeft />
+                      </button>
+                      <button
+                        onClick={handleNextPage}
+                        disabled={currentPage === totalPages - 1}
+                        className={`px-4 py-2`}
+                      >
+                        <MoveRight />
+                      </button>
+                    </div>)}
+        
       </section>
     </div>
   );

@@ -85,7 +85,7 @@ export default async function Page({ params }: Props) {
   );
 
   return (
-    <div className="flex flex-row w-full">
+    <div className="flex flex-row w-full h-full">
       <div className="w-1/4"></div>
       <div className="w-1/2 flex justify-center">
         <LessonRenderer
@@ -97,13 +97,14 @@ export default async function Page({ params }: Props) {
           author={isAuthor || false}
         />
       </div>
+      {enrollmentId &&
       <div className="w-1/4 bg-slate-50 rounded-lg border border-slate-200">
         <NotesBar
           userId={curAuthUser.id}
           lesson={lesson}
           enrollmentId={enrollmentId}
         />
-      </div>
+      </div>}
     </div>
   );
 }

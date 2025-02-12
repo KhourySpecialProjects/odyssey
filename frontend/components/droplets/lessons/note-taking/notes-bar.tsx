@@ -89,6 +89,7 @@ export function NotesBar({
 
     const handleAddNote = () => {
         const handleAddNote = async () => {
+            setDialogOpen(false);
             setNoteDisabled(true);
             const newNote: Note = {
                 id: 0,
@@ -105,7 +106,6 @@ export function NotesBar({
             const result = await createNote(lesson, enrollment, mousePositionY);
             if (result.success) {
                 const note = await fetchNotes();
-                setDialogOpen(false);
                 setNoteDisabled(false);
             }
         };
@@ -139,7 +139,7 @@ export function NotesBar({
             </div>
 
             <div
-                className="space-y-4 w-full h-full relative"
+                className="space-y-4 w-full h-full relative cursor-pointer"
                 onClick={handleMouseClick}
             >
 
@@ -147,8 +147,8 @@ export function NotesBar({
                 <div
                     className={`absolute`}
                     style={{
-                        top: `${mousePositionY - 3.5}%`,
-                        left: `${mousePositionX - 11.5}%`,
+                        top: `${mousePositionY - 1.5}%`,
+                        left: `${mousePositionX - 15}%`,
                     }}
                 >
                     <Popover open={dialogOpen}>
@@ -156,10 +156,9 @@ export function NotesBar({
                         <PopoverContent className="w-max p-0">
                             <div className="p-0">
                                 <Button
-                                    variant="ghost"
                                     size="sm"
                                     onClick={handleAddNote}
-                                    className="justify-center"
+                                    className="justify-center bg-white text-slate-600 hover:bg-slate-600 hover:text-white"
                                 >
                                     Create a Note?
                                 </Button>
@@ -176,15 +175,17 @@ export function NotesBar({
                     >
                         <div className="flex flex-row justify-center items-center">
                             <NoteBlock note={note} onUpdate={fetchNotes} disabled={noteDisabled} />
-                            <Button className="mr-2 mb-1 bg-red-700 flex justify-start hover:bg-red-900" variant="default" size="sm">
+                            {!noteDisabled &&
+                            <Button className="mr-2 mb-1 bg-red-700 flex justify-start hover:bg-red-900 trash-icon" variant="default" size="sm">
                                 <Trash2Icon
-                                    className="cursor-pointer text-white trash-icon"
+                                    className="cursor-pointer text-white"
                                     onClick={() => {
                                         handleDeleteNote(note.id);
                                     }}
                                     size={30}
                                 />
                             </Button>
+                            }
                         </div>
                     </div>
                 ))}
