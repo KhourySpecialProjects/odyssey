@@ -1,13 +1,12 @@
-
 "use client";
 
-import { Lesson, OpenEndedQuizQuestion, Note } from "@/types";
+import { Lesson, OpenEndedQuizQuestion, Note, Enrollment } from "@/types";
 import { ExpandableEditor } from "@/components/draft/lesson/blocks/expandable";
 import { VideoEditor } from "@/components/draft/lesson/blocks/video";
 import { CalloutEditor } from "@/components/draft/lesson/blocks/callout";
 import { GenericEditor } from "@/components/draft/lesson/blocks/generic";
 import { AddBlock } from "@/components/draft/lesson/add-block";
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback, useEffect, useRef, useReducer } from "react";
 import { debounce } from "lodash";
 import { updateLesson, deleteLesson } from "@/lib/actions";
 import { useRouter } from "next/navigation";
@@ -31,34 +30,34 @@ import {
     PopoverContent,
     PopoverTrigger,
 } from "@/components/ui/popover";
-
-
-interface NotesBarProps {
-    notes: Note[];
-}
+import { Trash2Icon } from "lucide-react";
+import { deleteNote } from "@/lib/actions";
 
 export function NotesBar({
     userId,
     lesson,
-    enrollmentId
+    enrollmentId,
 }: {
     userId: number;
-    lesson: Lesson,
-    enrollmentId: string | undefined
+    lesson: Lesson;
+    enrollmentId: string | undefined;
 }) {
     const [notes, setNotes] = useState<Note[]>([]);
     const [dialogOpen, setDialogOpen] = useState(false);
     const [mousePositionY, setMousePositionY] = useState(0);
     const [mousePositionX, setMousePositionX] = useState(0);
     const [selectedNote, setSelectedNote] = useState(false);
+    const [noteDisabled, setNoteDisabled] = useState(false);
 
     if (!enrollmentId) {
-        enrollmentId = ""
+        enrollmentId = "";
     }
 
     const fetchNotes = useCallback(async () => {
-        const fetchedNotes = await getNotesByAuthorizedUserAndLesson(userId, lesson.slug);
-        console.log("got the new notes", fetchedNotes)
+        const fetchedNotes = await getNotesByAuthorizedUserAndLesson(
+            userId,
+            lesson.slug,
+        );
         setNotes(fetchedNotes);
     }, [userId, lesson.slug]);
 
@@ -67,78 +66,129 @@ export function NotesBar({
     }, [fetchNotes]);
 
     const handleMouseClick = (e: React.MouseEvent<HTMLDivElement>) => {
-        const rect = e.currentTarget.getBoundingClientRect();
-        // Calculate percentage from top of container
-
-        setMousePositionY(((e.clientY - rect.top) / rect.height) * 100);
-
-        const rightOffset = ((rect.right - e.clientX) / rect.width) * 100;
-        setMousePositionX(100 - rightOffset); // Position from left edge
-
+        if (
+            (e.target as HTMLElement).closest(".note-block") ||
+            (e.target as HTMLElement).closest(".trash-icon")
+        ) {
+            if (dialogOpen === true) {
+                setDialogOpen(false);
+            }
+            setSelectedNote(true);
+            return;
+        }
         if (selectedNote === false) {
+            const rect = e.currentTarget.getBoundingClientRect();
+            // Calculate percentage from top of container
+            setMousePositionY(((e.clientY - rect.top) / rect.height) * 100);
+            const rightOffset = ((rect.right - e.clientX) / rect.width) * 100;
+            setMousePositionX(100 - rightOffset); // Position from left edge
             setDialogOpen(!dialogOpen);
         }
-
         setSelectedNote(false);
-
-
-        console.log("mouse x is ", mousePositionX)
-    }
-
+    };
 
     const handleAddNote = () => {
-
         const handleAddNote = async () => {
-            console.log("got here!", lesson)
+            setNoteDisabled(true);
+            const newNote: Note = {
+                id: 0,
+                content: "",
+                lesson: lesson,
+                enrollment: {} as Enrollment,
+                positionY: mousePositionY
+            }
+            const tempNotes = notes
+            tempNotes.push(newNote);
+            setNotes(tempNotes)
+
             const enrollment = await getEnrollByID(String(enrollmentId));
-            const result = await createNote(lesson, enrollment, mousePositionY)
-            console.log("created it!")
-        }
+            const result = await createNote(lesson, enrollment, mousePositionY);
+            if (result.success) {
+                const note = await fetchNotes();
+                setDialogOpen(false);
+                setNoteDisabled(false);
+            }
+        };
         handleAddNote();
-    }
+    };
+
+    const handleDeleteNote = async (id: number) => {
+        try {
+            // Optimistically remove the note from UI
+            setNotes(currentNotes => currentNotes.filter(note => note.id !== id));
+
+            const result = await deleteNote(id);
+            if (!result.ok) {
+                // If delete failed, restore the notes from server
+                const updatedNotes = await getNotesByAuthorizedUserAndLesson(userId, lesson.slug);
+                setNotes(updatedNotes);
+            }
+        } catch (error) {
+            console.error("Failed to delete note:", error);
+            // Restore notes from server on error
+            const updatedNotes = await getNotesByAuthorizedUserAndLesson(userId, lesson.slug);
+            setNotes(updatedNotes);
+        }
+    };
 
     return (
         <>
 
-            <div className="space-y-4 w-full h-full relative bg-blue-100"
-                onClick={handleMouseClick}>
+            <div className={`text-center mt-5`}>
+                <h1 className="text-2xl font-extrabold text-balance">My Notes</h1>
+            </div>
+
+            <div
+                className="space-y-4 w-full h-full relative"
+                onClick={handleMouseClick}
+            >
+
 
                 <div
-                    className={`absolute transform -translate-y-1/2`}
+                    className={`absolute`}
                     style={{
-                        top: `${mousePositionY}%`,
-                        left: `${mousePositionX}%`,
+                        top: `${mousePositionY - 3.5}%`,
+                        left: `${mousePositionX - 11.5}%`,
                     }}
                 >
                     <Popover open={dialogOpen}>
-                        <PopoverTrigger disabled={false}>
-
-                        </PopoverTrigger>
-                        <PopoverContent>
-                            <Button
-                                variant="ghost"
-                                onClick={handleAddNote}>
-                                Create a Note?
-                            </Button>
+                        <PopoverTrigger disabled={false}></PopoverTrigger>
+                        <PopoverContent className="w-max p-0">
+                            <div className="p-0">
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={handleAddNote}
+                                    className="justify-center"
+                                >
+                                    Create a Note?
+                                </Button>
+                            </div>
                         </PopoverContent>
                     </Popover>
-
                 </div>
 
-                {notes.map((note, index) => (
+                {notes.map((note) => (
                     <div
-                        key={index}
+                        key={note.id}
                         className={`absolute w-full transform -translate-y-1/2`}
                         style={{ top: `${note.positionY}%` }}
                     >
-                        <NoteBlock note={note} onUpdate={fetchNotes} />
+                        <div className="flex flex-row justify-center items-center">
+                            <NoteBlock note={note} onUpdate={fetchNotes} disabled={noteDisabled} />
+                            <Button className="mr-2 mb-1 bg-red-700 flex justify-start hover:bg-red-900" variant="default" size="sm">
+                                <Trash2Icon
+                                    className="cursor-pointer text-white trash-icon"
+                                    onClick={() => {
+                                        handleDeleteNote(note.id);
+                                    }}
+                                    size={30}
+                                />
+                            </Button>
+                        </div>
                     </div>
                 ))}
             </div>
-
-
-
-
         </>
     );
 }
