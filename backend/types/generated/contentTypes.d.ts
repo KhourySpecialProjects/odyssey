@@ -1025,7 +1025,7 @@ export interface ApiHighlightHighlight extends Schema.CollectionType {
     singularName: 'highlight';
   };
   options: {
-    draftAndPublish: true;
+    draftAndPublish: false;
   };
   attributes: {
     authorized_user: Attribute.Relation<
@@ -1047,7 +1047,6 @@ export interface ApiHighlightHighlight extends Schema.CollectionType {
       'api::lesson.lesson'
     >;
     position: Attribute.JSON;
-    publishedAt: Attribute.DateTime;
     text: Attribute.Text;
     updatedAt: Attribute.DateTime;
     updatedBy: Attribute.Relation<

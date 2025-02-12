@@ -23,6 +23,7 @@ export type AuthorizedUserRole = {
 };
 
 export interface Highlight {
+  id?: number;
   text: string;
   position: {
     start: number;
