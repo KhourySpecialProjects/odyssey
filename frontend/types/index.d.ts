@@ -22,6 +22,16 @@ export type AuthorizedUserRole = {
   authorizedUsers?: AuthorizedUser[];
 };
 
+export interface Highlight {
+  id?: number;
+  text: string;
+  position: {
+    start: number;
+    end: number;
+  };
+  color: string;
+}
+
 export type User = {
   name?: string | null;
   email?: string | null;
