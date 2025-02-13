@@ -11,7 +11,7 @@
       "url": "https://khouryodyssey.org"
     },
     "license": null,
-    "x-generation-date": "2025-02-13T03:32:57.279Z"
+    "x-generation-date": "2025-02-13T14:22:43.357Z"
   },
   "x-strapi-config": {
     "plugins": [
@@ -1802,12 +1802,6 @@
                                                                                       "attributes": {
                                                                                         "type": "object",
                                                                                         "properties": {
-<<<<<<< HEAD
-                                                                                          "content": {
-                                                                                            "type": "string"
-                                                                                          },
-=======
->>>>>>> feature/highlighting
                                                                                           "lesson": {
                                                                                             "type": "object",
                                                                                             "properties": {
@@ -1846,8 +1840,6 @@
                                                                                             "type": "number",
                                                                                             "format": "float"
                                                                                           },
-<<<<<<< HEAD
-=======
                                                                                           "content": {
                                                                                             "type": "string"
                                                                                           },
@@ -1955,7 +1947,6 @@
                                                                                             }
                                                                                           },
                                                                                           "position": {},
->>>>>>> feature/highlighting
                                                                                           "createdAt": {
                                                                                             "type": "string",
                                                                                             "format": "date-time"
@@ -5001,12 +4992,6 @@
                                                                                         "attributes": {
                                                                                           "type": "object",
                                                                                           "properties": {
-<<<<<<< HEAD
-                                                                                            "content": {
-                                                                                              "type": "string"
-                                                                                            },
-=======
->>>>>>> feature/highlighting
                                                                                             "lesson": {
                                                                                               "type": "object",
                                                                                               "properties": {
@@ -5045,8 +5030,6 @@
                                                                                               "type": "number",
                                                                                               "format": "float"
                                                                                             },
-<<<<<<< HEAD
-=======
                                                                                             "content": {
                                                                                               "type": "string"
                                                                                             },
@@ -5154,7 +5137,6 @@
                                                                                               }
                                                                                             },
                                                                                             "position": {},
->>>>>>> feature/highlighting
                                                                                             "createdAt": {
                                                                                               "type": "string",
                                                                                               "format": "date-time"
@@ -9193,12 +9175,6 @@
                                                                           "attributes": {
                                                                             "type": "object",
                                                                             "properties": {
-<<<<<<< HEAD
-                                                                              "content": {
-                                                                                "type": "string"
-                                                                              },
-=======
->>>>>>> feature/highlighting
                                                                               "lesson": {
                                                                                 "type": "object",
                                                                                 "properties": {
@@ -9237,12 +9213,9 @@
                                                                                 "type": "number",
                                                                                 "format": "float"
                                                                               },
-<<<<<<< HEAD
-=======
                                                                               "content": {
                                                                                 "type": "string"
                                                                               },
->>>>>>> feature/highlighting
                                                                               "createdAt": {
                                                                                 "type": "string",
                                                                                 "format": "date-time"
@@ -9470,8 +9443,6 @@
                                                       }
                                                     }
                                                   },
-<<<<<<< HEAD
-=======
                                                   "highlights": {
                                                     "type": "object",
                                                     "properties": {
@@ -9492,7 +9463,6 @@
                                                       }
                                                     }
                                                   },
->>>>>>> feature/highlighting
                                                   "createdAt": {
                                                     "type": "string",
                                                     "format": "date-time"
@@ -11384,12 +11354,6 @@
                                                                                         "attributes": {
                                                                                           "type": "object",
                                                                                           "properties": {
-<<<<<<< HEAD
-                                                                                            "content": {
-                                                                                              "type": "string"
-                                                                                            },
-=======
->>>>>>> feature/highlighting
                                                                                             "lesson": {
                                                                                               "type": "object",
                                                                                               "properties": {
@@ -11428,12 +11392,9 @@
                                                                                               "type": "number",
                                                                                               "format": "float"
                                                                                             },
-<<<<<<< HEAD
-=======
                                                                                             "content": {
                                                                                               "type": "string"
                                                                                             },
->>>>>>> feature/highlighting
                                                                                             "createdAt": {
                                                                                               "type": "string",
                                                                                               "format": "date-time"
@@ -11661,8 +11622,6 @@
                                                                     }
                                                                   }
                                                                 },
-<<<<<<< HEAD
-=======
                                                                 "highlights": {
                                                                   "type": "object",
                                                                   "properties": {
@@ -11767,7 +11726,6 @@
                                                                     }
                                                                   }
                                                                 },
->>>>>>> feature/highlighting
                                                                 "createdAt": {
                                                                   "type": "string",
                                                                   "format": "date-time"
@@ -15601,12 +15559,6 @@
                                                                             "attributes": {
                                                                               "type": "object",
                                                                               "properties": {
-<<<<<<< HEAD
-                                                                                "content": {
-                                                                                  "type": "string"
-                                                                                },
-=======
->>>>>>> feature/highlighting
                                                                                 "lesson": {
                                                                                   "type": "object",
                                                                                   "properties": {
@@ -15645,12 +15597,9 @@
                                                                                   "type": "number",
                                                                                   "format": "float"
                                                                                 },
-<<<<<<< HEAD
-=======
                                                                                 "content": {
                                                                                   "type": "string"
                                                                                 },
->>>>>>> feature/highlighting
                                                                                 "createdAt": {
                                                                                   "type": "string",
                                                                                   "format": "date-time"
@@ -15878,8 +15827,6 @@
                                                         }
                                                       }
                                                     },
-<<<<<<< HEAD
-=======
                                                     "highlights": {
                                                       "type": "object",
                                                       "properties": {
@@ -15900,7 +15847,6 @@
                                                         }
                                                       }
                                                     },
->>>>>>> feature/highlighting
                                                     "createdAt": {
                                                       "type": "string",
                                                       "format": "date-time"
@@ -17833,12 +17779,6 @@
                                                                                       "attributes": {
                                                                                         "type": "object",
                                                                                         "properties": {
-<<<<<<< HEAD
-                                                                                          "content": {
-                                                                                            "type": "string"
-                                                                                          },
-=======
->>>>>>> feature/highlighting
                                                                                           "lesson": {
                                                                                             "type": "object",
                                                                                             "properties": {
@@ -17877,8 +17817,6 @@
                                                                                             "type": "number",
                                                                                             "format": "float"
                                                                                           },
-<<<<<<< HEAD
-=======
                                                                                           "content": {
                                                                                             "type": "string"
                                                                                           },
@@ -17986,7 +17924,6 @@
                                                                                             }
                                                                                           },
                                                                                           "position": {},
->>>>>>> feature/highlighting
                                                                                           "createdAt": {
                                                                                             "type": "string",
                                                                                             "format": "date-time"
@@ -20754,12 +20691,6 @@
                                                                                       "attributes": {
                                                                                         "type": "object",
                                                                                         "properties": {
-<<<<<<< HEAD
-                                                                                          "content": {
-                                                                                            "type": "string"
-                                                                                          },
-=======
->>>>>>> feature/highlighting
                                                                                           "lesson": {
                                                                                             "type": "object",
                                                                                             "properties": {
@@ -20798,12 +20729,9 @@
                                                                                             "type": "number",
                                                                                             "format": "float"
                                                                                           },
-<<<<<<< HEAD
-=======
                                                                                           "content": {
                                                                                             "type": "string"
                                                                                           },
->>>>>>> feature/highlighting
                                                                                           "createdAt": {
                                                                                             "type": "string",
                                                                                             "format": "date-time"
@@ -21031,8 +20959,6 @@
                                                                   }
                                                                 }
                                                               },
-<<<<<<< HEAD
-=======
                                                               "highlights": {
                                                                 "type": "object",
                                                                 "properties": {
@@ -21137,7 +21063,6 @@
                                                                   }
                                                                 }
                                                               },
->>>>>>> feature/highlighting
                                                               "createdAt": {
                                                                 "type": "string",
                                                                 "format": "date-time"
@@ -23778,12 +23703,6 @@
                                                                                         "attributes": {
                                                                                           "type": "object",
                                                                                           "properties": {
-<<<<<<< HEAD
-                                                                                            "content": {
-                                                                                              "type": "string"
-                                                                                            },
-=======
->>>>>>> feature/highlighting
                                                                                             "lesson": {
                                                                                               "type": "object",
                                                                                               "properties": {
@@ -23822,12 +23741,9 @@
                                                                                               "type": "number",
                                                                                               "format": "float"
                                                                                             },
-<<<<<<< HEAD
-=======
                                                                                             "content": {
                                                                                               "type": "string"
                                                                                             },
->>>>>>> feature/highlighting
                                                                                             "createdAt": {
                                                                                               "type": "string",
                                                                                               "format": "date-time"
@@ -24055,8 +23971,6 @@
                                                                     }
                                                                   }
                                                                 },
-<<<<<<< HEAD
-=======
                                                                 "highlights": {
                                                                   "type": "object",
                                                                   "properties": {
@@ -24161,7 +24075,6 @@
                                                                     }
                                                                   }
                                                                 },
->>>>>>> feature/highlighting
                                                                 "createdAt": {
                                                                   "type": "string",
                                                                   "format": "date-time"
@@ -26862,12 +26775,6 @@
                                                                                         "attributes": {
                                                                                           "type": "object",
                                                                                           "properties": {
-<<<<<<< HEAD
-                                                                                            "content": {
-                                                                                              "type": "string"
-                                                                                            },
-=======
->>>>>>> feature/highlighting
                                                                                             "lesson": {
                                                                                               "type": "object",
                                                                                               "properties": {
@@ -26906,12 +26813,9 @@
                                                                                               "type": "number",
                                                                                               "format": "float"
                                                                                             },
-<<<<<<< HEAD
-=======
                                                                                             "content": {
                                                                                               "type": "string"
                                                                                             },
->>>>>>> feature/highlighting
                                                                                             "createdAt": {
                                                                                               "type": "string",
                                                                                               "format": "date-time"
@@ -27139,8 +27043,6 @@
                                                                     }
                                                                   }
                                                                 },
-<<<<<<< HEAD
-=======
                                                                 "highlights": {
                                                                   "type": "object",
                                                                   "properties": {
@@ -27245,7 +27147,6 @@
                                                                     }
                                                                   }
                                                                 },
->>>>>>> feature/highlighting
                                                                 "createdAt": {
                                                                   "type": "string",
                                                                   "format": "date-time"
@@ -31981,8 +31882,6 @@
                   ],
                   "example": "string or id"
                 }
-<<<<<<< HEAD
-=======
               },
               "highlights": {
                 "type": "array",
@@ -31997,7 +31896,6 @@
                   ],
                   "example": "string or id"
                 }
->>>>>>> feature/highlighting
               }
             }
           }
@@ -33185,12 +33083,6 @@
                                                                                         "attributes": {
                                                                                           "type": "object",
                                                                                           "properties": {
-<<<<<<< HEAD
-                                                                                            "content": {
-                                                                                              "type": "string"
-                                                                                            },
-=======
->>>>>>> feature/highlighting
                                                                                             "lesson": {
                                                                                               "type": "object",
                                                                                               "properties": {
@@ -33229,8 +33121,6 @@
                                                                                               "type": "number",
                                                                                               "format": "float"
                                                                                             },
-<<<<<<< HEAD
-=======
                                                                                             "content": {
                                                                                               "type": "string"
                                                                                             },
@@ -33338,7 +33228,6 @@
                                                                                               }
                                                                                             },
                                                                                             "position": {},
->>>>>>> feature/highlighting
                                                                                             "createdAt": {
                                                                                               "type": "string",
                                                                                               "format": "date-time"
@@ -34968,8 +34857,6 @@
               }
             }
           },
-<<<<<<< HEAD
-=======
           "highlights": {
             "type": "object",
             "properties": {
@@ -34990,7 +34877,6 @@
               }
             }
           },
->>>>>>> feature/highlighting
           "createdAt": {
             "type": "string",
             "format": "date-time"
@@ -35213,12 +35099,6 @@
           "data": {
             "type": "object",
             "properties": {
-<<<<<<< HEAD
-              "content": {
-                "type": "string"
-              },
-=======
->>>>>>> feature/highlighting
               "lesson": {
                 "oneOf": [
                   {
@@ -35244,12 +35124,9 @@
               "positionY": {
                 "type": "number",
                 "format": "float"
-<<<<<<< HEAD
-=======
               },
               "content": {
                 "type": "string"
->>>>>>> feature/highlighting
               }
             }
           }
@@ -35304,12 +35181,6 @@
       "Note": {
         "type": "object",
         "properties": {
-<<<<<<< HEAD
-          "content": {
-            "type": "string"
-          },
-=======
->>>>>>> feature/highlighting
           "lesson": {
             "type": "object",
             "properties": {
@@ -36288,12 +36159,6 @@
                                                                                       "attributes": {
                                                                                         "type": "object",
                                                                                         "properties": {
-<<<<<<< HEAD
-                                                                                          "content": {
-                                                                                            "type": "string"
-                                                                                          },
-=======
->>>>>>> feature/highlighting
                                                                                           "lesson": {
                                                                                             "type": "object",
                                                                                             "properties": {
@@ -36332,12 +36197,9 @@
                                                                                             "type": "number",
                                                                                             "format": "float"
                                                                                           },
-<<<<<<< HEAD
-=======
                                                                                           "content": {
                                                                                             "type": "string"
                                                                                           },
->>>>>>> feature/highlighting
                                                                                           "createdAt": {
                                                                                             "type": "string",
                                                                                             "format": "date-time"
@@ -37335,8 +37197,6 @@
                                                                   }
                                                                 }
                                                               },
-<<<<<<< HEAD
-=======
                                                               "highlights": {
                                                                 "type": "object",
                                                                 "properties": {
@@ -37441,7 +37301,6 @@
                                                                   }
                                                                 }
                                                               },
->>>>>>> feature/highlighting
                                                               "createdAt": {
                                                                 "type": "string",
                                                                 "format": "date-time"
@@ -38049,8 +37908,6 @@
                           }
                         }
                       },
-<<<<<<< HEAD
-=======
                       "highlights": {
                         "type": "object",
                         "properties": {
@@ -38071,7 +37928,6 @@
                           }
                         }
                       },
->>>>>>> feature/highlighting
                       "createdAt": {
                         "type": "string",
                         "format": "date-time"
@@ -38145,12 +38001,9 @@
             "type": "number",
             "format": "float"
           },
-<<<<<<< HEAD
-=======
           "content": {
             "type": "string"
           },
->>>>>>> feature/highlighting
           "createdAt": {
             "type": "string",
             "format": "date-time"
@@ -39473,12 +39326,6 @@
                                                                                         "attributes": {
                                                                                           "type": "object",
                                                                                           "properties": {
-<<<<<<< HEAD
-                                                                                            "content": {
-                                                                                              "type": "string"
-                                                                                            },
-=======
->>>>>>> feature/highlighting
                                                                                             "lesson": {
                                                                                               "type": "object",
                                                                                               "properties": {
@@ -39517,8 +39364,6 @@
                                                                                               "type": "number",
                                                                                               "format": "float"
                                                                                             },
-<<<<<<< HEAD
-=======
                                                                                             "content": {
                                                                                               "type": "string"
                                                                                             },
@@ -39626,7 +39471,6 @@
                                                                                               }
                                                                                             },
                                                                                             "position": {},
->>>>>>> feature/highlighting
                                                                                             "createdAt": {
                                                                                               "type": "string",
                                                                                               "format": "date-time"
@@ -42979,12 +42823,6 @@
                                                                                         "attributes": {
                                                                                           "type": "object",
                                                                                           "properties": {
-<<<<<<< HEAD
-                                                                                            "content": {
-                                                                                              "type": "string"
-                                                                                            },
-=======
->>>>>>> feature/highlighting
                                                                                             "lesson": {
                                                                                               "type": "object",
                                                                                               "properties": {
@@ -43023,8 +42861,6 @@
                                                                                               "type": "number",
                                                                                               "format": "float"
                                                                                             },
-<<<<<<< HEAD
-=======
                                                                                             "content": {
                                                                                               "type": "string"
                                                                                             },
@@ -43132,7 +42968,6 @@
                                                                                               }
                                                                                             },
                                                                                             "position": {},
->>>>>>> feature/highlighting
                                                                                             "createdAt": {
                                                                                               "type": "string",
                                                                                               "format": "date-time"
@@ -50027,8 +49862,7 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object",
-              "additionalProperties": true
+              "type": "object"
             },
             "style": "deepObject"
           },
@@ -51038,12 +50872,7 @@
             "deprecated": false,
             "required": false,
             "schema": {
-<<<<<<< HEAD
               "type": "object"
-=======
-              "type": "object",
-              "additionalProperties": true
->>>>>>> feature/highlighting
             },
             "style": "deepObject"
           },

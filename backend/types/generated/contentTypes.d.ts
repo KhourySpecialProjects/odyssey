@@ -1046,6 +1046,11 @@ export interface ApiAuthorizedUserAuthorizedUser extends Schema.CollectionType {
       'oneToMany',
       'api::announcement.announcement'
     >;
+    highlights: Attribute.Relation<
+      'api::authorized-user.authorized-user',
+      'oneToMany',
+      'api::highlight.highlight'
+    >;
     createdAt: Attribute.DateTime;
     updatedAt: Attribute.DateTime;
     createdBy: Attribute.Relation<
@@ -1169,41 +1174,7 @@ export interface ApiDropletDroplet extends Schema.CollectionType {
       'oneToMany',
       'api::enrollment.enrollment'
     >;
-    status: Attribute.Enumeration<['draft', 'edit', 'published']> 
-    firstName: Attribute.String;
-    firstTime: Attribute.Boolean & Attribute.DefaultTo<true>;
-    friendships: Attribute.Relation<
-      'api::authorized-user.authorized-user',
-      'manyToMany',
-      'api::friendship.friendship'
-    >;
-    github: Attribute.String;
-    groupAdmin: Attribute.Relation<
-      'api::authorized-user.authorized-user',
-      'manyToMany',
-      'api::group.group'
-    >;
-    groupManager: Attribute.Relation<
-      'api::authorized-user.authorized-user',
-      'manyToMany',
-      'api::group.group'
-    >;
-    groups: Attribute.Relation<
-      'api::authorized-user.authorized-user',
-      'manyToMany',
-      'api::group.group'
-    >;
-    groupsCreated: Attribute.Relation<
-      'api::authorized-user.authorized-user',
-      'oneToMany',
-      'api::group.group'
-    >;
-    highlights: Attribute.Relation<
-      'api::authorized-user.authorized-user',
-      'oneToMany',
-      'api::highlight.highlight'
-    >;
-    isEnabled: Attribute.Boolean &
+    status: Attribute.Enumeration<['draft', 'edit', 'published']> &
       Attribute.Required &
       Attribute.DefaultTo<'draft'>;
     groups: Attribute.Relation<
@@ -1339,30 +1310,6 @@ export interface ApiEnrollmentEnrollment extends Schema.CollectionType {
       'admin::user'
     > &
       Attribute.Private;
-    droplet: Attribute.Relation<
-      'api::enrollment.enrollment',
-      'manyToOne',
-      'api::droplet.droplet'
-    >;
-    isArchived: Attribute.Boolean & Attribute.DefaultTo<false>;
-    isComplete: Attribute.Boolean &
-      Attribute.Required &
-      Attribute.DefaultTo<false>;
-    isFirstTime: Attribute.Boolean & Attribute.DefaultTo<true>;
-    notes: Attribute.Relation<
-      'api::enrollment.enrollment',
-      'oneToMany',
-      'api::note.note'
-    >;
-    rating: Attribute.Integer &
-      Attribute.SetMinMax<
-        {
-          max: 5;
-          min: 1;
-        },
-        number
-      >;
-    updatedAt: Attribute.DateTime;
     updatedBy: Attribute.Relation<
       'api::enrollment.enrollment',
       'oneToOne',
@@ -1498,36 +1445,36 @@ export interface ApiGroupGroup extends Schema.CollectionType {
 export interface ApiHighlightHighlight extends Schema.CollectionType {
   collectionName: 'highlights';
   info: {
-    description: '';
-    displayName: 'Highlight';
-    pluralName: 'highlights';
     singularName: 'highlight';
+    pluralName: 'highlights';
+    displayName: 'Highlight';
+    description: '';
   };
   options: {
     draftAndPublish: false;
   };
   attributes: {
+    text: Attribute.Text;
+    color: Attribute.String & Attribute.DefaultTo<'yellow'>;
     authorized_user: Attribute.Relation<
       'api::highlight.highlight',
       'manyToOne',
       'api::authorized-user.authorized-user'
     >;
-    color: Attribute.String & Attribute.DefaultTo<'yellow'>;
-    createdAt: Attribute.DateTime;
-    createdBy: Attribute.Relation<
-      'api::highlight.highlight',
-      'oneToOne',
-      'admin::user'
-    > &
-      Attribute.Private;
     lesson: Attribute.Relation<
       'api::highlight.highlight',
       'manyToOne',
       'api::lesson.lesson'
     >;
     position: Attribute.JSON;
-    text: Attribute.Text;
+    createdAt: Attribute.DateTime;
     updatedAt: Attribute.DateTime;
+    createdBy: Attribute.Relation<
+      'api::highlight.highlight',
+      'oneToOne',
+      'admin::user'
+    > &
+      Attribute.Private;
     updatedBy: Attribute.Relation<
       'api::highlight.highlight',
       'oneToOne',
@@ -1576,23 +1523,6 @@ export interface ApiLessonLesson extends Schema.CollectionType {
       'manyToMany',
       'api::enrollment.enrollment'
     >;
-    highlights: Attribute.Relation<
-      'api::lesson.lesson',
-      'oneToMany',
-      'api::highlight.highlight'
-    >;
-    name: Attribute.String &
-      Attribute.Required &
-      Attribute.SetMinMaxLength<{
-        maxLength: 100;
-      }>;
-    notes: Attribute.Relation<
-      'api::lesson.lesson',
-      'oneToMany',
-      'api::note.note'
-    >;
-    publishedAt: Attribute.DateTime;
-    slug: Attribute.UID<'api::lesson.lesson', 'name'> & Attribute.Required;
     type: Attribute.Enumeration<['general', 'setup', 'activity', 'caseStudy']> &
       Attribute.DefaultTo<'general'>;
     droplet_lessons: Attribute.Relation<
@@ -1604,6 +1534,11 @@ export interface ApiLessonLesson extends Schema.CollectionType {
       'api::lesson.lesson',
       'oneToMany',
       'api::note.note'
+    >;
+    highlights: Attribute.Relation<
+      'api::lesson.lesson',
+      'oneToMany',
+      'api::highlight.highlight'
     >;
     createdAt: Attribute.DateTime;
     updatedAt: Attribute.DateTime;
@@ -1626,23 +1561,19 @@ export interface ApiLessonLesson extends Schema.CollectionType {
 export interface ApiNoteNote extends Schema.CollectionType {
   collectionName: 'notes';
   info: {
-    displayName: 'Note';
-    pluralName: 'notes';
     singularName: 'note';
+    pluralName: 'notes';
+    displayName: 'Note';
   };
   options: {
     draftAndPublish: false;
   };
   attributes: {
-    content: Attribute.Text;
     lesson: Attribute.Relation<
       'api::note.note',
       'manyToOne',
       'api::lesson.lesson'
     >;
-    createdAt: Attribute.DateTime;
-    createdBy: Attribute.Relation<'api::note.note', 'oneToOne', 'admin::user'> &
-      Attribute.Private;
     enrollment: Attribute.Relation<
       'api::note.note',
       'manyToOne',
@@ -1656,6 +1587,7 @@ export interface ApiNoteNote extends Schema.CollectionType {
         },
         number
       >;
+    content: Attribute.Text;
     createdAt: Attribute.DateTime;
     updatedAt: Attribute.DateTime;
     createdBy: Attribute.Relation<'api::note.note', 'oneToOne', 'admin::user'> &
