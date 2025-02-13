@@ -6,7 +6,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import hljs from "highlight.js";
 import { Highlight } from "@/types";
-import { Highlighter, X, Palette } from "lucide-react";
+import { Highlighter, X, Palette, Pencil } from "lucide-react";
 
 interface GenericBlockRendererProps {
   block: any;
@@ -14,6 +14,7 @@ interface GenericBlockRendererProps {
   onHighlight: (highlight: Highlight) => void;
   onDeleteHighlight: (highlightId: number) => void;
   isHighlighting: boolean;
+  onNote: (notePos: number, text: string) => void;
 }
 
 const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
@@ -22,22 +23,26 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
   onHighlight,
   onDeleteHighlight,
   isHighlighting,
+  onNote,
 }) => {
   const contentRef = useRef<HTMLDivElement>(null);
   const [popup, setPopup] = useState<{
-    x: number;
+    x: string;
     y: number;
     show: boolean;
     highlightSpan: HTMLElement | null;
     showColors: boolean;
   }>({
-    x: 0,
+    x: "",
     y: 0,
     show: false,
     highlightSpan: null,
     showColors: false,
   });
   const savedSelectionRef = useRef<Range | null>(null);
+  const [mousePositionY, setMousePositionY] = useState(0);
+  const [mousePositionX, setMousePositionX] = useState(0);
+  const [curHighlightText, setCurHighlightText] = useState("");
 
   useEffect(() => {
     if (popup.show && savedSelectionRef.current) {
@@ -118,7 +123,15 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
     return offset;
   };
 
-  const handleMouseUp = () => {
+  const handleMouseUp = (e: React.MouseEvent) => {
+    //const rect = e.currentTarget.getBoundingClientRect();
+    // Calculate percentage from top of container
+    //setMousePositionY(((e.clientY - rect.top) / rect.height) * 100);
+    const rect = e.currentTarget.getBoundingClientRect();
+    const rightOffset = ((rect.right - e.clientX) / rect.width) * 100;
+    setMousePositionX(100 - rightOffset); // Position from left edge
+    setMousePositionY(e.pageY);
+
     const selection = window.getSelection();
     if (!selection || selection.isCollapsed) return;
 
@@ -145,7 +158,6 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
               h.text === highlightSpan.textContent &&
               h.color === (highlightSpan as HTMLElement).style.backgroundColor,
           )?.id;
-
           if (highlightId && isHighlighting) {
             onDeleteHighlight(highlightId);
             const textNode = document.createTextNode(
@@ -156,9 +168,17 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
           }
         }
         // const rect = highlightSpan.getBoundingClientRect();
+        // setPopup({
+        //   x: blockOffset - range.startOffset,
+        //   y: blockOffset - range.endOffset,
+        //   show: true,
+        //   highlightSpan: highlightSpan as HTMLElement,
+        //   showColors: false,
+        // });
         setPopup({
-          x: blockOffset - range.startOffset,
-          y: blockOffset - range.endOffset,
+          //x: blockOffset - range.startOffset,
+          x: `${mousePositionX - 3}%`,
+          y: e.pageY - 90,
           show: true,
           highlightSpan: highlightSpan as HTMLElement,
           showColors: false,
@@ -168,6 +188,7 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
       savedSelectionRef.current = range.cloneRange();
 
       if (isHighlighting) {
+        setCurHighlightText(text);
         onHighlight({
           text,
           position: {
@@ -183,8 +204,9 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
 
       // const rect = range.getBoundingClientRect();
       setPopup({
-        x: blockOffset,
-        y: blockOffset,
+        //x: blockOffset,
+        x: `${mousePositionX - 3}%`,
+        y: e.pageY - 90,
         show: true,
         highlightSpan: null,
         showColors: false,
@@ -251,11 +273,16 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
     }
   };
 
+  const handleCreateNote = () => {
+    onNote(mousePositionY, curHighlightText);
+  };
+
   return (
     <>
       <div
         ref={contentRef}
-        onMouseUp={handleMouseUp}
+        onMouseUp={(e) => handleMouseUp(e)}
+        //onMouseDown={() => popup.show = false}
         className="mt-2 prose prose-lg prose-sky prose-table:block prose-table:overflow-x-scroll select-text"
         dangerouslySetInnerHTML={{ __html: block.content }}
       ></div>
@@ -323,6 +350,9 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
               </button>
               <button onClick={handleColorChoice}>
                 <Palette size={16} />
+              </button>
+              <button onClick={handleCreateNote}>
+                <Pencil size={16} />
               </button>
               {popup.showColors && (
                 <div style={{ display: "flex", gap: "5px" }}>
