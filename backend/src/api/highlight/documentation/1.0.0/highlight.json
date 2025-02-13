@@ -1,5 +1,5 @@
 {
-  "/notes": {
+  "/highlights": {
     "get": {
       "responses": {
         "200": {
@@ -7,7 +7,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/NoteListResponse"
+                "$ref": "#/components/schemas/HighlightListResponse"
               }
             }
           }
@@ -64,7 +64,7 @@
         }
       },
       "tags": [
-        "Note"
+        "Highlight"
       ],
       "parameters": [
         {
@@ -170,7 +170,7 @@
           }
         }
       ],
-      "operationId": "get/notes"
+      "operationId": "get/highlights"
     },
     "post": {
       "responses": {
@@ -179,7 +179,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/NoteResponse"
+                "$ref": "#/components/schemas/HighlightResponse"
               }
             }
           }
@@ -236,23 +236,23 @@
         }
       },
       "tags": [
-        "Note"
+        "Highlight"
       ],
       "parameters": [],
-      "operationId": "post/notes",
+      "operationId": "post/highlights",
       "requestBody": {
         "required": true,
         "content": {
           "application/json": {
             "schema": {
-              "$ref": "#/components/schemas/NoteRequest"
+              "$ref": "#/components/schemas/HighlightRequest"
             }
           }
         }
       }
     }
   },
-  "/notes/{id}": {
+  "/highlights/{id}": {
     "get": {
       "responses": {
         "200": {
@@ -260,7 +260,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/NoteResponse"
+                "$ref": "#/components/schemas/HighlightResponse"
               }
             }
           }
@@ -317,7 +317,7 @@
         }
       },
       "tags": [
-        "Note"
+        "Highlight"
       ],
       "parameters": [
         {
@@ -331,7 +331,7 @@
           }
         }
       ],
-      "operationId": "get/notes/{id}"
+      "operationId": "get/highlights/{id}"
     },
     "put": {
       "responses": {
@@ -340,7 +340,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/NoteResponse"
+                "$ref": "#/components/schemas/HighlightResponse"
               }
             }
           }
@@ -397,7 +397,7 @@
         }
       },
       "tags": [
-        "Note"
+        "Highlight"
       ],
       "parameters": [
         {
@@ -411,13 +411,13 @@
           }
         }
       ],
-      "operationId": "put/notes/{id}",
+      "operationId": "put/highlights/{id}",
       "requestBody": {
         "required": true,
         "content": {
           "application/json": {
             "schema": {
-              "$ref": "#/components/schemas/NoteRequest"
+              "$ref": "#/components/schemas/HighlightRequest"
             }
           }
         }
@@ -488,7 +488,7 @@
         }
       },
       "tags": [
-        "Note"
+        "Highlight"
       ],
       "parameters": [
         {
@@ -502,7 +502,7 @@
           }
         }
       ],
-      "operationId": "delete/notes/{id}"
+      "operationId": "delete/highlights/{id}"
     }
   }
 }

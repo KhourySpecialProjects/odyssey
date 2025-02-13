@@ -67,6 +67,12 @@
       "relation": "oneToMany",
       "target": "api::note.note",
       "mappedBy": "lesson"
+    },
+    "highlights": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::highlight.highlight",
+      "mappedBy": "lesson"
     }
   }
 }

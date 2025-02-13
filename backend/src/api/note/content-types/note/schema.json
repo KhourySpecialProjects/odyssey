@@ -11,9 +11,6 @@
   },
   "pluginOptions": {},
   "attributes": {
-    "content": {
-      "type": "text"
-    },
     "lesson": {
       "type": "relation",
       "relation": "manyToOne",
@@ -30,6 +27,9 @@
       "type": "decimal",
       "max": 100,
       "min": 0
+    },
+    "content": {
+      "type": "text"
     }
   }
 }

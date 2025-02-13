@@ -6,14 +6,25 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { extractHeadings, isAuthorizedUserAdmin } from "@/lib/utils";
-import { User, Droplet, Lesson } from "@/types";
+import { User, Droplet, Lesson, AuthorizedUser } from "@/types";
 import { BlocksRenderer } from "@strapi/blocks-react-renderer";
-import { ArrowDownFromLineIcon } from "lucide-react";
+import { ArrowDownFromLineIcon, Pencil } from "lucide-react";
 import { QuizBlock } from "./quiz";
 import GenericBlockRenderer from "./GenericBlockRenderer";
-import { useTransition } from "react";
-import { useRouter } from "next/navigation";
-import { markLessonAsComplete } from "@/lib/actions";
+import { useEffect, useState, useTransition } from "react";
+import { redirect, useRouter } from "next/navigation";
+import {
+  createHighlight,
+  deleteHighlight,
+  getHighlightsForLesson,
+  markLessonAsComplete,
+} from "@/lib/actions";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "../../ui/dialog";
 import {
   LockIcon,
   CircleAlert,
@@ -26,6 +37,13 @@ import {
 import { getCurrentUser } from "@/lib/auth/session";
 import { CalloutIcon } from "@/components/ui/callout-icons";
 import { OpenEndedQuizBlock } from "./open-ended-quiz";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { toast } from "sonner";
+import { Textarea } from "@/components/ui/textarea";
+import { Highlight } from "@/types";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 
 interface LessonRendererProps {
   lesson: Lesson;
@@ -34,6 +52,7 @@ interface LessonRendererProps {
   completedLessonIds: number[];
   user?: User | null;
   author?: boolean;
+  authUser?: AuthorizedUser;
 }
 
 export function LessonRenderer({
@@ -43,9 +62,62 @@ export function LessonRenderer({
   completedLessonIds,
   user,
   author = false,
+  authUser,
 }: LessonRendererProps) {
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
+  const [highlights, setHighlights] = useState<Highlight[]>([]);
+  const [isHighlighting, setIsHighlighting] = useState(false);
+
+  useEffect(() => {
+    // Fetch highlights when component mounts
+    const fetchHighlights = async () => {
+      const response = await getHighlightsForLesson(lesson.id);
+      console.log("response", response.data);
+      if (response.data) {
+        const formattedHighlights = response.data.map((item: any) => ({
+          ...item.attributes,
+          id: item.id,
+        }));
+        setHighlights(formattedHighlights);
+      }
+      console.log("highlights", highlights);
+    };
+    fetchHighlights();
+  }, [lesson.id]);
+
+  const handleHighlight = async (highlight: any) => {
+    const response = await createHighlight({
+      data: {
+        text: highlight.text,
+        position: highlight.position,
+        color: highlight.color,
+        lesson: lesson.id,
+        authorized_user: authUser?.id,
+      },
+    });
+
+    if (response.data) {
+      const formattedHighlight = {
+        ...response.data.attributes,
+        id: response.data.id,
+      };
+      setHighlights((prev) => [...prev, formattedHighlight]);
+      toast.success("Highlight saved");
+    } else {
+      toast.error("Failed to save highlight");
+    }
+  };
+
+  const handleDeleteHighlight = async (highlightId: number) => {
+    const response = await deleteHighlight(highlightId);
+    if (response && !response.error) {
+      setHighlights((prev) => prev.filter((h) => h.id !== highlightId));
+      toast.success("Highlight removed");
+    } else {
+      toast.error("Failed to remove highlight");
+    }
+  };
 
   // Find the current lesson's position in this droplet
   const currentLessonOrder = droplet.droplet_lessons.find(
@@ -109,54 +181,96 @@ export function LessonRenderer({
     });
 
   return (
-    <div className="w-full mx-auto lg:py-8 max-w-prose">
-      <h1 className="text-4xl font-extrabold text-balance">{lesson.name}</h1>
+    <>
+      <div className="w-full mx-auto lg:py-8 max-w-prose">
+        <div className="w-full mx-auto lg:py-8 max-w-prose relative">
+          <h1 className="text-4xl font-extrabold text-balance">
+            {lesson.name}
+          </h1>
+          <div className="flex items-center space-x-2 pt-4">
+            <Switch
+              id="public"
+              checked={isHighlighting}
+              onCheckedChange={setIsHighlighting}
+            />
+            <Label htmlFor="public">Highlighting Mode</Label>
+          </div>
 
-      {headings.length > 2 && (
-        <div className="p-6 mt-8 border rounded-md md:px-8 lg:-mx-8 bg-slate-50 border-slate-200">
-          <h2 className="text-xl font-bold">Contents</h2>
-          <ul className="mt-3 ml-4 list-disc list-inside">
-            {headings.map((heading, index) => (
-              <li
-                key={index}
-                style={{ marginLeft: `${(heading.level - 2) * 25}px` }}
-              >
-                {heading.text}
-              </li>
+          {headings.length > 2 && (
+            <div className="p-6 mt-8 border rounded-md md:px-8 lg:-mx-8 bg-slate-50 border-slate-200">
+              <h2 className="text-xl font-bold">Contents</h2>
+              <ul className="mt-3 ml-4 list-disc list-inside">
+                {headings.map((heading, index) => (
+                  <li
+                    key={index}
+                    style={{ marginLeft: `${(heading.level - 2) * 25}px` }}
+                  >
+                    {heading.text}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          <div className="mt-8 space-y-12">
+            {lesson.blocks.map((b: any, i: number) => (
+              <LessonBlockRenderer
+                key={i}
+                block={b}
+                highlights={highlights}
+                onHighlight={handleHighlight}
+                onDeleteHighlight={handleDeleteHighlight}
+                isHighlighting={isHighlighting}
+              />
             ))}
-          </ul>
+          </div>
+          <div className="mt-8 flex justify-between items-center">
+            <button
+              onClick={handleMarkAsComplete}
+              disabled={
+                isPending ||
+                !enrollmentId ||
+                completedLessonIds.includes(lesson.id)
+              }
+              className="px-4 py-2 bg-sky-600 text-white rounded-lg hover:bg-sky-700 disabled:opacity-50"
+            >
+              {isPending
+                ? "Marking as complete..."
+                : completedLessonIds.includes(lesson.id)
+                  ? "Completed"
+                  : "Mark as complete"}
+            </button>
+          </div>
         </div>
-      )}
-
-      <div className="mt-8 space-y-12">
-        {lesson.blocks.map((b: any, i: number) => (
-          <LessonBlockRenderer key={i} block={b} />
-        ))}
       </div>
-
-      <div className="mt-8 flex justify-between items-center">
-        <button
-          onClick={handleMarkAsComplete}
-          disabled={
-            isPending || !enrollmentId || completedLessonIds.includes(lesson.id)
-          }
-          className="px-4 py-2 bg-sky-600 text-white rounded-lg hover:bg-sky-700 disabled:opacity-50"
-        >
-          {isPending
-            ? "Marking as complete..."
-            : completedLessonIds.includes(lesson.id)
-              ? "Completed"
-              : "Mark as complete"}
-        </button>
-      </div>
-    </div>
+    </>
   );
 }
 
-function LessonBlockRenderer({ block }: { block: any }) {
+function LessonBlockRenderer({
+  block,
+  highlights,
+  onHighlight,
+  onDeleteHighlight,
+  isHighlighting,
+}: {
+  block: any;
+  highlights: any[];
+  onHighlight: (highlight: any) => void;
+  onDeleteHighlight: (id: number) => void;
+  isHighlighting: boolean;
+}) {
   switch (block.__component) {
     case "droplets.generic":
-      return <GenericBlockRenderer block={block} />;
+      return (
+        <GenericBlockRenderer
+          block={block}
+          highlights={highlights}
+          onHighlight={onHighlight}
+          onDeleteHighlight={onDeleteHighlight}
+          isHighlighting={isHighlighting}
+        />
+      );
 
     case "droplets.video":
       return (

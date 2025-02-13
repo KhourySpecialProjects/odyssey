@@ -13,6 +13,7 @@ import {
   updateNoteContent,
 } from "@/lib/requests/notes";
 import { AuthorizedUser } from "@/types";
+import { redirect } from "next/navigation";
 
 type Props = {
   params: Promise<Params>;
@@ -70,7 +71,8 @@ export default async function Page({ params }: Props) {
   }
 
   const currentUser = await getCurrentUser();
-  const curAuthUser = await getAuthorizedUserByEmail(currentUser?.email || "");
+  if (!currentUser || !currentUser?.email) return redirect("/");
+  const authUser = await getAuthorizedUserByEmail(currentUser.email);
   const userAuthor = await getAuthorByAuthorizedUserEmail(
     session?.user.email || "",
   );
@@ -80,7 +82,7 @@ export default async function Page({ params }: Props) {
     droplet.authors.map((author) => author.id).includes(userAuthor.id);
 
   const notes = await getNotesByAuthorizedUserAndLesson(
-    curAuthUser.id,
+    authUser.id,
     lessonSlug,
   );
 
@@ -95,12 +97,13 @@ export default async function Page({ params }: Props) {
           completedLessonIds={completedLessonIds}
           user={currentUser}
           author={isAuthor || false}
+          authUser={authUser}
         />
       </div>
       {enrollmentId &&
       <div className="w-1/4 bg-slate-50 rounded-lg border border-slate-200">
         <NotesBar
-          userId={curAuthUser.id}
+          userId={authUser.id}
           lesson={lesson}
           enrollmentId={enrollmentId}
         />
