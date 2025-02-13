@@ -183,6 +183,7 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
 
       if (isHighlighting && text) {
         setCurHighlightText(text);
+        console.log("current text is ", text)
         onHighlight({
           text,
           position: {
@@ -256,6 +257,9 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
     range.surroundContents(span);
   };
 
+  console.log("highlight span", popupRef.current.highlightSpan)
+  console.log("textContent", popupRef.current.highlightSpan?.textContent)
+
   const handleApplyColor = (color: string) => {
     if (popupRef.current.highlightSpan && popupRef.current.highlightSpan.textContent) {
       const blockOffset = getTextOffset(
@@ -288,6 +292,8 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
     onNote(mousePositionY, curHighlightText);
   };
 
+  console.log("popup ref ", popupRef.current)
+
   return (
     <>
       <div className="fixed top-8 right-1/4 transform -translate-x-1/2 bg-blue-100 p-2 rounded shadow-lg  group">
@@ -300,7 +306,7 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
                 id="public"
                 checked={isHighlighting}
                 onCheckedChange={setIsHighlighting}
-                className="bg-black"
+                className={`bg-black`}
               />
               <Label htmlFor="public">Highlighting Mode</Label>
             </div>
