@@ -131,9 +131,9 @@ export function NotesBar({
 
   return (
     <>
-      <div className={`text-center mt-5`}>
-        <h1 className="text-2xl font-extrabold text-balance">My Notes</h1>
-      </div>
+      <div className={`fixed right-[10%] text-center mt-5`}>
+                <h1 className="text-2xl font-extrabold ">My Notes</h1>
+            </div>
       <div
         className="space-y-4 w-full h-full relative cursor-pointer"
         onClick={handleMouseClick}
