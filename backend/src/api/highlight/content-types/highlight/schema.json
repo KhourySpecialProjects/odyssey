@@ -33,6 +33,17 @@
     },
     "position": {
       "type": "json"
+    },
+    "yLevel": {
+      "type": "decimal",
+      "max": 100,
+      "min": 0
+    },
+    "note": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::note.note",
+      "mappedBy": "highlight"
     }
   }
 }

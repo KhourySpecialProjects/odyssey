@@ -545,7 +545,7 @@ export async function createNewTag(tag: string) {
     return { success: false, error: "Failed to process request" };
   }
 }
-
+/*
 export async function createNote(
   note: string,
   positionY: number,
@@ -580,7 +580,7 @@ export async function createNote(
     console.error("Error adding note:", error);
     return { success: false, error: "Failed to process request" };
   }
-}
+}*/
 
 export async function updateLinkedin(linkedIn: string, userId: number) {
   try {

@@ -2,11 +2,13 @@ import { Note } from "@/types";
 import { useState, useEffect, useCallback } from "react";
 import { ChangeEvent } from "react";
 import { updateNoteContent } from "@/lib/requests/notes";
+import { Badge } from "@/components/ui/badge";
+import { File, MessageSquareText } from "lucide-react";
 
 export function NoteBlock({
   note,
   onUpdate,
-  disabled
+  disabled,
 }: {
   note: Note;
   onUpdate: () => void;
@@ -28,8 +30,42 @@ export function NoteBlock({
     }
   }, [content, note.id, onUpdate]);
 
+  console.log("text is ", note.highlight);
+  console.log("color is ", note.highlight?.color);
+
+  const getHighlightColor = (color: string | undefined) => {
+    switch (color) {
+      case "yellow":
+        return "bg-yellow-200";
+      case "red":
+        return "bg-red-200";
+      case "blue":
+        return "bg-blue-200";
+      default:
+        return "bg-yellow-200";
+    }
+  };
+
   return (
-    <div className=" mx-4 pt-2 px-2 w-3/4 note-block bg-slate-200 rounded-xl">
+    <div className=" mx-2 pt-2 px-2 w-4/5 note-block bg-slate-200 rounded-xl">
+      <div className="pb-1 flex flex-row">
+        {note.highlight?.text ? (
+          <div className="flex flex-row justify-between w-full">
+            <Badge
+              variant="secondary"
+              title={note.highlight.text}
+              className={`inline-block w-fit max-w-[85%] block overflow-hidden text-ellipsis whitespace-nowrap text-center text-slate-700 ${getHighlightColor(note.highlight.color)} hover:text-white`}
+            >
+              {note.highlight.text}
+            </Badge>
+            <MessageSquareText color="#6c6060" />
+          </div>
+        ) : (
+          <div className="flex flex-row justify-end w-full">
+            <File color="#6c6060" />
+          </div>
+        )}
+      </div>
 
       <textarea
         id="simple-input"
@@ -45,7 +81,7 @@ export function NoteBlock({
         placeholder="Type something..."
         rows={2}
         style={{
-          resize: "none"
+          resize: "none",
         }}
       />
     </div>

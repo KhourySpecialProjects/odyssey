@@ -4,7 +4,8 @@
   "info": {
     "singularName": "note",
     "pluralName": "notes",
-    "displayName": "Note"
+    "displayName": "Note",
+    "description": ""
   },
   "options": {
     "draftAndPublish": false
@@ -23,13 +24,17 @@
       "target": "api::enrollment.enrollment",
       "inversedBy": "notes"
     },
-    "positionY": {
-      "type": "decimal",
-      "max": 100,
-      "min": 0
-    },
     "content": {
       "type": "text"
+    },
+    "positionY": {
+      "type": "integer"
+    },
+    "highlight": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::highlight.highlight",
+      "inversedBy": "note"
     }
   }
 }
