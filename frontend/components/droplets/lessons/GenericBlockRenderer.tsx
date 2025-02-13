@@ -6,14 +6,15 @@
 import React, { useEffect, useRef, useState } from "react";
 import hljs from "highlight.js";
 import { Highlight } from "@/types";
-import { Highlighter, X, Palette } from "lucide-react";
+import { Highlighter, X, Palette, Pen } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 
 interface GenericBlockRendererProps {
   block: any;
   highlights: Highlight[];
   onHighlight: (highlight: Highlight) => void;
   onDeleteHighlight: (highlightId: number) => void;
-  isHighlighting: boolean;
 }
 
 const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
@@ -21,37 +22,23 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
   highlights,
   onHighlight,
   onDeleteHighlight,
-  isHighlighting,
 }) => {
   const contentRef = useRef<HTMLDivElement>(null);
-  const [popup, setPopup] = useState<{
+  const popupRef = useRef<{
     x: number;
     y: number;
-    show: boolean;
     highlightSpan: HTMLElement | null;
     showColors: boolean;
+    savedRange: Range | null;
   }>({
     x: 0,
     y: 0,
-    show: false,
     highlightSpan: null,
     showColors: false,
+    savedRange: null,
   });
   const savedSelectionRef = useRef<Range | null>(null);
-
-  useEffect(() => {
-    if (popup.show && savedSelectionRef.current) {
-      const selection = window.getSelection();
-      selection?.removeAllRanges();
-      selection?.addRange(savedSelectionRef.current);
-    }
-  }, [popup.show]);
-
-  useEffect(() => {
-    if (!popup.show) {
-      savedSelectionRef.current = null;
-    }
-  }, [popup.show]);
+  const [isHighlighting, setIsHighlighting] = useState(false);
 
   useEffect(() => {
     if (contentRef.current) {
@@ -105,7 +92,7 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
         }
       });
     }
-  }, [block, highlights, isHighlighting, popup]);
+  }, [block, highlights, isHighlighting, popupRef]);
 
   const getTextOffset = (parent: Node, node: Node): number => {
     let offset = 0;
@@ -120,11 +107,14 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
 
   const handleMouseUp = () => {
     const selection = window.getSelection();
-    if (!selection || selection.isCollapsed) return;
+    if (!selection || selection.isCollapsed) {
+      return;
+    }
 
-    const range = selection.getRangeAt(0);
+    let range = selection.getRangeAt(0);
+    savedSelectionRef.current = range.cloneRange();
+
     const text = selection.toString();
-
     if (text.length > 0 && contentRef.current) {
       const blockOffset = getTextOffset(
         contentRef.current,
@@ -155,19 +145,14 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
             parent.normalize();
           }
         }
-        // const rect = highlightSpan.getBoundingClientRect();
-        setPopup({
-          x: blockOffset - range.startOffset,
-          y: blockOffset - range.endOffset,
-          show: true,
-          highlightSpan: highlightSpan as HTMLElement,
-          showColors: false,
-        });
+        popupRef.current.x = blockOffset + range.startOffset;
+        popupRef.current.y = blockOffset + range.endOffset
+        popupRef.current.highlightSpan = highlightSpan as HTMLElement
+        popupRef.current.savedRange = savedSelectionRef.current
         return;
       }
-      savedSelectionRef.current = range.cloneRange();
 
-      if (isHighlighting) {
+      if (isHighlighting && text) {
         onHighlight({
           text,
           position: {
@@ -180,190 +165,159 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
         span.style.backgroundColor = "yellow";
         range.surroundContents(span);
       }
-
-      // const rect = range.getBoundingClientRect();
-      setPopup({
-        x: blockOffset,
-        y: blockOffset,
-        show: true,
-        highlightSpan: null,
-        showColors: false,
-      });
+        popupRef.current.x = blockOffset + range.startOffset;
+        popupRef.current.y = blockOffset + range.endOffset
+        popupRef.current.highlightSpan = null
+        popupRef.current.savedRange = savedSelectionRef.current
     }
   };
 
   const handlePopupDelete = () => {
-    if (popup.highlightSpan) {
+    if (popupRef.current.highlightSpan) {
       const highlightId = highlights.find(
         (h) =>
-          h.text === popup.highlightSpan?.textContent &&
+          h.text === popupRef.current.highlightSpan?.textContent &&
           h.color ===
-            (popup.highlightSpan as HTMLElement).style.backgroundColor,
+            (popupRef.current.highlightSpan as HTMLElement).style.backgroundColor,
       )?.id;
 
       if (highlightId) {
         onDeleteHighlight(highlightId);
-        const parent = popup.highlightSpan.parentNode;
+        const parent = popupRef.current.highlightSpan.parentNode;
         if (parent) {
           const textNode = document.createTextNode(
-            popup.highlightSpan.textContent || "",
+            popupRef.current.highlightSpan.textContent || "",
           );
-          parent.replaceChild(textNode, popup.highlightSpan);
+          parent.replaceChild(textNode, popupRef.current.highlightSpan);
           parent.normalize();
         }
       }
-      setPopup((prev) => ({ ...prev, show: false }));
     }
   };
 
   const handlePopupHighlight = () => {
-    const selection = window.getSelection();
+    if (!contentRef.current || !popupRef.current.savedRange) {
+      return;
+    }
 
-    if (!selection || !contentRef.current) return;
-
-    const range = selection.getRangeAt(0);
-    const text = selection.toString();
+    const range = popupRef.current.savedRange
+    const text = range.toString();
     const blockOffset = getTextOffset(contentRef.current, range.startContainer);
 
-    onHighlight({
-      text,
-      position: {
-        start: blockOffset + range.startOffset,
-        end: blockOffset + range.endOffset,
-      },
-      color: "yellow",
-    });
+    const startOffset = range.startOffset;
+    const endOffset = range.endOffset;
+
+    if (text) {
+      onHighlight({
+        text,
+        position: {
+          start: blockOffset + startOffset,
+          end: blockOffset + endOffset,
+        },
+        color: "yellow",
+      });
+    }
+    
 
     const span = document.createElement("span");
     span.style.backgroundColor = "yellow";
     range.surroundContents(span);
-    setPopup((prev) => ({ ...prev, show: false }));
-  };
-
-  const handleColorChoice = () => {
-    setPopup((prev) => ({ ...prev, showColors: !prev.showColors })); // Toggle color buttons
   };
 
   const handleApplyColor = (color: string) => {
-    if (popup.highlightSpan) {
-      popup.highlightSpan.style.backgroundColor = color;
-      setPopup((prev) => ({ ...prev, showColors: false }));
+    if (popupRef.current.highlightSpan && popupRef.current.highlightSpan.textContent) {
+      const blockOffset = getTextOffset(
+        contentRef.current!,
+        popupRef.current.highlightSpan.firstChild!
+      );
+      
+      const spanLength = popupRef.current.highlightSpan.textContent.length;
+  
+    
+      const highlightId = highlights.find(
+        (h) =>
+          h.text === popupRef.current.highlightSpan?.textContent 
+      )?.id;
+      if (highlightId) {
+        onDeleteHighlight(highlightId);
+      }
+      onHighlight({
+        text: popupRef.current.highlightSpan.textContent,
+        position: {
+          start: blockOffset,
+          end: blockOffset + spanLength,
+        },
+        color: color,
+      });
     }
   };
 
   return (
     <>
+      <div className="fixed top-8 right-1/4 transform -translate-x-1/2 bg-blue-100 p-2 rounded shadow-lg  group">
+        <div className="relative">
+          <Pen className="cursor-pointer" />
+          
+          {/* Hidden Content Until Hover */}
+          <div className="absolute left-1/2 transform -translate-x-1/2 top-full mt-2 w-max gap-2 bg-white p-4 rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center">
+            {/* Switch */}
+            <div className="flex items-center space-x-2">
+              <Switch
+                id="public"
+                checked={isHighlighting}
+                onCheckedChange={setIsHighlighting}
+                className="bg-black"
+              />
+              <Label htmlFor="public">Highlighting Mode</Label>
+            </div>
+  
+            {/* Toolbar */}
+            <div className="pt-4">Toolbar:</div>
+            <div className="flex space-x-2">
+              <button onClick={handlePopupHighlight} className="relative group">
+                <Highlighter size={30} />
+                {/* <span className="absolute left-1/2 transform -translate-x-1/2 top-full mt-1 w-max px-2 py-1 text-xs text-white bg-gray-800 rounded opacity-0 group-hover:opacity-100 transition-opacity">
+                  Add highlight
+                </span> */}
+              </button>
+              
+              <button onClick={handlePopupDelete} className="relative group">
+                <X size={30} />
+                {/* <span className="absolute left-1/2 transform -translate-x-1/2 top-full mt-1 w-max px-2 py-1 text-xs text-white bg-gray-800 rounded opacity-0 group-hover:opacity-100 transition-opacity">
+                  Delete highlight
+                </span> */}
+              </button>
+  
+              {/* Color Palette */}
+              <div className="relative group">
+                <button className="relative">
+                  <Palette size={30} />
+                </button>
+                <div className="absolute left-1/2 transform -translate-x-1/2 top-full mt-2 gap-2 bg-white p-2 rounded shadow opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div>Highlight Color:</div>
+                  <div className="flex">
+                    <button onClick={() => handleApplyColor("#f9a8d4")} className="w-6 h-6 rounded-full border border-gray-300 bg-pink-300" />
+                    <button onClick={() => handleApplyColor("#fca5a5")} className="w-6 h-6 rounded-full border border-gray-300 bg-red-300" />
+                    <button onClick={() => handleApplyColor("yellow")} className="w-6 h-6 rounded-full border border-gray-300 bg-yellow-300" />
+                    <button onClick={() => handleApplyColor("#86efac")} className="w-6 h-6 rounded-full border border-gray-300 bg-green-300" />
+                    <button onClick={() => handleApplyColor("#93c5fd")} className="w-6 h-6 rounded-full border border-gray-300 bg-blue-300" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>  
+        </div>
+      </div>
+  
+      {/* Content */}
       <div
         ref={contentRef}
         onMouseUp={handleMouseUp}
         className="mt-2 prose prose-lg prose-sky prose-table:block prose-table:overflow-x-scroll select-text"
         dangerouslySetInnerHTML={{ __html: block.content }}
       ></div>
-      {popup?.show && (
-        <div
-          style={{
-            position: "absolute",
-            top: popup.y,
-            left: popup.x,
-            background: "white",
-            border: "1px solid black",
-            padding: "5px",
-            borderRadius: "5px",
-            display: "flex",
-            gap: "5px",
-          }}
-        >
-          {popup.highlightSpan ? (
-            <>
-              <button onClick={handlePopupDelete}>
-                <X size={16} />
-              </button>
-              <button onClick={handleColorChoice}>
-                <Palette size={16} />
-              </button>
-              {popup.showColors && (
-                <div style={{ display: "flex", gap: "5px" }}>
-                  <button
-                    onClick={() => handleApplyColor("red")}
-                    style={{
-                      background: "red",
-                      width: "20px",
-                      height: "20px",
-                      border: "none",
-                      borderRadius: "50%",
-                    }}
-                  />
-                  <button
-                    onClick={() => handleApplyColor("yellow")}
-                    style={{
-                      background: "yellow",
-                      width: "20px",
-                      height: "20px",
-                      border: "none",
-                      borderRadius: "50%",
-                    }}
-                  />
-                  <button
-                    onClick={() => handleApplyColor("blue")}
-                    style={{
-                      background: "blue",
-                      width: "20px",
-                      height: "20px",
-                      border: "none",
-                      borderRadius: "50%",
-                    }}
-                  />
-                </div>
-              )}
-            </>
-          ) : (
-            <>
-              <button onClick={handlePopupHighlight}>
-                <Highlighter size={16} />
-              </button>
-              <button onClick={handleColorChoice}>
-                <Palette size={16} />
-              </button>
-              {popup.showColors && (
-                <div style={{ display: "flex", gap: "5px" }}>
-                  <button
-                    onClick={() => handleApplyColor("red")}
-                    style={{
-                      background: "red",
-                      width: "20px",
-                      height: "20px",
-                      border: "none",
-                      borderRadius: "50%",
-                    }}
-                  />
-                  <button
-                    onClick={() => handleApplyColor("yellow")}
-                    style={{
-                      background: "yellow",
-                      width: "20px",
-                      height: "20px",
-                      border: "none",
-                      borderRadius: "50%",
-                    }}
-                  />
-                  <button
-                    onClick={() => handleApplyColor("blue")}
-                    style={{
-                      background: "blue",
-                      width: "20px",
-                      height: "20px",
-                      border: "none",
-                      borderRadius: "50%",
-                    }}
-                  />
-                </div>
-              )}
-            </>
-          )}
-        </div>
-      )}
     </>
   );
-};
+  }  
 
 export default GenericBlockRenderer;

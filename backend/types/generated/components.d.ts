@@ -1,20 +1,20 @@
-import type { Schema, Attribute } from '@strapi/strapi';
+import type { Attribute, Schema } from '@strapi/strapi';
 
 export interface DropletsCallout extends Schema.Component {
   collectionName: 'components_droplets_callouts';
   info: {
+    description: '';
     displayName: 'Callout';
     icon: 'volumeUp';
-    description: '';
   };
   attributes: {
+    color: Attribute.String &
+      Attribute.Required &
+      Attribute.DefaultTo<'bg-sky-50'>;
     content: Attribute.Blocks & Attribute.Required;
     type: Attribute.Enumeration<['info', 'warning']> &
       Attribute.Required &
       Attribute.DefaultTo<'info'>;
-    color: Attribute.String &
-      Attribute.Required &
-      Attribute.DefaultTo<'bg-sky-50'>;
   };
 }
 
@@ -25,7 +25,6 @@ export interface DropletsExpandable extends Schema.Component {
     icon: 'archive';
   };
   attributes: {
-    title: Attribute.String & Attribute.Required;
     content: Attribute.RichText &
       Attribute.Required &
       Attribute.CustomField<
@@ -35,15 +34,16 @@ export interface DropletsExpandable extends Schema.Component {
           preset: 'rich';
         }
       >;
+    title: Attribute.String & Attribute.Required;
   };
 }
 
 export interface DropletsGeneric extends Schema.Component {
   collectionName: 'components_droplets_generics';
   info: {
+    description: '';
     displayName: 'Generic';
     icon: 'pencil';
-    description: '';
   };
   attributes: {
     content: Attribute.RichText &
@@ -61,8 +61,8 @@ export interface DropletsGeneric extends Schema.Component {
 export interface DropletsLearningObjective extends Schema.Component {
   collectionName: 'components_droplets_learning_objective';
   info: {
-    displayName: 'Learning Objective';
     description: '';
+    displayName: 'Learning Objective';
   };
   attributes: {
     objective: Attribute.String & Attribute.Required;
@@ -104,9 +104,9 @@ export interface DropletsResource extends Schema.Component {
 export interface DropletsVideo extends Schema.Component {
   collectionName: 'components_droplets_videos';
   info: {
+    description: '';
     displayName: 'Video';
     icon: 'play';
-    description: '';
   };
   attributes: {
     url: Attribute.String & Attribute.Required;
@@ -116,14 +116,14 @@ export interface DropletsVideo extends Schema.Component {
 export interface QuizzesAnswerOption extends Schema.Component {
   collectionName: 'components_quiz_answer_option';
   info: {
-    displayName: 'Quiz Answer Option';
     description: '';
+    displayName: 'Quiz Answer Option';
   };
   attributes: {
+    content: Attribute.String & Attribute.Required;
     isCorrect: Attribute.Boolean &
       Attribute.Required &
       Attribute.DefaultTo<false>;
-    content: Attribute.String & Attribute.Required;
   };
 }
 
@@ -148,11 +148,13 @@ export interface QuizzesOpenEndedQuestion extends Schema.Component {
 export interface QuizzesQuestion extends Schema.Component {
   collectionName: 'components_quiz_questions';
   info: {
+    description: '';
     displayName: 'Quiz Question';
     icon: 'question';
-    description: '';
   };
   attributes: {
+    answerOptions: Attribute.Component<'quizzes.answer-option', true> &
+      Attribute.Required;
     content: Attribute.RichText &
       Attribute.Required &
       Attribute.CustomField<
@@ -162,8 +164,6 @@ export interface QuizzesQuestion extends Schema.Component {
           preset: 'rich';
         }
       >;
-    answerOptions: Attribute.Component<'quizzes.answer-option', true> &
-      Attribute.Required;
   };
 }
 
