@@ -67,13 +67,11 @@ export function LessonRenderer({
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
   const [highlights, setHighlights] = useState<Highlight[]>([]);
-  const [isHighlighting, setIsHighlighting] = useState(false);
 
   useEffect(() => {
     // Fetch highlights when component mounts
     const fetchHighlights = async () => {
       const response = await getHighlightsForLesson(lesson.id);
-      console.log("response", response.data);
       if (response.data) {
         const formattedHighlights = response.data.map((item: any) => ({
           ...item.attributes,
@@ -81,7 +79,6 @@ export function LessonRenderer({
         }));
         setHighlights(formattedHighlights);
       }
-      console.log("highlights", highlights);
     };
     fetchHighlights();
   }, [lesson.id]);
@@ -166,10 +163,6 @@ export function LessonRenderer({
         completedLessonIds.push(lesson.id);
         await router.refresh();
       }
-      console.log(
-        "completedlessonids for mark as complete",
-        completedLessonIds,
-      );
     });
   }
 
@@ -187,14 +180,7 @@ export function LessonRenderer({
           <h1 className="text-4xl font-extrabold text-balance">
             {lesson.name}
           </h1>
-          <div className="flex items-center space-x-2 pt-4">
-            <Switch
-              id="public"
-              checked={isHighlighting}
-              onCheckedChange={setIsHighlighting}
-            />
-            <Label htmlFor="public">Highlighting Mode</Label>
-          </div>
+
 
           {headings.length > 2 && (
             <div className="p-6 mt-8 border rounded-md md:px-8 lg:-mx-8 bg-slate-50 border-slate-200">
@@ -220,7 +206,6 @@ export function LessonRenderer({
                 highlights={highlights}
                 onHighlight={handleHighlight}
                 onDeleteHighlight={handleDeleteHighlight}
-                isHighlighting={isHighlighting}
               />
             ))}
           </div>
@@ -252,13 +237,11 @@ function LessonBlockRenderer({
   highlights,
   onHighlight,
   onDeleteHighlight,
-  isHighlighting,
 }: {
   block: any;
   highlights: any[];
   onHighlight: (highlight: any) => void;
   onDeleteHighlight: (id: number) => void;
-  isHighlighting: boolean;
 }) {
   switch (block.__component) {
     case "droplets.generic":
@@ -268,7 +251,6 @@ function LessonBlockRenderer({
           highlights={highlights}
           onHighlight={onHighlight}
           onDeleteHighlight={onDeleteHighlight}
-          isHighlighting={isHighlighting}
         />
       );
 
