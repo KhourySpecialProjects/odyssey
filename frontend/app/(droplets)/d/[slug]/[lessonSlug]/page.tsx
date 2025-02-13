@@ -65,11 +65,7 @@ export default async function Page({ params }: Props) {
   }
 
   const currentUser = await getCurrentUser();
-  if (
-    !currentUser ||
-    !currentUser?.email 
-  )
-    return redirect("/");
+  if (!currentUser || !currentUser?.email) return redirect("/");
   const authUser = await getAuthorizedUserByEmail(currentUser.email);
   const userAuthor = await getAuthorByAuthorizedUserEmail(
     session?.user.email || "",
