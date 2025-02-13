@@ -258,9 +258,7 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
         <div className="relative">
           <Pen className="cursor-pointer" />
           
-          {/* Hidden Content Until Hover */}
           <div className="absolute left-1/2 transform -translate-x-1/2 top-full mt-2 w-max gap-2 bg-white p-4 rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center">
-            {/* Switch */}
             <div className="flex items-center space-x-2">
               <Switch
                 id="public"
@@ -271,24 +269,16 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
               <Label htmlFor="public">Highlighting Mode</Label>
             </div>
   
-            {/* Toolbar */}
             <div className="pt-4">Toolbar:</div>
             <div className="flex space-x-2">
               <button onClick={handlePopupHighlight} className="relative group">
                 <Highlighter size={30} />
-                {/* <span className="absolute left-1/2 transform -translate-x-1/2 top-full mt-1 w-max px-2 py-1 text-xs text-white bg-gray-800 rounded opacity-0 group-hover:opacity-100 transition-opacity">
-                  Add highlight
-                </span> */}
               </button>
               
               <button onClick={handlePopupDelete} className="relative group">
                 <X size={30} />
-                {/* <span className="absolute left-1/2 transform -translate-x-1/2 top-full mt-1 w-max px-2 py-1 text-xs text-white bg-gray-800 rounded opacity-0 group-hover:opacity-100 transition-opacity">
-                  Delete highlight
-                </span> */}
               </button>
   
-              {/* Color Palette */}
               <div className="relative group">
                 <button className="relative">
                   <Palette size={30} />
