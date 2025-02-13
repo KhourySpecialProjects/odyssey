@@ -546,7 +546,12 @@ export async function createNewTag(tag: string) {
   }
 }
 
-export async function createNote(note: string, positionY: number, lessonId: number, enrollmentId: number) {
+export async function createNote(
+  note: string,
+  positionY: number,
+  lessonId: number,
+  enrollmentId: number,
+) {
   try {
     const response = await fetch(`${STRAPI_API_URL}/api/notes`, {
       method: "POST",
@@ -559,7 +564,7 @@ export async function createNote(note: string, positionY: number, lessonId: numb
           content: note,
           positionY: positionY,
           lesson: lessonId,
-          enrollment: enrollmentId
+          enrollment: enrollmentId,
         },
       }),
     });
@@ -776,45 +781,48 @@ export async function updateFirstTimeStatus(userId: number) {
 
 export async function createHighlight(highlightData: any) {
   const response = await fetch(`${STRAPI_API_URL}/api/highlights`, {
-    method: 'POST',
+    method: "POST",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
     },
     body: JSON.stringify({ data: highlightData.data }),
   });
-  
+
   if (!response.ok) {
-    throw new Error('Failed to create highlight');
+    throw new Error("Failed to create highlight");
   }
   return response.json();
 }
 
 export async function deleteHighlight(id: number) {
   const response = await fetch(`${STRAPI_API_URL}/api/highlights/${id}`, {
-    method: 'DELETE',
+    method: "DELETE",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
     },
   });
-  
+
   if (!response.ok) {
-    throw new Error('Failed to delete highlight');
+    throw new Error("Failed to delete highlight");
   }
   return response.json();
 }
 
 export async function getHighlightsForLesson(lessonId: number) {
   const user = await getCurrentUser();
-    if (!user?.email) throw new Error("No email identified");
-    const authorizedUser = await getAuthorizedUserByEmail(user.email);
-  const response = await fetch(`${STRAPI_API_URL}/api/highlights?filters[lesson][id][$eq]=${lessonId}&filters[authorized_user][id][$eq]=${authorizedUser.id}`, {
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+  if (!user?.email) throw new Error("No email identified");
+  const authorizedUser = await getAuthorizedUserByEmail(user.email);
+  const response = await fetch(
+    `${STRAPI_API_URL}/api/highlights?filters[lesson][id][$eq]=${lessonId}&filters[authorized_user][id][$eq]=${authorizedUser.id}`,
+    {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+      },
     },
-  });
+  );
   return response.json();
 }
 
