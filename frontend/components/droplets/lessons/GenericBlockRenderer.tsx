@@ -41,8 +41,7 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
   });
   const savedSelectionRef = useRef<Range | null>(null);
   const [mousePositionY, setMousePositionY] = useState(0);
-  const [curHighlightText, setCurHighlightText] = useState("");
-  const [ isHighlighting, setIsHighlighting] = useState(false);
+  const [isHighlighting, setIsHighlighting] = useState(false);
   const [selectedColor, setSelectedColor] = useState("yellow")
 
 
@@ -60,7 +59,6 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
       highlights?.forEach((highlight) => {
         if (!highlight.position?.start || !highlight.position?.end) return;
 
-        const textNodes: Text[] = [];
         const walker = document.createTreeWalker(
           contentRef.current!,
           NodeFilter.SHOW_TEXT,
@@ -98,7 +96,7 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
         }
       });
     }
-  }, [block, highlights, isHighlighting, popupRef, selectedColor]);
+  }, [block, highlights, isHighlighting, contentRef, popupRef, savedSelectionRef, selectedColor, mousePositionY]);
 
   const getTextOffset = (parent: Node, node: Node): number => {
     let offset = 0;
@@ -184,6 +182,19 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
         }
       }
     }
+  };
+
+  const renderHighlightedText = (text: string) => {
+    let highlightedText = text;
+  
+    highlights.forEach((highlight) => {
+      highlightedText = highlightedText.replace(
+        highlight.text,
+        `<span style="background-color: ${highlight.color}">${highlight.text}</span>`
+      );
+    });
+  
+    return { __html: highlightedText };
   };
 
   const handlePopupHighlight = () => {
@@ -297,9 +308,8 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
         ref={contentRef}
         onMouseUp={(e) => handleMouseUp()}
         onMouseDown={(e) => handleMouseDown(e)}
-        //onMouseDown={() => popup.show = false}
         className="mt-2 prose prose-lg prose-sky prose-table:block prose-table:overflow-x-scroll select-text"
-        dangerouslySetInnerHTML={{ __html: block.content }}
+        dangerouslySetInnerHTML={renderHighlightedText(block.content)}
       ></div>
     </>
   );
