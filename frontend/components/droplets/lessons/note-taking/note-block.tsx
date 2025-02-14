@@ -47,7 +47,6 @@ export function NoteBlock({
     }
   };
 
-
   return (
     <div className=" mx-2 pt-2 pl-2 pr-2 w-4/5 note-block bg-slate-200 rounded-xl flex flex-row items-center">
       <div className="grip-handle pt-2">

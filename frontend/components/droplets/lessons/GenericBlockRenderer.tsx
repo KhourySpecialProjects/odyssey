@@ -6,7 +6,14 @@
 import React, { useEffect, useRef, useState } from "react";
 import hljs from "highlight.js";
 import { Highlight } from "@/types";
-import { Highlighter, X, CircleHelp, Pencil, Pen, NotebookPen } from "lucide-react";
+import {
+  Highlighter,
+  X,
+  CircleHelp,
+  Pencil,
+  Pen,
+  NotebookPen,
+} from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 
@@ -16,7 +23,7 @@ interface GenericBlockRendererProps {
   onHighlight: (highlight: Highlight) => void;
   onDeleteHighlight: (highlightId: number) => void;
   onNote: (notePos: number, text: string) => void;
-  genericBlocks: number[]
+  genericBlocks: number[];
 }
 
 const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
@@ -25,7 +32,7 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
   onHighlight,
   onDeleteHighlight,
   onNote,
-  genericBlocks
+  genericBlocks,
 }) => {
   const contentRef = useRef<HTMLDivElement>(null);
   const popupRef = useRef<{
@@ -45,7 +52,6 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
   const [mousePositionY, setMousePositionY] = useState(0);
   const [isHighlighting, setIsHighlighting] = useState(false);
   const [selectedColor, setSelectedColor] = useState("yellow");
-
 
   useEffect(() => {
     if (contentRef.current) {
@@ -270,96 +276,99 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
   const handleCreateNote = () => {
     handlePopupHighlight();
     onNote(mousePositionY, popupRef.current.savedRange?.toString() || "");
-      
   };
 
   return (
     <>
-    {block.id === genericBlocks[0] && <div className="fixed top-8 right-1/4 z-10 transform -translate-x-1/2 bg-blue-100 p-2 rounded shadow-lg">
-      <div className="relative group">
-      <CircleHelp className="cursor-pointer" />
-      <div className="absolute left-1/2 transform -translate-x-1/2 top-full mt-2 w-max gap-2 bg-white p-4 rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center pointer-events-none">
-        <p>Highlighting Instructions:</p>
-        <ul className="list-disc pl-4">
-          <li>Hover over the pen icon to see actions.</li>
-          <li>Use the toggle to switch highlighting mode.</li>
-          <li>In highlighting mode, selected text is highlighted.</li>
-          <li>Press the highlighter icon to highlight text.</li>
-          <li>Press the X icon to delete a highlight.</li>
-          <li>Press the note icon to add a note to text.</li>
-          <li>Click a colored circle to change highlight color.</li>
-        </ul>
-      </div>
-      </div>
-      </div>}
-      {block.id === genericBlocks[0] && <div className="fixed top-8 z-0 right-1/4 transform -translate-x-1/2 bg-blue-100 p-2 rounded shadow-lg  group">
-        <div className="relative">
-            <Pen className="cursor-pointer" />
-          
-          <div className="absolute left-1/2 transform -translate-x-1/2 top-full mt-2 w-max gap-2 bg-white p-4 rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center">
-            <div title="Highlighting Mode">
-              <Switch
-                id="public"
-                checked={isHighlighting}
-                onCheckedChange={setIsHighlighting}
-                className={`bg-black`}
-              />
-              <Label htmlFor="public" />
+      {block.id === genericBlocks[0] && (
+        <div className="fixed top-8 right-1/4 z-10 transform -translate-x-1/2 bg-blue-100 p-2 rounded shadow-lg">
+          <div className="relative group">
+            <CircleHelp className="cursor-pointer" />
+            <div className="absolute left-1/2 transform -translate-x-1/2 top-full mt-2 w-max gap-2 bg-white p-4 rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center pointer-events-none">
+              <p>Highlighting Instructions:</p>
+              <ul className="list-disc pl-4">
+                <li>Hover over the pen icon to see actions.</li>
+                <li>Use the toggle to switch highlighting mode.</li>
+                <li>In highlighting mode, selected text is highlighted.</li>
+                <li>Press the highlighter icon to highlight text.</li>
+                <li>Press the X icon to delete a highlight.</li>
+                <li>Press the note icon to add a note to text.</li>
+                <li>Click a colored circle to change highlight color.</li>
+              </ul>
             </div>
-
-            <button
-              title="Add Highlight"
-              onClick={handlePopupHighlight}
-              className="relative group"
-            >
-              <Highlighter size={30} />
-            </button>
-
-            <button
-              title="Delete Highlight"
-              onClick={handlePopupDelete}
-              className="relative group"
-            >
-              <X size={30} />
-            </button>
-
-            <button
-              title="Take Note"
-              onClick={handleCreateNote}
-              className="relative group"
-            >
-              <NotebookPen size={30} />
-            </button>
-
-            <button
-              title="Highlight Pink"
-              onClick={() => handleApplyColor("#f9a8d4")}
-              className={`w-6 h-6 rounded-full ${selectedColor === "#f9a8d4" ? "border-2 border-black" : "border border-gray-300"} bg-pink-300`}
-            />
-            <button
-              title="Highlight Red"
-              onClick={() => handleApplyColor("#fca5a5")}
-              className={`w-6 h-6 rounded-full ${selectedColor === "#fca5a5" ? "border-2 border-black" : "border border-gray-300"} bg-red-300`}
-            />
-            <button
-              title="Highlight Yellow"
-              onClick={() => handleApplyColor("yellow")}
-              className={`w-6 h-6 rounded-full ${selectedColor === "yellow" ? "border-2 border-black" : "border border-gray-300"} bg-yellow-300`}
-            />
-            <button
-              title="Highlight Green"
-              onClick={() => handleApplyColor("#86efac")}
-              className={`w-6 h-6 rounded-full ${selectedColor === "#86efac" ? "border-2 border-black" : "border border-gray-300"} bg-green-300`}
-            />
-            <button
-              title="Highlight Blue"
-              onClick={() => handleApplyColor("#93c5fd")}
-              className={`w-6 h-6 rounded-full ${selectedColor === "#93c5fd" ? "border-2 border-black" : "border border-gray-300"} bg-blue-300`}
-            />
           </div>
-        </div>  
-      </div>}
-  
+        </div>
+      )}
+      {block.id === genericBlocks[0] && (
+        <div className="fixed top-8 z-0 right-1/4 transform -translate-x-1/2 bg-blue-100 p-2 rounded shadow-lg  group">
+          <div className="relative">
+            <Pen className="cursor-pointer" />
+
+            <div className="absolute left-1/2 transform -translate-x-1/2 top-full mt-2 w-max gap-2 bg-white p-4 rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center">
+              <div title="Highlighting Mode">
+                <Switch
+                  id="public"
+                  checked={isHighlighting}
+                  onCheckedChange={setIsHighlighting}
+                  className={`bg-black`}
+                />
+                <Label htmlFor="public" />
+              </div>
+
+              <button
+                title="Add Highlight"
+                onClick={handlePopupHighlight}
+                className="relative group"
+              >
+                <Highlighter size={30} />
+              </button>
+
+              <button
+                title="Delete Highlight"
+                onClick={handlePopupDelete}
+                className="relative group"
+              >
+                <X size={30} />
+              </button>
+
+              <button
+                title="Take Note"
+                onClick={handleCreateNote}
+                className="relative group"
+              >
+                <NotebookPen size={30} />
+              </button>
+
+              <button
+                title="Highlight Pink"
+                onClick={() => handleApplyColor("#f9a8d4")}
+                className={`w-6 h-6 rounded-full ${selectedColor === "#f9a8d4" ? "border-2 border-black" : "border border-gray-300"} bg-pink-300`}
+              />
+              <button
+                title="Highlight Red"
+                onClick={() => handleApplyColor("#fca5a5")}
+                className={`w-6 h-6 rounded-full ${selectedColor === "#fca5a5" ? "border-2 border-black" : "border border-gray-300"} bg-red-300`}
+              />
+              <button
+                title="Highlight Yellow"
+                onClick={() => handleApplyColor("yellow")}
+                className={`w-6 h-6 rounded-full ${selectedColor === "yellow" ? "border-2 border-black" : "border border-gray-300"} bg-yellow-300`}
+              />
+              <button
+                title="Highlight Green"
+                onClick={() => handleApplyColor("#86efac")}
+                className={`w-6 h-6 rounded-full ${selectedColor === "#86efac" ? "border-2 border-black" : "border border-gray-300"} bg-green-300`}
+              />
+              <button
+                title="Highlight Blue"
+                onClick={() => handleApplyColor("#93c5fd")}
+                className={`w-6 h-6 rounded-full ${selectedColor === "#93c5fd" ? "border-2 border-black" : "border border-gray-300"} bg-blue-300`}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Content */}
       <div
         ref={contentRef}
