@@ -36,13 +36,17 @@ export function NoteBlock({
   const getHighlightColor = (color: string | undefined) => {
     switch (color) {
       case "yellow":
-        return "bg-yellow-200";
-      case "red":
-        return "bg-red-200";
-      case "blue":
-        return "bg-blue-200";
+        return "bg-yellow-300";
+      case "#f9a8d4":
+        return "bg-pink-300";
+      case "#fca5a5":
+        return "bg-red-300";
+      case "#86efac":
+        return "bg-green-300";
+      case "#93c5fd":
+        return "bg-blue-300";
       default:
-        return "bg-yellow-200";
+        return "bg-yellow-300";
     }
   };
 
