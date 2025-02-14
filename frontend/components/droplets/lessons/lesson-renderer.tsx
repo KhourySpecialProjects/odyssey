@@ -178,6 +178,8 @@ export function LessonRenderer({
     .forEach((b: any) => {
       headings = headings.concat(extractHeadings(b.content));
     });
+  
+  let genericBlocks = lesson.blocks.filter((b: any) => b.__component === "droplets.generic").map((b) => b.id)
 
   return (
     <>
@@ -213,6 +215,7 @@ export function LessonRenderer({
                 onHighlight={handleHighlight}
                 onDeleteHighlight={handleDeleteHighlight}
                 onNote={handleCreateNote}
+                genericBlocks={genericBlocks}
               />
             ))}
           </div>
@@ -245,12 +248,14 @@ function LessonBlockRenderer({
   onHighlight,
   onDeleteHighlight,
   onNote,
+  genericBlocks,
 }: {
   block: any;
   highlights: any[];
   onHighlight: (highlight: any) => void;
   onDeleteHighlight: (id: number) => void;
   onNote: (notePos: number, text: string) => void;
+  genericBlocks: number[]
 }) {
   switch (block.__component) {
     case "droplets.generic":
@@ -261,6 +266,7 @@ function LessonBlockRenderer({
           onHighlight={onHighlight}
           onDeleteHighlight={onDeleteHighlight}
           onNote={onNote}
+          genericBlocks={genericBlocks}
         />
       );
 
