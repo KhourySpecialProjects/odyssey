@@ -73,7 +73,7 @@ export function AddLesson({
             // lessons: droplet.lessons || [],
           },
         ],
-        notes: []
+        notes: [],
       };
 
       onAddLesson(newLesson);
