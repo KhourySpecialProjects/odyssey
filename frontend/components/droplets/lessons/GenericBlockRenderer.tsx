@@ -41,24 +41,10 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
   });
   const savedSelectionRef = useRef<Range | null>(null);
   const [mousePositionY, setMousePositionY] = useState(0);
-  const [mousePositionX, setMousePositionX] = useState(0);
   const [curHighlightText, setCurHighlightText] = useState("");
   const [ isHighlighting, setIsHighlighting] = useState(false);
+  const [selectedColor, setSelectedColor] = useState("yellow")
 
-  /*
-  useEffect(() => {
-    if (popup.show && savedSelectionRef.current) {
-      const selection = window.getSelection();
-      selection?.removeAllRanges();
-      selection?.addRange(savedSelectionRef.current);
-    }
-  }, [popup.show]);
-
-  useEffect(() => {
-    if (!popup.show) {
-      savedSelectionRef.current = null;
-    }
-  }, [popup.show]);*/
 
   useEffect(() => {
     if (contentRef.current) {
@@ -112,7 +98,7 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
         }
       });
     }
-  }, [block, highlights, isHighlighting, popupRef]);
+  }, [block, highlights, isHighlighting, popupRef, selectedColor]);
 
   const getTextOffset = (parent: Node, node: Node): number => {
     let offset = 0;
@@ -178,10 +164,10 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
             start: blockOffset + range.startOffset,
             end: blockOffset + range.endOffset,
           },
-          color: "yellow",
+          color: selectedColor,
         });
         const span = document.createElement("span");
-        span.style.backgroundColor = "yellow";
+        span.style.backgroundColor = selectedColor;
         range.surroundContents(span);
       }
       popupRef.current.x = blockOffset + range.startOffset;
@@ -195,9 +181,7 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
     if (popupRef.current.highlightSpan) {
       const highlightId = highlights.find(
         (h) =>
-          h.text === popupRef.current.highlightSpan?.textContent &&
-          h.color ===
-            (popupRef.current.highlightSpan as HTMLElement).style.backgroundColor,
+          h.text === popupRef.current.highlightSpan?.textContent 
       )?.id;
 
       if (highlightId) {
@@ -233,18 +217,15 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
           start: blockOffset + startOffset,
           end: blockOffset + endOffset,
         },
-        color: "yellow",
+        color: selectedColor,
       });
     }
     
 
     const span = document.createElement("span");
-    span.style.backgroundColor = "yellow";
+    span.style.backgroundColor = selectedColor;
     range.surroundContents(span);
   };
-
-  console.log("highlight span", popupRef.current.highlightSpan)
-  console.log("textContent", popupRef.current.highlightSpan?.textContent)
 
   const handleApplyColor = (color: string) => {
     if (popupRef.current.highlightSpan && popupRef.current.highlightSpan.textContent) {
@@ -271,14 +252,14 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
         },
         color: color,
       });
+    } else {
+      setSelectedColor(color)
     }
   };
 
   const handleCreateNote = () => {
     onNote(mousePositionY, curHighlightText);
   };
-
-  console.log("popup ref ", popupRef.current)
 
   return (
     <>
@@ -287,44 +268,31 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
           <Pen className="cursor-pointer" />
           
           <div className="absolute left-1/2 transform -translate-x-1/2 top-full mt-2 w-max gap-2 bg-white p-4 rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center">
-            <div className="flex items-center space-x-2">
+            <div title="Highlighting Mode">
               <Switch
                 id="public"
                 checked={isHighlighting}
                 onCheckedChange={setIsHighlighting}
                 className={`bg-black`}
               />
-              <Label htmlFor="public">Highlighting Mode</Label>
+              <Label htmlFor="public" />
             </div>
   
-            <div className="pt-4">Toolbar:</div>
-            <div className="flex space-x-2">
-              <button onClick={handlePopupHighlight} className="relative group">
+              <button title="Add Highlight" onClick={handlePopupHighlight} className="relative group">
                 <Highlighter size={30} />
               </button>
               
-              <button onClick={handlePopupDelete} className="relative group">
+              <button title="Delete Highlight" onClick={handlePopupDelete} className="relative group">
                 <X size={30} />
               </button>
   
-              <div className="relative group">
-                <button className="relative">
-                  <Palette size={30} />
-                </button>
-                <div className="absolute left-1/2 transform -translate-x-1/2 top-full mt-2 gap-2 bg-white p-2 rounded shadow opacity-0 group-hover:opacity-100 transition-opacity">
-                  <div>Highlight Color:</div>
-                  <div className="flex">
-                    <button onClick={() => handleApplyColor("#f9a8d4")} className="w-6 h-6 rounded-full border border-gray-300 bg-pink-300" />
-                    <button onClick={() => handleApplyColor("#fca5a5")} className="w-6 h-6 rounded-full border border-gray-300 bg-red-300" />
-                    <button onClick={() => handleApplyColor("yellow")} className="w-6 h-6 rounded-full border border-gray-300 bg-yellow-300" />
-                    <button onClick={() => handleApplyColor("#86efac")} className="w-6 h-6 rounded-full border border-gray-300 bg-green-300" />
-                    <button onClick={() => handleApplyColor("#93c5fd")} className="w-6 h-6 rounded-full border border-gray-300 bg-blue-300" />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>  
-        </div>
+              <button title="Highlight Pink" onClick={() => handleApplyColor("#f9a8d4")} className={`w-6 h-6 rounded-full ${selectedColor === "#f9a8d4" ? "border-2 border-black" : "border border-gray-300" } bg-pink-300`} />
+              <button title="Highlight Red" onClick={() => handleApplyColor("#fca5a5")} className={`w-6 h-6 rounded-full ${selectedColor === "#fca5a5" ? "border-2 border-black" : "border border-gray-300" } bg-red-300`} />
+              <button title="Highlight Yellow" onClick={() => handleApplyColor("yellow")} className={`w-6 h-6 rounded-full ${selectedColor === "yellow" ? "border-2 border-black" : "border border-gray-300" } bg-yellow-300`} />
+              <button title="Highlight Green" onClick={() => handleApplyColor("#86efac")} className={`w-6 h-6 rounded-full ${selectedColor === "#86efac" ? "border-2 border-black" : "border border-gray-300" } bg-green-300`} />
+              <button title="Highlight Blue" onClick={() => handleApplyColor("#93c5fd")} className={`w-6 h-6 rounded-full ${selectedColor === "#93c5fd" ? "border-2 border-black" : "border border-gray-300" } bg-blue-300`} />
+          </div>
+        </div>  
       </div>
   
       {/* Content */}
