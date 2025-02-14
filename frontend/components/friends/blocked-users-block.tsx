@@ -49,7 +49,7 @@ export function BlockedUsersBlock({
         </div>
         <UserBlock user={blocked} curUser={user} />
         <div className="inline-flex items-center gap-2" onClick={handleUnblock}>
-          <Button size="sm" variant="outline">
+          <Button size="sm" >
             Unblock
           </Button>
         </div>

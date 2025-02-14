@@ -16,15 +16,17 @@ import { updateFirstTimeStatus, updateOnboardingInfo } from "@/lib/actions";
 import { AuthorizedUser } from "@/types";
 import { Input } from "../ui/input";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 
 export function FirstVisitPopup({ user }: { user: AuthorizedUser | null }) {
   const [isOpen, setIsOpen] = useState(false);
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [bio, setBio] = useState("");
+  const router = useRouter();
 
   useEffect(() => {
-    if (user?.firstTime) {
+    if (!user?.firstTime === false) {
       setIsOpen(true);
     }
   }, [user]);
@@ -43,6 +45,7 @@ export function FirstVisitPopup({ user }: { user: AuthorizedUser | null }) {
         await updateFirstTimeStatus(user.id);
         await updateOnboardingInfo(firstName, lastName, bio, user.id);
         setIsOpen(false);
+        router.push("/d/introduction-to-odyssey")
       }
     } catch (error) {
       console.error("Failed to save your information. Please try again.");
