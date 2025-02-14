@@ -14,6 +14,7 @@ import {
 } from "@/lib/requests/notes";
 import { AuthorizedUser } from "@/types";
 import { redirect } from "next/navigation";
+import { DropletLessonWrapper } from "@/components/droplets/lessons/droplet-lesson-wrapper";
 
 type Props = {
   params: Promise<Params>;
@@ -81,33 +82,19 @@ export default async function Page({ params }: Props) {
     droplet.authors &&
     droplet.authors.map((author) => author.id).includes(userAuthor.id);
 
-  const notes = await getNotesByAuthorizedUserAndLesson(
-    authUser.id,
-    lessonSlug,
-  );
-
   return (
     <div className="flex flex-row w-full h-full">
       <div className="w-1/4"></div>
-      <div className="w-1/2 flex justify-center">
-        <LessonRenderer
-          lesson={lesson}
-          droplet={droplet}
-          enrollmentId={enrollmentId}
-          completedLessonIds={completedLessonIds}
-          user={currentUser}
-          author={isAuthor || false}
-          authUser={authUser}
-        />
-      </div>
-      {enrollmentId &&
-      <div className="w-1/4 bg-slate-50 rounded-lg border border-slate-200">
-        <NotesBar
-          userId={authUser.id}
-          lesson={lesson}
-          enrollmentId={enrollmentId}
-        />
-      </div>}
+      <DropletLessonWrapper
+        lesson={lesson}
+        droplet={droplet}
+        enrollmentId={enrollmentId}
+        completedLessonIds={completedLessonIds}
+        user={currentUser}
+        author={isAuthor || false}
+        authUser={authUser}
+        userId={authUser.id}
+      />
     </div>
   );
 }
