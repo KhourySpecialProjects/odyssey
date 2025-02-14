@@ -1046,6 +1046,11 @@ export interface ApiHighlightHighlight extends Schema.CollectionType {
       'manyToOne',
       'api::lesson.lesson'
     >;
+    note: Attribute.Relation<
+      'api::highlight.highlight',
+      'oneToOne',
+      'api::note.note'
+    >;
     position: Attribute.JSON;
     text: Attribute.Text;
     updatedAt: Attribute.DateTime;
@@ -1055,6 +1060,14 @@ export interface ApiHighlightHighlight extends Schema.CollectionType {
       'admin::user'
     > &
       Attribute.Private;
+    yLevel: Attribute.Decimal &
+      Attribute.SetMinMax<
+        {
+          max: 100;
+          min: 0;
+        },
+        number
+      >;
   };
 }
 
@@ -1135,6 +1148,7 @@ export interface ApiLessonLesson extends Schema.CollectionType {
 export interface ApiNoteNote extends Schema.CollectionType {
   collectionName: 'notes';
   info: {
+    description: '';
     displayName: 'Note';
     pluralName: 'notes';
     singularName: 'note';
@@ -1152,19 +1166,17 @@ export interface ApiNoteNote extends Schema.CollectionType {
       'manyToOne',
       'api::enrollment.enrollment'
     >;
+    highlight: Attribute.Relation<
+      'api::note.note',
+      'oneToOne',
+      'api::highlight.highlight'
+    >;
     lesson: Attribute.Relation<
       'api::note.note',
       'manyToOne',
       'api::lesson.lesson'
     >;
-    positionY: Attribute.Decimal &
-      Attribute.SetMinMax<
-        {
-          max: 100;
-          min: 0;
-        },
-        number
-      >;
+    positionY: Attribute.Integer;
     updatedAt: Attribute.DateTime;
     updatedBy: Attribute.Relation<'api::note.note', 'oneToOne', 'admin::user'> &
       Attribute.Private;

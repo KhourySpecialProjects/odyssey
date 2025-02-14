@@ -24,12 +24,14 @@ export type AuthorizedUserRole = {
 
 export interface Highlight {
   id?: number;
+  authorized_user?: AuthorizedUser;
   text: string;
   position: {
     start: number;
     end: number;
   };
   color: string;
+  yLevel?: number;
 }
 
 export type User = {
@@ -292,4 +294,5 @@ export type Note = {
   lesson: Lesson;
   enrollment: Enrollment;
   positionY: number;
+  highlight?: Highlight;
 };

@@ -3,11 +3,7 @@
 import { Enrollment, Note, Lesson, AuthorizedUser } from "@/types";
 import { StrapiRequestParams } from "@/types/strapi";
 import { fetchAPI } from "../utils";
-
-import { getCurrentUser } from "@/lib/auth/session";
-import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
 import { revalidatePath, revalidateTag } from "next/cache";
-import { Droplet } from "@/types";
 
 const NEXT_PUBLIC_STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
@@ -41,7 +37,11 @@ export async function getNotesByAuthorizedUserAndLesson(
         slug: { $eq: lessonSlug },
       },
     },
-    populate,
+    populate: {
+      highlight: {
+        fields: ["text", "color", "yLevel"],
+      },
+    },
     fields,
     pagination,
   };
@@ -88,6 +88,7 @@ export async function createNote(
   lesson: Lesson,
   enrollment: Enrollment,
   position: number,
+  highlight?: Highlight,
 ) {
   try {
     const response = await fetch(`${NEXT_PUBLIC_STRAPI_API_URL}/api/notes`, {
@@ -102,6 +103,7 @@ export async function createNote(
           lesson: lesson,
           enrollment: enrollment,
           positionY: position,
+          highlight: highlight,
         },
       }),
     });
@@ -113,7 +115,7 @@ export async function createNote(
 
     revalidatePath("/d/[slug]/[lessonSlug]", "page");
     revalidateTag("notes");
-
+    console.log("created a note!!!!");
     return { success: true };
   } catch (error) {
     console.error("Error adding note:", error);

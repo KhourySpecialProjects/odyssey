@@ -12,38 +12,23 @@ import { ArrowDownFromLineIcon, Pencil } from "lucide-react";
 import { QuizBlock } from "./quiz";
 import GenericBlockRenderer from "./GenericBlockRenderer";
 import { useEffect, useState, useTransition } from "react";
-import { redirect, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import {
   createHighlight,
   deleteHighlight,
   getHighlightsForLesson,
   markLessonAsComplete,
 } from "@/lib/actions";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "../../ui/dialog";
-import {
-  LockIcon,
-  CircleAlert,
-  CircleHelp,
-  TriangleAlert,
-  BookOpenText,
-  BadgeInfo,
-  Bell,
-} from "lucide-react";
-import { getCurrentUser } from "@/lib/auth/session";
+import { LockIcon } from "lucide-react";
 import { CalloutIcon } from "@/components/ui/callout-icons";
 import { OpenEndedQuizBlock } from "./open-ended-quiz";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { Textarea } from "@/components/ui/textarea";
 import { Highlight } from "@/types";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { getEnrollByID } from "@/lib/requests/enrollment";
+import { createNote } from "@/lib/requests/notes";
+import { getHighlights } from "@/lib/requests/highlights";
 
 interface LessonRendererProps {
   lesson: Lesson;
@@ -53,6 +38,7 @@ interface LessonRendererProps {
   user?: User | null;
   author?: boolean;
   authUser?: AuthorizedUser;
+  onUpdate: () => void;
 }
 
 export function LessonRenderer({
@@ -63,6 +49,7 @@ export function LessonRenderer({
   user,
   author = false,
   authUser,
+  onUpdate,
 }: LessonRendererProps) {
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
@@ -114,6 +101,25 @@ export function LessonRenderer({
     } else {
       toast.error("Failed to remove highlight");
     }
+  };
+
+  const handleCreateNote = async (notePos: number, text: string) => {
+    const enrollment = await getEnrollByID(String(enrollmentId));
+
+    //code that takes the text and notePos and gets the highlight
+    if (authUser) {
+      const highlight = await getHighlights(authUser.id, text);
+      const result = await createNote(
+        lesson,
+        enrollment,
+        notePos,
+        highlight[0],
+      );
+    }
+
+    console.log("created a new note in the handleHighlight function");
+
+    onUpdate();
   };
 
   // Find the current lesson's position in this droplet
@@ -206,6 +212,7 @@ export function LessonRenderer({
                 highlights={highlights}
                 onHighlight={handleHighlight}
                 onDeleteHighlight={handleDeleteHighlight}
+                onNote={handleCreateNote}
               />
             ))}
           </div>
@@ -237,11 +244,13 @@ function LessonBlockRenderer({
   highlights,
   onHighlight,
   onDeleteHighlight,
+  onNote,
 }: {
   block: any;
   highlights: any[];
   onHighlight: (highlight: any) => void;
   onDeleteHighlight: (id: number) => void;
+  onNote: (notePos: number, text: string) => void;
 }) {
   switch (block.__component) {
     case "droplets.generic":
@@ -251,6 +260,7 @@ function LessonBlockRenderer({
           highlights={highlights}
           onHighlight={onHighlight}
           onDeleteHighlight={onDeleteHighlight}
+          onNote={onNote}
         />
       );
 
