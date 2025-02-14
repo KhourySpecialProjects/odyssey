@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/popover";
 import { Trash2Icon } from "lucide-react";
 import { deleteNote } from "@/lib/actions";
+import { updateNotePosition } from "@/lib/requests/notes";
 
 export function NotesBar({
   userId,
@@ -27,6 +28,78 @@ export function NotesBar({
   initNotes: Note[];
 }) {
   const [notes, setNotes] = useState(initNotes);
+  const [draggedNote, setDraggedNote] = useState<Note | null>(null);
+  const [draggedY, setDraggedY] = useState(0);
+  const [dragOffset, setDragOffset] = useState(0);
+
+  const fetchNotes = useCallback(async () => {
+    const fetchedNotes = await getNotesByAuthorizedUserAndLesson(
+      userId,
+      lesson.slug,
+    );
+    setNotes(fetchedNotes);
+  }, [userId, lesson.slug]);
+
+  const handleDragMove = useCallback(
+    (e: MouseEvent) => {
+      if (!draggedNote) return;
+      const newPosition = e.pageY - dragOffset;
+
+      setNotes((prev) =>
+        prev.map((note) =>
+          note.id === draggedNote.id
+            ? { ...note, positionY: newPosition }
+            : note,
+        ),
+      );
+    },
+    [draggedNote, dragOffset],
+  );
+
+  const handleDragEnd = useCallback(async () => {
+    if (!draggedNote) return;
+
+    // Remove event listeners immediately
+    document.removeEventListener("mousemove", handleDragMove);
+    document.removeEventListener("mouseup", handleDragEnd);
+
+    try {
+      const currentNote = notes.find((n) => n.id === draggedNote.id);
+      if (currentNote) {
+        await updateNotePosition(draggedNote.id, currentNote.positionY);
+        await fetchNotes();
+      }
+    } catch (error) {
+      console.error("Failed to update note position:", error);
+      await fetchNotes();
+    }
+
+    setDraggedNote(null);
+    setNoteDisabled(false);
+  }, [draggedNote, notes, fetchNotes, handleDragMove]);
+
+  const handleDragStart = (note: Note, e: React.MouseEvent) => {
+    if (!(e.target as HTMLElement).closest(".grip-handle")) {
+      return;
+    }
+
+    e.preventDefault();
+    setDraggedNote(note);
+    setDragOffset(e.pageY - note.positionY);
+    setDraggedY(e.pageY);
+  };
+
+  useEffect(() => {
+    if (draggedNote) {
+      document.addEventListener("mousemove", handleDragMove);
+      document.addEventListener("mouseup", handleDragEnd);
+      return () => {
+        document.removeEventListener("mousemove", handleDragMove);
+        document.removeEventListener("mouseup", handleDragEnd);
+      };
+    }
+  }, [draggedNote, handleDragMove, handleDragEnd]);
+
   const [dialogOpen, setDialogOpen] = useState(false);
   const [mousePositionY, setMousePositionY] = useState(0);
   const [mousePositionX, setMousePositionX] = useState(0);
@@ -36,14 +109,6 @@ export function NotesBar({
   if (!enrollmentId) {
     enrollmentId = "";
   }
-
-  const fetchNotes = useCallback(async () => {
-    const fetchedNotes = await getNotesByAuthorizedUserAndLesson(
-      userId,
-      lesson.slug,
-    );
-    setNotes(fetchedNotes);
-  }, [userId, lesson.slug]);
 
   useEffect(() => {
     fetchNotes();
@@ -98,8 +163,8 @@ export function NotesBar({
       const result = await createNote(lesson, enrollment, mousePositionY);
       if (result.success) {
         const note = await fetchNotes();
-        setNoteDisabled(false);
       }
+      setNoteDisabled(false);
     };
     handleAddNote();
   };
@@ -129,11 +194,13 @@ export function NotesBar({
     }
   };
 
+  console.log("set note disabled", noteDisabled);
+
   return (
     <>
-      <div className={`fixed right-[10%] text-center mt-5`}>
-                <h1 className="text-2xl font-extrabold ">My Notes</h1>
-            </div>
+      <div className={`right-[10%] text-center mt-5`}>
+        <h1 className="text-2xl font-extrabold ">My Notes</h1>
+      </div>
       <div
         className="space-y-4 w-full h-full relative cursor-pointer"
         onClick={handleMouseClick}
@@ -165,8 +232,14 @@ export function NotesBar({
         {notes.map((note) => (
           <div
             key={note.id}
-            className={`absolute w-full transform -translate-y-1/2`}
-            style={{ top: `${note.positionY - 90}px` }}
+            className={`absolute w-full transform -translate-y-1/2  transition-transform ${
+              draggedNote?.id === note.id ? "cursor-grabbing" : ""
+            }`}
+            style={{
+              top: `${note.positionY}px`,
+              transform: `translateY(-50%)`,
+            }}
+            onMouseDown={(e) => handleDragStart(note, e)}
           >
             <div className="flex flex-row justify-center items-center">
               <NoteBlock

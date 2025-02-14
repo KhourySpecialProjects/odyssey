@@ -84,6 +84,38 @@ export async function updateNoteContent(noteId: number, newContent: string) {
   }
 }
 
+export async function updateNotePosition(noteId: number, newPos: number) {
+  try {
+    const response = await fetch(
+      `${NEXT_PUBLIC_STRAPI_API_URL}/api/notes/${noteId}`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+        },
+        body: JSON.stringify({
+          data: {
+            positionY: newPos,
+          },
+        }),
+      },
+    );
+
+    if (!response.ok) {
+      throw new Error("Failed to update note content");
+    }
+
+    revalidatePath("/d/[slug]/[lessonSlug]", "page");
+    revalidateTag("notes");
+
+    return { success: true };
+  } catch (error) {
+    console.error("Error updating note content:", error);
+    return { success: false, error };
+  }
+}
+
 export async function createNote(
   lesson: Lesson,
   enrollment: Enrollment,

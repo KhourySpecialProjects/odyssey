@@ -122,7 +122,7 @@ export default async function DropletRecapRoute({ params }: Props) {
             <>
               <CompletedDropletBlock
                 droplet={droplet}
-                enrollment={enrollment} 
+                enrollment={enrollment}
                 authUser={authUser}
               />
               <Confetti />
