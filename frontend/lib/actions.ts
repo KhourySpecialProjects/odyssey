@@ -545,6 +545,42 @@ export async function createNewTag(tag: string) {
     return { success: false, error: "Failed to process request" };
   }
 }
+/*
+export async function createNote(
+  note: string,
+  positionY: number,
+  lessonId: number,
+  enrollmentId: number,
+) {
+  try {
+    const response = await fetch(`${STRAPI_API_URL}/api/notes`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+      },
+      body: JSON.stringify({
+        data: {
+          content: note,
+          positionY: positionY,
+          lesson: lessonId,
+          enrollment: enrollmentId,
+        },
+      }),
+    });
+
+    if (!response.ok) {
+      console.error("adding note failed:", await response.text());
+      return { success: false, error: "Failed to add new note" };
+    }
+
+    revalidatePath("/draft/d/[slug]/[lessonSlug]", "page");
+    return { success: true };
+  } catch (error) {
+    console.error("Error adding note:", error);
+    return { success: false, error: "Failed to process request" };
+  }
+}*/
 
 export async function updateLinkedin(linkedIn: string, userId: number) {
   try {
@@ -741,6 +777,53 @@ export async function updateFirstTimeStatus(userId: number) {
     console.error("Error updating first time status:", error);
     return { success: false, error };
   }
+}
+
+export async function createHighlight(highlightData: any) {
+  const response = await fetch(`${STRAPI_API_URL}/api/highlights`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+    },
+    body: JSON.stringify({ data: highlightData.data }),
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to create highlight");
+  }
+  return response.json();
+}
+
+export async function deleteHighlight(id: number) {
+  const response = await fetch(`${STRAPI_API_URL}/api/highlights/${id}`, {
+    method: "DELETE",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to delete highlight");
+  }
+  return response.json();
+}
+
+export async function getHighlightsForLesson(lessonId: number) {
+  const user = await getCurrentUser();
+  if (!user?.email) throw new Error("No email identified");
+  const authorizedUser = await getAuthorizedUserByEmail(user.email);
+  const response = await fetch(
+    `${STRAPI_API_URL}/api/highlights?filters[lesson][id][$eq]=${lessonId}&filters[authorized_user][id][$eq]=${authorizedUser.id}`,
+    {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+      },
+    },
+  );
+  return response.json();
 }
 
 export async function archiveDroplet(droplet: Droplet, archiveState: boolean) {
@@ -1247,8 +1330,6 @@ export async function uploadImage(formData: FormData) {
     };
 
     const response = await s3.send(new PutObjectCommand(uploadParams));
-    console.log(fileName);
-    console.log(response);
     if (response["$metadata"].httpStatusCode != 200) {
       return { ok: false, error: "Failed to upload image.", url: null };
     }
@@ -1403,5 +1484,28 @@ export async function updatePlaylist(
       error: "Database Error: Failed to update playlist.",
       data: null,
     };
+  }
+}
+
+export async function deleteNote(id: number) {
+  try {
+    const response = await fetch(STRAPI_API_URL + "/api/notes/" + id, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+      },
+    });
+    const data = await response.json();
+    if (!response.ok || (response.ok && data.error))
+      return { ok: false, error: data.error.message, data: null };
+
+    revalidatePath("/d/[slug]/[lessonSlug]", "page");
+    revalidateTag("notes");
+
+    return { ok: true, error: null, data: data.data };
+  } catch (err) {
+    console.error(err);
+    return { error: "Database Error: Failed to Delete Note." };
   }
 }
