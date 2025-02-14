@@ -134,22 +134,6 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
         ) ||
         endContainer.parentElement?.closest('span[style*="background-color"]');
       if (highlightSpan) {
-        const parent = highlightSpan.parentNode;
-        if (parent) {
-          const highlightId = highlights.find(
-            (h) =>
-              h.text === highlightSpan.textContent &&
-              h.color === (highlightSpan as HTMLElement).style.backgroundColor,
-          )?.id;
-          if (highlightId && isHighlighting) {
-            onDeleteHighlight(highlightId);
-            const textNode = document.createTextNode(
-              highlightSpan.textContent || "",
-            );
-            parent.replaceChild(textNode, highlightSpan);
-            parent.normalize();
-          }
-        }
         popupRef.current.x = blockOffset + range.startOffset;
         popupRef.current.y = blockOffset + range.endOffset
         popupRef.current.highlightSpan = highlightSpan as HTMLElement
@@ -171,9 +155,9 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
         range.surroundContents(span);
       }
       popupRef.current.x = blockOffset + range.startOffset;
-        popupRef.current.y = blockOffset + range.endOffset
-        popupRef.current.highlightSpan = null
-        popupRef.current.savedRange = savedSelectionRef.current
+      popupRef.current.y = blockOffset + range.endOffset;
+      popupRef.current.highlightSpan = null;
+      popupRef.current.savedRange = savedSelectionRef.current;
     }
   };
 
@@ -219,6 +203,7 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
         },
         color: selectedColor,
       });
+      popupRef.current.highlightSpan = null;
     }
     
 
