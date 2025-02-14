@@ -6,7 +6,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import hljs from "highlight.js";
 import { Highlight } from "@/types";
-import { Highlighter, X, Palette, Pencil, Pen, NotebookPen } from "lucide-react";
+import { Highlighter, X, CircleHelp, Pencil, Pen, NotebookPen } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 
@@ -45,8 +45,6 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
   const [mousePositionY, setMousePositionY] = useState(0);
   const [isHighlighting, setIsHighlighting] = useState(false);
   const [selectedColor, setSelectedColor] = useState("yellow");
-
-  console.log("generic blocks", genericBlocks)
 
 
   useEffect(() => {
@@ -263,17 +261,32 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
 
   const handleCreateNote = () => {
     handlePopupHighlight();
-    console.log("cur highlighted text is ", popupRef.current.savedRange?.toString())
-
-        onNote(mousePositionY, popupRef.current.savedRange?.toString() || "");
+    onNote(mousePositionY, popupRef.current.savedRange?.toString() || "");
       
   };
 
   return (
     <>
-      {block.id === genericBlocks[0] && <div className="fixed top-8 right-1/4 transform -translate-x-1/2 bg-blue-100 p-2 rounded shadow-lg  group">
+    {block.id === genericBlocks[0] && <div className="fixed top-8 right-1/4 z-10 transform -translate-x-1/2 bg-blue-100 p-2 rounded shadow-lg">
+      <div className="relative group">
+      <CircleHelp className="cursor-pointer" />
+      <div className="absolute left-1/2 transform -translate-x-1/2 top-full mt-2 w-max gap-2 bg-white p-4 rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center pointer-events-none">
+        <p>Highlighting Instructions:</p>
+        <ul className="list-disc pl-4">
+          <li>Hover over the pen icon to see actions.</li>
+          <li>Use the toggle to switch highlighting mode.</li>
+          <li>In highlighting mode, selected text is highlighted.</li>
+          <li>Press the highlighter icon to highlight text.</li>
+          <li>Press the X icon to delete a highlight.</li>
+          <li>Press the note icon to add a note to text.</li>
+          <li>Click a colored circle to change highlight color.</li>
+        </ul>
+      </div>
+      </div>
+      </div>}
+      {block.id === genericBlocks[0] && <div className="fixed top-8 z-0 right-1/4 transform -translate-x-1/2 bg-blue-100 p-2 rounded shadow-lg  group">
         <div className="relative">
-          <Pen className="cursor-pointer" />
+            <Pen className="cursor-pointer" />
           
           <div className="absolute left-1/2 transform -translate-x-1/2 top-full mt-2 w-max gap-2 bg-white p-4 rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center">
             <div title="Highlighting Mode">
