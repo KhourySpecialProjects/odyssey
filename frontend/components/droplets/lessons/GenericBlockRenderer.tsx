@@ -16,6 +16,7 @@ interface GenericBlockRendererProps {
   onHighlight: (highlight: Highlight) => void;
   onDeleteHighlight: (highlightId: number) => void;
   onNote: (notePos: number, text: string) => void;
+  genericBlocks: number[]
 }
 
 const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
@@ -24,6 +25,7 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
   onHighlight,
   onDeleteHighlight,
   onNote,
+  genericBlocks
 }) => {
   const contentRef = useRef<HTMLDivElement>(null);
   const popupRef = useRef<{
@@ -42,7 +44,9 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
   const savedSelectionRef = useRef<Range | null>(null);
   const [mousePositionY, setMousePositionY] = useState(0);
   const [isHighlighting, setIsHighlighting] = useState(false);
-  const [selectedColor, setSelectedColor] = useState("yellow")
+  const [selectedColor, setSelectedColor] = useState("yellow");
+
+  console.log("generic blocks", genericBlocks)
 
 
   useEffect(() => {
@@ -267,7 +271,7 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
 
   return (
     <>
-      <div className="fixed top-8 right-1/4 transform -translate-x-1/2 bg-blue-100 p-2 rounded shadow-lg  group">
+      {block.id === genericBlocks[0] && <div className="fixed top-8 right-1/4 transform -translate-x-1/2 bg-blue-100 p-2 rounded shadow-lg  group">
         <div className="relative">
           <Pen className="cursor-pointer" />
           
@@ -301,7 +305,7 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
               <button title="Highlight Blue" onClick={() => handleApplyColor("#93c5fd")} className={`w-6 h-6 rounded-full ${selectedColor === "#93c5fd" ? "border-2 border-black" : "border border-gray-300" } bg-blue-300`} />
           </div>
         </div>  
-      </div>
+      </div>}
   
       {/* Content */}
       <div

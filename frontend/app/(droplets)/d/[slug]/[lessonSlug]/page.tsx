@@ -1,5 +1,4 @@
 import { Metadata } from "next";
-import { LessonRenderer } from "@/components/droplets/lessons/lesson-renderer";
 import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
 import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
 import { getDropletBySlug } from "@/lib/requests/droplet";
@@ -7,12 +6,6 @@ import { getLessonBySlug } from "@/lib/requests/lesson";
 import { getServerSession } from "next-auth";
 import { getAuthorByAuthorizedUserEmail } from "@/lib/requests/author";
 import { getCurrentUser } from "@/lib/auth/session";
-import { NotesBar } from "@/components/droplets/lessons/note-taking/notes-bar";
-import {
-  getNotesByAuthorizedUserAndLesson,
-  updateNoteContent,
-} from "@/lib/requests/notes";
-import { AuthorizedUser } from "@/types";
 import { redirect } from "next/navigation";
 import { DropletLessonWrapper } from "@/components/droplets/lessons/droplet-lesson-wrapper";
 
