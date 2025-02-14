@@ -6,7 +6,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import hljs from "highlight.js";
 import { Highlight } from "@/types";
-import { Highlighter, X, Palette, Pencil, Pen } from "lucide-react";
+import { Highlighter, X, Palette, Pencil, Pen, NotebookPen } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 
@@ -110,6 +110,10 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
     }
     return offset;
   };
+
+  const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+    setMousePositionY(e.pageY + 75);
+  }
 
   const handleMouseUp = () => {
     const selection = window.getSelection();
@@ -243,7 +247,11 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
   };
 
   const handleCreateNote = () => {
-    onNote(mousePositionY, curHighlightText);
+    handlePopupHighlight();
+    console.log("cur highlighted text is ", popupRef.current.savedRange?.toString())
+
+        onNote(mousePositionY, popupRef.current.savedRange?.toString() || "");
+      
   };
 
   return (
@@ -270,6 +278,10 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
               <button title="Delete Highlight" onClick={handlePopupDelete} className="relative group">
                 <X size={30} />
               </button>
+
+              <button title="Take Note" onClick={handleCreateNote} className="relative group">
+                <NotebookPen size={30} />
+              </button>
   
               <button title="Highlight Pink" onClick={() => handleApplyColor("#f9a8d4")} className={`w-6 h-6 rounded-full ${selectedColor === "#f9a8d4" ? "border-2 border-black" : "border border-gray-300" } bg-pink-300`} />
               <button title="Highlight Red" onClick={() => handleApplyColor("#fca5a5")} className={`w-6 h-6 rounded-full ${selectedColor === "#fca5a5" ? "border-2 border-black" : "border border-gray-300" } bg-red-300`} />
@@ -284,6 +296,7 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
       <div
         ref={contentRef}
         onMouseUp={(e) => handleMouseUp()}
+        onMouseDown={(e) => handleMouseDown(e)}
         //onMouseDown={() => popup.show = false}
         className="mt-2 prose prose-lg prose-sky prose-table:block prose-table:overflow-x-scroll select-text"
         dangerouslySetInnerHTML={{ __html: block.content }}
