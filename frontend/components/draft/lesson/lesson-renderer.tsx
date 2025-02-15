@@ -63,7 +63,6 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
       const response = await updateLesson(lesson.id, { blocks });
 
       if (!response || response.error || !response.ok) {
-        console.log("Error updating Lesson");
         return;
       }
     },
@@ -73,7 +72,6 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
   const updateBlocksBackendReload = useCallback(
     async (blocks: Block[]) => {
       await updateLesson(lesson.id, { blocks }, { reload: true });
-      console.log("Updated Blocks while reloading");
     },
     [lesson.id],
   );
@@ -108,10 +106,8 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
     const response = await deleteLesson(lesson.id);
     if (response && !response.error) {
       router.replace(`/draft/d/${dropletSlug}`);
-      console.log("Deleted Lesson");
       return;
     }
-    console.log("Failed to delete lesson");
   }, [lesson.id, dropletSlug, router]);
 
   // Block manipulation functions

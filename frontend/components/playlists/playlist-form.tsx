@@ -165,7 +165,6 @@ export function PlaylistForm({
         }
       } else {
         response = await createPlaylist(playlistData);
-        console.log(response);
         if (response.ok) {
           router.push(`/p/${response.data.attributes.slug}`);
         } else {

@@ -21,9 +21,6 @@ export async function ArchivedDropletsGrid() {
   const authorizedUser = await getAuthorizedUserByEmail(user.email);
   const enrollments = await getEnrollmentsByAuthorizedUser(authorizedUser.id);
 
-  console.log("enrollments: ", enrollments);
-  console.log("isArchived", enrollments[0].isArchived);
-
   const filteredEnrollments = enrollments.filter((e) => e.isArchived === true);
 
   const completedLessonIds = filteredEnrollments.flatMap(

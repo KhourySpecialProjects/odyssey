@@ -117,8 +117,6 @@ export function LessonRenderer({
       );
     }
 
-    console.log("created a new note in the handleHighlight function");
-
     onUpdate();
   };
 
@@ -155,7 +153,6 @@ export function LessonRenderer({
 
   async function handleMarkAsComplete() {
     if (!enrollmentId) {
-      console.log("no enrollment");
       return;
     }
 

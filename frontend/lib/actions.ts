@@ -356,7 +356,6 @@ export async function createEnrollmentFromEmail(
         .map((enrollment) => enrollment.droplet.id)
         .includes(formData.droplet)
     ) {
-      console.log("sending post request");
       const response = await fetch(STRAPI_API_URL + "/api/enrollments", {
         method: "POST",
         body: JSON.stringify({
@@ -391,15 +390,14 @@ const CreateDropletSchema = DropletSchema.pick({
   tagIds: true,
   learningObjectives: true,
 });
+
 export async function createDroplet(data: z.infer<typeof CreateDropletSchema>) {
   try {
     const user = await getCurrentUser();
-    console.log("user: ", user);
     if (!user?.email) throw new Error("No email identified");
     const author = await getAuthorByAuthorizedUserEmail(user.email, {
       populate: {},
     });
-    console.log("author: ", author);
     if (!author) throw new Error("No author identified");
 
     const dataToSend = {
@@ -418,7 +416,6 @@ export async function createDroplet(data: z.infer<typeof CreateDropletSchema>) {
         objective: obj,
       })),
     };
-    console.log("data to send: ", dataToSend);
 
     const response = await fetch(STRAPI_API_URL + "/api/droplets", {
       method: "POST",
@@ -428,7 +425,6 @@ export async function createDroplet(data: z.infer<typeof CreateDropletSchema>) {
         Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
       },
     });
-    console.log("fetch response: ", response);
 
     const responseData = await response.json();
 
@@ -611,7 +607,6 @@ export async function updateLinkedin(linkedIn: string, userId: number) {
 }
 
 export async function updateGithub(github: string, userId: number) {
-  console.log("github: ", github);
   try {
     const response = await fetch(
       `${STRAPI_API_URL}/api/authorized-users/${userId}`,
@@ -898,7 +893,6 @@ export async function updateDroplet(
 
     // Handle updating droplet_lessons collection updates separately if they exist
     if (data.droplet_lessons) {
-      console.log(" --> data.droplet_lessons = ", data.droplet_lessons);
       const dropletLessonsResponse = await Promise.all(
         data.droplet_lessons.map(async (dl) => {
           const response = await fetch(
@@ -940,7 +934,6 @@ export async function updateDroplet(
     const responseData = await response.json();
 
     if (!response.ok || (response.ok && responseData.error)) {
-      console.log(responseData);
       const errorPath = responseData.error.details.errors[0].path[0];
       const errorMessage = `${responseData.error.message} (${errorPath})`;
       return { ok: false, error: errorMessage, data: null };
@@ -1005,7 +998,6 @@ export async function updateLesson(
     regenerateSlug: false,
   },
 ) {
-  console.log(" --> actions.ts: updateLesson() function called");
   try {
     if (data.blocks) {
       data.blocks = data.blocks.map(({ id, ...rest }) => rest);
@@ -1015,10 +1007,6 @@ export async function updateLesson(
       ...(data.blocks && { blocks: data.blocks }),
     };
     dataToSend.regenerateSlug = options.regenerateSlug;
-
-    console.log(dataToSend);
-
-    console.log(dataToSend);
 
     const response = await fetch(STRAPI_API_URL + "/api/lessons/" + id, {
       method: "PUT",
@@ -1031,17 +1019,6 @@ export async function updateLesson(
     const responseData = await response.json();
 
     if (!response.ok || (response.ok && responseData.error)) {
-      console.log(" ----> F");
-      console.log("responseData: ", responseData);
-      console.log("responseData.error.details: ", responseData.error.details);
-      console.log(
-        "responseData.error.details.errors: ",
-        responseData.error.details.errors,
-      );
-      console.log(
-        "responseData.error.details.errors[0].path[0]: ",
-        responseData.error.details.errors[0].path[0],
-      );
       const errorPath = responseData.error.details.errors[0].path[0];
       const errorMessage = `${responseData.error.message} (${errorPath})`;
       return { ok: false, error: errorMessage, data: null };
@@ -1355,20 +1332,16 @@ export async function deleteImage(fileName: string) {
 
     const uploadParams = {
       Bucket: bucketName,
-      Key: `${rootPath}/${fileName}`, // Upload to the specified directory
+      Key: `${rootPath}/${fileName}`,
     };
 
     const response = await s3.send(new DeleteObjectCommand(uploadParams));
-    console.log(response);
 
     if (response["$metadata"].httpStatusCode != 204) {
       return { ok: false, error: "Failed to delete image" };
     }
-
-    console.log("Deleted Image");
     return { ok: true, error: null };
   } catch (err) {
-    console.log(err);
     return { ok: false, error: "Failed to delete image" };
   }
 }

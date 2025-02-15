@@ -1,7 +1,4 @@
-import {
-  isAuthorizedUserAdmin,
-  isContentCreator,
-} from "@/lib/utils";
+import { isAuthorizedUserAdmin, isContentCreator } from "@/lib/utils";
 import { GeneralConfig, User } from "@/types";
 export const originalNav = [
   {

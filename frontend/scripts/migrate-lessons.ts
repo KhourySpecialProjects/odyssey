@@ -81,8 +81,6 @@ async function migrateDropletLessons() {
     let totalPages = 1;
 
     while (page <= totalPages) {
-      console.log(`Fetching page ${page}`);
-
       const dropletsResponse = (await fetchAPI("/droplets", {
         method: "GET",
         params: {
@@ -95,14 +93,9 @@ async function migrateDropletLessons() {
       const droplets = dropletsResponse.data;
       totalPages = dropletsResponse.meta.pagination.pageCount;
 
-      console.log(`Processing ${droplets.length} droplets`);
-
       for (const droplet of droplets) {
-        console.log(`Droplet ID: ${droplet.id}`);
-
         // Safely access lessons
         const lessons = droplet.attributes.lessons?.data || [];
-        console.log(`Droplet has ${lessons.length} lessons`);
 
         for (let i = 0; i < lessons.length; i++) {
           const lesson = lessons[i];
@@ -118,10 +111,6 @@ async function migrateDropletLessons() {
                 },
               }),
             });
-
-            console.log(
-              `Created DropletLesson for Droplet ${droplet.id}, Lesson ${lesson.id}, Order ${i}`,
-            );
           } catch (createError) {
             console.error(
               `Error creating DropletLesson for Droplet ${droplet.id}, Lesson ${lesson.id}:`,
@@ -133,8 +122,6 @@ async function migrateDropletLessons() {
 
       page++;
     }
-
-    console.log("Migration completed successfully");
   } catch (error) {
     console.error("Migration failed:", error);
   }
