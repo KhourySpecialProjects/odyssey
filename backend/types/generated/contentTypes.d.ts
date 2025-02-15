@@ -632,6 +632,11 @@ export interface ApiAuthorizedUserAuthorizedUser extends Schema.CollectionType {
       'oneToMany',
       'api::group.group'
     >;
+    highlights: Attribute.Relation<
+      'api::authorized-user.authorized-user',
+      'oneToMany',
+      'api::highlight.highlight'
+    >;
     isEnabled: Attribute.Boolean &
       Attribute.Required &
       Attribute.DefaultTo<true>;
@@ -860,6 +865,11 @@ export interface ApiEnrollmentEnrollment extends Schema.CollectionType {
       Attribute.Required &
       Attribute.DefaultTo<false>;
     isFirstTime: Attribute.Boolean & Attribute.DefaultTo<true>;
+    notes: Attribute.Relation<
+      'api::enrollment.enrollment',
+      'oneToMany',
+      'api::note.note'
+    >;
     rating: Attribute.Integer &
       Attribute.SetMinMax<
         {
@@ -1006,6 +1016,61 @@ export interface ApiGroupGroup extends Schema.CollectionType {
   };
 }
 
+export interface ApiHighlightHighlight extends Schema.CollectionType {
+  collectionName: 'highlights';
+  info: {
+    description: '';
+    displayName: 'Highlight';
+    pluralName: 'highlights';
+    singularName: 'highlight';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    authorized_user: Attribute.Relation<
+      'api::highlight.highlight',
+      'manyToOne',
+      'api::authorized-user.authorized-user'
+    >;
+    color: Attribute.String & Attribute.DefaultTo<'yellow'>;
+    createdAt: Attribute.DateTime;
+    createdBy: Attribute.Relation<
+      'api::highlight.highlight',
+      'oneToOne',
+      'admin::user'
+    > &
+      Attribute.Private;
+    lesson: Attribute.Relation<
+      'api::highlight.highlight',
+      'manyToOne',
+      'api::lesson.lesson'
+    >;
+    note: Attribute.Relation<
+      'api::highlight.highlight',
+      'oneToOne',
+      'api::note.note'
+    >;
+    position: Attribute.JSON;
+    text: Attribute.Text;
+    updatedAt: Attribute.DateTime;
+    updatedBy: Attribute.Relation<
+      'api::highlight.highlight',
+      'oneToOne',
+      'admin::user'
+    > &
+      Attribute.Private;
+    yLevel: Attribute.Decimal &
+      Attribute.SetMinMax<
+        {
+          max: 100;
+          min: 0;
+        },
+        number
+      >;
+  };
+}
+
 export interface ApiLessonLesson extends Schema.CollectionType {
   collectionName: 'lessons';
   info: {
@@ -1051,11 +1116,21 @@ export interface ApiLessonLesson extends Schema.CollectionType {
       'manyToMany',
       'api::enrollment.enrollment'
     >;
+    highlights: Attribute.Relation<
+      'api::lesson.lesson',
+      'oneToMany',
+      'api::highlight.highlight'
+    >;
     name: Attribute.String &
       Attribute.Required &
       Attribute.SetMinMaxLength<{
         maxLength: 100;
       }>;
+    notes: Attribute.Relation<
+      'api::lesson.lesson',
+      'oneToMany',
+      'api::note.note'
+    >;
     publishedAt: Attribute.DateTime;
     slug: Attribute.UID<'api::lesson.lesson', 'name'> & Attribute.Required;
     type: Attribute.Enumeration<['general', 'setup', 'activity', 'caseStudy']> &
@@ -1066,6 +1141,44 @@ export interface ApiLessonLesson extends Schema.CollectionType {
       'oneToOne',
       'admin::user'
     > &
+      Attribute.Private;
+  };
+}
+
+export interface ApiNoteNote extends Schema.CollectionType {
+  collectionName: 'notes';
+  info: {
+    description: '';
+    displayName: 'Note';
+    pluralName: 'notes';
+    singularName: 'note';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    content: Attribute.Text;
+    createdAt: Attribute.DateTime;
+    createdBy: Attribute.Relation<'api::note.note', 'oneToOne', 'admin::user'> &
+      Attribute.Private;
+    enrollment: Attribute.Relation<
+      'api::note.note',
+      'manyToOne',
+      'api::enrollment.enrollment'
+    >;
+    highlight: Attribute.Relation<
+      'api::note.note',
+      'oneToOne',
+      'api::highlight.highlight'
+    >;
+    lesson: Attribute.Relation<
+      'api::note.note',
+      'manyToOne',
+      'api::lesson.lesson'
+    >;
+    positionY: Attribute.Integer;
+    updatedAt: Attribute.DateTime;
+    updatedBy: Attribute.Relation<'api::note.note', 'oneToOne', 'admin::user'> &
       Attribute.Private;
   };
 }
@@ -1640,7 +1753,9 @@ declare module '@strapi/types' {
       'api::enrollment.enrollment': ApiEnrollmentEnrollment;
       'api::friendship.friendship': ApiFriendshipFriendship;
       'api::group.group': ApiGroupGroup;
+      'api::highlight.highlight': ApiHighlightHighlight;
       'api::lesson.lesson': ApiLessonLesson;
+      'api::note.note': ApiNoteNote;
       'api::playlist.playlist': ApiPlaylistPlaylist;
       'api::report.report': ApiReportReport;
       'api::tag.tag': ApiTagTag;
