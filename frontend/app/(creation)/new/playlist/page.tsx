@@ -15,10 +15,8 @@ export default async function NewPlaylist() {
   )
     return redirect("/");
   const authUser = await getAuthorizedUserByEmail(user.email);
-  console.log(authUser);
 
   const author = await getAuthorByAuthorizedUserEmail(user.email);
-  console.log(author);
 
   //TODO: Fix logic here to get all droplets and get droplets in "current" playlist
   // so that this page can be used for creating a new playlist or editing a playlist.

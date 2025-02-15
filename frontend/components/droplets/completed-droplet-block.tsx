@@ -3,24 +3,24 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
 import { Button } from "../ui/button";
 import { useState } from "react";
-import { AuthorizedUser, Droplet } from "@/types";
+import { AuthorizedUser, Droplet, Enrollment } from "@/types";
 import { GradientBackground } from "../gradient-bg";
 import { updateEnrollmentFirstTime } from "@/lib/actions";
 import { createFriendAnnouncement } from "@/lib/requests/feed";
 
 export function CompletedDropletBlock({
   droplet,
-  enrollmentId,
+  enrollment,
   authUser,
 }: {
   droplet: Droplet;
-  enrollmentId: string;
+  enrollment: Enrollment;
   authUser: AuthorizedUser;
 }) {
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(enrollment.isFirstTime);
   const handleClose = async () => {
     try {
-      await updateEnrollmentFirstTime(enrollmentId);
+      await updateEnrollmentFirstTime(enrollment.id);
       setOpen(false);
     } catch (error) {
       console.error("Failed to update enrollment status:", error);
@@ -30,7 +30,7 @@ export function CompletedDropletBlock({
   const handleShare = async () => {
     try {
       await createFriendAnnouncement(droplet, authUser);
-      await updateEnrollmentFirstTime(enrollmentId);
+      await updateEnrollmentFirstTime(enrollment.id);
       setOpen(false);
     } catch (error) {
       console.error("Failed to share with network: ", error);

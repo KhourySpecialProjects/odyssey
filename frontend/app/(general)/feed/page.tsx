@@ -32,18 +32,11 @@ export default async function FeedPage() {
       <div className="flex flex-row justify-content ">
         <div className="flex justify-center w-1/4 h-200  text-center">
           <div className="relative bg-slate-100 rounded-2xl p-4">
-            <FriendRequests noProfile={true}></FriendRequests>
-
-            {friendRequests.length ? (
-              <div className="absolute top-[-50px] w-full">
-                <RequestsPopupWrapper
-                  user={authUser}
-                  friendships={friendRequests}
-                ></RequestsPopupWrapper>
-              </div>
-            ) : (
-              <div></div>
-            )}
+            <FriendRequests
+              noProfile={true}
+              friendsPerPage={5}
+              authUser={authUser}
+            ></FriendRequests>
           </div>
         </div>
         <div className="w-3/4 h-200 text-center">

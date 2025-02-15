@@ -1,5 +1,4 @@
 import { Metadata } from "next";
-import { LessonRenderer } from "@/components/droplets/lessons/lesson-renderer";
 import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
 import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
 import { getDropletBySlug } from "@/lib/requests/droplet";
@@ -7,6 +6,8 @@ import { getLessonBySlug } from "@/lib/requests/lesson";
 import { getServerSession } from "next-auth";
 import { getAuthorByAuthorizedUserEmail } from "@/lib/requests/author";
 import { getCurrentUser } from "@/lib/auth/session";
+import { redirect } from "next/navigation";
+import { DropletLessonWrapper } from "@/components/droplets/lessons/droplet-lesson-wrapper";
 
 type Props = {
   params: Promise<Params>;
@@ -64,6 +65,8 @@ export default async function Page({ params }: Props) {
   }
 
   const currentUser = await getCurrentUser();
+  if (!currentUser || !currentUser?.email) return redirect("/");
+  const authUser = await getAuthorizedUserByEmail(currentUser.email);
   const userAuthor = await getAuthorByAuthorizedUserEmail(
     session?.user.email || "",
   );
@@ -73,13 +76,18 @@ export default async function Page({ params }: Props) {
     droplet.authors.map((author) => author.id).includes(userAuthor.id);
 
   return (
-    <LessonRenderer
-      lesson={lesson}
-      droplet={droplet}
-      enrollmentId={enrollmentId}
-      completedLessonIds={completedLessonIds}
-      user={currentUser}
-      author={isAuthor || false}
-    />
+    <div className="flex flex-row w-full h-full">
+      <div className="w-1/4"></div>
+      <DropletLessonWrapper
+        lesson={lesson}
+        droplet={droplet}
+        enrollmentId={enrollmentId}
+        completedLessonIds={completedLessonIds}
+        user={currentUser}
+        author={isAuthor || false}
+        authUser={authUser}
+        userId={authUser.id}
+      />
+    </div>
   );
 }
