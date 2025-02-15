@@ -345,9 +345,9 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
                 className={`w-6 h-6 rounded-full ${selectedColor === "#f9a8d4" ? "border-2 border-black" : "border border-gray-300"} bg-pink-300`}
               />
               <button
-                title="Highlight Red"
-                onClick={() => handleApplyColor("#fca5a5")}
-                className={`w-6 h-6 rounded-full ${selectedColor === "#fca5a5" ? "border-2 border-black" : "border border-gray-300"} bg-red-300`}
+                title="Highlight Orange"
+                onClick={() => handleApplyColor("#fbd38d")}
+                className={`w-6 h-6 rounded-full ${selectedColor === "#fbd38d" ? "border-2 border-black" : "border border-gray-300"} bg-orange-300`}
               />
               <button
                 title="Highlight Yellow"
