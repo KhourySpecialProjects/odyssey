@@ -21,7 +21,6 @@ export function NextSteps({
 
   const updateNextStep = (id: number) => {
     return (nextStep: Resource) => {
-      console.log(nextStep);
       const newNextSteps = [...nextSteps];
       newNextSteps.filter((ns) => ns.id == id)[0].label = nextStep.label;
       newNextSteps.filter((ns) => ns.id == id)[0].url = nextStep.url;

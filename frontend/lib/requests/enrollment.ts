@@ -143,7 +143,6 @@ export async function changeEnrollmentRating(
     });
 
     const userID = "" + authorizedUser.id;
-    console.log("THis is the enrollmentID", enrollmentID);
     const response = await fetch(
       `${process.env.NEXT_PUBLIC_STRAPI_API_URL}/api/enrollments/${enrollmentID}`,
       {

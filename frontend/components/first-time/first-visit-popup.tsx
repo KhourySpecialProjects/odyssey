@@ -45,7 +45,7 @@ export function FirstVisitPopup({ user }: { user: AuthorizedUser | null }) {
         await updateFirstTimeStatus(user.id);
         await updateOnboardingInfo(firstName, lastName, bio, user.id);
         setIsOpen(false);
-        router.push("/d/introduction-to-odyssey")
+        router.push("/d/introduction-to-odyssey");
       }
     } catch (error) {
       console.error("Failed to save your information. Please try again.");

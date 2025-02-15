@@ -37,7 +37,7 @@ export function UserBlock({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button size="sm" className="bg-sky-300 text-black" >
+        <Button size="sm" className="bg-sky-300 text-black">
           View Profile
         </Button>
       </DialogTrigger>

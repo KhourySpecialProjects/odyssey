@@ -615,8 +615,6 @@ export async function getSuggestionsFromEmail(userEmail: string) {
         friendship.authorized_users.some(user => user.id === curUser.id),
     );
 
-    console.log("this is", userFriends)
-
 
     //array of AuthorizedUser objects of the given user's friends
     const friendFriendships = userFriends.map((friendship) => {

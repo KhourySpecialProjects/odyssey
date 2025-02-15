@@ -108,7 +108,6 @@ export function AuthorizedUserBlock({ user }: { user: AuthorizedUser }) {
     if (result.success) {
       toast.success("Information updated successfully");
     } else {
-      console.log(result);
       toast.error("Failed to update information");
     }
     setOpen(false);
@@ -130,7 +129,9 @@ export function AuthorizedUserBlock({ user }: { user: AuthorizedUser }) {
               </AvatarFallback>
             </Avatar>
             <p className="font-medium truncate text-slate-900 dark:text-white">
-              {user.firstName && user.lastName ? user.firstName + " " + user.lastName : user.email}
+              {user.firstName && user.lastName
+                ? user.firstName + " " + user.lastName
+                : user.email}
               {!user.isEnabled ? " (Disabled)" : ""}
             </p>
             <p className="text-sm truncate text-slate-500 dark:text-slate-400">
