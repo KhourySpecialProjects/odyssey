@@ -24,10 +24,6 @@
       "type": "string",
       "default": "bg-sky-50",
       "required": true
-    },
-    "iconEnabled": {
-      "type": "boolean",
-      "default": true
     }
   }
 }
