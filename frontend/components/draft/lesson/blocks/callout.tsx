@@ -5,7 +5,7 @@ import { revalidateLesson } from "@/lib/actions";
 import { strapiJSONToTiptapJSON, tiptapJSONToStrapiJSON } from "@/lib/utils";
 import { useCallback } from "react";
 import { debounce } from "lodash";
-import { Trash2Icon, Ban } from "lucide-react";
+import { Trash2Icon } from "lucide-react";
 import { CalloutBlockInput } from "@/components/ui/tiptap/callout-block-input";
 import { useState, useEffect } from "react";
 import CalloutTypeTool from "@/components/ui/tiptap/toolbar/tools/callout-type-tool";
@@ -21,7 +21,6 @@ export function CalloutEditor({
   updateBlock: (block: any) => void;
   deleteBlock: () => void;
 }) {
-  const [iconEnabled, setIconEnabled] = useState(block.iconEnabled);
   const handleUpdate = useCallback((content: any) => {
     console.log(" --> callout.tsx: handleUpdate useCallback handler");
     let temp: any = JSON.parse(
@@ -37,17 +36,6 @@ export function CalloutEditor({
 
   const debounceUpdate = useCallback(debounce(handleUpdate, 1000), []);
 
-  const handleToggleIcon = () => {
-    updateBlock({
-      __component: "droplets.callout",
-      content: block.content,
-      type: "info",
-      color: block.color,
-      iconEnabled: !iconEnabled,
-    });
-    setIconEnabled(!iconEnabled);
-  };
-
   return (
     <>
       <div
@@ -57,25 +45,14 @@ export function CalloutEditor({
           className={`w-full flex flex-row  mb-4 justify-between items-center`}
         >
           <div className="flex flex-row items-center">
-            <h2 className="text-lg font-bold text-black mr-3">Callout Block</h2>
-            {!block.color.includes("sky") && (
-              <div className="relative">
-                <Button variant="transparent" onClick={handleToggleIcon}>
-                  <CalloutIcon
-                    color={block.color || "bg-sky-300"}
-                  ></CalloutIcon>
-                  {!iconEnabled && (
-                    <Ban className="absolute top-0 left-0 w-full h-full text-red-500" />
-                  )}
-                </Button>
-              </div>
-            )}
+            <h2 className="text-lg font-bold text-white mr-3">Callout Block</h2>
+            <CalloutIcon color={block.color || "bg-sky-300"}></CalloutIcon>
           </div>
           <div className="flex flex-row items-center">
             <CalloutTypeTool block={block} updateBlock={updateBlock} />
 
             <Trash2Icon
-              className="cursor-pointer text-black"
+              className="cursor-pointer text-white"
               onClick={deleteBlock}
               size={30}
             />
