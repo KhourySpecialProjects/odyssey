@@ -1302,6 +1302,7 @@ export interface ApiEnrollmentEnrollment extends Schema.CollectionType {
       'oneToMany',
       'api::note.note'
     >;
+    dueDate: Attribute.DateTime;
     createdAt: Attribute.DateTime;
     updatedAt: Attribute.DateTime;
     createdBy: Attribute.Relation<

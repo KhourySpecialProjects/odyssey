@@ -11,7 +11,7 @@
       "url": "https://khouryodyssey.org"
     },
     "license": null,
-    "x-generation-date": "2025-02-17T18:22:46.566Z"
+    "x-generation-date": "2025-02-17T22:46:44.444Z"
   },
   "x-strapi-config": {
     "plugins": [
@@ -2120,6 +2120,10 @@
                                                                     }
                                                                   }
                                                                 }
+                                                              },
+                                                              "dueDate": {
+                                                                "type": "string",
+                                                                "format": "date-time"
                                                               },
                                                               "createdAt": {
                                                                 "type": "string",
@@ -5350,6 +5354,10 @@
                                                                       }
                                                                     }
                                                                   }
+                                                                },
+                                                                "dueDate": {
+                                                                  "type": "string",
+                                                                  "format": "date-time"
                                                                 },
                                                                 "createdAt": {
                                                                   "type": "string",
@@ -9385,6 +9393,10 @@
                                                                     }
                                                                   }
                                                                 },
+                                                                "dueDate": {
+                                                                  "type": "string",
+                                                                  "format": "date-time"
+                                                                },
                                                                 "createdAt": {
                                                                   "type": "string",
                                                                   "format": "date-time"
@@ -11687,6 +11699,10 @@
                                                                                     }
                                                                                   }
                                                                                 }
+                                                                              },
+                                                                              "dueDate": {
+                                                                                "type": "string",
+                                                                                "format": "date-time"
                                                                               },
                                                                               "createdAt": {
                                                                                 "type": "string",
@@ -15849,6 +15865,10 @@
                                                                       }
                                                                     }
                                                                   },
+                                                                  "dueDate": {
+                                                                    "type": "string",
+                                                                    "format": "date-time"
+                                                                  },
                                                                   "createdAt": {
                                                                     "type": "string",
                                                                     "format": "date-time"
@@ -18298,6 +18318,10 @@
                                                                   }
                                                                 }
                                                               },
+                                                              "dueDate": {
+                                                                "type": "string",
+                                                                "format": "date-time"
+                                                              },
                                                               "createdAt": {
                                                                 "type": "string",
                                                                 "format": "date-time"
@@ -19882,6 +19906,10 @@
                   ],
                   "example": "string or id"
                 }
+              },
+              "dueDate": {
+                "type": "string",
+                "format": "date-time"
               }
             }
           }
@@ -21144,6 +21172,10 @@
                                                                                   }
                                                                                 }
                                                                               }
+                                                                            },
+                                                                            "dueDate": {
+                                                                              "type": "string",
+                                                                              "format": "date-time"
                                                                             },
                                                                             "createdAt": {
                                                                               "type": "string",
@@ -22847,6 +22879,10 @@
               }
             }
           },
+          "dueDate": {
+            "type": "string",
+            "format": "date-time"
+          },
           "createdAt": {
             "type": "string",
             "format": "date-time"
@@ -24196,6 +24232,10 @@
                                                                                     }
                                                                                   }
                                                                                 }
+                                                                              },
+                                                                              "dueDate": {
+                                                                                "type": "string",
+                                                                                "format": "date-time"
                                                                               },
                                                                               "createdAt": {
                                                                                 "type": "string",
@@ -27308,6 +27348,10 @@
                                                                                     }
                                                                                   }
                                                                                 }
+                                                                              },
+                                                                              "dueDate": {
+                                                                                "type": "string",
+                                                                                "format": "date-time"
                                                                               },
                                                                               "createdAt": {
                                                                                 "type": "string",
@@ -30470,6 +30514,10 @@
                                                                                   }
                                                                                 }
                                                                               }
+                                                                            },
+                                                                            "dueDate": {
+                                                                              "type": "string",
+                                                                              "format": "date-time"
                                                                             },
                                                                             "createdAt": {
                                                                               "type": "string",
@@ -33838,6 +33886,10 @@
                                                                     }
                                                                   }
                                                                 },
+                                                                "dueDate": {
+                                                                  "type": "string",
+                                                                  "format": "date-time"
+                                                                },
                                                                 "createdAt": {
                                                                   "type": "string",
                                                                   "format": "date-time"
@@ -36861,6 +36913,10 @@
                                                                                   }
                                                                                 }
                                                                               }
+                                                                            },
+                                                                            "dueDate": {
+                                                                              "type": "string",
+                                                                              "format": "date-time"
                                                                             },
                                                                             "createdAt": {
                                                                               "type": "string",
@@ -40189,6 +40245,10 @@
                                                                       }
                                                                     }
                                                                   }
+                                                                },
+                                                                "dueDate": {
+                                                                  "type": "string",
+                                                                  "format": "date-time"
                                                                 },
                                                                 "createdAt": {
                                                                   "type": "string",
@@ -43726,6 +43786,10 @@
                                                                       }
                                                                     }
                                                                   }
+                                                                },
+                                                                "dueDate": {
+                                                                  "type": "string",
+                                                                  "format": "date-time"
                                                                 },
                                                                 "createdAt": {
                                                                   "type": "string",

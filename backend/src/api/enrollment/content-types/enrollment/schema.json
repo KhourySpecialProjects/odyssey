@@ -53,6 +53,9 @@
       "relation": "oneToMany",
       "target": "api::note.note",
       "mappedBy": "enrollment"
+    },
+    "dueDate": {
+      "type": "datetime"
     }
   }
 }

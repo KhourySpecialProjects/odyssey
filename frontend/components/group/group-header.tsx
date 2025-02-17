@@ -21,12 +21,20 @@ export function GroupHeader({ group, canEdit }: GroupHeaderProps) {
         </div>
       </div>
       {canEdit && (
-        <Link href={`/g/management?slug=${group.slug}`}>
+        <div>
+          <Link href={`/g/management?slug=${group.slug}`}>
+            <Button variant="default" className="gap-2">
+              <PencilIcon className="h-4 w-4" />
+              Edit Group
+            </Button>
+          </Link>
+          <Link href={`/g/due-dates?slug=${group.slug}`}>
           <Button variant="default" className="gap-2">
             <PencilIcon className="h-4 w-4" />
-            Edit Group
+            Due Dates
           </Button>
         </Link>
+        </div>
       )}
     </div>
   );
