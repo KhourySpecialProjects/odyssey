@@ -47,7 +47,7 @@ export default function CalloutTypeTool({
             "p-2.5 rounded-md border border-transparent",
           )}
         >
-          <Menu color="#ffffff" />
+          <Menu color="#000000" />
         </button>
       </PopoverTrigger>
       <PopoverContent>
@@ -149,10 +149,27 @@ export default function CalloutTypeTool({
               });
             }}
             variant={dropdownVariants}
-            className="w-full border border-slate-200 bg-amber-300"
+            className="w-full border border-slate-200 bg-amber-300 mb-1"
           >
             Caution
             {<CalloutIcon color={"bg-amber-300"}></CalloutIcon>}
+          </Button>
+          <Button
+            onClick={(e) => {
+              setOpen(false);
+              e.preventDefault();
+              updateBlock({
+                __component: "droplets.callout",
+                content: block.content,
+                type: "info",
+                color: "bg-sky-50",
+              });
+            }}
+            variant={dropdownVariants}
+            className="bg-sky-50 w-full border border-slate-200"
+          >
+            Default
+            {<CalloutIcon color={"bg-sky-50"}></CalloutIcon>}
           </Button>
         </div>
       </PopoverContent>
