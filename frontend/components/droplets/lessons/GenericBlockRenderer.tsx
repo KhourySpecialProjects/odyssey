@@ -10,7 +10,6 @@ import {
   Highlighter,
   X,
   CircleHelp,
-  Pencil,
   Pen,
   NotebookPen,
 } from "lucide-react";
