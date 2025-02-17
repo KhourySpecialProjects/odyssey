@@ -11,7 +11,7 @@
       "url": "https://khouryodyssey.org"
     },
     "license": null,
-    "x-generation-date": "2025-02-14T20:21:06.156Z"
+    "x-generation-date": "2025-02-17T18:22:46.566Z"
   },
   "x-strapi-config": {
     "plugins": [
@@ -1588,6 +1588,9 @@
                                                                                       },
                                                                                       "color": {
                                                                                         "type": "string"
+                                                                                      },
+                                                                                      "iconEnabled": {
+                                                                                        "type": "boolean"
                                                                                       }
                                                                                     }
                                                                                   },
@@ -4815,6 +4818,9 @@
                                                                                         },
                                                                                         "color": {
                                                                                           "type": "string"
+                                                                                        },
+                                                                                        "iconEnabled": {
+                                                                                          "type": "boolean"
                                                                                         }
                                                                                       }
                                                                                     },
@@ -7994,6 +8000,9 @@
                                                             },
                                                             "color": {
                                                               "type": "string"
+                                                            },
+                                                            "iconEnabled": {
+                                                              "type": "boolean"
                                                             }
                                                           }
                                                         },
@@ -11300,6 +11309,9 @@
                                                                           },
                                                                           "color": {
                                                                             "type": "string"
+                                                                          },
+                                                                          "iconEnabled": {
+                                                                            "type": "boolean"
                                                                           }
                                                                         }
                                                                       },
@@ -14452,6 +14464,9 @@
                                                               },
                                                               "color": {
                                                                 "type": "string"
+                                                              },
+                                                              "iconEnabled": {
+                                                                "type": "boolean"
                                                               }
                                                             }
                                                           },
@@ -17750,6 +17765,9 @@
                                                                                       },
                                                                                       "color": {
                                                                                         "type": "string"
+                                                                                      },
+                                                                                      "iconEnabled": {
+                                                                                        "type": "boolean"
                                                                                       }
                                                                                     }
                                                                                   },
@@ -20748,6 +20766,9 @@
                                                                         },
                                                                         "color": {
                                                                           "type": "string"
+                                                                        },
+                                                                        "iconEnabled": {
+                                                                          "type": "boolean"
                                                                         }
                                                                       }
                                                                     },
@@ -23797,6 +23818,9 @@
                                                                           },
                                                                           "color": {
                                                                             "type": "string"
+                                                                          },
+                                                                          "iconEnabled": {
+                                                                            "type": "boolean"
                                                                           }
                                                                         }
                                                                       },
@@ -26906,6 +26930,9 @@
                                                                           },
                                                                           "color": {
                                                                             "type": "string"
+                                                                          },
+                                                                          "iconEnabled": {
+                                                                            "type": "boolean"
                                                                           }
                                                                         }
                                                                       },
@@ -30065,6 +30092,9 @@
                                                                         },
                                                                         "color": {
                                                                           "type": "string"
+                                                                        },
+                                                                        "iconEnabled": {
+                                                                          "type": "boolean"
                                                                         }
                                                                       }
                                                                     },
@@ -33275,6 +33305,9 @@
                                                                                         },
                                                                                         "color": {
                                                                                           "type": "string"
+                                                                                        },
+                                                                                        "iconEnabled": {
+                                                                                          "type": "boolean"
                                                                                         }
                                                                                       }
                                                                                     },
@@ -35482,6 +35515,9 @@
           },
           "color": {
             "type": "string"
+          },
+          "iconEnabled": {
+            "type": "boolean"
           }
         }
       },
@@ -35745,6 +35781,9 @@
                                 },
                                 "color": {
                                   "type": "string"
+                                },
+                                "iconEnabled": {
+                                  "type": "boolean"
                                 }
                               }
                             },
@@ -39618,6 +39657,9 @@
                                                                                         },
                                                                                         "color": {
                                                                                           "type": "string"
+                                                                                        },
+                                                                                        "iconEnabled": {
+                                                                                          "type": "boolean"
                                                                                         }
                                                                                       }
                                                                                     },
@@ -43152,6 +43194,9 @@
                                                                                         },
                                                                                         "color": {
                                                                                           "type": "string"
+                                                                                        },
+                                                                                        "iconEnabled": {
+                                                                                          "type": "boolean"
                                                                                         }
                                                                                       }
                                                                                     },
@@ -45392,8 +45437,7 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object",
-              "additionalProperties": true
+              "type": "object"
             },
             "style": "deepObject"
           },
@@ -45898,8 +45942,7 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object",
-              "additionalProperties": true
+              "type": "object"
             },
             "style": "deepObject"
           },
@@ -46404,8 +46447,7 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object",
-              "additionalProperties": true
+              "type": "object"
             },
             "style": "deepObject"
           },
@@ -46910,8 +46952,7 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object",
-              "additionalProperties": true
+              "type": "object"
             },
             "style": "deepObject"
           },
@@ -47416,8 +47457,7 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object",
-              "additionalProperties": true
+              "type": "object"
             },
             "style": "deepObject"
           },
@@ -47922,8 +47962,7 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object",
-              "additionalProperties": true
+              "type": "object"
             },
             "style": "deepObject"
           },
@@ -48428,8 +48467,7 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object",
-              "additionalProperties": true
+              "type": "object"
             },
             "style": "deepObject"
           },
@@ -48934,8 +48972,7 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object",
-              "additionalProperties": true
+              "type": "object"
             },
             "style": "deepObject"
           },
@@ -49440,8 +49477,7 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object",
-              "additionalProperties": true
+              "type": "object"
             },
             "style": "deepObject"
           },
@@ -49946,8 +49982,7 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object",
-              "additionalProperties": true
+              "type": "object"
             },
             "style": "deepObject"
           },
@@ -50452,8 +50487,7 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object",
-              "additionalProperties": true
+              "type": "object"
             },
             "style": "deepObject"
           },
@@ -50958,8 +50992,7 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object",
-              "additionalProperties": true
+              "type": "object"
             },
             "style": "deepObject"
           },
@@ -51464,8 +51497,7 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object",
-              "additionalProperties": true
+              "type": "object"
             },
             "style": "deepObject"
           },
@@ -51970,8 +52002,7 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object",
-              "additionalProperties": true
+              "type": "object"
             },
             "style": "deepObject"
           },
@@ -52476,8 +52507,7 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object",
-              "additionalProperties": true
+              "type": "object"
             },
             "style": "deepObject"
           },
@@ -52982,8 +53012,7 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object",
-              "additionalProperties": true
+              "type": "object"
             },
             "style": "deepObject"
           },
