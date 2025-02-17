@@ -302,6 +302,7 @@ function LessonBlockRenderer({
               <CalloutIcon color={block.color || "bg-sky-300"}></CalloutIcon>
             </div>
           )}
+
           <div className="">
             <div className="pl-8 mx-auto prose prose-sky text-center">
               <BlocksRenderer content={block.content} />
