@@ -1,5 +1,4 @@
 import {
-  LockIcon,
   CircleAlert,
   CircleHelp,
   TriangleAlert,
@@ -10,7 +9,7 @@ import {
 
 export function CalloutIcon({ color }: { color: string }) {
   return (() => {
-    const iconStyle = "text-white";
+    const iconStyle = "text-black";
     switch (color.split("-")[1]) {
       case "red":
         return <TriangleAlert className={iconStyle} strokeWidth={2.5} />;
@@ -22,8 +21,10 @@ export function CalloutIcon({ color }: { color: string }) {
         return <BookOpenText className={iconStyle} strokeWidth={2.5} />;
       case "purple":
         return <BadgeInfo className={iconStyle} strokeWidth={2.5} />;
-      default:
+      case "amber":
         return <Bell className={iconStyle} strokeWidth={2.5} />;
+      default:
+        return <div />;
     }
   })();
 }
