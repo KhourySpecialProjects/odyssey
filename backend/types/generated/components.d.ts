@@ -15,7 +15,6 @@ export interface DropletsCallout extends Schema.Component {
     color: Attribute.String &
       Attribute.Required &
       Attribute.DefaultTo<'bg-sky-50'>;
-    iconEnabled: Attribute.Boolean & Attribute.DefaultTo<true>;
   };
 }
 

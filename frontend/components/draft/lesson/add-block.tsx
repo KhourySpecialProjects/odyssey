@@ -230,32 +230,10 @@ export function AddBlock({ add }: { add: (block: any) => void }) {
                     });
                   }}
                   variant={dropdownVariants}
-                  className="w-full border border-slate-200 bg-amber-300 mb-1"
+                  className="w-full border border-slate-200 bg-amber-300"
                 >
                   Caution
                   {<CalloutIcon color={"bg-amber-300"}></CalloutIcon>}
-                </Button>
-                <Button
-                  onClick={(e) => {
-                    setOpen(false);
-                    e.preventDefault();
-                    add({
-                      __component: "droplets.callout",
-                      content: [
-                        {
-                          type: "paragraph",
-                          children: [{ type: "text", text: "" }],
-                        },
-                      ],
-                      color: "bg-sky-50",
-                      type: "info",
-                    });
-                  }}
-                  variant={dropdownVariants}
-                  className="w-full border border-slate-200 bg-sky-50"
-                >
-                  Default
-                  {<CalloutIcon color={"bg-sky-50"}></CalloutIcon>}
                 </Button>
               </div>
             </PopoverContent>
