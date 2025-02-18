@@ -55,19 +55,12 @@ export default async function EditPlaylistPage({ params }: Props) {
     },
   });
 
-  console.log("returned playlist = ", playlist);
-
   if (!playlist) {
     return redirect("/drafts");
   }
 
   // Verify the user has permission to edit this playlist
   if ((playlist.author as any)?.authorizedUser.id !== authUser.id) {
-    console.log(
-      "Redirecting to drafts because author and current user aren't the same",
-    );
-    console.log(" playlist.author?.id = ", playlist.author?.id);
-    console.log(" authUser.id = ", authUser.id);
     return redirect("/drafts");
   }
 

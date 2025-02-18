@@ -194,8 +194,6 @@ export function NotesBar({
     }
   };
 
-  console.log("set note disabled", noteDisabled);
-
   return (
     <>
       <div className={`right-[10%] text-center mt-5`}>

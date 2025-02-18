@@ -24,8 +24,6 @@ import { CalloutIcon } from "@/components/ui/callout-icons";
 import { OpenEndedQuizBlock } from "./open-ended-quiz";
 import { toast } from "sonner";
 import { Highlight } from "@/types";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
 import { getEnrollByID } from "@/lib/requests/enrollment";
 import { createNote } from "@/lib/requests/notes";
 import { getHighlights } from "@/lib/requests/highlights";
@@ -117,8 +115,6 @@ export function LessonRenderer({
       );
     }
 
-    console.log("created a new note in the handleHighlight function");
-
     onUpdate();
   };
 
@@ -155,7 +151,6 @@ export function LessonRenderer({
 
   async function handleMarkAsComplete() {
     if (!enrollmentId) {
-      console.log("no enrollment");
       return;
     }
 

@@ -217,7 +217,7 @@ export function SocialForms({
         }}
         className="px-6 py-4 flex flex-row gap-4 items-center"
       >
-        <div>LinkedIn:</div>
+        <div className="w-[7%]">LinkedIn:</div>
         <Input
           name="linkedin"
           value={linkedinValue}
@@ -225,7 +225,7 @@ export function SocialForms({
           placeholder="Enter your LinkedIn url"
           className="max-w-80"
         />
-        <Button type="submit" className="max-w-80">
+        <Button type="submit" className="w-[13%]">
           Save LinkedIn
         </Button>
       </form>
@@ -246,7 +246,7 @@ export function SocialForms({
         className="px-6 py-4 flex flex-row gap-4 items-center"
       >
         {" "}
-        <div>GitHub:</div>
+        <div className="w-[7%]">GitHub:</div>
         <Input
           name="github"
           value={githubValue}
@@ -254,7 +254,7 @@ export function SocialForms({
           placeholder="Enter your GitHub url"
           className="max-w-80"
         />
-        <Button type="submit" className="max-w-80">
+        <Button type="submit" className="w-[13%]">
           Save GitHub
         </Button>
       </form>

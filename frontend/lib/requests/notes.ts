@@ -1,6 +1,6 @@
 "use server";
 
-import { Enrollment, Note, Lesson, AuthorizedUser } from "@/types";
+import { Enrollment, Note, Lesson, Highlight } from "@/types";
 import { StrapiRequestParams } from "@/types/strapi";
 import { fetchAPI } from "../utils";
 import { revalidatePath, revalidateTag } from "next/cache";
@@ -18,9 +18,7 @@ export async function getNotesByAuthorizedUserAndLesson(
   lessonSlug: string,
   {
     sort,
-    filters,
     pagination = { pageSize: 250, page: 1 },
-    populate,
     fields = ["id", "content", "positionY"],
   }: StrapiRequestParams = {},
 ): Promise<Note[]> {
@@ -147,7 +145,6 @@ export async function createNote(
 
     revalidatePath("/d/[slug]/[lessonSlug]", "page");
     revalidateTag("notes");
-    console.log("created a note!!!!");
     return { success: true };
   } catch (error) {
     console.error("Error adding note:", error);

@@ -99,7 +99,6 @@ export function GroupProgressGrid({ group }: GroupProgressGridProps) {
   };
 
   const getCompletedDropletColor = (completionStatus: number) => {
-    console.log("status ", completionStatus);
     if (completionStatus === 100) return "#6EE7B7";
     else if (completionStatus > 33) {
       return "#FBBF24";

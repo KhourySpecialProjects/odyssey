@@ -55,7 +55,6 @@ export function CalloutBlockInput({
     ],
 
     onUpdate: ({ editor }) => {
-      console.log(" --> callout-block-inputRegex.tsx: onUpdate handler");
       (updateContent as (content: JSONContent) => void)(editor.getJSON());
     },
 

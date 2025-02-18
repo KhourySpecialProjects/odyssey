@@ -49,7 +49,7 @@ export function FriendBlock({
         </div>
         <UserBlock user={friend} curUser={user} />
         <div className="inline-flex items-center gap-2" onClick={handleRemove}>
-          <Button size="sm" variant="outline">
+          <Button size="sm" variant="destructive">
             Remove Friend
           </Button>
         </div>
