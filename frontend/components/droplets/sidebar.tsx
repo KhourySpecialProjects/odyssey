@@ -111,9 +111,8 @@ export default function Sidebar({
       <aside
   id="sidebar"
   className={cn(
-    "fixed top-0 left-0 z-40 w-64 h-screen transition-transform",
-    expanded ? "translate-x-0" : "-translate-x-full",
-    "md:translate-x-0" 
+    "fixed md:sticky md:top-0 left-0 z-40 w-64 h-screen transition-transform",
+    expanded ? "translate-x-0" : "-translate-x-full md:translate-x-0"
   )}
   aria-label="Sidebar"
 >
