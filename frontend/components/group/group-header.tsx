@@ -21,7 +21,7 @@ export function GroupHeader({ group, canEdit }: GroupHeaderProps) {
         </div>
       </div>
       {canEdit && (
-        <div>
+        <div className="flex flex-col space-y-2">
           <Link href={`/g/management?slug=${group.slug}`}>
             <Button variant="default" className="gap-2">
               <PencilIcon className="h-4 w-4" />
