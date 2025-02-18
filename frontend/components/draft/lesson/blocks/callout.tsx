@@ -58,7 +58,7 @@ export function CalloutEditor({
         >
           <div className="flex flex-row items-center">
             <h2 className="text-lg font-bold text-black mr-3">Callout Block</h2>
-            {!block.color.includes("sky") && (
+            {block.color && !block.color.includes("sky") && (
               <div className="relative">
                 <Button variant="transparent" onClick={handleToggleIcon}>
                   <CalloutIcon
