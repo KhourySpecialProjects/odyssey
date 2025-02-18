@@ -40,7 +40,6 @@ import {
 } from "../ui/dropdown-menu";
 import { Label } from "../ui/label";
 import { Progress } from "../ui/progress";
-import { useSession } from "next-auth/react";
 
 export default function Sidebar({
   user,
@@ -57,8 +56,6 @@ export default function Sidebar({
 }) {
   const [expanded, setExpanded] = useState(false);
   const pathname = usePathname();
-  const { data: session } = useSession();
-
   const isAdmin = user && isAuthorizedUserAdmin(user.roles);
 
   const activeLinkClasses =
@@ -67,8 +64,6 @@ export default function Sidebar({
     "w-full flex items-center p-2 rounded-lg text-slate-900 dark:text-white hover:bg-slate-100 dark:hover:bg-slate-700 group transition-colors";
 
   const totalLessons = droplet.droplet_lessons?.length ?? 0;
-  // const totalPages = totalLessons;
-  // const pageSlug = pathname.split("/").at(-1);
 
   const totalLessonsCompleted = completedLessonIds.filter((id) =>
     droplet.droplet_lessons?.some((lesson) => lesson.lesson.id === id),
@@ -95,7 +90,7 @@ export default function Sidebar({
         onClick={() => setExpanded(false)}
       ></div>
 
-      <div className="z-20 inline-flex items-center w-full gap-2 px-3 py-2 text-sm border-b md:hidden border-b-slate-200">
+<div className="z-20 inline-flex items-center w-full gap-2 px-3 py-2 text-sm border-b md:hidden border-b-slate-200">
         <button
           aria-controls="sidebar"
           type="button"
@@ -114,16 +109,15 @@ export default function Sidebar({
       </div>
 
       <aside
-        id="sidebar"
-        className={cn(
-          "fixed top-0 left-0 z-40 w-64 h-screen transition-transform",
-          expanded
-            ? "md:translate-x-80 -transform-none"
-            : "md:translate-x-0 -translate-x-full",
-        )}
-        aria-label="Sidebar"
-      >
-        <div className="flex flex-col h-full py-4 overflow-y-auto md:justify-between md:pb-0 bg-slate-50 dark:bg-slate-800">
+  id="sidebar"
+  className={cn(
+    "fixed top-0 left-0 z-40 w-64 h-screen transition-transform",
+    expanded ? "translate-x-0" : "-translate-x-full",
+    "md:translate-x-0" 
+  )}
+  aria-label="Sidebar"
+>
+        <div className="flex flex-col h-full py-4 overflow-y-auto lg:justify-between lg:pb-0 bg-slate-50 dark:bg-slate-800">
           <div className="px-3">
             <Link href="/explore" className="block p-2 mb-4">
               <Image
@@ -239,7 +233,7 @@ export default function Sidebar({
             </ul>
           </div>
 
-          <div className="bottom-0 left-0 w-full p-2 mt-4 space-y-4 border-t bg-slate-50 border-t-slate-200 md:sticky md:px-3 md:mb-0 md:flex-col dark:bg-slate-800">
+          <div className="bottom-0 left-0 w-full p-2 mt-4 space-y-4 border-t bg-slate-50 border-t-slate-200 lg:sticky lg:px-3 lg:mb-0 lg:flex-col dark:bg-slate-800">
             <div className="px-2">
               <Label>{dropletProgress}% complete</Label>
               <Progress value={dropletProgress} className="mt-1.5" />

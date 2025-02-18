@@ -16,10 +16,6 @@ export interface DropletsCallout extends Schema.Component {
     type: Attribute.Enumeration<['info', 'warning']> &
       Attribute.Required &
       Attribute.DefaultTo<'info'>;
-    color: Attribute.String &
-      Attribute.Required &
-      Attribute.DefaultTo<'bg-sky-50'>;
-    iconEnabled: Attribute.Boolean & Attribute.DefaultTo<true>;
   };
 }
 
