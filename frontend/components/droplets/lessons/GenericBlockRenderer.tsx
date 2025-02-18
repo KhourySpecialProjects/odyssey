@@ -274,7 +274,7 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
   return (
     <>
       {block.id === genericBlocks[0] && (
-        <div className="fixed top-8 right-1/4 z-10 transform -translate-x-1/2 bg-blue-100 p-2 rounded shadow-lg">
+        <div className="fixed hidden lg:block top-8 right-1/4 z-10 transform -translate-x-1/2 bg-blue-100 p-2 rounded shadow-lg">
           <div className="relative group">
             <CircleHelp className="cursor-pointer" />
             <div className="absolute left-1/2 transform -translate-x-1/2 top-full mt-2 w-max gap-2 bg-white p-4 rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center pointer-events-none">
@@ -293,7 +293,7 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
         </div>
       )}
       {block.id === genericBlocks[0] && (
-        <div className="fixed top-8 z-0 right-1/4 transform -translate-x-1/2 bg-blue-100 p-2 rounded shadow-lg  group">
+        <div className="fixed hidden lg:block top-8 z-0 right-1/4 transform -translate-x-1/2 bg-blue-100 p-2 rounded shadow-lg  group">
           <div className="relative">
             <Pen className="cursor-pointer" />
 

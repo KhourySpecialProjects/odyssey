@@ -43,7 +43,7 @@ export function DropletLessonWrapper({
 
   return (
     <>
-      <div className="w-1/2 flex justify-center">
+      <div className="w-1/2 min-w-[700px] flex justify-center">
         <LessonRenderer
           lesson={lesson}
           droplet={droplet}
@@ -56,7 +56,7 @@ export function DropletLessonWrapper({
         />
       </div>
       {enrollmentId && (
-        <div className="w-1/4 bg-slate-50 rounded-lg border border-slate-200">
+        <div className="w-1/4 min-w-[375px]  bg-slate-50 rounded-lg border border-slate-200">
           <NotesBar
             userId={userId}
             lesson={lesson}

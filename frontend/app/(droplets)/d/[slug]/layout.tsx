@@ -78,7 +78,7 @@ export default async function RootLayout({ params, children }: Props) {
     droplet.authors.map((author) => author.id).includes(userAuthor.id);
 
   return (
-    <div className="flex flex-col md:flex-row">
+    <div className="flex flex-col md:flex-row min-h-screen">
       <Sidebar
         author={isAuthor || false}
         user={user}
@@ -86,7 +86,7 @@ export default async function RootLayout({ params, children }: Props) {
         authorizedUser={authorizedUser}
         completedLessonIds={completedLessonIds}
       />
-      <main className="flex-1 px-4 py-8 md:px-8">{children}</main>
+      <main className="flex-1 w-full ">{children}</main>
     </div>
   );
 }
