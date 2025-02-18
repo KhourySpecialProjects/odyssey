@@ -1,6 +1,6 @@
 "use server";
 
-import { Enrollment, Note, Lesson, AuthorizedUser } from "@/types";
+import { Highlight } from "@/types";
 import { StrapiRequestParams } from "@/types/strapi";
 import { fetchAPI } from "../utils";
 
@@ -9,9 +9,7 @@ export async function getHighlights(
   text: string,
   {
     sort,
-    filters,
     pagination = { pageSize: 250, page: 1 },
-    populate,
     fields = ["id", "color", "text", "yLevel"],
   }: StrapiRequestParams = {},
 ): Promise<Highlight[]> {

@@ -297,15 +297,6 @@ export default function Sidebar({
                   </Link>
                 </DropdownMenuItem>
 
-                {/* {isAdmin ? (
-                  <DropdownMenuItem asChild>
-                    <Link href="/admin">
-                      <TowerControlIcon className="w-4 h-4 mr-2" />
-                      <span>Admin</span>
-                    </Link>
-                  </DropdownMenuItem>
-                ) : null} */}
-
                 <DropdownMenuSeparator />
 
                 <DropdownMenuItem

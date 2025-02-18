@@ -9,32 +9,6 @@ import { Button } from "@/components/ui/button";
 import { useRef } from "react";
 import { useOffClick } from "../metadata/hooks/useOffClick";
 import { CalloutIcon } from "@/components/ui/callout-icons";
-
-import {
-  getInitials,
-  isAuthorizedUserAdmin,
-  isAuthorizedUserFaculty,
-  condenseRoleTitles,
-} from "@/lib/utils";
-import { AuthorizedUser, User } from "@/types";
-import {
-  ChevronDownIcon,
-  CogIcon,
-  LogOutIcon,
-  PersonStanding,
-  TowerControlIcon,
-  User2Icon,
-} from "lucide-react";
-import { signOut } from "next-auth/react";
-import Link from "next/link";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@radix-ui/react-dropdown-menu";
 import { useState } from "react";
 
 export function AddBlock({ add }: { add: (block: any) => void }) {

@@ -1,12 +1,9 @@
 "use client";
 
-import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
 import { FriendRequestBlock } from "./friend-request-block";
-import { getCurrentUser } from "@/lib/auth/session";
-import { redirect } from "next/navigation";
 import { FriendRequestFeedBlock } from "./friend-request-feed-block";
 import { MoveLeft, MoveRight } from "lucide-react";
-import { useTransition, useState } from "react";
+import { useState } from "react";
 import { AuthorizedUser } from "@/types";
 
 export function FriendRequests({

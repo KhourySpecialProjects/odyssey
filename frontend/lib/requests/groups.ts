@@ -9,8 +9,10 @@ import { AuthorizedUserRoleTitle } from "../globals";
 import { getAuthorizedUserRoleIdByTitle } from "./authorized-user-roles";
 import { createEnrollmentFromEmail } from "@/lib/actions";
 import { revalidatePath } from "next/cache";
+
 const STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
+
 /**
  * Gets all groups where the authorized user has a management role (creator, admin, or manager).
  * @param authorizedUserId The ID of the authorized user
@@ -361,11 +363,6 @@ export async function createGroup(
     }),
   };
 
-  console.log(
-    "    ----> createGroup createData = ",
-    JSON.stringify(createData),
-  );
-
   return await fetchAPI<Group>(path, {
     options: {
       method: "POST",
@@ -537,7 +534,6 @@ async function ensureAuthorizedUsers(
   const results = [];
 
   for (const email of emails) {
-    console.log("  --> ensureAuthorizedUsers email = ", email);
     try {
       // Try to find existing authorized user
       const existingUser = await getAuthorizedUserByEmail(email);
@@ -568,7 +564,6 @@ export async function createAuthorizedUserInGroup(
   const roleID = await getAuthorizedUserRoleIdByTitle(
     AuthorizedUserRoleTitle.User,
   );
-  console.log("    ----> createAuthorizedUserInGroup roleID = ", roleID);
   const dataToSend = {
     data: {
       email,
@@ -590,8 +585,6 @@ export async function createAuthorizedUserInGroup(
     });
 
     const data = await response.json();
-
-    console.log("    ----> data = ", data);
 
     if (!response.ok || (response.ok && data.error)) {
       return {
@@ -617,9 +610,6 @@ export async function createAuthorizedUserInGroup(
 }
 
 export async function enrollUsers(group: Group) {
-  console.log("enrolling users in these droplets");
-  console.log("member count ", group.members?.length);
-  console.log("droplet count ", group.droplets?.length);
   try {
     group.members?.map(async (member) => {
       group.droplets?.map(async (droplet) => {
@@ -627,10 +617,6 @@ export async function enrollUsers(group: Group) {
           droplet: droplet.id,
           viewedLessons: [],
         };
-        console.log("inside the function");
-        console.log("enrollment data: ", enrollmentData);
-        console.log("member email: ", member.email);
-        console.log("member id", member.id);
         return await createEnrollmentFromEmail(enrollmentData, member.email);
         //return await createEnrollment(enrollmentData);
       }) || [];

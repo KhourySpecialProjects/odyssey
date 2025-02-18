@@ -1,8 +1,4 @@
-import {
-  isAuthorizedUserAdmin,
-  isAuthorizedUserFaculty,
-  isContentCreator,
-} from "@/lib/utils";
+import { isAuthorizedUserAdmin, isContentCreator } from "@/lib/utils";
 import { GeneralConfig, User } from "@/types";
 export const originalNav = [
   {
@@ -22,7 +18,7 @@ export const getMainNav = (user: User) => {
     },
     {
       href: "/dashboard",
-      label: "My Content",
+      label: "My Dashboard",
     },
     {
       href: "/g/dashboard",
@@ -49,7 +45,7 @@ export const getContentCreatorNav = (user: User) => {
     },
     {
       href: "/dashboard",
-      label: "My Content",
+      label: "My Dashboard",
     },
     {
       href: "/g/dashboard",
@@ -57,7 +53,7 @@ export const getContentCreatorNav = (user: User) => {
     },
     {
       href: "/drafts",
-      label: "Drafts",
+      label: "My Content",
     },
   ];
   if (isAuthorizedUserAdmin(user.roles)) {
@@ -66,12 +62,6 @@ export const getContentCreatorNav = (user: User) => {
       label: "Admin",
     });
   }
-  // if (isAuthorizedUserFaculty(user.roles)) {
-  //   baseNav.push({
-  //     href: "/faculty",
-  //     label: "Faculty"
-  //   })
-  // }
   return baseNav;
 };
 export const getGeneralConfig = (user?: User): GeneralConfig => ({

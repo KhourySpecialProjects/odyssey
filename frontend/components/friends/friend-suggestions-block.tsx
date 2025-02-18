@@ -62,7 +62,6 @@ export function FriendSuggestionsBlock({
           <div className="inline-flex items-center gap-2">
             <Button
               size="sm"
-              variant="outline"
               disabled={requested}
               onClick={handleRequest}
               className="text-white bg-sky-600"

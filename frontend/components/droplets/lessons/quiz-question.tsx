@@ -11,7 +11,7 @@ import {
   FormLabel,
 } from "@/components/ui/form";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { QuizAnswerOption, QuizQuestion } from "@/types";
+import { QuizQuestion } from "@/types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowLeftIcon, ArrowRightIcon } from "lucide-react";
 import { useMemo, useState } from "react";

@@ -207,8 +207,6 @@ export function GroupManagementForm({
 
   const onSubmit = async (data: z.infer<typeof formSchema>) => {
     try {
-      console.log(" ---> on submit data: ", data);
-
       // Prepare data for backend submission
       const updateGroupData = {
         groupName: data.groupName,
@@ -230,8 +228,6 @@ export function GroupManagementForm({
           order: index, // Update order based on current array position
         })),
       };
-
-      console.log(" -------> submissionData = ", updateGroupData);
 
       const createGroupData = {
         groupName: data.groupName,
@@ -260,15 +256,11 @@ export function GroupManagementForm({
         playlists: data.playlists?.map((p) => p.id),
       };
 
-      console.log(" -------> submissionData2 = ", createGroupData);
-
       if (existingGroup) {
-        console.log("form being submitted soon!");
         const response = await updateGroup(existingGroup.id, updateGroupData);
         await enrollUsers(await getGroupByID(existingGroup.id));
         //router.push(`/g/${response.slug}`);
       } else {
-        console.log("form being submitted soon!");
         const newGroup = await createGroup(currentUser.id, createGroupData);
         await enrollUsers(await getGroupByID(newGroup.id));
         router.push(`/g/${newGroup.slug}`);

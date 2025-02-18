@@ -7,7 +7,7 @@ import { useCallback } from "react";
 import { debounce } from "lodash";
 import { Trash2Icon, Ban } from "lucide-react";
 import { CalloutBlockInput } from "@/components/ui/tiptap/callout-block-input";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import CalloutTypeTool from "@/components/ui/tiptap/toolbar/tools/callout-type-tool";
 import { Button } from "@lemonsqueezy/wedges";
 import { CalloutIcon } from "@/components/ui/callout-icons";
@@ -24,7 +24,6 @@ export function CalloutEditor({
   const [iconEnabled, setIconEnabled] = useState(block.iconEnabled);
 
   const handleUpdate = useCallback((content: any) => {
-    console.log(" --> callout.tsx: handleUpdate useCallback handler");
     let temp: any = JSON.parse(
       JSON.stringify(tiptapJSONToStrapiJSON(content.content ?? [])),
     );

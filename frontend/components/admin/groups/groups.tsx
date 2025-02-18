@@ -1,6 +1,4 @@
-import { Group } from "@/types";
 import { CreateGroup } from "./create-group";
-import { GroupBlock } from "./group-block";
 import { fetchGroups } from "@/lib/requests/data";
 import { GroupClient } from "./group-client";
 

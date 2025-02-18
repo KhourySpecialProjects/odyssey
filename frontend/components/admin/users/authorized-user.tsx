@@ -11,7 +11,7 @@ import {
 import { AuthorizedUser } from "@/types";
 import { Pencil, User2Icon } from "lucide-react";
 import { useFormStatus } from "react-dom";
-import { getInitials, isAuthorizedUserAdmin } from "@/lib/utils";
+import { isAuthorizedUserAdmin } from "@/lib/utils";
 import {
   DialogHeader,
   Dialog,
@@ -108,7 +108,6 @@ export function AuthorizedUserBlock({ user }: { user: AuthorizedUser }) {
     if (result.success) {
       toast.success("Information updated successfully");
     } else {
-      console.log(result);
       toast.error("Failed to update information");
     }
     setOpen(false);
@@ -122,15 +121,17 @@ export function AuthorizedUserBlock({ user }: { user: AuthorizedUser }) {
             <Avatar variant="round" size="sm">
               <AvatarImage src={user.profilePhoto || undefined} />
               <AvatarFallback>
-                {user?.firstName ? (
-                  getInitials(user.firstName + user.lastName)
+                {user?.firstName && user?.lastName ? (
+                  user.firstName[0] + user.lastName[0]
                 ) : (
                   <User2Icon className="w-4 h-4" />
                 )}
               </AvatarFallback>
             </Avatar>
             <p className="font-medium truncate text-slate-900 dark:text-white">
-              {user.email}
+              {user.firstName && user.lastName
+                ? user.firstName + " " + user.lastName
+                : user.email}
               {!user.isEnabled ? " (Disabled)" : ""}
             </p>
             <p className="text-sm truncate text-slate-500 dark:text-slate-400">

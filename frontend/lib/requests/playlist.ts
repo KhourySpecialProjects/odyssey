@@ -9,6 +9,7 @@ const NEXT_PUBLIC_STRAPI_API_URL =
   process.env.NEXT_PUBLIC_STRAPI_API_URL || "http://localhost:1337";
 const NEXT_PUBLIC_STRAPI_API_TOKEN =
   process.env.NEXT_PUBLIC_STRAPI_API_TOKEN || "";
+
 /**
  * Gets the first 25 Playlists matching the specified criteria, unless overridden by `options`.
  * @param options Strapi query modifiers.
