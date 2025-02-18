@@ -2,16 +2,18 @@ import { getCurrentUser } from "@/lib/auth/session";
 import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
 import { notFound, redirect } from "next/navigation";
 import { GroupManagementForm } from "@/components/group/group-management-form";
-import { getGroupBySlugV2 } from "@/lib/requests/groups";
+import { getDueDates, getGroupBySlugV2 } from "@/lib/requests/groups";
 import { Badge } from "@/components/ui/badge";
 import { isAuthorizedUserAdmin } from "@/lib/utils";
 import { GroupDueDateDashboard } from "@/components/group/due-date-dashboard";
+import { Button } from "@/components/ui/button";
 
 type Props = {
   searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
 };
 
 export default async function GroupDueDatesPage({ searchParams }: Props) {
+  
   const user = await getCurrentUser();
   if (!user?.email) redirect("/");
 
@@ -20,8 +22,8 @@ export default async function GroupDueDatesPage({ searchParams }: Props) {
 
   // If we have a group slug, fetch the group for editing
   const p = await searchParams;
-  const groupSlug = p?.slug as string | undefined;
-  const group = groupSlug ? await getGroupBySlugV2(groupSlug) : null;
+  const groupSlug = p?.slug as string;
+  const group = await getGroupBySlugV2(groupSlug);
 
   // Only allow editing if user is creator or admin
   if (group) {
@@ -32,7 +34,12 @@ export default async function GroupDueDatesPage({ searchParams }: Props) {
     if (!isCreator && !isAdmin && !isAuthorizedUserAdmin(user.roles)) {
       notFound();
     }
+
   }
+
+
+
+
 
   return (
     <div className="w-full max-w-4xl p-8 mx-auto">
@@ -49,12 +56,13 @@ export default async function GroupDueDatesPage({ searchParams }: Props) {
           </Badge>
         )}
       </div>
-
+      {group && 
       <GroupDueDateDashboard 
         currentUser={authorizedUser} 
         existingGroup={group} 
         searchParams={p} 
         user={user} />
+      }
     </div>
   );
 }

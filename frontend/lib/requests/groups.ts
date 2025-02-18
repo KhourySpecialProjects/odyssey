@@ -4,7 +4,7 @@ import { Group } from "@/types";
 import { StrapiRequestParams } from "@/types/strapi";
 import { fetchAPI } from "@/lib/utils";
 import { getAuthorizedUserByEmail } from "./authorized-user";
-import type { ActionResponse } from "@/types";
+import type { ActionResponse, AuthorizedUser, Droplet } from "@/types";
 import { AuthorizedUserRoleTitle } from "../globals";
 import { getAuthorizedUserRoleIdByTitle } from "./authorized-user-roles";
 import { createEnrollmentFromEmail } from "@/lib/actions";
@@ -638,5 +638,113 @@ export async function enrollUsers(group: Group) {
   } catch (error) {
     console.error("Error enrolling users:", error);
     throw error;
+  }
+}
+
+
+
+
+export async function assignDueDate(group: Group, droplet: Droplet, date: Date) {
+  const path = `/enrollments`;
+  try {
+    // Get all enrollments for this group's members in this droplet
+    const enrollments = await fetchAPI<any[]>(path, {
+      urlParams: {
+        filters: {
+          authorizedUser: {
+            id: {
+              $in: group.members?.map(member => member.id) || []
+            }
+          },
+          droplet: {
+            id: {
+              $eq: droplet.id
+            }
+          }
+        }
+      }
+    });
+
+    // Update each enrollment with the new due date
+    const updatePromises = enrollments.map(enrollment => 
+      fetchAPI(`/enrollments/${enrollment.id}`, {
+        options: {
+          method: 'PUT',
+          body: JSON.stringify({
+            data: {
+              dueDate: date.toISOString()
+            }
+          })
+        }
+      })
+    );
+
+    await Promise.all(updatePromises);
+    return { success: true };
+    
+  } catch (error) {
+    console.error('Error assigning due date:', error);
+    return { success: false, error };
+  }
+}
+
+export async function getDueDate(droplet: Droplet, user: AuthorizedUser) {
+  try {
+    const enrollments = await fetchAPI<Date[]>(`/enrollments`, {
+      urlParams: {
+        filters: {
+          authorizedUser: {
+            id: { 
+              $eq: user.id 
+            }
+          },
+          droplet: {
+            id: {
+              $eq: droplet.id
+            }
+          }
+        }
+      }
+    });
+    return enrollments;
+  }
+  catch (error) {
+    console.error('Error getting due date:', error);
+    return { success: false, error };
+  }
+
+
+}
+
+export async function getDueDates(group: Group, user: AuthorizedUser) {
+  const path = `/enrollments`;
+  try {
+    const enrollments = await fetchAPI<any[]>(path, {
+      urlParams: {
+        filters: {
+          authorizedUser: {
+            id: { 
+              $eq: user.id 
+            }
+          },
+          droplet: {
+            id: {
+              $in: group.droplets?.map(droplet => droplet.id) || []
+            }
+          }
+        }
+      }
+    });
+
+    // Map enrollments to include both dueDate and dropletId
+    const dueDates = enrollments.map(enrollment => ({
+      dropletId: enrollment.droplet.id,
+      dueDate: new Date(enrollment.dueDate)
+    }));
+    return dueDates;
+
+  } catch (error) {
+    console.error('Error getting due dates:', error);
+    return { success: false, error };
   }
 }

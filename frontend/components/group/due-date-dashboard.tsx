@@ -7,10 +7,11 @@ import { Playlist } from "@/types";
 import { DropletDueDateBlock } from "./droplet-due-date-block";
 import { ContentSelector } from "./content-selector";
 import { PlaylistDueDateBlock } from "./playlist-due-date-block";
+import { Button } from "../ui/button";
 
 interface GroupDueDateDashboardProps {
     currentUser: AuthorizedUser;
-    existingGroup?: Group | null;
+    existingGroup: Group;
     searchParams?: { [key: string]: string | string[] | undefined };
     user: User;
 }
@@ -46,42 +47,58 @@ export function GroupDueDateDashboard({
         }
     };
 
+
+
+    const handleCancel = () => {
+        router.push(existingGroup ? `/g/${existingGroup.slug}` : "/g/dashboard");
+    }
+
+
+
     console.log("droplets are ", existingGroup)
 
     return (
         <div className="w-full">
-              <ContentSelector user={user} />
-              <div className="mt-6">
+            <div className="w-full flex flex-row justify-center mt-2">
+                <Button
+                    onClick={handleCancel}
+                    variant="outline"
+                >Back to my group</Button>
+            </div>
+
+            <ContentSelector user={user} />
+            <div className="mt-6">
                 {tab === "droplets" ? (
-                  <>
-                  {droplets.map((droplet) => (
-                      <DropletDueDateBlock
-                          key={droplet.id}
-                          currentUser={currentUser}
-                          existingGroup={existingGroup}
-                          currentDroplet={droplet}
-                      />
-                  ))}
-              </>
+                    <>
+                        {droplets.map((droplet) => (
+                            <DropletDueDateBlock
+                                key={droplet.id}
+                                currentUser={currentUser}
+                                existingGroup={existingGroup}
+                                currentDroplet={droplet}
+                            //curDueDate={}
+                            />
+                        ))}
+                    </>
                 ) : tab === "playlists" ? (
-                <>
-                    {playlists.map((playlist) => (
-                        <PlaylistDueDateBlock
-                            key={playlist.id}
-                            currentUser={currentUser}
-                            existingGroup={existingGroup}
-                            currentPlaylist={playlist}
-                        />
-                    ))}
-                </>
+                    <>
+                        {playlists.map((playlist) => (
+                            <PlaylistDueDateBlock
+                                key={playlist.id}
+                                currentUser={currentUser}
+                                existingGroup={existingGroup}
+                                currentPlaylist={playlist}
+                            />
+                        ))}
+                    </>
                 ) : tab === "extensions" ? (
                     <>
                         Coming Soon!
                     </>
-                    ) : (
-                  <div  />
+                ) : (
+                    <div />
                 )}
-              </div>
             </div>
+        </div>
     );
 }
