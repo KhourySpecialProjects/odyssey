@@ -6,13 +6,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import hljs from "highlight.js";
 import { Highlight } from "@/types";
-import {
-  Highlighter,
-  X,
-  CircleHelp,
-  Pen,
-  NotebookPen,
-} from "lucide-react";
+import { Highlighter, X, CircleHelp, Pen, NotebookPen } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 

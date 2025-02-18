@@ -1,7 +1,5 @@
-import { DropletBlock } from "./droplet-block";
 import { CreateDroplet } from "./create-droplet";
 import { fetchDroplets } from "@/lib/requests/data";
-import { Droplet } from "@/types";
 import { DropletClient } from "./droplet-client";
 
 export async function Droplets() {

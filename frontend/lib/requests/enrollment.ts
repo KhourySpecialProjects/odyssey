@@ -9,9 +9,6 @@ import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
 import { revalidatePath } from "next/cache";
 import { Droplet } from "@/types";
 
-const NEXT_PUBLIC_STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
-const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
-
 /**
  * Gets the first 25 enrollments matching the specified criteria, unless overridden by `options`.
  * @param options Strapi query modifiers.

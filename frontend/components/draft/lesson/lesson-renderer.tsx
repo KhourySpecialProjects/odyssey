@@ -13,7 +13,6 @@ import { useRouter } from "next/navigation";
 import { htmlToText } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { DeleteLessonButton } from "./delete-lesson";
-import { useTransition } from "react";
 import { useMemo } from "react";
 import { LessonNameInput } from "@/components/ui/tiptap/lesson-name-input";
 import { QuizEditor } from "./blocks/quiz";
@@ -48,7 +47,6 @@ interface LessonRendererProps {
 
 export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
   const router = useRouter();
-  const [isPending, startTransition] = useTransition();
 
   const [blocks, setBlocks] = useState<Block[]>(lesson.blocks);
   const [lastSavedBlocks, setLastSavedBlocks] = useState<Block[]>(

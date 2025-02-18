@@ -4,7 +4,11 @@ import { AdminSelector } from "@/components/shared/selector";
 import { getCurrentUser } from "@/lib/auth/session";
 import { notFound } from "next/navigation";
 import { isAuthorizedUserAdmin } from "@/lib/utils";
-import { StudentProgress } from "@/components/admin/progress/student-progress";
+import { AuthorizedUsers } from "@/components/admin/users/authorized-users";
+import { Droplets } from "@/components/admin/droplets/droplets";
+import { Playlists } from "@/components/admin/playlists/playlists";
+import { Reports } from "@/components/admin/reports/reports";
+import { Groups } from "@/components/admin/groups/groups";
 
 export default async function Page() {
   const user = await getCurrentUser();
@@ -20,8 +24,12 @@ export default async function Page() {
       <Session />
       <AdminSelector
         content={{
+          Users: <AuthorizedUsers />,
+          Droplets: <Droplets />,
+          Playlists: <Playlists />,
+          Groups: <Groups />,
           "Access Manager": <AccessManager user={user} />,
-          "Student Progress": <StudentProgress />,
+          Reports: <Reports />,
         }}
       />
     </div>
