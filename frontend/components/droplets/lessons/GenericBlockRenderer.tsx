@@ -44,7 +44,7 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
   const savedSelectionRef = useRef<Range | null>(null);
   const [mousePositionY, setMousePositionY] = useState(0);
   const [isHighlighting, setIsHighlighting] = useState(false);
-  const [selectedColor, setSelectedColor] = useState("yellow");
+  const [selectedColor, setSelectedColor] = useState("#fff300");
 
   useEffect(() => {
     if (contentRef.current) {
@@ -56,44 +56,67 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
       });
       hljs.highlightAll();
 
-      // Apply existing highlights
-      highlights?.forEach((highlight) => {
+      const sortedHighlights = [...highlights].sort(
+        (a, b) => (a.position?.start || 0) - (b.position?.start || 0),
+      );
+
+      sortedHighlights.forEach((highlight) => {
         if (!highlight.position?.start || !highlight.position?.end) return;
 
+        // Reset for each highlight
         const walker = document.createTreeWalker(
           contentRef.current!,
           NodeFilter.SHOW_TEXT,
         );
 
         let currentPosition = 0;
-        let targetNode: Text | null = null;
-        let localStart = highlight.position.start;
-        let localEnd = highlight.position.end;
+        let currentNode = walker.nextNode();
 
-        while (walker.nextNode()) {
-          const node = walker.currentNode as Text;
-          const nodeLength = node.length;
+        while (
+          currentNode &&
+          currentPosition + (currentNode.textContent?.length || 0) <=
+            highlight.position.start
+        ) {
+          currentPosition += currentNode.textContent?.length || 0;
+          currentNode = walker.nextNode();
+        }
+        if (!currentNode) return;
 
-          if (currentPosition + nodeLength > highlight.position.start) {
-            targetNode = node;
-            localStart = highlight.position.start - currentPosition;
-            localEnd = Math.min(
-              nodeLength,
-              highlight.position.end - currentPosition,
-            );
-            break;
-          }
-          currentPosition += nodeLength;
+        const startNode = currentNode;
+        const startOffset = highlight.position.start - currentPosition;
+
+        let endNode = startNode;
+        let endOffset = highlight.position.end - currentPosition;
+
+        while (
+          currentNode &&
+          currentPosition + (currentNode.textContent?.length || 0) <
+            highlight.position.end
+        ) {
+          currentPosition += currentNode.textContent?.length || 0;
+          currentNode = walker.nextNode();
+          if (currentNode) endNode = currentNode;
         }
 
-        if (targetNode) {
+        if (currentNode) {
+          endOffset = Math.min(
+            currentNode.textContent?.length || 0,
+            highlight.position.end - currentPosition,
+          );
+
           const range = document.createRange();
-          range.setStart(targetNode, localStart);
-          range.setEnd(targetNode, localEnd);
+          range.setStart(startNode, startOffset);
+          range.setEnd(endNode, endOffset);
 
           const span = document.createElement("span");
+          span.style.borderRadius = "8px";
           span.style.backgroundColor = highlight.color;
-          range.surroundContents(span);
+
+          try {
+            range.surroundContents(span);
+          } catch (e) {
+            console.warn("Failed to highlight range:", e);
+          }
         }
       });
     }
@@ -163,6 +186,7 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
           color: selectedColor,
         });
         const span = document.createElement("span");
+        span.style.borderRadius = "8px";
         span.style.backgroundColor = selectedColor;
         range.surroundContents(span);
       }
@@ -193,18 +217,18 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
     }
   };
 
-  const renderHighlightedText = (text: string) => {
-    let highlightedText = text;
+  // const renderHighlightedText = (text: string) => {
+  //   let highlightedText = text;
 
-    highlights.forEach((highlight) => {
-      highlightedText = highlightedText.replace(
-        highlight.text,
-        `<span style="background-color: ${highlight.color}">${highlight.text}</span>`,
-      );
-    });
+  //   highlights.forEach((highlight) => {
+  //     highlightedText = highlightedText.replace(
+  //       highlight.text,
+  //       `<span style="background-color: ${highlight.color}; border-radius: 12px;">${highlight.text}</span>`,
+  //     );
+  //   });
 
-    return { __html: highlightedText };
-  };
+  //   return { __html: highlightedText };
+  // };
 
   const handlePopupHighlight = () => {
     if (!contentRef.current || !popupRef.current.savedRange) {
@@ -231,6 +255,7 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
     }
 
     const span = document.createElement("span");
+    span.style.borderRadius = "8px";
     span.style.backgroundColor = selectedColor;
     range.surroundContents(span);
   };
@@ -347,27 +372,27 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
               <button
                 title="Highlight Pink"
                 onClick={() => handleApplyColor("#f9a8d4")}
-                className={`w-6 h-6 rounded-full ${selectedColor === "#f9a8d4" ? "border-2 border-black" : "border border-gray-300"} bg-pink-300`}
+                className={`w-6 h-6 rounded-full ${selectedColor === "#f9a8d4" ? "border-2 border-black" : "border border-gray-300"} bg-[#f9a8d4]`}
               />
               <button
                 title="Highlight Orange"
                 onClick={() => handleApplyColor("#fbd38d")}
-                className={`w-6 h-6 rounded-full ${selectedColor === "#fbd38d" ? "border-2 border-black" : "border border-gray-300"} bg-orange-300`}
+                className={`w-6 h-6 rounded-full ${selectedColor === "#fbd38d" ? "border-2 border-black" : "border border-gray-300"} bg-[#fbd38d]`}
               />
               <button
                 title="Highlight Yellow"
-                onClick={() => handleApplyColor("yellow")}
-                className={`w-6 h-6 rounded-full ${selectedColor === "yellow" ? "border-2 border-black" : "border border-gray-300"} bg-yellow-300`}
+                onClick={() => handleApplyColor("#fff300")}
+                className={`w-6 h-6 rounded-full ${selectedColor === "#fff300" ? "border-2 border-black" : "border border-gray-300"} bg-[#fff300]`}
               />
               <button
                 title="Highlight Green"
                 onClick={() => handleApplyColor("#86efac")}
-                className={`w-6 h-6 rounded-full ${selectedColor === "#86efac" ? "border-2 border-black" : "border border-gray-300"} bg-green-300`}
+                className={`w-6 h-6 rounded-full ${selectedColor === "#86efac" ? "border-2 border-black" : "border border-gray-300"} bg-[#86efac]`}
               />
               <button
                 title="Highlight Blue"
                 onClick={() => handleApplyColor("#93c5fd")}
-                className={`w-6 h-6 rounded-full ${selectedColor === "#93c5fd" ? "border-2 border-black" : "border border-gray-300"} bg-blue-300`}
+                className={`w-6 h-6 rounded-full ${selectedColor === "#93c5fd" ? "border-2 border-black" : "border border-gray-300"} bg-[#93c5fd]`}
               />
             </div>
           </div>
@@ -380,7 +405,7 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
         onMouseUp={(e) => handleMouseUp()}
         onMouseDown={(e) => handleMouseDown(e)}
         className="mt-2 prose prose-lg prose-sky prose-table:block prose-table:overflow-x-scroll select-text"
-        dangerouslySetInnerHTML={renderHighlightedText(block.content)}
+        dangerouslySetInnerHTML={{ __html: block.content }}
       ></div>
     </div>
   );
