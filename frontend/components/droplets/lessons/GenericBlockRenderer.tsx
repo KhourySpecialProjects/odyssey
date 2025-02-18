@@ -272,20 +272,32 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
   };
 
   return (
-    <>
+    <div className="">
       {block.id === genericBlocks[0] && (
-        <div className="fixed top-8 right-1/4 z-10 transform -translate-x-1/2 bg-blue-100 p-2 rounded shadow-lg">
+        <div className="fixed top-8 sm:top-4 xs:top-4 right-0 lg:right-1/4 z-30 transform -translate-x-1/2 bg-blue-100 p-2 rounded shadow-lg">
           <div className="relative group">
             <CircleHelp className="cursor-pointer" />
-            <div className="absolute left-1/2 transform -translate-x-1/2 top-full mt-2 w-max gap-2 bg-white p-4 rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center pointer-events-none">
+            <div className="absolute left-0 transform -translate-x-[100%] top-full mt-2 w-max gap-2 bg-white p-4 rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center pointer-events-none">
               <p>Highlighting Instructions:</p>
               <ul className="list-disc pl-4">
-                <li>Hover over the pen icon to see actions.</li>
+                <li>
+                  Hover over the <Pen className="inline-block w-4 h-4" /> icon
+                  to see actions.
+                </li>
                 <li>Use the toggle to switch highlighting mode.</li>
                 <li>In highlighting mode, selected text is highlighted.</li>
-                <li>Press the highlighter icon to highlight text.</li>
-                <li>Press the X icon to delete a highlight.</li>
-                <li>Press the note icon to add a note to text.</li>
+                <li>
+                  Press the <Highlighter className="inline-block w-4 h-4" />{" "}
+                  icon to highlight text.
+                </li>
+                <li>
+                  Press the <X className="inline-block w-4 h-4" /> icon to
+                  delete a highlight.
+                </li>
+                <li>
+                  Press the <NotebookPen className="inline-block w-4 h-4" />{" "}
+                  icon to add a note to text.
+                </li>
                 <li>Click a colored circle to change highlight color.</li>
               </ul>
             </div>
@@ -293,7 +305,7 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
         </div>
       )}
       {block.id === genericBlocks[0] && (
-        <div className="fixed top-8 z-0 right-1/4 transform -translate-x-1/2 bg-blue-100 p-2 rounded shadow-lg  group">
+        <div className="fixed lg:top-16 xs:top-28 sm:top-28 md:top-28 z-20 right-0 lg:right-1/4 transform -translate-x-1/2 bg-blue-100 p-2 rounded shadow-lg group">
           <div className="relative">
             <Pen className="cursor-pointer" />
 
@@ -370,7 +382,7 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
         className="mt-2 prose prose-lg prose-sky prose-table:block prose-table:overflow-x-scroll select-text"
         dangerouslySetInnerHTML={renderHighlightedText(block.content)}
       ></div>
-    </>
+    </div>
   );
 };
 
