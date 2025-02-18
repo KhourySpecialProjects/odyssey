@@ -790,7 +790,7 @@ export interface ApiDropletDroplet extends Schema.CollectionType {
       'manyToMany',
       'api::lesson.lesson'
     >;
-    name: Attribute.String & Attribute.Required & Attribute.Unique;
+    name: Attribute.String & Attribute.Required;
     nextSteps: Attribute.Component<'droplets.resource', true>;
     overview: Attribute.RichText &
       Attribute.CustomField<
