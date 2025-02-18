@@ -39,13 +39,7 @@ export default async function CheckPermission({ params, children }: Props) {
       postrequisites: { populate: ["id", "name", "slug"] },
     },
   });
-  if (
-    !droplet ||
-    !user ||
-    !droplet.authors ||
-    !user.email ||
-    !(isContentCreator(user.roles) && isAuthorizedUserAdmin(user.roles))
-  ) {
+  if (!droplet || !user || !droplet.authors || !user.email) {
     return notFound();
   }
   const userAuthor = await getAuthorByAuthorizedUserEmail(user.email);
