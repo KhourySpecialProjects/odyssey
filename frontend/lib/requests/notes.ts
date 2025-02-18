@@ -18,9 +18,7 @@ export async function getNotesByAuthorizedUserAndLesson(
   lessonSlug: string,
   {
     sort,
-    filters,
     pagination = { pageSize: 250, page: 1 },
-    populate,
     fields = ["id", "content", "positionY"],
   }: StrapiRequestParams = {},
 ): Promise<Note[]> {

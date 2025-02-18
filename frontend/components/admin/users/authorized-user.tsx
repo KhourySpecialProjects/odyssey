@@ -11,7 +11,7 @@ import {
 import { AuthorizedUser } from "@/types";
 import { Pencil, User2Icon } from "lucide-react";
 import { useFormStatus } from "react-dom";
-import { getInitials, isAuthorizedUserAdmin } from "@/lib/utils";
+import { isAuthorizedUserAdmin } from "@/lib/utils";
 import {
   DialogHeader,
   Dialog,

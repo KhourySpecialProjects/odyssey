@@ -7,7 +7,7 @@ import { useCallback } from "react";
 import { debounce } from "lodash";
 import { Trash2Icon, Ban } from "lucide-react";
 import { CalloutBlockInput } from "@/components/ui/tiptap/callout-block-input";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import CalloutTypeTool from "@/components/ui/tiptap/toolbar/tools/callout-type-tool";
 import { Button } from "@lemonsqueezy/wedges";
 import { CalloutIcon } from "@/components/ui/callout-icons";

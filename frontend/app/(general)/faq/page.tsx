@@ -18,52 +18,46 @@ export default async function FAQPage() {
         </div>
         <div>
           <ul className=" divide-slate-200 dark:divide-slate-700 md:space-y-0">
-          <div>
-            <li className="py-4 px-6 [&:not(:first-child)]:pt-3 group relative border border-gray-300 rounded-md transition duration-150 group-hover:border-gray-500">
+            <div>
+              <li className="py-4 px-6 [&:not(:first-child)]:pt-3 group relative border border-gray-300 rounded-md transition duration-150 group-hover:border-gray-500">
                 <div className="flex items-center space-x-4">
-                <div className="flex-1 min-w-0">
+                  <div className="flex-1 min-w-0">
                     <p className="text-xl font-bold truncate text-slate-900 dark:text-white text-center">
-                    When was Odyssey first created?
+                      When was Odyssey first created?
                     </p>
-                </div>
+                  </div>
                 </div>
 
                 <div className="max-h-0 overflow-y-scroll transition-[max-height] duration-300 ease-in-out group-hover:max-h-96 text-center">
-                <div>
-                    (insert answer here)
+                  <div>(insert answer here)</div>
                 </div>
-                </div>
-            </li>
-            <li className="py-4 px-6 [&:not(:first-child)]:pt-3 group relative border border-gray-300 rounded-md transition duration-150 group-hover:border-gray-500">
+              </li>
+              <li className="py-4 px-6 [&:not(:first-child)]:pt-3 group relative border border-gray-300 rounded-md transition duration-150 group-hover:border-gray-500">
                 <div className="flex items-center space-x-4">
-                <div className="flex-1 min-w-0">
+                  <div className="flex-1 min-w-0">
                     <p className="text-xl font-bold truncate text-slate-900 dark:text-white text-center">
-                    What was the motivation behind this website?
+                      What was the motivation behind this website?
                     </p>
-                </div>
+                  </div>
                 </div>
 
                 <div className="max-h-0 overflow-y-scroll transition-[max-height] duration-300 ease-in-out group-hover:max-h-96 text-center">
-                <div>
-                    (insert answer here)
+                  <div>(insert answer here)</div>
                 </div>
-                </div>
-            </li>
-            <li className="py-4 px-6 [&:not(:first-child)]:pt-3 group relative border border-gray-300 rounded-md transition duration-150 group-hover:border-gray-500">
+              </li>
+              <li className="py-4 px-6 [&:not(:first-child)]:pt-3 group relative border border-gray-300 rounded-md transition duration-150 group-hover:border-gray-500">
                 <div className="flex items-center space-x-4">
-                <div className="flex-1 min-w-0">
+                  <div className="flex-1 min-w-0">
                     <p className="text-xl font-bold truncate text-slate-900 dark:text-white text-center">
-                    What are the plans for Odyssey in the future?
+                      What are the plans for Odyssey in the future?
                     </p>
-                </div>
+                  </div>
                 </div>
 
                 <div className="max-h-0 overflow-y-scroll transition-[max-height] duration-300 ease-in-out group-hover:max-h-96 text-center">
-                <div>
-                    (insert answer here)
+                  <div>(insert answer here)</div>
                 </div>
-                </div>
-            </li>
+              </li>
             </div>
           </ul>
         </div>
