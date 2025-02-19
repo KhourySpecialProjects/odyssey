@@ -3,15 +3,21 @@
 import { AuthorizedUser } from "@/types";
 import Link from "next/link";
 import { Github, Linkedin } from "lucide-react";
+import { useState } from "react";
 
 export function ContentCreatorBlock({
   contentCreator,
 }: {
   contentCreator: AuthorizedUser;
 }) {
+  const [isOpen, setIsOpen] = useState(false);
+
   return (
     <div>
-      <li className="py-4 px-6 [&:not(:first-child)]:pt-3 group relative border border-gray-300 rounded-md transition duration-150 group-hover:border-gray-500">
+      <li
+        onClick={() => setIsOpen(!isOpen)}
+        className="py-4 px-6 [&:not(:first-child)]:pt-3 relative border border-gray-300 rounded-md transition duration-150 hover:border-gray-500 cursor-pointer"
+      >
         <div className="flex items-center space-x-4">
           <div className="flex-1 min-w-0">
             <p className="text-xl font-bold truncate text-slate-900 dark:text-white text-center">
@@ -22,7 +28,11 @@ export function ContentCreatorBlock({
           </div>
         </div>
 
-        <div className="max-h-0 overflow-y-scroll transition-[max-height] duration-300 ease-in-out group-hover:max-h-96">
+        <div
+          className={`overflow-hidden transition-[max-height] duration-300 ease-in-out ${
+            isOpen ? "max-h-96" : "max-h-0"
+          }`}
+        >
           <div>
             {contentCreator.profilePhoto && (
               <div className="flex justify-center items-center pt-4">

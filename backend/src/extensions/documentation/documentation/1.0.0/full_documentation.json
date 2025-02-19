@@ -11,7 +11,7 @@
       "url": "https://khouryodyssey.org"
     },
     "license": null,
-    "x-generation-date": "2025-02-18T20:46:36.789Z"
+    "x-generation-date": "2025-02-19T14:15:24.704Z"
   },
   "x-strapi-config": {
     "plugins": [
@@ -3494,6 +3494,9 @@
                           }
                         }
                       },
+                      "shouldBeLocked": {
+                        "type": "boolean"
+                      },
                       "createdAt": {
                         "type": "string",
                         "format": "date-time"
@@ -6724,6 +6727,9 @@
                             }
                           }
                         },
+                        "shouldBeLocked": {
+                          "type": "boolean"
+                        },
                         "createdAt": {
                           "type": "string",
                           "format": "date-time"
@@ -9893,6 +9899,9 @@
                                         }
                                       }
                                     },
+                                    "shouldBeLocked": {
+                                      "type": "boolean"
+                                    },
                                     "createdAt": {
                                       "type": "string",
                                       "format": "date-time"
@@ -12705,6 +12714,9 @@
                                                       }
                                                     }
                                                   },
+                                                  "shouldBeLocked": {
+                                                    "type": "boolean"
+                                                  },
                                                   "createdAt": {
                                                     "type": "string",
                                                     "format": "date-time"
@@ -13581,6 +13593,9 @@
                   ],
                   "example": "string or id"
                 }
+              },
+              "shouldBeLocked": {
+                "type": "boolean"
               }
             }
           }
@@ -16357,6 +16372,9 @@
                                           }
                                         }
                                       },
+                                      "shouldBeLocked": {
+                                        "type": "boolean"
+                                      },
                                       "createdAt": {
                                         "type": "string",
                                         "format": "date-time"
@@ -16695,6 +16713,9 @@
                 }
               }
             }
+          },
+          "shouldBeLocked": {
+            "type": "boolean"
           },
           "createdAt": {
             "type": "string",
@@ -19671,6 +19692,9 @@
                           }
                         }
                       },
+                      "shouldBeLocked": {
+                        "type": "boolean"
+                      },
                       "createdAt": {
                         "type": "string",
                         "format": "date-time"
@@ -22161,6 +22185,9 @@
                                                       }
                                                     }
                                                   }
+                                                },
+                                                "shouldBeLocked": {
+                                                  "type": "boolean"
                                                 },
                                                 "createdAt": {
                                                   "type": "string",
@@ -25213,6 +25240,9 @@
                                                         }
                                                       }
                                                     }
+                                                  },
+                                                  "shouldBeLocked": {
+                                                    "type": "boolean"
                                                   },
                                                   "createdAt": {
                                                     "type": "string",
@@ -28325,6 +28355,9 @@
                                                         }
                                                       }
                                                     }
+                                                  },
+                                                  "shouldBeLocked": {
+                                                    "type": "boolean"
                                                   },
                                                   "createdAt": {
                                                     "type": "string",
@@ -31487,6 +31520,9 @@
                                                       }
                                                     }
                                                   }
+                                                },
+                                                "shouldBeLocked": {
+                                                  "type": "boolean"
                                                 },
                                                 "createdAt": {
                                                   "type": "string",
@@ -35211,6 +35247,9 @@
                             }
                           }
                         },
+                        "shouldBeLocked": {
+                          "type": "boolean"
+                        },
                         "createdAt": {
                           "type": "string",
                           "format": "date-time"
@@ -38314,6 +38353,9 @@
                                           }
                                         }
                                       }
+                                    },
+                                    "shouldBeLocked": {
+                                      "type": "boolean"
                                     },
                                     "createdAt": {
                                       "type": "string",
@@ -41562,6 +41604,9 @@
                               }
                             }
                           }
+                        },
+                        "shouldBeLocked": {
+                          "type": "boolean"
                         },
                         "createdAt": {
                           "type": "string",
@@ -45099,6 +45144,9 @@
                               }
                             }
                           }
+                        },
+                        "shouldBeLocked": {
+                          "type": "boolean"
                         },
                         "createdAt": {
                           "type": "string",

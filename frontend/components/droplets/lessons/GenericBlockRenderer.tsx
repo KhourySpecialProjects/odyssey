@@ -63,7 +63,6 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
       sortedHighlights.forEach((highlight) => {
         if (!highlight.position?.start || !highlight.position?.end) return;
 
-        // Reset for each highlight
         const walker = document.createTreeWalker(
           contentRef.current!,
           NodeFilter.SHOW_TEXT,
@@ -218,16 +217,37 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
   };
 
   // const renderHighlightedText = (text: string) => {
-  //   let highlightedText = text;
+  //   let result = "";
+  //   let lastIndex = 0;
 
-  //   highlights.forEach((highlight) => {
-  //     highlightedText = highlightedText.replace(
-  //       highlight.text,
-  //       `<span style="background-color: ${highlight.color}; border-radius: 12px;">${highlight.text}</span>`,
-  //     );
+  //   // Sort highlights by position to ensure correct order
+  //   const sortedHighlights = [...highlights].sort((a, b) => a.position.start - b.position.start);
+
+  //   sortedHighlights.forEach((highlight) => {
+  //     if (!highlight.position?.start || !highlight.position?.end) return;
+
+  //     // Append text before highlight
+  //     result += text.slice(lastIndex, highlight.position.start);
+  //     console.log("first: ", highlight.position.start, "end:")
+  //     console.log("start: ", text.slice(lastIndex, highlight.position.start))
+
+  //     // Wrap highlighted text
+  //     result += `<span style="background-color: ${highlight.color}; border-radius: 12px;">` +
+  //               text.slice(highlight.position.start, highlight.position.end) +
+  //               `</span>`;
+  //     console.log("middle", `<span style="background-color: ${highlight.color}; border-radius: 12px;">` +
+  //     text.slice(highlight.position.start, highlight.position.end) +
+  //     `</span>`)
+
+  //     // Update lastIndex to track the end of the last highlight
+  //     lastIndex = highlight.position.end;
   //   });
 
-  //   return { __html: highlightedText };
+  //   // Append any remaining text after the last highlight
+  //   result += text.slice(lastIndex);
+  //   console.log("end", text.slice(lastIndex))
+
+  //   return { __html: result };
   // };
 
   const handlePopupHighlight = () => {
