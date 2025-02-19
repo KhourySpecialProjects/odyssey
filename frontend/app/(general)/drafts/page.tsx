@@ -39,7 +39,7 @@ export default async function CreateRoute() {
     },
   });
   if (!author) return redirect("/unauthorized");
-  console.log("user = ", user);
+
   //get the current user's playlists
   const playlists = await getPlaylistsByAuthor(author.id);
 

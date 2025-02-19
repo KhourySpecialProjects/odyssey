@@ -10,20 +10,20 @@ export const metadata: Metadata = {
 export default async function WebsiteCreatorsPage() {
   return (
     <GradientBackground>
-      <>
+      <div className="flex flex-col items-center">
         <div className="max-w-2xl mx-auto text-center">
           <h1 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl pb-8">
             Website Creators
           </h1>
         </div>
-        <div>
+        <div className="w-[50%]">
           <ul className=" divide-slate-200 dark:divide-slate-700 md:space-y-0">
             {(await fetchWebsiteCreators()).map((creator) => (
               <ContentCreatorBlock contentCreator={creator} key={creator.id} />
             ))}
           </ul>
         </div>
-      </>
+      </div>
     </GradientBackground>
   );
 }

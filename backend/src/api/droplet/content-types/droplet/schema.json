@@ -132,6 +132,10 @@
       "relation": "oneToMany",
       "target": "api::announcement.announcement",
       "mappedBy": "droplet"
+    },
+    "shouldBeLocked": {
+      "type": "boolean",
+      "default": true
     }
   }
 }

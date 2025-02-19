@@ -147,6 +147,7 @@ export type Droplet = {
   isHidden: boolean;
   status: DropletStatus;
   droplet_lessons: DropletLesson[];
+  shouldBeLocked?: boolean;
 };
 
 export type QuizAnswerOption = {
