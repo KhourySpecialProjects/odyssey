@@ -40,6 +40,8 @@ import { enrollUsers } from "@/lib/requests/groups";
 import { getGroupByID } from "@/lib/requests/groups";
 import { createGroupAnnouncement } from "@/lib/requests/feed";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
+import { X } from "lucide-react";
+import { deleteGroup } from "@/lib/actions";
 
 const SEMESTER_OPTIONS: GroupSemester[] = [
   "Open Membership",
@@ -140,6 +142,15 @@ export function GroupManagementForm({
       setIsOpen(false);
     } else {
       setIsOpen(true);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (existingGroup) {
+      const response = await deleteGroup(existingGroup.id);
+      if (response.ok && !response.error) {
+        router.replace(`/g/dashboard`);
+      }
     }
   };
 
@@ -579,6 +590,10 @@ export function GroupManagementForm({
           <Button type="button" variant="outline" onClick={handleCancel}>
             Cancel
           </Button>
+          {/* <Button variant="destructive" className="gap-2" onClick={handleDelete}>
+            <X className="h-4 w-4" />
+            Delete Group
+          </Button> */}
           <Button
             type="submit"
             disabled={isSubmitting}
@@ -595,7 +610,7 @@ export function GroupManagementForm({
               <DialogHeader>
                 <DialogTitle>
                   Would you like to announce these changes to everyone enrolled
-                  in this droplet?
+                  in this group?
                 </DialogTitle>
               </DialogHeader>
 

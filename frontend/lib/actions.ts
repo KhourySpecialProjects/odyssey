@@ -25,6 +25,8 @@ import {
 } from "@aws-sdk/client-s3";
 import { v4 as uuidv4 } from "uuid";
 import { Buffer } from "node:buffer";
+import { getGroupByID } from "./requests/groups";
+import { getPlaylistById } from "./requests/playlist";
 
 const STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
@@ -1181,6 +1183,62 @@ export async function deepDeleteDroplet(id: number) {
   } catch (err) {
     console.error(err);
     return { error: "Database Error: Failed to Delete Droplet." };
+  }
+}
+
+export async function deleteGroup(id: number) {
+  try {
+    const group = await getGroupByID(id);
+
+    const response = await fetch(STRAPI_API_URL + "/api/groups/" + id, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+      },
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      return { ok: false, error: "Failed to delete group.", data: null };
+    }
+
+    revalidateTag("authors");
+    revalidateTag("groups");
+    revalidatePath("(general)/drafts", "page");
+    return { ok: true, error: null, data: data.data };
+  } catch (err) {
+    console.error(err);
+    return { error: "Database Error: Failed to Delete Group." };
+  }
+}
+
+export async function deletePlaylist(id: number) {
+  try {
+    const group = await getPlaylistById(id);
+
+    const response = await fetch(STRAPI_API_URL + "/api/playlists/" + id, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+      },
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      return { ok: false, error: "Failed to delete playlist.", data: null };
+    }
+
+    revalidateTag("authors");
+    revalidateTag("groups");
+    revalidatePath("(general)/drafts", "page");
+    return { ok: true, error: null, data: data.data };
+  } catch (err) {
+    console.error(err);
+    return { error: "Database Error: Failed to Delete Playlist." };
   }
 }
 

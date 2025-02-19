@@ -19,8 +19,10 @@ export function FAQList() {
                 <div className="flex-1 min-w-0">
                   <p className="text-xl font-bold truncate text-slate-900 dark:text-white text-center">
                     {index === 0 && "When was Odyssey first created?"}
-                    {index === 1 && "What was the motivation behind this website?"}
-                    {index === 2 && "What are the plans for Odyssey in the future?"}
+                    {index === 1 &&
+                      "What was the motivation behind this website?"}
+                    {index === 2 &&
+                      "What are the plans for Odyssey in the future?"}
                   </p>
                 </div>
               </div>

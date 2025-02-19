@@ -811,6 +811,7 @@ export interface ApiDropletDroplet extends Schema.CollectionType {
       'api::droplet.droplet'
     >;
     publishedAt: Attribute.DateTime;
+    shouldBeLocked: Attribute.Boolean & Attribute.DefaultTo<true>;
     slug: Attribute.UID<'api::droplet.droplet', 'name'> & Attribute.Required;
     status: Attribute.Enumeration<['draft', 'edit', 'published']> &
       Attribute.Required &

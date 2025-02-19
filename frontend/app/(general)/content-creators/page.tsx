@@ -19,7 +19,7 @@ export default async function ContentCreatorsPage() {
         <div className="w-[50%]">
           <ul className=" divide-slate-200 dark:divide-slate-700 md:space-y-0">
             {(await fetchContentCreators()).map((creator, index) => (
-              <ContentCreatorBlock contentCreator={creator} key={creator.id}/>
+              <ContentCreatorBlock contentCreator={creator} key={creator.id} />
             ))}
           </ul>
         </div>
