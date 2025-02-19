@@ -4,11 +4,17 @@ import { Group } from "@/types";
 import { StrapiRequestParams } from "@/types/strapi";
 import { fetchAPI } from "@/lib/utils";
 import { getAuthorizedUserByEmail } from "./authorized-user";
-import type { ActionResponse, AuthorizedUser, Droplet } from "@/types";
+import type {
+  ActionResponse,
+  AuthorizedUser,
+  Droplet,
+  Enrollment,
+} from "@/types";
 import { AuthorizedUserRoleTitle } from "../globals";
 import { getAuthorizedUserRoleIdByTitle } from "./authorized-user-roles";
 import { createEnrollmentFromEmail } from "@/lib/actions";
 import { revalidatePath } from "next/cache";
+import qs from "qs";
 const STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
 /**
@@ -641,79 +647,97 @@ export async function enrollUsers(group: Group) {
   }
 }
 
-
-
-
-export async function assignDueDate(group: Group, droplet: Droplet, date: Date) {
-  const path = `/enrollments`;
+export async function assignDueDate(
+  group: Group,
+  droplet: Droplet,
+  date: Date | null,
+) {
   try {
-    // Get all enrollments for this group's members in this droplet
-    const enrollments = await fetchAPI<any[]>(path, {
+    // Update group's base due date
+    await fetchAPI(`/groups/${group.id}`, {
+      options: {
+        method: "PUT",
+        body: JSON.stringify({
+          data: {
+            dropletDueDates:
+              date === null
+                ? (group.dropletDueDates || []).filter(
+                    (d) => d.dropletId !== droplet.id,
+                  )
+                : [
+                    ...(group.dropletDueDates || []).filter(
+                      (d) => d.dropletId !== droplet.id,
+                    ),
+                    {
+                      dropletId: droplet.id,
+                      baseDueDate: date.toISOString(),
+                    },
+                  ],
+          },
+        }),
+      },
+    });
+
+    // Update all member enrollments that don't have extensions
+    const enrollments = await fetchAPI<any[]>(`/enrollments`, {
       urlParams: {
         filters: {
           authorizedUser: {
-            id: {
-              $in: group.members?.map(member => member.id) || []
-            }
+            id: { $in: group.members?.map((member) => member.id) || [] },
           },
-          droplet: {
-            id: {
-              $eq: droplet.id
-            }
-          }
-        }
-      }
+          droplet: { id: { $eq: droplet.id } },
+        },
+      },
     });
 
-    // Update each enrollment with the new due date
-    const updatePromises = enrollments.map(enrollment => 
-      fetchAPI(`/enrollments/${enrollment.id}`, {
-        options: {
-          method: 'PUT',
-          body: JSON.stringify({
-            data: {
-              dueDate: date.toISOString()
-            }
-          })
-        }
-      })
-    );
+    const updatePromises = enrollments
+      .filter((enrollment) => !enrollment.hasExtension)
+      .map((enrollment) =>
+        fetchAPI(`/enrollments/${enrollment.id}`, {
+          options: {
+            method: "PUT",
+            body: JSON.stringify({
+              data: { dueDate: date?.toISOString() || null },
+            }),
+          },
+        }),
+      );
+
+    revalidatePath("/dashboard");
+    revalidatePath("/explore");
 
     await Promise.all(updatePromises);
     return { success: true };
-    
   } catch (error) {
-    console.error('Error assigning due date:', error);
+    console.error("Error assigning due date:", error);
     return { success: false, error };
   }
 }
 
+//gets AuthorizedUser's enrollment in Droplet
 export async function getDueDate(droplet: Droplet, user: AuthorizedUser) {
   try {
-    const enrollments = await fetchAPI<Date[]>(`/enrollments`, {
+    const enrollments = await fetchAPI<Enrollment[]>(`/enrollments`, {
       urlParams: {
         filters: {
           authorizedUser: {
-            id: { 
-              $eq: user.id 
-            }
+            id: {
+              $eq: user.id,
+            },
           },
           droplet: {
             id: {
-              $eq: droplet.id
-            }
-          }
-        }
-      }
+              $eq: droplet.id,
+            },
+          },
+        },
+      },
     });
     return enrollments;
-  }
-  catch (error) {
-    console.error('Error getting due date:', error);
+  } catch (error) {
+    console.error("Error getting due date:", error);
     return { success: false, error };
   }
-
-
 }
 
 export async function getDueDates(group: Group, user: AuthorizedUser) {
@@ -723,28 +747,53 @@ export async function getDueDates(group: Group, user: AuthorizedUser) {
       urlParams: {
         filters: {
           authorizedUser: {
-            id: { 
-              $eq: user.id 
-            }
+            id: {
+              $eq: user.id,
+            },
           },
           droplet: {
             id: {
-              $in: group.droplets?.map(droplet => droplet.id) || []
-            }
-          }
-        }
-      }
+              $in: group.droplets?.map((droplet) => droplet.id) || [],
+            },
+          },
+        },
+      },
     });
 
     // Map enrollments to include both dueDate and dropletId
-    const dueDates = enrollments.map(enrollment => ({
+    const dueDates = enrollments.map((enrollment) => ({
       dropletId: enrollment.droplet.id,
-      dueDate: new Date(enrollment.dueDate)
+      dueDate: new Date(enrollment.dueDate),
     }));
     return dueDates;
-
   } catch (error) {
-    console.error('Error getting due dates:', error);
+    console.error("Error getting due dates:", error);
     return { success: false, error };
+  }
+}
+
+
+export async function getGroupDueDates(group: Group) {
+  const path = `/groups`;
+  try {
+    const enrollments = await fetchAPI<Group[]>(path, {
+      urlParams: {
+        filters: {
+          id: {
+          $eq: group.id,
+        }
+      },
+      fields: ["dropletDueDates"]
+      },
+    });
+
+    if (!enrollments || !enrollments[0]) {
+      return group; // Return original group if no data found
+    }
+    
+    return enrollments[0];
+  } catch (error) {
+    console.error("Error getting due dates:", error);
+    return group;
   }
 }

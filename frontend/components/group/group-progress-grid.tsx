@@ -35,7 +35,7 @@ export function GroupProgressGrid({ group }: GroupProgressGridProps) {
 
   const [isPending, startTransition] = useTransition();
   const [currentPage, setCurrentPage] = useState(0); // Track the current page
-  const lessonsPerPage = 5; // Number of lessons to show per page
+  const lessonsPerPage = 4; // Number of lessons to show per page
 
   // Calculate the start and end indices for the lessons on the current page
   const startIndex = currentPage * lessonsPerPage;

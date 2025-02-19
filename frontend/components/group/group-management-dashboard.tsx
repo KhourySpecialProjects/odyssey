@@ -34,7 +34,11 @@ export function GroupDashboard({ group, canEdit }: RenderGroupDashboardProps) {
           {group.droplets && group.droplets.length > 0 ? (
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               {group.droplets.map((droplet) => (
-                <GroupDropletTile key={droplet.id} droplet={droplet} />
+                <GroupDropletTile
+                  key={droplet.id}
+                  droplet={droplet}
+                  dueDate={group.dropletDueDates?.find((dueDate) => dueDate.dropletId === droplet.id)?.baseDueDate || ""}
+                />
               ))}
             </div>
           ) : (
@@ -73,9 +77,9 @@ export function GroupDashboard({ group, canEdit }: RenderGroupDashboardProps) {
             emptyMessage="No students are enrolled in any droplets or playlists."
           >
             {group.droplets &&
-            group.droplets.length > 0 &&
-            group.members &&
-            group.members.length > 0 ? (
+              group.droplets.length > 0 &&
+              group.members &&
+              group.members.length > 0 ? (
               <div className="flex flex-row items-start">
                 <div className="" key={group.id}>
                   <GroupProgressGrid group={group} />

@@ -13,7 +13,6 @@ type Props = {
 };
 
 export default async function GroupDueDatesPage({ searchParams }: Props) {
-  
   const user = await getCurrentUser();
   if (!user?.email) redirect("/");
 
@@ -34,12 +33,7 @@ export default async function GroupDueDatesPage({ searchParams }: Props) {
     if (!isCreator && !isAdmin && !isAuthorizedUserAdmin(user.roles)) {
       notFound();
     }
-
   }
-
-
-
-
 
   return (
     <div className="w-full max-w-4xl p-8 mx-auto">
@@ -50,19 +44,15 @@ export default async function GroupDueDatesPage({ searchParams }: Props) {
         <p className="mt-4 text-lg leading-normal text-slate-600 text-balance">
           Manage due dates and extensions
         </p>
-        {group && (
-          <Badge variant="outline">
-            Group created by: {group.creator?.email || "Unknown"}
-          </Badge>
-        )}
       </div>
-      {group && 
-      <GroupDueDateDashboard 
-        currentUser={authorizedUser} 
-        existingGroup={group} 
-        searchParams={p} 
-        user={user} />
-      }
+      {group && (
+        <GroupDueDateDashboard
+          currentUser={authorizedUser}
+          existingGroup={group}
+          searchParams={p}
+          user={user}
+        />
+      )}
     </div>
   );
 }

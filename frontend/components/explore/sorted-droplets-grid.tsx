@@ -1,6 +1,6 @@
 "use client";
 
-import { Droplet } from "@/types";
+import { Droplet, Enrollment } from "@/types";
 import { DropletTile } from "../droplets/droplet-tile";
 import { useMemo, useState } from "react";
 import {
@@ -18,6 +18,7 @@ interface SortedDropletsGridProps {
   enrolledDropletIds: number[];
   searchValue?: string;
   ratingsMap: Map<number, number>;
+  enrollments: Enrollment[];
 }
 
 export function SortedDropletsGrid({
@@ -27,6 +28,7 @@ export function SortedDropletsGrid({
   enrolledDropletIds,
   searchValue,
   ratingsMap,
+  enrollments,
 }: SortedDropletsGridProps) {
   const ITEMS_PER_PAGE = 9;
   const [currentPage, setCurrentPage] = useState(1);
@@ -101,6 +103,11 @@ export function SortedDropletsGrid({
             droplet={droplet}
             isEnrolled={enrolledDropletIds.includes(droplet.id)}
             completedLessonIds={completedLessonIds}
+            dueDate={
+              enrollments
+                ?.find((enrollment) => enrollment.droplet.id === droplet.id)
+                ?.dueDate?.toString() || ""
+            }
           />
         ))}
       </ul>

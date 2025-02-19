@@ -1,7 +1,7 @@
 import { Group } from "@/types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { PencilIcon } from "lucide-react";
+import { Clock, PencilIcon } from "lucide-react";
 import Link from "next/link";
 
 interface GroupHeaderProps {
@@ -29,11 +29,11 @@ export function GroupHeader({ group, canEdit }: GroupHeaderProps) {
             </Button>
           </Link>
           <Link href={`/g/due-dates?slug=${group.slug}`}>
-          <Button variant="default" className="gap-2">
-            <PencilIcon className="h-4 w-4" />
-            Due Dates
-          </Button>
-        </Link>
+            <Button variant="default" className="gap-2">
+              <Clock className="h-4 w-4" />
+              Due Dates
+            </Button>
+          </Link>
         </div>
       )}
     </div>
