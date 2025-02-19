@@ -9,6 +9,8 @@ import { Separator } from "@/components/ui/separator";
 import createDOMPurifier from "isomorphic-dompurify";
 import { GroupDashboard } from "@/components/group/group-management-dashboard";
 import { isAuthorizedUserAdmin } from "@/lib/utils";
+import DueDateAnnouncements from "@/components/group/due-date-announcements";
+import { getGroupDueDates } from "@/lib/requests/groups";
 type Props = {
   params: Promise<{
     slug: string;
@@ -29,6 +31,7 @@ export default async function GroupDetailPage({ params }: Props) {
   const isCreator = group.creator?.id === authorizedUser.id;
   const isAdmin = group.admins?.some((admin) => admin.id === authorizedUser.id);
   const canEdit = isCreator || isAdmin || isAuthorizedUserAdmin(user.roles);
+  
 
   return (
     <div className="w-full max-w-7xl p-8 mx-auto space-y-12">
@@ -74,7 +77,7 @@ export default async function GroupDetailPage({ params }: Props) {
         </div>
 
         {/* Main content area */}
-        <div className="lg:col-span-2 space-y-12">
+        <div className="lg:col-span-2 space-y-6">
           <ContentSection
             title="Group Description"
             content={createDOMPurifier.sanitize(
@@ -88,7 +91,10 @@ export default async function GroupDetailPage({ params }: Props) {
             //   />
             // }
           />
+          <Separator />
 
+          <DueDateAnnouncements group={group} />
+          
           <Separator />
 
           <ContentSection title="">

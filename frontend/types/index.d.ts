@@ -187,6 +187,7 @@ export type Enrollment = {
   isFirstTime: boolean;
   isArchived: boolean;
   notes: Note[];
+  dueDate: Date;
 };
 
 export interface Playlist {
@@ -251,6 +252,10 @@ export type Group = {
   members?: AuthorizedUser[];
   droplets?: Droplet[];
   playlists?: Playlist[];
+  dropletDueDates?: {
+    dropletId: number;
+    baseDueDate: string;
+  }[];
 };
 
 export type GroupListResponse = {

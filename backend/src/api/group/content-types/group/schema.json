@@ -91,6 +91,9 @@
       "relation": "oneToMany",
       "target": "api::announcement.announcement",
       "mappedBy": "group"
+    },
+    "dropletDueDates": {
+      "type": "json"
     }
   }
 }

@@ -16,7 +16,10 @@ import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
-import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
+import {
+  getEnrollByID,
+  getEnrollmentsByAuthorizedUser,
+} from "@/lib/requests/enrollment";
 import { StarRating } from "@/components/ui/rating-stars";
 import { getDropletAverageRating } from "@/lib/requests/enrollment";
 
@@ -59,9 +62,11 @@ export default async function DropletRoute({ params }: Props) {
   // Get enrollment status
   let isEnrolled = false;
   const user = await getCurrentUser();
+  const enroll = "";
 
   if (user?.email) {
     const authorizedUser = await getAuthorizedUserByEmail(user.email);
+
     const enrollments = await getEnrollmentsByAuthorizedUser(authorizedUser.id);
     isEnrolled = enrollments.some((e) => e.droplet.id === droplet.id);
   }

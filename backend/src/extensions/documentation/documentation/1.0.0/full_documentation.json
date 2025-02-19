@@ -11,7 +11,7 @@
       "url": "https://khouryodyssey.org"
     },
     "license": null,
-    "x-generation-date": "2025-02-18T16:44:40.355Z"
+    "x-generation-date": "2025-02-19T14:54:14.912Z"
   },
   "x-strapi-config": {
     "plugins": [
@@ -2667,6 +2667,7 @@
                                                                                 }
                                                                               }
                                                                             },
+                                                                            "dropletDueDates": {},
                                                                             "createdAt": {
                                                                               "type": "string",
                                                                               "format": "date-time"
@@ -5901,6 +5902,7 @@
                                                                                   }
                                                                                 }
                                                                               },
+                                                                              "dropletDueDates": {},
                                                                               "createdAt": {
                                                                                 "type": "string",
                                                                                 "format": "date-time"
@@ -8645,6 +8647,7 @@
                                                                                                             }
                                                                                                           }
                                                                                                         },
+                                                                                                        "dropletDueDates": {},
                                                                                                         "createdAt": {
                                                                                                           "type": "string",
                                                                                                           "format": "date-time"
@@ -12632,6 +12635,7 @@
                                                                     }
                                                                   }
                                                                 },
+                                                                "dropletDueDates": {},
                                                                 "createdAt": {
                                                                   "type": "string",
                                                                   "format": "date-time"
@@ -15117,6 +15121,7 @@
                                                                                                               }
                                                                                                             }
                                                                                                           },
+                                                                                                          "dropletDueDates": {},
                                                                                                           "createdAt": {
                                                                                                             "type": "string",
                                                                                                             "format": "date-time"
@@ -18864,6 +18869,7 @@
                                                                                 }
                                                                               }
                                                                             },
+                                                                            "dropletDueDates": {},
                                                                             "createdAt": {
                                                                               "type": "string",
                                                                               "format": "date-time"
@@ -22105,6 +22111,7 @@
                                                                   }
                                                                 }
                                                               },
+                                                              "dropletDueDates": {},
                                                               "createdAt": {
                                                                 "type": "string",
                                                                 "format": "date-time"
@@ -25165,6 +25172,7 @@
                                                                     }
                                                                   }
                                                                 },
+                                                                "dropletDueDates": {},
                                                                 "createdAt": {
                                                                   "type": "string",
                                                                   "format": "date-time"
@@ -26077,7 +26085,8 @@
                   ],
                   "example": "string or id"
                 }
-              }
+              },
+              "dropletDueDates": {}
             }
           }
         }
@@ -28281,6 +28290,7 @@
                                                                     }
                                                                   }
                                                                 },
+                                                                "dropletDueDates": {},
                                                                 "createdAt": {
                                                                   "type": "string",
                                                                   "format": "date-time"
@@ -29131,6 +29141,7 @@
               }
             }
           },
+          "dropletDueDates": {},
           "createdAt": {
             "type": "string",
             "format": "date-time"
@@ -31447,6 +31458,7 @@
                                                                   }
                                                                 }
                                                               },
+                                                              "dropletDueDates": {},
                                                               "createdAt": {
                                                                 "type": "string",
                                                                 "format": "date-time"
@@ -34432,6 +34444,7 @@
                                                                                   }
                                                                                 }
                                                                               },
+                                                                              "dropletDueDates": {},
                                                                               "createdAt": {
                                                                                 "type": "string",
                                                                                 "format": "date-time"
@@ -37460,6 +37473,7 @@
                                                                                               }
                                                                                             }
                                                                                           },
+                                                                                          "dropletDueDates": {},
                                                                                           "createdAt": {
                                                                                             "type": "string",
                                                                                             "format": "date-time"
@@ -40792,6 +40806,7 @@
                                                                                   }
                                                                                 }
                                                                               },
+                                                                              "dropletDueDates": {},
                                                                               "createdAt": {
                                                                                 "type": "string",
                                                                                 "format": "date-time"
@@ -44333,6 +44348,7 @@
                                                                                   }
                                                                                 }
                                                                               },
+                                                                              "dropletDueDates": {},
                                                                               "createdAt": {
                                                                                 "type": "string",
                                                                                 "format": "date-time"

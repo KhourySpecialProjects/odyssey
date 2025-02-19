@@ -61,6 +61,7 @@ export async function EnrolledDropletsGrid() {
       dropletsWithCompletion={dropletsWithCompletion}
       completedLessonIds={completedLessonIds}
       isArchived={false}
+      enrollments={enrollments}
     />
   );
 }

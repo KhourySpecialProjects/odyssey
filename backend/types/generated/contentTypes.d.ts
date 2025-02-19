@@ -1426,6 +1426,7 @@ export interface ApiGroupGroup extends Schema.CollectionType {
       'oneToMany',
       'api::announcement.announcement'
     >;
+    dropletDueDates: Attribute.JSON;
     createdAt: Attribute.DateTime;
     updatedAt: Attribute.DateTime;
     createdBy: Attribute.Relation<

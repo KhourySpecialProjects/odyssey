@@ -12,6 +12,7 @@ import {
 } from "@/lib/requests/enrollment";
 import { DropletTile } from "../droplets/droplet-tile";
 import { SortedDropletsGrid } from "./sorted-droplets-grid";
+import { Enrollment } from "@/types";
 
 interface Lesson {
   id: number;
@@ -41,9 +42,12 @@ export async function DropletsGrid({
   let completedDropletIds: number[] = [];
   let completedLessonIds: number[] = [];
 
+  let enrollments: Enrollment[] = [];
+
   if (user?.email) {
     const authorizedUser = await getAuthorizedUserByEmail(user.email);
-    const enrollments = await getEnrollmentsByAuthorizedUser(authorizedUser.id);
+    enrollments = await getEnrollmentsByAuthorizedUser(authorizedUser.id);
+
     enrolledDropletIds = enrollments.map((e) => e.droplet.id);
     completedLessonIds = enrollments.flatMap(
       (enrollment) =>
@@ -143,6 +147,9 @@ export async function DropletsGrid({
             isEnrolled={enrolledDropletIds.includes(droplet.id)}
             completedLessonIds={completedLessonIds}
             profilePage={true}
+            dueDate={enrollments
+              .find((enrollment) => enrollment.droplet.id === droplet.id)
+              ?.dueDate?.toString()}
           />
         ))}
       </ul>
@@ -156,6 +163,7 @@ export async function DropletsGrid({
       completedLessonIds={completedLessonIds}
       enrolledDropletIds={enrolledDropletIds}
       ratingsMap={ratingsMap}
+      enrollments={enrollments}
     />
   );
 }

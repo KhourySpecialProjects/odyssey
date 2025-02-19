@@ -12,7 +12,8 @@ import { Button } from "../ui/button";
 import { toast } from "sonner";
 import { archiveDroplet } from "@/lib/actions";
 import { useRouter } from "next/navigation";
-import { Archive } from "lucide-react";
+import { Archive, Clock } from "lucide-react";
+import { getDueDateBadgeColor } from "@/lib/utils";
 
 interface DropletTileProps {
   droplet: Droplet;
@@ -21,6 +22,7 @@ interface DropletTileProps {
   profilePage?: boolean;
   compact?: boolean;
   isArchived?: boolean;
+  dueDate?: string;
 }
 
 export function DropletTile({
@@ -30,6 +32,7 @@ export function DropletTile({
   profilePage,
   compact,
   isArchived,
+  dueDate,
 }: DropletTileProps) {
   const [averageRating, setAverageRating] = useState<number>(0);
 
@@ -41,9 +44,20 @@ export function DropletTile({
   const completionPercentage =
     dropletLessonIds.length > 0
       ? Math.round(
-          (completedLessonsInDroplet.length / dropletLessonIds.length) * 100,
-        )
+        (completedLessonsInDroplet.length / dropletLessonIds.length) * 100,
+      )
       : 0;
+
+  console.log("date is ", dueDate);
+
+  let daysUntil = 0;
+  if (dueDate && dueDate !== "") {
+    const dueDateObject = new Date(dueDate);
+    const today = new Date();
+    const diffTime = dueDateObject.getTime() - today.getTime();
+    daysUntil = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    console.log("daysUntil", daysUntil);
+  }
 
   useEffect(() => {
     const fetchRating = async () => {
@@ -146,11 +160,23 @@ export function DropletTile({
               <Badge variant="destructive">Draft</Badge>
             ) : null}
 
+            {dueDate && dueDate !== "" && (
+              <Badge className={getDueDateBadgeColor(daysUntil, true)} variant="outline">
+                <Clock size={15} className="mr-1" />
+                {daysUntil > 0
+                  ? `Due in ${daysUntil} ${daysUntil > 1 ? "days" : "day"}!`
+                  : "This Droplet is Late!"
+                }
+              </Badge>
+            )}
+
             {isEnrolled && dropletLessonIds.length > 0 && (
               <Badge className={getCompletionBadgeColor()} variant="outline">
                 {completionPercentage}% Complete
               </Badge>
             )}
+
+
 
             <Badge variant="outline">
               {uppercaseFirstChar(droplet.focusArea)}
