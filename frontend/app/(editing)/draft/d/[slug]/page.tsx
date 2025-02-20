@@ -12,7 +12,6 @@ import { Description } from "@/components/draft/metadata/description";
 import { uppercaseFirstChar } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { RegenerateSlugButton } from "@/components/draft/metadata/regenerate-slug";
-import { DeleteDropletButton } from "@/components/draft/metadata/delete-droplet";
 
 type Props = {
   params: Promise<Params>;
