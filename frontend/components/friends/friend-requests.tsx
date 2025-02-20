@@ -44,7 +44,7 @@ export function FriendRequests({
   };
 
   return (
-    <div className="flex flex-col relative">
+    <div className="flex flex-col ">
       <section>
         <h1 className="font-bold">Friend Requests</h1>
         <p>A list of your friend requests.</p>
