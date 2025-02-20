@@ -4,7 +4,6 @@ import { revalidatePath, revalidateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { getCurrentUser } from "./auth/session";
-import { getAuthorByAuthorizedUserEmail } from "./requests/author";
 import { getAuthorizedUserByEmail } from "./requests/authorized-user";
 import { getEnrollmentsByAuthorizedUser } from "./requests/enrollment";
 import { accessRequestSchema } from "./validations/access-request";
@@ -233,9 +232,9 @@ export async function updateAuthorBio(formData: z.infer<typeof BioFormSchema>) {
   try {
     const user = await getCurrentUser();
     if (!user?.email) throw new Error("No email identified");
-    const author = await getAuthorByAuthorizedUserEmail(user.email);
+    const authorizedUser = await getAuthorizedUserByEmail(user.email);
 
-    const response = await fetch(STRAPI_API_URL + "/api/authors/" + author.id, {
+    const response = await fetch(STRAPI_API_URL + "/api/authorized-users/" + authorizedUser.id, {
       method: "PUT",
       body: JSON.stringify({ data: { bio: formData.bio } }),
       headers: {
@@ -258,7 +257,6 @@ export async function updateAuthorBio(formData: z.infer<typeof BioFormSchema>) {
   revalidatePath("/(general)/settings/profile", "page");
   revalidatePath("/(droplets)/d/[slug]", "page");
   revalidatePath("/(droplets)/d/[slug]/recap", "page");
-  redirect("/settings/profile");
 }
 
 export async function createEnrollment(
@@ -397,7 +395,7 @@ export async function createDroplet(data: z.infer<typeof CreateDropletSchema>) {
   try {
     const user = await getCurrentUser();
     if (!user?.email) throw new Error("No email identified");
-    const author = await getAuthorByAuthorizedUserEmail(user.email, {
+    const author = await getAuthorizedUserByEmail(user.email, {
       populate: {},
     });
     if (!author) throw new Error("No author identified");
@@ -410,7 +408,7 @@ export async function createDroplet(data: z.infer<typeof CreateDropletSchema>) {
       tags: {
         connect: data.tagIds,
       },
-      authors: {
+      authorized_users: {
         connect: [author.id],
       },
 
@@ -1146,7 +1144,7 @@ export async function deepDeleteDroplet(id: number) {
     const droplet = await getDropletById<Droplet>(id, {
       fields: ["*"],
       populate: {
-        authors: { populate: "*" },
+        authorized_users: { populate: "*" },
         learningObjectives: { populate: "*" },
         lessons: { populate: "*" },
         tags: { populate: "*" },
@@ -1415,7 +1413,7 @@ export async function createPlaylist(data: {
   try {
     const dataToSend = {
       name: data.name,
-      author: {
+      authors: {
         set: [data.author.id],
       },
       slug: tempSlug, // this gets overwritten by Strapi
@@ -1465,7 +1463,7 @@ export async function updatePlaylist(
     name: string;
     isPublic: boolean;
     droplets?: { id: number }[];
-    author?: { id: number };
+    authors?: { id: number };
     userId?: number;
     slug?: string; //TODO Should slug be optional for updating a playlist?
   },

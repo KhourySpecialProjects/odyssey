@@ -72,8 +72,7 @@ export function UserBlock({
               </Link>
             )}
           </div>
-          <DialogDescription>Email: {user.email}</DialogDescription>
-          {user.bio && <DialogDescription>Bio: {user.bio}</DialogDescription>}
+          {user.bio && <DialogDescription>{user.bio}</DialogDescription>}
           <DialogDescription>Completed Droplets: </DialogDescription>
           <FriendCompletedDroplets friend={user} />
           <div

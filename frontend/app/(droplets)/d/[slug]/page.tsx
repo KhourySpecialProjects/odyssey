@@ -11,6 +11,7 @@ import {
   FilePieChartIcon,
   GoalIcon,
   HammerIcon,
+  User2Icon,
 } from "lucide-react";
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
@@ -46,10 +47,10 @@ export default async function DropletRoute({ params }: Props) {
   const droplet = await getDropletBySlug<Droplet>(p.slug, {
     fields: ["*"],
     populate: {
-      authors: { populate: "*" },
       learningObjectives: { populate: "*" },
       lessons: { populate: "*" },
       tags: { populate: "*" },
+      authorized_users: { populate: "*" },
       prerequisites: { populate: ["id", "name", "slug"] },
       postrequisites: { populate: ["id", "name", "slug"] },
     },
@@ -231,20 +232,26 @@ export default async function DropletRoute({ params }: Props) {
           </p>
 
           <ul className="flex flex-col mt-4 border divide-y rounded-md bg-slate-50 border-slate-200 divide-slate-200">
-            {droplet.authors?.map((author) => (
+            {droplet.authorized_users?.map((author) => (
               <li key={`author-${author.id}`} className="inline-flex gap-4 p-4">
                 <Avatar variant="round" className="border border-sky-800">
-                  <AvatarImage
-                    src={author.photo?.formats?.small?.url ?? undefined}
-                  />
-                  <AvatarFallback>{getInitials(author.name)}</AvatarFallback>
+                <AvatarImage
+                src={author?.profilePhoto || user?.image || undefined}
+              />
+             <AvatarFallback>
+                {user?.name ? (
+                  getInitials(user.name)
+                ) : (
+                  <User2Icon className="w-4 h-4" />
+                )}
+              </AvatarFallback>
                 </Avatar>
 
                 <div
                   className={!author.bio ? "flex flex-row items-center" : ""}
                 >
                   <span className="font-bold leading-relaxed">
-                    {author.name}
+                    {author.firstName + " " + author.lastName}
                   </span>
 
                   {author.bio ? (

@@ -4,7 +4,6 @@ import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
 import { getDropletBySlug } from "@/lib/requests/droplet";
 import { getLessonBySlug } from "@/lib/requests/lesson";
 import { getServerSession } from "next-auth";
-import { getAuthorByAuthorizedUserEmail } from "@/lib/requests/author";
 import { getCurrentUser } from "@/lib/auth/session";
 import { redirect } from "next/navigation";
 import { DropletLessonWrapper } from "@/components/droplets/lessons/droplet-lesson-wrapper";
@@ -34,7 +33,7 @@ export default async function Page({ params }: Props) {
 
   const droplet = await getDropletBySlug(slug, {
     populate: {
-      authors: { populate: "*" },
+      authorized_users: { populate: "*" },
       droplet_lessons: {
         populate: ["lesson"],
         sort: ["orderIndex:asc"],
@@ -67,13 +66,10 @@ export default async function Page({ params }: Props) {
   const currentUser = await getCurrentUser();
   if (!currentUser || !currentUser?.email) return redirect("/");
   const authUser = await getAuthorizedUserByEmail(currentUser.email);
-  const userAuthor = await getAuthorByAuthorizedUserEmail(
-    session?.user.email || "",
-  );
+
   const isAuthor =
-    userAuthor &&
-    droplet.authors &&
-    droplet.authors.map((author) => author.id).includes(userAuthor.id);
+    droplet.authorized_users &&
+    droplet.authorized_users.map((author) => author.id).includes(authUser.id);
 
   return (
     <div className="flex flex-row w-full h-full">
