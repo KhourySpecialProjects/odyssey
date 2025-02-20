@@ -17,6 +17,7 @@ interface GenericBlockRendererProps {
   onDeleteHighlight: (highlightId: number) => void;
   onNote: (notePos: number, text: string) => void;
   genericBlocks: number[];
+  enrollmentId: string | undefined;
 }
 
 const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
@@ -26,6 +27,7 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
   onDeleteHighlight,
   onNote,
   genericBlocks,
+  enrollmentId,
 }) => {
   const contentRef = useRef<HTMLDivElement>(null);
   const popupRef = useRef<{
@@ -318,7 +320,7 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
 
   return (
     <div className="">
-      {block.id === genericBlocks[0] && (
+      {block.id === genericBlocks[0] && enrollmentId && (
         <div className="fixed top-8 sm:top-4 xs:top-4 right-0 lg:right-1/4 z-30 transform -translate-x-1/2 bg-blue-100 p-2 rounded shadow-lg">
           <div className="relative group">
             <CircleHelp className="cursor-pointer" />
@@ -349,7 +351,7 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
           </div>
         </div>
       )}
-      {block.id === genericBlocks[0] && (
+      {block.id === genericBlocks[0] && enrollmentId && (
         <div className="fixed lg:top-16 xs:top-28 sm:top-28 md:top-28 z-20 right-0 lg:right-1/4 transform -translate-x-1/2 bg-blue-100 p-2 rounded shadow-lg group">
           <div className="relative">
             <Pen className="cursor-pointer" />
