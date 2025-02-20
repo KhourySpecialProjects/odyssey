@@ -10,6 +10,9 @@ import {
 import { ChangeEvent, useState } from "react";
 import { assignPlaylistDueDate } from "@/lib/requests/groups";
 
+import MUIDateTimePicker from "./datetime-picker";
+import { DateTime, Settings} from 'luxon'
+
 interface PlaylistDueDateBlockProps {
   currentUser: AuthorizedUser;
   existingGroup: Group;
@@ -27,19 +30,18 @@ export function PlaylistDueDateBlock({
   
     const [removePopupVisible, setRemovePopupVisible] = useState(false);
   
-    const [dueDate, setDueDate] = useState<Date | null>(() => {
+    const [dueDate, setDueDate] = useState<DateTime | null>(() => {
       const baseDate = existingGroup.playlistDueDates?.find(
         (date) => date.playlistId === currentPlaylist.id,
       )?.baseDueDate;
-      return baseDate ? new Date(baseDate) : null;
+      return baseDate ? DateTime.fromISO(baseDate) : null;
     });
   
-    const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
-      const inputDueDate = e.target.value;
-  
-      setDueDate(new Date(inputDueDate));
-  
-      console.log("due date is ", dueDate);
+    const handleInputChange = (date: DateTime | null) => {
+      if (!date) return;
+
+    setDueDate(date);
+    console.log("date is ", date)
     };
   
     const handleSaveDate = () => {
@@ -48,7 +50,7 @@ export function PlaylistDueDateBlock({
         await assignPlaylistDueDate(
           existingGroup,
           currentPlaylist,
-          dueDate ? dueDate : new Date(),
+          dueDate ? dueDate.toISO() : DateTime.local().toISO(),
         );
       };
       handleSaveDate();
@@ -78,12 +80,8 @@ export function PlaylistDueDateBlock({
         {isSaveClicked && <p className="text-slate-400">Saved!</p>}
         {isRemoveClicked && <p className="text-slate-400">Removed!</p>}
 
-        <input
-          aria-label="Date and time"
-          type="datetime-local"
-          onChange={(e) => handleInputChange(e)}
-          value={dueDate ? dueDate.toISOString().slice(0, 16) : ""}
-        />
+        <MUIDateTimePicker onChange={handleInputChange} date={dueDate}></MUIDateTimePicker>
+        
         <Button
           onClick={() => {
             handleSaveDate();

@@ -483,12 +483,12 @@ export const getDueDateBadgeColor = (
   includeLate: boolean,
 ) => {
   if (daysUntil > 14) {
-    return "bg-emerald-200 text-emerald-800 border-emerald-500";
+    return "bg-emerald-100 text-emerald-800 border border-emerald-400";
   } else if (daysUntil > 3) {
-    return "bg-amber-200 text-amber-800 border-amber-500";
+    return "bg-amber-100 text-amber-800 border border-amber-400";
   } else if (daysUntil > 0) {
-    return "bg-red-200 text-red-800 border-red-500";
+    return "bg-red-100 text-red-800 border border-red-400";
   } else if (daysUntil <= 0 && includeLate) {
-    return "bg-red-400 text-red-900 border-red-700";
+    return "bg-red-400 text-red-900 border border-red-700";
   } 
 };

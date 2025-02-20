@@ -17,6 +17,7 @@ import { createEnrollmentFromEmail } from "@/lib/actions";
 import { revalidatePath } from "next/cache";
 import qs from "qs";
 import { enrollInPlaylist } from "./playlist-enrollment";
+import { DateTime } from "luxon";
 const STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
 /**
@@ -688,7 +689,7 @@ export async function enrollUsers(group: Group) {
 export async function assignDueDate(
   group: Group,
   droplet: Droplet,
-  date: Date | null,
+  date: string | null,
 ) {
   try {
     // Update group's base due date
@@ -708,7 +709,7 @@ export async function assignDueDate(
                     ),
                     {
                       dropletId: droplet.id,
-                      baseDueDate: date.toISOString(),
+                      baseDueDate: date,
                     },
                   ],
           },
@@ -735,7 +736,7 @@ export async function assignDueDate(
           options: {
             method: "PUT",
             body: JSON.stringify({
-              data: { dueDate: date?.toISOString() || null },
+              data: { dueDate: date || null },
             }),
           },
         }),
@@ -756,7 +757,7 @@ export async function assignDueDate(
 export async function assignPlaylistDueDate(
   group: Group,
   playlist: Playlist,
-  date: Date | null,
+  date: string | null,
 ) {
   try {
 
@@ -788,7 +789,7 @@ export async function assignPlaylistDueDate(
                     ),
                     {
                       playlistId: playlist.id,
-                      baseDueDate: date.toISOString(),
+                      baseDueDate: date,
                     },
                   ],
           },
@@ -818,7 +819,7 @@ export async function assignPlaylistDueDate(
           options: {
             method: "PUT",
             body: JSON.stringify({
-              data: { dueDate: date?.toISOString() || null },
+              data: { dueDate: date || null },
             }),
           },
         }),

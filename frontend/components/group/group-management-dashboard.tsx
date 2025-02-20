@@ -32,7 +32,7 @@ export function GroupDashboard({ group, canEdit }: RenderGroupDashboardProps) {
         >
           {/* Droplet components will go here */}
           {group.droplets && group.droplets.length > 0 ? (
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="grid grid-cols-1 grid-flow-row auto-rows-fr gap-4 sm:grid-cols-2">
               {group.droplets.map((droplet) => (
                 <GroupDropletTile
                   key={droplet.id}
