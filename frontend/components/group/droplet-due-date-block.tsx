@@ -12,6 +12,11 @@ import {
   DialogDescription,
 } from "../ui/dialog";
 
+import MUIDateTimePicker from "./datetime-picker";
+import { DateTime, Settings} from 'luxon'
+
+
+
 interface DropletDueDateBlockProps {
   currentUser: AuthorizedUser;
   existingGroup: Group;
@@ -28,19 +33,19 @@ export function DropletDueDateBlock({
 
   const [removePopupVisible, setRemovePopupVisible] = useState(false);
 
-  const [dueDate, setDueDate] = useState<Date | null>(() => {
+  const [dueDate, setDueDate] = useState<DateTime | null>(() => {
     const baseDate = existingGroup.dropletDueDates?.find(
       (date) => date.dropletId === currentDroplet.id,
     )?.baseDueDate;
-    return baseDate ? new Date(baseDate) : null;
+    return baseDate ? DateTime.fromISO(baseDate) : null;
   });
 
-  const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const inputDueDate = e.target.value;
 
-    setDueDate(new Date(inputDueDate));
+  const handleInputChange = (date: DateTime | null) => {
+    if (!date) return;
 
-    console.log("due date is ", dueDate);
+    setDueDate(date);
+    console.log("date is ", date)
   };
 
   const handleSaveDate = () => {
@@ -49,7 +54,7 @@ export function DropletDueDateBlock({
       await assignDueDate(
         existingGroup,
         currentDroplet,
-        dueDate ? dueDate : new Date(),
+        dueDate ? dueDate.toISO() : DateTime.local().toISO(),
       );
     };
     handleSaveDate();
@@ -71,6 +76,7 @@ export function DropletDueDateBlock({
     }, 3000);
   };
 
+
   return (
     <div className="flex flex-row justify-between space-x-2 w-full bg-slate-50 border border-slate-200 rounded-lg p-4 items-center">
       {currentDroplet.name}
@@ -78,12 +84,8 @@ export function DropletDueDateBlock({
         {isSaveClicked && <p className="text-slate-400">Saved!</p>}
         {isRemoveClicked && <p className="text-slate-400">Removed!</p>}
 
-        <input
-          aria-label="Date and time"
-          type="datetime-local"
-          onChange={(e) => handleInputChange(e)}
-          value={dueDate ? dueDate.toISOString().slice(0, 16) : ""}
-        />
+        <MUIDateTimePicker onChange={handleInputChange} date={dueDate}></MUIDateTimePicker>
+        
         <Button
           onClick={() => {
             handleSaveDate();

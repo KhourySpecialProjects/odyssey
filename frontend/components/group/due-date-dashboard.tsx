@@ -94,8 +94,6 @@ export function GroupDueDateDashboard({
               />
             ))}
           </>
-        ) : tab === "extensions" ? (
-          <>Coming Soon!</>
         ) : (
           <div />
         )}
