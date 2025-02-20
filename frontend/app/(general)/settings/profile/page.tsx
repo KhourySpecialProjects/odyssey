@@ -36,19 +36,21 @@ export default async function AuthorProfileSettings() {
 
         <CardContent className="flex items-center space-x-4">
           <Avatar variant="round">
-          <AvatarImage
-                src={authorizedUser?.profilePhoto || user?.image || undefined}
-              />
-             <AvatarFallback>
-                {user?.name ? (
-                  getInitials(user.name)
-                ) : (
-                  <User2Icon className="w-4 h-4" />
-                )}
-              </AvatarFallback>
+            <AvatarImage
+              src={authorizedUser?.profilePhoto || user?.image || undefined}
+            />
+            <AvatarFallback>
+              {user?.name ? (
+                getInitials(user.name)
+              ) : (
+                <User2Icon className="w-4 h-4" />
+              )}
+            </AvatarFallback>
           </Avatar>
           <div>
-            <div className="text-lg font-medium">{authorizedUser.firstName + " " + authorizedUser.lastName}</div>
+            <div className="text-lg font-medium">
+              {authorizedUser.firstName + " " + authorizedUser.lastName}
+            </div>
           </div>
         </CardContent>
 

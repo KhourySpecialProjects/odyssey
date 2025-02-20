@@ -31,9 +31,7 @@ export function FriendBlock({
     <li className="py-0 [&:not(:first-child)]:pt-3">
       <div className="flex items-center space-x-4">
         <Avatar variant="round" className="border border-sky-800 w-12 h-12">
-          <AvatarImage
-            src={friend?.profilePhoto || undefined}
-          />
+          <AvatarImage src={friend?.profilePhoto || undefined} />
           <AvatarFallback>
             {friend?.firstName ? (
               getInitials(friend.firstName + " " + friend.lastName)

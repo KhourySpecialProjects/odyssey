@@ -44,7 +44,9 @@ export default async function CheckPermission({ params, children }: Props) {
 
   if (
     !isAuthorizedUserAdmin(user.roles) &&
-    !droplet.authorized_users.map((author) => author.id).includes(authorizedUser?.id)
+    !droplet.authorized_users
+      .map((author) => author.id)
+      .includes(authorizedUser?.id)
   ) {
     return notFound();
   }

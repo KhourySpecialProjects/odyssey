@@ -33,17 +33,15 @@ export function FriendSentRequestsBlock({
     <li className="py-0 [&:not(:first-child)]:pt-3">
       <div className="flex items-center space-x-4">
         <Avatar variant="round" className="border border-sky-800 w-12 h-12">
-            <AvatarImage
-              src={request?.profilePhoto || undefined}
-            />
-            <AvatarFallback>
-              {request?.firstName ? (
-                getInitials(request.firstName + " " + request.lastName)
-              ) : (
-                <User2Icon />
-              )}
-            </AvatarFallback>
-          </Avatar>
+          <AvatarImage src={request?.profilePhoto || undefined} />
+          <AvatarFallback>
+            {request?.firstName ? (
+              getInitials(request.firstName + " " + request.lastName)
+            ) : (
+              <User2Icon />
+            )}
+          </AvatarFallback>
+        </Avatar>
         <div className="flex-1 min-w-0">
           <p className="font-medium truncate text-slate-900 dark:text-white">
             {request.firstName && request.lastName

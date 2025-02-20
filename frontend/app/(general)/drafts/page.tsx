@@ -31,7 +31,7 @@ export default async function CreateRoute() {
   const authorizedUser = await getAuthorizedUserByEmail(user.email);
 
   //get the current user's playlists
-  const playlists = authorizedUser.created_playlists
+  const playlists = authorizedUser.created_playlists;
 
   //get all draft droplets
   let allDroplets: Awaited<ReturnType<typeof getDraftDroplets>> = [];

@@ -33,7 +33,11 @@ export default async function NewPlaylist() {
       <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-4xl mb-7">
         Create New Playlist
       </h1>
-      <PlaylistForm userId={authUser.id} droplets={droplets} author={authUser} />
+      <PlaylistForm
+        userId={authUser.id}
+        droplets={droplets}
+        author={authUser}
+      />
     </div>
   );
 }

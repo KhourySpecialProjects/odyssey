@@ -73,7 +73,6 @@ export function FriendRequestBlock({
         <Button
           className="bg-green-600 text-white hover:bg-green-700"
           size="sm"
-          variant="outline"
           onClick={handleApprove}
         >
           <div className="relative group">
@@ -83,7 +82,11 @@ export function FriendRequestBlock({
             </span>
           </div>
         </Button>
-        <Button variant="destructive" size="sm" onClick={handleReject}>
+        <Button
+          className="bg-red-600 text-white hover:bg-red-700"
+          size="sm"
+          onClick={handleReject}
+        >
           <div className="relative group">
             <X />
             <span className="absolute left-1/2 transform -translate-x-1/2 top-full mt-1 w-max px-2 py-1 text-xs text-white bg-gray-800 rounded opacity-0 group-hover:opacity-100 transition-opacity">

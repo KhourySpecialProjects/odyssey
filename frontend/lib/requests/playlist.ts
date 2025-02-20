@@ -68,7 +68,7 @@ export async function getPlaylistBySlug(
       },
       authors: {
         fields: ["id", "name"],
-        populate: "*"
+        populate: "*",
       },
     },
   }: StrapiRequestParams = {},

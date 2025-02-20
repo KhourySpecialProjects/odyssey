@@ -46,45 +46,41 @@ export function BioCard({ author }: { author: AuthorizedUser }) {
 
   return (
     <Form {...form}>
-      <form
-        onSubmit={form.handleSubmit(onSubmit)}
-        className="px-6 py-4 w-full"
-      >
+      <form onSubmit={form.handleSubmit(onSubmit)} className="px-6 py-4 w-full">
         <div className="flex flex-row w-full gap-2 items-center">
-            <FormField
-              control={form.control}
-              name="bio"
-              render={({ field }) => (
-                <FormItem className="w-full">
-                  <FormControl>
-                    <Textarea
-                      placeholder={`Tell us a little bit about yourself: ${author.firstName} is a...`}
-                      className="resize-none w-full"
-                      {...field}
-                    />
-                  </FormControl>
-                  
-                  <FormDescription className="text-right flex gap-2 items-center justify-end">
+          <FormField
+            control={form.control}
+            name="bio"
+            render={({ field }) => (
+              <FormItem className="w-full">
+                <FormControl>
+                  <Textarea
+                    placeholder={`Tell us a little bit about yourself: ${author.firstName} is a...`}
+                    className="resize-none w-full"
+                    {...field}
+                  />
+                </FormControl>
 
-                    {field.value?.length}/{BIO_MAX_LENGTH} characters
-                    <Button
-                      type="submit"
-                      after={
-                        isPending ? (
-                          <LoaderIcon className="animate-spin" />
-                        ) : (
-                          <ArrowRightIcon />
-                        )
-                      }
-                    >
-                      Save Bio
-                    </Button>
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            </div>
+                <FormDescription className="text-right flex gap-2 items-center justify-end">
+                  {field.value?.length}/{BIO_MAX_LENGTH} characters
+                  <Button
+                    type="submit"
+                    after={
+                      isPending ? (
+                        <LoaderIcon className="animate-spin" />
+                      ) : (
+                        <ArrowRightIcon />
+                      )
+                    }
+                  >
+                    Save Bio
+                  </Button>
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
       </form>
     </Form>
   );

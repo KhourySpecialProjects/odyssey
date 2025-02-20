@@ -28,12 +28,12 @@ export const getMainNav = (user: User) => {
     {
       href: "/drafts",
       label: "My Content",
-      isHidden: !isContentCreator(user.roles)
+      isHidden: !isContentCreator(user.roles),
     },
     {
       href: "/admin",
       label: "Admin",
-      isHidden: !isAuthorizedUserAdmin(user.roles)
+      isHidden: !isAuthorizedUserAdmin(user.roles),
     },
   ];
   return mainNav;

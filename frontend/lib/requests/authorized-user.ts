@@ -49,7 +49,7 @@ export async function getAuthorizedUserByEmail<
               "bio",
               "github",
               "linkedin",
-              "profilePhoto"
+              "profilePhoto",
             ],
             populate: {
               blocked: {
@@ -126,6 +126,7 @@ export async function fetchAuthorizedUsers(): Promise<AuthorizedUser[]> {
 export async function fetchContentCreators(): Promise<AuthorizedUser[]> {
   try {
     const query = qs.stringify({
+      sort: ["lastName"],
       filters: {
         roles: {
           title: {
@@ -134,7 +135,7 @@ export async function fetchContentCreators(): Promise<AuthorizedUser[]> {
         },
         droplets: {
           $null: false,
-          $gt: [],  
+          $gt: [],
         },
       },
       fields: [
@@ -159,7 +160,7 @@ export async function fetchContentCreators(): Promise<AuthorizedUser[]> {
           fields: ["id"],
         },
         droplets: {
-          fields: ["id"], 
+          fields: ["id"],
         },
       },
       pagination: {
@@ -185,6 +186,7 @@ export async function fetchContentCreators(): Promise<AuthorizedUser[]> {
 export async function fetchWebsiteCreators(): Promise<AuthorizedUser[]> {
   try {
     const query = qs.stringify({
+      sort: ["lastName"],
       filters: {
         roles: {
           title: {

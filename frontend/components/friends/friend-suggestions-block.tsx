@@ -46,9 +46,7 @@ export function FriendSuggestionsBlock({
       <li className="py-0 [&:not(:first-child)]:pt-3">
         <div className="flex items-center space-x-4">
           <Avatar variant="round" className="border border-sky-800 w-12 h-12">
-            <AvatarImage
-              src={suggUser?.profilePhoto || undefined}
-            />
+            <AvatarImage src={suggUser?.profilePhoto || undefined} />
             <AvatarFallback>
               {suggUser?.firstName ? (
                 getInitials(suggUser.firstName + " " + suggUser.lastName)

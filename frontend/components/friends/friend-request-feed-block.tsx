@@ -128,10 +128,11 @@ export function FriendRequestFeedBlock({
 
           <DialogContent>
             <DialogHeader>
-              <Avatar variant="round" className="border border-sky-800 w-12 h-12">
-                <AvatarImage
-                  src={request?.profilePhoto || undefined}
-                />
+              <Avatar
+                variant="round"
+                className="border border-sky-800 w-12 h-12"
+              >
+                <AvatarImage src={request?.profilePhoto || undefined} />
                 <AvatarFallback>
                   {request?.firstName ? (
                     getInitials(request.firstName + " " + request.lastName)
