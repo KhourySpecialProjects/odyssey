@@ -5,7 +5,6 @@ import { getDroplets } from "@/lib/requests/droplet";
 import { PlaylistForm } from "@/components/playlists/playlist-form";
 import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
 import { getPlaylistBySlug } from "@/lib/requests/playlist";
-import { getAuthorByAuthorizedUserEmail } from "@/lib/requests/author";
 
 interface Props {
   params: Promise<{
@@ -23,7 +22,6 @@ export default async function EditPlaylistPage({ params }: Props) {
     return redirect("/");
 
   const authUser = await getAuthorizedUserByEmail(user.email);
-  const author = await getAuthorByAuthorizedUserEmail(user.email);
 
   const p = await params;
   const playlist = await getPlaylistBySlug(p.slug, {
@@ -46,11 +44,9 @@ export default async function EditPlaylistPage({ params }: Props) {
           ],
         },
       },
-      author: {
+      authors: {
         fields: ["id", "name"],
-        populate: {
-          authorizedUser: true,
-        },
+        populate: "*",
       },
     },
   });
@@ -60,7 +56,7 @@ export default async function EditPlaylistPage({ params }: Props) {
   }
 
   // Verify the user has permission to edit this playlist
-  if ((playlist.author as any)?.authorizedUser.id !== authUser.id) {
+  if (!(playlist.authors)?.some((author) => author.id === authUser.id)) {
     return redirect("/drafts");
   }
 

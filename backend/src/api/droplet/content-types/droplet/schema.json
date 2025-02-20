@@ -15,7 +15,7 @@
     "name": {
       "type": "string",
       "required": true,
-      "unique": false
+      "unique": true
     },
     "type": {
       "type": "enumeration",
@@ -133,9 +133,11 @@
       "target": "api::announcement.announcement",
       "mappedBy": "droplet"
     },
-    "shouldBeLocked": {
-      "type": "boolean",
-      "default": true
+    "authorized_users": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::authorized-user.authorized-user",
+      "mappedBy": "droplets"
     }
   }
 }

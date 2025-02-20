@@ -32,6 +32,12 @@ export async function getAuthorizedUserByEmail<
       was_blocked: {
         fields: ["id", "email", "firstName", "lastName", "bio", "profilePhoto"],
       },
+      droplets: {
+        fields: ["*"],
+      },
+      created_playlists: {
+        fields: ["*"],
+      },
       friendships: {
         populate: {
           authorized_users: {
@@ -43,7 +49,7 @@ export async function getAuthorizedUserByEmail<
               "bio",
               "github",
               "linkedin",
-              "profilePhoto",
+              "profilePhoto"
             ],
             populate: {
               blocked: {
@@ -126,6 +132,10 @@ export async function fetchContentCreators(): Promise<AuthorizedUser[]> {
             $eq: "Content Creator",
           },
         },
+        droplets: {
+          $null: false,
+          $gt: [],  
+        },
       },
       fields: [
         "id",
@@ -147,6 +157,9 @@ export async function fetchContentCreators(): Promise<AuthorizedUser[]> {
         },
         was_blocked: {
           fields: ["id"],
+        },
+        droplets: {
+          fields: ["id"], 
         },
       },
       pagination: {

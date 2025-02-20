@@ -7,6 +7,9 @@ import { toast } from "sonner";
 import { startTransition } from "react";
 import { sendFriendRequest } from "@/lib/requests/friends";
 import { UserBlock } from "./user-block";
+import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
+import { getInitials } from "@/lib/utils";
+import { User2Icon } from "lucide-react";
 
 export function FriendSuggestionsBlock({
   suggUser,
@@ -42,13 +45,18 @@ export function FriendSuggestionsBlock({
     >
       <li className="py-0 [&:not(:first-child)]:pt-3">
         <div className="flex items-center space-x-4">
-          {suggUser.profilePhoto && (
-            <img
-              src={suggUser.profilePhoto}
-              alt={`${suggUser.firstName}'s profile`}
-              className="w-12 h-12 rounded-full object-cover"
+          <Avatar variant="round" className="border border-sky-800 w-12 h-12">
+            <AvatarImage
+              src={suggUser?.profilePhoto || undefined}
             />
-          )}
+            <AvatarFallback>
+              {suggUser?.firstName ? (
+                getInitials(suggUser.firstName + " " + suggUser.lastName)
+              ) : (
+                <User2Icon />
+              )}
+            </AvatarFallback>
+          </Avatar>
           <div className="flex-1 min-w-0">
             <p className="font-medium truncate text-slate-900 dark:text-white">
               {suggUser.firstName && suggUser.lastName

@@ -59,12 +59,9 @@ export function ContentCreatorBlock({
                 </Link>
               )}
             </div>
-            <div className="flex justify-center pt-4">
-              Email: {contentCreator.email}
-            </div>
             {contentCreator.bio && (
               <div className="flex justify-center pt-4">
-                Bio: {contentCreator.bio}
+                {contentCreator.bio}
               </div>
             )}
           </div>

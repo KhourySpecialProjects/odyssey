@@ -68,11 +68,6 @@ export function FriendRequestBlock({
               ? `${request.firstName} ${request.lastName}`
               : request.email}
           </p>
-          {request.bio && (
-            <p className="text-sm truncate text-slate-500 dark:text-slate-400">
-              {request.bio}
-            </p>
-          )}
         </div>
         <UserBlock user={request} curUser={user} />
         <Button

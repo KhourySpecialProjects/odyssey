@@ -1,3 +1,5 @@
+"use client"
+
 import {
   Card,
   CardContent,
@@ -6,21 +8,14 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { getDroplets } from "@/lib/requests/droplet";
 import { ArrowRightIcon } from "lucide-react";
 import Link from "next/link";
 import { DropletTile } from "../droplets/droplet-tile";
 import { Button } from "../ui/button";
+import { AuthorizedUser } from "@/types";
 
-export async function AuthorDroplets({ authorId }: { authorId: number }) {
-  const droplets = await getDroplets({
-    filters: { authors: { id: { $eq: authorId } } },
-    populate: { authors: { populate: "*" } },
-    pagination: {
-      page: 1,
-      pageSize: 6,
-    },
-  });
+export function AuthorDroplets({ author }: { author: AuthorizedUser }) {
+  const droplets = author.droplets;
 
   return (
     <Card>
