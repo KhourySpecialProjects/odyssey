@@ -18,8 +18,8 @@ export function FeedContainer({
   );
 
   return (
-    <div className="flex flex-row justify-content">
-      <div className="w-2/3 h-200 text-center text-xl font-bold">
+    <div className="flex flex-row items-start">
+      <div className="w-2/3 text-center text-xl font-bold">
         <FeedClient
           selectedRoles={selectedRoles.map(
             (role) => role.toLowerCase() as AnnouncementType,
@@ -28,7 +28,7 @@ export function FeedContainer({
           curUser={curUser}
         />
       </div>
-      <div className="w-1/3 h-200 text-center text-xl font-bold flex flex-col items-center justify-center">
+      <div className="w-1/3 text-center text-xl font-bold flex flex-col items-center justify-center">
         Filters
         <FeedFilter onFilterChange={setSelectedRoles} />
       </div>

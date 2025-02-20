@@ -213,6 +213,7 @@ export function LessonRenderer({
                 onDeleteHighlight={handleDeleteHighlight}
                 onNote={handleCreateNote}
                 genericBlocks={genericBlocks}
+                enrollmentId={enrollmentId}
               />
             ))}
           </div>
@@ -246,6 +247,7 @@ function LessonBlockRenderer({
   onDeleteHighlight,
   onNote,
   genericBlocks,
+  enrollmentId,
 }: {
   block: any;
   highlights: any[];
@@ -253,6 +255,7 @@ function LessonBlockRenderer({
   onDeleteHighlight: (id: number) => void;
   onNote: (notePos: number, text: string) => void;
   genericBlocks: number[];
+  enrollmentId: string | undefined;
 }) {
   switch (block.__component) {
     case "droplets.generic":
@@ -264,6 +267,7 @@ function LessonBlockRenderer({
           onDeleteHighlight={onDeleteHighlight}
           onNote={onNote}
           genericBlocks={genericBlocks}
+          enrollmentId={enrollmentId}
         />
       );
 
