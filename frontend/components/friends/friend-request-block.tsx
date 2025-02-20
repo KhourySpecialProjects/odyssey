@@ -6,10 +6,12 @@ import {
   rejectFriendRequest,
 } from "@/lib/requests/friends";
 import { AuthorizedUser } from "@/types";
-import { Check, X } from "lucide-react";
+import { Check, User2Icon, X } from "lucide-react";
 import { startTransition } from "react";
 import { toast } from "sonner";
 import { UserBlock } from "./user-block";
+import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
+import { getInitials } from "@/lib/utils";
 
 export function FriendRequestBlock({
   user,
@@ -55,13 +57,16 @@ export function FriendRequestBlock({
   return (
     <li className="py-0 [&:not(:first-child)]:pt-3">
       <div className="flex items-center space-x-4">
-        {request.profilePhoto && (
-          <img
-            src={request.profilePhoto}
-            alt={`${request.firstName}'s profile`}
-            className="w-12 h-12 rounded-full object-cover"
-          />
-        )}
+        <Avatar variant="round" className="border border-sky-800 w-12 h-12">
+          <AvatarImage src={request?.profilePhoto || undefined} />
+          <AvatarFallback>
+            {request?.firstName ? (
+              getInitials(request.firstName + " " + request.lastName)
+            ) : (
+              <User2Icon />
+            )}
+          </AvatarFallback>
+        </Avatar>
         <div className="flex-1 min-w-0">
           <p className="font-medium truncate text-slate-900 dark:text-white">
             {request.firstName && request.lastName
