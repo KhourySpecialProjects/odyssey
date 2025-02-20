@@ -228,38 +228,32 @@ export async function createBugReport(formData: z.infer<typeof reportSchema>) {
   redirect(formData.path + "?ts=" + Date.now());
 }
 
-export async function updateAuthorBio(formData: z.infer<typeof BioFormSchema>) {
+export async function updateAuthorBio(bio: string, userId: number) {
   try {
-    const user = await getCurrentUser();
-    if (!user?.email) throw new Error("No email identified");
-    const authorizedUser = await getAuthorizedUserByEmail(user.email);
-
     const response = await fetch(
-      STRAPI_API_URL + "/api/authorized-users/" + authorizedUser.id,
+      `${STRAPI_API_URL}/api/authorized-users/${userId}`,
       {
         method: "PUT",
-        body: JSON.stringify({ data: { bio: formData.bio } }),
         headers: {
           "Content-Type": "application/json",
-          Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+          Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
         },
+        body: JSON.stringify({
+          data: {
+            bio: bio,
+          },
+        }),
       },
     );
-    const data = await response.json();
 
-    if (!response.ok || (response.ok && data.error)) {
-      const errorPath = data.error.details.errors[0].path[0];
-      const errorMessage = `${data.error.message} (${errorPath})`;
-      return { ok: false, error: errorMessage, data: null };
+    if (!response.ok) {
+      throw new Error("Failed to update bio");
     }
-  } catch (err) {
-    console.error(err);
-    return { error: "Database Error: Failed to update author." };
+    return { success: true };
+  } catch (error) {
+    console.error("Error updating bio:", error);
+    return { success: false, error };
   }
-
-  revalidatePath("/(general)/settings/profile", "page");
-  revalidatePath("/(droplets)/d/[slug]", "page");
-  revalidatePath("/(droplets)/d/[slug]/recap", "page");
 }
 
 export async function createEnrollment(
