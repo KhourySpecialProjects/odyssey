@@ -1,6 +1,5 @@
 import { SettingsNavigation } from "@/components/settings/navigation";
 import { getCurrentUser } from "@/lib/auth/session";
-import { getAuthorByAuthorizedUserEmail } from "@/lib/requests/author";
 import { NavItem } from "@/types";
 import { notFound } from "next/navigation";
 
@@ -11,17 +10,11 @@ export default async function SettingsLayout({
 }>) {
   const user = await getCurrentUser();
   if (!user?.email) return notFound();
-  const author = await getAuthorByAuthorizedUserEmail(user.email);
 
   const navItems: NavItem[] = [
     {
       href: "/settings",
       label: "General",
-    },
-    {
-      href: "/settings/profile",
-      label: "Author Profile",
-      isHidden: !author,
     },
     {
       href: "/settings/friends",

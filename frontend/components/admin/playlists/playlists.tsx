@@ -13,7 +13,7 @@ export async function Playlists() {
           },
         },
       },
-      author: {
+      authors: {
         fields: ["id", "name"],
       },
     },

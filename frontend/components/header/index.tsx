@@ -9,7 +9,6 @@ import { Menu } from "lucide-react";
 import { LoginButton } from "./login-button";
 import { NavLinks } from "./nav-links";
 import { UserDropdown } from "./user-dropdown";
-import { isContentCreator } from "@/lib/utils";
 import { AuthorizedUser } from "@/types";
 import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
 
@@ -17,12 +16,7 @@ export async function Header() {
   const user = await getCurrentUser();
 
   const getNavLinks = () => {
-    if (!user || !authorizedUser) {
-      return generalConfig.mainNav;
-    }
-    return isContentCreator(user.roles)
-      ? generalConfig.contentCreatorNav
-      : generalConfig.mainNav;
+    return generalConfig.mainNav;
   };
   const generalConfig = getGeneralConfig(user);
   let authorizedUser: AuthorizedUser | null = null;

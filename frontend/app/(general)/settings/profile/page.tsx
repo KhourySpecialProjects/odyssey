@@ -11,17 +11,18 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { getCurrentUser } from "@/lib/auth/session";
-import { getAuthorByAuthorizedUserEmail } from "@/lib/requests/author";
-import { getInitials } from "@/lib/utils";
+import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
+import { getInitials, isContentCreator } from "@/lib/utils";
+import { User2Icon } from "lucide-react";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 
 export default async function AuthorProfileSettings() {
   const user = await getCurrentUser();
   if (!user?.email) return notFound();
+  const authorizedUser = await getAuthorizedUserByEmail(user.email);
 
-  const author = await getAuthorByAuthorizedUserEmail(user.email);
-  if (!author) return notFound();
+  if (!isContentCreator(user.roles)) return notFound();
 
   return (
     <>
@@ -35,11 +36,21 @@ export default async function AuthorProfileSettings() {
 
         <CardContent className="flex items-center space-x-4">
           <Avatar variant="round">
-            <AvatarImage src={author.photo?.formats?.small?.url ?? undefined} />
-            <AvatarFallback>{getInitials(author.name)}</AvatarFallback>
+            <AvatarImage
+              src={authorizedUser?.profilePhoto || user?.image || undefined}
+            />
+            <AvatarFallback>
+              {user?.name ? (
+                getInitials(user.name)
+              ) : (
+                <User2Icon className="w-4 h-4" />
+              )}
+            </AvatarFallback>
           </Avatar>
           <div>
-            <div className="text-lg font-medium">{author.name}</div>
+            <div className="text-lg font-medium">
+              {authorizedUser.firstName + " " + authorizedUser.lastName}
+            </div>
           </div>
         </CardContent>
 
@@ -51,11 +62,11 @@ export default async function AuthorProfileSettings() {
       </Card>
 
       <Suspense fallback={<DropletsSkeleton />}>
-        <BioCard author={author} />
+        <BioCard author={authorizedUser} />
       </Suspense>
 
       <Suspense fallback={<DropletsSkeleton />}>
-        <AuthorDroplets authorId={author.id} />
+        <AuthorDroplets author={authorizedUser} />
       </Suspense>
     </>
   );

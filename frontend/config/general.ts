@@ -6,35 +6,9 @@ export const originalNav = [
     label: "Explore",
   },
 ];
+
 export const getMainNav = (user: User) => {
   const mainNav = [
-    {
-      href: "/feed",
-      label: "Feed",
-    },
-    {
-      href: "/explore",
-      label: "Explore",
-    },
-    {
-      href: "/dashboard",
-      label: "My Dashboard",
-    },
-    {
-      href: "/g/dashboard",
-      label: "My Groups",
-    },
-  ];
-  if (isAuthorizedUserAdmin(user.roles)) {
-    mainNav.push({
-      href: "/admin",
-      label: "Admin",
-    });
-  }
-  return mainNav;
-};
-export const getContentCreatorNav = (user: User) => {
-  const baseNav = [
     {
       href: "/feed",
       label: "Feed",
@@ -54,21 +28,17 @@ export const getContentCreatorNav = (user: User) => {
     {
       href: "/drafts",
       label: "My Content",
+      isHidden: !isContentCreator(user.roles),
     },
-  ];
-  if (isAuthorizedUserAdmin(user.roles)) {
-    baseNav.push({
+    {
       href: "/admin",
       label: "Admin",
-    });
-  }
-  return baseNav;
+      isHidden: !isAuthorizedUserAdmin(user.roles),
+    },
+  ];
+  return mainNav;
 };
+
 export const getGeneralConfig = (user?: User): GeneralConfig => ({
-  contentCreatorNav: user
-    ? isContentCreator(user.roles)
-      ? getContentCreatorNav(user)
-      : getMainNav(user)
-    : originalNav,
   mainNav: user ? getMainNav(user) : originalNav,
 });

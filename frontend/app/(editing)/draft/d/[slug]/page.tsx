@@ -40,7 +40,7 @@ export default async function Droplet({ params }: Props) {
   const droplet = await getDropletBySlug<Droplet>(p.slug, {
     fields: ["*"],
     populate: {
-      authors: { populate: "*" },
+      authorized_users: { populate: "*" },
       learningObjectives: { populate: "*" },
       lessons: { populate: "*" },
       tags: { populate: "*" },
@@ -60,6 +60,8 @@ export default async function Droplet({ params }: Props) {
   if (!droplet) {
     return <div>Droplet not found</div>;
   }
+
+  console.log("droplet", droplet);
 
   return (
     <>
@@ -82,14 +84,16 @@ export default async function Droplet({ params }: Props) {
         </div>
 
         {/* TODO: Turn this into a component */}
-        {droplet.authors && droplet.authors.length > 0 && (
+        {droplet.authorized_users && droplet.authorized_users.length > 0 && (
           <div className={`mt-4 rounded-lg border p-4 border-gray-300`}>
             <h2 className="text-xl font-semibold">
-              {droplet.authors.length > 1 ? "Authors" : "Author"}
+              {droplet.authorized_users.length > 1 ? "Authors" : "Author"}
             </h2>
             <ul className="list-disc list-inside">
-              {droplet.authors.map((author) => (
-                <li key={author.id}>{author.name}</li>
+              {droplet.authorized_users.map((author) => (
+                <li key={author.id}>
+                  {author.firstName + " " + author.lastName}
+                </li>
               ))}
             </ul>
           </div>

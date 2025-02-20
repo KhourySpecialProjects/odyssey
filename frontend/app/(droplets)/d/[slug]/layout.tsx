@@ -7,7 +7,6 @@ import { Metadata } from "next/types";
 import { AuthorizedUser, Droplet } from "@/types";
 import { getCurrentUser } from "@/lib/auth/session";
 import { notFound } from "next/navigation";
-import { getAuthorByAuthorizedUserEmail } from "@/lib/requests/author";
 
 type Props = {
   params: Promise<Params>;
@@ -59,7 +58,7 @@ export default async function RootLayout({ params, children }: Props) {
   const droplet = await getDropletBySlug<Droplet>(slug, {
     fields: ["*"],
     populate: {
-      authors: { populate: "*" },
+      authorized_users: { populate: "*" },
       learningObjectives: { populate: "*" },
       lessons: { populate: "*" },
       tags: { populate: "*" },
@@ -70,12 +69,11 @@ export default async function RootLayout({ params, children }: Props) {
 
   if (!droplet || !user) return notFound();
 
-  const userAuthor = await getAuthorByAuthorizedUserEmail(user.email || "");
-
   const isAuthor =
-    userAuthor &&
-    droplet.authors &&
-    droplet.authors.map((author) => author.id).includes(userAuthor.id);
+    droplet.authorized_users &&
+    droplet.authorized_users
+      .map((author) => author.id)
+      .includes(authorizedUser?.id);
 
   return (
     <div className="flex flex-col md:flex-row min-h-screen">

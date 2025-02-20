@@ -8,7 +8,7 @@ import {
 import { extractHeadings, isAuthorizedUserAdmin } from "@/lib/utils";
 import { User, Droplet, Lesson, AuthorizedUser } from "@/types";
 import { BlocksRenderer } from "@strapi/blocks-react-renderer";
-import { ArrowDownFromLineIcon, Pencil } from "lucide-react";
+import { ArrowDownFromLineIcon } from "lucide-react";
 import { QuizBlock } from "./quiz";
 import GenericBlockRenderer from "./GenericBlockRenderer";
 import { useEffect, useState, useTransition } from "react";
