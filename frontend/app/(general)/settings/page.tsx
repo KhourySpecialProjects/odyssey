@@ -10,12 +10,16 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { getCurrentUser } from "@/lib/auth/session";
-import { getInitials, condenseRoleTitles } from "@/lib/utils";
+import { getInitials, condenseRoleTitles, isContentCreator } from "@/lib/utils";
 import { User2Icon } from "lucide-react";
 import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
 import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
 import { AuthorizedUser, Droplet } from "@/types";
 import { DropletsGrid } from "@/components/explore/droplets-grid";
+import { BioCard } from "@/components/settings/bio-card";
+import { Suspense } from "react";
+import { DropletsSkeleton } from "@/components/explore/droplets-skeleton";
+import { AuthorDroplets } from "@/components/settings/author-droplets";
 
 export default async function Settings() {
   const user = await getCurrentUser();
@@ -38,6 +42,9 @@ export default async function Settings() {
       .map((d) => d.droplet.name);
     enrollmentDroplets = enrollmentDropletList.length;
     completedDroplets = completedDropletNames.length;
+  }
+  if (!authorizedUser) {
+    throw new Error("Authorized user not found");
   }
 
   return (
@@ -108,8 +115,15 @@ export default async function Settings() {
             effect.
           </p>
         </div>
+        <BioCard author={authorizedUser} />
         <SocialForms authorizedUser={authorizedUser} />
       </Card>
+
+      {isContentCreator(user?.roles) && (
+        <Suspense fallback={<DropletsSkeleton />}>
+          <AuthorDroplets author={authorizedUser} />
+        </Suspense>
+      )}
       <Card>
         <CardHeader>
           <CardTitle>Completed Droplets</CardTitle>

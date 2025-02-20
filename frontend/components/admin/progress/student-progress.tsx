@@ -1,8 +1,7 @@
 import { getCurrentUser } from "@/lib/auth/session";
-import { getAuthorByAuthorizedUserEmail } from "@/lib/requests/author";
-import { getPlaylistsByAuthor } from "@/lib/requests/playlist";
 import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
 import { StudentProgressList } from "./student-progress-list";
+import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
 
 interface Lesson {
   id: number;
@@ -17,26 +16,11 @@ export async function StudentProgress() {
   const user = await getCurrentUser();
   if (!user?.email) return null;
 
-  const author = await getAuthorByAuthorizedUserEmail(user.email);
+  const author = await getAuthorizedUserByEmail(user.email);
   if (!author) return null;
 
-  const playlists = await getPlaylistsByAuthor(author.id, {
-    filters: {
-      isPublic: false,
-    },
-    populate: {
-      authorized_users: {
-        fields: ["id", "email"],
-      },
-      droplets: {
-        populate: {
-          lessons: {
-            fields: ["id"],
-          },
-        },
-      },
-    },
-  });
+  const playlists = author.created_playlists;
+  if (!playlists) return null;
 
   // Calculate progress for each user in each playlist
   const playlistsWithProgress = await Promise.all(

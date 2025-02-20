@@ -2,7 +2,6 @@ import { Metadata } from "next";
 import { FriendRequests } from "@/components/friends/friend-requests";
 import { FeedContainer } from "@/components/feed/feed-container";
 import { redirect } from "next/navigation";
-import { RequestsPopupWrapper } from "@/components/friends/requests-popup-wrapper";
 import { fetchAnnouncements } from "@/lib/requests/feed";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";

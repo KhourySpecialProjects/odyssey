@@ -134,6 +134,18 @@
       "relation": "oneToMany",
       "target": "api::highlight.highlight",
       "mappedBy": "authorized_user"
+    },
+    "droplets": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::droplet.droplet",
+      "inversedBy": "authorized_users"
+    },
+    "created_playlists": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::playlist.playlist",
+      "inversedBy": "authors"
     }
   }
 }

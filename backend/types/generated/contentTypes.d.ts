@@ -591,6 +591,11 @@ export interface ApiAuthorizedUserAuthorizedUser extends Schema.CollectionType {
       'manyToMany',
       'api::authorized-user.authorized-user'
     >;
+    created_playlists: Attribute.Relation<
+      'api::authorized-user.authorized-user',
+      'manyToMany',
+      'api::playlist.playlist'
+    >;
     createdAt: Attribute.DateTime;
     createdBy: Attribute.Relation<
       'api::authorized-user.authorized-user',
@@ -598,6 +603,11 @@ export interface ApiAuthorizedUserAuthorizedUser extends Schema.CollectionType {
       'admin::user'
     > &
       Attribute.Private;
+    droplets: Attribute.Relation<
+      'api::authorized-user.authorized-user',
+      'manyToMany',
+      'api::droplet.droplet'
+    >;
     email: Attribute.Email & Attribute.Required & Attribute.Unique;
     enrollments: Attribute.Relation<
       'api::authorized-user.authorized-user',
@@ -742,6 +752,11 @@ export interface ApiDropletDroplet extends Schema.CollectionType {
       'oneToMany',
       'api::announcement.announcement'
     >;
+    authorized_users: Attribute.Relation<
+      'api::droplet.droplet',
+      'manyToMany',
+      'api::authorized-user.authorized-user'
+    >;
     authors: Attribute.Relation<
       'api::droplet.droplet',
       'manyToMany',
@@ -790,7 +805,7 @@ export interface ApiDropletDroplet extends Schema.CollectionType {
       'manyToMany',
       'api::lesson.lesson'
     >;
-    name: Attribute.String & Attribute.Required;
+    name: Attribute.String & Attribute.Required & Attribute.Unique;
     nextSteps: Attribute.Component<'droplets.resource', true>;
     overview: Attribute.RichText &
       Attribute.CustomField<
@@ -811,7 +826,6 @@ export interface ApiDropletDroplet extends Schema.CollectionType {
       'api::droplet.droplet'
     >;
     publishedAt: Attribute.DateTime;
-    shouldBeLocked: Attribute.Boolean & Attribute.DefaultTo<true>;
     slug: Attribute.UID<'api::droplet.droplet', 'name'> & Attribute.Required;
     status: Attribute.Enumeration<['draft', 'edit', 'published']> &
       Attribute.Required &
@@ -1207,6 +1221,11 @@ export interface ApiPlaylistPlaylist extends Schema.CollectionType {
       'api::author.author'
     >;
     authorized_users: Attribute.Relation<
+      'api::playlist.playlist',
+      'manyToMany',
+      'api::authorized-user.authorized-user'
+    >;
+    authors: Attribute.Relation<
       'api::playlist.playlist',
       'manyToMany',
       'api::authorized-user.authorized-user'
