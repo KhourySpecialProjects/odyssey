@@ -54,7 +54,7 @@ export function DropletDueDateBlock({
       await assignDueDate(
         existingGroup,
         currentDroplet,
-        dueDate ? dueDate.toISO() : DateTime.local().toISO(),
+        dueDate ? dueDate.setZone(currentUser.timeZone || "America/New_York").toISO() : DateTime.local().setZone(currentUser.timeZone || "America/New_York").toISO(),
       );
     };
     handleSaveDate();

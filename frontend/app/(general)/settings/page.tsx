@@ -14,8 +14,9 @@ import { getInitials, condenseRoleTitles } from "@/lib/utils";
 import { User2Icon } from "lucide-react";
 import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
 import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
-import { AuthorizedUser, Droplet } from "@/types";
+import { AuthorizedUser, Droplet, TimeZone } from "@/types";
 import { DropletsGrid } from "@/components/explore/droplets-grid";
+import TimeZoneSelector from "@/components/settings/time-zone-selector";
 
 export default async function Settings() {
   const user = await getCurrentUser();
@@ -24,6 +25,8 @@ export default async function Settings() {
   let enrollmentDroplets = 0;
   let completedDroplets = 0;
   let authorizedUser: AuthorizedUser | null = null;
+  let timeZone;
+  let userId = 0;
   if (user?.email) {
     authorizedUser = (await getAuthorizedUserByEmail(
       user.email,
@@ -38,6 +41,8 @@ export default async function Settings() {
       .map((d) => d.droplet.name);
     enrollmentDroplets = enrollmentDropletList.length;
     completedDroplets = completedDropletNames.length;
+    timeZone = authorizedUser.timeZone;
+    userId = authorizedUser.id;
   }
 
   return (
@@ -109,6 +114,9 @@ export default async function Settings() {
           </p>
         </div>
         <SocialForms authorizedUser={authorizedUser} />
+
+        <TimeZoneSelector currentZone={timeZone || "America/New_York"} userId={userId}></TimeZoneSelector>
+
       </Card>
       <Card>
         <CardHeader>

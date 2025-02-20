@@ -16,7 +16,7 @@ import { AuthorizedUserRoleTitle } from "./globals";
 import { getAuthorizedUserRoleIdByTitle } from "./requests/authorized-user-roles";
 import { DropletSchema } from "./validations/droplet";
 import { LessonSchema } from "./validations/lesson";
-import type { Droplet } from "@/types";
+import type { Droplet, TimeZone } from "@/types";
 import { getDropletById } from "./requests/droplet";
 import {
   S3Client,
@@ -1507,5 +1507,34 @@ export async function deleteNote(id: number) {
   } catch (err) {
     console.error(err);
     return { error: "Database Error: Failed to Delete Note." };
+  }
+}
+
+
+export async function setTimeZone(zone: string, userId: number) {
+  try {
+    const response = await fetch(
+      `${STRAPI_API_URL}/api/authorized-users/${userId}`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+        },
+        body: JSON.stringify({
+          data: {
+            timeZone: zone as TimeZone,
+          },
+        }),
+      },
+    );
+
+    if (!response.ok) {
+      throw new Error("Failed to update timezone");
+    }
+    return { success: true };
+  } catch (error) {
+    console.error("Error updating timezone:", error);
+    return { success: false, error };
   }
 }

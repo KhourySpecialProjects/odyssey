@@ -52,9 +52,9 @@ export function GroupDueDateDashboard({
     router.push(existingGroup ? `/g/${existingGroup.slug}` : "/g/dashboard");
   };
 
-  console.log("droplets are ", existingGroup);
+ 
 
-  let dueDates: Date[] = [];
+
 
   return (
     <div className="w-full">
