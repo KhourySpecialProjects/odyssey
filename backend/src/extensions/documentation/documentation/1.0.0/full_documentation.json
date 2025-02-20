@@ -11,7 +11,7 @@
       "url": "https://khouryodyssey.org"
     },
     "license": null,
-    "x-generation-date": "2025-02-19T14:54:14.912Z"
+    "x-generation-date": "2025-02-20T02:03:42.557Z"
   },
   "x-strapi-config": {
     "plugins": [
@@ -2668,6 +2668,7 @@
                                                                               }
                                                                             },
                                                                             "dropletDueDates": {},
+                                                                            "playlistDueDates": {},
                                                                             "createdAt": {
                                                                               "type": "string",
                                                                               "format": "date-time"
@@ -5903,6 +5904,7 @@
                                                                                 }
                                                                               },
                                                                               "dropletDueDates": {},
+                                                                              "playlistDueDates": {},
                                                                               "createdAt": {
                                                                                 "type": "string",
                                                                                 "format": "date-time"
@@ -8648,6 +8650,7 @@
                                                                                                           }
                                                                                                         },
                                                                                                         "dropletDueDates": {},
+                                                                                                        "playlistDueDates": {},
                                                                                                         "createdAt": {
                                                                                                           "type": "string",
                                                                                                           "format": "date-time"
@@ -12636,6 +12639,7 @@
                                                                   }
                                                                 },
                                                                 "dropletDueDates": {},
+                                                                "playlistDueDates": {},
                                                                 "createdAt": {
                                                                   "type": "string",
                                                                   "format": "date-time"
@@ -15122,6 +15126,7 @@
                                                                                                             }
                                                                                                           },
                                                                                                           "dropletDueDates": {},
+                                                                                                          "playlistDueDates": {},
                                                                                                           "createdAt": {
                                                                                                             "type": "string",
                                                                                                             "format": "date-time"
@@ -18870,6 +18875,7 @@
                                                                               }
                                                                             },
                                                                             "dropletDueDates": {},
+                                                                            "playlistDueDates": {},
                                                                             "createdAt": {
                                                                               "type": "string",
                                                                               "format": "date-time"
@@ -22112,6 +22118,7 @@
                                                                 }
                                                               },
                                                               "dropletDueDates": {},
+                                                              "playlistDueDates": {},
                                                               "createdAt": {
                                                                 "type": "string",
                                                                 "format": "date-time"
@@ -25173,6 +25180,7 @@
                                                                   }
                                                                 },
                                                                 "dropletDueDates": {},
+                                                                "playlistDueDates": {},
                                                                 "createdAt": {
                                                                   "type": "string",
                                                                   "format": "date-time"
@@ -26086,7 +26094,8 @@
                   "example": "string or id"
                 }
               },
-              "dropletDueDates": {}
+              "dropletDueDates": {},
+              "playlistDueDates": {}
             }
           }
         }
@@ -28291,6 +28300,7 @@
                                                                   }
                                                                 },
                                                                 "dropletDueDates": {},
+                                                                "playlistDueDates": {},
                                                                 "createdAt": {
                                                                   "type": "string",
                                                                   "format": "date-time"
@@ -29142,6 +29152,7 @@
             }
           },
           "dropletDueDates": {},
+          "playlistDueDates": {},
           "createdAt": {
             "type": "string",
             "format": "date-time"
@@ -31459,6 +31470,7 @@
                                                                 }
                                                               },
                                                               "dropletDueDates": {},
+                                                              "playlistDueDates": {},
                                                               "createdAt": {
                                                                 "type": "string",
                                                                 "format": "date-time"
@@ -34445,6 +34457,7 @@
                                                                                 }
                                                                               },
                                                                               "dropletDueDates": {},
+                                                                              "playlistDueDates": {},
                                                                               "createdAt": {
                                                                                 "type": "string",
                                                                                 "format": "date-time"
@@ -37474,6 +37487,7 @@
                                                                                             }
                                                                                           },
                                                                                           "dropletDueDates": {},
+                                                                                          "playlistDueDates": {},
                                                                                           "createdAt": {
                                                                                             "type": "string",
                                                                                             "format": "date-time"
@@ -40807,6 +40821,7 @@
                                                                                 }
                                                                               },
                                                                               "dropletDueDates": {},
+                                                                              "playlistDueDates": {},
                                                                               "createdAt": {
                                                                                 "type": "string",
                                                                                 "format": "date-time"
@@ -44349,6 +44364,7 @@
                                                                                 }
                                                                               },
                                                                               "dropletDueDates": {},
+                                                                              "playlistDueDates": {},
                                                                               "createdAt": {
                                                                                 "type": "string",
                                                                                 "format": "date-time"

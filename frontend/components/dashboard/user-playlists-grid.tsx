@@ -7,6 +7,7 @@ import {
   MessageDescription,
   MessageHeader,
 } from "@/components/message";
+import { Group } from "@/types";
 
 interface Lesson {
   id: number;

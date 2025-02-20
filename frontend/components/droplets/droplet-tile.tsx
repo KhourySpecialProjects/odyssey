@@ -44,8 +44,8 @@ export function DropletTile({
   const completionPercentage =
     dropletLessonIds.length > 0
       ? Math.round(
-        (completedLessonsInDroplet.length / dropletLessonIds.length) * 100,
-      )
+          (completedLessonsInDroplet.length / dropletLessonIds.length) * 100,
+        )
       : 0;
 
   console.log("date is ", dueDate);
@@ -161,12 +161,14 @@ export function DropletTile({
             ) : null}
 
             {dueDate && dueDate !== "" && (
-              <Badge className={getDueDateBadgeColor(daysUntil, true)} variant="outline">
+              <Badge
+                className={getDueDateBadgeColor(daysUntil, true)}
+                variant="outline"
+              >
                 <Clock size={15} className="mr-1" />
                 {daysUntil > 0
                   ? `Due in ${daysUntil} ${daysUntil > 1 ? "days" : "day"}!`
-                  : "This Droplet is Late!"
-                }
+                  : "This Droplet is Late!"}
               </Badge>
             )}
 
@@ -175,8 +177,6 @@ export function DropletTile({
                 {completionPercentage}% Complete
               </Badge>
             )}
-
-
 
             <Badge variant="outline">
               {uppercaseFirstChar(droplet.focusArea)}

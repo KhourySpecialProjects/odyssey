@@ -256,6 +256,10 @@ export type Group = {
     dropletId: number;
     baseDueDate: string;
   }[];
+  playlistDueDates?: {
+    playlistId: number;
+    baseDueDate: string;
+  }[];
 };
 
 export type GroupListResponse = {

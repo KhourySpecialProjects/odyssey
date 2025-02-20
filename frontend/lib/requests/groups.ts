@@ -9,12 +9,14 @@ import type {
   AuthorizedUser,
   Droplet,
   Enrollment,
+  Playlist,
 } from "@/types";
 import { AuthorizedUserRoleTitle } from "../globals";
 import { getAuthorizedUserRoleIdByTitle } from "./authorized-user-roles";
 import { createEnrollmentFromEmail } from "@/lib/actions";
 import { revalidatePath } from "next/cache";
 import qs from "qs";
+import { enrollInPlaylist } from "./playlist-enrollment";
 const STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
 /**
@@ -129,6 +131,11 @@ export async function getGroupByID(
   {
     populate = {
       members: {
+        populate: {
+          playlists: {
+            fields: ["id", "name"],
+          },
+        },
         fields: ["id", "email"],
       },
       admins: {
@@ -142,6 +149,14 @@ export async function getGroupByID(
       },
       droplets: {
         fields: ["id"],
+      },
+      playlists: {
+        populate: {
+          droplets: {
+            fields: ["id", "name", "slug", "type", "focusArea"],
+          },
+        },
+        fields: ["id", "name", "slug"],
       },
     },
   }: StrapiRequestParams = {},
@@ -157,6 +172,9 @@ export async function getGroupByID(
       page: 1,
     },
   };
+
+  revalidatePath("/dashboard");
+  revalidatePath("/explore")
 
   return await fetchAPI<Group[]>(path, {
     urlParams,
@@ -626,6 +644,7 @@ export async function enrollUsers(group: Group) {
   console.log("enrolling users in these droplets");
   console.log("member count ", group.members?.length);
   console.log("droplet count ", group.droplets?.length);
+  console.log("playlist count", group.playlists?.length);
   try {
     group.members?.map(async (member) => {
       group.droplets?.map(async (droplet) => {
@@ -640,7 +659,26 @@ export async function enrollUsers(group: Group) {
         return await createEnrollmentFromEmail(enrollmentData, member.email);
         //return await createEnrollment(enrollmentData);
       }) || [];
+
+      group.playlists?.map(async (playlist) => {
+        await enrollInPlaylist(playlist.id, member.id);
+        playlist.droplets?.map(async (droplet) => {
+          const enrollmentData = {
+            droplet: droplet.id,
+            viewedLessons: [],
+          };
+          console.log("inside the playlist enrollment function");
+          console.log("enrollment data: ", enrollmentData);
+          console.log("member email: ", member.email);
+          console.log("member id", member.id);
+          return await createEnrollmentFromEmail(enrollmentData, member.email);
+          //return await createEnrollment(enrollmentData);
+        }) || [];
+  
+      }) || [];
+
     }) || [];
+
   } catch (error) {
     console.error("Error enrolling users:", error);
     throw error;
@@ -692,6 +730,89 @@ export async function assignDueDate(
 
     const updatePromises = enrollments
       .filter((enrollment) => !enrollment.hasExtension)
+      .map((enrollment) =>
+        fetchAPI(`/enrollments/${enrollment.id}`, {
+          options: {
+            method: "PUT",
+            body: JSON.stringify({
+              data: { dueDate: date?.toISOString() || null },
+            }),
+          },
+        }),
+      );
+
+    revalidatePath("/dashboard");
+    revalidatePath("/explore");
+
+    await Promise.all(updatePromises);
+    return { success: true };
+  } catch (error) {
+    console.error("Error assigning due date:", error);
+    return { success: false, error };
+  }
+}
+
+
+export async function assignPlaylistDueDate(
+  group: Group,
+  playlist: Playlist,
+  date: Date | null,
+) {
+  try {
+
+    // First, get the complete playlist data with droplets
+    const fullPlaylist = await fetchAPI<Playlist>(`/playlists/${playlist.id}`, {
+      urlParams: {
+        populate: {
+          droplets: {
+            fields: ["id"],
+          },
+        },
+      },
+    });
+
+    // Update group's base due date
+    await fetchAPI(`/groups/${group.id}`, {
+      options: {
+        method: "PUT",
+        body: JSON.stringify({
+          data: {
+            playlistDueDates:
+              date === null
+                ? (group.playlistDueDates || []).filter(
+                    (d) => d.playlistId !== playlist.id,
+                  )
+                : [
+                    ...(group.playlistDueDates || []).filter(
+                      (d) => d.playlistId !== playlist.id,
+                    ),
+                    {
+                      playlistId: playlist.id,
+                      baseDueDate: date.toISOString(),
+                    },
+                  ],
+          },
+        }),
+      },
+    });
+
+    // Update all member enrollments that don't have extensions
+    const enrollments = await fetchAPI<any[]>(`/enrollments`, {
+      urlParams: {
+        filters: {
+          authorizedUser: {
+            id: { $in: group.members?.map((member) => member.id) || [] },
+          },
+          droplet: { id: { $in: fullPlaylist.droplets?.map((droplet) => droplet.id) || [] } },
+        },
+      },
+    });
+
+    //console.log("number of enrollments is ", enrollments)
+    console.log("date is ", date)
+
+    const updatePromises = enrollments
+      //.filter((enrollment) => !enrollment.hasExtension)
       .map((enrollment) =>
         fetchAPI(`/enrollments/${enrollment.id}`, {
           options: {
@@ -772,7 +893,6 @@ export async function getDueDates(group: Group, user: AuthorizedUser) {
   }
 }
 
-
 export async function getGroupDueDates(group: Group) {
   const path = `/groups`;
   try {
@@ -780,17 +900,17 @@ export async function getGroupDueDates(group: Group) {
       urlParams: {
         filters: {
           id: {
-          $eq: group.id,
-        }
-      },
-      fields: ["dropletDueDates"]
+            $eq: group.id,
+          },
+        },
+        fields: ["dropletDueDates"],
       },
     });
 
     if (!enrollments || !enrollments[0]) {
       return group; // Return original group if no data found
     }
-    
+
     return enrollments[0];
   } catch (error) {
     console.error("Error getting due dates:", error);
