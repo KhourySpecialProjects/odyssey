@@ -7,7 +7,7 @@ export async function FriendSuggestions({ user }: { user: AuthorizedUser }) {
   const authorizedUsers = await fetchAuthorizedUsers();
 
   return (
-    <section>
+    <section className="mt-4">
       <h1 className="font-bold">Friend Suggestions</h1>
       <p>A list of your people you may know.</p>
 
