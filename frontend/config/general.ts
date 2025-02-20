@@ -40,5 +40,7 @@ export const getMainNav = (user: User) => {
 };
 
 export const getGeneralConfig = (user?: User): GeneralConfig => ({
-  mainNav: user ? getMainNav(user) : originalNav,
+  mainNav: user
+    ? getMainNav(user).filter((item) => !item.isHidden)
+    : originalNav,
 });
