@@ -1,5 +1,5 @@
 import { fetchAPI, flattenAttributes } from "@/lib/utils";
-import { AuthorizedUser } from "@/types";
+import { AuthorizedUser, TimeZone } from "@/types";
 import { StrapiRequestParams } from "@/types/strapi";
 import qs from "qs";
 
@@ -57,7 +57,7 @@ export async function getAuthorizedUserByEmail<
         },
       },
     },
-    fields = ["*", "firstName", "lastName", "bio", "id"],
+    fields = ["*", "firstName", "lastName", "bio", "id", "timeZone"],
   }: StrapiRequestParams = {},
 ): Promise<T> {
   const path = `/authorized-users`;
@@ -277,3 +277,5 @@ export async function getAllAuthorizedUsers(): Promise<AuthorizedUser[]> {
     return [];
   }
 }
+
+

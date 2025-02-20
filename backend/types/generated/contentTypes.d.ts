@@ -1051,6 +1051,50 @@ export interface ApiAuthorizedUserAuthorizedUser extends Schema.CollectionType {
       'oneToMany',
       'api::highlight.highlight'
     >;
+    timeZone: Attribute.Enumeration<
+      [
+        'America/New_York',
+        'America/Chicago',
+        'America/Denver',
+        'America/Phoenix',
+        'America/Los_Angeles',
+        'America/Anchorage',
+        'America/Honolulu',
+        'America/Bogota',
+        'America/Lima',
+        'America/Caracas',
+        'America/Santiago',
+        'America/Argentina/Buenos_Aires',
+        'America/Sao_Paulo',
+        'Europe/London',
+        'Europe/Berlin',
+        'Europe/Paris',
+        'Europe/Madrid',
+        'Europe/Rome',
+        'Europe/Athens',
+        'Europe/Istanbul',
+        'Europe/Moscow',
+        'Asia/Dubai',
+        'Asia/Kolkata',
+        'Asia/Shanghai',
+        'Asia/Tokyo',
+        'Asia/Seoul',
+        'Asia/Bangkok',
+        'Asia/Singapore',
+        'Asia/Jakarta',
+        'Asia/Hong_Kong',
+        'Australia/Sydney',
+        'Australia/Melbourne',
+        'Australia/Brisbane',
+        'Pacific/Auckland',
+        'Pacific/Fiji',
+        'Africa/Cairo',
+        'Africa/Johannesburg',
+        'Africa/Lagos',
+        'Africa/Nairobi'
+      ]
+    > &
+      Attribute.DefaultTo<'America/New_York'>;
     createdAt: Attribute.DateTime;
     updatedAt: Attribute.DateTime;
     createdBy: Attribute.Relation<

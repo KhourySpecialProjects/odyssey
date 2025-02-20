@@ -726,6 +726,11 @@ export async function assignDueDate(
           },
           droplet: { id: { $eq: droplet.id } },
         },
+        populate: {
+          authorizedUser: {
+            fields: ["timeZone"],
+          },
+        },
       },
     });
 
@@ -736,7 +741,7 @@ export async function assignDueDate(
           options: {
             method: "PUT",
             body: JSON.stringify({
-              data: { dueDate: date || null },
+              data: { dueDate: date ? DateTime.fromISO(date).setZone(enrollment.authorizedUser.timeZone || "America/Los_Angeles").toISO() : null  },
             }),
           },
         }),
@@ -819,7 +824,9 @@ export async function assignPlaylistDueDate(
           options: {
             method: "PUT",
             body: JSON.stringify({
-              data: { dueDate: date || null },
+              data: { 
+                dueDate: date ? DateTime.fromISO(date).setZone(enrollment.authorizedUser.timeZone).toISO() : null 
+              },
             }),
           },
         }),
