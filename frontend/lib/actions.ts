@@ -234,14 +234,17 @@ export async function updateAuthorBio(formData: z.infer<typeof BioFormSchema>) {
     if (!user?.email) throw new Error("No email identified");
     const authorizedUser = await getAuthorizedUserByEmail(user.email);
 
-    const response = await fetch(STRAPI_API_URL + "/api/authorized-users/" + authorizedUser.id, {
-      method: "PUT",
-      body: JSON.stringify({ data: { bio: formData.bio } }),
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+    const response = await fetch(
+      STRAPI_API_URL + "/api/authorized-users/" + authorizedUser.id,
+      {
+        method: "PUT",
+        body: JSON.stringify({ data: { bio: formData.bio } }),
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+        },
       },
-    });
+    );
     const data = await response.json();
 
     if (!response.ok || (response.ok && data.error)) {

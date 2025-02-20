@@ -119,9 +119,11 @@ export default async function Settings() {
         <SocialForms authorizedUser={authorizedUser} />
       </Card>
 
-      {isContentCreator(user?.roles) && <Suspense fallback={<DropletsSkeleton />}>
-        <AuthorDroplets author={authorizedUser} />
-      </Suspense>}
+      {isContentCreator(user?.roles) && (
+        <Suspense fallback={<DropletsSkeleton />}>
+          <AuthorDroplets author={authorizedUser} />
+        </Suspense>
+      )}
       <Card>
         <CardHeader>
           <CardTitle>Completed Droplets</CardTitle>

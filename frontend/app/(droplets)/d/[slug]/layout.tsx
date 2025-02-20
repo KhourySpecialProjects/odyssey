@@ -69,10 +69,11 @@ export default async function RootLayout({ params, children }: Props) {
 
   if (!droplet || !user) return notFound();
 
-
   const isAuthor =
     droplet.authorized_users &&
-    droplet.authorized_users.map((author) => author.id).includes(authorizedUser?.id);
+    droplet.authorized_users
+      .map((author) => author.id)
+      .includes(authorizedUser?.id);
 
   return (
     <div className="flex flex-col md:flex-row min-h-screen">

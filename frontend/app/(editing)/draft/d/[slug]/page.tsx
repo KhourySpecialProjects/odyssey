@@ -61,7 +61,7 @@ export default async function Droplet({ params }: Props) {
     return <div>Droplet not found</div>;
   }
 
-  console.log("droplet", droplet)
+  console.log("droplet", droplet);
 
   return (
     <>
@@ -91,7 +91,9 @@ export default async function Droplet({ params }: Props) {
             </h2>
             <ul className="list-disc list-inside">
               {droplet.authorized_users.map((author) => (
-                <li key={author.id}>{author.firstName + " " + author.lastName}</li>
+                <li key={author.id}>
+                  {author.firstName + " " + author.lastName}
+                </li>
               ))}
             </ul>
           </div>

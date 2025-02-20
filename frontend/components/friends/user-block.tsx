@@ -37,7 +37,7 @@ export function UserBlock({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button size="sm" className="bg-sky-300 text-black">
+        <Button size="sm" className="bg-sky-300 text-black hover:bg-sky-400">
           View Profile
         </Button>
       </DialogTrigger>
@@ -79,7 +79,10 @@ export function UserBlock({
             className={`inline-flex items-center gap-2 ${curUser == user || curUser.blocked.includes(user) ? "visibility: hidden" : "visibility: visible"}`}
             onClick={handleBlock}
           >
-            <Button size="sm" variant="destructive">
+            <Button
+              size="sm"
+              className="bg-red-600 text-white hover:bg-red-700"
+            >
               Block user
             </Button>
           </div>

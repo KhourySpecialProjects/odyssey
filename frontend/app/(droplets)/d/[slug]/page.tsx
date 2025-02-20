@@ -235,16 +235,16 @@ export default async function DropletRoute({ params }: Props) {
             {droplet.authorized_users?.map((author) => (
               <li key={`author-${author.id}`} className="inline-flex gap-4 p-4">
                 <Avatar variant="round" className="border border-sky-800">
-                <AvatarImage
-                src={author?.profilePhoto || user?.image || undefined}
-              />
-             <AvatarFallback>
-                {user?.name ? (
-                  getInitials(user.name)
-                ) : (
-                  <User2Icon className="w-4 h-4" />
-                )}
-              </AvatarFallback>
+                  <AvatarImage
+                    src={author?.profilePhoto || user?.image || undefined}
+                  />
+                  <AvatarFallback>
+                    {user?.name ? (
+                      getInitials(user.name)
+                    ) : (
+                      <User2Icon className="w-4 h-4" />
+                    )}
+                  </AvatarFallback>
                 </Avatar>
 
                 <div
