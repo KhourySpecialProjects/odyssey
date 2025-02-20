@@ -14,7 +14,7 @@ export async function FriendSentRequests() {
   );
 
   return (
-    <section>
+    <section className="mt-4">
       <h1 className="font-bold">Sent Requests</h1>
       <p>A list of people you have sent friend requests to.</p>
 
