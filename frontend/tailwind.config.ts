@@ -2,6 +2,11 @@ import type { Config } from "tailwindcss";
 import { wedgesTW } from "@lemonsqueezy/wedges";
 
 const config: Config = {
+  safelist: [
+    {
+      pattern: /(bg|text|border)-(emerald|amber|red)-(400|500|700|800|900)/,
+    },
+  ],
   darkMode: ["class"],
   content: [
     "./pages/**/*.{js,ts,jsx,tsx,mdx}",

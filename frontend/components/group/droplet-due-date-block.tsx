@@ -28,7 +28,6 @@ export function DropletDueDateBlock({
 
   const [removePopupVisible, setRemovePopupVisible] = useState(false);
 
-
   const [dueDate, setDueDate] = useState<Date | null>(() => {
     const baseDate = existingGroup.dropletDueDates?.find(
       (date) => date.dropletId === currentDroplet.id,
@@ -90,17 +89,18 @@ export function DropletDueDateBlock({
             handleSaveDate();
           }}
           variant="default"
-          className="bg-emerald-500 hover:bg-emerald-700" 
+          className="bg-emerald-500 hover:bg-emerald-700"
           disabled={!dueDate}
         >
           Save
         </Button>
         <div>
-          <Button 
-            onClick={() => setRemovePopupVisible(true)} 
-            variant="default" 
-            className="bg-red-500 hover:bg-red-700" 
-            disabled={!dueDate}>
+          <Button
+            onClick={() => setRemovePopupVisible(true)}
+            variant="default"
+            className="bg-red-500 hover:bg-red-700"
+            disabled={!dueDate}
+          >
             Remove
           </Button>
           <Dialog open={removePopupVisible}>
@@ -113,10 +113,18 @@ export function DropletDueDateBlock({
 
               <div className="flex flex-row justify-center space-x-2 items-center">
                 <div className="w-1/3"></div>
-                <Button onClick={() => handleRemoveDate()}  className="bg-red-500 hover:bg-red-700">
+                <Button
+                  onClick={() => handleRemoveDate()}
+                  className="bg-red-500 hover:bg-red-700"
+                >
                   Yes, remove it
                 </Button>
-                <Button onClick={() => setRemovePopupVisible(false)} variant="ghost" size="xs" className="w-1/3">
+                <Button
+                  onClick={() => setRemovePopupVisible(false)}
+                  variant="ghost"
+                  size="xs"
+                  className="w-1/3"
+                >
                   No, take me back
                 </Button>
               </div>

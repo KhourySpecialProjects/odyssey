@@ -60,7 +60,7 @@ export function GroupDueDateDashboard({
     <div className="w-full">
       <div className="w-full flex flex-row justify-center mt-2">
         <Button onClick={handleCancel} variant="outline">
-            <ArrowLeft size={18}/> Back to my group
+          <ArrowLeft size={18} /> Back to my group
         </Button>
       </div>
 
@@ -68,14 +68,20 @@ export function GroupDueDateDashboard({
       <div className="mt-6 space-y-1">
         {tab === "droplets" ? (
           <>
-            {droplets.map((droplet) => (
-              <DropletDueDateBlock
-                key={droplet.id}
-                currentUser={currentUser}
-                existingGroup={existingGroup}
-                currentDroplet={droplet}
-              />
-            ))}
+            {droplets
+              .sort((a, b) => {
+                if (b.name > a.name) return -1;
+                if (b.name < a.name) return 1;
+                return 0;
+              })
+              .map((droplet) => (
+                <DropletDueDateBlock
+                  key={droplet.id}
+                  currentUser={currentUser}
+                  existingGroup={existingGroup}
+                  currentDroplet={droplet}
+                />
+              ))}
           </>
         ) : tab === "playlists" ? (
           <>

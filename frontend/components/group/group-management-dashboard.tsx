@@ -37,7 +37,11 @@ export function GroupDashboard({ group, canEdit }: RenderGroupDashboardProps) {
                 <GroupDropletTile
                   key={droplet.id}
                   droplet={droplet}
-                  dueDate={group.dropletDueDates?.find((dueDate) => dueDate.dropletId === droplet.id)?.baseDueDate || ""}
+                  dueDate={
+                    group.dropletDueDates?.find(
+                      (dueDate) => dueDate.dropletId === droplet.id,
+                    )?.baseDueDate || ""
+                  }
                 />
               ))}
             </div>
@@ -60,6 +64,11 @@ export function GroupDashboard({ group, canEdit }: RenderGroupDashboardProps) {
                   key={playlist.id}
                   playlist={playlist}
                   completedLessonIds={[]} // We'll need to implement this later
+                  dueDate={
+                    group.playlistDueDates?.find(
+                      (dueDate) => dueDate.playlistId === playlist.id,
+                    )?.baseDueDate || ""
+                  }
                 />
               ))}
             </div>
@@ -77,9 +86,9 @@ export function GroupDashboard({ group, canEdit }: RenderGroupDashboardProps) {
             emptyMessage="No students are enrolled in any droplets or playlists."
           >
             {group.droplets &&
-              group.droplets.length > 0 &&
-              group.members &&
-              group.members.length > 0 ? (
+            group.droplets.length > 0 &&
+            group.members &&
+            group.members.length > 0 ? (
               <div className="flex flex-row items-start">
                 <div className="" key={group.id}>
                   <GroupProgressGrid group={group} />

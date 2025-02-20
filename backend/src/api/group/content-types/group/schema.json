@@ -94,6 +94,9 @@
     },
     "dropletDueDates": {
       "type": "json"
+    },
+    "playlistDueDates": {
+      "type": "json"
     }
   }
 }
