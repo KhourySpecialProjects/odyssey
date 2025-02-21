@@ -64,8 +64,8 @@ export function DraggableTileListClient({
             size="sm"
             variant="outline"
             onClick={handleNextPage}
-            disabled={currentPage === totalPages}
-            className={`${currentPage === totalPages ? "visibility: hidden" : "visibility: visible"}`}
+            disabled={currentPage >= totalPages}
+            className={`${currentPage >= totalPages ? "visibility: hidden" : "visibility: visible"}`}
           >
             Next
           </Button>
