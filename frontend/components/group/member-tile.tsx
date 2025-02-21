@@ -22,6 +22,8 @@ export function MemberTile({
     .split(".")
     .map((part) => part[0].toUpperCase())
     .join("");
+  
+  console.log("member", member);
 
   return (
     <div className="relative group">

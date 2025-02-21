@@ -3,7 +3,7 @@ import { Session } from "@/components/shared/session";
 import { AdminSelector } from "@/components/shared/selector";
 import { getCurrentUser } from "@/lib/auth/session";
 import { notFound } from "next/navigation";
-import { isAuthorizedUserAdmin } from "@/lib/utils";
+import { isAuthorizedUserFaculty } from "@/lib/utils";
 import { AuthorizedUsers } from "@/components/admin/users/authorized-users";
 import { Droplets } from "@/components/admin/droplets/droplets";
 import { Playlists } from "@/components/admin/playlists/playlists";
@@ -12,7 +12,7 @@ import { Groups } from "@/components/admin/groups/groups";
 
 export default async function Page() {
   const user = await getCurrentUser();
-  if (!user || !isAuthorizedUserAdmin(user.roles)) return notFound();
+  if (!user || !isAuthorizedUserFaculty(user.roles)) return notFound();
 
   return (
     <div className="w-full max-w-5xl mx-auto">
