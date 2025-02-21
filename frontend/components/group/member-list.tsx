@@ -41,7 +41,9 @@ export function MemberList({ title, members, variant }: MemberListProps) {
               </AvatarFallback>
             </Avatar>
             <div className="min-w-0 flex-1">
-              <p className="text-sm font-medium truncate">{member.firstName + " " + member.lastName}</p>
+              <p className="text-sm font-medium truncate">
+                {member.firstName + " " + member.lastName}
+              </p>
             </div>
           </div>
         ))}
