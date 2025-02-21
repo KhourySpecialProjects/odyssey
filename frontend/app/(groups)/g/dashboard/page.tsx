@@ -26,7 +26,7 @@ export default async function GroupsPage({ searchParams }: Props) {
   if (!params) {
     redirect("/dashboard");
   }
-  const tab = params.tab || "creator";
+  const tab = params.tab || "member";
 
   const user = await getCurrentUser();
   if (!user?.email) {
