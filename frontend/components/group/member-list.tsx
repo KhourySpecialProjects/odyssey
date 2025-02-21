@@ -1,6 +1,7 @@
 import { AuthorizedUser } from "@/types";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { cn } from "@/lib/utils";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { cn, getInitials } from "@/lib/utils";
+import { User2Icon } from "lucide-react";
 
 type MemberListProps = {
   title: string;
@@ -29,13 +30,20 @@ export function MemberList({ title, members, variant }: MemberListProps) {
               variantStyles[variant],
             )}
           >
-            <Avatar className="h-8 w-8">
+            <Avatar variant="round" className="w-8 h-8">
+              <AvatarImage src={member.profilePhoto || undefined} />
               <AvatarFallback>
-                {member.email.substring(0, 2).toUpperCase()}
+                {member.firstName ? (
+                  getInitials(member.firstName + " " + member.lastName)
+                ) : (
+                  <User2Icon />
+                )}
               </AvatarFallback>
             </Avatar>
             <div className="min-w-0 flex-1">
-              <p className="text-sm font-medium truncate">{member.email}</p>
+              <p className="text-sm font-medium truncate">
+                {member.firstName + " " + member.lastName}
+              </p>
             </div>
           </div>
         ))}

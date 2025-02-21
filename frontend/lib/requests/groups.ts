@@ -376,16 +376,16 @@ export async function getGroupBySlugV2(
   {
     populate = {
       members: {
-        fields: ["id", "email", "firstName", "lastName"],
+        fields: ["id", "email", "firstName", "lastName", "profilePhoto"],
       },
       admins: {
-        fields: ["id", "email"],
+        fields: ["id", "email", "firstName", "lastName", "profilePhoto"],
       },
       managers: {
-        fields: ["id", "email"],
+        fields: ["id", "email", "firstName", "lastName", "profilePhoto"],
       },
       creator: {
-        fields: ["id", "email"],
+        fields: ["id", "email", "firstName", "lastName", "profilePhoto"],
       },
       droplets: {
         fields: ["id", "name", "slug", "status", "focusArea", "type"],
