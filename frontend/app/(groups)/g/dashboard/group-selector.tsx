@@ -19,7 +19,7 @@ const baseTabs = [
   { name: "Member", value: "member", icon: UserIcon },
   { name: "Admin", value: "admin", icon: ShieldIcon },
   { name: "Manager", value: "manager", icon: CircleUserIcon },
-  { name: "Favs", value: "favorites", icon: StarIcon }
+  { name: "Favs", value: "favorites", icon: StarIcon },
 ];
 
 export function GroupsSelector() {
@@ -41,13 +41,16 @@ export function GroupsSelector() {
     return params.toString();
   };
 
-  const tabs = useMemo(() => 
-    canCreateGroup 
-      ? [{ name: "Creator", value: "creator", icon: PlusCircleIcon }, ...baseTabs]
-      : baseTabs,
+  const tabs = useMemo(
+    () =>
+      canCreateGroup
+        ? [
+            { name: "Creator", value: "creator", icon: PlusCircleIcon },
+            ...baseTabs,
+          ]
+        : baseTabs,
     [canCreateGroup],
   );
-
 
   // TODO: Break this tabbed UI setup into its own reusable component. We are using it in a few different
   // places and it would be nice to abstract it out.
