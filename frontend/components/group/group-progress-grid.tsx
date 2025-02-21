@@ -34,12 +34,12 @@ export function GroupProgressGrid({ group }: GroupProgressGridProps) {
   >({});
 
   const [isPending, startTransition] = useTransition();
-  const [currentPage, setCurrentPage] = useState(0); 
-  const lessonsPerPage = 5; 
+  const [currentPage, setCurrentPage] = useState(0);
+  const lessonsPerPage = 5;
 
   const startIndex = currentPage * lessonsPerPage;
   const endIndex = startIndex + lessonsPerPage;
-  const paginatedLessons = group.droplets?.slice(startIndex, endIndex); 
+  const paginatedLessons = group.droplets?.slice(startIndex, endIndex);
 
   const totalPages = Math.ceil((group.droplets?.length || 0) / lessonsPerPage);
 

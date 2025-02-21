@@ -87,7 +87,12 @@ export function QuizQuestionBlock({ question }: { question: QuizQuestion }) {
                       (opt) => String(opt.id) === id,
                     );
                     return selectedAnswer ? (
-                      <li key={id} dangerouslySetInnerHTML={{ __html: selectedAnswer.content }} />
+                      <li
+                        key={id}
+                        dangerouslySetInnerHTML={{
+                          __html: selectedAnswer.content,
+                        }}
+                      />
                     ) : null;
                   })}
                 </ul>
@@ -169,7 +174,11 @@ export function QuizQuestionBlock({ question }: { question: QuizQuestion }) {
                 <FormItem className="space-y-0">
                   <div>Choose one answer</div>
                   <FormControl>
-                    <RadioGroup className="mt-4" onValueChange={(value) => field.onChange([value])} value={field.value[0]}>
+                    <RadioGroup
+                      className="mt-4"
+                      onValueChange={(value) => field.onChange([value])}
+                      value={field.value[0]}
+                    >
                       {question.answerOptions.map((answer, number: number) => (
                         <FormItem key={answer.id} className="space-y-0">
                           <FormControl>
