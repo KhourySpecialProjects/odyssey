@@ -67,13 +67,13 @@ export function QuizQuestionBlock({ question }: { question: QuizQuestion }) {
         <div className="px-8 py-12 mt-4 text-center border rounded-md border-slate-200">
           {areAnswersCorrect(form.getValues("answerIds")) ? (
             <>
-              <Badge className="text-green-700 bg-green-100 text-lg">
+              <Badge className="text-green-700 bg-green-100 text-lg hover:bg-green-200">
                 That&rsquo;s Right!
               </Badge>
             </>
           ) : (
             <>
-              <Badge className="text-orange-700 bg-orange-100 text-lg">
+              <Badge className="text-orange-700 bg-orange-100 text-lg hover:bg-orange-200">
                 Not Quite
               </Badge>
 
@@ -87,7 +87,12 @@ export function QuizQuestionBlock({ question }: { question: QuizQuestion }) {
                       (opt) => String(opt.id) === id,
                     );
                     return selectedAnswer ? (
-                      <li key={id}>{selectedAnswer.content}</li>
+                      <li
+                        key={id}
+                        dangerouslySetInnerHTML={{
+                          __html: selectedAnswer.content,
+                        }}
+                      />
                     ) : null;
                   })}
                 </ul>
@@ -169,7 +174,11 @@ export function QuizQuestionBlock({ question }: { question: QuizQuestion }) {
                 <FormItem className="space-y-0">
                   <div>Choose one answer</div>
                   <FormControl>
-                    <RadioGroup className="mt-4" onValueChange={field.onChange}>
+                    <RadioGroup
+                      className="mt-4"
+                      onValueChange={(value) => field.onChange([value])}
+                      value={field.value[0]}
+                    >
                       {question.answerOptions.map((answer, number: number) => (
                         <FormItem key={answer.id} className="space-y-0">
                           <FormControl>
