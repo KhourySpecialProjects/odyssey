@@ -33,7 +33,7 @@ export default function Error({
           Try again
         </Button>
         <Button size="lg" variant="link" after={<ArrowRightIcon />} asChild>
-          <Link href="/">Start over</Link>
+          <Link href="/">Return to Home Page</Link>
         </Button>
       </MessageActions>
     </Message>

@@ -1,5 +1,5 @@
 import { getCurrentUser } from "@/lib/auth/session";
-import { redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { isAuthorizedUserAdmin, isContentCreator } from "@/lib/utils";
 import { getDroplets } from "@/lib/requests/droplet";
 import { PlaylistForm } from "@/components/playlists/playlist-form";
@@ -19,7 +19,7 @@ export default async function EditPlaylistPage({ params }: Props) {
     !user?.email ||
     (!isContentCreator(user.roles) && !isAuthorizedUserAdmin(user.roles))
   )
-    return redirect("/");
+    return notFound();
 
   const authUser = await getAuthorizedUserByEmail(user.email);
 
@@ -51,13 +51,13 @@ export default async function EditPlaylistPage({ params }: Props) {
     },
   });
 
-  if (!playlist) {
-    return redirect("/drafts");
-  }
-
   // Verify the user has permission to edit this playlist
-  if (!playlist.authors?.some((author) => author.id === authUser.id) && !isAuthorizedUserAdmin(user.roles)) {
-    return redirect("/drafts");
+  if (
+    !playlist ||
+    (!playlist.authors?.some((author) => author.id === authUser.id) &&
+      !isAuthorizedUserAdmin(user.roles))
+  ) {
+    return notFound();
   }
 
   // Get all available droplets for selection
