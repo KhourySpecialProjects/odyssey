@@ -1,10 +1,14 @@
 import { getCurrentUser } from "@/lib/auth/session";
 import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { GroupManagementForm } from "@/components/group/group-management-form";
 import { getGroupBySlugV2 } from "@/lib/requests/groups";
 import { Badge } from "@/components/ui/badge";
-import { isAuthorizedUserAdmin } from "@/lib/utils";
+import {
+  isAuthorizedUserAdmin,
+  isAuthorizedUserFaculty,
+  isContentCreator,
+} from "@/lib/utils";
 
 type Props = {
   searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
@@ -12,10 +16,16 @@ type Props = {
 
 export default async function GroupManagementPage({ searchParams }: Props) {
   const user = await getCurrentUser();
-  if (!user?.email) redirect("/");
+  if (
+    !user?.email ||
+    !(isContentCreator(user.roles) || isAuthorizedUserAdmin(user.roles)) ||
+    isAuthorizedUserFaculty(user.roles)
+  ) {
+    return notFound();
+  }
 
   const authorizedUser = await getAuthorizedUserByEmail(user.email);
-  if (!authorizedUser) redirect("/");
+  if (!authorizedUser) return notFound();
 
   // If we have a group slug, fetch the group for editing
   const p = await searchParams;

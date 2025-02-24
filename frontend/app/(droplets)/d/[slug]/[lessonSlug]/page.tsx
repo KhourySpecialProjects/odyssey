@@ -5,7 +5,7 @@ import { getDropletBySlug } from "@/lib/requests/droplet";
 import { getLessonBySlug } from "@/lib/requests/lesson";
 import { getServerSession } from "next-auth";
 import { getCurrentUser } from "@/lib/auth/session";
-import { redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { DropletLessonWrapper } from "@/components/droplets/lessons/droplet-lesson-wrapper";
 
 type Props = {
@@ -64,7 +64,7 @@ export default async function Page({ params }: Props) {
   }
 
   const currentUser = await getCurrentUser();
-  if (!currentUser || !currentUser?.email) return redirect("/");
+  if (!currentUser || !currentUser?.email) return notFound();
   const authUser = await getAuthorizedUserByEmail(currentUser.email);
 
   const isAuthor =
