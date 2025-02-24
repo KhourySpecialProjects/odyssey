@@ -56,7 +56,7 @@ export default async function EditPlaylistPage({ params }: Props) {
   }
 
   // Verify the user has permission to edit this playlist
-  if (!playlist.authors?.some((author) => author.id === authUser.id)) {
+  if (!playlist.authors?.some((author) => author.id === authUser.id) && !isAuthorizedUserAdmin(user.roles)) {
     return redirect("/drafts");
   }
 

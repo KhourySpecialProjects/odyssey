@@ -175,7 +175,7 @@ export function PlaylistForm({
       } else {
         response = await createPlaylist(playlistData);
         if (response.ok) {
-          router.push(`/p/${response.data.attributes.slug}`);
+          //router.push(`/p/${response.data.attributes.slug}`);
         } else {
           setError(response.error || "Failed to create Playlist!");
         }
@@ -240,7 +240,7 @@ export function PlaylistForm({
             type="button"
             variant="outline"
             onClick={() => router.back()}
-            className="h-12"
+            className="h-12 bg-white text-black"
           >
             <MoveLeftIcon size={16} />
             Cancel
