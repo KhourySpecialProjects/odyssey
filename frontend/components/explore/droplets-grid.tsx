@@ -129,7 +129,7 @@ export async function DropletsGrid({
     );
     if (completedDroplets.length === 0) {
       return (
-        <div className="text-black">
+        <div className="text-black dark:text-white">
           You haven&apos;t completed any Droplets yet.
         </div>
       );

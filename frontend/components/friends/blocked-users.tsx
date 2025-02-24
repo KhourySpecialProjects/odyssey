@@ -26,7 +26,7 @@ export async function BlockedUsers() {
             ))}
           </ul>
         ) : (
-          <p>You have no blocked users</p>
+          <p className="dark:text-black">You have no blocked users</p>
         )}
       </div>
     </section>
