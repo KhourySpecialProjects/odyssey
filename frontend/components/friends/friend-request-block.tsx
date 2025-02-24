@@ -68,7 +68,7 @@ export function FriendRequestBlock({
           </AvatarFallback>
         </Avatar>
         <div className="flex-1 min-w-0">
-          <p className="font-medium truncate text-slate-900 dark:text-white">
+          <p className="font-medium truncate text-slate-900 dark:text-black">
             {request.firstName && request.lastName
               ? `${request.firstName} ${request.lastName}`
               : request.email}
@@ -76,7 +76,7 @@ export function FriendRequestBlock({
         </div>
         <UserBlock user={request} curUser={user} />
         <Button
-          className="bg-green-600 text-white hover:bg-green-700"
+          className="bg-green-600 text-white hover:bg-green-700 dark:bg-green-600 dark:hover:bg-green-700"
           size="sm"
           onClick={handleApprove}
         >
@@ -88,7 +88,7 @@ export function FriendRequestBlock({
           </div>
         </Button>
         <Button
-          className="bg-red-600 text-white hover:bg-red-700"
+          className="bg-red-600 text-white hover:bg-red-700 dark:bg-red-600 dark:hover:bg-red-700"
           size="sm"
           onClick={handleReject}
         >

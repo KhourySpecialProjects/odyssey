@@ -13,32 +13,32 @@ export function FeedFilter({ onFilterChange }: FeedFilterProps) {
     {
       value: AnnouncementTypeTitle.Droplet,
       label: "Droplet",
-      color: "bg-blue-100",
+      color: "bg-blue-100 dark:bg-blue-400 dark:text-black",
     },
     {
       value: AnnouncementTypeTitle.Playlist,
       label: "Playlist",
-      color: "bg-green-100",
+      color: "bg-green-100 dark:bg-green-400 dark:text-black",
     },
     {
       value: AnnouncementTypeTitle.Group,
       label: "Group",
-      color: "bg-purple-100",
+      color: "bg-purple-100 dark:bg-purple-400 dark:text-black",
     },
     {
       value: AnnouncementTypeTitle.System,
       label: "System",
-      color: "bg-red-100",
+      color: "bg-red-100 dark:bg-red-400 dark:text-black",
     },
     {
       value: AnnouncementTypeTitle.Friend,
       label: "Friend",
-      color: "bg-yellow-100",
+      color: "bg-yellow-100 dark:bg-yellow-400 dark:text-black",
     },
     {
       value: AnnouncementTypeTitle.Kudos,
       label: "Kudos",
-      color: "bg-orange-100",
+      color: "bg-orange-100 dark:bg-orange-400 dark:text-black",
     },
   ] as const;
 
@@ -60,7 +60,7 @@ export function FeedFilter({ onFilterChange }: FeedFilterProps) {
       {roleOptions.map((role) => (
         <div
           key={role.value}
-          className={`flex items-center space-x-2 ${role.color}`}
+          className={`flex items-center space-x-2 p-1 ${role.color}`}
         >
           <Checkbox
             id={role.value}
