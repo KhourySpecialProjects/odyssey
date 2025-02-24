@@ -80,7 +80,7 @@ export default async function CreateRoute() {
             </ul>
           </Suspense>
         )}
-        {isContentCreator(user.roles) && (
+        {(isContentCreator(user.roles) || isAuthorizedUserAdmin(user.roles)) && (
           <>
             <h2 className="text-lg mb-2 mt-4">Your Playlists</h2>
             <Separator orientation="horizontal" className="mt-2 mb-4" />
