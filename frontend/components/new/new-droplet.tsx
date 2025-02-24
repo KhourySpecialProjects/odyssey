@@ -1,12 +1,16 @@
 import { CreateDropletForm } from "./new-droplet-form";
 import { getTags } from "@/lib/requests/tag";
 import { getCurrentUser } from "@/lib/auth/session";
-import { redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { isAuthorizedUserAdmin, isContentCreator } from "@/lib/utils";
 
 export async function CreateDroplet() {
   const user = await getCurrentUser();
-  if (!user || (!isContentCreator(user.roles) && !isAuthorizedUserAdmin(user.roles))) return redirect("/");
+  if (
+    !user ||
+    (!isContentCreator(user.roles) && !isAuthorizedUserAdmin(user.roles))
+  )
+    return notFound();
   const tags = await getTags({ fields: ["name", "slug"] });
 
   return (

@@ -1,5 +1,5 @@
 import { getCurrentUser } from "@/lib/auth/session";
-import { redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { isAuthorizedUserAdmin, isContentCreator } from "@/lib/utils";
 import { getDroplets } from "@/lib/requests/droplet";
 import { PlaylistForm } from "@/components/playlists/playlist-form";
@@ -12,7 +12,7 @@ export default async function NewPlaylist() {
     !user?.email ||
     (!isContentCreator(user.roles) && !isAuthorizedUserAdmin(user.roles))
   )
-    return redirect("/");
+    return notFound();
   const authUser = await getAuthorizedUserByEmail(user.email);
 
   //TODO: Fix logic here to get all droplets and get droplets in "current" playlist

@@ -1,7 +1,7 @@
 import { Metadata } from "next";
 import { FriendRequests } from "@/components/friends/friend-requests";
 import { FeedContainer } from "@/components/feed/feed-container";
-import { redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { fetchAnnouncements } from "@/lib/requests/feed";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
@@ -14,7 +14,7 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 export default async function FeedPage() {
   const user = await getCurrentUser();
-  if (!user || !user?.email) return redirect("/");
+  if (!user || !user?.email) return notFound();
   const authUser = await getAuthorizedUserByEmail(user.email);
   const announcements = await fetchAnnouncements(authUser);
 

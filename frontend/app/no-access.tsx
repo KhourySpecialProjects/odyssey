@@ -73,7 +73,7 @@ export default async function CantAccessRoute() {
       </MessageDescription>
       <MessageActions>
         <Button size="lg" after={<ArrowRightIcon />} asChild>
-          <Link href="/">Start Over</Link>
+          <Link href="/">Return to Home Page</Link>
         </Button>
       </MessageActions>
     </Message>

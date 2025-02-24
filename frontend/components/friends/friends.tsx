@@ -1,12 +1,12 @@
 import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
 import { FriendBlock } from "./friend-block";
 import { getCurrentUser } from "@/lib/auth/session";
-import { redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { fetchFriends } from "@/lib/requests/friends";
 
 export async function Friends() {
   const user = await getCurrentUser();
-  if (!user || !user?.email) return redirect("/");
+  if (!user || !user?.email) return notFound();
   const authUser = await getAuthorizedUserByEmail(user.email);
 
   const friends = await fetchFriends(authUser);

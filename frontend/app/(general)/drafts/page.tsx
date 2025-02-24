@@ -11,7 +11,6 @@ import { DropletsSkeleton } from "@/components/explore/droplets-skeleton";
 import { Separator } from "@/components/ui/separator";
 import { Metadata } from "next";
 import { PlaylistCard } from "@/components/playlists/playlist-card";
-import { ShieldAlertIcon } from "lucide-react";
 import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
 
 export const metadata: Metadata = {
@@ -35,6 +34,7 @@ export default async function CreateRoute() {
 
   //get all draft droplets
   let allDroplets: Awaited<ReturnType<typeof getDraftDroplets>> = [];
+
   if (isAuthorizedUserAdmin(user.roles)) {
     allDroplets = await getDraftDroplets();
   }
@@ -80,7 +80,8 @@ export default async function CreateRoute() {
             </ul>
           </Suspense>
         )}
-        {(isContentCreator(user.roles) || isAuthorizedUserAdmin(user.roles)) && (
+        {(isContentCreator(user.roles) ||
+          isAuthorizedUserAdmin(user.roles)) && (
           <>
             <h2 className="text-lg mb-2 mt-4">Your Playlists</h2>
             <Separator orientation="horizontal" className="mt-2 mb-4" />
@@ -93,27 +94,6 @@ export default async function CreateRoute() {
                     completedLessonIds={[]}
                     toDraft={true}
                   />
-                ))}
-              </ul>
-            </Suspense>
-          </>
-        )}
-        {isAuthorizedUserAdmin(user.roles) && (
-          <>
-            <h2 className="text-2xl pt-10 text-center font-bold flex items-center justify-center">
-              <ShieldAlertIcon className="mr-2 text-red-500" /> Admin Access{" "}
-              <ShieldAlertIcon className="ml-2 text-red-500" />
-            </h2>
-            <Separator
-              orientation="horizontal"
-              className="mt-2 mb-2 bg-red-300"
-            />
-            <h2 className="text-lg mb-2 mt-2">All Droplet Drafts</h2>
-            <Separator orientation="horizontal" className="mt-2 mb-4" />
-            <Suspense fallback={<DropletsSkeleton />}>
-              <ul className="grid grid-flow-row grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                {allDroplets.map((droplet) => (
-                  <DropletTile key={droplet.id} droplet={droplet} />
                 ))}
               </ul>
             </Suspense>
