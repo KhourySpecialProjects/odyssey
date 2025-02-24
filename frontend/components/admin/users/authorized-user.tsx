@@ -128,13 +128,13 @@ export function AuthorizedUserBlock({ user }: { user: AuthorizedUser }) {
                 )}
               </AvatarFallback>
             </Avatar>
-            <p className="font-medium truncate text-slate-900 dark:text-white">
+            <p className="font-medium truncate text-slate-900 dark:text-black">
               {user.firstName && user.lastName
                 ? user.firstName + " " + user.lastName
                 : user.email}
               {!user.isEnabled ? " (Disabled)" : ""}
             </p>
-            <p className="text-sm truncate text-slate-500 dark:text-slate-400">
+            <p className="text-sm truncate text-slate-500 dark:text-black">
               {isAdmin ? "Admin" : ""}
             </p>
           </div>

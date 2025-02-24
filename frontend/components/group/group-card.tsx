@@ -22,7 +22,7 @@ export function GroupCard({ group, role, roleColors }: GroupCardProps) {
         </CardHeader>
         <CardContent>
           {(role === "creator" || role === "admin" || role === "manager") && (
-            <div className="flex items-center gap-4 text-sm text-slate-600">
+            <div className="flex items-center gap-4 text-sm light:text-slate-600 dark:text-slate-300">
               <UsersIcon className="h-4 w-4" />
               <div className="flex gap-3">
                 <span>Admins: {group.admins?.length || 0}</span>

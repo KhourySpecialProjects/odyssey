@@ -31,13 +31,13 @@ export default async function HomeRoute() {
             Khoury students.
           </p>
           <div className="flex flex-col items-center justify-center mt-10 md:flex-row gap-x-6 gap-y-3">
-            <Button size="lg" after={<ArrowRightIcon />} asChild>
+            <Button size="lg" className="dark:bg-black dark:text-white" after={<ArrowRightIcon />} asChild>
               <Link href="/explore">Explore</Link>
             </Button>
             {!user && (
               <Button
                 size="lg"
-                variant="link"
+                className="dark:bg-black dark:text-white"
                 after={<ArrowRightIcon />}
                 asChild
               >

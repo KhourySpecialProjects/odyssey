@@ -32,12 +32,11 @@ export function PlaylistCard({
 }: PlaylistCardProps) {
   const linkTo = toDraft ? `/draft/p/${playlist.slug}` : `/p/${playlist.slug}`;
   return (
-    // <Link href={`/p/${playlist.slug}`}>
     <Link href={linkTo}>
-      <Card className="bg-slate-50 border-slate-200">
+      <Card className="bg-slate-50 dark:bg-slate-50 border-slate-200 dark:border-slate-200">
         <CardHeader>
-          <CardTitle>{playlist.name}</CardTitle>
-          <p className="text-sm text-muted-foreground">
+          <CardTitle className="text-black">{playlist.name}</CardTitle>
+          <p className="text-sm text-muted-foreground text-black">
             {playlist.droplets?.length || 0} droplets
           </p>
         </CardHeader>

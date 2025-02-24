@@ -42,10 +42,10 @@ export default async function CreateRoute() {
   return (
     <>
       <div className="w-full p-8 mx-auto my-4 text-center max-w-7xl">
-        <h1 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
+        <h1 className="text-3xl font-bold tracking-tight light:text-slate-900 sm:text-4xl">
           Drafts
         </h1>
-        <p className="mt-4 text-lg leading-normal text-slate-600 text-balance">
+        <p className="mt-4 text-lg leading-normal light:text-slate-600 text-balance">
           Create a new Droplet or Playlist draft or edit an existing one.
         </p>
       </div>
@@ -69,7 +69,7 @@ export default async function CreateRoute() {
         <Separator orientation="horizontal" className="mt-2 mb-4" />
         {!authorizedUser.droplets || authorizedUser.droplets.length === 0 ? (
           <div className="flex items-center justify-center h-full">
-            <p className="text-lg text-slate-500">No drafts found.</p>
+            <p className="text-lg light:text-slate-500">No drafts found.</p>
           </div>
         ) : (
           <Suspense fallback={<DropletsSkeleton />}>
