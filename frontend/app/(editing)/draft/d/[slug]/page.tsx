@@ -60,8 +60,6 @@ export default async function Droplet({ params }: Props) {
     return <div>Droplet not found</div>;
   }
 
-  console.log("droplet", droplet);
-
   return (
     <>
       <div className="w-full max-w-2xl">

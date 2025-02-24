@@ -3,11 +3,11 @@
 import { createKudosAnnouncement } from "@/lib/requests/feed";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
-import { redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 
 export async function giveKudos(announcementId: number) {
   const user = await getCurrentUser();
-  if (!user || !user?.email) return redirect("/");
+  if (!user || !user?.email) return notFound();
   const authUser = await getAuthorizedUserByEmail(user.email);
 
   try {
