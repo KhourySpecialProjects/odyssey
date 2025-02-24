@@ -10,6 +10,8 @@ import "./globals.css";
 import { FirstVisitPopup } from "@/components/first-time/first-visit-popup";
 import { getCurrentUser } from "../lib/auth/session";
 import { getAuthorizedUserByEmail } from "../lib/requests/authorized-user";
+import { ThemeProvider } from "next-themes";
+import { ThemeClientProvider } from "@/components/theme.client.provider";
 
 const lato = Lato({
   subsets: ["latin-ext"],
@@ -42,21 +44,23 @@ export default async function RootLayout({
     }
   }
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <link rel="icon" href="/icon.svg" type="image/svg+xml" sizes="any" />
-      <body className={lato.className}>
-        <AuthSessionProvider>
-          <PHProvider>
-            <TooltipProvider delayDuration={250}>
-              <NuqsAdapter>
-                {children}
-                <FirstVisitPopup user={authorizedUser} />
-              </NuqsAdapter>
-              <DebugToggle />
-            </TooltipProvider>
-          </PHProvider>
-        </AuthSessionProvider>
+      <body className={lato.className} >
+      <ThemeClientProvider>
+          <AuthSessionProvider>
+            <PHProvider>
+              <TooltipProvider delayDuration={250}>
+                <NuqsAdapter>
+                  {children}
+                  <FirstVisitPopup user={authorizedUser} />
+                </NuqsAdapter>
+                <DebugToggle />
+              </TooltipProvider>
+            </PHProvider>
+          </AuthSessionProvider>
         <Toaster />
+        </ThemeClientProvider>
       </body>
     </html>
   );

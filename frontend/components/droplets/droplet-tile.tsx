@@ -123,9 +123,8 @@ export function DropletTile({
     <li className="transition-colors border rounded-md border-slate-200 hover:border-slate-300 bg-slate-50 h-full">
       <Button
         size="sm"
-        variant="outline"
         onClick={changeVisibility}
-        className={`${isArchived === true || isArchived === false ? "visibility: visible" : "visibility: hidden"}`}
+        className={`${isArchived === true || isArchived === false ? "visibility: visible" : "visibility: hidden"} bg-white`}
       >
         <div className="relative group">
           <Archive className="text-purple-800" />
@@ -152,10 +151,10 @@ export function DropletTile({
               </Badge>
             )}
 
-            <Badge variant="outline">
+            <Badge className="bg-white text-black border-black">
               {uppercaseFirstChar(droplet.focusArea)}
             </Badge>
-            <Badge variant="outline">{uppercaseFirstChar(droplet.type)}</Badge>
+            <Badge className="bg-white text-black border-black">{uppercaseFirstChar(droplet.type)}</Badge>
             {droplet.tags?.map((tag) => (
               <Badge key={tag.id} variant="outline">
                 {tag.name}

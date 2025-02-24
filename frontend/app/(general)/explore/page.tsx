@@ -32,8 +32,8 @@ export default async function ExplorePage({
   const { sortKey } = sorting.find((item) => item.slug === sort) || defaultSort;
   return (
     <>
-      <div className="w-full p-8 mx-auto my-4 text-center max-w-7xl">
-        <h1 className="text-5xl font-bold">Explore</h1>
+      <div className="w-full p-8 mx-auto my-4 text-center max-w-7xl" suppressHydrationWarning>
+        <h1 className="text-5xl font-bold">Explore</h1>       
       </div>
 
       <div className="w-full px-4 mx-auto mt-4 mb-8 max-w-7xl xl:p-0">

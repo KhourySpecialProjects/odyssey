@@ -31,7 +31,7 @@ export function AccessRequestBlock({ request }: { request: AccessRequest }) {
   return (
     <li className="flex items-center justify-between py-4">
       <div>
-        <p className="font-medium">
+        <p className="font-medium dark:text-black">
           {request.givenName} {request.familyName}
         </p>
         <p className="text-sm text-gray-600">{request.email}</p>

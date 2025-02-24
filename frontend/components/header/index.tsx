@@ -11,6 +11,7 @@ import { NavLinks } from "./nav-links";
 import { UserDropdown } from "./user-dropdown";
 import { AuthorizedUser } from "@/types";
 import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
+import { DarkMode } from "../explore/dark-mode";
 
 export async function Header() {
   const user = await getCurrentUser();
@@ -86,6 +87,7 @@ export async function Header() {
           </nav>
 
           <div className="flex items-center gap-4 md:ml-auto md:gap-2 lg:gap-4">
+            <DarkMode />
             {user ? (
               <div className="flex items-center justify-center">
                 <UserDropdown user={user} authorizedUser={authorizedUser} />

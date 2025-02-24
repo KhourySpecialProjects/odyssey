@@ -12,7 +12,7 @@ export function PlaylistBlock({ playlist }: { playlist: Playlist }) {
     <li className="py-0 [&:not(:first-child)]:pt-3">
       <div className="flex items-center space-x-4">
         <div className="flex-1 min-w-0">
-          <p className="font-medium truncate text-slate-900 dark:text-white">
+          <p className="font-medium truncate text-slate-900 dark:text-black">
             {playlist.name}
             {playlist.isPublic ? " (Public)" : ""}
           </p>

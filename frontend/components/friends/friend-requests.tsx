@@ -46,8 +46,8 @@ export function FriendRequests({
   return (
     <div className="flex flex-col ">
       <section className="mt-4">
-        <h1 className="font-bold">Friend Requests</h1>
-        <p>A list of your friend requests.</p>
+        <h1 className="font-bold dark:text-black">Friend Requests</h1>
+        <p className="dark:text-black">A list of your friend requests.</p>
 
         <div className="p-4 mt-4 rounded-md bg-slate-100">
           {friendRequests.length > 0 ? (
