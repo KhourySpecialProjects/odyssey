@@ -43,9 +43,10 @@ export function GroupDropletTile({
               </Badge>
             </div>
             {dueDate && dueDate !== "" && daysUntil > -2 && (
-              <div className="flex justify-end">
-                <div
-                  className={`text-sm whitespace-nowrap flex flex-row items-center rounded-md p-2 ${getDueDateBadgeColor(daysUntil, true)}`}
+              <div className="flex justify-end w-2/3 ml-0">
+                <Badge
+                  className={`${getDueDateBadgeColor(daysUntil, true)}`}
+                  variant="outline"
                 >
                   <Clock size={15} className="mr-1" />
 
@@ -61,7 +62,7 @@ export function GroupDropletTile({
                       return "This Droplet is Late!";
                     }
                   })()}
-                </div>
+                </Badge>
               </div>
             )}
           </div>
