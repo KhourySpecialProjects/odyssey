@@ -11,7 +11,7 @@ import { ChangeEvent, useState } from "react";
 import { assignPlaylistDueDate } from "@/lib/requests/groups";
 
 import MUIDateTimePicker from "./datetime-picker";
-import { DateTime, Settings} from 'luxon'
+import { DateTime, Settings } from "luxon";
 
 interface PlaylistDueDateBlockProps {
   currentUser: AuthorizedUser;
@@ -24,54 +24,52 @@ export function PlaylistDueDateBlock({
   existingGroup,
   currentPlaylist,
 }: PlaylistDueDateBlockProps) {
-
   const [isSaveClicked, setIsSaveClicked] = useState(false);
-    const [isRemoveClicked, setIsRemoveClicked] = useState(false);
-  
-    const [removePopupVisible, setRemovePopupVisible] = useState(false);
-  
-    const [dueDate, setDueDate] = useState<DateTime | null>(() => {
-      const baseDate = existingGroup.playlistDueDates?.find(
-        (date) => date.playlistId === currentPlaylist.id,
-      )?.baseDueDate;
-      return baseDate ? DateTime.fromISO(baseDate) : null;
-    });
-  
-    const handleInputChange = (date: DateTime | null) => {
-      if (!date) return;
+  const [isRemoveClicked, setIsRemoveClicked] = useState(false);
+
+  const [removePopupVisible, setRemovePopupVisible] = useState(false);
+
+  const [dueDate, setDueDate] = useState<DateTime | null>(() => {
+    const baseDate = existingGroup.playlistDueDates?.find(
+      (date) => date.playlistId === currentPlaylist.id,
+    )?.baseDueDate;
+    return baseDate ? DateTime.fromISO(baseDate) : null;
+  });
+
+  const handleInputChange = (date: DateTime | null) => {
+    if (!date) return;
 
     setDueDate(date);
-    console.log("date is ", date)
-    };
-  
-    const handleSaveDate = () => {
-      setIsSaveClicked(true);
-      const handleSaveDate = async () => {
-        await assignPlaylistDueDate(
-          existingGroup,
-          currentPlaylist,
-          dueDate ? dueDate.toISO() : DateTime.local().toISO(),
-        );
-      };
-      handleSaveDate();
-      const timeout = setTimeout(() => {
-        setIsSaveClicked(false);
-      }, 3000);
-    };
-  
-    const handleRemoveDate = () => {
-      setRemovePopupVisible(false);
-      setIsRemoveClicked(true);
-      const handleRemoveDate = async () => {
-        await assignPlaylistDueDate(existingGroup, currentPlaylist, null);
-        setDueDate(null);
-      };
-      handleRemoveDate();
-      const timeout = setTimeout(() => {
-        setIsRemoveClicked(false);
-      }, 3000);
-    };
+    console.log("date is ", date);
+  };
 
+  const handleSaveDate = () => {
+    setIsSaveClicked(true);
+    const handleSaveDate = async () => {
+      await assignPlaylistDueDate(
+        existingGroup,
+        currentPlaylist,
+        dueDate ? dueDate.toISO() : DateTime.local().toISO(),
+      );
+    };
+    handleSaveDate();
+    const timeout = setTimeout(() => {
+      setIsSaveClicked(false);
+    }, 3000);
+  };
+
+  const handleRemoveDate = () => {
+    setRemovePopupVisible(false);
+    setIsRemoveClicked(true);
+    const handleRemoveDate = async () => {
+      await assignPlaylistDueDate(existingGroup, currentPlaylist, null);
+      setDueDate(null);
+    };
+    handleRemoveDate();
+    const timeout = setTimeout(() => {
+      setIsRemoveClicked(false);
+    }, 3000);
+  };
 
   return (
     <div className="flex flex-row justify-between space-x-2 w-full bg-slate-50 border border-slate-200 rounded-lg p-4 items-center">
@@ -80,8 +78,11 @@ export function PlaylistDueDateBlock({
         {isSaveClicked && <p className="text-slate-400">Saved!</p>}
         {isRemoveClicked && <p className="text-slate-400">Removed!</p>}
 
-        <MUIDateTimePicker onChange={handleInputChange} date={dueDate}></MUIDateTimePicker>
-        
+        <MUIDateTimePicker
+          onChange={handleInputChange}
+          date={dueDate}
+        ></MUIDateTimePicker>
+
         <Button
           onClick={() => {
             handleSaveDate();

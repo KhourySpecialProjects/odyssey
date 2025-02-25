@@ -13,9 +13,7 @@ import {
 } from "../ui/dialog";
 
 import MUIDateTimePicker from "./datetime-picker";
-import { DateTime, Settings} from 'luxon'
-
-
+import { DateTime, Settings } from "luxon";
 
 interface DropletDueDateBlockProps {
   currentUser: AuthorizedUser;
@@ -40,12 +38,11 @@ export function DropletDueDateBlock({
     return baseDate ? DateTime.fromISO(baseDate) : null;
   });
 
-
   const handleInputChange = (date: DateTime | null) => {
     if (!date) return;
 
     setDueDate(date);
-    console.log("date is ", date)
+    console.log("date is ", date);
   };
 
   const handleSaveDate = () => {
@@ -54,7 +51,11 @@ export function DropletDueDateBlock({
       await assignDueDate(
         existingGroup,
         currentDroplet,
-        dueDate ? dueDate.setZone(currentUser.timeZone || "America/New_York").toISO() : DateTime.local().setZone(currentUser.timeZone || "America/New_York").toISO(),
+        dueDate
+          ? dueDate.setZone(currentUser.timeZone || "America/New_York").toISO()
+          : DateTime.local()
+              .setZone(currentUser.timeZone || "America/New_York")
+              .toISO(),
       );
     };
     handleSaveDate();
@@ -76,7 +77,6 @@ export function DropletDueDateBlock({
     }, 3000);
   };
 
-
   return (
     <div className="flex flex-row justify-between space-x-2 w-full bg-slate-50 border border-slate-200 rounded-lg p-4 items-center">
       {currentDroplet.name}
@@ -84,8 +84,11 @@ export function DropletDueDateBlock({
         {isSaveClicked && <p className="text-slate-400">Saved!</p>}
         {isRemoveClicked && <p className="text-slate-400">Removed!</p>}
 
-        <MUIDateTimePicker onChange={handleInputChange} date={dueDate}></MUIDateTimePicker>
-        
+        <MUIDateTimePicker
+          onChange={handleInputChange}
+          date={dueDate}
+        ></MUIDateTimePicker>
+
         <Button
           onClick={() => {
             handleSaveDate();

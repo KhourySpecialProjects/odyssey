@@ -115,8 +115,10 @@ export default async function Settings() {
         </div>
         <SocialForms authorizedUser={authorizedUser} />
 
-        <TimeZoneSelector currentZone={timeZone || "America/New_York"} userId={userId}></TimeZoneSelector>
-
+        <TimeZoneSelector
+          currentZone={timeZone || "America/New_York"}
+          userId={userId}
+        ></TimeZoneSelector>
       </Card>
       <Card>
         <CardHeader>

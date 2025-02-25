@@ -1,4 +1,4 @@
-import { Droplet } from "@/types";
+import { AuthorizedUser, Droplet } from "@/types";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import Link from "next/link";
@@ -9,24 +9,30 @@ import { DateTime } from "luxon";
 interface GroupDropletTileProps {
   droplet: Droplet;
   dueDate: string;
+  authUser: AuthorizedUser;
 }
 
-export function GroupDropletTile({ droplet, dueDate }: GroupDropletTileProps) {
+export function GroupDropletTile({
+  droplet,
+  dueDate,
+  authUser,
+}: GroupDropletTileProps) {
   let daysUntil = 0;
   if (dueDate && dueDate !== "") {
     const dueDateObject = DateTime.fromISO(dueDate);
-    const today = DateTime.local().startOf('day');  // Set to start of day
-    const diffDays = dueDateObject.startOf('day').diff(today, 'days').days;
+    const today = DateTime.local().startOf("day"); // Set to start of day
+    const diffDays = dueDateObject.startOf("day").diff(today, "days").days;
     daysUntil = Math.ceil(diffDays);
-    console.log("daysUntil", daysUntil);
   }
 
-  const finalDate = DateTime.fromISO(dueDate).toFormat("MM/dd hh:mm a");
+  const finalDate = DateTime.fromISO(dueDate)
+    .setZone(authUser.timeZone || "America/New_York")
+    .toFormat("MM/dd hh:mm a");
 
   return (
     <Link href={`/d/${droplet.slug}`}>
       <Card className="bg-slate-50 border-slate-200 hover:shadow-md transition-shadow h-full">
-        <CardHeader className={`${dueDate && dueDate !== "" ? '' : ''} `}>
+        <CardHeader className={`${dueDate && dueDate !== "" ? "" : ""} `}>
           <div className="flex flex-row gap-2 mb-2 items-center">
             <div className="h-1/2 flex flex-row w-2/3 space-x-1">
               <Badge variant="default" className="text-xs">
@@ -36,15 +42,25 @@ export function GroupDropletTile({ droplet, dueDate }: GroupDropletTileProps) {
                 {uppercaseFirstChar(droplet.type)}
               </Badge>
             </div>
-            {dueDate && dueDate !== "" && (
+            {dueDate && dueDate !== "" && daysUntil > -2 && (
               <div className="flex justify-end">
                 <div
                   className={`text-sm whitespace-nowrap flex flex-row items-center rounded-md p-2 ${getDueDateBadgeColor(daysUntil, true)}`}
                 >
                   <Clock size={15} className="mr-1" />
-                  {daysUntil > 0
-                    ? `Due ${finalDate}`
-                    : "This Droplet is Late!"}
+
+                  {(() => {
+                    if (
+                      DateTime.fromISO(dueDate).toISODate() ==
+                      DateTime.local().toISODate()
+                    ) {
+                      return "Due today!";
+                    } else if (daysUntil > 0) {
+                      return `Due ${finalDate}`;
+                    } else {
+                      return "This Droplet is Late!";
+                    }
+                  })()}
                 </div>
               </div>
             )}
@@ -53,11 +69,7 @@ export function GroupDropletTile({ droplet, dueDate }: GroupDropletTileProps) {
           <p className="text-sm text-muted-foreground">
             {droplet.lessons?.length || 0} lessons
           </p>
-
-
-
         </CardHeader>
-
       </Card>
     </Link>
   );

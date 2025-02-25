@@ -5,19 +5,24 @@ import "react-tabs/style/react-tabs.css";
 
 import { ContentSection } from "@/components/group/content-section";
 import { GroupDropletTile } from "@/components/group/group-droplet-tile";
-import { Group } from "@/types";
+import { AuthorizedUser, Group } from "@/types";
 import { PlaylistCard } from "@/components/playlists/playlist-card";
 import { GroupProgressGrid } from "@/components/group/group-progress-grid";
 
 interface RenderGroupDashboardProps {
   group: Group;
   canEdit: boolean | undefined;
+  authUser: AuthorizedUser;
 }
 
 const tabStyle =
   "px-4 py-2 cursor-pointer border-b-2 border-transparent focus:outline-none hover:border-gray-300";
 
-export function GroupDashboard({ group, canEdit }: RenderGroupDashboardProps) {
+export function GroupDashboard({
+  group,
+  canEdit,
+  authUser,
+}: RenderGroupDashboardProps) {
   return (
     <Tabs title="" forceRenderTabPanel>
       <TabList className="flex border-b">
@@ -42,6 +47,7 @@ export function GroupDashboard({ group, canEdit }: RenderGroupDashboardProps) {
                       (dueDate) => dueDate.dropletId === droplet.id,
                     )?.baseDueDate || ""
                   }
+                  authUser={authUser}
                 />
               ))}
             </div>

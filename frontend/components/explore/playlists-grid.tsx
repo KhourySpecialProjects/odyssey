@@ -8,6 +8,7 @@ import {
   MessageDescription,
   MessageHeader,
 } from "@/components/message";
+import { AuthorizedUser } from "@/types";
 
 interface PlaylistsGridProps {
   searchValue?: string;
@@ -57,9 +58,12 @@ export async function PlaylistsGrid({
   // Get user completion data
   const user = await getCurrentUser();
   let completedLessonIds: number[] = [];
+  let authorizedUser: AuthorizedUser | null = null;
 
   if (user?.email) {
-    const authorizedUser = await getAuthorizedUserByEmail(user.email);
+    authorizedUser = (await getAuthorizedUserByEmail(
+      user.email,
+    )) as AuthorizedUser;
     const enrollments = await getEnrollmentsByAuthorizedUser(authorizedUser.id);
     completedLessonIds = enrollments.flatMap(
       (enrollment) =>
@@ -116,6 +120,21 @@ export async function PlaylistsGrid({
     );
   }
 
+  const allDueDates = (authorizedUser?.groups || [])
+    .flatMap((group: any) => group.playlistDueDates || [])
+    .reduce(
+      (acc: any, curr: any) => {
+        if (
+          !acc[curr.playlistId] ||
+          new Date(curr.baseDueDate) < new Date(acc[curr.playlistId])
+        ) {
+          acc[curr.playlistId] = curr.baseDueDate;
+        }
+        return acc;
+      },
+      {} as Record<number, string>,
+    );
+
   return (
     <section>
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -124,6 +143,7 @@ export async function PlaylistsGrid({
             key={playlist.id}
             playlist={playlist}
             completedLessonIds={completedLessonIds}
+            dueDate={allDueDates[playlist.id] || ""}
           />
         ))}
       </div>

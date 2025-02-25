@@ -7,7 +7,6 @@ import { revalidatePath } from "next/cache";
 const STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
 
-
 interface PlaylistWithId {
   id: number;
 }
@@ -62,7 +61,6 @@ export async function togglePlaylistEnrollment(playlistId: number) {
     return { success: false, error: "Failed to update enrollment" };
   }
 }
-
 
 export async function enrollInPlaylist(playlistId: number, userId: number) {
   try {

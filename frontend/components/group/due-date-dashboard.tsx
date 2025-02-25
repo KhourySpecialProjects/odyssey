@@ -52,10 +52,6 @@ export function GroupDueDateDashboard({
     router.push(existingGroup ? `/g/${existingGroup.slug}` : "/g/dashboard");
   };
 
- 
-
-
-
   return (
     <div className="w-full">
       <div className="w-full flex flex-row justify-center mt-2">

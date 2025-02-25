@@ -56,6 +56,14 @@ export async function getAuthorizedUserByEmail<
           },
         },
       },
+      groups: {
+        populate: {
+          playlists: {
+            fields: ["id"],
+          },
+        },
+        fields: ["id", "playlistDueDates"],
+      },
     },
     fields = ["*", "firstName", "lastName", "bio", "id", "timeZone"],
   }: StrapiRequestParams = {},
@@ -277,5 +285,3 @@ export async function getAllAuthorizedUsers(): Promise<AuthorizedUser[]> {
     return [];
   }
 }
-
-
