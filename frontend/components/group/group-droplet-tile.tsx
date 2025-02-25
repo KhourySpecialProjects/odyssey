@@ -26,7 +26,7 @@ export function GroupDropletTile({
   }
 
   const finalDate = DateTime.fromISO(dueDate)
-    .setZone(authUser.timeZone || "America/New_York")
+    .setZone(authUser?.timeZone || "America/New_York")
     .toFormat("MM/dd hh:mm a");
 
   return (
