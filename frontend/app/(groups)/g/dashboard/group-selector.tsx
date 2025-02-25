@@ -13,12 +13,12 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { isContentCreator, isAuthorizedUserFaculty } from "@/lib/utils";
 import { useSession } from "next-auth/react";
+import { useMemo } from "react";
 
-const tabs = [
-  { name: "Creator", value: "creator", icon: PlusCircleIcon },
+const baseTabs = [
+  { name: "Member", value: "member", icon: UserIcon },
   { name: "Admin", value: "admin", icon: ShieldIcon },
   { name: "Manager", value: "manager", icon: CircleUserIcon },
-  { name: "Member", value: "member", icon: UserIcon },
   { name: "Favs", value: "favorites", icon: StarIcon },
 ];
 
@@ -33,13 +33,25 @@ export function GroupsSelector() {
       isAuthorizedUserAdmin(session.user.roles) ||
       isAuthorizedUserFaculty(session.user.roles));
 
-  const currentTab = searchParams.get("tab") || "creator";
+  const currentTab = searchParams.get("tab") || "member";
 
   const createQueryString = (name: string, value: string) => {
     const params = new URLSearchParams(searchParams);
     params.set(name, value);
     return params.toString();
   };
+
+  const tabs = useMemo(
+    () =>
+      canCreateGroup
+        ? [
+            { name: "Creator", value: "creator", icon: PlusCircleIcon },
+            ...baseTabs,
+          ]
+        : baseTabs,
+    [canCreateGroup],
+  );
+
   // TODO: Break this tabbed UI setup into its own reusable component. We are using it in a few different
   // places and it would be nice to abstract it out.
   return (

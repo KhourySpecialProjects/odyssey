@@ -9,6 +9,7 @@ const NEXT_PUBLIC_STRAPI_API_URL =
   process.env.NEXT_PUBLIC_STRAPI_API_URL || "http://localhost:1337";
 const NEXT_PUBLIC_STRAPI_API_TOKEN =
   process.env.NEXT_PUBLIC_STRAPI_API_TOKEN || "";
+
 /**
  * Gets the first 25 Playlists matching the specified criteria, unless overridden by `options`.
  * @param options Strapi query modifiers.
@@ -65,13 +66,9 @@ export async function getPlaylistBySlug(
           },
         },
       },
-      author: {
+      authors: {
         fields: ["id", "name"],
-        populate: {
-          authorizedUser: {
-            fields: ["id", "email"],
-          },
-        },
+        populate: "*",
       },
     },
   }: StrapiRequestParams = {},
@@ -132,19 +129,19 @@ export async function getPlaylistById<T extends Partial<Playlist> = Playlist>(
   }
 }
 
-export async function getPlaylistsByAuthor(
-  authorId: number,
-  { filters = {}, populate = "*", fields = ["*"] }: StrapiRequestParams = {},
-): Promise<Playlist[]> {
-  const path = `/playlists`;
-  const urlParams = {
-    filters: {
-      ...filters,
-      author: { id: { $eq: authorId } },
-    },
-    populate,
-    fields,
-  };
+// export async function getPlaylistsByAuthor(
+//   authorId: number,
+//   { filters = {}, populate = "*", fields = ["*"] }: StrapiRequestParams = {},
+// ): Promise<Playlist[]> {
+//   const path = `/playlists`;
+//   const urlParams = {
+//     filters: {
+//       ...filters,
+//       author: { id: { $eq: authorId } },
+//     },
+//     populate,
+//     fields,
+//   };
 
-  return await fetchAPI<Playlist[]>(path, { urlParams });
-}
+//   return await fetchAPI<Playlist[]>(path, { urlParams });
+// }

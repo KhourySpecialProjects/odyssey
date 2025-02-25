@@ -1,9 +1,8 @@
 import { getCurrentUser } from "@/lib/auth/session";
 import { notFound } from "next/navigation";
-import { isContentCreator, isAuthorizedUserAdmin } from "@/lib/utils";
+import { isAuthorizedUserAdmin } from "@/lib/utils";
 import { getDropletBySlug } from "@/lib/requests/droplet";
 import { AuthorizedUser, Droplet } from "@/types";
-import { getAuthorByAuthorizedUserEmail } from "@/lib/requests/author";
 import { Sidebar } from "@/components/draft/sidebar";
 import { EnvironmentBanner } from "@/components/debug/environmentBanner";
 import { DebugBanner } from "@/components/debug/debugBanner";
@@ -31,7 +30,7 @@ export default async function CheckPermission({ params, children }: Props) {
   const droplet = await getDropletBySlug<Droplet>(p.slug, {
     fields: ["*"],
     populate: {
-      authors: { populate: "*" },
+      authorized_users: { populate: "*" },
       learningObjectives: { populate: "*" },
       lessons: { populate: "*" },
       tags: { populate: "*" },
@@ -39,20 +38,15 @@ export default async function CheckPermission({ params, children }: Props) {
       postrequisites: { populate: ["id", "name", "slug"] },
     },
   });
-  if (
-    !droplet ||
-    !user ||
-    !droplet.authors ||
-    !user.email ||
-    !(isContentCreator(user.roles) && isAuthorizedUserAdmin(user.roles))
-  ) {
+  if (!droplet || !user || !droplet.authorized_users || !user.email) {
     return notFound();
   }
-  const userAuthor = await getAuthorByAuthorizedUserEmail(user.email);
 
   if (
     !isAuthorizedUserAdmin(user.roles) &&
-    !droplet.authors.map((author) => author.id).includes(userAuthor.id)
+    !droplet.authorized_users
+      .map((author) => author.id)
+      .includes(authorizedUser?.id)
   ) {
     return notFound();
   }

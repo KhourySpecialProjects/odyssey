@@ -54,7 +54,6 @@ export type AuthorizedUser = {
   linkedin: string;
   github: string;
   firstTime: boolean;
-  author?: Author;
   firstName: string;
   lastName: string;
   bio: string;
@@ -66,6 +65,8 @@ export type AuthorizedUser = {
   was_blocked: AuthorizedUser[];
   timeZone: TimeZone;
   groups?: Group[];
+  droplets?: Droplet[];
+  created_playlists?: Playlist[];
 };
 
 export type Media = {
@@ -85,17 +86,16 @@ export type NavItem = {
 
 export type GeneralConfig = {
   mainNav: NavItem[];
-  contentCreatorNav: NavItem[];
 };
 
-export type Author = {
-  id: number;
-  name: string;
-  bio?: string;
-  photo?: StrapiMediaParams;
-  droplets?: Droplet[];
-  authorizedUser?: AuthorizedUser;
-};
+// export type Author = {
+//   id: number;
+//   name: string;
+//   bio?: string;
+//   photo?: StrapiMediaParams;
+//   droplets?: Droplet[];
+//   authorizedUser?: AuthorizedUser;
+// };
 
 export type Lesson = {
   id: number;
@@ -143,13 +143,14 @@ export type Droplet = {
   tags?: Tag[];
   learningObjectives: LearningObjective[];
   lessons?: Lesson[];
-  authors?: Author[];
   nextSteps?: Resource[];
   prerequisites?: Droplet[];
   postrequisites?: Droplet[];
   isHidden: boolean;
   status: DropletStatus;
   droplet_lessons: DropletLesson[];
+  shouldBeLocked?: boolean;
+  authorized_users?: AuthorizedUser[];
 };
 
 export type QuizAnswerOption = {
@@ -205,11 +206,7 @@ export interface Playlist {
     id: number;
     email: string;
   }[];
-  author?: {
-    id: number;
-    name: string;
-    authorizedUser: AuthorizedUser;
-  };
+  authors?: AuthorizedUser[];
 }
 
 export type PlaylistListResponse = {

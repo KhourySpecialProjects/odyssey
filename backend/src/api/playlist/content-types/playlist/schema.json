@@ -65,6 +65,12 @@
       "relation": "oneToMany",
       "target": "api::announcement.announcement",
       "mappedBy": "playlist"
+    },
+    "authors": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::authorized-user.authorized-user",
+      "mappedBy": "created_playlists"
     }
   }
 }

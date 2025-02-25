@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import {
+  updateAuthorBio,
   updateGithub,
   updateLinkedin,
   updatePhoto,
@@ -12,12 +13,14 @@ import {
 import { AuthorizedUser } from "@/types";
 import { useState } from "react";
 import imageCompression from "browser-image-compression";
+import { Textarea } from "@/components/ui/textarea";
 
 export function SocialForms({
   authorizedUser,
 }: {
   authorizedUser: AuthorizedUser | null;
 }) {
+  const [bioValue, setBioValue] = useState(authorizedUser?.bio || "");
   const [linkedinValue, setLinkedinValue] = useState(
     authorizedUser?.linkedin || "",
   );
@@ -112,7 +115,7 @@ export function SocialForms({
 
     return (
       <div
-        className={`flex flex-col items-center p-6 border-2 rounded-lg cursor-pointer 
+        className={`flex flex-col items-center p-6 border-2 rounded-lg cursor-pointer w-[59%]
           ${isDragging ? "border-blue-500 bg-blue-50" : "border-gray-300 border-dashed"}`}
         onDrop={handleDrop}
         onDragOver={handleDragOver}
@@ -198,8 +201,35 @@ export function SocialForms({
           }}
           imagePreview={profileImage}
         />
-        <Button type="submit" className="max-w-80" disabled={!profileFile}>
+        <Button type="submit" className="w-[13%]" disabled={!profileFile}>
           Save Photo
+        </Button>
+      </form>
+      <form
+        action={async (formData: FormData) => {
+          const bio = formData.get("bio") as string;
+          if (bio && authorizedUser?.id) {
+            const result = await updateAuthorBio(bio, authorizedUser.id);
+            if (result.success) {
+              setBioValue(bio);
+              toast.success("Bio updated successfully");
+            } else {
+              toast.error("Failed to update bio");
+            }
+          }
+        }}
+        className="px-6 py-4 flex flex-row gap-4 items-center"
+      >
+        <div className="w-[7%]">Bio:</div>
+        <Textarea
+          name="bio"
+          value={bioValue}
+          onChange={(e) => setBioValue(e.target.value)}
+          placeholder="Enter your bio"
+          className="w-[50%]"
+        />
+        <Button type="submit" className="w-[13%]">
+          Save Bio
         </Button>
       </form>
       <form
@@ -217,15 +247,15 @@ export function SocialForms({
         }}
         className="px-6 py-4 flex flex-row gap-4 items-center"
       >
-        <div>LinkedIn:</div>
+        <div className="w-[7%]">LinkedIn:</div>
         <Input
           name="linkedin"
           value={linkedinValue}
           onChange={(e) => setLinkedinValue(e.target.value)}
           placeholder="Enter your LinkedIn url"
-          className="max-w-80"
+          className="w-[50%]"
         />
-        <Button type="submit" className="max-w-80">
+        <Button type="submit" className="w-[13%]">
           Save LinkedIn
         </Button>
       </form>
@@ -246,15 +276,15 @@ export function SocialForms({
         className="px-6 py-4 flex flex-row gap-4 items-center"
       >
         {" "}
-        <div>GitHub:</div>
+        <div className="w-[7%]">GitHub:</div>
         <Input
           name="github"
           value={githubValue}
           onChange={(e) => setGithubValue(e.target.value)}
           placeholder="Enter your GitHub url"
-          className="max-w-80"
+          className="w-[50%]"
         />
-        <Button type="submit" className="max-w-80">
+        <Button type="submit" className="w-[13%]">
           Save GitHub
         </Button>
       </form>

@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button";
 import { TrashIcon, PlusIcon } from "lucide-react";
 import { GenericBlockInput as TipTapEditor } from "@/components/ui/tiptap/generic-block-input";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Textarea } from "@/components/ui/textarea";
 
 interface QuizQuestionEditorProps {
   question: QuizQuestion;

@@ -37,15 +37,12 @@ export function GroupProgressGrid({ group }: GroupProgressGridProps) {
   const [currentPage, setCurrentPage] = useState(0); // Track the current page
   const lessonsPerPage = 4; // Number of lessons to show per page
 
-  // Calculate the start and end indices for the lessons on the current page
   const startIndex = currentPage * lessonsPerPage;
   const endIndex = startIndex + lessonsPerPage;
-  const paginatedLessons = group.droplets?.slice(startIndex, endIndex); // Slice the lessons array
+  const paginatedLessons = group.droplets?.slice(startIndex, endIndex);
 
-  // Calculate the total number of pages
   const totalPages = Math.ceil((group.droplets?.length || 0) / lessonsPerPage);
 
-  // Handlers for navigation
   const handleNextPage = () => {
     if (currentPage < totalPages - 1) setCurrentPage(currentPage + 1);
   };
@@ -99,7 +96,6 @@ export function GroupProgressGrid({ group }: GroupProgressGridProps) {
   };
 
   const getCompletedDropletColor = (completionStatus: number) => {
-    console.log("status ", completionStatus);
     if (completionStatus === 100) return "#6EE7B7";
     else if (completionStatus > 33) {
       return "#FBBF24";
@@ -119,14 +115,14 @@ export function GroupProgressGrid({ group }: GroupProgressGridProps) {
         <button
           onClick={handlePrevPage}
           disabled={currentPage === 0}
-          className={`px-4 py-2 mr-4 w-22`}
+          className={`px-4 py-2 mr-4 w-22 ${currentPage === 0 ? "visibility: hidden" : "visibility: visible"}`}
         >
           <MoveLeft />
         </button>
         <button
           onClick={handleNextPage}
           disabled={currentPage === totalPages - 1}
-          className={`px-4 py-2`}
+          className={`px-4 py-2 ${currentPage >= totalPages - 1 ? "visibility: hidden" : "visibility: visible"}`}
         >
           <MoveRight />
         </button>
@@ -205,7 +201,6 @@ export function GroupProgressGrid({ group }: GroupProgressGridProps) {
                             style={{
                               width: `${getCompletionStatus(member.id, droplet.id)}%`, // Set width based on the percentage
                               height: "100%",
-                              //backgroundColor: '#ffc107',  // The color for the filled portion
                               backgroundColor: getCompletedDropletColor(
                                 getCompletionStatus(member.id, droplet.id),
                               ),

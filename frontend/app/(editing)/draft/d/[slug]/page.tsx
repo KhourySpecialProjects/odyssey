@@ -12,7 +12,6 @@ import { Description } from "@/components/draft/metadata/description";
 import { uppercaseFirstChar } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { RegenerateSlugButton } from "@/components/draft/metadata/regenerate-slug";
-import { DeleteDropletButton } from "@/components/draft/metadata/delete-droplet";
 
 type Props = {
   params: Promise<Params>;
@@ -40,7 +39,7 @@ export default async function Droplet({ params }: Props) {
   const droplet = await getDropletBySlug<Droplet>(p.slug, {
     fields: ["*"],
     populate: {
-      authors: { populate: "*" },
+      authorized_users: { populate: "*" },
       learningObjectives: { populate: "*" },
       lessons: { populate: "*" },
       tags: { populate: "*" },
@@ -78,18 +77,20 @@ export default async function Droplet({ params }: Props) {
         <DropletName dropletId={droplet.id} startingName={droplet.name} />
         <div className="flex flex-row w-full  items-center space-x-10 my-3">
           <RegenerateSlugButton dropletId={droplet.id} name={droplet.name} />
-          <DeleteDropletButton dropletId={droplet.id} />
+          {/* <DeleteDropletButton dropletId={droplet.id} /> */}
         </div>
 
         {/* TODO: Turn this into a component */}
-        {droplet.authors && droplet.authors.length > 0 && (
+        {droplet.authorized_users && droplet.authorized_users.length > 0 && (
           <div className={`mt-4 rounded-lg border p-4 border-gray-300`}>
             <h2 className="text-xl font-semibold">
-              {droplet.authors.length > 1 ? "Authors" : "Author"}
+              {droplet.authorized_users.length > 1 ? "Authors" : "Author"}
             </h2>
             <ul className="list-disc list-inside">
-              {droplet.authors.map((author) => (
-                <li key={author.id}>{author.name}</li>
+              {droplet.authorized_users.map((author) => (
+                <li key={author.id}>
+                  {author.firstName + " " + author.lastName}
+                </li>
               ))}
             </ul>
           </div>

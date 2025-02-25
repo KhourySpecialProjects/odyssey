@@ -1,6 +1,4 @@
-import { PlaylistBlock } from "./playlist-block";
 import { CreatePlaylist } from "./create-playlist";
-import { Playlist } from "@/types";
 import { getPlaylists } from "@/lib/requests/playlist";
 import { PlaylistClient } from "./playlist-client";
 
@@ -15,7 +13,7 @@ export async function Playlists() {
           },
         },
       },
-      author: {
+      authors: {
         fields: ["id", "name"],
       },
     },

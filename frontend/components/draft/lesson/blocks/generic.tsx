@@ -12,8 +12,6 @@ export function GenericEditor({
   updateBlock: (block: any) => void;
   deleteBlock: () => void;
 }) {
-  //const [blockState, setBlockState] = useState(block);
-
   const handleChange = (content: string) => {
     updateBlock({
       id: block.id,

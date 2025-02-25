@@ -1,6 +1,6 @@
 "use server";
 
-import { Announcement, AuthorizedUser, Droplet, Playlist } from "@/types";
+import { Announcement, AuthorizedUser, Droplet } from "@/types";
 import qs from "qs";
 import { flattenAttributes } from "../utils";
 import { revalidatePath } from "next/cache";

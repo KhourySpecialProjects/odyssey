@@ -8,7 +8,7 @@ import {
 import { extractHeadings, isAuthorizedUserAdmin } from "@/lib/utils";
 import { User, Droplet, Lesson, AuthorizedUser } from "@/types";
 import { BlocksRenderer } from "@strapi/blocks-react-renderer";
-import { ArrowDownFromLineIcon, Pencil } from "lucide-react";
+import { ArrowDownFromLineIcon } from "lucide-react";
 import { QuizBlock } from "./quiz";
 import GenericBlockRenderer from "./GenericBlockRenderer";
 import { useEffect, useState, useTransition } from "react";
@@ -24,15 +24,13 @@ import { CalloutIcon } from "@/components/ui/callout-icons";
 import { OpenEndedQuizBlock } from "./open-ended-quiz";
 import { toast } from "sonner";
 import { Highlight } from "@/types";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
 import { getEnrollByID } from "@/lib/requests/enrollment";
 import { createNote } from "@/lib/requests/notes";
 import { getHighlights } from "@/lib/requests/highlights";
 
 interface LessonRendererProps {
   lesson: Lesson;
-  droplet: Pick<Droplet, "id" | "droplet_lessons">;
+  droplet: Pick<Droplet, "id" | "droplet_lessons" | "shouldBeLocked">;
   enrollmentId?: string;
   completedLessonIds: number[];
   user?: User | null;
@@ -117,8 +115,6 @@ export function LessonRenderer({
       );
     }
 
-    console.log("created a new note in the handleHighlight function");
-
     onUpdate();
   };
 
@@ -135,6 +131,7 @@ export function LessonRenderer({
   // Check if this lesson should be locked
   const isLocked =
     previousLesson &&
+    !(droplet.shouldBeLocked === false) &&
     !completedLessonIds.includes(previousLesson.id) &&
     !author &&
     !(user && isAuthorizedUserAdmin(user.roles));
@@ -155,7 +152,6 @@ export function LessonRenderer({
 
   async function handleMarkAsComplete() {
     if (!enrollmentId) {
-      console.log("no enrollment");
       return;
     }
 
@@ -192,7 +188,7 @@ export function LessonRenderer({
           </h1>
 
           {headings.length > 2 && (
-            <div className="p-6 mt-8 border rounded-md md:px-8 lg:-mx-8 bg-slate-50 border-slate-200">
+            <div className="p-6 mt-8 border rounded-md bg-slate-50 border-slate-200">
               <h2 className="text-xl font-bold">Contents</h2>
               <ul className="mt-3 ml-4 list-disc list-inside">
                 {headings.map((heading, index) => (
@@ -217,6 +213,7 @@ export function LessonRenderer({
                 onDeleteHighlight={handleDeleteHighlight}
                 onNote={handleCreateNote}
                 genericBlocks={genericBlocks}
+                enrollmentId={enrollmentId}
               />
             ))}
           </div>
@@ -250,6 +247,7 @@ function LessonBlockRenderer({
   onDeleteHighlight,
   onNote,
   genericBlocks,
+  enrollmentId,
 }: {
   block: any;
   highlights: any[];
@@ -257,6 +255,7 @@ function LessonBlockRenderer({
   onDeleteHighlight: (id: number) => void;
   onNote: (notePos: number, text: string) => void;
   genericBlocks: number[];
+  enrollmentId: string | undefined;
 }) {
   switch (block.__component) {
     case "droplets.generic":
@@ -268,6 +267,7 @@ function LessonBlockRenderer({
           onDeleteHighlight={onDeleteHighlight}
           onNote={onNote}
           genericBlocks={genericBlocks}
+          enrollmentId={enrollmentId}
         />
       );
 

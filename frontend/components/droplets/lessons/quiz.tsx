@@ -13,7 +13,6 @@ export function QuizBlock({ data }: { data: Quiz }) {
 
       <div>
         {data.questions.map((question) => {
-          console.log("Raw question:", question);
           return (
             <div
               key={question.id}

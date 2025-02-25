@@ -4,7 +4,6 @@ import { revalidatePath, revalidateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { getCurrentUser } from "./auth/session";
-import { getAuthorByAuthorizedUserEmail } from "./requests/author";
 import { getAuthorizedUserByEmail } from "./requests/authorized-user";
 import { getEnrollmentsByAuthorizedUser } from "./requests/enrollment";
 import { accessRequestSchema } from "./validations/access-request";
@@ -25,6 +24,8 @@ import {
 } from "@aws-sdk/client-s3";
 import { v4 as uuidv4 } from "uuid";
 import { Buffer } from "node:buffer";
+import { getGroupByID } from "./requests/groups";
+import { getPlaylistById } from "./requests/playlist";
 
 const STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
@@ -227,36 +228,32 @@ export async function createBugReport(formData: z.infer<typeof reportSchema>) {
   redirect(formData.path + "?ts=" + Date.now());
 }
 
-export async function updateAuthorBio(formData: z.infer<typeof BioFormSchema>) {
+export async function updateAuthorBio(bio: string, userId: number) {
   try {
-    const user = await getCurrentUser();
-    if (!user?.email) throw new Error("No email identified");
-    const author = await getAuthorByAuthorizedUserEmail(user.email);
-
-    const response = await fetch(STRAPI_API_URL + "/api/authors/" + author.id, {
-      method: "PUT",
-      body: JSON.stringify({ data: { bio: formData.bio } }),
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+    const response = await fetch(
+      `${STRAPI_API_URL}/api/authorized-users/${userId}`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+        },
+        body: JSON.stringify({
+          data: {
+            bio: bio,
+          },
+        }),
       },
-    });
-    const data = await response.json();
+    );
 
-    if (!response.ok || (response.ok && data.error)) {
-      const errorPath = data.error.details.errors[0].path[0];
-      const errorMessage = `${data.error.message} (${errorPath})`;
-      return { ok: false, error: errorMessage, data: null };
+    if (!response.ok) {
+      throw new Error("Failed to update bio");
     }
-  } catch (err) {
-    console.error(err);
-    return { error: "Database Error: Failed to update author." };
+    return { success: true };
+  } catch (error) {
+    console.error("Error updating bio:", error);
+    return { success: false, error };
   }
-
-  revalidatePath("/(general)/settings/profile", "page");
-  revalidatePath("/(droplets)/d/[slug]", "page");
-  revalidatePath("/(droplets)/d/[slug]/recap", "page");
-  redirect("/settings/profile");
 }
 
 export async function createEnrollment(
@@ -356,7 +353,6 @@ export async function createEnrollmentFromEmail(
         .map((enrollment) => enrollment.droplet.id)
         .includes(formData.droplet)
     ) {
-      console.log("sending post request");
       const response = await fetch(STRAPI_API_URL + "/api/enrollments", {
         method: "POST",
         body: JSON.stringify({
@@ -391,15 +387,14 @@ const CreateDropletSchema = DropletSchema.pick({
   tagIds: true,
   learningObjectives: true,
 });
+
 export async function createDroplet(data: z.infer<typeof CreateDropletSchema>) {
   try {
     const user = await getCurrentUser();
-    console.log("user: ", user);
     if (!user?.email) throw new Error("No email identified");
-    const author = await getAuthorByAuthorizedUserEmail(user.email, {
+    const author = await getAuthorizedUserByEmail(user.email, {
       populate: {},
     });
-    console.log("author: ", author);
     if (!author) throw new Error("No author identified");
 
     const dataToSend = {
@@ -410,7 +405,7 @@ export async function createDroplet(data: z.infer<typeof CreateDropletSchema>) {
       tags: {
         connect: data.tagIds,
       },
-      authors: {
+      authorized_users: {
         connect: [author.id],
       },
 
@@ -418,7 +413,6 @@ export async function createDroplet(data: z.infer<typeof CreateDropletSchema>) {
         objective: obj,
       })),
     };
-    console.log("data to send: ", dataToSend);
 
     const response = await fetch(STRAPI_API_URL + "/api/droplets", {
       method: "POST",
@@ -428,7 +422,6 @@ export async function createDroplet(data: z.infer<typeof CreateDropletSchema>) {
         Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
       },
     });
-    console.log("fetch response: ", response);
 
     const responseData = await response.json();
 
@@ -611,7 +604,6 @@ export async function updateLinkedin(linkedIn: string, userId: number) {
 }
 
 export async function updateGithub(github: string, userId: number) {
-  console.log("github: ", github);
   try {
     const response = await fetch(
       `${STRAPI_API_URL}/api/authorized-users/${userId}`,
@@ -898,7 +890,6 @@ export async function updateDroplet(
 
     // Handle updating droplet_lessons collection updates separately if they exist
     if (data.droplet_lessons) {
-      console.log(" --> data.droplet_lessons = ", data.droplet_lessons);
       const dropletLessonsResponse = await Promise.all(
         data.droplet_lessons.map(async (dl) => {
           const response = await fetch(
@@ -940,7 +931,6 @@ export async function updateDroplet(
     const responseData = await response.json();
 
     if (!response.ok || (response.ok && responseData.error)) {
-      console.log(responseData);
       const errorPath = responseData.error.details.errors[0].path[0];
       const errorMessage = `${responseData.error.message} (${errorPath})`;
       return { ok: false, error: errorMessage, data: null };
@@ -1005,7 +995,6 @@ export async function updateLesson(
     regenerateSlug: false,
   },
 ) {
-  console.log(" --> actions.ts: updateLesson() function called");
   try {
     if (data.blocks) {
       data.blocks = data.blocks.map(({ id, ...rest }) => rest);
@@ -1015,10 +1004,6 @@ export async function updateLesson(
       ...(data.blocks && { blocks: data.blocks }),
     };
     dataToSend.regenerateSlug = options.regenerateSlug;
-
-    console.log(dataToSend);
-
-    console.log(dataToSend);
 
     const response = await fetch(STRAPI_API_URL + "/api/lessons/" + id, {
       method: "PUT",
@@ -1031,17 +1016,6 @@ export async function updateLesson(
     const responseData = await response.json();
 
     if (!response.ok || (response.ok && responseData.error)) {
-      console.log(" ----> F");
-      console.log("responseData: ", responseData);
-      console.log("responseData.error.details: ", responseData.error.details);
-      console.log(
-        "responseData.error.details.errors: ",
-        responseData.error.details.errors,
-      );
-      console.log(
-        "responseData.error.details.errors[0].path[0]: ",
-        responseData.error.details.errors[0].path[0],
-      );
       const errorPath = responseData.error.details.errors[0].path[0];
       const errorMessage = `${responseData.error.message} (${errorPath})`;
       return { ok: false, error: errorMessage, data: null };
@@ -1167,7 +1141,7 @@ export async function deepDeleteDroplet(id: number) {
     const droplet = await getDropletById<Droplet>(id, {
       fields: ["*"],
       populate: {
-        authors: { populate: "*" },
+        authorized_users: { populate: "*" },
         learningObjectives: { populate: "*" },
         lessons: { populate: "*" },
         tags: { populate: "*" },
@@ -1204,6 +1178,62 @@ export async function deepDeleteDroplet(id: number) {
   } catch (err) {
     console.error(err);
     return { error: "Database Error: Failed to Delete Droplet." };
+  }
+}
+
+export async function deleteGroup(id: number) {
+  try {
+    const group = await getGroupByID(id);
+
+    const response = await fetch(STRAPI_API_URL + "/api/groups/" + id, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+      },
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      return { ok: false, error: "Failed to delete group.", data: null };
+    }
+
+    revalidateTag("authors");
+    revalidateTag("groups");
+    revalidatePath("(general)/drafts", "page");
+    return { ok: true, error: null, data: data.data };
+  } catch (err) {
+    console.error(err);
+    return { error: "Database Error: Failed to Delete Group." };
+  }
+}
+
+export async function deletePlaylist(id: number) {
+  try {
+    const group = await getPlaylistById(id);
+
+    const response = await fetch(STRAPI_API_URL + "/api/playlists/" + id, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+      },
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      return { ok: false, error: "Failed to delete playlist.", data: null };
+    }
+
+    revalidateTag("authors");
+    revalidateTag("groups");
+    revalidatePath("(general)/drafts", "page");
+    return { ok: true, error: null, data: data.data };
+  } catch (err) {
+    console.error(err);
+    return { error: "Database Error: Failed to Delete Playlist." };
   }
 }
 
@@ -1355,20 +1385,16 @@ export async function deleteImage(fileName: string) {
 
     const uploadParams = {
       Bucket: bucketName,
-      Key: `${rootPath}/${fileName}`, // Upload to the specified directory
+      Key: `${rootPath}/${fileName}`,
     };
 
     const response = await s3.send(new DeleteObjectCommand(uploadParams));
-    console.log(response);
 
     if (response["$metadata"].httpStatusCode != 204) {
       return { ok: false, error: "Failed to delete image" };
     }
-
-    console.log("Deleted Image");
     return { ok: true, error: null };
   } catch (err) {
-    console.log(err);
     return { ok: false, error: "Failed to delete image" };
   }
 }
@@ -1384,7 +1410,7 @@ export async function createPlaylist(data: {
   try {
     const dataToSend = {
       name: data.name,
-      author: {
+      authors: {
         set: [data.author.id],
       },
       slug: tempSlug, // this gets overwritten by Strapi
@@ -1434,7 +1460,7 @@ export async function updatePlaylist(
     name: string;
     isPublic: boolean;
     droplets?: { id: number }[];
-    author?: { id: number };
+    authors?: { id: number };
     userId?: number;
     slug?: string; //TODO Should slug be optional for updating a playlist?
   },

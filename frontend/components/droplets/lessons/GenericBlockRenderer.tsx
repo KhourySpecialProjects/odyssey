@@ -6,14 +6,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import hljs from "highlight.js";
 import { Highlight } from "@/types";
-import {
-  Highlighter,
-  X,
-  CircleHelp,
-  Pencil,
-  Pen,
-  NotebookPen,
-} from "lucide-react";
+import { Highlighter, X, CircleHelp, Pen, NotebookPen } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 
@@ -24,6 +17,7 @@ interface GenericBlockRendererProps {
   onDeleteHighlight: (highlightId: number) => void;
   onNote: (notePos: number, text: string) => void;
   genericBlocks: number[];
+  enrollmentId: string | undefined;
 }
 
 const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
@@ -33,6 +27,7 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
   onDeleteHighlight,
   onNote,
   genericBlocks,
+  enrollmentId,
 }) => {
   const contentRef = useRef<HTMLDivElement>(null);
   const popupRef = useRef<{
@@ -51,7 +46,7 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
   const savedSelectionRef = useRef<Range | null>(null);
   const [mousePositionY, setMousePositionY] = useState(0);
   const [isHighlighting, setIsHighlighting] = useState(false);
-  const [selectedColor, setSelectedColor] = useState("yellow");
+  const [selectedColor, setSelectedColor] = useState("#fff300");
 
   useEffect(() => {
     if (contentRef.current) {
@@ -63,8 +58,11 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
       });
       hljs.highlightAll();
 
-      // Apply existing highlights
-      highlights?.forEach((highlight) => {
+      const sortedHighlights = [...highlights].sort(
+        (a, b) => (a.position?.start || 0) - (b.position?.start || 0),
+      );
+
+      sortedHighlights.forEach((highlight) => {
         if (!highlight.position?.start || !highlight.position?.end) return;
 
         const walker = document.createTreeWalker(
@@ -73,34 +71,53 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
         );
 
         let currentPosition = 0;
-        let targetNode: Text | null = null;
-        let localStart = highlight.position.start;
-        let localEnd = highlight.position.end;
+        let currentNode = walker.nextNode();
 
-        while (walker.nextNode()) {
-          const node = walker.currentNode as Text;
-          const nodeLength = node.length;
+        while (
+          currentNode &&
+          currentPosition + (currentNode.textContent?.length || 0) <=
+            highlight.position.start
+        ) {
+          currentPosition += currentNode.textContent?.length || 0;
+          currentNode = walker.nextNode();
+        }
+        if (!currentNode) return;
 
-          if (currentPosition + nodeLength > highlight.position.start) {
-            targetNode = node;
-            localStart = highlight.position.start - currentPosition;
-            localEnd = Math.min(
-              nodeLength,
-              highlight.position.end - currentPosition,
-            );
-            break;
-          }
-          currentPosition += nodeLength;
+        const startNode = currentNode;
+        const startOffset = highlight.position.start - currentPosition;
+
+        let endNode = startNode;
+        let endOffset = highlight.position.end - currentPosition;
+
+        while (
+          currentNode &&
+          currentPosition + (currentNode.textContent?.length || 0) <
+            highlight.position.end
+        ) {
+          currentPosition += currentNode.textContent?.length || 0;
+          currentNode = walker.nextNode();
+          if (currentNode) endNode = currentNode;
         }
 
-        if (targetNode) {
+        if (currentNode) {
+          endOffset = Math.min(
+            currentNode.textContent?.length || 0,
+            highlight.position.end - currentPosition,
+          );
+
           const range = document.createRange();
-          range.setStart(targetNode, localStart);
-          range.setEnd(targetNode, localEnd);
+          range.setStart(startNode, startOffset);
+          range.setEnd(endNode, endOffset);
 
           const span = document.createElement("span");
+          span.style.borderRadius = "8px";
           span.style.backgroundColor = highlight.color;
-          range.surroundContents(span);
+
+          try {
+            range.surroundContents(span);
+          } catch (e) {
+            console.warn("Failed to highlight range:", e);
+          }
         }
       });
     }
@@ -170,6 +187,7 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
           color: selectedColor,
         });
         const span = document.createElement("span");
+        span.style.borderRadius = "8px";
         span.style.backgroundColor = selectedColor;
         range.surroundContents(span);
       }
@@ -200,18 +218,39 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
     }
   };
 
-  const renderHighlightedText = (text: string) => {
-    let highlightedText = text;
+  // const renderHighlightedText = (text: string) => {
+  //   let result = "";
+  //   let lastIndex = 0;
 
-    highlights.forEach((highlight) => {
-      highlightedText = highlightedText.replace(
-        highlight.text,
-        `<span style="background-color: ${highlight.color}">${highlight.text}</span>`,
-      );
-    });
+  //   // Sort highlights by position to ensure correct order
+  //   const sortedHighlights = [...highlights].sort((a, b) => a.position.start - b.position.start);
 
-    return { __html: highlightedText };
-  };
+  //   sortedHighlights.forEach((highlight) => {
+  //     if (!highlight.position?.start || !highlight.position?.end) return;
+
+  //     // Append text before highlight
+  //     result += text.slice(lastIndex, highlight.position.start);
+  //     console.log("first: ", highlight.position.start, "end:")
+  //     console.log("start: ", text.slice(lastIndex, highlight.position.start))
+
+  //     // Wrap highlighted text
+  //     result += `<span style="background-color: ${highlight.color}; border-radius: 12px;">` +
+  //               text.slice(highlight.position.start, highlight.position.end) +
+  //               `</span>`;
+  //     console.log("middle", `<span style="background-color: ${highlight.color}; border-radius: 12px;">` +
+  //     text.slice(highlight.position.start, highlight.position.end) +
+  //     `</span>`)
+
+  //     // Update lastIndex to track the end of the last highlight
+  //     lastIndex = highlight.position.end;
+  //   });
+
+  //   // Append any remaining text after the last highlight
+  //   result += text.slice(lastIndex);
+  //   console.log("end", text.slice(lastIndex))
+
+  //   return { __html: result };
+  // };
 
   const handlePopupHighlight = () => {
     if (!contentRef.current || !popupRef.current.savedRange) {
@@ -238,6 +277,7 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
     }
 
     const span = document.createElement("span");
+    span.style.borderRadius = "8px";
     span.style.backgroundColor = selectedColor;
     range.surroundContents(span);
   };
@@ -279,28 +319,40 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
   };
 
   return (
-    <>
-      {block.id === genericBlocks[0] && (
-        <div className="fixed top-8 right-1/4 z-10 transform -translate-x-1/2 bg-blue-100 p-2 rounded shadow-lg">
+    <div className="">
+      {block.id === genericBlocks[0] && enrollmentId && (
+        <div className="fixed top-8 sm:top-4 xs:top-4 right-0 lg:right-1/4 z-30 transform -translate-x-1/2 bg-blue-100 p-2 rounded shadow-lg">
           <div className="relative group">
             <CircleHelp className="cursor-pointer" />
-            <div className="absolute left-1/2 transform -translate-x-1/2 top-full mt-2 w-max gap-2 bg-white p-4 rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center pointer-events-none">
+            <div className="absolute left-0 transform -translate-x-[100%] top-full mt-2 w-max gap-2 bg-white p-4 rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center pointer-events-none">
               <p>Highlighting Instructions:</p>
               <ul className="list-disc pl-4">
-                <li>Hover over the pen icon to see actions.</li>
+                <li>
+                  Hover over the <Pen className="inline-block w-4 h-4" /> icon
+                  to see actions.
+                </li>
                 <li>Use the toggle to switch highlighting mode.</li>
                 <li>In highlighting mode, selected text is highlighted.</li>
-                <li>Press the highlighter icon to highlight text.</li>
-                <li>Press the X icon to delete a highlight.</li>
-                <li>Press the note icon to add a note to text.</li>
+                <li>
+                  Press the <Highlighter className="inline-block w-4 h-4" />{" "}
+                  icon to highlight text.
+                </li>
+                <li>
+                  Press the <X className="inline-block w-4 h-4" /> icon to
+                  delete a highlight.
+                </li>
+                <li>
+                  Press the <NotebookPen className="inline-block w-4 h-4" />{" "}
+                  icon to add a note to text.
+                </li>
                 <li>Click a colored circle to change highlight color.</li>
               </ul>
             </div>
           </div>
         </div>
       )}
-      {block.id === genericBlocks[0] && (
-        <div className="fixed top-8 z-0 right-1/4 transform -translate-x-1/2 bg-blue-100 p-2 rounded shadow-lg  group">
+      {block.id === genericBlocks[0] && enrollmentId && (
+        <div className="fixed lg:top-16 xs:top-28 sm:top-28 md:top-28 z-20 right-0 lg:right-1/4 transform -translate-x-1/2 bg-blue-100 p-2 rounded shadow-lg group">
           <div className="relative">
             <Pen className="cursor-pointer" />
 
@@ -342,27 +394,27 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
               <button
                 title="Highlight Pink"
                 onClick={() => handleApplyColor("#f9a8d4")}
-                className={`w-6 h-6 rounded-full ${selectedColor === "#f9a8d4" ? "border-2 border-black" : "border border-gray-300"} bg-pink-300`}
+                className={`w-6 h-6 rounded-full ${selectedColor === "#f9a8d4" ? "border-2 border-black" : "border border-gray-300"} bg-[#f9a8d4]`}
               />
               <button
-                title="Highlight Red"
-                onClick={() => handleApplyColor("#fca5a5")}
-                className={`w-6 h-6 rounded-full ${selectedColor === "#fca5a5" ? "border-2 border-black" : "border border-gray-300"} bg-red-300`}
+                title="Highlight Orange"
+                onClick={() => handleApplyColor("#fbd38d")}
+                className={`w-6 h-6 rounded-full ${selectedColor === "#fbd38d" ? "border-2 border-black" : "border border-gray-300"} bg-[#fbd38d]`}
               />
               <button
                 title="Highlight Yellow"
-                onClick={() => handleApplyColor("yellow")}
-                className={`w-6 h-6 rounded-full ${selectedColor === "yellow" ? "border-2 border-black" : "border border-gray-300"} bg-yellow-300`}
+                onClick={() => handleApplyColor("#fff300")}
+                className={`w-6 h-6 rounded-full ${selectedColor === "#fff300" ? "border-2 border-black" : "border border-gray-300"} bg-[#fff300]`}
               />
               <button
                 title="Highlight Green"
                 onClick={() => handleApplyColor("#86efac")}
-                className={`w-6 h-6 rounded-full ${selectedColor === "#86efac" ? "border-2 border-black" : "border border-gray-300"} bg-green-300`}
+                className={`w-6 h-6 rounded-full ${selectedColor === "#86efac" ? "border-2 border-black" : "border border-gray-300"} bg-[#86efac]`}
               />
               <button
                 title="Highlight Blue"
                 onClick={() => handleApplyColor("#93c5fd")}
-                className={`w-6 h-6 rounded-full ${selectedColor === "#93c5fd" ? "border-2 border-black" : "border border-gray-300"} bg-blue-300`}
+                className={`w-6 h-6 rounded-full ${selectedColor === "#93c5fd" ? "border-2 border-black" : "border border-gray-300"} bg-[#93c5fd]`}
               />
             </div>
           </div>
@@ -375,9 +427,9 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
         onMouseUp={(e) => handleMouseUp()}
         onMouseDown={(e) => handleMouseDown(e)}
         className="mt-2 prose prose-lg prose-sky prose-table:block prose-table:overflow-x-scroll select-text"
-        dangerouslySetInnerHTML={renderHighlightedText(block.content)}
+        dangerouslySetInnerHTML={{ __html: block.content }}
       ></div>
-    </>
+    </div>
   );
 };
 

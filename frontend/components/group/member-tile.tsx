@@ -23,6 +23,8 @@ export function MemberTile({
     .map((part) => part[0].toUpperCase())
     .join("");
 
+  console.log("member", member);
+
   return (
     <div className="relative group">
       <div className="p-4 border rounded-lg bg-slate-50 hover:bg-slate-100 transition-colors">

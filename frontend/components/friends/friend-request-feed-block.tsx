@@ -7,7 +7,7 @@ import {
   removeFriend,
 } from "@/lib/requests/friends";
 import { AuthorizedUser } from "@/types";
-import { Check, X } from "lucide-react";
+import { Check, User2Icon, X } from "lucide-react";
 import { startTransition, useState } from "react";
 import { toast } from "sonner";
 
@@ -23,6 +23,8 @@ import Link from "next/link";
 import { Github, Linkedin } from "lucide-react";
 import { FriendCompletedDroplets } from "./friend-completed-droplets";
 import { BlockUser } from "@/lib/requests/friends";
+import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
+import { getInitials } from "@/lib/utils";
 
 export function FriendRequestFeedBlock({
   user,
@@ -69,14 +71,17 @@ export function FriendRequestFeedBlock({
 
   return (
     <div className="flex flex-col justify-center">
-      <div className="flex flex-row justify-center mt-2">
-        {request.profilePhoto && (
-          <img
-            src={request.profilePhoto}
-            alt={`${request.firstName}'s profile`}
-            className="w-9 h-9 rounded-full object-cover"
-          />
-        )}
+      <div className="flex flex-row items-start mt-2">
+        <Avatar variant="round" className="border border-sky-800 w-8 h-8">
+          <AvatarImage src={request?.profilePhoto || undefined} />
+          <AvatarFallback>
+            {request?.firstName ? (
+              getInitials(request.firstName + " " + request.lastName)
+            ) : (
+              <User2Icon />
+            )}
+          </AvatarFallback>
+        </Avatar>
 
         <button onClick={() => setOpen(true)}>
           <div className="flex-1 min-w-0 pl-2 overflow-hidden">
@@ -85,11 +90,6 @@ export function FriendRequestFeedBlock({
                 ? `${request.firstName} ${request.lastName}`
                 : request.email}
             </p>
-            {request.bio && (
-              <p className="text-sm truncate text-slate-500 dark:text-slate-400">
-                {request.bio}
-              </p>
-            )}
           </div>
         </button>
       </div>
@@ -131,15 +131,19 @@ export function FriendRequestFeedBlock({
 
           <DialogContent>
             <DialogHeader>
-              {request.profilePhoto && (
-                <div className="flex justify-center items-center">
-                  <img
-                    src={request.profilePhoto}
-                    alt={`${request.firstName}'s profile`}
-                    className="w-12 h-12 rounded-full object-cover"
-                  />
-                </div>
-              )}
+              <Avatar
+                variant="round"
+                className="border border-sky-800 w-12 h-12"
+              >
+                <AvatarImage src={request?.profilePhoto || undefined} />
+                <AvatarFallback>
+                  {request?.firstName ? (
+                    getInitials(request.firstName + " " + request.lastName)
+                  ) : (
+                    <User2Icon />
+                  )}
+                </AvatarFallback>
+              </Avatar>
               <DialogTitle style={{ fontSize: "2rem", textAlign: "center" }}>
                 {request.firstName} {request.lastName}
               </DialogTitle>
@@ -159,9 +163,8 @@ export function FriendRequestFeedBlock({
                   </Link>
                 )}
               </div>
-              <DialogDescription>Email: {request.email}</DialogDescription>
               {request.bio && (
-                <DialogDescription>Bio: {request.bio}</DialogDescription>
+                <DialogDescription>{request.bio}</DialogDescription>
               )}
               <DialogDescription>Completed Droplets: </DialogDescription>
               <FriendCompletedDroplets friend={request} />

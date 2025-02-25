@@ -54,13 +54,9 @@ export default async function PlaylistPage({ params }: Props) {
       authorized_users: {
         fields: ["id"],
       },
-      author: {
+      authors: {
         fields: ["id", "name"],
-        populate: {
-          authorizedUser: {
-            fields: ["id", "email"],
-          },
-        },
+        populate: "*",
       },
     },
   });
@@ -108,8 +104,6 @@ export default async function PlaylistPage({ params }: Props) {
       const completedLessonsInDroplet = completedLessonIds.filter((id) =>
         dropletLessonIds.includes(id),
       );
-      console.log(dropletLessonIds.length);
-      console.log(completedLessonsInDroplet.length);
       return {
         droplet,
         index,
@@ -181,7 +175,7 @@ export default async function PlaylistPage({ params }: Props) {
             </div>
           )}
           <div
-            className={`pb-2 ${playlist?.author?.authorizedUser.email === user?.email ? "visibility: visible" : "visibility: hidden"}`}
+            className={`pb-2 ${playlist?.authors?.some((author) => author.email === user?.email) ? "visibility: visible" : "visibility: hidden"}`}
           >
             <Link href={`/draft/p/${playlist.slug}`}>
               <Button>Edit Playlist</Button>

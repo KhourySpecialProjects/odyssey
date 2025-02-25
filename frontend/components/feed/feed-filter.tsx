@@ -13,7 +13,7 @@ export function FeedFilter({ onFilterChange }: FeedFilterProps) {
     {
       value: AnnouncementTypeTitle.Droplet,
       label: "Droplet",
-      color: "bg-sky-100",
+      color: "bg-blue-100",
     },
     {
       value: AnnouncementTypeTitle.Playlist,

@@ -1,11 +1,10 @@
 import { getCurrentUser } from "@/lib/auth/session";
-import { redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { isAuthorizedUserAdmin, isContentCreator } from "@/lib/utils";
 import { getDroplets } from "@/lib/requests/droplet";
 import { PlaylistForm } from "@/components/playlists/playlist-form";
 import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
 import { getPlaylistBySlug } from "@/lib/requests/playlist";
-import { getAuthorByAuthorizedUserEmail } from "@/lib/requests/author";
 
 interface Props {
   params: Promise<{
@@ -20,10 +19,9 @@ export default async function EditPlaylistPage({ params }: Props) {
     !user?.email ||
     (!isContentCreator(user.roles) && !isAuthorizedUserAdmin(user.roles))
   )
-    return redirect("/");
+    return notFound();
 
   const authUser = await getAuthorizedUserByEmail(user.email);
-  const author = await getAuthorByAuthorizedUserEmail(user.email);
 
   const p = await params;
   const playlist = await getPlaylistBySlug(p.slug, {
@@ -46,29 +44,20 @@ export default async function EditPlaylistPage({ params }: Props) {
           ],
         },
       },
-      author: {
+      authors: {
         fields: ["id", "name"],
-        populate: {
-          authorizedUser: true,
-        },
+        populate: "*",
       },
     },
   });
 
-  console.log("returned playlist = ", playlist);
-
-  if (!playlist) {
-    return redirect("/drafts");
-  }
-
   // Verify the user has permission to edit this playlist
-  if ((playlist.author as any)?.authorizedUser.id !== authUser.id) {
-    console.log(
-      "Redirecting to drafts because author and current user aren't the same",
-    );
-    console.log(" playlist.author?.id = ", playlist.author?.id);
-    console.log(" authUser.id = ", authUser.id);
-    return redirect("/drafts");
+  if (
+    !playlist ||
+    (!playlist.authors?.some((author) => author.id === authUser.id) &&
+      !isAuthorizedUserAdmin(user.roles))
+  ) {
+    return notFound();
   }
 
   // Get all available droplets for selection

@@ -1,8 +1,4 @@
-import {
-  isAuthorizedUserAdmin,
-  isAuthorizedUserFaculty,
-  isContentCreator,
-} from "@/lib/utils";
+import { isAuthorizedUserAdmin, isContentCreator } from "@/lib/utils";
 import { GeneralConfig, User } from "@/types";
 export const originalNav = [
   {
@@ -10,6 +6,7 @@ export const originalNav = [
     label: "Explore",
   },
 ];
+
 export const getMainNav = (user: User) => {
   const mainNav = [
     {
@@ -22,34 +19,7 @@ export const getMainNav = (user: User) => {
     },
     {
       href: "/dashboard",
-      label: "My Content",
-    },
-    {
-      href: "/g/dashboard",
-      label: "My Groups",
-    },
-  ];
-  if (isAuthorizedUserAdmin(user.roles)) {
-    mainNav.push({
-      href: "/admin",
-      label: "Admin",
-    });
-  }
-  return mainNav;
-};
-export const getContentCreatorNav = (user: User) => {
-  const baseNav = [
-    {
-      href: "/feed",
-      label: "Feed",
-    },
-    {
-      href: "/explore",
-      label: "Explore",
-    },
-    {
-      href: "/dashboard",
-      label: "My Content",
+      label: "My Dashboard",
     },
     {
       href: "/g/dashboard",
@@ -57,28 +27,21 @@ export const getContentCreatorNav = (user: User) => {
     },
     {
       href: "/drafts",
-      label: "Drafts",
+      label: "My Content",
+      isHidden:
+        !isContentCreator(user.roles) && !isAuthorizedUserAdmin(user.roles),
     },
-  ];
-  if (isAuthorizedUserAdmin(user.roles)) {
-    baseNav.push({
+    {
       href: "/admin",
       label: "Admin",
-    });
-  }
-  // if (isAuthorizedUserFaculty(user.roles)) {
-  //   baseNav.push({
-  //     href: "/faculty",
-  //     label: "Faculty"
-  //   })
-  // }
-  return baseNav;
+      isHidden: !isAuthorizedUserAdmin(user.roles),
+    },
+  ];
+  return mainNav;
 };
+
 export const getGeneralConfig = (user?: User): GeneralConfig => ({
-  contentCreatorNav: user
-    ? isContentCreator(user.roles)
-      ? getContentCreatorNav(user)
-      : getMainNav(user)
+  mainNav: user
+    ? getMainNav(user).filter((item) => !item.isHidden)
     : originalNav,
-  mainNav: user ? getMainNav(user) : originalNav,
 });
