@@ -44,6 +44,7 @@ export type User = {
 };
 
 export type AuthorizedUser = {
+  groups: any;
   id: number;
   email: string;
   roles: AuthorizedUserRole[];
@@ -64,6 +65,7 @@ export type AuthorizedUser = {
   blocked: AuthorizedUser[];
   was_blocked: AuthorizedUser[];
   timeZone: TimeZone;
+  groups?: Group[];
 };
 
 export type Media = {
@@ -188,7 +190,7 @@ export type Enrollment = {
   isFirstTime: boolean;
   isArchived: boolean;
   notes: Note[];
-  dueDate: Date;
+  dueDate: DateTime;
 };
 
 export interface Playlist {
@@ -307,8 +309,7 @@ export type Note = {
   highlight?: Highlight;
 };
 
-
-export type TimeZone = 
+export type TimeZone =
   | "America/New_York"
   | "America/Chicago"
   | "America/Denver"

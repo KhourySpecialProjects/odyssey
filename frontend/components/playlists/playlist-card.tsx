@@ -3,6 +3,7 @@ import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { getDueDateBadgeColor } from "@/lib/utils";
 import { Clock } from "lucide-react";
 import { Badge } from "../ui/badge";
+import { DateTime } from "luxon";
 
 interface PlaylistCardProps {
   playlist: {
@@ -34,17 +35,15 @@ export function PlaylistCard({
   completedLessonIds,
   toDraft = false,
   dueDate,
-
 }: PlaylistCardProps) {
   const linkTo = toDraft ? `/draft/p/${playlist.slug}` : `/p/${playlist.slug}`;
 
   let daysUntil = 0;
   if (dueDate && dueDate !== "") {
-    const dueDateObject = new Date(dueDate);
-    const today = new Date();
-    const diffTime = dueDateObject.getTime() - today.getTime();
-    daysUntil = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    console.log("daysUntil", daysUntil);
+    const dueDateObject = DateTime.fromISO(dueDate);
+    const today = DateTime.local().startOf("day"); // Set to start of day
+    const diffDays = dueDateObject.startOf("day").diff(today, "days").days;
+    daysUntil = Math.ceil(diffDays);
   }
 
   return (
@@ -52,19 +51,32 @@ export function PlaylistCard({
     <Link href={linkTo}>
       <Card className="bg-slate-50 border-slate-200">
         <CardHeader>
-        <div className="pt-4">
-      {dueDate && dueDate !== "" && (
-        <Badge
-          className={getDueDateBadgeColor(daysUntil, true)}
-          variant="outline"
-        >
-          <Clock size={15} className="mr-1" />
-          {daysUntil > 0
+          <div className="pt-4">
+            {dueDate && dueDate !== "" && daysUntil > -2 && (
+              <Badge
+                className={getDueDateBadgeColor(daysUntil, true)}
+                variant="outline"
+              >
+                <Clock size={15} className="mr-1" />
+                {/* {daysUntil > 0
             ? `Due in ${daysUntil} ${daysUntil > 1 ? "days" : "day"}!`
-            : "This Droplet is Late!"}
-        </Badge>
-      )}
-      </div>
+            : "This Playlist is Late!"} */}
+
+                {(() => {
+                  if (
+                    DateTime.fromISO(dueDate).toISODate() ==
+                    DateTime.local().toISODate()
+                  ) {
+                    return "Due today!";
+                  } else if (daysUntil > 0) {
+                    return `Due in ${daysUntil} days`;
+                  } else {
+                    return "This Droplet is Late!";
+                  }
+                })()}
+              </Badge>
+            )}
+          </div>
           <CardTitle>{playlist.name}</CardTitle>
           <p className="text-sm text-muted-foreground">
             {playlist.droplets?.length || 0} droplets

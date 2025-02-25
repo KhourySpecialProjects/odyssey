@@ -265,10 +265,9 @@ export function GroupManagementForm({
       if (existingGroup) {
         console.log("form being submitted soon!");
         const response = await updateGroup(existingGroup.id, updateGroupData);
-        console.log("new group is ", await getGroupByID(existingGroup.id)
-        )
+        console.log("new group is ", await getGroupByID(existingGroup.id));
         await enrollUsers(await getGroupByID(existingGroup.id));
-        
+
         //router.push(`/g/${response.slug}`);
       } else {
         console.log("form being submitted soon!");

@@ -1510,7 +1510,6 @@ export async function deleteNote(id: number) {
   }
 }
 
-
 export async function setTimeZone(zone: string, userId: number) {
   try {
     const response = await fetch(

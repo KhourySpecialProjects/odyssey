@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import { setTimeZone } from "@/lib/actions";
 import { TimeZone } from "@/types";
@@ -47,16 +47,21 @@ const timeZones = [
 ];
 
 interface TimeZoneSelectorProps {
-    currentZone: string;
-    userId: number;
+  currentZone: string;
+  userId: number;
 }
 
-export default function TimeZoneSelector({currentZone, userId} : TimeZoneSelectorProps) {
-  const [selectedTimeZone, setSelectedTimeZone] = useState(currentZone || "America/New_York");
+export default function TimeZoneSelector({
+  currentZone,
+  userId,
+}: TimeZoneSelectorProps) {
+  const [selectedTimeZone, setSelectedTimeZone] = useState(
+    currentZone || "America/New_York",
+  );
 
   const handleChange = async (zone: string) => {
     console.log("zone ", zone);
-    
+
     await setTimeZone(zone, userId);
     setSelectedTimeZone(zone);
   };

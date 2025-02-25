@@ -25,7 +25,7 @@ interface ProcessedDueDate {
   name: string;
   daysUntil: string;
   slug: string;
-  type: 'droplet' | 'playlist';
+  type: "droplet" | "playlist";
 }
 
 interface DueDateAnnouncementsProps {
@@ -43,29 +43,31 @@ export default function DueDateAnnouncements({
   >([]);
 
   const [visibleDates, setVisibleDates] = useState<number | undefined>(5);
-  const [combinedDueDates, setCombinedDueDates] = useState<ProcessedDueDate[]>([]);
+  const [combinedDueDates, setCombinedDueDates] = useState<ProcessedDueDate[]>(
+    [],
+  );
 
   useEffect(() => {
-    const dropletDates = processedDropletDueDates.map(d => ({
+    const dropletDates = processedDropletDueDates.map((d) => ({
       name: d.dropletName,
       daysUntil: d.daysUntil,
       slug: d.dropletSlug,
-      type: 'droplet' as const
+      type: "droplet" as const,
     }));
 
-    const playlistDates = processedPlaylistDueDates.map(p => ({
+    const playlistDates = processedPlaylistDueDates.map((p) => ({
       name: p.playlistName,
       daysUntil: p.daysUntil,
       slug: p.playlistSlug,
-      type: 'playlist' as const
+      type: "playlist" as const,
     }));
 
-    setCombinedDueDates([...dropletDates, ...playlistDates]
-      .sort((a, b) => Number(a.daysUntil) - Number(b.daysUntil))
-      .filter(date => Number(date.daysUntil) > 0)
+    setCombinedDueDates(
+      [...dropletDates, ...playlistDates]
+        .sort((a, b) => Number(a.daysUntil) - Number(b.daysUntil))
+        .filter((date) => Number(date.daysUntil) >= 0),
     );
   }, [processedDropletDueDates, processedPlaylistDueDates]);
-
 
   useEffect(() => {
     const processDropletDueDates = async () => {
@@ -86,11 +88,12 @@ export default function DueDateAnnouncements({
 
           let daysUntil = "0";
           if (dueDate.baseDueDate && dueDate.baseDueDate !== "") {
-              const dueDateObject = DateTime.fromISO(dueDate.baseDueDate);
-              const today = DateTime.local().startOf('day');  // Set to start of day
-              const diffDays = dueDateObject.startOf('day').diff(today, 'days').days;
-              daysUntil = String(Math.ceil(diffDays));
-              console.log("daysUntil", daysUntil);
+            const dueDateObject = DateTime.fromISO(dueDate.baseDueDate);
+            const today = DateTime.local().startOf("day"); // Set to start of day
+            const diffDays = dueDateObject
+              .startOf("day")
+              .diff(today, "days").days;
+            daysUntil = String(Math.ceil(diffDays));
           }
 
           return {
@@ -104,7 +107,7 @@ export default function DueDateAnnouncements({
       setProcessedDropletDueDates(
         processed
           .sort((n1, n2) => Number(n1.daysUntil) - Number(n2.daysUntil))
-          .filter((dueDate) => Number(dueDate.daysUntil) > 0),
+          .filter((dueDate) => Number(dueDate.daysUntil) >= 0),
       );
     };
 
@@ -116,21 +119,14 @@ export default function DueDateAnnouncements({
           );
           if (!playlist) return null;
 
-          /*let daysUntil = "0";
-          if (dueDate.baseDueDate && dueDate.baseDueDate !== "") {
-            const dueDateObject = new Date(dueDate.baseDueDate);
-            const today = new Date();
-            const diffTime = dueDateObject.getTime() - today.getTime();
-            daysUntil = String(Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
-          }*/
-
           let daysUntil = "0";
           if (dueDate.baseDueDate && dueDate.baseDueDate !== "") {
-              const dueDateObject = DateTime.fromISO(dueDate.baseDueDate);
-              const today = DateTime.local().startOf('day');  // Set to start of day
-              const diffDays = dueDateObject.startOf('day').diff(today, 'days').days;
-              daysUntil = String(Math.ceil(diffDays));
-              console.log("daysUntil", daysUntil);
+            const dueDateObject = DateTime.fromISO(dueDate.baseDueDate);
+            const today = DateTime.local().startOf("day"); // Set to start of day
+            const diffDays = dueDateObject
+              .startOf("day")
+              .diff(today, "days").days;
+            daysUntil = String(Math.ceil(diffDays));
           }
 
           return {
@@ -144,13 +140,12 @@ export default function DueDateAnnouncements({
       setProcessedPlaylistDueDates(
         processed
           .sort((n1, n2) => Number(n1.daysUntil) - Number(n2.daysUntil))
-          .filter((dueDate) => Number(dueDate.daysUntil) > 0),
+          .filter((dueDate) => Number(dueDate.daysUntil) >= 0),
       );
     };
 
     processDropletDueDates();
     processPlaylistDueDates();
-
   }, [group.dropletDueDates, group.playlistDueDates]);
 
   const handleSeeMore = () => {
@@ -161,28 +156,34 @@ export default function DueDateAnnouncements({
     }
   };
 
-
   return (
     <div className="space-y-3 w-2/3">
       <h2 className="text-2xl font-semibold">Upcoming Due Dates</h2>
       <div className="space-y-5">
         {combinedDueDates.slice(0, visibleDates).map((dueDate, index) => (
-          <Link key={index} href={`/${dueDate.type === 'droplet' ? 'd' : 'p'}/${dueDate.slug}`}>
+          <Link
+            key={index}
+            href={`/${dueDate.type === "droplet" ? "d" : "p"}/${dueDate.slug}`}
+          >
             <div
               className={` p-2 rounded-md flex flex-row mb-1 hover:scale-105 ${getDueDateBadgeColor(Number(dueDate.daysUntil), false)}`}
             >
-              {dueDate.type === 'droplet' ? <Droplet /> : <ListVideo />}
+              {dueDate.type === "droplet" ? <Droplet /> : <ListVideo />}
               <p className="font-bold ml-1">{dueDate.name}</p>
-              <p>
-                &nbsp;is due in {dueDate.daysUntil}{" "}
-                {Number(dueDate.daysUntil) > 1 ? "days" : "day"}!
-              </p>
+              {Number(dueDate.daysUntil) > 0 ? (
+                <p>
+                  &nbsp;is due in {dueDate.daysUntil}{" "}
+                  {Number(dueDate.daysUntil) > 1 ? "days" : "day"}!
+                </p>
+              ) : (
+                <p>&nbsp;is due today!</p>
+              )}
             </div>
           </Link>
         ))}
       </div>
 
-      {combinedDueDates.length > 5 &&
+      {combinedDueDates.length > 5 && (
         <Button
           variant="link"
           size="xs"
@@ -192,7 +193,7 @@ export default function DueDateAnnouncements({
           {" "}
           {visibleDates ? `see more` : `see less`}...
         </Button>
-      }
+      )}
     </div>
   );
 }

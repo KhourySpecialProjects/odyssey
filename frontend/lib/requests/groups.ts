@@ -175,7 +175,7 @@ export async function getGroupByID(
   };
 
   revalidatePath("/dashboard");
-  revalidatePath("/explore")
+  revalidatePath("/explore");
 
   return await fetchAPI<Group[]>(path, {
     urlParams,
@@ -675,11 +675,8 @@ export async function enrollUsers(group: Group) {
           return await createEnrollmentFromEmail(enrollmentData, member.email);
           //return await createEnrollment(enrollmentData);
         }) || [];
-  
       }) || [];
-
     }) || [];
-
   } catch (error) {
     console.error("Error enrolling users:", error);
     throw error;
@@ -741,7 +738,7 @@ export async function assignDueDate(
           options: {
             method: "PUT",
             body: JSON.stringify({
-              data: { dueDate: date ? DateTime.fromISO(date).setZone(enrollment.authorizedUser.timeZone || "America/Los_Angeles").toISO() : null  },
+              data: { dueDate: date ? DateTime.fromISO(date) : null },
             }),
           },
         }),
@@ -758,14 +755,12 @@ export async function assignDueDate(
   }
 }
 
-
 export async function assignPlaylistDueDate(
   group: Group,
   playlist: Playlist,
   date: string | null,
 ) {
   try {
-
     // First, get the complete playlist data with droplets
     const fullPlaylist = await fetchAPI<Playlist>(`/playlists/${playlist.id}`, {
       urlParams: {
@@ -809,33 +804,18 @@ export async function assignPlaylistDueDate(
           authorizedUser: {
             id: { $in: group.members?.map((member) => member.id) || [] },
           },
-          droplet: { id: { $in: fullPlaylist.droplets?.map((droplet) => droplet.id) || [] } },
+          droplet: {
+            id: {
+              $in: fullPlaylist.droplets?.map((droplet) => droplet.id) || [],
+            },
+          },
         },
       },
     });
 
-    //console.log("number of enrollments is ", enrollments)
-    console.log("date is ", date)
-
-    const updatePromises = enrollments
-      //.filter((enrollment) => !enrollment.hasExtension)
-      .map((enrollment) =>
-        fetchAPI(`/enrollments/${enrollment.id}`, {
-          options: {
-            method: "PUT",
-            body: JSON.stringify({
-              data: { 
-                dueDate: date ? DateTime.fromISO(date).setZone(enrollment.authorizedUser.timeZone).toISO() : null 
-              },
-            }),
-          },
-        }),
-      );
-
     revalidatePath("/dashboard");
     revalidatePath("/explore");
 
-    await Promise.all(updatePromises);
     return { success: true };
   } catch (error) {
     console.error("Error assigning due date:", error);

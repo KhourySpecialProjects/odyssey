@@ -14,6 +14,7 @@ import { archiveDroplet } from "@/lib/actions";
 import { useRouter } from "next/navigation";
 import { Archive, Clock } from "lucide-react";
 import { getDueDateBadgeColor } from "@/lib/utils";
+import { DateTime } from "luxon";
 
 interface DropletTileProps {
   droplet: Droplet;
@@ -48,15 +49,12 @@ export function DropletTile({
         )
       : 0;
 
-  console.log("date is ", dueDate);
-
   let daysUntil = 0;
   if (dueDate && dueDate !== "") {
-    const dueDateObject = new Date(dueDate);
-    const today = new Date();
-    const diffTime = dueDateObject.getTime() - today.getTime();
-    daysUntil = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    console.log("daysUntil", daysUntil);
+    const dueDateObject = DateTime.fromISO(dueDate);
+    const today = DateTime.local().startOf("day"); // Set to start of day
+    const diffDays = dueDateObject.startOf("day").diff(today, "days").days;
+    daysUntil = Math.ceil(diffDays);
   }
 
   useEffect(() => {
@@ -160,15 +158,29 @@ export function DropletTile({
               <Badge variant="destructive">Draft</Badge>
             ) : null}
 
-            {dueDate && dueDate !== "" && (
+            {dueDate && dueDate !== "" && daysUntil > -2 && (
               <Badge
                 className={getDueDateBadgeColor(daysUntil, true)}
                 variant="outline"
               >
                 <Clock size={15} className="mr-1" />
-                {daysUntil > 0
+                {/* {daysUntil > 0
                   ? `Due in ${daysUntil} ${daysUntil > 1 ? "days" : "day"}!`
-                  : "This Droplet is Late!"}
+                  : "This Droplet is Late!"} */}
+                
+                {(() => {
+                  if (
+                    DateTime.fromISO(dueDate).toISODate() ==
+                    DateTime.local().toISODate()
+                  ) {
+                    return "Due today!";
+                  } else if (daysUntil > 0) {
+                    return `Due in ${daysUntil} days`;
+                  } else {
+                    return "This Droplet is Late!";
+                  }
+                })()}
+
               </Badge>
             )}
 

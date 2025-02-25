@@ -8,6 +8,7 @@ import {
   MessageHeader,
 } from "@/components/message";
 import { Group } from "@/types";
+import { useMemo } from "react";
 
 interface Lesson {
   id: number;
@@ -47,6 +48,14 @@ export async function UserPlaylistsGrid() {
             },
           },
         },
+      },
+      groups: {
+        populate: {
+          playlists: {
+            fields: ["id"],
+          },
+        },
+        fields: ["id", "playlistDueDates"],
       },
     },
   });
@@ -96,6 +105,21 @@ export async function UserPlaylistsGrid() {
     );
   }
 
+  const allDueDates = (authorizedUser.groups || [])
+    .flatMap((group: any) => group.playlistDueDates || [])
+    .reduce(
+      (acc: any, curr: any) => {
+        if (
+          !acc[curr.playlistId] ||
+          new Date(curr.baseDueDate) < new Date(acc[curr.playlistId])
+        ) {
+          acc[curr.playlistId] = curr.baseDueDate;
+        }
+        return acc;
+      },
+      {} as Record<number, string>,
+    );
+
   return (
     <div className="space-y-8">
       {customPlaylists.length > 0 && (
@@ -122,6 +146,7 @@ export async function UserPlaylistsGrid() {
                 key={playlist.id}
                 playlist={playlist}
                 completedLessonIds={completedLessonIds}
+                dueDate={allDueDates[playlist.id] || ""}
               />
             ))}
           </div>
