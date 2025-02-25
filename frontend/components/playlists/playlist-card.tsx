@@ -28,6 +28,7 @@ interface PlaylistCardProps {
   completedLessonIds: number[];
   toDraft?: boolean;
   dueDate?: string;
+  timeZone?: string;
 }
 
 export function PlaylistCard({
@@ -35,6 +36,7 @@ export function PlaylistCard({
   completedLessonIds,
   toDraft = false,
   dueDate,
+  timeZone,
 }: PlaylistCardProps) {
   const linkTo = toDraft ? `/draft/p/${playlist.slug}` : `/p/${playlist.slug}`;
 
@@ -45,6 +47,10 @@ export function PlaylistCard({
     const diffDays = dueDateObject.startOf("day").diff(today, "days").days;
     daysUntil = Math.ceil(diffDays);
   }
+
+  const finalDate = DateTime.fromISO(dueDate || "")
+    .setZone(timeZone || "America/New_York")
+    .toFormat("MM/dd hh:mm a");
 
   return (
     // <Link href={`/p/${playlist.slug}`}>
@@ -58,24 +64,24 @@ export function PlaylistCard({
                 variant="outline"
               >
                 <Clock size={15} className="mr-1" />
-                {/* {daysUntil > 0
-            ? `Due in ${daysUntil} ${daysUntil > 1 ? "days" : "day"}!`
-            : "This Playlist is Late!"} */}
 
                 {(() => {
-                  if (
-                    DateTime.fromISO(dueDate).toISODate() ==
-                    DateTime.local().toISODate()
-                  ) {
+                  if (DateTime.fromISO(dueDate).toISODate() == DateTime.local().toISODate()) {
                     return "Due today!";
                   } else if (daysUntil > 0) {
-                    return `Due in ${daysUntil} days`;
+                    return timeZone
+                      ? `Due ${finalDate}`
+                      : `Due in ${daysUntil} days`;
                   } else {
                     return "This Droplet is Late!";
                   }
                 })()}
+
+
+
               </Badge>
             )}
+
           </div>
           <CardTitle>{playlist.name}</CardTitle>
           <p className="text-sm text-muted-foreground">

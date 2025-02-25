@@ -75,6 +75,7 @@ export function GroupDashboard({
                       (dueDate) => dueDate.playlistId === playlist.id,
                     )?.baseDueDate || ""
                   }
+                  timeZone={authUser.timeZone}
                 />
               ))}
             </div>
