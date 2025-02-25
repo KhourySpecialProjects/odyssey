@@ -714,7 +714,7 @@ export async function assignDueDate(
       },
     });
 
-    // Update all member enrollments that don't have extensions
+    // Update all member enrollments
     const enrollments = await fetchAPI<any[]>(`/enrollments`, {
       urlParams: {
         filters: {
@@ -728,11 +728,11 @@ export async function assignDueDate(
             fields: ["timeZone"],
           },
         },
+        fields: ["dueDate"]
       },
     });
 
     const updatePromises = enrollments
-      .filter((enrollment) => !enrollment.hasExtension)
       .map((enrollment) =>
         fetchAPI(`/enrollments/${enrollment.id}`, {
           options: {
