@@ -9,11 +9,13 @@ import {
 } from "../ui/dialog";
 import { Button } from "../ui/button";
 import Link from "next/link";
-import { Github, Linkedin } from "lucide-react";
+import { Github, Linkedin, User2Icon } from "lucide-react";
 import { FriendCompletedDroplets } from "./friend-completed-droplets";
 import { startTransition, useState } from "react";
 import { toast } from "sonner";
 import { BlockUser, removeFriend } from "@/lib/requests/friends";
+import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
+import { getInitials } from "@/lib/utils";
 
 export function UserBlock({
   user,
@@ -37,22 +39,28 @@ export function UserBlock({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button size="sm" variant="outline">
+        <Button size="sm" className="bg-sky-300 text-black hover:bg-sky-400">
           View Profile
         </Button>
       </DialogTrigger>
 
       <DialogContent>
         <DialogHeader>
-          {user.profilePhoto && (
-            <div className="flex justify-center items-center">
-              <img
-                src={user.profilePhoto}
-                alt={`${user.firstName}'s profile`}
-                className="w-20 h-20 rounded-full object-cover"
-              />
-            </div>
-          )}
+          <div className="flex justify-center items-center">
+            <Avatar
+              variant="round"
+              className="w-20 h-20 rounded-full justify-center items-center"
+            >
+              <AvatarImage src={user?.profilePhoto || undefined} />
+              <AvatarFallback>
+                {user?.firstName ? (
+                  getInitials(user.firstName + " " + user.lastName)
+                ) : (
+                  <User2Icon />
+                )}
+              </AvatarFallback>
+            </Avatar>
+          </div>
           <DialogTitle style={{ fontSize: "2rem", textAlign: "center" }}>
             {user.firstName} {user.lastName}
           </DialogTitle>
@@ -72,15 +80,17 @@ export function UserBlock({
               </Link>
             )}
           </div>
-          <DialogDescription>Email: {user.email}</DialogDescription>
-          {user.bio && <DialogDescription>Bio: {user.bio}</DialogDescription>}
+          {user.bio && <DialogDescription>{user.bio}</DialogDescription>}
           <DialogDescription>Completed Droplets: </DialogDescription>
           <FriendCompletedDroplets friend={user} />
           <div
             className={`inline-flex items-center gap-2 ${curUser == user || curUser.blocked.includes(user) ? "visibility: hidden" : "visibility: visible"}`}
             onClick={handleBlock}
           >
-            <Button size="sm" variant="destructive">
+            <Button
+              size="sm"
+              className="bg-red-600 text-white hover:bg-red-700"
+            >
               Block user
             </Button>
           </div>

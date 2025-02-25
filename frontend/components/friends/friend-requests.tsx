@@ -1,12 +1,9 @@
 "use client";
 
-import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
 import { FriendRequestBlock } from "./friend-request-block";
-import { getCurrentUser } from "@/lib/auth/session";
-import { redirect } from "next/navigation";
 import { FriendRequestFeedBlock } from "./friend-request-feed-block";
 import { MoveLeft, MoveRight } from "lucide-react";
-import { useTransition, useState } from "react";
+import { useState } from "react";
 import { AuthorizedUser } from "@/types";
 
 export function FriendRequests({
@@ -47,14 +44,14 @@ export function FriendRequests({
   };
 
   return (
-    <div className="flex flex-col relative">
-      <section>
+    <div className="flex flex-col ">
+      <section className="mt-4">
         <h1 className="font-bold">Friend Requests</h1>
         <p>A list of your friend requests.</p>
 
         <div className="p-4 mt-4 rounded-md bg-slate-100">
           {friendRequests.length > 0 ? (
-            <ul className="divide-y divide-slate-200 dark:divide-slate-700 md:space-y-4">
+            <ul className="grid grid-cols-1 auto-cols-auto divide-y divide-slate-200 dark:divide-slate-700 md:space-y-4">
               {noProfile
                 ? paginatedRequests.map((friendship) => (
                     <FriendRequestFeedBlock

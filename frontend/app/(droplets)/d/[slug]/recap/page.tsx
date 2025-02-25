@@ -7,9 +7,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { StarRating } from "@/components/ui/rating-stars";
 import { Confetti } from "./confetti";
-
 import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
-
 import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
 import { getServerSession } from "next-auth";
 import { CompletedDropletBlock } from "@/components/droplets/completed-droplet-block";

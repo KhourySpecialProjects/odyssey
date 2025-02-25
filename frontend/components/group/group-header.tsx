@@ -1,8 +1,12 @@
+"use client";
+
 import { Group } from "@/types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Clock, PencilIcon } from "lucide-react";
+import { Clock, PencilIcon} from "lucide-react";
 import Link from "next/link";
+import { deleteGroup } from "@/lib/actions";
+import { useRouter } from "next/navigation";
 
 interface GroupHeaderProps {
   group: Group;
@@ -10,6 +14,14 @@ interface GroupHeaderProps {
 }
 
 export function GroupHeader({ group, canEdit }: GroupHeaderProps) {
+  const router = useRouter();
+
+  const handleDelete = async () => {
+    const response = await deleteGroup(group.id);
+    if (response.ok && !response.error) {
+      router.replace(`/g/dashboard`);
+    }
+  };
   return (
     <div className="flex justify-between items-start">
       <div className="space-y-4">

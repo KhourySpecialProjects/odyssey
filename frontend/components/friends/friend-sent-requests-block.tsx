@@ -3,10 +3,12 @@
 import { Button } from "@/components/ui/button";
 import { AuthorizedUser } from "@/types";
 import { startTransition, useState } from "react";
-import { X } from "lucide-react";
+import { User2Icon, X } from "lucide-react";
 import { toast } from "sonner";
 import { cancelFriendRequest } from "@/lib/requests/friends";
 import { UserBlock } from "./user-block";
+import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
+import { getInitials } from "@/lib/utils";
 
 export function FriendSentRequestsBlock({
   user,
@@ -30,24 +32,22 @@ export function FriendSentRequestsBlock({
   return (
     <li className="py-0 [&:not(:first-child)]:pt-3">
       <div className="flex items-center space-x-4">
-        {request.profilePhoto && (
-          <img
-            src={request.profilePhoto}
-            alt={`${request.firstName}'s profile`}
-            className="w-12 h-12 rounded-full object-cover"
-          />
-        )}
+        <Avatar variant="round" className="border border-sky-800 w-12 h-12">
+          <AvatarImage src={request?.profilePhoto || undefined} />
+          <AvatarFallback>
+            {request?.firstName ? (
+              getInitials(request.firstName + " " + request.lastName)
+            ) : (
+              <User2Icon />
+            )}
+          </AvatarFallback>
+        </Avatar>
         <div className="flex-1 min-w-0">
           <p className="font-medium truncate text-slate-900 dark:text-white">
             {request.firstName && request.lastName
               ? `${request.firstName} ${request.lastName}`
               : request.email}
           </p>
-          {request.bio && (
-            <p className="text-sm truncate text-slate-500 dark:text-slate-400">
-              {request.bio}
-            </p>
-          )}
         </div>
         <UserBlock user={request} curUser={user} />
         <Button variant="destructive" size="sm" onClick={handleReject}>

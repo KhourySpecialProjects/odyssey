@@ -25,7 +25,6 @@ const CustomImage = Image.extend({
                     const imageUrl = node.attrs.src;
                     // Call the onImageDelete callback
                     const fileName = imageUrl.split("/").pop();
-                    console.log(fileName);
                     deleteImage(fileName);
                   }
                 });

@@ -179,6 +179,18 @@
         "Africa/Nairobi"
       ],
       "default": "America/New_York"
+    },
+    "droplets": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::droplet.droplet",
+      "inversedBy": "authorized_users"
+    },
+    "created_playlists": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::playlist.playlist",
+      "inversedBy": "authors"
     }
   }
 }

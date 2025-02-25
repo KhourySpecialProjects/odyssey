@@ -1,6 +1,5 @@
 import { useCallback } from "react";
 import { Droplet } from "@/types/index.d";
-import DraggableDropletWideTile from "./draggable-droplet-wide-tile";
 import { useDrop } from "react-dnd";
 import { cn } from "@/lib/utils";
 import { DraggableTileListClient } from "./draggable_tile_list_client";

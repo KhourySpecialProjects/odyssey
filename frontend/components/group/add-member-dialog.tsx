@@ -52,8 +52,6 @@ export function AddMemberDialog({
     }
   };
 
-  // const emailCount = parseEmails(emailInput).length;
-
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
@@ -64,7 +62,6 @@ export function AddMemberDialog({
       </DialogTrigger>
       <DialogContent className="max-w-xl">
         {" "}
-        {/* Increased width from max-w-md to max-w-xl */}
         <DialogHeader>
           <DialogTitle>Add Members to Group</DialogTitle>
         </DialogHeader>
