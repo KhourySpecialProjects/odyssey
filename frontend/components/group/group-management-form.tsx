@@ -293,6 +293,7 @@ export function GroupManagementForm({
   };
 
   const handleGroupPost = async () => {
+    setIsOpen(false)
     try {
       if (existingGroup) {
         await createGroupAnnouncement(
@@ -580,14 +581,14 @@ export function GroupManagementForm({
               onRemove={handlePlaylistRemove}
             />
           ) : (
-            <div className="p-8 text-center text-slate-500 border border-dashed rounded-lg">
+            <div className="p-8 text-center text-slate-500 border border-dashed dark:border-slate-500 rounded-lg">
               No playlists have been added to this group yet
             </div>
           )}
         </ContentSection>
 
         <div className="flex justify-end gap-4">
-          <Button type="button" variant="outline" onClick={handleCancel}>
+          <Button type="button" variant="outline" className="dark:text-slate-300" onClick={handleCancel}>
             Cancel
           </Button>
           {/* <Button variant="destructive" className="gap-2" onClick={handleDelete}>
@@ -598,6 +599,7 @@ export function GroupManagementForm({
             type="submit"
             disabled={isSubmitting}
             onClick={() => setIsOpen(true)}
+            className="dark:bg-slate-100"
           >
             {isSubmitting
               ? "Saving..."
@@ -616,7 +618,7 @@ export function GroupManagementForm({
 
               <div className="flex flex-col gap-4 mt-4">
                 <Button onClick={handleGroupPost}>Share</Button>
-                <Button onClick={() => router.back()}>Not Now</Button>
+                <Button onClick={() => {setIsOpen(false); router.back()}}>Not Now</Button>
               </div>
             </DialogContent>
           </Dialog>

@@ -112,6 +112,7 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
           const span = document.createElement("span");
           span.style.borderRadius = "8px";
           span.style.backgroundColor = highlight.color;
+          span.style.color = "black";
 
           try {
             range.surroundContents(span);
@@ -321,9 +322,9 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
   return (
     <div className="">
       {block.id === genericBlocks[0] && enrollmentId && (
-        <div className="fixed top-8 sm:top-4 xs:top-4 right-0 lg:right-1/4 z-30 transform -translate-x-1/2 bg-blue-100 p-2 rounded shadow-lg">
-          <div className="relative group">
-            <CircleHelp className="cursor-pointer" />
+        <div className="fixed top-8 sm:top-4 dark:bg-blue-100 dark:text-black xs:top-4 right-0 lg:right-1/4 z-30 transform -translate-x-1/2 bg-blue-100 p-2 rounded shadow-lg">
+          <div className="relative group ">
+            <CircleHelp className="cursor-pointer " />
             <div className="absolute left-0 transform -translate-x-[100%] top-full mt-2 w-max gap-2 bg-white p-4 rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center pointer-events-none">
               <p>Highlighting Instructions:</p>
               <ul className="list-disc pl-4">
@@ -352,7 +353,7 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
         </div>
       )}
       {block.id === genericBlocks[0] && enrollmentId && (
-        <div className="fixed lg:top-16 xs:top-28 sm:top-28 md:top-28 z-20 right-0 lg:right-1/4 transform -translate-x-1/2 bg-blue-100 p-2 rounded shadow-lg group">
+        <div className="fixed lg:top-16 xs:top-28 dark:text-black sm:top-28 md:top-28 z-20 right-0 lg:right-1/4 transform -translate-x-1/2 bg-blue-100 p-2 rounded shadow-lg group">
           <div className="relative">
             <Pen className="cursor-pointer" />
 
@@ -426,7 +427,7 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
         ref={contentRef}
         onMouseUp={(e) => handleMouseUp()}
         onMouseDown={(e) => handleMouseDown(e)}
-        className="mt-2 prose prose-lg prose-sky prose-table:block prose-table:overflow-x-scroll select-text"
+        className="mt-2 prose prose-lg prose-sky prose-table:block prose-code:text-inherit prose-table:overflow-x-scroll select-text dark:text-slate-300 prose-headings:text-inherit prose-strong:text-inherit"
         dangerouslySetInnerHTML={{ __html: block.content }}
       ></div>
     </div>

@@ -101,7 +101,6 @@ export default async function DropletRoute({ params }: Props) {
             </p>
           ) : null}
         </div>
-      </GradientBackground>
 
       <div className="w-full max-w-2xl py-4 mx-auto space-y-8 lg:py-8 md:space-y-12">
         {droplet.overview ? (
@@ -112,7 +111,7 @@ export default async function DropletRoute({ params }: Props) {
 
             <div className="w-full p-8 mt-4 border rounded-md bg-slate-50 dark:bg-slate-800 border-slate-200">
               <div
-                className="mx-auto prose prose-sky dark:text-slate-300"
+                className="mx-auto prose prose-sky prose-code:text-inherit prose-strong:text-inherit prose-headings:text-inherit dark:text-slate-300"
                 dangerouslySetInnerHTML={{ __html: droplet.overview }}
               ></div>
             </div>
@@ -273,6 +272,7 @@ export default async function DropletRoute({ params }: Props) {
           </section>
         ) : null}
       </div>
+      </GradientBackground>
     </>
   );
 }

@@ -120,7 +120,7 @@ export function DropletTile({
   }
 
   return (
-    <li className="transition-colors border rounded-md border-slate-200 dark:border-slate-500 hover:border-slate-300 bg-slate-50 dark:bg-slate-800 h-full">
+    <li className="transition-colors border rounded-md border-slate-200 dark:border-slate-500 hover:border-slate-300 bg-slate-50 dark:bg-slate-800 h-full p-2">
       <Button
         size="sm"
         onClick={changeVisibility}

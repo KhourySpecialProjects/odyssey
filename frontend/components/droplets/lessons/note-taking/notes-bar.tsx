@@ -246,7 +246,7 @@ export function NotesBar({
                 disabled={noteDisabled}
               />
               <Button
-                className="px-auto mb-1 bg-red-700 p-0 hover:bg-red-900 trash-icon"
+                className="px-auto mb-1 bg-red-700 dark:bg-red-700 p-0 hover:bg-red-900 dark:hover:bg-red-900 trash-icon"
                 variant="default"
                 size="sm"
                 onClick={() => {

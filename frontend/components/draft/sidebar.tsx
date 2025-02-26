@@ -101,7 +101,7 @@ export function Sidebar({
 
   const classes = {
     link: "flex items-center p-2 rounded-lg text-slate-900 dark:text-white hover:bg-slate-100 dark:hover:bg-slate-700 group transition-colors",
-    activeLink: "font-bold bg-slate-500",
+    activeLink: "font-bold dark:bg-slate-500 light:bg-sky-100",
   };
 
   // Handle window resize
