@@ -39,7 +39,10 @@ export function UserBlock({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button size="sm" className="bg-sky-300 text-black hover:bg-sky-400 dark:bg-sky-300 dark:hover:bg-sky-400">
+        <Button
+          size="sm"
+          className="bg-sky-300 text-black hover:bg-sky-400 dark:bg-sky-300 dark:hover:bg-sky-400"
+        >
           View Profile
         </Button>
       </DialogTrigger>
@@ -52,7 +55,7 @@ export function UserBlock({
               className="w-20 h-20 rounded-full justify-center items-center"
             >
               <AvatarImage src={user?.profilePhoto || undefined} />
-              <AvatarFallback>
+              <AvatarFallback className="text-2xl">
                 {user?.firstName ? (
                   getInitials(user.firstName + " " + user.lastName)
                 ) : (

@@ -111,7 +111,7 @@ export function SortedDropletsGrid({
             variant="outline"
             onClick={handlePrevPage}
             disabled={currentPage === 1}
-            className={`${currentPage === 1 ? "visibility: hidden" : "visibility: visible"} dark:bg-white dark:text-black`}
+            className={`${currentPage === 1 ? "visibility: hidden" : "visibility: visible"} dark:bg-slate-300 dark:text-black`}
           >
             Previous
           </Button>
@@ -120,7 +120,7 @@ export function SortedDropletsGrid({
             variant="outline"
             onClick={handleNextPage}
             disabled={currentPage === totalPages}
-            className={`${currentPage === totalPages ? "visibility: hidden" : "visibility: visible"} dark:bg-white dark:text-black`}
+            className={`${currentPage === totalPages ? "visibility: hidden" : "visibility: visible"} dark:bg-slate-300 dark:text-black`}
           >
             Next
           </Button>

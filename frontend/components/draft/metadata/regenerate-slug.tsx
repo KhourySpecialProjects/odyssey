@@ -26,7 +26,11 @@ export function RegenerateSlugButton({
   };
 
   return (
-    <Button variant="outline" onClick={() => regenerateSlug(dropletId)}>
+    <Button
+      variant="outline"
+      className="dark:bg-slate-800 dark:outline dark:outline-slate-500"
+      onClick={() => regenerateSlug(dropletId)}
+    >
       Regenerate Slug
     </Button>
   );

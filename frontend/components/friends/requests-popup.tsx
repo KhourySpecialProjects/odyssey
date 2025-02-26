@@ -16,8 +16,8 @@ export function RequestsPopup({
 
   return (
     <div className="flex flex-col relative">
-      <h1 className="font-bold">Friend Requests</h1>
-      <p >A list of your friend requests.</p>
+      <h1 className="font-bold dark:text-slate-300">Friend Requests</h1>
+      <p className="dark:text-slate-300">A list of your friend requests.</p>
       <div className="p-4 mt-4 rounded-md bg-slate-100">
         {friendships.length > 0 ? (
           <ul className="divide-y divide-slate-200 dark:divide-slate-700 md:space-y-4">

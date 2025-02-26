@@ -32,10 +32,10 @@ export function AuthorizedUserClient({
   };
 
   return (
-    <div className="p-4 mt-4 rounded-md bg-slate-100">
+    <div className="p-4 mt-4 rounded-md bg-slate-100 dark:bg-slate-800">
       {authorizedUsers.length > 0 ? (
         <>
-          <ul className="divide-y divide-slate-200 dark:divide-slate-700 md:space-y-4">
+          <ul className="divide-y divide-slate-200 dark:divide-slate-300 md:space-y-4">
             {paginatedUsers.map((user) => (
               <AuthorizedUserBlock user={user} key={user.id} />
             ))}
@@ -48,7 +48,7 @@ export function AuthorizedUserClient({
                 variant="outline"
                 onClick={handlePrevPage}
                 disabled={currentPage === 1}
-                className={`${currentPage === 1 ? "visibility: hidden" : "visibility: visible"}`}
+                className={`${currentPage === 1 ? "visibility: hidden" : "visibility: visible"} dark:bg-slate-300 dark:text-black`}
               >
                 Previous
               </Button>
@@ -57,7 +57,7 @@ export function AuthorizedUserClient({
                 variant="outline"
                 onClick={handleNextPage}
                 disabled={currentPage === totalPages}
-                className={`${currentPage === totalPages ? "visibility: hidden" : "visibility: visible"}`}
+                className={`${currentPage === totalPages ? "visibility: hidden" : "visibility: visible"} dark:bg-slate-300 dark:text-black`}
               >
                 Next
               </Button>

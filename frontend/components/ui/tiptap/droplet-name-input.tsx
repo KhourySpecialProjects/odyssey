@@ -18,7 +18,8 @@ export function DropletNameInput({
       Heading.configure({
         levels: [1],
         HTMLAttributes: {
-          class: "text-6xl font-black text-slate-900",
+          class:
+            "text-6xl font-black text-slate-900 dark:bg-slate-800 dark:text-white",
         },
       }),
       Text,

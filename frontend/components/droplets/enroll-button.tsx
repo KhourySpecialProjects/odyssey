@@ -80,6 +80,7 @@ export function EnrollButton({ droplet, isEnrolled }: EnrollButtonProps) {
         }
       }}
       variant={isEnrolled ? "secondary" : "default"}
+      className="dark:bg-slate-300"
     >
       {isEnrolled ? "Unenroll" : "Enroll and Continue"}
     </Button>

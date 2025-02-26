@@ -13,10 +13,12 @@ type GroupCardProps = {
 export function GroupCard({ group, role, roleColors }: GroupCardProps) {
   return (
     <Link href={`/g/${group.slug}`}>
-      <Card className="hover:shadow-md transition-shadow">
+      <Card className="hover:shadow-md transition-shadow bg-slate-50 dark:bg-slate-800 border rounded-md border-slate-200 dark:border-slate-500 hover:border-slate-300">
         <CardHeader>
           <div className="flex items-start justify-between">
-            <h3 className="text-lg font-semibold">{group.groupName}</h3>
+            <h3 className="text-lg font-semibold dark:text-slate-300">
+              {group.groupName}
+            </h3>
             <Badge className={roleColors[role]}>{role}</Badge>
           </div>
         </CardHeader>

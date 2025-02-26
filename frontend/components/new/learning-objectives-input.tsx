@@ -66,7 +66,7 @@ export function LearningObjectivesInput({
               value={objective}
               placeholder="New Learning Objective"
               autoComplete="off"
-              className="w-full text-sm rounded-md border-1 border-slate-200 outline-0 ring-0 focus-visible:ring-0 focus-visible:outline-2 px-3 py-2 "
+              className="w-full text-sm rounded-md border-1 dark:bg-black border-slate-200 outline-0 focus:outline-none focus:ring-0 dark:focus:outline-none dark:focus:ring-0 ring-0 focus:border-slate-200 focus-visible:outline-none focus-visible:ring-0 px-3 py-2"
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
                   e.preventDefault();

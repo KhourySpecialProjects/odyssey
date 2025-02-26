@@ -7,7 +7,9 @@ import Link from "next/link";
 export function CreateDroplet() {
   return (
     <Link href="/new/droplet">
-      <Button after={<PlusIcon />}>Create Droplet</Button>
+      <Button className="dark:bg-slate-300" after={<PlusIcon />}>
+        Create Droplet
+      </Button>
     </Link>
   );
 }

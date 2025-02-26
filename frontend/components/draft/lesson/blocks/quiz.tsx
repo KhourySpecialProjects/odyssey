@@ -95,7 +95,11 @@ export function QuizEditor({
   return (
     <div className="w-full max-w-2xl">
       <div className="flex justify-between items-center mb-4">
-        <h3 className="text-xl font-bold">Multiple Choice Quiz</h3>
+        <h3 className="text-xl font-bold">
+          {questions[0].answerOptions[0].content === "True"
+            ? "True/False Quiz"
+            : "Multiple Choice Quiz"}
+        </h3>
         <Button variant="ghost" size="sm" onClick={deleteBlock}>
           <TrashIcon className="w-4 h-4" />
         </Button>

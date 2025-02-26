@@ -11,10 +11,10 @@ export async function BlockedUsers() {
 
   return (
     <section className="mt-4">
-      <h1 className="font-bold">Blocked Users</h1>
-      <p>A list of people you have blocked.</p>
+      <h1 className="font-bold dark:text-slate-300">Blocked Users</h1>
+      <p className="dark:text-slate-300">A list of people you have blocked.</p>
 
-      <div className="p-4 mt-4 rounded-md bg-slate-100">
+      <div className="p-4 mt-4 rounded-md bg-slate-100 dark:bg-slate-800">
         {blockedUsers.length > 0 ? (
           <ul className="divide-y divide-slate-200 dark:divide-slate-700 md:space-y-4">
             {blockedUsers.map((block) => (
@@ -26,7 +26,7 @@ export async function BlockedUsers() {
             ))}
           </ul>
         ) : (
-          <p className="dark:text-black">You have no blocked users</p>
+          <p className="dark:text-slate-300">You have no blocked users</p>
         )}
       </div>
     </section>

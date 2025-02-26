@@ -68,7 +68,7 @@ export function FriendRequestBlock({
           </AvatarFallback>
         </Avatar>
         <div className="flex-1 min-w-0">
-          <p className="font-medium truncate text-slate-900 dark:text-black">
+          <p className="font-medium truncate text-slate-900 dark:text-slate-300">
             {request.firstName && request.lastName
               ? `${request.firstName} ${request.lastName}`
               : request.email}

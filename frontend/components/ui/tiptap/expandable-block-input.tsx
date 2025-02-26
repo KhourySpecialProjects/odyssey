@@ -55,7 +55,7 @@ export function ExpandableBlockInput({
     editorProps: {
       attributes: {
         class:
-          "prose prose-sky  p-2 max-w-full min-h-32 border rounded-b-md border-slate-200 hover:shadow focus:shadow-lg outline-none",
+          "prose prose-sky  p-2 max-w-full min-h-32 border rounded-b-md border-slate-200 dark:border-slate-500 hover:shadow focus:shadow-lg outline-none",
       },
       handleKeyDown: (view: any, event: KeyboardEvent) => {
         if (event.key === "Tab") {

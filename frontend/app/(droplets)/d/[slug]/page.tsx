@@ -92,11 +92,11 @@ export default async function DropletRoute({ params }: Props) {
               ></StarRating>
             ) : null}
           </div>
-          <h1 className="mt-3 text-6xl font-black text-slate-900">
+          <h1 className="mt-3 text-6xl font-black text-slate-900 dark:text-white">
             {droplet.name}
           </h1>
           {droplet.description ? (
-            <p className="mt-3 text-slate-500 text-pretty md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed dark:text-slate-400">
+            <p className="mt-3 text-slate-500 text-pretty md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed dark:text-slate-300">
               {droplet.description}
             </p>
           ) : null}
@@ -106,11 +106,13 @@ export default async function DropletRoute({ params }: Props) {
       <div className="w-full max-w-2xl py-4 mx-auto space-y-8 lg:py-8 md:space-y-12">
         {droplet.overview ? (
           <section>
-            <h2 className="text-2xl font-bold text-slate-900">Overview</h2>
+            <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
+              Overview
+            </h2>
 
-            <div className="w-full p-8 mt-4 border rounded-md bg-slate-50 border-slate-200">
+            <div className="w-full p-8 mt-4 border rounded-md bg-slate-50 dark:bg-slate-800 border-slate-200">
               <div
-                className="mx-auto prose prose-sky"
+                className="mx-auto prose prose-sky dark:text-slate-300"
                 dangerouslySetInnerHTML={{ __html: droplet.overview }}
               ></div>
             </div>
@@ -119,7 +121,7 @@ export default async function DropletRoute({ params }: Props) {
 
         {droplet.prerequisites && droplet.prerequisites.length > 0 ? (
           <section>
-            <h2 className="text-2xl font-bold text-slate-900">
+            <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
               Recommended Background
             </h2>
             <p className="text-slate-500">
@@ -135,19 +137,19 @@ export default async function DropletRoute({ params }: Props) {
         ) : null}
 
         <section>
-          <h2 className="text-2xl font-bold text-slate-900">
+          <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
             Learning Objectives
           </h2>
           <p className="text-slate-500">
             By completing this Droplet, you should:
           </p>
 
-          <div className="mt-4 border rounded-md bg-slate-50 border-slate-200">
-            <ul className="flex flex-col divide-y divide-slate-200">
+          <div className="mt-4 border rounded-md bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-500">
+            <ul className="flex flex-col divide-y divide-slate-200 dark:divide-slate-500">
               {droplet.learningObjectives.map((objective) => (
                 <li
                   key={`objective-${objective.id}`}
-                  className="inline-flex items-center gap-2 px-4 py-3 leading-snug"
+                  className="inline-flex items-center gap-2 px-4 py-3 leading-snug dark:text-slate-300"
                 >
                   <GoalIcon className="w-5 h-5 mr-0.5 shrink-0" />
                   {objective.objective}
@@ -158,7 +160,7 @@ export default async function DropletRoute({ params }: Props) {
         </section>
 
         <section>
-          <h2 className="text-2xl font-bold text-slate-900">
+          <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
             What&rsquo;s Inside
           </h2>
           <p className="text-slate-500">
@@ -166,8 +168,8 @@ export default async function DropletRoute({ params }: Props) {
           </p>
 
           {droplet.droplet_lessons && droplet.droplet_lessons.length > 0 ? (
-            <div className="mt-4 border rounded-md bg-slate-50 border-slate-200">
-              <ul className="flex flex-col divide-y divide-slate-200">
+            <div className="mt-4 border rounded-md bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-500">
+              <ul className="flex flex-col divide-y divide-slate-200 dark:divide-slate-500">
                 {droplet.droplet_lessons
                   .sort((a, b) => a.orderIndex - b.orderIndex)
                   .map((dropletLesson) => {
@@ -175,7 +177,7 @@ export default async function DropletRoute({ params }: Props) {
                     return (
                       <li
                         key={`lesson-${lesson.id}`}
-                        className="inline-flex items-center gap-2 px-4 py-3 leading-snug"
+                        className="inline-flex items-center gap-2 px-4 py-3 leading-snug dark:text-slate-300"
                       >
                         {lesson.type === "activity" ? (
                           <HammerIcon className="w-5 h-5 mr-0.5 shrink-0" />
@@ -224,14 +226,14 @@ export default async function DropletRoute({ params }: Props) {
         </section>
 
         <section>
-          <h2 className="text-2xl font-bold text-slate-900">
+          <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
             About the Authors
           </h2>
-          <p className="text-slate-500">
+          <p className="text-slate-500 dark:text-slate-300">
             This Droplet was written by the following individuals:
           </p>
 
-          <ul className="flex flex-col mt-4 border divide-y rounded-md bg-slate-50 border-slate-200 divide-slate-200">
+          <ul className="flex flex-col mt-4 border divide-y rounded-md bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-500 divide-slate-200 dark:divide-slate-500">
             {droplet.authorized_users?.map((author) => (
               <li key={`author-${author.id}`} className="inline-flex gap-4 p-4">
                 <Avatar variant="round" className="border border-sky-800">
@@ -255,7 +257,9 @@ export default async function DropletRoute({ params }: Props) {
                   </span>
 
                   {author.bio ? (
-                    <p className="text-sm text-slate-600">{author.bio}</p>
+                    <p className="text-sm text-slate-600 dark:text-slate-300">
+                      {author.bio}
+                    </p>
                   ) : null}
                 </div>
               </li>

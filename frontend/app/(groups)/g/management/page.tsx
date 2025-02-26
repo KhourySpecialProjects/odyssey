@@ -18,8 +18,11 @@ export default async function GroupManagementPage({ searchParams }: Props) {
   const user = await getCurrentUser();
   if (
     !user?.email ||
-    !(isContentCreator(user.roles) || isAuthorizedUserAdmin(user.roles)) ||
-    isAuthorizedUserFaculty(user.roles)
+    !(
+      isContentCreator(user.roles) ||
+      isAuthorizedUserAdmin(user.roles) ||
+      isAuthorizedUserFaculty(user.roles)
+    )
   ) {
     return notFound();
   }
@@ -46,10 +49,10 @@ export default async function GroupManagementPage({ searchParams }: Props) {
   return (
     <div className="w-full max-w-4xl p-8 mx-auto space-y-12">
       <div className="text-center">
-        <h1 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
+        <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-4xl">
           {group ? "Edit Group" : "Create New Group"}
         </h1>
-        <p className="mt-4 text-lg leading-normal text-slate-600 text-balance">
+        <p className="mt-4 text-lg leading-normal text-slate-600 dark:text-slate-300 text-balance">
           {group
             ? "Modify your group settings and manage members"
             : "Set up a new group and invite members"}

@@ -51,7 +51,11 @@ export function Filter({
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button variant="outline" size="sm" className="gap-0.25 border-dashed">
+        <Button
+          variant="outline"
+          size="sm"
+          className="gap-0.25 border-dashed dark:text-slate-300"
+        >
           <PlusCircleIcon className="w-4 h-4 mr-2" />
 
           {label}

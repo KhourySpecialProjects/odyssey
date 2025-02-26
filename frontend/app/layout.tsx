@@ -46,8 +46,8 @@ export default async function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <link rel="icon" href="/icon.svg" type="image/svg+xml" sizes="any" />
-      <body className={lato.className} >
-      <ThemeClientProvider>
+      <body className={lato.className}>
+        <ThemeClientProvider>
           <AuthSessionProvider>
             <PHProvider>
               <TooltipProvider delayDuration={250}>
@@ -59,7 +59,7 @@ export default async function RootLayout({
               </TooltipProvider>
             </PHProvider>
           </AuthSessionProvider>
-        <Toaster />
+          <Toaster />
         </ThemeClientProvider>
       </body>
     </html>

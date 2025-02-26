@@ -43,7 +43,7 @@ export function FeedClient({
 
   return (
     <section>
-      <div className="p-4 rounded-md bg-slate-100">
+      <div className="p-4 rounded-md bg-slate-100 dark:bg-slate-800">
         {paginatedAnnouncements.length > 0 ? (
           <>
             <ul className="divide-y divide-slate-200 dark:divide-slate-700 md:space-y-4">

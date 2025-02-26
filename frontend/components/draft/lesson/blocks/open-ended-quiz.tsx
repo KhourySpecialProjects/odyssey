@@ -80,7 +80,10 @@ export function OpenEndedQuizEditor({
 
       <div className="space-y-6">
         {questions.map((question, index) => (
-          <div key={question.id} className="p-6 border rounded-lg bg-white">
+          <div
+            key={question.id}
+            className="p-6 border dark:border-slate-500 rounded-lg light:bg-white"
+          >
             <div className="flex justify-between items-start mb-4">
               <h4 className="font-semibold">Question {index + 1}</h4>
               <Button
