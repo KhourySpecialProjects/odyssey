@@ -69,7 +69,7 @@ export function DropletLessonWrapper({
           </button>
           <div
             className={cn(
-              "fixed lg:relative lg:w-1/4 min-w-[375px] h-full bg-slate-50 border border-slate-200 ",
+              "fixed lg:relative lg:w-1/4 min-w-[375px] h-full bg-slate-50 dark:bg-slate-800 border border-slate-200 ",
               "top-0 right-0 z-40",
               expanded ? "translate-x-0" : "translate-x-full lg:translate-x-0",
             )}

@@ -48,7 +48,7 @@ export function NoteBlock({
   };
 
   return (
-    <div className=" mx-2 pt-2 pl-2 pr-2 w-4/5 note-block bg-slate-200 rounded-xl flex flex-row items-center">
+    <div className=" mx-2 pt-2 pl-2 pr-2 w-4/5 note-block bg-slate-200 dark:bg-slate-800 dark:border dark:border-slate-500 rounded-xl flex flex-row items-center">
       <div className="grip-handle pt-2">
         <GripVertical />
       </div>
@@ -63,11 +63,11 @@ export function NoteBlock({
               >
                 {note.highlight.text}
               </Badge>
-              <MessageSquareText color="#6c6060" />
+              <MessageSquareText className="text-slate-[#6c6060] dark:text-slate-300" />
             </div>
           ) : (
             <div className="flex flex-row justify-end w-full">
-              <File color="#6c6060" />
+              <File className="text-slate-[#6c6060] dark:text-slate-300"/>
             </div>
           )}
         </div>
@@ -82,7 +82,7 @@ export function NoteBlock({
             e.target.style.height = `${e.target.scrollHeight}px`; // Adjust height
           }}
           onBlur={handleBlur}
-          className="p-2 border-slate-300 rounded-xl focus:outline-none focus:border-slate-400 focus:ring-0 shadow-sm"
+          className="p-2 border-slate-300 dark:text-black rounded-xl focus:outline-none focus:border-slate-400 focus:ring-0 shadow-sm"
           placeholder="Type something..."
           rows={2}
           style={{

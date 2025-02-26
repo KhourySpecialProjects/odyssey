@@ -39,7 +39,7 @@ export function CalloutBlockInput({
       Placeholder.configure({
         placeholder: "Nothing here yet...",
         emptyEditorClass:
-          "before:content-[attr(data-placeholder)] before:text-gray-500 before:absolute before:top-2 before:left-2 before:pointer-events-none before:select-none",
+          "before:content-[attr(data-placeholder)] before:text-gray-500 dark:before:text-slate-300 before:absolute before:top-2 before:left-2 before:pointer-events-none before:select-none",
       }),
       CodeBlockLowlight.extend({
         addNodeView() {
@@ -62,7 +62,7 @@ export function CalloutBlockInput({
     editorProps: {
       attributes: {
         class:
-          "prose prose-sky bg-white p-2 min-w-full max-w-2xl min-h-20 border rounded-b-md border-slate-200 hover:shadow focus:shadow-lg outline-none",
+          "prose prose-sky prose-headings:text-inherit prose-code:text-inherit prose-strong:text-inherit bg-white dark:bg-slate-800 dark:text-slate-300 p-2 min-w-full max-w-2xl min-h-20 border rounded-b-md border-slate-200 dark:border-slate-500 hover:shadow focus:shadow-lg outline-none",
       },
       handleKeyDown: (view: any, event: KeyboardEvent) => {
         if (event.key === "Tab") {

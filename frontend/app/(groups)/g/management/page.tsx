@@ -47,7 +47,7 @@ export default async function GroupManagementPage({ searchParams }: Props) {
   }
 
   return (
-    <div className="w-full max-w-4xl p-8 mx-auto space-y-12">
+    <div className="w-full max-w-4xl p-8 mx-auto space-y-12 dark:bg-slate-800 bg-slate-100">
       <div className="text-center">
         <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-4xl">
           {group ? "Edit Group" : "Create New Group"}

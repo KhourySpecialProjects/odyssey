@@ -188,7 +188,7 @@ export function LessonRenderer({
           </h1>
 
           {headings.length > 2 && (
-            <div className="p-6 mt-8 border rounded-md bg-slate-50 border-slate-200">
+            <div className="p-6 mt-8 border rounded-md bg-slate-50 dark:bg-slate-800 border-slate-200">
               <h2 className="text-xl font-bold">Contents</h2>
               <ul className="mt-3 ml-4 list-disc list-inside">
                 {headings.map((heading, index) => (

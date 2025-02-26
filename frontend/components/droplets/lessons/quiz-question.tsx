@@ -59,7 +59,7 @@ export function QuizQuestionBlock({ question }: { question: QuizQuestion }) {
   return (
     <>
       <div
-        className="prose prose-sky prose-table:text-left prose-p:text-center"
+        className="prose prose-sky prose-table:text-left prose-p:text-center dark:text-slate-300"
         dangerouslySetInnerHTML={{ __html: question.content }}
       ></div>
 
@@ -108,62 +108,6 @@ export function QuizQuestionBlock({ question }: { question: QuizQuestion }) {
             </>
           )}
         </div>
-      ) : correctAnswers.length != 1 ? (
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)}>
-            <FormField
-              control={form.control}
-              name="answerIds"
-              render={({ field }) => (
-                <FormItem>
-                  <div>Choose multiple answers</div>
-                  <FormControl>
-                    <div className="mt-4 space-y-3">
-                      {question.answerOptions.map((answer, number: number) => (
-                        <FormItem
-                          key={answer.id}
-                          className="flex items-center space-x-3"
-                        >
-                          <FormControl>
-                            <Checkbox
-                              value={String(answer.id)}
-                              checked={field.value.includes(String(answer.id))}
-                              onCheckedChange={(checked) => {
-                                field.onChange(
-                                  checked
-                                    ? [...field.value, String(answer.id)]
-                                    : field.value.filter(
-                                        (id) => id !== String(answer.id),
-                                      ),
-                                );
-                              }}
-                            />
-                          </FormControl>
-                          <FormLabel
-                            htmlFor={String(answer.id)}
-                            className="cursor-pointer flex-1"
-                          >
-                            <span
-                              dangerouslySetInnerHTML={{
-                                __html: answer.content,
-                              }}
-                            />
-                          </FormLabel>
-                        </FormItem>
-                      ))}
-                    </div>
-                  </FormControl>
-                </FormItem>
-              )}
-            />
-
-            <div className="flex justify-end mt-4">
-              <Button type="submit" after={<ArrowRightIcon />}>
-                Check Answer
-              </Button>
-            </div>
-          </form>
-        </Form>
       ) : (
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)}>
@@ -171,53 +115,58 @@ export function QuizQuestionBlock({ question }: { question: QuizQuestion }) {
               control={form.control}
               name="answerIds"
               render={({ field }) => (
-                <FormItem className="space-y-0">
-                  <div>Choose one answer</div>
+                <FormItem>
+                  <div className="dark:text-slate-300">
+                    {correctAnswers.length === 1 ? "Select one answer" : "Choose multiple answers"}
+                  </div>
                   <FormControl>
-                    <RadioGroup
-                      className="mt-4"
-                      onValueChange={(value) => field.onChange([value])}
-                      value={field.value[0]}
-                    >
-                      {question.answerOptions.map((answer, number: number) => (
-                        <FormItem key={answer.id} className="space-y-0">
-                          <FormControl>
-                            <RadioGroupItem
-                              value={String(answer.id)}
-                              id={String(answer.id)}
-                              className="sr-only peer"
-                            />
-                          </FormControl>
-                          <FormLabel
-                            htmlFor={String(answer.id)}
-                            className="flex cursor-pointer flex-row items-center gap-3 rounded-md border border-slate-200 hover:border-sky-700 bg-popover p-4 leading-5 hover:bg-slate-50 transition-colors hover:text-sky-700 peer-data-[state=checked]:border-sky-700 [&:has([data-state=checked])]:border-sky-700"
-                          >
-                            <span className="flex items-center justify-center w-8 h-8 text-sm font-bold border rounded-full aspect-square border-sky-700 bg-slate-100 text-sky-700">
-                              {number === 0
-                                ? "A"
-                                : number === 1
-                                  ? "B"
-                                  : number === 2
-                                    ? "C"
-                                    : number === 3
-                                      ? "D"
-                                      : "?"}
-                            </span>
-                            <div
-                              className="prose prose-m w-full"
-                              dangerouslySetInnerHTML={{
-                                __html: answer.content,
-                              }}
-                            />
-                          </FormLabel>
-                        </FormItem>
-                      ))}
-                    </RadioGroup>
+                    {correctAnswers.length === 1 ? (
+                      <RadioGroup
+                        onValueChange={(value) => {
+                          field.onChange([value]);
+                        }}
+                        value={field.value[0]}
+                        className="mt-4 space-y-3"
+                      >
+                        {question.answerOptions.map((answer) => (
+                          <FormItem key={answer.id} className="flex items-center space-x-3">
+                            <FormControl>
+                              <RadioGroupItem value={String(answer.id)} />
+                            </FormControl>
+                            <FormLabel className="cursor-pointer flex-1">
+                              <span dangerouslySetInnerHTML={{ __html: answer.content }} />
+                            </FormLabel>
+                          </FormItem>
+                        ))}
+                      </RadioGroup>
+                    ) : (
+                      <div className="mt-4 space-y-3">
+                        {question.answerOptions.map((answer) => (
+                          <FormItem key={answer.id} className="flex items-center space-x-3">
+                            <FormControl>
+                              <Checkbox
+                                value={String(answer.id)}
+                                checked={field.value.includes(String(answer.id))}
+                                onCheckedChange={(checked) => {
+                                  field.onChange(
+                                    checked
+                                      ? [...field.value, String(answer.id)]
+                                      : field.value.filter((id) => id !== String(answer.id))
+                                  );
+                                }}
+                              />
+                            </FormControl>
+                            <FormLabel className="cursor-pointer flex-1">
+                              <span dangerouslySetInnerHTML={{ __html: answer.content }} />
+                            </FormLabel>
+                          </FormItem>
+                        ))}
+                      </div>
+                    )}
                   </FormControl>
                 </FormItem>
               )}
             />
-
             <div className="flex justify-end mt-4">
               <Button type="submit" after={<ArrowRightIcon />}>
                 Check Answer

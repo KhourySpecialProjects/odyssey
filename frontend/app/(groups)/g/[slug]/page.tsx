@@ -62,12 +62,12 @@ export default async function GroupDetailPage({ params }: Props) {
             <h2 className="text-xl font-semibold mb-4">Group Details</h2>
             <dl className="space-y-4 text-sm">
               <div>
-                <dt className="text-slate-500">Semester</dt>
-                <dd className="font-medium">{group.semester}</dd>
+                <dt className="text-slate-500 dark:text-slate-100">Semester</dt>
+                <dd className="font-medium dark:text-slate-400">{group.semester}</dd>
               </div>
               <div>
-                <dt className="text-slate-500">Total Members</dt>
-                <dd className="font-medium">{group.members?.length || 0}</dd>
+                <dt className="text-slate-500 dark:text-slate-100">Total Members</dt>
+                <dd className="font-medium dark:text-slate-400">{group.members?.length || 0}</dd>
               </div>
             </dl>
           </div>
