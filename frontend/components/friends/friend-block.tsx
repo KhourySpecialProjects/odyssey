@@ -42,7 +42,7 @@ export function FriendBlock({
         </Avatar>
 
         <div className="flex-1 min-w-0">
-          <p className="font-medium truncate text-slate-900 dark:text-black">
+          <p className="font-medium truncate text-slate-900 dark:text-slate-300">
             {friend.firstName && friend.lastName
               ? `${friend.firstName} ${friend.lastName}`
               : friend.email}

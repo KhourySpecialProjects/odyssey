@@ -12,7 +12,7 @@ export default async function ContentCreatorsPage() {
     <GradientBackground className="flex-grow">
       <div className="flex flex-col items-center">
         <div className="max-w-2xl mx-auto text-center">
-          <h1 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl pb-8">
+          <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-4xl pb-8">
             Content Creators
           </h1>
         </div>

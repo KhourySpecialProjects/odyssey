@@ -58,10 +58,10 @@ export default async function AboutPage() {
     <GradientBackground>
       <>
         <div className="max-w-2xl mx-auto text-center">
-          <h1 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
+          <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-4xl">
             About Odyssey
           </h1>
-          <p className="mt-4 text-lg leading-normal text-slate-600 text-balance">
+          <p className="mt-4 text-lg leading-normal text-slate-600 dark:text-slate-300 text-balance">
             Odyssey is an all-new on-demand learning platform built by Khoury
             College, for Khoury College.
           </p>
@@ -74,14 +74,14 @@ export default async function AboutPage() {
                 <h2 className="text-base font-semibold leading-7 text-sky-600">
                   Types
                 </h2>
-                <p className="mt-2 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
+                <p className="mt-2 text-3xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-4xl">
                   Understand{" "}
                   <span className="italic underline underline-offset-1 font-mono px-1.5 text-sky-600">
                     how
                   </span>{" "}
                   you&rsquo;ll learn
                 </p>
-                <p className="mt-6 text-lg leading-8 text-slate-600">
+                <p className="mt-6 text-lg leading-8 text-slate-600 dark:text-slate-300">
                   Droplets are categorized based on the types of content they
                   include and their estimated completion time, so that you know
                   what to expect and how to make the most of your odyssey.
@@ -93,18 +93,20 @@ export default async function AboutPage() {
               {types.map((type) => (
                 <div
                   key={type.name.toLowerCase()}
-                  className="p-5 transition-colors border border-transparent rounded-md bg-sky-50 hover:border-sky-600"
+                  className="p-5 transition-colors border light:border-transparent dark:border-slate-500 rounded-md dark:bg-slate-800 bg-sky-50 hover:border-sky-600"
                 >
                   <dt className="flex flex-row items-center gap-3">
                     <type.icon
                       className="w-6 h-6 text-sky-600"
                       aria-hidden="true"
                     />
-                    <span className="text-lg font-semibold text-slate-900">
+                    <span className="text-lg font-semibold text-slate-900 dark:text-slate-300">
                       {type.name} Droplets
                     </span>
                   </dt>
-                  <dd className="mt-1 ml-9">{type.description}</dd>
+                  <dd className="mt-1 ml-9 dark:text-slate-400">
+                    {type.description}
+                  </dd>
                 </div>
               ))}
             </dl>
@@ -118,14 +120,14 @@ export default async function AboutPage() {
                 <h2 className="text-base font-semibold leading-7 text-sky-600">
                   Focus Areas
                 </h2>
-                <p className="mt-2 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
+                <p className="mt-2 text-3xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-4xl">
                   Understand{" "}
                   <span className="italic underline underline-offset-1 font-mono px-1.5 text-sky-600">
                     what
                   </span>{" "}
                   you&rsquo;ll learn
                 </p>
-                <p className="mt-6 text-lg leading-8 text-slate-600">
+                <p className="mt-6 text-lg leading-8 text-slate-600 dark:text-slate-300">
                   Odyssey has collections of Droplets across a number of focus
                   areas to hone in on various student aspects.
                 </p>
@@ -136,18 +138,20 @@ export default async function AboutPage() {
               {focusAreas.map((type) => (
                 <div
                   key={type.name.toLowerCase()}
-                  className="p-5 transition-colors border border-transparent rounded-md bg-sky-50 hover:border-sky-600"
+                  className="p-5 transition-colors border light:border-transparent dark:border-slate-500 dark:bg-slate-800 rounded-md bg-sky-50 hover:border-sky-600"
                 >
                   <dt className="flex flex-row items-center gap-3">
                     <type.icon
                       className="w-6 h-6 text-sky-600"
                       aria-hidden="true"
                     />
-                    <span className="text-lg font-semibold text-slate-900">
+                    <span className="text-lg font-semibold text-slate-900 dark:text-slate-300">
                       {type.name} Droplets
                     </span>
                   </dt>
-                  <dd className="mt-1 ml-9">{type.description}</dd>
+                  <dd className="mt-1 ml-9 dark:text-slate-400">
+                    {type.description}
+                  </dd>
                 </div>
               ))}
             </dl>

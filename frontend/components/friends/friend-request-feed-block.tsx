@@ -85,7 +85,7 @@ export function FriendRequestFeedBlock({
 
         <button onClick={() => setOpen(true)}>
           <div className="flex-1 min-w-0 pl-2 overflow-hidden">
-            <p className="font-medium truncate text-slate-900 dark:text-black">
+            <p className="font-medium truncate text-slate-900 dark:text-slate-300">
               {request.firstName && request.lastName
                 ? `${request.firstName} ${request.lastName}`
                 : request.email}

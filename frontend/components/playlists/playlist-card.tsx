@@ -33,10 +33,12 @@ export function PlaylistCard({
   const linkTo = toDraft ? `/draft/p/${playlist.slug}` : `/p/${playlist.slug}`;
   return (
     <Link href={linkTo}>
-      <Card className="bg-slate-50 dark:bg-slate-50 border-slate-200 dark:border-slate-200">
+      <Card className="bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-500">
         <CardHeader>
-          <CardTitle className="text-black">{playlist.name}</CardTitle>
-          <p className="text-sm text-muted-foreground text-black">
+          <CardTitle className="text-black dark:text-slate-300">
+            {playlist.name}
+          </CardTitle>
+          <p className="text-sm text-muted-foreground text-black dark:text-slate-300">
             {playlist.droplets?.length || 0} droplets
           </p>
         </CardHeader>

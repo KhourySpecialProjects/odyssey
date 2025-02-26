@@ -50,7 +50,7 @@ export function QuizQuestionEditor({
   };
 
   return (
-    <div className="p-6 border rounded-lg bg-white">
+    <div className="p-6 border dark:border-slate-500 rounded-lg light:bg-white">
       <div className="flex justify-between items-start mb-4">
         <h4 className="font-semibold">Question</h4>
         <Button variant="ghost" size="sm" onClick={onDelete}>

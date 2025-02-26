@@ -7,7 +7,9 @@ import Link from "next/link";
 export function CreateGroup() {
   return (
     <Link href="/g/management">
-      <Button after={<PlusIcon />}>Create Group</Button>
+      <Button className="dark:bg-slate-300" after={<PlusIcon />}>
+        Create Group
+      </Button>
     </Link>
   );
 }

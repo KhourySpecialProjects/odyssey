@@ -98,7 +98,7 @@ const StarRating: React.FC<StarRatingProps> = ({
           );
         })}
         <div className="">
-          <p className="ml-3 block w-full text-3xl font-normal text-slate-950 text-3xl">
+          <p className="ml-3 block w-full text-3xl font-normal text-slate-950 text-3xl dark:text-slate-300">
             {rating.toFixed(1)}
           </p>
         </div>

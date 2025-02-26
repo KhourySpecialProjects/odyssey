@@ -41,7 +41,7 @@ export function VideoEditor({
   return (
     <div
       className={
-        "w-full text-lg rounded border hover:shadow border-slate-200 p-4 " +
+        "w-full text-lg rounded border hover:shadow border-slate-200 dark:border-slate-500 p-4 " +
         (open ? "shadow-md" : "")
       }
       ref={ref}

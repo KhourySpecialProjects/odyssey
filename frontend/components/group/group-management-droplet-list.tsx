@@ -64,7 +64,7 @@ const DropletItem = ({
   return (
     <div
       ref={combinedRef}
-      className={`relative group transition-colors border rounded-md border-slate-200 hover:border-slate-300 bg-slate-50 ${
+      className={`relative group transition-colors border rounded-md border-slate-200 dark:border-slate-500 hover:border-slate-300 bg-slate-50 dark:bg-slate-800 ${
         isDragging ? "opacity-50 shadow-lg" : ""
       }`}
     >
@@ -75,15 +75,15 @@ const DropletItem = ({
 
         <div className="flex-grow">
           <div className="flex flex-row flex-wrap flex-0 gap-1.5 mb-2">
-            <Badge variant="default">
+            <Badge variant="default" className="dark:bg-slate-700">
               {uppercaseFirstChar(droplet.focusArea)}
             </Badge>
-            <Badge variant="secondary">
+            <Badge variant="secondary" className="dark:bg-slate-700">
               {uppercaseFirstChar(droplet.type)}
             </Badge>
           </div>
 
-          <span className="block text-xl font-bold text-slate-950">
+          <span className="block text-xl font-bold text-slate-950 dark:text-slate-300">
             {droplet.name}
           </span>
 

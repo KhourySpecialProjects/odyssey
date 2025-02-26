@@ -75,7 +75,7 @@ export default async function Droplet({ params }: Props) {
           ))}
         </div>
         <DropletName dropletId={droplet.id} startingName={droplet.name} />
-        <div className="flex flex-row w-full  items-center space-x-10 my-3">
+        <div className="flex flex-row w-full items-center space-x-10 my-3">
           <RegenerateSlugButton dropletId={droplet.id} name={droplet.name} />
           {/* <DeleteDropletButton dropletId={droplet.id} /> */}
         </div>
@@ -116,8 +116,10 @@ export default async function Droplet({ params }: Props) {
         <NextSteps dropletId={droplet.id} nextSteps={droplet.nextSteps ?? []} />
 
         <section>
-          <h1 className="text-2xl font-bold text-slate-900 ">General Info</h1>
-          <p className="text-slate-500 mb-8">
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
+            General Info
+          </h1>
+          <p className="text-slate-500 mb-8 dark:text-slate-300">
             Information that users will see when they view the droplet{" "}
           </p>
           <div className="w-full flex flex-col space-y-4">

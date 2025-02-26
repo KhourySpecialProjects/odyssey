@@ -45,22 +45,30 @@ export default async function CreateRoute() {
         <h1 className="text-3xl font-bold tracking-tight light:text-slate-900 sm:text-4xl">
           Drafts
         </h1>
-        <p className="mt-4 text-lg leading-normal light:text-slate-600 text-balance">
+        <p className="mt-4 text-lg leading-normal light:text-slate-600 dark:text-slate-300 text-balance">
           Create a new Droplet or Playlist draft or edit an existing one.
         </p>
       </div>
 
       <div className="w-full max-w-5xl px-4 mx-auto mb-8 xl:p-0 s">
         <div className="w-full flex justify-between items-end">
-          <h2 className="text-lg">Your Droplet Drafts</h2>
+          <h2 className="text-lg dark:text-slate-300">Your Droplet Drafts</h2>
           <div className="flex items-center gap-2">
             <Link href="/new/droplet">
-              <Button after={<PlusIcon />} className="select-none" size="sm">
+              <Button
+                after={<PlusIcon />}
+                className="select-none dark:bg-slate-300"
+                size="sm"
+              >
                 New Droplet
               </Button>
             </Link>
             <Link href="/new/playlist">
-              <Button after={<PlusIcon />} className="select-none" size="sm">
+              <Button
+                after={<PlusIcon />}
+                className="select-none dark:bg-slate-300"
+                size="sm"
+              >
                 New Playlist
               </Button>
             </Link>
@@ -69,7 +77,9 @@ export default async function CreateRoute() {
         <Separator orientation="horizontal" className="mt-2 mb-4" />
         {!authorizedUser.droplets || authorizedUser.droplets.length === 0 ? (
           <div className="flex items-center justify-center h-full">
-            <p className="text-lg light:text-slate-500">No drafts found.</p>
+            <p className="text-lg light:text-slate-500 dark:text-slate-400">
+              No drafts found.
+            </p>
           </div>
         ) : (
           <Suspense fallback={<DropletsSkeleton />}>
@@ -83,20 +93,30 @@ export default async function CreateRoute() {
         {(isContentCreator(user.roles) ||
           isAuthorizedUserAdmin(user.roles)) && (
           <>
-            <h2 className="text-lg mb-2 mt-4">Your Playlists</h2>
+            <h2 className="text-lg mb-2 mt-4 dark:text-slate-300">
+              Your Playlists
+            </h2>
             <Separator orientation="horizontal" className="mt-2 mb-4" />
-            <Suspense fallback={<DropletsSkeleton />}>
-              <ul className="grid grid-flow-row grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                {playlists?.map((playlist) => (
-                  <PlaylistCard
-                    key={playlist.id}
-                    playlist={playlist}
-                    completedLessonIds={[]}
-                    toDraft={true}
-                  />
-                ))}
-              </ul>
-            </Suspense>
+            {!playlists || playlists.length === 0 ? (
+              <div className="flex items-center justify-center h-full">
+                <p className="text-lg light:text-slate-500 dark:text-slate-400">
+                  No playlists found.
+                </p>
+              </div>
+            ) : (
+              <Suspense fallback={<DropletsSkeleton />}>
+                <ul className="grid grid-flow-row grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                  {playlists?.map((playlist) => (
+                    <PlaylistCard
+                      key={playlist.id}
+                      playlist={playlist}
+                      completedLessonIds={[]}
+                      toDraft={true}
+                    />
+                  ))}
+                </ul>
+              </Suspense>
+            )}
           </>
         )}
       </div>

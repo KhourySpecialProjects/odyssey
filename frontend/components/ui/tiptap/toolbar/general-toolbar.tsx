@@ -15,7 +15,7 @@ import CalloutTypeTool from "./tools/callout-type-tool";
 
 export default function DefaultToolbar({ editor }: { editor: Editor }) {
   return (
-    <div className="w-full border border-b-transparent rounded-t-md  border-slate-200 bg-white p-1 space-x-0.5">
+    <div className="w-full border border-b-transparent rounded-t-md  border-slate-200 dark:border-slate-500 light:bg-white p-1 space-x-0.5">
       <BoldTool editor={editor} />
       <ItalicTool editor={editor} />
       <UnderlineTool editor={editor} />

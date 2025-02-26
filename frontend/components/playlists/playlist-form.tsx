@@ -240,7 +240,7 @@ export function PlaylistForm({
             type="button"
             variant="outline"
             onClick={() => router.back()}
-            className="h-12 bg-white text-black"
+            className="h-12 bg-white text-black dark:bg-slate-300 dark:hover:bg-slate-400 dark:hover:text-black"
           >
             <MoveLeftIcon size={16} />
             Cancel
@@ -250,7 +250,7 @@ export function PlaylistForm({
           </Button> */}
           <Button
             type="submit"
-            className="h-12"
+            className="h-12 dark:bg-slate-300 dark:hover:bg-slate-400 dark:hover:text-black"
             onClick={() => setIsOpen(true)}
           >
             Save Playlist
@@ -258,15 +258,25 @@ export function PlaylistForm({
           <Dialog open={isOpen} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-[825px]">
               <DialogHeader>
-                <DialogTitle>
+                <DialogTitle className="dark:text-slate-300">
                   Would you like to announce these changes to everyone enrolled
                   in this playlist?
                 </DialogTitle>
               </DialogHeader>
 
               <div className="flex flex-col gap-4 mt-4">
-                <Button onClick={handlePlaylistPost}>Share</Button>
-                <Button onClick={() => router.back()}>Not Now</Button>
+                <Button
+                  className="dark:bg-slate-300"
+                  onClick={handlePlaylistPost}
+                >
+                  Share
+                </Button>
+                <Button
+                  className="dark:bg-slate-300"
+                  onClick={() => router.back()}
+                >
+                  Not Now
+                </Button>
               </div>
             </DialogContent>
           </Dialog>
@@ -294,6 +304,7 @@ export function PlaylistForm({
           <Button
             before={<SearchIcon />}
             onClick={() => updateQueryString(tempQuery)}
+            className="dark:bg-slate-300"
           >
             <span className="sr-only md:not-sr-only">Search</span>
           </Button>
@@ -302,7 +313,9 @@ export function PlaylistForm({
         <DndProvider backend={HTML5Backend}>
           <div className="grid grid-cols-2 gap-8 pt-4">
             <div className="space-y-4">
-              <h3 className="font-semibold">Available Droplets</h3>
+              <h3 className="font-semibold dark:text-slate-300">
+                Available Droplets
+              </h3>
               <DraggableTileList
                 droplets={filteredDroplets}
                 onDropToOther={handleDropToSource}
@@ -311,7 +324,9 @@ export function PlaylistForm({
               />
             </div>
             <div className="space-y-4">
-              <h3 className="font-semibold">Selected Droplets</h3>
+              <h3 className="font-semibold dark:text-slate-300">
+                Selected Droplets
+              </h3>
               <DraggableTileList
                 droplets={selectedDroplets}
                 onDropToOther={handleDropToSelected}

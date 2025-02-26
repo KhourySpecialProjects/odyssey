@@ -29,7 +29,7 @@ export function PlaylistClient({ playlists }: { playlists: Playlist[] }) {
   };
 
   return (
-    <div className="p-4 mt-4 rounded-md bg-slate-100">
+    <div className="p-4 mt-4 rounded-md bg-slate-100 dark:bg-slate-800">
       {paginatedPlaylists.length > 0 ? (
         <>
           <ul className="divide-y divide-slate-200 dark:divide-slate-700 md:space-y-4">
@@ -45,7 +45,7 @@ export function PlaylistClient({ playlists }: { playlists: Playlist[] }) {
                 variant="outline"
                 onClick={handlePrevPage}
                 disabled={currentPage === 1}
-                className={`${currentPage === 1 ? "visibility: hidden" : "visibility: visible"}`}
+                className={`${currentPage === 1 ? "visibility: hidden" : "visibility: visible"} dark:bg-slate-300 dark:text-black`}
               >
                 Previous
               </Button>
@@ -54,7 +54,7 @@ export function PlaylistClient({ playlists }: { playlists: Playlist[] }) {
                 variant="outline"
                 onClick={handleNextPage}
                 disabled={currentPage === totalPages}
-                className={`${currentPage === totalPages ? "visibility: hidden" : "visibility: visible"}`}
+                className={`${currentPage === totalPages ? "visibility: hidden" : "visibility: visible"} dark:bg-slate-300 dark:text-black`}
               >
                 Next
               </Button>

@@ -128,23 +128,25 @@ export default async function DropletRecapRoute({ params }: Props) {
           )}
 
         <div className="max-w-2xl mx-auto">
-          <h1 className="mt-3 text-6xl font-black text-slate-900">Recap</h1>
+          <h1 className="mt-3 text-6xl font-black text-slate-900 dark:text-white">
+            Recap
+          </h1>
         </div>
         <div className="w-full max-w-2xl py-8 mx-auto space-y-8 md:space-y-12">
           <section>
-            <h2 className="text-2xl font-bold text-slate-900">
+            <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
               Learning Objectives
             </h2>
-            <p className="text-slate-500">
+            <p className="text-slate-500 dark:text-slate-300">
               Now that you have completed this Droplet, you should:
             </p>
 
-            <div className="mt-4 border rounded-md bg-slate-50 border-slate-200">
-              <ul className="flex flex-col divide-y divide-slate-200">
+            <div className="mt-4 border rounded-md bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-500">
+              <ul className="flex flex-col divide-y divide-slate-200 dark:divide-slate-500">
                 {droplet.learningObjectives.map((objective) => (
                   <li
                     key={objective.id}
-                    className="inline-flex items-center gap-2 px-4 py-3 leading-snug"
+                    className="inline-flex items-center gap-2 px-4 py-3 leading-snug dark:text-slate-300"
                   >
                     <GoalIcon className="w-5 h-5 mr-0.5 shrink-0" />
                     {objective.objective}
@@ -156,18 +158,20 @@ export default async function DropletRecapRoute({ params }: Props) {
 
           {droplet.nextSteps && droplet.nextSteps.length > 0 ? (
             <section>
-              <h2 className="text-2xl font-bold text-slate-900">Next Steps</h2>
-              <p className="text-slate-500">
+              <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
+                Next Steps
+              </h2>
+              <p className="text-slate-500 dark:text-slate-300">
                 To further your understanding, we recommend exploring:
               </p>
 
-              <div className="mt-4 border rounded-md bg-slate-50 border-slate-200">
-                <ul className="flex flex-col divide-y divide-slate-200">
+              <div className="mt-4 border rounded-md bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-500">
+                <ul className="flex flex-col divide-y divide-slate-200 dark:divide-slate-500">
                   {droplet.nextSteps.map((resource) => (
                     <li key={resource.id}>
                       <Link
                         href={resource.url}
-                        className="inline-flex items-center gap-2 px-4 py-3 leading-snug transition-colors hover:text-sky-700"
+                        className="inline-flex items-center gap-2 px-4 py-3 dark:text-slate-300 leading-snug transition-colors hover:text-sky-700"
                       >
                         <Link2Icon className="w-5 h-5 mr-0.5 shrink-0" />
                         {resource.label ?? resource.url}
@@ -181,10 +185,10 @@ export default async function DropletRecapRoute({ params }: Props) {
 
           {dropletRecommendations && dropletRecommendations.length > 0 ? (
             <section>
-              <h2 className="text-2xl font-bold text-slate-900">
+              <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
                 Extend Your Odyssey
               </h2>
-              <p className="text-slate-500">
+              <p className="text-slate-500 dark:text-slate-300">
                 Have you explored these Droplets yet?
               </p>
 

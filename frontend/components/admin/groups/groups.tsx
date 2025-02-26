@@ -7,8 +7,10 @@ export async function Groups() {
 
   return (
     <section>
-      <h1 className="font-bold">Groups</h1>
-      <p>The following groups have been created.</p>
+      <h1 className="font-bold dark:text-slate-300">Groups</h1>
+      <p className="dark:text-slate-300">
+        The following groups have been created.
+      </p>
 
       <div className="mt-4">
         <CreateGroup />

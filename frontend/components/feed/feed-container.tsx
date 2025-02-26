@@ -28,7 +28,7 @@ export function FeedContainer({
           curUser={curUser}
         />
       </div>
-      <div className="w-1/3 text-center text-xl font-bold flex flex-col items-center justify-center">
+      <div className="w-1/3 text-center text-xl font-bold flex flex-col items-center justify-center dark:text-slate-300">
         Filters
         <FeedFilter onFilterChange={setSelectedRoles} />
       </div>

@@ -13,32 +13,32 @@ export function FeedFilter({ onFilterChange }: FeedFilterProps) {
     {
       value: AnnouncementTypeTitle.Droplet,
       label: "Droplet",
-      color: "bg-blue-100 dark:bg-blue-400 dark:text-black",
+      color: "bg-blue-100 dark:bg-blue-800 dark:text-slate-300",
     },
     {
       value: AnnouncementTypeTitle.Playlist,
       label: "Playlist",
-      color: "bg-green-100 dark:bg-green-400 dark:text-black",
+      color: "bg-green-100 dark:bg-green-800 dark:text-slate-300",
     },
     {
       value: AnnouncementTypeTitle.Group,
       label: "Group",
-      color: "bg-purple-100 dark:bg-purple-400 dark:text-black",
+      color: "bg-purple-100 dark:bg-purple-800 dark:text-slate-300",
     },
     {
       value: AnnouncementTypeTitle.System,
       label: "System",
-      color: "bg-red-100 dark:bg-red-400 dark:text-black",
+      color: "bg-red-100 dark:bg-red-800 dark:text-slate-300",
     },
     {
       value: AnnouncementTypeTitle.Friend,
       label: "Friend",
-      color: "bg-yellow-100 dark:bg-yellow-400 dark:text-black",
+      color: "bg-yellow-100 dark:bg-yellow-800 dark:text-slate-300",
     },
     {
       value: AnnouncementTypeTitle.Kudos,
       label: "Kudos",
-      color: "bg-orange-100 dark:bg-orange-400 dark:text-black",
+      color: "bg-orange-100 dark:bg-orange-800 dark:text-slate-300",
     },
   ] as const;
 

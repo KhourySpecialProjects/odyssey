@@ -44,12 +44,18 @@ export function FriendRequests({
   };
 
   return (
-    <div className="flex flex-col ">
+    <div className={`flex flex-col`}>
       <section className="mt-4">
-        <h1 className={`font-bold ${noProfile ? "dark:text-black" : "dark:text-white"}`}>Friend Requests</h1>
-        <p className={noProfile ? "dark:text-black" : "dark:text-white"}>A list of your friend requests.</p>
+        <h1
+          className={`font-bold ${noProfile ? "dark:text-slate-300" : "dark:text-white"}`}
+        >
+          Friend Requests
+        </h1>
+        <p className={noProfile ? "dark:text-slate-300" : "dark:text-white"}>
+          A list of your friend requests.
+        </p>
 
-        <div className="p-4 mt-4 rounded-md bg-slate-100">
+        <div className="p-4 mt-4 rounded-md bg-slate-100 dark:bg-slate-800">
           {friendRequests.length > 0 ? (
             <ul className="grid grid-cols-1 auto-cols-auto divide-y divide-slate-200 dark:divide-slate-700 md:space-y-4">
               {noProfile
