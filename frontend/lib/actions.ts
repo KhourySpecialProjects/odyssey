@@ -220,12 +220,13 @@ export async function createBugReport(formData: z.infer<typeof reportSchema>) {
       const errorMessage = `${data.error.message} (${errorPath})`;
       return { ok: false, error: errorMessage, data: null };
     }
+    return { ok: true, data };
   } catch (err) {
     console.error(err);
     return { error: "Database Error: Failed to create bug report." };
   }
 
-  redirect(formData.path + "?ts=" + Date.now());
+  // redirect(formData.path + "?ts=" + Date.now());
 }
 
 export async function updateAuthorBio(bio: string, userId: number) {
@@ -348,11 +349,13 @@ export async function createEnrollmentFromEmail(
     const authorizedUser = await getAuthorizedUserByEmail(email);
     const enrollments = await getEnrollmentsByAuthorizedUser(authorizedUser.id);
 
+
     if (
       !enrollments
         .map((enrollment) => enrollment.droplet.id)
         .includes(formData.droplet)
     ) {
+      console.log("doesnt have enrollment", formData.droplet)
       const response = await fetch(STRAPI_API_URL + "/api/enrollments", {
         method: "POST",
         body: JSON.stringify({

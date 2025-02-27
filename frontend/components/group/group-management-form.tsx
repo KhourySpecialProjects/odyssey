@@ -283,7 +283,6 @@ export function GroupManagementForm({
   };
 
   const handleDropletReorder = (reorderedDroplets: Droplet[]) => {
-    console.debug("  --> Group Mgmt - reordering droplets ", reorderedDroplets);
     const updatedDroplets = reorderedDroplets.map((droplet, index) => ({
       ...droplet,
       order: index,
@@ -308,7 +307,6 @@ export function GroupManagementForm({
   };
 
   const handleDropletRemove = (dropletId: number) => {
-    console.debug("  --> Group Mgmt - removing droplet ", dropletId);
     const currentDroplets = form.getValues("droplets") || [];
     const updatedDroplets = currentDroplets.filter((d) => d.id !== dropletId);
     form.setValue("droplets", updatedDroplets);
@@ -316,10 +314,6 @@ export function GroupManagementForm({
   };
 
   const handlePlaylistReorder = (reorderedPlaylists: Playlist[]) => {
-    console.debug(
-      "  --> Group Mgmt - reordering playlist ",
-      reorderedPlaylists,
-    );
     const updatedPlaylists = reorderedPlaylists.map((playlist, index) => ({
       ...playlist,
       order: index,
@@ -329,7 +323,6 @@ export function GroupManagementForm({
   };
 
   const handlePlaylistRemove = (playlistId: number) => {
-    console.debug("  --> Group Mgmt - removing playlist ", playlistId);
     const currentPlaylists = form.getValues("playlists") || [];
     const updatedPlaylists = currentPlaylists.filter(
       (p) => p.id !== playlistId,
@@ -340,7 +333,6 @@ export function GroupManagementForm({
   };
 
   const handleMemberRemove = (emailToRemove: string) => {
-    console.debug("  --> Group Mgmt - removing member ", emailToRemove);
     const currentMembers = form.getValues("members") || [];
     const updatedMembers = currentMembers.filter(
       (m) => m.email !== emailToRemove,

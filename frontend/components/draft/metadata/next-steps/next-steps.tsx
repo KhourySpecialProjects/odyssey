@@ -69,8 +69,8 @@ export function NextSteps({
       <p className="text-slate-500 dark:text-slate-300">
         To further your understanding, we recommend exploring:
       </p>
-      <div className="mt-4 border rounded-md bg-slate-50 dark:bg-slate-800 border-slate-200">
-        <ul className="flex flex-col divide-y divide-slate-200">
+      <div className="mt-4 border rounded-md bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-500">
+        <ul className="flex flex-col divide-y divide-slate-200 dark:divide-slate-500 dark:text-slate-300">
           {nextSteps.map((ns) => (
             <NextStepDisplay
               initial={ns}

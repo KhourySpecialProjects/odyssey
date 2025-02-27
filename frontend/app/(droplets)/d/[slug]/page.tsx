@@ -109,7 +109,7 @@ export default async function DropletRoute({ params }: Props) {
               Overview
             </h2>
 
-            <div className="w-full p-8 mt-4 border rounded-md bg-slate-50 dark:bg-slate-800 border-slate-200">
+            <div className="w-full p-8 mt-4 border rounded-md bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-500">
               <div
                 className="mx-auto prose prose-sky prose-code:text-inherit prose-strong:text-inherit prose-headings:text-inherit dark:text-slate-300"
                 dangerouslySetInnerHTML={{ __html: droplet.overview }}
@@ -139,7 +139,7 @@ export default async function DropletRoute({ params }: Props) {
           <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
             Learning Objectives
           </h2>
-          <p className="text-slate-500">
+          <p className="text-slate-500 dark:text-slate-300">
             By completing this Droplet, you should:
           </p>
 
@@ -162,7 +162,7 @@ export default async function DropletRoute({ params }: Props) {
           <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
             What&rsquo;s Inside
           </h2>
-          <p className="text-slate-500">
+          <p className="text-slate-500 dark:text-slate-300">
             This Droplet contains the following lessons:
           </p>
 
@@ -192,7 +192,7 @@ export default async function DropletRoute({ params }: Props) {
               </ul>
             </div>
           ) : (
-            <div className="p-4 mt-2 border rounded-md bg-slate-50 border-slate-200">
+            <div className="p-4 mt-2 border rounded-md bg-slate-50 dark:bg-slate-800 dark:text-slate-300 border-slate-200 dark:border-slate-500">
               This Droplet does not have any lessons yet. Check back soon!
             </div>
           )}
@@ -237,11 +237,11 @@ export default async function DropletRoute({ params }: Props) {
               <li key={`author-${author.id}`} className="inline-flex gap-4 p-4">
                 <Avatar variant="round" className="border border-sky-800">
                   <AvatarImage
-                    src={author?.profilePhoto || user?.image || undefined}
+                    src={author?.profilePhoto || undefined}
                   />
                   <AvatarFallback>
-                    {user?.name ? (
-                      getInitials(user.name)
+                    {author?.firstName && author?.lastName ? (
+                      author.firstName[0] + author.lastName[0]
                     ) : (
                       <User2Icon className="w-4 h-4" />
                     )}

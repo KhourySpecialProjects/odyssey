@@ -1,4 +1,3 @@
-import DebugToggle from "@/components/debug/toggle";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { PHProvider } from "@/providers/PHProvider";
@@ -10,8 +9,12 @@ import "./globals.css";
 import { FirstVisitPopup } from "@/components/first-time/first-visit-popup";
 import { getCurrentUser } from "../lib/auth/session";
 import { getAuthorizedUserByEmail } from "../lib/requests/authorized-user";
-import { ThemeProvider } from "next-themes";
 import { ThemeClientProvider } from "@/components/theme.client.provider";
+import AccessRequestBanner from "@/components/access-request-banner";
+import { EnvironmentBanner } from "@/components/debug/environmentBanner";
+import Footer from "@/components/footer/page";
+import { Header } from "@/components/header";
+import { Suspense } from "react";
 
 const lato = Lato({
   subsets: ["latin-ext"],
@@ -52,10 +55,24 @@ export default async function RootLayout({
             <PHProvider>
               <TooltipProvider delayDuration={250}>
                 <NuqsAdapter>
-                  {children}
+                <div className="flex min-h-screen flex-col">
+                    <EnvironmentBanner />
+                    
+                    <div className="z-10 sticky top-0">
+                      <Suspense>
+                        <Header />
+                      </Suspense>
+
+                      <Suspense>
+                        <AccessRequestBanner />
+                      </Suspense>
+                    </div>
+
+                    <main className="flex-grow">{children}</main>
+                    <Footer />
+                  </div>
                   <FirstVisitPopup user={authorizedUser} />
                 </NuqsAdapter>
-                <DebugToggle />
               </TooltipProvider>
             </PHProvider>
           </AuthSessionProvider>

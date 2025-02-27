@@ -10,17 +10,24 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { User } from "@/types";
-import { MessageSquareWarningIcon } from "lucide-react";
+import { Bug } from "lucide-react";
 import { useState } from "react";
 import { ReportBugForm } from "./form";
 
-export function ReportBugDialog({ user }: { user?: User | null }) {
-  const [open, setOpen] = useState(false);
+export function ReportBugDialog({ 
+  user, 
+  open, 
+  onOpenChange 
+}: { 
+  user?: User | null;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>
-        <Button variant="outline" before={<MessageSquareWarningIcon />}>
+        <Button className="bg-red-300 dark:bg-red-300 h-6 text-black" before={<Bug />}>
           Report Bug
         </Button>
       </DialogTrigger>
@@ -37,7 +44,7 @@ export function ReportBugDialog({ user }: { user?: User | null }) {
           <ReportBugForm
             name={user?.name}
             email={user?.email}
-            onSuccess={() => setOpen(false)}
+            onSuccess={() => onOpenChange(false)}
           />
         </div>
       </DialogContent>
