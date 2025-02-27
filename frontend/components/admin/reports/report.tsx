@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { ArrowRightIcon, LinkIcon } from "lucide-react";
+import { ArrowRightIcon } from "lucide-react";
 import Link from "next/link";
 import { Report } from "./reports";
 
@@ -11,22 +11,18 @@ export function ReportBlock({ report }: { report: Report }) {
       <div className="flex items-center space-x-4">
         <div className="flex-1 min-w-0">
           <p className="truncate text-slate-900 dark:text-white">
-            <span className="font-bold">
+            <span className="font-bold dark:text-slate-300">
               {report.fullName} &middot; {report.email} ({report.type})
             </span>
           </p>
-          <div className="mt-0.5 inline-flex gap-1 items-center text-slate-600">
-            <LinkIcon className="w-4 h-4" />
-            <span className="text-sm">{report.path}</span>
-          </div>
 
-          <p className="mt-2 font-medium truncate text-slate-900 dark:text-white">
+          <p className="mt-2 font-medium truncate text-slate-900 dark:text-slate-300">
             {report.description}
           </p>
         </div>
 
         <div className="inline-flex items-center gap-2">
-          <Button after={<ArrowRightIcon />} asChild>
+          <Button after={<ArrowRightIcon />} className="dark:bg-slate-300" asChild>
             <Link href={report.path} target="_blank">
               Visit Reported Page
             </Link>

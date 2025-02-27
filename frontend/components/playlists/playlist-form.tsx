@@ -224,13 +224,13 @@ export function PlaylistForm({
       <div>
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-lg font-semibold">Select and Arrange Droplets</h2>
-          <p className="text-sm text-slate-600">
+          <p className="text-sm text-slate-600 dark:text-slate-300">
             {selectedDroplets.length} droplets selected ({totalLessons} lessons
             total)
           </p>
         </div>
 
-        <Separator className="mb-4" />
+        <Separator className="mb-4 dark:bg-slate-300" />
 
         {/*TODO: Why aren't the buttons the same size?
            This may not be the best placement for the buttons.  But at the bottom of the columns 
@@ -273,7 +273,7 @@ export function PlaylistForm({
                 </Button>
                 <Button
                   className="dark:bg-slate-300"
-                  onClick={() => router.back()}
+                  onClick={() => {setIsOpen(false); router.back()}}
                 >
                   Not Now
                 </Button>

@@ -183,7 +183,7 @@ export function RequestAccessForm() {
           <Button
             type="submit"
             after={isPending ? <LoaderIcon /> : <ArrowRightIcon />}
-            className="w-full"
+            className="w-full dark:bg-slate-300"
             disabled={isPending}
           >
             Submit Request

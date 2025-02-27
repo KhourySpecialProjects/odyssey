@@ -40,7 +40,7 @@ export default async function ExplorePage({
       </div>
 
       <div className="w-full px-4 mx-auto mt-4 mb-8 max-w-7xl xl:p-0">
-        <div className="flex flex-col gap-4 p-4 border rounded-md bg-slate-50 border-slate-200 dark:bg-slate-800">
+        <div className="flex flex-col gap-4 p-4 border rounded-md bg-slate-50 border-slate-200 dark:border-slate-500 dark:bg-slate-800">
           <ContentTypeSelector />
 
           <div className="flex flex-col gap-2 md:flex-row md:items-center">

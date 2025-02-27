@@ -62,8 +62,8 @@ export function LearningObjectives({
       <p className="text-slate-500 mb-4 dark:text-slate-300">
         By completing this Droplet, you should:
       </p>
-      <div className="mt-4 border rounded-md bg-slate-50 dark:bg-slate-800 border-slate-200">
-        <ul className="flex flex-col divide-y divide-slate-200">
+      <div className="mt-4 border rounded-md bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-500 ">
+        <ul className="flex flex-col divide-y divide-slate-200 dark:divide-slate-500 dark:text-slate-300">
           {learningObjectives.map((objective) => (
             <LearningObjectiveDisplay
               objective={objective.objective}
