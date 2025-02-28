@@ -1,7 +1,7 @@
 import { DropletTile } from "@/components/droplets/droplet-tile";
 import { getDropletBySlug, getDroplets } from "@/lib/requests/droplet";
 import { Droplet } from "@/types";
-import { GoalIcon, Link2Icon } from "lucide-react";
+import { GoalIcon, HighlighterIcon, Link2Icon, NotebookPen } from "lucide-react";
 import { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -11,6 +11,8 @@ import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
 import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
 import { getServerSession } from "next-auth";
 import { CompletedDropletBlock } from "@/components/droplets/completed-droplet-block";
+import { getNotesByAuthorizedUserAndLesson, getNotesByDroplet } from "@/lib/requests/notes";
+import { getHighlightsByDroplet } from "@/lib/requests/highlights";
 
 type Props = {
   params: Promise<Params>;
@@ -83,9 +85,7 @@ export default async function DropletRecapRoute({ params }: Props) {
     populate: { tags: { populate: "*" } },
   });
 
-  let enrollID: string = "";
   const session = await getServerSession();
-
   if (session?.user?.email) {
     const user = await getAuthorizedUserByEmail(session.user.email);
     const enrollments = await getEnrollmentsByAuthorizedUser(user.id, {
@@ -103,13 +103,17 @@ export default async function DropletRecapRoute({ params }: Props) {
       },
     });
 
+
+  const authUser = await getAuthorizedUserByEmail(user.email);
+  let enrollID: string = "";
+  const highlights = await getHighlightsByDroplet(authUser.id, droplet.id);
+  const notes = await getNotesByDroplet(authUser.id, droplet.id)
+
     const enrollment = enrollments.find((e) => e.droplet.id === droplet.id);
 
     if (enrollment) {
       enrollID = enrollment.id;
     }
-
-    const authUser = await getAuthorizedUserByEmail(user.email);
 
     return (
       <>
@@ -155,6 +159,63 @@ export default async function DropletRecapRoute({ params }: Props) {
               </ul>
             </div>
           </section>
+
+          {enrollID && <section>
+            <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
+              Notes
+            </h2>
+            <p className="text-slate-500 dark:text-slate-300">
+              A collection of notes and highlights that you created throughout this droplet:
+            </p>
+
+            {(notes.length > 0 || highlights.length > 0) ? (<div className="mt-4 border rounded-md bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-500">
+              <ul className="flex flex-col divide-y divide-slate-200 dark:divide-slate-500">
+                {droplet.droplet_lessons?.map(async (lesson) => (
+                  <>
+                  {((await getNotesByAuthorizedUserAndLesson(user.id, lesson.lesson.slug)).length > 0 
+                  || highlights.filter(highlight => highlight.lesson.droplet_lessons[0].id === lesson.id).length > 0) 
+                  && <p className="pl-4 font-bold">{lesson.lesson.name}</p>}
+                  {(highlights.filter((highlight) => highlight.lesson.droplet_lessons[0].id === lesson.id).map((highlight) => (
+                    <li
+                      key={highlight.id}
+                      className="inline-flex items-center gap-2 px-4 py-3 leading-snug dark:text-slate-300"
+                    >
+                      <HighlighterIcon className="w-5 h-5 mr-0.5 shrink-0" />
+                      <span className={`bg-[${highlight.color}] px-1 rounded dark:text-black`}>
+                        {highlight.text}
+                      </span>
+                    </li>
+                  )))}
+                  {(await getNotesByAuthorizedUserAndLesson(user.id, lesson.lesson.slug)).map((note) => (
+                    <li
+                      key={note.id}
+                      className="inline-flex items-center gap-2 px-4 py-3 leading-snug dark:text-slate-300"
+                    >
+                      <NotebookPen className="w-5 h-5 mr-0.5 shrink-0" />
+                      <span>
+                        {note.highlight ? (
+                          <>
+                            <span className={`bg-[${note.highlight.color}] px-1 rounded dark:text-black`}>
+                              {note.highlight.text} 
+                            </span>{" "}
+                            {note.content}
+                          </>
+                        ) : (
+                          note.content
+                        )}
+                      </span>
+                    </li>
+                  ))}
+                    
+                  </>
+                ))}
+              </ul>
+            </div>) : (
+              <div className="border-t dark:border-slate-500 pt-2 mt-1">
+                You have no saved notes.
+              </div>
+            )}
+          </section>}
 
           {droplet.nextSteps && droplet.nextSteps.length > 0 ? (
             <section>

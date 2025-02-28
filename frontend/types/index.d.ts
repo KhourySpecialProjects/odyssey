@@ -22,7 +22,7 @@ export type AuthorizedUserRole = {
   authorizedUsers?: AuthorizedUser[];
 };
 
-export interface Highlight {
+export type Highlight = {
   id?: number;
   authorized_user?: AuthorizedUser;
   text: string;
@@ -31,6 +31,7 @@ export interface Highlight {
     end: number;
   };
   color: string;
+  lesson: Lesson;
   yLevel?: number;
 }
 
@@ -101,6 +102,7 @@ export type Lesson = {
   type?: "general" | "setup" | "activity" | "caseStudy";
   blocks: any[];
   droplets: Droplet[];
+  droplet_lessons:DropletLesson[];
   notes: Note[];
 };
 
