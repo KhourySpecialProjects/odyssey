@@ -36,3 +36,45 @@ export async function getHighlights(
     next: { tags: ["highlights"] },
   });
 }
+
+export async function getHighlightsByDroplet(
+  authUser: number,
+  dropletId: number,
+  {
+    sort = ["yLevel:asc"],
+    pagination = { pageSize: 250, page: 1 },
+    fields = ["text", "color", "yLevel"],
+  }: StrapiRequestParams = {},
+): Promise<Highlight[]> {
+  const path = `/highlights`;
+  const urlParams = {
+    sort,
+    filters: {
+      lesson: {
+        droplets: {
+          id: { $eq: dropletId }
+        }
+      },
+      authorized_user: {
+        id: { $eq: authUser }
+      }
+    },
+    populate: {
+      lesson: {
+        fields: ["id", "name", "slug"],
+        populate: {
+          droplet_lessons: {
+            fields: ["id"],
+          }
+        }
+      }
+    },
+    fields,
+    pagination,
+  };
+
+  return await fetchAPI<Highlight[]>(path, {
+    urlParams,
+    next: { tags: ["highlights"] },
+  });
+}
