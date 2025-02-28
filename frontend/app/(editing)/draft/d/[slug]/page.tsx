@@ -82,11 +82,14 @@ export default async function Droplet({ params }: Props) {
 
         {/* TODO: Turn this into a component */}
         <div className="text-xl font-semibold mt-10">
-          {droplet.authorized_users && droplet.authorized_users.length > 1 ? "Authors" : "Author"}
+          {droplet.authorized_users && droplet.authorized_users.length > 1
+            ? "Authors"
+            : "Author"}
         </div>
         {droplet.authorized_users && droplet.authorized_users.length > 0 && (
-          <div className={`mt-4 rounded-lg border p-4 border-gray-300 dark:border-slate-500`}>
-            
+          <div
+            className={`mt-4 rounded-lg border p-4 border-gray-300 dark:border-slate-500`}
+          >
             <ul className="list-disc list-inside">
               {droplet.authorized_users.map((author) => (
                 <div key={author.id} className="dark:text-slate-300">

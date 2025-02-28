@@ -14,20 +14,22 @@ import { Bug } from "lucide-react";
 import { useState } from "react";
 import { ReportBugForm } from "./form";
 
-export function ReportBugDialog({ 
-  user, 
-  open, 
-  onOpenChange 
-}: { 
+export function ReportBugDialog({
+  user,
+  open,
+  onOpenChange,
+}: {
   user?: User | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>
-        <Button className="bg-red-300 dark:bg-red-300 h-6 text-black" before={<Bug />}>
+        <Button
+          className="bg-red-300 dark:bg-red-300 h-6 text-black"
+          before={<Bug />}
+        >
           Report Bug
         </Button>
       </DialogTrigger>

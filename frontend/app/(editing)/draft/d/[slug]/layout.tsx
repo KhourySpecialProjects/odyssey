@@ -4,8 +4,6 @@ import { isAuthorizedUserAdmin } from "@/lib/utils";
 import { getDropletBySlug } from "@/lib/requests/droplet";
 import { AuthorizedUser, Droplet } from "@/types";
 import { Sidebar } from "@/components/draft/sidebar";
-import { EnvironmentBanner } from "@/components/debug/environmentBanner";
-import { DebugBanner } from "@/components/debug/debugBanner";
 import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
 
 type params = {

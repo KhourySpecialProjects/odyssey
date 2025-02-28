@@ -22,7 +22,11 @@ export function ReportBlock({ report }: { report: Report }) {
         </div>
 
         <div className="inline-flex items-center gap-2">
-          <Button after={<ArrowRightIcon />} className="dark:bg-slate-300" asChild>
+          <Button
+            after={<ArrowRightIcon />}
+            className="dark:bg-slate-300"
+            asChild
+          >
             <Link href={report.path} target="_blank">
               Visit Reported Page
             </Link>

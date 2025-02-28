@@ -3,7 +3,6 @@
 import { Announcement, AuthorizedUser } from "@/types";
 import Link from "next/link";
 import { KudosButton } from "./kudos-button";
-import { useState } from "react";
 
 export function FeedBlock({
   announcement,

@@ -10,7 +10,8 @@ type MemberListProps = {
 };
 
 const variantStyles = {
-  creator: "bg-purple-50 dark:bg-purple-900 dark:text-purple-100 text-purple-700",
+  creator:
+    "bg-purple-50 dark:bg-purple-900 dark:text-purple-100 text-purple-700",
   admin: "bg-yellow-50 dark:bg-yellow-900 dark:text-yellow-100 text-yellow-700",
   manager: "bg-blue-50 dark:bg-blue-900 dark:text-blue-100 text-blue-700",
 };
@@ -20,7 +21,9 @@ export function MemberList({ title, members, variant }: MemberListProps) {
 
   return (
     <div className="space-y-3">
-      <h3 className="text-sm font-medium text-slate-500 dark:text-slate-300">{title}</h3>
+      <h3 className="text-sm font-medium text-slate-500 dark:text-slate-300">
+        {title}
+      </h3>
       <div className="space-y-2">
         {members.map((member) => (
           <div

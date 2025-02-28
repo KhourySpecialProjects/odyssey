@@ -42,7 +42,12 @@ export default async function AccessRequestBanner() {
               Ready to join the Odyssey?
             </strong>
           </p>
-          <Button size="xs" className="dark:bg-slate-300" after={<ArrowRightIcon />} asChild>
+          <Button
+            size="xs"
+            className="dark:bg-slate-300"
+            after={<ArrowRightIcon />}
+            asChild
+          >
             <Link href="/request-access">Request Access</Link>
           </Button>
         </div>

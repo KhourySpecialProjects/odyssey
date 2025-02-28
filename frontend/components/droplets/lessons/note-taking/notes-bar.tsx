@@ -1,7 +1,7 @@
 "use client";
 
 import { Lesson, Note } from "@/types";
-import { useState, useCallback, useEffect, useRef, useReducer } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { getNotesByAuthorizedUserAndLesson } from "@/lib/requests/notes";
 import { NoteBlock } from "./note-block";
