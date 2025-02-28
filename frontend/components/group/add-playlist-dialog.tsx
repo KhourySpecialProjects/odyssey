@@ -80,7 +80,9 @@ export function AddPlaylistDialog({
               <div key={playlist.id} className="relative group h-[120px]">
                 <div className="p-4 h-full border rounded-md bg-slate-50 dark:bg-slate-800 dark:border-slate-500">
                   <div className="flex flex-col h-full">
-                    <span className="text-xl font-bold dark:text-slate-300">{playlist.name}</span>
+                    <span className="text-xl font-bold dark:text-slate-300">
+                      {playlist.name}
+                    </span>
                     <div className="flex gap-2 mt-2">
                       <Badge variant="outline">
                         {playlist.isPublic ? "Public" : "Private"}

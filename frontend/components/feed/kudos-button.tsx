@@ -2,7 +2,7 @@
 
 import { Button } from "../ui/button";
 import { giveKudos } from "@/lib/kudos";
-import { useEffect, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
 import { toast } from "sonner";
 
 export function KudosButton({ announcementId }: { announcementId: number }) {

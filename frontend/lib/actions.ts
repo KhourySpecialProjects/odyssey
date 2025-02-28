@@ -7,7 +7,6 @@ import { getCurrentUser } from "./auth/session";
 import { getAuthorizedUserByEmail } from "./requests/authorized-user";
 import { getEnrollmentsByAuthorizedUser } from "./requests/enrollment";
 import { accessRequestSchema } from "./validations/access-request";
-import { BioFormSchema } from "./validations/author";
 import { AuthorizedUserSchema } from "./validations/authorized-user";
 import { DropletEnrollmentSchema } from "./validations/enrollment";
 import { reportSchema } from "./validations/report";
@@ -349,13 +348,12 @@ export async function createEnrollmentFromEmail(
     const authorizedUser = await getAuthorizedUserByEmail(email);
     const enrollments = await getEnrollmentsByAuthorizedUser(authorizedUser.id);
 
-
     if (
       !enrollments
         .map((enrollment) => enrollment.droplet.id)
         .includes(formData.droplet)
     ) {
-      console.log("doesnt have enrollment", formData.droplet)
+      console.log("doesnt have enrollment", formData.droplet);
       const response = await fetch(STRAPI_API_URL + "/api/enrollments", {
         method: "POST",
         body: JSON.stringify({

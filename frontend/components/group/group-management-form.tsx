@@ -40,7 +40,6 @@ import { enrollUsers } from "@/lib/requests/groups";
 import { getGroupByID } from "@/lib/requests/groups";
 import { createGroupAnnouncement } from "@/lib/requests/feed";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
-import { X } from "lucide-react";
 import { deleteGroup } from "@/lib/actions";
 
 const SEMESTER_OPTIONS: GroupSemester[] = [
@@ -292,7 +291,7 @@ export function GroupManagementForm({
   };
 
   const handleGroupPost = async () => {
-    setIsOpen(false)
+    setIsOpen(false);
     try {
       if (existingGroup) {
         await createGroupAnnouncement(
@@ -580,7 +579,12 @@ export function GroupManagementForm({
         </ContentSection>
 
         <div className="flex justify-end gap-4">
-          <Button type="button" variant="outline" className="dark:text-slate-300" onClick={handleCancel}>
+          <Button
+            type="button"
+            variant="outline"
+            className="dark:text-slate-300"
+            onClick={handleCancel}
+          >
             Cancel
           </Button>
           {/* <Button variant="destructive" className="gap-2" onClick={handleDelete}>
@@ -610,7 +614,14 @@ export function GroupManagementForm({
 
               <div className="flex flex-col gap-4 mt-4">
                 <Button onClick={handleGroupPost}>Share</Button>
-                <Button onClick={() => {setIsOpen(false); router.back()}}>Not Now</Button>
+                <Button
+                  onClick={() => {
+                    setIsOpen(false);
+                    router.back();
+                  }}
+                >
+                  Not Now
+                </Button>
               </div>
             </DialogContent>
           </Dialog>

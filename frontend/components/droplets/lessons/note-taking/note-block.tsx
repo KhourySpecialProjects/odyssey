@@ -1,5 +1,5 @@
 import { Note } from "@/types";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { ChangeEvent } from "react";
 import { updateNoteContent } from "@/lib/requests/notes";
 import { Badge } from "@/components/ui/badge";
@@ -67,7 +67,7 @@ export function NoteBlock({
             </div>
           ) : (
             <div className="flex flex-row justify-end w-full">
-              <File className="text-slate-[#6c6060] dark:text-slate-300"/>
+              <File className="text-slate-[#6c6060] dark:text-slate-300" />
             </div>
           )}
         </div>

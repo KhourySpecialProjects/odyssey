@@ -14,10 +14,16 @@ export function GroupDropletTile({ droplet }: GroupDropletTileProps) {
       <Card className="hover:shadow-md transition-shadow bg-slate-50 dark:bg-slate-800 border rounded-md border-slate-200 dark:border-slate-500 hover:border-slate-300 h-full">
         <CardHeader className="h-full flex flex-col">
           <div className="flex gap-2 mb-2">
-            <Badge variant="default" className="text-xs bg-white dark:bg-slate-300 text-black border-black pointer-events-none">
+            <Badge
+              variant="default"
+              className="text-xs bg-white dark:bg-slate-300 text-black border-black pointer-events-none"
+            >
               {uppercaseFirstChar(droplet.focusArea)}
             </Badge>
-            <Badge variant="secondary" className="text-xs bg-white dark:bg-slate-300 text-black border-black pointer-events-none">
+            <Badge
+              variant="secondary"
+              className="text-xs bg-white dark:bg-slate-300 text-black border-black pointer-events-none"
+            >
               {uppercaseFirstChar(droplet.type)}
             </Badge>
           </div>

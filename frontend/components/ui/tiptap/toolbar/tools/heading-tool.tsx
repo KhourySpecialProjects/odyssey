@@ -21,7 +21,9 @@ export default function HeadingTool({
           .run()
       }
       className={cn(
-        editor?.isActive("heading", { level: number }) ? "bg-slate-200 dark:bg-slate-700" : "",
+        editor?.isActive("heading", { level: number })
+          ? "bg-slate-200 dark:bg-slate-700"
+          : "",
         "p-2.5 rounded-md border border-transparent hover:border-slate-200",
       )}
     >

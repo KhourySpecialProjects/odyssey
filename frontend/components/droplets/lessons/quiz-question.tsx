@@ -117,7 +117,9 @@ export function QuizQuestionBlock({ question }: { question: QuizQuestion }) {
               render={({ field }) => (
                 <FormItem>
                   <div className="dark:text-slate-300">
-                    {correctAnswers.length === 1 ? "Select one answer" : "Choose multiple answers"}
+                    {correctAnswers.length === 1
+                      ? "Select one answer"
+                      : "Choose multiple answers"}
                   </div>
                   <FormControl>
                     {correctAnswers.length === 1 ? (
@@ -129,12 +131,19 @@ export function QuizQuestionBlock({ question }: { question: QuizQuestion }) {
                         className="mt-4 space-y-3"
                       >
                         {question.answerOptions.map((answer) => (
-                          <FormItem key={answer.id} className="flex items-center space-x-3">
+                          <FormItem
+                            key={answer.id}
+                            className="flex items-center space-x-3"
+                          >
                             <FormControl>
                               <RadioGroupItem value={String(answer.id)} />
                             </FormControl>
                             <FormLabel className="cursor-pointer flex-1">
-                              <span dangerouslySetInnerHTML={{ __html: answer.content }} />
+                              <span
+                                dangerouslySetInnerHTML={{
+                                  __html: answer.content,
+                                }}
+                              />
                             </FormLabel>
                           </FormItem>
                         ))}
@@ -142,22 +151,33 @@ export function QuizQuestionBlock({ question }: { question: QuizQuestion }) {
                     ) : (
                       <div className="mt-4 space-y-3">
                         {question.answerOptions.map((answer) => (
-                          <FormItem key={answer.id} className="flex items-center space-x-3">
+                          <FormItem
+                            key={answer.id}
+                            className="flex items-center space-x-3"
+                          >
                             <FormControl>
                               <Checkbox
                                 value={String(answer.id)}
-                                checked={field.value.includes(String(answer.id))}
+                                checked={field.value.includes(
+                                  String(answer.id),
+                                )}
                                 onCheckedChange={(checked) => {
                                   field.onChange(
                                     checked
                                       ? [...field.value, String(answer.id)]
-                                      : field.value.filter((id) => id !== String(answer.id))
+                                      : field.value.filter(
+                                          (id) => id !== String(answer.id),
+                                        ),
                                   );
                                 }}
                               />
                             </FormControl>
                             <FormLabel className="cursor-pointer flex-1">
-                              <span dangerouslySetInnerHTML={{ __html: answer.content }} />
+                              <span
+                                dangerouslySetInnerHTML={{
+                                  __html: answer.content,
+                                }}
+                              />
                             </FormLabel>
                           </FormItem>
                         ))}

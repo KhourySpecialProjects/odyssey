@@ -273,7 +273,10 @@ export function PlaylistForm({
                 </Button>
                 <Button
                   className="dark:bg-slate-300"
-                  onClick={() => {setIsOpen(false); router.back()}}
+                  onClick={() => {
+                    setIsOpen(false);
+                    router.back();
+                  }}
                 >
                   Not Now
                 </Button>

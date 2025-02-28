@@ -1,7 +1,5 @@
 "use client";
 
-import { Switch } from "../ui/switch";
-import { Label } from "../ui/label";
 import { useEffect, useState } from "react";
 import { useTheme } from "next-themes";
 import { Sun, Moon } from "lucide-react";

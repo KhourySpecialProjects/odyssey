@@ -92,7 +92,9 @@ export function GroupProgressGrid({ group }: GroupProgressGridProps) {
   }, [group]);
 
   const getCompletionStatus = (memberId: number, dropletId: number) => {
-    return (Math.floor(completionStatus[`${memberId}-${dropletId}`] * 100) / 100) || 0;
+    return (
+      Math.floor(completionStatus[`${memberId}-${dropletId}`] * 100) / 100 || 0
+    );
   };
 
   const getCompletedDropletColor = (completionStatus: number) => {

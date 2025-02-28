@@ -8,7 +8,6 @@ import {
   MessageDescription,
   MessageHeader,
 } from "@/components/message";
-import { getDropletAverageRating } from "@/lib/requests/enrollment";
 import { Button } from "../ui/button";
 
 interface SortedDropletsGridProps {

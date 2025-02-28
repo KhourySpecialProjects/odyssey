@@ -3,7 +3,7 @@
 import { Group } from "@/types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { PencilIcon, X } from "lucide-react";
+import { PencilIcon } from "lucide-react";
 import Link from "next/link";
 import { deleteGroup } from "@/lib/actions";
 import { useRouter } from "next/navigation";
