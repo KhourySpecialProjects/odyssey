@@ -62,7 +62,7 @@ export default function Sidebar({
   const isAdmin = user && isAuthorizedUserAdmin(user.roles);
 
   const activeLinkClasses =
-    "w-full flex font-bold items-center p-2 bg-slate-200 [&>svg]:text-sky-700 rounded-lg dark:text-white dark:hover:bg-slate-700 group text-sky-700 transition-colors";
+    "w-full flex font-bold items-center p-2 bg-slate-200 dark:bg-slate-700 [&>svg]:text-sky-700 rounded-lg dark:text-white dark:hover:bg-slate-700 group text-sky-700 transition-colors";
   const inactiveLinkClasses =
     "w-full flex items-center p-2 rounded-lg text-slate-900 dark:text-white hover:bg-slate-100 dark:hover:bg-slate-700 group transition-colors";
 
@@ -265,7 +265,7 @@ export default function Sidebar({
                       </Avatar>
                     ) : null}
 
-                    <span className="font-medium ms-2">
+                    <span className="font-medium ms-2 dark:text-slate-300">
                       Hi, <b>{user.name ?? user.email}</b>!
                     </span>
                   </div>

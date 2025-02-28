@@ -3,7 +3,6 @@
 import { Announcement, AuthorizedUser } from "@/types";
 import Link from "next/link";
 import { KudosButton } from "./kudos-button";
-import { useState } from "react";
 
 export function FeedBlock({
   announcement,
@@ -45,7 +44,7 @@ export function FeedBlock({
         <div className="flex items-center space-x-4">
           <div className="flex-1 min-w-0">
             <Link href={`/p/${announcement.playlist?.slug}`}>
-              <p className="font-medium truncate bg-green-100 text-slate-900 dark:text-white">
+              <p className="font-medium truncate bg-green-100 dark:bg-green-800 text-slate-900 dark:text-slate-300">
                 {announcement.content}
               </p>
             </Link>
@@ -64,7 +63,7 @@ export function FeedBlock({
         <div className="flex items-center space-x-4">
           <div className="flex-1 min-w-0">
             <Link href={`/d/${announcement.droplet?.slug}`}>
-              <p className="font-medium truncate bg-sky-100 text-slate-900 dark:text-white">
+              <p className="font-medium truncate bg-sky-100 dark:bg-sky-800 text-slate-900 dark:text-slate-300">
                 {announcement.content}
               </p>
             </Link>
@@ -83,7 +82,7 @@ export function FeedBlock({
         <div className="flex items-center space-x-4">
           <div className="flex-1 min-w-0">
             <Link href={`/g/${announcement.group?.slug}`}>
-              <p className="font-medium truncate bg-purple-100 text-slate-900 dark:text-white">
+              <p className="font-medium truncate bg-purple-100 dark:bg-purple-800 text-slate-900 dark:text-slate-300">
                 {announcement.content}
               </p>
             </Link>
@@ -101,7 +100,7 @@ export function FeedBlock({
         )}
         <div className="flex items-center space-x-4">
           <div className="flex-1 min-w-0">
-            <p className="font-medium truncate bg-yellow-100 text-slate-900 dark:text-white">
+            <p className="font-medium truncate bg-yellow-100 dark:bg-yellow-800 text-slate-900 dark:text-slate-300">
               {announcement.content}
             </p>
             {!announcement.kudosGiven && (
@@ -121,7 +120,7 @@ export function FeedBlock({
         )}
         <div className="flex items-center space-x-4">
           <div className="flex-1 min-w-0">
-            <p className="font-medium truncate bg-orange-100 text-slate-900 dark:text-white">
+            <p className="font-medium truncate bg-orange-100 dark:bg-orange-800 text-slate-900 dark:text-slate-300">
               {announcement.content}
             </p>
           </div>
@@ -138,7 +137,7 @@ export function FeedBlock({
         )}
         <div className="flex items-center space-x-4">
           <div className="flex-1 min-w-0">
-            <p className="font-medium truncate bg-red-100 text-slate-900 dark:text-white">
+            <p className="font-medium truncate bg-red-100 dark:bg-red-800 text-slate-900 dark:text-slate-300">
               {announcement.content}
             </p>
           </div>

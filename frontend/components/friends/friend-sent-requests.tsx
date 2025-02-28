@@ -15,10 +15,12 @@ export async function FriendSentRequests() {
 
   return (
     <section className="mt-4">
-      <h1 className="font-bold">Sent Requests</h1>
-      <p>A list of people you have sent friend requests to.</p>
+      <h1 className="font-bold dark:text-slate-300">Sent Requests</h1>
+      <p className="dark:text-slate-300">
+        A list of people you have sent friend requests to.
+      </p>
 
-      <div className="p-4 mt-4 rounded-md bg-slate-100">
+      <div className="p-4 mt-4 rounded-md bg-slate-100 dark:bg-slate-800">
         {sentRequests.length > 0 ? (
           <ul className="divide-y divide-slate-200 dark:divide-slate-700 md:space-y-4">
             {sentRequests.map((friendship) => (

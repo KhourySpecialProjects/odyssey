@@ -7,7 +7,9 @@ import Link from "next/link";
 export function CreatePlaylist() {
   return (
     <Link href="/new/playlist">
-      <Button after={<PlusIcon />}>Create Playlist</Button>
+      <Button className="dark:bg-slate-300" after={<PlusIcon />}>
+        Create Playlist
+      </Button>
     </Link>
   );
 }

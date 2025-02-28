@@ -8,6 +8,8 @@ import { GroupDropletTile } from "@/components/group/group-droplet-tile";
 import { Group } from "@/types";
 import { PlaylistCard } from "@/components/playlists/playlist-card";
 import { GroupProgressGrid } from "@/components/group/group-progress-grid";
+import { Button } from "../ui/button";
+import { useState } from "react";
 
 interface RenderGroupDashboardProps {
   group: Group;
@@ -18,6 +20,23 @@ const tabStyle =
   "px-4 py-2 cursor-pointer border-b-2 border-transparent focus:outline-none hover:border-gray-300";
 
 export function GroupDashboard({ group, canEdit }: RenderGroupDashboardProps) {
+  const [currentPage, setCurrentPage] = useState(0);
+  const lessonsPerPage = 6;
+
+  const startIndex = currentPage * lessonsPerPage;
+  const endIndex = startIndex + lessonsPerPage;
+  const paginatedDroplets = group.droplets?.slice(startIndex, endIndex);
+
+  const totalPages = Math.ceil((group.droplets?.length || 0) / lessonsPerPage);
+
+  const handleNextPage = () => {
+    if (currentPage < totalPages - 1) setCurrentPage(currentPage + 1);
+  };
+
+  const handlePrevPage = () => {
+    if (currentPage > 0) setCurrentPage(currentPage - 1);
+  };
+
   return (
     <Tabs title="" forceRenderTabPanel>
       <TabList className="flex border-b">
@@ -32,13 +51,37 @@ export function GroupDashboard({ group, canEdit }: RenderGroupDashboardProps) {
         >
           {/* Droplet components will go here */}
           {group.droplets && group.droplets.length > 0 ? (
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              {group.droplets.map((droplet) => (
-                <GroupDropletTile key={droplet.id} droplet={droplet} />
-              ))}
+            <div className="flex flex-col gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 auto-rows-fr">
+                {paginatedDroplets?.map((droplet) => (
+                  <div key={droplet.id} className="h-full w-full">
+                    <GroupDropletTile droplet={droplet} />
+                  </div>
+                ))}
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={handlePrevPage}
+                  disabled={currentPage === 0}
+                  className={`${currentPage === 0 ? "visibility: hidden" : "visibility: visible"} dark:bg-slate-300 dark:text-black`}
+                >
+                  Previous
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={handleNextPage}
+                  disabled={currentPage === totalPages - 1}
+                  className={`${currentPage === totalPages - 1 ? "visibility: hidden" : "visibility: visible"} dark:bg-slate-300 dark:text-black`}
+                >
+                  Next
+                </Button>
+              </div>
             </div>
           ) : (
-            <div className="p-8 text-center text-slate-500 border border-dashed rounded-lg">
+            <div className="p-8 text-center text-slate-500 dark:text-slate-300 border border-dashed dark:border-slate-500 rounded-lg">
               No droplets have been added to this group yet.
             </div>
           )}
@@ -60,7 +103,7 @@ export function GroupDashboard({ group, canEdit }: RenderGroupDashboardProps) {
               ))}
             </div>
           ) : (
-            <div className="p-8 text-center text-slate-500 border border-dashed rounded-lg">
+            <div className="p-8 text-center text-slate-500 border border-dashed rounded-lg dark:text-slate-300 dark:border-slate-500">
               No playlists have been added to this group yet.
             </div>
           )}
@@ -82,7 +125,7 @@ export function GroupDashboard({ group, canEdit }: RenderGroupDashboardProps) {
                 </div>
               </div>
             ) : (
-              <div className="p-8 text-center text-slate-500 border border-dashed rounded-lg">
+              <div className="p-8 text-center text-slate-500 border border-dashed rounded-lg dark:text-slate-300 dark:border-slate-500">
                 No droplets or members have been added to this group yet.
               </div>
             )}

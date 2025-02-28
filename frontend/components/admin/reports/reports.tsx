@@ -15,10 +15,12 @@ export async function Reports() {
 
   return (
     <section>
-      <h1 className="font-bold">Reports</h1>
-      <p>The following reports have been received from users.</p>
+      <h1 className="font-bold dark:text-slate-300">Reports</h1>
+      <p className="dark:text-slate-300">
+        The following reports have been received from users.
+      </p>
 
-      <div className="p-4 mt-4 rounded-md bg-slate-100">
+      <div className="p-4 mt-4 rounded-md bg-slate-100 dark:bg-slate-800 dark:text-slate-300">
         {reports.length > 0 ? (
           <ul className="divide-y divide-slate-200 dark:divide-slate-700 md:space-y-4">
             {reports.map((report: Report) => (

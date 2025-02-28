@@ -31,18 +31,20 @@ export function AccessRequestBlock({ request }: { request: AccessRequest }) {
   return (
     <li className="flex items-center justify-between py-4">
       <div>
-        <p className="font-medium">
+        <p className="font-medium dark:text-slate-300">
           {request.givenName} {request.familyName}
         </p>
-        <p className="text-sm text-gray-600">{request.email}</p>
-        <p className="text-sm text-gray-600">
+        <p className="text-sm text-gray-600 dark:text-slate-400">
+          {request.email}
+        </p>
+        <p className="text-sm text-gray-600 dark:text-slate-400">
           {request.affiliation} • {request.college}
         </p>
       </div>
       <div className="flex gap-2">
         <Button
           onClick={handleApprove}
-          className="bg-green-600 text-white hover:bg-green-700"
+          className="bg-green-600 dark:bg-green-800 dark:hover:bg-green-900 text-white dark:text-white hover:bg-green-700"
           disabled={isPending}
         >
           Accept

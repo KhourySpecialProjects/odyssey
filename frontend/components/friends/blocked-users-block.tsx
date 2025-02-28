@@ -42,7 +42,7 @@ export function BlockedUsersBlock({
           </AvatarFallback>
         </Avatar>
         <div className="flex-1 min-w-0">
-          <p className="font-medium truncate text-slate-900 dark:text-white">
+          <p className="font-medium truncate text-slate-900 dark:text-black">
             {blocked.firstName && blocked.lastName
               ? `${blocked.firstName} ${blocked.lastName}`
               : blocked.email}

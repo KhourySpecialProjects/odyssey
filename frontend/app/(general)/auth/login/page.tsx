@@ -26,10 +26,10 @@ export default async function SignIn() {
     <GradientBackground>
       <>
         <div className="max-w-2xl mx-auto text-center">
-          <h2 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
+          <h2 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-4xl">
             Log In
           </h2>
-          <p className="mt-4 text-lg leading-normal text-slate-600 text-balance">
+          <p className="mt-4 text-lg leading-normal text-slate-600 dark:text-slate-300 text-balance">
             Authenticate with GitHub or with your Northeastern University
             account via Azure Active Directory to access Khoury Odyssey.
           </p>

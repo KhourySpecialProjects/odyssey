@@ -62,8 +62,10 @@ export function BatchAddUser() {
 
   return (
     <section className="mt-8">
-      <h2 className="font-bold">Batch Add Users</h2>
-      <p>Enter multiple email addresses or upload a CSV file.</p>
+      <h2 className="font-bold dark:text-slate-300">Batch Add Users</h2>
+      <p className="dark:text-slate-300">
+        Enter multiple email addresses or upload a CSV file.
+      </p>
 
       <form onSubmit={handleSubmit} className="mt-4">
         <div className="space-y-4">
@@ -77,7 +79,7 @@ export function BatchAddUser() {
             />
           </div>
           <div
-            className="relative border-2 border-dashed border-gray-300 rounded-lg p-6 hover:border-gray-400 transition-colors duration-200 ease-in-out"
+            className="relative border-2 border-dashed border-gray-300 dark:border-slate-500 rounded-lg p-6 hover:border-gray-400 transition-colors duration-200 ease-in-out"
             onDragOver={(e) => {
               e.preventDefault();
               e.stopPropagation();
@@ -105,11 +107,11 @@ export function BatchAddUser() {
             />
             <label
               htmlFor="csv-file-input"
-              className="inline-flex items-center px-4 py-2 bg-slate-100 border border-gray-300 rounded-md font-semibold text-xs text-gray-700 uppercase tracking-widest shadow-sm hover:bg-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-25 transition ease-in-out duration-150 cursor-pointer"
+              className="inline-flex items-center px-4 py-2 bg-slate-100 dark:bg-slate-300 border border-gray-300 rounded-md font-semibold text-xs text-gray-700 uppercase tracking-widest shadow-sm hover:bg-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-25 transition ease-in-out duration-150 cursor-pointer"
             >
               Choose Files
             </label>
-            <p className="mt-2 text-sm text-gray-500">
+            <p className="mt-2 text-sm text-gray-500 dark:text-slate-300">
               {csvFiles.length > 0
                 ? `${csvFiles.length} file(s) selected`
                 : "Drag and drop CSV files here"}
@@ -145,7 +147,7 @@ function SubmitButton() {
   const { pending } = useFormStatus();
 
   return (
-    <Button type="submit" disabled={pending}>
+    <Button type="submit" className="dark:bg-slate-300" disabled={pending}>
       {pending ? "Sending..." : "Send Invites"}
     </Button>
   );

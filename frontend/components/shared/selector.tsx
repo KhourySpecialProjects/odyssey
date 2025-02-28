@@ -19,7 +19,9 @@ export function AdminSelector({ content }: { content: AdminContent }) {
               key={key}
               className={
                 "px-2 py-1 cursor-pointer rounded-lg " +
-                (selected == key ? "bg-slate-200" : "hover:bg-slate-100")
+                (selected == key
+                  ? "bg-slate-200 dark:text-black"
+                  : "hover:bg-slate-100 dark:hover:text-black")
               }
               onClick={() => setSelected(key)}
             >

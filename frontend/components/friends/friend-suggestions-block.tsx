@@ -56,7 +56,7 @@ export function FriendSuggestionsBlock({
             </AvatarFallback>
           </Avatar>
           <div className="flex-1 min-w-0">
-            <p className="font-medium truncate text-slate-900 dark:text-white">
+            <p className="font-medium truncate text-slate-900 dark:text-slate-300">
               {suggUser.firstName && suggUser.lastName
                 ? suggUser.firstName + " " + suggUser.lastName
                 : suggUser.email}
@@ -70,7 +70,7 @@ export function FriendSuggestionsBlock({
               size="sm"
               disabled={requested}
               onClick={handleRequest}
-              className="text-white bg-sky-600"
+              className="text-white bg-sky-600 dark:bg-sky-600 dark:text-white"
             >
               {requested ? "Sent!" : "Send Request"}
             </Button>

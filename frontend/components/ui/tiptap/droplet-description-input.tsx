@@ -23,7 +23,7 @@ export function DropletDescriptionInput({
         },
       }),
       Placeholder.configure({
-        placeholder: "Nothing here yet...",
+        placeholder: "Type droplet description here...",
         emptyEditorClass:
           "before:content-[attr(data-placeholder)] before:text-gray-500 before:absolute before:top-2 before:left-4 before:pointer-events-none before:select-none",
       }),

@@ -36,7 +36,7 @@ export function ExpandableEditor({
   };
 
   return (
-    <div className="w-full p-4 border rounded-md border-slate-200">
+    <div className="w-full p-4 border rounded-md border-slate-200 dark:border-slate-500">
       <div className="w-full flex flex-row  mb-4 justify-between items-center">
         <h2 className="text-lg">Expandable Block</h2>
         <Trash2Icon

@@ -7,7 +7,7 @@ export default function ItalicTool({ editor }: { editor: Editor }) {
     <button
       onClick={() => editor.chain().focus().toggleItalic().run()}
       className={cn(
-        editor?.isActive("italic") ? "bg-slate-200" : "",
+        editor?.isActive("italic") ? "bg-slate-200 dark:bg-slate-700" : "",
         "p-2.5 rounded-md border border-transparent hover:border-slate-200",
       )}
     >

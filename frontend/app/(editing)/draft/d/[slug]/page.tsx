@@ -75,22 +75,26 @@ export default async function Droplet({ params }: Props) {
           ))}
         </div>
         <DropletName dropletId={droplet.id} startingName={droplet.name} />
-        <div className="flex flex-row w-full  items-center space-x-10 my-3">
+        <div className="flex flex-row w-full items-center space-x-10 my-3">
           <RegenerateSlugButton dropletId={droplet.id} name={droplet.name} />
           {/* <DeleteDropletButton dropletId={droplet.id} /> */}
         </div>
 
         {/* TODO: Turn this into a component */}
+        <div className="text-xl font-semibold mt-10">
+          {droplet.authorized_users && droplet.authorized_users.length > 1
+            ? "Authors"
+            : "Author"}
+        </div>
         {droplet.authorized_users && droplet.authorized_users.length > 0 && (
-          <div className={`mt-4 rounded-lg border p-4 border-gray-300`}>
-            <h2 className="text-xl font-semibold">
-              {droplet.authorized_users.length > 1 ? "Authors" : "Author"}
-            </h2>
+          <div
+            className={`mt-4 rounded-lg border p-4 border-gray-300 dark:border-slate-500`}
+          >
             <ul className="list-disc list-inside">
               {droplet.authorized_users.map((author) => (
-                <li key={author.id}>
+                <div key={author.id} className="dark:text-slate-300">
                   {author.firstName + " " + author.lastName}
-                </li>
+                </div>
               ))}
             </ul>
           </div>
@@ -116,8 +120,10 @@ export default async function Droplet({ params }: Props) {
         <NextSteps dropletId={droplet.id} nextSteps={droplet.nextSteps ?? []} />
 
         <section>
-          <h1 className="text-2xl font-bold text-slate-900 ">General Info</h1>
-          <p className="text-slate-500 mb-8">
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
+            General Info
+          </h1>
+          <p className="text-slate-500 mb-8 dark:text-slate-300">
             Information that users will see when they view the droplet{" "}
           </p>
           <div className="w-full flex flex-col space-y-4">
