@@ -7,8 +7,10 @@ export async function Droplets() {
 
   return (
     <section>
-      <h1 className="font-bold">Droplets</h1>
-      <p>The following droplets have been created.</p>
+      <h1 className="font-bold dark:text-slate-300">Droplets</h1>
+      <p className="dark:text-slate-300">
+        The following droplets have been created.
+      </p>
 
       <div className="mt-4">
         <CreateDroplet />

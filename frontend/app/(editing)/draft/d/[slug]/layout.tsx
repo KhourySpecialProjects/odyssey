@@ -4,8 +4,6 @@ import { isAuthorizedUserAdmin } from "@/lib/utils";
 import { getDropletBySlug } from "@/lib/requests/droplet";
 import { AuthorizedUser, Droplet } from "@/types";
 import { Sidebar } from "@/components/draft/sidebar";
-import { EnvironmentBanner } from "@/components/debug/environmentBanner";
-import { DebugBanner } from "@/components/debug/debugBanner";
 import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
 
 type params = {
@@ -53,8 +51,6 @@ export default async function CheckPermission({ params, children }: Props) {
 
   return (
     <>
-      <DebugBanner />
-      <EnvironmentBanner className="mb-2" />
       <Sidebar droplet={droplet} user={user} authorizedUser={authorizedUser} />
       <div className="md:ml-64">
         <div className="p-6 rounded-lg sm:p-8 md:py-10 md:m-4 md:border-dashed md:border-2 md:border-slate-200 md:dark:border-slate-700 mx-auto flex flex-col items-center justify-center">

@@ -1,28 +1,14 @@
 "use client";
-import { Editor } from "@tiptap/react";
 import { useState } from "react";
-import { useActionState } from "react";
 import { Button } from "@/components/ui/button";
-import {
-  ArrowUpToLineIcon,
-  LoaderIcon,
-  XIcon,
-  ImagePlusIcon,
-  Menu,
-} from "lucide-react";
+import { Menu } from "lucide-react";
 import {
   Popover,
-  PopoverClose,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { uploadImage } from "@/lib/actions";
 import { cn } from "@/lib/utils";
-import { useCallback } from "react";
-import { tiptapJSONToStrapiJSON } from "@/lib/utils";
 import { CalloutIcon } from "@/components/ui/callout-icons";
-import { useOffClick } from "@/components/draft/metadata/hooks/useOffClick";
-import { useRef } from "react";
 
 export default function CalloutTypeTool({
   block,
@@ -132,7 +118,7 @@ export default function CalloutTypeTool({
               });
             }}
             variant={dropdownVariants}
-            className="w-full border border-slate-200 bg-purple-300 mb-1"
+            className="w-full border border-slate-200 bg-purple-300 dark:bg-purple-300 mb-1"
           >
             More Information
             {<CalloutIcon color={"bg-purple-300"}></CalloutIcon>}

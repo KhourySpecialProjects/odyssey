@@ -18,8 +18,8 @@ export function SettingsNavigation({ items }: { items: NavItem[] }) {
             key={item.href}
             href={item.href}
             className={cn(
-              "font-semibold",
-              pathname == item.href && "text-sky-600",
+              "font-semibold dark:text-slate-300",
+              pathname == item.href && "text-sky-600 dark:text-sky-600",
             )}
           >
             {item.label}

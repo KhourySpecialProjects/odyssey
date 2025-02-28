@@ -1,7 +1,7 @@
 "use client";
 
 import { Lesson, Note } from "@/types";
-import { useState, useCallback, useEffect, useRef, useReducer } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { getNotesByAuthorizedUserAndLesson } from "@/lib/requests/notes";
 import { NoteBlock } from "./note-block";
@@ -246,7 +246,7 @@ export function NotesBar({
                 disabled={noteDisabled}
               />
               <Button
-                className="px-auto mb-1 bg-red-700 p-0 hover:bg-red-900 trash-icon"
+                className="px-auto mb-1 bg-red-700 dark:bg-red-700 p-0 hover:bg-red-900 dark:hover:bg-red-900 trash-icon"
                 variant="default"
                 size="sm"
                 onClick={() => {

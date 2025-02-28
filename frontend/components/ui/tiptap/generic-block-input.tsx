@@ -45,7 +45,7 @@ export function GenericBlockInput({
       Placeholder.configure({
         placeholder: "Nothing here yet...",
         emptyEditorClass:
-          "before:content-[attr(data-placeholder)] before:text-gray-500 before:absolute before:top-3 before:left-3 before:pointer-events-none before:select-none",
+          "cursor-text before:content-[attr(data-placeholder)] before:text-gray-500 dark:before:text-slate-300 before:absolute before:top-3 before:left-3 before:pointer-events-none before:select-none",
       }),
     ],
 
@@ -57,7 +57,7 @@ export function GenericBlockInput({
     editorProps: {
       attributes: {
         class:
-          "w-full border min-h-32 border-slate-200 p-3 prose prose-lg prose-sky prose-table:block prose-table:overflow-x-scroll rounded-b-md hover:shadow focus:shadow-lg outline-none",
+          "w-full border min-h-32 prose-code:text-inherit border-slate-200 dark:border-slate-500 p-3 prose prose-lg prose-sky prose-headings:text-inherit prose-strong:text-inherit prose-table:block prose-table:overflow-x-scroll rounded-b-md hover:shadow focus:shadow-lg outline-none dark:text-slate-300",
       },
       handleKeyDown: (view: any, event: KeyboardEvent) => {
         if (event.key === "Tab") {

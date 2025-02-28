@@ -55,7 +55,9 @@ export async function fetchAnnouncements(
           {
             droplet: {
               enrollments: {
-                id: { $eq: user.id },
+                authorizedUser: {
+                  id: { $eq: user.id },
+                },
               },
             },
           },

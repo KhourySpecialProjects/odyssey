@@ -61,7 +61,7 @@ export function DropletLessonWrapper({
       {enrollmentId && (
         <>
           <button
-            className="fixed top-20 sm:top-16 xs:top-16 right-0 lg:hidden z-10 p-2 transform -translate-x-1/2 bg-blue-100 rounded shadow-lg"
+            className="fixed top-44 sm:top-44 xs:top-44 right-0 lg:hidden z-10 dark:text-black p-2 transform -translate-x-1/2 bg-blue-100 rounded shadow-lg"
             title="View Notes Bar"
             onClick={() => setExpanded(!expanded)}
           >
@@ -69,7 +69,7 @@ export function DropletLessonWrapper({
           </button>
           <div
             className={cn(
-              "fixed lg:relative lg:w-1/4 min-w-[375px] h-full bg-slate-50 border border-slate-200 ",
+              "fixed lg:relative lg:w-1/4 min-w-[375px] h-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-500",
               "top-0 right-0 z-40",
               expanded ? "translate-x-0" : "translate-x-full lg:translate-x-0",
             )}

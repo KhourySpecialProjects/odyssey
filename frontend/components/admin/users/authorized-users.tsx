@@ -7,8 +7,10 @@ export async function AuthorizedUsers() {
 
   return (
     <section>
-      <h1 className="font-bold">Authorized Users</h1>
-      <p>The following users have access to this application.</p>
+      <h1 className="font-bold dark:text-slate-300">Authorized Users</h1>
+      <p className="dark:text-slate-300">
+        The following users have access to this application.
+      </p>
 
       <div className="mt-4">
         <CreateUser />
