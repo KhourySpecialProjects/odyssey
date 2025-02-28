@@ -78,6 +78,9 @@ export async function getNotesByDroplet(
       highlight: {
         fields: ["text", "color", "yLevel"],
       },
+      lesson: {
+        fields: ["*"],
+      },
     },
     fields,
     pagination,

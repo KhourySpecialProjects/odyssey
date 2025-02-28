@@ -20,6 +20,10 @@ export default async function SettingsLayout({
       href: "/settings/friends",
       label: "Friends",
     },
+    {
+      href: "/settings/notes",
+      label: "Notes",
+    },
   ];
 
   return (

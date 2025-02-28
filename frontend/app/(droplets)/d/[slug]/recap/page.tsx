@@ -198,7 +198,9 @@ export default async function DropletRecapRoute({ params }: Props) {
                             <span className={`bg-[${note.highlight.color}] px-1 rounded dark:text-black`}>
                               {note.highlight.text} 
                             </span>{" "}
-                            {note.content}
+                            <div>
+                              {note.content}
+                            </div>
                           </>
                         ) : (
                           note.content
