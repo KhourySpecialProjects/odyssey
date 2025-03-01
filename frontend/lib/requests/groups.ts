@@ -427,6 +427,7 @@ export async function getGroupBySlugV2(
         },
       },
     },
+    fields = ["*", "dropletDueDates"],
   }: StrapiRequestParams = {},
 ): Promise<Group | null> {
   const path = `/groups`;
@@ -435,6 +436,7 @@ export async function getGroupBySlugV2(
       slug: { $eq: slug },
     },
     populate,
+    fields,
   };
 
   const groups = await fetchAPI<Group[]>(path, {
@@ -698,7 +700,7 @@ export async function assignDueDate(
     });
 
     // Update all member enrollments
-    const enrollments = await fetchAPI<any[]>(`/enrollments`, {
+    const enrollments = await fetchAPI<Enrollment[]>(`/enrollments`, {
       urlParams: {
         filters: {
           authorizedUser: {
@@ -708,6 +710,13 @@ export async function assignDueDate(
         },
         populate: {
           authorizedUser: {
+            populate: {
+            groups: {
+              droplets: {
+                fields: ["id, name"],
+              },
+            },
+          },
             fields: ["timeZone"],
           },
         },
@@ -715,17 +724,62 @@ export async function assignDueDate(
       },
     });
 
-    const updatePromises = enrollments
-      .map((enrollment) =>
-        fetchAPI(`/enrollments/${enrollment.id}`, {
-          options: {
-            method: "PUT",
-            body: JSON.stringify({
-              data: { dueDate: date ? DateTime.fromISO(date) : null },
-            }),
-          },
-        }),
-      );
+    // const updatePromises = enrollments
+    //   .map((enrollment) =>
+    //     fetchAPI(`/enrollments/${enrollment.id}`, {
+    //       options: {
+    //         method: "PUT",
+    //         body: JSON.stringify({
+    //           data: { dueDate: date ? DateTime.fromISO(date) : null },
+    //         }),
+    //       },
+    //     }),
+    //   );
+
+    // const updatePromises = enrollments
+    // .map((enrollment) =>
+    //   fetchAPI(`/enrollments/${enrollment.id}`, {
+    //     options: {
+    //       method: "PUT",
+    //       body: JSON.stringify({
+    //         data: {
+    //           dueDate: !date ? null : !enrollment.dueDate ? date :
+    //             DateTime.fromISO(enrollment.dueDate) < DateTime.fromISO(date) 
+    //               ? DateTime.fromISO(enrollment.dueDate)
+    //               : DateTime.fromISO(date)
+    //         },
+    //       }),
+    //     },
+    //   }),
+    // );
+
+    const updatePromises = enrollments.map((enrollment) => {
+      const earliestDueDate = enrollment.authorizedUser.groups
+        ?.filter((group: { droplets: { id: number }[]; dropletDueDates?: { dropletId: number; baseDueDate: string }[] }) => 
+          group.droplets?.some((d: { id: number }) => d.id === droplet.id))
+        ?.map((group: { dropletDueDates?: { dropletId: number; baseDueDate: string }[] }) => {
+          const dropletDueDate = group.dropletDueDates?.find((d: { dropletId: number }) => d.dropletId === droplet.id)?.baseDueDate;
+          return dropletDueDate ? DateTime.fromISO(dropletDueDate) : null;
+        })
+        ?.filter((date: DateTime | null) => date !== null)
+        ?.reduce((earliest: DateTime | null, current: DateTime) => 
+          !earliest || current < earliest ? current : earliest, 
+          null);
+
+      return fetchAPI(`/enrollments/${enrollment.id}`, {
+        options: {
+          method: "PUT",
+          body: JSON.stringify({
+            data: {
+              dueDate: !date ? null : !earliestDueDate ? date :
+                earliestDueDate < DateTime.fromISO(date) 
+                  ? earliestDueDate.toISO()
+                  : date
+            },
+          }),
+        },
+      });
+    });
 
     revalidatePath("/dashboard");
     revalidatePath("/explore");

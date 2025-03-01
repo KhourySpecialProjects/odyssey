@@ -8,29 +8,48 @@ import {
 import { extractHeadings, isAuthorizedUserAdmin } from "@/lib/utils";
 import { User, Droplet, Lesson, AuthorizedUser } from "@/types";
 import { BlocksRenderer } from "@strapi/blocks-react-renderer";
-import { ArrowDownFromLineIcon } from "lucide-react";
+import { ArrowDownFromLineIcon, Pencil } from "lucide-react";
 import { QuizBlock } from "./quiz";
 import GenericBlockRenderer from "./GenericBlockRenderer";
 import { useEffect, useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
+import { redirect, useRouter } from "next/navigation";
 import {
   createHighlight,
   deleteHighlight,
   getHighlightsForLesson,
   markLessonAsComplete,
 } from "@/lib/actions";
-import { LockIcon } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "../../ui/dialog";
+import {
+  LockIcon,
+  CircleAlert,
+  CircleHelp,
+  TriangleAlert,
+  BookOpenText,
+  BadgeInfo,
+  Bell,
+} from "lucide-react";
+import { getCurrentUser } from "@/lib/auth/session";
 import { CalloutIcon } from "@/components/ui/callout-icons";
 import { OpenEndedQuizBlock } from "./open-ended-quiz";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
+import { Textarea } from "@/components/ui/textarea";
 import { Highlight } from "@/types";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { getEnrollByID } from "@/lib/requests/enrollment";
 import { createNote } from "@/lib/requests/notes";
-import { getHighlights } from "@/lib/requests/highlights";
 
 interface LessonRendererProps {
   lesson: Lesson;
-  droplet: Pick<Droplet, "id" | "droplet_lessons" | "shouldBeLocked">;
+  droplet: Pick<Droplet, "id" | "droplet_lessons">;
   enrollmentId?: string;
   completedLessonIds: number[];
   user?: User | null;
@@ -47,16 +66,19 @@ export function LessonRenderer({
   user,
   author = false,
   authUser,
-  onUpdate,
-}: LessonRendererProps) {
+  onUpdate
+}: LessonRendererProps
+) {
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
   const [highlights, setHighlights] = useState<Highlight[]>([]);
+  const [isHighlighting, setIsHighlighting] = useState(false);
 
   useEffect(() => {
     // Fetch highlights when component mounts
     const fetchHighlights = async () => {
       const response = await getHighlightsForLesson(lesson.id);
+      console.log("response", response.data);
       if (response.data) {
         const formattedHighlights = response.data.map((item: any) => ({
           ...item.attributes,
@@ -64,6 +86,7 @@ export function LessonRenderer({
         }));
         setHighlights(formattedHighlights);
       }
+      console.log("highlights", highlights);
     };
     fetchHighlights();
   }, [lesson.id]);
@@ -86,9 +109,15 @@ export function LessonRenderer({
       };
       setHighlights((prev) => [...prev, formattedHighlight]);
       toast.success("Highlight saved");
+
+      
+
+
     } else {
       toast.error("Failed to save highlight");
     }
+
+
   };
 
   const handleDeleteHighlight = async (highlightId: number) => {
@@ -101,22 +130,14 @@ export function LessonRenderer({
     }
   };
 
-  const handleCreateNote = async (notePos: number, text: string) => {
+  const handleCreateNote = async (notePos: number, highlight: Highlight) => {
     const enrollment = await getEnrollByID(String(enrollmentId));
+      const result = await createNote(lesson, enrollment, notePos, highlight);
+      
+      console.log("created a new note in the handleHighlight function")
 
-    //code that takes the text and notePos and gets the highlight
-    if (authUser) {
-      const highlight = await getHighlights(authUser.id, text);
-      const result = await createNote(
-        lesson,
-        enrollment,
-        notePos,
-        highlight[0],
-      );
-    }
-
-    onUpdate();
-  };
+      onUpdate();
+  }
 
   // Find the current lesson's position in this droplet
   const currentLessonOrder = droplet.droplet_lessons.find(
@@ -131,7 +152,6 @@ export function LessonRenderer({
   // Check if this lesson should be locked
   const isLocked =
     previousLesson &&
-    !(droplet.shouldBeLocked === false) &&
     !completedLessonIds.includes(previousLesson.id) &&
     !author &&
     !(user && isAuthorizedUserAdmin(user.roles));
@@ -152,6 +172,7 @@ export function LessonRenderer({
 
   async function handleMarkAsComplete() {
     if (!enrollmentId) {
+      console.log("no enrollment");
       return;
     }
 
@@ -165,6 +186,10 @@ export function LessonRenderer({
         completedLessonIds.push(lesson.id);
         await router.refresh();
       }
+      console.log(
+        "completedlessonids for mark as complete",
+        completedLessonIds,
+      );
     });
   }
 
@@ -175,10 +200,6 @@ export function LessonRenderer({
       headings = headings.concat(extractHeadings(b.content));
     });
 
-  let genericBlocks = lesson.blocks
-    .filter((b: any) => b.__component === "droplets.generic")
-    .map((b) => b.id);
-
   return (
     <>
       <div className="w-full mx-auto lg:py-8 max-w-prose">
@@ -186,9 +207,17 @@ export function LessonRenderer({
           <h1 className="text-4xl font-extrabold text-balance">
             {lesson.name}
           </h1>
+          <div className="flex items-center space-x-2 pt-4">
+            <Switch
+              id="public"
+              checked={isHighlighting}
+              onCheckedChange={setIsHighlighting}
+            />
+            <Label htmlFor="public">Highlighting Mode</Label>
+          </div>
 
           {headings.length > 2 && (
-            <div className="p-6 mt-8 border rounded-md bg-slate-50 border-slate-200">
+            <div className="p-6 mt-8 border rounded-md md:px-8 lg:-mx-8 bg-slate-50 border-slate-200">
               <h2 className="text-xl font-bold">Contents</h2>
               <ul className="mt-3 ml-4 list-disc list-inside">
                 {headings.map((heading, index) => (
@@ -211,9 +240,8 @@ export function LessonRenderer({
                 highlights={highlights}
                 onHighlight={handleHighlight}
                 onDeleteHighlight={handleDeleteHighlight}
+                isHighlighting={isHighlighting}
                 onNote={handleCreateNote}
-                genericBlocks={genericBlocks}
-                enrollmentId={enrollmentId}
               />
             ))}
           </div>
@@ -245,17 +273,15 @@ function LessonBlockRenderer({
   highlights,
   onHighlight,
   onDeleteHighlight,
+  isHighlighting,
   onNote,
-  genericBlocks,
-  enrollmentId,
 }: {
   block: any;
   highlights: any[];
   onHighlight: (highlight: any) => void;
   onDeleteHighlight: (id: number) => void;
-  onNote: (notePos: number, text: string) => void;
-  genericBlocks: number[];
-  enrollmentId: string | undefined;
+  isHighlighting: boolean;
+  onNote: (notePos: number, text: string) => void
 }) {
   switch (block.__component) {
     case "droplets.generic":
@@ -265,9 +291,8 @@ function LessonBlockRenderer({
           highlights={highlights}
           onHighlight={onHighlight}
           onDeleteHighlight={onDeleteHighlight}
+          isHighlighting={isHighlighting}
           onNote={onNote}
-          genericBlocks={genericBlocks}
-          enrollmentId={enrollmentId}
         />
       );
 
@@ -297,12 +322,9 @@ function LessonBlockRenderer({
         <div
           className={`flex flex-row items-center px-6 py-6 border rounded-md md:-mx-8 ${block.color || "bg-sky-50"}`}
         >
-          {block?.iconEnabled && (
-            <div className="">
-              <CalloutIcon color={block.color || "bg-sky-300"}></CalloutIcon>
-            </div>
-          )}
-
+          <div className="">
+            <CalloutIcon color={block.color || "bg-sky-300"}></CalloutIcon>
+          </div>
           <div className="">
             <div className="pl-8 mx-auto prose prose-sky text-center">
               <BlocksRenderer content={block.content} />
