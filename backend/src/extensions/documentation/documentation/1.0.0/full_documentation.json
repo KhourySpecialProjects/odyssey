@@ -11,7 +11,7 @@
       "url": "https://khouryodyssey.org"
     },
     "license": null,
-    "x-generation-date": "2025-02-24T14:11:09.306Z"
+    "x-generation-date": "2025-03-01T17:42:52.196Z"
   },
   "x-strapi-config": {
     "plugins": [
@@ -3157,7 +3157,8 @@
                                                     "Africa/Johannesburg",
                                                     "Africa/Lagos",
                                                     "Africa/Nairobi"
-                                                  ]},
+                                                  ]
+                                                },
                                                 "droplets": {
                                                   "type": "object",
                                                   "properties": {
@@ -6516,7 +6517,8 @@
                                                       "Africa/Johannesburg",
                                                       "Africa/Lagos",
                                                       "Africa/Nairobi"
-                                                    ]},
+                                                    ]
+                                                  },
                                                   "droplets": {
                                                     "type": "object",
                                                     "properties": {
@@ -7428,7 +7430,8 @@
                   "Africa/Johannesburg",
                   "Africa/Lagos",
                   "Africa/Nairobi"
-                ]},
+                ]
+              },
               "droplets": {
                 "type": "array",
                 "items": {
@@ -9661,7 +9664,8 @@
                                                                                 "Africa/Johannesburg",
                                                                                 "Africa/Lagos",
                                                                                 "Africa/Nairobi"
-                                                                              ]},
+                                                                              ]
+                                                                            },
                                                                             "droplets": {
                                                                               "type": "object",
                                                                               "properties": {
@@ -10832,7 +10836,8 @@
               "Africa/Johannesburg",
               "Africa/Lagos",
               "Africa/Nairobi"
-            ]},
+            ]
+          },
           "droplets": {
             "type": "object",
             "properties": {
@@ -13902,7 +13907,8 @@
                             "Africa/Johannesburg",
                             "Africa/Lagos",
                             "Africa/Nairobi"
-                          ]},
+                          ]
+                        },
                         "droplets": {
                           "type": "object",
                           "properties": {
@@ -16480,7 +16486,8 @@
                                                                                   "Africa/Johannesburg",
                                                                                   "Africa/Lagos",
                                                                                   "Africa/Nairobi"
-                                                                                ]},
+                                                                                ]
+                                                                              },
                                                                               "droplets": {
                                                                                 "type": "object",
                                                                                 "properties": {
@@ -20167,7 +20174,8 @@
                                                     "Africa/Johannesburg",
                                                     "Africa/Lagos",
                                                     "Africa/Nairobi"
-                                                  ]},
+                                                  ]
+                                                },
                                                 "droplets": {
                                                   "type": "object",
                                                   "properties": {
@@ -23784,7 +23792,8 @@
                           "Africa/Johannesburg",
                           "Africa/Lagos",
                           "Africa/Nairobi"
-                        ]},
+                        ]
+                      },
                       "droplets": {
                         "type": "object",
                         "properties": {
@@ -26969,7 +26978,8 @@
                             "Africa/Johannesburg",
                             "Africa/Lagos",
                             "Africa/Nairobi"
-                          ]},
+                          ]
+                        },
                         "droplets": {
                           "type": "object",
                           "properties": {
@@ -30212,7 +30222,8 @@
                             "Africa/Johannesburg",
                             "Africa/Lagos",
                             "Africa/Nairobi"
-                          ]},
+                          ]
+                        },
                         "droplets": {
                           "type": "object",
                           "properties": {
@@ -33505,7 +33516,8 @@
                           "Africa/Johannesburg",
                           "Africa/Lagos",
                           "Africa/Nairobi"
-                        ]},
+                        ]
+                      },
                       "droplets": {
                         "type": "object",
                         "properties": {
@@ -36364,7 +36376,8 @@
                                                       "Africa/Johannesburg",
                                                       "Africa/Lagos",
                                                       "Africa/Nairobi"
-                                                    ]},
+                                                    ]
+                                                  },
                                                   "droplets": {
                                                     "type": "object",
                                                     "properties": {
@@ -39517,7 +39530,8 @@
                                                                   "Africa/Johannesburg",
                                                                   "Africa/Lagos",
                                                                   "Africa/Nairobi"
-                                                                ]},
+                                                                ]
+                                                              },
                                                               "droplets": {
                                                                 "type": "object",
                                                                 "properties": {
@@ -42988,7 +43002,8 @@
                                                       "Africa/Johannesburg",
                                                       "Africa/Lagos",
                                                       "Africa/Nairobi"
-                                                    ]},
+                                                    ]
+                                                  },
                                                   "droplets": {
                                                     "type": "object",
                                                     "properties": {
@@ -46674,7 +46689,8 @@
                                                       "Africa/Johannesburg",
                                                       "Africa/Lagos",
                                                       "Africa/Nairobi"
-                                                    ]},
+                                                    ]
+                                                  },
                                                   "droplets": {
                                                     "type": "object",
                                                     "properties": {
@@ -47477,8 +47493,7 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object",
-              "additionalProperties": true
+              "type": "object"
             },
             "style": "deepObject"
           },
@@ -47983,8 +47998,7 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object",
-              "additionalProperties": true
+              "type": "object"
             },
             "style": "deepObject"
           },
@@ -48489,8 +48503,7 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object",
-              "additionalProperties": true
+              "type": "object"
             },
             "style": "deepObject"
           },
@@ -48995,8 +49008,7 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object",
-              "additionalProperties": true
+              "type": "object"
             },
             "style": "deepObject"
           },
@@ -49501,8 +49513,7 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object",
-              "additionalProperties": true
+              "type": "object"
             },
             "style": "deepObject"
           },
@@ -50007,8 +50018,7 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object",
-              "additionalProperties": true
+              "type": "object"
             },
             "style": "deepObject"
           },
@@ -50513,8 +50523,7 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object",
-              "additionalProperties": true
+              "type": "object"
             },
             "style": "deepObject"
           },
@@ -51019,8 +51028,7 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object",
-              "additionalProperties": true
+              "type": "object"
             },
             "style": "deepObject"
           },
@@ -51525,8 +51533,7 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object",
-              "additionalProperties": true
+              "type": "object"
             },
             "style": "deepObject"
           },
@@ -52031,8 +52038,7 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object",
-              "additionalProperties": true
+              "type": "object"
             },
             "style": "deepObject"
           },
@@ -52537,8 +52543,7 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object",
-              "additionalProperties": true
+              "type": "object"
             },
             "style": "deepObject"
           },
@@ -53043,8 +53048,7 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object",
-              "additionalProperties": true
+              "type": "object"
             },
             "style": "deepObject"
           },
@@ -53549,8 +53553,7 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object",
-              "additionalProperties": true
+              "type": "object"
             },
             "style": "deepObject"
           },
@@ -54055,8 +54058,7 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object",
-              "additionalProperties": true
+              "type": "object"
             },
             "style": "deepObject"
           },
@@ -54561,8 +54563,7 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object",
-              "additionalProperties": true
+              "type": "object"
             },
             "style": "deepObject"
           },
@@ -55067,8 +55068,7 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object",
-              "additionalProperties": true
+              "type": "object"
             },
             "style": "deepObject"
           },

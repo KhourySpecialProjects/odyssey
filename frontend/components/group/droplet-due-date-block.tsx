@@ -48,6 +48,7 @@ export function DropletDueDateBlock({
   const handleSaveDate = () => {
     setIsSaveClicked(true);
     const handleSaveDate = async () => {
+      
       await assignDueDate(
         existingGroup,
         currentDroplet,
