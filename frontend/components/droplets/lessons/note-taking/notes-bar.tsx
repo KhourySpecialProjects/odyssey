@@ -105,6 +105,7 @@ export function NotesBar({
   const [mousePositionX, setMousePositionX] = useState(0);
   const [selectedNote, setSelectedNote] = useState(false);
   const [noteDisabled, setNoteDisabled] = useState(false);
+  const [focused, setFocused] = useState<number|null>(null);
 
   if (!enrollmentId) {
     enrollmentId = "";
@@ -199,57 +200,67 @@ export function NotesBar({
       <div className={`right-[10%] text-center mt-5`}>
         <h1 className="text-2xl font-extrabold ">My Notes</h1>
       </div>
+
       <div
-        className="space-y-4 w-full h-full relative cursor-pointer"
+        className={`space-y-4 w-full h-full relative cursor-pointer `}
         onClick={handleMouseClick}
       >
-        <div
-          className={`absolute z-50`}
-          style={{
-            top: `${mousePositionY -195}px`,
-            left: `${mousePositionX}%`,
-            position: "absolute",
-          }}
-        >
-          <Popover open={dialogOpen}>
-            <PopoverTrigger disabled={false}></PopoverTrigger>
-            <PopoverContent className="w-max p-0">
-              <div className="p-0">
-                <Button
-                  size="sm"
-                  onClick={handleAddNote}
-                  className="justify-center bg-white text-slate-600 hover:bg-slate-600 hover:text-white"
-                >
-                  Create a Note?
-                </Button>
-              </div>
-            </PopoverContent>
-          </Popover>
-        </div>
 
-        {notes.map((note) => (
+        
+
           <div
-            key={note.id}
-            className={`absolute w-full transform -translate-y-1/2  transition-transform ${
-              draggedNote?.id === note.id ? "cursor-grabbing" : ""
-            }`}
+            className={`absolute z-50`}
             style={{
-              top: `${note.positionY - 220}px`,
-              transform: `translateY(-50%)`,
+              top: `${mousePositionY - 195}px`,
+              left: `${mousePositionX}%`,
+              position: "absolute",
             }}
-            onMouseDown={(e) => handleDragStart(note, e)}
           >
-            <div className="flex flex-row justify-center items-center">
-              <NoteBlock
-                note={note}
-                onUpdate={fetchNotes}
-                disabled={noteDisabled}
-                onDelete={handleDeleteNote}
-              />
-            </div>
+            <Popover open={dialogOpen}>
+              <PopoverTrigger disabled={false}></PopoverTrigger>
+              <PopoverContent className="w-max p-0">
+                <div className="p-0">
+                  <Button
+                    size="sm"
+                    onClick={handleAddNote}
+                    className="justify-center bg-white text-slate-600 hover:bg-slate-600 hover:text-white"
+                  >
+                    Create a Note?
+                  </Button>
+                </div>
+              </PopoverContent>
+            </Popover>
           </div>
-        ))}
-      </div>
+
+          {notes.map((note) => (
+            <div
+              key={note.id}
+              className={`absolute w-full transform -translate-y-1/2  transition-transform 
+                ${draggedNote?.id === note.id ? "cursor-grabbing" : ""}
+                ${focused === note.id ? 'z-20' : 'z-0'}`}
+              style={{
+                top: `${note.positionY - 220}px`,
+                transform: `translateY(-50%)`,
+              }}
+              onMouseDown={(e) => handleDragStart(note, e)}
+            >
+              <div
+                className={`flex flex-row justify-center items-center 
+                  ${!focused || focused === note.id? 'opacity-100' : 'opacity-30'}`}
+                onFocus={() => setFocused(note.id)}
+                onBlur={() => setFocused(null)}>
+
+
+                <NoteBlock
+                  note={note}
+                  onUpdate={fetchNotes}
+                  disabled={noteDisabled}
+                  onDelete={handleDeleteNote}
+                />
+              </div>
+            </div>
+          ))}
+        </div>
     </>
   );
 }

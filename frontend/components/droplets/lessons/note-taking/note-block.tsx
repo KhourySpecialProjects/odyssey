@@ -3,7 +3,7 @@ import { useState, useCallback } from "react";
 import { ChangeEvent } from "react";
 import { updateNoteContent } from "@/lib/requests/notes";
 import { Badge } from "@/components/ui/badge";
-import { File, MessageSquareText, GripVertical, Trash2Icon } from "lucide-react";
+import { MessageSquareText, GripVertical, Trash2Icon, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export function NoteBlock({
@@ -18,6 +18,7 @@ export function NoteBlock({
   onDelete: (noteId: number) => void;
 }) {
   const [content, setContent] = useState(note.content);
+  const [focused, setFocused] = useState(false);
 
   const handleInputChange = (e: ChangeEvent<HTMLTextAreaElement>) => {
     const searchTerm = e.target.value;
@@ -50,6 +51,14 @@ export function NoteBlock({
     }
   };
 
+  const adjustHeight = (event: Event): void => {
+    const textarea = event.target as HTMLTextAreaElement; // Type assertion
+    if (textarea) {
+        textarea.style.height = 'auto'; // Reset height to recalculate
+        textarea.style.height = `${textarea.scrollHeight}px`; // Set to full content height
+    }
+}
+
   return (
     <div className="mx-3 pt-2 pl-2 pr-2 w-full note-block bg-slate-200 dark:bg-slate-800 dark:border dark:border-slate-500 rounded-xl flex flex-row">
 
@@ -70,9 +79,19 @@ export function NoteBlock({
               <MessageSquareText className="text-slate-[#6c6060] dark:text-slate-300" />
             </div>
           ) : (
-            <div className="flex flex-row justify-end w-full">
-              <File className="text-slate-[#6c6060] dark:text-slate-300" />
+
+            <div className="flex flex-row justify-between w-full">
+
+              <Badge
+                variant="secondary"
+                className={`text-center text-slate-700 bg-slate-200 border border-slate-400 hover:text-white`}
+              >
+                General Note
+              </Badge>
+
+              <FileText className="text-slate-[#6c6060] dark:text-slate-300" />
             </div>
+
           )}
 
           <Button
@@ -92,17 +111,27 @@ export function NoteBlock({
           disabled={disabled}
           onChange={(e) => {
             handleInputChange(e);
-            e.target.style.height = "auto"; // Reset the height
-            e.target.style.height = `${e.target.scrollHeight}px`; // Adjust height
           }}
-          onBlur={handleBlur}
-          className="p-2 border-slate-300 dark:text-black rounded-xl focus:outline-none focus:border-slate-400 focus:ring-0 shadow-sm"
+          onBlur={(e) => {
+            setFocused(false);
+            e.target.style.height = `3.5em`
+            handleBlur();
+          }}
+          onFocus={(e) => {
+            setFocused(true), 
+            e.target.style.height = `${e.target.scrollHeight}px`
+          }}
+
+          className={`p-2 border-slate-300 dark:text-black rounded-xl focus:outline-none focus:border-slate-400 focus:ring-0 shadow-sm transition-all duration-200`}          
           placeholder="Type something..."
           rows={2}
           style={{
             resize: "none",
             width: "100%",
+            height: "auto",
             boxSizing: "border-box",
+            overflow: "hidden",
+            lineHeight: "1.5em"
           }}
         />
       </div>
