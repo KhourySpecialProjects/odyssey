@@ -25,7 +25,7 @@ export function GroupHeader({ group, canEdit }: GroupHeaderProps) {
   return (
     <div className="flex justify-between items-start">
       <div className="space-y-4">
-        <h1 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
+        <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-4xl">
           {group.groupName}
         </h1>
         <div className="flex items-center gap-4">
