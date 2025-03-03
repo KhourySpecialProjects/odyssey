@@ -69,7 +69,7 @@ export default async function RootLayout({
                     </div>
 
                     <main className="flex-grow">{children}</main>
-                    
+                    <Footer />
                   </div>
                   <FirstVisitPopup user={authorizedUser} />
                 </NuqsAdapter>
