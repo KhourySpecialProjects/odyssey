@@ -3,16 +3,19 @@ import { useState, useCallback } from "react";
 import { ChangeEvent } from "react";
 import { updateNoteContent } from "@/lib/requests/notes";
 import { Badge } from "@/components/ui/badge";
-import { File, MessageSquareText, GripVertical } from "lucide-react";
+import { File, MessageSquareText, GripVertical, Trash2Icon } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export function NoteBlock({
   note,
   onUpdate,
   disabled,
+  onDelete
 }: {
   note: Note;
   onUpdate: () => void;
   disabled: boolean;
+  onDelete: (noteId: number) => void;
 }) {
   const [content, setContent] = useState(note.content);
 
@@ -48,12 +51,13 @@ export function NoteBlock({
   };
 
   return (
-    <div className=" mx-2 pt-2 pl-2 pr-2 w-4/5 note-block bg-slate-200 dark:bg-slate-800 dark:border dark:border-slate-500 rounded-xl flex flex-row items-center">
-      <div className="grip-handle pt-2">
-        <GripVertical />
-      </div>
-      <div className="flex-1 flex flex-col w-4/5 p-2">
-        <div className="pb-1 flex flex-row">
+    <div className="mx-3 pt-2 pl-2 pr-2 w-full note-block bg-slate-200 dark:bg-slate-800 dark:border dark:border-slate-500 rounded-xl flex flex-row">
+
+      <div className="flex-1 flex flex-col w-4/5 py-2 px-1">
+        <div className="pb-2 flex flex-row items-center">
+          <div className="grip-handle pr-2">
+            <GripVertical />
+          </div>
           {note.highlight?.text ? (
             <div className="flex flex-row justify-between w-full">
               <Badge
@@ -70,6 +74,16 @@ export function NoteBlock({
               <File className="text-slate-[#6c6060] dark:text-slate-300" />
             </div>
           )}
+
+          <Button
+            className="p-0 mb-1 ml-2 h-full bg-red-700 dark:bg-red-700  hover:bg-red-900 dark:hover:bg-red-900 trash-icon"
+            variant="default"
+            size="sm"
+            onClick={() => onDelete(note.id)}
+          >
+            <Trash2Icon className="cursor-pointer text-white" />
+          </Button>
+
         </div>
 
         <textarea
