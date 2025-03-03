@@ -120,7 +120,7 @@ export default async function GroupsPage({ searchParams }: Props) {
               <div className="grid grid-flow-row grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 auto-rows-fr">
                 {groupsByRole[tab as keyof typeof groupsByRole].map(
                   ({ group, role }) => (
-                    <div className="h-full"> 
+                    <div className="h-full">
                       <GroupCard
                         key={group.id}
                         group={group}

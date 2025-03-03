@@ -70,8 +70,8 @@ export async function getNotesByDroplet(
       },
       lesson: {
         droplets: {
-          id: { $eq: dropletId }
-        }
+          id: { $eq: dropletId },
+        },
       },
     },
     populate: {
@@ -80,6 +80,11 @@ export async function getNotesByDroplet(
       },
       lesson: {
         fields: ["*"],
+        populate: {
+          droplet_lessons: {
+            fields: ["*"],
+          },
+        },
       },
     },
     fields,
