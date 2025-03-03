@@ -1,6 +1,6 @@
 "use client";
 
-import { Lesson, Note } from "@/types";
+import { Enrollment, Lesson, Note } from "@/types";
 import { useState, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { getNotesByAuthorizedUserAndLesson } from "@/lib/requests/notes";
@@ -149,7 +149,7 @@ export function NotesBar({
       setDialogOpen(false);
       setNoteDisabled(true);
       //If we want to add input box before Note is created. Better response time.
-      /*const newNote: Note = {
+      const newNote: Note = {
                 id: 0,
                 content: "",
                 lesson: lesson,
@@ -158,7 +158,7 @@ export function NotesBar({
             }
             const tempNotes = notes
             tempNotes.push(newNote);
-            setNotes(tempNotes)*/
+            setNotes(tempNotes)
 
       const enrollment = await getEnrollByID(String(enrollmentId));
       const result = await createNote(lesson, enrollment, mousePositionY);
@@ -246,16 +246,15 @@ export function NotesBar({
             >
               <div
                 className={`flex flex-row justify-center items-center 
-                  ${!focused || focused === note.id? 'opacity-100' : 'opacity-30'}`}
-                onFocus={() => setFocused(note.id)}
-                onBlur={() => setFocused(null)}>
-
+                  ${!focused || focused === note.id? 'opacity-100' : 'opacity-30'}
+                  ${focused === note.id? 'scale-105' : ''}`}>
 
                 <NoteBlock
                   note={note}
                   onUpdate={fetchNotes}
                   disabled={noteDisabled}
                   onDelete={handleDeleteNote}
+                  onFocus={setFocused}
                 />
               </div>
             </div>

@@ -10,15 +10,16 @@ export function NoteBlock({
   note,
   onUpdate,
   disabled,
-  onDelete
+  onDelete,
+  onFocus,
 }: {
   note: Note;
   onUpdate: () => void;
   disabled: boolean;
   onDelete: (noteId: number) => void;
+  onFocus: (focused: number | null) => void;
 }) {
   const [content, setContent] = useState(note.content);
-  const [focused, setFocused] = useState(false);
 
   const handleInputChange = (e: ChangeEvent<HTMLTextAreaElement>) => {
     const searchTerm = e.target.value;
@@ -51,16 +52,11 @@ export function NoteBlock({
     }
   };
 
-  const adjustHeight = (event: Event): void => {
-    const textarea = event.target as HTMLTextAreaElement; // Type assertion
-    if (textarea) {
-        textarea.style.height = 'auto'; // Reset height to recalculate
-        textarea.style.height = `${textarea.scrollHeight}px`; // Set to full content height
-    }
-}
 
   return (
-    <div className="mx-3 pt-2 pl-2 pr-2 w-full note-block bg-slate-200 dark:bg-slate-800 dark:border dark:border-slate-500 rounded-xl flex flex-row">
+    <div 
+    className="mx-3 pt-2 pl-2 pr-2 w-full note-block bg-slate-200 dark:bg-slate-800 dark:border dark:border-slate-500 rounded-xl flex flex-row">
+     
 
       <div className="flex-1 flex flex-col w-4/5 py-2 px-1">
         <div className="pb-2 flex flex-row items-center">
@@ -110,28 +106,40 @@ export function NoteBlock({
           value={content}
           disabled={disabled}
           onChange={(e) => {
+            //e.target.style.height = `${e.target.scrollHeight}px`
+            e.target.style.height = `${Math.ceil(e.target.scrollHeight / 24) * 24}px`;
+            
+            if(e.target.scrollHeight > 200) {
+              e.target.style.overflowY = "auto"
+              }
             handleInputChange(e);
           }}
           onBlur={(e) => {
-            setFocused(false);
-            e.target.style.height = `3.5em`
+            onFocus(null);
+            e.target.style.height = `60px`
+            e.target.style.overflowY = "hidden"
             handleBlur();
           }}
           onFocus={(e) => {
-            setFocused(true), 
+            onFocus(note.id);
             e.target.style.height = `${e.target.scrollHeight}px`
+            if(e.target.scrollHeight > 200) {
+            e.target.style.overflowY = "auto"
+            }
           }}
 
-          className={`p-2 border-slate-300 dark:text-black rounded-xl focus:outline-none focus:border-slate-400 focus:ring-0 shadow-sm transition-all duration-200`}          
+          className={`p-2 border-slate-300 dark:text-black rounded-tl-xl rounded-bl-xl focus:outline-none focus:border-slate-400 focus:ring-0 transition-all duration-200`}          
           placeholder="Type something..."
+          
           rows={2}
           style={{
             resize: "none",
             width: "100%",
-            height: "auto",
+            height: "60px",
             boxSizing: "border-box",
-            overflow: "hidden",
-            lineHeight: "1.5em"
+            overflow:  "hidden",
+            lineHeight: "24px",
+            maxHeight: "200px",
           }}
         />
       </div>
