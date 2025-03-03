@@ -52,12 +52,12 @@ export async function getHighlightsByDroplet(
     filters: {
       lesson: {
         droplets: {
-          id: { $eq: dropletId }
-        }
+          id: { $eq: dropletId },
+        },
       },
       authorized_user: {
-        id: { $eq: authUser }
-      }
+        id: { $eq: authUser },
+      },
     },
     populate: {
       lesson: {
@@ -65,9 +65,9 @@ export async function getHighlightsByDroplet(
         populate: {
           droplet_lessons: {
             fields: ["id"],
-          }
-        }
-      }
+          },
+        },
+      },
     },
     fields,
     pagination,

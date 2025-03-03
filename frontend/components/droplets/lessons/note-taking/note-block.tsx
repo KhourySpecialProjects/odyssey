@@ -3,7 +3,7 @@ import { useState, useCallback } from "react";
 import { ChangeEvent } from "react";
 import { updateNoteContent } from "@/lib/requests/notes";
 import { Badge } from "@/components/ui/badge";
-import { File, MessageSquareText, GripVertical } from "lucide-react";
+import { FileText, MessageSquareText, GripVertical } from "lucide-react";
 
 export function NoteBlock({
   note,
@@ -67,7 +67,7 @@ export function NoteBlock({
             </div>
           ) : (
             <div className="flex flex-row justify-end w-full">
-              <File className="text-slate-[#6c6060] dark:text-slate-300" />
+              <FileText className="text-slate-[#6c6060] dark:text-slate-300" />
             </div>
           )}
         </div>

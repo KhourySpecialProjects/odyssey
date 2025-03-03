@@ -153,14 +153,23 @@ export default async function PlaylistPage({ params }: Props) {
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold mb-4">{playlist.name}</h1>
           <div className="flex justify-center gap-4 mb-6">
-            <Badge variant="outline" className="capitalize bg-slate-100 dark:text-black dark:bg-slate-300">
+            <Badge
+              variant="outline"
+              className="capitalize bg-slate-100 dark:text-black dark:bg-slate-300"
+            >
               {playlist.duration}
             </Badge>
-            <Badge variant="outline" className="bg-slate-100 dark:text-black dark:bg-slate-300">
+            <Badge
+              variant="outline"
+              className="bg-slate-100 dark:text-black dark:bg-slate-300"
+            >
               {totalLessons} {totalLessons === 1 ? "Lesson" : "Lessons"}
             </Badge>
             {!playlist.isPublic && (
-              <Badge variant="outline" className="bg-slate-100 dark:bg-slate-300 dark:text-black">
+              <Badge
+                variant="outline"
+                className="bg-slate-100 dark:bg-slate-300 dark:text-black"
+              >
                 Private
               </Badge>
             )}

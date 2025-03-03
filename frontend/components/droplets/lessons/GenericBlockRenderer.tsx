@@ -322,8 +322,11 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
   return (
     <div className="">
       {block.id === genericBlocks[0] && enrollmentId && (
-        <div className="fixed top-36 sm:top-32 dark:bg-blue-100 dark:text-black xs:top-32 right-0 lg:right-1/4 z-30 transform -translate-x-1/2 bg-blue-100 p-2 rounded shadow-lg">
-          <div className="relative group ">
+        <div className="fixed top-32 sm:top-28 xs:top-28 bg-sky-100 w-36 h-16 right-4 z-20"></div>
+      )}
+      {block.id === genericBlocks[0] && enrollmentId && (
+        <div className="fixed top-36 sm:top-32 dark:bg-blue-100 dark:text-black xs:top-32 border border-black right-0 z-30 transform -translate-x-1/2 bg-blue-100 p-2 rounded shadow-lg">
+          <div className="relative group">
             <CircleHelp className="cursor-pointer " />
             <div className="absolute left-0 transform -translate-x-[100%] top-full mt-2 w-max gap-2 bg-white p-4 rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center pointer-events-none">
               <p>Highlighting Instructions:</p>
@@ -353,7 +356,7 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
         </div>
       )}
       {block.id === genericBlocks[0] && enrollmentId && (
-        <div className="fixed lg:top-44 xs:top-56 dark:text-black sm:top-56 md:top-56 z-20 right-0 lg:right-1/4 transform -translate-x-1/2 bg-blue-100 p-2 rounded shadow-lg group">
+        <div className="fixed dark:text-black top-32 z-20 right-12 transform -translate-x-1/2 border border-black bg-blue-100 p-2 rounded shadow-lg group">
           <div className="relative">
             <Pen className="cursor-pointer" />
 

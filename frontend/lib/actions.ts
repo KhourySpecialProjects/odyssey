@@ -353,7 +353,6 @@ export async function createEnrollmentFromEmail(
         .map((enrollment) => enrollment.droplet.id)
         .includes(formData.droplet)
     ) {
-      console.log("doesnt have enrollment", formData.droplet);
       const response = await fetch(STRAPI_API_URL + "/api/enrollments", {
         method: "POST",
         body: JSON.stringify({

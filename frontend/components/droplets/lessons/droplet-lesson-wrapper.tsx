@@ -46,7 +46,7 @@ export function DropletLessonWrapper({
 
   return (
     <>
-      <div className="w-1/2 min-w-[700px] flex justify-center">
+      <div className="w-[65%] min-w-[700px] flex justify-center">
         <LessonRenderer
           lesson={lesson}
           droplet={droplet}
@@ -61,7 +61,7 @@ export function DropletLessonWrapper({
       {enrollmentId && (
         <>
           <button
-            className="fixed top-44 sm:top-44 xs:top-44 right-0 lg:hidden z-10 dark:text-black p-2 transform -translate-x-1/2 bg-blue-100 rounded shadow-lg"
+            className="fixed top-32 right-24 z-50 dark:text-black p-2 transform -translate-x-1/2 bg-blue-100 border border-black rounded shadow-lg"
             title="View Notes Bar"
             onClick={() => setExpanded(!expanded)}
           >
@@ -69,13 +69,14 @@ export function DropletLessonWrapper({
           </button>
           <div
             className={cn(
-              "fixed lg:relative lg:w-1/4 min-w-[375px] h-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-500",
-              "top-0 right-0 z-40",
-              expanded ? "translate-x-0" : "translate-x-full lg:translate-x-0",
+              "fixed min-w-[375px] lg:w-[25%] min-h-screen bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-500",
+              " right-0 z-10 overflow-y-auto",
+              expanded
+                ? "translate-x-0 visibility: visible"
+                : "translate-x-full visibility: hidden",
             )}
           >
-            <div className="lg:hidden flex justify-between items-center p-4 border-b border-slate-200">
-              <h2 className="font-semibold">Notes</h2>
+            <div className=" flex justify-between items-center p-4 border-b border-slate-200 dark:border-slate-500">
               <button onClick={() => setExpanded(false)}>
                 <X className="w-5 h-5" />
               </button>
@@ -87,13 +88,6 @@ export function DropletLessonWrapper({
               initNotes={notes}
             />
           </div>
-          <div
-            className={cn(
-              "fixed inset-0 bg-black/50 lg:hidden transition-opacity",
-              expanded ? "opacity-100 z-30" : "opacity-0 pointer-events-none",
-            )}
-            onClick={() => setExpanded(false)}
-          />
         </>
       )}
     </>

@@ -16,6 +16,13 @@ export type AnnouncementType =
   | "group"
   | "kudos";
 
+export type HighlightColor =
+  | "#f9a8d4"
+  | "#fbd38d"
+  | "#fff300"
+  | "#86efac"
+  | "#93c5fd";
+
 export type AuthorizedUserRole = {
   id: number;
   title: AuthorizedUserRoleTitle;
@@ -30,10 +37,10 @@ export type Highlight = {
     start: number;
     end: number;
   };
-  color: string;
-  lesson: Lesson;
+  color: HighlightColor;
+  lesson?: Lesson;
   yLevel?: number;
-}
+};
 
 export type User = {
   name?: string | null;
@@ -102,7 +109,7 @@ export type Lesson = {
   type?: "general" | "setup" | "activity" | "caseStudy";
   blocks: any[];
   droplets: Droplet[];
-  droplet_lessons:DropletLesson[];
+  droplet_lessons: DropletLesson[];
   notes: Note[];
 };
 

@@ -24,10 +24,10 @@ export default async function RootLayout({ params, children }: Props) {
   if (!droplet) return notFound();
 
   return (
-    <>
+    <div>
       {children}
 
       <DropletFooter droplet={droplet} />
-    </>
+    </div>
   );
 }
