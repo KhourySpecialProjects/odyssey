@@ -56,17 +56,12 @@ export function DropletLessonWrapper({
           author={author}
           authUser={authUser}
           onUpdate={fetchNotes}
+          expanded={expanded}
+          setExpanded={setExpanded}
         />
       </div>
       {enrollmentId && (
         <>
-          <button
-            className="fixed top-32 right-24 z-50 dark:text-black p-2 transform -translate-x-1/2 bg-blue-100 border border-black rounded shadow-lg"
-            title="View Notes Bar"
-            onClick={() => setExpanded(!expanded)}
-          >
-            <NotepadText />
-          </button>
           <div
             className={cn(
               "fixed min-w-[375px] lg:w-[25%] min-h-screen bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-500",
@@ -76,7 +71,7 @@ export function DropletLessonWrapper({
                 : "translate-x-full visibility: hidden",
             )}
           >
-            <div className=" flex justify-between items-center p-4 border-b border-slate-200 dark:border-slate-500">
+            <div className=" flex justify-end items-center p-4 border-b border-slate-200 dark:border-slate-500">
               <button onClick={() => setExpanded(false)}>
                 <X className="w-5 h-5" />
               </button>

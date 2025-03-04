@@ -37,6 +37,8 @@ interface LessonRendererProps {
   author?: boolean;
   authUser?: AuthorizedUser;
   onUpdate: () => void;
+  expanded: boolean;
+  setExpanded: (expanded: boolean) => void;
 }
 
 export function LessonRenderer({
@@ -48,6 +50,8 @@ export function LessonRenderer({
   author = false,
   authUser,
   onUpdate,
+  expanded,
+  setExpanded,
 }: LessonRendererProps) {
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
@@ -214,6 +218,8 @@ export function LessonRenderer({
                 onNote={handleCreateNote}
                 genericBlocks={genericBlocks}
                 enrollmentId={enrollmentId}
+                expanded={expanded}
+                setExpanded={setExpanded}
               />
             ))}
           </div>
@@ -248,6 +254,8 @@ function LessonBlockRenderer({
   onNote,
   genericBlocks,
   enrollmentId,
+  expanded,
+  setExpanded,
 }: {
   block: any;
   highlights: any[];
@@ -256,6 +264,8 @@ function LessonBlockRenderer({
   onNote: (notePos: number, text: string) => void;
   genericBlocks: number[];
   enrollmentId: string | undefined;
+  expanded: boolean;
+  setExpanded: (expanded: boolean) => void;
 }) {
   switch (block.__component) {
     case "droplets.generic":
@@ -268,6 +278,8 @@ function LessonBlockRenderer({
           onNote={onNote}
           genericBlocks={genericBlocks}
           enrollmentId={enrollmentId}
+          expanded={expanded}
+          setExpanded={setExpanded}
         />
       );
 
