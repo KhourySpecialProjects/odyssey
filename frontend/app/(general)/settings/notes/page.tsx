@@ -10,6 +10,8 @@ import { getNotesByDroplet } from "@/lib/requests/notes";
 import { getHighlightsByDroplet } from "@/lib/requests/highlights";
 import { Card } from "@/components/ui/card";
 import { NotesContainer } from "@/components/droplets/notes-container";
+import { PDFDocument } from 'pdf-lib'
+import { NotesPdfButton } from "@/components/droplets/notes-pdf-button";
 
 type Props = {
   params: Promise<Params>;
@@ -77,7 +79,6 @@ export default async function DropletRecapRoute({ params }: Props) {
           populate: {
             droplet_lessons: {
               populate: {
-                // Add this nested populate
                 lesson: {
                   fields: ["id", "name", "slug"],
                 },
@@ -108,6 +109,11 @@ export default async function DropletRecapRoute({ params }: Props) {
       }),
     );
 
+    const pdfDoc = await PDFDocument.create()
+    const page = pdfDoc.addPage()
+    page.drawText('You can create PDFs!')
+    const pdfBytes = await pdfDoc.save()
+
     return (
       <>
         <div className="max-w-2xl mx-auto text-center">
@@ -117,6 +123,9 @@ export default async function DropletRecapRoute({ params }: Props) {
           <p className="dark:text-slate-300">
             A collection of notes and highlights that you have created
           </p>
+          <section className="pt-2">
+            <NotesPdfButton pdfBytes={pdfBytes}/>
+          </section>
         </div>
         <div className="w-full max-w-2xl py-8 mx-auto space-y-4 ">
           {enrollments.map((enrollment, index) => {
