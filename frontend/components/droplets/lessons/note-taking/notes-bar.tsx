@@ -41,7 +41,7 @@ export function NotesBar({
   }, [userId, lesson.slug]);
 
   const handleDragMove = useCallback(
-    (e: MouseEvent) => {
+    (e: MouseEvent) => {     
       if (!draggedNote) return;
       const newPosition = e.pageY - dragOffset;
 

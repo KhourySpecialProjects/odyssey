@@ -54,9 +54,9 @@ export function NoteBlock({
 
 
   return (
-    <div 
-    className="mx-3 pt-2 pl-2 pr-2 w-full note-block bg-slate-200 dark:bg-slate-800 dark:border dark:border-slate-500 rounded-xl flex flex-row">
-     
+    <div
+      className="mx-3 pt-2 pl-2 pr-2 w-full note-block bg-slate-200 dark:bg-slate-800 dark:border dark:border-slate-500 rounded-xl flex flex-row">
+
 
       <div className="flex-1 flex flex-col w-4/5 py-2 px-1">
         <div className="pb-2 flex flex-row items-center">
@@ -68,11 +68,12 @@ export function NoteBlock({
               <Badge
                 variant="secondary"
                 title={note.highlight.text}
-                className={`inline-block w-fit max-w-[85%] block overflow-hidden text-ellipsis whitespace-nowrap text-center text-slate-700 ${getHighlightColor(note.highlight.color)} hover:text-white`}
+                className={`inline-block w-fit max-w-[50%] block overflow-hidden text-ellipsis whitespace-nowrap text-center text-slate-700 ${getHighlightColor(note.highlight.color)} hover:text-white`}
               >
-                {note.highlight.text}
+                {note.highlight.text.substring(0,25)} {note.highlight.text.length > 25 ? "..." : ""}
               </Badge>
               <MessageSquareText className="text-slate-[#6c6060] dark:text-slate-300" />
+              
             </div>
           ) : (
 
@@ -91,13 +92,14 @@ export function NoteBlock({
           )}
 
           <Button
-            className="p-0 mb-1 ml-2 h-full bg-red-700 dark:bg-red-700  hover:bg-red-900 dark:hover:bg-red-900 trash-icon"
-            variant="default"
-            size="sm"
-            onClick={() => onDelete(note.id)}
-          >
-            <Trash2Icon className="cursor-pointer text-white" />
-          </Button>
+              className="p-0 mb-1 ml-2 h-full bg-red-700 dark:bg-red-700 hover:bg-red-900 dark:hover:bg-red-900 trash-icon"
+              variant="default"
+              size="sm"
+              onClick={() => onDelete(note.id)}
+            >
+              <Trash2Icon className="cursor-pointer text-white" />
+            </Button>
+            
 
         </div>
 
@@ -108,10 +110,10 @@ export function NoteBlock({
           onChange={(e) => {
             //e.target.style.height = `${e.target.scrollHeight}px`
             e.target.style.height = `${Math.ceil(e.target.scrollHeight / 24) * 24}px`;
-            
-            if(e.target.scrollHeight > 200) {
+
+            if (e.target.scrollHeight > 200) {
               e.target.style.overflowY = "auto"
-              }
+            }
             handleInputChange(e);
           }}
           onBlur={(e) => {
@@ -123,21 +125,21 @@ export function NoteBlock({
           onFocus={(e) => {
             onFocus(note.id);
             e.target.style.height = `${e.target.scrollHeight}px`
-            if(e.target.scrollHeight > 200) {
-            e.target.style.overflowY = "auto"
+            if (e.target.scrollHeight > 200) {
+              e.target.style.overflowY = "auto"
             }
           }}
 
-          className={`p-2 border-slate-300 dark:text-black rounded-tl-xl rounded-bl-xl focus:outline-none focus:border-slate-400 focus:ring-0 transition-all duration-200`}          
+          className={`p-2 border-slate-300 dark:text-black rounded-tl-xl rounded-bl-xl focus:outline-none focus:border-slate-400 focus:ring-0 transition-all duration-200`}
           placeholder="Type something..."
-          
+
           rows={2}
           style={{
             resize: "none",
             width: "100%",
             height: "60px",
             boxSizing: "border-box",
-            overflow:  "hidden",
+            overflow: "hidden",
             lineHeight: "24px",
             maxHeight: "200px",
           }}
