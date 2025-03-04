@@ -177,17 +177,17 @@ export async function createNote(
       body: JSON.stringify({
         data: {
           content: "",
-          lesson: lesson,
-          enrollment: enrollment,
-          positionY: position,
-          highlight: highlight,
+          lesson: lesson.id,
+          enrollment: enrollment.id,
+          positionY: Math.round(position),
+          highlight: highlight?.id,
         },
       }),
     });
 
     if (!response.ok) {
       console.error("adding note failed:", await response.text());
-      return { success: false, error: "Failed to add new tag" };
+      return { success: false, error: "Failed to add new note" };
     }
 
     revalidatePath("/d/[slug]/[lessonSlug]", "page");
