@@ -1,7 +1,7 @@
 import { DropletTile } from "@/components/droplets/droplet-tile";
 import { getDropletBySlug, getDroplets } from "@/lib/requests/droplet";
 import { Droplet } from "@/types";
-import { GoalIcon, Link2Icon } from "lucide-react";
+import { GoalIcon, Link2Icon, FileTextIcon } from "lucide-react";
 import { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -13,9 +13,9 @@ import { getServerSession } from "next-auth";
 import { CompletedDropletBlock } from "@/components/droplets/completed-droplet-block";
 import { getNotesByDroplet } from "@/lib/requests/notes";
 import { getHighlightsByDroplet } from "@/lib/requests/highlights";
-import NotesSummary from "@/components/droplets/notes-summary";
-import { NotesFilter } from "@/components/droplets/notes-filter";
 import { NotesContainer } from "@/components/droplets/notes-container";
+import { PDFDocument } from 'pdf-lib'
+import { NotesPdfButton } from "@/components/droplets/notes-pdf-button";
 
 type Props = {
   params: Promise<Params>;
@@ -123,6 +123,11 @@ export default async function DropletRecapRoute({ params }: Props) {
       highlights: highlights,
     };
 
+    const pdfDoc = await PDFDocument.create()
+    const page = pdfDoc.addPage()
+    page.drawText('You can create PDFs!')
+    const pdfBytes = await pdfDoc.save()
+
     return (
       <>
         {enrollment &&
@@ -177,6 +182,9 @@ export default async function DropletRecapRoute({ params }: Props) {
                 A collection of notes and highlights that you created throughout
                 this droplet:
               </p>
+              <section>
+                <NotesPdfButton pdfBytes={pdfBytes}/>
+              </section>
               <NotesContainer
                 allNotes={allNotes}
                 dropletHighlights={highlights}
