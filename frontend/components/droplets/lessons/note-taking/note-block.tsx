@@ -54,7 +54,7 @@ export function NoteBlock({
 
 
   return (
-    <div
+    <div 
       className="mx-3 pt-2 pl-2 pr-2 w-full note-block bg-slate-200 dark:bg-slate-800 dark:border dark:border-slate-500 rounded-xl flex flex-row">
 
 

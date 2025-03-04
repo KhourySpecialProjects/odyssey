@@ -43,7 +43,17 @@ export function NotesBar({
   const handleDragMove = useCallback(
     (e: MouseEvent) => {     
       if (!draggedNote) return;
-      const newPosition = e.pageY - dragOffset;
+      let newPosition = e.pageY - dragOffset;
+
+      if (newPosition < 300) {
+        newPosition = 300;
+      }
+
+      const barHeight = document.querySelector(".notes-bar")?.clientHeight;
+
+      if (barHeight && newPosition > barHeight + 50) {
+        newPosition = barHeight + 50;
+      }
 
       setNotes((prev) =>
         prev.map((note) =>
@@ -202,7 +212,7 @@ export function NotesBar({
       </div>
 
       <div
-        className={`space-y-4 w-full h-full relative cursor-pointer `}
+        className={`space-y-4 w-full h-full relative cursor-pointer notes-bar`}
         onClick={handleMouseClick}
       >
 
@@ -240,6 +250,7 @@ export function NotesBar({
                 ${focused === note.id ? 'z-20' : 'z-0'}`}
               style={{
                 top: `${note.positionY - 220}px`,
+                //top: `${Math.max(0, Math.min(note.positionY, window.innerHeight - 100))}px`,
                 transform: `translateY(-50%)`,
               }}
               onMouseDown={(e) => handleDragStart(note, e)}
