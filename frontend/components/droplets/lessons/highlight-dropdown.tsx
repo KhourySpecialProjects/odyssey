@@ -74,7 +74,8 @@ export function HighlightDropdown({
         title={expanded ? "Hide Notes Bar" : "View Notes Bar"}
         className="z-20 dark:text-black p-2 transform -translate-x-1/2 bg-blue-100 border border-black rounded shadow-lg"
       >
-        <NotepadText onClick={() => setExpanded(!expanded)} />
+        <NotepadText onClick={() => setExpanded(!expanded)} className="cursor-pointer "/>
+
       </div>
       <div className="dark:text-black z-20 transform -translate-x-1/2 border border-black bg-blue-100 p-2 rounded shadow-lg group">
         <div className="relative">

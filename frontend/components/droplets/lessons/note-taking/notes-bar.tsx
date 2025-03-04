@@ -138,6 +138,7 @@ export function NotesBar({
       const rightOffset = ((rect.right - e.clientX) / rect.width) * 100;
       setMousePositionX(100 - rightOffset); // Position from left edge
       //setMousePositionX(e.pageX);
+      console.log("setting dialog open")
       setDialogOpen(!dialogOpen);
     }
     setSelectedNote(false);
@@ -204,21 +205,21 @@ export function NotesBar({
         onClick={handleMouseClick}
       >
         <div
-          className={`absolute z-50`}
+          className="absolute z-[100]"
           style={{
             top: `${mousePositionY - 90}px`,
             left: `${mousePositionX}%`,
-            position: "absolute",
+            position: "fixed",
           }}
         >
           <Popover open={dialogOpen}>
             <PopoverTrigger disabled={false}></PopoverTrigger>
-            <PopoverContent className="w-max p-0">
+            <PopoverContent className="w-max p-0 z-[100]">
               <div className="p-0">
                 <Button
                   size="sm"
                   onClick={handleAddNote}
-                  className="justify-center bg-white text-slate-600 hover:bg-slate-600 hover:text-white"
+                  className="justify-center bg-white text-slate-600 hover:bg-slate-600 hover:text-white z-[100]"
                 >
                   Create a Note?
                 </Button>
