@@ -6,9 +6,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import hljs from "highlight.js";
 import { Highlight, HighlightColor } from "@/types";
-import { Highlighter, X, CircleHelp, Pen, NotebookPen } from "lucide-react";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
+import { HighlightDropdown } from "./highlight-dropdown";
 
 interface GenericBlockRendererProps {
   block: any;
@@ -18,6 +16,8 @@ interface GenericBlockRendererProps {
   onNote: (notePos: number, text: string) => void;
   genericBlocks: number[];
   enrollmentId: string | undefined;
+  expanded: boolean;
+  setExpanded: (expanded: boolean) => void;
 }
 
 const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
@@ -28,6 +28,8 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
   onNote,
   genericBlocks,
   enrollmentId,
+  expanded,
+  setExpanded,
 }) => {
   const contentRef = useRef<HTMLDivElement>(null);
   const popupRef = useRef<{
@@ -321,108 +323,21 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
 
   return (
     <div className="">
+      {/* {block.id === genericBlocks[0] && enrollmentId && (
+        <div className="fixed top-36 sm:top-32 xs:top-32 bg-sky-100 w-16 h-36 right-4 z-20"></div>
+      )} */}
       {block.id === genericBlocks[0] && enrollmentId && (
-        <div className="fixed top-32 sm:top-28 xs:top-28 bg-sky-100 w-36 h-16 right-4 z-20"></div>
-      )}
-      {block.id === genericBlocks[0] && enrollmentId && (
-        <div className="fixed top-36 sm:top-32 dark:bg-blue-100 dark:text-black xs:top-32 border border-black right-0 z-30 transform -translate-x-1/2 bg-blue-100 p-2 rounded shadow-lg">
-          <div className="relative group">
-            <CircleHelp className="cursor-pointer " />
-            <div className="absolute left-0 transform -translate-x-[100%] top-full mt-2 w-max gap-2 bg-white p-4 rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center pointer-events-none">
-              <p>Highlighting Instructions:</p>
-              <ul className="list-disc pl-4">
-                <li>
-                  Hover over the <Pen className="inline-block w-4 h-4" /> icon
-                  to see actions.
-                </li>
-                <li>Use the toggle to switch highlighting mode.</li>
-                <li>In highlighting mode, selected text is highlighted.</li>
-                <li>
-                  Press the <Highlighter className="inline-block w-4 h-4" />{" "}
-                  icon to highlight text.
-                </li>
-                <li>
-                  Press the <X className="inline-block w-4 h-4" /> icon to
-                  delete a highlight.
-                </li>
-                <li>
-                  Press the <NotebookPen className="inline-block w-4 h-4" />{" "}
-                  icon to add a note to text.
-                </li>
-                <li>Click a colored circle to change highlight color.</li>
-              </ul>
-            </div>
-          </div>
-        </div>
-      )}
-      {block.id === genericBlocks[0] && enrollmentId && (
-        <div className="fixed dark:text-black top-32 z-20 right-12 transform -translate-x-1/2 border border-black bg-blue-100 p-2 rounded shadow-lg group">
-          <div className="relative">
-            <Pen className="cursor-pointer" />
-
-            <div className="absolute left-1/2 transform -translate-x-1/2 top-full mt-2 w-max gap-2 bg-white p-4 rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center">
-              <div title="Highlighting Mode">
-                <Switch
-                  id="public"
-                  checked={isHighlighting}
-                  onCheckedChange={setIsHighlighting}
-                  className={`bg-black`}
-                />
-                <Label htmlFor="public" />
-              </div>
-
-              <button
-                title="Add Highlight"
-                onClick={handlePopupHighlight}
-                className="relative group"
-              >
-                <Highlighter size={30} />
-              </button>
-
-              <button
-                title="Delete Highlight"
-                onClick={handlePopupDelete}
-                className="relative group"
-              >
-                <X size={30} />
-              </button>
-
-              <button
-                title="Take Note"
-                onClick={handleCreateNote}
-                className="relative group"
-              >
-                <NotebookPen size={30} />
-              </button>
-
-              <button
-                title="Highlight Pink"
-                onClick={() => handleApplyColor("#f9a8d4")}
-                className={`w-6 h-6 rounded-full ${selectedColor === "#f9a8d4" ? "border-2 border-black" : "border border-gray-300"} bg-[#f9a8d4]`}
-              />
-              <button
-                title="Highlight Orange"
-                onClick={() => handleApplyColor("#fbd38d")}
-                className={`w-6 h-6 rounded-full ${selectedColor === "#fbd38d" ? "border-2 border-black" : "border border-gray-300"} bg-[#fbd38d]`}
-              />
-              <button
-                title="Highlight Yellow"
-                onClick={() => handleApplyColor("#fff300")}
-                className={`w-6 h-6 rounded-full ${selectedColor === "#fff300" ? "border-2 border-black" : "border border-gray-300"} bg-[#fff300]`}
-              />
-              <button
-                title="Highlight Green"
-                onClick={() => handleApplyColor("#86efac")}
-                className={`w-6 h-6 rounded-full ${selectedColor === "#86efac" ? "border-2 border-black" : "border border-gray-300"} bg-[#86efac]`}
-              />
-              <button
-                title="Highlight Blue"
-                onClick={() => handleApplyColor("#93c5fd")}
-                className={`w-6 h-6 rounded-full ${selectedColor === "#93c5fd" ? "border-2 border-black" : "border border-gray-300"} bg-[#93c5fd]`}
-              />
-            </div>
-          </div>
-        </div>
+        <HighlightDropdown
+          selectedColor={selectedColor}
+          handleApplyColor={handleApplyColor}
+          isHighlighting={isHighlighting}
+          setIsHighlighting={() => setIsHighlighting(!isHighlighting)}
+          handlePopupHighlight={handlePopupHighlight}
+          handlePopupDelete={handlePopupDelete}
+          handleCreateNote={handleCreateNote}
+          setExpanded={setExpanded}
+          expanded={expanded}
+        />
       )}
 
       {/* Content */}
