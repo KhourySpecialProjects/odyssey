@@ -6,7 +6,7 @@ import { useState, useCallback, useEffect } from "react";
 import { Droplet, Lesson, User, AuthorizedUser, Note } from "@/types";
 import { getNotesByAuthorizedUserAndLesson } from "@/lib/requests/notes";
 import { cn } from "@/lib/utils";
-import { NotepadText, X } from "lucide-react";
+import { X } from "lucide-react";
 
 interface DropletLessonWrapperProps {
   lesson: Lesson;
