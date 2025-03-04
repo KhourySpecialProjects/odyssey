@@ -125,7 +125,10 @@ export default async function DropletRecapRoute({ params }: Props) {
             const dropletHighlights = dropletData.highlights;
 
             return (
-              <Card className="dark:bg-slate-800 p-2">
+              <Card
+                key={`enrollment-${enrollment.id}`}
+                className="dark:bg-slate-800 p-2"
+              >
                 <Link href={`/d/${enrollment.droplet.slug}`}>
                   <div className="text-2xl text-center font-bold">
                     {enrollment.droplet.name}
