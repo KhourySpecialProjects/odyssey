@@ -79,7 +79,7 @@ export default async function GroupsPage({ searchParams }: Props) {
   };
 
   return (
-    <div className="w-full max-w-7xl p-8 mx-auto space-y-12">
+    <div className="w-full max-w-7xl p-8 mx-auto space-y-12 my-4">
       <div className="text-center">
         <h1 className="text-3xl font-bold tracking-tight light:text-slate-900 sm:text-4xl">
           My Groups
@@ -117,15 +117,17 @@ export default async function GroupsPage({ searchParams }: Props) {
         ) : (
           <div>
             {groupsByRole[tab as keyof typeof groupsByRole].length > 0 ? (
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+              <div className="grid grid-flow-row grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 auto-rows-fr">
                 {groupsByRole[tab as keyof typeof groupsByRole].map(
                   ({ group, role }) => (
-                    <GroupCard
-                      key={group.id}
-                      group={group}
-                      role={role}
-                      roleColors={roleColors}
-                    />
+                    <div key={`group-${group.id}`} className="h-full">
+                      <GroupCard
+                        key={group.id}
+                        group={group}
+                        role={role}
+                        roleColors={roleColors}
+                      />
+                    </div>
                   ),
                 )}
               </div>

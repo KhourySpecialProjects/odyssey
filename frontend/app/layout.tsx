@@ -58,7 +58,7 @@ export default async function RootLayout({
                   <div className="flex min-h-screen flex-col">
                     <EnvironmentBanner />
 
-                    <div className="z-10 sticky top-0">
+                    <div className="z-50 sticky top-0">
                       <Suspense>
                         <Header />
                       </Suspense>

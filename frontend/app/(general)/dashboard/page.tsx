@@ -10,7 +10,7 @@ export default async function DashboardRoute({ searchParams }: Props) {
   const params = await searchParams;
   return (
     <>
-      <div className="w-full p-8 mx-auto my-4 text-center max-w-7xl">
+      <div className="w-full p-8 mx-auto my-4 max-w-7xl text-center">
         <h1 className="text-3xl font-bold tracking-tight light:text-slate-900 sm:text-4xl">
           My Dashboard
         </h1>

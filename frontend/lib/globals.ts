@@ -17,6 +17,14 @@ export enum AnnouncementTypeTitle {
   Kudos = "Kudos",
 }
 
+export enum NoteTypeTitle {
+  Pink = "#f9a8d4",
+  Orange = "#fbd38d",
+  Yellow = "#fff300",
+  Green = "#86efac",
+  Blue = "#93c5fd",
+}
+
 export const AuthorizedUserAdminRoles = [
   AuthorizedUserRoleTitle.SysAdmin,
   AuthorizedUserRoleTitle.AcadAdmin,

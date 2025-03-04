@@ -11,6 +11,11 @@ import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
 import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
 import { getServerSession } from "next-auth";
 import { CompletedDropletBlock } from "@/components/droplets/completed-droplet-block";
+import { getNotesByDroplet } from "@/lib/requests/notes";
+import { getHighlightsByDroplet } from "@/lib/requests/highlights";
+import NotesSummary from "@/components/droplets/notes-summary";
+import { NotesFilter } from "@/components/droplets/notes-filter";
+import { NotesContainer } from "@/components/droplets/notes-container";
 
 type Props = {
   params: Promise<Params>;
@@ -83,9 +88,7 @@ export default async function DropletRecapRoute({ params }: Props) {
     populate: { tags: { populate: "*" } },
   });
 
-  let enrollID: string = "";
   const session = await getServerSession();
-
   if (session?.user?.email) {
     const user = await getAuthorizedUserByEmail(session.user.email);
     const enrollments = await getEnrollmentsByAuthorizedUser(user.id, {
@@ -103,13 +106,22 @@ export default async function DropletRecapRoute({ params }: Props) {
       },
     });
 
+    const authUser = await getAuthorizedUserByEmail(user.email);
+    let enrollID: string = "";
+    const highlights = await getHighlightsByDroplet(authUser.id, droplet.id);
+    const notes = await getNotesByDroplet(authUser.id, droplet.id);
+
     const enrollment = enrollments.find((e) => e.droplet.id === droplet.id);
 
     if (enrollment) {
       enrollID = enrollment.id;
     }
 
-    const authUser = await getAuthorizedUserByEmail(user.email);
+    const allNotes = {
+      dropletId: enrollment?.droplet.id || 1,
+      notes: notes,
+      highlights: highlights,
+    };
 
     return (
       <>
@@ -155,6 +167,24 @@ export default async function DropletRecapRoute({ params }: Props) {
               </ul>
             </div>
           </section>
+
+          {enrollID && (
+            <section>
+              <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
+                Notes
+              </h2>
+              <p className="text-slate-500 dark:text-slate-300">
+                A collection of notes and highlights that you created throughout
+                this droplet:
+              </p>
+              <NotesContainer
+                allNotes={allNotes}
+                dropletHighlights={highlights}
+                dropletNotes={notes}
+                mappedLessons={droplet.droplet_lessons}
+              />
+            </section>
+          )}
 
           {droplet.nextSteps && droplet.nextSteps.length > 0 ? (
             <section>

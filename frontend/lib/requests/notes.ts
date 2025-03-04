@@ -50,6 +50,53 @@ export async function getNotesByAuthorizedUserAndLesson(
   });
 }
 
+export async function getNotesByDroplet(
+  authorizedUserId: number,
+  dropletId: number,
+  {
+    sort,
+    pagination = { pageSize: 250, page: 1 },
+    fields = ["id", "content", "positionY"],
+  }: StrapiRequestParams = {},
+): Promise<Note[]> {
+  const path = `/notes`;
+  const urlParams = {
+    sort,
+    filters: {
+      enrollment: {
+        authorizedUser: {
+          id: { $eq: authorizedUserId },
+        },
+      },
+      lesson: {
+        droplets: {
+          id: { $eq: dropletId },
+        },
+      },
+    },
+    populate: {
+      highlight: {
+        fields: ["text", "color", "yLevel"],
+      },
+      lesson: {
+        fields: ["*"],
+        populate: {
+          droplet_lessons: {
+            fields: ["*"],
+          },
+        },
+      },
+    },
+    fields,
+    pagination,
+  };
+
+  return await fetchAPI<Note[]>(path, {
+    urlParams,
+    next: { tags: ["notes"] },
+  });
+}
+
 export async function updateNoteContent(noteId: number, newContent: string) {
   try {
     const response = await fetch(
