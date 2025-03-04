@@ -3,8 +3,20 @@ import { useState, useCallback } from "react";
 import { ChangeEvent } from "react";
 import { updateNoteContent } from "@/lib/requests/notes";
 import { Badge } from "@/components/ui/badge";
-import { MessageSquareText, GripVertical, Trash2Icon, FileText } from "lucide-react";
+import { MessageSquareText, GripVertical, Trash2Icon, FileText, ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
+
+
+import { useEditor, EditorContent, ReactNodeViewRenderer } from "@tiptap/react";
+import Placeholder from "@tiptap/extension-placeholder";
+import StartingKit from "@tiptap/starter-kit";
+import Underline from "@tiptap/extension-underline";
+import Link from "@tiptap/extension-link";
+import CustomImage from "@/components/ui/tiptap/custom-image";
+import CodeBlockLowlight from "@tiptap/extension-code-block-lowlight";
+import { CodeBlockComponent } from "@/components/ui/tiptap/toolbar/tools/code-tool/code-tool";
+import { all, createLowlight } from "lowlight";
+import DefaultToolbar from "@/components/ui/tiptap/toolbar/general-toolbar";
 
 export function NoteBlock({
   note,
@@ -20,6 +32,8 @@ export function NoteBlock({
   onFocus: (focused: number | null) => void;
 }) {
   const [content, setContent] = useState(note.content);
+  const [toolbarVisible, setToolbarVisible] = useState(false);
+  const [focused, setFocused] = useState(false);
 
   const handleInputChange = (e: ChangeEvent<HTMLTextAreaElement>) => {
     const searchTerm = e.target.value;
@@ -52,9 +66,53 @@ export function NoteBlock({
     }
   };
 
+  const lowlight = createLowlight(all);
+
+
+  const editor = useEditor({
+    extensions: [
+      Link,
+      Underline,
+      StartingKit,
+      Placeholder.configure({
+        placeholder: "Nothing here yet...",
+        emptyEditorClass:
+          "cursor-text before:content-[attr(data-placeholder)] before:text-gray-500 dark:before:text-slate-300 before:absolute before:top-3 before:left-3 before:pointer-events-none before:select-none",
+      }),
+    ],
+
+    onUpdate: ({ editor }) => {
+      setContent(editor.getHTML());
+    },
+
+    content: content,
+    editorProps: {
+      attributes: {
+        class:
+          `w-full min-h-16 bg-white border border-slate-200 dark:border-slate-500 p-3 rounded-br-xl rounded-bl-xl outline-none dark:text-slate-300 cursor-text ${content.length > 200 ? 'overflow-scroll' : 'overflow-hidden'} ${focused ? 'max-h-[150px]' : 'max-h-[24px]'} overflow-x-hidden`
+      },
+      handleKeyDown: (view: any, event: KeyboardEvent) => {
+        if (event.key === "Tab") {
+          if (view.state.selection.$from.parent.type.name === "codeBlock") {
+            event.preventDefault();
+            view.dispatch(view.state.tr.insertText("\t"));
+            return true;
+          }
+
+          return false;
+        }
+        return false;
+      },
+    },
+    immediatelyRender: false,
+    onDestroy: () => {
+      //revalidate();
+    },
+  });
+
 
   return (
-    <div 
+    <div
       className="mx-3 pt-2 pl-2 pr-2 w-full note-block bg-slate-200 dark:bg-slate-800 dark:border dark:border-slate-500 rounded-xl flex flex-row">
 
 
@@ -70,10 +128,10 @@ export function NoteBlock({
                 title={note.highlight.text}
                 className={`inline-block w-fit max-w-[50%] block overflow-hidden text-ellipsis whitespace-nowrap text-center text-slate-700 ${getHighlightColor(note.highlight.color)} hover:text-white`}
               >
-                {note.highlight.text.substring(0,25)} {note.highlight.text.length > 25 ? "..." : ""}
+                {note.highlight.text.substring(0, 25)} {note.highlight.text.length > 25 ? "..." : ""}
               </Badge>
               <MessageSquareText className="text-slate-[#6c6060] dark:text-slate-300" />
-              
+
             </div>
           ) : (
 
@@ -92,58 +150,33 @@ export function NoteBlock({
           )}
 
           <Button
-              className="p-0 mb-1 ml-2 h-full bg-red-700 dark:bg-red-700 hover:bg-red-900 dark:hover:bg-red-900 trash-icon"
-              variant="default"
-              size="sm"
-              onClick={() => onDelete(note.id)}
-            >
-              <Trash2Icon className="cursor-pointer text-white" />
-            </Button>
-            
+            className="p-0 mb-1 ml-2 h-full bg-red-700 dark:bg-red-700 hover:bg-red-900 dark:hover:bg-red-900 trash-icon"
+            variant="default"
+            size="sm"
+            onClick={() => onDelete(note.id)}
+          >
+            <Trash2Icon className="cursor-pointer text-white" />
+          </Button>
 
         </div>
 
-        <textarea
-          id="simple-input"
-          value={content}
-          disabled={disabled}
-          onChange={(e) => {
-            //e.target.style.height = `${e.target.scrollHeight}px`
-            e.target.style.height = `${Math.ceil(e.target.scrollHeight / 24) * 24}px`;
-
-            if (e.target.scrollHeight > 200) {
-              e.target.style.overflowY = "auto"
+        <div
+          onBlur={() => { handleBlur(), onFocus(null), setFocused(false) }}
+          onFocus={() => {onFocus(note.id), setFocused(true)}}>
+          <div className="bg-white flex flex-row items-center w-full rounded-tl-md rounded-tr-md">
+            <div className="flex-grow">
+            {toolbarVisible &&
+              <DefaultToolbar editor={editor!} note={true} />
             }
-            handleInputChange(e);
-          }}
-          onBlur={(e) => {
-            onFocus(null);
-            e.target.style.height = `60px`
-            e.target.style.overflowY = "hidden"
-            handleBlur();
-          }}
-          onFocus={(e) => {
-            onFocus(note.id);
-            e.target.style.height = `${e.target.scrollHeight}px`
-            if (e.target.scrollHeight > 200) {
-              e.target.style.overflowY = "auto"
-            }
-          }}
+            </div>
+            <button className="ml-auto" onClick={() => setToolbarVisible(!toolbarVisible)}>
+              {!toolbarVisible ? <ChevronDown/>: <ChevronUp/>}
+            </button>
+          </div>
+          <EditorContent name="lesson-generic" editor={editor} />
+        </div>
 
-          className={`p-2 border-slate-300 dark:text-black rounded-tl-xl rounded-bl-xl focus:outline-none focus:border-slate-400 focus:ring-0 transition-all duration-200`}
-          placeholder="Type something..."
 
-          rows={2}
-          style={{
-            resize: "none",
-            width: "100%",
-            height: "60px",
-            boxSizing: "border-box",
-            overflow: "hidden",
-            lineHeight: "24px",
-            maxHeight: "200px",
-          }}
-        />
       </div>
     </div>
   );
