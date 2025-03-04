@@ -3,7 +3,6 @@
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import {
-  Archive,
   CircleHelp,
   Highlighter,
   NotebookPen,
@@ -11,7 +10,7 @@ import {
   Pen,
   X,
 } from "lucide-react";
-import { Highlight, HighlightColor } from "@/types";
+import { HighlightColor } from "@/types";
 
 interface HighlightDropdownProps {
   selectedColor: HighlightColor;
