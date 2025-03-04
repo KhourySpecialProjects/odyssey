@@ -79,7 +79,7 @@ export default async function GroupsPage({ searchParams }: Props) {
   };
 
   return (
-    <div className="w-full max-w-7xl p-8 mx-auto space-y-12">
+    <div className="w-full max-w-7xl p-8 mx-auto space-y-12 my-4">
       <div className="text-center">
         <h1 className="text-3xl font-bold tracking-tight light:text-slate-900 sm:text-4xl">
           My Groups
@@ -120,7 +120,7 @@ export default async function GroupsPage({ searchParams }: Props) {
               <div className="grid grid-flow-row grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 auto-rows-fr">
                 {groupsByRole[tab as keyof typeof groupsByRole].map(
                   ({ group, role }) => (
-                    <div className="h-full">
+                    <div key={`group-${group.id}`} className="h-full">
                       <GroupCard
                         key={group.id}
                         group={group}
