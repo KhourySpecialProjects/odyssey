@@ -5,7 +5,7 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import hljs from "highlight.js";
-import { Highlight } from "@/types";
+import { Highlight, HighlightColor } from "@/types";
 import { Highlighter, X, CircleHelp, Pen, NotebookPen } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
@@ -46,7 +46,7 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
   const savedSelectionRef = useRef<Range | null>(null);
   const [mousePositionY, setMousePositionY] = useState(0);
   const [isHighlighting, setIsHighlighting] = useState(false);
-  const [selectedColor, setSelectedColor] = useState("#fff300");
+  const [selectedColor, setSelectedColor] = useState<HighlightColor>("#fff300");
 
   useEffect(() => {
     if (contentRef.current) {
@@ -283,7 +283,7 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
     range.surroundContents(span);
   };
 
-  const handleApplyColor = (color: string) => {
+  const handleApplyColor = (color: HighlightColor) => {
     if (
       popupRef.current.highlightSpan &&
       popupRef.current.highlightSpan.textContent
