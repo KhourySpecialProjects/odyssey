@@ -28,7 +28,7 @@ export async function Header() {
   }
 
   return (
-    <header className="sticky top-0 z-10 bg-white border-b border-slate-200 dark:border-slate-500 dark:bg-slate-900 md:px-6">
+    <header className="sticky top-0 z-50 bg-white border-b border-slate-200 dark:border-slate-500 dark:bg-slate-900 md:px-6">
       <div className="flex items-center justify-between h-full max-w-screen-xl px-4 py-3 mx-auto">
         <div className="flex flex-row justify-between md:grid w-full md:grid-cols-[1fr_auto_1fr]">
           <div className="flex flex-row gap-4">
