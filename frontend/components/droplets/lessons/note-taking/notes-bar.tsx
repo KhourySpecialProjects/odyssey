@@ -130,15 +130,16 @@ export function NotesBar({
       return;
     }
     if (selectedNote === false) {
-      // Calculate percentage from top of container
-      //setMousePositionY(((e.clientY - rect.top) / rect.height) * 100);
-      setMousePositionY(e.pageY);
-
       const rect = e.currentTarget.getBoundingClientRect();
+      const scrollTop = window.scrollY || document.documentElement.scrollTop;
+      const notesBarTop = rect.top + scrollTop;
+
+      // Calculate the actual click position relative to the notes bar
+      const clickY = e.clientY + scrollTop - notesBarTop;
+      setMousePositionY(clickY);
+
       const rightOffset = ((rect.right - e.clientX) / rect.width) * 100;
-      setMousePositionX(100 - rightOffset); // Position from left edge
-      //setMousePositionX(e.pageX);
-      console.log("setting dialog open")
+      setMousePositionX(100 - rightOffset);
       setDialogOpen(!dialogOpen);
     }
     setSelectedNote(false);
@@ -148,23 +149,16 @@ export function NotesBar({
     const handleAddNote = async () => {
       setDialogOpen(false);
       setNoteDisabled(true);
-      //If we want to add input box before Note is created. Better response time.
-      /*const newNote: Note = {
-                id: 0,
-                content: "",
-                lesson: lesson,
-                enrollment: {} as Enrollment,
-                positionY: mousePositionY
-            }
-            const tempNotes = notes
-            tempNotes.push(newNote);
-            setNotes(tempNotes)*/
 
       const enrollment = await getEnrollByID(String(enrollmentId));
       const result = await createNote(lesson, enrollment, mousePositionY);
+
       if (result.success) {
-        const note = await fetchNotes();
+        await fetchNotes();
+      } else {
+        console.error("Failed to create note:", result.error);
       }
+
       setNoteDisabled(false);
     };
     handleAddNote();
@@ -207,9 +201,10 @@ export function NotesBar({
         <div
           className="absolute z-[100]"
           style={{
-            top: `${mousePositionY - 90}px`,
+            top: `${mousePositionY}px`,
             left: `${mousePositionX}%`,
-            position: "fixed",
+            position: "absolute",
+            //transform: "translateY(-50%)",
           }}
         >
           <Popover open={dialogOpen}>

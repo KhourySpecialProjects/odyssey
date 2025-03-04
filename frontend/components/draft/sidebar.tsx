@@ -169,7 +169,6 @@ export function Sidebar({
   };
 
   const handleLessonDelete = (lessonId: string) => {
-    console.log("deleting lesson from frontend");
     const newLessons = lessons.filter(
       (lesson) => lesson.id.toString() !== lessonId,
     );

@@ -37,7 +37,7 @@ export function HighlightDropdown({
 }: HighlightDropdownProps) {
   return (
     <div
-      className={`fixed flex ${expanded ? "right-[19%] z-40 top-28 flex-row" : "right-0 top-36 flex-col"} gap-2`}
+      className={`fixed flex ${expanded ? "right-[19%] z-40 top-28 md:top-28 xs:top-44 flex-row" : "right-0 top-36 flex-col"} gap-2`}
     >
       <div
         className={`dark:bg-blue-100 dark:text-black border border-black z-30 transform -translate-x-1/2 bg-blue-100 p-2 rounded shadow-lg`}
@@ -74,8 +74,10 @@ export function HighlightDropdown({
         title={expanded ? "Hide Notes Bar" : "View Notes Bar"}
         className="z-20 dark:text-black p-2 transform -translate-x-1/2 bg-blue-100 border border-black rounded shadow-lg"
       >
-        <NotepadText onClick={() => setExpanded(!expanded)} className="cursor-pointer "/>
-
+        <NotepadText
+          onClick={() => setExpanded(!expanded)}
+          className="cursor-pointer "
+        />
       </div>
       <div className="dark:text-black z-20 transform -translate-x-1/2 border border-black bg-blue-100 p-2 rounded shadow-lg group">
         <div className="relative">

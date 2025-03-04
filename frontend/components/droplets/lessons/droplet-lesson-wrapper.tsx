@@ -71,17 +71,19 @@ export function DropletLessonWrapper({
                 : "translate-x-full visibility: hidden",
             )}
           >
-            <div className=" flex justify-end items-center p-4 border-b border-slate-200 dark:border-slate-500">
+            <div className="flex justify-end items-center p-4 border-b border-slate-200 dark:border-slate-500">
               <button onClick={() => setExpanded(false)}>
                 <X className="w-5 h-5" />
               </button>
             </div>
-            <NotesBar
-              userId={userId}
-              lesson={lesson}
-              enrollmentId={enrollmentId}
-              initNotes={notes}
-            />
+            <div className="relative h-[calc(100vh-4rem)]">
+              <NotesBar
+                userId={userId}
+                lesson={lesson}
+                enrollmentId={enrollmentId}
+                initNotes={notes}
+              />
+            </div>
           </div>
         </>
       )}
