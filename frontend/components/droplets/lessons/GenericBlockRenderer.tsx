@@ -130,6 +130,7 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
     isHighlighting,
     contentRef,
     popupRef,
+    onNote,
     savedSelectionRef,
     selectedColor,
     mousePositionY,
@@ -147,7 +148,11 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
   };
 
   const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
-    setMousePositionY(e.pageY + 75);
+    const rect = e.currentTarget.getBoundingClientRect();
+    const scrollTop = window.scrollY || document.documentElement.scrollTop;
+    const notesBarTop = rect.top + scrollTop;
+    const clickY = e.clientY + scrollTop - notesBarTop;
+    setMousePositionY(clickY);
   };
 
   const handleMouseUp = () => {
