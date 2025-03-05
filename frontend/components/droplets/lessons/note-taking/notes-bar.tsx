@@ -50,9 +50,11 @@ export function NotesBar({
       if (newPosition < 75) {
         newPosition = 75;
       }
+      if (newPosition > 3700) {
+        newPosition = 3700;
+      }
 
       const barHeight = document?.querySelector(".notes-bar")?.clientHeight;
-      console.log("barheight", barHeight);
 
       if (barHeight && newPosition > barHeight - 250) {
         newPosition = barHeight - 250;
