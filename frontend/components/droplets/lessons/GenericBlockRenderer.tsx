@@ -169,21 +169,19 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
 
     let range = selection.getRangeAt(0);
     savedSelectionRef.current = range.cloneRange();
-    currentSelectionRef.current = range.cloneRange();
+    //currentSelectionRef.current = range.cloneRange();
 
-    const span = document.createElement("span");
-        //span.style.borderRadius = "8px";
-        span.style.backgroundColor = "rgb(0, 120, 215)";
-        span.style.color = "white"
-        span.style.userSelect = "text";
-        span.style.padding = "5px 0"; // Add vertical padding
-        currentSelectionRef.current.surroundContents(span);
+    // const span = document.createElement("span");
+    //     //span.style.borderRadius = "8px";
+    //     span.style.backgroundColor = "rgb(0, 120, 215)";
+    //     span.style.color = "white"
+    //     span.style.userSelect = "text";
+    //     span.style.padding = "5px 0"; // Add vertical padding
+    //     currentSelectionRef.current.surroundContents(span);
 
-
-
-    console.log("current ref is ", currentSelectionRef.current.toString())
 
     const text = selection.toString();
+    console.log("text is ", text)
     if (text.length > 0 && contentRef.current) {
       const blockOffset = getTextOffset(
         contentRef.current,

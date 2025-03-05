@@ -89,7 +89,7 @@ export function NoteBlock({
     editorProps: {
       attributes: {
         class:
-          `w-full min-h-16 bg-white border border-slate-200 dark:border-slate-500 p-3 rounded-br-xl rounded-bl-xl outline-none dark:text-slate-300 cursor-text ${content.length > 200 ? 'overflow-scroll' : 'overflow-hidden'} ${focused ? 'max-h-[150px]' : 'max-h-[24px]'} overflow-x-hidden`
+          `w-full min-h-22 bg-white border border-slate-200 dark:border-slate-500 p-3 rounded-br-xl rounded-bl-xl outline-none dark:text-slate-300 cursor-text ${content.length > 200 ? 'overflow-scroll' : 'overflow-hidden'} ${focused ? 'max-h-[150px]' : 'max-h-[24px]'} overflow-x-hidden`
       },
       handleKeyDown: (view: any, event: KeyboardEvent) => {
         if (event.key === "Tab") {

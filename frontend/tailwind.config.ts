@@ -20,6 +20,9 @@ const config: Config = {
       },
     },
     extend: {
+      spacing: {
+        22: '5.5rem', // Add custom value (22 corresponds to 5.5rem, or 88px)
+      },
       keyframes: {
         "accordion-down": {
           from: { height: "0" },
