@@ -29,7 +29,6 @@ export function NotesBar({
 }) {
   const [notes, setNotes] = useState(initNotes);
   const [draggedNote, setDraggedNote] = useState<Note | null>(null);
-  const [draggedY, setDraggedY] = useState(0);
   const [dragOffset, setDragOffset] = useState(0);
 
   const fetchNotes = useCallback(async () => {
@@ -86,7 +85,6 @@ export function NotesBar({
     e.preventDefault();
     setDraggedNote(note);
     setDragOffset(e.pageY - note.positionY);
-    setDraggedY(e.pageY);
   };
 
   useEffect(() => {

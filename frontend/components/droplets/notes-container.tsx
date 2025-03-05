@@ -11,6 +11,7 @@ import {
 } from "@/types";
 import { NotesFilter } from "./notes-filter";
 import NotesSummary from "./notes-summary";
+import { PDFDocument } from "pdf-lib";
 
 export function NotesContainer({
   dropletHighlights,
@@ -44,7 +45,7 @@ export function NotesContainer({
           allNotes={allNotes}
         />
       </div>
-      <div className="w-1/3 text-center text-xl font-bold flex flex-col items-center justify-center dark:text-slate-300">
+      <div className="w-1/3 text-center text-xl font-bold flex flex-col items-center justify-center dark:text-slate-300 pt-2">
         Filters
         <NotesFilter onFilterChange={setSelectedColors} />
       </div>

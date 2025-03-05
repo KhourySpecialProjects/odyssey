@@ -23,14 +23,14 @@ export default function NotesSummary({
     selectedColors.includes(highlight.color),
   );
   const filteredNewNotes = dropletNotes.filter(
-    (note) => note.highlight && selectedColors.includes(note.highlight.color),
+    (note) => !note.highlight || selectedColors.includes(note.highlight.color),
   );
   return (
     <>
       <div className=" ">
         {filteredNewHighlights.length > 0 || filteredNewNotes.length > 0 ? (
           <div className="mt-4 border rounded-md bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-500">
-            <ul className="flex flex-col divide-y divide-slate-200 dark:divide-slate-500">
+            <ul className="flex flex-col">
               {mappedLessons.map((lesson) => {
                 const lessonNotes = allNotes.notes.filter(
                   (note) => note.lesson?.droplet_lessons[0].id === lesson.id,
@@ -39,18 +39,12 @@ export default function NotesSummary({
                   (highlight) =>
                     highlight.lesson?.droplet_lessons[0].id === lesson.id,
                 );
-                const newHighlights = lessonHighlights.filter(
-                  (highlight) =>
-                    !lessonNotes.some(
-                      (lesson) => lesson.highlight?.id === highlight.id,
-                    ),
-                );
-                const filteredHighlights = newHighlights.filter((highlight) =>
-                  selectedColors.includes(highlight.color),
+                const filteredHighlights = lessonHighlights.filter(
+                  (highlight) => selectedColors.includes(highlight.color),
                 );
                 const filteredNotes = lessonNotes.filter(
                   (note) =>
-                    note.highlight &&
+                    !note.highlight ||
                     selectedColors.includes(note.highlight.color),
                 );
                 return (
@@ -77,7 +71,7 @@ export default function NotesSummary({
                     {filteredNotes.map((note) => (
                       <li
                         key={note.id}
-                        className="inline-flex items-center gap-2 px-4 py-3 leading-snug dark:text-slate-300"
+                        className="inline-flex items-center gap-2 px-4 py-3 leading-snug dark:text-slate-300 border dark:border-slate-500"
                       >
                         <NotebookPen className="w-5 h-5 mr-0.5 shrink-0" />
                         <span>
@@ -102,7 +96,7 @@ export default function NotesSummary({
             </ul>
           </div>
         ) : (
-          <div className="border-t dark:border-slate-500 pt-2 mt-1">
+          <div className="pt-2">
             You have no saved notes or highlights for this droplet.
           </div>
         )}

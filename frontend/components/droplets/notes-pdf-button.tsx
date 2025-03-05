@@ -1,21 +1,32 @@
 "use client";
 import { FileTextIcon } from "lucide-react";
 
-
-export function NotesPdfButton({pdfBytes  } : {pdfBytes: Uint8Array}) {
-  
+export function NotesPdfButton({
+  pdfBytes,
+  name,
+}: {
+  pdfBytes: Uint8Array;
+  name: string;
+}) {
+  const handleDownload = () => {
+    const blob = new Blob([pdfBytes], { type: "application/pdf" });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${name}.pdf`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+  };
 
   return (
     <button
-        onClick={() => {
-            const blob = new Blob([pdfBytes], { type: 'application/pdf' });
-            const url = window.URL.createObjectURL(blob);
-            window.open(url, '_blank');
-        }}
-        className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-sky-600 rounded-md hover:bg-sky-700"
+      onClick={handleDownload}
+      className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-sky-600 rounded-md hover:bg-sky-700"
     >
-        <FileTextIcon className="w-4 h-4" />
-        View Notes as PDF
+      <FileTextIcon className="w-4 h-4" />
+      Download Notes as PDF
     </button>
   );
 }

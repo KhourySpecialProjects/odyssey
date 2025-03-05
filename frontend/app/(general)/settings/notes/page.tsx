@@ -10,8 +10,9 @@ import { getNotesByDroplet } from "@/lib/requests/notes";
 import { getHighlightsByDroplet } from "@/lib/requests/highlights";
 import { Card } from "@/components/ui/card";
 import { NotesContainer } from "@/components/droplets/notes-container";
-import { PDFDocument } from 'pdf-lib'
+import { PDFDocument } from "pdf-lib";
 import { NotesPdfButton } from "@/components/droplets/notes-pdf-button";
+import { NoteSummary } from "@/components/droplets/lessons/note-taking/note-summary";
 
 type Props = {
   params: Promise<Params>;
@@ -104,15 +105,38 @@ export default async function DropletRecapRoute({ params }: Props) {
         return {
           dropletId: enrollment.droplet.id,
           notes: dropletNotes,
-          highlights: dropletHighlights,
+          highlights: dropletHighlights.filter(
+            (highlight) =>
+              !dropletNotes.some(
+                (lesson) => lesson.highlight?.id === highlight.id,
+              ),
+          ),
         };
       }),
     );
 
-    const pdfDoc = await PDFDocument.create()
-    const page = pdfDoc.addPage()
-    page.drawText('You can create PDFs!')
-    const pdfBytes = await pdfDoc.save()
+    const pdfDoc = await PDFDocument.create();
+
+    for (let i = 0; i < enrollments.length; i++) {
+      const enrollment = enrollments[i];
+      const dropletData = allNotes[i];
+
+      const sectionPdfBytes = await NoteSummary({
+        filteredHighlights: dropletData.highlights,
+        notes: dropletData.notes,
+        droplet: enrollment.droplet,
+      });
+
+      const sectionPdfDoc = await PDFDocument.load(sectionPdfBytes);
+      const sectionPages = sectionPdfDoc.getPages();
+
+      for (let j = 0; j < sectionPages.length; j++) {
+        const [copiedPage] = await pdfDoc.copyPages(sectionPdfDoc, [j]);
+        pdfDoc.addPage(copiedPage);
+      }
+    }
+
+    const pdfBytes = await pdfDoc.save();
 
     return (
       <>
@@ -124,7 +148,7 @@ export default async function DropletRecapRoute({ params }: Props) {
             A collection of notes and highlights that you have created
           </p>
           <section className="pt-2">
-            <NotesPdfButton pdfBytes={pdfBytes}/>
+            <NotesPdfButton pdfBytes={pdfBytes} name="notes-summary" />
           </section>
         </div>
         <div className="w-full max-w-2xl py-8 mx-auto space-y-4 ">
@@ -139,7 +163,7 @@ export default async function DropletRecapRoute({ params }: Props) {
                 className="dark:bg-slate-800 p-2"
               >
                 <Link href={`/d/${enrollment.droplet.slug}`}>
-                  <div className="text-2xl text-center font-bold">
+                  <div className="text-2xl text-center border-b dark:border-slate-500 p-2 font-bold">
                     {enrollment.droplet.name}
                   </div>
                 </Link>
