@@ -13,21 +13,32 @@ import CodeTool from "./tools/code-tool/code-tool";
 import HeadingTool from "./tools/heading-tool";
 import CalloutTypeTool from "./tools/callout-type-tool";
 
-export default function DefaultToolbar({ editor }: { editor: Editor }) {
+export default function DefaultToolbar({
+  editor,
+  note,
+}: {
+  editor: Editor;
+  note?: boolean | null;
+}) {
   return (
     <div className="w-full border border-b-transparent rounded-t-md border-slate-200 dark:border-slate-500 light:bg-white p-1 dark:bg-slate-800 space-x-0.5">
       <BoldTool editor={editor} />
       <ItalicTool editor={editor} />
       <UnderlineTool editor={editor} />
       <StrikeTool editor={editor} />
-      <UnorderedListTool editor={editor} />
-      <OrderedListTool editor={editor} />
-      <LinkTool editor={editor} />
-      <ImageTool editor={editor} />
-      <CodeTool editor={editor} />
-      <HeadingTool editor={editor} number={1} />
-      <HeadingTool editor={editor} number={2} />
-      <HeadingTool editor={editor} number={3} />
+      {!note && (
+        <>
+          <UnorderedListTool editor={editor} />
+          <OrderedListTool editor={editor} />
+          <LinkTool editor={editor} />
+          <ImageTool editor={editor} />
+          <CodeTool editor={editor} />
+
+          <HeadingTool editor={editor} number={1} />
+          <HeadingTool editor={editor} number={2} />
+          <HeadingTool editor={editor} number={3} />
+        </>
+      )}
     </div>
   );
 }

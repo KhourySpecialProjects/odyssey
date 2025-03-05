@@ -73,17 +73,18 @@ export default async function Page({ params }: Props) {
 
   return (
     <div className="flex flex-row w-full h-full">
-      <div className="w-[10%]"></div>
-      <DropletLessonWrapper
-        lesson={lesson}
-        droplet={droplet}
-        enrollmentId={enrollmentId}
-        completedLessonIds={completedLessonIds}
-        user={currentUser}
-        author={isAuthor || false}
-        authUser={authUser}
-        userId={authUser.id}
-      />
+      <div className="w-full">
+        <DropletLessonWrapper
+          lesson={lesson}
+          droplet={droplet}
+          enrollmentId={enrollmentId}
+          completedLessonIds={completedLessonIds}
+          user={currentUser}
+          author={isAuthor || false}
+          authUser={authUser}
+          userId={authUser.id}
+        />
+      </div>
     </div>
   );
 }

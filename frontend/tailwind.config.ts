@@ -20,6 +20,15 @@ const config: Config = {
       },
     },
     extend: {
+      spacing: {
+        // Custom padding values
+        40: "10rem",
+        56: "14rem",
+        72: "18rem", // Example: p-72 will be 18rem
+        84: "21rem", // Example: p-84 will be 21rem
+        96: "24rem", // Example: p-96 will be 24rem
+        22: "5.5rem", // Add custom value (22 corresponds to 5.5rem, or 88px)
+      },
       keyframes: {
         "accordion-down": {
           from: { height: "0" },
