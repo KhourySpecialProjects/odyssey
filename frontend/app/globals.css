@@ -29,3 +29,17 @@
   background: rgb(0, 120, 215); /* Blue highlight */
   color: white;
 }
+
+@keyframes slideInFromRight {
+  0% {
+    transform: translateX(100%); /* Start off-screen */
+  }
+  100% {
+    transform: translateX(0); /* End at original position */
+  }
+}
+
+/* Apply the animation to the box */
+.sliding-notes-bar {
+  animation: slideInFromRight 300ms ease-out; /* ease-out for smooth animation */
+}

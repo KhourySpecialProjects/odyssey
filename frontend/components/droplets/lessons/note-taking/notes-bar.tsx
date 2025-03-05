@@ -50,9 +50,10 @@ export function NotesBar({
       }
 
       const barHeight = document.querySelector(".notes-bar")?.clientHeight;
+      console.log("barheight", barHeight)
 
-      if (barHeight && newPosition > barHeight + 50) {
-        newPosition = barHeight + 50;
+      if (barHeight && newPosition > barHeight - 250) {
+        newPosition = barHeight - 250;
       }
 
       setNotes((prev) =>
@@ -221,7 +222,7 @@ export function NotesBar({
       </div>
 
       <div
-        className='space-y-4 w-full relative cursor-pointer'
+        className='space-y-4 w-full relative cursor-pointer notes-bar'
         onClick={(e) => handleMouseClick(e)}
         style={{height: document.querySelector('.lesson-wrapper')?.scrollHeight || 0 + 'px'}}
       >
