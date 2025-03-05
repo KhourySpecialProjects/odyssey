@@ -141,14 +141,16 @@ export function NotesBar({
       return;
     }
     if (selectedNote === false) {
-      // Calculate percentage from top of container
-      //setMousePositionY(((e.clientY - rect.top) / rect.height) * 100);
-      setMousePositionY(e.pageY);
-
       const rect = e.currentTarget.getBoundingClientRect();
+      const scrollTop = window.scrollY || document.documentElement.scrollTop;
+      const notesBarTop = rect.top + scrollTop;
+
+      // Calculate the actual click position relative to the notes bar
+      const clickY = e.clientY + scrollTop - notesBarTop;
+      setMousePositionY(clickY);
+
       const rightOffset = ((rect.right - e.clientX) / rect.width) * 100;
-      setMousePositionX(100 - rightOffset); // Position from left edge
-      //setMousePositionX(e.pageX);
+      setMousePositionX(100 - rightOffset);
       setDialogOpen(!dialogOpen);
     }
     setSelectedNote(false);
@@ -172,9 +174,13 @@ export function NotesBar({
 
       const enrollment = await getEnrollByID(String(enrollmentId));
       const result = await createNote(lesson, enrollment, mousePositionY);
+
       if (result.success) {
-        const note = await fetchNotes();
+        await fetchNotes();
+      } else {
+        console.error("Failed to create note:", result.error);
       }
+
       setNoteDisabled(false);
     };
     handleAddNote();
@@ -207,7 +213,7 @@ export function NotesBar({
 
   return (
     <>
-      <div className={`right-[10%] text-center mt-5`}>
+      <div className={`text-center mt-5`}>
         <h1 className="text-2xl font-extrabold ">My Notes</h1>
       </div>
 
@@ -219,7 +225,7 @@ export function NotesBar({
         
 
           <div
-            className={`absolute z-50`}
+            className={`absolute z-[100]`}
             style={{
               top: `${mousePositionY - 195}px`,
               left: `${mousePositionX}%`,
@@ -228,12 +234,12 @@ export function NotesBar({
           >
             <Popover open={dialogOpen}>
               <PopoverTrigger disabled={false}></PopoverTrigger>
-              <PopoverContent className="w-max p-0">
+              <PopoverContent className="w-max p-0 z-[100]">
                 <div className="p-0">
                   <Button
                     size="sm"
                     onClick={handleAddNote}
-                    className="justify-center bg-white text-slate-600 hover:bg-slate-600 hover:text-white"
+                    className="justify-center bg-white text-slate-600 hover:bg-slate-600 hover:text-white z-[100]"
                   >
                     Create a Note?
                   </Button>
