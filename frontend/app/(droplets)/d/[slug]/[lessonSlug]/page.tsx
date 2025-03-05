@@ -73,7 +73,7 @@ export default async function Page({ params }: Props) {
 
   return (
     <div className="flex flex-row w-full h-full">
-      <div className="w-[10%]"></div>
+      <div className="w-[5%]"></div>
       <DropletLessonWrapper
         lesson={lesson}
         droplet={droplet}
