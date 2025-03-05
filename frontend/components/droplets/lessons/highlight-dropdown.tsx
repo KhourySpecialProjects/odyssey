@@ -36,7 +36,6 @@ export function HighlightDropdown({
   setExpanded,
   expanded,
 }: HighlightDropdownProps) {
-
   const [visible, setVisible] = useState(false);
 
   return (
@@ -83,14 +82,19 @@ export function HighlightDropdown({
           className="cursor-pointer "
         />
       </div>
-      <div className="dark:text-black z-20 transform -translate-x-1/2 border border-black bg-blue-100 p-2 rounded shadow-lg group"
-      onMouseLeave={() => setVisible(false)}>
+      <div
+        className="dark:text-black z-20 transform -translate-x-1/2 border border-black bg-blue-100 p-2 rounded shadow-lg group"
+        onMouseLeave={() => setVisible(false)}
+      >
         <div className="relative">
           <Pen
             onMouseEnter={() => setVisible(true)}
-            className="cursor-pointer" />
+            className="cursor-pointer"
+          />
 
-          <div className={`absolute left-1/2 transform -translate-x-1/2 top-full mt-2 w-max gap-2 bg-white p-4 rounded shadow-lg ${visible ? 'visible' : 'hidden'} transition-opacity flex flex-col items-center`}>
+          <div
+            className={`absolute left-1/2 transform -translate-x-1/2 top-full mt-2 w-max gap-2 bg-white p-4 rounded shadow-lg ${visible ? "visible" : "hidden"} transition-opacity flex flex-col items-center`}
+          >
             <div title="Highlighting Mode">
               <Switch
                 id="public"

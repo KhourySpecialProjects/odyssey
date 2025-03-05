@@ -31,7 +31,8 @@ export function NotesBar({
   const [draggedNote, setDraggedNote] = useState<Note | null>(null);
   const [dragOffset, setDragOffset] = useState(0);
 
-  let pageHeight = window.document?.querySelector('.lesson-wrapper')?.scrollHeight || 0;
+  let pageHeight =
+    window.document?.querySelector(".lesson-wrapper")?.scrollHeight || 0;
 
   const fetchNotes = useCallback(async () => {
     const fetchedNotes = await getNotesByAuthorizedUserAndLesson(
@@ -42,7 +43,7 @@ export function NotesBar({
   }, [userId, lesson.slug]);
 
   const handleDragMove = useCallback(
-    (e: MouseEvent) => {     
+    (e: MouseEvent) => {
       if (!draggedNote) return;
       let newPosition = e.pageY - dragOffset;
 
@@ -51,7 +52,7 @@ export function NotesBar({
       }
 
       const barHeight = document?.querySelector(".notes-bar")?.clientHeight;
-      console.log("barheight", barHeight)
+      console.log("barheight", barHeight);
 
       if (barHeight && newPosition > barHeight - 250) {
         newPosition = barHeight - 250;
@@ -116,7 +117,7 @@ export function NotesBar({
   const [mousePositionX, setMousePositionX] = useState(0);
   const [selectedNote, setSelectedNote] = useState(false);
   const [noteDisabled, setNoteDisabled] = useState(false);
-  const [focused, setFocused] = useState<number|null>(null);
+  const [focused, setFocused] = useState<number | null>(null);
 
   if (!enrollmentId) {
     enrollmentId = "";
@@ -142,7 +143,6 @@ export function NotesBar({
       return;
     }
 
-
     if (selectedNote === false) {
       const rect = e.currentTarget.getBoundingClientRect();
       const scrollTop = window.scrollY || document.documentElement.scrollTop;
@@ -151,7 +151,7 @@ export function NotesBar({
       // Calculate the actual click position relative to the notes bar
       const clickY = e.clientY + scrollTop - notesBarTop;
       setMousePositionY(clickY);
-      console.log("mouse position y is:", mousePositionY)
+      console.log("mouse position y is:", mousePositionY);
 
       const rightOffset = ((rect.right - e.clientX) / rect.width) * 100;
       setMousePositionX(100 - rightOffset);
@@ -166,15 +166,15 @@ export function NotesBar({
       setNoteDisabled(true);
       //If we want to add input box before Note is created. Better response time.
       const newNote: Note = {
-                id: 0,
-                content: "",
-                lesson: lesson,
-                enrollment: {} as Enrollment,
-                positionY: mousePositionY
-            }
-            const tempNotes = notes
-            tempNotes.push(newNote);
-            setNotes(tempNotes)
+        id: 0,
+        content: "",
+        lesson: lesson,
+        enrollment: {} as Enrollment,
+        positionY: mousePositionY,
+      };
+      const tempNotes = notes;
+      tempNotes.push(newNote);
+      setNotes(tempNotes);
 
       const enrollment = await getEnrollByID(String(enrollmentId));
       const result = await createNote(lesson, enrollment, mousePositionY);
@@ -222,64 +222,63 @@ export function NotesBar({
       </div>
 
       <div
-        className='space-y-4 w-full relative cursor-pointer notes-bar'
+        className="space-y-4 w-full relative cursor-pointer notes-bar"
         onClick={(e) => handleMouseClick(e)}
-        style={{height: pageHeight + 'px'}}
+        style={{ height: pageHeight + "px" }}
       >
-
-          <div
-            className={`absolute z-[100]`}
-            style={{
-              top: `${mousePositionY - 60}px`,
-              left: `${mousePositionX}%`,
-              position: "absolute",
-            }}
-          >
-            <Popover open={dialogOpen}>
-              <PopoverTrigger disabled={false}></PopoverTrigger>
-              <PopoverContent className="w-max p-0 z-[100]">
-                <div className="p-0">
-                  <Button
-                    size="sm"
-                    onClick={handleAddNote}
-                    className="justify-center bg-white text-slate-600 hover:bg-slate-600 hover:text-white z-[100]"
-                  >
-                    Create a Note?
-                  </Button>
-                </div>
-              </PopoverContent>
-            </Popover>
-          </div>
-
-          {notes.map((note) => (
-            <div
-              key={note.id}
-              className={`absolute w-full transform -translate-y-1/2  transition-transform 
-                ${draggedNote?.id === note.id ? "cursor-grabbing" : ""}
-                ${focused === note.id ? 'z-20' : 'z-0'}`}
-              style={{
-                top: `${note.positionY + 195}px`,
-                //top: `${Math.max(0, Math.min(note.positionY, window.innerHeight - 100))}px`,
-                transform: `translateY(-50%)`,
-              }}
-              onMouseDown={(e) => handleDragStart(note, e)}
-            >
-              <div
-                className={`flex flex-row justify-center items-center 
-                  ${!focused || focused === note.id? 'opacity-100' : 'opacity-30'}
-                  ${focused === note.id? 'scale-105' : ''}`}>
-
-                <NoteBlock
-                  note={note}
-                  onUpdate={fetchNotes}
-                  disabled={noteDisabled}
-                  onDelete={handleDeleteNote}
-                  onFocus={setFocused}
-                />
+        <div
+          className={`absolute z-[100]`}
+          style={{
+            top: `${mousePositionY - 60}px`,
+            left: `${mousePositionX}%`,
+            position: "absolute",
+          }}
+        >
+          <Popover open={dialogOpen}>
+            <PopoverTrigger disabled={false}></PopoverTrigger>
+            <PopoverContent className="w-max p-0 z-[100]">
+              <div className="p-0">
+                <Button
+                  size="sm"
+                  onClick={handleAddNote}
+                  className="justify-center bg-white text-slate-600 hover:bg-slate-600 hover:text-white z-[100]"
+                >
+                  Create a Note?
+                </Button>
               </div>
-            </div>
-          ))}
+            </PopoverContent>
+          </Popover>
         </div>
+
+        {notes.map((note) => (
+          <div
+            key={note.id}
+            className={`absolute w-full transform -translate-y-1/2  transition-transform 
+                ${draggedNote?.id === note.id ? "cursor-grabbing" : ""}
+                ${focused === note.id ? "z-20" : "z-0"}`}
+            style={{
+              top: `${note.positionY + 195}px`,
+              //top: `${Math.max(0, Math.min(note.positionY, window.innerHeight - 100))}px`,
+              transform: `translateY(-50%)`,
+            }}
+            onMouseDown={(e) => handleDragStart(note, e)}
+          >
+            <div
+              className={`flex flex-row justify-center items-center 
+                  ${!focused || focused === note.id ? "opacity-100" : "opacity-30"}
+                  ${focused === note.id ? "scale-105" : ""}`}
+            >
+              <NoteBlock
+                note={note}
+                onUpdate={fetchNotes}
+                disabled={noteDisabled}
+                onDelete={handleDeleteNote}
+                onFocus={setFocused}
+              />
+            </div>
+          </div>
+        ))}
+      </div>
     </>
   );
 }
