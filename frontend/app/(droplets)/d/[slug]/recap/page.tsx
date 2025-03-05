@@ -14,8 +14,10 @@ import { CompletedDropletBlock } from "@/components/droplets/completed-droplet-b
 import { getNotesByDroplet } from "@/lib/requests/notes";
 import { getHighlightsByDroplet } from "@/lib/requests/highlights";
 import { NotesContainer } from "@/components/droplets/notes-container";
-import { PDFDocument } from 'pdf-lib'
+import { PDFDocument } from "pdf-lib";
 import { NotesPdfButton } from "@/components/droplets/notes-pdf-button";
+import { rgb } from "pdf-lib";
+import { NoteSummary } from "@/components/droplets/lessons/note-taking/note-summary";
 
 type Props = {
   params: Promise<Params>;
@@ -110,6 +112,10 @@ export default async function DropletRecapRoute({ params }: Props) {
     let enrollID: string = "";
     const highlights = await getHighlightsByDroplet(authUser.id, droplet.id);
     const notes = await getNotesByDroplet(authUser.id, droplet.id);
+    const filteredHighlights = highlights.filter(
+      (highlight) =>
+        !notes.some((lesson) => lesson.highlight?.id === highlight.id),
+    );
 
     const enrollment = enrollments.find((e) => e.droplet.id === droplet.id);
 
@@ -120,13 +126,10 @@ export default async function DropletRecapRoute({ params }: Props) {
     const allNotes = {
       dropletId: enrollment?.droplet.id || 1,
       notes: notes,
-      highlights: highlights,
+      highlights: filteredHighlights,
     };
 
-    const pdfDoc = await PDFDocument.create()
-    const page = pdfDoc.addPage()
-    page.drawText('You can create PDFs!')
-    const pdfBytes = await pdfDoc.save()
+    const pdfBytes = await NoteSummary({ filteredHighlights, notes, droplet });
 
     return (
       <>
@@ -183,11 +186,14 @@ export default async function DropletRecapRoute({ params }: Props) {
                 this droplet:
               </p>
               <section>
-                <NotesPdfButton pdfBytes={pdfBytes}/>
+                <NotesPdfButton
+                  pdfBytes={pdfBytes}
+                  name={`${droplet.name.replace(/\s/g, "")}-notes`}
+                />
               </section>
               <NotesContainer
                 allNotes={allNotes}
-                dropletHighlights={highlights}
+                dropletHighlights={filteredHighlights}
                 dropletNotes={notes}
                 mappedLessons={droplet.droplet_lessons}
               />
