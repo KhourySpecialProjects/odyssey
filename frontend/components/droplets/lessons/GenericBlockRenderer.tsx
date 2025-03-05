@@ -49,8 +49,12 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
   const [mousePositionY, setMousePositionY] = useState(0);
   const [isHighlighting, setIsHighlighting] = useState(false);
   const [selectedColor, setSelectedColor] = useState<HighlightColor>("#fff300");
+  const currentSelectionRef = useRef<Range | null>(null);
+
 
   useEffect(() => {
+
+
     if (contentRef.current) {
       const codeBlocks = contentRef.current.querySelectorAll("pre code");
       codeBlocks.forEach((codeBlock) => {
@@ -59,6 +63,7 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
         }
       });
       hljs.highlightAll();
+
 
       const sortedHighlights = [...highlights].sort(
         (a, b) => (a.position?.start || 0) - (b.position?.start || 0),
@@ -161,8 +166,22 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
       return;
     }
 
+
     let range = selection.getRangeAt(0);
     savedSelectionRef.current = range.cloneRange();
+    currentSelectionRef.current = range.cloneRange();
+
+    const span = document.createElement("span");
+        //span.style.borderRadius = "8px";
+        span.style.backgroundColor = "rgb(0, 120, 215)";
+        span.style.color = "white"
+        span.style.userSelect = "text";
+        span.style.padding = "5px 0"; // Add vertical padding
+        currentSelectionRef.current.surroundContents(span);
+
+
+
+    console.log("current ref is ", currentSelectionRef.current.toString())
 
     const text = selection.toString();
     if (text.length > 0 && contentRef.current) {
@@ -324,6 +343,7 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
   const handleCreateNote = () => {
     handlePopupHighlight();
     onNote(mousePositionY, popupRef.current.savedRange?.toString() || "");
+    console.log("this is the highlight noted ", popupRef.current.savedRange?.toString())
   };
 
   return (

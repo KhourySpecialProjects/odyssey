@@ -46,7 +46,7 @@ export function DropletLessonWrapper({
 
   return (
     <>
-      <div className="relative w-full h-full">
+      <div className="relative w-full h-full lesson-wrapper">
         
         <div className={cn("w-[65%] min-w-[700px] flex justify-center",
           expanded
