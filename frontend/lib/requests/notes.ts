@@ -166,6 +166,7 @@ export async function createNote(
   enrollment: Enrollment,
   position: number,
   highlight?: Highlight,
+  content?: string,
 ) {
   try {
     const response = await fetch(`${NEXT_PUBLIC_STRAPI_API_URL}/api/notes`, {
@@ -176,6 +177,11 @@ export async function createNote(
       },
       body: JSON.stringify({
         data: {
+          // content: content || "",
+          // lesson: lesson,
+          // enrollment: enrollment,
+          // positionY: position,
+          // highlight: highlight,
           content: "",
           lesson: lesson.id,
           enrollment: enrollment.id,

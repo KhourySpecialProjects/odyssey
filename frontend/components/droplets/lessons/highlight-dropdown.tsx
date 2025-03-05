@@ -11,6 +11,7 @@ import {
   X,
 } from "lucide-react";
 import { HighlightColor } from "@/types";
+import { useState } from "react";
 
 interface HighlightDropdownProps {
   selectedColor: HighlightColor;
@@ -35,9 +36,11 @@ export function HighlightDropdown({
   setExpanded,
   expanded,
 }: HighlightDropdownProps) {
+  const [visible, setVisible] = useState(false);
+
   return (
     <div
-      className={`fixed flex ${expanded ? "right-[19%] z-40 top-28 md:top-28 xs:top-44 flex-row" : "right-0 top-36 flex-col"} gap-2`}
+      className={`fixed flex ${expanded ? "right-[335px] z-40 top-36 md:top-36 xs:top-44 flex-col" : "right-0 top-36 flex-col"} gap-2`}
     >
       <div
         className={`dark:bg-blue-100 dark:text-black border border-black z-30 transform -translate-x-1/2 bg-blue-100 p-2 rounded shadow-lg`}
@@ -79,11 +82,19 @@ export function HighlightDropdown({
           className="cursor-pointer "
         />
       </div>
-      <div className="dark:text-black z-20 transform -translate-x-1/2 border border-black bg-blue-100 p-2 rounded shadow-lg group">
+      <div
+        className="dark:text-black z-20 transform -translate-x-1/2 border border-black bg-blue-100 p-2 rounded shadow-lg group"
+        onMouseLeave={() => setVisible(false)}
+      >
         <div className="relative">
-          <Pen className="cursor-pointer" />
+          <Pen
+            onMouseEnter={() => setVisible(true)}
+            className="cursor-pointer"
+          />
 
-          <div className="absolute left-1/2 transform -translate-x-1/2 top-full mt-2 w-max gap-2 bg-white p-4 rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center">
+          <div
+            className={`absolute left-1/2 transform -translate-x-1/2 top-full mt-2 w-max gap-2 bg-white p-4 rounded shadow-lg ${visible ? "visible" : "hidden"} transition-opacity flex flex-col items-center`}
+          >
             <div title="Highlighting Mode">
               <Switch
                 id="public"
@@ -113,7 +124,7 @@ export function HighlightDropdown({
             <button
               title="Take Note"
               onClick={handleCreateNote}
-              className="relative group"
+              className="relative group note-button"
             >
               <NotebookPen size={30} />
             </button>
