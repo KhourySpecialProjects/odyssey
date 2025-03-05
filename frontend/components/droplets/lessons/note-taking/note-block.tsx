@@ -13,14 +13,11 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-import { useEditor, EditorContent, ReactNodeViewRenderer } from "@tiptap/react";
+import { useEditor, EditorContent } from "@tiptap/react";
 import Placeholder from "@tiptap/extension-placeholder";
 import StartingKit from "@tiptap/starter-kit";
 import Underline from "@tiptap/extension-underline";
 import Link from "@tiptap/extension-link";
-import CustomImage from "@/components/ui/tiptap/custom-image";
-import CodeBlockLowlight from "@tiptap/extension-code-block-lowlight";
-import { CodeBlockComponent } from "@/components/ui/tiptap/toolbar/tools/code-tool/code-tool";
 import { all, createLowlight } from "lowlight";
 import DefaultToolbar from "@/components/ui/tiptap/toolbar/general-toolbar";
 
@@ -82,7 +79,7 @@ export function NoteBlock({
       Placeholder.configure({
         placeholder: "Nothing here yet...",
         emptyEditorClass:
-          "cursor-text before:content-[attr(data-placeholder)] before:text-gray-500 dark:before:text-slate-300 before:absolute before:top-3 before:left-3 before:pointer-events-none before:select-none",
+          "cursor-text before:content-[attr(data-placeholder)] before:text-gray-500 dark:before:text-black before:absolute before:top-3 before:left-3 before:pointer-events-none before:select-none",
       }),
     ],
 
@@ -93,7 +90,7 @@ export function NoteBlock({
     content: content,
     editorProps: {
       attributes: {
-        class: `w-full min-h-22 bg-white border border-slate-200 dark:border-slate-500 p-3 rounded-br-xl rounded-bl-xl outline-none dark:text-slate-300 cursor-text ${content.length > 200 ? "overflow-scroll" : "overflow-hidden"} ${focused ? "max-h-[150px]" : "max-h-[24px]"} overflow-x-hidden`,
+        class: `w-full min-h-22 bg-white border border-slate-200 dark:border-slate-500 p-3 rounded-br-xl rounded-bl-xl outline-none dark:text-black cursor-text ${content.length > 200 ? "overflow-scroll" : "overflow-hidden"} ${focused ? "max-h-[150px]" : "max-h-[24px]"} overflow-x-hidden`,
       },
       handleKeyDown: (view: any, event: KeyboardEvent) => {
         if (event.key === "Tab") {
@@ -164,7 +161,7 @@ export function NoteBlock({
             onFocus(note.id), setFocused(true);
           }}
         >
-          <div className="bg-white flex flex-row items-center w-full rounded-tl-md rounded-tr-md">
+          <div className="bg-white dark:bg-slate-800 flex flex-row items-center w-full rounded-tl-md border dark:border-slate-500 rounded-tr-md">
             <div className="flex-grow">
               {toolbarVisible && (
                 <DefaultToolbar editor={editor!} note={true} />
@@ -174,7 +171,11 @@ export function NoteBlock({
               className="ml-auto"
               onClick={() => setToolbarVisible(!toolbarVisible)}
             >
-              {!toolbarVisible ? <ChevronDown /> : <ChevronUp />}
+              {!toolbarVisible ? (
+                <ChevronDown className="dark:bg-slate-800" />
+              ) : (
+                <ChevronUp className="dark:bg-slate-800" />
+              )}
             </button>
           </div>
           <EditorContent name="lesson-generic" editor={editor} />
