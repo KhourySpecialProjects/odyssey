@@ -46,13 +46,15 @@ export function DropletLessonWrapper({
 
   return (
     <>
-      <div className={`relative w-full h-full lesson-wrapper overflow-x-hidden ${expanded ? '' : 'lg:pl-40'}`}>
-        
-        <div className={cn("w-[65%] min-w-[700px] flex justify-center",
-          expanded
-          ? ""
-          : ""
-        )}>
+      <div
+        className={`relative w-full h-full lesson-wrapper overflow-x-hidden ${expanded ? "" : "lg:pl-40"}`}
+      >
+        <div
+          className={cn(
+            "w-[65%] min-w-[700px] flex justify-center",
+            expanded ? "" : "",
+          )}
+        >
           <LessonRenderer
             lesson={lesson}
             droplet={droplet}
@@ -82,12 +84,7 @@ export function DropletLessonWrapper({
                   <X className="w-5 h-5" />
                 </button>
               </div>
-              <div className={cn(
-                "",
-                expanded
-                  ? ""
-                  : "",
-              )}>
+              <div className={cn("", expanded ? "" : "")}>
                 <NotesBar
                   userId={userId}
                   lesson={lesson}
@@ -97,7 +94,6 @@ export function DropletLessonWrapper({
               </div>
             </div>
           </>
-
         )}
       </div>
     </>

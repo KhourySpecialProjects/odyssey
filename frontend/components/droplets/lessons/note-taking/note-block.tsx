@@ -3,9 +3,15 @@ import { useState, useCallback } from "react";
 import { ChangeEvent } from "react";
 import { updateNoteContent } from "@/lib/requests/notes";
 import { Badge } from "@/components/ui/badge";
-import { MessageSquareText, GripVertical, Trash2Icon, FileText, ChevronDown, ChevronUp } from "lucide-react";
+import {
+  MessageSquareText,
+  GripVertical,
+  Trash2Icon,
+  FileText,
+  ChevronDown,
+  ChevronUp,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
-
 
 import { useEditor, EditorContent, ReactNodeViewRenderer } from "@tiptap/react";
 import Placeholder from "@tiptap/extension-placeholder";
@@ -68,7 +74,6 @@ export function NoteBlock({
 
   const lowlight = createLowlight(all);
 
-
   const editor = useEditor({
     extensions: [
       Link,
@@ -88,8 +93,7 @@ export function NoteBlock({
     content: content,
     editorProps: {
       attributes: {
-        class:
-          `w-full min-h-22 bg-white border border-slate-200 dark:border-slate-500 p-3 rounded-br-xl rounded-bl-xl outline-none dark:text-slate-300 cursor-text ${content.length > 200 ? 'overflow-scroll' : 'overflow-hidden'} ${focused ? 'max-h-[150px]' : 'max-h-[24px]'} overflow-x-hidden`
+        class: `w-full min-h-22 bg-white border border-slate-200 dark:border-slate-500 p-3 rounded-br-xl rounded-bl-xl outline-none dark:text-slate-300 cursor-text ${content.length > 200 ? "overflow-scroll" : "overflow-hidden"} ${focused ? "max-h-[150px]" : "max-h-[24px]"} overflow-x-hidden`,
       },
       handleKeyDown: (view: any, event: KeyboardEvent) => {
         if (event.key === "Tab") {
@@ -110,12 +114,8 @@ export function NoteBlock({
     },
   });
 
-
   return (
-    <div
-      className="mx-3 pt-2 pl-2 pr-2 w-full note-block bg-slate-200 dark:bg-slate-800 dark:border dark:border-slate-500 rounded-xl flex flex-row">
-
-
+    <div className="mx-3 pt-2 pl-2 pr-2 w-full note-block bg-slate-200 dark:bg-slate-800 dark:border dark:border-slate-500 rounded-xl flex flex-row">
       <div className="flex-1 flex flex-col w-4/5 py-2 px-1">
         <div className="pb-2 flex flex-row items-center">
           <div className="grip-handle pr-2">
@@ -128,15 +128,13 @@ export function NoteBlock({
                 title={note.highlight.text}
                 className={`inline-block w-fit max-w-[50%] block overflow-hidden text-ellipsis whitespace-nowrap text-center text-slate-700 ${getHighlightColor(note.highlight.color)} hover:text-white`}
               >
-                {note.highlight.text.substring(0, 25)} {note.highlight.text.length > 25 ? "..." : ""}
+                {note.highlight.text.substring(0, 25)}{" "}
+                {note.highlight.text.length > 25 ? "..." : ""}
               </Badge>
               <MessageSquareText className="text-slate-[#6c6060] dark:text-slate-300" />
-
             </div>
           ) : (
-
             <div className="flex flex-row justify-between w-full">
-
               <Badge
                 variant="secondary"
                 className={`text-center text-slate-700 bg-slate-200 border border-slate-400 hover:text-white`}
@@ -146,7 +144,6 @@ export function NoteBlock({
 
               <FileText className="text-slate-[#6c6060] dark:text-slate-300" />
             </div>
-
           )}
 
           <Button
@@ -157,26 +154,31 @@ export function NoteBlock({
           >
             <Trash2Icon className="cursor-pointer text-white" />
           </Button>
-
         </div>
 
         <div
-          onBlur={() => { handleBlur(), onFocus(null), setFocused(false) }}
-          onFocus={() => {onFocus(note.id), setFocused(true)}}>
+          onBlur={() => {
+            handleBlur(), onFocus(null), setFocused(false);
+          }}
+          onFocus={() => {
+            onFocus(note.id), setFocused(true);
+          }}
+        >
           <div className="bg-white flex flex-row items-center w-full rounded-tl-md rounded-tr-md">
             <div className="flex-grow">
-            {toolbarVisible &&
-              <DefaultToolbar editor={editor!} note={true} />
-            }
+              {toolbarVisible && (
+                <DefaultToolbar editor={editor!} note={true} />
+              )}
             </div>
-            <button className="ml-auto" onClick={() => setToolbarVisible(!toolbarVisible)}>
-              {!toolbarVisible ? <ChevronDown/>: <ChevronUp/>}
+            <button
+              className="ml-auto"
+              onClick={() => setToolbarVisible(!toolbarVisible)}
+            >
+              {!toolbarVisible ? <ChevronDown /> : <ChevronUp />}
             </button>
           </div>
           <EditorContent name="lesson-generic" editor={editor} />
         </div>
-
-
       </div>
     </div>
   );
