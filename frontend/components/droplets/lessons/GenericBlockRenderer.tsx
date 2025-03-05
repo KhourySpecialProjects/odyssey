@@ -11,7 +11,7 @@ import { HighlightDropdown } from "./highlight-dropdown";
 interface GenericBlockRendererProps {
   block: any;
   highlights: Highlight[];
-  onHighlight: (highlight: Highlight) => void;
+  onHighlight: (highlight: Highlight, isWithNote?: boolean) => void;
   onDeleteHighlight: (highlightId: number) => void;
   onNote: (notePos: number, text: string) => void;
   genericBlocks: number[];
@@ -226,41 +226,7 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
     }
   };
 
-  // const renderHighlightedText = (text: string) => {
-  //   let result = "";
-  //   let lastIndex = 0;
-
-  //   // Sort highlights by position to ensure correct order
-  //   const sortedHighlights = [...highlights].sort((a, b) => a.position.start - b.position.start);
-
-  //   sortedHighlights.forEach((highlight) => {
-  //     if (!highlight.position?.start || !highlight.position?.end) return;
-
-  //     // Append text before highlight
-  //     result += text.slice(lastIndex, highlight.position.start);
-  //     console.log("first: ", highlight.position.start, "end:")
-  //     console.log("start: ", text.slice(lastIndex, highlight.position.start))
-
-  //     // Wrap highlighted text
-  //     result += `<span style="background-color: ${highlight.color}; border-radius: 12px;">` +
-  //               text.slice(highlight.position.start, highlight.position.end) +
-  //               `</span>`;
-  //     console.log("middle", `<span style="background-color: ${highlight.color}; border-radius: 12px;">` +
-  //     text.slice(highlight.position.start, highlight.position.end) +
-  //     `</span>`)
-
-  //     // Update lastIndex to track the end of the last highlight
-  //     lastIndex = highlight.position.end;
-  //   });
-
-  //   // Append any remaining text after the last highlight
-  //   result += text.slice(lastIndex);
-  //   console.log("end", text.slice(lastIndex))
-
-  //   return { __html: result };
-  // };
-
-  const handlePopupHighlight = () => {
+  const handlePopupHighlight = (isWithNote?: boolean) => {
     if (!contentRef.current || !popupRef.current.savedRange) {
       return;
     }
@@ -273,14 +239,17 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
     const endOffset = range.endOffset;
 
     if (text) {
-      onHighlight({
-        text,
-        position: {
-          start: blockOffset + startOffset,
-          end: blockOffset + endOffset,
+      onHighlight(
+        {
+          text,
+          position: {
+            start: blockOffset + startOffset,
+            end: blockOffset + endOffset,
+          },
+          color: selectedColor,
         },
-        color: selectedColor,
-      });
+        isWithNote,
+      );
       popupRef.current.highlightSpan = null;
     }
 
@@ -322,7 +291,7 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
   };
 
   const handleCreateNote = () => {
-    handlePopupHighlight();
+    handlePopupHighlight(true);
     onNote(mousePositionY, popupRef.current.savedRange?.toString() || "");
   };
 

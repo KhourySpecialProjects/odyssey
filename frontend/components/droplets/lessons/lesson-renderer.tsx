@@ -72,7 +72,7 @@ export function LessonRenderer({
     fetchHighlights();
   }, [lesson.id]);
 
-  const handleHighlight = async (highlight: any) => {
+  const handleHighlight = async (highlight: any, isWithNote?: boolean) => {
     const response = await createHighlight({
       data: {
         text: highlight.text,
@@ -89,7 +89,9 @@ export function LessonRenderer({
         id: response.data.id,
       };
       setHighlights((prev) => [...prev, formattedHighlight]);
-      toast.success("Highlight saved");
+      if (!(isWithNote === true)) {
+        toast.success("Highlight saved");
+      }
     } else {
       toast.error("Failed to save highlight");
     }
@@ -117,6 +119,11 @@ export function LessonRenderer({
         notePos,
         highlight[0],
       );
+      if (result.success) {
+        toast.success("Note created");
+      } else {
+        toast.error("Failed to create note");
+      }
     }
 
     onUpdate();
@@ -259,7 +266,7 @@ function LessonBlockRenderer({
 }: {
   block: any;
   highlights: any[];
-  onHighlight: (highlight: any) => void;
+  onHighlight: (highlight: any, isWithNote?: boolean) => void;
   onDeleteHighlight: (id: number) => void;
   onNote: (notePos: number, text: string) => void;
   genericBlocks: number[];
