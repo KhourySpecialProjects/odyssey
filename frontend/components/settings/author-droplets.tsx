@@ -40,7 +40,7 @@ export function AuthorDroplets({ author }: { author: AuthorizedUser }) {
         )}
       </CardContent>
 
-      <CardFooter className="px-6 py-4 border-t">
+      <CardFooter className="px-6 py-4 border-t dark:border-slate-500">
         <Button after={<ArrowRightIcon />} asChild>
           <Link href="/explore">Explore</Link>
         </Button>

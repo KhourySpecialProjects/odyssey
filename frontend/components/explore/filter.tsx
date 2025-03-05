@@ -80,7 +80,7 @@ export function Filter({
                       <Badge
                         variant="secondary"
                         key={option.value}
-                        className="px-1 font-normal rounded-sm"
+                        className="px-1 font-normal rounded-sm dark:bg-slate-800"
                       >
                         {option.label}
                       </Badge>

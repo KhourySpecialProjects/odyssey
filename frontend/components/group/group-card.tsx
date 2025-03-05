@@ -12,9 +12,9 @@ type GroupCardProps = {
 
 export function GroupCard({ group, role, roleColors }: GroupCardProps) {
   return (
-    <Link href={`/g/${group.slug}`}>
-      <Card className="hover:shadow-md transition-shadow bg-slate-50 dark:bg-slate-800 border rounded-md border-slate-200 dark:border-slate-500 hover:border-slate-300">
-        <CardHeader>
+    <Link href={`/g/${group.slug}`} className="block h-full">
+      <Card className="hover:shadow-md transition-shadow bg-slate-50 dark:bg-slate-800 border rounded-md border-slate-200 dark:border-slate-500 hover:border-slate-300 flex flex-col h-full">
+        <CardHeader className="flex-grow">
           <div className="flex items-start justify-between">
             <h3 className="text-3xl font-black text-slate-950 place-self-end dark:text-slate-300">
               {group.groupName}
