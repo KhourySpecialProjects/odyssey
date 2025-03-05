@@ -351,6 +351,7 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
       )} */}
       {block.id === genericBlocks[0] && enrollmentId && (
         <HighlightDropdown
+        
           selectedColor={selectedColor}
           handleApplyColor={handleApplyColor}
           isHighlighting={isHighlighting}
