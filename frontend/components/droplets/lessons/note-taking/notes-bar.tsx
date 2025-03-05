@@ -29,7 +29,6 @@ export function NotesBar({
 }) {
   const [notes, setNotes] = useState(initNotes);
   const [draggedNote, setDraggedNote] = useState<Note | null>(null);
-  const [draggedY, setDraggedY] = useState(0);
   const [dragOffset, setDragOffset] = useState(0);
 
   let pageHeight = window.document?.querySelector('.lesson-wrapper')?.scrollHeight || 0;
@@ -99,7 +98,6 @@ export function NotesBar({
     e.preventDefault();
     setDraggedNote(note);
     setDragOffset(e.pageY - note.positionY);
-    setDraggedY(e.pageY);
   };
 
   useEffect(() => {
