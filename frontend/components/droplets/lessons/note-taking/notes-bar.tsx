@@ -32,6 +32,8 @@ export function NotesBar({
   const [draggedY, setDraggedY] = useState(0);
   const [dragOffset, setDragOffset] = useState(0);
 
+  let pageHeight = window.document?.querySelector('.lesson-wrapper')?.scrollHeight || 0;
+
   const fetchNotes = useCallback(async () => {
     const fetchedNotes = await getNotesByAuthorizedUserAndLesson(
       userId,
@@ -49,7 +51,7 @@ export function NotesBar({
         newPosition = 75;
       }
 
-      const barHeight = document.querySelector(".notes-bar")?.clientHeight;
+      const barHeight = document?.querySelector(".notes-bar")?.clientHeight;
       console.log("barheight", barHeight)
 
       if (barHeight && newPosition > barHeight - 250) {
@@ -224,7 +226,7 @@ export function NotesBar({
       <div
         className='space-y-4 w-full relative cursor-pointer notes-bar'
         onClick={(e) => handleMouseClick(e)}
-        style={{height: document.querySelector('.lesson-wrapper')?.scrollHeight || 0 + 'px'}}
+        style={{height: pageHeight + 'px'}}
       >
 
           <div
@@ -258,7 +260,7 @@ export function NotesBar({
                 ${draggedNote?.id === note.id ? "cursor-grabbing" : ""}
                 ${focused === note.id ? 'z-20' : 'z-0'}`}
               style={{
-                top: `${note.positionY}px`,
+                top: `${note.positionY + 195}px`,
                 //top: `${Math.max(0, Math.min(note.positionY, window.innerHeight - 100))}px`,
                 transform: `translateY(-50%)`,
               }}
