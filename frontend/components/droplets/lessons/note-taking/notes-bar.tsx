@@ -45,8 +45,8 @@ export function NotesBar({
       if (!draggedNote) return;
       let newPosition = e.pageY - dragOffset;
 
-      if (newPosition < 300) {
-        newPosition = 300;
+      if (newPosition < 75) {
+        newPosition = 75;
       }
 
       const barHeight = document.querySelector(".notes-bar")?.clientHeight;
@@ -140,6 +140,8 @@ export function NotesBar({
       setSelectedNote(true);
       return;
     }
+
+
     if (selectedNote === false) {
       const rect = e.currentTarget.getBoundingClientRect();
       const scrollTop = window.scrollY || document.documentElement.scrollTop;
@@ -148,6 +150,7 @@ export function NotesBar({
       // Calculate the actual click position relative to the notes bar
       const clickY = e.clientY + scrollTop - notesBarTop;
       setMousePositionY(clickY);
+      console.log("mouse position y is:", mousePositionY)
 
       const rightOffset = ((rect.right - e.clientX) / rect.width) * 100;
       setMousePositionX(100 - rightOffset);
@@ -218,16 +221,15 @@ export function NotesBar({
       </div>
 
       <div
-        className={`space-y-4 w-full h-full relative cursor-pointer notes-bar`}
-        onClick={handleMouseClick}
+        className='space-y-4 w-full relative cursor-pointer'
+        onClick={(e) => handleMouseClick(e)}
+        style={{height: document.querySelector('.lesson-wrapper')?.scrollHeight || 0 + 'px'}}
       >
-
-        
 
           <div
             className={`absolute z-[100]`}
             style={{
-              top: `${mousePositionY - 195}px`,
+              top: `${mousePositionY - 60}px`,
               left: `${mousePositionX}%`,
               position: "absolute",
             }}
@@ -255,7 +257,7 @@ export function NotesBar({
                 ${draggedNote?.id === note.id ? "cursor-grabbing" : ""}
                 ${focused === note.id ? 'z-20' : 'z-0'}`}
               style={{
-                top: `${note.positionY - 220}px`,
+                top: `${note.positionY}px`,
                 //top: `${Math.max(0, Math.min(note.positionY, window.innerHeight - 100))}px`,
                 transform: `translateY(-50%)`,
               }}
