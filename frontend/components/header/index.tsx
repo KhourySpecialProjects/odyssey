@@ -61,7 +61,11 @@ export async function Header() {
                     items={getNavLinks()}
                     className="flex-col space-y-2"
                   />
+                  <div className="ml-2">
+                    <DarkMode />
+                  </div>
                 </nav>
+                
               </SheetContent>
             </Sheet>
 
@@ -87,7 +91,9 @@ export async function Header() {
           </nav>
 
           <div className="flex items-center gap-4 md:ml-auto md:gap-2 lg:gap-4">
-            <DarkMode />
+            <div className="hidden md:block ml-4">
+              <DarkMode />
+            </div>
             {user ? (
               <div className="flex items-center justify-center">
                 <UserDropdown user={user} authorizedUser={authorizedUser} />
