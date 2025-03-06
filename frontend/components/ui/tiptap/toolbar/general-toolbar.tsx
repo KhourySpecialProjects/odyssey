@@ -21,7 +21,7 @@ export default function DefaultToolbar({
   note?: boolean | null;
 }) {
   return (
-    <div className="w-full border border-b-transparent rounded-t-md border-slate-200 dark:border-slate-500 light:bg-white p-1 dark:bg-slate-800 space-x-0.5">
+    <div className={`w-full  ${note ? "rounded-tl-md": "rounded-t-md border border-b-transparent border-slate-200"}  dark:border-slate-500 light:bg-white p-1 dark:bg-slate-800 space-x-0.5`}>
       <BoldTool editor={editor} />
       <ItalicTool editor={editor} />
       <UnderlineTool editor={editor} />
