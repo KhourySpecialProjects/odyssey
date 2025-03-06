@@ -45,9 +45,9 @@ export function DropletLessonWrapper({
   }, [fetchNotes]);
 
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {  // Properly type the event
-      if (e.key === "Escape") {  // Correct key name is "Escape", not "esc"
-        setExpanded(false);  // We probably want to always close on Escape, not toggle
+    const handleKeyDown = (e: KeyboardEvent) => {  
+      if (e.key === "Escape") {  
+        setExpanded(false);  
       }
     };
     
@@ -56,7 +56,7 @@ export function DropletLessonWrapper({
     return () => {
       document.removeEventListener("keydown", handleKeyDown);
     };
-  }, [setExpanded]);  // Add setExpanded to dependency array
+  }, [setExpanded]); 
 
   return (
     <>
