@@ -67,7 +67,7 @@ export function OpenEndedQuizQuestionBlock({
             value={userAnswer}
             onChange={(e) => setUserAnswer(e.target.value)}
             placeholder="Type your answer here..."
-            className="min-h-[100px] dark:bg-slate-900 dark:border dark:border-slate-500 dark:text-slate-300"
+            className="Textarea min-h-[100px] dark:bg-slate-900 dark:border dark:border-slate-500 dark:text-slate-300"
           />
           <div className="flex justify-end">
             <Button onClick={checkAnswer}>Check Answer</Button>

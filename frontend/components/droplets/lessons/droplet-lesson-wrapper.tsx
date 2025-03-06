@@ -45,20 +45,18 @@ export function DropletLessonWrapper({
   }, [fetchNotes]);
 
   useEffect(() => {
-    const handleKeyPress = (event: KeyboardEvent) => {
-      // Ignore if user is typing in an input or textarea
-      if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) {
-        return;
-      }
-      
-      if (event.key.toLowerCase() === 'n') {
-        setExpanded(prev => !prev);
+    const handleKeyDown = (e: KeyboardEvent) => {  // Properly type the event
+      if (e.key === "Escape") {  // Correct key name is "Escape", not "esc"
+        setExpanded(false);  // We probably want to always close on Escape, not toggle
       }
     };
-
-    window.addEventListener('keydown', handleKeyPress);
-    return () => window.removeEventListener('keydown', handleKeyPress);
-  }, []);
+    
+    document.addEventListener("keydown", handleKeyDown);
+    
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [setExpanded]);  // Add setExpanded to dependency array
 
   return (
     <>
