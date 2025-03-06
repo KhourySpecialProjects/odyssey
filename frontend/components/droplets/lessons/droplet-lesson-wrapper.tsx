@@ -84,7 +84,7 @@ export function DropletLessonWrapper({
                   <X className="w-5 h-5" />
                 </button>
               </div>
-              <div className={cn("", expanded ? "" : "")}>
+              <div>
                 <NotesBar
                   userId={userId}
                   lesson={lesson}
