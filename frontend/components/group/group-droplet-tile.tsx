@@ -16,13 +16,13 @@ export function GroupDropletTile({ droplet }: GroupDropletTileProps) {
           <div className="flex gap-2 mb-2">
             <Badge
               variant="default"
-              className="text-xs bg-white dark:bg-slate-300 text-black border-black pointer-events-none"
+              className="text-xs bg-purple-500 dark:bg-purple-300 text-white dark:text-black pointer-events-none"
             >
               {uppercaseFirstChar(droplet.focusArea)}
             </Badge>
             <Badge
               variant="secondary"
-              className="text-xs bg-white dark:bg-slate-300 text-black border-black pointer-events-none"
+              className="text-xs bg-slate-800 dark:bg-blue-300 text-white dark:text-black pointer-events-none"
             >
               {uppercaseFirstChar(droplet.type)}
             </Badge>
