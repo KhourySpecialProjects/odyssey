@@ -2,16 +2,9 @@
 
 import { useState } from "react";
 import { NoteTypeTitle } from "@/lib/globals";
-import {
-  AuthorizedUser,
-  DropletLesson,
-  Highlight,
-  HighlightColor,
-  Note,
-} from "@/types";
+import { DropletLesson, Highlight, HighlightColor, Note } from "@/types";
 import { NotesFilter } from "./notes-filter";
 import NotesSummary from "./notes-summary";
-import { PDFDocument } from "pdf-lib";
 
 export function NotesContainer({
   dropletHighlights,
