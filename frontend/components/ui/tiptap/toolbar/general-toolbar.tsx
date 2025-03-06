@@ -11,7 +11,6 @@ import LinkTool from "./tools/link-tool";
 import ImageTool from "./tools/image-tool";
 import CodeTool from "./tools/code-tool/code-tool";
 import HeadingTool from "./tools/heading-tool";
-import CalloutTypeTool from "./tools/callout-type-tool";
 
 export default function DefaultToolbar({
   editor,

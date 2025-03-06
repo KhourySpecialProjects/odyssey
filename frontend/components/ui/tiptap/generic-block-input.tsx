@@ -37,9 +37,13 @@ export function GenericBlockInput({
         katexOptions: {
           throwOnError: false,
           output: 'html',
-          displayMode: true,
           strict: false,
           trust: true,
+        },
+        addInlineMath: true,
+        delimiters: {
+          inlineRegex: '\\$([^$]+)\\$',
+          blockRegex: '\\${2}([^$]+)\\${2}',
         },
       }),
       CodeBlockLowlight.extend({

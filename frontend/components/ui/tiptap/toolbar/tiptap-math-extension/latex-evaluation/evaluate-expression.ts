@@ -1,4 +1,3 @@
-import type { EvaluatexResult } from "evaluatex";
 import { generateID } from "../util/generate-id";
 
 // Import evaluatex at the top level
