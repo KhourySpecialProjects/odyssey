@@ -10,6 +10,8 @@ import CodeBlockLowlight from "@tiptap/extension-code-block-lowlight";
 import { CodeBlockComponent } from "./toolbar/tools/code-tool/code-tool";
 import { all, createLowlight } from "lowlight";
 import GeneralToolbar from "./toolbar/general-toolbar";
+import Math from "@aarkue/tiptap-math-extension";
+import "katex/dist/katex.min.css";
 
 const lowlight = createLowlight(all);
 
@@ -31,6 +33,15 @@ export function GenericBlockInput({
       }),
       Underline,
       StartingKit,
+      Math.configure({
+        katexOptions: {
+          throwOnError: false,
+          output: 'html',
+          displayMode: true,
+          strict: false,
+          trust: true,
+        },
+      }),
       CodeBlockLowlight.extend({
         addNodeView() {
           return ReactNodeViewRenderer(CodeBlockComponent);
