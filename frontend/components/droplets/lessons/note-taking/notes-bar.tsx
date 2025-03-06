@@ -184,14 +184,14 @@ export function NotesBar({
         content: "",
         lesson: lesson,
         enrollment: {} as Enrollment,
-        positionY: mousePositionY,
+        positionY: mousePositionY - 300,
       };
       const tempNotes = notes;
       tempNotes.push(newNote);
       setNotes(tempNotes);
 
       const enrollment = await getEnrollByID(String(enrollmentId));
-      const result = await createNote(lesson, enrollment, mousePositionY);
+      const result = await createNote(lesson, enrollment, mousePositionY - 300);
 
       if (result.success) {
         await fetchNotes();
@@ -255,7 +255,7 @@ export function NotesBar({
                 <Button
                   size="sm"
                   onClick={handleAddNote}
-                  className="justify-center bg-white text-slate-600 hover:bg-slate-600 hover:text-white z-[100]"
+                  className="justify-center bg-white text-slate-600 hover:bg-slate-600 hover:text-white z-[100] dark:bg-slate-700 dark:text-white border dark:border-white"
                 >
                   Create a Note?
                 </Button>
@@ -280,7 +280,7 @@ export function NotesBar({
             <div
               className={`flex flex-row justify-center items-center 
                   ${!focused || focused === note.id ? "opacity-100" : "opacity-30"}
-                  ${focused === note.id ? "scale-105" : ""}`}
+                  ${draggedNote?.id !== note.id ? "scale-100" : "scale-105"}`}
             >
               <NoteBlock
                 note={note}
