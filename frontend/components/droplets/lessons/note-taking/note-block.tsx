@@ -159,13 +159,16 @@ export function NoteBlock({
               )}
             </div>
             <button
-              className="ml-auto"
+              className={`ml-auto ${toolbarVisible ? "" : "flex flex-row justify-between w-full"} `}
               onClick={() => setToolbarVisible(!toolbarVisible)}
             >
+              <div className={`w-full ${toolbarVisible ? 'hidden': ''}`}>
+
+              </div>
               {!toolbarVisible ? (
-                <ChevronDown className="dark:bg-slate-800" />
+                <ChevronDown className="dark:bg-slate-800 rounded-tr-md" />
               ) : (
-                <ChevronUp className="dark:bg-slate-800" />
+                <ChevronUp className="dark:bg-slate-800 rounded-tr-md" />
               )}
             </button>
           </div>
