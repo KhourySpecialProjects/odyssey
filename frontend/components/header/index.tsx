@@ -65,7 +65,6 @@ export async function Header() {
                     <DarkMode />
                   </div>
                 </nav>
-                
               </SheetContent>
             </Sheet>
 
