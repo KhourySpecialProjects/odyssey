@@ -104,15 +104,15 @@ export function NoteBlock({
   });
 
   return (
-
-<div className={cn(
-              "mx-3 pt-2 pl-1 pr-1 w-full note-block bg-slate-200  rounded-xl flex flex-row",
-              "dark:bg-slate-700 dark:border dark:border-slate-500",
-              focused 
-              ? "dark:shadow-[0px_0px_16px_rgb(0,255,255)] shadow-[0px_0px_16px_rgb(29,58,138)]" 
-              : "dark:shadow-[0px_0px_6px_rgb(0,255,255)] shadow-[0px_0px_8px_rgb(29,58,138)]"
-            )} >
-
+    <div
+      className={cn(
+        "mx-3 pt-2 pl-1 pr-1 w-full note-block bg-slate-200  rounded-xl flex flex-row",
+        "dark:bg-slate-700 dark:border dark:border-slate-500",
+        focused
+          ? "dark:shadow-[0px_0px_16px_rgb(0,255,255)] shadow-[0px_0px_16px_rgb(29,58,138)]"
+          : "dark:shadow-[0px_0px_6px_rgb(0,255,255)] shadow-[0px_0px_8px_rgb(29,58,138)]",
+      )}
+    >
       <div className="flex-1 flex flex-col w-4/5 py-2 px-1">
         <div className="pb-2 flex flex-row items-center">
           <div className="grip-handle pr-2">
@@ -171,9 +171,7 @@ export function NoteBlock({
               className={`ml-auto ${toolbarVisible ? "" : "flex flex-row justify-between w-full"} `}
               onClick={() => setToolbarVisible(!toolbarVisible)}
             >
-              <div className={`w-full ${toolbarVisible ? 'hidden': ''}`}>
-
-              </div>
+              <div className={`w-full ${toolbarVisible ? "hidden" : ""}`}></div>
               {!toolbarVisible ? (
                 <ChevronDown className="dark:bg-slate-800 rounded-tr-md" />
               ) : (

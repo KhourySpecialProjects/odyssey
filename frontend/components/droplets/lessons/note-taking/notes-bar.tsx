@@ -34,15 +34,16 @@ export function NotesBar({
 
   useEffect(() => {
     const updateHeight = () => {
-      const height = document.querySelector(".lesson-wrapper")?.scrollHeight || 0;
+      const height =
+        document.querySelector(".lesson-wrapper")?.scrollHeight || 0;
       setPageHeight(height);
     };
 
     updateHeight();
 
-    window.addEventListener('resize', updateHeight);
+    window.addEventListener("resize", updateHeight);
     return () => {
-      window.removeEventListener('resize', updateHeight);
+      window.removeEventListener("resize", updateHeight);
     };
   }, [draggedNote]);
 
@@ -59,7 +60,6 @@ export function NotesBar({
       if (!draggedNote) return;
       let newPosition = e.pageY - dragOffset;
 
-
       if (newPosition < -100) {
         newPosition = -100;
       }
@@ -68,8 +68,8 @@ export function NotesBar({
         newPosition = pageHeight - 450;
       }
 
-      console.log(pageHeight)
-      console.log(newPosition)
+      console.log(pageHeight);
+      console.log(newPosition);
 
       setNotes((prev) =>
         prev.map((note) =>
@@ -115,7 +115,6 @@ export function NotesBar({
   };
 
   useEffect(() => {
-
     if (draggedNote) {
       document.addEventListener("mousemove", handleDragMove);
       document.addEventListener("mouseup", handleDragEnd);

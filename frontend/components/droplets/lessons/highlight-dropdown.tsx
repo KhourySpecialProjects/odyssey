@@ -87,10 +87,10 @@ export function HighlightDropdown({
         onMouseLeave={() => setVisible(false)}
       >
         <div className="relative">
-            <Pen
-              onMouseEnter={() => setVisible(true)}
-              className="cursor-pointer dark:text-white"
-            />
+          <Pen
+            onMouseEnter={() => setVisible(true)}
+            className="cursor-pointer dark:text-white"
+          />
 
           <div
             className={`absolute left-1/2 transform -translate-x-1/2 top-full mt-2 w-max gap-2 bg-white p-4 rounded shadow-lg ${visible ? "visible" : "hidden"} transition-opacity flex flex-col items-center`}
