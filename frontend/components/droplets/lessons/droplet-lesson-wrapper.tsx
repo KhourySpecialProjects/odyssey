@@ -44,6 +44,22 @@ export function DropletLessonWrapper({
     fetchNotes();
   }, [fetchNotes]);
 
+  useEffect(() => {
+    const handleKeyPress = (event: KeyboardEvent) => {
+      // Ignore if user is typing in an input or textarea
+      if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) {
+        return;
+      }
+      
+      if (event.key.toLowerCase() === 'n') {
+        setExpanded(prev => !prev);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, []);
+
   return (
     <>
       <div
