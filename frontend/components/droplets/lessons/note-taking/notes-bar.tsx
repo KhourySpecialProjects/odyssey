@@ -12,7 +12,6 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Trash2Icon } from "lucide-react";
 import { deleteNote } from "@/lib/actions";
 import { updateNotePosition } from "@/lib/requests/notes";
 
