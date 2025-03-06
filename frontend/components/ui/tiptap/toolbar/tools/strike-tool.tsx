@@ -10,6 +10,7 @@ export default function StrikeTool({ editor }: { editor: Editor }) {
         editor?.isActive("strike") ? "bg-slate-200 dark:bg-slate-700" : "",
         "p-2.5 rounded-md border border-transparent hover:border-slate-200",
       )}
+      title="Strikethrough"
     >
       <StrikethroughIcon size={17} />
     </button>

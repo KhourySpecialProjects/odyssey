@@ -54,9 +54,7 @@ export async function evaluateExpression(
         // Replace all occurences of alias with
         const regexSafeAlias = alias.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
         const r = new RegExp("(^|(?<=[^a-zA-Z]))" + regexSafeAlias + "($|(?=[^a-zA-Z]))", "g");
-        console.log("changedLatex before",changedLatex)
         changedLatex = changedLatex.replace(r, id);
-        console.log("changedLatex after",changedLatex)
         for (const a of aliases) {
           if (alias === a) {
             definedVariableID = id;

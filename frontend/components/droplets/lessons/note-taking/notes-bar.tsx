@@ -30,8 +30,10 @@ export function NotesBar({
   const [draggedNote, setDraggedNote] = useState<Note | null>(null);
   const [dragOffset, setDragOffset] = useState(0);
 
-  let pageHeight =
-    window.document?.querySelector(".lesson-wrapper")?.scrollHeight || 0;
+  let pageHeight = 0;
+  if (typeof window !== "undefined") {
+    pageHeight = document?.querySelector(".lesson-wrapper")?.scrollHeight || 0;
+  }
 
   const fetchNotes = useCallback(async () => {
     const fetchedNotes = await getNotesByAuthorizedUserAndLesson(

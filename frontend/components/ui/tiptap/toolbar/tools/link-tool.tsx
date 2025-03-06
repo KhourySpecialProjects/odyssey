@@ -15,7 +15,6 @@ import { cn } from "@/lib/utils";
 export default function LinkToolButton({ editor }: { editor: Editor | null }) {
   const [open, setOpen] = useState(false);
   const [url, setUrl] = useState("");
-  const savedSelection = useRef(null);
 
   const insertLink = () => {
     editor
@@ -44,6 +43,7 @@ export default function LinkToolButton({ editor }: { editor: Editor | null }) {
             editor?.isActive("link") ? "bg-slate-200" : "",
             "p-2.5 rounded-md border border-transparent hover:border-slate-200",
           )}
+          title="Link"
         >
           <Link2Icon size={17} />
         </button>

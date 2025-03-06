@@ -228,7 +228,7 @@ export function SocialForms({
           placeholder="Enter your bio"
           className="w-[50%]"
         />
-        <Button type="submit" className="w-[13%]">
+        <Button type="submit" className="w-[13%] dark:bg-slate-300">
           Save Bio
         </Button>
       </form>
@@ -255,7 +255,7 @@ export function SocialForms({
           placeholder="Enter your LinkedIn url"
           className="w-[50%]"
         />
-        <Button type="submit" className="w-[13%]">
+        <Button type="submit" className="w-[13%] dark:bg-slate-300">
           Save LinkedIn
         </Button>
       </form>
@@ -284,7 +284,7 @@ export function SocialForms({
           placeholder="Enter your GitHub url"
           className="w-[50%]"
         />
-        <Button type="submit" className="w-[13%]">
+        <Button type="submit" className="w-[13%] dark:bg-slate-300">
           Save GitHub
         </Button>
       </form>

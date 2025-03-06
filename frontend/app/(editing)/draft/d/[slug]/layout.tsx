@@ -50,13 +50,11 @@ export default async function CheckPermission({ params, children }: Props) {
   }
 
   return (
-    <>
+    <div className="flex flex-col md:flex-row min-h-screen">
       <Sidebar droplet={droplet} user={user} authorizedUser={authorizedUser} />
-      <div className="md:ml-64">
-        <div className="p-6 rounded-lg sm:p-8 md:py-10 md:m-4 md:border-dashed md:border-2 md:border-slate-200 md:dark:border-slate-700 mx-auto flex flex-col items-center justify-center">
+        <main className="p-6 rounded-lg w-full md:border-dashed md:border-2 md:border-slate-200 md:dark:border-slate-700 mx-auto flex flex-col items-center justify-center">
           {children}
-        </div>
-      </div>
-    </>
+        </main>
+    </div>
   );
 }
