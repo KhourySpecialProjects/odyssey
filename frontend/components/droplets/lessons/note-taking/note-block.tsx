@@ -38,11 +38,6 @@ export function NoteBlock({
   const [toolbarVisible, setToolbarVisible] = useState(false);
   const [focused, setFocused] = useState(false);
 
-  const handleInputChange = (e: ChangeEvent<HTMLTextAreaElement>) => {
-    const searchTerm = e.target.value;
-    setContent(searchTerm);
-  };
-
   const handleBlur = useCallback(async () => {
     const result = await updateNoteContent(note.id, content);
     if (!result.success) {
@@ -68,8 +63,6 @@ export function NoteBlock({
         return "bg-[#fff300]";
     }
   };
-
-  const lowlight = createLowlight(all);
 
   const editor = useEditor({
     extensions: [

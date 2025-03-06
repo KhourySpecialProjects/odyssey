@@ -30,9 +30,21 @@ export function NotesBar({
   const [notes, setNotes] = useState(initNotes);
   const [draggedNote, setDraggedNote] = useState<Note | null>(null);
   const [dragOffset, setDragOffset] = useState(0);
+  const [pageHeight, setPageHeight] = useState(0);
 
-  let pageHeight =
-    window.document?.querySelector(".lesson-wrapper")?.scrollHeight || 0;
+  useEffect(() => {
+    const updateHeight = () => {
+      const height = document.querySelector(".lesson-wrapper")?.scrollHeight || 0;
+      setPageHeight(height);
+    };
+
+    updateHeight();
+
+    window.addEventListener('resize', updateHeight);
+    return () => {
+      window.removeEventListener('resize', updateHeight);
+    };
+  }, [draggedNote]);
 
   const fetchNotes = useCallback(async () => {
     const fetchedNotes = await getNotesByAuthorizedUserAndLesson(
@@ -47,18 +59,17 @@ export function NotesBar({
       if (!draggedNote) return;
       let newPosition = e.pageY - dragOffset;
 
-      if (newPosition < 75) {
-        newPosition = 75;
-      }
-      if (newPosition > 3700) {
-        newPosition = 3700;
+
+      if (newPosition < -100) {
+        newPosition = -100;
       }
 
-      const barHeight = document?.querySelector(".notes-bar")?.clientHeight;
-
-      if (barHeight && newPosition > barHeight - 250) {
-        newPosition = barHeight - 250;
+      if (pageHeight && newPosition > pageHeight - 450) {
+        newPosition = pageHeight - 450;
       }
+
+      console.log(pageHeight)
+      console.log(newPosition)
 
       setNotes((prev) =>
         prev.map((note) =>
@@ -104,6 +115,7 @@ export function NotesBar({
   };
 
   useEffect(() => {
+
     if (draggedNote) {
       document.addEventListener("mousemove", handleDragMove);
       document.addEventListener("mouseup", handleDragEnd);
