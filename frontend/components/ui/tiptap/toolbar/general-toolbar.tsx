@@ -11,6 +11,7 @@ import LinkTool from "./tools/link-tool";
 import ImageTool from "./tools/image-tool";
 import CodeTool from "./tools/code-tool/code-tool";
 import HeadingTool from "./tools/heading-tool";
+import LatexTool from "./tools/latex-tool";
 
 export default function DefaultToolbar({
   editor,
@@ -36,6 +37,7 @@ export default function DefaultToolbar({
           <HeadingTool editor={editor} number={1} />
           <HeadingTool editor={editor} number={2} />
           <HeadingTool editor={editor} number={3} />
+          <LatexTool editor={editor} />
         </>
       )}
     </div>

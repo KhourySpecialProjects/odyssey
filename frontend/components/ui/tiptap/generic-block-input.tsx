@@ -41,10 +41,6 @@ export function GenericBlockInput({
           trust: true,
         },
         addInlineMath: true,
-        delimiters: {
-          inlineRegex: '\\$([^$]+)\\$',
-          blockRegex: '\\${2}([^$]+)\\${2}',
-        },
       }),
       CodeBlockLowlight.extend({
         addNodeView() {

@@ -71,6 +71,7 @@ function CodeTool({ editor }: { editor: Editor }) {
         editor?.isActive("codeBlock") ? "bg-slate-200 dark:bg-slate-700" : "",
         "p-2.5 rounded-md border border-transparent hover:border-slate-200",
       )}
+      title="Code"
     >
       <CodeIcon size={17} />
     </button>
