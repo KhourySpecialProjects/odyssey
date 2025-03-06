@@ -13,7 +13,11 @@ export async function getTags({
     sort,
     filters,
     fields,
-    populate,
+    populate: {
+      droplets: {
+        fields: ["isHidden", "status"],
+      },
+    },
     pagination: {
       pageSize: 250,
       page: 1,

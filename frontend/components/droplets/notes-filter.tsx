@@ -1,9 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { AnnouncementTypeTitle, NoteTypeTitle } from "@/lib/globals";
+import { NoteTypeTitle } from "@/lib/globals";
 import { Checkbox } from "@/components/ui/checkbox";
-import { HighlightColor, Note } from "@/types";
 
 interface NotesFilterProps {
   onFilterChange: (selectedColors: NoteTypeTitle[]) => void;
