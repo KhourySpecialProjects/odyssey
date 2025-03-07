@@ -149,7 +149,10 @@ export default async function DropletRecapRoute({ params }: Props) {
             <NotesPdfButton pdfBytes={pdfBytes} name="notes-summary" />
           </section>
         </div>
-        <div className="w-full max-w-2xl py-8 mx-auto space-y-4" key={droplet.id}>
+        <div
+          className="w-full max-w-2xl py-8 mx-auto space-y-4"
+          key={droplet.id}
+        >
           {enrollments.map((enrollment, index) => {
             const dropletData = allNotes[index];
             const dropletNotes = dropletData.notes;
