@@ -34,6 +34,10 @@ export function GenericEditor({
         initialContent={block.content}
         updateContent={handleChange}
       />
+      <div className="pt-2 text-sm">
+        Surround content with a single dollar sign ($content$) for inline LaTeX and surround with double dollar signs
+        ($$content$$) for block LaTeX.
+      </div>
     </div>
   );
 }
