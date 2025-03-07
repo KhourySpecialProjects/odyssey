@@ -55,7 +55,9 @@ export function FeedClient({
                 />
               ))}
             </ul>
-            {totalPages != 1 && <hr className="h-px my-4 bg-gray-200 border-0 dark:bg-gray-700"></hr>}
+            {totalPages != 1 && (
+              <hr className="h-px my-4 bg-gray-200 border-0 dark:bg-gray-700"></hr>
+            )}
             <div className="flex justify-end items-center mt-4 pb-4">
               <div className="flex gap-2">
                 <Button

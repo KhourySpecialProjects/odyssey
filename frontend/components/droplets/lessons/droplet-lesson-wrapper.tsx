@@ -44,6 +44,20 @@ export function DropletLessonWrapper({
     fetchNotes();
   }, [fetchNotes]);
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setExpanded(false);
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [setExpanded]);
+
   return (
     <>
       <div

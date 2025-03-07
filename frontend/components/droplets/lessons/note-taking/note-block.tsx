@@ -1,6 +1,5 @@
 import { Note } from "@/types";
 import { useState, useCallback } from "react";
-import { ChangeEvent } from "react";
 import { updateNoteContent } from "@/lib/requests/notes";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -18,8 +17,8 @@ import Placeholder from "@tiptap/extension-placeholder";
 import StartingKit from "@tiptap/starter-kit";
 import Underline from "@tiptap/extension-underline";
 import Link from "@tiptap/extension-link";
-import { all, createLowlight } from "lowlight";
 import DefaultToolbar from "@/components/ui/tiptap/toolbar/general-toolbar";
+import { cn } from "@/lib/utils";
 
 export function NoteBlock({
   note,
@@ -37,11 +36,6 @@ export function NoteBlock({
   const [content, setContent] = useState(note.content);
   const [toolbarVisible, setToolbarVisible] = useState(false);
   const [focused, setFocused] = useState(false);
-
-  const handleInputChange = (e: ChangeEvent<HTMLTextAreaElement>) => {
-    const searchTerm = e.target.value;
-    setContent(searchTerm);
-  };
 
   const handleBlur = useCallback(async () => {
     const result = await updateNoteContent(note.id, content);
@@ -68,8 +62,6 @@ export function NoteBlock({
         return "bg-[#fff300]";
     }
   };
-
-  const lowlight = createLowlight(all);
 
   const editor = useEditor({
     extensions: [
@@ -112,7 +104,15 @@ export function NoteBlock({
   });
 
   return (
-    <div className="mx-3 pt-2 pl-2 pr-2 w-full note-block bg-slate-200 dark:bg-slate-800 dark:border dark:border-slate-500 rounded-xl flex flex-row">
+    <div
+      className={cn(
+        "mx-3 pt-2 pl-1 pr-1 w-full note-block bg-slate-200  rounded-xl flex flex-row",
+        "dark:bg-slate-700 dark:border dark:border-slate-500",
+        focused
+          ? "dark:shadow-[0px_0px_16px_rgb(0,255,255)] shadow-[0px_0px_16px_rgb(29,58,138)]"
+          : "dark:shadow-[0px_0px_6px_rgb(0,255,255)] shadow-[0px_0px_8px_rgb(29,58,138)]",
+      )}
+    >
       <div className="flex-1 flex flex-col w-4/5 py-2 px-1">
         <div className="pb-2 flex flex-row items-center">
           <div className="grip-handle pr-2">
@@ -123,7 +123,7 @@ export function NoteBlock({
               <Badge
                 variant="secondary"
                 title={note.highlight.text}
-                className={`inline-block w-fit max-w-[50%] block overflow-hidden text-ellipsis whitespace-nowrap text-center text-slate-700 ${getHighlightColor(note.highlight.color)} hover:text-white`}
+                className={`inline-block w-fit max-w-[50%] block overflow-hidden text-ellipsis whitespace-nowrap text-center text-slate-700 ${getHighlightColor(note.highlight.color)} hover:text-white dark:hover:bg-slate-800 border dark:hover:border-white`}
               >
                 {note.highlight.text.substring(0, 25)}{" "}
                 {note.highlight.text.length > 25 ? "..." : ""}
@@ -134,7 +134,7 @@ export function NoteBlock({
             <div className="flex flex-row justify-between w-full">
               <Badge
                 variant="secondary"
-                className={`text-center text-slate-700 bg-slate-200 border border-slate-400 hover:text-white`}
+                className={`text-center text-slate-700 bg-slate-200 border border-slate-400 hover:text-white dark:hover:bg-slate-800`}
               >
                 General Note
               </Badge>
@@ -168,13 +168,14 @@ export function NoteBlock({
               )}
             </div>
             <button
-              className="ml-auto"
+              className={`ml-auto ${toolbarVisible ? "" : "flex flex-row justify-between w-full"} `}
               onClick={() => setToolbarVisible(!toolbarVisible)}
             >
+              <div className={`w-full ${toolbarVisible ? "hidden" : ""}`}></div>
               {!toolbarVisible ? (
-                <ChevronDown className="dark:bg-slate-800" />
+                <ChevronDown className="dark:bg-slate-800 rounded-tr-md" />
               ) : (
-                <ChevronUp className="dark:bg-slate-800" />
+                <ChevronUp className="dark:bg-slate-800 rounded-tr-md" />
               )}
             </button>
           </div>

@@ -4,9 +4,9 @@ import { HighlighterIcon, NotebookPen } from "lucide-react";
 import { useState } from "react";
 
 const stripHtmlTags = (html: string) => {
-  const tmp = document.createElement('div');
+  const tmp = document.createElement("div");
   tmp.innerHTML = html;
-  return tmp.textContent || tmp.innerText || '';
+  return tmp.textContent || tmp.innerText || "";
 };
 
 export default function NotesSummary({

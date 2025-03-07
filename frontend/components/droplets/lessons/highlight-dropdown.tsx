@@ -43,11 +43,11 @@ export function HighlightDropdown({
       className={`fixed flex ${expanded ? "right-[335px] xl:right-[22.5%] z-40 top-36 md:top-36 xs:top-44 flex-col" : "right-0 top-36 flex-col"} gap-2`}
     >
       <div
-        className={`dark:bg-blue-100 dark:text-black border border-black z-30 transform -translate-x-1/2 bg-blue-100 p-2 rounded shadow-lg`}
+        className={`dark:bg-slate-700 dark:text-white border dark:border-white border-black z-30 transform -translate-x-1/2 bg-blue-100 p-2 rounded shadow-lg`}
       >
         <div className="relative group">
           <CircleHelp className="cursor-pointer " />
-          <div className="absolute left-0 transform -translate-x-[100%] top-full mt-2 w-max gap-2 bg-white p-4 rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center pointer-events-none">
+          <div className="absolute left-0 transform -translate-x-[100%] top-full mt-2 w-max gap-2 bg-white p-4 rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center pointer-events-none text-black">
             <p>Highlighting Instructions:</p>
             <ul className="list-disc pl-4">
               <li>
@@ -75,7 +75,7 @@ export function HighlightDropdown({
       </div>
       <div
         title={expanded ? "Hide Notes Bar" : "View Notes Bar"}
-        className="z-20 dark:text-black p-2 transform -translate-x-1/2 bg-blue-100 border border-black rounded shadow-lg"
+        className="z-20 dark:text-white dark:bg-slate-700 p-2 transform -translate-x-1/2 bg-blue-100 border dark:border-white border-black rounded shadow-lg"
       >
         <NotepadText
           onClick={() => setExpanded(!expanded)}
@@ -83,13 +83,13 @@ export function HighlightDropdown({
         />
       </div>
       <div
-        className="dark:text-black z-20 transform -translate-x-1/2 border border-black bg-blue-100 p-2 rounded shadow-lg group"
+        className="dark:text-black dark:bg-slate-700 z-20 transform -translate-x-1/2 border border-black dark:border-white bg-blue-100 p-2 rounded shadow-lg group"
         onMouseLeave={() => setVisible(false)}
       >
         <div className="relative">
           <Pen
             onMouseEnter={() => setVisible(true)}
-            className="cursor-pointer"
+            className="cursor-pointer dark:text-white"
           />
 
           <div

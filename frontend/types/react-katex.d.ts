@@ -1,5 +1,5 @@
-declare module 'react-katex' {
-  import { FC } from 'react';
+declare module "react-katex" {
+  import { FC } from "react";
 
   interface KatexProps {
     math: string;
@@ -10,4 +10,4 @@ declare module 'react-katex' {
 
   export const InlineMath: FC<KatexProps>;
   export const BlockMath: FC<KatexProps>;
-} 
+}
