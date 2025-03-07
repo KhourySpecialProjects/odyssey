@@ -164,6 +164,7 @@ export default async function DropletRecapRoute({ params }: Props) {
                 dropletNotes={dropletNotes}
                 enrollment={enrollment}
                 allNotes={allNotes}
+                key={enrollment.id}
               />
             );
           })}
