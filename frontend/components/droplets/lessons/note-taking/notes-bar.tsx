@@ -12,7 +12,6 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Trash2Icon } from "lucide-react";
 import { deleteNote } from "@/lib/actions";
 import { updateNotePosition } from "@/lib/requests/notes";
 
@@ -164,7 +163,6 @@ export function NotesBar({
       // Calculate the actual click position relative to the notes bar
       const clickY = e.clientY + scrollTop - notesBarTop;
       setMousePositionY(clickY);
-      console.log("mouse position y is:", mousePositionY);
 
       const rightOffset = ((rect.right - e.clientX) / rect.width) * 100;
       setMousePositionX(100 - rightOffset);

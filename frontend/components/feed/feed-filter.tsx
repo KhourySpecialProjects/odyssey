@@ -3,6 +3,14 @@
 import { useState } from "react";
 import { AnnouncementTypeTitle } from "@/lib/globals";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  CircleAlert,
+  Droplet,
+  Handshake,
+  ListVideo,
+  PartyPopper,
+  UsersRound,
+} from "lucide-react";
 
 interface FeedFilterProps {
   onFilterChange: (selectedRoles: AnnouncementTypeTitle[]) => void;
@@ -12,32 +20,58 @@ export function FeedFilter({ onFilterChange }: FeedFilterProps) {
   const roleOptions = [
     {
       value: AnnouncementTypeTitle.Droplet,
-      label: "Droplet",
+      label: (
+        <div className="flex items-center justify-between w-full">
+          <span>Droplet</span>
+          <Droplet size={20} />
+        </div>
+      ),
       color: "bg-blue-100 dark:bg-blue-800 dark:text-slate-300",
     },
     {
       value: AnnouncementTypeTitle.Playlist,
-      label: "Playlist",
+      label: (
+        <div className="flex items-center justify-between w-full">
+          <span>Playlist</span>
+          <ListVideo size={20} />
+        </div>
+      ),
       color: "bg-green-100 dark:bg-green-800 dark:text-slate-300",
     },
     {
       value: AnnouncementTypeTitle.Group,
-      label: "Group",
+      label: (
+        <div className="flex items-center justify-between w-full">
+          Group <UsersRound size={20} />
+        </div>
+      ),
       color: "bg-purple-100 dark:bg-purple-800 dark:text-slate-300",
     },
     {
       value: AnnouncementTypeTitle.System,
-      label: "System",
+      label: (
+        <div className="flex items-center justify-between w-full">
+          System <CircleAlert size={20} />
+        </div>
+      ),
       color: "bg-red-100 dark:bg-red-800 dark:text-slate-300",
     },
     {
       value: AnnouncementTypeTitle.Friend,
-      label: "Friend",
+      label: (
+        <div className="flex items-center justify-between w-full">
+          Friend <Handshake size={20} />
+        </div>
+      ),
       color: "bg-yellow-100 dark:bg-yellow-800 dark:text-slate-300",
     },
     {
       value: AnnouncementTypeTitle.Kudos,
-      label: "Kudos",
+      label: (
+        <div className="flex items-center justify-between w-full">
+          Kudos <PartyPopper size={20} />
+        </div>
+      ),
       color: "bg-orange-100 dark:bg-orange-800 dark:text-slate-300",
     },
   ] as const;
@@ -60,7 +94,7 @@ export function FeedFilter({ onFilterChange }: FeedFilterProps) {
       {roleOptions.map((role) => (
         <div
           key={role.value}
-          className={`flex items-center space-x-2 p-1 ${role.color}`}
+          className={`flex items-center space-x-2 p-1 rounded-lg ${role.color}`}
         >
           <Checkbox
             id={role.value}
@@ -70,7 +104,7 @@ export function FeedFilter({ onFilterChange }: FeedFilterProps) {
           />
           <label
             htmlFor={role.value}
-            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex-1"
           >
             {role.label}
           </label>
