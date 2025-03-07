@@ -19,7 +19,7 @@ export function FeedContainer({
 
   return (
     <div className="flex flex-row items-start">
-      <div className="w-2/3 text-center text-xl font-bold">
+      <div className="w-2/3 items-center text-xl font-bold">
         <FeedClient
           selectedRoles={selectedRoles.map(
             (role) => role.toLowerCase() as AnnouncementType,

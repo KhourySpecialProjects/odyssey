@@ -9,7 +9,6 @@ import { Highlight, HighlightColor } from "@/types";
 import { HighlightDropdown } from "./highlight-dropdown";
 import 'katex/dist/katex.min.css';
 import katex from 'katex';
-import { InlineMath, BlockMath } from 'react-katex';
 
 interface GenericBlockRendererProps {
   block: any;

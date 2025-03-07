@@ -14,9 +14,7 @@ import { CompletedDropletBlock } from "@/components/droplets/completed-droplet-b
 import { getNotesByDroplet } from "@/lib/requests/notes";
 import { getHighlightsByDroplet } from "@/lib/requests/highlights";
 import { NotesContainer } from "@/components/droplets/notes-container";
-import { PDFDocument } from "pdf-lib";
 import { NotesPdfButton } from "@/components/droplets/notes-pdf-button";
-import { rgb } from "pdf-lib";
 import { NoteSummary } from "@/components/droplets/lessons/note-taking/note-summary";
 
 type Props = {

@@ -3,6 +3,7 @@
 import { Announcement, AuthorizedUser } from "@/types";
 import Link from "next/link";
 import { KudosButton } from "./kudos-button";
+import { CircleAlert, Droplet, Handshake, ListVideo, PartyPopper, UsersRound } from "lucide-react";
 
 export function FeedBlock({
   announcement,
@@ -35,114 +36,67 @@ export function FeedBlock({
   }
   const formattedDate = formatDate(announcement.firstCreated);
 
-  if (announcementType === "playlist") {
-    return (
-      <li className="py-0 [&:not(:first-child)]:pt-3">
-        {formattedDate && (
-          <div className="text-sm text-slate-500">{formattedDate}</div>
-        )}
-        <div className="flex items-center space-x-4">
-          <div className="flex-1 min-w-0">
-            <Link href={`/p/${announcement.playlist?.slug}`}>
-              <p className="font-medium truncate bg-green-100 dark:bg-green-800 text-slate-900 dark:text-slate-300">
-                {announcement.content}
-              </p>
-            </Link>
-          </div>
-        </div>
-      </li>
-    );
+  const backgroundColor = {
+    "playlist": "bg-green-100 dark:bg-green-800",
+    "droplet": "bg-sky-100 dark:bg-sky-800",
+    "group": "bg-purple-100 dark:bg-purple-800",
+    "friend": "bg-yellow-100 dark:bg-yellow-800",
+    "kudos": "bg-orange-100 dark:bg-orange-800",
+    "system": "bg-red-100 dark:bg-red-800"
+  } 
+
+  const announcementIcon = {
+    "playlist": <ListVideo />,
+    "droplet": <Droplet />,
+    "group": <UsersRound />,
+    "friend": <Handshake />,
+    "kudos": <PartyPopper />,
+    "system": <CircleAlert />
   }
 
-  if (announcementType === "droplet") {
-    return (
-      <li className="py-0 [&:not(:first-child)]:pt-3">
+  return (
+      <li className={`${backgroundColor[announcementType]} rounded-lg flex flex-col items-center gap-2 p-2`}>
         {formattedDate && (
-          <div className="text-sm text-slate-500">{formattedDate}</div>
-        )}
-        <div className="flex items-center space-x-4">
-          <div className="flex-1 min-w-0">
-            <Link href={`/d/${announcement.droplet?.slug}`}>
-              <p className="font-medium truncate bg-sky-100 dark:bg-sky-800 text-slate-900 dark:text-slate-300">
-                {announcement.content}
-              </p>
-            </Link>
+            <div className="text-sm text-slate-500 dark:text-slate-300">{formattedDate}</div>
+          )}
+          <div className="justify-center dark:text-slate-300">
+            {announcementIcon[announcementType]}
           </div>
-        </div>
+          <div className="flex items-center space-x-4">
+            <div className="flex-1 min-w-0">
+              {announcementType === "playlist" && 
+                <Link href={`/p/${announcement.playlist?.slug}`}>
+                  <p className="font-medium text-slate-900 dark:text-slate-300 max-h-24 overflow-y-auto">
+                    {announcement.content}
+                  </p>
+                </Link>
+              }
+              {announcementType === "droplet" && 
+                <Link href={`/d/${announcement.droplet?.slug}`}>
+                  <p className="font-medium bg-sky-100 dark:bg-sky-800 text-slate-900 dark:text-slate-300 max-h-24 overflow-y-auto">
+                    {announcement.content}
+                  </p>
+                </Link>
+              }
+              {announcementType === "group" && 
+                <Link href={`/g/${announcement.group?.slug}`}>
+                  <p className="font-medium bg-sky-100 dark:bg-sky-800 text-slate-900 dark:text-slate-300 max-h-24 overflow-y-auto">
+                    {announcement.content}
+                  </p>
+                </Link>
+              }
+              {((announcementType != "group") && (announcementType != "droplet") && announcementType != "playlist") &&
+              <>
+                <p className="font-medium text-slate-900 dark:text-slate-300 max-h-24 overflow-y-auto">
+                  {announcement.content}
+                </p>
+                {announcementType === "friend" && !announcement.kudosGiven && (
+                  <KudosButton announcementId={announcement.id} />
+                )}
+              </>
+              }
+            </div>
+          </div>
       </li>
     );
-  }
-
-  if (announcementType === "group") {
-    return (
-      <li className="py-0 [&:not(:first-child)]:pt-3">
-        {formattedDate && (
-          <div className="text-sm text-slate-500">{formattedDate}</div>
-        )}
-        <div className="flex items-center space-x-4">
-          <div className="flex-1 min-w-0">
-            <Link href={`/g/${announcement.group?.slug}`}>
-              <p className="font-medium truncate bg-purple-100 dark:bg-purple-800 text-slate-900 dark:text-slate-300">
-                {announcement.content}
-              </p>
-            </Link>
-          </div>
-        </div>
-      </li>
-    );
-  }
-
-  if (announcementType === "friend") {
-    return (
-      <li className="py-0 [&:not(:first-child)]:pt-3">
-        {formattedDate && (
-          <div className="text-sm text-slate-500">{formattedDate}</div>
-        )}
-        <div className="flex items-center space-x-4">
-          <div className="flex-1 min-w-0">
-            <p className="font-medium truncate bg-yellow-100 dark:bg-yellow-800 text-slate-900 dark:text-slate-300">
-              {announcement.content}
-            </p>
-            {!announcement.kudosGiven && (
-              <KudosButton announcementId={announcement.id} />
-            )}
-          </div>
-        </div>
-      </li>
-    );
-  }
-
-  if (announcementType === "kudos") {
-    return (
-      <li className="py-0 [&:not(:first-child)]:pt-3">
-        {formattedDate && (
-          <div className="text-sm text-slate-500">{formattedDate}</div>
-        )}
-        <div className="flex items-center space-x-4">
-          <div className="flex-1 min-w-0">
-            <p className="font-medium truncate bg-orange-100 dark:bg-orange-800 text-slate-900 dark:text-slate-300">
-              {announcement.content}
-            </p>
-          </div>
-        </div>
-      </li>
-    );
-  }
-
-  if (announcementType === "system") {
-    return (
-      <li className="py-0 [&:not(:first-child)]:pt-3">
-        {formattedDate && (
-          <div className="text-sm text-slate-500">{formattedDate}</div>
-        )}
-        <div className="flex items-center space-x-4">
-          <div className="flex-1 min-w-0">
-            <p className="font-medium truncate bg-red-100 dark:bg-red-800 text-slate-900 dark:text-slate-300">
-              {announcement.content}
-            </p>
-          </div>
-        </div>
-      </li>
-    );
-  }
 }

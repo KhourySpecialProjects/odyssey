@@ -1,18 +1,16 @@
 import { getDropletBySlug } from "@/lib/requests/droplet";
 import { Droplet } from "@/types";
 import { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
 import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
 import { getServerSession } from "next-auth";
 import { getNotesByDroplet } from "@/lib/requests/notes";
 import { getHighlightsByDroplet } from "@/lib/requests/highlights";
-import { Card } from "@/components/ui/card";
-import { NotesContainer } from "@/components/droplets/notes-container";
 import { PDFDocument } from "pdf-lib";
 import { NotesPdfButton } from "@/components/droplets/notes-pdf-button";
 import { NoteSummary } from "@/components/droplets/lessons/note-taking/note-summary";
+import { NotesSummaryClient } from "@/components/droplets/notes-summary-client";
 
 type Props = {
   params: Promise<Params>;
@@ -151,30 +149,17 @@ export default async function DropletRecapRoute({ params }: Props) {
             <NotesPdfButton pdfBytes={pdfBytes} name="notes-summary" />
           </section>
         </div>
-        <div className="w-full max-w-2xl py-8 mx-auto space-y-4 ">
+        <div className="w-full max-w-2xl py-8 mx-auto space-y-4">
           {enrollments.map((enrollment, index) => {
             const dropletData = allNotes[index];
             const dropletNotes = dropletData.notes;
             const dropletHighlights = dropletData.highlights;
-
-            return (
-              <Card
-                key={`enrollment-${enrollment.id}`}
-                className="dark:bg-slate-800 p-2"
-              >
-                <Link href={`/d/${enrollment.droplet.slug}`}>
-                  <div className="text-2xl text-center border-b dark:border-slate-500 p-2 font-bold">
-                    {enrollment.droplet.name}
-                  </div>
-                </Link>
-                <NotesContainer
-                  allNotes={allNotes[index]}
-                  dropletHighlights={dropletHighlights}
-                  dropletNotes={dropletNotes}
-                  mappedLessons={enrollment.droplet.droplet_lessons}
-                />
-              </Card>
-            );
+            return (<NotesSummaryClient 
+              index={index} 
+              dropletHighlights={dropletHighlights} 
+              dropletNotes={dropletNotes} 
+              enrollment={enrollment} 
+              allNotes={allNotes} />)
           })}
         </div>
       </>
