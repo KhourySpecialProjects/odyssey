@@ -37,7 +37,7 @@ export default function DefaultToolbar({
           <HeadingTool editor={editor} number={1} />
           <HeadingTool editor={editor} number={2} />
           <HeadingTool editor={editor} number={3} />
-          <LatexTool editor={editor} />
+          {/* <LatexTool editor={editor} /> */}
         </>
       )}
     </div>

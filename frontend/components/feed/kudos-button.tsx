@@ -27,7 +27,7 @@ export function KudosButton({ announcementId }: { announcementId: number }) {
       size="xs"
       onClick={handleClick}
       disabled={isPending}
-      className={`bg-white dark:bg-slate-500 dark:text-slate-300 text-black border border-black hover:bg-gray-200 ${isVisible ? "visiblity: visible" : "visibility: hidden"}`}
+      className={`bg-yellow-400 dark:bg-yellow-300 dark:text-black text-black border border-yellow-600 hover:bg-gray-200 ${isVisible ? "visiblity: visible" : "visibility: hidden"}`}
     >
       {isPending ? "Giving..." : "Give Kudos"}
     </Button>

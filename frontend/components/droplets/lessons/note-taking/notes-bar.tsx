@@ -154,7 +154,6 @@ export function NotesBar({
       // Calculate the actual click position relative to the notes bar
       const clickY = e.clientY + scrollTop - notesBarTop;
       setMousePositionY(clickY);
-      console.log("mouse position y is:", mousePositionY);
 
       const rightOffset = ((rect.right - e.clientX) / rect.width) * 100;
       setMousePositionX(100 - rightOffset);

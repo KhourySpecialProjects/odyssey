@@ -46,7 +46,6 @@ export async function evaluateExpression(
       aliases = getVariableAliases(definesVariable);
     }
     changedLatex = getVariableName(changedLatex.replace("}", "}"));
-    console.log({aliases,changedLatex,variables})
     for (const id in variables) {
       const variable: MathVariable = variables[id];
       variableObj[id] = variable.value;
@@ -65,7 +64,6 @@ export async function evaluateExpression(
 
     const res = evaluatex(changedLatex, {}, { latex: true });
     const usedVars: Set<string> = new Set(res.tokens.filter((t: { type: string; value: string }) => t.type === "SYMBOL").map((t: { type: string; value: string }) => t.value));
-    console.log({usedVars,res});
     const resNum = res(variableObj);
 
     if (definesVariable !== undefined) {
