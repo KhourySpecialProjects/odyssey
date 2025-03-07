@@ -85,7 +85,7 @@ export function DropletTile({
 
   if (compact) {
     return (
-      <li className="transition-colors border rounded-md border-slate-200 hover:border-slate-300 bg-slate-50">
+      <li className="transition-colors border rounded-md border-slate-200 hover:border-slate-300 bg-slate-50 dark:bg-slate-800">
         <Link
           className="relative inline-flex w-full h-full p-2"
           href={`/d/${droplet.slug}`}
@@ -102,7 +102,7 @@ export function DropletTile({
 
   if (profilePage) {
     return (
-      <li className="transition-colors border rounded-md border-slate-200 hover:border-slate-300 bg-slate-50">
+      <li className="transition-colors border rounded-md border-slate-200 hover:border-slate-300 bg-slate-50 dark:bg-slate-800 dark:border-slate-500">
         <Link
           className="relative inline-flex w-full h-full p-6"
           href={
@@ -110,7 +110,7 @@ export function DropletTile({
           }
         >
           <div className="flex flex-col items-center justify-center gap-3 w-full h-full">
-            <span className="block text-center text-3lg font-black text-slate-950">
+            <span className="block text-center text-3lg font-black text-slate-950 dark:text-slate-300">
               {droplet.name}
             </span>
           </div>

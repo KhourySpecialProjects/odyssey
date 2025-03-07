@@ -74,7 +74,7 @@ export function FriendSearch({
 
         {isHovered && searchTerm != "" && (
           <div
-            className="absolute z-50 w-full bg-white border border-gray-200 rounded-md shadow-lg"
+            className="absolute z-50 w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-500 rounded-md shadow-lg"
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
           >

@@ -230,7 +230,7 @@ export function Sidebar({
       <aside
         id="sidebar"
         className={cn(
-          "fixed top-0 left-0 z-40 w-64 h-screen transition-transform",
+          "fixed md:sticky md:top-0 left-0 z-40 w-64 h-screen transition-transform",
           expanded
             ? "md:translate-x-80 -transform-none"
             : "md:translate-x-0 -translate-x-full",

@@ -1,6 +1,13 @@
 "use client";
 import { DropletLesson, Highlight, HighlightColor, Note } from "@/types";
 import { HighlighterIcon, NotebookPen } from "lucide-react";
+import { useState } from "react";
+
+const stripHtmlTags = (html: string) => {
+  const tmp = document.createElement("div");
+  tmp.innerHTML = html;
+  return tmp.textContent || tmp.innerText || "";
+};
 
 export default function NotesSummary({
   dropletHighlights,
@@ -82,10 +89,10 @@ export default function NotesSummary({
                               >
                                 {note.highlight.text}
                               </div>
-                              <div>{note.content}</div>
+                              <div>{stripHtmlTags(note.content)}</div>
                             </>
                           ) : (
-                            note.content
+                            stripHtmlTags(note.content)
                           )}
                         </span>
                       </li>

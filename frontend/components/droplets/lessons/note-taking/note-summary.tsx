@@ -17,7 +17,6 @@ export async function NoteSummary({
 
   // Helper function to draw lesson icon
   const drawLessonIcon = (x: number, y: number) => {
-    // Draw book shape
     page.drawRectangle({
       x: x,
       y: y - 2,
@@ -27,7 +26,6 @@ export async function NoteSummary({
       borderColor: rgb(0.5, 0.5, 0.5),
       borderWidth: 0.5,
     });
-    // Draw lines to represent pages
     page.drawLine({
       start: { x: x + 4, y: y + 12 },
       end: { x: x + 12, y: y + 12 },

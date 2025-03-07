@@ -55,7 +55,7 @@ export function NotesFilter({ onFilterChange }: NotesFilterProps) {
       {colorOptions.map((color) => (
         <div
           key={color.value}
-          className={`flex items-center space-x-2 p-1 ${color.color}`}
+          className={`flex items-center space-x-2 p-1 rounded-md ${color.color}`}
         >
           <Checkbox
             id={color.value}

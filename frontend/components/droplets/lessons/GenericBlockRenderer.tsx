@@ -7,6 +7,8 @@ import React, { useEffect, useRef, useState } from "react";
 import hljs from "highlight.js";
 import { Highlight, HighlightColor } from "@/types";
 import { HighlightDropdown } from "./highlight-dropdown";
+import "katex/dist/katex.min.css";
+import katex from "katex";
 
 interface GenericBlockRendererProps {
   block: any;
@@ -51,8 +53,68 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
   const [selectedColor, setSelectedColor] = useState<HighlightColor>("#fff300");
   const currentSelectionRef = useRef<Range | null>(null);
 
+  const processLatex = (content: string) => {
+    content = content.replace(/\$\$(.*?)\$\$/g, (match, latex) => {
+      try {
+        return `<div class="katex-block" data-latex="${encodeURIComponent(latex)}">${latex}</div>`;
+      } catch (e) {
+        console.error("Failed to process block LaTeX:", e);
+        return match;
+      }
+    });
+
+    content = content.replace(/\$(.*?)\$/g, (match, latex) => {
+      try {
+        return `<span class="katex-inline" data-latex="${encodeURIComponent(latex)}">${latex}</span>`;
+      } catch (e) {
+        console.error("Failed to process inline LaTeX:", e);
+        return match;
+      }
+    });
+
+    return content;
+  };
+
   useEffect(() => {
     if (contentRef.current) {
+      const processedContent = processLatex(block.content);
+      contentRef.current.innerHTML = processedContent;
+
+      const inlineLatexElements =
+        contentRef.current.querySelectorAll(".katex-inline");
+      inlineLatexElements.forEach((element) => {
+        const latex = element.textContent || "";
+        try {
+          const mathElement = document.createElement("span");
+          mathElement.innerHTML = katex.renderToString(latex, {
+            throwOnError: false,
+            displayMode: false,
+          });
+          element.parentNode?.replaceChild(mathElement, element);
+        } catch (e) {
+          console.error("Failed to render inline LaTeX:", e);
+        }
+      });
+
+      const blockLatexElements =
+        contentRef.current.querySelectorAll(".katex-block");
+      blockLatexElements.forEach((element) => {
+        const latex = decodeURIComponent(
+          element.getAttribute("data-latex") || "",
+        );
+        try {
+          const mathElement = document.createElement("div");
+          mathElement.innerHTML = katex.renderToString(latex, {
+            throwOnError: false,
+            displayMode: true,
+          });
+          element.parentNode?.replaceChild(mathElement, element);
+        } catch (e) {
+          console.error("Failed to render block LaTeX:", e);
+        }
+      });
+
+      // Continue with existing code highlighting
       const codeBlocks = contentRef.current.querySelectorAll("pre code");
       codeBlocks.forEach((codeBlock) => {
         if (codeBlock.classList.contains("language-plaintext")) {
@@ -174,8 +236,13 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
     //     span.style.padding = "5px 0"; // Add vertical padding
     //     currentSelectionRef.current.surroundContents(span);
 
-    const text = selection.toString();
-    console.log("text is ", text);
+    let text = selection.toString();
+    const latexParent = range.startContainer.parentElement?.closest(
+      ".katex-inline, .katex-block",
+    );
+    if (latexParent) {
+      text = decodeURIComponent(latexParent.getAttribute("data-latex") || text);
+    }
     if (text.length > 0 && contentRef.current) {
       const blockOffset = getTextOffset(
         contentRef.current,

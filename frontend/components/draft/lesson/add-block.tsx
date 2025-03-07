@@ -45,7 +45,7 @@ export function AddBlock({ add }: { add: (block: any) => void }) {
             variant="ghost"
             className="w-full border border-slate-200"
           >
-            Generic Rich Text Block
+            Text Block
           </Button>
           <Button
             onClick={() => {

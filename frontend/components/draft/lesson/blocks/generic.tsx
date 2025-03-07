@@ -23,7 +23,7 @@ export function GenericEditor({
   return (
     <div className="w-full rounded-md border border-slate-200 dark:border-slate-500 p-4 hover:shadow-md">
       <div className="w-full flex flex-row  mb-4 justify-between items-center">
-        <h2 className="text-lg">Generic Rich Text Block</h2>
+        <h2 className="text-lg">Text Block</h2>
         <Trash2Icon
           className="cursor-pointer text-red-600 hover:text-red-700"
           onClick={deleteBlock}
@@ -34,6 +34,10 @@ export function GenericEditor({
         initialContent={block.content}
         updateContent={handleChange}
       />
+      <div className="pt-2 text-sm">
+        Surround content with a single dollar sign ($content$) for inline LaTeX
+        and surround with double dollar signs ($$content$$) for block LaTeX.
+      </div>
     </div>
   );
 }

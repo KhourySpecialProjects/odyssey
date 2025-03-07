@@ -10,6 +10,7 @@ export default function UnorderedListTool({ editor }: { editor: Editor }) {
         editor?.isActive("bulletList") ? "bg-slate-200 dark:bg-slate-700" : "",
         "p-2.5 rounded-md border border-transparent hover:border-slate-200",
       )}
+      title="Unordered list"
     >
       <ListIcon size={17} />
     </button>
