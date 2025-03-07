@@ -1,6 +1,7 @@
 "use client";
 import { DropletLesson, Highlight, HighlightColor, Note } from "@/types";
 import { HighlighterIcon, NotebookPen } from "lucide-react";
+import { useState } from "react";
 
 const stripHtmlTags = (html: string) => {
   const tmp = document.createElement('div');
