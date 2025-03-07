@@ -29,11 +29,22 @@ export function NotesBar({
   const [notes, setNotes] = useState(initNotes);
   const [draggedNote, setDraggedNote] = useState<Note | null>(null);
   const [dragOffset, setDragOffset] = useState(0);
+  const [pageHeight, setPageHeight] = useState(0);
 
-  let pageHeight = 0;
-  if (typeof window !== "undefined") {
-    pageHeight = document?.querySelector(".lesson-wrapper")?.scrollHeight || 0;
-  }
+  useEffect(() => {
+    const updateHeight = () => {
+      const height =
+        document.querySelector(".lesson-wrapper")?.scrollHeight || 0;
+      setPageHeight(height);
+    };
+
+    updateHeight();
+
+    window.addEventListener("resize", updateHeight);
+    return () => {
+      window.removeEventListener("resize", updateHeight);
+    };
+  }, [draggedNote]);
 
   const fetchNotes = useCallback(async () => {
     const fetchedNotes = await getNotesByAuthorizedUserAndLesson(
@@ -48,18 +59,16 @@ export function NotesBar({
       if (!draggedNote) return;
       let newPosition = e.pageY - dragOffset;
 
-      if (newPosition < 75) {
-        newPosition = 75;
-      }
-      if (newPosition > 3700) {
-        newPosition = 3700;
+      if (newPosition < -100) {
+        newPosition = -100;
       }
 
-      const barHeight = document?.querySelector(".notes-bar")?.clientHeight;
-
-      if (barHeight && newPosition > barHeight - 250) {
-        newPosition = barHeight - 250;
+      if (pageHeight && newPosition > pageHeight - 450) {
+        newPosition = pageHeight - 450;
       }
+
+      console.log(pageHeight);
+      console.log(newPosition);
 
       setNotes((prev) =>
         prev.map((note) =>
@@ -172,14 +181,14 @@ export function NotesBar({
         content: "",
         lesson: lesson,
         enrollment: {} as Enrollment,
-        positionY: mousePositionY,
+        positionY: mousePositionY - 300,
       };
       const tempNotes = notes;
       tempNotes.push(newNote);
       setNotes(tempNotes);
 
       const enrollment = await getEnrollByID(String(enrollmentId));
-      const result = await createNote(lesson, enrollment, mousePositionY);
+      const result = await createNote(lesson, enrollment, mousePositionY - 300);
 
       if (result.success) {
         await fetchNotes();
@@ -243,7 +252,7 @@ export function NotesBar({
                 <Button
                   size="sm"
                   onClick={handleAddNote}
-                  className="justify-center bg-white text-slate-600 hover:bg-slate-600 hover:text-white z-[100]"
+                  className="justify-center bg-white text-slate-600 hover:bg-slate-600 hover:text-white z-[100] dark:bg-slate-700 dark:text-white border dark:border-white"
                 >
                   Create a Note?
                 </Button>
@@ -268,7 +277,7 @@ export function NotesBar({
             <div
               className={`flex flex-row justify-center items-center 
                   ${!focused || focused === note.id ? "opacity-100" : "opacity-30"}
-                  ${focused === note.id ? "scale-105" : ""}`}
+                  ${draggedNote?.id !== note.id ? "scale-100" : "scale-105"}`}
             >
               <NoteBlock
                 note={note}

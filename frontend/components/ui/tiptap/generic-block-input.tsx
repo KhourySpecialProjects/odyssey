@@ -36,7 +36,7 @@ export function GenericBlockInput({
       Math.configure({
         katexOptions: {
           throwOnError: false,
-          output: 'html',
+          output: "html",
           strict: false,
           trust: true,
         },

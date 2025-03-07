@@ -154,12 +154,15 @@ export default async function DropletRecapRoute({ params }: Props) {
             const dropletData = allNotes[index];
             const dropletNotes = dropletData.notes;
             const dropletHighlights = dropletData.highlights;
-            return (<NotesSummaryClient 
-              index={index} 
-              dropletHighlights={dropletHighlights} 
-              dropletNotes={dropletNotes} 
-              enrollment={enrollment} 
-              allNotes={allNotes} />)
+            return (
+              <NotesSummaryClient
+                index={index}
+                dropletHighlights={dropletHighlights}
+                dropletNotes={dropletNotes}
+                enrollment={enrollment}
+                allNotes={allNotes}
+              />
+            );
           })}
         </div>
       </>

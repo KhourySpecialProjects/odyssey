@@ -3,25 +3,36 @@ import { generateID } from "../util/generate-id";
 // Import evaluatex at the top level
 let evaluatex: any;
 try {
-  evaluatex = require('evaluatex').default;
+  evaluatex = require("evaluatex").default;
 } catch (e) {
-  console.error('Failed to load evaluatex:', e);
+  console.error("Failed to load evaluatex:", e);
 }
 
-export type VariableUpdateListeners = { id: string; onUpdate: () => any }[] | undefined;
-export type AllVariableUpdateListeners = Record<string, VariableUpdateListeners>;
+export type VariableUpdateListeners =
+  | { id: string; onUpdate: () => any }[]
+  | undefined;
+export type AllVariableUpdateListeners = Record<
+  string,
+  VariableUpdateListeners
+>;
 export type MathVariable = { aliases: string[]; value: number };
 export type MathVariables = Record<string, MathVariable>;
 
 export async function evaluateExpression(
   latex: string,
   variables: MathVariables,
-  variableListeners: AllVariableUpdateListeners
-):
-  Promise<{ result: number | undefined; definedVariableID: string | undefined; variablesUsed: Set<string>; } | undefined> {
+  variableListeners: AllVariableUpdateListeners,
+): Promise<
+  | {
+      result: number | undefined;
+      definedVariableID: string | undefined;
+      variablesUsed: Set<string>;
+    }
+  | undefined
+> {
   try {
     if (!evaluatex) {
-      throw new Error('evaluatex not loaded');
+      throw new Error("evaluatex not loaded");
     }
 
     const regex = /\\pi({})?/g;
@@ -34,9 +45,9 @@ export async function evaluateExpression(
       definesVariable = assRegexRes[1].trim();
     }
     const splitAtEq = changedLatex.split("=");
-    if(splitAtEq[splitAtEq.length - 1].length > 0){
+    if (splitAtEq[splitAtEq.length - 1].length > 0) {
       changedLatex = splitAtEq[splitAtEq.length - 1];
-    }else if (splitAtEq.length >= 2){
+    } else if (splitAtEq.length >= 2) {
       changedLatex = splitAtEq[splitAtEq.length - 2];
     }
     const variableObj: Record<string, number> = {};
@@ -51,8 +62,11 @@ export async function evaluateExpression(
       variableObj[id] = variable.value;
       for (const alias of variable.aliases) {
         // Replace all occurences of alias with
-        const regexSafeAlias = alias.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-        const r = new RegExp("(^|(?<=[^a-zA-Z]))" + regexSafeAlias + "($|(?=[^a-zA-Z]))", "g");
+        const regexSafeAlias = alias.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        const r = new RegExp(
+          "(^|(?<=[^a-zA-Z]))" + regexSafeAlias + "($|(?=[^a-zA-Z]))",
+          "g",
+        );
         changedLatex = changedLatex.replace(r, id);
         for (const a of aliases) {
           if (alias === a) {
@@ -63,7 +77,11 @@ export async function evaluateExpression(
     }
 
     const res = evaluatex(changedLatex, {}, { latex: true });
-    const usedVars: Set<string> = new Set(res.tokens.filter((t: { type: string; value: string }) => t.type === "SYMBOL").map((t: { type: string; value: string }) => t.value));
+    const usedVars: Set<string> = new Set(
+      res.tokens
+        .filter((t: { type: string; value: string }) => t.type === "SYMBOL")
+        .map((t: { type: string; value: string }) => t.value),
+    );
     const resNum = res(variableObj);
 
     if (definesVariable !== undefined) {
@@ -78,7 +96,8 @@ export async function evaluateExpression(
         value: resNum,
         aliases: aliases,
       };
-      const listeners: VariableUpdateListeners = variableListeners[definedVariableID];
+      const listeners: VariableUpdateListeners =
+        variableListeners[definedVariableID];
       if (listeners != undefined) {
         for (const l of listeners) {
           l.onUpdate();
@@ -98,10 +117,13 @@ export async function evaluateExpression(
 }
 
 function getVariableAliases(variable: string) {
-  return [getVariableName(variable),getVariableName(variable,true)];
+  return [getVariableName(variable), getVariableName(variable, true)];
 }
 
-function parseInnerVariablePart(variablePart: string, skipOptionalBrackets = false): string {
+function parseInnerVariablePart(
+  variablePart: string,
+  skipOptionalBrackets = false,
+): string {
   variablePart = variablePart.trim();
   let mode: "main" | "sub" | "sup" | "after" = "main";
   let depth = 0;
@@ -173,23 +195,27 @@ function parseInnerVariablePart(variablePart: string, skipOptionalBrackets = fal
   if (sub.startsWith("{") && sub.endsWith("}")) {
     sub = sub.substring(1, sub.length - 1);
   }
-  let subpart = sub.trim()
-  let suppart = sup.trim()
-  if(skipOptionalBrackets && subpart.indexOf(" ") === -1){
+  let subpart = sub.trim();
+  let suppart = sup.trim();
+  if (skipOptionalBrackets && subpart.indexOf(" ") === -1) {
     subpart = sub !== "" ? `_${subpart}` : "";
-  }else{
+  } else {
     subpart = sub !== "" ? `_{${subpart}}` : "";
   }
-  if(skipOptionalBrackets && suppart.indexOf(" ") === -1){
+  if (skipOptionalBrackets && suppart.indexOf(" ") === -1) {
     suppart = sup !== "" ? `^${sup.trim()}` : "";
-  }else{
+  } else {
     suppart = sup !== "" ? `^{${sup.trim()}}` : "";
   }
-  const processedAfter = after !== "" ? " " + parseInnerVariablePart(after) : "";
+  const processedAfter =
+    after !== "" ? " " + parseInnerVariablePart(after) : "";
   return `${main}${subpart}${suppart}${processedAfter}`;
 }
 
-function getVariableName(variablePart: string, skipOptionalBrackets = false): string {
+function getVariableName(
+  variablePart: string,
+  skipOptionalBrackets = false,
+): string {
   variablePart = variablePart.trim();
   if (variablePart.startsWith("{") && variablePart.endsWith("}")) {
     return getVariableName(variablePart.substring(1, variablePart.length - 1));

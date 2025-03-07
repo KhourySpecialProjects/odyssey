@@ -3,7 +3,14 @@
 import { useState } from "react";
 import { AnnouncementTypeTitle } from "@/lib/globals";
 import { Checkbox } from "@/components/ui/checkbox";
-import { CircleAlert, Droplet, Handshake, ListVideo, PartyPopper, UsersRound } from "lucide-react";
+import {
+  CircleAlert,
+  Droplet,
+  Handshake,
+  ListVideo,
+  PartyPopper,
+  UsersRound,
+} from "lucide-react";
 
 interface FeedFilterProps {
   onFilterChange: (selectedRoles: AnnouncementTypeTitle[]) => void;

@@ -26,7 +26,9 @@ export default function HeadingTool({
           : "",
         "p-2.5 rounded-md border border-transparent hover:border-slate-200",
       )}
-      title={number === 1 ? "Heading 1" : number === 2 ? "Heading 2" : "Heading 3"}
+      title={
+        number === 1 ? "Heading 1" : number === 2 ? "Heading 2" : "Heading 3"
+      }
     >
       {(() => {
         switch (number) {

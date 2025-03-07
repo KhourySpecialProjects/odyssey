@@ -45,7 +45,7 @@ export function UserDropdown({
               </AvatarFallback>
             </Avatar>
 
-            <span className="font-medium ms-2">
+            <span className="font-medium ms-2 hidden md:block">
               Hi, <b>{user.name ?? user.email}</b>!
             </span>
           </div>
