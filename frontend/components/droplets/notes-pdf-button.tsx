@@ -1,12 +1,15 @@
 "use client";
+import { Enrollment } from "@/types";
 import { FileTextIcon } from "lucide-react";
 
 export function NotesPdfButton({
   pdfBytes,
   name,
+  enrollments,
 }: {
   pdfBytes: Uint8Array;
   name: string;
+  enrollments: Enrollment[];
 }) {
   const handleDownload = () => {
     const blob = new Blob([pdfBytes], { type: "application/pdf" });
@@ -23,7 +26,8 @@ export function NotesPdfButton({
   return (
     <button
       onClick={handleDownload}
-      className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-sky-600 rounded-md hover:bg-sky-700"
+      className={`inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white ${enrollments.length === 0 ? "bg-slate-300 dark:text-black light:text-black" : "bg-sky-600 hover:bg-sky-700"} rounded-md `}
+      disabled={enrollments.length === 0}
     >
       <FileTextIcon className="w-4 h-4" />
       Download Notes as PDF
