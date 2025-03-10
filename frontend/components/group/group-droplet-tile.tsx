@@ -26,11 +26,9 @@ export function GroupDropletTile({
     daysUntil = Math.ceil(diffDays);
 
     finalDate = DateTime.fromISO(dueDate)
-    .setZone(authUser?.timeZone || "America/New_York")
-    .toFormat("MM/dd hh:mm a");
+      .setZone(authUser?.timeZone || "America/New_York")
+      .toFormat("MM/dd hh:mm a");
   }
-
-  
 
   return (
     <Link href={`/d/${droplet.slug}`}>
