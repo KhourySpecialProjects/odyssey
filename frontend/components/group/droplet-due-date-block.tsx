@@ -3,7 +3,7 @@ import { DateTimePicker } from "react-datetime-picker";
 import { ChangeEvent } from "react";
 import { useState, useEffect } from "react";
 import { Button } from "../ui/button";
-import { assignDropletDueDate, assignDueDate, getDueDate, getGroupDueDate } from "@/lib/requests/groups";
+import { assignDropletDueDate, getGroupDueDate } from "@/lib/requests/groups";
 import {
   Dialog,
   DialogContent,
@@ -32,7 +32,7 @@ export function DropletDueDateBlock({
   const [removePopupVisible, setRemovePopupVisible] = useState(false);
 
   const [dueDate, setDueDate] = useState<DateTime | null>(null);
-  
+
   useEffect(() => {
     const getDueDates = async () => {
       const response = await getGroupDueDate(currentDroplet, existingGroup);
@@ -53,7 +53,7 @@ export function DropletDueDateBlock({
   const handleSaveDate = () => {
     setIsSaveClicked(true);
     const handleSaveDate = async () => {
-      
+
       // await assignDueDate(
       //   existingGroup,
       //   currentDroplet,
@@ -75,7 +75,7 @@ export function DropletDueDateBlock({
     setRemovePopupVisible(false);
     setIsRemoveClicked(true);
     const handleRemoveDate = async () => {
-      await assignDueDate(existingGroup, currentDroplet, null);
+      await assignDropletDueDate(null, existingGroup, currentDroplet);
       setDueDate(null);
     };
     handleRemoveDate();
@@ -85,23 +85,25 @@ export function DropletDueDateBlock({
   };
 
   return (
-    <div className="flex flex-row justify-between space-x-2 w-full bg-slate-50 border border-slate-200 rounded-lg p-4 items-center">
+    <div className="flex flex-row justify-between space-x-2 w-full bg-slate-50 border border-slate-200 rounded-lg p-4 items-center dark:bg-slate-800 dark:border dark:border-slate-500">
       {currentDroplet.name}
       <div className="flex flex-row space-x-2 items-center">
         {isSaveClicked && <p className="text-slate-400">Saved!</p>}
         {isRemoveClicked && <p className="text-slate-400">Removed!</p>}
 
-        <MUIDateTimePicker
-          onChange={handleInputChange}
-          date={dueDate}
-        ></MUIDateTimePicker>
+        <div className="dark:bg-slate-50 p-3 rounded-md">
+          <MUIDateTimePicker
+            onChange={handleInputChange}
+            date={dueDate}
+          ></MUIDateTimePicker>
+        </div>
 
         <Button
           onClick={() => {
             handleSaveDate();
           }}
           variant="default"
-          className="bg-emerald-500 hover:bg-emerald-700"
+          className="bg-emerald-500 hover:bg-emerald-700 dark:bg-emerald-600 dark:text-white dark:border dark:border-white"
           disabled={!dueDate}
         >
           Save
@@ -110,7 +112,7 @@ export function DropletDueDateBlock({
           <Button
             onClick={() => setRemovePopupVisible(true)}
             variant="default"
-            className="bg-red-500 hover:bg-red-700"
+            className="bg-red-500 hover:bg-red-700 dark:bg-red-600 dark:text-white dark:border dark:border-white"
             disabled={!dueDate}
           >
             Remove
@@ -127,7 +129,7 @@ export function DropletDueDateBlock({
                 <div className="w-1/3"></div>
                 <Button
                   onClick={() => handleRemoveDate()}
-                  className="bg-red-500 hover:bg-red-700"
+                  className="bg-red-500 hover:bg-red-700 dark:bg-red-600 dark:text-white dark:border dark:border-white"
                 >
                   Yes, remove it
                 </Button>

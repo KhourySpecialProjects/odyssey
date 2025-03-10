@@ -2,7 +2,7 @@ import { getCurrentUser } from "@/lib/auth/session";
 import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
 import { notFound, redirect } from "next/navigation";
 import { GroupManagementForm } from "@/components/group/group-management-form";
-import { getDueDates, getGroupBySlugV2 } from "@/lib/requests/groups";
+import { getGroupBySlugV2 } from "@/lib/requests/groups";
 import { Badge } from "@/components/ui/badge";
 import { isAuthorizedUserAdmin } from "@/lib/utils";
 import { GroupDueDateDashboard } from "@/components/group/due-date-dashboard";
@@ -38,10 +38,10 @@ export default async function GroupDueDatesPage({ searchParams }: Props) {
   return (
     <div className="w-full max-w-4xl p-8 mx-auto">
       <div className="text-center">
-        <h1 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
+        <h1 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl dark:text-white">
           Due Dates
         </h1>
-        <p className="mt-4 text-lg leading-normal text-slate-600 text-balance">
+        <p className="mt-4 text-lg leading-normal text-slate-600 text-balance dark:text-slate-400">
           Manage due dates and extensions
         </p>
       </div>

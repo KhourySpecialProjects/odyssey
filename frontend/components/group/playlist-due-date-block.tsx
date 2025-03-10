@@ -32,14 +32,14 @@ export function PlaylistDueDateBlock({
   const [dueDate, setDueDate] = useState<DateTime | null>(null);
 
   useEffect(() => {
-      const getDueDates = async () => {
-        const response = await getGroupDueDate(currentPlaylist, existingGroup);
-        if (response && 'dueDate' in response) {
-          setDueDate(response.dueDate ? DateTime.fromISO(response.dueDate) : null);
-        }
-      };
-      getDueDates();
-    }, [currentPlaylist, existingGroup]);
+    const getDueDates = async () => {
+      const response = await getGroupDueDate(currentPlaylist, existingGroup);
+      if (response && 'dueDate' in response) {
+        setDueDate(response.dueDate ? DateTime.fromISO(response.dueDate) : null);
+      }
+    };
+    getDueDates();
+  }, [currentPlaylist, existingGroup]);
 
   const handleInputChange = (date: DateTime | null) => {
     if (!date) return;
@@ -77,23 +77,25 @@ export function PlaylistDueDateBlock({
   };
 
   return (
-    <div className="flex flex-row justify-between space-x-2 w-full bg-slate-50 border border-slate-200 rounded-lg p-4 items-center">
+    <div className="flex flex-row justify-between space-x-2 w-full bg-slate-50 border border-slate-200 rounded-lg p-4 items-center dark:bg-slate-800 dark:border dark:border-slate-500">
       {currentPlaylist.name}
       <div className="flex flex-row space-x-2 items-center">
         {isSaveClicked && <p className="text-slate-400">Saved!</p>}
         {isRemoveClicked && <p className="text-slate-400">Removed!</p>}
 
-        <MUIDateTimePicker
-          onChange={handleInputChange}
-          date={dueDate}
-        ></MUIDateTimePicker>
+        <div className="dark:bg-slate-50 p-3 rounded-md">
+          <MUIDateTimePicker
+            onChange={handleInputChange}
+            date={dueDate}
+          ></MUIDateTimePicker>
+        </div>
 
         <Button
           onClick={() => {
             handleSaveDate();
           }}
           variant="default"
-          className="bg-emerald-500 hover:bg-emerald-700"
+          className="bg-emerald-500 hover:bg-emerald-700 dark:bg-emerald-600 dark:text-white dark:border dark:border-white"
           disabled={!dueDate}
         >
           Save
@@ -102,7 +104,7 @@ export function PlaylistDueDateBlock({
           <Button
             onClick={() => setRemovePopupVisible(true)}
             variant="default"
-            className="bg-red-500 hover:bg-red-700"
+            className="bg-red-500 hover:bg-red-700 dark:bg-red-600 dark:text-white dark:border dark:border-white"
             disabled={!dueDate}
           >
             Remove
@@ -119,7 +121,7 @@ export function PlaylistDueDateBlock({
                 <div className="w-1/3"></div>
                 <Button
                   onClick={() => handleRemoveDate()}
-                  className="bg-red-500 hover:bg-red-700"
+                  className="bg-red-500 hover:bg-red-700 dark:bg-red-600 dark:text-white dark:border dark:border-white"
                 >
                   Yes, remove it
                 </Button>

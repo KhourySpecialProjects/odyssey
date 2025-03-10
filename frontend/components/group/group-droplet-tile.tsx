@@ -31,14 +31,14 @@ export function GroupDropletTile({
 
   return (
     <Link href={`/d/${droplet.slug}`}>
-      <Card className="bg-slate-50 border-slate-200 hover:shadow-md transition-shadow h-full">
+      <Card className="bg-slate-50 border-slate-200 hover:shadow-md transition-shadow h-full dark:bg-slate-800 dark:border-slate-500">
         <CardHeader className={`${dueDate && dueDate !== "" ? "" : ""} `}>
           <div className="flex flex-row gap-2 mb-2 items-center">
             <div className="h-1/2 flex flex-row w-2/3 space-x-1">
               <Badge variant="default" className="text-xs">
                 {uppercaseFirstChar(droplet.focusArea)}
               </Badge>
-              <Badge variant="secondary" className="text-xs">
+              <Badge variant="secondary" className="text-xs dark:bg-slate-900 dark:text-white">
                 {uppercaseFirstChar(droplet.type)}
               </Badge>
             </div>
