@@ -35,19 +35,21 @@ export default async function GroupDetailPage({ params }: Props) {
   const dueDates = await getGroupDueDates(group);
 
   // Filter to keep only one due date per item (earliest one)
-  const filteredDueDates = dueDates.reduce((acc, curr) => {
-    const itemId = curr.droplet?.id || curr.playlist?.id;
-    const itemType = curr.droplet ? 'droplet' : 'playlist';
-    const key = `${itemType}-${itemId}`;
-    
-    if (!acc[key] || new Date(curr.dueDate) < new Date(acc[key].dueDate)) {
-      acc[key] = curr;
-    }
-    return acc;
-  }, {} as Record<string, typeof dueDates[0]>);
+  const filteredDueDates = dueDates.reduce(
+    (acc, curr) => {
+      const itemId = curr.droplet?.id || curr.playlist?.id;
+      const itemType = curr.droplet ? "droplet" : "playlist";
+      const key = `${itemType}-${itemId}`;
+
+      if (!acc[key] || new Date(curr.dueDate) < new Date(acc[key].dueDate)) {
+        acc[key] = curr;
+      }
+      return acc;
+    },
+    {} as Record<string, (typeof dueDates)[0]>,
+  );
 
   const uniqueDueDates = Object.values(filteredDueDates);
-
 
   return (
     <div className="w-full max-w-7xl p-8 mx-auto space-y-12">
