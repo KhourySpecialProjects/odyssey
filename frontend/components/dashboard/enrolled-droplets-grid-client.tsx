@@ -11,13 +11,11 @@ export function EnrolledDropletsGridClient({
   dropletsWithCompletion,
   completedLessonIds,
   isArchived,
-  enrollments,
   dueDates,
 }: {
   dropletsWithCompletion: Droplet[];
   completedLessonIds: number[];
   isArchived: boolean;
-  enrollments: Enrollment[];
   dueDates?: DueDate[];
 }) {
   const [currentPage, setCurrentPage] = useState(1);
