@@ -17,20 +17,20 @@ export default function LatexTool({ editor }: { editor: Editor | null }) {
   const addNewLatex = (selection: Selection | null) => {
     if (!selection || !selection.toString().trim()) {
       editor?.chain().focus().insertContent(`$$`).run();
-      setOpen(false)
-      return
-    };
-  
+      setOpen(false);
+      return;
+    }
+
     const selectedText = selection.toString();
-  
+
     const range = selection.getRangeAt(0);
-  
+
     const latexNode = document.createTextNode(`$${selectedText}$`);
-  
+
     range.deleteContents();
     range.insertNode(latexNode);
-    setOpen(false)
-  }
+    setOpen(false);
+  };
 
   const disabled = !(
     editor?.view.state.selection.$from.node().type.name == "doc" ||
@@ -40,32 +40,32 @@ export default function LatexTool({ editor }: { editor: Editor | null }) {
   const addNewBlockLatex = (selection: Selection | null) => {
     if (!selection || !selection.toString().trim()) {
       editor?.chain().focus().insertContent(`$$$$`).run();
-      setOpen(false)
-      return
-    };
-  
+      setOpen(false);
+      return;
+    }
+
     const selectedText = selection.toString();
-  
+
     const range = selection.getRangeAt(0);
-  
+
     const latexNode = document.createTextNode(`$$${selectedText}$$`);
-  
+
     range.deleteContents();
     range.insertNode(latexNode);
-    setOpen(false)
-  }
+    setOpen(false);
+  };
 
   return (
-  <Popover open={open}>
+    <Popover open={open}>
       <PopoverTrigger asChild disabled={disabled}>
         <button
           onClick={() => {
             setOpen(!open);
-            editor?.chain().focus().run();   
+            editor?.chain().focus().run();
           }}
           className={cn(
             open ? "bg-slate-200 dark:bg-slate-700" : "",
-              "p-2.5 rounded-md border border-transparent hover:border-slate-200",
+            "p-2.5 rounded-md border border-transparent hover:border-slate-200",
           )}
           title="LaTeX"
         >
@@ -74,23 +74,20 @@ export default function LatexTool({ editor }: { editor: Editor | null }) {
       </PopoverTrigger>
       <PopoverContent>
         <div className="w-full flex justify-between items-center">
-          <Button onClick={() => addNewLatex(window.getSelection())} className="m-2">
+          <Button
+            onClick={() => addNewLatex(window.getSelection())}
+            className="m-2"
+          >
             Inline LaTeX
           </Button>
-          <Button onClick={() => addNewBlockLatex(window.getSelection())} className="m-2">
+          <Button
+            onClick={() => addNewBlockLatex(window.getSelection())}
+            className="m-2"
+          >
             Block LaTeX
           </Button>
         </div>
       </PopoverContent>
     </Popover>
-
-
-
-
-
-
-    
   );
 }
-
-  

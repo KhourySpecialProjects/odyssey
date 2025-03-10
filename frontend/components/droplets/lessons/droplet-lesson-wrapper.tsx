@@ -7,6 +7,7 @@ import { Droplet, Lesson, User, AuthorizedUser, Note } from "@/types";
 import { getNotesByAuthorizedUserAndLesson } from "@/lib/requests/notes";
 import { cn } from "@/lib/utils";
 import { X } from "lucide-react";
+import DropletFooter from "../footer";
 
 interface DropletLessonWrapperProps {
   lesson: Lesson;
@@ -63,12 +64,7 @@ export function DropletLessonWrapper({
       <div
         className={`relative w-full h-full lesson-wrapper overflow-x-hidden ${expanded ? "" : "lg:pl-40"}`}
       >
-        <div
-          className={cn(
-            "w-[65%] min-w-[700px] flex justify-center",
-            expanded ? "" : "",
-          )}
-        >
+        <div className="w-[65%] min-w-[700px] flex flex-col justify-center">
           <LessonRenderer
             lesson={lesson}
             droplet={droplet}
@@ -81,6 +77,7 @@ export function DropletLessonWrapper({
             expanded={expanded}
             setExpanded={setExpanded}
           />
+          <DropletFooter droplet={droplet} />
         </div>
         {enrollmentId && (
           <>
