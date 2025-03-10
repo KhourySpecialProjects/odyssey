@@ -323,7 +323,7 @@ function LessonBlockRenderer({
           )}
 
           <div className="">
-            <div className="pl-8 mx-auto prose prose-sky dark:text-slate-300 prose-strong:text-inherit prose-headings:text-inherit text-center">
+            <div className="pl-8 mx-auto prose prose-sky dark:text-slate-300 prose-headings:text-inherit prose-code:text-inherit prose-strong:text-inherit justify-left">
               <BlocksRenderer content={block.content} />
             </div>
           </div>

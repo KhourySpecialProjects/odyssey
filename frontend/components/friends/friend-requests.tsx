@@ -15,11 +15,15 @@ export function FriendRequests({
   friendsPerPage: number;
   authUser: AuthorizedUser;
 }) {
-  const friendRequests = authUser.received_requests.filter(
-    (friend) =>
-      !authUser.blocked.some((blockedUser) => blockedUser.id === friend.id) &&
-      !authUser.was_blocked.some((blockedUser) => blockedUser.id === friend.id),
-  );
+  const friendRequests = authUser.received_requests
+    .filter(
+      (friend) =>
+        !authUser.blocked.some((blockedUser) => blockedUser.id === friend.id) &&
+        !authUser.was_blocked.some(
+          (blockedUser) => blockedUser.id === friend.id,
+        ),
+    )
+    .sort((a, b) => a.lastName.localeCompare(b.lastName));
 
   const [currentPage, setCurrentPage] = useState(0); // Track the current page
   const requestsPerPage = friendsPerPage; // Number of lessons to show per page

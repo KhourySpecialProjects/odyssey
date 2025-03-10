@@ -1,7 +1,7 @@
 import { DropletTile } from "@/components/droplets/droplet-tile";
 import { getDropletBySlug, getDroplets } from "@/lib/requests/droplet";
 import { Droplet } from "@/types";
-import { GoalIcon, Link2Icon, FileTextIcon } from "lucide-react";
+import { GoalIcon, Link2Icon } from "lucide-react";
 import { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -187,6 +187,7 @@ export default async function DropletRecapRoute({ params }: Props) {
                 <NotesPdfButton
                   pdfBytes={pdfBytes}
                   name={`${droplet.name.replace(/\s/g, "")}-notes`}
+                  enrollments={enrollments}
                 />
               </section>
               <NotesContainer

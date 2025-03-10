@@ -25,6 +25,7 @@ import { toast } from "sonner";
 import { AuthorizedUserRoleTitle } from "@/lib/globals";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Textarea } from "@/components/ui/textarea";
 
 export function AuthorizedUserBlock({ user }: { user: AuthorizedUser }) {
   const [open, setOpen] = useState(false);
@@ -163,7 +164,7 @@ export function AuthorizedUserBlock({ user }: { user: AuthorizedUser }) {
                 <p>Profile Photo</p>
                 <div
                   {...getRootProps()}
-                  className="border p-4 rounded-lg cursor-pointer text-center"
+                  className="border dark:border-slate-500 p-4 rounded-lg cursor-pointer text-center"
                 >
                   <input {...getInputProps()} name="profilePhoto" />
                   {profilePhoto ? (
@@ -214,7 +215,7 @@ export function AuthorizedUserBlock({ user }: { user: AuthorizedUser }) {
                   onChange={(e) => setLastName(e.target.value)}
                   placeholder="Last Name"
                 />
-                <Input
+                <Textarea
                   name="bio"
                   value={bio}
                   onChange={(e) => setBio(e.target.value)}
