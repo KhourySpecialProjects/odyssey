@@ -32,6 +32,10 @@ export default async function GroupDetailPage({ params }: Props) {
   const isAdmin = group.admins?.some((admin) => admin.id === authorizedUser.id);
   const canEdit = isCreator || isAdmin || isAuthorizedUserAdmin(user.roles);
 
+  const dueDates = await getGroupDueDates(group);
+
+  console.log("due dates are ", dueDates)
+
   return (
     <div className="w-full max-w-7xl p-8 mx-auto space-y-12">
       <GroupHeader group={group} canEdit={canEdit} />
@@ -96,11 +100,12 @@ export default async function GroupDetailPage({ params }: Props) {
             //   />
             // }
           />
-          {((group.dropletDueDates && group.dropletDueDates.length > 0) ||
-            (group.playlistDueDates && group.playlistDueDates.length > 0)) && (
+          {dueDates && dueDates.length > 0 && (
             <>
               <Separator />
-              <DueDateAnnouncements group={group} />
+              <DueDateAnnouncements 
+               group={group}
+               dueDates={dueDates}/>
             </>
           )}
 
@@ -111,6 +116,7 @@ export default async function GroupDetailPage({ params }: Props) {
               group={group}
               canEdit={canEdit}
               authUser={authorizedUser}
+              dueDates={dueDates}
             />
           </ContentSection>
 

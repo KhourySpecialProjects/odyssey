@@ -1051,50 +1051,6 @@ export interface ApiAuthorizedUserAuthorizedUser extends Schema.CollectionType {
       'oneToMany',
       'api::highlight.highlight'
     >;
-    timeZone: Attribute.Enumeration<
-      [
-        'America/New_York',
-        'America/Chicago',
-        'America/Denver',
-        'America/Phoenix',
-        'America/Los_Angeles',
-        'America/Anchorage',
-        'America/Honolulu',
-        'America/Bogota',
-        'America/Lima',
-        'America/Caracas',
-        'America/Santiago',
-        'America/Argentina/Buenos_Aires',
-        'America/Sao_Paulo',
-        'Europe/London',
-        'Europe/Berlin',
-        'Europe/Paris',
-        'Europe/Madrid',
-        'Europe/Rome',
-        'Europe/Athens',
-        'Europe/Istanbul',
-        'Europe/Moscow',
-        'Asia/Dubai',
-        'Asia/Kolkata',
-        'Asia/Shanghai',
-        'Asia/Tokyo',
-        'Asia/Seoul',
-        'Asia/Bangkok',
-        'Asia/Singapore',
-        'Asia/Jakarta',
-        'Asia/Hong_Kong',
-        'Australia/Sydney',
-        'Australia/Melbourne',
-        'Australia/Brisbane',
-        'Pacific/Auckland',
-        'Pacific/Fiji',
-        'Africa/Cairo',
-        'Africa/Johannesburg',
-        'Africa/Lagos',
-        'Africa/Nairobi'
-      ]
-    > &
-      Attribute.DefaultTo<'America/New_York'>;
     droplets: Attribute.Relation<
       'api::authorized-user.authorized-user',
       'manyToMany',
@@ -1104,6 +1060,55 @@ export interface ApiAuthorizedUserAuthorizedUser extends Schema.CollectionType {
       'api::authorized-user.authorized-user',
       'manyToMany',
       'api::playlist.playlist'
+    >;
+    timeZone: Attribute.Enumeration<
+      [
+        'America/New_York  ',
+        'America/Chicago  ',
+        'America/Denver  ',
+        'America/Phoenix  ',
+        'America/Los_Angeles  ',
+        'America/Anchorage  ',
+        'America/Honolulu  ',
+        'America/Bogota  ',
+        'America/Lima  ',
+        'America/Caracas  ',
+        'America/Santiago  ',
+        'America/Argentina/Buenos_Aires  ',
+        'America/Sao_Paulo  ',
+        'Europe/London  ',
+        'Europe/Berlin  ',
+        'Europe/Paris  ',
+        'Europe/Madrid  ',
+        'Europe/Rome  ',
+        'Europe/Athens  ',
+        'Europe/Istanbul  ',
+        'Europe/Moscow  ',
+        'Asia/Dubai  ',
+        'Asia/Kolkata  ',
+        'Asia/Shanghai  ',
+        'Asia/Tokyo  ',
+        'Asia/Seoul  ',
+        'Asia/Bangkok  ',
+        'Asia/Singapore  ',
+        'Asia/Jakarta  ',
+        'Asia/Hong_Kong  ',
+        'Australia/Sydney  ',
+        'Australia/Melbourne  ',
+        'Australia/Brisbane  ',
+        'Pacific/Auckland  ',
+        'Pacific/Fiji  ',
+        'Africa/Cairo  ',
+        'Africa/Johannesburg  ',
+        'Africa/Lagos  ',
+        'Africa/Nairobi  '
+      ]
+    > &
+      Attribute.DefaultTo<'America/New_York  '>;
+    due_dates: Attribute.Relation<
+      'api::authorized-user.authorized-user',
+      'oneToMany',
+      'api::due-date.due-date'
     >;
     createdAt: Attribute.DateTime;
     updatedAt: Attribute.DateTime;
@@ -1309,6 +1314,56 @@ export interface ApiDropletLessonDropletLesson extends Schema.CollectionType {
       Attribute.Private;
     updatedBy: Attribute.Relation<
       'api::droplet-lesson.droplet-lesson',
+      'oneToOne',
+      'admin::user'
+    > &
+      Attribute.Private;
+  };
+}
+
+export interface ApiDueDateDueDate extends Schema.CollectionType {
+  collectionName: 'due_dates';
+  info: {
+    singularName: 'due-date';
+    pluralName: 'due-dates';
+    displayName: 'Due Date';
+    description: '';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    dueDate: Attribute.DateTime;
+    authorized_user: Attribute.Relation<
+      'api::due-date.due-date',
+      'manyToOne',
+      'api::authorized-user.authorized-user'
+    >;
+    droplet: Attribute.Relation<
+      'api::due-date.due-date',
+      'oneToOne',
+      'api::droplet.droplet'
+    >;
+    playlist: Attribute.Relation<
+      'api::due-date.due-date',
+      'oneToOne',
+      'api::playlist.playlist'
+    >;
+    group: Attribute.Relation<
+      'api::due-date.due-date',
+      'oneToOne',
+      'api::group.group'
+    >;
+    createdAt: Attribute.DateTime;
+    updatedAt: Attribute.DateTime;
+    createdBy: Attribute.Relation<
+      'api::due-date.due-date',
+      'oneToOne',
+      'admin::user'
+    > &
+      Attribute.Private;
+    updatedBy: Attribute.Relation<
+      'api::due-date.due-date',
       'oneToOne',
       'admin::user'
     > &
@@ -1825,6 +1880,7 @@ declare module '@strapi/types' {
       'api::authorized-user-role.authorized-user-role': ApiAuthorizedUserRoleAuthorizedUserRole;
       'api::droplet.droplet': ApiDropletDroplet;
       'api::droplet-lesson.droplet-lesson': ApiDropletLessonDropletLesson;
+      'api::due-date.due-date': ApiDueDateDueDate;
       'api::enrollment.enrollment': ApiEnrollmentEnrollment;
       'api::friendship.friendship': ApiFriendshipFriendship;
       'api::group.group': ApiGroupGroup;

@@ -173,6 +173,8 @@ export function DropletTile({
                     DateTime.local().toISODate()
                   ) {
                     return "Due today!";
+                  } else if (daysUntil === 1) {
+                    return `Due in 1 day`;
                   } else if (daysUntil > 0) {
                     return `Due in ${daysUntil} days`;
                   } else {

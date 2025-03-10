@@ -7,8 +7,8 @@ import {
   DialogTitle,
   DialogDescription,
 } from "../ui/dialog";
-import { ChangeEvent, useState } from "react";
-import { assignPlaylistDueDate } from "@/lib/requests/groups";
+import { ChangeEvent, useEffect, useState } from "react";
+import { assignPlaylistDueDate, getGroupDueDate } from "@/lib/requests/groups";
 
 import MUIDateTimePicker from "./datetime-picker";
 import { DateTime, Settings } from "luxon";
@@ -29,12 +29,17 @@ export function PlaylistDueDateBlock({
 
   const [removePopupVisible, setRemovePopupVisible] = useState(false);
 
-  const [dueDate, setDueDate] = useState<DateTime | null>(() => {
-    const baseDate = existingGroup.playlistDueDates?.find(
-      (date) => date.playlistId === currentPlaylist.id,
-    )?.baseDueDate;
-    return baseDate ? DateTime.fromISO(baseDate) : null;
-  });
+  const [dueDate, setDueDate] = useState<DateTime | null>(null);
+
+  useEffect(() => {
+      const getDueDates = async () => {
+        const response = await getGroupDueDate(currentPlaylist, existingGroup);
+        if (response && 'dueDate' in response) {
+          setDueDate(response.dueDate ? DateTime.fromISO(response.dueDate) : null);
+        }
+      };
+      getDueDates();
+    }, [currentPlaylist, existingGroup]);
 
   const handleInputChange = (date: DateTime | null) => {
     if (!date) return;
@@ -47,9 +52,9 @@ export function PlaylistDueDateBlock({
     setIsSaveClicked(true);
     const handleSaveDate = async () => {
       await assignPlaylistDueDate(
+        dueDate ? dueDate.toISO() : DateTime.local().toISO(),
         existingGroup,
         currentPlaylist,
-        dueDate ? dueDate.toISO() : DateTime.local().toISO(),
       );
     };
     handleSaveDate();
@@ -62,7 +67,7 @@ export function PlaylistDueDateBlock({
     setRemovePopupVisible(false);
     setIsRemoveClicked(true);
     const handleRemoveDate = async () => {
-      await assignPlaylistDueDate(existingGroup, currentPlaylist, null);
+      await assignPlaylistDueDate(null, existingGroup, currentPlaylist);
       setDueDate(null);
     };
     handleRemoveDate();
