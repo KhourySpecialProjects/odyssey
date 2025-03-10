@@ -8,7 +8,8 @@ import {
   MessageDescription,
   MessageHeader,
 } from "@/components/message";
-import { AuthorizedUser } from "@/types";
+import { AuthorizedUser, DueDate } from "@/types";
+import { getUserDueDates } from "@/lib/requests/groups";
 
 interface PlaylistsGridProps {
   searchValue?: string;
@@ -59,6 +60,7 @@ export async function PlaylistsGrid({
   const user = await getCurrentUser();
   let completedLessonIds: number[] = [];
   let authorizedUser: AuthorizedUser | null = null;
+  let dueDates: DueDate[];
 
   if (user?.email) {
     authorizedUser = (await getAuthorizedUserByEmail(
@@ -69,6 +71,7 @@ export async function PlaylistsGrid({
       (enrollment) =>
         enrollment.viewedLessons?.map((lesson: Lesson) => lesson.id) || [],
     );
+    dueDates = await getUserDueDates(authorizedUser.id);
   }
 
   // Calculate completion percentage for each playlist
@@ -120,20 +123,6 @@ export async function PlaylistsGrid({
     );
   }
 
-  const allDueDates = (authorizedUser?.groups || [])
-    .flatMap((group: any) => group.playlistDueDates || [])
-    .reduce(
-      (acc: any, curr: any) => {
-        if (
-          !acc[curr.playlistId] ||
-          new Date(curr.baseDueDate) < new Date(acc[curr.playlistId])
-        ) {
-          acc[curr.playlistId] = curr.baseDueDate;
-        }
-        return acc;
-      },
-      {} as Record<number, string>,
-    );
 
   return (
     <section>
@@ -143,7 +132,9 @@ export async function PlaylistsGrid({
             key={playlist.id}
             playlist={playlist}
             completedLessonIds={completedLessonIds}
-            dueDate={allDueDates[playlist.id] || ""}
+            dueDate={dueDates?.find(
+              (dueDate) => dueDate.playlist?.id === playlist.id,
+            )?.dueDate || ""}
           />
         ))}
       </div>

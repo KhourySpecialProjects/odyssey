@@ -1,0 +1,40 @@
+{
+  "kind": "collectionType",
+  "collectionName": "due_dates",
+  "info": {
+    "singularName": "due-date",
+    "pluralName": "due-dates",
+    "displayName": "Due Date",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "dueDate": {
+      "type": "datetime"
+    },
+    "authorized_user": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::authorized-user.authorized-user",
+      "inversedBy": "due_dates"
+    },
+    "droplet": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::droplet.droplet"
+    },
+    "playlist": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::playlist.playlist"
+    },
+    "group": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::group.group"
+    }
+  }
+}

@@ -12,7 +12,8 @@ import {
 } from "@/lib/requests/enrollment";
 import { DropletTile } from "../droplets/droplet-tile";
 import { SortedDropletsGrid } from "./sorted-droplets-grid";
-import { Enrollment } from "@/types";
+import { DueDate, Enrollment } from "@/types";
+import { getUserDueDates } from "@/lib/requests/groups";
 
 interface Lesson {
   id: number;
@@ -43,6 +44,7 @@ export async function DropletsGrid({
   let completedLessonIds: number[] = [];
 
   let enrollments: Enrollment[] = [];
+  let dueDates: DueDate[] = [];
 
   if (user?.email) {
     const authorizedUser = await getAuthorizedUserByEmail(user.email);
@@ -56,6 +58,7 @@ export async function DropletsGrid({
     completedDropletIds = enrollments
       .filter((e) => e.viewedLessons.length === e.droplet.lessons?.length)
       .map((d) => d.droplet.id);
+      dueDates = await getUserDueDates(authorizedUser.id);
   }
 
   const droplets = await getDroplets({
@@ -147,9 +150,9 @@ export async function DropletsGrid({
             isEnrolled={enrolledDropletIds.includes(droplet.id)}
             completedLessonIds={completedLessonIds}
             profilePage={true}
-            dueDate={enrollments
-              .find((enrollment) => enrollment.droplet.id === droplet.id)
-              ?.dueDate?.toString()}
+            dueDate={dueDates?.find(
+              (dueDate) => dueDate.droplet?.id === droplet.id,
+            )?.dueDate || ""}
           />
         ))}
       </ul>
@@ -163,7 +166,7 @@ export async function DropletsGrid({
       completedLessonIds={completedLessonIds}
       enrolledDropletIds={enrolledDropletIds}
       ratingsMap={ratingsMap}
-      enrollments={enrollments}
+      dueDates={dueDates}
     />
   );
 }

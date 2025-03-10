@@ -5,7 +5,7 @@ import "react-tabs/style/react-tabs.css";
 
 import { ContentSection } from "@/components/group/content-section";
 import { GroupDropletTile } from "@/components/group/group-droplet-tile";
-import { AuthorizedUser, Group } from "@/types";
+import { AuthorizedUser, DueDate, Group } from "@/types";
 import { PlaylistCard } from "@/components/playlists/playlist-card";
 import { GroupProgressGrid } from "@/components/group/group-progress-grid";
 import { Button } from "../ui/button";
@@ -15,12 +15,13 @@ interface RenderGroupDashboardProps {
   group: Group;
   canEdit: boolean | undefined;
   authUser: AuthorizedUser;
+  dueDates: DueDate[];
 }
 
 const tabStyle =
   "px-4 py-2 cursor-pointer border-b-2 border-transparent focus:outline-none hover:border-gray-300";
 
-export function GroupDashboard({ group, canEdit, authUser }: RenderGroupDashboardProps) {
+export function GroupDashboard({ group, canEdit, authUser, dueDates }: RenderGroupDashboardProps) {
   const [currentPage, setCurrentPage] = useState(0);
   const lessonsPerPage = 6;
 
@@ -60,9 +61,9 @@ export function GroupDashboard({ group, canEdit, authUser }: RenderGroupDashboar
                   key={droplet.id}
                   droplet={droplet}
                   dueDate={
-                    group.dropletDueDates?.find(
-                      (dueDate) => dueDate.dropletId === droplet.id,
-                    )?.baseDueDate || ""
+                    dueDates?.find(
+                      (dueDate) => dueDate.droplet?.id === droplet.id,
+                    )?.dueDate || ""
                   }
                   authUser={authUser}
                 />
@@ -110,9 +111,9 @@ export function GroupDashboard({ group, canEdit, authUser }: RenderGroupDashboar
                   playlist={playlist}
                   completedLessonIds={[]} // We'll need to implement this later
                   dueDate={
-                    group.playlistDueDates?.find(
-                      (dueDate) => dueDate.playlistId === playlist.id,
-                    )?.baseDueDate || ""
+                    dueDates?.find(
+                      (dueDate) => dueDate.playlist?.id === playlist.id,
+                    )?.dueDate || ""
                   }
                   timeZone={authUser.timeZone}
                 />

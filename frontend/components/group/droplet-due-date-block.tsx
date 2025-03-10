@@ -3,7 +3,7 @@ import { DateTimePicker } from "react-datetime-picker";
 import { ChangeEvent } from "react";
 import { useState, useEffect } from "react";
 import { Button } from "../ui/button";
-import { assignDueDate, getDueDate } from "@/lib/requests/groups";
+import { assignDropletDueDate, assignDueDate, getDueDate, getGroupDueDate } from "@/lib/requests/groups";
 import {
   Dialog,
   DialogContent,
@@ -31,12 +31,17 @@ export function DropletDueDateBlock({
 
   const [removePopupVisible, setRemovePopupVisible] = useState(false);
 
-  const [dueDate, setDueDate] = useState<DateTime | null>(() => {
-    const baseDate = existingGroup.dropletDueDates?.find(
-      (date) => date.dropletId === currentDroplet.id,
-    )?.baseDueDate;
-    return baseDate ? DateTime.fromISO(baseDate) : null;
-  });
+  const [dueDate, setDueDate] = useState<DateTime | null>(null);
+  
+  useEffect(() => {
+    const getDueDates = async () => {
+      const response = await getGroupDueDate(currentDroplet, existingGroup);
+      if (response && 'dueDate' in response) {
+        setDueDate(response.dueDate ? DateTime.fromISO(response.dueDate) : null);
+      }
+    };
+    getDueDates();
+  }, [currentDroplet, existingGroup]);
 
   const handleInputChange = (date: DateTime | null) => {
     if (!date) return;
@@ -49,15 +54,16 @@ export function DropletDueDateBlock({
     setIsSaveClicked(true);
     const handleSaveDate = async () => {
       
-      await assignDueDate(
-        existingGroup,
-        currentDroplet,
-        dueDate
-          ? dueDate.setZone(currentUser.timeZone || "America/New_York").toISO()
-          : DateTime.local()
-              .setZone(currentUser.timeZone || "America/New_York")
-              .toISO(),
-      );
+      // await assignDueDate(
+      //   existingGroup,
+      //   currentDroplet,
+      //   dueDate
+      //     ? dueDate.setZone(currentUser.timeZone || "America/New_York").toISO()
+      //     : DateTime.local()
+      //         .setZone(currentUser.timeZone || "America/New_York")
+      //         .toISO(),
+      // );
+      await assignDropletDueDate(dueDate?.toISO() || "America/New_York", existingGroup, currentDroplet)
     };
     handleSaveDate();
     const timeout = setTimeout(() => {

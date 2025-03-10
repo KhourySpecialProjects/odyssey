@@ -9,6 +9,7 @@ import {
 } from "@/components/message";
 import { Group } from "@/types";
 import { useMemo } from "react";
+import { getUserDueDates } from "@/lib/requests/groups";
 
 interface Lesson {
   id: number;
@@ -105,6 +106,12 @@ export async function UserPlaylistsGrid() {
     );
   }
 
+  //Handle due dates
+
+  const dueDates = await getUserDueDates(authorizedUser.id);
+
+  console.log("due dates are", dueDates)
+
   const allDueDates = (authorizedUser.groups || [])
     .flatMap((group: any) => group.playlistDueDates || [])
     .reduce(
@@ -148,7 +155,9 @@ export async function UserPlaylistsGrid() {
                 key={playlist.id}
                 playlist={playlist}
                 completedLessonIds={completedLessonIds}
-                dueDate={allDueDates[playlist.id] || ""}
+                dueDate={dueDates?.find(
+                  (dueDate) => dueDate.playlist?.id === playlist.id,
+                )?.dueDate || ""}
               />
             ))}
           </div>

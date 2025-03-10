@@ -355,3 +355,12 @@ export type TimeZone =
   | "Africa/Johannesburg"
   | "Africa/Lagos"
   | "Africa/Nairobi";
+
+
+  export type DueDate = {
+    dueDate: DateTime;
+    authorized_user: AuthorizedUser;
+    droplet?: Droplet;
+    playlist?: Playlist;
+    group: Group;
+  }

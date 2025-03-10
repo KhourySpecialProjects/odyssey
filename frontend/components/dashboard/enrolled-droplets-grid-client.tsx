@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Droplet, Enrollment } from "@/types";
+import { Droplet, DueDate, Enrollment } from "@/types";
 import { DropletTile } from "../droplets/droplet-tile";
 
 const ITEMS_PER_PAGE = 9;
@@ -12,11 +12,13 @@ export function EnrolledDropletsGridClient({
   completedLessonIds,
   isArchived,
   enrollments,
+  dueDates
 }: {
   dropletsWithCompletion: Droplet[];
   completedLessonIds: number[];
   isArchived: boolean;
   enrollments: Enrollment[];
+  dueDates?: DueDate[];
 }) {
   const [currentPage, setCurrentPage] = useState(1);
   const totalPages = Math.ceil(dropletsWithCompletion.length / ITEMS_PER_PAGE);
@@ -48,11 +50,9 @@ export function EnrolledDropletsGridClient({
             isEnrolled={true}
             completedLessonIds={completedLessonIds}
             isArchived={isArchived}
-            dueDate={
-              enrollments
-                .find((enrollment) => enrollment.droplet.id === droplet.id)
-                ?.dueDate?.toString() || ""
-            }
+            dueDate={dueDates?.find(
+              (dueDate) => dueDate.droplet?.id === droplet.id,
+            )?.dueDate || ""}
           />
         ))}
       </ul>
