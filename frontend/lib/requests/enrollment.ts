@@ -38,7 +38,6 @@ export async function getEnrollmentsByAuthorizedUser(
       "isComplete",
       "isFirstTime",
       "isArchived",
-      "dueDate",
     ],
   }: StrapiRequestParams = {},
 ): Promise<Enrollment[]> {
