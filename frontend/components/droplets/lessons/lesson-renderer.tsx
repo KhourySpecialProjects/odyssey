@@ -323,7 +323,7 @@ function LessonBlockRenderer({
           )}
 
           <div className="">
-            <div className="pl-8 mx-auto prose prose-sky text-center">
+            <div className="pl-8 mx-auto prose prose-sky text-start">
               <BlocksRenderer content={block.content} />
             </div>
           </div>
