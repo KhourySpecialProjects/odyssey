@@ -8,8 +8,8 @@ import { DateTime } from "luxon";
 
 interface GroupDropletTileProps {
   droplet: Droplet;
-  dueDate: string;
-  authUser: AuthorizedUser;
+  dueDate?: string;
+  authUser?: AuthorizedUser;
 }
 
 export function GroupDropletTile({
@@ -18,16 +18,19 @@ export function GroupDropletTile({
   authUser,
 }: GroupDropletTileProps) {
   let daysUntil = 0;
+  let finalDate = "";
   if (dueDate && dueDate !== "") {
     const dueDateObject = DateTime.fromISO(dueDate);
     const today = DateTime.local().startOf("day"); // Set to start of day
     const diffDays = dueDateObject.startOf("day").diff(today, "days").days;
     daysUntil = Math.ceil(diffDays);
-  }
 
-  const finalDate = DateTime.fromISO(dueDate)
+    finalDate = DateTime.fromISO(dueDate)
     .setZone(authUser?.timeZone || "America/New_York")
     .toFormat("MM/dd hh:mm a");
+  }
+
+  
 
   return (
     <Link href={`/d/${droplet.slug}`}>
