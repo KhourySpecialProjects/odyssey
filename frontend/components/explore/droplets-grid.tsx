@@ -58,7 +58,7 @@ export async function DropletsGrid({
     completedDropletIds = enrollments
       .filter((e) => e.viewedLessons.length === e.droplet.lessons?.length)
       .map((d) => d.droplet.id);
-      dueDates = await getUserDueDates(authorizedUser.id);
+    dueDates = await getUserDueDates(authorizedUser.id);
   }
 
   const droplets = await getDroplets({
@@ -150,9 +150,10 @@ export async function DropletsGrid({
             isEnrolled={enrolledDropletIds.includes(droplet.id)}
             completedLessonIds={completedLessonIds}
             profilePage={true}
-            dueDate={dueDates?.find(
-              (dueDate) => dueDate.droplet?.id === droplet.id,
-            )?.dueDate || ""}
+            dueDate={
+              dueDates?.find((dueDate) => dueDate.droplet?.id === droplet.id)
+                ?.dueDate || ""
+            }
           />
         ))}
       </ul>

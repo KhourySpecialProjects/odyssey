@@ -356,11 +356,10 @@ export type TimeZone =
   | "Africa/Lagos"
   | "Africa/Nairobi";
 
-
-  export type DueDate = {
-    dueDate: DateTime;
-    authorized_user: AuthorizedUser;
-    droplet?: Droplet;
-    playlist?: Playlist;
-    group: Group;
-  }
+export type DueDate = {
+  dueDate: DateTime;
+  authorized_user: AuthorizedUser;
+  droplet?: Droplet;
+  playlist?: Playlist;
+  group: Group;
+};

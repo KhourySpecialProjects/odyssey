@@ -16,9 +16,8 @@ interface DueDateAnnouncementsProps {
 
 export default function DueDateAnnouncements({
   group,
-  dueDates
+  dueDates,
 }: DueDateAnnouncementsProps) {
-
   const [visibleDates, setVisibleDates] = useState<number | undefined>(5);
 
   const handleSeeMore = () => {
@@ -34,13 +33,11 @@ export default function DueDateAnnouncements({
     if (dueDate && dueDate.dueDate !== "") {
       const dueDateObject = DateTime.fromISO(dueDate.dueDate);
       const today = DateTime.local().startOf("day"); // Set to start of day
-      const diffDays = dueDateObject
-        .startOf("day")
-        .diff(today, "days").days;
+      const diffDays = dueDateObject.startOf("day").diff(today, "days").days;
       daysUntil = String(Math.ceil(diffDays));
     }
-    return daysUntil
-  }
+    return daysUntil;
+  };
 
   return (
     <div className="space-y-3 w-2/3">
@@ -49,13 +46,17 @@ export default function DueDateAnnouncements({
         {dueDates.slice(0, visibleDates).map((dueDate, index) => (
           <Link
             key={index}
-            href={`/${dueDate.droplet? "d" : "p"}/${dueDate.droplet? dueDate.droplet?.slug : dueDate.playlist?.slug}`}
+            href={`/${dueDate.droplet ? "d" : "p"}/${dueDate.droplet ? dueDate.droplet?.slug : dueDate.playlist?.slug}`}
           >
             <div
               className={` p-2 rounded-md flex flex-row mb-1 hover:scale-105 ${getDueDateBadgeColor(Number(getDaysUntil(dueDate)), false)}`}
             >
-              {dueDate.droplet? <Droplet /> : <ListVideo />}
-              <p className="font-bold ml-1">{dueDate.droplet? dueDate.droplet.name : dueDate.playlist?.name}</p>
+              {dueDate.droplet ? <Droplet /> : <ListVideo />}
+              <p className="font-bold ml-1">
+                {dueDate.droplet
+                  ? dueDate.droplet.name
+                  : dueDate.playlist?.name}
+              </p>
               {Number(getDaysUntil(dueDate)) > 0 ? (
                 <p>
                   &nbsp;is due in {getDaysUntil(dueDate)}{" "}

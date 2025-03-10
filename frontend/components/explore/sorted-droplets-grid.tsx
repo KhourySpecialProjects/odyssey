@@ -102,9 +102,10 @@ export function SortedDropletsGrid({
             droplet={droplet}
             isEnrolled={enrolledDropletIds.includes(droplet.id)}
             completedLessonIds={completedLessonIds}
-            dueDate={dueDates?.find(
-              (dueDate) => dueDate.droplet?.id === droplet.id,
-            )?.dueDate || ""}
+            dueDate={
+              dueDates?.find((dueDate) => dueDate.droplet?.id === droplet.id)
+                ?.dueDate || ""
+            }
           />
         ))}
       </ul>
