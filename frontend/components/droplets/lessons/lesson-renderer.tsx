@@ -314,7 +314,7 @@ function LessonBlockRenderer({
     case "droplets.callout":
       return (
         <div
-          className={`flex flex-row items-center px-6 py-6 border rounded-md md:-mx-8 ${block.color || "bg-sky-50"}`}
+          className={`flex flex-row items-center dark:bg-slate-800 dark:border-slate-500 px-6 py-6 border rounded-md md:-mx-8 ${block.color || "bg-sky-50"}`}
         >
           {block?.iconEnabled && (
             <div className="">
@@ -323,7 +323,7 @@ function LessonBlockRenderer({
           )}
 
           <div className="">
-            <div className="pl-8 mx-auto prose prose-sky text-center">
+            <div className="pl-8 mx-auto prose prose-sky dark:text-slate-300 prose-strong:text-inherit prose-headings:text-inherit text-center">
               <BlocksRenderer content={block.content} />
             </div>
           </div>
@@ -332,14 +332,14 @@ function LessonBlockRenderer({
 
     case "droplets.expandable":
       return (
-        <Collapsible className="w-full p-4 border rounded-md border-slate-200">
+        <Collapsible className="w-full p-4 border rounded-md border-slate-200 dark:border-slate-500">
           <CollapsibleTrigger className="inline-flex flex-row items-center gap-2 font-bold text-sky-600">
             {block.title}
             <ArrowDownFromLineIcon className="w-4 h-4 text-sky-400" />
           </CollapsibleTrigger>
-          <CollapsibleContent className="pt-3 mt-4 border-t border-t-slate-200">
+          <CollapsibleContent className="pt-3 mt-4 border-t border-t-slate-200 dark:border-slate-500">
             <div
-              className="prose prose-sky"
+              className="prose prose-sky dark:text-slate-300 prose-headings:text-inherit prose-strong:text-inherit prose-code:text-inherit"
               dangerouslySetInnerHTML={{ __html: block.content }}
             ></div>
           </CollapsibleContent>
