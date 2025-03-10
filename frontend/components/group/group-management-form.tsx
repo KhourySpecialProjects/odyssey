@@ -268,7 +268,9 @@ export function GroupManagementForm({
 
       if (existingGroup) {
         const response = await updateGroup(existingGroup.id, updateGroupData);
+        console.log("new group is ", await getGroupByID(existingGroup.id));
         await enrollUsers(await getGroupByID(existingGroup.id));
+
         //router.push(`/g/${response.slug}`);
       } else {
         const newGroup = await createGroup(currentUser.id, createGroupData);

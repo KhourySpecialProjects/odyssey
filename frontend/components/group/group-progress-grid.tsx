@@ -34,8 +34,8 @@ export function GroupProgressGrid({ group }: GroupProgressGridProps) {
   >({});
 
   const [isPending, startTransition] = useTransition();
-  const [currentPage, setCurrentPage] = useState(0);
-  const lessonsPerPage = 5;
+  const [currentPage, setCurrentPage] = useState(0); // Track the current page
+  const lessonsPerPage = 4; // Number of lessons to show per page
 
   const startIndex = currentPage * lessonsPerPage;
   const endIndex = startIndex + lessonsPerPage;

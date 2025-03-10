@@ -52,6 +52,7 @@ export type User = {
 };
 
 export type AuthorizedUser = {
+  groups: any;
   id: number;
   email: string;
   roles: AuthorizedUserRole[];
@@ -70,6 +71,8 @@ export type AuthorizedUser = {
   profilePhoto: string;
   blocked: AuthorizedUser[];
   was_blocked: AuthorizedUser[];
+  timeZone: TimeZone;
+  groups?: Group[];
   droplets?: Droplet[];
   created_playlists?: Playlist[];
 };
@@ -301,4 +304,53 @@ export type Note = {
   enrollment: Enrollment;
   positionY: number;
   highlight?: Highlight;
+};
+
+export type TimeZone =
+  | "America/New_York"
+  | "America/Chicago"
+  | "America/Denver"
+  | "America/Phoenix"
+  | "America/Los_Angeles"
+  | "America/Anchorage"
+  | "America/Honolulu"
+  | "America/Bogota"
+  | "America/Lima"
+  | "America/Caracas"
+  | "America/Santiago"
+  | "America/Argentina/Buenos_Aires"
+  | "America/Sao_Paulo"
+  | "Europe/London"
+  | "Europe/Berlin"
+  | "Europe/Paris"
+  | "Europe/Madrid"
+  | "Europe/Rome"
+  | "Europe/Athens"
+  | "Europe/Istanbul"
+  | "Europe/Moscow"
+  | "Asia/Dubai"
+  | "Asia/Kolkata"
+  | "Asia/Shanghai"
+  | "Asia/Tokyo"
+  | "Asia/Seoul"
+  | "Asia/Bangkok"
+  | "Asia/Singapore"
+  | "Asia/Jakarta"
+  | "Asia/Hong_Kong"
+  | "Australia/Sydney"
+  | "Australia/Melbourne"
+  | "Australia/Brisbane"
+  | "Pacific/Auckland"
+  | "Pacific/Fiji"
+  | "Africa/Cairo"
+  | "Africa/Johannesburg"
+  | "Africa/Lagos"
+  | "Africa/Nairobi";
+
+export type DueDate = {
+  dueDate: DateTime;
+  authorized_user: AuthorizedUser;
+  droplet?: Droplet;
+  playlist?: Playlist;
+  group: Group;
 };

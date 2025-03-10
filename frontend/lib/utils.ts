@@ -476,3 +476,19 @@ export function isAuthorizedUserFaculty(
   }
   return false;
 }
+
+//used in group-droplet-tile.tsx, droplet-tile.tsx, due-date-announcement.tsx
+export const getDueDateBadgeColor = (
+  daysUntil: number,
+  includeLate: boolean,
+) => {
+  if (daysUntil > 14) {
+    return "bg-emerald-100 text-emerald-800 border border-emerald-400";
+  } else if (daysUntil > 3) {
+    return "bg-amber-100 text-amber-800 border border-amber-400";
+  } else if (daysUntil >= 0) {
+    return "bg-red-100 text-red-800 border border-red-400";
+  } else if (daysUntil < 0 && includeLate) {
+    return "bg-red-400 text-red-900 border border-red-700";
+  }
+};
