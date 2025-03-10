@@ -110,7 +110,7 @@ export async function UserPlaylistsGrid() {
 
   const dueDates = await getUserDueDates(authorizedUser.id);
 
-  console.log("due dates are", dueDates)
+  console.log("due dates are", dueDates);
 
   const allDueDates = (authorizedUser.groups || [])
     .flatMap((group: any) => group.playlistDueDates || [])
@@ -155,9 +155,11 @@ export async function UserPlaylistsGrid() {
                 key={playlist.id}
                 playlist={playlist}
                 completedLessonIds={completedLessonIds}
-                dueDate={dueDates?.find(
-                  (dueDate) => dueDate.playlist?.id === playlist.id,
-                )?.dueDate || ""}
+                dueDate={
+                  dueDates?.find(
+                    (dueDate) => dueDate.playlist?.id === playlist.id,
+                  )?.dueDate || ""
+                }
               />
             ))}
           </div>

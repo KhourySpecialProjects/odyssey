@@ -34,7 +34,7 @@ export default async function GroupDetailPage({ params }: Props) {
 
   const dueDates = await getGroupDueDates(group);
 
-  console.log("due dates are ", dueDates)
+  console.log("due dates are ", dueDates);
 
   return (
     <div className="w-full max-w-7xl p-8 mx-auto space-y-12">
@@ -103,9 +103,7 @@ export default async function GroupDetailPage({ params }: Props) {
           {dueDates && dueDates.length > 0 && (
             <>
               <Separator />
-              <DueDateAnnouncements 
-               group={group}
-               dueDates={dueDates}/>
+              <DueDateAnnouncements group={group} dueDates={dueDates} />
             </>
           )}
 

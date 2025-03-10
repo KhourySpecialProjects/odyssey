@@ -166,7 +166,7 @@ export function DropletTile({
                 {/* {daysUntil > 0
                   ? `Due in ${daysUntil} ${daysUntil > 1 ? "days" : "day"}!`
                   : "This Droplet is Late!"} */}
-                
+
                 {(() => {
                   if (
                     DateTime.fromISO(dueDate).toISODate() ==
@@ -181,7 +181,6 @@ export function DropletTile({
                     return "This Droplet is Late!";
                   }
                 })()}
-
               </Badge>
             )}
 

@@ -21,7 +21,12 @@ interface RenderGroupDashboardProps {
 const tabStyle =
   "px-4 py-2 cursor-pointer border-b-2 border-transparent focus:outline-none hover:border-gray-300";
 
-export function GroupDashboard({ group, canEdit, authUser, dueDates }: RenderGroupDashboardProps) {
+export function GroupDashboard({
+  group,
+  canEdit,
+  authUser,
+  dueDates,
+}: RenderGroupDashboardProps) {
   const [currentPage, setCurrentPage] = useState(0);
   const lessonsPerPage = 6;
 
@@ -58,15 +63,15 @@ export function GroupDashboard({ group, canEdit, authUser, dueDates }: RenderGro
                 {paginatedDroplets?.map((droplet) => (
                   <div key={droplet.id} className="h-full w-full">
                     <GroupDropletTile
-                  key={droplet.id}
-                  droplet={droplet}
-                  dueDate={
-                    dueDates?.find(
-                      (dueDate) => dueDate.droplet?.id === droplet.id,
-                    )?.dueDate || ""
-                  }
-                  authUser={authUser}
-                />
+                      key={droplet.id}
+                      droplet={droplet}
+                      dueDate={
+                        dueDates?.find(
+                          (dueDate) => dueDate.droplet?.id === droplet.id,
+                        )?.dueDate || ""
+                      }
+                      authUser={authUser}
+                    />
                   </div>
                 ))}
               </div>

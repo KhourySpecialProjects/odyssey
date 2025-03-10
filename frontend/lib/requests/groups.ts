@@ -669,11 +669,13 @@ export async function enrollUsers(group: Group) {
   }
 }
 
-
 //NEW REQUESTS FOR DUE DATE COLLECTION TYPE
 
-
-export async function assignDropletDueDate(date: string | null, group: Group, droplet: Droplet) {
+export async function assignDropletDueDate(
+  date: string | null,
+  group: Group,
+  droplet: Droplet,
+) {
   try {
     // If no members in group, return early
     if (!group.members || group.members.length === 0) {
@@ -689,29 +691,35 @@ export async function assignDropletDueDate(date: string | null, group: Group, dr
           headers: {
             Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
           },
-        }
+        },
       );
 
       const existingDueDates = await existingDueDateResponse.json();
-      
+
       if (existingDueDates.data && existingDueDates.data.length > 0) {
         // Update existing due date
         const existingDueDate = existingDueDates.data[0];
-        const response = await fetch(`${STRAPI_API_URL}/api/due-dates/${existingDueDate.id}`, {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
-          },
-          body: JSON.stringify({
-            data: {
-              dueDate: date
+        const response = await fetch(
+          `${STRAPI_API_URL}/api/due-dates/${existingDueDate.id}`,
+          {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
             },
-          }),
-        });
+            body: JSON.stringify({
+              data: {
+                dueDate: date,
+              },
+            }),
+          },
+        );
 
         if (!response.ok) {
-          console.error(`Failed to update due date for user ${member.id}:`, await response.text());
+          console.error(
+            `Failed to update due date for user ${member.id}:`,
+            await response.text(),
+          );
           return false;
         }
       } else {
@@ -727,13 +735,16 @@ export async function assignDropletDueDate(date: string | null, group: Group, dr
               dueDate: date,
               authorized_user: member.id,
               droplet: droplet.id,
-              group: group.id
+              group: group.id,
             },
           }),
         });
 
         if (!response.ok) {
-          console.error(`Failed to add due date for user ${member.id}:`, await response.text());
+          console.error(
+            `Failed to add due date for user ${member.id}:`,
+            await response.text(),
+          );
           return false;
         }
       }
@@ -745,16 +756,19 @@ export async function assignDropletDueDate(date: string | null, group: Group, dr
     const results = await Promise.all(dueDatePromises);
 
     // Check if any requests failed
-    const allSuccessful = results.every(result => result === true);
+    const allSuccessful = results.every((result) => result === true);
 
     if (!allSuccessful) {
-      return { success: false, error: "Failed to process due dates for some users" };
+      return {
+        success: false,
+        error: "Failed to process due dates for some users",
+      };
     }
 
     revalidatePath("/explore");
     revalidatePath("/dashboard");
     revalidatePath("/groups/g/[slug]", "page");
-    revalidatePath("/")
+    revalidatePath("/");
 
     return { success: true };
   } catch (error) {
@@ -763,8 +777,11 @@ export async function assignDropletDueDate(date: string | null, group: Group, dr
   }
 }
 
-
-export async function assignPlaylistDueDate(date: string | null, group: Group, playlist: Playlist) {
+export async function assignPlaylistDueDate(
+  date: string | null,
+  group: Group,
+  playlist: Playlist,
+) {
   try {
     // If no members in group, return early
     if (!group.members || group.members.length === 0) {
@@ -780,29 +797,35 @@ export async function assignPlaylistDueDate(date: string | null, group: Group, p
           headers: {
             Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
           },
-        }
+        },
       );
 
       const existingDueDates = await existingDueDateResponse.json();
-      
+
       if (existingDueDates.data && existingDueDates.data.length > 0) {
         // Update existing due date
         const existingDueDate = existingDueDates.data[0];
-        const response = await fetch(`${STRAPI_API_URL}/api/due-dates/${existingDueDate.id}`, {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
-          },
-          body: JSON.stringify({
-            data: {
-              dueDate: date
+        const response = await fetch(
+          `${STRAPI_API_URL}/api/due-dates/${existingDueDate.id}`,
+          {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
             },
-          }),
-        });
+            body: JSON.stringify({
+              data: {
+                dueDate: date,
+              },
+            }),
+          },
+        );
 
         if (!response.ok) {
-          console.error(`Failed to update due date for user ${member.id}:`, await response.text());
+          console.error(
+            `Failed to update due date for user ${member.id}:`,
+            await response.text(),
+          );
           return false;
         }
       } else {
@@ -818,13 +841,16 @@ export async function assignPlaylistDueDate(date: string | null, group: Group, p
               dueDate: date,
               authorized_user: member.id,
               playlist: playlist.id,
-              group: group.id
+              group: group.id,
             },
           }),
         });
 
         if (!response.ok) {
-          console.error(`Failed to add due date for user ${member.id}:`, await response.text());
+          console.error(
+            `Failed to add due date for user ${member.id}:`,
+            await response.text(),
+          );
           return false;
         }
       }
@@ -836,16 +862,19 @@ export async function assignPlaylistDueDate(date: string | null, group: Group, p
     const results = await Promise.all(dueDatePromises);
 
     // Check if any requests failed
-    const allSuccessful = results.every(result => result === true);
+    const allSuccessful = results.every((result) => result === true);
 
     if (!allSuccessful) {
-      return { success: false, error: "Failed to process due dates for some users" };
+      return {
+        success: false,
+        error: "Failed to process due dates for some users",
+      };
     }
 
     revalidatePath("/explore");
     revalidatePath("/dashboard");
     revalidatePath("/groups/g/[slug]", "page");
-    revalidatePath("/")
+    revalidatePath("/");
 
     return { success: true };
   } catch (error) {
@@ -853,9 +882,6 @@ export async function assignPlaylistDueDate(date: string | null, group: Group, p
     return { success: false, error: "Failed to process request" };
   }
 }
-
-
-
 
 //gets AuthorizedUser's enrollment in Droplet
 export async function getGroupDueDate(item: Droplet | Playlist, group: Group) {
@@ -866,11 +892,13 @@ export async function getGroupDueDate(item: Droplet | Playlist, group: Group) {
           group: {
             id: { $eq: group.id },
           },
-          ...(('type' in item) ? {
-            droplet: { id: { $eq: item.id } }
-          } : {
-            playlist: { id: { $eq: item.id } }
-          })
+          ...("type" in item
+            ? {
+                droplet: { id: { $eq: item.id } },
+              }
+            : {
+                playlist: { id: { $eq: item.id } },
+              }),
         },
       },
     });
@@ -881,8 +909,6 @@ export async function getGroupDueDate(item: Droplet | Playlist, group: Group) {
     return { success: false, error };
   }
 }
-
-
 
 export async function getGroupDueDates(
   group: Group,
@@ -902,15 +928,15 @@ export async function getGroupDueDates(
     },
     populate: {
       droplet: {
-        fields: ["id", "name", "slug"]
+        fields: ["id", "name", "slug"],
       },
       playlist: {
-        fields: ["id", "name", "slug"]
-      }
+        fields: ["id", "name", "slug"],
+      },
     },
     fields: [...(fields || []), "dueDate"],
     pagination,
-    revalidate: 0
+    revalidate: 0,
   };
 
   return await fetchAPI<DueDate[]>(path, {
@@ -918,7 +944,6 @@ export async function getGroupDueDates(
     next: { tags: ["due-dates"], revalidate: 0 },
   });
 }
-
 
 export async function getUserDueDates(
   authorizedUserId: number,
@@ -938,16 +963,16 @@ export async function getUserDueDates(
     },
     populate: {
       droplet: {
-        fields: ["id", "name", "slug"]
+        fields: ["id", "name", "slug"],
       },
       playlist: {
-        fields: ["id", "name", "slug"]
-      }
+        fields: ["id", "name", "slug"],
+      },
     },
     fields: [...(fields || []), "dueDate"],
     pagination,
     revalidate: 0,
-    cache: "no-store"
+    cache: "no-store",
   };
 
   return await fetchAPI<DueDate[]>(path, {

@@ -34,8 +34,10 @@ export function PlaylistDueDateBlock({
   useEffect(() => {
     const getDueDates = async () => {
       const response = await getGroupDueDate(currentPlaylist, existingGroup);
-      if (response && 'dueDate' in response) {
-        setDueDate(response.dueDate ? DateTime.fromISO(response.dueDate) : null);
+      if (response && "dueDate" in response) {
+        setDueDate(
+          response.dueDate ? DateTime.fromISO(response.dueDate) : null,
+        );
       }
     };
     getDueDates();

@@ -36,8 +36,10 @@ export function DropletDueDateBlock({
   useEffect(() => {
     const getDueDates = async () => {
       const response = await getGroupDueDate(currentDroplet, existingGroup);
-      if (response && 'dueDate' in response) {
-        setDueDate(response.dueDate ? DateTime.fromISO(response.dueDate) : null);
+      if (response && "dueDate" in response) {
+        setDueDate(
+          response.dueDate ? DateTime.fromISO(response.dueDate) : null,
+        );
       }
     };
     getDueDates();
@@ -53,7 +55,6 @@ export function DropletDueDateBlock({
   const handleSaveDate = () => {
     setIsSaveClicked(true);
     const handleSaveDate = async () => {
-
       // await assignDueDate(
       //   existingGroup,
       //   currentDroplet,
@@ -63,7 +64,11 @@ export function DropletDueDateBlock({
       //         .setZone(currentUser.timeZone || "America/New_York")
       //         .toISO(),
       // );
-      await assignDropletDueDate(dueDate?.toISO() || "America/New_York", existingGroup, currentDroplet)
+      await assignDropletDueDate(
+        dueDate?.toISO() || "America/New_York",
+        existingGroup,
+        currentDroplet,
+      );
     };
     handleSaveDate();
     const timeout = setTimeout(() => {

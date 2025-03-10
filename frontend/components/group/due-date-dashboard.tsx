@@ -55,7 +55,11 @@ export function GroupDueDateDashboard({
   return (
     <div className="w-full">
       <div className="w-full flex flex-row justify-center mt-2">
-        <Button onClick={handleCancel} variant="outline" className="dark:bg-slate-800 dark:border dark:border-white dark:text-white dark:hover:bg-white dark:hover:text-slate-800">
+        <Button
+          onClick={handleCancel}
+          variant="outline"
+          className="dark:bg-slate-800 dark:border dark:border-white dark:text-white dark:hover:bg-white dark:hover:text-slate-800"
+        >
           <ArrowLeft size={18} /> Back to my group
         </Button>
       </div>

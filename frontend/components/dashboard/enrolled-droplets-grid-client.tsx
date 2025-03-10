@@ -12,7 +12,7 @@ export function EnrolledDropletsGridClient({
   completedLessonIds,
   isArchived,
   enrollments,
-  dueDates
+  dueDates,
 }: {
   dropletsWithCompletion: Droplet[];
   completedLessonIds: number[];
@@ -50,9 +50,10 @@ export function EnrolledDropletsGridClient({
             isEnrolled={true}
             completedLessonIds={completedLessonIds}
             isArchived={isArchived}
-            dueDate={dueDates?.find(
-              (dueDate) => dueDate.droplet?.id === droplet.id,
-            )?.dueDate || ""}
+            dueDate={
+              dueDates?.find((dueDate) => dueDate.droplet?.id === droplet.id)
+                ?.dueDate || ""
+            }
           />
         ))}
       </ul>

@@ -38,7 +38,10 @@ export function GroupDropletTile({
               <Badge variant="default" className="text-xs">
                 {uppercaseFirstChar(droplet.focusArea)}
               </Badge>
-              <Badge variant="secondary" className="text-xs dark:bg-slate-900 dark:text-white">
+              <Badge
+                variant="secondary"
+                className="text-xs dark:bg-slate-900 dark:text-white"
+              >
                 {uppercaseFirstChar(droplet.type)}
               </Badge>
             </div>

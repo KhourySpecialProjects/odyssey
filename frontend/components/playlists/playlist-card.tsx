@@ -65,7 +65,10 @@ export function PlaylistCard({
                 <Clock size={15} className="mr-1" />
 
                 {(() => {
-                  if (DateTime.fromISO(dueDate).toISODate() == DateTime.local().toISODate()) {
+                  if (
+                    DateTime.fromISO(dueDate).toISODate() ==
+                    DateTime.local().toISODate()
+                  ) {
                     return "Due today!";
                   } else if (daysUntil > 0) {
                     return timeZone
@@ -75,12 +78,8 @@ export function PlaylistCard({
                     return "This Droplet is Late!";
                   }
                 })()}
-
-
-
               </Badge>
             )}
-
           </div>
           <CardTitle>{playlist.name}</CardTitle>
           <p className="text-sm text-muted-foreground">

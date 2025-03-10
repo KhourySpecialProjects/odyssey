@@ -123,7 +123,6 @@ export async function PlaylistsGrid({
     );
   }
 
-
   return (
     <section>
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -132,9 +131,10 @@ export async function PlaylistsGrid({
             key={playlist.id}
             playlist={playlist}
             completedLessonIds={completedLessonIds}
-            dueDate={dueDates?.find(
-              (dueDate) => dueDate.playlist?.id === playlist.id,
-            )?.dueDate || ""}
+            dueDate={
+              dueDates?.find((dueDate) => dueDate.playlist?.id === playlist.id)
+                ?.dueDate || ""
+            }
           />
         ))}
       </div>
