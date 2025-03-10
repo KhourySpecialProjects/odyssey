@@ -8,9 +8,8 @@ import { getServerSession } from "next-auth";
 import { getNotesByDroplet } from "@/lib/requests/notes";
 import { getHighlightsByDroplet } from "@/lib/requests/highlights";
 import { PDFDocument } from "pdf-lib";
-import { NotesPdfButton } from "@/components/droplets/notes-pdf-button";
 import { NoteSummary } from "@/components/droplets/lessons/note-taking/note-summary";
-import { NotesSummaryClient } from "@/components/droplets/notes-summary-client";
+import { NotesManager } from "@/components/droplets/notes-manager";
 
 type Props = {
   params: Promise<Params>;
@@ -134,42 +133,14 @@ export default async function DropletRecapRoute({ params }: Props) {
       }
     }
 
-    const pdfBytes = await pdfDoc.save();
+    const initialPdfBytes = await pdfDoc.save();
 
     return (
-      <>
-        <div className="max-w-2xl mx-auto text-center">
-          <h1 className=" text-6xl font-black text-slate-900 dark:text-white">
-            Saved Notes
-          </h1>
-          <p className="dark:text-slate-300">
-            A collection of notes and highlights that you have created
-          </p>
-          <section className="pt-2">
-            <NotesPdfButton pdfBytes={pdfBytes} name="notes-summary" />
-          </section>
-        </div>
-        <div
-          className="w-full max-w-2xl py-8 mx-auto space-y-4"
-          key={droplet.id}
-        >
-          {enrollments.map((enrollment, index) => {
-            const dropletData = allNotes[index];
-            const dropletNotes = dropletData.notes;
-            const dropletHighlights = dropletData.highlights;
-            return (
-              <NotesSummaryClient
-                index={index}
-                dropletHighlights={dropletHighlights}
-                dropletNotes={dropletNotes}
-                enrollment={enrollment}
-                allNotes={allNotes}
-                key={enrollment.id}
-              />
-            );
-          })}
-        </div>
-      </>
+      <NotesManager
+        enrollments={enrollments}
+        allNotes={allNotes}
+        initialPdfBytes={initialPdfBytes}
+      />
     );
   }
 }
