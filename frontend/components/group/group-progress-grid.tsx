@@ -92,7 +92,9 @@ export function GroupProgressGrid({ group }: GroupProgressGridProps) {
   }, [group]);
 
   const getCompletionStatus = (memberId: number, dropletId: number) => {
-    return completionStatus[`${memberId}-${dropletId}`] || 0;
+    return (
+      Math.floor(completionStatus[`${memberId}-${dropletId}`] * 100) / 100 || 0
+    );
   };
 
   const getCompletedDropletColor = (completionStatus: number) => {
@@ -145,7 +147,7 @@ export function GroupProgressGrid({ group }: GroupProgressGridProps) {
                 >
                   <span
                     title={member.email}
-                    className="text-center text-sm font-semibold text-slate-950 line-clamp-3"
+                    className="text-center text-sm font-semibold text-slate-950 dark:text-slate-300 line-clamp-3"
                   >
                     {member.firstName || member.lastName
                       ? `${member.firstName ?? ""} ${member.lastName ?? ""}`.trim()
@@ -164,7 +166,7 @@ export function GroupProgressGrid({ group }: GroupProgressGridProps) {
                   >
                     <span
                       title={droplet.name}
-                      className="text-center text-sm font-semibold text-slate-950 line-clamp-3"
+                      className="text-center text-sm font-semibold text-slate-950 dark:text-slate-300 line-clamp-3"
                     >
                       {droplet.name}
                     </span>

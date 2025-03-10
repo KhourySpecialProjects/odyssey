@@ -53,9 +53,8 @@ export function PlaylistCard({
     .toFormat("MM/dd hh:mm a");
 
   return (
-    // <Link href={`/p/${playlist.slug}`}>
     <Link href={linkTo}>
-      <Card className="bg-slate-50 border-slate-200">
+      <Card className="bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-500">
         <CardHeader>
           <div className="pt-4">
             {dueDate && dueDate !== "" && daysUntil > -2 && (

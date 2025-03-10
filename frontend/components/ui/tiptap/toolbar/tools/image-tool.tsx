@@ -66,6 +66,7 @@ export default function ImageToolButton({ editor }: { editor: Editor | null }) {
             disabled ? "" : "hover:border-slate-200",
             "p-2.5 rounded-md border border-transparent",
           )}
+          title="Image"
         >
           <ImagePlusIcon size={17} />
         </button>

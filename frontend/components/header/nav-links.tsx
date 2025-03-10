@@ -3,7 +3,7 @@
 import { cn } from "@/lib/utils";
 import { NavItem } from "@/types";
 import Link from "next/link";
-import { usePathname, useSelectedLayoutSegment } from "next/navigation";
+import { usePathname } from "next/navigation";
 
 export function NavLinks({
   items,

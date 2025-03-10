@@ -22,6 +22,7 @@ export default function LoginButtons({
           <Button
             onClick={() => signIn(provider.id)}
             after={<ArrowRightIcon />}
+            className="dark:bg-slate-300"
           >
             Log in with {provider.name}
           </Button>

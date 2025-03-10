@@ -7,9 +7,10 @@ export default function UnderlineTool({ editor }: { editor: Editor }) {
     <button
       onClick={() => editor.chain().focus().toggleUnderline().run()}
       className={cn(
-        editor?.isActive("underline") ? "bg-slate-200" : "",
+        editor?.isActive("underline") ? "bg-slate-200 dark:bg-slate-700" : "",
         "p-2.5 rounded-md border border-transparent hover:border-slate-200",
       )}
+      title="Underline"
     >
       <UnderlineIcon size={17} />
     </button>

@@ -20,12 +20,16 @@ export default async function SettingsLayout({
       href: "/settings/friends",
       label: "Friends",
     },
+    {
+      href: "/settings/notes",
+      label: "Notes",
+    },
   ];
 
   return (
-    <div className="flex flex-col flex-1 min-h-screen gap-4 p-4 bg-slate-50 md:gap-8 md:p-10">
+    <div className="flex flex-col flex-1 min-h-screen gap-4 p-4 bg-slate-50 dark:bg-slate-950 md:gap-8 md:p-10">
       <div className="grid w-full max-w-6xl gap-2 mx-auto">
-        <h1 className="text-3xl font-bold">
+        <h1 className="text-3xl font-bold dark:text-white">
           {/* {navItems.find((section) => section.href === pathname)?.label}{" "} */}
           Profile
         </h1>

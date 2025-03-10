@@ -16,13 +16,20 @@ export type AnnouncementType =
   | "group"
   | "kudos";
 
+export type HighlightColor =
+  | "#f9a8d4"
+  | "#fbd38d"
+  | "#fff300"
+  | "#86efac"
+  | "#93c5fd";
+
 export type AuthorizedUserRole = {
   id: number;
   title: AuthorizedUserRoleTitle;
   authorizedUsers?: AuthorizedUser[];
 };
 
-export interface Highlight {
+export type Highlight = {
   id?: number;
   authorized_user?: AuthorizedUser;
   text: string;
@@ -30,9 +37,10 @@ export interface Highlight {
     start: number;
     end: number;
   };
-  color: string;
+  color: HighlightColor;
+  lesson?: Lesson;
   yLevel?: number;
-}
+};
 
 export type User = {
   name?: string | null;
@@ -104,6 +112,7 @@ export type Lesson = {
   type?: "general" | "setup" | "activity" | "caseStudy";
   blocks: any[];
   droplets: Droplet[];
+  droplet_lessons: DropletLesson[];
   notes: Note[];
 };
 

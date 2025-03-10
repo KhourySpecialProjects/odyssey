@@ -120,7 +120,7 @@ export function CreateDropletForm({
         <div className="w-full font-semibold text-sm py-0.5 pb-2 text-slate-400">
           Metadata
         </div>
-        <div className="w-full flex flex-col gap-3 border rounded-md border-slate-200 p-8 bg-white">
+        <div className="w-full flex flex-col gap-3 border rounded-md border-slate-200 dark:border-slate-500 p-8 bg-white dark:bg-slate-800">
           <div>
             <div className="font-semibold text-sm py-0.5 pb-2">Name</div>
             <Input
@@ -213,7 +213,7 @@ export function CreateDropletForm({
           Overview
         </div>
         <LearningObjectivesInput
-          className="w-full flex flex-col gap-3 border rounded-md border-slate-200 p-8 bg-white"
+          className="w-full flex flex-col gap-3 border rounded-md border-slate-200 dark:border-slate-500 p-8 bg-white dark:bg-slate-800"
           learningObjectives={learningObjectives}
           setLearningObjectives={setLearningObjectives}
         />

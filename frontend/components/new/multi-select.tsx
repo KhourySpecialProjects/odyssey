@@ -27,7 +27,6 @@ import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { Input } from "../ui/input";
 import { createNewTag } from "@/lib/actions";
-import { result } from "lodash";
 import { toast } from "sonner";
 
 export function MultiSelect({
@@ -75,7 +74,10 @@ export function MultiSelect({
     <>
       <Popover>
         <PopoverTrigger asChild>
-          <Button variant="outline" className={cn("h-fit", className)}>
+          <Button
+            variant="outline"
+            className={cn("h-fit dark:hover:bg-black", className)}
+          >
             {selected?.length > 0 ? (
               <>
                 <div className="gap-1 flex flex-wrap items-center justify-start w-full">
@@ -83,7 +85,7 @@ export function MultiSelect({
                     <Badge
                       variant="secondary"
                       key={option.id}
-                      className="px-1 py-0 font-normal rounded-sm"
+                      className="px-1 py-0 font-normal rounded-sm dark:text-black"
                     >
                       {option.name}
                     </Badge>

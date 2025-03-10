@@ -78,8 +78,8 @@ export default async function EditPlaylistPage({ params }: Props) {
   );
 
   return (
-    <div className="flex flex-col min-h-screen w-full bg-slate-100 px-24 items-center pt-12">
-      <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-4xl mb-7">
+    <div className="flex flex-col min-h-screen w-full bg-slate-100 dark:bg-slate-800 px-24 items-center pt-12">
+      <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-4xl mb-7">
         Edit Playlist
       </h1>
       <PlaylistForm

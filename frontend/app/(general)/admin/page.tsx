@@ -29,19 +29,21 @@ export default async function Page() {
   return (
     <div className="w-full max-w-5xl mx-auto">
       <div className="w-full p-8 mx-auto my-4 text-center max-w-7xl">
-        <h1 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
+        <h1 className="text-3xl font-bold tracking-tight light:text-slate-900 sm:text-4xl">
           Admin
         </h1>
-        <p className="mt-4 text-lg leading-normal text-slate-600 text-balance">
+        <p className="mt-4 text-lg leading-normal light:text-slate-600 text-balance">
           View Odyssey statistics and edit existing information.
         </p>
       </div>
-      <h2 className="text-lg mb-2 mt-4">Statistics</h2>
+      <h2 className="text-lg mb-2 mt-4 dark:text-slate-300">Statistics</h2>
       <Separator orientation="horizontal" className="mt-2 mb-4" />
       <CardContent className="flex flex-col items-start gap-x-8 text-center gap-y-6 sm:flex-row">
         <div className="flex items-center space-x-3">
           <div>
-            <div className="font-medium">Number of Users</div>
+            <div className="font-medium dark:text-slate-300">
+              Number of Users
+            </div>
             <div className="text-sm text-slate-500 dark:text-slate-400">
               {authorizedUsers.length}
             </div>
@@ -49,7 +51,9 @@ export default async function Page() {
         </div>
         <div className="flex items-center space-x-3">
           <div>
-            <div className="font-medium">Number of Total Droplets</div>
+            <div className="font-medium dark:text-slate-300">
+              Number of Total Droplets
+            </div>
             <div className="text-sm text-slate-500 dark:text-slate-400">
               {droplets.length}
             </div>
@@ -57,7 +61,9 @@ export default async function Page() {
         </div>
         <div className="flex items-center space-x-3">
           <div>
-            <div className="font-medium">Number of Enrollments</div>
+            <div className="font-medium dark:text-slate-300">
+              Number of Enrollments
+            </div>
             <div className="text-sm text-slate-500 dark:text-slate-400">
               {totalEnrollments}
             </div>

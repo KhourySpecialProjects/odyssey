@@ -1,7 +1,7 @@
 "use client";
 
-import { Lesson, Note } from "@/types";
-import { useState, useCallback, useEffect, useRef, useReducer } from "react";
+import { Enrollment, Lesson, Note } from "@/types";
+import { useState, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { getNotesByAuthorizedUserAndLesson } from "@/lib/requests/notes";
 import { NoteBlock } from "./note-block";
@@ -12,7 +12,6 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Trash2Icon } from "lucide-react";
 import { deleteNote } from "@/lib/actions";
 import { updateNotePosition } from "@/lib/requests/notes";
 
@@ -29,8 +28,23 @@ export function NotesBar({
 }) {
   const [notes, setNotes] = useState(initNotes);
   const [draggedNote, setDraggedNote] = useState<Note | null>(null);
-  const [draggedY, setDraggedY] = useState(0);
   const [dragOffset, setDragOffset] = useState(0);
+  const [pageHeight, setPageHeight] = useState(0);
+
+  useEffect(() => {
+    const updateHeight = () => {
+      const height =
+        document.querySelector(".lesson-wrapper")?.scrollHeight || 0;
+      setPageHeight(height);
+    };
+
+    updateHeight();
+
+    window.addEventListener("resize", updateHeight);
+    return () => {
+      window.removeEventListener("resize", updateHeight);
+    };
+  }, [draggedNote]);
 
   const fetchNotes = useCallback(async () => {
     const fetchedNotes = await getNotesByAuthorizedUserAndLesson(
@@ -43,7 +57,18 @@ export function NotesBar({
   const handleDragMove = useCallback(
     (e: MouseEvent) => {
       if (!draggedNote) return;
-      const newPosition = e.pageY - dragOffset;
+      let newPosition = e.pageY - dragOffset;
+
+      if (newPosition < -100) {
+        newPosition = -100;
+      }
+
+      if (pageHeight && newPosition > pageHeight - 450) {
+        newPosition = pageHeight - 450;
+      }
+
+      console.log(pageHeight);
+      console.log(newPosition);
 
       setNotes((prev) =>
         prev.map((note) =>
@@ -86,7 +111,6 @@ export function NotesBar({
     e.preventDefault();
     setDraggedNote(note);
     setDragOffset(e.pageY - note.positionY);
-    setDraggedY(e.pageY);
   };
 
   useEffect(() => {
@@ -105,6 +129,7 @@ export function NotesBar({
   const [mousePositionX, setMousePositionX] = useState(0);
   const [selectedNote, setSelectedNote] = useState(false);
   const [noteDisabled, setNoteDisabled] = useState(false);
+  const [focused, setFocused] = useState<number | null>(null);
 
   if (!enrollmentId) {
     enrollmentId = "";
@@ -129,15 +154,18 @@ export function NotesBar({
       setSelectedNote(true);
       return;
     }
-    if (selectedNote === false) {
-      // Calculate percentage from top of container
-      //setMousePositionY(((e.clientY - rect.top) / rect.height) * 100);
-      setMousePositionY(e.pageY);
 
+    if (selectedNote === false) {
       const rect = e.currentTarget.getBoundingClientRect();
+      const scrollTop = window.scrollY || document.documentElement.scrollTop;
+      const notesBarTop = rect.top + scrollTop;
+
+      // Calculate the actual click position relative to the notes bar
+      const clickY = e.clientY + scrollTop - notesBarTop;
+      setMousePositionY(clickY);
+
       const rightOffset = ((rect.right - e.clientX) / rect.width) * 100;
-      setMousePositionX(100 - rightOffset); // Position from left edge
-      //setMousePositionX(e.pageX);
+      setMousePositionX(100 - rightOffset);
       setDialogOpen(!dialogOpen);
     }
     setSelectedNote(false);
@@ -148,22 +176,26 @@ export function NotesBar({
       setDialogOpen(false);
       setNoteDisabled(true);
       //If we want to add input box before Note is created. Better response time.
-      /*const newNote: Note = {
-                id: 0,
-                content: "",
-                lesson: lesson,
-                enrollment: {} as Enrollment,
-                positionY: mousePositionY
-            }
-            const tempNotes = notes
-            tempNotes.push(newNote);
-            setNotes(tempNotes)*/
+      const newNote: Note = {
+        id: 0,
+        content: "",
+        lesson: lesson,
+        enrollment: {} as Enrollment,
+        positionY: mousePositionY - 300,
+      };
+      const tempNotes = notes;
+      tempNotes.push(newNote);
+      setNotes(tempNotes);
 
       const enrollment = await getEnrollByID(String(enrollmentId));
-      const result = await createNote(lesson, enrollment, mousePositionY);
+      const result = await createNote(lesson, enrollment, mousePositionY - 300);
+
       if (result.success) {
-        const note = await fetchNotes();
+        await fetchNotes();
+      } else {
+        console.error("Failed to create note:", result.error);
       }
+
       setNoteDisabled(false);
     };
     handleAddNote();
@@ -196,29 +228,31 @@ export function NotesBar({
 
   return (
     <>
-      <div className={`right-[10%] text-center mt-5`}>
+      <div className={`text-center mt-5`}>
         <h1 className="text-2xl font-extrabold ">My Notes</h1>
       </div>
+
       <div
-        className="space-y-4 w-full h-full relative cursor-pointer"
-        onClick={handleMouseClick}
+        className="space-y-4 w-full relative cursor-pointer notes-bar"
+        onClick={(e) => handleMouseClick(e)}
+        style={{ height: pageHeight + "px" }}
       >
         <div
-          className={`absolute z-50`}
+          className={`absolute z-[100]`}
           style={{
-            top: `${mousePositionY - 90}px`,
+            top: `${mousePositionY - 60}px`,
             left: `${mousePositionX}%`,
             position: "absolute",
           }}
         >
           <Popover open={dialogOpen}>
             <PopoverTrigger disabled={false}></PopoverTrigger>
-            <PopoverContent className="w-max p-0">
+            <PopoverContent className="w-max p-0 z-[100]">
               <div className="p-0">
                 <Button
                   size="sm"
                   onClick={handleAddNote}
-                  className="justify-center bg-white text-slate-600 hover:bg-slate-600 hover:text-white"
+                  className="justify-center bg-white text-slate-600 hover:bg-slate-600 hover:text-white z-[100] dark:bg-slate-700 dark:text-white border dark:border-white"
                 >
                   Create a Note?
                 </Button>
@@ -230,31 +264,28 @@ export function NotesBar({
         {notes.map((note) => (
           <div
             key={note.id}
-            className={`absolute w-full transform -translate-y-1/2  transition-transform ${
-              draggedNote?.id === note.id ? "cursor-grabbing" : ""
-            }`}
+            className={`absolute w-full transform -translate-y-1/2  transition-transform 
+                ${draggedNote?.id === note.id ? "cursor-grabbing" : ""}
+                ${focused === note.id ? "z-20" : "z-0"}`}
             style={{
-              top: `${note.positionY}px`,
+              top: `${note.positionY + 195}px`,
+              //top: `${Math.max(0, Math.min(note.positionY, window.innerHeight - 100))}px`,
               transform: `translateY(-50%)`,
             }}
             onMouseDown={(e) => handleDragStart(note, e)}
           >
-            <div className="flex flex-row justify-center items-center">
+            <div
+              className={`flex flex-row justify-center items-center 
+                  ${!focused || focused === note.id ? "opacity-100" : "opacity-30"}
+                  ${draggedNote?.id !== note.id ? "scale-100" : "scale-105"}`}
+            >
               <NoteBlock
                 note={note}
                 onUpdate={fetchNotes}
                 disabled={noteDisabled}
+                onDelete={handleDeleteNote}
+                onFocus={setFocused}
               />
-              <Button
-                className="px-auto mb-1 bg-red-700 p-0 hover:bg-red-900 trash-icon"
-                variant="default"
-                size="sm"
-                onClick={() => {
-                  handleDeleteNote(note.id);
-                }}
-              >
-                <Trash2Icon className="cursor-pointer text-white" size={30} />
-              </Button>
             </div>
           </div>
         ))}

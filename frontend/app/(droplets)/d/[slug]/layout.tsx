@@ -84,7 +84,7 @@ export default async function RootLayout({ params, children }: Props) {
         authorizedUser={authorizedUser}
         completedLessonIds={completedLessonIds}
       />
-      <main className="flex-1 w-full ">{children}</main>
+      <main className="flex-1 w-full">{children}</main>
     </div>
   );
 }

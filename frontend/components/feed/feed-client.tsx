@@ -43,10 +43,10 @@ export function FeedClient({
 
   return (
     <section>
-      <div className="p-4 rounded-md bg-slate-100">
+      <div className="rounded-md ">
         {paginatedAnnouncements.length > 0 ? (
           <>
-            <ul className="divide-y divide-slate-200 dark:divide-slate-700 md:space-y-4">
+            <ul className="w-[75%] mx-auto grid gap-4 grid-cols-1 auto-rows-fr">
               {paginatedAnnouncements.map((post) => (
                 <FeedBlock
                   key={post.id}
@@ -55,8 +55,10 @@ export function FeedClient({
                 />
               ))}
             </ul>
-            <hr className="h-px my-4 bg-gray-200 border-0 dark:bg-gray-700"></hr>
-            <div className="flex justify-end items-center mt-4">
+            {totalPages != 1 && (
+              <hr className="h-px my-4 bg-gray-200 border-0 dark:bg-gray-700"></hr>
+            )}
+            <div className="flex justify-end items-center mt-4 pb-4">
               <div className="flex gap-2">
                 <Button
                   size="sm"

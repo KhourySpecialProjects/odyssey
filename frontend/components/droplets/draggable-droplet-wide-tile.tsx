@@ -51,7 +51,7 @@ export default function DraggableDropletWideTile({
         }
       }}
       className={cn(
-        "relative transition-colors border rounded-md border-slate-200 hover:border-slate-300 bg-slate-50",
+        "relative transition-colors border rounded-md border-slate-200 dark:border-slate-500 hover:border-slate-300 bg-slate-50 dark:bg-slate-800",
         isDragging && "opacity-50",
       )}
     >
@@ -64,10 +64,13 @@ export default function DraggableDropletWideTile({
             {droplet.status === "draft" && (
               <Badge variant="destructive">Draft</Badge>
             )}
-            <Badge variant="default">
+            <Badge variant="default" className="dark:bg-purple-800">
               {uppercaseFirstChar(droplet.focusArea)}
             </Badge>
-            <Badge variant="secondary">
+            <Badge
+              variant="secondary"
+              className="dark:bg-slate-700 dark:text-white"
+            >
               {uppercaseFirstChar(droplet.type)}
             </Badge>
             {droplet.tags?.map((tag: any) => (
@@ -77,7 +80,7 @@ export default function DraggableDropletWideTile({
             ))}
           </div>
 
-          <span className="block w-full text-xl font-black text-slate-950 place-self-end pt-2 pl-1">
+          <span className="block w-full text-xl font-black dark:text-slate-300 text-slate-950 place-self-end pt-2 pl-1">
             {droplet.name}
           </span>
         </div>

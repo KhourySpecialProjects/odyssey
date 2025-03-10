@@ -47,7 +47,7 @@ export async function EnrolledDropletsGrid() {
 
   if (!dropletsWithCompletion || dropletsWithCompletion.length === 0) {
     return (
-      <Message className="mb-8 border border-dashed rounded-md border-slate-200">
+      <Message className="mb-8 border border-dashed rounded-md border-slate-200 dark:bg-slate-800 dark:border-slate-500">
         <MessageHeader subtitle="No Results" title="No Enrolled Droplets" />
         <MessageDescription>
           You haven&apos;t enrolled in any Droplets yet.

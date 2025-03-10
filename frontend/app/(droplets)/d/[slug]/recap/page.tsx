@@ -1,7 +1,7 @@
 import { DropletTile } from "@/components/droplets/droplet-tile";
 import { getDropletBySlug, getDroplets } from "@/lib/requests/droplet";
 import { Droplet } from "@/types";
-import { GoalIcon, Link2Icon } from "lucide-react";
+import { GoalIcon, Link2Icon, FileTextIcon } from "lucide-react";
 import { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -11,6 +11,11 @@ import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
 import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
 import { getServerSession } from "next-auth";
 import { CompletedDropletBlock } from "@/components/droplets/completed-droplet-block";
+import { getNotesByDroplet } from "@/lib/requests/notes";
+import { getHighlightsByDroplet } from "@/lib/requests/highlights";
+import { NotesContainer } from "@/components/droplets/notes-container";
+import { NotesPdfButton } from "@/components/droplets/notes-pdf-button";
+import { NoteSummary } from "@/components/droplets/lessons/note-taking/note-summary";
 
 type Props = {
   params: Promise<Params>;
@@ -83,9 +88,7 @@ export default async function DropletRecapRoute({ params }: Props) {
     populate: { tags: { populate: "*" } },
   });
 
-  let enrollID: string = "";
   const session = await getServerSession();
-
   if (session?.user?.email) {
     const user = await getAuthorizedUserByEmail(session.user.email);
     const enrollments = await getEnrollmentsByAuthorizedUser(user.id, {
@@ -103,13 +106,28 @@ export default async function DropletRecapRoute({ params }: Props) {
       },
     });
 
+    const authUser = await getAuthorizedUserByEmail(user.email);
+    let enrollID: string = "";
+    const highlights = await getHighlightsByDroplet(authUser.id, droplet.id);
+    const notes = await getNotesByDroplet(authUser.id, droplet.id);
+    const filteredHighlights = highlights.filter(
+      (highlight) =>
+        !notes.some((lesson) => lesson.highlight?.id === highlight.id),
+    );
+
     const enrollment = enrollments.find((e) => e.droplet.id === droplet.id);
 
     if (enrollment) {
       enrollID = enrollment.id;
     }
 
-    const authUser = await getAuthorizedUserByEmail(user.email);
+    const allNotes = {
+      dropletId: enrollment?.droplet.id || 1,
+      notes: notes,
+      highlights: filteredHighlights,
+    };
+
+    const pdfBytes = await NoteSummary({ filteredHighlights, notes, droplet });
 
     return (
       <>
@@ -128,23 +146,25 @@ export default async function DropletRecapRoute({ params }: Props) {
           )}
 
         <div className="max-w-2xl mx-auto">
-          <h1 className="mt-3 text-6xl font-black text-slate-900">Recap</h1>
+          <h1 className="mt-3 text-6xl font-black text-slate-900 dark:text-white">
+            Recap
+          </h1>
         </div>
         <div className="w-full max-w-2xl py-8 mx-auto space-y-8 md:space-y-12">
           <section>
-            <h2 className="text-2xl font-bold text-slate-900">
+            <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
               Learning Objectives
             </h2>
-            <p className="text-slate-500">
+            <p className="text-slate-500 dark:text-slate-300">
               Now that you have completed this Droplet, you should:
             </p>
 
-            <div className="mt-4 border rounded-md bg-slate-50 border-slate-200">
-              <ul className="flex flex-col divide-y divide-slate-200">
+            <div className="mt-4 border rounded-md bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-500">
+              <ul className="flex flex-col divide-y divide-slate-200 dark:divide-slate-500">
                 {droplet.learningObjectives.map((objective) => (
                   <li
                     key={objective.id}
-                    className="inline-flex items-center gap-2 px-4 py-3 leading-snug"
+                    className="inline-flex items-center gap-2 px-4 py-3 leading-snug dark:text-slate-300"
                   >
                     <GoalIcon className="w-5 h-5 mr-0.5 shrink-0" />
                     {objective.objective}
@@ -154,20 +174,46 @@ export default async function DropletRecapRoute({ params }: Props) {
             </div>
           </section>
 
+          {enrollID && (
+            <section>
+              <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
+                Notes
+              </h2>
+              <p className="text-slate-500 dark:text-slate-300">
+                A collection of notes and highlights that you created throughout
+                this droplet:
+              </p>
+              <section>
+                <NotesPdfButton
+                  pdfBytes={pdfBytes}
+                  name={`${droplet.name.replace(/\s/g, "")}-notes`}
+                />
+              </section>
+              <NotesContainer
+                allNotes={allNotes}
+                dropletHighlights={filteredHighlights}
+                dropletNotes={notes}
+                mappedLessons={droplet.droplet_lessons}
+              />
+            </section>
+          )}
+
           {droplet.nextSteps && droplet.nextSteps.length > 0 ? (
             <section>
-              <h2 className="text-2xl font-bold text-slate-900">Next Steps</h2>
-              <p className="text-slate-500">
+              <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
+                Next Steps
+              </h2>
+              <p className="text-slate-500 dark:text-slate-300">
                 To further your understanding, we recommend exploring:
               </p>
 
-              <div className="mt-4 border rounded-md bg-slate-50 border-slate-200">
-                <ul className="flex flex-col divide-y divide-slate-200">
+              <div className="mt-4 border rounded-md bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-500">
+                <ul className="flex flex-col divide-y divide-slate-200 dark:divide-slate-500">
                   {droplet.nextSteps.map((resource) => (
                     <li key={resource.id}>
                       <Link
                         href={resource.url}
-                        className="inline-flex items-center gap-2 px-4 py-3 leading-snug transition-colors hover:text-sky-700"
+                        className="inline-flex items-center gap-2 px-4 py-3 dark:text-slate-300 leading-snug transition-colors hover:text-sky-700"
                       >
                         <Link2Icon className="w-5 h-5 mr-0.5 shrink-0" />
                         {resource.label ?? resource.url}
@@ -181,10 +227,10 @@ export default async function DropletRecapRoute({ params }: Props) {
 
           {dropletRecommendations && dropletRecommendations.length > 0 ? (
             <section>
-              <h2 className="text-2xl font-bold text-slate-900">
+              <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
                 Extend Your Odyssey
               </h2>
-              <p className="text-slate-500">
+              <p className="text-slate-500 dark:text-slate-300">
                 Have you explored these Droplets yet?
               </p>
 

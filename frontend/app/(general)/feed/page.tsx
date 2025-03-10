@@ -25,7 +25,7 @@ export default async function FeedPage() {
       </div>
       <div className="flex flex-row items-start gap-4 px-4">
         <div className="flex justify-center w-1/4 text-center">
-          <div className=" bg-slate-100 rounded-md p-4">
+          <div className="dark:bg-slate-800 bg-slate-100 rounded-md p-4">
             <FriendRequests
               noProfile={true}
               friendsPerPage={5}

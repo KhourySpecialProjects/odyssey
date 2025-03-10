@@ -17,7 +17,7 @@ export default async function Page() {
   return (
     <div className="w-full max-w-5xl mx-auto">
       <div className="w-full p-8 mx-auto my-4 text-center max-w-7xl">
-        <h1 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
+        <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-4xl">
           Faculty
         </h1>
       </div>

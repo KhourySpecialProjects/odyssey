@@ -40,6 +40,7 @@ export function Search() {
       <Button
         before={<SearchIcon />}
         onClick={() => updateQueryString(tempQuery)}
+        className="dark:bg-slate-300"
       >
         <span className="sr-only md:not-sr-only">Search</span>
       </Button>

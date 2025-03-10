@@ -8,7 +8,9 @@ export async function TagFilter() {
         return {
           label: tag.name,
           value: tag.slug,
-          count: tag.droplets.length,
+          count: tag.droplets.filter(
+            (droplet) => !droplet.isHidden && droplet.status === "published",
+          ).length,
         };
       });
     },

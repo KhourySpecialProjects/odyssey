@@ -40,7 +40,6 @@ import { enrollUsers } from "@/lib/requests/groups";
 import { getGroupByID } from "@/lib/requests/groups";
 import { createGroupAnnouncement } from "@/lib/requests/feed";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
-import { X } from "lucide-react";
 import { deleteGroup } from "@/lib/actions";
 
 const SEMESTER_OPTIONS: GroupSemester[] = [
@@ -285,7 +284,6 @@ export function GroupManagementForm({
   };
 
   const handleDropletReorder = (reorderedDroplets: Droplet[]) => {
-    console.debug("  --> Group Mgmt - reordering droplets ", reorderedDroplets);
     const updatedDroplets = reorderedDroplets.map((droplet, index) => ({
       ...droplet,
       order: index,
@@ -295,6 +293,7 @@ export function GroupManagementForm({
   };
 
   const handleGroupPost = async () => {
+    setIsOpen(false);
     try {
       if (existingGroup) {
         await createGroupAnnouncement(
@@ -309,7 +308,6 @@ export function GroupManagementForm({
   };
 
   const handleDropletRemove = (dropletId: number) => {
-    console.debug("  --> Group Mgmt - removing droplet ", dropletId);
     const currentDroplets = form.getValues("droplets") || [];
     const updatedDroplets = currentDroplets.filter((d) => d.id !== dropletId);
     form.setValue("droplets", updatedDroplets);
@@ -317,10 +315,6 @@ export function GroupManagementForm({
   };
 
   const handlePlaylistReorder = (reorderedPlaylists: Playlist[]) => {
-    console.debug(
-      "  --> Group Mgmt - reordering playlist ",
-      reorderedPlaylists,
-    );
     const updatedPlaylists = reorderedPlaylists.map((playlist, index) => ({
       ...playlist,
       order: index,
@@ -330,7 +324,6 @@ export function GroupManagementForm({
   };
 
   const handlePlaylistRemove = (playlistId: number) => {
-    console.debug("  --> Group Mgmt - removing playlist ", playlistId);
     const currentPlaylists = form.getValues("playlists") || [];
     const updatedPlaylists = currentPlaylists.filter(
       (p) => p.id !== playlistId,
@@ -341,7 +334,6 @@ export function GroupManagementForm({
   };
 
   const handleMemberRemove = (emailToRemove: string) => {
-    console.debug("  --> Group Mgmt - removing member ", emailToRemove);
     const currentMembers = form.getValues("members") || [];
     const updatedMembers = currentMembers.filter(
       (m) => m.email !== emailToRemove,
@@ -582,14 +574,19 @@ export function GroupManagementForm({
               onRemove={handlePlaylistRemove}
             />
           ) : (
-            <div className="p-8 text-center text-slate-500 border border-dashed rounded-lg">
+            <div className="p-8 text-center text-slate-500 border border-dashed dark:border-slate-500 rounded-lg">
               No playlists have been added to this group yet
             </div>
           )}
         </ContentSection>
 
         <div className="flex justify-end gap-4">
-          <Button type="button" variant="outline" onClick={handleCancel}>
+          <Button
+            type="button"
+            variant="outline"
+            className="dark:text-slate-300"
+            onClick={handleCancel}
+          >
             Cancel
           </Button>
           {/* <Button variant="destructive" className="gap-2" onClick={handleDelete}>
@@ -600,6 +597,7 @@ export function GroupManagementForm({
             type="submit"
             disabled={isSubmitting}
             onClick={() => setIsOpen(true)}
+            className="dark:bg-slate-100"
           >
             {isSubmitting
               ? "Saving..."
@@ -618,7 +616,14 @@ export function GroupManagementForm({
 
               <div className="flex flex-col gap-4 mt-4">
                 <Button onClick={handleGroupPost}>Share</Button>
-                <Button onClick={() => router.back()}>Not Now</Button>
+                <Button
+                  onClick={() => {
+                    setIsOpen(false);
+                    router.back();
+                  }}
+                >
+                  Not Now
+                </Button>
               </div>
             </DialogContent>
           </Dialog>

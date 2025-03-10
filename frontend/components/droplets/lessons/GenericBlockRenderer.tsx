@@ -5,19 +5,21 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import hljs from "highlight.js";
-import { Highlight } from "@/types";
-import { Highlighter, X, CircleHelp, Pen, NotebookPen } from "lucide-react";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
+import { Highlight, HighlightColor } from "@/types";
+import { HighlightDropdown } from "./highlight-dropdown";
+import "katex/dist/katex.min.css";
+import katex from "katex";
 
 interface GenericBlockRendererProps {
   block: any;
   highlights: Highlight[];
-  onHighlight: (highlight: Highlight) => void;
+  onHighlight: (highlight: Highlight, isWithNote?: boolean) => void;
   onDeleteHighlight: (highlightId: number) => void;
   onNote: (notePos: number, text: string) => void;
   genericBlocks: number[];
   enrollmentId: string | undefined;
+  expanded: boolean;
+  setExpanded: (expanded: boolean) => void;
 }
 
 const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
@@ -28,6 +30,8 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
   onNote,
   genericBlocks,
   enrollmentId,
+  expanded,
+  setExpanded,
 }) => {
   const contentRef = useRef<HTMLDivElement>(null);
   const popupRef = useRef<{
@@ -46,10 +50,71 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
   const savedSelectionRef = useRef<Range | null>(null);
   const [mousePositionY, setMousePositionY] = useState(0);
   const [isHighlighting, setIsHighlighting] = useState(false);
-  const [selectedColor, setSelectedColor] = useState("#fff300");
+  const [selectedColor, setSelectedColor] = useState<HighlightColor>("#fff300");
+  const currentSelectionRef = useRef<Range | null>(null);
+
+  const processLatex = (content: string) => {
+    content = content.replace(/\$\$(.*?)\$\$/g, (match, latex) => {
+      try {
+        return `<div class="katex-block" data-latex="${encodeURIComponent(latex)}">${latex}</div>`;
+      } catch (e) {
+        console.error("Failed to process block LaTeX:", e);
+        return match;
+      }
+    });
+
+    content = content.replace(/\$(.*?)\$/g, (match, latex) => {
+      try {
+        return `<span class="katex-inline" data-latex="${encodeURIComponent(latex)}">${latex}</span>`;
+      } catch (e) {
+        console.error("Failed to process inline LaTeX:", e);
+        return match;
+      }
+    });
+
+    return content;
+  };
 
   useEffect(() => {
     if (contentRef.current) {
+      const processedContent = processLatex(block.content);
+      contentRef.current.innerHTML = processedContent;
+
+      const inlineLatexElements =
+        contentRef.current.querySelectorAll(".katex-inline");
+      inlineLatexElements.forEach((element) => {
+        const latex = element.textContent || "";
+        try {
+          const mathElement = document.createElement("span");
+          mathElement.innerHTML = katex.renderToString(latex, {
+            throwOnError: false,
+            displayMode: false,
+          });
+          element.parentNode?.replaceChild(mathElement, element);
+        } catch (e) {
+          console.error("Failed to render inline LaTeX:", e);
+        }
+      });
+
+      const blockLatexElements =
+        contentRef.current.querySelectorAll(".katex-block");
+      blockLatexElements.forEach((element) => {
+        const latex = decodeURIComponent(
+          element.getAttribute("data-latex") || "",
+        );
+        try {
+          const mathElement = document.createElement("div");
+          mathElement.innerHTML = katex.renderToString(latex, {
+            throwOnError: false,
+            displayMode: true,
+          });
+          element.parentNode?.replaceChild(mathElement, element);
+        } catch (e) {
+          console.error("Failed to render block LaTeX:", e);
+        }
+      });
+
+      // Continue with existing code highlighting
       const codeBlocks = contentRef.current.querySelectorAll("pre code");
       codeBlocks.forEach((codeBlock) => {
         if (codeBlock.classList.contains("language-plaintext")) {
@@ -112,6 +177,7 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
           const span = document.createElement("span");
           span.style.borderRadius = "8px";
           span.style.backgroundColor = highlight.color;
+          span.style.color = "black";
 
           try {
             range.surroundContents(span);
@@ -127,6 +193,7 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
     isHighlighting,
     contentRef,
     popupRef,
+    onNote,
     savedSelectionRef,
     selectedColor,
     mousePositionY,
@@ -144,7 +211,11 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
   };
 
   const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
-    setMousePositionY(e.pageY + 75);
+    const rect = e.currentTarget.getBoundingClientRect();
+    const scrollTop = window.scrollY || document.documentElement.scrollTop;
+    const notesBarTop = rect.top + scrollTop;
+    const clickY = e.clientY + scrollTop - notesBarTop;
+    setMousePositionY(clickY);
   };
 
   const handleMouseUp = () => {
@@ -155,8 +226,23 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
 
     let range = selection.getRangeAt(0);
     savedSelectionRef.current = range.cloneRange();
+    //currentSelectionRef.current = range.cloneRange();
 
-    const text = selection.toString();
+    // const span = document.createElement("span");
+    //     //span.style.borderRadius = "8px";
+    //     span.style.backgroundColor = "rgb(0, 120, 215)";
+    //     span.style.color = "white"
+    //     span.style.userSelect = "text";
+    //     span.style.padding = "5px 0"; // Add vertical padding
+    //     currentSelectionRef.current.surroundContents(span);
+
+    let text = selection.toString();
+    const latexParent = range.startContainer.parentElement?.closest(
+      ".katex-inline, .katex-block",
+    );
+    if (latexParent) {
+      text = decodeURIComponent(latexParent.getAttribute("data-latex") || text);
+    }
     if (text.length > 0 && contentRef.current) {
       const blockOffset = getTextOffset(
         contentRef.current,
@@ -218,41 +304,7 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
     }
   };
 
-  // const renderHighlightedText = (text: string) => {
-  //   let result = "";
-  //   let lastIndex = 0;
-
-  //   // Sort highlights by position to ensure correct order
-  //   const sortedHighlights = [...highlights].sort((a, b) => a.position.start - b.position.start);
-
-  //   sortedHighlights.forEach((highlight) => {
-  //     if (!highlight.position?.start || !highlight.position?.end) return;
-
-  //     // Append text before highlight
-  //     result += text.slice(lastIndex, highlight.position.start);
-  //     console.log("first: ", highlight.position.start, "end:")
-  //     console.log("start: ", text.slice(lastIndex, highlight.position.start))
-
-  //     // Wrap highlighted text
-  //     result += `<span style="background-color: ${highlight.color}; border-radius: 12px;">` +
-  //               text.slice(highlight.position.start, highlight.position.end) +
-  //               `</span>`;
-  //     console.log("middle", `<span style="background-color: ${highlight.color}; border-radius: 12px;">` +
-  //     text.slice(highlight.position.start, highlight.position.end) +
-  //     `</span>`)
-
-  //     // Update lastIndex to track the end of the last highlight
-  //     lastIndex = highlight.position.end;
-  //   });
-
-  //   // Append any remaining text after the last highlight
-  //   result += text.slice(lastIndex);
-  //   console.log("end", text.slice(lastIndex))
-
-  //   return { __html: result };
-  // };
-
-  const handlePopupHighlight = () => {
+  const handlePopupHighlight = (isWithNote?: boolean) => {
     if (!contentRef.current || !popupRef.current.savedRange) {
       return;
     }
@@ -265,14 +317,17 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
     const endOffset = range.endOffset;
 
     if (text) {
-      onHighlight({
-        text,
-        position: {
-          start: blockOffset + startOffset,
-          end: blockOffset + endOffset,
+      onHighlight(
+        {
+          text,
+          position: {
+            start: blockOffset + startOffset,
+            end: blockOffset + endOffset,
+          },
+          color: selectedColor,
         },
-        color: selectedColor,
-      });
+        isWithNote,
+      );
       popupRef.current.highlightSpan = null;
     }
 
@@ -282,7 +337,7 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
     range.surroundContents(span);
   };
 
-  const handleApplyColor = (color: string) => {
+  const handleApplyColor = (color: HighlightColor) => {
     if (
       popupRef.current.highlightSpan &&
       popupRef.current.highlightSpan.textContent
@@ -314,111 +369,31 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
   };
 
   const handleCreateNote = () => {
-    handlePopupHighlight();
+    handlePopupHighlight(true);
     onNote(mousePositionY, popupRef.current.savedRange?.toString() || "");
+    console.log(
+      "this is the highlight noted ",
+      popupRef.current.savedRange?.toString(),
+    );
   };
 
   return (
     <div className="">
+      {/* {block.id === genericBlocks[0] && enrollmentId && (
+        <div className="fixed top-36 sm:top-32 xs:top-32 bg-sky-100 w-16 h-36 right-4 z-20"></div>
+      )} */}
       {block.id === genericBlocks[0] && enrollmentId && (
-        <div className="fixed top-8 sm:top-4 xs:top-4 right-0 lg:right-1/4 z-30 transform -translate-x-1/2 bg-blue-100 p-2 rounded shadow-lg">
-          <div className="relative group">
-            <CircleHelp className="cursor-pointer" />
-            <div className="absolute left-0 transform -translate-x-[100%] top-full mt-2 w-max gap-2 bg-white p-4 rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center pointer-events-none">
-              <p>Highlighting Instructions:</p>
-              <ul className="list-disc pl-4">
-                <li>
-                  Hover over the <Pen className="inline-block w-4 h-4" /> icon
-                  to see actions.
-                </li>
-                <li>Use the toggle to switch highlighting mode.</li>
-                <li>In highlighting mode, selected text is highlighted.</li>
-                <li>
-                  Press the <Highlighter className="inline-block w-4 h-4" />{" "}
-                  icon to highlight text.
-                </li>
-                <li>
-                  Press the <X className="inline-block w-4 h-4" /> icon to
-                  delete a highlight.
-                </li>
-                <li>
-                  Press the <NotebookPen className="inline-block w-4 h-4" />{" "}
-                  icon to add a note to text.
-                </li>
-                <li>Click a colored circle to change highlight color.</li>
-              </ul>
-            </div>
-          </div>
-        </div>
-      )}
-      {block.id === genericBlocks[0] && enrollmentId && (
-        <div className="fixed lg:top-16 xs:top-28 sm:top-28 md:top-28 z-20 right-0 lg:right-1/4 transform -translate-x-1/2 bg-blue-100 p-2 rounded shadow-lg group">
-          <div className="relative">
-            <Pen className="cursor-pointer" />
-
-            <div className="absolute left-1/2 transform -translate-x-1/2 top-full mt-2 w-max gap-2 bg-white p-4 rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center">
-              <div title="Highlighting Mode">
-                <Switch
-                  id="public"
-                  checked={isHighlighting}
-                  onCheckedChange={setIsHighlighting}
-                  className={`bg-black`}
-                />
-                <Label htmlFor="public" />
-              </div>
-
-              <button
-                title="Add Highlight"
-                onClick={handlePopupHighlight}
-                className="relative group"
-              >
-                <Highlighter size={30} />
-              </button>
-
-              <button
-                title="Delete Highlight"
-                onClick={handlePopupDelete}
-                className="relative group"
-              >
-                <X size={30} />
-              </button>
-
-              <button
-                title="Take Note"
-                onClick={handleCreateNote}
-                className="relative group"
-              >
-                <NotebookPen size={30} />
-              </button>
-
-              <button
-                title="Highlight Pink"
-                onClick={() => handleApplyColor("#f9a8d4")}
-                className={`w-6 h-6 rounded-full ${selectedColor === "#f9a8d4" ? "border-2 border-black" : "border border-gray-300"} bg-[#f9a8d4]`}
-              />
-              <button
-                title="Highlight Orange"
-                onClick={() => handleApplyColor("#fbd38d")}
-                className={`w-6 h-6 rounded-full ${selectedColor === "#fbd38d" ? "border-2 border-black" : "border border-gray-300"} bg-[#fbd38d]`}
-              />
-              <button
-                title="Highlight Yellow"
-                onClick={() => handleApplyColor("#fff300")}
-                className={`w-6 h-6 rounded-full ${selectedColor === "#fff300" ? "border-2 border-black" : "border border-gray-300"} bg-[#fff300]`}
-              />
-              <button
-                title="Highlight Green"
-                onClick={() => handleApplyColor("#86efac")}
-                className={`w-6 h-6 rounded-full ${selectedColor === "#86efac" ? "border-2 border-black" : "border border-gray-300"} bg-[#86efac]`}
-              />
-              <button
-                title="Highlight Blue"
-                onClick={() => handleApplyColor("#93c5fd")}
-                className={`w-6 h-6 rounded-full ${selectedColor === "#93c5fd" ? "border-2 border-black" : "border border-gray-300"} bg-[#93c5fd]`}
-              />
-            </div>
-          </div>
-        </div>
+        <HighlightDropdown
+          selectedColor={selectedColor}
+          handleApplyColor={handleApplyColor}
+          isHighlighting={isHighlighting}
+          setIsHighlighting={() => setIsHighlighting(!isHighlighting)}
+          handlePopupHighlight={handlePopupHighlight}
+          handlePopupDelete={handlePopupDelete}
+          handleCreateNote={handleCreateNote}
+          setExpanded={setExpanded}
+          expanded={expanded}
+        />
       )}
 
       {/* Content */}
@@ -426,7 +401,7 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
         ref={contentRef}
         onMouseUp={(e) => handleMouseUp()}
         onMouseDown={(e) => handleMouseDown(e)}
-        className="mt-2 prose prose-lg prose-sky prose-table:block prose-table:overflow-x-scroll select-text"
+        className="mt-2 prose prose-lg prose-sky prose-table:block prose-code:text-inherit prose-table:overflow-x-scroll select-text dark:text-slate-300 prose-headings:text-inherit prose-strong:text-inherit"
         dangerouslySetInnerHTML={{ __html: block.content }}
       ></div>
     </div>

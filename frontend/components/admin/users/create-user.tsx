@@ -30,7 +30,9 @@ export function CreateUser() {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button after={<PlusIcon />}>Create User</Button>
+        <Button className="dark:bg-slate-300" after={<PlusIcon />}>
+          Create User
+        </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>

@@ -14,7 +14,9 @@ export function Overview({
 
   return (
     <section className="w-full max-w-2xl">
-      <h2 className="text-2xl font-bold text-slate-900">Overview</h2>
+      <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
+        Overview
+      </h2>
       <DropletOverviewInput
         updateContent={(content: string) => handleChange({ overview: content })}
         initialContent={initialContent}
