@@ -110,7 +110,7 @@ export async function DropletsGrid({
 
   if (!dropletsWithCompletion || dropletsWithCompletion.length === 0) {
     return (
-      <Message className="mb-8 border border-dashed rounded-md border-slate-200">
+      <Message className="mb-8 border border-dashed rounded-md border-slate-200 dark:border-slate-500 dark:bg-slate-800">
         <MessageHeader subtitle="No Results" title="No Droplets Found" />
         <MessageDescription>
           There are no Droplets that match &quot;{searchValue}&quot;.
@@ -133,7 +133,7 @@ export async function DropletsGrid({
     );
     if (completedDroplets.length === 0) {
       return (
-        <div className="text-black">
+        <div className="text-black dark:text-slate-300">
           You haven&apos;t completed any Droplets yet.
         </div>
       );

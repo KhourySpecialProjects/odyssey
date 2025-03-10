@@ -59,6 +59,7 @@ export function AddLesson({
         slug: response.data.attributes.slug,
         type: response.data.attributes.type || "general",
         blocks: [],
+        droplet_lessons: [],
         droplets: [
           {
             id: droplet.id,

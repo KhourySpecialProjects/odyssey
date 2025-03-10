@@ -8,7 +8,6 @@ import {
   MessageDescription,
   MessageHeader,
 } from "@/components/message";
-import { getDropletAverageRating } from "@/lib/requests/enrollment";
 import { Button } from "../ui/button";
 
 interface SortedDropletsGridProps {
@@ -85,7 +84,7 @@ export function SortedDropletsGrid({
 
   if (!sortedDroplets || sortedDroplets.length === 0) {
     return (
-      <Message className="mb-8 border border-dashed rounded-md border-slate-200">
+      <Message className="mb-8 border border-dashed rounded-md border-slate-200 dark:border-slate-500 dark:bg-slate-800">
         <MessageHeader subtitle="No Results" title="No Droplets Found" />
         <MessageDescription>
           There are no Droplets that match &quot;{searchValue}&quot;.
@@ -118,7 +117,7 @@ export function SortedDropletsGrid({
             variant="outline"
             onClick={handlePrevPage}
             disabled={currentPage === 1}
-            className={`${currentPage === 1 ? "visibility: hidden" : "visibility: visible"}`}
+            className={`${currentPage === 1 ? "visibility: hidden" : "visibility: visible"} dark:bg-slate-300 dark:text-black`}
           >
             Previous
           </Button>
@@ -127,7 +126,7 @@ export function SortedDropletsGrid({
             variant="outline"
             onClick={handleNextPage}
             disabled={currentPage === totalPages}
-            className={`${currentPage === totalPages ? "visibility: hidden" : "visibility: visible"}`}
+            className={`${currentPage === totalPages ? "visibility: hidden" : "visibility: visible"} dark:bg-slate-300 dark:text-black`}
           >
             Next
           </Button>

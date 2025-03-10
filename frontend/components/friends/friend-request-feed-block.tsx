@@ -85,7 +85,7 @@ export function FriendRequestFeedBlock({
 
         <button onClick={() => setOpen(true)}>
           <div className="flex-1 min-w-0 pl-2 overflow-hidden">
-            <p className="font-medium truncate text-slate-900 dark:text-white">
+            <p className="font-medium truncate text-slate-900 dark:text-slate-300">
               {request.firstName && request.lastName
                 ? `${request.firstName} ${request.lastName}`
                 : request.email}
@@ -96,7 +96,7 @@ export function FriendRequestFeedBlock({
 
       <div className="flex flex-row justify-center mt-2">
         <Button
-          className="bg-green-600 text-white hover:bg-green-700 mr-3 flex items-center justify-center"
+          className="bg-green-600 dark:bg-green-900 text-white hover:bg-green-700 mr-3 flex items-center justify-center"
           style={{ height: "15px", width: "50px" }}
           size="sm"
           variant="outline"
@@ -131,19 +131,21 @@ export function FriendRequestFeedBlock({
 
           <DialogContent>
             <DialogHeader>
-              <Avatar
-                variant="round"
-                className="border border-sky-800 w-12 h-12"
-              >
-                <AvatarImage src={request?.profilePhoto || undefined} />
-                <AvatarFallback>
-                  {request?.firstName ? (
-                    getInitials(request.firstName + " " + request.lastName)
-                  ) : (
-                    <User2Icon />
-                  )}
-                </AvatarFallback>
-              </Avatar>
+              <div className="flex justify-center items-center">
+                <Avatar
+                  variant="round"
+                  className="border border-sky-800 w-20 h-20 items-center"
+                >
+                  <AvatarImage src={request?.profilePhoto || undefined} />
+                  <AvatarFallback className="text-2xl">
+                    {request?.firstName ? (
+                      getInitials(request.firstName + " " + request.lastName)
+                    ) : (
+                      <User2Icon />
+                    )}
+                  </AvatarFallback>
+                </Avatar>
+              </div>
               <DialogTitle style={{ fontSize: "2rem", textAlign: "center" }}>
                 {request.firstName} {request.lastName}
               </DialogTitle>

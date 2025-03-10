@@ -7,7 +7,6 @@ import { getCurrentUser } from "./auth/session";
 import { getAuthorizedUserByEmail } from "./requests/authorized-user";
 import { getEnrollmentsByAuthorizedUser } from "./requests/enrollment";
 import { accessRequestSchema } from "./validations/access-request";
-import { BioFormSchema } from "./validations/author";
 import { AuthorizedUserSchema } from "./validations/authorized-user";
 import { DropletEnrollmentSchema } from "./validations/enrollment";
 import { reportSchema } from "./validations/report";
@@ -220,12 +219,13 @@ export async function createBugReport(formData: z.infer<typeof reportSchema>) {
       const errorMessage = `${data.error.message} (${errorPath})`;
       return { ok: false, error: errorMessage, data: null };
     }
+    return { ok: true, data };
   } catch (err) {
     console.error(err);
     return { error: "Database Error: Failed to create bug report." };
   }
 
-  redirect(formData.path + "?ts=" + Date.now());
+  // redirect(formData.path + "?ts=" + Date.now());
 }
 
 export async function updateAuthorBio(bio: string, userId: number) {

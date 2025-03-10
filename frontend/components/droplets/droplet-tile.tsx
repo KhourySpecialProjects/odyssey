@@ -97,7 +97,7 @@ export function DropletTile({
 
   if (compact) {
     return (
-      <li className="transition-colors border rounded-md border-slate-200 hover:border-slate-300 bg-slate-50">
+      <li className="transition-colors border rounded-md border-slate-200 hover:border-slate-300 bg-slate-50 dark:bg-slate-800">
         <Link
           className="relative inline-flex w-full h-full p-2"
           href={`/d/${droplet.slug}`}
@@ -114,7 +114,7 @@ export function DropletTile({
 
   if (profilePage) {
     return (
-      <li className="transition-colors border rounded-md border-slate-200 hover:border-slate-300 bg-slate-50">
+      <li className="transition-colors border rounded-md border-slate-200 hover:border-slate-300 bg-slate-50 dark:bg-slate-800 dark:border-slate-500">
         <Link
           className="relative inline-flex w-full h-full p-6"
           href={
@@ -122,7 +122,7 @@ export function DropletTile({
           }
         >
           <div className="flex flex-col items-center justify-center gap-3 w-full h-full">
-            <span className="block text-center text-3lg font-black text-slate-950">
+            <span className="block text-center text-3lg font-black text-slate-950 dark:text-slate-300">
               {droplet.name}
             </span>
           </div>
@@ -132,12 +132,11 @@ export function DropletTile({
   }
 
   return (
-    <li className="transition-colors border rounded-md border-slate-200 hover:border-slate-300 bg-slate-50 h-full">
+    <li className="transition-colors border rounded-md border-slate-200 dark:border-slate-500 hover:border-slate-300 bg-slate-50 dark:bg-slate-800 h-full p-2">
       <Button
         size="sm"
-        variant="outline"
         onClick={changeVisibility}
-        className={`${isArchived === true || isArchived === false ? "visibility: visible" : "visibility: hidden"}`}
+        className={`${isArchived === true || isArchived === false ? "visibility: visible" : "visibility: hidden"} bg-white dark:bg-slate-300`}
       >
         <div className="relative group">
           <Archive className="text-purple-800" />
@@ -190,18 +189,23 @@ export function DropletTile({
               </Badge>
             )}
 
-            <Badge variant="outline">
+            <Badge className="bg-white dark:bg-slate-300 text-black border-black pointer-events-none">
               {uppercaseFirstChar(droplet.focusArea)}
             </Badge>
-            <Badge variant="outline">{uppercaseFirstChar(droplet.type)}</Badge>
+            <Badge className="bg-white dark:bg-slate-300 text-black border-black pointer-events-none">
+              {uppercaseFirstChar(droplet.type)}
+            </Badge>
             {droplet.tags?.map((tag) => (
-              <Badge key={tag.id} variant="outline">
+              <Badge
+                key={tag.id}
+                className="bg-white dark:bg-slate-300 text-black border-black pointer-events-none"
+              >
                 {tag.name}
               </Badge>
             ))}
           </div>
 
-          <span className="block w-full text-3xl font-black text-slate-950 place-self-end">
+          <span className="block w-full text-3xl font-black text-slate-950 place-self-end dark:text-slate-300">
             {droplet.name}
           </span>
 

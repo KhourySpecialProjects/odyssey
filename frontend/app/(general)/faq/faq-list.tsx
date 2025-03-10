@@ -17,7 +17,7 @@ export function FAQList() {
             >
               <div className="flex items-center space-x-4">
                 <div className="flex-1 min-w-0">
-                  <p className="text-xl font-bold truncate text-slate-900 dark:text-white text-center">
+                  <p className="text-xl font-bold truncate text-slate-900 dark:text-slate-300 text-center">
                     {index === 0 && "When was Odyssey first created?"}
                     {index === 1 &&
                       "What was the motivation behind this website?"}
@@ -28,7 +28,7 @@ export function FAQList() {
               </div>
 
               <div
-                className={`overflow-hidden transition-[max-height] duration-300 ease-in-out text-center ${
+                className={`overflow-hidden transition-[max-height] duration-300 ease-in-out text-center dark:text-slate-300 ${
                   openIndex === index ? "max-h-96" : "max-h-0"
                 }`}
               >

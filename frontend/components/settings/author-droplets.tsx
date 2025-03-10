@@ -28,7 +28,7 @@ export function AuthorDroplets({ author }: { author: AuthorizedUser }) {
 
       <CardContent>
         {!droplets || droplets.length === 0 ? (
-          <div className="p-4 text-sm border border-dashed rounded-md border-slate-200">
+          <div className="p-4 text-sm border border-dashed rounded-md border-slate-200 dark:border-slate-500 dark:text-slate-300">
             You have no Droplets.
           </div>
         ) : (
@@ -40,7 +40,7 @@ export function AuthorDroplets({ author }: { author: AuthorizedUser }) {
         )}
       </CardContent>
 
-      <CardFooter className="px-6 py-4 border-t">
+      <CardFooter className="px-6 py-4 border-t dark:border-slate-500">
         <Button after={<ArrowRightIcon />} asChild>
           <Link href="/explore">Explore</Link>
         </Button>

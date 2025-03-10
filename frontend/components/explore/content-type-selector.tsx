@@ -25,7 +25,11 @@ export function ContentTypeSelector() {
       {contentTypes.map((type) => (
         <Button
           key={type.value}
-          variant={currentType === type.value ? "default" : "outline"}
+          className={
+            currentType === type.value
+              ? "bg-black dark:bg-black dark:text-slate-300 dark:hover:bg-black dark:border dark:border-slate-500"
+              : "bg-white hover:text-white text-black border dark:bg-slate-300 dark:hover:bg-black dark:hover:text-white"
+          }
           onClick={() => {
             router.push(`${pathname}?${createQueryString(type.value)}`);
           }}

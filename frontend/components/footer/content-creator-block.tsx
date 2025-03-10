@@ -20,7 +20,7 @@ export function ContentCreatorBlock({
       >
         <div className="flex items-center space-x-4">
           <div className="flex-1 min-w-0">
-            <p className="text-xl font-bold truncate text-slate-900 dark:text-white text-center">
+            <p className="text-xl font-bold truncate text-slate-900 dark:text-slate-300 text-center">
               {contentCreator.firstName && contentCreator.lastName
                 ? contentCreator.firstName + " " + contentCreator.lastName
                 : contentCreator.email}
@@ -47,20 +47,20 @@ export function ContentCreatorBlock({
               {contentCreator.linkedin && (
                 <Link href={contentCreator.linkedin} legacyBehavior>
                   <a target="_blank" rel="noopener noreferrer">
-                    <Linkedin />
+                    <Linkedin className="dark:text-slate-300" />
                   </a>
                 </Link>
               )}
               {contentCreator.github && (
                 <Link href={contentCreator.github} legacyBehavior>
                   <a target="_blank" rel="noopener noreferrer">
-                    <Github />
+                    <Github className="dark:text-slate-300" />
                   </a>
                 </Link>
               )}
             </div>
             {contentCreator.bio && (
-              <div className="flex justify-center pt-4">
+              <div className="flex justify-center pt-4 dark:text-slate-300">
                 {contentCreator.bio}
               </div>
             )}

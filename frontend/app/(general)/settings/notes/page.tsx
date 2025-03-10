@@ -1,0 +1,175 @@
+import { getDropletBySlug } from "@/lib/requests/droplet";
+import { Droplet } from "@/types";
+import { Metadata } from "next";
+import { notFound } from "next/navigation";
+import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
+import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
+import { getServerSession } from "next-auth";
+import { getNotesByDroplet } from "@/lib/requests/notes";
+import { getHighlightsByDroplet } from "@/lib/requests/highlights";
+import { PDFDocument } from "pdf-lib";
+import { NotesPdfButton } from "@/components/droplets/notes-pdf-button";
+import { NoteSummary } from "@/components/droplets/lessons/note-taking/note-summary";
+import { NotesSummaryClient } from "@/components/droplets/notes-summary-client";
+
+type Props = {
+  params: Promise<Params>;
+};
+
+type Params = {
+  slug: string;
+};
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const p = await params;
+  const droplet = await getDropletBySlug<Droplet>(p.slug, {
+    fields: ["*"],
+    populate: {
+      learningObjectives: { populate: "*" },
+      tags: { populate: "*" },
+      nextSteps: { populate: "*" },
+      lessons: {
+        fields: ["id", "name", "slug"],
+      },
+      droplet_lessons: {
+        populate: {
+          lesson: {
+            fields: ["id", "name", "slug"],
+          },
+        },
+      },
+    },
+  });
+
+  if (!droplet) {
+    console.error("not found");
+    return notFound();
+  }
+
+  return {
+    title: `Recap | ${droplet.name}`,
+  };
+}
+
+export default async function DropletRecapRoute({ params }: Props) {
+  const p = await params;
+  const droplet = await getDropletBySlug<Droplet>(p.slug, {
+    fields: ["*"],
+    populate: {
+      learningObjectives: { populate: "*" },
+      tags: { populate: "*" },
+      nextSteps: { populate: "*" },
+    },
+  });
+  if (!droplet) {
+    console.error("not found");
+    return notFound();
+  }
+
+  const session = await getServerSession();
+  if (session?.user?.email) {
+    const user = await getAuthorizedUserByEmail(session.user.email);
+    const enrollments = await getEnrollmentsByAuthorizedUser(user.id, {
+      populate: {
+        viewedLessons: {
+          fields: ["id", "name", "slug"],
+        },
+        droplet: {
+          populate: {
+            droplet_lessons: {
+              populate: {
+                lesson: {
+                  fields: ["id", "name", "slug"],
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    const authUser = await getAuthorizedUserByEmail(user.email);
+
+    const allNotes = await Promise.all(
+      enrollments.map(async (enrollment) => {
+        const dropletNotes = await getNotesByDroplet(
+          authUser.id,
+          enrollment.droplet.id,
+        );
+        const dropletHighlights = await getHighlightsByDroplet(
+          authUser.id,
+          enrollment.droplet.id,
+        );
+        return {
+          dropletId: enrollment.droplet.id,
+          notes: dropletNotes,
+          highlights: dropletHighlights.filter(
+            (highlight) =>
+              !dropletNotes.some(
+                (lesson) => lesson.highlight?.id === highlight.id,
+              ),
+          ),
+        };
+      }),
+    );
+
+    const pdfDoc = await PDFDocument.create();
+
+    for (let i = 0; i < enrollments.length; i++) {
+      const enrollment = enrollments[i];
+      const dropletData = allNotes[i];
+
+      const sectionPdfBytes = await NoteSummary({
+        filteredHighlights: dropletData.highlights,
+        notes: dropletData.notes,
+        droplet: enrollment.droplet,
+      });
+
+      const sectionPdfDoc = await PDFDocument.load(sectionPdfBytes);
+      const sectionPages = sectionPdfDoc.getPages();
+
+      for (let j = 0; j < sectionPages.length; j++) {
+        const [copiedPage] = await pdfDoc.copyPages(sectionPdfDoc, [j]);
+        pdfDoc.addPage(copiedPage);
+      }
+    }
+
+    const pdfBytes = await pdfDoc.save();
+
+    return (
+      <>
+        <div className="max-w-2xl mx-auto text-center">
+          <h1 className=" text-6xl font-black text-slate-900 dark:text-white">
+            Saved Notes
+          </h1>
+          <p className="dark:text-slate-300">
+            A collection of notes and highlights that you have created
+          </p>
+          <section className="pt-2">
+            <NotesPdfButton pdfBytes={pdfBytes} name="notes-summary" />
+          </section>
+        </div>
+        <div
+          className="w-full max-w-2xl py-8 mx-auto space-y-4"
+          key={droplet.id}
+        >
+          {enrollments.map((enrollment, index) => {
+            const dropletData = allNotes[index];
+            const dropletNotes = dropletData.notes;
+            const dropletHighlights = dropletData.highlights;
+            return (
+              <NotesSummaryClient
+                index={index}
+                dropletHighlights={dropletHighlights}
+                dropletNotes={dropletNotes}
+                enrollment={enrollment}
+                allNotes={allNotes}
+                key={enrollment.id}
+              />
+            );
+          })}
+        </div>
+      </>
+    );
+  }
+}

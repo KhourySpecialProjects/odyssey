@@ -51,7 +51,11 @@ export function Filter({
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button variant="outline" size="sm" className="gap-0.25 border-dashed">
+        <Button
+          variant="outline"
+          size="sm"
+          className="gap-0.25 border-dashed dark:text-slate-300"
+        >
           <PlusCircleIcon className="w-4 h-4 mr-2" />
 
           {label}
@@ -76,7 +80,7 @@ export function Filter({
                       <Badge
                         variant="secondary"
                         key={option.value}
-                        className="px-1 font-normal rounded-sm"
+                        className="px-1 font-normal rounded-sm dark:bg-slate-800"
                       >
                         {option.label}
                       </Badge>

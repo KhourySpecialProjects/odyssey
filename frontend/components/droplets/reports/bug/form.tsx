@@ -22,7 +22,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { createBugReport } from "@/lib/actions";
 import { reportSchema } from "@/lib/validations/report";
 import { ArrowRightIcon, LoaderIcon } from "lucide-react";
-import { usePathname } from "next/navigation";
+import { redirect, usePathname } from "next/navigation";
 
 type Props = {
   name?: string | null;
@@ -54,6 +54,7 @@ export function ReportBugForm({ name, email, onSuccess }: Props) {
         } else {
           onSuccess();
           toast.success("Your report has been successfully submitted.");
+          redirect(values.path + "?ts=" + Date.now());
         }
       });
     });

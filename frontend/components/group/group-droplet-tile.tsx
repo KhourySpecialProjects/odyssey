@@ -66,8 +66,8 @@ export function GroupDropletTile({
               </div>
             )}
           </div>
-          <CardTitle>{droplet.name}</CardTitle>
-          <p className="text-sm text-muted-foreground">
+          <CardTitle className="dark:text-slate-300">{droplet.name}</CardTitle>
+          <p className="text-sm text-muted-foreground dark:text-slate-400">
             {droplet.lessons?.length || 0} lessons
           </p>
         </CardHeader>

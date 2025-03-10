@@ -124,7 +124,9 @@ export async function UserPlaylistsGrid() {
     <div className="space-y-8">
       {customPlaylists.length > 0 && (
         <section>
-          <h2 className="text-xl font-semibold mb-4">Custom Playlists</h2>
+          <h2 className="text-xl font-semibold mb-4 dark:text-slate-300">
+            Custom Playlists
+          </h2>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
             {customPlaylists.map((playlist: Playlist) => (
               <PlaylistCard

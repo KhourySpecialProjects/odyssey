@@ -101,7 +101,7 @@ export function Sidebar({
 
   const classes = {
     link: "flex items-center p-2 rounded-lg text-slate-900 dark:text-white hover:bg-slate-100 dark:hover:bg-slate-700 group transition-colors",
-    activeLink: "font-bold bg-slate-200 [&>svg]:text-sky-700 text-sky-700",
+    activeLink: "font-bold dark:bg-slate-500 light:bg-sky-100",
   };
 
   // Handle window resize
@@ -169,7 +169,6 @@ export function Sidebar({
   };
 
   const handleLessonDelete = (lessonId: string) => {
-    console.log("deleting lesson from frontend");
     const newLessons = lessons.filter(
       (lesson) => lesson.id.toString() !== lessonId,
     );
@@ -231,7 +230,7 @@ export function Sidebar({
       <aside
         id="sidebar"
         className={cn(
-          "fixed top-0 left-0 z-40 w-64 h-screen transition-transform",
+          "fixed md:sticky md:top-0 left-0 z-40 w-64 h-screen transition-transform",
           expanded
             ? "md:translate-x-80 -transform-none"
             : "md:translate-x-0 -translate-x-full",
@@ -303,7 +302,7 @@ export function Sidebar({
                 <Link
                   href={`/draft/d/${droplet.slug}`}
                   className={cn(
-                    "w-full flex items-center justify-start text-base px-4",
+                    "w-full flex items-center justify-start text-base px-4 dark:bg-black",
                     classes.link,
                     pathname === `/draft/d/${droplet.slug}` &&
                       classes.activeLink,
@@ -325,7 +324,10 @@ export function Sidebar({
               </li>
             </ul>
 
-            <Separator orientation="horizontal" className="my-2" />
+            <Separator
+              orientation="horizontal"
+              className="my-2 dark:bg-slate-500"
+            />
 
             {/* Add lesson section */}
             <AddLesson droplet={droplet} onAddLesson={addLessonCallback} />
@@ -387,7 +389,7 @@ export function Sidebar({
                       </Avatar>
                     ) : null}
 
-                    <span className="font-medium ms-2">
+                    <span className="font-medium ms-2 dark:text-slate-300">
                       Hi, <b>{user.name ?? user.email}</b>!
                     </span>
                   </div>
@@ -416,15 +418,6 @@ export function Sidebar({
                     <span>Profile</span>
                   </Link>
                 </DropdownMenuItem>
-
-                {/* {isAdmin ? (
-                  <DropdownMenuItem asChild>
-                    <Link href="/admin">
-                      <TowerControlIcon className="w-4 h-4 mr-2" />
-                      <span>Admin</span>
-                    </Link>
-                  </DropdownMenuItem>
-                ) : null} */}
 
                 <DropdownMenuItem
                   onClick={() => signOut()}

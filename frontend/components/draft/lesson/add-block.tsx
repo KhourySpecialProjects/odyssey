@@ -45,7 +45,7 @@ export function AddBlock({ add }: { add: (block: any) => void }) {
             variant="ghost"
             className="w-full border border-slate-200"
           >
-            Generic Rich Text Block
+            Text Block
           </Button>
           <Button
             onClick={() => {
@@ -94,7 +94,7 @@ export function AddBlock({ add }: { add: (block: any) => void }) {
                     });
                   }}
                   variant={dropdownVariants}
-                  className="w-full border border-slate-200 bg-red-300 mb-1"
+                  className="w-full border border-slate-200 bg-red-300 dark:bg-red-300 dark:text-black mb-1"
                 >
                   Warning
                   {<CalloutIcon color={"bg-red-300"}></CalloutIcon>}
@@ -116,7 +116,7 @@ export function AddBlock({ add }: { add: (block: any) => void }) {
                     });
                   }}
                   variant={dropdownVariants}
-                  className="w-full border border-slate-200 bg-blue-300 mb-1"
+                  className="w-full border border-slate-200 bg-blue-300 dark:bg-blue-300 dark:text-black mb-1"
                 >
                   Question
                   {<CalloutIcon color={"bg-blue-300"}></CalloutIcon>}
@@ -138,7 +138,7 @@ export function AddBlock({ add }: { add: (block: any) => void }) {
                     });
                   }}
                   variant={dropdownVariants}
-                  className="w-full border border-slate-200 bg-orange-300 mb-1"
+                  className="w-full border border-slate-200 bg-orange-300 dark:bg-orange-300 dark:text-black mb-1"
                 >
                   Important
                   {<CalloutIcon color={"bg-orange-300"}></CalloutIcon>}
@@ -160,7 +160,7 @@ export function AddBlock({ add }: { add: (block: any) => void }) {
                     });
                   }}
                   variant={dropdownVariants}
-                  className="w-full border border-slate-200 bg-green-300 mb-1"
+                  className="w-full border border-slate-200 bg-green-300 dark:bg-green-300 dark:text-black mb-1"
                 >
                   Definition
                   {<CalloutIcon color={"bg-green-300"}></CalloutIcon>}
@@ -182,7 +182,7 @@ export function AddBlock({ add }: { add: (block: any) => void }) {
                     });
                   }}
                   variant={dropdownVariants}
-                  className="w-full border border-slate-200 bg-purple-300 mb-1"
+                  className="w-full border border-slate-200 bg-purple-300 dark:bg-purple-300 dark:text-black mb-1"
                 >
                   More Information
                   {<CalloutIcon color={"bg-purple-300"}></CalloutIcon>}
@@ -204,7 +204,7 @@ export function AddBlock({ add }: { add: (block: any) => void }) {
                     });
                   }}
                   variant={dropdownVariants}
-                  className="w-full border border-slate-200 bg-amber-300 mb-1"
+                  className="w-full border border-slate-200 bg-amber-300 dark:bg-amber-300 dark:text-black mb-1"
                 >
                   Caution
                   {<CalloutIcon color={"bg-amber-300"}></CalloutIcon>}
@@ -226,7 +226,7 @@ export function AddBlock({ add }: { add: (block: any) => void }) {
                     });
                   }}
                   variant={dropdownVariants}
-                  className="w-full border border-slate-200 bg-sky-50"
+                  className="w-full border border-slate-200 bg-sky-50 dark:bg-sky-50 dark:text-black"
                 >
                   Default
                   {<CalloutIcon color={"bg-sky-50"}></CalloutIcon>}

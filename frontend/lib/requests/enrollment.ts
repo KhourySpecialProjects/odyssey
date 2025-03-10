@@ -55,7 +55,7 @@ export async function getEnrollmentsByAuthorizedUser(
 
   return await fetchAPI<Enrollment[]>(path, {
     urlParams,
-    next: { tags: ["enrollments"] },
+    next: { tags: ["enrollments"], revalidate: 0 },
   });
 }
 

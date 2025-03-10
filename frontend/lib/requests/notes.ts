@@ -50,6 +50,53 @@ export async function getNotesByAuthorizedUserAndLesson(
   });
 }
 
+export async function getNotesByDroplet(
+  authorizedUserId: number,
+  dropletId: number,
+  {
+    sort,
+    pagination = { pageSize: 250, page: 1 },
+    fields = ["id", "content", "positionY"],
+  }: StrapiRequestParams = {},
+): Promise<Note[]> {
+  const path = `/notes`;
+  const urlParams = {
+    sort,
+    filters: {
+      enrollment: {
+        authorizedUser: {
+          id: { $eq: authorizedUserId },
+        },
+      },
+      lesson: {
+        droplets: {
+          id: { $eq: dropletId },
+        },
+      },
+    },
+    populate: {
+      highlight: {
+        fields: ["text", "color", "yLevel"],
+      },
+      lesson: {
+        fields: ["*"],
+        populate: {
+          droplet_lessons: {
+            fields: ["*"],
+          },
+        },
+      },
+    },
+    fields,
+    pagination,
+  };
+
+  return await fetchAPI<Note[]>(path, {
+    urlParams,
+    next: { tags: ["notes"] },
+  });
+}
+
 export async function updateNoteContent(noteId: number, newContent: string) {
   try {
     const response = await fetch(
@@ -119,6 +166,7 @@ export async function createNote(
   enrollment: Enrollment,
   position: number,
   highlight?: Highlight,
+  content?: string,
 ) {
   try {
     const response = await fetch(`${NEXT_PUBLIC_STRAPI_API_URL}/api/notes`, {
@@ -129,18 +177,23 @@ export async function createNote(
       },
       body: JSON.stringify({
         data: {
+          // content: content || "",
+          // lesson: lesson,
+          // enrollment: enrollment,
+          // positionY: position,
+          // highlight: highlight,
           content: "",
-          lesson: lesson,
-          enrollment: enrollment,
-          positionY: position,
-          highlight: highlight,
+          lesson: lesson.id,
+          enrollment: enrollment.id,
+          positionY: Math.round(position),
+          highlight: highlight?.id,
         },
       }),
     });
 
     if (!response.ok) {
       console.error("adding note failed:", await response.text());
-      return { success: false, error: "Failed to add new tag" };
+      return { success: false, error: "Failed to add new note" };
     }
 
     revalidatePath("/d/[slug]/[lessonSlug]", "page");
