@@ -3,7 +3,7 @@
 import { Group } from "@/types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { PencilIcon } from "lucide-react";
+import { Clock, PencilIcon } from "lucide-react";
 import Link from "next/link";
 import { deleteGroup } from "@/lib/actions";
 import { useRouter } from "next/navigation";
@@ -33,17 +33,19 @@ export function GroupHeader({ group, canEdit }: GroupHeaderProps) {
         </div>
       </div>
       {canEdit && (
-        <div className="flex gap-2">
+        <div className="flex flex-col space-y-2">
           <Link href={`/g/management?slug=${group.slug}`}>
             <Button variant="default" className="gap-2">
               <PencilIcon className="h-4 w-4" />
               Edit Group
             </Button>
           </Link>
-          {/* <Button variant="destructive" className="gap-2" onClick={handleDelete}>
-        <X className="h-4 w-4" />
-        Delete Group
-      </Button> */}
+          <Link href={`/g/due-dates?slug=${group.slug}`}>
+            <Button variant="default" className="gap-2">
+              <Clock className="h-4 w-4" />
+              Due Dates
+            </Button>
+          </Link>
         </div>
       )}
     </div>

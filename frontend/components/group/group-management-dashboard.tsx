@@ -5,7 +5,7 @@ import "react-tabs/style/react-tabs.css";
 
 import { ContentSection } from "@/components/group/content-section";
 import { GroupDropletTile } from "@/components/group/group-droplet-tile";
-import { Group } from "@/types";
+import { AuthorizedUser, DueDate, Group } from "@/types";
 import { PlaylistCard } from "@/components/playlists/playlist-card";
 import { GroupProgressGrid } from "@/components/group/group-progress-grid";
 import { Button } from "../ui/button";
@@ -14,12 +14,19 @@ import { useState } from "react";
 interface RenderGroupDashboardProps {
   group: Group;
   canEdit: boolean | undefined;
+  authUser: AuthorizedUser;
+  dueDates: DueDate[];
 }
 
 const tabStyle =
   "px-4 py-2 cursor-pointer border-b-2 border-transparent focus:outline-none hover:border-gray-300";
 
-export function GroupDashboard({ group, canEdit }: RenderGroupDashboardProps) {
+export function GroupDashboard({
+  group,
+  canEdit,
+  authUser,
+  dueDates,
+}: RenderGroupDashboardProps) {
   const [currentPage, setCurrentPage] = useState(0);
   const lessonsPerPage = 6;
 
@@ -55,7 +62,16 @@ export function GroupDashboard({ group, canEdit }: RenderGroupDashboardProps) {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 auto-rows-fr">
                 {paginatedDroplets?.map((droplet) => (
                   <div key={droplet.id} className="h-full w-full">
-                    <GroupDropletTile droplet={droplet} />
+                    <GroupDropletTile
+                      key={droplet.id}
+                      droplet={droplet}
+                      dueDate={
+                        dueDates?.find(
+                          (dueDate) => dueDate.droplet?.id === droplet.id,
+                        )?.dueDate || ""
+                      }
+                      authUser={authUser}
+                    />
                   </div>
                 ))}
               </div>
@@ -99,6 +115,12 @@ export function GroupDashboard({ group, canEdit }: RenderGroupDashboardProps) {
                   key={playlist.id}
                   playlist={playlist}
                   completedLessonIds={[]} // We'll need to implement this later
+                  dueDate={
+                    dueDates?.find(
+                      (dueDate) => dueDate.playlist?.id === playlist.id,
+                    )?.dueDate || ""
+                  }
+                  timeZone={authUser.timeZone}
                 />
               ))}
             </div>
