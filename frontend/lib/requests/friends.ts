@@ -41,6 +41,7 @@ export async function fetchFriends(
           },
         },
       },
+      sort: ["authorized_users.lastName:asc"],
       pagination: {
         pageSize: 250,
         page: 1,
@@ -57,7 +58,7 @@ export async function fetchFriends(
     const data = await response.json();
     const friendships = flattenAttributes(data.data);
 
-    return friendships.flatMap((friendship: Friendship) =>
+    const allFriends = friendships.flatMap((friendship: Friendship) =>
       friendship.authorized_users.filter(
         (friend) =>
           friend.id !== authorizedUser.id &&
@@ -68,6 +69,11 @@ export async function fetchFriends(
             (blockedUser) => blockedUser.id === friend.id,
           ),
       ),
+    );
+    return Array.from(
+      new Map<number, AuthorizedUser>(
+        allFriends.map((friend: AuthorizedUser) => [friend.id, friend]),
+      ).values(),
     );
   } catch (error) {
     console.error("Database Error:", error);
@@ -536,24 +542,31 @@ export async function fetchSuggestionsById(
           ),
       ),
     );
+    console.log("direct", directFriends);
 
     // Get all friends of friends
     const friendsOfFriends = await Promise.all(
       directFriends.map(async (friend) => {
         // Get all friendships for each direct friend
         const friendFriendships = await fetchFriendshipsById(friend.id);
+        console.log("friend friend", friendFriendships);
 
         // Return all users from these friendships except the direct friend and original user
-        return friendFriendships.flatMap((friendship) =>
-          friendship.authorized_users.filter(
-            (user) =>
-              user.id !== friend.id &&
-              user.id !== userId &&
-              !user.was_blocked.some(
-                (blockedUser: AuthorizedUser) => blockedUser.id === userId,
-              ),
-          ),
-        );
+        return friendFriendships
+          .flatMap((friendship) =>
+            friendship.authorized_users.filter(
+              (user) =>
+                user.id !== friend.id &&
+                user.id !== userId &&
+                !directFriends.some(
+                  (newUser: AuthorizedUser) => newUser.id === user.id,
+                ) &&
+                !user.was_blocked.some(
+                  (blockedUser: AuthorizedUser) => blockedUser.id === userId,
+                ),
+            ),
+          )
+          .sort((a, b) => a.lastName.localeCompare(b.lastName));
       }),
     );
 

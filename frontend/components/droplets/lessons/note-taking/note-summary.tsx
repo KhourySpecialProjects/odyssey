@@ -15,6 +15,23 @@ export async function NoteSummary({
   let page = pdfDoc.addPage([595.28, 841.89]);
   const { width, height } = page.getSize();
 
+  const stripHtmlTags = (html: string) => {
+    return (
+      html
+        .replace(/<[^>]*>/g, "")
+        // Replace common HTML entities
+        .replace(/&nbsp;/g, " ")
+        .replace(/&amp;/g, "&")
+        .replace(/&lt;/g, "<")
+        .replace(/&gt;/g, ">")
+        .replace(/&quot;/g, '"')
+        .replace(/&#39;/g, "'")
+        // Remove multiple spaces
+        .replace(/\s+/g, " ")
+        .trim()
+    );
+  };
+
   // Helper function to draw lesson icon
   const drawLessonIcon = (x: number, y: number) => {
     page.drawRectangle({
@@ -224,7 +241,13 @@ export async function NoteSummary({
         }
 
         if (note.content && note.content.trim() !== "") {
-          const noteHeight = drawText(note.content, 90, yPosition, 12, 475);
+          const noteHeight = drawText(
+            stripHtmlTags(note.content),
+            90,
+            yPosition,
+            12,
+            475,
+          );
 
           yPosition -= noteHeight + 10;
         }

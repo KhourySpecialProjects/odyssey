@@ -65,7 +65,7 @@ export function FeedClient({
                   variant="outline"
                   onClick={handlePrevPage}
                   disabled={currentPage === 1}
-                  className={`${currentPage === 1 ? "visibility: hidden" : "visibility: visible"}`}
+                  className={`${currentPage === 1 ? "visibility: hidden" : "visibility: visible"} dark:bg-slate-300 dark:text-black`}
                 >
                   Previous
                 </Button>
@@ -74,7 +74,7 @@ export function FeedClient({
                   variant="outline"
                   onClick={handleNextPage}
                   disabled={currentPage === totalPages}
-                  className={`${currentPage === totalPages ? "visibility: hidden" : "visibility: visible"}`}
+                  className={`${currentPage === totalPages ? "visibility: hidden" : "visibility: visible"} dark:bg-slate-300 dark:text-black`}
                 >
                   Next
                 </Button>

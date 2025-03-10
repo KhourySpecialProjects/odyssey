@@ -70,7 +70,7 @@ export function FriendSuggestionsBlock({
               size="sm"
               disabled={requested}
               onClick={handleRequest}
-              className="text-white bg-sky-600 dark:bg-sky-600 dark:text-white"
+              className="text-white bg-sky-600 dark:bg-sky-600 dark:text-white dark:hover:bg-sky-700 hover:bg-sky-700"
             >
               {requested ? "Sent!" : "Send Request"}
             </Button>

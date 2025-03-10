@@ -69,7 +69,7 @@ export default function DropletFooter({
   }
 
   return (
-    <>
+    <div className="w-full flex flex-col justify-left">
       {/* {pathSegments.length > 3 &&
         pathSegments.at(-1)?.toLowerCase() !== "introduction" &&
         !pathSegments.at(-1)?.toLowerCase().includes("recap") && (
@@ -88,7 +88,7 @@ export default function DropletFooter({
           </div>
         )} */}
 
-      <div className="flex flex-col gap-2 pb-2 mt-8 max-w-prose md:flex-row md:justify-between ml-[20%]">
+      <div className="flex flex-col gap-2 pb-2 mt-8 max-w-2xl w-full md:flex-row md:justify-between mx-auto">
         {previous ? (
           <PaginationLinkWrapper link={previous.link}>
             <div className="p-2 rounded-full bg-sky-100">
@@ -120,7 +120,7 @@ export default function DropletFooter({
           <div className="flex-1"></div>
         )}
       </div>
-    </>
+    </div>
   );
 }
 

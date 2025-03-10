@@ -70,7 +70,7 @@ export function GroupDashboard({ group, canEdit, authUser, dueDates }: RenderGro
                   </div>
                 ))}
               </div>
-              <div className="flex gap-2">
+              <div className="flex gap-2 justify-end">
                 <Button
                   size="sm"
                   variant="outline"

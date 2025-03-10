@@ -97,7 +97,7 @@ export async function getAuthorizedUserByEmail<
 export async function fetchAuthorizedUsers(): Promise<AuthorizedUser[]> {
   try {
     const query = qs.stringify({
-      sort: ["email"],
+      sort: ["lastName"],
       fields: [
         "id",
         "email",
