@@ -365,7 +365,11 @@ export function GroupManagementForm({
               <FormItem>
                 <FormLabel>Group Name</FormLabel>
                 <FormControl>
-                  <Input placeholder="Enter group name" {...field} />
+                  <Input
+                    placeholder="Enter group name"
+                    {...field}
+                    autoComplete="off"
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -518,7 +522,7 @@ export function GroupManagementForm({
               ))}
             </div>
           ) : (
-            <div className="p-8 text-center text-slate-500 border border-dashed rounded-lg">
+            <div className="p-8 text-center text-slate-500 border border-dashed dark:border-slate-500 rounded-lg">
               No members have been added to this group yet
             </div>
           )}
@@ -545,7 +549,7 @@ export function GroupManagementForm({
               onRemove={handleDropletRemove}
             />
           ) : (
-            <div className="p-8 text-center text-slate-500 border border-dashed rounded-lg">
+            <div className="p-8 text-center text-slate-500 border border-dashed dark:border-slate-500 rounded-lg">
               No droplets have been added to this group yet
             </div>
           )}

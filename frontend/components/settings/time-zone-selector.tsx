@@ -1,7 +1,6 @@
 "use client";
 
 import { setTimeZone } from "@/lib/actions";
-import { TimeZone } from "@/types";
 import { useState } from "react";
 
 const timeZones = [
