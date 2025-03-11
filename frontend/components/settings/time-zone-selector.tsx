@@ -69,9 +69,7 @@ export default function TimeZoneSelector({
   return (
     <div className="px-6 py-4 flex flex-row gap-4 items-center">
       <div className="w-[12%]">
-      <label className="block mb-1 ">
-        Time Zone:
-      </label>
+        <label className="block mb-1 ">Time Zone:</label>
       </div>
       <select
         className="w-[50%] px-3 py-2 border text-sm border-gray-300 dark:text-white dark:border-slate-800 rounded-md dark:bg-black focus:outline-none focus:ring-2 focus:ring-blue-500"
