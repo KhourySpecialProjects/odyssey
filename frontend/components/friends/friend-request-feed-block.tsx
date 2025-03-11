@@ -168,7 +168,9 @@ export function FriendRequestFeedBlock({
               {request.bio && (
                 <DialogDescription>{request.bio}</DialogDescription>
               )}
-              <DialogDescription>Completed Droplets: </DialogDescription>
+              <DialogDescription className="text-center font-bold">
+                Completed Droplets:{" "}
+              </DialogDescription>
               <FriendCompletedDroplets friend={request} />
               <div
                 className={`inline-flex items-center gap-2 ${user.blocked.includes(request) ? "visibility: hidden" : "visibility: visible"}`}

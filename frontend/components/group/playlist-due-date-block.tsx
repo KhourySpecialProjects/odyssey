@@ -1,17 +1,11 @@
 import { Playlist, AuthorizedUser, Group } from "@/types";
 import { Button } from "../ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "../ui/dialog";
-import { ChangeEvent, useEffect, useState } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
+import { useEffect, useState } from "react";
 import { assignPlaylistDueDate, getGroupDueDate } from "@/lib/requests/groups";
 
 import MUIDateTimePicker from "./datetime-picker";
-import { DateTime, Settings } from "luxon";
+import { DateTime } from "luxon";
 
 interface PlaylistDueDateBlockProps {
   currentUser: AuthorizedUser;
