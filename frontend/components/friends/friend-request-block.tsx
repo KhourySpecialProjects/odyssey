@@ -55,7 +55,7 @@ export function FriendRequestBlock({
   };
 
   return (
-    <li className="py-0 [&:not(:first-child)]:pt-3">
+    <li className="py-0 [&:not(:first-child)]:pt-3 ">
       <div className="flex items-center space-x-4">
         <Avatar variant="round" className="border border-sky-800 w-12 h-12">
           <AvatarImage src={request?.profilePhoto || undefined} />
@@ -76,7 +76,7 @@ export function FriendRequestBlock({
         </div>
         <UserBlock user={request} curUser={user} />
         <Button
-          className="bg-green-600 text-white hover:bg-green-700 dark:bg-green-600 dark:hover:bg-green-700"
+          className="bg-green-600 text-white hover:bg-green-700 dark:bg-green-600 dark:hover:bg-green-700 "
           size="sm"
           onClick={handleApprove}
         >
@@ -88,7 +88,7 @@ export function FriendRequestBlock({
           </div>
         </Button>
         <Button
-          className="bg-red-600 text-white hover:bg-red-700 dark:bg-red-600 dark:hover:bg-red-700"
+          className="bg-red-600 text-white hover:bg-red-700 dark:bg-red-600 dark:hover:bg-red-700 "
           size="sm"
           onClick={handleReject}
         >

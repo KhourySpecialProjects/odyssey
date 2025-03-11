@@ -12,8 +12,10 @@ import { FriendSentRequests } from "@/components/friends/friend-sent-requests";
 import { FriendSearch } from "@/components/friends/friend-search";
 import { getSentRequestIds, fetchFriends } from "@/lib/requests/friends";
 import { BlockedUsers } from "@/components/friends/blocked-users";
+import { FriendDropdown } from "@/components/friends/friend-dropdown";
 
 export default async function AuthorProfileSettings() {
+
   const authorizedUsers = await fetchAuthorizedUsers();
 
   const user = await getCurrentUser();
@@ -32,8 +34,10 @@ export default async function AuthorProfileSettings() {
     .filter((user) => !friends.includes(user.id))
     .map((user) => user.id);
 
+  
+
   return (
-    <div>
+    <div className="flex flex-col">
       <FriendSearch
         authUsers={authorizedUsers}
         curUser={authorizedUser}
@@ -41,6 +45,7 @@ export default async function AuthorProfileSettings() {
         friendIds={friendedAuthUsers}
       ></FriendSearch>
 
+  <div className="hidden md:flex md:flex-col">
       <AdminSelector
         content={{
           Friends: <Friends />,
@@ -56,6 +61,28 @@ export default async function AuthorProfileSettings() {
           "Blocked Users": <BlockedUsers />,
         }}
       />
+      </div>  
+
+      <div className="flex flex-col md:hidden">
+      <FriendDropdown
+        content={{
+          "Friends": <Friends />,
+          "Friend Requests": (
+            <FriendRequests
+              noProfile={false}
+              friendsPerPage={20}
+              authUser={authorizedUser}
+            />
+          ),
+          "People You May Know": <FriendSuggestions user={authorizedUser} />,
+          "Sent Requests": <FriendSentRequests />,
+          "Blocked Users": <BlockedUsers />,
+        }}
+      />
+      </div>
+
+
+
     </div>
   );
 }

@@ -9,7 +9,7 @@ import {
 } from "../ui/dialog";
 import { Button } from "../ui/button";
 import Link from "next/link";
-import { Github, Linkedin, User2Icon } from "lucide-react";
+import { Github, Linkedin, User2Icon, UserRound } from "lucide-react";
 import { FriendCompletedDroplets } from "./friend-completed-droplets";
 import { startTransition, useState } from "react";
 import { toast } from "sonner";
@@ -39,12 +39,22 @@ export function UserBlock({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button
-          size="sm"
-          className="bg-sky-300 text-black hover:bg-sky-400 dark:bg-sky-300 dark:hover:bg-sky-400"
-        >
-          View Profile
-        </Button>
+        <div>
+          <Button
+            size="sm"
+            className="bg-sky-300 text-black hover:bg-sky-400 dark:bg-sky-300 dark:hover:bg-sky-400 hidden md:block"
+          >
+            View Profile
+          </Button>
+
+          <Button
+            size="sm"
+            className="bg-sky-300 text-black hover:bg-sky-400 dark:bg-sky-300 dark:hover:bg-sky-400 block md:hidden scale-75"
+          >
+            <UserRound/>
+          </Button>
+        </div>
+        
       </DialogTrigger>
 
       <DialogContent>
