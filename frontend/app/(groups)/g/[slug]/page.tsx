@@ -11,6 +11,11 @@ import { GroupDashboard } from "@/components/group/group-management-dashboard";
 import { isAuthorizedUserAdmin } from "@/lib/utils";
 import DueDateAnnouncements from "@/components/group/due-date-announcements";
 import { getGroupDueDates } from "@/lib/requests/groups";
+
+// Ensure fresh data by disabling caching for this route
+export const fetchCache = 'force-no-store';
+export const revalidate = 0;
+
 type Props = {
   params: Promise<{
     slug: string;

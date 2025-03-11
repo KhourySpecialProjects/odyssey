@@ -70,10 +70,6 @@ export default function DueDateAnnouncements({
                 <p>&nbsp;is due today!</p>
               )}
 
-
-
-
-
             </div>
           </Link>
         ))}
