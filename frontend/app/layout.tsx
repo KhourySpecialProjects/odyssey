@@ -58,7 +58,7 @@ export default async function RootLayout({
                   <div className="flex min-h-screen flex-col">
                     <EnvironmentBanner />
 
-                    <div className="z-50 sticky top-0">
+                    <div className="z-50 sticky top-0 ">
                       <Suspense>
                         <Header />
                       </Suspense>
@@ -69,7 +69,9 @@ export default async function RootLayout({
                     </div>
 
                     <main className="flex-grow">{children}</main>
-                    <Footer />
+                    <div className="scale-x-80 md:scale-x-100">
+                      <Footer />
+                    </div>
                   </div>
                   <FirstVisitPopup user={authorizedUser} />
                 </NuqsAdapter>
