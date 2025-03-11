@@ -12,13 +12,13 @@ export async function Friends() {
   const friends = await fetchFriends(authUser);
 
   return (
-    <section className="mt-4">
+    <section className="mt-4 max-w-3/4">
       <h1 className="font-bold dark:text-slate-300">Friends</h1>
       <p className="dark:text-slate-300">A list of your friends.</p>
 
-      <div className="p-4 mt-4 rounded-md bg-slate-100 dark:bg-slate-800">
+      <div className="p-1 md:p-4 mt-4 rounded-md bg-slate-100 dark:bg-slate-800">
         {friends.length > 0 ? (
-          <ul className="divide-y divide-slate-200 dark:divide-slate-700 md:space-y-4">
+          <ul className="divide-y divide-slate-200 dark:divide-slate-700 md:space-y-4 ">
             {friends.map((friendship) => (
               <FriendBlock
                 user={authUser}

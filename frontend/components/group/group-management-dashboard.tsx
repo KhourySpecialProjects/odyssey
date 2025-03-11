@@ -21,6 +21,8 @@ interface RenderGroupDashboardProps {
 const tabStyle =
   "px-4 py-2 cursor-pointer border-b-2 border-transparent focus:outline-none hover:border-gray-300";
 
+const selectedTabStyle = "dark:focus:bg-transparent dark:focus:text-white";
+
 export function GroupDashboard({
   group,
   canEdit,

@@ -15,7 +15,7 @@ export async function FriendSentRequests() {
           (blockedUser) => blockedUser.id === friend.id,
         ),
     )
-    .sort((a, b) => a.lastName.localeCompare(b.lastName));
+    .sort((a, b) => a.lastName?.localeCompare(b.lastName));
 
   return (
     <section className="mt-4">
