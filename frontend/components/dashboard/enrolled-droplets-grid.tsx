@@ -7,6 +7,7 @@ import { getCurrentUser } from "@/lib/auth/session";
 import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
 import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
 import { EnrolledDropletsGridClient } from "./enrolled-droplets-grid-client";
+import { getUserDueDates } from "@/lib/requests/groups";
 
 interface Lesson {
   id: number;
@@ -56,11 +57,14 @@ export async function EnrolledDropletsGrid() {
     );
   }
 
+  const dueDates = await getUserDueDates(authorizedUser.id);
+
   return (
     <EnrolledDropletsGridClient
       dropletsWithCompletion={dropletsWithCompletion}
       completedLessonIds={completedLessonIds}
       isArchived={false}
+      dueDates={dueDates}
     />
   );
 }
