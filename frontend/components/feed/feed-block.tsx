@@ -84,14 +84,14 @@ export function FeedBlock({
           )}
           {announcementType === "droplet" && (
             <Link href={`/d/${announcement.droplet?.slug}`}>
-              <p className="font-medium bg-sky-100 dark:bg-sky-800 text-slate-900 dark:text-slate-300 max-h-24 overflow-y-auto">
+              <p className="font-medium text-slate-900 dark:text-slate-300 max-h-24 overflow-y-auto">
                 {announcement.content}
               </p>
             </Link>
           )}
           {announcementType === "group" && (
             <Link href={`/g/${announcement.group?.slug}`}>
-              <p className="font-medium bg-sky-100 dark:bg-sky-800 text-slate-900 dark:text-slate-300 max-h-24 overflow-y-auto">
+              <p className="font-medium text-slate-900 dark:text-slate-300 max-h-24 overflow-y-auto">
                 {announcement.content}
               </p>
             </Link>

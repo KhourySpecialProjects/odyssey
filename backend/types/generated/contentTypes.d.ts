@@ -1015,101 +1015,6 @@ export interface ApiAuthorizedUserAuthorizedUser extends Schema.CollectionType {
       Attribute.SetMinMaxLength<{
         maxLength: 400;
       }>;
-    sent_requests: Attribute.Relation<
-      'api::authorized-user.authorized-user',
-      'manyToMany',
-      'api::authorized-user.authorized-user'
-    >;
-    received_requests: Attribute.Relation<
-      'api::authorized-user.authorized-user',
-      'manyToMany',
-      'api::authorized-user.authorized-user'
-    >;
-    friendships: Attribute.Relation<
-      'api::authorized-user.authorized-user',
-      'manyToMany',
-      'api::friendship.friendship'
-    >;
-    profilePhoto: Attribute.Text;
-    was_blocked: Attribute.Relation<
-      'api::authorized-user.authorized-user',
-      'manyToMany',
-      'api::authorized-user.authorized-user'
-    >;
-    blocked: Attribute.Relation<
-      'api::authorized-user.authorized-user',
-      'manyToMany',
-      'api::authorized-user.authorized-user'
-    >;
-    announcements: Attribute.Relation<
-      'api::authorized-user.authorized-user',
-      'oneToMany',
-      'api::announcement.announcement'
-    >;
-    highlights: Attribute.Relation<
-      'api::authorized-user.authorized-user',
-      'oneToMany',
-      'api::highlight.highlight'
-    >;
-    droplets: Attribute.Relation<
-      'api::authorized-user.authorized-user',
-      'manyToMany',
-      'api::droplet.droplet'
-    >;
-    created_playlists: Attribute.Relation<
-      'api::authorized-user.authorized-user',
-      'manyToMany',
-      'api::playlist.playlist'
-    >;
-    timeZone: Attribute.Enumeration<
-      [
-        'America/New_York  ',
-        'America/Chicago  ',
-        'America/Denver  ',
-        'America/Phoenix  ',
-        'America/Los_Angeles  ',
-        'America/Anchorage  ',
-        'America/Honolulu  ',
-        'America/Bogota  ',
-        'America/Lima  ',
-        'America/Caracas  ',
-        'America/Santiago  ',
-        'America/Argentina/Buenos_Aires  ',
-        'America/Sao_Paulo  ',
-        'Europe/London  ',
-        'Europe/Berlin  ',
-        'Europe/Paris  ',
-        'Europe/Madrid  ',
-        'Europe/Rome  ',
-        'Europe/Athens  ',
-        'Europe/Istanbul  ',
-        'Europe/Moscow  ',
-        'Asia/Dubai  ',
-        'Asia/Kolkata  ',
-        'Asia/Shanghai  ',
-        'Asia/Tokyo  ',
-        'Asia/Seoul  ',
-        'Asia/Bangkok  ',
-        'Asia/Singapore  ',
-        'Asia/Jakarta  ',
-        'Asia/Hong_Kong  ',
-        'Australia/Sydney  ',
-        'Australia/Melbourne  ',
-        'Australia/Brisbane  ',
-        'Pacific/Auckland  ',
-        'Pacific/Fiji  ',
-        'Africa/Cairo  ',
-        'Africa/Johannesburg  ',
-        'Africa/Lagos  ',
-        'Africa/Nairobi  '
-      ]
-    > &
-      Attribute.DefaultTo<'America/New_York  '>;
-    due_dates: Attribute.Relation<
-      'api::authorized-user.authorized-user',
-      'oneToMany',
-      'api::due-date.due-date'
-    >;
     createdAt: Attribute.DateTime;
     updatedAt: Attribute.DateTime;
     createdBy: Attribute.Relation<
@@ -1228,6 +1133,12 @@ export interface ApiDropletDroplet extends Schema.CollectionType {
       'manyToMany',
       'api::droplet.droplet'
     >;
+    due_dates: Attribute.Relation<
+      'api::authorized-user.authorized-user',
+      'oneToMany',
+      'api::due-date.due-date'
+    >;
+    email: Attribute.Email & Attribute.Required & Attribute.Unique;
     enrollments: Attribute.Relation<
       'api::droplet.droplet',
       'oneToMany',
@@ -1257,6 +1168,50 @@ export interface ApiDropletDroplet extends Schema.CollectionType {
       'api::authorized-user.authorized-user'
     >;
     createdAt: Attribute.DateTime;
+    timeZone: Attribute.Enumeration<
+      [
+        'America/New_York  ',
+        'America/Chicago  ',
+        'America/Denver  ',
+        'America/Phoenix  ',
+        'America/Los_Angeles  ',
+        'America/Anchorage  ',
+        'America/Honolulu  ',
+        'America/Bogota  ',
+        'America/Lima  ',
+        'America/Caracas  ',
+        'America/Santiago  ',
+        'America/Argentina/Buenos_Aires  ',
+        'America/Sao_Paulo  ',
+        'Europe/London  ',
+        'Europe/Berlin  ',
+        'Europe/Paris  ',
+        'Europe/Madrid  ',
+        'Europe/Rome  ',
+        'Europe/Athens  ',
+        'Europe/Istanbul  ',
+        'Europe/Moscow  ',
+        'Asia/Dubai  ',
+        'Asia/Kolkata  ',
+        'Asia/Shanghai  ',
+        'Asia/Tokyo  ',
+        'Asia/Seoul  ',
+        'Asia/Bangkok  ',
+        'Asia/Singapore  ',
+        'Asia/Jakarta  ',
+        'Asia/Hong_Kong  ',
+        'Australia/Sydney  ',
+        'Australia/Melbourne  ',
+        'Australia/Brisbane  ',
+        'Pacific/Auckland  ',
+        'Pacific/Fiji  ',
+        'Africa/Cairo  ',
+        'Africa/Johannesburg  ',
+        'Africa/Lagos  ',
+        'Africa/Nairobi  '
+      ]
+    > &
+      Attribute.DefaultTo<'America/New_York  '>;
     updatedAt: Attribute.DateTime;
     publishedAt: Attribute.DateTime;
     createdBy: Attribute.Relation<
@@ -1324,44 +1279,44 @@ export interface ApiDropletLessonDropletLesson extends Schema.CollectionType {
 export interface ApiDueDateDueDate extends Schema.CollectionType {
   collectionName: 'due_dates';
   info: {
-    singularName: 'due-date';
-    pluralName: 'due-dates';
-    displayName: 'Due Date';
     description: '';
+    displayName: 'Due Date';
+    pluralName: 'due-dates';
+    singularName: 'due-date';
   };
   options: {
     draftAndPublish: false;
   };
   attributes: {
-    dueDate: Attribute.DateTime;
     authorized_user: Attribute.Relation<
       'api::due-date.due-date',
       'manyToOne',
       'api::authorized-user.authorized-user'
     >;
-    droplet: Attribute.Relation<
-      'api::due-date.due-date',
-      'oneToOne',
-      'api::droplet.droplet'
-    >;
-    playlist: Attribute.Relation<
-      'api::due-date.due-date',
-      'oneToOne',
-      'api::playlist.playlist'
-    >;
-    group: Attribute.Relation<
-      'api::due-date.due-date',
-      'oneToOne',
-      'api::group.group'
-    >;
     createdAt: Attribute.DateTime;
-    updatedAt: Attribute.DateTime;
     createdBy: Attribute.Relation<
       'api::due-date.due-date',
       'oneToOne',
       'admin::user'
     > &
       Attribute.Private;
+    droplet: Attribute.Relation<
+      'api::due-date.due-date',
+      'oneToOne',
+      'api::droplet.droplet'
+    >;
+    dueDate: Attribute.DateTime;
+    group: Attribute.Relation<
+      'api::due-date.due-date',
+      'oneToOne',
+      'api::group.group'
+    >;
+    playlist: Attribute.Relation<
+      'api::due-date.due-date',
+      'oneToOne',
+      'api::playlist.playlist'
+    >;
+    updatedAt: Attribute.DateTime;
     updatedBy: Attribute.Relation<
       'api::due-date.due-date',
       'oneToOne',
@@ -1388,35 +1343,6 @@ export interface ApiEnrollmentEnrollment extends Schema.CollectionType {
       'manyToOne',
       'api::authorized-user.authorized-user'
     >;
-    droplet: Attribute.Relation<
-      'api::enrollment.enrollment',
-      'manyToOne',
-      'api::droplet.droplet'
-    >;
-    viewedLessons: Attribute.Relation<
-      'api::enrollment.enrollment',
-      'manyToMany',
-      'api::lesson.lesson'
-    >;
-    isComplete: Attribute.Boolean &
-      Attribute.Required &
-      Attribute.DefaultTo<false>;
-    rating: Attribute.Integer &
-      Attribute.SetMinMax<
-        {
-          min: 1;
-          max: 5;
-        },
-        number
-      >;
-    isFirstTime: Attribute.Boolean & Attribute.DefaultTo<true>;
-    isArchived: Attribute.Boolean & Attribute.DefaultTo<false>;
-    notes: Attribute.Relation<
-      'api::enrollment.enrollment',
-      'oneToMany',
-      'api::note.note'
-    >;
-    dueDate: Attribute.DateTime;
     createdAt: Attribute.DateTime;
     updatedAt: Attribute.DateTime;
     createdBy: Attribute.Relation<
@@ -1425,6 +1351,31 @@ export interface ApiEnrollmentEnrollment extends Schema.CollectionType {
       'admin::user'
     > &
       Attribute.Private;
+    droplet: Attribute.Relation<
+      'api::enrollment.enrollment',
+      'manyToOne',
+      'api::droplet.droplet'
+    >;
+    dueDate: Attribute.DateTime;
+    isArchived: Attribute.Boolean & Attribute.DefaultTo<false>;
+    isComplete: Attribute.Boolean &
+      Attribute.Required &
+      Attribute.DefaultTo<false>;
+    isFirstTime: Attribute.Boolean & Attribute.DefaultTo<true>;
+    notes: Attribute.Relation<
+      'api::enrollment.enrollment',
+      'oneToMany',
+      'api::note.note'
+    >;
+    rating: Attribute.Integer &
+      Attribute.SetMinMax<
+        {
+          max: 5;
+          min: 1;
+        },
+        number
+      >;
+    updatedAt: Attribute.DateTime;
     updatedBy: Attribute.Relation<
       'api::enrollment.enrollment',
       'oneToOne',
@@ -1480,6 +1431,35 @@ export interface ApiGroupGroup extends Schema.CollectionType {
     draftAndPublish: false;
   };
   attributes: {
+    admins: Attribute.Relation<
+      'api::group.group',
+      'manyToMany',
+      'api::authorized-user.authorized-user'
+    >;
+    announcements: Attribute.Relation<
+      'api::group.group',
+      'oneToMany',
+      'api::announcement.announcement'
+    >;
+    createdAt: Attribute.DateTime;
+    createdBy: Attribute.Relation<
+      'api::group.group',
+      'oneToOne',
+      'admin::user'
+    > &
+      Attribute.Private;
+    creator: Attribute.Relation<
+      'api::group.group',
+      'manyToOne',
+      'api::authorized-user.authorized-user'
+    >;
+    description: Attribute.Text;
+    dropletDueDates: Attribute.JSON;
+    droplets: Attribute.Relation<
+      'api::group.group',
+      'manyToMany',
+      'api::droplet.droplet'
+    >;
     groupName: Attribute.String & Attribute.Required;
     description: Attribute.Text;
     members: Attribute.Relation<
@@ -1519,30 +1499,6 @@ export interface ApiGroupGroup extends Schema.CollectionType {
     > &
       Attribute.DefaultTo<'Open Membership'>;
     slug: Attribute.UID<'api::group.group', 'groupName'> & Attribute.Required;
-    isArchived: Attribute.Boolean & Attribute.DefaultTo<false>;
-    creator: Attribute.Relation<
-      'api::group.group',
-      'manyToOne',
-      'api::authorized-user.authorized-user'
-    >;
-    droplets: Attribute.Relation<
-      'api::group.group',
-      'manyToMany',
-      'api::droplet.droplet'
-    >;
-    playlists: Attribute.Relation<
-      'api::group.group',
-      'manyToMany',
-      'api::playlist.playlist'
-    >;
-    announcements: Attribute.Relation<
-      'api::group.group',
-      'oneToMany',
-      'api::announcement.announcement'
-    >;
-    dropletDueDates: Attribute.JSON;
-    playlistDueDates: Attribute.JSON;
-    createdAt: Attribute.DateTime;
     updatedAt: Attribute.DateTime;
     createdBy: Attribute.Relation<
       'api::group.group',
@@ -1880,6 +1836,7 @@ declare module '@strapi/types' {
       'api::authorized-user-role.authorized-user-role': ApiAuthorizedUserRoleAuthorizedUserRole;
       'api::droplet.droplet': ApiDropletDroplet;
       'api::droplet-lesson.droplet-lesson': ApiDropletLessonDropletLesson;
+      'api::droplet.droplet': ApiDropletDroplet;
       'api::due-date.due-date': ApiDueDateDueDate;
       'api::enrollment.enrollment': ApiEnrollmentEnrollment;
       'api::friendship.friendship': ApiFriendshipFriendship;
