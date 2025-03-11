@@ -65,7 +65,7 @@ export function FriendSearch({
         <Input
           type="search"
           placeholder="Search..."
-          className="w-full md:w-[125px] lg:w-[500px] flex items-center justify-center"
+          className="w-full w-[250px] md:w-[500px] flex items-center justify-center"
           value={searchTerm}
           onChange={(e) => handleInputChange(e)}
           onMouseEnter={() => setIsHovered(true)}
@@ -74,7 +74,7 @@ export function FriendSearch({
 
         {isHovered && searchTerm != "" && (
           <div
-            className="absolute z-50 w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-500 rounded-md shadow-lg"
+            className="absolute z-50 w-screen left-1/2 transform -translate-x-1/2 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-500 rounded-md shadow-lg"
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
           >

@@ -35,15 +35,20 @@ export function GroupHeader({ group, canEdit }: GroupHeaderProps) {
       {canEdit && (
         <div className="flex flex-col space-y-2">
           <Link href={`/g/management?slug=${group.slug}`}>
-            <Button variant="default" className="gap-2">
-              <PencilIcon className="h-4 w-4" />
+            <Button
+              variant="default"
+              className="gap-2 dark:bg-slate-800 border dark:border-slate-500 dark:text-white dark:hover:text-slate-800"
+            >
+              <PencilIcon size={17} />
               Edit Group
             </Button>
           </Link>
           <Link href={`/g/due-dates?slug=${group.slug}`}>
-            <Button variant="default" className="gap-2">
-              <Clock className="h-4 w-4" />
-              Due Dates
+            <Button
+              variant="default"
+              className="gap-2 dark:bg-slate-800 border dark:border-slate-500 dark:text-white dark:hover:text-slate-800"
+            >
+              <Clock size={17} /> Due Dates
             </Button>
           </Link>
         </div>
