@@ -11,7 +11,7 @@
       "url": "https://khouryodyssey.org"
     },
     "license": null,
-    "x-generation-date": "2025-03-11T18:51:29.570Z"
+    "x-generation-date": "2025-03-11T13:32:23.634Z"
   },
   "x-strapi-config": {
     "plugins": [
@@ -56287,7 +56287,8 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object"
+              "type": "object",
+              "additionalProperties": true
             },
             "style": "deepObject"
           },

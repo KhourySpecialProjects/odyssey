@@ -16,7 +16,7 @@ const NEXT_PUBLIC_STRAPI_API_TOKEN =
  * @returns The matching Playlists.
  */
 export async function getPlaylists({
-  sort,
+  sort = ["name:asc"],
   filters = { isPublic: true },
   pagination = { pageSize: 250, page: 1 },
   populate = {

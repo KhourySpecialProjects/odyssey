@@ -115,7 +115,7 @@ export function SocialForms({
 
     return (
       <div
-        className={`flex flex-col items-center p-6 border-2 rounded-lg cursor-pointer w-[59%]
+        className={`flex flex-col items-center p-6 border-2 rounded-lg cursor-pointer w-[64%]
           ${isDragging ? "border-blue-500 bg-blue-50" : "border-gray-300 border-dashed"}`}
         onDrop={handleDrop}
         onDragOver={handleDragOver}
@@ -220,7 +220,7 @@ export function SocialForms({
         }}
         className="px-6 py-4 flex flex-row gap-4 items-center"
       >
-        <div className="w-[7%]">Bio:</div>
+        <div className="w-[12%]">Bio:</div>
         <Textarea
           name="bio"
           value={bioValue}
@@ -247,7 +247,7 @@ export function SocialForms({
         }}
         className="px-6 py-4 flex flex-row gap-4 items-center"
       >
-        <div className="w-[7%]">LinkedIn:</div>
+        <div className="w-[12%]">LinkedIn:</div>
         <Input
           name="linkedin"
           value={linkedinValue}
@@ -276,7 +276,7 @@ export function SocialForms({
         className="px-6 py-4 flex flex-row gap-4 items-center"
       >
         {" "}
-        <div className="w-[7%]">GitHub:</div>
+        <div className="w-[12%]">GitHub:</div>
         <Input
           name="github"
           value={githubValue}
