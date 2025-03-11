@@ -941,7 +941,11 @@ export async function getGroupDueDates(
 
   return await fetchAPI<DueDate[]>(path, {
     urlParams,
-    next: { tags: ["due-dates"], revalidate: 0 },
+    cache: "no-store",
+    next: { 
+      revalidate: 0,
+      tags: ["due-dates"]
+    }
   });
 }
 
