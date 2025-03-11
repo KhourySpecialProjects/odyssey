@@ -8,6 +8,8 @@ import {
   MessageDescription,
   MessageHeader,
 } from "@/components/message";
+import { AuthorizedUser, DueDate } from "@/types";
+import { getUserDueDates } from "@/lib/requests/groups";
 
 interface PlaylistsGridProps {
   searchValue?: string;
@@ -57,14 +59,19 @@ export async function PlaylistsGrid({
   // Get user completion data
   const user = await getCurrentUser();
   let completedLessonIds: number[] = [];
+  let authorizedUser: AuthorizedUser | null = null;
+  let dueDates: DueDate[];
 
   if (user?.email) {
-    const authorizedUser = await getAuthorizedUserByEmail(user.email);
+    authorizedUser = (await getAuthorizedUserByEmail(
+      user.email,
+    )) as AuthorizedUser;
     const enrollments = await getEnrollmentsByAuthorizedUser(authorizedUser.id);
     completedLessonIds = enrollments.flatMap(
       (enrollment) =>
         enrollment.viewedLessons?.map((lesson: Lesson) => lesson.id) || [],
     );
+    dueDates = await getUserDueDates(authorizedUser.id);
   }
 
   // Calculate completion percentage for each playlist
@@ -124,6 +131,10 @@ export async function PlaylistsGrid({
             key={playlist.id}
             playlist={playlist}
             completedLessonIds={completedLessonIds}
+            dueDate={
+              dueDates?.find((dueDate) => dueDate.playlist?.id === playlist.id)
+                ?.dueDate || ""
+            }
           />
         ))}
       </div>
