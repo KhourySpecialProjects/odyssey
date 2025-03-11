@@ -154,8 +154,7 @@
           "deprecated": false,
           "required": false,
           "schema": {
-            "type": "object",
-            "additionalProperties": true
+            "type": "object"
           },
           "style": "deepObject"
         },
