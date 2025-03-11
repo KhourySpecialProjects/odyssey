@@ -9,7 +9,7 @@ import { sendFriendRequest } from "@/lib/requests/friends";
 import { UserBlock } from "./user-block";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { getInitials } from "@/lib/utils";
-import { User2Icon } from "lucide-react";
+import { User2Icon, UserRoundPlus } from "lucide-react";
 
 export function FriendSuggestionsBlock({
   suggUser,
@@ -44,8 +44,11 @@ export function FriendSuggestionsBlock({
       }`}
     >
       <li className="py-0 [&:not(:first-child)]:pt-3">
-        <div className="flex items-center space-x-4">
-          <Avatar variant="round" className="border border-sky-800 w-12 h-12">
+        <div className="flex items-center">
+          <Avatar
+            variant="round"
+            className="border border-sky-800 w-12 h-12 scale-75 md:scale-100"
+          >
             <AvatarImage src={suggUser?.profilePhoto || undefined} />
             <AvatarFallback>
               {suggUser?.firstName ? (
@@ -55,8 +58,15 @@ export function FriendSuggestionsBlock({
               )}
             </AvatarFallback>
           </Avatar>
-          <div className="flex-1 min-w-0">
-            <p className="font-medium truncate text-slate-900 dark:text-slate-300">
+          <div className="flex-1 min-w-0 ml-1">
+            <p
+              title={`${
+                suggUser.firstName && suggUser.lastName
+                  ? `${suggUser.firstName} ${suggUser.lastName}`
+                  : suggUser.email
+              }`}
+              className="font-medium truncate text-slate-900 dark:text-slate-300"
+            >
               {suggUser.firstName && suggUser.lastName
                 ? suggUser.firstName + " " + suggUser.lastName
                 : suggUser.email}
@@ -65,14 +75,22 @@ export function FriendSuggestionsBlock({
 
           <UserBlock user={suggUser} curUser={curUser} />
 
-          <div className="inline-flex items-center gap-2">
+          <div className="inline-flex items-center">
             <Button
               size="sm"
               disabled={requested}
               onClick={handleRequest}
-              className="text-white bg-sky-600 dark:bg-sky-600 dark:text-white dark:hover:bg-sky-700 hover:bg-sky-700"
+              className="text-white bg-sky-600 dark:bg-sky-600 dark:text-white dark:hover:bg-sky-700 hover:bg-sky-700 hidden md:block"
             >
               {requested ? "Sent!" : "Send Request"}
+            </Button>
+            <Button
+              size="sm"
+              disabled={requested}
+              onClick={handleRequest}
+              className="text-white bg-sky-600 dark:bg-sky-600 dark:text-white dark:hover:bg-sky-700 hover:bg-sky-700 block md:hidden scale-75"
+            >
+              {requested ? <UserRoundPlus /> : <UserRoundPlus />}
             </Button>
           </div>
         </div>
