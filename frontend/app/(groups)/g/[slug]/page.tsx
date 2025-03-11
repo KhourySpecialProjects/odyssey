@@ -13,7 +13,7 @@ import DueDateAnnouncements from "@/components/group/due-date-announcements";
 import { getGroupDueDates } from "@/lib/requests/groups";
 
 // Ensure fresh data by disabling caching for this route
-export const fetchCache = 'force-no-store';
+export const fetchCache = "force-no-store";
 export const revalidate = 0;
 
 type Props = {

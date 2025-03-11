@@ -40,8 +40,8 @@ export default function DueDateAnnouncements({
   };
 
   const processedDueDates = dueDates.filter((dueDate) => {
-    return Number(getDaysUntil(dueDate)) >= 0
-  })
+    return Number(getDaysUntil(dueDate)) >= 0;
+  });
 
   return (
     <div className="space-y-3 w-2/3">
@@ -69,7 +69,6 @@ export default function DueDateAnnouncements({
               ) : (
                 <p>&nbsp;is due today!</p>
               )}
-
             </div>
           </Link>
         ))}

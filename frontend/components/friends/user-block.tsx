@@ -51,10 +51,9 @@ export function UserBlock({
             size="sm"
             className="bg-sky-300 text-black hover:bg-sky-400 dark:bg-sky-300 dark:hover:bg-sky-400 block md:hidden scale-75"
           >
-            <UserRound/>
+            <UserRound />
           </Button>
         </div>
-        
       </DialogTrigger>
 
       <DialogContent>

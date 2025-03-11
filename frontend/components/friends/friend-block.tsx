@@ -30,7 +30,10 @@ export function FriendBlock({
   return (
     <li className="py-0 [&:not(:first-child)]:pt-3">
       <div className="flex items-center md:space-x-4">
-        <Avatar variant="round" className="border border-sky-800 w-12 h-12 scale-75">
+        <Avatar
+          variant="round"
+          className="border border-sky-800 w-12 h-12 scale-75"
+        >
           <AvatarImage src={friend?.profilePhoto || undefined} />
           <AvatarFallback>
             {friend?.firstName ? (
@@ -42,9 +45,14 @@ export function FriendBlock({
         </Avatar>
 
         <div className="flex-1 min-w-0">
-          <p title={`${friend.firstName && friend.lastName
-              ? `${friend.firstName} ${friend.lastName}`
-              : friend.email}`} className="font-medium truncate overflow-hidden text-slate-900 dark:text-slate-300 max-w-[200px] md:max-w-sm inline-block" >
+          <p
+            title={`${
+              friend.firstName && friend.lastName
+                ? `${friend.firstName} ${friend.lastName}`
+                : friend.email
+            }`}
+            className="font-medium truncate overflow-hidden text-slate-900 dark:text-slate-300 max-w-[200px] md:max-w-sm inline-block"
+          >
             {friend.firstName && friend.lastName
               ? `${friend.firstName} ${friend.lastName}`
               : friend.email}
@@ -55,7 +63,11 @@ export function FriendBlock({
           <Button size="sm" variant="destructive" className="hidden md:block">
             Remove Friend
           </Button>
-          <Button size="sm" variant="destructive" className="block md:hidden scale-75">
+          <Button
+            size="sm"
+            variant="destructive"
+            className="block md:hidden scale-75"
+          >
             <X></X>
           </Button>
         </div>
