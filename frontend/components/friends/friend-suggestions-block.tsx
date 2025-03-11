@@ -45,7 +45,10 @@ export function FriendSuggestionsBlock({
     >
       <li className="py-0 [&:not(:first-child)]:pt-3">
         <div className="flex items-center">
-          <Avatar variant="round" className="border border-sky-800 w-12 h-12 scale-75 md:scale-100">
+          <Avatar
+            variant="round"
+            className="border border-sky-800 w-12 h-12 scale-75 md:scale-100"
+          >
             <AvatarImage src={suggUser?.profilePhoto || undefined} />
             <AvatarFallback>
               {suggUser?.firstName ? (
@@ -56,9 +59,14 @@ export function FriendSuggestionsBlock({
             </AvatarFallback>
           </Avatar>
           <div className="flex-1 min-w-0 ml-1">
-            <p title={`${suggUser.firstName && suggUser.lastName
-              ? `${suggUser.firstName} ${suggUser.lastName}`
-              : suggUser.email}`} className="font-medium truncate text-slate-900 dark:text-slate-300">
+            <p
+              title={`${
+                suggUser.firstName && suggUser.lastName
+                  ? `${suggUser.firstName} ${suggUser.lastName}`
+                  : suggUser.email
+              }`}
+              className="font-medium truncate text-slate-900 dark:text-slate-300"
+            >
               {suggUser.firstName && suggUser.lastName
                 ? suggUser.firstName + " " + suggUser.lastName
                 : suggUser.email}
@@ -82,7 +90,7 @@ export function FriendSuggestionsBlock({
               onClick={handleRequest}
               className="text-white bg-sky-600 dark:bg-sky-600 dark:text-white dark:hover:bg-sky-700 hover:bg-sky-700 block md:hidden scale-75"
             >
-              {requested ? <UserRoundPlus/> : <UserRoundPlus />}
+              {requested ? <UserRoundPlus /> : <UserRoundPlus />}
             </Button>
           </div>
         </div>

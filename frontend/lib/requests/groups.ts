@@ -942,10 +942,10 @@ export async function getGroupDueDates(
   return await fetchAPI<DueDate[]>(path, {
     urlParams,
     cache: "no-store",
-    next: { 
+    next: {
       revalidate: 0,
-      tags: ["due-dates"]
-    }
+      tags: ["due-dates"],
+    },
   });
 }
 
