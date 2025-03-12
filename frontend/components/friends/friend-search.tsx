@@ -6,6 +6,7 @@ import { ChangeEvent } from "react";
 import { AuthorizedUser } from "@/types";
 import { FriendSuggestionsBlock } from "./friend-suggestions-block";
 import { FriendBlock } from "./friend-block";
+import { cn } from "@/lib/utils";
 
 interface FriendSearchProps {
   authUsers: AuthorizedUser[];
@@ -23,6 +24,7 @@ export function FriendSearch({
   const [searchTerm, setSearchItem] = useState("");
   const [isHovered, setIsHovered] = useState(false);
   const [searchResults, setSearchResults] = useState<AuthorizedUser[]>([]);
+  const [focused, setFocused] = useState(false);
 
   const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
     const searchTerm = e.target.value;
@@ -60,21 +62,28 @@ export function FriendSearch({
   };
 
   return (
-    <div className="relative w-full flex justify-center mb-4">
+    <div className="relative flex justify-center mb-4">
       <div className="relative">
         <Input
           type="search"
           placeholder="Search..."
-          className="w-full w-[250px] md:w-[500px] flex items-center justify-center"
+          className={cn(
+            "w-[250px] md:w-[500px] flex items-center justify-center",
+            focused
+              ? "dark:shadow-[0px_0px_16px_rgb(0,255,255)] shadow-[0px_0px_16px_rgb(29,58,138)]"
+              : "dark:shadow-[0px_0px_6px_rgb(0,255,255)] shadow-[0px_0px_8px_rgb(29,58,138)]",
+          )}
           value={searchTerm}
           onChange={(e) => handleInputChange(e)}
           onMouseEnter={() => setIsHovered(true)}
           onMouseLeave={() => setIsHovered(false)}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
         />
 
         {isHovered && searchTerm != "" && (
           <div
-            className="absolute z-50 w-screen left-1/2 transform -translate-x-1/2 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-500 rounded-md shadow-lg"
+            className="absolute z-50 w-screen left-1/2 transform -translate-x-1/2 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-500 rounded-md shadow-lg md:max-w-[600px]"
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
           >
@@ -109,7 +118,7 @@ export function FriendSearch({
                 })}
               </ul>
             ) : (
-              <p>There are no authorized users.</p>
+              <p className="p-1">No users found.</p>
             )}
           </div>
         )}
