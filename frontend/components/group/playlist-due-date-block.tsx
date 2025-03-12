@@ -8,13 +8,11 @@ import MUIDateTimePicker from "./datetime-picker";
 import { DateTime } from "luxon";
 
 interface PlaylistDueDateBlockProps {
-  currentUser: AuthorizedUser;
   existingGroup: Group;
   currentPlaylist: Playlist;
 }
 
 export function PlaylistDueDateBlock({
-  currentUser,
   existingGroup,
   currentPlaylist,
 }: PlaylistDueDateBlockProps) {
@@ -39,9 +37,7 @@ export function PlaylistDueDateBlock({
 
   const handleInputChange = (date: DateTime | null) => {
     if (!date) return;
-
     setDueDate(date);
-    console.log("date is ", date);
   };
 
   const handleSaveDate = () => {
@@ -54,9 +50,6 @@ export function PlaylistDueDateBlock({
       );
     };
     handleSaveDate();
-    const timeout = setTimeout(() => {
-      setIsSaveClicked(false);
-    }, 3000);
   };
 
   const handleRemoveDate = () => {
@@ -67,9 +60,6 @@ export function PlaylistDueDateBlock({
       setDueDate(null);
     };
     handleRemoveDate();
-    const timeout = setTimeout(() => {
-      setIsRemoveClicked(false);
-    }, 3000);
   };
 
   return (
@@ -91,7 +81,7 @@ export function PlaylistDueDateBlock({
             handleSaveDate();
           }}
           variant="default"
-          className="bg-emerald-500 hover:bg-emerald-700 dark:bg-emerald-600 dark:text-white dark:border dark:border-white"
+          className="bg-emerald-500 hover:bg-emerald-700 dark:bg-emerald-600 dark:hover:bg-emerald-700 dark:text-white dark:border dark:border-white"
           disabled={!dueDate}
         >
           Save
@@ -100,7 +90,7 @@ export function PlaylistDueDateBlock({
           <Button
             onClick={() => setRemovePopupVisible(true)}
             variant="default"
-            className="bg-red-500 hover:bg-red-700 dark:bg-red-600 dark:text-white dark:border dark:border-white"
+            className="bg-red-500 hover:bg-red-700 dark:bg-red-600 dark:hover:bg-red-700 dark:text-white dark:border dark:border-white"
             disabled={!dueDate}
           >
             Remove

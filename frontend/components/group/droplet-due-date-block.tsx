@@ -1,6 +1,4 @@
 import { Droplet, AuthorizedUser, Group } from "@/types";
-import { DateTimePicker } from "react-datetime-picker";
-import { ChangeEvent } from "react";
 import { useState, useEffect } from "react";
 import { Button } from "../ui/button";
 import { assignDropletDueDate, getGroupDueDate } from "@/lib/requests/groups";
@@ -9,7 +7,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
 } from "../ui/dialog";
 
 import MUIDateTimePicker from "./datetime-picker";
@@ -71,9 +68,6 @@ export function DropletDueDateBlock({
       );
     };
     handleSaveDate();
-    const timeout = setTimeout(() => {
-      setIsSaveClicked(false);
-    }, 3000);
   };
 
   const handleRemoveDate = () => {
@@ -84,9 +78,6 @@ export function DropletDueDateBlock({
       setDueDate(null);
     };
     handleRemoveDate();
-    const timeout = setTimeout(() => {
-      setIsRemoveClicked(false);
-    }, 3000);
   };
 
   return (
@@ -108,7 +99,7 @@ export function DropletDueDateBlock({
             handleSaveDate();
           }}
           variant="default"
-          className="bg-emerald-500 hover:bg-emerald-700 dark:bg-emerald-600 dark:text-white dark:border dark:border-white"
+          className="bg-emerald-500 hover:bg-emerald-700 dark:bg-emerald-600 dark:hover:bg-emerald-700 dark:text-white dark:border dark:border-white"
           disabled={!dueDate}
         >
           Save
@@ -117,7 +108,7 @@ export function DropletDueDateBlock({
           <Button
             onClick={() => setRemovePopupVisible(true)}
             variant="default"
-            className="bg-red-500 hover:bg-red-700 dark:bg-red-600 dark:text-white dark:border dark:border-white"
+            className="bg-red-500 hover:bg-red-700 dark:bg-red-600 dark:hover:bg-red-700 dark:text-white dark:border dark:border-white"
             disabled={!dueDate}
           >
             Remove

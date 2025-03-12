@@ -7,8 +7,6 @@ import {
   MessageDescription,
   MessageHeader,
 } from "@/components/message";
-import { Group } from "@/types";
-import { useMemo } from "react";
 import { getUserDueDates } from "@/lib/requests/groups";
 
 interface Lesson {
@@ -110,8 +108,6 @@ export async function UserPlaylistsGrid() {
 
   const dueDates = await getUserDueDates(authorizedUser.id);
 
-  console.log("due dates are", dueDates);
-
   const allDueDates = (authorizedUser.groups || [])
     .flatMap((group: any) => group.playlistDueDates || [])
     .reduce(
@@ -134,7 +130,7 @@ export async function UserPlaylistsGrid() {
           <h2 className="text-xl font-semibold mb-4 dark:text-slate-300">
             Custom Playlists
           </h2>
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-flow-row grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 auto-rows-fr">
             {customPlaylists.map((playlist: Playlist) => (
               <PlaylistCard
                 key={playlist.id}
@@ -149,18 +145,20 @@ export async function UserPlaylistsGrid() {
       {publicPlaylists.length > 0 && (
         <section>
           <h2 className="text-xl font-semibold mb-4">Public Playlists</h2>
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-flow-row grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 auto-rows-fr">
             {publicPlaylists.map((playlist: Playlist) => (
-              <PlaylistCard
-                key={playlist.id}
-                playlist={playlist}
-                completedLessonIds={completedLessonIds}
-                dueDate={
-                  dueDates?.find(
-                    (dueDate) => dueDate.playlist?.id === playlist.id,
-                  )?.dueDate || ""
-                }
-              />
+              <div key={`group-${playlist.id}`} className="h-full">
+                <PlaylistCard
+                  key={playlist.id}
+                  playlist={playlist}
+                  completedLessonIds={completedLessonIds}
+                  dueDate={
+                    dueDates?.find(
+                      (dueDate) => dueDate.playlist?.id === playlist.id,
+                    )?.dueDate || ""
+                  }
+                />
+              </div>
             ))}
           </div>
         </section>
