@@ -32,7 +32,7 @@ export function FriendBlock({
       <div className="flex items-center md:space-x-4">
         <Avatar
           variant="round"
-          className="border border-sky-800 w-12 h-12 scale-75"
+          className="border border-sky-800 w-12 h-12 scale-75 md:scale-100"
         >
           <AvatarImage src={friend?.profilePhoto || undefined} />
           <AvatarFallback>
