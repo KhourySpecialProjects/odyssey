@@ -127,10 +127,11 @@ export function GroupManagementForm({
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [droplets, setDroplets] = useState<Droplet[]>(
-    existingGroup?.droplets || [],
+    existingGroup?.droplets?.sort((a, b) => a.name.localeCompare(b.name)) || [],
   );
   const [playlists, setPlaylists] = useState<Playlist[]>(
-    existingGroup?.playlists || [],
+    existingGroup?.playlists?.sort((a, b) => a.name.localeCompare(b.name)) ||
+      [],
   );
   const [members, setMembers] = useState<User[]>(existingGroup?.members || []);
   const [hasChanges, setHasChanges] = useState(false);
@@ -365,7 +366,11 @@ export function GroupManagementForm({
               <FormItem>
                 <FormLabel>Group Name</FormLabel>
                 <FormControl>
-                  <Input placeholder="Enter group name" {...field} />
+                  <Input
+                    placeholder="Enter group name"
+                    {...field}
+                    autoComplete="off"
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -518,7 +523,7 @@ export function GroupManagementForm({
               ))}
             </div>
           ) : (
-            <div className="p-8 text-center text-slate-500 border border-dashed rounded-lg">
+            <div className="p-8 text-center text-slate-500 border border-dashed dark:border-slate-500 rounded-lg">
               No members have been added to this group yet
             </div>
           )}
@@ -545,7 +550,7 @@ export function GroupManagementForm({
               onRemove={handleDropletRemove}
             />
           ) : (
-            <div className="p-8 text-center text-slate-500 border border-dashed rounded-lg">
+            <div className="p-8 text-center text-slate-500 border border-dashed dark:border-slate-500 rounded-lg">
               No droplets have been added to this group yet
             </div>
           )}

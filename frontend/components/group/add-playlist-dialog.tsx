@@ -41,9 +41,11 @@ export function AddPlaylistDialog({
     }
   }, [open, currentPlaylists]);
 
-  const filteredPlaylists = availablePlaylists.filter((playlist) =>
-    playlist.name.toLowerCase().includes(search.toLowerCase()),
-  );
+  const filteredPlaylists = availablePlaylists
+    .filter((playlist) =>
+      playlist.name.toLowerCase().includes(search.toLowerCase()),
+    )
+    .sort((a, b) => a.name?.localeCompare(b.name));
 
   const handleAddPlaylist = (playlist: Playlist) => {
     setSelectedPlaylists((prev) => [...prev, playlist]);

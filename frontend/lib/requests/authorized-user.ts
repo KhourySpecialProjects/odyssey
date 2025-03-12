@@ -277,8 +277,8 @@ export async function fetchIsAuthorizedUser(email: string) {
 export async function getAllAuthorizedUsers(): Promise<AuthorizedUser[]> {
   try {
     const query = qs.stringify({
-      sort: ["email:asc"],
-      fields: ["email"],
+      sort: ["lastName:asc"],
+      fields: ["email", "firstName", "lastName"],
       pagination: {
         pageSize: 1000,
         page: 1,
