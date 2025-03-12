@@ -1960,6 +1960,7 @@ declare module '@strapi/types' {
       'api::authorized-user-role.authorized-user-role': ApiAuthorizedUserRoleAuthorizedUserRole;
       'api::authorized-user.authorized-user': ApiAuthorizedUserAuthorizedUser;
       'api::droplet-lesson.droplet-lesson': ApiDropletLessonDropletLesson;
+      'api::droplet.droplet': ApiDropletDroplet;
       'api::due-date.due-date': ApiDueDateDueDate;
       'api::enrollment.enrollment': ApiEnrollmentEnrollment;
       'api::friendship.friendship': ApiFriendshipFriendship;
