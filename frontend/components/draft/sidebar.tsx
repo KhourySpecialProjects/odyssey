@@ -57,12 +57,10 @@ export function Sidebar({
   user,
   droplet,
   authorizedUser,
-  onLessonsUpdate,
 }: {
   user: User;
   droplet: Pick<Droplet, "id" | "name" | "slug" | "droplet_lessons">;
   authorizedUser: AuthorizedUser | null;
-  onLessonsUpdate?: (lessons: Lesson[]) => void;
 }) {
   const [expanded, setExpanded] = useState(false);
   const pathname = usePathname();
@@ -402,7 +400,9 @@ export function Sidebar({
                 <DropdownMenuLabel className="text-xs">
                   NUID: {user.nuid || "unknown"}
                   <br />
-                  Role(s): {condenseRoleTitles(user.roles) || "unknown"}
+                  <p className="text-xs leading-none text-muted-foreground max-w-56">
+                    Role(s): {condenseRoleTitles(user.roles)}
+                  </p>
                 </DropdownMenuLabel>
 
                 <DropdownMenuItem asChild>

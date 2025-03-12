@@ -276,9 +276,11 @@ export default function Sidebar({
 
               <DropdownMenuContent className="mb-3 min-w-[220px]">
                 <DropdownMenuLabel className="text-xs">
-                  NUID: {user.nuid || "unknown"}
+                  {user.nuid ? "NUID:" + user.nuid || "unknown" : ""}
                   <br />
-                  Role: {condenseRoleTitles(user.roles) || "unknown"}
+                  <p className="text-xs leading-none text-muted-foreground max-w-56">
+                    Role(s): {condenseRoleTitles(user.roles)}
+                  </p>
                 </DropdownMenuLabel>
                 <DropdownMenuItem asChild>
                   <Link href="/explore">
