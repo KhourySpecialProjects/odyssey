@@ -566,7 +566,7 @@ export async function fetchSuggestionsById(
                 ),
             ),
           )
-          .sort((a, b) => a.lastName.localeCompare(b.lastName));
+          .sort((a, b) => a.lastName?.localeCompare(b.lastName));
       }),
     );
 
