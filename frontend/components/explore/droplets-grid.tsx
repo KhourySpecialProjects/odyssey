@@ -116,7 +116,7 @@ export async function DropletsGrid({
       <Message className="mb-8 border border-dashed rounded-md border-slate-200 dark:border-slate-500 dark:bg-slate-800">
         <MessageHeader subtitle="No Results" title="No Droplets Found" />
         <MessageDescription>
-          There are no Droplets that match &quot;{searchValue}&quot;.
+          {searchValue ? `There are no Droplets that match "${searchValue}".` : "There are no droplets that match those filters."}
         </MessageDescription>
       </Message>
     );

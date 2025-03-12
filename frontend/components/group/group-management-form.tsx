@@ -420,6 +420,7 @@ export function GroupManagementForm({
                     initialContent={field.value || ""}
                     updateContent={field.onChange}
                     placeholder="Enter group description..."
+                    isDroplet={false}
                   />
                 </FormControl>
                 <FormMessage />

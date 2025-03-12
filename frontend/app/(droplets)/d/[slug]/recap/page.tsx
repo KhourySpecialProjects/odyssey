@@ -255,7 +255,7 @@ export default async function DropletRecapRoute({ params }: Props) {
 
           {enrollID ? (
             <section>
-              <h2 className="mb-3 text-2xl font-bold text-slate-900">
+              <h2 className="mb-3 text-2xl font-bold text-slate-900 dark:text-slate-300">
                 Rate this Droplet!
               </h2>
               <StarRating value={0} enrollmentID={enrollID} average={false} />
