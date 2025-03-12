@@ -290,6 +290,7 @@ export async function createEnrollment(
       console.log("enrollment successful");
       revalidateTag("enrollments");
       revalidatePath("/(droplets)/d/[slug]", "page");
+      revalidatePath("/(droplets)/d/[slug]/[lessonSlug]", "page");
       revalidatePath("/(general)/dashboard", "page");
     }
   } catch (err) {
