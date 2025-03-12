@@ -16,11 +16,11 @@ import LatexTool from "./tools/latex-tool";
 export default function DefaultToolbar({
   editor,
   note,
-  isDroplet
+  isDroplet,
 }: {
   editor: Editor;
   note?: boolean | null;
-  isDroplet?: boolean
+  isDroplet?: boolean;
 }) {
   return (
     <div

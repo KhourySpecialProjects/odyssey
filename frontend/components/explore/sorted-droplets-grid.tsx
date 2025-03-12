@@ -87,7 +87,9 @@ export function SortedDropletsGrid({
       <Message className="mb-8 border border-dashed rounded-md border-slate-200 dark:border-slate-500 dark:bg-slate-800">
         <MessageHeader subtitle="No Results" title="No Droplets Found" />
         <MessageDescription>
-          {searchValue ? `There are no Droplets that match "${searchValue}".` : "There are no droplets that match those filters."}
+          {searchValue
+            ? `There are no Droplets that match "${searchValue}".`
+            : "There are no droplets that match those filters."}
         </MessageDescription>
       </Message>
     );

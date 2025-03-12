@@ -61,7 +61,10 @@ export function BlockedUsersBlock({
         <div className="flex items-center -space-x-1 md:space-x-4">
           <UserBlock user={blocked} curUser={user} />
           <div className="flex items-center" onClick={handleUnblock}>
-            <Button size="sm" className="scale-75 md:scale-100">
+            <Button
+              size="sm"
+              className="scale-75 md:scale-100 dark:bg-black dark:text-white dark:hover:bg-slate-800 dark:border dark:border-slate-500"
+            >
               Unblock
             </Button>
           </div>

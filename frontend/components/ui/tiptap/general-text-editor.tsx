@@ -13,7 +13,7 @@ interface GeneralTextEditorProps {
   updateContent: (content: string) => void;
   placeholder?: string;
   className?: string;
-  isDroplet?: boolean
+  isDroplet?: boolean;
 }
 
 export function GeneralTextEditor({
