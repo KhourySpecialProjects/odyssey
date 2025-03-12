@@ -63,7 +63,7 @@ export default async function AuthorProfileSettings() {
       <div className="flex flex-col md:hidden">
         <FriendDropdown
           content={{
-            Friends: <Friends />,
+            "Friends": <Friends />,
             "Friend Requests": (
               <FriendRequests
                 noProfile={false}
