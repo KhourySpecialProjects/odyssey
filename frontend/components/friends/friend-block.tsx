@@ -60,7 +60,11 @@ export function FriendBlock({
         </div>
         <UserBlock user={friend} curUser={user} />
         <div className="inline-flex items-center " onClick={handleRemove}>
-          <Button size="sm" variant="destructive" className="hidden md:block">
+          <Button
+            size="sm"
+            variant="destructive"
+            className="hidden md:block w-32"
+          >
             Remove Friend
           </Button>
           <Button
