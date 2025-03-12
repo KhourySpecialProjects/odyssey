@@ -287,7 +287,7 @@ export async function createEnrollment(
         const errorMessage = `${data.error.message} (${errorPath})`;
         return { ok: false, error: errorMessage, data: null };
       }
-
+      console.log("enrollment successful");
       revalidateTag("enrollments");
       revalidatePath("/(droplets)/d/[slug]", "page");
       revalidatePath("/(general)/dashboard", "page");

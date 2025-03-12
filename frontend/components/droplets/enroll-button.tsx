@@ -72,10 +72,13 @@ export function EnrollButton({ droplet, isEnrolled }: EnrollButtonProps) {
       size="lg"
       after={<ArrowRightIcon />}
       onClick={() => {
+        console.log("enrollment button clicked");
         if (droplet.lessons && droplet.lessons[0] && !isEnrolled) {
+          console.log("enrolling...");
           enroll();
           router.push(`/d/${droplet.slug}/${droplet.lessons[0].slug}`);
         } else {
+          console.log("was already enrolled");
           unenroll();
         }
       }}
