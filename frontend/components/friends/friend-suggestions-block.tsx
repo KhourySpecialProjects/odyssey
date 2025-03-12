@@ -44,7 +44,7 @@ export function FriendSuggestionsBlock({
       }`}
     >
       <li className="py-0 [&:not(:first-child)]:pt-3">
-        <div className="flex items-center">
+        <div className="flex items-center md:space-x-4">
           <Avatar
             variant="round"
             className="border border-sky-800 w-12 h-12 scale-75 md:scale-100"
@@ -58,14 +58,14 @@ export function FriendSuggestionsBlock({
               )}
             </AvatarFallback>
           </Avatar>
-          <div className="flex-1 min-w-0 ml-1">
+          <div className="flex-1 min-w-0">
             <p
               title={`${
                 suggUser.firstName && suggUser.lastName
                   ? `${suggUser.firstName} ${suggUser.lastName}`
                   : suggUser.email
               }`}
-              className="font-medium truncate text-slate-900 dark:text-slate-300"
+              className="font-medium truncate overflow-hidden text-slate-900 dark:text-slate-300 max-w-[200px] md:max-w-[250px] inline-block"
             >
               {suggUser.firstName && suggUser.lastName
                 ? suggUser.firstName + " " + suggUser.lastName

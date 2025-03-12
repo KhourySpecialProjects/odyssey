@@ -95,7 +95,11 @@ export async function NoteSummary({
       y: y - totalHeight + 10,
       width: maxWidth,
       height: totalHeight,
-      color: rgb(backgroundColor.r, backgroundColor.g, backgroundColor.b),
+      color: rgb(
+        backgroundColor.r || 0,
+        backgroundColor.g || 0,
+        backgroundColor.b || 0,
+      ),
     });
 
     page.drawText(text, {

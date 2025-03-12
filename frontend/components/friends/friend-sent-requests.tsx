@@ -24,7 +24,7 @@ export async function FriendSentRequests() {
         A list of people you have sent friend requests to.
       </p>
 
-      <div className="p-4 mt-4 rounded-md bg-slate-100 dark:bg-slate-800">
+      <div className="p-1 md:p-4 mt-4 rounded-md bg-slate-100 dark:bg-slate-800">
         {sentRequests.length > 0 ? (
           <ul className="divide-y divide-slate-200 dark:divide-slate-700 md:space-y-4">
             {sentRequests.map((friendship) => (
