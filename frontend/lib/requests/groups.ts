@@ -654,10 +654,6 @@ export async function enrollUsers(group: Group) {
             droplet: droplet.id,
             viewedLessons: [],
           };
-          console.log("inside the playlist enrollment function");
-          console.log("enrollment data: ", enrollmentData);
-          console.log("member email: ", member.email);
-          console.log("member id", member.id);
           return await createEnrollmentFromEmail(enrollmentData, member.email);
           //return await createEnrollment(enrollmentData);
         }) || [];
