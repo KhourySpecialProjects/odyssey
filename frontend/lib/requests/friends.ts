@@ -542,14 +542,12 @@ export async function fetchSuggestionsById(
           ),
       ),
     );
-    console.log("direct", directFriends);
 
     // Get all friends of friends
     const friendsOfFriends = await Promise.all(
       directFriends.map(async (friend) => {
         // Get all friendships for each direct friend
         const friendFriendships = await fetchFriendshipsById(friend.id);
-        console.log("friend friend", friendFriendships);
 
         // Return all users from these friendships except the direct friend and original user
         return friendFriendships
