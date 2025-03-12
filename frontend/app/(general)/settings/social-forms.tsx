@@ -116,7 +116,7 @@ export function SocialForms({
     return (
       <div
         className={`flex flex-col items-center p-6 border-2 rounded-lg cursor-pointer w-[64%]
-          ${isDragging ? "border-blue-500 bg-blue-50" : "border-gray-300 border-dashed"}`}
+          ${isDragging ? "border-blue-300 bg-blue-50 dark:bg-slate-800" : "border-gray-300 dark:border-slate-500 border-dashed"}`}
         onDrop={handleDrop}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
@@ -128,7 +128,7 @@ export function SocialForms({
             className="w-32 h-32 object-cover rounded-full border mb-4"
           />
         ) : (
-          <p className="text-gray-500 mb-4">
+          <p className="text-gray-500 dark:text-slate-400 mb-4">
             Drag & drop to update your profile photo here
           </p>
         )}

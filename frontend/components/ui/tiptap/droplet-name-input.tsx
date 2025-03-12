@@ -19,7 +19,7 @@ export function DropletNameInput({
         levels: [1],
         HTMLAttributes: {
           class:
-            "text-6xl font-black text-slate-900 dark:bg-slate-800 dark:text-white",
+            "text-6xl font-black text-slate-900 dark:hover:border dark:hover:border-slate-500 dark:text-white",
         },
       }),
       Text,

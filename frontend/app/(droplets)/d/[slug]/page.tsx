@@ -128,7 +128,7 @@ export default async function DropletRoute({ params }: Props) {
               <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
                 Recommended Background
               </h2>
-              <p className="text-slate-500">
+              <p className="text-slate-500 dark:text-slate-300">
                 Before beginning, we recommend completing the following
                 Droplets:
               </p>

@@ -46,12 +46,12 @@ export function UserMultiSelect({
           variant="outline"
           role="combobox"
           aria-expanded={open}
-          className="w-full justify-between"
+          className="w-full justify-between dark:hover:bg-slate-900"
         >
           {selectedIds.length > 0
             ? users
                 .filter((user) => selectedIds.includes(user.id))
-                .map((user) => user.email)
+                .map((user) => user.firstName + " " + user.lastName)
                 .join(", ")
             : "Select users..."}
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -79,7 +79,7 @@ export function UserMultiSelect({
                 <div>
                   {/* <div>{user.name}</div> */}
                   <div className="text-sm text-muted-foreground">
-                    {user.email}
+                    {user.firstName + " " + user.lastName}
                   </div>
                 </div>
               </CommandItem>

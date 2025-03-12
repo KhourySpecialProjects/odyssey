@@ -1,12 +1,9 @@
 import { getCurrentUser } from "@/lib/auth/session";
 import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
 import { notFound, redirect } from "next/navigation";
-import { GroupManagementForm } from "@/components/group/group-management-form";
 import { getGroupBySlugV2 } from "@/lib/requests/groups";
-import { Badge } from "@/components/ui/badge";
 import { isAuthorizedUserAdmin } from "@/lib/utils";
 import { GroupDueDateDashboard } from "@/components/group/due-date-dashboard";
-import { Button } from "@/components/ui/button";
 
 type Props = {
   searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;

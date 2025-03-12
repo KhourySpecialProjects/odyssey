@@ -26,7 +26,7 @@ export function Filter({
 
   return (
     <div>
-      <h1 className="font-bold text-sm text-slate-900 pb-2">
+      <h1 className="font-bold text-sm text-slate-900 dark:text-slate-300 pb-2">
         {variant == "focusArea" ? "Focus Area" : "Type"}
       </h1>
       <ToggleGroup type="single" onValueChange={update} defaultValue={initial}>
