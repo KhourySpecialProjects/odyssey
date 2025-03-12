@@ -199,7 +199,7 @@ export function LessonRenderer({
           </h1>
 
           {headings.length > 2 && (
-            <div className="p-6 mt-8 border rounded-md bg-slate-50 dark:bg-slate-800 border-slate-200">
+            <div className="p-6 mt-8 border rounded-md bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-500">
               <h2 className="text-xl font-bold">Contents</h2>
               <ul className="mt-3 ml-4 list-disc list-inside">
                 {headings.map((heading, index) => (
@@ -314,7 +314,7 @@ function LessonBlockRenderer({
     case "droplets.callout":
       return (
         <div
-          className={`flex flex-row items-center dark:bg-slate-800 dark:border-slate-500 px-6 py-6 border rounded-md md:-mx-8 ${block.color || "bg-sky-50"}`}
+          className={`flex flex-row items-center dark:border-slate-500 px-6 py-6 border rounded-md md:-mx-8 ${block.color || "bg-sky-50"}`}
         >
           {block?.iconEnabled && (
             <div className="">
@@ -323,7 +323,7 @@ function LessonBlockRenderer({
           )}
 
           <div className="">
-            <div className="pl-8 mx-auto prose prose-sky dark:text-slate-300 prose-headings:text-inherit prose-code:text-inherit prose-strong:text-inherit justify-left">
+            <div className="pl-8 mx-auto prose prose-sky  prose-headings:text-inherit prose-code:text-inherit prose-strong:text-inherit justify-left">
               <BlocksRenderer content={block.content} />
             </div>
           </div>

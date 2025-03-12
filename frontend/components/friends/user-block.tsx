@@ -92,7 +92,12 @@ export function UserBlock({
               </Link>
             )}
           </div>
-          {user.bio && <DialogDescription>{user.bio}</DialogDescription>}
+          {user.bio && (
+            <DialogDescription className="text-center">
+              {user.bio}
+            </DialogDescription>
+          )}
+          <hr></hr>
           <DialogDescription className="text-center font-bold">
             Completed Droplets:{" "}
           </DialogDescription>

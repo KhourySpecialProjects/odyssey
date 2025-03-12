@@ -165,8 +165,11 @@ export function FriendRequestFeedBlock({
                 )}
               </div>
               {request.bio && (
-                <DialogDescription>{request.bio}</DialogDescription>
+                <DialogDescription className="text-center">
+                  {request.bio}
+                </DialogDescription>
               )}
+              <hr></hr>
               <DialogDescription className="text-center font-bold">
                 Completed Droplets:{" "}
               </DialogDescription>

@@ -13,6 +13,7 @@ interface GeneralTextEditorProps {
   updateContent: (content: string) => void;
   placeholder?: string;
   className?: string;
+  isDroplet?: boolean;
 }
 
 export function GeneralTextEditor({
@@ -20,6 +21,7 @@ export function GeneralTextEditor({
   updateContent,
   placeholder = "Enter text...",
   className = "",
+  isDroplet,
 }: GeneralTextEditorProps) {
   const editor = useEditor({
     extensions: [
@@ -61,7 +63,7 @@ export function GeneralTextEditor({
 
   return (
     <div className="w-full">
-      <GeneralToolbar editor={editor} />
+      <GeneralToolbar editor={editor} isDroplet={isDroplet} />
       <EditorContent
         name="general-text-editor"
         editor={editor}

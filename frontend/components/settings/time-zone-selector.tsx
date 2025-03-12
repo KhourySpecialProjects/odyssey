@@ -59,8 +59,6 @@ export default function TimeZoneSelector({
   );
 
   const handleChange = async (zone: string) => {
-    console.log("zone ", zone);
-
     await setTimeZone(zone, userId);
     setSelectedTimeZone(zone);
   };

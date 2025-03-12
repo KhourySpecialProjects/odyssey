@@ -67,9 +67,6 @@ export function NotesBar({
         newPosition = pageHeight - 450;
       }
 
-      console.log(pageHeight);
-      console.log(newPosition);
-
       setNotes((prev) =>
         prev.map((note) =>
           note.id === draggedNote.id

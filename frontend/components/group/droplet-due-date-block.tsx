@@ -39,9 +39,7 @@ export function DropletDueDateBlock({
 
   const handleInputChange = (date: DateTime | null) => {
     if (!date) return;
-
     setDueDate(date);
-    console.log("date is ", date);
   };
 
   const handleSaveDate = () => {
