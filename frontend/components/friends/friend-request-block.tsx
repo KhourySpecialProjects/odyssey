@@ -57,7 +57,10 @@ export function FriendRequestBlock({
   return (
     <li className="py-0 [&:not(:first-child)]:pt-3 ">
       <div className="flex items-center md:space-x-4">
-        <Avatar variant="round" className="border border-sky-800 w-12 h-12 scale-75 md:scale-100">
+        <Avatar
+          variant="round"
+          className="border border-sky-800 w-12 h-12 scale-75 md:scale-100"
+        >
           <AvatarImage src={request?.profilePhoto || undefined} />
           <AvatarFallback>
             {request?.firstName ? (
@@ -68,12 +71,14 @@ export function FriendRequestBlock({
           </AvatarFallback>
         </Avatar>
         <div className="flex-1 min-w-0">
-          <p  title={`${
+          <p
+            title={`${
               request.firstName && request.lastName
                 ? `${request.firstName} ${request.lastName}`
                 : request.email
             }`}
-            className="font-medium truncate text-slate-900 dark:text-slate-300">
+            className="font-medium truncate text-slate-900 dark:text-slate-300"
+          >
             {request.firstName && request.lastName
               ? `${request.firstName} ${request.lastName}`
               : request.email}

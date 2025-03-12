@@ -67,11 +67,12 @@ export function FriendSearch({
         <Input
           type="search"
           placeholder="Search..."
-          className= {cn("w-[250px] md:w-[500px] flex items-center justify-center",
-                  focused
-                    ? "dark:shadow-[0px_0px_16px_rgb(0,255,255)] shadow-[0px_0px_16px_rgb(29,58,138)]"
-                    : "dark:shadow-[0px_0px_6px_rgb(0,255,255)] shadow-[0px_0px_8px_rgb(29,58,138)]",
-                )}
+          className={cn(
+            "w-[250px] md:w-[500px] flex items-center justify-center",
+            focused
+              ? "dark:shadow-[0px_0px_16px_rgb(0,255,255)] shadow-[0px_0px_16px_rgb(29,58,138)]"
+              : "dark:shadow-[0px_0px_6px_rgb(0,255,255)] shadow-[0px_0px_8px_rgb(29,58,138)]",
+          )}
           value={searchTerm}
           onChange={(e) => handleInputChange(e)}
           onMouseEnter={() => setIsHovered(true)}
