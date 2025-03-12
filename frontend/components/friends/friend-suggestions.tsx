@@ -12,7 +12,7 @@ export async function FriendSuggestions({ user }: { user: AuthorizedUser }) {
       <h1 className="font-bold dark:text-slate-300">Friend Suggestions</h1>
       <p className="dark:text-slate-300">A list of your people you may know.</p>
 
-      <div className="p-4 mt-4 rounded-md bg-slate-100 dark:bg-slate-800">
+      <div className="p-1 md:p-4 mt-4 rounded-md bg-slate-100 dark:bg-slate-800">
         {suggestions.length > 0 ? (
           <ul className="divide-y divide-slate-200 dark:divide-slate-700 md:space-y-4">
             {(await fetchSuggestionsById(user.id)).map((suggestedUser) => (
