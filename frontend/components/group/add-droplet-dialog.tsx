@@ -40,9 +40,11 @@ export function AddDropletDialog({
     }
   }, [open, currentDroplets]);
 
-  const filteredDroplets = availableDroplets.filter((droplet) =>
-    droplet.name.toLowerCase().includes(search.toLowerCase()),
-  );
+  const filteredDroplets = availableDroplets
+    .filter((droplet) =>
+      droplet.name.toLowerCase().includes(search.toLowerCase()),
+    )
+    .sort((a, b) => a.name.localeCompare(b.name));
 
   const handleAddDroplet = (droplet: Droplet) => {
     setSelectedDroplets((prev) => [...prev, droplet]);
