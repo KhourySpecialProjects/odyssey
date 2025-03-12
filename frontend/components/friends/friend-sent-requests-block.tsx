@@ -32,7 +32,10 @@ export function FriendSentRequestsBlock({
   return (
     <li className="py-0 [&:not(:first-child)]:pt-3">
       <div className="flex items-center md:space-x-4">
-        <Avatar variant="round" className="border border-sky-800 w-12 h-12 scale-75 md:scale-100">
+        <Avatar
+          variant="round"
+          className="border border-sky-800 w-12 h-12 scale-75 md:scale-100"
+        >
           <AvatarImage src={request?.profilePhoto || undefined} />
           <AvatarFallback>
             {request?.firstName ? (
@@ -43,19 +46,26 @@ export function FriendSentRequestsBlock({
           </AvatarFallback>
         </Avatar>
         <div className="flex-1 min-w-0">
-          <p title={`${
+          <p
+            title={`${
               request.firstName && request.lastName
                 ? `${request.firstName} ${request.lastName}`
                 : request.email
             }`}
-            className="font-medium truncate text-slate-900 dark:text-slate-300 max-w-[200px] md:max-w-sm inline-block">
+            className="font-medium truncate text-slate-900 dark:text-slate-300 max-w-[200px] md:max-w-sm inline-block"
+          >
             {request.firstName && request.lastName
               ? `${request.firstName} ${request.lastName}`
               : request.email}
           </p>
         </div>
         <UserBlock user={request} curUser={user} />
-        <Button variant="destructive" size="sm" onClick={handleReject} className="scale-75 md:scale-100">
+        <Button
+          variant="destructive"
+          size="sm"
+          onClick={handleReject}
+          className="scale-75 md:scale-100"
+        >
           <div className="relative group">
             <X />
             <span className="absolute left-1/2 transform -translate-x-1/2 top-full mt-1 w-max px-2 py-1 text-xs text-white bg-gray-800 rounded opacity-0 group-hover:opacity-100 transition-opacity">
