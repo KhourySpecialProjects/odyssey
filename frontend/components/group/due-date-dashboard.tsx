@@ -29,24 +29,12 @@ export function GroupDueDateDashboard({
   const router = useRouter();
   const tab = searchParams?.tab || "droplets";
 
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [droplets, setDroplets] = useState<Droplet[]>(
     existingGroup?.droplets || [],
   );
   const [playlists, setPlaylists] = useState<Playlist[]>(
     existingGroup?.playlists || [],
   );
-  const [members, setMembers] = useState<User[]>(existingGroup?.members || []);
-  const [hasChanges, setHasChanges] = useState(false);
-
-  const [isOpen, setIsOpen] = useState(false);
-  const onOpenChange = (open: boolean) => {
-    if (!open) {
-      setIsOpen(false);
-    } else {
-      setIsOpen(true);
-    }
-  };
 
   const handleCancel = () => {
     router.push(existingGroup ? `/g/${existingGroup.slug}` : "/g/dashboard");
@@ -58,7 +46,7 @@ export function GroupDueDateDashboard({
         <Button
           onClick={handleCancel}
           variant="outline"
-          className="dark:bg-slate-800 dark:border dark:border-white dark:text-white dark:hover:bg-white dark:hover:text-slate-800"
+          className="dark:bg-slate-800 dark:border dark:border-slate-500 dark:text-white dark:hover:bg-white dark:hover:text-slate-800"
         >
           <ArrowLeft size={18} /> Back to my group
         </Button>
@@ -88,7 +76,6 @@ export function GroupDueDateDashboard({
             {playlists.map((playlist) => (
               <PlaylistDueDateBlock
                 key={playlist.id}
-                currentUser={currentUser}
                 existingGroup={existingGroup}
                 currentPlaylist={playlist}
               />

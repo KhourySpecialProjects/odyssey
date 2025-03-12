@@ -35,7 +35,7 @@ export function GeneralTextEditor({
       Placeholder.configure({
         placeholder: placeholder,
         emptyEditorClass:
-          "before:content-[attr(data-placeholder)] before:text-gray-500 before:absolute before:top-2 before:left-2 before:pointer-events-none before:select-none",
+          "cursor-text before:content-[attr(data-placeholder)] before:text-gray-500 dark:before:text-slate-300 before:absolute before:top-4 before:left-4 before:pointer-events-none before:select-none",
       }),
     ],
 

@@ -93,7 +93,9 @@ export function UserBlock({
             )}
           </div>
           {user.bio && <DialogDescription>{user.bio}</DialogDescription>}
-          <DialogDescription>Completed Droplets: </DialogDescription>
+          <DialogDescription className="text-center font-bold">
+            Completed Droplets:{" "}
+          </DialogDescription>
           <FriendCompletedDroplets friend={user} />
           <div
             className={`inline-flex items-center gap-2 ${curUser == user || curUser.blocked.includes(user) ? "visibility: hidden" : "visibility: visible"}`}
