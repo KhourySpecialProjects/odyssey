@@ -53,10 +53,10 @@ export function PlaylistCard({
     .toFormat("MM/dd hh:mm a");
 
   return (
-    <Link href={linkTo}>
-      <Card className="bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-500">
+    <Link href={linkTo} className="block h-full">
+      <Card className="bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-500 flex flex-col h-full">
         <CardHeader>
-          <div className="pt-4">
+          <div>
             {dueDate && dueDate !== "" && daysUntil > -2 && (
               <Badge
                 className={getDueDateBadgeColor(daysUntil, true)}

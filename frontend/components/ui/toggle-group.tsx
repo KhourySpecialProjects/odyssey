@@ -12,7 +12,7 @@ const ToggleGroup = React.forwardRef<
   return (
     <ToggleGroupPrimitive.Root
       className={cn(
-        "rounded-3xl px-2 py-2 space-x-2 border border-slate-200 w-fit",
+        "rounded-3xl px-2 py-2 space-x-2 border border-slate-200 dark:border-slate-500 w-fit",
         className,
       )}
       {...props}
