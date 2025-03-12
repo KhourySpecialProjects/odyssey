@@ -75,7 +75,7 @@ const PlaylistItem = ({
 
         <div className="flex-grow">
           <div className="flex flex-row flex-wrap flex-0 gap-1.5 mb-2">
-            <Badge  variant="default" className="dark:bg-slate-700">
+            <Badge variant="default" className="dark:bg-slate-700">
               {playlist.isPublic ? "Public" : "Private"}
             </Badge>
             <Badge variant="default" className="dark:bg-slate-700">

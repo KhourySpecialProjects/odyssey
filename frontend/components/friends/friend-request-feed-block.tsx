@@ -96,7 +96,7 @@ export function FriendRequestFeedBlock({
 
       <div className="flex flex-row justify-center mt-2">
         <Button
-          className="bg-green-600 dark:bg-green-900 text-white hover:bg-green-700 mr-3 flex items-center justify-center"
+          className="bg-green-600 dark:bg-green-900 text-white hover:bg-green-700 dark:hover:bg-green-600 hover:text-white mr-3 flex items-center justify-center"
           style={{ height: "15px", width: "50px" }}
           size="sm"
           variant="outline"
@@ -110,8 +110,7 @@ export function FriendRequestFeedBlock({
           </div>
         </Button>
         <Button
-          className="flex items-center justify-center"
-          variant="destructive"
+          className="flex items-center justify-center bg-red-600 dark:bg-red-900 text-white hover:bg-red-700 dark:hover:bg-red-600 dark:text-white"
           size="sm"
           onClick={handleReject}
           style={{ height: "15px", width: "50px" }}

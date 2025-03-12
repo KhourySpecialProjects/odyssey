@@ -35,9 +35,9 @@ export function ContentSelector({ user }: { user: User }) {
             }}
             className={cn(
               tab.value === currentTab
-              ? "border-primary-500 light:text-primary-600 dark:text-primary-300"
-              : "border-transparent light:text-gray-500 dark:text-slate-300 dark:hover:text-gray-400 hover:border-gray-300 hover:text-gray-700",
-            "whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium",
+                ? "border-primary-500 light:text-primary-600 dark:text-primary-300"
+                : "border-transparent light:text-gray-500 dark:text-slate-300 dark:hover:text-gray-400 hover:border-gray-300 hover:text-gray-700",
+              "whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium",
             )}
           >
             {tab.name}

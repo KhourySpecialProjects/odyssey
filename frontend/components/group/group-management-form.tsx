@@ -127,10 +127,11 @@ export function GroupManagementForm({
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [droplets, setDroplets] = useState<Droplet[]>(
-    existingGroup?.droplets || [],
+    existingGroup?.droplets?.sort((a, b) => a.name.localeCompare(b.name)) || [],
   );
   const [playlists, setPlaylists] = useState<Playlist[]>(
-    existingGroup?.playlists || [],
+    existingGroup?.playlists?.sort((a, b) => a.name.localeCompare(b.name)) ||
+      [],
   );
   const [members, setMembers] = useState<User[]>(existingGroup?.members || []);
   const [hasChanges, setHasChanges] = useState(false);
