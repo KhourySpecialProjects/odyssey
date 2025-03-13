@@ -14,7 +14,7 @@ import { AuthorizedUserRoleTitle } from "./globals";
 import { getAuthorizedUserRoleIdByTitle } from "./requests/authorized-user-roles";
 import { DropletSchema } from "./validations/droplet";
 import { LessonSchema } from "./validations/lesson";
-import type { Droplet, TimeZone } from "@/types";
+import type { Droplet, Lesson, TimeZone } from "@/types";
 import { getDropletById } from "./requests/droplet";
 import {
   S3Client,
@@ -257,7 +257,8 @@ export async function updateAuthorBio(bio: string, userId: number) {
 }
 
 export async function createEnrollment(
-  formData: z.infer<typeof DropletEnrollmentSchema>,
+  droplet: Droplet,
+  viewedLessons: Lesson[],
 ) {
   try {
     const user = await getCurrentUser();
@@ -268,12 +269,16 @@ export async function createEnrollment(
     if (
       !enrollments
         .map((enrollment) => enrollment.droplet.id)
-        .includes(formData.droplet)
+        .includes(droplet.id)
     ) {
       const response = await fetch(STRAPI_API_URL + "/api/enrollments", {
         method: "POST",
         body: JSON.stringify({
-          data: { ...formData, authorizedUser: authorizedUser.id },
+          data: {
+            authorizedUser: authorizedUser.id,
+            droplet: droplet.id,
+            viewedLessons: viewedLessons,
+          },
         }),
         headers: {
           "Content-Type": "application/json",
@@ -292,6 +297,15 @@ export async function createEnrollment(
       revalidatePath("/(droplets)/d/[slug]", "page");
       revalidatePath("/(droplets)/d/[slug]/[lessonSlug]", "page");
       revalidatePath("/(general)/dashboard", "page");
+      revalidatePath(`/(droplets)/d/${droplet.slug}`, "page");
+      if (droplet.lessons) {
+        revalidatePath(
+          `/(droplets)/d/${droplet.slug}/${droplet.lessons[0].slug}`,
+          "page",
+        );
+      }
+    } else {
+      console.log("enrollment already existed");
     }
   } catch (err) {
     console.error(err);
