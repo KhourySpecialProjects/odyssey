@@ -25,13 +25,8 @@ export function EnrollButton({ droplet, isEnrolled }: EnrollButtonProps) {
 
   function enroll() {
     if (droplet.lessons && droplet.lessons.length > 0) {
-      const values: z.infer<typeof DropletEnrollmentSchema> = {
-        droplet: droplet.id,
-        viewedLessons: [],
-      };
-
       startTransition(() => {
-        toast.promise(createEnrollment(values), {
+        toast.promise(createEnrollment(droplet, []), {
           loading: "Enrolling...",
           success: () => `You are now enrolled in ${droplet.name}!`,
           error: (error) => (
