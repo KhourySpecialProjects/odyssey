@@ -11,7 +11,6 @@ import { useEffect, useState } from "react";
 import { Button } from "../ui/button";
 import { toast } from "sonner";
 import { archiveDroplet } from "@/lib/actions";
-import { useRouter } from "next/navigation";
 import { Archive, Clock } from "lucide-react";
 import { getDueDateBadgeColor } from "@/lib/utils";
 import { DateTime } from "luxon";
@@ -74,8 +73,6 @@ export function DropletTile({
     return "bg-emerald-100 text-emerald-800 border-emerald-200";
   };
 
-  const router = useRouter();
-
   async function changeVisibility() {
     try {
       const result = await archiveDroplet(droplet, isArchived ? false : true);
@@ -85,7 +82,6 @@ export function DropletTile({
             ? `${droplet.name} is now unarchived!`
             : `${droplet.name} is now archived!`,
         );
-        //router.push('/dashboard');
       } else {
         toast.error("Failed to update droplet visibility");
       }

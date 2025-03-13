@@ -1,7 +1,6 @@
 "use client";
 
-import { AlignJustify } from "lucide-react";
-import React, { useState } from "react";
+import React from "react";
 
 export interface AdminContent {
   [name: string]: React.ReactNode;

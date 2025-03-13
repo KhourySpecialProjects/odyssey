@@ -4,14 +4,12 @@ import { useState } from "react";
 import { AnnouncementTypeTitle } from "@/lib/globals";
 import { FeedClient } from "./feed-client";
 import { FeedFilter } from "./feed-filter";
-import { Announcement, AnnouncementType, AuthorizedUser } from "@/types";
+import { Announcement, AnnouncementType } from "@/types";
 
 export function FeedContainer({
   announcements,
-  curUser,
 }: {
   announcements: Announcement[];
-  curUser: AuthorizedUser;
 }) {
   const [selectedRoles, setSelectedRoles] = useState<AnnouncementTypeTitle[]>(
     Object.values(AnnouncementTypeTitle),
@@ -25,7 +23,6 @@ export function FeedContainer({
             (role) => role.toLowerCase() as AnnouncementType,
           )}
           announcements={announcements}
-          curUser={curUser}
         />
       </div>
       <div className="w-1/3 text-center text-xl font-bold flex flex-col items-center justify-center dark:text-slate-300">

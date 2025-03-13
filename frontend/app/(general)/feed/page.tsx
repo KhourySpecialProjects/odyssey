@@ -34,7 +34,7 @@ export default async function FeedPage() {
           </div>
         </div>
         <div className="w-3/4 text-center">
-          <FeedContainer announcements={announcements} curUser={authUser} />
+          <FeedContainer announcements={announcements} />
         </div>
       </div>
     </>

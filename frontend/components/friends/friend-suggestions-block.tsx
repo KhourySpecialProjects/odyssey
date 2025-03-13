@@ -22,8 +22,6 @@ export function FriendSuggestionsBlock({
   display: boolean;
   requested: boolean;
 }) {
-  const [open, setOpen] = useState(false);
-
   const handleRequest = () => {
     startTransition(async () => {
       const result = await sendFriendRequest(curUser, suggUser);

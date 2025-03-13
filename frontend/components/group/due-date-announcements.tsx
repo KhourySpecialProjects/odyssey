@@ -1,8 +1,7 @@
 "use client";
 
 import { DueDate, Group } from "@/types";
-import { getDropletById } from "@/lib/requests/droplet";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { Button } from "../ui/button";
 import { getDueDateBadgeColor } from "@/lib/utils";

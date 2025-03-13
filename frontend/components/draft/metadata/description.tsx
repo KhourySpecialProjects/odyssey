@@ -12,12 +12,10 @@ export function Description({
   dropletId: number;
   initialContent: string;
 }) {
-  const [description, setDescription] = useState(initialContent);
   const { error, handleChange } = useDropletUpdate(dropletId);
 
   const updateDescription = async (description: string) => {
     const descriptionText = htmlToText(description);
-    setDescription(descriptionText);
     handleChange({ description: descriptionText });
   };
 

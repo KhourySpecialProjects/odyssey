@@ -110,7 +110,6 @@ export default async function CreateRoute() {
                     <PlaylistCard
                       key={playlist.id}
                       playlist={playlist}
-                      completedLessonIds={[]}
                       toDraft={true}
                     />
                   ))}

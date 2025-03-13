@@ -25,17 +25,13 @@ interface GroupProgressGridProps {
 }
 
 export function GroupProgressGrid({ group }: GroupProgressGridProps) {
-  // const [completionStatus, setCompletionStatus] = useState<
-  //   Record<string, boolean>
-  // >({});
-
   const [completionStatus, setCompletionStatus] = useState<
     Record<string, number>
   >({});
 
   const [isPending, startTransition] = useTransition();
-  const [currentPage, setCurrentPage] = useState(0); // Track the current page
-  const lessonsPerPage = 4; // Number of lessons to show per page
+  const [currentPage, setCurrentPage] = useState(0);
+  const lessonsPerPage = 4;
 
   const startIndex = currentPage * lessonsPerPage;
   const endIndex = startIndex + lessonsPerPage;
@@ -61,11 +57,6 @@ export function GroupProgressGrid({ group }: GroupProgressGridProps) {
             startTransition(async () => {
               const enrollments = await getEnrollmentsByAuthorizedUser(
                 member.id,
-              );
-
-              const completedLessonIds = enrollments.flatMap(
-                (enrollment) =>
-                  enrollment.viewedLessons?.map((lesson) => lesson.id) || [],
               );
 
               enrollments.map(async (enrollment) => {
@@ -159,7 +150,7 @@ export function GroupProgressGrid({ group }: GroupProgressGridProps) {
 
             <div>
               <div className="flex flex-row">
-                {paginatedLessons?.map((droplet, rowIndex) => (
+                {paginatedLessons?.map((droplet) => (
                   <div
                     key={droplet.id}
                     className="transition-colors  border-slate-200 hover:border-slate-300 bg-white-50 p-4 h-24 w-36 flex items-center justify-center"
@@ -206,7 +197,7 @@ export function GroupProgressGrid({ group }: GroupProgressGridProps) {
                               backgroundColor: getCompletedDropletColor(
                                 getCompletionStatus(member.id, droplet.id),
                               ),
-                              transition: "width 0.3s ease", // Smooth transition
+                              transition: "width 0.3s ease",
                             }}
                           />
                         </div>
