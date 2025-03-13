@@ -305,9 +305,11 @@ export async function createEnrollment(
         );
         console.log("finished revalidation");
       }
+      return { ok: true, error: null, data: data.data };
     } else {
       console.log("enrollment already existed");
     }
+    return { ok: true };
   } catch (err) {
     console.error(err);
     return { error: "Database Error: Failed to enroll." };
