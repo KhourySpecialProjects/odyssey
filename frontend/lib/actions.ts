@@ -303,6 +303,7 @@ export async function createEnrollment(
           `/(droplets)/d/${droplet.slug}/${droplet.lessons[0].slug}`,
           "page",
         );
+        console.log("finished revalidation");
       }
     } else {
       console.log("enrollment already existed");
