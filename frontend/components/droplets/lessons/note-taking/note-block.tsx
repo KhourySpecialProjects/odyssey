@@ -98,9 +98,6 @@ export function NoteBlock({
       },
     },
     immediatelyRender: false,
-    onDestroy: () => {
-      //revalidate();
-    },
   });
 
   return (
