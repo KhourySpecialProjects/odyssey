@@ -57,6 +57,7 @@ export default async function Page({ params }: Props) {
     const user = await getAuthorizedUserByEmail(session.user.email);
     const enrollments = await getEnrollmentsByAuthorizedUser(user.id);
     console.log("enrollments", enrollments);
+    console.log("current lesson", lesson.name);
 
     const enrollment = enrollments.find((e) => e.droplet.id === droplet.id);
 
