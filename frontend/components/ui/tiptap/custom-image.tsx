@@ -12,7 +12,6 @@ const CustomImage = Image.extend({
         props: {
           handleDOMEvents: {
             keydown: (view, event) => {
-              // Check if delete or backspace was pressed
               if (event.key === "Delete" || event.key === "Backspace") {
                 const { state } = view;
                 const { selection } = state;

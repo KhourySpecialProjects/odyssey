@@ -4,20 +4,12 @@ import { Group } from "@/types";
 import { StrapiRequestParams } from "@/types/strapi";
 import { fetchAPI } from "@/lib/utils";
 import { getAuthorizedUserByEmail } from "./authorized-user";
-import type {
-  ActionResponse,
-  AuthorizedUser,
-  Droplet,
-  DueDate,
-  Enrollment,
-  Playlist,
-} from "@/types";
+import type { ActionResponse, Droplet, DueDate, Playlist } from "@/types";
 import { AuthorizedUserRoleTitle } from "../globals";
 import { getAuthorizedUserRoleIdByTitle } from "./authorized-user-roles";
 import { createEnrollmentFromEmail } from "@/lib/actions";
 import { revalidatePath } from "next/cache";
 import { enrollInPlaylist } from "./playlist-enrollment";
-import { DateTime } from "luxon";
 const STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
 

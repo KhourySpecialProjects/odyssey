@@ -5,7 +5,6 @@ import { TypeIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   Popover,
-  PopoverClose,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";

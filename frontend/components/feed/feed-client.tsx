@@ -10,11 +10,9 @@ const ITEMS_PER_PAGE = 5;
 export function FeedClient({
   selectedRoles,
   announcements,
-  curUser,
 }: {
   selectedRoles: AnnouncementType[];
   announcements: Announcement[];
-  curUser: AuthorizedUser;
 }) {
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -48,11 +46,7 @@ export function FeedClient({
           <>
             <ul className="w-[75%] mx-auto grid gap-4 grid-cols-1 auto-rows-fr">
               {paginatedAnnouncements.map((post) => (
-                <FeedBlock
-                  key={post.id}
-                  announcement={post}
-                  curUser={curUser}
-                />
+                <FeedBlock key={post.id} announcement={post} />
               ))}
             </ul>
             {totalPages != 1 && (

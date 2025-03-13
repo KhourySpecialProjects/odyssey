@@ -29,9 +29,6 @@ export default function DropletFooter({
 
   if (pathSegments.length > 3) {
     const lessonSlug = pathname.split("/").at(-1);
-    // const currentLessonSlugIndex = droplet.droplet_lessons
-    //   .map((l: any) => l.slug)
-    //   .indexOf(lessonSlug);
     const lessonSlugs = droplet.droplet_lessons.map((l: any) => l.lesson.slug);
     const currentLessonSlugIndex = lessonSlugs.indexOf(lessonSlug);
 

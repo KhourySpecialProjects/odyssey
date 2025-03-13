@@ -46,11 +46,6 @@ export function GeneralTextEditor({
     },
 
     content: initialContent,
-    // editorProps: {
-    //   attributes: {
-    //     class: `prose prose-sky w-full min-h-32 border rounded-b-md border-slate-200 hover:shadow focus:shadow-lg outline-none p-4 ${className}`,
-    //   },
-    // },
     editorProps: {
       attributes: {
         class: `prose prose-sky prose-code:text-inherit prose-headings:text-inherit dark:text-slate-300 prose-strong:text-inherit w-full max-w-none border rounded-b-md border-slate-200 dark:border-slate-500 hover:shadow focus:shadow-lg outline-none p-4 ${className}`,

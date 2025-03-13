@@ -18,9 +18,8 @@ export function FAQList() {
               <div className="flex items-center space-x-4">
                 <div className="flex-1 min-w-0">
                   <p className="text-xl font-bold truncate text-slate-900 dark:text-slate-300 text-center">
-                    {index === 0 && "When was Odyssey first created?"}
-                    {index === 1 &&
-                      "What was the motivation behind this website?"}
+                    {index === 0 && "How can I create a droplet?"}
+                    {index === 1 && "When was Odyssey first created?"}
                     {index === 2 &&
                       "What are the plans for Odyssey in the future?"}
                   </p>
@@ -32,7 +31,13 @@ export function FAQList() {
                   openIndex === index ? "max-h-96" : "max-h-0"
                 }`}
               >
-                <div>(insert answer here)</div>
+                <div>
+                  {index === 0 &&
+                    "Contact a member of the Odyssey team to ask for permission to become a content creator."}
+                  {index === 1 && "January 2024"}
+                  {index === 2 &&
+                    "We are looking to add support for multiple authors on droplets as well as creating personalized badges for completing droplets."}
+                </div>
               </div>
             </li>
           ))}

@@ -14,7 +14,6 @@ export function ContentSelector({ user }: { user: User }) {
   const searchParams = useSearchParams();
   const pathname = usePathname();
   const router = useRouter();
-  const isAdmin = isAuthorizedUserAdmin(user.roles);
 
   const currentTab = searchParams.get("tab") || "droplets";
 

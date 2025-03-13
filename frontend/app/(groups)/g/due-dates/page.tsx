@@ -44,7 +44,6 @@ export default async function GroupDueDatesPage({ searchParams }: Props) {
       </div>
       {group && (
         <GroupDueDateDashboard
-          currentUser={authorizedUser}
           existingGroup={group}
           searchParams={p}
           user={user}

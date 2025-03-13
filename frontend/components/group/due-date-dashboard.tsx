@@ -2,8 +2,6 @@
 
 import { AuthorizedUser, Droplet, Group, User } from "@/types";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-import { Playlist } from "@/types";
 import { DropletDueDateBlock } from "./droplet-due-date-block";
 import { ContentSelector } from "./content-selector";
 import { PlaylistDueDateBlock } from "./playlist-due-date-block";
@@ -11,7 +9,6 @@ import { Button } from "../ui/button";
 import { ArrowLeft } from "lucide-react";
 
 interface GroupDueDateDashboardProps {
-  currentUser: AuthorizedUser;
   existingGroup: Group;
   searchParams?: { [key: string]: string | string[] | undefined };
   user: User;
@@ -21,7 +18,6 @@ interface GroupDueDateDashboardProps {
 // Currently, just trying to get the functionality done.  Will refactor
 // later.
 export function GroupDueDateDashboard({
-  currentUser,
   existingGroup,
   searchParams,
   user,
@@ -29,12 +25,8 @@ export function GroupDueDateDashboard({
   const router = useRouter();
   const tab = searchParams?.tab || "droplets";
 
-  const [droplets, setDroplets] = useState<Droplet[]>(
-    existingGroup?.droplets || [],
-  );
-  const [playlists, setPlaylists] = useState<Playlist[]>(
-    existingGroup?.playlists || [],
-  );
+  const droplets = existingGroup?.droplets || [];
+  const playlists = existingGroup?.playlists || [];
 
   const handleCancel = () => {
     router.push(existingGroup ? `/g/${existingGroup.slug}` : "/g/dashboard");
@@ -65,7 +57,6 @@ export function GroupDueDateDashboard({
               .map((droplet) => (
                 <DropletDueDateBlock
                   key={droplet.id}
-                  currentUser={currentUser}
                   existingGroup={existingGroup}
                   currentDroplet={droplet}
                 />

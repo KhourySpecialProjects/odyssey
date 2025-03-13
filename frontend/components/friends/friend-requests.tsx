@@ -25,25 +25,20 @@ export function FriendRequests({
     )
     .sort((a, b) => a.lastName?.localeCompare(b.lastName));
 
-  const [currentPage, setCurrentPage] = useState(0); // Track the current page
-  const requestsPerPage = friendsPerPage; // Number of lessons to show per page
+  const [currentPage, setCurrentPage] = useState(0);
+  const requestsPerPage = friendsPerPage;
 
-  // Calculate the start and end indices for the lessons on the current page
   const startIndex = currentPage * requestsPerPage;
   const endIndex = startIndex + requestsPerPage;
-  const paginatedRequests = friendRequests.slice(startIndex, endIndex); // Slice the lessons array
+  const paginatedRequests = friendRequests.slice(startIndex, endIndex);
 
-  // Calculate the total number of pages
   const totalPages = Math.ceil((friendRequests.length || 0) / requestsPerPage);
 
-  // Handlers for navigation
   const handleNextPage = () => {
-    //if (currentPage < totalPages - 1) setCurrentPage(currentPage + 1);
     setCurrentPage((prev) => Math.min(prev + 1, totalPages - 1));
   };
 
   const handlePrevPage = () => {
-    //if (currentPage > 0) setCurrentPage(currentPage - 1);
     setCurrentPage((prev) => Math.max(prev - 1, 0));
   };
 

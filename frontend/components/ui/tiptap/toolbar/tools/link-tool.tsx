@@ -1,6 +1,6 @@
 "use client";
 import { Editor } from "@tiptap/react";
-import { useState, useRef } from "react";
+import { useState } from "react";
 import {
   Popover,
   PopoverTrigger,

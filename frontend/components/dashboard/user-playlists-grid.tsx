@@ -108,21 +108,6 @@ export async function UserPlaylistsGrid() {
 
   const dueDates = await getUserDueDates(authorizedUser.id);
 
-  const allDueDates = (authorizedUser.groups || [])
-    .flatMap((group: any) => group.playlistDueDates || [])
-    .reduce(
-      (acc: any, curr: any) => {
-        if (
-          !acc[curr.playlistId] ||
-          new Date(curr.baseDueDate) < new Date(acc[curr.playlistId])
-        ) {
-          acc[curr.playlistId] = curr.baseDueDate;
-        }
-        return acc;
-      },
-      {} as Record<number, string>,
-    );
-
   return (
     <div className="space-y-8">
       {customPlaylists.length > 0 && (
@@ -132,11 +117,7 @@ export async function UserPlaylistsGrid() {
           </h2>
           <div className="grid grid-flow-row grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 auto-rows-fr">
             {customPlaylists.map((playlist: Playlist) => (
-              <PlaylistCard
-                key={playlist.id}
-                playlist={playlist}
-                completedLessonIds={completedLessonIds}
-              />
+              <PlaylistCard key={playlist.id} playlist={playlist} />
             ))}
           </div>
         </section>
@@ -151,7 +132,6 @@ export async function UserPlaylistsGrid() {
                 <PlaylistCard
                   key={playlist.id}
                   playlist={playlist}
-                  completedLessonIds={completedLessonIds}
                   dueDate={
                     dueDates?.find(
                       (dueDate) => dueDate.playlist?.id === playlist.id,
