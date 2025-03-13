@@ -190,10 +190,6 @@ export function LessonRenderer({
     .filter((b: any) => b.__component === "droplets.generic")
     .map((b) => b.id);
 
-  console.log("enrollment id", enrollmentId);
-  console.log("completed lesson ids", completedLessonIds);
-  console.log("current lesson id", lesson.id);
-  console.log("-------------------------------------------");
   return (
     <>
       <div className="w-full mx-auto lg:py-8 max-w-prose">
