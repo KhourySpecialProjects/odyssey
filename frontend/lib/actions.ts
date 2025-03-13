@@ -292,7 +292,6 @@ export async function createEnrollment(
         const errorMessage = `${data.error.message} (${errorPath})`;
         return { ok: false, error: errorMessage, data: null };
       }
-      console.log("enrollment successful");
       revalidateTag("enrollments");
       revalidatePath("/(droplets)/d/[slug]", "page");
       revalidatePath("/(droplets)/d/[slug]/[lessonSlug]", "page");
@@ -303,11 +302,8 @@ export async function createEnrollment(
           `/(droplets)/d/${droplet.slug}/${droplet.lessons[0].slug}`,
           "page",
         );
-        console.log("finished revalidation");
       }
       return { ok: true, error: null, data: data.data };
-    } else {
-      console.log("enrollment already existed");
     }
     return { ok: true };
   } catch (err) {
