@@ -1,6 +1,5 @@
 import { generateID } from "../util/generate-id";
 
-// Import evaluatex at the top level
 let evaluatex: any;
 try {
   evaluatex = require("evaluatex").default;

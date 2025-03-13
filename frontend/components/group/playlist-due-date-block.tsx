@@ -1,4 +1,4 @@
-import { Playlist, AuthorizedUser, Group } from "@/types";
+import { Playlist, Group } from "@/types";
 import { Button } from "../ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
 import { useEffect, useState } from "react";

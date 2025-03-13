@@ -11,7 +11,7 @@ import Link from "next/link";
 export function DropletBlock({ droplet }: { droplet: Droplet }) {
   const linkTo = `/draft/d/${droplet.slug}`;
 
-  const handleUpdateDroplet = async (formData: FormData) => {
+  const handleUpdateDroplet = async () => {
     const result = await updateDroplet(
       droplet.id,
       {

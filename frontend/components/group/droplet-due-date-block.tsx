@@ -5,16 +5,14 @@ import { assignDropletDueDate, getGroupDueDate } from "@/lib/requests/groups";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
 
 import MUIDateTimePicker from "./datetime-picker";
-import { DateTime, Settings } from "luxon";
+import { DateTime } from "luxon";
 
 interface DropletDueDateBlockProps {
-  currentUser: AuthorizedUser;
   existingGroup: Group;
   currentDroplet: Droplet;
 }
 
 export function DropletDueDateBlock({
-  currentUser,
   existingGroup,
   currentDroplet,
 }: DropletDueDateBlockProps) {
@@ -45,15 +43,6 @@ export function DropletDueDateBlock({
   const handleSaveDate = () => {
     setIsSaveClicked(true);
     const handleSaveDate = async () => {
-      // await assignDueDate(
-      //   existingGroup,
-      //   currentDroplet,
-      //   dueDate
-      //     ? dueDate.setZone(currentUser.timeZone || "America/New_York").toISO()
-      //     : DateTime.local()
-      //         .setZone(currentUser.timeZone || "America/New_York")
-      //         .toISO(),
-      // );
       await assignDropletDueDate(
         dueDate?.toISO() || "America/New_York",
         existingGroup,

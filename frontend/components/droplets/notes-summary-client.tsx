@@ -14,7 +14,6 @@ export function NotesSummaryClient({
   dropletNotes,
   enrollment,
   allNotes,
-  enrollments,
   onSelectionChange,
 }: {
   index: number;
@@ -26,7 +25,6 @@ export function NotesSummaryClient({
     notes: Note[];
     highlights: Highlight[];
   }[];
-  enrollments: Enrollment[];
   onSelectionChange: (dropletId: number, isSelected: boolean) => void;
 }) {
   const [openDroplets, setOpenDroplets] = useState<{ [key: number]: boolean }>(

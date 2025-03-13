@@ -1,10 +1,8 @@
-import { fetchAuthorizedUsers } from "@/lib/requests/authorized-user";
 import { FriendSuggestionsBlock } from "./friend-suggestions-block";
 import { fetchSuggestionsById } from "@/lib/requests/friends";
 import { AuthorizedUser } from "@/types";
 
 export async function FriendSuggestions({ user }: { user: AuthorizedUser }) {
-  const authorizedUsers = await fetchAuthorizedUsers();
   const suggestions = await fetchSuggestionsById(user.id);
 
   return (

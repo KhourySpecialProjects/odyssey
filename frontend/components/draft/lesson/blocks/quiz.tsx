@@ -60,7 +60,6 @@ export function QuizEditor({
       __component: block.__component,
       questions: updatedQuestions,
     });
-    setIsOpen(false);
   };
 
   const updateQuestion = (index: number, updatedQuestion: QuizQuestion) => {
@@ -89,8 +88,6 @@ export function QuizEditor({
       questions: updatedQuestions,
     });
   };
-
-  const [isOpen, setIsOpen] = useState(false);
 
   return (
     <div className="w-full max-w-2xl">

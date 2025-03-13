@@ -17,7 +17,6 @@ export function FriendSentRequestsBlock({
   user: AuthorizedUser;
   request: AuthorizedUser;
 }) {
-  const [open, setOpen] = useState(false);
   const handleReject = () => {
     startTransition(async () => {
       const result = await cancelFriendRequest(user.id, request.id);

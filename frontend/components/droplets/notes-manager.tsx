@@ -112,7 +112,6 @@ export function NotesManager({
               dropletNotes={dropletData.notes}
               enrollment={enrollment}
               allNotes={allNotes}
-              enrollments={enrollments}
               onSelectionChange={handleSelectionChange}
             />
           );

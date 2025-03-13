@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Droplet, DueDate, Enrollment } from "@/types";
+import { Droplet, DueDate } from "@/types";
 import { DropletTile } from "../droplets/droplet-tile";
 
 const ITEMS_PER_PAGE = 9;

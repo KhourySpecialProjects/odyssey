@@ -7,6 +7,7 @@ import { updateDroplet } from "@/lib/actions";
 import { NextStepDisplay } from "@/components/draft/metadata/next-steps/next-step";
 import { Input } from "@/components/ui/input";
 import { AddButton } from "../form-buttons";
+import { toast } from "sonner";
 
 export function NextSteps({
   dropletId,
@@ -58,6 +59,8 @@ export function NextSteps({
     if (!response.error && response.data) {
       setUrl("");
       setLabel("");
+    } else {
+      toast.error("Not a valid URL");
     }
   };
 

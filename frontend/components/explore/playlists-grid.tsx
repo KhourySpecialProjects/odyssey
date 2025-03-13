@@ -130,7 +130,6 @@ export async function PlaylistsGrid({
           <PlaylistCard
             key={playlist.id}
             playlist={playlist}
-            completedLessonIds={completedLessonIds}
             dueDate={
               dueDates?.find((dueDate) => dueDate.playlist?.id === playlist.id)
                 ?.dueDate || ""

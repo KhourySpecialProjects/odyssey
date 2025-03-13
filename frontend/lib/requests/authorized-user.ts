@@ -1,5 +1,5 @@
 import { fetchAPI, flattenAttributes } from "@/lib/utils";
-import { AuthorizedUser, TimeZone } from "@/types";
+import { AuthorizedUser } from "@/types";
 import { StrapiRequestParams } from "@/types/strapi";
 import qs from "qs";
 
