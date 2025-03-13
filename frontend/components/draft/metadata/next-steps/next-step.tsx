@@ -8,8 +8,6 @@ import { Link2Icon } from "lucide-react";
 import { DeleteButton } from "@/components/draft/metadata/form-buttons";
 import { Input } from "@/components/ui/input";
 
-type NextStep = Omit<Resource, "id">;
-
 export function NextStepDisplay({
   initial,
   update,

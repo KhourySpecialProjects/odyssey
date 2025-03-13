@@ -11,7 +11,6 @@ import {
 } from "@/components/ui/dialog";
 import { User } from "@/types";
 import { Bug } from "lucide-react";
-import { useState } from "react";
 import { ReportBugForm } from "./form";
 
 export function ReportBugDialog({

@@ -28,32 +28,6 @@ export function SocialForms({
   const [profileImage, setProfileImage] = useState<string | null>(null);
   const [profileFile, setProfileFile] = useState<File | null>(null);
 
-  const handleDrop = async (event: React.DragEvent<HTMLDivElement>) => {
-    event.preventDefault();
-    const file = event.dataTransfer.files[0];
-
-    if (file && file.type.startsWith("image/")) {
-      const compressedFile = await compressImage(file); // Compress before storing
-      setProfileFile(compressedFile);
-      setProfileImage(URL.createObjectURL(compressedFile));
-    } else {
-      toast.error("Please upload a valid image file");
-    }
-  };
-
-  const handleFileSelect = async (
-    event: React.ChangeEvent<HTMLInputElement>,
-  ) => {
-    const file = event.target.files?.[0];
-    if (file && file.type.startsWith("image/")) {
-      const compressedFile = await compressImage(file); // Compress the image
-      setProfileFile(compressedFile);
-      setProfileImage(URL.createObjectURL(compressedFile));
-    } else {
-      toast.error("Please upload a valid image file");
-    }
-  };
-
   const compressImage = async (imageFile: File) => {
     const options = {
       maxSizeMB: 1,
@@ -163,7 +137,7 @@ export function SocialForms({
   return (
     <>
       <form
-        action={async (formData: FormData) => {
+        action={async () => {
           if (profileFile && authorizedUser?.id) {
             const newFormData: FormData = new FormData();
             newFormData.append("image", profileFile as Blob);
@@ -236,12 +210,15 @@ export function SocialForms({
         action={async (formData: FormData) => {
           const linkedin = formData.get("linkedin") as string;
           if (linkedin && authorizedUser?.id) {
-            const result = await updateLinkedin(linkedin, authorizedUser.id);
+            const result = await updateLinkedin(
+              { linkedin },
+              authorizedUser.id,
+            );
             if (result.success) {
               setLinkedinValue(linkedin);
               toast.success("LinkedIn URL updated successfully");
             } else {
-              toast.error("Failed to update LinkedIn URL");
+              toast.error("Not a valid LinkedIn URL");
             }
           }
         }}
@@ -264,12 +241,12 @@ export function SocialForms({
         action={async (formData: FormData) => {
           const github = formData.get("github") as string;
           if (github && authorizedUser?.id) {
-            const result = await updateGithub(github, authorizedUser.id);
+            const result = await updateGithub({ github }, authorizedUser.id);
             if (result.success) {
               setGithubValue(github);
               toast.success("GitHub URL updated successfully");
             } else {
-              toast.error("Failed to update GitHub URL");
+              toast.error("Not a valid GitHub URL");
             }
           }
         }}

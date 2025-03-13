@@ -30,7 +30,6 @@ export function EnrollButton({ droplet, isEnrolled }: EnrollButtonProps) {
           const enrollment = await createEnrollment(droplet, []);
           if (enrollment && enrollment.ok) {
             toast.success(`You are now enrolled in ${droplet.name}!`);
-            // Only navigate after successful enrollment
             if (droplet.lessons) {
               router.push(`/d/${droplet.slug}/${droplet.lessons[0].slug}`);
             }
@@ -73,7 +72,6 @@ export function EnrollButton({ droplet, isEnrolled }: EnrollButtonProps) {
       onClick={() => {
         if (droplet.lessons && droplet.lessons[0] && !isEnrolled) {
           enroll();
-          //router.push(`/d/${droplet.slug}/${droplet.lessons[0].slug}`);
         } else {
           unenroll();
         }

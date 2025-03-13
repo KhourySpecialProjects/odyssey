@@ -19,11 +19,6 @@ export function AddLesson({
   const ref = useRef<HTMLLIElement>(null);
   const router = useRouter();
 
-  const showInput = () => {
-    setIsHidden(false);
-    inputRef.current!.focus();
-  };
-
   const handleClick = () => {
     setIsHidden(false);
     setTimeout(() => {

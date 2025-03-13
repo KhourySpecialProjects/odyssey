@@ -25,7 +25,6 @@ interface PlaylistCardProps {
     isPublic: boolean;
     completionPercentage?: number;
   };
-  completedLessonIds: number[];
   toDraft?: boolean;
   dueDate?: string;
   timeZone?: string;
@@ -33,7 +32,6 @@ interface PlaylistCardProps {
 
 export function PlaylistCard({
   playlist,
-  completedLessonIds,
   toDraft = false,
   dueDate,
   timeZone,

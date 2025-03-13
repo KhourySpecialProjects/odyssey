@@ -9,7 +9,6 @@ import { updateDroplet } from "@/lib/actions";
 
 export function useDropletUpdate(dropletId: number) {
   const [error, setError] = useState("");
-  const [lastUpdate, setLastUpdate] = useState();
   const router = useRouter();
 
   const update = async (data: Partial<z.infer<typeof DropletSchema>>) => {

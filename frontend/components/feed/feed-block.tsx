@@ -12,13 +12,7 @@ import {
   UsersRound,
 } from "lucide-react";
 
-export function FeedBlock({
-  announcement,
-  curUser,
-}: {
-  announcement: Announcement;
-  curUser: AuthorizedUser;
-}) {
+export function FeedBlock({ announcement }: { announcement: Announcement }) {
   const announcementType = announcement.type;
 
   function formatDate(dateInput: string | Date | undefined) {
