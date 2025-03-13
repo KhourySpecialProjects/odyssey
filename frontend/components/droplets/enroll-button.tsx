@@ -30,14 +30,12 @@ export function EnrollButton({ droplet, isEnrolled }: EnrollButtonProps) {
           const enrollment = await createEnrollment(droplet, []);
           if (enrollment && enrollment.ok) {
             toast.success(`You are now enrolled in ${droplet.name}!`);
-            console.log("finished making enrollment");
             // Only navigate after successful enrollment
             if (droplet.lessons) {
               router.push(`/d/${droplet.slug}/${droplet.lessons[0].slug}`);
             }
           } else {
             toast.error("Uh oh! Something went wrong.");
-            console.log("error:", enrollment);
           }
         });
       } catch (error) {
@@ -73,13 +71,10 @@ export function EnrollButton({ droplet, isEnrolled }: EnrollButtonProps) {
       size="lg"
       after={<ArrowRightIcon />}
       onClick={() => {
-        console.log("enrollment button clicked");
         if (droplet.lessons && droplet.lessons[0] && !isEnrolled) {
-          console.log("enrolling...");
           enroll();
           //router.push(`/d/${droplet.slug}/${droplet.lessons[0].slug}`);
         } else {
-          console.log("was already enrolled");
           unenroll();
         }
       }}
