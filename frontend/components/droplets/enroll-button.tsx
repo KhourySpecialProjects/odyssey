@@ -23,20 +23,24 @@ export function EnrollButton({ droplet, isEnrolled }: EnrollButtonProps) {
     return null;
   }
 
-  function enroll() {
+  async function enroll() {
     if (droplet.lessons && droplet.lessons.length > 0) {
-      startTransition(() => {
-        toast.promise(createEnrollment(droplet, []), {
-          loading: "Enrolling...",
-          success: () => `You are now enrolled in ${droplet.name}!`,
-          error: (error) => (
-            <div>
-              <p>Uh oh! Something went wrong.</p>
-              <pre>{error}</pre>
-            </div>
-          ),
+      try {
+        startTransition(async () => {
+          const enrollment = await createEnrollment(droplet, []);
+          if (enrollment && enrollment.ok) {
+            toast.success(`You are now enrolled in ${droplet.name}!`);
+            // Only navigate after successful enrollment
+            if (droplet.lessons) {
+              router.push(`/d/${droplet.slug}/${droplet.lessons[0].slug}`);
+            }
+          } else {
+            toast.error("Uh oh! Something went wrong.");
+          }
         });
-      });
+      } catch (error) {
+        toast.error("Failed to enroll in the course");
+      }
     }
   }
 

@@ -8,6 +8,8 @@ import { getCurrentUser } from "@/lib/auth/session";
 import { notFound } from "next/navigation";
 import { DropletLessonWrapper } from "@/components/droplets/lessons/droplet-lesson-wrapper";
 
+export const dynamic = "force-dynamic";
+
 type Props = {
   params: Promise<Params>;
 };
