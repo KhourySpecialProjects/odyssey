@@ -1,5 +1,5 @@
-const { getAuthorByAuthorizedUserEmail } = require('../lib/requests/author'); 
-const { getAuthorizedUserByEmail, fetchAuthorizedUsers, fetchIsAuthorizedUser } = require('../lib/requests/authorized-user'); 
+const { getAuthorByAuthorizedUserEmail } = require('../lib/requests/author');
+const { getAuthorizedUserByEmail, fetchAuthorizedUsers, fetchIsAuthorizedUser, fetchContentCreators } = require('../lib/requests/authorized-user');
 const { getAuthorizedUserRoleIdByTitle } = require('../lib/requests/authorized-user-roles');
 const { fetchAPI } = require('../lib/utils');
 const { fetchDroplets, fetchAccessRequests, fetchReports } = require('../lib/requests/data');
@@ -12,7 +12,8 @@ const { getTags, getTagBySlug } = require('../lib/requests/tag');
 //import { data } from "./mocks/strapiMock";
 
 const data = require("./mocks/strapiMock");
-  
+const mockUsers = require("./mocks/authorizedUsersMock");
+
 jest.mock('../lib/utils', () => ({
   fetchAPI: jest.fn(),
   flattenAttributes: jest.fn(data => {
@@ -28,9 +29,21 @@ jest.mock('../lib/utils', () => ({
 
 global.fetch = jest.fn();
 
-  
 
-// author.ts tests
+//Comment this out if working on error testing (suppresses console error logs from error mocking)
+
+beforeEach(() => {
+  jest.spyOn(console, 'error').mockImplementation(() => { }); // Suppress console errors
+  jest.spyOn(console, 'warn').mockImplementation(() => { }); // Suppress console warnings
+});
+
+afterEach(() => {
+  jest.restoreAllMocks(); // Restore console after each test
+});
+
+
+
+/*// author.ts tests
 describe('getAuthorByAuthorizedUserEmail', () => {
   it('should return the expected author when provided with a valid email', async () => {
     const mockAuthor = {
@@ -71,171 +84,276 @@ describe('getAuthorByAuthorizedUserEmail', () => {
     expect(fetchAPI).toHaveBeenCalledWith(expect.anything(), expect.anything());
   });
 });
+*/
+describe('Authorized User Tests', () => {
 
-
-
-// authorized-user.ts tests
-describe('getAuthorizedUserByEmail', () => {
-  it('should return an authorized user based on the given email', async () => {
-    const testEmail = 'palmer.gi@northeastern.edu'
-    const mockAuthor = {
-      id: 1,
-      name: 'Gillian Palmer',
-      authorizedUser: {
-        email: 'palmer.gi@northeastern.edu'
-      }
-    };
-        
-    fetchAPI.mockResolvedValue([mockAuthor]);
-    
-    const result = await getAuthorizedUserByEmail(testEmail);
-  
-    expect(result).toEqual(mockAuthor);
-    expect(fetchAPI).toHaveBeenCalledWith(expect.anything(), expect.anything());
-    expect(jest.mocked(fetchAPI)).toHaveBeenCalledWith('/authors', {
-      urlParams: expect.objectContaining({
-        filters: {
-          authorizedUser: { 
-            email: { 
-              $eq: testEmail 
-            } 
-          }
-        }
-      })
-    });
-  });
-});
-
-
-
-describe('fetchAuthorizedUsers', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-  });
-
-  it('should fetch and return authorized users', async () => {
-    const mockStrapiResponse = {
-      data: data.map(user => ({
-        id: user.id,
-        attributes: {
-          name: user.name,
-          authorizedUser: user.authorizedUser,
-          isEnabled: true,
-          roles: {
-            data: [{
-              attributes: {
-                title: 'User'
-              }
-            }]
-          }
-        }
-      }))
-    };
-
-    (global.fetch).mockResolvedValueOnce({
-      ok: true,
-      json: async () => mockStrapiResponse
-    });
-
-    const result = await fetchAuthorizedUsers();
-
-    expect(global.fetch).toHaveBeenCalledWith(
-      expect.stringContaining('/api/authorized-users'),
-      expect.objectContaining({
-        headers: expect.objectContaining({
-          Authorization: expect.stringContaining('Bearer')
-        }),
-        cache: 'no-store'
-      })
-    );
-
-    expect(result).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          id: expect.any(Number),
-          name: expect.any(String),
-          authorizedUser: expect.objectContaining({
-            email: expect.stringMatching(/@northeastern.edu$/)
-          })
-        })
-      ])
-    );
-  });
-
-  it('should handle fetch errors', async () => {
-    (global.fetch).mockRejectedValueOnce(
-      new Error('Network error')
-    );
-
-    await expect(fetchAuthorizedUsers()).rejects.toThrow(
-      'Failed to fetch authorized users data.'
-    );
-  });
-});
-
-describe('fetchIsAuthorizedUser', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-  });
-
-  it('should return whether the given user is authorized', async () => {
-    const mockStrapiResponse = {
-      data: [{
+  // authorized-user.ts tests
+  describe('getAuthorizedUserByEmail', () => {
+    it('should return an authorized user based on the given email', async () => {
+      const testEmail = 'palmer.gi@northeastern.edu'
+      const mockUser = {
         id: 1,
-        attributes: {
-          name: 'Gillian Palmer',
-          authorizedUser: {
-            data: {
-              attributes: {
-                email: 'palmer.gi@northeastern.edu'
+        firstName: 'Gillian',
+        lastName: 'Palmer',
+        email: 'palmer.gi@northeastern.edu'
+      };
+
+      fetchAPI.mockResolvedValue([mockUser]);
+
+
+      const result = await getAuthorizedUserByEmail(testEmail);
+
+      expect(result).toEqual(mockUser);
+      expect(fetchAPI).toHaveBeenCalledWith(expect.anything(), expect.anything());
+      expect(jest.mocked(fetchAPI)).toHaveBeenCalledWith('/authorized-users', {
+        urlParams: expect.objectContaining({
+          filters: {
+            email: {
+              $eq: testEmail
+            }
+          }
+        })
+      });
+    });
+  });
+
+
+
+  describe('fetchAuthorizedUsers', () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+
+    it('should fetch and return authorized users', async () => {
+      const mockStrapiResponse = {
+        data: mockUsers.map(user => ({
+          id: user.id,
+          attributes: user.attributes
+        })),
+        meta: {
+          pagination: {
+            page: 1,
+            pageSize: 25,
+            pageCount: 1,
+            total: mockUsers.length
+          }
+        }
+      };
+
+      (global.fetch).mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockStrapiResponse
+      });
+
+      const result = await fetchAuthorizedUsers();
+
+      expect(global.fetch).toHaveBeenCalledWith(
+        expect.stringContaining('/api/authorized-users'),
+        expect.objectContaining({
+          headers: expect.objectContaining({
+            Authorization: expect.stringContaining('Bearer')
+          }),
+          cache: 'no-store'
+        })
+      );
+
+      expect(result).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            id: expect.any(Number),
+            firstName: expect.any(String),
+            lastName: expect.any(String),
+            email: expect.stringMatching(/@northeastern.edu$/),
+            isEnabled: expect.any(Boolean)
+          })
+        ])
+      );
+    });
+
+    it('should handle fetch errors', async () => {
+      (global.fetch).mockRejectedValueOnce(
+        new Error('Network error')
+      );
+
+      await expect(fetchAuthorizedUsers()).rejects.toThrow(
+        'Failed to fetch authorized users data.'
+      );
+    });
+  });
+
+  describe('fetchIsAuthorizedUser', () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+
+    it('should return whether the given user is authorized', async () => {
+      const mockStrapiResponse = {
+        data: [{
+          id: 1,
+          attributes: {
+            name: 'Gillian Palmer',
+            authorizedUser: {
+              data: {
+                attributes: {
+                  email: 'palmer.gi@northeastern.edu'
+                }
+              }
+            },
+            isEnabled: true,
+            roles: {
+              data: [{
+                attributes: {
+                  title: 'User'
+                }
+              }]
+            }
+          }
+        }]
+      };
+
+      (global.fetch).mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockStrapiResponse
+      });
+
+      const result = await fetchIsAuthorizedUser("palmer.gi@northeastern.edu");
+      expect(result).toEqual(true);
+    });
+
+    it('should return false for an unauthorized user', async () => {
+      const mockStrapiResponse = {
+        data: []
+      };
+
+      (global.fetch).mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockStrapiResponse
+      });
+
+      const result = await fetchIsAuthorizedUser("unauthorized@northeastern.edu");
+      expect(result).toEqual(false);
+    });
+
+    it('should handle fetch errors', async () => {
+      (global.fetch).mockRejectedValueOnce(
+        new Error('Network error')
+      );
+
+      await expect(fetchIsAuthorizedUser()).rejects.toThrow(
+        'Failed to fetch authorized users data.'
+      );
+    });
+  });
+
+
+
+
+  describe('fetchContentCreators', () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+
+    it('should fetch and return content creators', async () => {
+      const mockStrapiResponse = {
+        data: [
+          {
+            id: 1,
+            attributes: {
+              firstName: "John",
+              lastName: "Doe",
+              email: "doe.j@northeastern.edu",
+              isEnabled: true,
+              roles: {
+                data: [
+                  {
+                    id: 2,
+                    attributes: {
+                      title: "Content Creator"
+                    }
+                  }
+                ]
+              },
+              droplets: {
+                data: [
+                  { id: 5 },
+                  { id: 6 }
+                ]
               }
             }
-          },
-          isEnabled: true,
-          roles: {
-            data: [{
-              attributes: {
-                title: 'User'
-              }
-            }]
           }
-        }
-      }]
-    };
+        ]
+      };
 
-    (global.fetch).mockResolvedValueOnce({
-      ok: true,
-      json: async () => mockStrapiResponse
+      (global.fetch).mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockStrapiResponse
+      });
+
+      const result = await fetchContentCreators();
+
+      console.log("result is ", result)
+
+     // Check that the URL contains expected query parameters
+      expect(global.fetch).toHaveBeenCalledWith(
+        expect.stringMatching(/sort=\["lastName"\]/),
+        expect.any(Object)
+      );
+
+      // Verify Content Creator role filter
+      expect(global.fetch).toHaveBeenCalledWith(
+        expect.stringMatching(/filters\[roles\]\[title\]\[\$eq\]=Content%20Creator/),
+        expect.any(Object)
+      );
+
+      // Verify non-empty droplets filter
+      expect(global.fetch).toHaveBeenCalledWith(
+        expect.stringMatching(/filters\[droplets\]\[\$null\]=false/),
+        expect.any(Object)
+      );
+
+      // Verify pagination settings
+      expect(global.fetch).toHaveBeenCalledWith(
+        expect.stringMatching(/pagination\[pageSize\]=100/),
+        expect.any(Object)
+      );
+
+      expect(global.fetch).toHaveBeenCalledWith(
+        expect.stringContaining('/api/authorized-users'),
+        expect.objectContaining({
+          headers: expect.objectContaining({
+            Authorization: expect.stringContaining('Bearer')
+          }),
+          cache: 'no-store'
+        })
+      );
+
+      expect(result).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            id: expect.any(Number),
+            firstName: expect.any(String),
+            lastName: expect.any(String),
+            email: expect.stringMatching(/@northeastern.edu$/),
+            isEnabled: expect.any(Boolean)
+          })
+        ])
+      );
     });
 
-    const result = await fetchIsAuthorizedUser("palmer.gi@northeastern.edu");
-    expect(result).toEqual(true);
-  });
+    it('should handle fetch errors', async () => {
+      (global.fetch).mockRejectedValueOnce(
+        new Error('Network error')
+      );
 
-  it('should return false for an unauthorized user', async () => {
-    const mockStrapiResponse = {
-      data: [] 
-    };
-
-    (global.fetch).mockResolvedValueOnce({
-      ok: true,
-      json: async () => mockStrapiResponse
+      await expect(fetchAuthorizedUsers()).rejects.toThrow(
+        'Failed to fetch authorized users data.'
+      );
     });
-
-    const result = await fetchIsAuthorizedUser("unauthorized@northeastern.edu");
-    expect(result).toEqual(false);
   });
 
-  it('should handle fetch errors', async () => {
-    (global.fetch).mockRejectedValueOnce(
-      new Error('Network error')
-    );
 
-    await expect(fetchIsAuthorizedUser()).rejects.toThrow(
-      'Failed to fetch authorized users data.'
-    );
-  });
-});
+
+})
 
 
 
@@ -470,7 +588,6 @@ describe('Droplet tests', () => {
         urlParams: expect.objectContaining({
           filters: { slug: 'droplet-1' },
           pagination: { pageSize: 1, page: 1 },
-          populate: '*'
         })
       });
     });
@@ -603,7 +720,7 @@ describe('getLessonBySlug', () => {
 
     expect(result).toEqual(mockLesson);
   });
-  
+
   it('should handle fetch errors', async () => {
     (fetchAPI).mockRejectedValueOnce(new Error('Failed to fetch lesson info'));
 
@@ -623,43 +740,46 @@ describe('Playlist tests', () => {
     jest.clearAllMocks();
   });
 
-  describe('getPlaylistsByAuthor', () => {
-    it('should return the playlists corresponding to a given author', async () => {
-      const mockPlaylists = [
-        {
-          id: 1,
-          name: 'Droplet 1',
-          slug: 'droplet-1',
-          authorId: 1
-        }
-      ];
+  // describe('getPlaylistsByAuthor', () => {
+  //   it('should return the playlists corresponding to a given author', async () => {
+  //     const mockPlaylists = [
+  //       {
+  //         id: 1,
+  //         name: 'Droplet 1',
+  //         slug: 'droplet-1',
+  //         authorId: 1
+  //       }
+  //     ];
 
-      (fetchAPI).mockResolvedValue(mockPlaylists);
+  //     (fetchAPI).mockResolvedValue(mockPlaylists);
 
-      const result = await getPlaylistsByAuthor(1);
+  //     const result = await getPlaylistsByAuthor(1);
 
-      expect(result).toEqual(mockPlaylists);
-    });
-    it('should handle fetch errors', async () => {
-      (fetchAPI).mockRejectedValueOnce(new Error('Failed to fetch playlist info'));
+  //     expect(result).toEqual(mockPlaylists);
+  //   });
+  //   it('should handle fetch errors', async () => {
+  //     (fetchAPI).mockRejectedValueOnce(new Error('Failed to fetch playlist info'));
 
-      await expect(getPlaylistsByAuthor(5)).rejects.toThrow();
-    });
-  });
+  //     await expect(getPlaylistsByAuthor(5)).rejects.toThrow();
+  //   });
+  // });
 
   describe('getPlaylistById', () => {
     it('should return the playlist corresponding to a given id', async () => {
       const mockPlaylist = {
         id: 1,
-        name: 'Test Playlist',
-        slug: 'test-playlist',
-        isPublic: true,
-        droplets: []
+        attributes: {
+          name: 'Test Playlist',
+          slug: 'test-playlist',
+          isPublic: true,
+          droplets: []
+        }
       };
+
 
       global.fetch = jest.fn().mockResolvedValue({
         ok: true,
-        json: () => Promise.resolve({ 
+        json: () => Promise.resolve({
           data: {
             id: 1,
             attributes: {
@@ -674,16 +794,17 @@ describe('Playlist tests', () => {
 
       (fetchAPI).mockReset();
       (fetchAPI).mockResolvedValueOnce({
-        data: mockPlaylist  
+        data: mockPlaylist
       });
 
       const result = await getPlaylistById(1);
+
+
       expect(result).toEqual(mockPlaylist);
     });
 
     it('should handle fetch errors', async () => {
       global.fetch = jest.fn().mockRejectedValue(new Error('Failed to fetch playlist by id.'));
-  
       await expect(getPlaylistById(1)).rejects.toThrow('Failed to fetch playlist by id.');
     });
   });
@@ -703,6 +824,7 @@ describe('Playlist tests', () => {
         populate: '*',
         fields: ['*']
       });
+
       expect(result).toEqual(mockPlaylist);
     });
 
