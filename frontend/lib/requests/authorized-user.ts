@@ -68,7 +68,7 @@ export async function getAuthorizedUserByEmail<
             fields: ["id"],
           },
         },
-        fields: ["id", "playlistDueDates"],
+        fields: ["id"],
       },
     },
     fields = ["*", "firstName", "lastName", "bio", "id", "timeZone"],
