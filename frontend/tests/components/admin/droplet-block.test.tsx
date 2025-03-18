@@ -44,18 +44,18 @@ describe('DropletBlock', () => {
     jest.clearAllMocks();
   });
 
-  it.skip('renders droplet name correctly', () => {
+  it('renders droplet name correctly', () => {
     render(<DropletBlock droplet={mockDroplet} />);
     expect(screen.getByText('Test Droplet')).toBeInTheDocument();
   });
 
-  it.skip('shows (Hidden) text when droplet is hidden', () => {
+  it('shows (Hidden) text when droplet is hidden', () => {
     const hiddenDroplet = { ...mockDroplet, isHidden: true };
     render(<DropletBlock droplet={hiddenDroplet} />);
     expect(screen.getByText('Test Droplet (Hidden)')).toBeInTheDocument();
   });
 
-  it.skip('links to the correct edit URL', () => {
+  it('links to the correct edit URL', () => {
     render(<DropletBlock droplet={mockDroplet} />);
     const editLink = screen.getByRole('link');
     expect(editLink).toHaveAttribute('href', '/draft/d/test-droplet');
@@ -72,7 +72,7 @@ describe('DropletBlock', () => {
     expect(screen.getByText('Show Droplet')).toBeInTheDocument();
   });
 
-  it.skip('calls updateDroplet with correct parameters when toggling visibility', async () => {
+  it('calls updateDroplet with correct parameters when toggling visibility', async () => {
     (updateDroplet as jest.Mock).mockResolvedValue({ ok: true });
 
     render(<DropletBlock droplet={mockDroplet} />);
@@ -95,7 +95,7 @@ describe('DropletBlock', () => {
     });
   });
 
-  it.skip('shows success toast when update succeeds', async () => {
+  it('shows success toast when update succeeds', async () => {
     (updateDroplet as jest.Mock).mockResolvedValue({ ok: true });
 
     render(<DropletBlock droplet={mockDroplet} />);
@@ -108,7 +108,7 @@ describe('DropletBlock', () => {
     });
   });
 
-  it.skip('shows error toast when update fails', async () => {
+  it('shows error toast when update fails', async () => {
     (updateDroplet as jest.Mock).mockResolvedValue({
       ok: false,
       error: 'Update failed'
