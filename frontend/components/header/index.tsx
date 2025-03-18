@@ -90,7 +90,7 @@ export async function Header() {
           </nav>
 
           <div className="flex items-center gap-4 md:ml-auto md:gap-2 lg:gap-4">
-            <div className="hidden md:block ml-4">
+            <div className="hidden lg:block ml-4">
               <DarkMode />
             </div>
             {user ? (

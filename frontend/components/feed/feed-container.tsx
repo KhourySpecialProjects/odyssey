@@ -19,8 +19,8 @@ export function FeedContainer({
   const [expanded, setExpanded] = useState(false)
 
   return (
-    <div className="flex flex-row items-start">
-      <div className="relative w-full sm:w-2/3 text-center text-xl font-bold">
+    <div className="flex flex-row">
+      <div className="relative w-full sm:w-2/3 text-center text-xl font-bold justify-center items-center">
         <FeedClient
           selectedRoles={selectedRoles.map(
             (role) => role.toLowerCase() as AnnouncementType,
