@@ -56,7 +56,7 @@ export function FriendRequests({
 
         <div className="p-1 md:p-4 mt-4 rounded-md bg-slate-100 dark:bg-slate-800">
           {friendRequests.length > 0 ? (
-            <ul className="grid grid-cols-1 auto-cols-auto divide-y divide-slate-200 dark:divide-slate-700 md:space-y-4">
+            <ul className="grid grid-cols-1 auto-cols-auto divide-y divide-slate-200 dark:divide-slate-700 space-y-2 md:space-y-4">
               {noProfile
                 ? paginatedRequests.map((friendship) => (
                     <FriendRequestFeedBlock
