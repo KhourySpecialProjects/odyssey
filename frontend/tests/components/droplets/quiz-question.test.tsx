@@ -25,7 +25,7 @@ describe("QuizQuestionBlock", () => {
     expect(screen.getByText("5")).toBeInTheDocument();
   });
 
-  it.skip("shows feedback when answer is submitted", async () => {
+  it("shows feedback when answer is submitted", async () => {
     render(<QuizQuestionBlock question={mockQuestion} />);
 
     const user = userEvent.setup();
