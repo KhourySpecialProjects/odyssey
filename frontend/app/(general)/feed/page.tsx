@@ -23,7 +23,7 @@ export default async function FeedPage() {
       <div className="w-full p-8 mx-auto my-4 text-center max-w-7xl">
         <h1 className="text-5xl font-bold">My Feed</h1>
       </div>
-      <div className="flex flex-row items-start gap-4 px-4">
+      <div className="flex flex-row items-center sm:items-start sm:gap-4 px-4">
         <div className="flex justify-center w-1/4 text-center">
           <div className="dark:bg-slate-800 bg-slate-100 rounded-md p-4 hidden sm:block">
             <FriendRequests
@@ -33,7 +33,7 @@ export default async function FeedPage() {
             ></FriendRequests>
           </div>
         </div>
-        <div className="w-full sm:w-3/4 text-center">
+        <div className="w-full sm:w-3/4 justify-start text-center">
           <FeedContainer announcements={announcements} />
         </div>
       </div>
