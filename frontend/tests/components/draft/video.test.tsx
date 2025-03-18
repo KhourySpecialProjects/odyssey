@@ -1,6 +1,6 @@
 import { render, screen, fireEvent } from "@testing-library/react";
 import { VideoEditor } from "@/components/draft/lesson/blocks/video";
-import { youtubeUrlToEmbeddedUrl, embeddedUrlToYoutubeUrl } from "@/lib/utils";
+import { embeddedUrlToYoutubeUrl } from "@/lib/utils";
 
 // Mock dependencies
 jest.mock("@/lib/utils", () => ({
