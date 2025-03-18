@@ -2,7 +2,7 @@ import { render, screen, fireEvent } from "@testing-library/react";
 import { AddBlock } from "@/components/draft/lesson/add-block";
 
 // Mock dependencies
-jest.mock("../metadata/hooks/useOffClick", () => ({
+jest.mock("@/components/draft/metadata/hooks/useOffClick", () => ({
   useOffClick: jest.fn(() => ({
     open: true,
     setOpen: jest.fn(),
@@ -127,7 +127,10 @@ describe("AddBlock", () => {
   it("adds a red warning callout when Warning option is clicked", () => {
     render(<AddBlock add={mockAdd} />);
 
-    fireEvent.click(screen.getByText("Warning"));
+    // First click the Callout Block button to open the nested popover
+    fireEvent.click(screen.getByText("Callout Block"));
+    // Then click the Warning option
+    fireEvent.click(screen.getByRole("button", { name: /warning/i }));
 
     expect(mockAdd).toHaveBeenCalledWith({
       __component: "droplets.callout",

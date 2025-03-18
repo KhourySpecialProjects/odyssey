@@ -146,7 +146,7 @@ describe("OpenEndedQuizEditor", () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole("img", { name: /trash/i }));
+    fireEvent.click(screen.getByRole("button", { name: /delete question 1/i }));
 
     expect(mockUpdateBlock).toHaveBeenCalledWith({
       __component: "droplets.open-ended-quiz",
@@ -163,8 +163,7 @@ describe("OpenEndedQuizEditor", () => {
       />,
     );
 
-    const deleteButtons = screen.getAllByRole("img", { name: /trash/i });
-    fireEvent.click(deleteButtons[0]);
+    fireEvent.click(screen.getByRole("button", { name: /delete quiz/i }));
 
     expect(mockDeleteBlock).toHaveBeenCalled();
   });

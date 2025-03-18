@@ -8,7 +8,7 @@ jest.mock("@/lib/utils", () => ({
   embeddedUrlToYoutubeUrl: jest.fn((url) => `youtube-${url}`),
 }));
 
-jest.mock("../../metadata/hooks/useOffClick", () => ({
+jest.mock("@/components/draft/metadata/hooks/useOffClick", () => ({
   useOffClick: jest.fn(() => ({
     open: false,
     setOpen: jest.fn(),
@@ -75,7 +75,7 @@ describe("VideoEditor", () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole("img", { name: /trash/i }));
+    fireEvent.click(screen.getByRole("button", { name: /delete video/i }));
 
     expect(mockDeleteBlock).toHaveBeenCalled();
   });
