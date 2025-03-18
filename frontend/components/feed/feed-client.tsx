@@ -5,7 +5,7 @@ import { AnnouncementType, Announcement, AuthorizedUser } from "@/types";
 import { FeedBlock } from "./feed-block";
 import { Button } from "../ui/button";
 
-const ITEMS_PER_PAGE = 5;
+const ITEMS_PER_PAGE = 20;
 
 export function FeedClient({
   selectedRoles,
@@ -44,7 +44,7 @@ export function FeedClient({
       <div className="rounded-md">
         {paginatedAnnouncements.length > 0 ? (
           <>
-            <ul className="md:w-[75%] md:mx-auto grid gap-4 grid-cols-1 auto-rows-fr">
+            <ul className="md:w-[90%] md:mx-auto grid gap-4 grid-cols-1 auto-rows-fr">
               {paginatedAnnouncements.map((post) => (
                 <FeedBlock key={post.id} announcement={post} />
               ))}

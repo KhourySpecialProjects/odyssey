@@ -28,14 +28,14 @@ export function FeedContainer({
           <div className=" dark:bg-slate-800 bg-slate-100 rounded-md p-4 hidden md:block">
             <FriendRequests
               noProfile={true}
-              friendsPerPage={5}
+              friendsPerPage={4}
               authUser={authUser}
             ></FriendRequests>
           </div>
       </div>
 
         
-      <div className="relative w-full sm:w-2/3 text-center text-xl font-bold justify-center items-center">
+      <div className="relative w-full sm:w-1/2 text-center text-xl font-bold justify-center items-center">
         <FeedClient
           selectedRoles={selectedRoles.map(
             (role) => role.toLowerCase() as AnnouncementType,
@@ -43,15 +43,13 @@ export function FeedContainer({
           announcements={announcements}
         />
 
-        <button onClick={() => setFiltersExpanded(true)} className="absolute top-0 right-0 translate-y-[-200%] block sm:hidden">
+        <button onClick={() => setFiltersExpanded(!filtersExpanded)} className="absolute top-0 right-0 translate-y-[-200%] block sm:hidden">
           <SlidersHorizontal className="w-5 h-5" />
         </button>
 
-        <button onClick={() => setRequestsExpanded(true)} className="absolute top-0 left-0 translate-y-[-200%] block sm:hidden">
+        <button onClick={() => setRequestsExpanded(!requestsExpanded)} className="absolute top-0 left-0 translate-y-[-200%] block sm:hidden">
           <BellRing className="w-5 h-5" />
         </button>
-
-
 
         <div
           className={cn(
@@ -105,7 +103,7 @@ export function FeedContainer({
 
 
 
-      <div className={`w-1/3 text-center text-xl font-bold flex flex-col items-center justify-center dark:text-slate-300 hidden sm:flex`}>
+      <div className={`w-1/4 text-center text-xl font-bold flex flex-col items-center justify-start dark:text-slate-300 hidden sm:flex`}>
         Filters
         <FeedFilter onFilterChange={setSelectedRoles} />
       </div>
