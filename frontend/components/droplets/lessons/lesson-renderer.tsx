@@ -314,7 +314,7 @@ function LessonBlockRenderer({
     case "droplets.callout":
       return (
         <div
-          className={`flex flex-row items-center dark:border-slate-500 px-6 py-6 border rounded-md md:-mx-8 ${block.color || "bg-sky-50"}`}
+          className={`flex flex-col items-center space-y-4 dark:border-slate-500 px-6 py-6 border rounded-md md:-mx-8 ${block.color || "bg-sky-50 dark:bg-sky-200"}`}
         >
           {block?.iconEnabled && (
             <div className="">
