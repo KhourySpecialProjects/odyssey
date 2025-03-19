@@ -22,20 +22,12 @@ export default async function FeedPage() {
     <>
       <div className="w-full p-8 mx-auto my-4 text-center max-w-7xl">
         <h1 className="text-5xl font-bold">My Feed</h1>
+        <p className="mt-4 text-lg leading-normal light:text-slate-600 text-balance hidden lg:block">
+          Check out what&apos;s happening right now
+        </p>
       </div>
-      <div className="flex flex-row items-start gap-4 px-4">
-        <div className="flex justify-center w-1/4 text-center">
-          <div className="dark:bg-slate-800 bg-slate-100 rounded-md p-4">
-            <FriendRequests
-              noProfile={true}
-              friendsPerPage={5}
-              authUser={authUser}
-            ></FriendRequests>
-          </div>
-        </div>
-        <div className="w-3/4 text-center">
-          <FeedContainer announcements={announcements} />
-        </div>
+      <div className="w-full px-4 sm:px-16">
+        <FeedContainer announcements={announcements} authUser={authUser} />
       </div>
     </>
   );

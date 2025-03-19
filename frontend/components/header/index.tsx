@@ -28,16 +28,16 @@ export async function Header() {
   }
 
   return (
-    <header className="sticky top-0 z-50 bg-white border-b border-slate-200 dark:border-slate-500 dark:bg-slate-900 md:px-6">
+    <header className="sticky top-0 z-50 bg-white border-b border-slate-200 dark:border-slate-500 dark:bg-slate-900 lg:px-6">
       <div className="flex items-center justify-between h-full max-w-screen-xl px-4 py-3 mx-auto">
-        <div className="flex flex-row justify-between md:grid w-full md:grid-cols-[1fr_auto_1fr]">
+        <div className="flex flex-row justify-between lg:grid w-full lg:grid-cols-[1fr_auto_1fr]">
           <div className="flex flex-row gap-4">
             <Sheet>
               <SheetTrigger asChild>
                 <Button
                   variant="outline"
                   size="icon"
-                  className="shrink-0 md:hidden"
+                  className="shrink-0 lg:hidden"
                 >
                   <Menu className="w-5 h-5" />
                   <span className="sr-only">Toggle navigation menu</span>
@@ -82,7 +82,7 @@ export async function Header() {
             </Link>
           </div>
 
-          <nav className="flex-row items-center hidden md:flex">
+          <nav className="flex-row items-center hidden lg:flex">
             <NavLinks
               items={getNavLinks()}
               className="flex-row space-x-8 space-y-0"
@@ -90,7 +90,7 @@ export async function Header() {
           </nav>
 
           <div className="flex items-center gap-4 md:ml-auto md:gap-2 lg:gap-4">
-            <div className="hidden md:block ml-4">
+            <div className="hidden lg:block ml-4">
               <DarkMode />
             </div>
             {user ? (
