@@ -93,11 +93,11 @@ export default function Sidebar({
         onClick={() => setExpanded(false)}
       ></div>
 
-      <div className="z-20 inline-flex items-center w-full gap-2 px-3 py-2 text-sm border-b md:hidden border-b-slate-200">
+      <div className="z-20 inline-flex items-center w-full gap-2 px-3 py-2 text-sm border-b lg:hidden border-b-slate-200">
         <button
           aria-controls="sidebar"
           type="button"
-          className="z-20 inline-flex items-center p-2 text-sm rounded-lg text-slate-500 md:hidden hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-200 dark:text-slate-400 dark:hover:bg-slate-700 dark:focus:ring-slate-600"
+          className="z-20 inline-flex items-center p-2 text-sm rounded-lg text-slate-500 lg:hidden hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-200 dark:text-slate-400 dark:hover:bg-slate-700 dark:focus:ring-slate-600"
           onClick={() => setExpanded(true)}
         >
           <span className="sr-only">Open sidebar</span>
@@ -114,8 +114,8 @@ export default function Sidebar({
       <aside
         id="sidebar"
         className={cn(
-          "fixed md:sticky md:top-0 left-0 z-40 w-64 h-screen transition-transform",
-          expanded ? "translate-x-0" : "-translate-x-full md:translate-x-0",
+          "fixed lg:sticky lg:top-0 left-0 z-40 w-64 h-screen transition-transform",
+          expanded ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
         )}
         aria-label="Sidebar"
       >
