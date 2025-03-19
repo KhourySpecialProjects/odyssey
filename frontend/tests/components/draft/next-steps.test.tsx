@@ -11,6 +11,24 @@ jest.mock('sonner', () => ({
   toast: { error: jest.fn() }
 }));
 
+jest.mock('next/navigation', () => ({
+  useRouter: () => ({
+    push: jest.fn(),
+    refresh: jest.fn(),
+    back: jest.fn(),
+    forward: jest.fn(),
+    replace: jest.fn(),
+  })
+}));
+
+// Mock the useDropletUpdate hook
+jest.mock('@/components/draft/metadata/hooks/useDropletUpdate', () => ({
+  useDropletUpdate: () => ({
+    update: jest.fn(),
+    error: null
+  })
+}));
+
 describe('NextSteps', () => {
   const mockNextSteps = [
     { id: 1, label: 'Step 1', url: 'https://test1.com' }

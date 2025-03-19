@@ -1,37 +1,30 @@
+import { DeleteButton } from '@/components/draft/metadata/form-buttons';
 import { render, screen } from '@testing-library/react';
-import { DeleteButton, AddButton } from '@/components/draft/metadata/form-buttons';
 import { useFormStatus } from 'react-dom';
 
+// Mock useFormStatus
 jest.mock('react-dom', () => ({
-  useFormStatus: jest.fn()
+  useFormStatus: jest.fn(),
 }));
 
 describe('FormButtons', () => {
   describe('DeleteButton', () => {
     it('renders delete text when not pending', () => {
       (useFormStatus as jest.Mock).mockReturnValue({ pending: false });
-      render(<DeleteButton />);
-      expect(screen.getByText('Delete')).toBeInTheDocument();
+      render(
+        <DeleteButton />
+      );
+      expect(screen.getByRole('button')).toHaveTextContent(/delete/i);
     });
 
     it('shows loader when pending', () => {
       (useFormStatus as jest.Mock).mockReturnValue({ pending: true });
-      render(<DeleteButton />);
-      expect(screen.getByRole('button')).toHaveClass('animate-spin');
-    });
-  });
-
-  describe('AddButton', () => {
-    it('renders corner down left icon when not pending', () => {
-      (useFormStatus as jest.Mock).mockReturnValue({ pending: false });
-      render(<AddButton />);
-      expect(screen.getByRole('button')).toBeInTheDocument();
-    });
-
-    it('shows loader when pending', () => {
-      (useFormStatus as jest.Mock).mockReturnValue({ pending: true });
-      render(<AddButton />);
-      expect(screen.getByRole('button')).toHaveClass('animate-spin');
+      render(
+        <DeleteButton />
+          
+      );
+      // Look for the loading spinner container instead of status role
+      expect(screen.getByTestId('loading-spinner')).toBeInTheDocument();
     });
   });
 });

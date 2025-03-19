@@ -34,7 +34,7 @@ describe('ContentCreatorBlock', () => {
   it('renders email when name is not provided', () => {
     const creatorWithoutName = { ...mockContentCreator, firstName: '', lastName: '' };
     render(<ContentCreatorBlock contentCreator={creatorWithoutName} />);
-    expect(screen.getByText('test@example.com')).toBeInTheDocument();
+    expect(screen.getByText('user@example.com')).toBeInTheDocument();
   });
 
   it('toggles content visibility when clicked', () => {

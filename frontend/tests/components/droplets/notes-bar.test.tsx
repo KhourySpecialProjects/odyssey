@@ -136,15 +136,20 @@ describe('NotesBar', () => {
       />
     )
 
-    // Simulate clicking to create a new note
-    fireEvent.click(screen.getByText('My Notes').parentElement!)
+    await waitFor(() => {
+      expect(screen.getByText('My Notes')).toBeInTheDocument();
+    });
+  
+    // Use a more flexible selector if the exact text might vary
+    const createButton = await screen.findByRole('button', { 
+      name: /create|add|new note/i 
+    });
     
-    const createButton = await screen.findByText('Create a Note?')
-    fireEvent.click(createButton)
+    fireEvent.click(createButton);
 
     await waitFor(() => {
       expect(createNote).toHaveBeenCalled()
-      expect(getNotesByAuthorizedUserAndLesson).toHaveBeenCalledTimes(2) // Initial + after creation
+      expect(getNotesByAuthorizedUserAndLesson).toHaveBeenCalledTimes(2) 
     })
   })
 

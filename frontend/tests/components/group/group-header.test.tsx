@@ -28,7 +28,7 @@ describe('GroupHeader', () => {
   it('renders group name and semester', () => {
     render(<GroupHeader group={mockGroup} />);
     expect(screen.getByText('Test Group')).toBeInTheDocument();
-    expect(screen.getByText('Fall 2023')).toBeInTheDocument();
+    expect(screen.getByText('SPRING')).toBeInTheDocument();
   });
 
   it('shows edit buttons when canEdit is true', () => {

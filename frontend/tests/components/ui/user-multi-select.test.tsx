@@ -85,7 +85,9 @@ describe('UserMultiSelect', () => {
 
     await waitFor(() => {
       const searchInput = getByPlaceholderText('Search users...')
-      fireEvent.change(searchInput, { target: { value: 'John' } })
+      const event = new Event('change', { bubbles: true })
+      Object.defineProperty(event, 'target', { value: { value: 'John' } })
+      fireEvent(searchInput, event)
       
       expect(queryByText('John Doe')).toBeInTheDocument()
       expect(queryByText('Jane Smith')).not.toBeInTheDocument()

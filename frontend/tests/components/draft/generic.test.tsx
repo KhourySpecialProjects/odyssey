@@ -79,7 +79,7 @@ describe("GenericEditor", () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole("img", { name: /trash/i }));
+    fireEvent.click(screen.getByTestId("delete-block"));
 
     expect(mockDeleteBlock).toHaveBeenCalled();
   });

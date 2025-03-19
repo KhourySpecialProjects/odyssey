@@ -1,45 +1,47 @@
-import "@testing-library/jest-dom";
+import '@testing-library/jest-dom';
 
-class MockResizeObserver {
-  observe() {}
-  unobserve() {}
-  disconnect() {}
+// Mock window.fetch and global fetch
+global.fetch = jest.fn();
+window.fetch = jest.fn();
+
+// Mock Request
+global.Request = class Request {
+  constructor(input: RequestInfo | URL, init?: RequestInit) {}
+} as any;
+
+// Mock TextEncoder/TextDecoder
+if (typeof TextEncoder === 'undefined') {
+  global.TextEncoder = require('util').TextEncoder;
+}
+if (typeof TextDecoder === 'undefined') {
+  global.TextDecoder = require('util').TextDecoder;
 }
 
-class MockEvent {
-  type: string;
-  bubbles: boolean;
-  cancelable: boolean;
-  defaultPrevented: boolean = false;
+// Mock ResizeObserver
+global.ResizeObserver = jest.fn().mockImplementation(() => ({
+  observe: jest.fn(),
+  unobserve: jest.fn(),
+  disconnect: jest.fn(),
+}));
 
-  // Add static properties required by Event
-  static readonly NONE = 0;
-  static readonly CAPTURING_PHASE = 1;
-  static readonly AT_TARGET = 2;
-  static readonly BUBBLING_PHASE = 3;
+// Mock createRange
+document.createRange = () => {
+  const range = new Range();
+  range.getBoundingClientRect = jest.fn();
+  range.getClientRects = () => {
+    return {
+      item: () => null,
+      length: 0,
+      [Symbol.iterator]: jest.fn()
+    };
+  };
+  return range;
+};
 
-  constructor(type: string, eventInitDict: Record<string, any> = {}) {
-    this.type = type;
-    this.bubbles = eventInitDict.bubbles || false;
-    this.cancelable = eventInitDict.cancelable || false;
-    Object.assign(this, eventInitDict);
-  }
-
-  preventDefault() {
-    this.defaultPrevented = true;
-  }
-
-  stopPropagation() {}
-  stopImmediatePropagation() {}
-}
-
-// Assign mocks to the global object
-global.ResizeObserver = MockResizeObserver;
-global.Event = MockEvent as unknown as typeof Event;
-
-Object.defineProperty(window, "matchMedia", {
+// Mock window.matchMedia
+Object.defineProperty(window, 'matchMedia', {
   writable: true,
-  value: jest.fn().mockImplementation((query) => ({
+  value: jest.fn().mockImplementation(query => ({
     matches: false,
     media: query,
     onchange: null,
@@ -50,6 +52,16 @@ Object.defineProperty(window, "matchMedia", {
     dispatchEvent: jest.fn(),
   })),
 });
-const { TextEncoder, TextDecoder } = require('util');
-global.TextEncoder = TextEncoder;
-global.TextDecoder = TextDecoder;
+
+// Mock React.useId() for stable IDs in tests
+let id = 0;
+jest.mock('react', () => ({
+  ...jest.requireActual('react'),
+  useId: () => (++id).toString(),
+}));
+
+// Reset all mocks before each test
+beforeEach(() => {
+  jest.clearAllMocks();
+  id = 0; // Reset ID counter
+});

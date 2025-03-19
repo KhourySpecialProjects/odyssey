@@ -20,6 +20,22 @@ jest.mock('react', () => {
   };
 });
 
+jest.mock('flat', () => ({
+  flatten: jest.fn(obj => obj),
+  unflatten: jest.fn(obj => obj)
+}));
+
+// Mock react-dnd
+jest.mock('react-dnd', () => ({
+  useDrag: () => [{ isDragging: false }, jest.fn()],
+  useDrop: () => [{}, jest.fn()],
+  DndProvider: ({ children }: { children: React.ReactNode }) => children
+}));
+
+jest.mock('react-dnd-html5-backend', () => ({
+  HTML5Backend: {}
+}));
+
 describe('CreateUser', () => {
   it('renders the create user button', () => {
     render(<CreateUser />);

@@ -32,19 +32,23 @@
     "next": "^15.1.3",
     "npm-check-updates": "^16.14.15",
     "pdf-lib": "^1.17.1",
+    "react": "^18.2.0",
     "react-confetti": "^6.2.2",
     "react-datetime-picker": "^6.0.1",
+    "react-dom": "^18.2.0",
     "react-dropzone": "^14.3.5",
     "react-router-dom": "^7.1.5",
     "react-tabs": "^6.1.0",
     "reactjs-popup": "^2.0.6"
   },
   "devDependencies": {
+    "@babel/preset-env": "^7.26.9",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.2.0",
     "@testing-library/user-event": "^14.6.1",
     "@types/canvas-confetti": "^1.9.0",
     "@types/jest": "^29.5.14",
+    "babel-jest": "^29.7.0",
     "jest": "^29.7.0",
     "jest-environment-jsdom": "^29.7.0",
     "prettier": "3.3.2"

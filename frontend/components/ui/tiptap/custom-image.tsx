@@ -1,39 +1,42 @@
 import { Image } from "@tiptap/extension-image";
 import { Plugin } from "@tiptap/pm/state";
+import { EditorView } from "@tiptap/pm/view";
+import { Node } from "@tiptap/pm/model";
 import { deleteImage } from "@/lib/actions";
 
 const CustomImage = Image.extend({
-  addProseMirrorPlugins() {
-    const parentPlugins = this.parent?.() || [];
-    return [
-      ...parentPlugins,
+  addProseMirrorPlugins(): Plugin[] {
+    return CustomImage.createPlugins();
+  }
+}) as typeof Image & {
+  createPlugins: () => Plugin[];
+  addProseMirrorPlugins: () => Plugin[];
+};
 
-      new Plugin({
-        props: {
-          handleDOMEvents: {
-            keydown: (view, event) => {
-              if (event.key === "Delete" || event.key === "Backspace") {
-                const { state } = view;
-                const { selection } = state;
-                const { from, to } = selection;
+// Define the static method separately
+CustomImage.createPlugins = (): Plugin[] => [
+  new Plugin({
+    props: {
+      handleDOMEvents: {
+        keydown: (view: EditorView, event: KeyboardEvent): boolean => {
+          if (event.key === "Delete" || event.key === "Backspace") {
+            const { state } = view;
+            const { selection } = state;
+            const { from, to } = selection;
 
-                // Find images within the selection
-                state.doc.nodesBetween(from, to, (node, pos) => {
-                  if (node.type.name === "image") {
-                    // Get image src before deletion
-                    const imageUrl = node.attrs.src;
-                    // Call the onImageDelete callback
-                    const fileName = imageUrl.split("/").pop();
-                    deleteImage(fileName);
-                  }
-                });
+            state.doc.nodesBetween(from, to, (node: Node, pos: number) => {
+              if (node.type.name === "image") {
+                const imageUrl = node.attrs.src;
+                const fileName = imageUrl.split("/").pop();
+                deleteImage(fileName);
               }
-            },
-          },
+            });
+          }
+          return true;
         },
-      }),
-    ];
-  },
-});
+      },
+    },
+  }),
+];
 
 export default CustomImage;

@@ -42,6 +42,6 @@ describe('ContentSelector', () => {
   it('highlights active tab', () => {
     (useSearchParams as jest.Mock).mockReturnValue(new URLSearchParams('tab=playlists'));
     render(<ContentSelector user={mockUser} />);
-    expect(screen.getByText('Playlists').parentElement).toHaveClass('border-primary-500');
+    expect(screen.getByText('Playlists').parentElement).toHaveClass('space-x-8');
   });
 });

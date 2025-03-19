@@ -13,7 +13,7 @@ describe('DropletDescriptionInput', () => {
   })
 
   it('renders placeholder when empty', () => {
-    render(<DropletDescriptionInput {...mockProps} initialContent="" />)
+    render(<DropletDescriptionInput {...mockProps}  />)
     expect(screen.getByText('Type droplet description here...')).toBeInTheDocument()
   })
 
@@ -22,3 +22,4 @@ describe('DropletDescriptionInput', () => {
     expect(container.firstChild).toHaveClass('hover:shadow', 'focus:shadow-lg')
   })
 })
+

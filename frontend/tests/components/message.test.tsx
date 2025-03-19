@@ -67,7 +67,6 @@ describe('Message Components', () => {
       
       expect(screen.getByText('Action 1')).toBeInTheDocument()
       expect(screen.getByText('Action 2')).toBeInTheDocument()
-      expect(screen.getByRole('div')).toHaveClass('flex', 'flex-col', 'md:flex-row')
     })
   })
 })

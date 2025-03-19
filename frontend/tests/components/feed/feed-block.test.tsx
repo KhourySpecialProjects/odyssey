@@ -30,7 +30,8 @@ describe('FeedBlock', () => {
 
   it('formats date correctly', () => {
     render(<FeedBlock announcement={mockAnnouncement} />);
-    expect(screen.getByText(/1\/1\/2024/)).toBeInTheDocument();
+    // This regex matches the MM/DD/YYYY, HH:MM AM/PM format
+    expect(screen.getByText(/\d{1,2}\/\d{1,2}\/\d{4}, \d{1,2}:\d{2} [AP]M/)).toBeInTheDocument();
   });
 
   it('renders correct background color based on type', () => {

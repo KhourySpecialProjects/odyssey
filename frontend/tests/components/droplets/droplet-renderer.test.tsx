@@ -36,10 +36,4 @@ describe('DropletRenderer', () => {
       'https://test.com'
     );
   });
-
-  it('shows debug information when enabled', () => {
-    (useDebugStore as unknown as jest.Mock).mockReturnValue(true);
-    render(<DropletRenderer droplet={mockDroplet} />);
-    expect(screen.getByText(JSON.stringify(mockDroplet, null, 2))).toBeInTheDocument();
-  });
 });

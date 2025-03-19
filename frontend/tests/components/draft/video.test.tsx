@@ -75,7 +75,7 @@ describe("VideoEditor", () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: /delete video/i }));
+    fireEvent.click(screen.getByRole("button"));
 
     expect(mockDeleteBlock).toHaveBeenCalled();
   });

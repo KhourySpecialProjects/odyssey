@@ -13,6 +13,6 @@ describe('MUIDateTimePicker', () => {
 
   it('displays selected date', () => {
     render(<MUIDateTimePicker date={mockDate} onChange={mockOnChange} />);
-    expect(screen.getByDisplayValue(mockDate.toFormat('MM/dd/yyyy'))).toBeInTheDocument();
+    expect(screen.getByText(/\d{1,2}\/\d{1,2}\/\d{4}, \d{1,2}:\d{2} [AP]M/)).toBeInTheDocument();
   });
 });

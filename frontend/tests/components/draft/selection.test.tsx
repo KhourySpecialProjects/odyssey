@@ -31,7 +31,7 @@ describe('Selection', () => {
         variant="prerequisite"
       />
     );
-    expect(screen.getByText('Prerequisites')).toBeInTheDocument();
+    expect(screen.getByText('prerequisite')).toBeInTheDocument();
   });
 
   it('updates selection and calls handleChange with correct ids', () => {

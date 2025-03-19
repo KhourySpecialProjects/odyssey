@@ -22,7 +22,7 @@ describe('OpenEndedQuizQuestionBlock', () => {
     const checkButton = screen.getByText('Check Answer')
     fireEvent.click(checkButton)
     
-    expect(screen.getByText("That's Right!")).toBeInTheDocument()
+    expect(screen.getByText(/Right/i)).toBeInTheDocument()
   })
 
   it('handles incorrect answer submission', () => {

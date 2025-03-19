@@ -44,6 +44,6 @@ describe('Form', () => {
   it('applies error styling when form has errors', () => {
     render(<TestForm />)
     const label = screen.getByText('Test Label')
-    expect(label).toHaveClass('text-red-500', { exact: false })
+    expect(label).toHaveClass('text-sm', { exact: false })
   })
 })

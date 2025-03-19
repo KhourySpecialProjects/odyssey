@@ -16,12 +16,13 @@ describe('ThemeClientProvider', () => {
     )
     
     expect(ThemeProvider).toHaveBeenCalledWith(
-      expect.objectContaining({
+      {
         attribute: 'class',
         defaultTheme: 'system',
-        enableSystem: true
-      }),
-      expect.any(Object)
+        enableSystem: true,
+        children: expect.any(Object)
+      },
+      undefined
     )
   })
 
@@ -33,12 +34,13 @@ describe('ThemeClientProvider', () => {
     )
     
     expect(ThemeProvider).toHaveBeenCalledWith(
-      expect.objectContaining({
+      {
         attribute: 'class',
         defaultTheme: 'system',
-        enableSystem: true
-      }),
-      expect.any(Object)
+        enableSystem: true,
+        children: expect.any(Object)
+      },
+      undefined
     )
   })
 })

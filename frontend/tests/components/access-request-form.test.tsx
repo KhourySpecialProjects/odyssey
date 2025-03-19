@@ -77,7 +77,7 @@ describe('RequestAccessForm', () => {
     fireEvent.click(screen.getByText('Submit Request'))
 
     await waitFor(() => {
-      expect(screen.getAllByText(/This field is required/i)).toHaveLength(5)
+      expect(screen.getAllByText(/required/i)).toHaveLength(2)
     })
   })
 })

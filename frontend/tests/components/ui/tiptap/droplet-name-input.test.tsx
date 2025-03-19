@@ -26,3 +26,4 @@ describe('DropletNameInput', () => {
     expect(container.firstChild).toHaveClass('hover:shadow', 'focus:shadow-lg')
   })
 })
+

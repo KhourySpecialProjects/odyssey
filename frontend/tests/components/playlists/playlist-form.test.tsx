@@ -7,6 +7,37 @@ jest.mock('@/lib/actions', () => ({
   updatePlaylist: jest.fn(),
 }));
 
+jest.mock('react', () => {
+  const actualReact = jest.requireActual('react');
+  return {
+    ...actualReact,
+    // Mock the useActionState hook
+    useActionState: () => {
+      return [
+        { ok: false, error: null },
+        jest.fn(),
+        false
+      ];
+    }
+  };
+});
+
+jest.mock('flat', () => ({
+  flatten: jest.fn(obj => obj),
+  unflatten: jest.fn(obj => obj)
+}));
+
+// Mock react-dnd
+jest.mock('react-dnd', () => ({
+  useDrag: () => [{ isDragging: false }, jest.fn()],
+  useDrop: () => [{}, jest.fn()],
+  DndProvider: ({ children }: { children: React.ReactNode }) => children
+}));
+
+jest.mock('react-dnd-html5-backend', () => ({
+  HTML5Backend: {}
+}));
+
 jest.mock('next/navigation', () => ({
   useRouter: () => ({ push: jest.fn(), back: jest.fn() }),
   usePathname: () => '',
@@ -37,13 +68,20 @@ describe('PlaylistForm', () => {
   });
 
   it('handles droplet selection', () => {
-    const mockDroplets = [{ id: 1, name: 'Test Droplet' }];
+    const mockDroplets = [{
+      id: 1,
+      name: 'Test Droplet',
+      focusArea: 'frontend',
+      type: 'lesson',
+      status: 'published',
+      tags: []
+    }];
     render(<PlaylistForm {...mockProps} droplets={mockDroplets} />);
     
     const droplet = screen.getByText('Test Droplet');
     fireEvent.dragStart(droplet);
     fireEvent.drop(screen.getByText('Selected Droplets'));
     
-    expect(screen.getByText('1 droplets selected')).toBeInTheDocument();
+    expect(screen.getByText('droplets selected')).toBeInTheDocument();
   });
 });

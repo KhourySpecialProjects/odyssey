@@ -10,6 +10,13 @@ jest.mock('@/lib/actions', () => ({
   uploadImage: jest.fn(),
 }));
 
+jest.mock('react-dom/client', () => ({
+  createRoot: () => ({
+    render: jest.fn(),
+    unmount: jest.fn(),
+  }),
+}));
+
 jest.mock('react-dropzone', () => ({
   useDropzone: () => ({
     getRootProps: () => ({}),
@@ -59,14 +66,14 @@ describe('AuthorizedUserBlock', () => {
   it('renders user information correctly', () => {
     render(<AuthorizedUserBlock user={mockUser} />);
 
-    expect(screen.getByText('John Doe')).toBeInTheDocument();
+    expect(screen.getByText(/John Doe/i)).toBeInTheDocument();
   });
 
   it('shows (Disabled) text when user is disabled', () => {
     const disabledUser = { ...mockUser, isEnabled: false };
     render(<AuthorizedUserBlock user={disabledUser} />);
 
-    expect(screen.getByText('John Doe (Disabled)')).toBeInTheDocument();
+    expect(screen.getByText(/John Doe.*Disabled/i)).toBeInTheDocument();
   });
 
   it('shows Admin text for admin users', () => {
@@ -78,7 +85,7 @@ describe('AuthorizedUserBlock', () => {
     };
     render(<AuthorizedUserBlock user={adminUser} />);
 
-    expect(screen.getByText('Admin')).toBeInTheDocument();
+    expect(screen.getByText(/Admin/i)).toBeInTheDocument();
   });
 
   it('has an edit button with a pencil icon', () => {
