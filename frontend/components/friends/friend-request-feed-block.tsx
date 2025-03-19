@@ -72,7 +72,10 @@ export function FriendRequestFeedBlock({
   return (
     <div className="flex flex-col justify-center">
       <div className="flex flex-row items-start mt-2">
-        <Avatar variant="round" className="border border-sky-800 w-8 h-8 flex-shrink-0">
+        <Avatar
+          variant="round"
+          className="border border-sky-800 w-8 h-8 flex-shrink-0"
+        >
           <AvatarImage src={request?.profilePhoto || undefined} />
           <AvatarFallback>
             {request?.firstName ? (
@@ -83,9 +86,15 @@ export function FriendRequestFeedBlock({
           </AvatarFallback>
         </Avatar>
 
-        <button onClick={() => setOpen(true)} className="flex-1 min-w-0" title={`${request.firstName && request.lastName
-                ? `${request.firstName} ${request.lastName}`
-                : request.email}`}>
+        <button
+          onClick={() => setOpen(true)}
+          className="flex-1 min-w-0"
+          title={`${
+            request.firstName && request.lastName
+              ? `${request.firstName} ${request.lastName}`
+              : request.email
+          }`}
+        >
           <div className="pl-2 w-full">
             <p className="font-medium truncate text-slate-900 dark:text-slate-300 text-left">
               {request.firstName && request.lastName

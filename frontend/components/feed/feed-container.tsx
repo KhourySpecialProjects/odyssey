@@ -20,15 +20,12 @@ export function FeedContainer({
   const [selectedRoles, setSelectedRoles] = useState<AnnouncementTypeTitle[]>(
     Object.values(AnnouncementTypeTitle),
   );
-  const [filtersExpanded, setFiltersExpanded] = useState(false)
-  const [requestsExpanded, setRequestsExpanded] = useState(false)
-
-  
+  const [filtersExpanded, setFiltersExpanded] = useState(false);
+  const [requestsExpanded, setRequestsExpanded] = useState(false);
 
   return (
     <div className="flex flex-row">
       <div className="flex justify-end relative md:w-1/4 text-center h-full">
-      
         <div className="absolute top-[-50px] transition-colors border rounded-md border-slate-200 dark:border-slate-500 hover:border-slate-300 bg-slate-50 dark:bg-slate-800 p-2 lg:p-4 hidden md:block min-w-[200px]">
           <FriendRequests
             noProfile={true}
@@ -38,7 +35,6 @@ export function FeedContainer({
         </div>
       </div>
 
-
       <div className="relative w-full sm:w-1/2 text-center text-xl font-bold justify-center items-center">
         <FeedClient
           selectedRoles={selectedRoles.map(
@@ -47,11 +43,17 @@ export function FeedContainer({
           announcements={announcements}
         />
 
-        <button onClick={() => setFiltersExpanded(!filtersExpanded)} className={`absolute top-0 right-0 translate-y-[-150%] block sm:hidden ${filtersExpanded ? "bg-slate-300 rounded-md p-1 dark:bg-slate-600" : "p-1"}`}>
+        <button
+          onClick={() => setFiltersExpanded(!filtersExpanded)}
+          className={`absolute top-0 right-0 translate-y-[-150%] block sm:hidden ${filtersExpanded ? "bg-slate-300 rounded-md p-1 dark:bg-slate-600" : "p-1"}`}
+        >
           <SlidersHorizontal className="w-6 h-6" />
         </button>
 
-        <button onClick={() => setRequestsExpanded(!requestsExpanded)} className={`absolute top-0 left-0 translate-y-[-150%] block sm:hidden ${requestsExpanded ? "bg-slate-300 rounded-md p-1 dark:bg-slate-600" : "p-1"}`}>
+        <button
+          onClick={() => setRequestsExpanded(!requestsExpanded)}
+          className={`absolute top-0 left-0 translate-y-[-150%] block sm:hidden ${requestsExpanded ? "bg-slate-300 rounded-md p-1 dark:bg-slate-600" : "p-1"}`}
+        >
           <BellRing className="w-6 h-6" />
         </button>
 
@@ -89,22 +91,16 @@ export function FeedContainer({
             </div>
           </div>
         </div>
-
       </div>
 
-
-
-
-
-
-
-      <div className={`relative w-1/4 text-center text-xl font-bold flex flex-row justify-start dark:text-slate-300 hidden sm:flex`}>
+      <div
+        className={`relative w-1/4 text-center text-xl font-bold flex flex-row justify-start dark:text-slate-300 hidden sm:flex`}
+      >
         <div className="flex flex-col items-center absolute top-0 translate-y-[-20%]">
           Filters
           <FeedFilter onFilterChange={setSelectedRoles} />
         </div>
       </div>
-
     </div>
   );
 }

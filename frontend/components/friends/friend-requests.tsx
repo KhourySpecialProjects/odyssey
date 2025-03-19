@@ -51,11 +51,13 @@ export function FriendRequests({
         >
           Friend Requests
         </h1>
-        <p className={`${noProfile ? "dark:text-slate-300" : "dark:text-white"}`}>
+        <p
+          className={`${noProfile ? "dark:text-slate-300" : "dark:text-white"}`}
+        >
           A list of your pending friend requests.
         </p>
 
-        <Separator className="mt-2 dark:bg-slate-600"/>
+        <Separator className="mt-2 dark:bg-slate-600" />
 
         <div className="p-1 lg:p-4 rounded-md bg-slate-50 dark:bg-slate-800">
           {friendRequests.length > 0 ? (

@@ -26,9 +26,9 @@ export default async function FeedPage() {
           Check out what's happening right now
         </p>
       </div>
-        <div className="w-full px-4 sm:px-16">
-          <FeedContainer announcements={announcements} authUser={authUser}/>
-        </div>
+      <div className="w-full px-4 sm:px-16">
+        <FeedContainer announcements={announcements} authUser={authUser} />
+      </div>
     </>
   );
 }
