@@ -176,7 +176,11 @@ export function SocialForms({
           }}
           imagePreview={profileImage}
         />
-        <Button type="submit" className="w-[13%] min-w-[50px] whitespace-normal" disabled={!profileFile}>
+        <Button
+          type="submit"
+          className="w-[13%] min-w-[50px] whitespace-normal"
+          disabled={!profileFile}
+        >
           Save Photo
         </Button>
       </form>
@@ -203,11 +207,17 @@ export function SocialForms({
           placeholder="Enter your bio"
           className="w-[50%]"
         />
-        <Button type="submit" className="min-w-[120px] dark:bg-slate-300 hidden sm:block">
+        <Button
+          type="submit"
+          className="min-w-[120px] dark:bg-slate-300 hidden sm:block"
+        >
           Save Bio
         </Button>
-        <Button type="submit" className="w-[13%] dark:bg-slate-300 p-0 sm:hidden">
-          <Check className="h-5 w-5"/>
+        <Button
+          type="submit"
+          className="w-[13%] dark:bg-slate-300 p-0 sm:hidden"
+        >
+          <Check className="h-5 w-5" />
         </Button>
       </form>
       <form
@@ -236,11 +246,17 @@ export function SocialForms({
           placeholder="Enter your LinkedIn url"
           className="w-[50%]"
         />
-        <Button type="submit" className="min-w-[120px] dark:bg-slate-300 hidden sm:block">
+        <Button
+          type="submit"
+          className="min-w-[120px] dark:bg-slate-300 hidden sm:block"
+        >
           Save LinkedIn
         </Button>
-        <Button type="submit" className="w-[13%] dark:bg-slate-300 p-0 sm:hidden">
-          <Check className="h-5 w-5"/>
+        <Button
+          type="submit"
+          className="w-[13%] dark:bg-slate-300 p-0 sm:hidden"
+        >
+          <Check className="h-5 w-5" />
         </Button>
       </form>
 
@@ -268,11 +284,17 @@ export function SocialForms({
           placeholder="Enter your GitHub url"
           className="w-[50%]"
         />
-        <Button type="submit" className="min-w-[120px] dark:bg-slate-300 hidden sm:block">
+        <Button
+          type="submit"
+          className="min-w-[120px] dark:bg-slate-300 hidden sm:block"
+        >
           Save GitHub
         </Button>
-        <Button type="submit" className="w-[13%] dark:bg-slate-300 p-0 sm:hidden">
-          <Check className="h-5 w-5"/>
+        <Button
+          type="submit"
+          className="w-[13%] dark:bg-slate-300 p-0 sm:hidden"
+        >
+          <Check className="h-5 w-5" />
         </Button>
       </form>
     </>
