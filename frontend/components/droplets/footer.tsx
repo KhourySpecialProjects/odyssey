@@ -85,7 +85,7 @@ export default function DropletFooter({
           </div>
         )} */}
 
-      <div className="flex flex-col gap-2 pb-2 mt-8 max-w-2xl w-full md:flex-row md:justify-between mx-auto">
+      <div className="flex flex-col gap-2 pb-2 mt-8 max-w-2xl lg:w-full md:flex-row md:justify-between mx-auto">
         {previous ? (
           <PaginationLinkWrapper link={previous.link}>
             <div className="p-2 rounded-full bg-sky-100">
