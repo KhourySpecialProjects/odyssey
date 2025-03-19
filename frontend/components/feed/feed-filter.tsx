@@ -92,16 +92,15 @@ export function FeedFilter({ onFilterChange }: FeedFilterProps) {
   return (
     <div className="space-y-3 pt-4">
       {roleOptions.map((role) => (
-
         <div
           key={role.value}
           className={`flex items-center space-x-2 p-1 rounded-lg ${role.color} scale-125 ml-2`}
         >
-          <button id={role.value}
+          <button
+            id={role.value}
             onClick={() => toggleRole(role.value)}
             className={`${selectedRoles.includes(role.value) ? "opacity-100" : "opacity-30"} focus-visible:ring-sky-500 pl-1`}
           >
-
             <label
               htmlFor={role.value}
               className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex-1"
@@ -110,7 +109,6 @@ export function FeedFilter({ onFilterChange }: FeedFilterProps) {
             </label>
           </button>
         </div>
-
       ))}
     </div>
   );
