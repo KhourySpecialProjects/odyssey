@@ -7,6 +7,14 @@ jest.mock('react-dom', () => ({
   useFormStatus: jest.fn(),
 }));
 
+jest.mock('react-dom/client', () => ({
+  createRoot: () => ({
+    render: jest.fn(),
+    unmount: jest.fn(),
+  }),
+}));
+
+
 describe('FormButtons', () => {
   describe('DeleteButton', () => {
     it('renders delete text when not pending', () => {

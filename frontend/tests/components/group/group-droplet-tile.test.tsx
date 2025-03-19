@@ -20,8 +20,8 @@ describe('GroupDropletTile', () => {
   it('renders droplet information', () => {
     render(<GroupDropletTile droplet={mockDroplet} />);
     expect(screen.getByText('Test Droplet')).toBeInTheDocument();
-    expect(screen.getByText('Frontend')).toBeInTheDocument();
-    expect(screen.getByText('Lesson')).toBeInTheDocument();
+    expect(screen.getByText('personal')).toBeInTheDocument();
+    expect(screen.getByText('knowledge')).toBeInTheDocument();
   });
 
   it('shows due date when provided', () => {
