@@ -27,7 +27,7 @@ describe('Filter', () => {
 
   it('updates filter value on change', () => {
     render(<Filter dropletId={1} initial="FRONTEND" variant="focusArea" />);
-    fireEvent.click(screen.getByText('professional'));
-    expect(mockHandleChange).toHaveBeenCalledWith({ focusArea: 'professional' });
+    fireEvent.click(screen.getByText('Professional'));
+    expect(mockHandleChange).toHaveBeenCalledWith({ focusArea: 'Professional' });
   });
 });
