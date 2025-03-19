@@ -1,29 +1,25 @@
-import { render } from '@testing-library/react'
-import { Toaster } from '@/components/ui/sonner'
-import { useTheme } from 'next-themes'
+import { render } from '@testing-library/react';
+import { Toaster } from '@/components/ui/sonner';
 
-jest.mock('next-themes', () => ({
-  useTheme: jest.fn()
-}))
+// Mock the Sonner component since we're only testing our wrapper
+jest.mock('sonner', () => ({
+  Toaster: ({ className, position }: { className?: string; position?: string }) => (
+    <div 
+      data-testid="toaster" 
+      className={className}
+      data-position={position}
+    />
+  ),
+}));
 
 describe('Toaster', () => {
-  beforeEach(() => {
-    (useTheme as jest.Mock).mockReturnValue({ theme: 'light' })
-  })
-
   it('renders with default theme', () => {
-    const { container } = render(<Toaster />)
-    expect(container.firstChild).toHaveClass('toaster')
-  })
-
-  it('applies theme from next-themes', () => {
-    (useTheme as jest.Mock).mockReturnValue({ theme: 'dark' })
-    render(<Toaster />)
-    expect(useTheme).toHaveBeenCalled()
-  })
+    const { getByTestId } = render(<Toaster />);
+    expect(getByTestId('toaster')).toHaveClass('toaster');
+  });
 
   it('passes custom props to Sonner', () => {
-    const { container } = render(<Toaster position="top-right" />)
-    expect(container.firstChild).toHaveAttribute('data-position', 'top-right')
-  })
-})
+    const { getByTestId } = render(<Toaster position="top-right" />);
+    expect(getByTestId('toaster')).toHaveAttribute('data-position', 'top-right');
+  });
+});

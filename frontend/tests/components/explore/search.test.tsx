@@ -1,27 +1,33 @@
+// frontend/tests/components/explore/search.test.tsx
 import { render, screen, fireEvent } from '@testing-library/react';
 import { Search } from '@/components/explore/search';
-import { useRouter, useSearchParams, usePathname } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 
 jest.mock('next/navigation', () => ({
   useRouter: jest.fn(),
-  useSearchParams: jest.fn(),
-  usePathname: jest.fn(),
+  usePathname: () => '/explore',
+  useSearchParams: () => new URLSearchParams(),
 }));
 
 describe('Search', () => {
-  const mockRouter = { push: jest.fn() };
+  const mockRouter = {
+    push: jest.fn(),
+  };
 
   beforeEach(() => {
     (useRouter as jest.Mock).mockReturnValue(mockRouter);
-    (useSearchParams as jest.Mock).mockReturnValue(new URLSearchParams());
-    (usePathname as jest.Mock).mockReturnValue('/test');
   });
 
   it('updates search query on submit', () => {
     render(<Search />);
+    
     const input = screen.getByPlaceholderText('Search...');
     fireEvent.change(input, { target: { value: 'test query' } });
-    fireEvent.submit(screen.getByRole('form'));
+    
+    // Submit the form
+    const form = screen.getByRole('searchbox').closest('form');
+    fireEvent.submit(form!);
+    
     expect(mockRouter.push).toHaveBeenCalledWith(expect.stringContaining('q=test%20query'));
   });
 });

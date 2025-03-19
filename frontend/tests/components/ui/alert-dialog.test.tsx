@@ -40,9 +40,10 @@ describe('AlertDialog', () => {
     expect(screen.getByText('Test Description')).toBeInTheDocument()
   })
 
-  it('applies correct styling to content', () => {
+  it('applies correct styling to content', async () => {
     render(<TestDialog />)
     fireEvent.click(screen.getByText('Open Dialog'))
-    expect(screen.getByRole('dialog')).toHaveClass('fixed', 'z-50')
+    const dialog = await screen.findByRole('alertdialog')
+    expect(dialog).toHaveClass('fixed', 'z-50')
   })
 })

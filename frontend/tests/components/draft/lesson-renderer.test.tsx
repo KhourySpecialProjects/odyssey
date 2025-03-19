@@ -17,6 +17,7 @@ jest.mock('@/lib/actions', () => ({
 
 jest.mock('@/lib/utils', () => ({
   htmlToText: jest.fn(html => html.replace(/<\/?[^>]+(>|$)/g, "")),
+  cn: (...inputs: any[]) => inputs.join(' '),
 }));
 
 jest.mock('@/components/draft/lesson/blocks/generic', () => ({

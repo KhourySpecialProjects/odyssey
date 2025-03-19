@@ -65,6 +65,11 @@ describe('Droplet Editing Page', () => {
     expect(screen.getByText('John Doe')).toBeInTheDocument()
   })
 
+  beforeEach(() => {
+    jest.spyOn(require('@/lib/requests/droplet'), 'getDropletBySlug')
+      .mockResolvedValue(mockDroplet);
+  });
+
   it('renders description and overview', async () => {
     await render(<Droplet params={Promise.resolve({ slug: 'test-droplet' })} />)
     

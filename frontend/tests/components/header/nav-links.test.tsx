@@ -3,7 +3,7 @@ import { NavLinks } from '@/components/header/nav-links';
 import { usePathname } from 'next/navigation';
 
 jest.mock('next/navigation', () => ({
-  usePathname: jest.fn(),
+  usePathname: () => '/'
 }));
 
 describe('NavLinks', () => {

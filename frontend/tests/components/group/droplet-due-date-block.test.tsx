@@ -1,10 +1,10 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { DropletDueDateBlock } from '@/components/group/droplet-due-date-block';
 import { assignDropletDueDate, getGroupDueDate } from '@/lib/requests/groups';
 import { DropletStatus, DropletType, FocusArea, GroupSemester, Tag } from '@/types';
 
 jest.mock('@/lib/requests/groups', () => ({
-  assignDropletDueDate: jest.fn(),
+  assignDropletDueDate: jest.fn().mockResolvedValue({ success: true }),
   getGroupDueDate: jest.fn(),
 }));
 
@@ -31,6 +31,7 @@ describe('DropletDueDateBlock', () => {
 
   beforeEach(() => {
     (getGroupDueDate as jest.Mock).mockResolvedValue({ dueDate: null });
+    jest.clearAllMocks();
   });
 
   it('renders droplet name', () => {
@@ -39,8 +40,17 @@ describe('DropletDueDateBlock', () => {
   });
 
   it('handles save action', async () => {
-    render(<DropletDueDateBlock existingGroup={mockGroup} currentDroplet={mockDroplet} />);
+    render(
+      <DropletDueDateBlock 
+        existingGroup={mockGroup} 
+        currentDroplet={mockDroplet} 
+      />
+    );
+    
     fireEvent.click(screen.getByText('Save'));
-    expect(assignDropletDueDate).toHaveBeenCalled();
+
+    await waitFor(() => {
+      expect(assignDropletDueDate).toHaveBeenCalled();
+    });
   });
 });

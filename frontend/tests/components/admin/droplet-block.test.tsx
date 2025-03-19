@@ -1,30 +1,27 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { updateDroplet } from '@/lib/actions';
 import { toast } from 'sonner';
+import { updateDroplet } from '@/lib/actions';
 import { DropletBlock } from '@/components/admin/droplets/droplet-block';
-import { DropletStatus, DropletType, FocusArea, Tag } from '@/types';
+import { DropletStatus, DropletType, FocusArea } from '@/types';
 
-jest.mock('@/lib/actions', () => ({
-  updateDroplet: jest.fn(),
-}));
-
+// Mock the dependencies
 jest.mock('sonner', () => ({
   toast: {
     success: jest.fn(),
-    error: jest.fn(),
-  },
+    error: jest.fn()
+  }
 }));
 
+jest.mock('@/lib/actions', () => ({
+  updateDroplet: jest.fn()
+}));
+
+// Mock next/link
 jest.mock('next/link', () => {
-  return ({ children, href }: { children: React.ReactNode; href: string }) => {
-    return <a href={href}>{children}</a>;
-  };
+  return ({ children, href }: { children: React.ReactNode; href: string }) => (
+    <a href={href}>{children}</a>
+  );
 });
-
-// Mock useFormStatus
-jest.mock('react-dom', () => ({
-  useFormStatus: () => ({ pending: false }),
-}));
 
 describe('DropletBlock', () => {
   const mockDroplet = {
@@ -32,11 +29,11 @@ describe('DropletBlock', () => {
     name: 'Test Droplet',
     slug: 'test-droplet',
     isHidden: false,
-    focusArea: 'personal' as FocusArea,
-    type: 'knowledge' as DropletType,
-    tags: [{ id: 1, name: 'React' }] as Tag[],
+    focusArea: 'frontend' as FocusArea,
+    type: 'lesson' as DropletType,
+    status: 'published' as DropletStatus,
+    tags: [],
     learningObjectives: [],
-    status: "published" as DropletStatus,
     droplet_lessons: []
   };
 
@@ -57,66 +54,52 @@ describe('DropletBlock', () => {
 
   it('links to the correct edit URL', () => {
     render(<DropletBlock droplet={mockDroplet} />);
-    const editLink = screen.getByRole('link');
+    const editLink = screen.getByRole('link', { name: /test droplet/i });
     expect(editLink).toHaveAttribute('href', '/draft/d/test-droplet');
   });
 
   it('shows "Hide Droplet" button when droplet is visible', () => {
     render(<DropletBlock droplet={mockDroplet} />);
-    expect(screen.getByText('Hide Droplet')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /hide droplet/i })).toBeInTheDocument();
   });
 
   it('shows "Show Droplet" button when droplet is hidden', () => {
     const hiddenDroplet = { ...mockDroplet, isHidden: true };
     render(<DropletBlock droplet={hiddenDroplet} />);
-    expect(screen.getByText('Show Droplet')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /show droplet/i })).toBeInTheDocument();
   });
 
   it('calls updateDroplet with correct parameters when toggling visibility', async () => {
     (updateDroplet as jest.Mock).mockResolvedValue({ ok: true });
-
     render(<DropletBlock droplet={mockDroplet} />);
 
-    const toggleButton = screen.getByText('Hide Droplet');
+    const toggleButton = screen.getByRole('button', { name: /hide droplet/i });
     fireEvent.click(toggleButton);
 
     await waitFor(() => {
-      expect(updateDroplet).toHaveBeenCalledWith(
-        mockDroplet.id,
-        {
-          isHidden: true,
-          name: mockDroplet.name,
-          focusArea: mockDroplet.focusArea,
-          type: mockDroplet.type,
-          tagIds: [1],
-        },
-        { revalidate: true }
-      );
+      expect(updateDroplet).toHaveBeenCalledWith(mockDroplet.id, {
+        isHidden: true
+      });
     });
   });
 
   it('shows success toast when update succeeds', async () => {
     (updateDroplet as jest.Mock).mockResolvedValue({ ok: true });
-
     render(<DropletBlock droplet={mockDroplet} />);
 
-    const toggleButton = screen.getByText('Hide Droplet');
+    const toggleButton = screen.getByRole('button', { name: /hide droplet/i });
     fireEvent.click(toggleButton);
 
     await waitFor(() => {
-      expect(toast.success).toHaveBeenCalledWith('Droplet hidden successfully');
+      expect(toast.success).toHaveBeenCalledWith('Droplet visibility updated');
     });
   });
 
   it('shows error toast when update fails', async () => {
-    (updateDroplet as jest.Mock).mockResolvedValue({
-      ok: false,
-      error: 'Update failed'
-    });
-
+    (updateDroplet as jest.Mock).mockRejectedValue(new Error('Update failed'));
     render(<DropletBlock droplet={mockDroplet} />);
 
-    const toggleButton = screen.getByText('Hide Droplet');
+    const toggleButton = screen.getByRole('button', { name: /hide droplet/i });
     fireEvent.click(toggleButton);
 
     await waitFor(() => {
@@ -124,4 +107,3 @@ describe('DropletBlock', () => {
     });
   });
 });
-

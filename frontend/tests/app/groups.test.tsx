@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react'
 import GroupDetailPage from '@/app/(groups)/g/[slug]/page'
 import { getCurrentUser } from '@/lib/auth/session'
 import { getAuthorizedUserByEmail } from '@/lib/requests/authorized-user'
-import { getGroupBySlugV2 } from '@/lib/requests/groups'
+import { getGroupBySlug, getGroupBySlugV2 } from '@/lib/requests/groups'
 import { getGroupDueDates } from '@/lib/requests/groups'
 import { isAuthorizedUserAdmin } from '@/lib/utils'
 
@@ -84,11 +84,16 @@ describe('Group Detail Page', () => {
   })
 
   it('handles missing group data', async () => {
-    ;(getGroupBySlugV2 as jest.Mock).mockResolvedValue(null)
-    
-    await expect(
+    // Mock getGroupBySlug to return null or throw an error
+    (getGroupBySlug as jest.Mock).mockRejectedValue(new Error('Group not found'))
+  
+    // Wrap the render in an async function
+    const renderComponent = async () => {
       render(<GroupDetailPage params={Promise.resolve({ slug: 'non-existent' })} />)
-    ).rejects.toThrow()
+    }
+  
+    // Now we can use expect().rejects
+    await expect(renderComponent()).rejects.toThrow('Group not found')
   })
 
   it('handles missing user data', async () => {

@@ -1,38 +1,47 @@
 import { render, screen } from '@testing-library/react';
 import { Header } from '@/components/header';
-import { getCurrentUser } from '@/lib/auth/session';
+import { useSession } from 'next-auth/react';
 
-jest.mock('@/lib/auth/session', () => ({
-  getCurrentUser: jest.fn(),
+// Mock next/navigation
+jest.mock('next/navigation', () => ({
+  usePathname: () => '/',
+  useRouter: () => ({
+    push: jest.fn(),
+    replace: jest.fn(),
+    refresh: jest.fn()
+  })
 }));
 
-jest.mock('@/lib/requests/authorized-user', () => ({
-  getAuthorizedUserByEmail: jest.fn(),
+// Mock next-auth/react
+jest.mock('next-auth/react', () => ({
+  useSession: () => ({
+    data: null,
+    status: 'unauthenticated'
+  }),
+  signIn: jest.fn(),
+  signOut: jest.fn()
 }));
 
 describe('Header', () => {
-  it('renders logo and navigation', async () => {
-    (getCurrentUser as jest.Mock).mockResolvedValue(null);
-    render(await Header());
-    
-    expect(screen.getByAltText('Khoury Odyssey Logo')).toBeInTheDocument();
+  it('renders logo and navigation', () => {
+    render(<Header />);
+    expect(screen.getByRole('banner')).toBeInTheDocument();
     expect(screen.getByRole('navigation')).toBeInTheDocument();
   });
 
-  it('shows login button when user is not authenticated', async () => {
-    (getCurrentUser as jest.Mock).mockResolvedValue(null);
-    render(await Header());
-    
-    expect(screen.getByText('Log in')).toBeInTheDocument();
+  it('shows login button when user is not authenticated', () => {
+    render(<Header />);
+    expect(screen.getByRole('button', { name: /login/i })).toBeInTheDocument();
   });
 
-  it('shows user dropdown when user is authenticated', async () => {
-    (getCurrentUser as jest.Mock).mockResolvedValue({
-      name: 'Test User',
-      email: 'test@example.com',
+  it('shows user dropdown when user is authenticated', () => {
+    // Override the default mock for this test
+    (useSession as jest.Mock).mockReturnValue({
+      data: { user: { name: 'Test User' } },
+      status: 'authenticated'
     });
-    render(await Header());
     
-    expect(screen.getByText(/Hi, Test User!/)).toBeInTheDocument();
+    render(<Header />);
+    expect(screen.getByText('Test User')).toBeInTheDocument();
   });
 });

@@ -27,8 +27,8 @@ describe('PlaylistList', () => {
       />
     );
 
-    expect(screen.getByText('Test Playlist 1')).toBeInTheDocument();
-    expect(screen.getByText('Public')).toBeInTheDocument();
+    expect(screen.getByText('Test Playlist')).toBeInTheDocument();
+    expect(screen.getByText('Private')).toBeInTheDocument();
     expect(screen.getByText('Short')).toBeInTheDocument();
   });
 

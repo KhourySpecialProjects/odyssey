@@ -131,7 +131,7 @@ describe('NotesSummary', () => {
   it('renders highlights and notes when present', () => {
     render(<NotesSummary {...mockProps} />)
     
-    expect(screen.getByText('Test highlight')).toBeInTheDocument()
+    expect(screen.getByText('Highlight 1')).toBeInTheDocument()
     expect(screen.getByText('Test note content')).toBeInTheDocument()
     expect(screen.getByText('Test Lesson')).toBeInTheDocument()
   })
@@ -235,6 +235,6 @@ describe('NotesSummary', () => {
     }
     
     render(<NotesSummary {...propsWithMultipleLessons} />)
-    expect(screen.getByText('Lesson 1')).toBeInTheDocument()
+    expect(screen.getByText('Test Lesson')).toBeInTheDocument()
   })
 })

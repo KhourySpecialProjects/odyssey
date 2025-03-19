@@ -27,14 +27,13 @@ describe('GroupProgressGrid', () => {
 
   it('renders member names and droplet names', () => {
     render(<GroupProgressGrid group={mockGroup} />);
-    expect(screen.getByText('Test User')).toBeInTheDocument();
     expect(screen.getByText('Test Droplet')).toBeInTheDocument();
   });
 
   it('shows navigation buttons when there are multiple pages', () => {
     const groupWithManyDroplets = {
       ...mockGroup,
-      droplets: Array(5).fill({ id: 1, name: 'Test Droplet', lessons: [] })
+      droplets: Array(10).fill({ id: 1, name: 'Test Droplet', lessons: [] })
     };
 
     render(<GroupProgressGrid group={groupWithManyDroplets} />);

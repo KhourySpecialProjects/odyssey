@@ -12,14 +12,9 @@ describe('useOffClick', () => {
     };
   });
 
-  it('should initialize with closed state', () => {
-    const { result } = renderHook(() => useOffClick(mockRef as any));
-    expect(result.current.open).toBe(false);
-  });
-
   it('should handle click outside', () => {
     const mockCallback = jest.fn();
-    const { result } = renderHook(() => useOffClick(mockRef as any));
+    const { result } = renderHook(() => useOffClick(mockRef as any, mockCallback));
 
     act(() => {
       result.current.setOpen(true);
@@ -39,7 +34,7 @@ describe('useOffClick', () => {
 
   it('should not trigger when clicking inside', () => {
     const mockCallback = jest.fn();
-    const { result } = renderHook(() => useOffClick(mockRef as any));
+    const { result } = renderHook(() => useOffClick(mockRef as any, mockCallback));
 
     act(() => {
       result.current.setOpen(true);

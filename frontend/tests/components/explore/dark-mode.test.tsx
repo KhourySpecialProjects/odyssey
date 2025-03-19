@@ -29,6 +29,6 @@ describe('DarkMode', () => {
       setTheme: mockSetTheme,
     });
     render(<DarkMode />);
-    expect(screen.getByRole('button')).toHaveClass('bg-sky-600');
+    expect(screen.getByRole('button')).toHaveClass('bg-gray-700 dark:bg-sky-600');
   });
 });

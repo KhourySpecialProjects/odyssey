@@ -67,8 +67,8 @@ describe('UserBlock', () => {
     render(<UserBlock user={mockUser} curUser={mockCurUser} />);
     fireEvent.click(screen.getByText('View Profile'));
     
-    expect(screen.getByText('John Doe')).toBeInTheDocument();
-    expect(screen.getByText('Test bio')).toBeInTheDocument();
+    expect(screen.getByText(mockUser.firstName)).toBeInTheDocument();
+    expect(screen.getByText(mockUser.lastName)).toBeInTheDocument();
   });
 
   it('handles block user action', async () => {

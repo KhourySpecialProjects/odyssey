@@ -9,6 +9,7 @@ jest.mock("@/lib/actions", () => ({
 jest.mock("@/lib/utils", () => ({
   strapiJSONToTiptapJSON: jest.fn(() => []),
   tiptapJSONToStrapiJSON: jest.fn(() => ({})),
+  cn: (...inputs: any[]) => inputs.filter(Boolean).join(' ')
 }));
 
 jest.mock("@/components/ui/tiptap/callout-block-input", () => ({
@@ -105,7 +106,7 @@ describe("CalloutEditor", () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole("img", { name: /trash/i }));
+    fireEvent.click(screen.getByRole("button"));
 
     expect(mockDeleteBlock).toHaveBeenCalled();
   });

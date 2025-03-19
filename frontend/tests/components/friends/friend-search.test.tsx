@@ -92,6 +92,6 @@ describe('FriendSearch', () => {
     const searchInput = screen.getByPlaceholderText('Search...');
     fireEvent.change(searchInput, { target: { value: 'xyz' } });
     
-    expect(screen.getByText('No users found.')).toBeInTheDocument();
+    expect(screen.getByText(/No users found./i)).toBeInTheDocument();
   });
 });

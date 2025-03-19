@@ -13,7 +13,8 @@ describe('AddUser', () => {
     
     const input = screen.getByPlaceholderText('Enter email address');
     fireEvent.change(input, { target: { value: 'test@example.com' } });
-    fireEvent.submit(screen.getByRole('form'));
+    const form = screen.getByTestId('add-user-form');
+    fireEvent.submit(form);
     
     expect(input).toHaveValue('');
   });

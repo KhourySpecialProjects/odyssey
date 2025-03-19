@@ -14,12 +14,16 @@ describe('DropletOverviewInput', () => {
 
   it('renders placeholder when empty', () => {
     render(<DropletOverviewInput {...mockProps} initialContent="" />)
-    expect(screen.getByText('Nothing here yet...')).toBeInTheDocument()
+    const placeholderElement = screen.getByRole('textbox');
+    expect(placeholderElement.querySelector('p')).toHaveAttribute('data-placeholder', 'Nothing here yet...')
   })
 
   it('applies correct styling', () => {
-    const { container } = render(<DropletOverviewInput {...mockProps} />)
-    expect(container.firstChild).toHaveClass(
+    render(<DropletOverviewInput {...mockProps} />)
+    const editor = screen.getByRole('textbox')
+    expect(editor).toHaveClass(
+      'tiptap',
+      'ProseMirror',
       'prose',
       'prose-sky',
       'w-full',
@@ -27,7 +31,16 @@ describe('DropletOverviewInput', () => {
       'p-8',
       'mt-4',
       'border',
-      'rounded-md'
+      'rounded-md',
+      'bg-slate-50',
+      'dark:bg-slate-800',
+      'border-slate-200',
+      'dark:text-slate-300',
+      'dark:border-slate-500',
+      'hover:shadow',
+      'focus:shadow-lg',
+      'outline-none'
     )
   })
 })
+

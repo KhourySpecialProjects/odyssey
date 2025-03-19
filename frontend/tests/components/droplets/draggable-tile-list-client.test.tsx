@@ -1,10 +1,30 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { DraggableTileListClient } from '@/components/droplets/draggable_tile_list_client';
 
+jest.mock('flat', () => ({
+  flatten: jest.fn(obj => obj),
+  unflatten: jest.fn(obj => obj)
+}));
+
+// Mock react-dnd
+jest.mock('react-dnd', () => ({
+  useDrag: () => [{ isDragging: false }, jest.fn()],
+  useDrop: () => [{}, jest.fn()],
+  DndProvider: ({ children }: { children: React.ReactNode }) => children
+}));
+
+jest.mock('react-dnd-html5-backend', () => ({
+  HTML5Backend: {}
+}));
+
 describe('DraggableTileListClient', () => {
   const mockDroplets = Array.from({ length: 7 }, (_, i) => ({
     id: i + 1,
-    name: `Droplet ${i + 1}`
+    name: `Droplet ${i + 1}`,
+    focusArea: 'test',
+    type: 'lesson',
+    status: 'published',
+    tags: []
   }));
 
   it('renders first page of droplets', () => {

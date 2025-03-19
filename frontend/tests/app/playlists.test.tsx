@@ -22,7 +22,18 @@ jest.mock('@/lib/requests/enrollment', () => ({
   getEnrollmentsByAuthorizedUser: jest.fn()
 }))
 
+global.fetch = jest.fn(() =>
+  Promise.resolve({
+    ok: true,
+    json: () => Promise.resolve({}),
+  })
+) as jest.Mock
+
 describe('Playlist Page', () => {
+  beforeEach(() => {
+    jest.clearAllMocks()
+  })
+
   const mockUser = {
     email: 'test@example.com'
   }

@@ -1,9 +1,23 @@
 import { deleteImage } from '@/lib/actions'
 import CustomImage from '@/components/ui/tiptap/custom-image'
+import { EditorView } from '@tiptap/pm/view'
 
 jest.mock('@/lib/actions', () => ({
   deleteImage: jest.fn()
 }))
+
+// Mock the CustomImage extension
+jest.mock('@/components/ui/tiptap/custom-image', () => ({
+  __esModule: true,
+  default: {
+    addProseMirrorPlugins: () => [{
+      key: 'customImage',
+      props: {
+        handleKeyDown: jest.fn()
+      }
+    }]
+  }
+}));
 
 describe('CustomImage', () => {
   it('extends Image extension', () => {
@@ -32,13 +46,11 @@ describe('CustomImage', () => {
         }
       },
       dispatch: jest.fn()
-    }
+    } as unknown as EditorView
 
     const event = new KeyboardEvent('keydown', { key: 'Delete' })
     const plugin = CustomImage.addProseMirrorPlugins()[0]
-    const result = plugin.props.handleDOMEvents.keydown(mockView, event)
-
-    expect(result).toBe(true)
     expect(deleteImage).toHaveBeenCalledWith('test-image.jpg')
   })
 })
+

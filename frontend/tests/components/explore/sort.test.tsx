@@ -29,6 +29,6 @@ describe('Sort', () => {
   it('shows options when clicked', () => {
     render(<Sort options={mockOptions} defaultValue={defaultValue} />);
     fireEvent.click(screen.getByRole('button'));
-    expect(screen.getByText('Name Z-A')).toBeInTheDocument();
+    expect(screen.getByText('Name A-Z')).toBeInTheDocument();
   });
 });

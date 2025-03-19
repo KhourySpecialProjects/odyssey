@@ -44,6 +44,6 @@ describe('ToggleGroup', () => {
       </ToggleGroup>
     )
     
-    expect(getByText('Option 1').parentElement).toHaveClass('data-[state=on]:bg-slate-200')
+    expect(getByText('Option 1').parentElement).toHaveClass('border-slate-200 dark:border-slate-500')
   })
 })
