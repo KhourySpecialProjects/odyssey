@@ -18,10 +18,10 @@ export function AuthorDroplets({ author }: { author: AuthorizedUser }) {
   const droplets = author.droplets;
 
   return (
-    <Card>
+    <Card className="border dark:border-slate-500 hover:border-slate-300 dark:bg-slate-700">
       <CardHeader>
         <CardTitle>Droplets</CardTitle>
-        <CardDescription>
+        <CardDescription className="dark:text-white">
           Here is a quick overview of some of your Droplets.
         </CardDescription>
       </CardHeader>
@@ -39,12 +39,6 @@ export function AuthorDroplets({ author }: { author: AuthorizedUser }) {
           </ul>
         )}
       </CardContent>
-
-      <CardFooter className="px-6 py-4 border-t dark:border-slate-800">
-        <Button after={<ArrowRightIcon />} asChild>
-          <Link href="/explore">Explore</Link>
-        </Button>
-      </CardFooter>
     </Card>
   );
 }
