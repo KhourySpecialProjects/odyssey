@@ -23,7 +23,7 @@ export default async function FeedPage() {
       <div className="w-full p-8 mx-auto my-4 text-center max-w-7xl">
         <h1 className="text-5xl font-bold">My Feed</h1>
         <p className="mt-4 text-lg leading-normal light:text-slate-600 text-balance hidden lg:block">
-          Check out what's happening right now
+          Check out what&apos;s happening right now
         </p>
       </div>
       <div className="w-full px-4 sm:px-16">
