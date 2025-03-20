@@ -64,6 +64,7 @@ export function FriendSentRequestsBlock({
           size="sm"
           onClick={handleReject}
           className="scale-75 md:scale-100"
+          role="x"
         >
           <div className="relative group">
             <X />

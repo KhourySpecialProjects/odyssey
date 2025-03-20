@@ -38,7 +38,9 @@ describe('Sheet', () => {
 
   it('applies correct side variant styling', () => {
     const { container } = render(
-      <SheetContent side="left">Content</SheetContent>
+      <Sheet>
+        <SheetContent side="left">Content</SheetContent>
+      </Sheet>
     )
     expect(container.firstChild).toHaveClass('left-0')
   })

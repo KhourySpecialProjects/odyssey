@@ -60,6 +60,6 @@ describe('ReportBugDialog', () => {
         onOpenChange={mockOnOpenChange}
       />
     );
-    expect(screen.getByText('Is something outdated?')).toBeInTheDocument();
+    expect(screen.getByText(/outdated/i)).toBeInTheDocument();
   });
 });

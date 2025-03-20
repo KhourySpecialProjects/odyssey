@@ -106,7 +106,7 @@ describe("CalloutEditor", () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole("button"));
+    fireEvent.click(screen.getByRole("trash"));
 
     expect(mockDeleteBlock).toHaveBeenCalled();
   });

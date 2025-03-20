@@ -53,6 +53,7 @@ export function VideoEditor({
             <Trash2Icon
               className="cursor-pointer text-red-600 hover:text-red-700"
               onClick={deleteBlock}
+              role="trash"
             />
           </div>
 

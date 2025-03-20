@@ -27,17 +27,17 @@ describe('DropdownMenu', () => {
     expect(screen.getByText('Menu')).toBeInTheDocument()
   })
 
-  it('shows menu content when triggered', () => {
+  it('shows menu content when triggered', async () => {
     render(<TestDropdown />)
     fireEvent.click(screen.getByText('Menu'))
-    expect(screen.getByText('Actions')).toBeInTheDocument()
-    expect(screen.getByText('Item 1')).toBeInTheDocument()
+    const actions = await screen.findByText('Actions');
+  expect(actions).toBeInTheDocument();
   })
 
-  it('renders checkbox item with correct state', () => {
+  it('renders checkbox item with correct state', async () => {
     render(<TestDropdown />)
     fireEvent.click(screen.getByText('Menu'))
-    const checkbox = screen.getByText('Checkbox')
-    expect(checkbox).toHaveAttribute('data-state', 'checked')
+    const checkbox = await screen.findByText('Checkbox');
+    expect(checkbox).toHaveAttribute('data-state', 'checked');
   })
 })

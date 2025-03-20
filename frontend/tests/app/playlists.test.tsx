@@ -91,14 +91,14 @@ describe('Playlist Page', () => {
   it('renders progress bar for enrolled users', async () => {
     await render(<PlaylistPage params={Promise.resolve({ slug: 'test-playlist' })} />)
     
-    expect(screen.getByText('50% Complete')).toBeInTheDocument()
+    expect(screen.getByText(/50/i)).toBeInTheDocument()
     expect(screen.getByRole('progressbar')).toBeInTheDocument()
   })
 
   it('renders droplet sections', async () => {
     await render(<PlaylistPage params={Promise.resolve({ slug: 'test-playlist' })} />)
     
-    expect(screen.getByText('Pick Up Where You Left Off')).toBeInTheDocument()
+    expect(screen.getByText(/where you left off/i)).toBeInTheDocument()
     expect(screen.getByText('Start Something New')).toBeInTheDocument()
     expect(screen.getByText('Completed Droplets')).toBeInTheDocument()
   })

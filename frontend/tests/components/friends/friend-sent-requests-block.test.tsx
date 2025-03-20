@@ -66,7 +66,7 @@ describe('FriendSentRequestsBlock', () => {
     (cancelFriendRequest as jest.Mock).mockResolvedValue({ success: true });
     
     render(<FriendSentRequestsBlock user={mockUser} request={mockRequest} />);
-    fireEvent.click(screen.getByRole('button'));
+    fireEvent.click(screen.getByRole('x'));
     
     expect(cancelFriendRequest).toHaveBeenCalledWith(mockUser.id, mockRequest.id);
     expect(toast.success).toHaveBeenCalledWith('Friend request rejected');

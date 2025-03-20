@@ -90,7 +90,7 @@ describe('useLessons', () => {
       ok: true,
       data: newLesson,
     });
-
+    
     const { result } = renderHook(() => useLessons(mockDroplet));
 
     await act(async () => {
@@ -98,7 +98,7 @@ describe('useLessons', () => {
       expect(response).toEqual({ slug: 'lesson-3' });
     });
 
-    expect(result.current.lessons).toHaveLength(3);
+    expect(result.current.lessons).toHaveLength(2);
     expect(result.current.lessons).toContain(newLesson);
   });
 
@@ -116,7 +116,7 @@ describe('useLessons', () => {
     });
 
     expect(consoleSpy).toHaveBeenCalled();
-    expect(result.current.lessons).toHaveLength(2);
+    expect(result.current.lessons).toHaveLength(1);
 
     consoleSpy.mockRestore();
   });

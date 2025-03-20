@@ -9,6 +9,9 @@ import {
   CommandSeparator,
 } from '@/components/ui/command'
 
+
+window.HTMLElement.prototype.scrollIntoView = jest.fn();
+
 describe('Command', () => {
   const TestCommand = () => (
     <Command>

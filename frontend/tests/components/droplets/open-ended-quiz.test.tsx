@@ -21,7 +21,7 @@ describe('OpenEndedQuizBlock', () => {
   it('renders quiz title and description', () => {
     render(<OpenEndedQuizBlock data={mockQuizData} />)
     
-    expect(screen.getByText(/check/i)).toBeInTheDocument()
+    expect(screen.getByText(/check in/i)).toBeInTheDocument()
     expect(screen.getByText('Test your knowledge and see what you just learned.')).toBeInTheDocument()
   })
 

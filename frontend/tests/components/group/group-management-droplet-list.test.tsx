@@ -43,8 +43,8 @@ describe('DropletList', () => {
     name: 'Test Droplet',
     slug: 'test-droplet',
     isHidden: false,
-    focusArea: 'personal' as FocusArea,
-    type: 'knowledge' as DropletType,
+    focusArea: 'Personal' as FocusArea,
+    type: 'Knowledge' as DropletType,
     tags: [{ id: 1, name: 'React' }] as Tag[],
     learningObjectives: [],
     status: "published" as DropletStatus,
@@ -67,8 +67,8 @@ describe('DropletList', () => {
     );
 
     expect(screen.getByText('Test Droplet')).toBeInTheDocument();
-    expect(screen.getByText('personal')).toBeInTheDocument();
-    expect(screen.getByText('knowledge')).toBeInTheDocument();
+    expect(screen.getByText('Personal')).toBeInTheDocument();
+    expect(screen.getByText('Knowledge')).toBeInTheDocument();
   });
 
   it('calls onRemove when remove button is clicked', () => {

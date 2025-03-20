@@ -92,7 +92,7 @@ export function FriendSearch({
                 {searchResults.slice(0, 10).map((user) => {
                   if (!friendIds.includes(user.id)) {
                     return (
-                      <FriendBlock user={curUser} friend={user} key={user.id} />
+                      <FriendBlock user={curUser} friend={user} key={user.id} data-testid={`user-item-${user.id}`}/>
                     );
                   } else if (requestIds.includes(user.id)) {
                     return (
@@ -102,6 +102,7 @@ export function FriendSearch({
                         display={true}
                         requested={false}
                         key={user.id}
+                        data-testid={`user-item-${user.id}`}
                       />
                     );
                   } else {
@@ -112,13 +113,14 @@ export function FriendSearch({
                         display={true}
                         requested={true}
                         key={user.id}
+                        data-testid={`user-item-${user.id}`}
                       />
                     );
                   }
                 })}
               </ul>
             ) : (
-              <p className="p-1">No users found.</p>
+              <p className="p-1" data-testid="no-results">No users found.</p>
             )}
           </div>
         )}

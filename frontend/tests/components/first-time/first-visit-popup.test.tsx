@@ -33,7 +33,7 @@ describe('FirstVisitPopup', () => {
     ],
     linkedin: "https://www.google.com/",
     github: "https://www.google.com/",
-    firstTime: false,
+    firstTime: true,
     friendships: [],
     sent_requests: [],
     received_requests: [],

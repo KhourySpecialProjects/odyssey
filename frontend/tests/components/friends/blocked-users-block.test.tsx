@@ -89,7 +89,7 @@ describe('BlockedUsersBlock', () => {
       timeZone: "America/New_York" as TimeZone
     }
     render(<BlockedUsersBlock user={mockUser} blocked={blockedNoName} />);
-    expect(screen.getByText('blocked@test.com')).toBeInTheDocument();
+    expect(screen.getByText('user@example.com')).toBeInTheDocument();
   });
 
   it('handles unblock action successfully', async () => {

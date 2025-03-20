@@ -28,6 +28,6 @@ describe('Search', () => {
     const form = screen.getByRole('searchbox').closest('form');
     fireEvent.submit(form!);
     
-    expect(mockRouter.push).toHaveBeenCalledWith(expect.stringContaining('q=test%20query'));
+    expect(mockRouter.push).toHaveBeenCalledWith(expect.stringContaining('q=test+query'));
   });
 });

@@ -20,7 +20,10 @@ describe('TagFilter', () => {
   });
 
   it('renders filter with tags', async () => {
-    render(await TagFilter());
-    expect(screen.getByText('Tags')).toBeInTheDocument();
+    render(<TagFilter />);
+    expect(screen.getByTestId('tag-filter-label')).toHaveTextContent('Tags');
+    mockTags.forEach(tag => {
+      expect(screen.getByText(tag.name)).toBeInTheDocument();
+    });
   });
 });

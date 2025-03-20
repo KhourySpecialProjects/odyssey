@@ -4,6 +4,11 @@ import { LearningObjectives } from '@/components/draft/metadata/learning-objecti
 
 jest.mock('@/lib/actions');
 
+// Mock Next.js router
+jest.mock('next/navigation', () => ({
+  useRouter: jest.fn()
+}));
+
 describe('LearningObjectives', () => {
   const mockLearningObjectives = [
     { id: 1, objective: 'First Objective' },
