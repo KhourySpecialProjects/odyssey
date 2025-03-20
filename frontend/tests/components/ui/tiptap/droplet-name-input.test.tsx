@@ -23,7 +23,9 @@ describe('DropletNameInput', () => {
 
   it('applies correct container styling', () => {
     const { container } = render(<DropletNameInput {...mockProps} />)
-    expect(container.firstChild).toHaveClass('hover:shadow', 'focus:shadow-lg')
+    const editor = container.querySelector('.tiptap')
+    expect(editor).toHaveClass('hover:shadow', 'focus:shadow-lg')
   })
 })
+
 

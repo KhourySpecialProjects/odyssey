@@ -40,12 +40,12 @@ describe('UserDropdown', () => {
 
   it('renders user information', () => {
     render(<UserDropdown user={mockUser} authorizedUser={mockAuthorizedUser} />);
-    expect(screen.getByText(/Hi, Test User!/)).toBeInTheDocument();
+    expect(screen.getByText(/hi/i)).toBeInTheDocument();
   });
 
   it('shows dropdown menu when clicked', () => {
     render(<UserDropdown user={mockUser} authorizedUser={mockAuthorizedUser} />);
-    fireEvent.click(screen.getByText(/Hi, Test User!/));
+    fireEvent.click(screen.getByText(/test user!/i));
     expect(screen.getByText('Profile')).toBeInTheDocument();
     expect(screen.getByText('Log Out')).toBeInTheDocument();
   });

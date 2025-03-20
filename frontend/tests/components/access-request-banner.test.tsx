@@ -12,7 +12,7 @@ describe('AccessRequestBanner', () => {
     (getServerSession as jest.Mock).mockResolvedValue(null)
     await render(<AccessRequestBanner />)
     
-    expect(screen.getByText('Ready to join the Odyssey?')).toBeInTheDocument()
+    expect(screen.getByText(/ready to join the odyssey/i)).toBeInTheDocument()
     expect(screen.getByText('Request Access')).toBeInTheDocument()
   })
 

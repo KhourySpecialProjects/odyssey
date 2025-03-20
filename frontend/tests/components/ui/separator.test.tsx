@@ -18,7 +18,8 @@ describe('Separator', () => {
   })
 
   it('sets decorative attribute', () => {
-    const { container } = render(<Separator decorative={false} />)
-    expect(container.firstChild).toHaveAttribute('aria-orientation', 'horizontal')
+    const { container } = render(<Separator orientation="horizontal" />)
+    const separator = container.firstChild as HTMLElement
+    expect(separator).toHaveAttribute('aria-orientation', 'horizontal')
   })
 })

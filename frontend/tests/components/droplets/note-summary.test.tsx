@@ -17,6 +17,15 @@ describe('NoteSummary', () => {
     status: "published" as DropletStatus,
     droplet_lessons: []
   };
+  const mockLesson = {
+    id: 1,
+    name: 'Test Lesson',
+    slug: 'test-lesson',
+    blocks: [],
+    droplets: [],
+    droplet_lessons: [],
+    notes: []  
+  }
   const mockProps = {
     filteredHighlights: [
       {
@@ -28,7 +37,11 @@ describe('NoteSummary', () => {
           name: 'Test Lesson',
           slug: 'test-lesson',
           droplets: [],
-          droplet_lessons: [],
+          droplet_lessons: [{
+            id: 123,
+            orderIndex: 1,
+            lesson: mockLesson
+          }],
           notes: [],
           blocks: [
             {
@@ -94,7 +107,11 @@ describe('NoteSummary', () => {
           slug: 'test-lesson',
           blocks: [],
           droplets: [],
-          droplet_lessons: [],
+          droplet_lessons: [{
+            id: 123,
+            orderIndex: 1,
+            lesson: mockLesson
+          }],
           notes: []
         },
         enrollment: {

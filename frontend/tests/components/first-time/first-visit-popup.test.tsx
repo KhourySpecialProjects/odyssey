@@ -44,13 +44,13 @@ describe('FirstVisitPopup', () => {
 
   it('renders popup when user is first time visitor', () => {
     render(<FirstVisitPopup user={mockUser} />);
-    expect(screen.getByText('Welcome to Khoury Odyssey!')).toBeInTheDocument();
+    expect(screen.getByText(/welcome to khoury/i)).toBeInTheDocument();
   });
 
   it('requires first and last name before continuing', async () => {
     render(<FirstVisitPopup user={mockUser} />);
     
-    const startButton = screen.getByText('Start Exploring');
+    const startButton = screen.getByRole('button', { name: /start exploring/i })
     fireEvent.click(startButton);
 
     expect(toast.error).toHaveBeenCalledWith('Please enter your first name before continuing');
@@ -59,15 +59,18 @@ describe('FirstVisitPopup', () => {
   it('submits form with valid data', async () => {
     render(<FirstVisitPopup user={mockUser} />);
     
-    fireEvent.change(screen.getByPlaceholderText('First name (required)'), {
-      target: { value: 'John' }
-    });
-    fireEvent.change(screen.getByPlaceholderText('Last name (required)'), {
-      target: { value: 'Doe' }
-    });
+    const firstNameInput = screen.getByLabelText(/first name/i)
+    const lastNameInput = screen.getByLabelText(/last name/i)
     
-    const startButton = screen.getByText('Start Exploring');
-    fireEvent.click(startButton);
+    await fireEvent.change(firstNameInput, {
+      target: { value: 'John' }
+    })
+    await fireEvent.change(lastNameInput, {
+      target: { value: 'Doe' }
+    })
+    
+    const startButton = screen.getByRole('button', { name: /start exploring/i })
+    await fireEvent.click(startButton)
 
     await waitFor(() => {
       expect(updateFirstTimeStatus).toHaveBeenCalledWith(mockUser.id);

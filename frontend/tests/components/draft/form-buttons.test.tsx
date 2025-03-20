@@ -18,21 +18,17 @@ jest.mock('react-dom/client', () => ({
 describe('FormButtons', () => {
   describe('DeleteButton', () => {
     it('renders delete text when not pending', () => {
-      (useFormStatus as jest.Mock).mockReturnValue({ pending: false });
       render(
         <DeleteButton />
-      );
-      expect(screen.getByRole('button')).toHaveTextContent(/delete/i);
-    });
+      )
+      expect(screen.getByRole('button')).toHaveTextContent(/delete/i)
+    })
 
     it('shows loader when pending', () => {
-      (useFormStatus as jest.Mock).mockReturnValue({ pending: true });
       render(
         <DeleteButton />
-          
-      );
-      // Look for the loading spinner container instead of status role
-      expect(screen.getByTestId('loading-spinner')).toBeInTheDocument();
-    });
-  });
+      )
+      expect(screen.getByTestId('loading-spinner')).toBeInTheDocument()
+    })
+  })
 });

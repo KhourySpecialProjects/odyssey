@@ -26,15 +26,16 @@ describe('RadioSelect', () => {
   });
 
   it('calls setSelected when option clicked', () => {
+    const mockSetSelected = jest.fn()
     render(
-      <RadioSelect
-        label="Test Radio"
+      <RadioSelect 
+        label='Test Radio'
         items={mockItems}
-        selected={null}
+        selected="opt1"
         setSelected={mockSetSelected}
       />
-    );
-    fireEvent.click(screen.getByText('Option 1'));
-    expect(mockSetSelected).toHaveBeenCalledWith('opt1');
-  });
+    )
+    fireEvent.click(screen.getByText('Option 1'))
+    expect(mockSetSelected).toHaveBeenCalledWith('opt1')
+  })
 });

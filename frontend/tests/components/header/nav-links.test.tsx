@@ -3,27 +3,28 @@ import { NavLinks } from '@/components/header/nav-links';
 import { usePathname } from 'next/navigation';
 
 jest.mock('next/navigation', () => ({
-  usePathname: () => '/'
+  usePathname: jest.fn()
 }));
 
 describe('NavLinks', () => {
   const mockItems = [
-    { href: '/home', label: 'Home' },
-    { href: '/about', label: 'About' },
+    { href: '/feed', label: 'Feed' },
+    { href: '/explore', label: 'Explore' },
   ];
 
   beforeEach(() => {
-    (usePathname as jest.Mock).mockReturnValue('/home');
-  });
+    jest.clearAllMocks()
+    ;(usePathname as jest.Mock).mockReturnValue('/explore')
+  })
 
   it('renders all navigation items', () => {
     render(<NavLinks items={mockItems} />);
-    expect(screen.getByText('Home')).toBeInTheDocument();
-    expect(screen.getByText('About')).toBeInTheDocument();
+    expect(screen.getByText('Explore')).toBeInTheDocument();
+    expect(screen.getByText('Feed')).toBeInTheDocument();
   });
 
   it('applies active styles to current path', () => {
     render(<NavLinks items={mockItems} />);
-    expect(screen.getByText('Home').parentElement).toHaveClass('font-bold');
+    expect(screen.getByText('Explore').parentElement).toHaveClass('font-bold');
   });
 });

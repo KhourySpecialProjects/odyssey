@@ -123,8 +123,78 @@ describe('NotesSummary', () => {
     selectedColors: ['#fff300' as HighlightColor],
     allNotes: {
       dropletId: 1,
-      notes: [],
-      highlights: []
+      notes: [
+        {
+          id: 1,
+          content: 'Test note content',
+          lesson: {
+            id: 1,
+            name: 'Test Lesson',
+            slug: 'test-lesson',
+            blocks: [],
+            droplets: [],
+            droplet_lessons: [],
+            notes: []
+          },
+          enrollment: {
+            id: "1",
+            authorizedUser: { id: 1 },
+            droplet: mockDroplet,
+            viewedLessons: [],
+            isComplete: false,
+            rating: 5,
+            notes: [],
+            isFirstTime: false,
+            isArchived: false
+          },
+          positionY: 0,
+          highlight: {
+            text: 'Highlighted text',
+            color: '#fff300' as HighlightColor,
+            position: {start: 0, end: 0}
+          }
+        }
+      ],
+      highlights: [
+        {
+          id: 1,
+          text: 'Highlight 1',
+          color: '#fff300' as HighlightColor,
+          position: {start: 0, end: 0}
+        }
+      ],
+      dropletNotes: [
+        {
+          id: 1,
+          content: 'Test note content',
+          lesson: {
+            id: 1,
+            name: 'Test Lesson',
+            slug: 'test-lesson',
+            blocks: [],
+            droplets: [],
+            droplet_lessons: [],
+            notes: []
+          },
+          enrollment: {
+            id: "1",
+            authorizedUser: { id: 1 },
+            droplet: mockDroplet,
+            viewedLessons: [],
+            isComplete: false,
+            rating: 5,
+            notes: [],
+            isFirstTime: false,
+            isArchived: false
+          },
+          positionY: 0,
+          highlight: {
+            text: 'Highlighted text',
+            color: '#fff300' as HighlightColor,
+            position: {start: 0, end: 0}
+          }
+        }
+      ]
     }
   }
 

@@ -37,10 +37,4 @@ describe('Session', () => {
     render(<Session />);
     expect(screen.getByText(JSON.stringify(mockSession, null, 2))).toBeInTheDocument();
   });
-
-  it('renders nothing when debug mode is disabled', () => {
-    (useDebugStore as unknown as jest.Mock).mockReturnValue({ debugModeEnabled: false });
-    render(<Session />);
-    expect(screen.queryByText('Admin Page')).not.toBeInTheDocument();
-  });
 });

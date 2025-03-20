@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { AccessRequestBlock } from '@/components/shared/access-manager/access-requests/access-request';
 import { createAuthorizedUser, deleteAccessRequest } from '@/lib/actions';
 
@@ -29,14 +29,23 @@ describe('AccessRequestBlock', () => {
   });
 
   it('handles approve action', async () => {
-    (createAuthorizedUser as jest.Mock).mockResolvedValue({ ok: true });
-    render(<AccessRequestBlock request={mockRequest} />);
+    const createAuthorizedUser = jest.fn().mockResolvedValue({})
+    const deleteAccessRequest = jest.fn().mockResolvedValue({})
     
-    fireEvent.click(screen.getByText('Accept'));
+    render(
+      <AccessRequestBlock 
+        
+      request={mockRequest}
+      />
+    )
+
+    await fireEvent.click(screen.getByRole('button', { name: /accept/i }))
     
-    expect(createAuthorizedUser).toHaveBeenCalled();
-    expect(deleteAccessRequest).toHaveBeenCalled();
-  });
+    await waitFor(() => {
+      expect(createAuthorizedUser).toHaveBeenCalled()
+      expect(deleteAccessRequest).toHaveBeenCalled()
+    })
+  })
 
   it('handles reject action', async () => {
     render(<AccessRequestBlock request={mockRequest} />);
