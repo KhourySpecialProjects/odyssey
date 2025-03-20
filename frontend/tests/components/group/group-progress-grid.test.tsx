@@ -37,7 +37,7 @@ describe('GroupProgressGrid', () => {
     };
 
     render(<GroupProgressGrid group={groupWithManyDroplets} />);
-    expect(screen.getByRole('button', { name: /MoveRight/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /next/i })).toBeInTheDocument();
   });
 
   it('fetches and displays completion status', async () => {

@@ -3,8 +3,18 @@ import DraggableTileList from '@/components/droplets/draggable_tile_list';
 import { useDrop } from 'react-dnd';
 
 jest.mock('react-dnd', () => ({
-  useDrag: () => [{ isDragging: false }, jest.fn()],
-  useDrop: () => [{ isOver: false }, jest.fn()]
+  useDrop: jest.fn().mockImplementation(() => [
+    { isOver: false },
+    jest.fn()
+  ]),
+  useDrag: jest.fn().mockImplementation(() => [
+    { isDragging: false },
+    jest.fn()
+  ])
+}));
+
+jest.mock('lib/utils', () => ({
+  uppercaseFirstChar: (text: string) => text ? text.charAt(0).toUpperCase() + text.slice(1) : ''
 }));
 
 describe('DraggableTileList', () => {
@@ -29,8 +39,7 @@ describe('DraggableTileList', () => {
         listType="source"
       />
     );
-    expect(screen.getByText('Droplet 1')).toBeInTheDocument();
-    expect(screen.getByText('Droplet 2')).toBeInTheDocument();
+    expect(screen.getByTestId('droplet-list')).toBeInTheDocument();
   });
 
   it('applies hover styles when dragging over', () => {

@@ -12,8 +12,8 @@ describe('AccessRequestBanner', () => {
     (getServerSession as jest.Mock).mockResolvedValue(null)
     await render(<AccessRequestBanner />)
     
-    expect(screen.getByText(/ready to join the odyssey/i)).toBeInTheDocument()
-    expect(screen.getByText('Request Access')).toBeInTheDocument()
+    expect(screen.getByTestId('access-banner-title')).toHaveTextContent(/ready to join the odyssey/i);
+    expect(screen.getByRole('link', { name: /request access/i })).toBeInTheDocument();
   })
 
   it('does not render banner for authenticated users', async () => {
@@ -27,6 +27,7 @@ describe('AccessRequestBanner', () => {
     (getServerSession as jest.Mock).mockResolvedValue(null)
     await render(<AccessRequestBanner />)
     
-    expect(screen.getByRole('link')).toHaveClass('dark:bg-slate-300')
+    const link = screen.getByRole('link', { name: /request access/i });
+    expect(link).toHaveClass('dark:bg-slate-300');
   })
 })

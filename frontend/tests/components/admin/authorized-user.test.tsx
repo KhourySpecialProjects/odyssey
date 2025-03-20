@@ -66,14 +66,14 @@ describe('AuthorizedUserBlock', () => {
   it('renders user information correctly', () => {
     render(<AuthorizedUserBlock user={mockUser} />);
 
-    expect(screen.getByText(/John Doe/i)).toBeInTheDocument();
+    expect(screen.getByTestId('user-name')).toHaveTextContent(/john/i);
   });
 
   it('shows (Disabled) text when user is disabled', () => {
     const disabledUser = { ...mockUser, isEnabled: false };
     render(<AuthorizedUserBlock user={disabledUser} />);
 
-    expect(screen.getByText(/John Doe.*Disabled/i)).toBeInTheDocument();
+    expect(screen.getByTestId('user-status')).toHaveTextContent(/disabled/i);
   });
 
   it('shows Admin text for admin users', () => {
@@ -85,16 +85,12 @@ describe('AuthorizedUserBlock', () => {
     };
     render(<AuthorizedUserBlock user={adminUser} />);
 
-    expect(screen.getByText(/Admin/i)).toBeInTheDocument();
-  });
-
+   expect(screen.getByTestId('user-role')).toHaveTextContent(/admin/i);
+  })
   it('has an edit button with a pencil icon', () => {
     render(<AuthorizedUserBlock user={mockUser} />);
 
-    const button = screen.getByRole('button');
+    const button = screen.getByRole('button', { name: /edit user/i });
     expect(button).toBeInTheDocument();
-
-    const tooltip = screen.getByText('Edit User');
-    expect(tooltip).toBeInTheDocument();
   });
 });

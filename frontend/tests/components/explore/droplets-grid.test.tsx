@@ -11,6 +11,10 @@ jest.mock('@/lib/requests/droplet', () => ({
   getDroplets: jest.fn(),
 }));
 
+jest.mock('lib/utils', () => ({
+  uppercaseFirstChar: (text: string) => text ? text.charAt(0).toUpperCase() + text.slice(1) : ''
+}));
+
 describe('DropletsGrid', () => {
   const mockDroplets = [
     {
@@ -34,8 +38,8 @@ describe('DropletsGrid', () => {
     expect(screen.getByText('No Droplets Found')).toBeInTheDocument();
   });
 
-  it('renders droplets when available', async () => {
-    render(await DropletsGrid({}));
+  it('renders droplets when available', () => {
+    render(<DropletsGrid />);
     expect(screen.getByText('Test Droplet')).toBeInTheDocument();
   });
 });

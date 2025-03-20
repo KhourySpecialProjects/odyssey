@@ -125,7 +125,7 @@ export function FirstVisitPopup({ user }: { user: AuthorizedUser | null }) {
             journey.
           </p>
 
-          <Button onClick={() => handleClose()} after={<ArrowRightIcon />}>
+          <Button role="button" onClick={() => handleClose()} after={<ArrowRightIcon />}>
             Start Exploring
           </Button>
         </div>

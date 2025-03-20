@@ -36,7 +36,7 @@ describe('LearningObjectivesInput', () => {
         setLearningObjectives={mockSetLearningObjectives}
       />
     );
-    fireEvent.click(screen.getByRole('button', { name: /delete/i }));
+    fireEvent.click(screen.getByRole('delete'));
     expect(mockSetLearningObjectives).toHaveBeenCalledWith([]);
   });
 });

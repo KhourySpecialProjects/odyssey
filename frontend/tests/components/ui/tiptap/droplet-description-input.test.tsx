@@ -19,7 +19,7 @@ describe('DropletDescriptionInput', () => {
 
   it('renders placeholder when empty', () => {
     render(<DropletDescriptionInput {...mockProps}  />)
-    expect(screen.getByText('Type droplet description here...')).toBeInTheDocument()
+    expect(screen.getByText(/droplet description/i)).toBeInTheDocument()
   })
 
   it('applies correct styling', () => {

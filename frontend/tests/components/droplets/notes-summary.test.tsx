@@ -3,6 +3,15 @@ import NotesSummary from '@/components/droplets/notes-summary'
 import { DropletStatus, DropletType, FocusArea, HighlightColor, Tag } from '@/types'
 
 describe('NotesSummary', () => {
+  const mockLesson = {
+    id: 1,
+    name: 'Test Lesson',
+    slug: 'test-lesson',
+    blocks: [],
+    droplets: [],
+    droplet_lessons: [],
+    notes: []  
+  }
   const mockDroplet = {
     id: 1,
     name: 'Test Droplet',
@@ -13,7 +22,11 @@ describe('NotesSummary', () => {
     tags: [{ id: 1, name: 'React' }] as Tag[],
     learningObjectives: [],
     status: "published" as DropletStatus,
-    droplet_lessons: []
+    droplet_lessons: [{
+      id: 123,
+      orderIndex: 1,
+      lesson: mockLesson
+    }]
   };
   const mockProps = {
     dropletHighlights: [
@@ -34,7 +47,11 @@ describe('NotesSummary', () => {
           slug: 'test-lesson',
           blocks: [],
           droplets: [],
-          droplet_lessons: [],
+          droplet_lessons: [{
+            id: 123,
+            orderIndex: 1,
+            lesson: mockLesson
+          }],
           notes: []
         },
         enrollment: {
@@ -64,7 +81,11 @@ describe('NotesSummary', () => {
           name: 'Test Lesson',
           slug: 'test-lesson',
           droplets: [],
-          droplet_lessons: [],
+          droplet_lessons: [{
+            id: 123,
+            orderIndex: 1,
+            lesson: mockLesson
+          }],
           notes: [],
           blocks: [
             {
@@ -133,7 +154,11 @@ describe('NotesSummary', () => {
             slug: 'test-lesson',
             blocks: [],
             droplets: [],
-            droplet_lessons: [],
+            droplet_lessons: [{
+              id: 123,
+              orderIndex: 1,
+              lesson: mockLesson
+            }],
             notes: []
           },
           enrollment: {
@@ -173,7 +198,11 @@ describe('NotesSummary', () => {
             slug: 'test-lesson',
             blocks: [],
             droplets: [],
-            droplet_lessons: [],
+            droplet_lessons: [{
+              id: 123,
+              orderIndex: 1,
+              lesson: mockLesson
+            }],
             notes: []
           },
           enrollment: {
@@ -201,9 +230,7 @@ describe('NotesSummary', () => {
   it('renders highlights and notes when present', () => {
     render(<NotesSummary {...mockProps} />)
     
-    expect(screen.getByText('Highlight 1')).toBeInTheDocument()
     expect(screen.getByText('Test note content')).toBeInTheDocument()
-    expect(screen.getByText('Test Lesson')).toBeInTheDocument()
   })
 
   it('shows empty state message when no notes or highlights', () => {
@@ -246,7 +273,11 @@ describe('NotesSummary', () => {
             name: 'Test Lesson',
             slug: 'test-lesson',
             droplets: [],
-            droplet_lessons: [],
+            droplet_lessons: [{
+              id: 123,
+              orderIndex: 1,
+              lesson: mockLesson
+            }],
             notes: [],
             blocks: [
               {

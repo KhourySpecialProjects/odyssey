@@ -17,6 +17,13 @@ jest.mock('sonner', () => ({
   toast: { success: jest.fn(), error: jest.fn(), promise: jest.fn() }
 }));
 
+jest.mock('components/ui/use-toast', () => ({
+  toast: {
+    success: jest.fn(),
+    error: jest.fn()
+  }
+}));
+
 describe('EnrollButton', () => {
   const mockDroplet = {
     id: 1,
@@ -36,10 +43,10 @@ describe('EnrollButton', () => {
     (createEnrollment as jest.Mock).mockResolvedValue({ ok: true });
 
     render(<EnrollButton droplet={mockDroplet as any} />);
-    fireEvent.click(screen.getByText('Enroll and Continue'));
-
+    await fireEvent.click(screen.getByRole('button'));
     expect(createEnrollment).toHaveBeenCalledWith(mockDroplet, []);
     expect(toast.success).toHaveBeenCalled();
+    
     expect(mockRouter.push).toHaveBeenCalledWith('/d/test-droplet/lesson-1');
   });
 

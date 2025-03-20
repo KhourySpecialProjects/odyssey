@@ -19,7 +19,7 @@ export function Description({
   };
 
   return (
-    <div>
+    <div role="textbox">
       <DropletDescriptionInput
         initialContent={initialContent}
         updateContent={updateDescription}

@@ -38,7 +38,7 @@ export default async function AccessRequestBanner() {
 
         <div className="flex flex-wrap items-center justify-center flex-grow w-full gap-x-4 gap-y-2">
           <p className="text-sm leading-6 text-slate-900 dark:text-slate-300">
-            <strong className="font-semibold">
+            <strong className="font-semibold" data-testid="access-banner-title">
               Ready to join the Odyssey?
             </strong>
           </p>

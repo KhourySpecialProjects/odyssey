@@ -84,6 +84,7 @@ export function LearningObjectivesInput({
             <Trash
               width={37}
               height={37}
+              role="delete"
               className="text-slate-500 hover:text-slate-600 bg-slate-200 cursor-pointer rounded-md border border-slate-200 p-1.5"
               onClick={() => {
                 const newObjectives = [...learningObjectives];

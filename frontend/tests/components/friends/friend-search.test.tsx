@@ -74,9 +74,10 @@ describe('FriendSearch', () => {
 
     const searchInput = screen.getByPlaceholderText('Search...');
     fireEvent.change(searchInput, { target: { value: 'John' } });
-    
-    expect(screen.getByText('John Doe')).toBeInTheDocument();
-    expect(screen.queryByText('Jane Smith')).not.toBeInTheDocument();
+
+    const userItem = screen.getByTestId('user-item-1');
+    expect(userItem).toHaveTextContent(/john/i);
+    expect(screen.queryByTestId('user-item-2')).not.toBeInTheDocument();
   });
 
   it('shows no results message when no matches found', () => {
@@ -92,6 +93,6 @@ describe('FriendSearch', () => {
     const searchInput = screen.getByPlaceholderText('Search...');
     fireEvent.change(searchInput, { target: { value: 'xyz' } });
     
-    expect(screen.getByText(/No users found./i)).toBeInTheDocument();
+    expect(screen.getByTestId('no-results')).toHaveTextContent(/no users found/i);
   });
 });

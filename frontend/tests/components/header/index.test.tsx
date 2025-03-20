@@ -14,15 +14,16 @@ jest.mock('next/navigation', () => ({
 
 // Mock next-auth/react
 jest.mock('next-auth/react', () => ({
-  useSession: () => ({
-    data: null,
-    status: 'unauthenticated'
-  }),
-  signIn: jest.fn(),
-  signOut: jest.fn()
+  useSession: jest.fn()
 }));
 
 describe('Header', () => {
+  beforeEach(() => {
+    (useSession as jest.Mock).mockReturnValue({
+      data: null,
+      status: 'unauthenticated'
+    });
+  });
   it('renders logo and navigation', () => {
     render(<Header />);
     expect(screen.getByRole('banner')).toBeInTheDocument();

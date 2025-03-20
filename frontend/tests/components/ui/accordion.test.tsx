@@ -6,11 +6,11 @@ describe('Accordion', () => {
     <Accordion type="single">
       <AccordionItem value="item-1">
         <AccordionTrigger>Section 1</AccordionTrigger>
-        <AccordionContent>Content 1</AccordionContent>
+        <AccordionContent data-testid="accordion-content">Content 1</AccordionContent>
       </AccordionItem>
       <AccordionItem value="item-2">
         <AccordionTrigger>Section 2</AccordionTrigger>
-        <AccordionContent>Content 2</AccordionContent>
+        <AccordionContent data-testid="accordion-content2">Content 2</AccordionContent>
       </AccordionItem>
     </Accordion>
   )
@@ -36,7 +36,7 @@ describe('Accordion', () => {
 
   it('applies correct styling to content', () => {
     render(<TestAccordion />)
-    const content = screen.getByText('Content 1').parentElement
+    const content = screen.getByTestId('accordion-content');
     expect(content).toHaveClass('overflow-hidden', 'text-sm')
   })
 })

@@ -79,6 +79,7 @@ export function CalloutEditor({
               className="cursor-pointer text-black"
               onClick={deleteBlock}
               size={30}
+              role="trash"
             />
           </div>
         </div>

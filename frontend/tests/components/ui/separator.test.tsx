@@ -1,4 +1,4 @@
-import { render } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import { Separator } from '@/components/ui/separator'
 
 describe('Separator', () => {
@@ -18,8 +18,8 @@ describe('Separator', () => {
   })
 
   it('sets decorative attribute', () => {
-    const { container } = render(<Separator orientation="horizontal" />)
-    const separator = container.firstChild as HTMLElement
-    expect(separator).toHaveAttribute('aria-orientation', 'horizontal')
-  })
+    render(<Separator orientation="horizontal" />);
+    const separator = screen.getByTestId('separator');
+    expect(separator).toHaveAttribute('aria-orientation', 'horizontal');
+  });
 })
