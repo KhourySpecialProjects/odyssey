@@ -23,6 +23,7 @@ import {
   CheckCircle2,
   LockIcon,
   ArrowLeftIcon,
+  PanelRightClose,
 } from "lucide-react";
 import { signOut } from "next-auth/react";
 import Image from "next/image";
@@ -93,15 +94,15 @@ export default function Sidebar({
         onClick={() => setExpanded(false)}
       ></div>
 
-      <div className="z-20 inline-flex items-center w-full gap-2 px-3 py-2 text-sm border-b lg:hidden border-b-slate-200">
+      <div className="z-20 inline-flex items-center w-full gap-2 px-3 py-2 text-sm border-b xl:hidden border-b-slate-200">
         <button
           aria-controls="sidebar"
           type="button"
-          className="z-20 inline-flex items-center p-2 text-sm rounded-lg text-slate-500 lg:hidden hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-200 dark:text-slate-400 dark:hover:bg-slate-700 dark:focus:ring-slate-600"
+          className="z-20 inline-flex items-center p-2 text-sm rounded-lg text-slate-500 xl:hidden hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-200 dark:text-slate-400 dark:hover:bg-slate-700 dark:focus:ring-slate-600"
           onClick={() => setExpanded(true)}
         >
           <span className="sr-only">Open sidebar</span>
-          <MenuIcon />
+          <PanelRightClose className="dark:text-white" />
         </button>
         <Link
           href={getPath("droplet", droplet.slug)}
@@ -114,12 +115,12 @@ export default function Sidebar({
       <aside
         id="sidebar"
         className={cn(
-          "fixed lg:sticky lg:top-0 left-0 z-40 w-64 h-screen transition-transform",
-          expanded ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
+          "fixed xl:sticky xl:top-0 left-0 z-40 w-64 h-screen transition-transform",
+          expanded ? "translate-x-0" : "-translate-x-full xl:translate-x-0",
         )}
         aria-label="Sidebar"
       >
-        <div className="flex flex-col h-full py-4 overflow-y-auto lg:justify-between lg:pb-0 bg-slate-50 dark:bg-slate-800">
+        <div className="flex flex-col h-full py-4 overflow-y-auto xl:justify-between xl:pb-0 bg-slate-50 dark:bg-slate-800">
           <div className="px-3">
             <Link href="/explore" className="block p-2 mb-4">
               <Image
@@ -236,7 +237,7 @@ export default function Sidebar({
             </ul>
           </div>
 
-          <div className="bottom-0 left-0 w-full p-2 mt-4 space-y-4 border-t bg-slate-50 border-t-slate-200 lg:sticky lg:px-3 lg:mb-0 lg:flex-col dark:bg-slate-800">
+          <div className="bottom-0 left-0 w-full p-2 mt-4 space-y-4 border-t bg-slate-50 border-t-slate-200 xl:sticky xl:px-3 xl:mb-0 xl:flex-col dark:bg-slate-800">
             <div className="px-2">
               <Label>{dropletProgress}% complete</Label>
               <Progress value={dropletProgress} className="mt-1.5" />
