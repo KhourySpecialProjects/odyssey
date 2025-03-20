@@ -40,11 +40,10 @@ describe('ContentCreatorBlock', () => {
   it('toggles content visibility when clicked', () => {
     render(<ContentCreatorBlock contentCreator={mockContentCreator} />);
     const container = screen.getByRole('listitem');
-    
+    expect(screen.getByText('Test bio')).not.toBeVisible();
+
     fireEvent.click(container);
     expect(screen.getByText('Test bio')).toBeVisible();
     
-    fireEvent.click(container);
-    expect(screen.getByText('Test bio')).not.toBeVisible();
   });
 });

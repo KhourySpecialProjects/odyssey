@@ -46,6 +46,7 @@ export function AccessRequestBlock({ request }: { request: AccessRequest }) {
           onClick={handleApprove}
           className="bg-green-600 dark:bg-green-800 dark:hover:bg-green-900 text-white dark:text-white hover:bg-green-700"
           disabled={isPending}
+          role="button"
         >
           Accept
         </Button>

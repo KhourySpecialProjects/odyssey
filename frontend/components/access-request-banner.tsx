@@ -48,7 +48,7 @@ export default async function AccessRequestBanner() {
             after={<ArrowRightIcon />}
             asChild
           >
-            <Link href="/request-access">Request Access</Link>
+            <Link role="link" href="/request-access">Request Access</Link>
           </Button>
         </div>
       </div>

@@ -3,7 +3,8 @@ import DraggableTileList from '@/components/droplets/draggable_tile_list';
 import { useDrop } from 'react-dnd';
 
 jest.mock('react-dnd', () => ({
-  useDrop: jest.fn()
+  useDrag: () => [{ isDragging: false }, jest.fn()],
+  useDrop: () => [{ isOver: false }, jest.fn()]
 }));
 
 describe('DraggableTileList', () => {

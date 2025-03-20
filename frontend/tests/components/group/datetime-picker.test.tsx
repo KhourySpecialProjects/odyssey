@@ -4,7 +4,7 @@ import { DateTime } from 'luxon';
 
 describe('MUIDateTimePicker', () => {
   const mockOnChange = jest.fn();
-  const mockDate = DateTime.local();
+  const mockDate = DateTime.fromJSDate(new Date('2025-03-20T09:19:00'));
 
   it('renders date time picker', () => {
     render(<MUIDateTimePicker date={mockDate} onChange={mockOnChange} />);
@@ -12,7 +12,11 @@ describe('MUIDateTimePicker', () => {
   });
 
   it('displays selected date', () => {
-    render(<MUIDateTimePicker date={mockDate} onChange={mockOnChange} />);
-    expect(screen.getByText(/\d{1,2}\/\d{1,2}\/\d{4}, \d{1,2}:\d{2} [AP]M/)).toBeInTheDocument();
-  });
+    const mockOnChange = jest.fn()
+
+    render(<MUIDateTimePicker date={mockDate} onChange={mockOnChange} />)
+    
+    const input = screen.getByRole('textbox')
+    expect(input).toHaveValue('03/20/2025 09:19 AM')
+  })
 });

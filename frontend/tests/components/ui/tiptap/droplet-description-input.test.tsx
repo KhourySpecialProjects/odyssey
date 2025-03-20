@@ -3,12 +3,17 @@ import { DropletDescriptionInput } from '@/components/ui/tiptap/droplet-descript
 
 describe('DropletDescriptionInput', () => {
   const mockProps = {
-    initialContent: '<p>Test description</p>',
+    initialContent: '',
+    updateContent: jest.fn()
+  }
+
+  const otherProps = {
+    initialContent: 'Test description',
     updateContent: jest.fn()
   }
 
   it('renders editor with initial content', () => {
-    render(<DropletDescriptionInput {...mockProps} />)
+    render(<DropletDescriptionInput {...otherProps} />)
     expect(screen.getByText('Test description')).toBeInTheDocument()
   })
 
@@ -19,7 +24,9 @@ describe('DropletDescriptionInput', () => {
 
   it('applies correct styling', () => {
     const { container } = render(<DropletDescriptionInput {...mockProps} />)
-    expect(container.firstChild).toHaveClass('hover:shadow', 'focus:shadow-lg')
+    const editor = container.querySelector('.tiptap')
+    expect(editor).toHaveClass('hover:shadow', 'focus:shadow-lg')
   })
 })
+
 
