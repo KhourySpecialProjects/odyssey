@@ -6,7 +6,11 @@ import { Sun, Moon } from "lucide-react";
 
 import { Classic } from "@theme-toggles/react"
 
-export function DarkMode() {
+export function DarkMode({
+  className,
+}: {
+  className?: string;
+}) {
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
@@ -20,15 +24,20 @@ export function DarkMode() {
   const isDark = theme === "dark";
 
   return (
-    <div className="flex items-center bg-emerald-300 h-full">
     <button
       onClick={() => setTheme(isDark ? "light" : "dark")}
-      className="relative flex items-center w-7 h-7 bg-yellow-300 dark:bg-sky-600 rounded-full p-1 transition-colors"
+      className={`relative flex items-center w-8 h-8 bg-yellow-300 dark:bg-sky-600 rounded-full p-1 transition-colors ${className}`}
     >
-      <Classic duration={750} placeholder={undefined} onPointerEnterCapture={undefined} onPointerLeaveCapture={undefined}/>
 
-      
+      <Moon
+        className={`absolute left-1 w-6 h-6 text-gray-900 transition-scale duration-500 ease-in-out ${isDark ? "" : "scale-0"}`}
+      />
+
+      <Sun
+        className={`absolute right-1 w-6 h-6 text-gray-600 transition-scale duration-500 ease-in-out ${isDark ? "scale-0" : ""}`}
+      />
+
+
     </button>
-    </div>
   );
 }
