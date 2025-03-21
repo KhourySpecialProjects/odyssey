@@ -15,13 +15,15 @@ jest.mock('react-dom/client', () => ({
 }));
 
 
+
 describe('FormButtons', () => {
   describe('DeleteButton', () => {
     it('renders delete text when not pending', () => {
       render(
         <DeleteButton />
       )
-      expect(screen.getByRole('button')).toHaveTextContent(/delete/i)
+      const button = screen.getByRole('button');
+      expect(button).toHaveTextContent(/delete/i);
     })
 
     it('shows loader when pending', () => {

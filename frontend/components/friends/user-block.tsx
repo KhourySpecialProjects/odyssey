@@ -103,7 +103,7 @@ export function UserBlock({
           </DialogDescription>
           <FriendCompletedDroplets friend={user} />
           <div
-            className={`inline-flex items-center gap-2 ${curUser == user || curUser.blocked.includes(user) ? "visibility: hidden" : "visibility: visible"}`}
+            className={`inline-flex items-center gap-2 ${curUser === user || curUser?.blocked?.includes(user) ? "visibility: hidden" : "visibility: visible"}`}
             onClick={handleBlock}
           >
             <Button

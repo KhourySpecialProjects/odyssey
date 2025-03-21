@@ -228,10 +228,62 @@ describe('NotesSummary', () => {
   }
 
   it('renders highlights and notes when present', () => {
-    render(<NotesSummary {...mockProps} />)
+    const mockProps = {
+      dropletNotes: [
+        {
+          id: 1,
+          content: 'Test note content',
+          lesson: {
+            id: 1,
+            name: 'Test Lesson',
+            slug: 'test-lesson',
+            blocks: [],
+            droplets: [],
+            droplet_lessons: [{
+              id: 123,
+              orderIndex: 1,
+              lesson: mockLesson
+            }],
+            notes: []
+          },
+          enrollment: {
+            id: "1",
+            authorizedUser: { id: 1 },
+            droplet: mockDroplet,
+            viewedLessons: [],
+            isComplete: false,
+            rating: 5,
+            notes: [],
+            isFirstTime: false,
+            isArchived: false
+          },
+          positionY: 0,
+          highlight: {
+            text: 'Highlighted text',
+            color: '#fff300' as HighlightColor,
+            position: {start: 0, end: 0}
+          }
+        }
+      ],
+      dropletHighlights: [],
+      mappedLessons: [],
+      selectedColors: [],
+      allNotes: {
+        dropletId: 1,
+        notes: [],
+        highlights: [],
+        dropletNotes: []
+      }
+    };
+  
+    render(<NotesSummary {...mockProps} />);
     
-    expect(screen.getByText('Test note content')).toBeInTheDocument()
-  })
+    // Debug what's being rendered
+    screen.debug();
+    
+    // Try a more flexible text match
+    expect(screen.getByText((content) => content.includes('Test note content'))).toBeInTheDocument();
+  });
 
   it('shows empty state message when no notes or highlights', () => {
     const emptyProps = {

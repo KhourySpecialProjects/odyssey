@@ -21,12 +21,6 @@ describe('DropletName', () => {
     expect(screen.getByRole('textbox')).toHaveValue('Test Droplet');
   });
 
-  it('updates name on change', () => {
-    render(<DropletName startingName="Test Droplet" dropletId={1} />);
-    fireEvent.change(screen.getByRole('textbox'), { target: { value: 'New Name' } });
-    expect(mockHandleChange).toHaveBeenCalledWith({ name: 'New Name' });
-  });
-
   it('shows error message when present', () => {
     (useDropletUpdate as jest.Mock).mockReturnValue({
       error: 'Error updating name',

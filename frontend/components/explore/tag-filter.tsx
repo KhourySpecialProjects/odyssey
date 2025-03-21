@@ -15,6 +15,5 @@ export async function TagFilter() {
       });
     },
   );
-
   return <Filter name="tags" label="Tags" options={tags} data-testid="tag-filter-label"/>;
 }

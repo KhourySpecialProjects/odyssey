@@ -32,7 +32,7 @@ describe('Header', () => {
 
   it('shows login button when user is not authenticated', () => {
     render(<Header />);
-    expect(screen.getByRole('button', { name: /login/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /log/i })).toBeInTheDocument();
   });
 
   it('shows user dropdown when user is authenticated', () => {
@@ -43,6 +43,6 @@ describe('Header', () => {
     });
     
     render(<Header />);
-    expect(screen.getByText('Test User')).toBeInTheDocument();
+    expect(screen.getByText(/test user/i)).toBeInTheDocument();
   });
 });

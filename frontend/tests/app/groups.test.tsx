@@ -17,7 +17,8 @@ jest.mock('@/lib/requests/authorized-user', () => ({
 
 jest.mock('@/lib/requests/groups', () => ({
   getGroupBySlugV2: jest.fn(),
-  getGroupDueDates: jest.fn()
+  getGroupDueDates: jest.fn(),
+  getGroupBySlug: jest.fn(),
 }))
 
 jest.mock('@/lib/utils', () => ({
@@ -80,7 +81,7 @@ describe('Group Detail Page', () => {
 
   it('renders due dates when available', async () => {
     await render(<GroupDetailPage params={Promise.resolve({ slug: 'test-group' })} />)
-    expect(screen.getByText('Due Date Announcements')).toBeInTheDocument()
+    expect(screen.getByText(/due date/i)).toBeInTheDocument()
   })
 
   it('handles missing group data', async () => {

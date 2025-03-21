@@ -254,7 +254,7 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
         startContainer.parentElement?.closest(
           'span[style*="background-color"]',
         ) ||
-        endContainer.parentElement?.closest('span[style*="background-color"]');
+        endContainer?.parentElement?.closest('span[style*="background-color"]');
       if (highlightSpan) {
         popupRef.current.x = blockOffset + range.startOffset;
         popupRef.current.y = blockOffset + range.endOffset;

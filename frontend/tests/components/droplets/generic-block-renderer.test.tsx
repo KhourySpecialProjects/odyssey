@@ -87,7 +87,7 @@ describe('GenericBlockRenderer', () => {
     render(<GenericBlockRenderer {...propsWithHighlights} />)
     const highlightedElement = screen.getByText(/test/i)
     expect(highlightedElement.parentElement).toHaveStyle({
-      backgroundColor: '#fff300'
+      backgroundColor: '#fff300',
     })
   })
 })

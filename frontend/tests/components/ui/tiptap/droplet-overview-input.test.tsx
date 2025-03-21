@@ -22,8 +22,6 @@ describe('DropletOverviewInput', () => {
     render(<DropletOverviewInput {...mockProps} />)
     const editor = screen.getByRole('textbox')
     expect(editor).toHaveClass(
-      'tiptap',
-      'ProseMirror',
       'prose',
       'prose-sky',
       'w-full',

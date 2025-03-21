@@ -86,6 +86,7 @@ export function NextSteps({
             <form
               action={addNextStep}
               className="flex flex-row items-center justify-between flex-nowrap w-full space-x-1.5"
+              role="form"
             >
               <Input
                 name="url"

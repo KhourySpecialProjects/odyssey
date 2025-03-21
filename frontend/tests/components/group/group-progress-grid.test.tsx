@@ -1,7 +1,7 @@
 import { render, screen, act } from '@testing-library/react';
 import { GroupProgressGrid } from '@/components/group/group-progress-grid';
 import { getEnrollmentsByAuthorizedUser } from '@/lib/requests/enrollment';
-import { GroupSemester } from '@/types';
+import { DropletStatus, DropletType, FocusArea, GroupSemester } from '@/types';
 
 jest.mock('@/lib/requests/enrollment', () => ({
   getEnrollmentsByAuthorizedUser: jest.fn(),
@@ -13,17 +13,26 @@ describe('GroupProgressGrid', () => {
     groupName: 'Test Group',
     slug: 'test-group',
     isArchived: false,
-    semester: "SPRING" as GroupSemester
+    semester: "SPRING" as GroupSemester,
+    droplets: [{ 
+      id: 1, 
+      name: 'Test Droplet', 
+      isHidden: false,
+      lessons: [], 
+      slug: 'test-droplet', 
+      type: 'DROPPLET' as DropletType, 
+      focusArea: 'TEST' as FocusArea, 
+      learningObjectives: [], 
+      isArchived: false, 
+      status: 'ACTIVE' as DropletStatus,
+      droplet_lessons: [],
+      createdAt: new Date(), 
+      updatedAt: new Date() }]
   };
 
   beforeEach(() => {
-    (getEnrollmentsByAuthorizedUser as jest.Mock).mockResolvedValue([
-      {
-        droplet: { id: 1, lessons: [{ id: 1 }] },
-        viewedLessons: [{ id: 1 }]
-      }
-    ]);
-  });
+    jest.clearAllMocks();
+  })
 
   it('renders member names and droplet names', () => {
     render(<GroupProgressGrid group={mockGroup} />);

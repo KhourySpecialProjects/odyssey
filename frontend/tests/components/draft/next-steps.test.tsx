@@ -82,7 +82,7 @@ describe('NextSteps', () => {
     fireEvent.change(screen.getByPlaceholderText('Label'), {
       target: { value: 'Step 2' }
     });
-    fireEvent.submit(screen.getByRole('form'));
+    await fireEvent.submit(screen.getByRole('form'));
 
     expect(toast.error).toHaveBeenCalledWith('Not a valid URL');
   });

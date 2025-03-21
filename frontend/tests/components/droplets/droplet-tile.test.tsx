@@ -53,7 +53,7 @@ describe('DropletTile', () => {
     (archiveDroplet as jest.Mock).mockResolvedValue({ success: true });
     
     render(<DropletTile droplet={mockDroplet as any} isArchived={false} />);
-    fireEvent.click(screen.getByRole('button'));
+    await fireEvent.click(screen.getByRole('button'));
     
     expect(archiveDroplet).toHaveBeenCalledWith(mockDroplet, true);
     expect(toast.success).toHaveBeenCalled();

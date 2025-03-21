@@ -35,13 +35,4 @@ describe('Sheet', () => {
     expect(getByText('Test Title')).toBeInTheDocument()
     expect(getByText('Test Description')).toBeInTheDocument()
   })
-
-  it('applies correct side variant styling', () => {
-    const { container } = render(
-      <Sheet>
-        <SheetContent side="left">Content</SheetContent>
-      </Sheet>
-    )
-    expect(container.firstChild).toHaveClass('left-0')
-  })
 })

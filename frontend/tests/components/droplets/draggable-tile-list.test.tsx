@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react';
 import DraggableTileList from '@/components/droplets/draggable_tile_list';
 import { useDrop } from 'react-dnd';
 
+
 jest.mock('react-dnd', () => ({
   useDrop: jest.fn().mockImplementation(() => [
     { isOver: false },
@@ -14,7 +15,8 @@ jest.mock('react-dnd', () => ({
 }));
 
 jest.mock('lib/utils', () => ({
-  uppercaseFirstChar: (text: string) => text ? text.charAt(0).toUpperCase() + text.slice(1) : ''
+  uppercaseFirstChar: (text: string) => text ? text.charAt(0).toUpperCase() + text.slice(1) : '',
+  cn: (...classes: (string | boolean | undefined)[]) => classes.filter(Boolean).join(' ')
 }));
 
 describe('DraggableTileList', () => {
