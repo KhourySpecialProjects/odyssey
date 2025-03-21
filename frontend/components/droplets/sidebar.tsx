@@ -124,7 +124,6 @@ export default function Sidebar({
       >
         <div className="flex flex-col h-full py-4 overflow-y-auto xl:justify-between xl:pb-0 bg-slate-50 dark:bg-slate-800">
           <div className="px-3">
-
             <div className="flex flex-row justify-between pr-2">
               <Link
                 type="button"
@@ -139,16 +138,15 @@ export default function Sidebar({
                 <Home />
               </Link>
 
-              <div className="w-full">
-              </div>
+              <div className="w-full"></div>
 
-              <button onClick={() => setExpanded(false)} className={`xl:hidden`}>
+              <button
+                onClick={() => setExpanded(false)}
+                className={`xl:hidden`}
+              >
                 <ChevronsLeft />
               </button>
-
             </div>
-
-
 
             <p className="p-2 my-2 text-lg font-extrabold leading-7">
               {droplet.name}
