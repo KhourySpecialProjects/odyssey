@@ -30,7 +30,7 @@ export function UserDropdown({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <div className="w-full group flex shrink cursor-pointer select-none items-center justify-between gap-1 rounded-lg p-1.5 px-2 text-sm light:text-slate-600 transition-colors duration-100 wg-antialiased hover:bg-slate-100 dark:hover:bg-white/5">
+        <div className="w-full group flex shrink cursor-pointer select-none items-center justify-between gap-1 rounded-lg p-1.5 px-1 text-sm light:text-slate-600 transition-colors duration-100 wg-antialiased hover:bg-slate-100 dark:hover:bg-white/5">
           <div className="inline-flex flex-row items-center justify-between">
             <Avatar variant="round" size="xs">
               <AvatarImage
@@ -45,8 +45,8 @@ export function UserDropdown({
               </AvatarFallback>
             </Avatar>
 
-            <span className="font-medium ms-2 hidden xl:block">
-              Hi, <b>{user.name ?? user.email}</b>!
+            <span className="font-medium ms-2 hidden sm:block">
+              Hi, <b>{authorizedUser?.firstName ?? user.name ?? user.email}</b>!
             </span>
           </div>
 

@@ -40,13 +40,13 @@ export function HighlightDropdown({
 
   return (
     <div
-      className={`fixed flex ${expanded ? "right-[335px] xl:right-[22.5%] z-40 top-36 md:top-36 xs:top-44 flex-col" : "right-0 top-36 flex-col"} gap-2`}
+      className={`fixed flex ${expanded ? "right-[335px] xl:right-[22.5%] top-36 md:top-36 xs:top-44 flex-col" : "right-0 top-36 flex-col"} gap-2 z-20`}
     >
       <div
         className={`dark:bg-slate-700 dark:text-white border dark:border-white border-black z-30 transform -translate-x-1/2 bg-blue-100 p-2 rounded shadow-lg`}
       >
         <div className="relative group">
-          <CircleHelp className="cursor-pointer " />
+          <CircleHelp className="cursor-pointer" />
           <div className="absolute left-0 transform -translate-x-[100%] top-full mt-2 w-max gap-2 bg-white p-4 rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center pointer-events-none text-black">
             <p>Highlighting Instructions:</p>
             <ul className="list-disc pl-4">
