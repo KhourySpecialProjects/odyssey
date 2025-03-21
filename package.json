@@ -18,6 +18,7 @@
     "@mui/material": "^6.4.5",
     "@mui/x-date-pickers": "^7.27.0",
     "@nextui-org/table": "^2.2.8",
+    "@theme-toggles/react": "^4.1.0",
     "@tiptap/extension-color": "^2.11.5",
     "@tiptap/extension-text-style": "^2.11.5",
     "@types/luxon": "^3.4.2",
