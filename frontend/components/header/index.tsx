@@ -57,14 +57,13 @@ export async function Header() {
                       Odyssey, a Khoury College Learning Platform
                     </span>
                   </Link>
-                  
-                  <NavLinks
 
+                  <NavLinks
                     items={getNavLinks()}
                     className="flex-col space-y-2 text-2xl"
                   />
 
-                    <DarkMode className="scale-150 ml-2"/>
+                  <DarkMode className="scale-150 ml-2" />
                 </nav>
               </SheetContent>
             </Sheet>
@@ -82,8 +81,6 @@ export async function Header() {
             </Link>
           </div>
 
-          
-
           <nav className="flex-row items-center hidden xl:flex">
             <NavLinks
               items={getNavLinks()}
@@ -92,7 +89,6 @@ export async function Header() {
           </nav>
 
           <div className="flex items-center gap-4 md:ml-auto md:gap-2 xl:gap-2">
-          
             {user ? (
               <div className="flex items-center justify-center">
                 <UserDropdown user={user} authorizedUser={authorizedUser} />
@@ -101,11 +97,9 @@ export async function Header() {
               <LoginButton />
             )}
             <div className="hidden xl:block">
-              <DarkMode className="scale-[1.2]"/>
+              <DarkMode className="scale-[1.2]" />
             </div>
-            
           </div>
-          
         </div>
       </div>
     </header>
