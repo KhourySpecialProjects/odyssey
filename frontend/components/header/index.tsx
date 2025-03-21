@@ -67,7 +67,6 @@ export async function Header() {
                 </nav>
               </SheetContent>
             </Sheet>
-
             <Link href="/" className="w-max">
               <Image
                 src="/logo.svg"
@@ -82,6 +81,8 @@ export async function Header() {
             </Link>
           </div>
 
+          
+
           <nav className="flex-row items-center hidden xl:flex">
             <NavLinks
               items={getNavLinks()}
@@ -90,7 +91,7 @@ export async function Header() {
           </nav>
 
           <div className="flex items-center gap-4 md:ml-auto md:gap-2 xl:gap-4">
-            <div className="hidden xl:block ml-4">
+            <div className="hidden xl:block ml-4 h-full">
               <DarkMode />
             </div>
             {user ? (
