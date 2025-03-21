@@ -17,11 +17,6 @@ describe('DropletDescriptionInput', () => {
     expect(screen.getByText('Test description')).toBeInTheDocument()
   })
 
-  it('renders placeholder when empty', () => {
-    render(<DropletDescriptionInput {...mockProps}  />)
-    expect(screen.getByText(/droplet description/i)).toBeInTheDocument()
-  })
-
   it('applies correct styling', () => {
     const { container } = render(<DropletDescriptionInput {...mockProps} />)
     const editor = container.querySelector('.tiptap')

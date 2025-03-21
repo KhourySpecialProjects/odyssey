@@ -25,7 +25,7 @@ describe('RadioSelect', () => {
     expect(screen.getByText('Option 2')).toBeInTheDocument();
   });
 
-  it('calls setSelected when option clicked', () => {
+  it('calls setSelected when option clicked', async () => {
     const mockSetSelected = jest.fn()
     render(
       <RadioSelect 
@@ -35,7 +35,7 @@ describe('RadioSelect', () => {
         setSelected={mockSetSelected}
       />
     )
-    fireEvent.click(screen.getByText('Option 1'))
+    await fireEvent.click(screen.getByText('Option 1'))
     expect(mockSetSelected).toHaveBeenCalledWith('opt1')
   })
 });

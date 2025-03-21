@@ -14,6 +14,9 @@ describe('Filter', () => {
       handleChange: mockHandleChange
     });
   });
+  beforeAll(() => {
+    window.HTMLElement.prototype.scrollIntoView = jest.fn();
+  });
 
   it('renders focus area options', () => {
     render(<Filter dropletId={1} initial="FRONTEND" variant="focusArea" />);

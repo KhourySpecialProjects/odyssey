@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import Loading from '@/app/(creation)/new/droplet/loading'
 import CreateDropletRoute from '@/app/(creation)/new/droplet/page'
 import { CreateDroplet } from '@/components/new/new-droplet'
@@ -23,10 +23,10 @@ describe('Droplet Creation Pages', () => {
       expect(screen.getByTestId('create-droplet')).toBeInTheDocument()
     })
 
-    it('has correct container styling', () => {
+    it('has correct container styling', async () => {
       const { container } = render(<CreateDropletRoute />)
       const mainElement = container.firstElementChild
-      expect(mainElement).not.toBeNull()
+      await waitFor(() => expect(mainElement).not.toBeNull());
       expect(mainElement).toHaveClass('relative', 'light:bg-slate-100', 'isolate')
     })
   })

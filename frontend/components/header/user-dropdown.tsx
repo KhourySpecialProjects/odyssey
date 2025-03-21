@@ -71,7 +71,7 @@ export function UserDropdown({
 
         <DropdownMenuSeparator />
 
-        <DropdownMenuItem asChild>
+        <DropdownMenuItem asChild data-testid="profile-link">
           <Link href="/settings">
             <PersonStanding className="w-4 h-4 mr-2" />
             <span>Profile</span>

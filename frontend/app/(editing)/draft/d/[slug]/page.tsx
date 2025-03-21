@@ -57,7 +57,7 @@ export default async function Droplet({ params }: Props) {
   const tags = await getTags();
 
   if (!droplet) {
-    return <div>Droplet not found</div>;
+    return <div data-testid={`not-found-message`}>Droplet not found</div>;
   }
 
   return (
@@ -74,7 +74,7 @@ export default async function Droplet({ params }: Props) {
             </Badge>
           ))}
         </div>
-        <DropletName dropletId={droplet.id} startingName={droplet.name} />
+        <DropletName data-testid="droplet-name" dropletId={droplet.id} startingName={droplet.name} />
         <div className="flex flex-row w-full items-center space-x-10 my-3">
           <RegenerateSlugButton dropletId={droplet.id} name={droplet.name} />
           {/* <DeleteDropletButton dropletId={droplet.id} /> */}

@@ -27,7 +27,7 @@ describe('AccessRequestBanner', () => {
     (getServerSession as jest.Mock).mockResolvedValue(null)
     await render(<AccessRequestBanner />)
     
-    const link = screen.getByRole('link', { name: /request access/i });
-    expect(link).toHaveClass('dark:bg-slate-300');
+    const link = screen.getByText(/request access/i);
+    expect(link.closest('a')).toHaveClass('dark:bg-slate-300');
   })
 })

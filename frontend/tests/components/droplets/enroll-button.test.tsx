@@ -17,13 +17,6 @@ jest.mock('sonner', () => ({
   toast: { success: jest.fn(), error: jest.fn(), promise: jest.fn() }
 }));
 
-jest.mock('components/ui/use-toast', () => ({
-  toast: {
-    success: jest.fn(),
-    error: jest.fn()
-  }
-}));
-
 describe('EnrollButton', () => {
   const mockDroplet = {
     id: 1,

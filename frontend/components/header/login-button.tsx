@@ -6,7 +6,7 @@ import { Button } from "../ui/button";
 
 export function LoginButton() {
   return (
-    <Button size="sm" before={<LogInIcon />} onClick={() => signIn()}>
+    <Button role="button" size="sm" before={<LogInIcon />} onClick={() => signIn()}>
       Log in
     </Button>
   );

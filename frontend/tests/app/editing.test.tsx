@@ -44,10 +44,22 @@ describe('Droplet Editing Page', () => {
   ]
 
   beforeEach(() => {
-    ;(getDropletBySlug as jest.Mock).mockResolvedValue(mockDroplet)
-    ;(getDroplets as jest.Mock).mockResolvedValue(mockDroplets)
-    ;(getTags as jest.Mock).mockResolvedValue(mockTags)
-  })
+    // Mock the getDropletBySlug function
+    (getDropletBySlug as jest.Mock).mockImplementation((slug) => {
+      if (slug === 'test-droplet') {
+        return Promise.resolve(mockDroplet);
+      }
+      if (slug === 'non-existent') {
+        return Promise.resolve(null);
+      }
+      return Promise.resolve({
+        ...mockDroplet,
+        description: null,
+        prerequisites: [],
+        postrequisites: []
+      });
+    });
+  });
 
   it('renders droplet metadata', async () => {
     await render(<Droplet params={Promise.resolve({ slug: 'test-droplet' })} />)
@@ -90,18 +102,22 @@ describe('Droplet Editing Page', () => {
   })
 
   it('renders general info section', async () => {
-    await render(<Droplet params={Promise.resolve({ slug: 'test-droplet' })} />)
+    await render(<Droplet params={Promise.resolve({ slug: 'test-droplet' })} />);
     
-    expect(screen.getByText('General Info')).toBeInTheDocument()
-    expect(screen.getByText('Information that users will see when they view the droplet')).toBeInTheDocument()
-  })
+    // Use a more flexible text matcher
+    expect(screen.getByText((content) => content.toLowerCase().includes('general info'))).toBeInTheDocument();
+    expect(screen.getByText((content) => 
+      content.includes('Information that users will see when they view the droplet')
+    )).toBeInTheDocument();
+  });
 
   it('renders prerequisite and postrequisite selections', async () => {
-    await render(<Droplet params={Promise.resolve({ slug: 'test-droplet' })} />)
+    await render(<Droplet params={Promise.resolve({ slug: 'test-droplet' })} />);
     
-    expect(screen.getByText('Prereq 1')).toBeInTheDocument()
-    expect(screen.getByText('Postreq 1')).toBeInTheDocument()
-  })
+    // Add data-testid attributes to make testing easier
+    expect(screen.getByTestId('prereq-1')).toHaveTextContent('Prereq 1');
+    expect(screen.getByTestId('postreq-1')).toHaveTextContent('Postreq 1');
+  });
 
   it('handles missing droplet data', async () => {
     ;(getDropletBySlug as jest.Mock).mockResolvedValue(null)
@@ -121,7 +137,7 @@ describe('Droplet Editing Page', () => {
     ;(getDropletBySlug as jest.Mock).mockResolvedValue(minimalDroplet)
     
     await render(<Droplet params={Promise.resolve({ slug: 'test-droplet' })} />)
-    expect(screen.getByText('Test Droplet')).toBeInTheDocument()
+    expect(screen.getByTestId('droplet-name')).toHaveTextContent('Test Droplet');
     expect(screen.queryByText('Test description')).not.toBeInTheDocument()
   })
 }) 

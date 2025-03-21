@@ -89,10 +89,10 @@ export function FriendSearch({
           >
             {searchResults.length > 0 ? (
               <ul className="md:space-y-4 p-4">
-                {searchResults.slice(0, 10).map((user) => {
+                {searchResults.slice(0, 10).map((user, index) => {
                   if (!friendIds.includes(user.id)) {
                     return (
-                      <FriendBlock user={curUser} friend={user} key={user.id} data-testid={`user-item-${user.id}`}/>
+                      <FriendBlock user={curUser} friend={user} key={user.id} data-testid={`user-item-${index + 1}`}/>
                     );
                   } else if (requestIds.includes(user.id)) {
                     return (

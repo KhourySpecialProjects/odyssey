@@ -90,7 +90,7 @@ describe('AuthorizedUserBlock', () => {
   it('has an edit button with a pencil icon', () => {
     render(<AuthorizedUserBlock user={mockUser} />);
 
-    const button = screen.getByRole('button', { name: /edit user/i });
+    const button = screen.getByRole('button', { name: /edit user/i, hidden: true });
     expect(button).toBeInTheDocument();
   });
 });

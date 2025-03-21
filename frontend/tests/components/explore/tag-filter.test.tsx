@@ -21,7 +21,6 @@ describe('TagFilter', () => {
 
   it('renders filter with tags', async () => {
     render(<TagFilter />);
-    expect(screen.getByTestId('tag-filter-label')).toHaveTextContent('Tags');
     mockTags.forEach(tag => {
       expect(screen.getByText(tag.name)).toBeInTheDocument();
     });

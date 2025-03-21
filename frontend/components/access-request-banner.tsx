@@ -37,8 +37,8 @@ export default async function AccessRequestBanner() {
         </div> */}
 
         <div className="flex flex-wrap items-center justify-center flex-grow w-full gap-x-4 gap-y-2">
-          <p className="text-sm leading-6 text-slate-900 dark:text-slate-300">
-            <strong className="font-semibold" data-testid="access-banner-title">
+          <p className="text-sm leading-6 text-slate-900 dark:text-slate-300" data-testid="access-banner-title">
+            <strong className="font-semibold" >
               Ready to join the Odyssey?
             </strong>
           </p>
@@ -48,7 +48,7 @@ export default async function AccessRequestBanner() {
             after={<ArrowRightIcon />}
             asChild
           >
-            <Link role="link" href="/request-access">Request Access</Link>
+            <Link role="link" aria-label="request access" href="/request-access">Request Access</Link>
           </Button>
         </div>
       </div>

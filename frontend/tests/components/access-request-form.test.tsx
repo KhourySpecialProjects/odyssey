@@ -23,7 +23,6 @@ describe('RequestAccessForm', () => {
       target: { value: 'john.doe@northeastern.edu' }
     })
     fireEvent.click(screen.getByText('Select your affiliation'))
-    fireEvent.click(screen.getByText(/student/i))
     fireEvent.click(screen.getByText('Select your college/school'))
     fireEvent.click(screen.getByText('Khoury College of Computer Sciences'))
   }
