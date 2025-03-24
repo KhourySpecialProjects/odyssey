@@ -2,8 +2,7 @@ import { render, screen } from '@testing-library/react'
 import GroupDetailPage from '@/app/(groups)/g/[slug]/page'
 import { getCurrentUser } from '@/lib/auth/session'
 import { getAuthorizedUserByEmail } from '@/lib/requests/authorized-user'
-import { getGroupBySlug, getGroupBySlugV2 } from '@/lib/requests/groups'
-import { getGroupDueDates } from '@/lib/requests/groups'
+import { getGroupBySlugV2, getGroupDueDates } from '@/lib/requests/groups'
 import { isAuthorizedUserAdmin } from '@/lib/utils'
 
 // Mock all the required functions
@@ -55,19 +54,34 @@ describe('Group Detail Page', () => {
   ]
 
   beforeEach(() => {
-    ;(getCurrentUser as jest.Mock).mockResolvedValue(mockUser)
-    ;(getAuthorizedUserByEmail as jest.Mock).mockResolvedValue(mockAuthUser)
-    ;(getGroupBySlugV2 as jest.Mock).mockResolvedValue(mockGroup)
-    ;(getGroupDueDates as jest.Mock).mockResolvedValue(mockDueDates)
-    ;(isAuthorizedUserAdmin as jest.Mock).mockReturnValue(false)
-  })
+    // Clear all mocks before each test
+    jest.clearAllMocks();
+   
+    (getCurrentUser as jest.Mock).mockResolvedValue(mockUser);
+    (getAuthorizedUserByEmail as jest.Mock).mockResolvedValue(mockAuthUser);
+    (getGroupBySlugV2 as jest.Mock).mockResolvedValue(mockGroup);
+    (getGroupDueDates as jest.Mock).mockResolvedValue(mockDueDates);
+    (isAuthorizedUserAdmin as jest.Mock).mockReturnValue(false);
+  });
 
   it('handles missing user data', async () => {
-    ;(getCurrentUser as jest.Mock).mockResolvedValue(null)
+    (getCurrentUser as jest.Mock).mockResolvedValue(null);
     
     const { container } = await render(
       <GroupDetailPage params={Promise.resolve({ slug: 'test-group' })} />
-    )
-    expect(container).toBeEmptyDOMElement()
-  })
-}) 
+    );
+    expect(container).toBeEmptyDOMElement();
+  });
+
+  it('hides edit controls for regular members', async () => {
+    const regularMemberAuthUser = { ...mockAuthUser, id: 999 };
+    (getAuthorizedUserByEmail as jest.Mock).mockResolvedValue(regularMemberAuthUser);
+    
+    await render(
+      <GroupDetailPage params={Promise.resolve({ slug: 'test-group' })} />
+    );
+    
+    expect(screen.queryByTestId('group-edit-controls')).not.toBeInTheDocument();
+  });
+
+}); 

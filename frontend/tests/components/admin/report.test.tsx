@@ -1,7 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { ReportBlock } from "@/components/admin/reports/report";
 
-// Mock Next.js Link component
 jest.mock("next/link", () => {
   return function Link({
     children,

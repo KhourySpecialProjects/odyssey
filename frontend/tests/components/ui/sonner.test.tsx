@@ -1,7 +1,6 @@
 import { render } from '@testing-library/react';
 import { Toaster } from '@/components/ui/sonner';
 
-// Mock the Sonner component since we're only testing our wrapper
 jest.mock('sonner', () => ({
   Toaster: ({ className, position }: { className?: string; position?: string }) => (
     <div 

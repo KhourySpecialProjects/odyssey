@@ -1,8 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { PlaylistBlock } from "@/components/admin/playlists/playlist-block";
-import { Duration } from "@mui/material";
 
-// Mock Next.js Link component
 jest.mock("next/link", () => {
   return function Link({
     children,
@@ -48,7 +46,6 @@ describe("PlaylistBlock", () => {
     const button = screen.getByRole("button");
     expect(button).toBeInTheDocument();
 
-    // Check for the tooltip text
     const tooltip = screen.getByText("Edit Playlist");
     expect(tooltip).toBeInTheDocument();
   });

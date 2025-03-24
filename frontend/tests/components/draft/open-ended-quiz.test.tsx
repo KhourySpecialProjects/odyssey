@@ -1,7 +1,6 @@
 import { render, screen, fireEvent } from "@testing-library/react";
 import { OpenEndedQuizEditor } from "@/components/draft/lesson/blocks/open-ended-quiz";
 
-// Mock dependencies
 jest.mock("@/components/ui/tiptap/generic-block-input", () => ({
   GenericBlockInput: ({
     initialContent,

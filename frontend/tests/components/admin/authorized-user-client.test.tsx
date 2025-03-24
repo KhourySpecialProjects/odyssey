@@ -2,7 +2,6 @@ import { render, screen, fireEvent } from "@testing-library/react";
 import { AuthorizedUserClient } from "@/components/admin/users/authorized-user-client";
 import { TimeZone } from "@/types";
 
-// Mock AuthorizedUserBlock component
 jest.mock("@/components/admin/users/authorized-user", () => ({
   AuthorizedUserBlock: ({ user }: { user: any }) => (
     <div data-testid={`user-${user.id}`}>{user.email}</div>

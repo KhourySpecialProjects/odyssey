@@ -1,9 +1,7 @@
-// In content-selector.test.tsx
 import { render, screen, fireEvent } from "@testing-library/react";
 import { ContentSelector } from "@/components/dashboard/content-selector";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 
-// Mock Next.js navigation hooks
 jest.mock("next/navigation", () => ({
   useRouter: jest.fn(),
   useSearchParams: jest.fn(),

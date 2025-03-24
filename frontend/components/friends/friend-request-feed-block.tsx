@@ -101,6 +101,7 @@ export function FriendRequestFeedBlock({
           size="sm"
           variant="outline"
           onClick={handleApprove}
+          role="accept"
         >
           <div className="relative group">
             <Check className="w-3 h-3 group-hover:scale-110 transition-transform" />
@@ -114,6 +115,7 @@ export function FriendRequestFeedBlock({
           size="sm"
           onClick={handleReject}
           style={{ height: "15px", width: "50px" }}
+          role="reject"
         >
           <div className="relative group">
             <X className="w-3 h-3" />

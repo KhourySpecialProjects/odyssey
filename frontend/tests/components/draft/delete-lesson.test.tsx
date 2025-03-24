@@ -3,7 +3,6 @@ import { DeleteLessonButton } from "@/components/draft/lesson/delete-lesson";
 import { useRouter } from "next/navigation";
 import React from "react";
 
-// Mock dependencies
 jest.mock("next/navigation", () => ({
   useRouter: jest.fn(),
 }));
@@ -38,7 +37,6 @@ describe("DeleteLessonButton", () => {
       />,
     );
 
-    // Click the delete button
     fireEvent.click(screen.getByText("Delete Lesson"));
 
     expect(
@@ -56,16 +54,12 @@ describe("DeleteLessonButton", () => {
       />,
     );
 
-    // Open the dialog
     fireEvent.click(screen.getByText("Delete Lesson"));
 
-    // Click Delete in the dialog
     fireEvent.click(screen.getByText("Delete"));
 
-    // Verify deleteLesson was called
     expect(mockDeleteLesson).toHaveBeenCalledTimes(1);
 
-    // Verify router.push was called with the correct path
     await waitFor(() => {
       expect(mockPush).toHaveBeenCalledWith("/draft/d/test-droplet");
     });
@@ -79,19 +73,14 @@ describe("DeleteLessonButton", () => {
       />,
     );
 
-    // Open the dialog
     fireEvent.click(screen.getByText("Delete Lesson"));
 
-    // Click Cancel in the dialog
     fireEvent.click(screen.getByText("Cancel"));
 
-    // Verify deleteLesson was not called
     expect(mockDeleteLesson).not.toHaveBeenCalled();
   });
 
   it("disables buttons while deletion is in progress", async () => {
-    // This test simulates the deletion process being in progress
-    // We'll need to mock useState to control the isDeleting state
     const useState = jest.spyOn(React, "useState");
     useState.mockImplementationOnce(() => [true, jest.fn()]);
 
@@ -102,10 +91,8 @@ describe("DeleteLessonButton", () => {
       />,
     );
 
-    // Open the dialog
     fireEvent.click(screen.getByText("Delete Lesson"));
 
-    // Check that buttons are disabled
     expect(screen.getByText("Cancel")).toBeDisabled();
     expect(screen.getByText("Deleting...")).toBeDisabled();
   });

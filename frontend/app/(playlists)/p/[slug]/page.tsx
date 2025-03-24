@@ -86,12 +86,10 @@ export default async function PlaylistPage({ params }: Props) {
       ) || false;
   }
 
-  // Check if user can access this playlist
   if (!playlist.isPublic && !isEnrolled) {
     notFound();
   }
 
-  // Get all lesson IDs from the playlist's droplets
   const playlistLessonIds =
     playlist.droplets?.flatMap(
       (droplet) => droplet.lessons?.map((lesson: Lesson) => lesson.id) || [],

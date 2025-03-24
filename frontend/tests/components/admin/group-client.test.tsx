@@ -2,7 +2,6 @@ import { render, screen, fireEvent } from "@testing-library/react";
 import { GroupClient } from "@/components/admin/groups/group-client";
 import { GroupSemester } from "@/types";
 
-// Mock GroupBlock component
 jest.mock("@/components/admin/groups/group-block", () => ({
   GroupBlock: ({ group }: { group: any }) => (
     <div data-testid={`group-${group.id}`}>{group.groupName}</div>
@@ -10,7 +9,6 @@ jest.mock("@/components/admin/groups/group-block", () => ({
 }));
 
 describe("GroupClient", () => {
-  // Create an array of 15 mock groups for testing pagination
   const mockGroups = Array.from({ length: 15 }, (_, i) => ({
     id: i + 1,
     groupName: `Group ${i + 1}`,
@@ -22,7 +20,6 @@ describe("GroupClient", () => {
   it("renders a list of groups", () => {
     render(<GroupClient groups={mockGroups.slice(0, 5)} />);
 
-    // Should render all 5 groups
     expect(screen.getByTestId("group-1")).toBeInTheDocument();
     expect(screen.getByTestId("group-5")).toBeInTheDocument();
   });
@@ -30,12 +27,10 @@ describe("GroupClient", () => {
   it("displays pagination correctly", () => {
     render(<GroupClient groups={mockGroups} />);
 
-    // Should show only the first 10 groups initially
     expect(screen.getByTestId("group-1")).toBeInTheDocument();
     expect(screen.getByTestId("group-10")).toBeInTheDocument();
     expect(screen.queryByTestId("group-11")).not.toBeInTheDocument();
 
-    // Should have a Next button but Previous button should be disabled on first page
     expect(screen.getByText("Next")).toBeInTheDocument();
     const prevButton = screen.getByText("Previous");
     expect(prevButton).toBeInTheDocument();
@@ -64,7 +59,6 @@ describe("GroupClient", () => {
 
     fireEvent.click(screen.getByText("Previous"));
 
-    // Should show groups 1-10 again
     expect(screen.getByTestId("group-1")).toBeInTheDocument();
     expect(screen.getByTestId("group-10")).toBeInTheDocument();
     expect(screen.queryByTestId("group-11")).not.toBeInTheDocument();

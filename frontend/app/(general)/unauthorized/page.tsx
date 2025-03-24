@@ -11,7 +11,7 @@ import { getServerSession } from "next-auth";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
-export default async function UnauthorizedRoute() {
+export default function UnauthorizedRoute() {
   return (
     <Message>
       <MessageHeader subtitle="Error" title="Unauthorized" />

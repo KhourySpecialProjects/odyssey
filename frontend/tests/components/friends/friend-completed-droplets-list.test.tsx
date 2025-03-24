@@ -29,7 +29,6 @@ describe('FriendCompletedDropletsList', () => {
     const dropletTiles = screen.getAllByRole('link');
     expect(dropletTiles).toHaveLength(mockDroplets.length);
     
-    // Verify each droplet tile is rendered with compact prop
     dropletTiles.forEach((tile, index) => {
       expect(tile).toHaveAttribute('href', `/d/${mockDroplets[index].slug}`);
     });

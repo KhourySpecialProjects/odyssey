@@ -1,7 +1,6 @@
 import { render, screen, fireEvent } from "@testing-library/react";
 import { PlaylistClient } from "@/components/admin/playlists/playlist-client";
 
-// Mock PlaylistBlock component
 jest.mock("@/components/admin/playlists/playlist-block", () => ({
   PlaylistBlock: ({ playlist }: { playlist: any }) => (
     <div data-testid={`playlist-${playlist.id}`}>{playlist.name}</div>

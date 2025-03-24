@@ -1,91 +1,84 @@
-// Modified student-progress-list.test.tsx
-import { render, screen } from "@testing-library/react";
-import { StudentProgressList } from "@/components/admin/progress/student-progress-list";
-import React from "react";
+import { render, screen, fireEvent } from '@testing-library/react'
+import { StudentProgressList } from '@/components/admin/progress/student-progress-list'
 
-// Mock the Collapsible components
-jest.mock("@/components/ui/collapsible", () => ({
-  Collapsible: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
-  ),
-  CollapsibleTrigger: ({ children }: { children: React.ReactNode }) => (
-    <button>{children}</button>
-  ),
-  CollapsibleContent: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
-  ),
-}));
+jest.mock('@/lib/utils', () => ({
+  cn: (...args: any[]) => args.filter(Boolean).join(' '),
+}))
 
-// Mock the Card components
-jest.mock("@/components/ui/card", () => ({
-  Card: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  CardHeader: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
-  ),
-  CardContent: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
-  ),
-}));
-
-// Mock the Progress component
-jest.mock("@/components/ui/progress", () => ({
-  Progress: ({ value }: { value: number }) => <div>Progress: {value}%</div>,
-}));
-
-// Mock the Button component
-jest.mock("@/components/ui/button", () => ({
-  Button: ({
-    children,
-    onClick,
-  }: {
-    children: React.ReactNode;
-    onClick?: () => void;
-  }) => <button onClick={onClick}>{children}</button>,
-}));
-
-// Mock the URL methods
-global.URL.createObjectURL = jest.fn(() => "mock-url");
-global.URL.revokeObjectURL = jest.fn();
-
-describe("StudentProgressList", () => {
+describe('StudentProgressList', () => {
   const mockPlaylists = [
     {
       id: 1,
-      name: "Test Playlist",
-      slug: "test-playlist",
+      name: 'Test Playlist 1',
+      slug: 'test-playlist-1',
       authorized_users: [
-        { id: 1, email: "student1@example.com", progress: 75 },
-        { id: 2, email: "student2@example.com", progress: 30 },
-      ],
+        { id: 1, email: 'student1@test.com', progress: 50 },
+        { id: 2, email: 'student2@test.com', progress: 75 }
+      ]
     },
     {
       id: 2,
-      name: "Another Playlist",
-      slug: "another-playlist",
+      name: 'Test Playlist 2',
+      slug: 'test-playlist-2',
       authorized_users: [
-        { id: 3, email: "student3@example.com", progress: 100 },
-      ],
-    },
-  ];
+        { id: 3, email: 'student3@test.com', progress: 25 }
+      ]
+    }
+  ]
 
-  // Create a simplified test that doesn't rely on complex DOM interactions
-  it("renders correctly with playlists", () => {
-    render(<StudentProgressList playlists={mockPlaylists} />);
+  beforeEach(() => {
+    // Reset all mocks
+    jest.clearAllMocks()
 
-    // Check for playlist names
-    expect(screen.getByText("Test Playlist")).toBeInTheDocument();
-    expect(screen.getByText("Another Playlist")).toBeInTheDocument();
+    // Mock URL APIs
+    global.URL.createObjectURL = jest.fn(() => 'mock-url')
+    global.URL.revokeObjectURL = jest.fn()
 
-    // Check for student counts
-    expect(screen.getByText("2 enrolled students")).toBeInTheDocument();
-    expect(screen.getByText("1 enrolled student")).toBeInTheDocument();
-  });
+    // Mock Blob
+    global.Blob = jest.fn().mockImplementation((content, options) => ({
+      content,
+      options,
+    })) as any
 
-  it("renders a message when no playlists are available", () => {
-    render(<StudentProgressList playlists={[]} />);
+    // Setup document.body
+    document.body.innerHTML = '<div id="root"></div>'
+  })
 
-    expect(
-      screen.getByText("You haven't created any private playlists yet"),
-    ).toBeInTheDocument();
-  });
-});
+  it('renders empty state when no playlists are provided', () => {
+    render(<StudentProgressList playlists={[]} />)
+    expect(screen.getByText("You haven't created any private playlists yet")).toBeInTheDocument()
+  })
+
+  it('renders playlist cards with correct information', () => {
+    render(<StudentProgressList playlists={mockPlaylists} />)
+    
+    // Check playlist names
+    expect(screen.getByText('Test Playlist 1')).toBeInTheDocument()
+    expect(screen.getByText('Test Playlist 2')).toBeInTheDocument()
+    
+    // Check student counts
+    expect(screen.getByText('2 enrolled students')).toBeInTheDocument()
+    expect(screen.getByText('1 enrolled student')).toBeInTheDocument()
+  })
+
+  it('toggles playlist content visibility when clicked', () => {
+    render(<StudentProgressList playlists={mockPlaylists} />)
+    
+    // Initially, student emails should not be visible
+    expect(screen.queryByText('student1@test.com')).not.toBeInTheDocument()
+    
+    // Click to expand first playlist
+    fireEvent.click(screen.getByText('Test Playlist 1'))
+    
+    // Student information should now be visible
+    expect(screen.getByText('student1@test.com')).toBeInTheDocument()
+    expect(screen.getByText('student2@test.com')).toBeInTheDocument()
+    
+    // Click again to collapse
+    fireEvent.click(screen.getByText('Test Playlist 1'))
+    
+    // Student information should be hidden again
+    expect(screen.queryByText('student1@test.com')).not.toBeInTheDocument()
+  })
+  
+})

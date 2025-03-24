@@ -2,7 +2,6 @@ import { render, screen, fireEvent } from '@testing-library/react'
 import AccessDenied from '@/components/access-denied'
 import { signIn } from 'next-auth/react'
 
-// Mock next-auth
 jest.mock('next-auth/react', () => ({
   signIn: jest.fn()
 }))

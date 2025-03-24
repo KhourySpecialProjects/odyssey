@@ -34,7 +34,6 @@ describe('NotesPdfButton', () => {
   }
 
   beforeEach(() => {
-    // Mock URL.createObjectURL and URL.revokeObjectURL
     URL.createObjectURL = jest.fn().mockReturnValue('blob:test') as jest.Mock
     URL.revokeObjectURL = jest.fn()
   })

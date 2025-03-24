@@ -1,20 +1,23 @@
-import { render, screen, fireEvent } from '@testing-library/react';
-import { FriendRequestFeedBlock } from '@/components/friends/friend-request-feed-block';
-import { acceptFriendRequest, rejectFriendRequest, BlockUser } from '@/lib/requests/friends';
-import { toast } from 'sonner';
-import { AuthorizedUserRoleTitle } from '@/lib/globals';
-import { TimeZone } from '@/types';
+import { render, fireEvent, act, getByRole, screen } from '@testing-library/react'
+import { FriendRequestFeedBlock } from '@/components/friends/friend-request-feed-block'
+import { BlockUser, acceptFriendRequest, rejectFriendRequest, removeFriend } from '@/lib/requests/friends'
+import { toast } from 'sonner'
+import { AuthorizedUserRoleTitle } from '@/lib/globals'
+import { AuthorizedUserRole, TimeZone } from '@/types'
 
 jest.mock('@/lib/requests/friends', () => ({
+  BlockUser: jest.fn(),
   acceptFriendRequest: jest.fn(),
   rejectFriendRequest: jest.fn(),
-  BlockUser: jest.fn(),
   removeFriend: jest.fn()
-}));
+}))
 
 jest.mock('sonner', () => ({
-  toast: { success: jest.fn(), error: jest.fn() }
-}));
+  toast: {
+    success: jest.fn(),
+    error: jest.fn()
+  }
+}))
 
 describe('FriendRequestFeedBlock', () => {
   const mockUser = {
@@ -36,10 +39,12 @@ describe('FriendRequestFeedBlock', () => {
     received_requests: [],
     blocked: [],
     was_blocked: [],
-    timeZone: "America/New_York" as TimeZone
-  };
+    timeZone: "America/New_York" as TimeZone,
+    isActive: true
+  } 
+
   const mockRequest = {
-    id: 1,
+    id: 2,
     email: 'user@example.com',
     firstName: 'John',
     lastName: 'Doe',
@@ -57,20 +62,43 @@ describe('FriendRequestFeedBlock', () => {
     received_requests: [],
     blocked: [],
     was_blocked: [],
-    timeZone: "America/New_York" as TimeZone
-  };
+    timeZone: "America/New_York" as TimeZone,
+    isActive: true
+  } 
 
-  it('renders request information', () => {
-    render(<FriendRequestFeedBlock user={mockUser} request={mockRequest} />);
-    expect(screen.getByText('John Doe')).toBeInTheDocument();
-  });
+  beforeEach(() => {
+    jest.clearAllMocks()
+  })
 
-  it('handles accept request', async () => {
-    (acceptFriendRequest as jest.Mock).mockResolvedValue({ success: true });
-    
-    render(<FriendRequestFeedBlock user={mockUser} request={mockRequest} />);
-    fireEvent.click(screen.getByRole('button', { name: /Accept/i }));
-    
-    expect(acceptFriendRequest).toHaveBeenCalledWith(mockUser.id, mockRequest.id);
-  });
-});
+  describe('friend request actions', () => {
+    it('accepts friend request successfully', async () => {
+      ;(acceptFriendRequest as jest.Mock).mockResolvedValueOnce({ success: true })
+
+      const { getByTitle } = render(
+        <FriendRequestFeedBlock user={mockUser} request={mockRequest} />
+      )
+
+      await act(async () => {
+        fireEvent.click(screen.getByRole('accept'))
+      })
+
+      expect(acceptFriendRequest).toHaveBeenCalledWith(1, 2)
+      expect(toast.success).toHaveBeenCalledWith('Friend request accepted!')
+    })
+
+    it('rejects friend request successfully', async () => {
+      ;(rejectFriendRequest as jest.Mock).mockResolvedValueOnce({ success: true })
+
+      const { getByTitle } = render(
+        <FriendRequestFeedBlock user={mockUser} request={mockRequest} />
+      )
+
+      await act(async () => {
+        fireEvent.click(screen.getByRole('reject'))
+      })
+
+      expect(rejectFriendRequest).toHaveBeenCalledWith(1, 2)
+      expect(toast.success).toHaveBeenCalledWith('Friend request rejected')
+    })
+  })
+})

@@ -2,7 +2,6 @@ import { render, screen } from "@testing-library/react";
 import { Groups } from "@/components/admin/groups/groups";
 import { fetchGroups } from "@/lib/requests/data";
 
-// Mock dependencies
 jest.mock("@/lib/requests/data", () => ({
   fetchGroups: jest.fn(),
 }));

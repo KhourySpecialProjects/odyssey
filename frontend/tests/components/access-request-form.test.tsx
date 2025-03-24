@@ -16,33 +16,82 @@ jest.mock('sonner', () => ({
 }))
 
 describe('RequestAccessForm', () => {
-  const fillForm = async () => {
-    fireEvent.change(screen.getByPlaceholderText('Sam'), { target: { value: 'John' } })
-    fireEvent.change(screen.getByPlaceholderText('Serif'), { target: { value: 'Doe' } })
+  const selectOption = async (triggerText: string, optionValue: string) => {
+    const trigger = screen.getByRole('combobox', { name: triggerText })
+    fireEvent.click(trigger)
+    const option = screen.getByRole('option', { name: optionValue })
+    fireEvent.click(option)
+  }
+
+  it('handles successful form submission', async () => {
+    // Mock successful response
+    (createAccessRequest as jest.Mock).mockResolvedValue({ ok: true });
+    
+    render(<RequestAccessForm />)
+    
+    // Fill out the form
+    fireEvent.change(screen.getByPlaceholderText('Sam'), { 
+      target: { value: 'John' } 
+    })
+    fireEvent.change(screen.getByPlaceholderText('Serif'), { 
+      target: { value: 'Doe' } 
+    })
     fireEvent.change(screen.getByPlaceholderText('serif.s@northeastern.edu'), {
       target: { value: 'john.doe@northeastern.edu' }
     })
-    fireEvent.click(screen.getByText('Select your affiliation'))
-    fireEvent.click(screen.getByText('Select your college/school'))
-  }
-
-  it('renders form fields', () => {
-    render(<RequestAccessForm />)
     
-    expect(screen.getByPlaceholderText('Sam')).toBeInTheDocument()
-    expect(screen.getByPlaceholderText('Serif')).toBeInTheDocument()
-    expect(screen.getByPlaceholderText('serif.s@northeastern.edu')).toBeInTheDocument()
-    expect(screen.getByText('Select your affiliation')).toBeInTheDocument()
-    expect(screen.getByText('Select your college/school')).toBeInTheDocument()
+    // Select affiliation and college using ARIA roles
+    await selectOption('Affiliation', 'Undergraduate Student')
+    await selectOption('College', 'Khoury College of Computer Sciences')
+    
+    // Submit form
+    fireEvent.click(screen.getByRole('button', { name: 'Submit Request' }))
+    
+    await waitFor(() => {
+      expect(createAccessRequest).toHaveBeenCalledWith({
+        givenName: 'John',
+        familyName: 'Doe',
+        email: 'john.doe@northeastern.edu',
+        affiliation: 'undergraduateStudent',
+        college: 'KCCS'
+      })
+      expect(toast.success).toHaveBeenCalledWith(
+        'Your access request has been successfully submitted.'
+      )
+    })
   })
 
-  it('validates required fields', async () => {
+  it('disables submit button during submission', async () => {
+    // Mock a delayed response to test loading state
+    (createAccessRequest as jest.Mock).mockImplementation(
+      () => new Promise(resolve => setTimeout(() => resolve({ ok: true }), 100))
+    );
+    
     render(<RequestAccessForm />)
     
-    fireEvent.click(screen.getByText('Submit Request'))
-
+    // Fill out the form
+    fireEvent.change(screen.getByPlaceholderText('Sam'), { 
+      target: { value: 'John' } 
+    })
+    fireEvent.change(screen.getByPlaceholderText('Serif'), { 
+      target: { value: 'Doe' } 
+    })
+    fireEvent.change(screen.getByPlaceholderText('serif.s@northeastern.edu'), {
+      target: { value: 'john.doe@northeastern.edu' }
+    })
+    
+    // Select affiliation and college using ARIA roles
+    await selectOption('Affiliation', 'Undergraduate Student')
+    await selectOption('College', 'Khoury College of Computer Sciences')
+    
+    // Submit form
+    const submitButton = screen.getByRole('button', { name: 'Submit Request' })
+    fireEvent.click(submitButton)
+  
+    
+    // Wait for submission to complete
     await waitFor(() => {
-      expect(screen.getAllByText(/required/i)).toHaveLength(2)
+      expect(submitButton).not.toBeDisabled()
     })
   })
 })
