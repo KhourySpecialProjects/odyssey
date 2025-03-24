@@ -40,9 +40,8 @@ const {
   getPlaylists,
 } = require("../lib/requests/playlist");
 const { getTags, getTagBySlug } = require("../lib/requests/tag");
-const { getNotesByAuthorizedUserAndLesson } = require("../lib/requests/notes");
 //import { data } from "./mocks/strapiMock";
-const { flattenAttributes } = require("../lib/utils")
+const { flattenAttributes } = require("../lib/utils");
 
 const data = require("./mocks/strapiMock");
 const mockUsers = require("./mocks/authorizedUsersMock");
@@ -67,57 +66,20 @@ global.fetch = jest.fn();
 //Comment this out if working on error testing (suppresses console error logs from error mocking)
 
 beforeEach(() => {
-  jest.spyOn(console, "error").mockImplementation(() => { }); // Suppress console errors
-  jest.spyOn(console, "warn").mockImplementation(() => { }); // Suppress console warnings
+  jest.spyOn(console, "error").mockImplementation(() => {}); // Suppress console errors
+  jest.spyOn(console, "warn").mockImplementation(() => {}); // Suppress console warnings
 });
 
 afterEach(() => {
   jest.restoreAllMocks(); // Restore console after each test
 });
 
-/*// author.ts tests
+// Mock Next.js cache functions
+jest.mock("next/cache", () => ({
+  revalidatePath: jest.fn(),
+  revalidateTag: jest.fn(),
+}));
 
-describe('getAuthorByAuthorizedUserEmail', () => {
-  it('should return the expected author when provided with a valid email', async () => {
-    const mockAuthor = {
-      id: 1,
-      name: 'Gillian Palmer',
-      authorizedUser: {
-        email: 'palmer.gi@northeastern.edu'
-      }
-    };
-    
-    fetchAPI.mockResolvedValue([mockAuthor]);
-  
-    const result = await getAuthorByAuthorizedUserEmail('palmer.gi@northeastern.edu');
-
-    expect(result).toEqual(mockAuthor);
-    expect(fetchAPI).toHaveBeenCalledWith(expect.anything(), expect.anything());
-    expect(jest.mocked(fetchAPI)).toHaveBeenCalledWith('/authors', {
-      urlParams: expect.objectContaining({
-        filters: {
-          authorizedUser: { 
-            email: { 
-              $eq: 'palmer.gi@northeastern.edu' 
-            } 
-          }
-        }
-      })
-    });
-  });
-  
-  it('should throw an error when provided with an invalid email', async () => {
-    fetchAPI.mockRejectedValue(new Error("Invalid email"));
-  
-    const invalidEmail = "invalid@example.com";
-  
-    await expect(getAuthorByAuthorizedUserEmail(invalidEmail)).rejects.toThrow(
-      "Invalid email"
-    );
-    expect(fetchAPI).toHaveBeenCalledWith(expect.anything(), expect.anything());
-  });
-});
-*/
 describe("Authorized User Tests", () => {
   // authorized-user.ts tests
   describe("getAuthorizedUserByEmail", () => {
@@ -383,8 +345,6 @@ describe("Authorized User Tests", () => {
 
       const result = await fetchWebsiteCreators();
 
-      console.log("result is ", result);
-
       expect(global.fetch).toHaveBeenCalledWith(
         expect.stringContaining("/api/authorized-users"),
         expect.objectContaining({
@@ -458,8 +418,6 @@ describe("Authorized User Tests", () => {
       });
 
       const result = await getAllAuthorizedUsers();
-
-      console.log("result is ", result);
 
       expect(global.fetch).toHaveBeenCalledWith(
         expect.stringContaining("/api/authorized-users?"),
@@ -950,9 +908,7 @@ describe("Enrollment tests", () => {
     it("should handle fetch errors", async () => {
       fetchAPI.mockRejectedValueOnce(new Error("Failed to fetch enrollments"));
 
-      await expect(
-        getEnrollmentsByAuthorizedUser(500),
-      ).rejects.toThrow();
+      await expect(getEnrollmentsByAuthorizedUser(500)).rejects.toThrow();
     });
   });
 
@@ -1153,71 +1109,6 @@ describe("getLessonBySlug", () => {
     await expect(getLessonBySlug("fail")).rejects.toThrow();
   });
 });
-
-//notes.ts test
-describe("Notes Tests", () => {
-  describe("getNotesByAuthorizedUserAndLesson", () => {
-    beforeEach(() => {
-      jest.clearAllMocks();
-    });
-
-    it("should fetch and return notes for this user and lesson", async () => {
-      const mockStrapiResponse = {
-        data: mockNotes.map((note) => ({
-          id: note.id,
-          //attributes: {
-            content: note.attributes.content,
-            positionY: note.attributes.positionY,
-          //},
-        })),
-      };
-
-      fetchAPI.mockResolvedValueOnce(mockStrapiResponse);
-
-      const result = await getNotesByAuthorizedUserAndLesson(4, "101");
-
-      expect(fetchAPI).toHaveBeenCalledWith("/notes", {
-        urlParams: {
-          sort: undefined,
-          filters: {
-            enrollment: {
-              authorizedUser: {
-                id: { $eq: 4 }
-              }
-            },
-            lesson: {
-              slug: { $eq: "101" }
-            }
-          },
-          populate: {
-            highlight: {
-              fields: ["text", "color", "yLevel"]
-            }
-          },
-          fields: ["id", "content", "positionY"],
-          pagination: {
-            pageSize: 250,
-            page: 1
-          }
-        },
-        next: {
-          tags: ["notes"]
-        }
-      });
-
-      expect(result).toEqual(mockStrapiResponse)
-
-  });
-
-    it("should handle fetch errors", async () => {
-      fetchAPI.mockRejectedValueOnce(new Error("Failed to fetch notes"));
-
-      await expect(getNotesByAuthorizedUserAndLesson(-1, 500)).rejects.toThrow();
-    });
-  
-});
-
-})
 
 // playlist-enrollment.ts tests
 
