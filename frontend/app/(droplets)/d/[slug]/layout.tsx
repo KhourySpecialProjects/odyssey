@@ -76,7 +76,7 @@ export default async function RootLayout({ params, children }: Props) {
       .includes(authorizedUser?.id);
 
   return (
-    <div className="flex flex-col md:flex-row min-h-screen">
+    <div className="flex flex-col xl:flex-row min-h-screen">
       <Sidebar
         author={isAuthor || false}
         user={user}

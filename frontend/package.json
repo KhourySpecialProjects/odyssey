@@ -37,6 +37,7 @@
     "@radix-ui/react-tooltip": "^1.0.7",
     "@strapi/blocks-react-renderer": "^1.0.0",
     "@tailwindcss/forms": "^0.5.7",
+    "@theme-toggles/react": "^4.1.0",
     "@tiptap/core": "^2.11.5",
     "@tiptap/extension-code-block-lowlight": "^2.10.4",
     "@tiptap/extension-color": "^2.11.5",
