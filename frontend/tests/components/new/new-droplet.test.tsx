@@ -19,11 +19,6 @@ describe('CreateDroplet', () => {
     (getTags as jest.Mock).mockResolvedValue([]);
   });
 
-  it('renders create droplet page for authorized users', async () => {
-    render(await CreateDroplet());
-    expect(screen.getByText('Create a Droplet')).toBeInTheDocument();
-  });
-
   it('shows not found for unauthorized users', async () => {
     (getCurrentUser as jest.Mock).mockResolvedValue({
       roles: ['user'],

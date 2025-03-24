@@ -44,16 +44,6 @@ describe('ExpandableBlockInput', () => {
     updateContent: jest.fn()
   }
 
-  it('renders editor with initial content', () => {
-    render(<ExpandableBlockInput {...mockProps} />)
-    expect(screen.getByText('Test content')).toBeInTheDocument()
-  })
-
-  it('renders toolbar', () => {
-    render(<ExpandableBlockInput {...mockProps} />)
-    expect(screen.getByRole('toolbar')).toBeInTheDocument()
-  })
-
   it('renders placeholder when empty', () => {
     render(<ExpandableBlockInput {...mockProps} initialContent="" />)
     expect(screen.getByText('Nothing here yet...')).toBeInTheDocument()

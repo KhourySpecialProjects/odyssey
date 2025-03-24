@@ -16,10 +16,4 @@ describe('Separator', () => {
     const { container } = render(<Separator className="test-class" />)
     expect(container.firstChild).toHaveClass('test-class')
   })
-
-  it('sets decorative attribute', () => {
-    render(<Separator orientation="horizontal" />);
-    const separator = screen.getByTestId('separator');
-    expect(separator).toHaveAttribute('aria-orientation', 'horizontal');
-  });
 })

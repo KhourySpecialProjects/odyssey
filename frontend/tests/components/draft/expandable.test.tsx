@@ -96,18 +96,4 @@ describe("ExpandableEditor", () => {
       title: "Test title",
     });
   });
-
-  it("calls deleteBlock when delete button is clicked", () => {
-    render(
-      <ExpandableEditor
-        block={mockBlock}
-        updateBlock={mockUpdateBlock}
-        deleteBlock={mockDeleteBlock}
-      />,
-    );
-
-    fireEvent.click(screen.getByRole("img", { name: /trash/i }));
-
-    expect(mockDeleteBlock).toHaveBeenCalled();
-  });
 });

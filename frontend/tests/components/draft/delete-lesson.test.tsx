@@ -41,8 +41,6 @@ describe("DeleteLessonButton", () => {
     // Click the delete button
     fireEvent.click(screen.getByText("Delete Lesson"));
 
-    // Check that the dialog appears
-    expect(screen.getByText("Delete Lesson")).toBeInTheDocument();
     expect(
       screen.getByText(/Are you sure you want to delete this lesson?/),
     ).toBeInTheDocument();

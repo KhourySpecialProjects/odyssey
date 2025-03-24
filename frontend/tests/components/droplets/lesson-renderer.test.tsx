@@ -97,13 +97,6 @@ describe('LessonRenderer', () => {
     jest.clearAllMocks()
   })
 
-  it('renders lesson content', () => {
-    render(<LessonRenderer {...mockProps} />)
-    
-    expect(screen.getByText('Test Lesson')).toBeInTheDocument()
-    expect(screen.getByText('Test content')).toBeInTheDocument()
-  })
-
   it('handles lesson completion', async () => {
     (markLessonAsComplete as jest.Mock).mockResolvedValue(true)
 

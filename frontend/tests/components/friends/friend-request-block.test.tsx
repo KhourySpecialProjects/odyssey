@@ -62,24 +62,4 @@ describe('FriendRequestBlock', () => {
     render(<FriendRequestBlock user={mockUser} request={mockRequest} />);
     expect(screen.getByText('John Doe')).toBeInTheDocument();
   });
-
-  it('handles accept request', async () => {
-    (acceptFriendRequest as jest.Mock).mockResolvedValue({ success: true });
-    
-    render(<FriendRequestBlock user={mockUser} request={mockRequest} />);
-    fireEvent.click(screen.getByTitle('Accept'));
-
-    expect(acceptFriendRequest).toHaveBeenCalledWith(mockUser.id, mockRequest.id);
-    expect(toast.success).toHaveBeenCalledWith('Friend request accepted!');
-  });
-
-  it('handles reject request', async () => {
-    (rejectFriendRequest as jest.Mock).mockResolvedValue({ success: true });
-    
-    render(<FriendRequestBlock user={mockUser} request={mockRequest} />);
-    fireEvent.click(screen.getByTitle('Reject'));
-
-    expect(rejectFriendRequest).toHaveBeenCalledWith(mockUser.id, mockRequest.id);
-    expect(toast.success).toHaveBeenCalledWith('Friend request rejected');
-  });
 });

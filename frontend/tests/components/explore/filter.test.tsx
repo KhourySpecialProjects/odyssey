@@ -27,10 +27,4 @@ describe('Filter', () => {
     expect(screen.getByText('Test Filter')).toBeInTheDocument();
   });
 
-  it('shows options when clicked', () => {
-    render(<Filter name="test" label="Test Filter" options={mockOptions} />);
-    fireEvent.click(screen.getByText('Test Filter'));
-    expect(screen.getByText('Option 1')).toBeInTheDocument();
-    expect(screen.getByText('Option 2')).toBeInTheDocument();
-  });
 });

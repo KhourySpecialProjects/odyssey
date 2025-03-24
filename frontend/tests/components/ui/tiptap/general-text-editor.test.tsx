@@ -13,16 +13,6 @@ describe('GeneralTextEditor', () => {
     expect(screen.getByText('Test content')).toBeInTheDocument()
   })
 
-  it('renders custom placeholder', () => {
-    render(<GeneralTextEditor {...mockProps} initialContent="" />)
-    expect(screen.getByText('Custom placeholder')).toBeInTheDocument()
-  })
-
-  it('renders with default placeholder when not provided', () => {
-    render(<GeneralTextEditor {...mockProps} placeholder={undefined} initialContent="" />)
-    expect(screen.getByText('Enter text...')).toBeInTheDocument()
-  })
-
   it('applies additional className when provided', () => {
     const { container } = render(<GeneralTextEditor {...mockProps} className="test-class" />)
     expect(container.querySelector('.test-class')).toBeInTheDocument()

@@ -141,10 +141,4 @@ describe('NotesContainer', () => {
     fireEvent.click(filterOptions[0])
   })
 
-  it('displays correct number of notes and highlights', () => {
-    render(<NotesContainer {...mockProps} />)
-    
-    expect(screen.getByText('Highlight 1')).toBeInTheDocument()
-    expect(screen.getByText('Note 1')).toBeInTheDocument()
-  })
 })

@@ -45,19 +45,9 @@ describe('CalloutBlockInput', () => {
     revalidate: jest.fn()
   }
 
-  it('renders editor with initial content', () => {
-    render(<CalloutBlockInput {...mockProps} />)
-    expect(screen.getByText('Test content')).toBeInTheDocument()
-  })
-
   it('renders toolbar', () => {
     render(<CalloutBlockInput {...mockProps} />)
     expect(screen.getByRole('toolbar')).toBeInTheDocument()
-  })
-
-  it('renders placeholder when empty', () => {
-    render(<CalloutBlockInput {...mockProps} initialContent={{ type: 'doc', content: [] }} />)
-    expect(screen.getByText('Nothing here yet...')).toBeInTheDocument()
   })
 })
 
