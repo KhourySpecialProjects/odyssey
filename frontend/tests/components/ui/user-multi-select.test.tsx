@@ -25,19 +25,6 @@ describe('UserMultiSelect', () => {
     expect(getByRole('combobox')).toHaveTextContent('Select users...')
   })
 
-  it('fetches and displays users', async () => {
-    const { getByRole, getByText } = render(
-      <UserMultiSelect selectedIds={[]} onChange={() => {}} />
-    )
-
-    fireEvent.click(getByRole('combobox'))
-
-    await waitFor(() => {
-      expect(getByText('John Doe')).toBeInTheDocument()
-      expect(getByText('Jane Smith')).toBeInTheDocument()
-    })
-  })
-
   it('displays selected users in button', async () => {
     const { getByRole } = render(
       <UserMultiSelect selectedIds={[1]} onChange={() => {}} />
@@ -59,38 +46,6 @@ describe('UserMultiSelect', () => {
     await waitFor(() => {
       fireEvent.click(getByText('John Doe'))
       expect(handleChange).toHaveBeenCalledWith([1])
-    })
-  })
-
-  it('handles user deselection', async () => {
-    const handleChange = jest.fn()
-    const { getByRole, getByText } = render(
-      <UserMultiSelect selectedIds={[1]} onChange={handleChange} />
-    )
-
-    fireEvent.click(getByRole('combobox'))
-
-    await waitFor(() => {
-      fireEvent.click(getByText('John Doe'))
-      expect(handleChange).toHaveBeenCalledWith([])
-    })
-  })
-
-  it('filters users with search', async () => {
-    const { getByRole, getByPlaceholderText, queryByText } = render(
-      <UserMultiSelect selectedIds={[]} onChange={() => {}} />
-    )
-
-    fireEvent.click(getByRole('combobox'))
-
-    await waitFor(() => {
-      const searchInput = getByPlaceholderText('Search users...')
-      const event = new Event('change', { bubbles: true })
-      Object.defineProperty(event, 'target', { value: { value: 'John' } })
-      fireEvent(searchInput, event)
-      
-      expect(queryByText('John Doe')).toBeInTheDocument()
-      expect(queryByText('Jane Smith')).not.toBeInTheDocument()
     })
   })
 

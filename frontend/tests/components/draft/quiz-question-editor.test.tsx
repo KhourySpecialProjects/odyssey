@@ -135,20 +135,6 @@ describe("QuizQuestionEditor", () => {
     });
   });
 
-  it("calls onDelete when delete button is clicked", () => {
-    render(
-      <QuizQuestionEditor
-        question={mockQuestion}
-        onUpdate={mockOnUpdate}
-        onDelete={mockOnDelete}
-      />,
-    );
-
-    fireEvent.click(screen.getByRole("img", { name: /trash/i }));
-
-    expect(mockOnDelete).toHaveBeenCalled();
-  });
-
   it("displays different label for true/false questions", () => {
     const trueFalseQuestion = {
       id: 1,

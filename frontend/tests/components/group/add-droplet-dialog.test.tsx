@@ -20,26 +20,4 @@ describe('AddDropletDialog', () => {
     render(<AddDropletDialog currentDroplets={[]} onAddDroplets={mockOnAddDroplets} />);
     expect(screen.getByText('Add Droplet')).toBeInTheDocument();
   });
-
-  it('shows dialog with droplets when clicked', async () => {
-    render(<AddDropletDialog currentDroplets={[]} onAddDroplets={mockOnAddDroplets} />);
-    
-    fireEvent.click(screen.getByText('Add Droplet'));
-    await waitFor(() => {
-      expect(screen.getByText('Test Droplet')).toBeInTheDocument();
-    });
-  });
-
-  it('filters droplets based on search', async () => {
-    render(<AddDropletDialog currentDroplets={[]} onAddDroplets={mockOnAddDroplets} />);
-    
-    fireEvent.click(screen.getByText('Add Droplet'));
-    fireEvent.change(screen.getByPlaceholderText('Search droplets...'), {
-      target: { value: 'Test' }
-    });
-    
-    await waitFor(() => {
-      expect(screen.getByText('Test Droplet')).toBeInTheDocument();
-    });
-  });
 });

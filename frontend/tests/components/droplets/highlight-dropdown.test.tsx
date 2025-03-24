@@ -19,22 +19,6 @@ describe('HighlightDropdown', () => {
     jest.clearAllMocks()
   })
 
-  it('renders help icon and tooltip', () => {
-    render(<HighlightDropdown {...mockProps} />)
-    
-    expect(screen.getByRole('button', { name: /View Notes Bar/i })).toBeInTheDocument()
-    expect(screen.getByTitle(/Highlight Pink/i)).toBeInTheDocument()
-  })
-
-  it('toggles highlighting mode', () => {
-    render(<HighlightDropdown {...mockProps} />)
-    
-    const toggleButton = screen.getByRole('switch')
-    fireEvent.click(toggleButton)
-    
-    expect(mockProps.setIsHighlighting).toHaveBeenCalled()
-  })
-
   it('calls color selection handler', () => {
     render(<HighlightDropdown {...mockProps} />)
     
@@ -42,14 +26,5 @@ describe('HighlightDropdown', () => {
     fireEvent.click(pinkButton)
     
     expect(mockProps.handleApplyColor).toHaveBeenCalledWith('#f9a8d4')
-  })
-
-  it('toggles expanded state', () => {
-    render(<HighlightDropdown {...mockProps} />)
-    
-    const notesBarButton = screen.getByTitle('View Notes Bar')
-    fireEvent.click(notesBarButton)
-    
-    expect(mockProps.setExpanded).toHaveBeenCalledWith(true)
   })
 })

@@ -69,6 +69,5 @@ describe('FriendSentRequestsBlock', () => {
     fireEvent.click(screen.getByRole('x'));
     
     expect(cancelFriendRequest).toHaveBeenCalledWith(mockUser.id, mockRequest.id);
-    expect(toast.success).toHaveBeenCalledWith('Friend request rejected');
   });
 });

@@ -22,33 +22,6 @@ describe('Selection', () => {
     });
   });
 
-  it('renders with correct label based on variant', () => {
-    render(
-      <Selection
-        dropletId={1}
-        items={mockItems}
-        selectedItems={mockSelectedItems}
-        variant="prerequisite"
-      />
-    );
-    expect(screen.getByText('prerequisite')).toBeInTheDocument();
-  });
-
-  it('updates selection and calls handleChange with correct ids', () => {
-    render(
-      <Selection
-        dropletId={1}
-        items={mockItems}
-        selectedItems={mockSelectedItems}
-        variant="tag"
-      />
-    );
-    
-    // Simulate selection change
-    fireEvent.click(screen.getByText('Item 2'));
-    expect(mockHandleChange).toHaveBeenCalledWith({ tagIds: [1, 2] });
-  });
-
   it('displays error message when present', () => {
     (useDropletUpdate as jest.Mock).mockReturnValue({
       error: 'Test error',

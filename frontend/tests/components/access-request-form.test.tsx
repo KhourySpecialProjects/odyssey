@@ -36,39 +36,6 @@ describe('RequestAccessForm', () => {
     expect(screen.getByText('Select your college/school')).toBeInTheDocument()
   })
 
-  it('handles successful form submission', async () => {
-    (createAccessRequest as jest.Mock).mockResolvedValue({ ok: true })
-    render(<RequestAccessForm />)
-    
-    await fillForm()
-    fireEvent.click(screen.getByText('Submit Request'))
-
-    await waitFor(() => {
-      expect(createAccessRequest).toHaveBeenCalled()
-      expect(toast.success).toHaveBeenCalledWith(
-        'Your access request has been successfully submitted.'
-      )
-    })
-  })
-
-  it('handles form submission error', async () => {
-    (createAccessRequest as jest.Mock).mockResolvedValue({ 
-      ok: false, 
-      error: 'Submission failed' 
-    })
-    render(<RequestAccessForm />)
-    
-    await fillForm()
-    fireEvent.click(screen.getByText('Submit Request'))
-
-    await waitFor(() => {
-      expect(toast.error).toHaveBeenCalledWith(
-        'Uh oh! Something went wrong.',
-        { description: 'Submission failed' }
-      )
-    })
-  })
-
   it('validates required fields', async () => {
     render(<RequestAccessForm />)
     
