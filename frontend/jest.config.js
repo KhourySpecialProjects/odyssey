@@ -16,5 +16,5 @@ module.exports = {
   moduleFileExtensions: ["js", "json", "ts"],
   testRegex: ".*\\.(spec|test)\\.(ts|js)$",
   transform: { "^.+\\.(t|j)s$": "ts-jest" },
-  collectCoverageFrom: ["**/*.(t|j)s"],
+  collectCoverageFrom: ["**/*.(t|j)s", "!<rootDir>/node_modules/"],
 };

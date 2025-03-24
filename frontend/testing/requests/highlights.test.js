@@ -1,42 +1,41 @@
 const {
-    getHighlights,
-    getHighlightsByDroplet
-  } = require("../../lib/requests/highlights");
-  const { flattenAttributes } = require("../../lib/utils");
-  const { fetchAPI } = require("../../lib/utils");
+  getHighlights,
+  getHighlightsByDroplet,
+} = require("../../lib/requests/highlights");
+const { flattenAttributes } = require("../../lib/utils");
+const { fetchAPI } = require("../../lib/utils");
 
-  
-  jest.mock("../../lib/utils", () => ({
-    fetchAPI: jest.fn(),
-    flattenAttributes: jest.fn((data) => {
-      if (Array.isArray(data)) {
-        return data.map((item) => ({
-          id: item.id,
-          ...item.attributes,
-        }));
-      }
-      return data;
-    }),
-  }));
-  
-  global.fetch = jest.fn();
-  
-  //Comment this out if working on error testing (suppresses console error logs from error mocking)
-  
-  beforeEach(() => {
-    jest.spyOn(console, "error").mockImplementation(() => {}); // Suppress console errors
-    jest.spyOn(console, "warn").mockImplementation(() => {}); // Suppress console warnings
-  });
-  
-  afterEach(() => {
-    jest.restoreAllMocks(); // Restore console after each test
-  });
-  
-  // Mock Next.js cache functions
-  jest.mock("next/cache", () => ({
-    revalidatePath: jest.fn(),
-    revalidateTag: jest.fn(),
-  }));
+jest.mock("../../lib/utils", () => ({
+  fetchAPI: jest.fn(),
+  flattenAttributes: jest.fn((data) => {
+    if (Array.isArray(data)) {
+      return data.map((item) => ({
+        id: item.id,
+        ...item.attributes,
+      }));
+    }
+    return data;
+  }),
+}));
+
+global.fetch = jest.fn();
+
+//Comment this out if working on error testing (suppresses console error logs from error mocking)
+
+beforeEach(() => {
+  jest.spyOn(console, "error").mockImplementation(() => {}); // Suppress console errors
+  jest.spyOn(console, "warn").mockImplementation(() => {}); // Suppress console warnings
+});
+
+afterEach(() => {
+  jest.restoreAllMocks(); // Restore console after each test
+});
+
+// Mock Next.js cache functions
+jest.mock("next/cache", () => ({
+  revalidatePath: jest.fn(),
+  revalidateTag: jest.fn(),
+}));
 
 describe("Highlights Tests", () => {
   beforeEach(() => {
@@ -51,15 +50,15 @@ describe("Highlights Tests", () => {
           color: "yellow",
           text: "This is an important concept",
           yLevel: 150,
-          lesson: { id: 101 }
+          lesson: { id: 101 },
         },
         {
           id: 2,
           color: "green",
           text: "This is an important concept",
           yLevel: 300,
-          lesson: { id: 102 }
-        }
+          lesson: { id: 102 },
+        },
       ];
 
       fetchAPI.mockResolvedValueOnce(mockHighlights);
@@ -76,60 +75,64 @@ describe("Highlights Tests", () => {
         urlParams: expect.objectContaining({
           filters: {
             authorized_user: {
-              id: { $eq: authorizedUserId }
+              id: { $eq: authorizedUserId },
             },
-            text: { $eq: text }
+            text: { $eq: text },
           },
           populate: {
             lesson: {
-              fields: ["id"]
-            }
+              fields: ["id"],
+            },
           },
           fields: ["id", "color", "text", "yLevel"],
-          pagination: { pageSize: 250, page: 1 }
+          pagination: { pageSize: 250, page: 1 },
         }),
-        next: { tags: ["highlights"] }
+        next: { tags: ["highlights"] },
       });
     });
 
     it("should use custom sort and pagination parameters when provided", async () => {
-      const mockHighlights = [{ id: 1, color: "yellow", text: "Custom params test" }];
-      
+      const mockHighlights = [
+        { id: 1, color: "yellow", text: "Custom params test" },
+      ];
+
       fetchAPI.mockResolvedValueOnce(mockHighlights);
-      
+
       const authorizedUserId = 5;
       const text = "Custom params test";
       const customParams = {
         sort: ["id:desc"],
         pagination: { pageSize: 50, page: 2 },
-        fields: ["id", "color"]
+        fields: ["id", "color"],
       };
-      
+
       await getHighlights(authorizedUserId, text, customParams);
-      
+
       // Verify custom parameters were passed to fetchAPI
       expect(fetchAPI).toHaveBeenCalledWith("/highlights", {
         urlParams: expect.objectContaining({
           sort: ["id:desc"],
           pagination: { pageSize: 50, page: 2 },
-          fields: ["id", "color"]
+          fields: ["id", "color"],
         }),
-        next: { tags: ["highlights"] }
+        next: { tags: ["highlights"] },
       });
     });
 
     it("should return empty array when no highlights found", async () => {
       fetchAPI.mockResolvedValueOnce([]);
-      
+
       const result = await getHighlights(5, "Non-existent text");
-      
+
       expect(result).toEqual([]);
     });
 
     it("should handle errors from fetchAPI", async () => {
       fetchAPI.mockRejectedValueOnce(new Error("Failed to fetch highlights"));
-      
-      await expect(getHighlights(5, "Error test")).rejects.toThrow("Failed to fetch highlights");
+
+      await expect(getHighlights(5, "Error test")).rejects.toThrow(
+        "Failed to fetch highlights",
+      );
     });
   });
 
@@ -140,24 +143,24 @@ describe("Highlights Tests", () => {
           text: "Important concept in lesson 1",
           color: "yellow",
           yLevel: 100,
-          lesson: { 
-            id: 201, 
-            name: "Introduction", 
+          lesson: {
+            id: 201,
+            name: "Introduction",
             slug: "intro",
-            droplet_lessons: [{ id: 301 }]
-          }
+            droplet_lessons: [{ id: 301 }],
+          },
         },
         {
           text: "Another highlight in lesson 2",
           color: "blue",
           yLevel: 200,
-          lesson: { 
-            id: 202, 
-            name: "Advanced Topics", 
+          lesson: {
+            id: 202,
+            name: "Advanced Topics",
             slug: "advanced",
-            droplet_lessons: [{ id: 302 }]
-          }
-        }
+            droplet_lessons: [{ id: 302 }],
+          },
+        },
       ];
 
       fetchAPI.mockResolvedValueOnce(mockHighlights);
@@ -176,88 +179,95 @@ describe("Highlights Tests", () => {
           filters: {
             lesson: {
               droplets: {
-                id: { $eq: dropletId }
-              }
+                id: { $eq: dropletId },
+              },
             },
             authorized_user: {
-              id: { $eq: authorizedUserId }
-            }
+              id: { $eq: authorizedUserId },
+            },
           },
           populate: {
             lesson: {
               fields: ["id", "name", "slug"],
               populate: {
                 droplet_lessons: {
-                  fields: ["id"]
-                }
-              }
-            }
+                  fields: ["id"],
+                },
+              },
+            },
           },
           fields: ["text", "color", "yLevel"],
-          pagination: { pageSize: 250, page: 1 }
+          pagination: { pageSize: 250, page: 1 },
         }),
-        next: { tags: ["highlights"] }
+        next: { tags: ["highlights"] },
       });
     });
 
     it("should use custom sort and pagination parameters when provided", async () => {
-      const mockHighlights = [{ text: "Custom sort test", color: "pink", yLevel: 150 }];
-      
+      const mockHighlights = [
+        { text: "Custom sort test", color: "pink", yLevel: 150 },
+      ];
+
       fetchAPI.mockResolvedValueOnce(mockHighlights);
-      
+
       const authorizedUserId = 5;
       const dropletId = 10;
       const customParams = {
         sort: ["color:asc"],
         pagination: { pageSize: 100, page: 3 },
-        fields: ["text", "color"]
+        fields: ["text", "color"],
       };
-      
+
       await getHighlightsByDroplet(authorizedUserId, dropletId, customParams);
-      
+
       // Verify custom parameters were passed to fetchAPI
       expect(fetchAPI).toHaveBeenCalledWith("/highlights", {
         urlParams: expect.objectContaining({
           sort: ["color:asc"],
           pagination: { pageSize: 100, page: 3 },
-          fields: ["text", "color"]
+          fields: ["text", "color"],
         }),
-        next: { tags: ["highlights"] }
+        next: { tags: ["highlights"] },
       });
     });
 
     it("should return empty array when no highlights found", async () => {
       fetchAPI.mockResolvedValueOnce([]);
-      
+
       const result = await getHighlightsByDroplet(5, 999);
-      
+
       expect(result).toEqual([]);
     });
 
     it("should handle errors from fetchAPI", async () => {
-      fetchAPI.mockRejectedValueOnce(new Error("Failed to fetch highlights by droplet"));
-      
-      await expect(getHighlightsByDroplet(5, 10)).rejects.toThrow("Failed to fetch highlights by droplet");
+      fetchAPI.mockRejectedValueOnce(
+        new Error("Failed to fetch highlights by droplet"),
+      );
+
+      await expect(getHighlightsByDroplet(5, 10)).rejects.toThrow(
+        "Failed to fetch highlights by droplet",
+      );
     });
-    
+
     it("should handle numeric and string inputs for IDs", async () => {
       fetchAPI.mockResolvedValueOnce([]);
-      
+
       // Test with string droplet ID (which should be converted to a number in the function)
       await getHighlightsByDroplet(5, "10");
-      
-      expect(fetchAPI).toHaveBeenCalledWith("/highlights", 
+
+      expect(fetchAPI).toHaveBeenCalledWith(
+        "/highlights",
         expect.objectContaining({
           urlParams: expect.objectContaining({
             filters: expect.objectContaining({
               lesson: {
                 droplets: {
-                  id: { $eq: "10" }
-                }
-              }
-            })
-          })
-        })
+                  id: { $eq: "10" },
+                },
+              },
+            }),
+          }),
+        }),
       );
     });
   });
