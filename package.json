@@ -15,6 +15,7 @@
     "@aws-sdk/client-s3": "^3.701.0",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.0",
+    "@lemonsqueezy/wedges": "^1.4.0",
     "@mui/material": "^6.4.5",
     "@mui/x-date-pickers": "^7.27.0",
     "@nextui-org/table": "^2.2.8",

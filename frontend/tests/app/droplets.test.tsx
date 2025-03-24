@@ -60,6 +60,54 @@ describe('Droplet Lesson Pages', () => {
     })
   })
 
+  describe('Image loading and drawing', () => {
+    let canvas: HTMLCanvasElement;
+    let ctx: CanvasRenderingContext2D;
+  
+    beforeEach(() => {
+      canvas = document.createElement('canvas');
+      ctx = canvas.getContext('2d')!;
+    });
+  
+    afterEach(() => {
+      jest.clearAllMocks();
+    });
+  
+    it('should draw the image and trigger confetti on load', () => {
+      const myConfetti = jest.fn(); 
+      const defaults = { foo: 'bar' }; 
+  
+      const image = new Image();
+  
+      jest.useFakeTimers();
+
+      image.onload = () => {
+        if (!ctx) return;
+  
+        ctx.drawImage(image, 0, 0);
+        const pattern = ctx.createPattern(image, "no-repeat");
+        expect(pattern).not.toBeNull();
+  
+        myConfetti({
+          ...defaults,
+          shapes: ["circle"],
+          colors: ["#297496"],
+          particleCount: 1000,
+        });
+  
+        setTimeout(() => {
+          canvas.remove();
+        }, 5000);
+      };
+
+      image.onload!(new Event('load'));
+
+      jest.runAllTimers();
+
+      expect(document.body.contains(canvas)).toBe(false);
+    });
+  });
+
   describe('NotFound Component', () => {
     it('renders not found message', () => {
       render(<NotFound />)
