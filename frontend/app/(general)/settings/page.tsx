@@ -53,7 +53,7 @@ export default async function Settings() {
 
   return (
     <>
-      <Card>
+      <Card className="border dark:border-slate-500 hover:border-slate-300 dark:bg-slate-800">
         <CardHeader>
           <CardTitle>Profile</CardTitle>
           <CardDescription>Your personal profile information.</CardDescription>
@@ -132,7 +132,7 @@ export default async function Settings() {
           <AuthorDroplets author={authorizedUser} />
         </Suspense>
       )}
-      <Card>
+      <Card className="border dark:border-slate-500 hover:border-slate-300 dark:bg-slate-800">
         <CardHeader>
           <CardTitle>Completed Droplets</CardTitle>
           <CardDescription>
@@ -150,7 +150,7 @@ export default async function Settings() {
           </div>
         </CardContent>
       </Card>
-      <Card>
+      <Card className="border dark:border-slate-500 hover:border-slate-300 dark:bg-slate-800">
         <CardHeader>
           <CardTitle>Statistics</CardTitle>
           <CardDescription>
