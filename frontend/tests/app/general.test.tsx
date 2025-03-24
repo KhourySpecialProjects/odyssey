@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react'
 import HomeRoute from '@/app/(general)/page'
 import NotFoundRoute from '@/app/(general)/not-found'
 import { getCurrentUser } from '@/lib/auth/session'
+import UnauthorizedRoute from '@/app/(general)/unauthorized/page'
 
 // Mock the getCurrentUser function
 jest.mock('@/lib/auth/session', () => ({
@@ -18,6 +19,13 @@ describe('General Pages', () => {
       expect(screen.queryByText('Request Access')).not.toBeInTheDocument()
     })
 
+  })
+
+  describe('UnauthorizedRoute', () => {
+    it('renders no access message', () => {
+      render(<UnauthorizedRoute />)
+      expect(screen.getByText('You do not have permission to access this application.')).toBeInTheDocument()
+    })
   })
 
   describe('NotFoundRoute', () => {

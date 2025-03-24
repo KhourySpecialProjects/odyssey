@@ -61,7 +61,6 @@ export default async function GroupDetailPage({ params }: Props) {
       <GroupHeader group={group} canEdit={canEdit} />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Sidebar with member information */}
         <div className="space-y-8">
           <div>
             <h2 className="text-xl font-semibold mb-4">Group Leadership</h2>
@@ -105,7 +104,6 @@ export default async function GroupDetailPage({ params }: Props) {
           </div>
         </div>
 
-        {/* Main content area */}
         <div className="lg:col-span-2 space-y-6">
           <ContentSection
             title="Group Description"
