@@ -6,7 +6,6 @@ jest.mock('flat', () => ({
   unflatten: jest.fn(obj => obj)
 }));
 
-// Mock react-dnd
 jest.mock('react-dnd', () => ({
   useDrag: () => [{ isDragging: false }, jest.fn()],
   useDrop: () => [{}, jest.fn()],

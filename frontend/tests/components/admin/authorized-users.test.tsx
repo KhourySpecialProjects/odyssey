@@ -2,7 +2,6 @@ import { render, screen } from "@testing-library/react";
 import { AuthorizedUsers } from "@/components/admin/users/authorized-users";
 import { fetchAuthorizedUsers } from "@/lib/requests/authorized-user";
 
-// Mock dependencies
 jest.mock("@/lib/requests/authorized-user", () => ({
   fetchAuthorizedUsers: jest.fn(),
 }));

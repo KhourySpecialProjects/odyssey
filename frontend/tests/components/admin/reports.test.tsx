@@ -2,7 +2,6 @@ import { render, screen } from "@testing-library/react";
 import { Reports } from "@/components/admin/reports/reports";
 import { fetchReports } from "@/lib/requests/data";
 
-// Mock dependencies
 jest.mock("@/lib/requests/data", () => ({
   fetchReports: jest.fn(),
 }));

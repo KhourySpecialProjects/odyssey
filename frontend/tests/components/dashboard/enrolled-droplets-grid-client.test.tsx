@@ -10,7 +10,6 @@ import {
   Tag,
 } from "@/types";
 
-// Mock DropletTile component
 jest.mock("@/components/droplets/droplet-tile", () => ({
   DropletTile: ({ droplet }: { droplet: any }) => (
     <div data-testid={`droplet-${droplet.id}`}>
@@ -60,12 +59,10 @@ describe("EnrolledDropletsGridClient", () => {
       />,
     );
 
-    // Should show only the first 9 droplets initially
     expect(screen.getByTestId("droplet-1")).toBeInTheDocument();
     expect(screen.getByTestId("droplet-9")).toBeInTheDocument();
     expect(screen.queryByTestId("droplet-10")).not.toBeInTheDocument();
 
-    // Should have a Next button
     expect(screen.getByText("Next")).toBeInTheDocument();
   });
 
@@ -78,10 +75,8 @@ describe("EnrolledDropletsGridClient", () => {
       />,
     );
 
-    // Click Next button
     fireEvent.click(screen.getByText("Next"));
 
-    // Should show droplets 10-12
     expect(screen.queryByTestId("droplet-1")).not.toBeInTheDocument();
     expect(screen.getByTestId("droplet-10")).toBeInTheDocument();
     expect(screen.getByTestId("droplet-12")).toBeInTheDocument();
@@ -96,13 +91,10 @@ describe("EnrolledDropletsGridClient", () => {
       />,
     );
 
-    // Go to second page
     fireEvent.click(screen.getByText("Next"));
 
-    // Then go back to first page
     fireEvent.click(screen.getByText("Previous"));
 
-    // Should show droplets 1-9 again
     expect(screen.getByTestId("droplet-1")).toBeInTheDocument();
     expect(screen.getByTestId("droplet-9")).toBeInTheDocument();
     expect(screen.queryByTestId("droplet-10")).not.toBeInTheDocument();
@@ -136,7 +128,6 @@ describe("EnrolledDropletsGridClient", () => {
       />,
     );
 
-    // We can't directly test the prop passing, but we can verify the component renders
     expect(screen.getByTestId("droplet-1")).toBeInTheDocument();
   });
 });

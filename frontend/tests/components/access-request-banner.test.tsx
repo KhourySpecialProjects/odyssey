@@ -1,8 +1,7 @@
-import { render, screen } from '@testing-library/react'
+import { render } from '@testing-library/react'
 import AccessRequestBanner from '@/components/access-request-banner'
 import { getServerSession } from 'next-auth'
 
-// Mock next-auth
 jest.mock('next-auth', () => ({
   getServerSession: jest.fn()
 }))

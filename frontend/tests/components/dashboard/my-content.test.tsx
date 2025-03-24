@@ -2,7 +2,6 @@ import { render, screen } from "@testing-library/react";
 import { MyContent } from "@/components/dashboard/my-content";
 import { getCurrentUser } from "@/lib/auth/session";
 
-// Mock dependencies
 jest.mock("@/lib/auth/session", () => ({
   getCurrentUser: jest.fn(),
 }));

@@ -1,7 +1,6 @@
 import { render, screen, fireEvent } from "@testing-library/react";
 import { ExpandableEditor } from "@/components/draft/lesson/blocks/expandable";
 
-// Mock the dependencies
 jest.mock("@/components/ui/tiptap/expandable-block-input", () => ({
   ExpandableBlockInput: ({
     initialContent,

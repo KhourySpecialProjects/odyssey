@@ -2,7 +2,6 @@ import { render, screen, fireEvent } from "@testing-library/react";
 import DebugToggle from "@/components/debug/toggle";
 import useDebugStore from "@/stores/debug-toggle-store";
 
-// Mock the debug store
 jest.mock("@/stores/debug-toggle-store", () => ({
   __esModule: true,
   default: jest.fn(),

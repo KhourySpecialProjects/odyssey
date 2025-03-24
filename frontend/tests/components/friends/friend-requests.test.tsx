@@ -1,52 +1,98 @@
-import { render, screen, fireEvent } from '@testing-library/react';
-import { FriendRequests } from '@/components/friends/friend-requests';
-import { AuthorizedUserRoleTitle } from '@/lib/globals';
-import { TimeZone } from '@/types';
+import { render, fireEvent } from '@testing-library/react'
+import { FriendRequests } from '@/components/friends/friend-requests'
 
 describe('FriendRequests', () => {
   const mockAuthUser = {
-    id: 1,
-    email: 'user@example.com',
-    firstName: 'John',
-    lastName: 'Doe',
-    bio: 'Test bio',
-    profilePhoto: 'https://example.com/photo.jpg',
-    isEnabled: true,
-    roles: [
-      { id: 1, title: AuthorizedUserRoleTitle.Faculty }
+    id: '1',
+    received_requests: [
+      { id: '2', lastName: 'Doe', firstName: 'John' },
+      { id: '3', lastName: 'Smith', firstName: 'Jane' },
+      { id: '4', lastName: 'Brown', firstName: 'Bob' }
     ],
-    linkedin: "https://www.google.com/",
-    github: "https://www.google.com/",
-    firstTime: false,
-    friendships: [],
-    sent_requests: [],
-    received_requests: [],
     blocked: [],
-    was_blocked: [],
-    timeZone: "America/New_York" as TimeZone
-  };
+    was_blocked: []
+  } as any
 
-  it('renders friend requests section', () => {
-    render(
+  it('filters and sorts friend requests correctly', () => {
+    const { getAllByRole } = render(
       <FriendRequests 
         noProfile={false} 
-        friendsPerPage={5} 
+        friendsPerPage={2} 
         authUser={mockAuthUser} 
       />
-    );
-    expect(screen.getByText('Friend Requests')).toBeInTheDocument();
-  });
+    )
 
-  it('shows empty state when no requests', () => {
-    const emptyUser = { ...mockAuthUser, received_requests: [] };
-    render(
+    const requestElements = getAllByRole('listitem')
+    expect(requestElements).toHaveLength(2) 
+  })
+
+  it('excludes blocked users from requests', () => {
+    const userWithBlocked = {
+      ...mockAuthUser,
+      blocked: [{ id: '2' }],
+      was_blocked: [{ id: '3' }]
+    }
+
+    const { getAllByRole } = render(
       <FriendRequests 
         noProfile={false} 
-        friendsPerPage={5} 
+        friendsPerPage={2} 
+        authUser={userWithBlocked} 
+      />
+    )
+
+    const requestElements = getAllByRole('listitem')
+    expect(requestElements).toHaveLength(1) // Only one user should remain
+  })
+
+  it('handles pagination correctly', () => {
+    const { getByRole, getAllByRole } = render(
+      <FriendRequests 
+        noProfile={false} 
+        friendsPerPage={2} 
+        authUser={mockAuthUser} 
+      />
+    )
+
+    // Check initial page
+    expect(getAllByRole('listitem')).toHaveLength(2)
+
+  })
+
+  it('renders correct component based on noProfile prop', () => {
+    const { container: profileContainer } = render(
+      <FriendRequests 
+        noProfile={false} 
+        friendsPerPage={2} 
+        authUser={mockAuthUser} 
+      />
+    )
+
+    const { container: feedContainer } = render(
+      <FriendRequests 
+        noProfile={true} 
+        friendsPerPage={2} 
+        authUser={mockAuthUser} 
+      />
+    )
+
+    expect(profileContainer.innerHTML).not.toBe(feedContainer.innerHTML)
+  })
+
+  it('displays empty state message when no requests', () => {
+    const emptyUser = {
+      ...mockAuthUser,
+      received_requests: []
+    }
+
+    const { getByText } = render(
+      <FriendRequests 
+        noProfile={false} 
+        friendsPerPage={2} 
         authUser={emptyUser} 
       />
-    );
-    expect(screen.getByText('You have no friend requests')).toBeInTheDocument();
-  });
+    )
 
-});
+    expect(getByText('You have no friend requests')).toBeInTheDocument()
+  })
+})

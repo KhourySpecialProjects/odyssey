@@ -67,11 +67,15 @@ export function VideoEditor({
                   url: youtubeUrlToEmbeddedUrl(url),
                 });
               }}
+              role="button"
+              aria-label="save"
             />
           ) : (
             <PencilIcon
               className="cursor-pointer text-slate-700 hover:text-slate-800"
               onClick={() => setOpen(true)}
+              role="button"
+              aria-label="edit"
             />
           )}
         </div>

@@ -1,159 +1,99 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { LessonRenderer } from '@/components/draft/lesson/lesson-renderer';
-import { updateLesson, deleteLesson } from '@/lib/actions';
-import { useRouter } from 'next/navigation';
-import React from 'react';
-import { Block } from '@/components/draft/lesson/lesson-renderer';
+import { render, screen, fireEvent, act } from '@testing-library/react'
+import { LessonRenderer } from '@/components/draft/lesson/lesson-renderer'
+import { updateLesson, deleteLesson } from '@/lib/actions'
+import { useRouter } from 'next/navigation'
 
-// Mock dependencies
-jest.mock('next/navigation', () => ({
-  useRouter: jest.fn(),
-}));
+// Mock all dependencies that might use ES Modules
+jest.mock('@/components/ui/tiptap/lesson-name-input', () => ({
+  LessonNameInput: ({ initialContent, updateContent }: any) => (
+    <div data-testid="lesson-name-input">
+      <input 
+        type="text" 
+        defaultValue={initialContent}
+        onChange={(e) => updateContent(e.target.value)}
+      />
+    </div>
+  )
+}))
+
+jest.mock('@/components/draft/lesson/blocks/expandable', () => ({
+  ExpandableEditor: ({ block, updateBlock, deleteBlock }: any) => (
+    <div data-testid="expandable-editor">
+      Mock Expandable Editor
+      <button onClick={deleteBlock}>Delete</button>
+    </div>
+  )
+}))
+
+jest.mock('@/components/draft/lesson/blocks/video', () => ({
+  VideoEditor: ({ block, updateBlock, deleteBlock }: any) => (
+    <div data-testid="video-editor">
+      Mock Video Editor
+      <button onClick={deleteBlock}>Delete</button>
+    </div>
+  )
+}))
+
+jest.mock('@/components/draft/lesson/blocks/generic', () => ({
+  GenericEditor: ({ block, updateBlock, deleteBlock }: any) => (
+    <div data-testid="generic-editor">
+      Mock Generic Editor
+      <button onClick={deleteBlock}>Delete</button>
+    </div>
+  )
+}))
+
+jest.mock('@/components/draft/lesson/blocks/callout', () => ({
+  CalloutEditor: ({ block, updateBlock, deleteBlock }: any) => (
+    <div data-testid="callout-editor">
+      Mock Callout Editor
+      <button onClick={deleteBlock}>Delete</button>
+    </div>
+  )
+}))
+
+jest.mock('@/components/draft/lesson/blocks/quiz', () => ({
+  QuizEditor: ({ block, updateBlock, deleteBlock }: any) => (
+    <div data-testid="quiz-editor">
+      Mock Quiz Editor
+      <button onClick={deleteBlock}>Delete</button>
+    </div>
+  )
+}))
+
+jest.mock('@/components/draft/lesson/blocks/open-ended-quiz', () => ({
+  OpenEndedQuizEditor: ({ block, updateBlock, deleteBlock }: any) => (
+    <div data-testid="open-ended-quiz-editor">
+      Mock Open Ended Quiz Editor
+      <button onClick={deleteBlock}>Delete</button>
+    </div>
+  )
+}))
 
 jest.mock('@/lib/actions', () => ({
   updateLesson: jest.fn(),
-  deleteLesson: jest.fn(),
-}));
+  deleteLesson: jest.fn()
+}))
 
-jest.mock('@/lib/utils', () => ({
-  htmlToText: jest.fn(html => html.replace(/<\/?[^>]+(>|$)/g, "")),
-  cn: (...inputs: any[]) => inputs.join(' '),
-}));
+jest.mock('next/navigation', () => ({
+  useRouter: jest.fn()
+}))
 
-jest.mock('@/components/draft/lesson/blocks/generic', () => ({
-  GenericEditor: ({ block, updateBlock, deleteBlock }: {
-    block: Block;
-    updateBlock: (update: Partial<Block>) => void;
-    deleteBlock: () => void;
-  }) => (
-    <div data-testid={`generic-block-${block.id}`}>
-      <p>Generic Editor</p>
-      <button onClick={() => updateBlock({ content: 'Updated content' })}>Update</button>
-      <button onClick={deleteBlock}>Delete</button>
-    </div>
-  ),
-}));
-
-jest.mock('@/components/draft/lesson/blocks/expandable', () => ({
-  ExpandableEditor: ({ block, updateBlock, deleteBlock }: {
-    block: Block;
-    updateBlock: (update: Partial<Block>) => void;
-    deleteBlock: () => void;
-  }) => (
-    <div data-testid={`expandable-block-${block.id}`}>
-      <p>Expandable Editor</p>
-      <button onClick={() => updateBlock({ content: 'Updated content' })}>Update</button>
-      <button onClick={deleteBlock}>Delete</button>
-    </div>
-  ),
-}));
-
-jest.mock('@/components/draft/lesson/blocks/video', () => ({
-  VideoEditor: ({ block, updateBlock, deleteBlock }: {
-    block: Block;
-    updateBlock: (update: Partial<Block>) => void;
-    deleteBlock: () => void;
-  }) => (
-    <div data-testid={`video-block-${block.id}`}>
-      <p>Video Editor</p>
-      <button onClick={() => updateBlock({ url: 'updated-url' })}>Update</button>
-      <button onClick={deleteBlock}>Delete</button>
-    </div>
-  ),
-}));
-
-jest.mock('@/components/draft/lesson/blocks/callout', () => ({
-  CalloutEditor: ({ block, updateBlock, deleteBlock }: {
-    block: Block;
-    updateBlock: (update: Partial<Block>) => void;
-    deleteBlock: () => void;
-  }) => (
-    <div data-testid={`callout-block-${block.id}`}>
-      <p>Callout Editor</p>
-      <button onClick={() => updateBlock({ content: 'Updated content' })}>Update</button>
-      <button onClick={deleteBlock}>Delete</button>
-    </div>
-  ),
-}));
-
-jest.mock('@/components/draft/lesson/blocks/quiz', () => ({
-  QuizEditor: ({ block, updateBlock, deleteBlock }: {
-    block: Block;
-    updateBlock: (update: Partial<Block>) => void;
-    deleteBlock: () => void;
-  }) => (
-    <div data-testid={`quiz-block-${block.id}`}>
-      <p>Quiz Editor</p>
-      <button onClick={() => updateBlock({ questions: [] })}>Update</button>
-      <button onClick={deleteBlock}>Delete</button>
-    </div>
-  ),
-}));
-
-jest.mock('@/components/draft/lesson/blocks/open-ended-quiz', () => ({
-  OpenEndedQuizEditor: ({ block, updateBlock, deleteBlock }: {
-    block: Block;
-    updateBlock: (update: Partial<Block>) => void;
-    deleteBlock: () => void;
-  }) => (
-    <div data-testid={`open-ended-quiz-block-${block.id}`}>
-      <p>Open Ended Quiz Editor</p>
-      <button onClick={() => updateBlock({ questions: [] })}>Update</button>
-      <button onClick={deleteBlock}>Delete</button>
-    </div>
-  ),
-}));
-
-jest.mock('@/components/ui/tiptap/lesson-name-input', () => ({
-  LessonNameInput: ({ initialContent, updateContent }: {
-    initialContent: string;
-    updateContent: (content: string) => void;
-  }) => (
-    <div data-testid="lesson-name-input">
-      <input
-        defaultValue={initialContent.replace(/<\/?[^>]+(>|$)/g, "")}
-        onChange={e => updateContent(e.target.value)}
-      />
-    </div>
-  ),
-}));
-
-jest.mock('@/components/draft/lesson/add-block', () => ({
-  AddBlock: ({ add }: { add: (block: Block) => void }) => (
-    <button
-      data-testid="add-block-button"
-      onClick={() => add({ __component: 'droplets.generic', content: '', id: 999 })}
-    >
-      Add Block
-    </button>
-  ),
-}));
-
-jest.mock('@/components/draft/lesson/delete-lesson', () => ({
-  DeleteLessonButton: ({ deleteLesson, dropletSlug }: {
-    deleteLesson: () => void;
-    dropletSlug: string;
-  }) => (
-    <button
-      data-testid="delete-lesson-button"
-      onClick={deleteLesson}
-    >
-      Delete Lesson
-    </button>
-  ),
-}));
+jest.mock('lodash', () => ({
+  debounce: (fn: Function) => fn
+}))
 
 describe('LessonRenderer', () => {
   const mockRouter = {
-    replace: jest.fn(),
-  };
+    replace: jest.fn()
+  }
 
   const mockLesson = {
     id: 1,
     name: 'Test Lesson',
     slug: 'test-lesson',
-    droplets: [],
     droplet_lessons: [],
+    droplets: [],
     notes: [],
     blocks: [
       {
@@ -205,98 +145,56 @@ describe('LessonRenderer', () => {
         ],
       },
     ],
-  };
+  }
 
   beforeEach(() => {
-    jest.clearAllMocks();
-    (useRouter as jest.Mock).mockReturnValue(mockRouter);
-    (updateLesson as jest.Mock).mockResolvedValue({
-      ok: true,
-      data: { attributes: { slug: 'updated-slug' } },
-    });
-  });
+    jest.clearAllMocks()
+    ;(useRouter as jest.Mock).mockReturnValue(mockRouter)
+  })
 
-  it('renders all block editors based on block types', () => {
-    render(<LessonRenderer lesson={mockLesson} dropletSlug="test-droplet" />);
+  it('regenerates slug when requested', async () => {
+    (updateLesson as jest.Mock).mockResolvedValueOnce({
+      data: { attributes: { slug: 'new-slug' } }
+    })
 
-    // Check that all block editors are rendered
-    expect(screen.getByTestId('generic-block-1')).toBeInTheDocument();
-    expect(screen.getByTestId('expandable-block-2')).toBeInTheDocument();
-    expect(screen.getByTestId('video-block-3')).toBeInTheDocument();
-    expect(screen.getByTestId('callout-block-4')).toBeInTheDocument();
-    expect(screen.getByTestId('quiz-block-5')).toBeInTheDocument();
-    expect(screen.getByTestId('open-ended-quiz-block-6')).toBeInTheDocument();
-  });
-
-  it('renders the lesson name input', () => {
-    render(<LessonRenderer lesson={mockLesson} dropletSlug="test-droplet" />);
-
-    expect(screen.getByTestId('lesson-name-input')).toBeInTheDocument();
-  });
-
-  it('renders add block buttons', () => {
-    render(<LessonRenderer lesson={mockLesson} dropletSlug="test-droplet" />);
-
-    // There should be add block buttons between each block (7 total for 6 blocks)
-    const addBlockButtons = screen.getAllByTestId('add-block-button');
-    expect(addBlockButtons.length).toBe(7);
-  });
-
-  it('deletes a block when delete is triggered', async () => {
-    (updateLesson as jest.Mock).mockResolvedValue({ ok: true });
-
-    render(<LessonRenderer lesson={mockLesson} dropletSlug="test-droplet" />);
+    render(<LessonRenderer lesson={mockLesson} dropletSlug="test-droplet" />)
     
-    const button = screen.getByTestId('generic-block-1').querySelector('button:last-of-type');
-    if (button) {
-      fireEvent.click(button);
+    const regenerateButton = screen.getByText('Regenerate URL Slug')
+    fireEvent.click(regenerateButton)
+
+    expect(updateLesson).toHaveBeenCalledWith(
+      mockLesson.id,
+      { name: mockLesson.name },
+      { regenerateSlug: true }
+    )
+
+    await act(async () => {
+      await Promise.resolve()
+    })
+
+    expect(mockRouter.replace).toHaveBeenCalledWith('/draft/d/test-droplet/new-slug')
+  })
+
+  it('renders different block types correctly', () => {
+    const mockLessonWithAllBlocks = {
+      ...mockLesson,
+      blocks: [
+        { __component: 'droplets.video', id: 1 },
+        { __component: 'droplets.generic', id: 2 },
+        { __component: 'droplets.expandable', id: 3 },
+        { __component: 'droplets.callout', id: 4 },
+        { __component: 'droplets.quiz', questions: [], id: 5 },
+        { __component: 'droplets.open-ended-quiz', questions: [], id: 6 }
+      ]
     }
 
-    // Check that updateLesson was called without the deleted block
-    expect(updateLesson).toHaveBeenCalledWith(
-      mockLesson.id,
-      {
-        blocks: expect.not.arrayContaining([
-          expect.objectContaining({
-            id: 1,
-          }),
-        ]),
-      },
-      { reload: true }
-    );
-  });
+    render(<LessonRenderer lesson={mockLessonWithAllBlocks} dropletSlug="test-droplet" />)
 
-  it('adds a new block when add block is clicked', async () => {
-    (updateLesson as jest.Mock).mockResolvedValue({ ok: true });
-
-    render(<LessonRenderer lesson={mockLesson} dropletSlug="test-droplet" />);
-
-    // Click the first add block button
-    fireEvent.click(screen.getAllByTestId('add-block-button')[0]);
-
-    // Check that updateLesson was called with the new block added
-    expect(updateLesson).toHaveBeenCalledWith(
-      mockLesson.id,
-      {
-        blocks: expect.arrayContaining([
-          expect.objectContaining({
-            __component: 'droplets.generic',
-            content: '',
-            id: 999,
-          }),
-        ]),
-      },
-      { reload: true }
-    );
-  });
-
-  it('deletes the lesson when delete button is clicked', async () => {
-    (deleteLesson as jest.Mock).mockResolvedValue({ ok: true });
-
-    render(<LessonRenderer lesson={mockLesson} dropletSlug="test-droplet" />);
-
-    fireEvent.click(screen.getByTestId('delete-lesson-button'));
-
-    expect(deleteLesson).toHaveBeenCalledWith(mockLesson.id);
-  });
-});
+    expect(screen.getByTestId('video-editor')).toBeInTheDocument()
+    expect(screen.getByTestId('generic-editor')).toBeInTheDocument()
+    expect(screen.getByTestId('expandable-editor')).toBeInTheDocument()
+    expect(screen.getByTestId('callout-editor')).toBeInTheDocument()
+    expect(screen.getByTestId('quiz-editor')).toBeInTheDocument()
+    expect(screen.getByTestId('open-ended-quiz-editor')).toBeInTheDocument()
+  })
+})

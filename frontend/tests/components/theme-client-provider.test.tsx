@@ -2,7 +2,6 @@ import { render } from '@testing-library/react'
 import { ThemeClientProvider } from '@/components/theme.client.provider'
 import { ThemeProvider } from 'next-themes'
 
-// Mock next-themes
 jest.mock('next-themes', () => ({
   ThemeProvider: jest.fn(({ children }) => <div>{children}</div>)
 }))

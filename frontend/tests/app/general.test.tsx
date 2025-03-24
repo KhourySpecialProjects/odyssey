@@ -4,7 +4,6 @@ import NotFoundRoute from '@/app/(general)/not-found'
 import { getCurrentUser } from '@/lib/auth/session'
 import UnauthorizedRoute from '@/app/(general)/unauthorized/page'
 
-// Mock the getCurrentUser function
 jest.mock('@/lib/auth/session', () => ({
   getCurrentUser: jest.fn()
 }))

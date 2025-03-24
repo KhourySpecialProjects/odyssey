@@ -5,7 +5,6 @@ import { getCurrentUser } from '@/lib/auth/session'
 import { getAuthorizedUserByEmail } from '@/lib/requests/authorized-user'
 import { getEnrollmentsByAuthorizedUser } from '@/lib/requests/enrollment'
 
-// Mock all the required functions
 jest.mock('@/lib/requests/playlist', () => ({
   getPlaylistBySlug: jest.fn()
 }))
