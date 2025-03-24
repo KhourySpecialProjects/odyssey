@@ -517,7 +517,7 @@ export async function fetchFriendshipsById(
     return authorizedUsers;
   } catch (error) {
     console.error("Database Error:", error);
-    throw new Error("Failed to fetch authorized users data.");
+    throw new Error("Failed to fetch friendships");
   }
 }
 
