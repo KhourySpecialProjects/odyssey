@@ -39,7 +39,6 @@ afterEach(() => {
   jest.restoreAllMocks(); // Restore console after each test
 });
 
-
 describe("Authorized User Tests", () => {
   // authorized-user.ts tests
   describe("getAuthorizedUserByEmail", () => {

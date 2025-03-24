@@ -83,7 +83,7 @@ describe("getAuthorizedUserRoleIdByTitle", () => {
       title: "User",
     };
 
-    fetchAPI.mockResolvedValue([mockRole])
+    fetchAPI.mockResolvedValue([mockRole]);
 
     const result = await getAuthorizedUserRoleIdByTitle("User");
     expect(result).toBe(1);
