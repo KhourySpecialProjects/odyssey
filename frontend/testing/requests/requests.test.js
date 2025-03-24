@@ -1,12 +1,3 @@
-const { getAuthorByAuthorizedUserEmail } = require("../../lib/requests/author");
-const {
-  getAuthorizedUserByEmail,
-  fetchAuthorizedUsers,
-  fetchIsAuthorizedUser,
-  fetchContentCreators,
-  fetchWebsiteCreators,
-  getAllAuthorizedUsers,
-} = require("../../lib/requests/authorized-user");
 const {
   getAuthorizedUserRoleIdByTitle,
 } = require("../../lib/requests/authorized-user-roles");

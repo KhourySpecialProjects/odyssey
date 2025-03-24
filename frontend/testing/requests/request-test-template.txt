@@ -1,0 +1,39 @@
+const {
+    getHighlights,
+    getHighlightsByDroplet
+  } = require("../../lib/requests/highlights");
+  const { flattenAttributes } = require("../../lib/utils");
+  const { fetchAPI } = require("../../lib/utils");
+
+  
+  jest.mock("../../lib/utils", () => ({
+    fetchAPI: jest.fn(),
+    flattenAttributes: jest.fn((data) => {
+      if (Array.isArray(data)) {
+        return data.map((item) => ({
+          id: item.id,
+          ...item.attributes,
+        }));
+      }
+      return data;
+    }),
+  }));
+  
+  global.fetch = jest.fn();
+  
+  //Comment this out if working on error testing (suppresses console error logs from error mocking)
+  
+  beforeEach(() => {
+    jest.spyOn(console, "error").mockImplementation(() => {}); // Suppress console errors
+    jest.spyOn(console, "warn").mockImplementation(() => {}); // Suppress console warnings
+  });
+  
+  afterEach(() => {
+    jest.restoreAllMocks(); // Restore console after each test
+  });
+  
+  // Mock Next.js cache functions
+  jest.mock("next/cache", () => ({
+    revalidatePath: jest.fn(),
+    revalidateTag: jest.fn(),
+  }));
