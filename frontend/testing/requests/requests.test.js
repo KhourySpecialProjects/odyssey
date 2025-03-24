@@ -1,4 +1,4 @@
-const { getAuthorByAuthorizedUserEmail } = require("../lib/requests/author");
+const { getAuthorByAuthorizedUserEmail } = require("../../lib/requests/author");
 const {
   getAuthorizedUserByEmail,
   fetchAuthorizedUsers,
@@ -6,49 +6,49 @@ const {
   fetchContentCreators,
   fetchWebsiteCreators,
   getAllAuthorizedUsers,
-} = require("../lib/requests/authorized-user");
+} = require("../../lib/requests/authorized-user");
 const {
   getAuthorizedUserRoleIdByTitle,
-} = require("../lib/requests/authorized-user-roles");
-const { fetchAPI } = require("../lib/utils");
+} = require("../../lib/requests/authorized-user-roles");
+const { fetchAPI } = require("../../lib/utils");
 const {
   fetchDroplets,
   fetchGroups,
   fetchAccessRequests,
   fetchReports,
-} = require("../lib/requests/data");
+} = require("../../lib/requests/data");
 const {
   getDroplets,
   getDropletBySlug,
   getDropletById,
   getDraftDroplets,
-} = require("../lib/requests/droplet");
+} = require("../../lib/requests/droplet");
 const {
   getIsEnrolled,
   getEnrollmentsByAuthorizedUser,
   getIsEnrollComplete,
   getEnrollByID,
-} = require("../lib/requests/enrollment");
-const { getLessonBySlug } = require("../lib/requests/lesson");
+} = require("../../lib/requests/enrollment");
+const { getLessonBySlug } = require("../../lib/requests/lesson");
 const {
   togglePlaylistEnrollment,
-} = require("../lib/requests/playlist-enrollment");
+} = require("../../lib/requests/playlist-enrollment");
 const {
   getPlaylistsByAuthor,
   getPlaylistById,
   getPlaylistBySlug,
   getPlaylists,
-} = require("../lib/requests/playlist");
-const { getTags, getTagBySlug } = require("../lib/requests/tag");
+} = require("../../lib/requests/playlist");
+const { getTags, getTagBySlug } = require("../../lib/requests/tag");
 //import { data } from "./mocks/strapiMock";
-const { flattenAttributes } = require("../lib/utils");
+const { flattenAttributes } = require("../../lib/utils");
 
-const data = require("./mocks/strapiMock");
-const mockUsers = require("./mocks/authorizedUsersMock");
-const mockGroups = require("./mocks/groupsMock");
-const mockNotes = require("./mocks/notesMock");
+const data = require("../mocks/strapiMock");
+const mockUsers = require("../mocks/authorizedUsersMock");
+const mockGroups = require("../mocks/groupsMock");
+const mockNotes = require("../mocks/notesMock");
 
-jest.mock("../lib/utils", () => ({
+jest.mock("../../lib/utils", () => ({
   fetchAPI: jest.fn(),
   flattenAttributes: jest.fn((data) => {
     if (Array.isArray(data)) {

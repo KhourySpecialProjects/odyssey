@@ -5,15 +5,15 @@ const {
   fetchContentCreators,
   fetchWebsiteCreators,
   getAllAuthorizedUsers,
-} = require("../lib/requests/authorized-user");
-const { fetchAPI } = require("../lib/utils");
+} = require("../../lib/requests/authorized-user");
+const { fetchAPI } = require("../../lib/utils");
 
-const { flattenAttributes } = require("../lib/utils");
+const { flattenAttributes } = require("../../lib/utils");
 
-const data = require("./mocks/strapiMock");
-const mockUsers = require("./mocks/authorizedUsersMock");
+const data = require("../mocks/strapiMock");
+const mockUsers = require("../mocks/authorizedUsersMock");
 
-jest.mock("../lib/utils", () => ({
+jest.mock("../../lib/utils", () => ({
   fetchAPI: jest.fn(),
   flattenAttributes: jest.fn((data) => {
     if (Array.isArray(data)) {

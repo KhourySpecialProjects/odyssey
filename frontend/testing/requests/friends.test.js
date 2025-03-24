@@ -1,5 +1,5 @@
-const { flattenAttributes } = require("../lib/utils");
-const { fetchAPI } = require("../lib/utils");
+const { flattenAttributes } = require("../../lib/utils");
+const { fetchAPI } = require("../../lib/utils");
 const {
   fetchFriends,
   getSentRequest,
@@ -13,14 +13,14 @@ const {
   removeFriend,
   fetchFriendshipsById,
   fetchSuggestionsById
-} = require("../lib/requests/friends");
+} = require("../../lib/requests/friends");
 
-const data = require("./mocks/strapiMock");
-const mockUsers = require("./mocks/authorizedUsersMock");
-const mockGroups = require("./mocks/groupsMock");
-const mockNotes = require("./mocks/notesMock");
+const data = require("../mocks/strapiMock");
+const mockUsers = require("../mocks/authorizedUsersMock");
+const mockGroups = require("../mocks/groupsMock");
+const mockNotes = require("../mocks/notesMock");
 
-jest.mock("../lib/utils", () => ({
+jest.mock("../../lib/utils", () => ({
   fetchAPI: jest.fn(),
   flattenAttributes: jest.fn((data) => {
     if (Array.isArray(data)) {

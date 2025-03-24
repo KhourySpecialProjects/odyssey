@@ -5,10 +5,10 @@ const {
   createKudosAnnouncement,
   createPlaylistAnnouncement,
   createGroupAnnouncement,
-} = require("../lib/requests/feed");
-const { flattenAttributes } = require("../lib/utils");
+} = require("../../lib/requests/feed");
+const { flattenAttributes } = require("../../lib/utils");
 
-jest.mock("../lib/utils", () => ({
+jest.mock("../../lib/utils", () => ({
   fetchAPI: jest.fn(),
   flattenAttributes: jest.fn((data) => {
     if (Array.isArray(data)) {
