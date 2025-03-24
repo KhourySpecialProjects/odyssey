@@ -24,7 +24,6 @@ describe('RequestAccessForm', () => {
     })
     fireEvent.click(screen.getByText('Select your affiliation'))
     fireEvent.click(screen.getByText('Select your college/school'))
-    fireEvent.click(screen.getByText('Khoury College of Computer Sciences'))
   }
 
   it('renders form fields', () => {

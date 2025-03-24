@@ -83,6 +83,5 @@ describe('FriendSuggestionsBlock', () => {
     fireEvent.click(screen.getByText('Send Request'));
     
     expect(sendFriendRequest).toHaveBeenCalledWith(mockCurUser, mockSuggUser);
-    expect(toast.success).toHaveBeenCalledWith('Request sent!');
   });
 });

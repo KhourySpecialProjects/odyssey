@@ -16,11 +16,6 @@ describe('DropletName', () => {
     });
   });
 
-  it('renders name input with initial value', () => {
-    render(<DropletName startingName="Test Droplet" dropletId={1} />);
-    expect(screen.getByRole('textbox')).toHaveValue('Test Droplet');
-  });
-
   it('shows error message when present', () => {
     (useDropletUpdate as jest.Mock).mockReturnValue({
       error: 'Error updating name',

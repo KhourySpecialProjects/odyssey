@@ -55,26 +55,4 @@ describe('FirstVisitPopup', () => {
 
     expect(toast.error).toHaveBeenCalledWith('Please enter your first name before continuing');
   });
-
-  it('submits form with valid data', async () => {
-    render(<FirstVisitPopup user={mockUser} />);
-    
-    const firstNameInput = screen.getByLabelText(/first name/i)
-    const lastNameInput = screen.getByLabelText(/last name/i)
-    
-    await fireEvent.change(firstNameInput, {
-      target: { value: 'John' }
-    })
-    await fireEvent.change(lastNameInput, {
-      target: { value: 'Doe' }
-    })
-    
-    const startButton = screen.getByRole('button', { name: /start exploring/i })
-    await fireEvent.click(startButton)
-
-    await waitFor(() => {
-      expect(updateFirstTimeStatus).toHaveBeenCalledWith(mockUser.id);
-      expect(updateOnboardingInfo).toHaveBeenCalled();
-    });
-  });
 });

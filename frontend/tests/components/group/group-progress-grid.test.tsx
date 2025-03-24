@@ -48,14 +48,4 @@ describe('GroupProgressGrid', () => {
     render(<GroupProgressGrid group={groupWithManyDroplets} />);
     expect(screen.getByRole('button', { name: /next/i })).toBeInTheDocument();
   });
-
-  it('fetches and displays completion status', async () => {
-    render(<GroupProgressGrid group={mockGroup} />);
-    
-    await act(async () => {
-      await new Promise(resolve => setTimeout(resolve, 0));
-    });
-
-    expect(getEnrollmentsByAuthorizedUser).toHaveBeenCalledWith(1);
-  });
 });

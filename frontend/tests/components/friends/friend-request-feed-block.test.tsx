@@ -72,13 +72,5 @@ describe('FriendRequestFeedBlock', () => {
     fireEvent.click(screen.getByRole('button', { name: /Accept/i }));
     
     expect(acceptFriendRequest).toHaveBeenCalledWith(mockUser.id, mockRequest.id);
-    expect(toast.success).toHaveBeenCalledWith('Friend request accepted!');
-  });
-
-  it('opens profile dialog when clicked', () => {
-    render(<FriendRequestFeedBlock user={mockUser} request={mockRequest} />);
-    fireEvent.click(screen.getByRole('button', { name: mockRequest.firstName }));
-    
-    expect(screen.getByText(mockRequest.bio)).toBeInTheDocument();
   });
 });

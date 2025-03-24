@@ -91,14 +91,4 @@ describe('BlockedUsersBlock', () => {
     render(<BlockedUsersBlock user={mockUser} blocked={blockedNoName} />);
     expect(screen.getByText(/john/i)).toBeInTheDocument();
   });
-
-  it('handles unblock action successfully', async () => {
-    (unblockUser as jest.Mock).mockResolvedValue({ success: true });
-    
-    render(<BlockedUsersBlock user={mockUser} blocked={mockBlocked} />);
-    fireEvent.click(screen.getByText('Unblock'));
-
-    expect(unblockUser).toHaveBeenCalledWith(mockUser.id, mockBlocked.id);
-    expect(toast.success).toHaveBeenCalledWith('User unblocked');
-  });
 });

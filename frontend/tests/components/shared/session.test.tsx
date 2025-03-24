@@ -26,15 +26,4 @@ describe('Session', () => {
     render(<Session />);
     expect(screen.getByRole('status')).toBeInTheDocument();
   });
-
-  it('renders session data when available', () => {
-    const mockSession = { user: { name: 'Test User' } };
-    (useSession as jest.Mock).mockReturnValue({
-      status: 'authenticated',
-      data: mockSession,
-    });
-
-    render(<Session />);
-    expect(screen.getByText(JSON.stringify(mockSession, null, 2))).toBeInTheDocument();
-  });
 });

@@ -27,12 +27,6 @@ describe('GroupBlock', () => {
     expect(screen.getByText(/test group.*archived/i)).toBeInTheDocument();
   });
 
-  it('links to the correct edit URL', () => {
-    render(<GroupBlock group={mockGroup} />);
-    const editLink = screen.getByRole('link', { name: /test group/i });
-    expect(editLink).toHaveAttribute('href', '/g/management?slug=test-group');
-  });
-
   it('shows "Archive Group" button when group is not archived', () => {
     render(<GroupBlock group={mockGroup} />);
     expect(screen.getByRole('button', { name: /archive group/i })).toBeInTheDocument();

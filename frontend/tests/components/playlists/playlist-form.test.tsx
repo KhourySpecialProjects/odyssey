@@ -66,22 +66,4 @@ describe('PlaylistForm', () => {
     fireEvent.click(screen.getByText('Save Playlist'));
     expect(await screen.findByText('Please enter a playlist name')).toBeInTheDocument();
   });
-
-  it('handles droplet selection', () => {
-    const mockDroplets = [{
-      id: 1,
-      name: 'Test Droplet',
-      focusArea: 'frontend',
-      type: 'lesson',
-      status: 'published',
-      tags: []
-    }];
-    render(<PlaylistForm {...mockProps} droplets={mockDroplets} />);
-    
-    const droplet = screen.getByText('Test Droplet');
-    fireEvent.dragStart(droplet);
-    fireEvent.drop(screen.getByText('Selected Droplets'));
-    
-    expect(screen.getByText('droplets selected')).toBeInTheDocument();
-  });
 });

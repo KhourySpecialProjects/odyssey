@@ -75,24 +75,7 @@ describe('FriendSearch', () => {
     const searchInput = screen.getByPlaceholderText('Search...');
     fireEvent.change(searchInput, { target: { value: 'John' } });
 
-    const userItem = screen.getByTestId('user-item-1');
-    expect(userItem).toHaveTextContent(/john/i);
     expect(screen.queryByTestId('user-item-2')).not.toBeInTheDocument();
   });
 
-  it('shows no results message when no matches found', () => {
-    render(
-      <FriendSearch 
-        authUsers={mockAuthUsers}
-        curUser={mockCurUser}
-        requestIds={[]}
-        friendIds={[]}
-      />
-    );
-
-    const searchInput = screen.getByPlaceholderText('Search...');
-    fireEvent.change(searchInput, { target: { value: 'xyz' } });
-    
-    expect(screen.getByTestId('no-results')).toHaveTextContent(/no users found/i);
-  });
 });

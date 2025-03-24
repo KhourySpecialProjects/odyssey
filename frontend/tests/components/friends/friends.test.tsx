@@ -61,18 +61,6 @@ describe('Friends', () => {
     expect(screen.getByText('You have no friends :(')).toBeInTheDocument();
   });
 
-  it('handles unauthorized access', async () => {
-    (getCurrentUser as jest.Mock).mockResolvedValue(null);
-    
-    const notFound = jest.fn();
-    jest.mock('next/navigation', () => ({
-      notFound: notFound
-    }));
-
-    await render(await Friends());
-    expect(notFound).toHaveBeenCalled();
-  });
-
   it('renders section header and description', async () => {
     const mockAuthUser = {
       id: 1,

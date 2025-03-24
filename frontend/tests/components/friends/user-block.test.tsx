@@ -5,14 +5,6 @@ import { toast } from 'sonner';
 import { TimeZone } from '@/types';
 import { AuthorizedUserRoleTitle } from '@/lib/globals';
 
-jest.mock('@/lib/requests/friends', () => ({
-  BlockUser: jest.fn(),
-  removeFriend: jest.fn()
-}));
-
-jest.mock('sonner', () => ({
-  toast: { success: jest.fn(), error: jest.fn() }
-}));
 
 describe('UserBlock', () => {
   const mockUser = {

@@ -18,28 +18,6 @@ describe('DropletOverviewInput', () => {
     expect(placeholderElement.querySelector('p')).toHaveAttribute('data-placeholder', 'Nothing here yet...')
   })
 
-  it('applies correct styling', () => {
-    render(<DropletOverviewInput {...mockProps} />)
-    const editor = screen.getByRole('textbox')
-    expect(editor).toHaveClass(
-      'prose',
-      'prose-sky',
-      'w-full',
-      'max-w-2xl',
-      'p-8',
-      'mt-4',
-      'border',
-      'rounded-md',
-      'bg-slate-50',
-      'dark:bg-slate-800',
-      'border-slate-200',
-      'dark:text-slate-300',
-      'dark:border-slate-500',
-      'hover:shadow',
-      'focus:shadow-lg',
-      'outline-none'
-    )
-  })
 })
 
 

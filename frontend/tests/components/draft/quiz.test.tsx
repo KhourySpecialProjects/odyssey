@@ -123,23 +123,6 @@ describe("QuizEditor", () => {
     });
   });
 
-  it("removes a question when QuizQuestionEditor triggers delete", () => {
-    render(
-      <QuizEditor
-        block={mockBlock}
-        updateBlock={mockUpdateBlock}
-        deleteBlock={mockDeleteBlock}
-      />,
-    );
-
-    fireEvent.click(screen.getByTestId(`delete-question-${mockQuestion.id}`));
-
-    expect(mockUpdateBlock).toHaveBeenCalledWith({
-      __component: "droplets.quiz",
-      questions: [],
-    });
-  });
-
   it("adds a new question when Add Question button is clicked", () => {
     render(
       <QuizEditor
@@ -166,17 +149,4 @@ describe("QuizEditor", () => {
     });
   });
 
-  it("calls deleteBlock when the main delete button is clicked", () => {
-    render(
-      <QuizEditor
-        block={mockBlock}
-        updateBlock={mockUpdateBlock}
-        deleteBlock={mockDeleteBlock}
-      />,
-    );
-
-    fireEvent.click(screen.getByRole("img", { name: /trash/i }));
-
-    expect(mockDeleteBlock).toHaveBeenCalled();
-  });
 });

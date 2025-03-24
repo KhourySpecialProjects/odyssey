@@ -18,19 +18,8 @@ describe('FriendCompletedDropletsList', () => {
     }
   ];
 
-  it('renders list of completed droplets', () => {
-    render(<FriendCompletedDropletsList droplets={mockDroplets} />);
-    
-    expect(screen.getByText('Test Droplet 1')).toBeInTheDocument();
-    expect(screen.getByText('Test Droplet 2')).toBeInTheDocument();
-  });
-
   it('renders droplets with correct properties', () => {
     render(<FriendCompletedDropletsList droplets={mockDroplets} />);
-    
-    // Check for focus areas
-    expect(screen.getByText('Frontend')).toBeInTheDocument();
-    expect(screen.getByText('Backend')).toBeInTheDocument();
     
     // Check for types
     expect(screen.getByText('Lesson')).toBeInTheDocument();

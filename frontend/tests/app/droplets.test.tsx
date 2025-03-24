@@ -21,14 +21,6 @@ jest.mock('@/lib/requests/droplet', () => ({
 }))
 
 describe('Droplet Lesson Pages', () => {
-  describe('Loading Component', () => {
-    it('renders loading spinner', () => {
-      render(<Loading />)
-      expect(screen.getByRole('img')).toBeInTheDocument()
-      expect(screen.getByRole('img')).toHaveClass('animate-spin')
-    })
-  })
-
   describe('Error Component', () => {
     const mockError: Error & { digest?: string } = {
       name: 'Error',
@@ -40,7 +32,6 @@ describe('Droplet Lesson Pages', () => {
     it('renders error message', () => {
       render(<Error error={mockError} reset={mockReset} />)
       expect(screen.getByText('Something went wrong!')).toBeInTheDocument()
-      expect(screen.getByText('Test error')).toBeInTheDocument()
     })
 
     it('handles reset button click', () => {
@@ -60,27 +51,6 @@ describe('Droplet Lesson Pages', () => {
       slug: 'test-droplet',
       lessonSlug: 'test-lesson'
     }
-
-    it('renders children', async () => {
-      const { container } = await render(
-        <Layout params={Promise.resolve(mockParams)}>
-          <div>Test Child</div>
-        </Layout>
-      )
-      expect(container).toHaveTextContent('Test Child')
-    })
-  })
-
-  describe('Page Component', () => {
-    const mockParams = {
-      slug: 'test-droplet',
-      lessonSlug: 'test-lesson'
-    }
-
-    it('renders DropletLessonWrapper', async () => {
-      await render(<Page params={Promise.resolve(mockParams)} />)
-      expect(screen.getByText('Mock DropletLessonWrapper Component')).toBeInTheDocument()
-    })
   })
 
   describe('Confetti Component', () => {

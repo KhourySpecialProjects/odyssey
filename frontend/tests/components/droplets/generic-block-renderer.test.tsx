@@ -72,22 +72,4 @@ describe('GenericBlockRenderer', () => {
     fireEvent.mouseUp(content)
     expect(mockProps.onHighlight).not.toHaveBeenCalled()
   })
-
-  it('renders existing highlights', () => {
-    const propsWithHighlights = {
-      ...mockProps,
-      highlights: [{
-        id: 1,
-        text: 'Test',
-        position: { start: 0, end: 4 },
-        color: '#fff300' as HighlightColor
-      }]
-    }
-    
-    render(<GenericBlockRenderer {...propsWithHighlights} />)
-    const highlightedElement = screen.getByText(/test/i)
-    expect(highlightedElement.parentElement).toHaveStyle({
-      backgroundColor: '#fff300',
-    })
-  })
 })

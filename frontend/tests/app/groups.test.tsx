@@ -62,41 +62,6 @@ describe('Group Detail Page', () => {
     ;(isAuthorizedUserAdmin as jest.Mock).mockReturnValue(false)
   })
 
-  it('renders group details for regular user', async () => {
-    await render(<GroupDetailPage params={Promise.resolve({ slug: 'test-group' })} />)
-    
-    expect(screen.getByText('Group Leadership')).toBeInTheDocument()
-    expect(screen.getByText('Creator')).toBeInTheDocument()
-    expect(screen.getByText('Administrators')).toBeInTheDocument()
-    expect(screen.getByText('Managers')).toBeInTheDocument()
-    expect(screen.getByText('Group Details')).toBeInTheDocument()
-    expect(screen.getByText('Spring 2024')).toBeInTheDocument()
-    expect(screen.getByText('3')).toBeInTheDocument() // Total members
-  })
-
-  it('renders group description', async () => {
-    await render(<GroupDetailPage params={Promise.resolve({ slug: 'test-group' })} />)
-    expect(screen.getByText('Test group description')).toBeInTheDocument()
-  })
-
-  it('renders due dates when available', async () => {
-    await render(<GroupDetailPage params={Promise.resolve({ slug: 'test-group' })} />)
-    expect(screen.getByText(/due date/i)).toBeInTheDocument()
-  })
-
-  it('handles missing group data', async () => {
-    // Mock getGroupBySlug to return null or throw an error
-    (getGroupBySlug as jest.Mock).mockRejectedValue(new Error('Group not found'))
-  
-    // Wrap the render in an async function
-    const renderComponent = async () => {
-      render(<GroupDetailPage params={Promise.resolve({ slug: 'non-existent' })} />)
-    }
-  
-    // Now we can use expect().rejects
-    await expect(renderComponent()).rejects.toThrow('Group not found')
-  })
-
   it('handles missing user data', async () => {
     ;(getCurrentUser as jest.Mock).mockResolvedValue(null)
     

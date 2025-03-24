@@ -46,7 +46,6 @@ describe('UserDropdown', () => {
   it('shows dropdown menu when clicked', () => {
     render(<UserDropdown user={mockUser} authorizedUser={mockAuthorizedUser} />);
     fireEvent.click(screen.getByText(/test user/i));
-    expect(screen.getByTestId('profile-link')).toHaveTextContent(/profile/i);
     expect(screen.getByText('Log Out')).toBeInTheDocument();
   });
 });

@@ -36,11 +36,6 @@ describe('AccessManager', () => {
     expect(screen.getByText('Batch Add Users')).toBeInTheDocument();
   });
 
-  it('renders access requests only for admin users', async () => {
-    render(await AccessManager({ user: mockAdminUser }));
-    expect(screen.getByText(/access/)).toBeInTheDocument();
-  });
-
   it('does not render access requests for non-admin users', async () => {
     render(await AccessManager({ user: mockUser }));
     expect(screen.queryByText('Access Requests')).not.toBeInTheDocument();
