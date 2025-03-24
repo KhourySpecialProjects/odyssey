@@ -4,16 +4,16 @@ const {
   updateNoteContent,
   updateNotePosition,
   createNote,
-} = require("../lib/requests/notes");
-const { flattenAttributes } = require("../lib/utils");
-const { fetchAPI } = require("../lib/utils");
+} = require("../../lib/requests/notes");
+const { flattenAttributes } = require("../../lib/utils");
+const { fetchAPI } = require("../../lib/utils");
 
-const data = require("./mocks/strapiMock");
-const mockUsers = require("./mocks/authorizedUsersMock");
-const mockGroups = require("./mocks/groupsMock");
-const mockNotes = require("./mocks/notesMock");
+const data = require("../mocks/strapiMock");
+const mockUsers = require("../mocks/authorizedUsersMock");
+const mockGroups = require("../mocks/groupsMock");
+const mockNotes = require("../mocks/notesMock");
 
-jest.mock("../lib/utils", () => ({
+jest.mock("../../lib/utils", () => ({
   fetchAPI: jest.fn(),
   flattenAttributes: jest.fn((data) => {
     if (Array.isArray(data)) {
