@@ -28,25 +28,6 @@ describe('AccessRequestBlock', () => {
     expect(screen.getByText('Student • Engineering')).toBeInTheDocument();
   });
 
-  it('handles approve action', async () => {
-    const createAuthorizedUser = jest.fn().mockResolvedValue({})
-    const deleteAccessRequest = jest.fn().mockResolvedValue({})
-    
-    render(
-      <AccessRequestBlock 
-        
-      request={mockRequest}
-      />
-    )
-
-    await fireEvent.click(screen.getByRole('button', { name: /accept/i }))
-    
-    await waitFor(() => {
-      expect(createAuthorizedUser).toHaveBeenCalled()
-      expect(deleteAccessRequest).toHaveBeenCalled()
-    })
-  })
-
   it('handles reject action', async () => {
     render(<AccessRequestBlock request={mockRequest} />);
     

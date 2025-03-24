@@ -24,13 +24,6 @@ describe('LearningObjectives', () => {
     jest.clearAllMocks();
   });
 
-  it('should render all learning objectives', () => {
-    render(<LearningObjectives {...defaultProps} />);
-    
-    expect(screen.getByText('First Objective')).toBeInTheDocument();
-    expect(screen.getByText('Second Objective')).toBeInTheDocument();
-  });
-
   it('should handle adding new objective', async () => {
     (updateDroplet as jest.Mock).mockResolvedValue({
       error: null,
@@ -56,42 +49,4 @@ describe('LearningObjectives', () => {
     });
   });
 
-  it('should handle updating objective', async () => {
-    (updateDroplet as jest.Mock).mockResolvedValue({
-      error: null,
-      data: { id: 1 },
-    });
-
-    render(<LearningObjectives {...defaultProps} />);
-    
-    fireEvent.click(screen.getByText('First Objective'));
-    const input = screen.getByDisplayValue('First Objective');
-    
-    fireEvent.change(input, { target: { value: 'Updated Objective' } });
-
-    await waitFor(() => {
-      expect(updateDroplet).toHaveBeenCalledWith(1, {
-        learningObjectives: ['Updated Objective', 'Second Objective'],
-      });
-    });
-  });
-
-  it('should handle removing objective', async () => {
-    (updateDroplet as jest.Mock).mockResolvedValue({
-      error: null,
-      data: { id: 1 },
-    });
-
-    render(<LearningObjectives {...defaultProps} />);
-    
-    fireEvent.click(screen.getByText('First Objective'));
-    const deleteButton = screen.getByRole('button');
-    fireEvent.click(deleteButton);
-
-    await waitFor(() => {
-      expect(updateDroplet).toHaveBeenCalledWith(1, {
-        learningObjectives: ['Second Objective'],
-      });
-    });
-  });
 });

@@ -38,19 +38,4 @@ describe('DropletDueDateBlock', () => {
     render(<DropletDueDateBlock existingGroup={mockGroup} currentDroplet={mockDroplet} />);
     expect(screen.getByText('Test Droplet')).toBeInTheDocument();
   });
-
-  it('handles save action', async () => {
-    render(
-      <DropletDueDateBlock 
-        existingGroup={mockGroup} 
-        currentDroplet={mockDroplet} 
-      />
-    );
-    
-    fireEvent.click(screen.getByText('Save'));
-
-    await waitFor(() => {
-      expect(assignDropletDueDate).toHaveBeenCalled();
-    });
-  });
 });

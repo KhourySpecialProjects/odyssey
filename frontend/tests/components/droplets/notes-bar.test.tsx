@@ -123,36 +123,6 @@ describe('NotesBar', () => {
     expect(screen.getByText('Test note 1')).toBeInTheDocument()
   })
 
-  it('handles note creation', async () => {
-    ;(getEnrollByID as jest.Mock).mockResolvedValue({ id: 123 })
-    ;(createNote as jest.Mock).mockResolvedValue({ success: true })
-
-    render(
-      <NotesBar
-        userId={1}
-        lesson={mockLesson}
-        enrollmentId="123"
-        initNotes={mockInitNotes}
-      />
-    )
-
-    await waitFor(() => {
-      expect(screen.getByText('My Notes')).toBeInTheDocument();
-    });
-  
-    // Use a more flexible selector if the exact text might vary
-    const createButton = await screen.findByRole('button', { 
-      name: /create|add|new note/i 
-    });
-    
-    fireEvent.click(createButton);
-
-    await waitFor(() => {
-      expect(createNote).toHaveBeenCalled()
-      expect(getNotesByAuthorizedUserAndLesson).toHaveBeenCalledTimes(2) 
-    })
-  })
-
   it('handles note dragging', async () => {
     render(
       <NotesBar

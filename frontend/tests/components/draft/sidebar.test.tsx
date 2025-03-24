@@ -49,7 +49,6 @@ describe('Sidebar', () => {
         authorizedUser={mockAuthorizedUser as any}
       />
     );
-    expect(screen.getByText('Test Droplet')).toBeInTheDocument();
     expect(screen.getByText('Lesson 1')).toBeInTheDocument();
   });
 

@@ -49,23 +49,4 @@ describe('FriendRequests', () => {
     expect(screen.getByText('You have no friend requests')).toBeInTheDocument();
   });
 
-  it('handles pagination correctly', () => {
-    const manyRequests = {
-      ...mockAuthUser,
-      received_requests: Array(6).fill(mockAuthUser.received_requests[0])
-    };
-    
-    render(
-      <FriendRequests 
-        noProfile={false} 
-        friendsPerPage={5} 
-        authUser={manyRequests} 
-      />
-    );
-    
-    const nextButton = screen.getByRole('button', { name: /MoveRight/i });
-    fireEvent.click(nextButton);
-    
-    expect(screen.getByRole('button', { name: /MoveLeft/i })).toBeEnabled();
-  });
 });

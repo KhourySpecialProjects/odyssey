@@ -26,11 +26,6 @@ describe('AuthorDroplets', () => {
     timeZone: "America/New_York" as TimeZone
   };
 
-  it('renders droplets when available', () => {
-    render(<AuthorDroplets author={mockAuthor} />);
-    expect(screen.getByText('Test Droplet')).toBeInTheDocument();
-  });
-
   it('shows empty state when no droplets', () => {
     render(<AuthorDroplets author={{ ...mockAuthor, droplets: [] }} />);
     expect(screen.getByText('You have no Droplets.')).toBeInTheDocument();

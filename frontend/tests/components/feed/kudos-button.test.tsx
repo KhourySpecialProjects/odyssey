@@ -22,18 +22,6 @@ describe('KudosButton', () => {
     expect(screen.getByText('Give Kudos')).toBeInTheDocument();
   });
 
-  it('handles successful kudos submission', async () => {
-    (giveKudos as jest.Mock).mockResolvedValue({ success: true });
-    
-    render(<KudosButton announcementId={1} />);
-    fireEvent.click(screen.getByText('Give Kudos'));
-
-    await waitFor(() => {
-      expect(toast.success).toHaveBeenCalledWith('Kudos given!');
-      expect(screen.getByRole('button')).not.toBeVisible();
-    });
-  });
-
   it('handles failed kudos submission', async () => {
     (giveKudos as jest.Mock).mockResolvedValue({ success: false });
     

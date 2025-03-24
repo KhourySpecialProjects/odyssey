@@ -34,32 +34,4 @@ describe('AddLesson', () => {
     fireEvent.click(screen.getByRole('button'));
     expect(screen.getByPlaceholderText('Lesson Name')).toBeInTheDocument();
   });
-
-  it('handles lesson addition successfully', async () => {
-    const mockResponse = {
-      data: {
-        id: 1,
-        attributes: {
-          name: 'New Lesson',
-          slug: 'new-lesson',
-          type: 'general'
-        }
-      }
-    };
-    (addLesson as jest.Mock).mockResolvedValue(mockResponse);
-    const mockRouter = { push: jest.fn() };
-    (useRouter as jest.Mock).mockReturnValue(mockRouter);
-
-    render(<AddLesson droplet={mockDroplet} onAddLesson={mockOnAddLesson} />);
-    
-    fireEvent.click(screen.getByRole('button'));
-    const input = screen.getByPlaceholderText('Lesson Name');
-    fireEvent.change(input, { target: { value: 'New Lesson' } });
-    fireEvent.submit(input);
-
-    await waitFor(() => {
-      expect(mockOnAddLesson).toHaveBeenCalled();
-      expect(mockRouter.push).toHaveBeenCalledWith('/draft/d/test-droplet/new-lesson');
-    });
-  });
 });

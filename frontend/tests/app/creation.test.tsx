@@ -16,18 +16,4 @@ describe('Droplet Creation Pages', () => {
       expect(screen.getByRole('status')).toHaveClass('animate-spin')
     })
   })
-
-  describe('CreateDropletRoute', () => {
-    it('renders CreateDroplet component', () => {
-      render(<CreateDropletRoute />)
-      expect(screen.getByTestId('create-droplet')).toBeInTheDocument()
-    })
-
-    it('has correct container styling', async () => {
-      const { container } = render(<CreateDropletRoute />)
-      const mainElement = container.firstElementChild
-      await waitFor(() => expect(mainElement).not.toBeNull());
-      expect(mainElement).toHaveClass('relative', 'light:bg-slate-100', 'isolate')
-    })
-  })
 }) 

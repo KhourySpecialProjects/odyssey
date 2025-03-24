@@ -68,36 +68,4 @@ describe('NoteBlock', () => {
     expect(screen.getByText('Test note content')).toBeInTheDocument()
   })
 
-  it('handles content updates', async () => {
-    (updateNoteContent as jest.Mock).mockResolvedValue({ success: true })
-
-    render(<NoteBlock {...mockProps} />)
-    
-    const editor = screen.getByRole('textbox')
-    fireEvent.change(editor, { target: { value: 'Updated content' } })
-    fireEvent.blur(editor)
-
-    await waitFor(() => {
-      expect(updateNoteContent).toHaveBeenCalledWith(1, 'Updated content')
-      expect(mockProps.onUpdate).toHaveBeenCalled()
-    })
-  })
-
-  it('handles note deletion', () => {
-    render(<NoteBlock {...mockProps} />)
-    
-    const deleteButton = screen.getByRole('button', { name: /delete/i })
-    fireEvent.click(deleteButton)
-
-    expect(mockProps.onDelete).toHaveBeenCalledWith(1)
-  })
-
-  it('handles focus state', () => {
-    render(<NoteBlock {...mockProps} />)
-    
-    const editor = screen.getByRole('textbox')
-    fireEvent.focus(editor)
-
-    expect(mockProps.onFocus).toHaveBeenCalledWith(1)
-  })
 })

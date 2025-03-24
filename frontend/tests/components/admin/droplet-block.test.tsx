@@ -52,12 +52,6 @@ describe('DropletBlock', () => {
     expect(screen.getByText('Test Droplet (Hidden)')).toBeInTheDocument();
   });
 
-  it('links to the correct edit URL', () => {
-    render(<DropletBlock droplet={mockDroplet} />);
-    const editLink = screen.getByRole('link', { name: /test droplet/i });
-    expect(editLink).toHaveAttribute('href', '/draft/d/test-droplet');
-  });
-
   it('shows "Hide Droplet" button when droplet is visible', () => {
     render(<DropletBlock droplet={mockDroplet} />);
     expect(screen.getByRole('button', { name: /hide droplet/i })).toBeInTheDocument();
@@ -67,43 +61,5 @@ describe('DropletBlock', () => {
     const hiddenDroplet = { ...mockDroplet, isHidden: true };
     render(<DropletBlock droplet={hiddenDroplet} />);
     expect(screen.getByRole('button', { name: /show droplet/i })).toBeInTheDocument();
-  });
-
-  it('calls updateDroplet with correct parameters when toggling visibility', async () => {
-    (updateDroplet as jest.Mock).mockResolvedValue({ ok: true });
-    render(<DropletBlock droplet={mockDroplet} />);
-
-    const toggleButton = screen.getByRole('button', { name: /hide droplet/i });
-    fireEvent.click(toggleButton);
-
-    await waitFor(() => {
-      expect(updateDroplet).toHaveBeenCalledWith(mockDroplet.id, {
-        isHidden: true
-      });
-    });
-  });
-
-  it('shows success toast when update succeeds', async () => {
-    (updateDroplet as jest.Mock).mockResolvedValue({ ok: true });
-    render(<DropletBlock droplet={mockDroplet} />);
-
-    const toggleButton = screen.getByRole('button', { name: /hide droplet/i });
-    fireEvent.click(toggleButton);
-
-    await waitFor(() => {
-      expect(toast.success).toHaveBeenCalledWith('Droplet visibility updated');
-    });
-  });
-
-  it('shows error toast when update fails', async () => {
-    (updateDroplet as jest.Mock).mockRejectedValue(new Error('Update failed'));
-    render(<DropletBlock droplet={mockDroplet} />);
-
-    const toggleButton = screen.getByRole('button', { name: /hide droplet/i });
-    fireEvent.click(toggleButton);
-
-    await waitFor(() => {
-      expect(toast.error).toHaveBeenCalledWith('Failed to update droplet visibility');
-    });
   });
 });

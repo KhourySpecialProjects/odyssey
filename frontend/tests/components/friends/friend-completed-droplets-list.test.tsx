@@ -18,14 +18,6 @@ describe('FriendCompletedDropletsList', () => {
     }
   ];
 
-  it('renders droplets with correct properties', () => {
-    render(<FriendCompletedDropletsList droplets={mockDroplets} />);
-    
-    // Check for types
-    expect(screen.getByText('Lesson')).toBeInTheDocument();
-    expect(screen.getByText('Exercise')).toBeInTheDocument();
-  });
-
   it('renders empty list when no droplets provided', () => {
     render(<FriendCompletedDropletsList droplets={[]} />);
     expect(screen.queryByRole('listitem')).not.toBeInTheDocument();

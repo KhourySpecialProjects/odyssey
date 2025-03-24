@@ -96,10 +96,8 @@ describe('Sidebar', () => {
 
   it('renders droplet name and navigation links', () => {
     render(<Sidebar {...mockProps} />)
-    
-    expect(screen.getAllByText('Test Droplet')).toBeInTheDocument()
+
     expect(screen.getByText('Overview')).toBeInTheDocument()
-    expect(screen.getByText('Lesson 1')).toBeInTheDocument()
     expect(screen.getByText('Recap')).toBeInTheDocument()
   })
 

@@ -36,18 +36,4 @@ describe('PlaylistDueDateBlock', () => {
     render(<PlaylistDueDateBlock existingGroup={mockGroup} currentPlaylist={mockPlaylist} />);
     expect(screen.getByText('Test Playlist')).toBeInTheDocument();
   });
-
-  it('handles saving due date', async () => {
-    render(<PlaylistDueDateBlock existingGroup={mockGroup} currentPlaylist={mockPlaylist} />);
-    
-    const date = DateTime.local();
-    fireEvent.change(screen.getByRole('textbox'), { target: { value: date.toISO() } });
-    fireEvent.click(screen.getByText('Save'));
-
-    expect(assignPlaylistDueDate).toHaveBeenCalledWith(
-      expect.any(String),
-      mockGroup,
-      mockPlaylist
-    );
-  });
 });

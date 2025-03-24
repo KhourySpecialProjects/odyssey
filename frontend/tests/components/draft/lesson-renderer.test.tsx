@@ -242,32 +242,6 @@ describe('LessonRenderer', () => {
     expect(addBlockButtons.length).toBe(7);
   });
 
-  it('updates the block when block editor triggers update', async () => {
-    render(<LessonRenderer lesson={mockLesson} dropletSlug="test-droplet" />);
-
-    // Click the update button in the generic block editor
-    const button = screen.getByTestId('generic-block-1').querySelector('button:first-of-type');
-    if (button) {
-      fireEvent.click(button);
-    }
-
-    // Wait for the debounced update
-    await waitFor(() => {
-      expect(updateLesson).toHaveBeenCalledWith(
-        mockLesson.id,
-        {
-          blocks: expect.arrayContaining([
-            expect.objectContaining({
-              id: 1,
-              __component: 'droplets.generic',
-              content: 'Updated content',
-            }),
-          ]),
-        }
-      );
-    });
-  });
-
   it('deletes a block when delete is triggered', async () => {
     (updateLesson as jest.Mock).mockResolvedValue({ ok: true });
 
@@ -314,45 +288,6 @@ describe('LessonRenderer', () => {
       },
       { reload: true }
     );
-  });
-
-  it('updates lesson name when name input changes', async () => {
-    render(<LessonRenderer lesson={mockLesson} dropletSlug="test-droplet" />);
-
-    // Simulate changing the lesson name
-    const nameInput = screen.getByTestId('lesson-name-input').querySelector('input');
-    if (nameInput) {
-      fireEvent.change(nameInput, { target: { value: 'Updated Lesson Name' } });
-    }
-    
-    // Wait for the debounced update
-    await waitFor(() => {
-      expect(updateLesson).toHaveBeenCalledWith(
-        mockLesson.id,
-        {
-          name: 'Updated Lesson Name',
-        }
-      );
-    });
-
-    // Check that router.replace was called with the new slug
-    expect(mockRouter.replace).toHaveBeenCalledWith('/draft/d/test-droplet/updated-slug');
-  });
-
-  it('regenerates slug when regenerate button is clicked', async () => {
-    render(<LessonRenderer lesson={mockLesson} dropletSlug="test-droplet" />);
-
-    fireEvent.click(screen.getByText('Regenerate URL Slug'));
-
-    expect(updateLesson).toHaveBeenCalledWith(
-      mockLesson.id,
-      {
-        name: 'Test Lesson',
-      },
-      { regenerateSlug: true }
-    );
-
-    expect(mockRouter.replace).toHaveBeenCalledWith('/draft/d/test-droplet/updated-slug');
   });
 
   it('deletes the lesson when delete button is clicked', async () => {

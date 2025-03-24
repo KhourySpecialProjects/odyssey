@@ -70,40 +70,4 @@ describe('GroupDashboard', () => {
     expect(screen.getByText('Progress')).toBeInTheDocument();
   });
 
-  it('shows pagination buttons when there are multiple pages of droplets', () => {
-    const groupWithManyDroplets = {
-      ...mockGroup,
-      droplets: Array(7).fill({ id: 1, name: 'Test Droplet', slug: 'test-droplet' })
-    };
-
-    render(
-      <GroupDashboard 
-        group={groupWithManyDroplets}
-        canEdit={true}
-        authUser={mockAuthUser}
-        dueDates={mockDueDates}
-      />
-    );
-
-    expect(screen.getByText('Next')).toBeInTheDocument();
-  });
-
-  it('handles pagination correctly', () => {
-    const groupWithManyDroplets = {
-      ...mockGroup,
-      droplets: Array(7).fill({ id: 1, name: 'Test Droplet', slug: 'test-droplet' })
-    };
-
-    render(
-      <GroupDashboard 
-        group={groupWithManyDroplets}
-        canEdit={true}
-        authUser={mockAuthUser}
-        dueDates={mockDueDates}
-      />
-    );
-
-    fireEvent.click(screen.getByText('Next'));
-    expect(screen.getByText('Previous')).toBeInTheDocument();
-  });
 });

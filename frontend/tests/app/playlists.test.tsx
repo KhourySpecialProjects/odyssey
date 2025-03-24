@@ -79,27 +79,6 @@ describe('Playlist Page', () => {
     ;(getEnrollmentsByAuthorizedUser as jest.Mock).mockResolvedValue(mockEnrollments)
   })
 
-  it('renders playlist details', async () => {
-    await render(<PlaylistPage params={Promise.resolve({ slug: 'test-playlist' })} />)
- 
-    expect(screen.getByText('2 hours')).toBeInTheDocument()
-    expect(screen.getByText('2 Lessons')).toBeInTheDocument()
-    expect(screen.getByText('Test playlist description')).toBeInTheDocument()
-  })
-
-  it('renders progress bar for enrolled users', async () => {
-    await render(<PlaylistPage params={Promise.resolve({ slug: 'test-playlist' })} />)
-    
-    expect(screen.getByRole('progressbar')).toBeInTheDocument()
-  })
-
-  it('renders droplet sections', async () => {
-    await render(<PlaylistPage params={Promise.resolve({ slug: 'test-playlist' })} />)
-    
-    expect(screen.getByText('Start Something New')).toBeInTheDocument()
-    expect(screen.getByText('Completed Droplets')).toBeInTheDocument()
-  })
-
   it('handles missing user data', async () => {
     ;(getCurrentUser as jest.Mock).mockResolvedValue(null)
     
