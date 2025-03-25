@@ -3,6 +3,7 @@ import { ArchivedDropletsGrid } from "@/components/dashboard/archived-droplets-g
 import { getCurrentUser } from "@/lib/auth/session";
 import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
 import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
+import { Enrollment } from "@/types";
 
 // Mock dependencies
 jest.mock("@/lib/auth/session", () => ({
@@ -68,6 +69,21 @@ describe("ArchivedDropletsGrid", () => {
     expect(
       screen.getByText("You haven't archived any Droplets yet."),
     ).toBeInTheDocument();
+  });
+
+  it('displays message when no archived droplets exist', async () => {
+    const mockUser = { email: 'test@example.com' };
+    const mockAuthorizedUser = { id: 1 };
+    const mockEnrollments = [] as Enrollment[];
+
+    (getCurrentUser as jest.Mock).mockResolvedValue(mockUser);
+    (getAuthorizedUserByEmail as jest.Mock).mockResolvedValue(mockAuthorizedUser);
+    (getEnrollmentsByAuthorizedUser as jest.Mock).mockResolvedValue(mockEnrollments);
+
+    render(await ArchivedDropletsGrid());
+
+    expect(screen.getByText('No Archived Droplets')).toBeInTheDocument();
+    expect(screen.getByText("You haven't archived any Droplets yet.")).toBeInTheDocument();
   });
 
   it("renders the grid when archived droplets are found", async () => {

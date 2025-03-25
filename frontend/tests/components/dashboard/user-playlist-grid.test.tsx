@@ -5,7 +5,6 @@ import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
 import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
 import { getUserDueDates } from "@/lib/requests/groups";
 
-// Mock dependencies
 jest.mock("@/lib/auth/session", () => ({
   getCurrentUser: jest.fn(),
 }));
@@ -164,7 +163,6 @@ describe("UserPlaylistsGrid", () => {
 
     render(await UserPlaylistsGrid());
 
-    // We can't directly test the calculation, but we can verify the component renders
     expect(screen.getByTestId("playlist-1")).toBeInTheDocument();
   });
 

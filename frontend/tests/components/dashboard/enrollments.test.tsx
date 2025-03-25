@@ -57,7 +57,6 @@ describe("Enrollments", () => {
           tags: [],
           lessons: [],
         },
-        viewedLessons: [],
       },
       {
         id: 2,

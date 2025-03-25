@@ -2,22 +2,10 @@ import { render, screen, fireEvent } from "@testing-library/react";
 import { ReportBugButton } from "@/components/debug/reportBugButton";
 
 // Mock the ReportBugDialog component
-jest.mock("@/components/droplets/reports/bug/dialog", () => ({
-  ReportBugDialog: ({
-    user,
-    open,
-    onOpenChange,
-  }: {
-    user: any;
-    open: boolean;
-    onOpenChange: () => void;
-  }) => (
-    <div data-testid="report-bug-dialog" data-open={open}>
-      {open && (
-        <button onClick={onOpenChange} data-testid="close-dialog">
-          Close Dialog
-        </button>
-      )}
+jest.mock('@/components/droplets/reports/bug/dialog', () => ({
+  ReportBugDialog: ({ open, onOpenChange }: { open: boolean, onOpenChange: () => void }) => (
+    <div data-testid="report-bug-dialog" data-open={open} onClick={onOpenChange}>
+      Mock Dialog
     </div>
   ),
 }));
@@ -47,5 +35,21 @@ describe("ReportBugButton", () => {
     render(<ReportBugButton user={undefined} />);
 
     expect(screen.getByTestId("report-bug-dialog")).toBeInTheDocument();
+  });
+
+  it('toggles dialog state when onOpenChange is called', () => {
+    const mockUser = { id: 1, email: 'test@example.com', roles: [], isActive: true };
+    const { getByTestId } = render(<ReportBugButton user={mockUser} />);
+    
+    const dialog = getByTestId('report-bug-dialog');
+    
+    // Initial state should be closed
+    expect(dialog).toHaveAttribute('data-open', 'false');
+    
+    // Click to toggle
+    fireEvent.click(dialog);
+    
+    // Dialog should now be open
+    expect(dialog).toHaveAttribute('data-open', 'true');
   });
 });

@@ -56,3 +56,39 @@ describe('Dialog', () => {
     expect(container.firstChild).toHaveTextContent('Description text');
   });
 })
+
+describe('Dialog Components', () => {
+
+  describe('DialogTitle and DialogDescription', () => {
+    it('applies correct default classes to DialogTitle', () => {
+      render(<Dialog><DialogTitle className="test-class">Test Title</DialogTitle></Dialog>);
+
+      const title = screen.getByText('Test Title');
+      expect(title).toHaveClass(
+        'text-lg',
+        'font-semibold',
+        'leading-none',
+        'tracking-tight',
+        'test-class'
+      );
+    });
+
+    it('applies correct default classes to DialogDescription', () => {
+      render(
+        <Dialog>
+          <DialogDescription className="test-class">
+            Test Description
+          </DialogDescription>
+        </Dialog>
+      );
+
+      const description = screen.getByText('Test Description');
+      expect(description).toHaveClass(
+        'text-sm',
+        'text-slate-500',
+        'dark:text-slate-400',
+        'test-class'
+      );
+    });
+  });
+});
