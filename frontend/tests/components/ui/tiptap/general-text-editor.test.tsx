@@ -17,4 +17,5 @@ describe('GeneralTextEditor', () => {
     const { container } = render(<GeneralTextEditor {...mockProps} className="test-class" />)
     expect(container.querySelector('.test-class')).toBeInTheDocument()
   })
+
 })

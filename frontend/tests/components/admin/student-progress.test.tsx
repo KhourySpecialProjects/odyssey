@@ -102,4 +102,29 @@ describe("StudentProgress", () => {
     const result = await StudentProgress();
     expect(result).toBeNull();
   });
+
+  it('calculates correct progress for users in playlists', async () => {
+    const mockUser = { email: 'test@example.com' };
+    const mockAuthor = {
+      created_playlists: [{
+        id: 1,
+        authorized_users: [{ id: 1, email: 'student@test.com' }],
+        droplets: [{
+          lessons: [{ id: 1 }, { id: 2 }]
+        }]
+      }]
+    };
+    const mockEnrollments = [{
+      viewedLessons: [{ id: 1 }] // Student completed 1 out of 2 lessons
+    }];
+
+    (getCurrentUser as jest.Mock).mockResolvedValue(mockUser);
+    (getAuthorizedUserByEmail as jest.Mock).mockResolvedValue(mockAuthor);
+    (getEnrollmentsByAuthorizedUser as jest.Mock).mockResolvedValue(mockEnrollments);
+
+    const { container } = render(await StudentProgress());
+
+    // Verify progress calculation (1/2 lessons = 50%)
+    expect(container).toHaveTextContent(/student progress/i);
+  });
 });

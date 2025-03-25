@@ -27,20 +27,16 @@ describe('StudentProgressList', () => {
   ]
 
   beforeEach(() => {
-    // Reset all mocks
     jest.clearAllMocks()
 
-    // Mock URL APIs
-    global.URL.createObjectURL = jest.fn(() => 'mock-url')
+    global.URL.createObjectURL = jest.fn()
     global.URL.revokeObjectURL = jest.fn()
 
-    // Mock Blob
     global.Blob = jest.fn().mockImplementation((content, options) => ({
       content,
       options,
     })) as any
 
-    // Setup document.body
     document.body.innerHTML = '<div id="root"></div>'
   })
 
@@ -51,34 +47,52 @@ describe('StudentProgressList', () => {
 
   it('renders playlist cards with correct information', () => {
     render(<StudentProgressList playlists={mockPlaylists} />)
-    
-    // Check playlist names
+
     expect(screen.getByText('Test Playlist 1')).toBeInTheDocument()
     expect(screen.getByText('Test Playlist 2')).toBeInTheDocument()
-    
-    // Check student counts
+
     expect(screen.getByText('2 enrolled students')).toBeInTheDocument()
     expect(screen.getByText('1 enrolled student')).toBeInTheDocument()
   })
 
   it('toggles playlist content visibility when clicked', () => {
     render(<StudentProgressList playlists={mockPlaylists} />)
-    
-    // Initially, student emails should not be visible
+ 
     expect(screen.queryByText('student1@test.com')).not.toBeInTheDocument()
-    
-    // Click to expand first playlist
+
     fireEvent.click(screen.getByText('Test Playlist 1'))
-    
-    // Student information should now be visible
+ 
     expect(screen.getByText('student1@test.com')).toBeInTheDocument()
     expect(screen.getByText('student2@test.com')).toBeInTheDocument()
-    
-    // Click again to collapse
+
     fireEvent.click(screen.getByText('Test Playlist 1'))
-    
-    // Student information should be hidden again
+
     expect(screen.queryByText('student1@test.com')).not.toBeInTheDocument()
   })
+
+  it('exports progress data as CSV correctly', async () => {
+    render(<StudentProgressList playlists={mockPlaylists} />);
+    
+    fireEvent.click(screen.getByText('Test Playlist 1'));
+
+    const exportButton = screen.getByText('Export Progress as CSV');
+    fireEvent.click(exportButton);
+
+    const expectedCSVContent = 'email,progress\nstudent1@test.com,0.50\nstudent2@test.com,0.75';
+    expect(global.URL.createObjectURL).toHaveBeenCalledWith(
+      expect.objectContaining({
+        content: [expectedCSVContent],
+        options: {
+          type: 'text/csv;charset=utf-8;'
+        }
+      })
+    );
+  });
+
+  it('displays message when no playlists exist', () => {
+    render(<StudentProgressList playlists={[]} />);
+    
+    expect(screen.getByText("You haven't created any private playlists yet")).toBeInTheDocument();
+  });
   
 })

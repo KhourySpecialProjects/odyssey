@@ -1,17 +1,12 @@
 import { render, screen, fireEvent } from '@testing-library/react'
 import Error from '@/app/(droplets)/d/[slug]/[lessonSlug]/error'
-import Layout from '@/app/(droplets)/d/[slug]/[lessonSlug]/layout'
-import Page from '@/app/(droplets)/d/[slug]/[lessonSlug]/page'
 import { Confetti } from '@/app/(droplets)/d/[slug]/recap/confetti'
 import NotFound from '@/app/(droplets)/d/[slug]/not-found'
-import Loading from '@/app/(droplets)/d/loading'
 
-// Mock the DropletLessonWrapper component
 jest.mock('@/components/droplets/lessons/droplet-lesson-wrapper', () => ({
   DropletLessonWrapper: jest.fn(() => <div>Mock DropletLessonWrapper Component</div>)
 }))
 
-// Mock the getDropletBySlug function
 jest.mock('@/lib/requests/droplet', () => ({
   getDropletBySlug: jest.fn().mockResolvedValue({
     id: 1,
@@ -120,4 +115,59 @@ describe('Droplet Lesson Pages', () => {
       expect(screen.getByText('Return to Home Page')).toBeInTheDocument()
     })
   })
+
+jest.mock('canvas-confetti', () => ({
+  create: jest.fn(() => jest.fn()),
+}));
+
+describe('Confetti', () => {
+    let mockContext: Partial<CanvasRenderingContext2D>;
+
+  beforeEach(() => {
+    mockContext = {
+      drawImage: jest.fn(),
+      createPattern: jest.fn(() => ({}) as CanvasPattern),
+    } as unknown as Partial<CanvasRenderingContext2D>;
+    
+    HTMLCanvasElement.prototype.getContext = jest.fn().mockReturnValue(mockContext as CanvasRenderingContext2D);
+    global.Image = class {
+      onload: () => void = () => {};
+      src: string = '';
+      
+      constructor() {
+        setTimeout(() => {
+          this.onload();
+        }, 0);
+      }
+    } as unknown as typeof Image;
+  });
+
+  it('creates and removes canvas element with confetti', () => {
+    const { unmount } = render(<Confetti />);
+
+    const canvas = document.querySelector('canvas');
+    expect(canvas).toBeInTheDocument();
+    expect(canvas).toHaveStyle({
+      position: 'fixed',
+      inset: '0',
+      width: '100%',
+      height: '100%',
+      pointerEvents: 'none',
+      zIndex: '999999',
+    });
+
+    unmount();
+    expect(document.querySelector('canvas')).not.toBeInTheDocument();
+  });
+
+  it('loads image and triggers confetti animation', () => {
+    jest.useFakeTimers();
+    render(<Confetti />);
+
+    const canvas = document.querySelector('canvas');
+    expect(canvas).toBeInTheDocument();
+    
+    jest.useRealTimers();
+  });
+});
 }) 

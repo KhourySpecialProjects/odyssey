@@ -31,7 +31,9 @@ export default async function GroupDetailPage({ params }: Props) {
 
   const p = await params;
   const group = await getGroupBySlugV2(p?.slug);
-  if (!group) notFound();
+  if (!group) {
+    return notFound();
+  }
 
   const isCreator = group.creator?.id === authorizedUser.id;
   const isAdmin = group.admins?.some((admin) => admin.id === authorizedUser.id);

@@ -110,6 +110,7 @@ export function StudentProgressList({ playlists }: StudentProgressListProps) {
                   <Button
                     variant="outline"
                     size="sm"
+                    role="export"
                     onClick={(e) => {
                       e.preventDefault(); // Prevent collapsible from toggling
                       exportProgress(playlist.name, playlist.authorized_users);

@@ -1,13 +1,25 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { GroupBlock } from '@/components/admin/groups/group-block';
 import { GroupSemester } from '@/types';
+import { updateGroup } from '@/lib/requests/groups';
+import { toast } from 'sonner';
 
-// Mock next/link
 jest.mock('next/link', () => {
   return ({ children, href }: { children: React.ReactNode; href: string }) => (
     <a href={href}>{children}</a>
   );
 });
+
+jest.mock('@/lib/requests/groups', () => ({
+  updateGroup: jest.fn(),
+}));
+
+jest.mock('sonner', () => ({
+  toast: {
+    success: jest.fn(),
+    error: jest.fn(),
+  },
+}));
 
 describe('GroupBlock', () => {
   const mockGroup = {
@@ -16,14 +28,23 @@ describe('GroupBlock', () => {
     slug: 'test-group',
     isArchived: false,
     semester: 'Spring 2025' as GroupSemester,
-
-    // Add any other required properties
   };
+
+  const mockGroup2 = {
+    id: 1,
+    groupName: 'Test Group',
+    slug: 'test-group',
+    isArchived: true,
+    semester: 'Spring 2025' as GroupSemester,
+  };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  })
 
   it('shows (Archived) text when group is archived', () => {
     const archivedGroup = { ...mockGroup, isArchived: true };
     render(<GroupBlock group={archivedGroup} />);
-    // Use a more flexible text matcher
     expect(screen.getByText(/test group.*archived/i)).toBeInTheDocument();
   });
 
@@ -36,5 +57,47 @@ describe('GroupBlock', () => {
     const archivedGroup = { ...mockGroup, isArchived: true };
     render(<GroupBlock group={archivedGroup} />);
     expect(screen.getByRole('button', { name: /unarchive group/i })).toBeInTheDocument();
+  });
+
+  it('handles successful group archive update', async () => {
+    (updateGroup as jest.Mock).mockResolvedValue(true);
+    
+    render(<GroupBlock group={mockGroup} />);
+    
+    const archiveButton = screen.getByText('Archive Group');
+    await fireEvent.click(archiveButton);
+
+    expect(updateGroup).toHaveBeenCalledWith(1, {
+      isArchived: true,
+      groupName: 'Test Group',
+    });
+    expect(toast.success).toHaveBeenCalledWith('Group archived successfully');
+  });
+
+  it('handles successful group unarchive update', async () => {
+    (updateGroup as jest.Mock).mockResolvedValue(true);
+    
+    render(<GroupBlock group={mockGroup2} />);
+    
+    const archiveButton = screen.getByText('Unarchive Group');
+    await fireEvent.click(archiveButton);
+
+    expect(updateGroup).toHaveBeenCalledWith(1, {
+      isArchived: false,
+      groupName: 'Test Group',
+    });
+    expect(toast.success).toHaveBeenCalledWith('Group unarchived successfully');
+  });
+
+  it('handles failed group archive update', async () => {
+    (updateGroup as jest.Mock).mockResolvedValue(false);
+    
+    render(<GroupBlock group={mockGroup} />);
+    
+    const archiveButton = screen.getByText('Archive Group');
+    await fireEvent.click(archiveButton);
+
+    expect(updateGroup).toHaveBeenCalled();
+    expect(toast.error).toHaveBeenCalledWith('Failed to update group visibility');
   });
 });
