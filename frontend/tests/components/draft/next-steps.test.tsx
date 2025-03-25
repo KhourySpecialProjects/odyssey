@@ -3,7 +3,7 @@ import { NextSteps } from '@/components/draft/metadata/next-steps/next-steps';
 import { updateDroplet } from '@/lib/actions';
 
 jest.mock('@/lib/actions', () => ({
-  updateDroplet: jest.fn()
+  updateDroplet: jest.fn(() => Promise.resolve({ data: true, error: null }))
 }));
 
 jest.mock('sonner', () => ({
@@ -42,5 +42,19 @@ describe('NextSteps', () => {
     await fireEvent.submit(form);
 
     expect(updateDroplet).not.toHaveBeenCalled();
+  });
+
+  it('initializes with next steps', () => {
+    render(<NextSteps dropletId={1} nextSteps={mockNextSteps} />);
+    
+    expect(screen.getByText('Step 1')).toBeInTheDocument();
+    expect(screen.getByText('Step 2')).toBeInTheDocument();
+  });
+
+  it('initializes with next steps', () => {
+    render(<NextSteps dropletId={1} nextSteps={mockNextSteps} />);
+    
+    expect(screen.getByText('Step 1')).toBeInTheDocument();
+    expect(screen.getByText('Step 2')).toBeInTheDocument();
   });
 });

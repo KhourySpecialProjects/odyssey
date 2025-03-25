@@ -1,14 +1,10 @@
 "use client";
 
-import useDebugStore from "@/stores/debug-toggle-store";
 import { LoaderIcon } from "lucide-react";
 import { useSession } from "next-auth/react";
 
 export function Session() {
   const { data: session, status } = useSession();
-  const isDebugEnabled = useDebugStore((state) => state.debugModeEnabled);
-
-  if (!isDebugEnabled) return null;
 
   return (
     <section>

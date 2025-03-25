@@ -14,7 +14,9 @@ jest.mock('@/stores/debug-toggle-store', () => ({
 
 describe('Session', () => {
   beforeEach(() => {
-    (useDebugStore as unknown as jest.Mock).mockReturnValue({ debugModeEnabled: true });
+    (useDebugStore as unknown as jest.Mock).mockReturnValue({
+      debugModeEnabled: true
+    });
   });
 
   it('renders loading state', () => {
@@ -25,5 +27,34 @@ describe('Session', () => {
 
     render(<Session />);
     expect(screen.getByRole('status')).toBeInTheDocument();
+  });
+
+  it('shows loading state', () => {
+    (useSession as jest.Mock).mockReturnValue({
+      data: null,
+      status: 'loading'
+    });
+
+    render(<Session />);
+    
+    expect(screen.getByRole('status')).toBeInTheDocument();
+  });
+
+  it('shows session data when loaded', () => {
+    const mockSession = {
+      user: { name: 'Test User' }
+    };
+
+    (useSession as jest.Mock).mockReturnValue({
+      data: mockSession,
+      status: 'authenticated'
+    });
+
+    render(<Session />);
+   
+    const pre = screen.getByText((content) => 
+      content.includes('"name": "Test User"')
+    );
+    expect(pre).toBeInTheDocument();
   });
 });
