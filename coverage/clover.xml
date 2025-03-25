@@ -1,6 +1,826 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<coverage generated="1742844865737" clover="3.2.0">
-  <project timestamp="1742844865737" name="All files">
-    <metrics statements="0" coveredstatements="0" conditionals="0" coveredconditionals="0" methods="0" coveredmethods="0" elements="0" coveredelements="0" complexity="0" loc="0" ncloc="0" packages="0" files="0" classes="0"/>
+<coverage generated="1742935095468" clover="3.2.0">
+  <project timestamp="1742935095468" name="All files">
+    <metrics statements="751" coveredstatements="710" conditionals="284" coveredconditionals="248" methods="124" coveredmethods="111" elements="1159" coveredelements="1069" complexity="0" loc="751" ncloc="751" packages="3" files="20" classes="20"/>
+    <package name="lib">
+      <metrics statements="27" coveredstatements="27" conditionals="6" coveredconditionals="6" methods="3" coveredmethods="3"/>
+      <file name="globals.ts" path="C:\Users\chous\odyssey\frontend\lib\globals.ts">
+        <metrics statements="27" coveredstatements="27" conditionals="6" coveredconditionals="6" methods="3" coveredmethods="3"/>
+        <line num="1" count="1" type="cond" truecount="2" falsecount="0"/>
+        <line num="2" count="1" type="stmt"/>
+        <line num="3" count="1" type="stmt"/>
+        <line num="4" count="1" type="stmt"/>
+        <line num="5" count="1" type="stmt"/>
+        <line num="6" count="1" type="stmt"/>
+        <line num="7" count="1" type="stmt"/>
+        <line num="8" count="1" type="stmt"/>
+        <line num="11" count="1" type="cond" truecount="2" falsecount="0"/>
+        <line num="12" count="1" type="stmt"/>
+        <line num="13" count="1" type="stmt"/>
+        <line num="14" count="1" type="stmt"/>
+        <line num="15" count="1" type="stmt"/>
+        <line num="16" count="1" type="stmt"/>
+        <line num="17" count="1" type="stmt"/>
+        <line num="20" count="1" type="cond" truecount="2" falsecount="0"/>
+        <line num="21" count="1" type="stmt"/>
+        <line num="22" count="1" type="stmt"/>
+        <line num="23" count="1" type="stmt"/>
+        <line num="24" count="1" type="stmt"/>
+        <line num="25" count="1" type="stmt"/>
+        <line num="28" count="1" type="stmt"/>
+        <line num="37" count="1" type="stmt"/>
+        <line num="51" count="1" type="stmt"/>
+        <line num="58" count="1" type="stmt"/>
+        <line num="107" count="1" type="stmt"/>
+        <line num="132" count="1" type="stmt"/>
+      </file>
+    </package>
+    <package name="lib.requests">
+      <metrics statements="719" coveredstatements="678" conditionals="278" coveredconditionals="242" methods="121" coveredmethods="108"/>
+      <file name="authorized-user-roles.ts" path="C:\Users\chous\odyssey\frontend\lib\requests\authorized-user-roles.ts">
+        <metrics statements="6" coveredstatements="6" conditionals="2" coveredconditionals="2" methods="2" coveredmethods="2"/>
+        <line num="1" count="1" type="stmt"/>
+        <line num="5" count="1" type="stmt"/>
+        <line num="9" count="2" type="stmt"/>
+        <line num="10" count="2" type="stmt"/>
+        <line num="24" count="2" type="stmt"/>
+        <line num="25" count="1" type="stmt"/>
+      </file>
+      <file name="authorized-user.ts" path="C:\Users\chous\odyssey\frontend\lib\requests\authorized-user.ts">
+        <metrics statements="51" coveredstatements="51" conditionals="5" coveredconditionals="5" methods="7" coveredmethods="7"/>
+        <line num="1" count="1" type="stmt"/>
+        <line num="4" count="1" type="stmt"/>
+        <line num="6" count="1" type="stmt"/>
+        <line num="7" count="1" type="stmt"/>
+        <line num="15" count="1" type="stmt"/>
+        <line num="77" count="1" type="stmt"/>
+        <line num="78" count="1" type="stmt"/>
+        <line num="92" count="1" type="stmt"/>
+        <line num="93" count="1" type="stmt"/>
+        <line num="97" count="1" type="stmt"/>
+        <line num="98" count="2" type="stmt"/>
+        <line num="99" count="2" type="stmt"/>
+        <line num="118" count="2" type="stmt"/>
+        <line num="125" count="1" type="stmt"/>
+        <line num="126" count="1" type="stmt"/>
+        <line num="127" count="1" type="stmt"/>
+        <line num="129" count="1" type="stmt"/>
+        <line num="130" count="1" type="stmt"/>
+        <line num="134" count="1" type="stmt"/>
+        <line num="135" count="2" type="stmt"/>
+        <line num="136" count="2" type="stmt"/>
+        <line num="179" count="2" type="stmt"/>
+        <line num="186" count="1" type="stmt"/>
+        <line num="187" count="1" type="stmt"/>
+        <line num="189" count="1" type="stmt"/>
+        <line num="190" count="1" type="stmt"/>
+        <line num="194" count="1" type="stmt"/>
+        <line num="195" count="2" type="stmt"/>
+        <line num="196" count="2" type="stmt"/>
+        <line num="232" count="2" type="stmt"/>
+        <line num="239" count="1" type="stmt"/>
+        <line num="240" count="1" type="stmt"/>
+        <line num="242" count="1" type="stmt"/>
+        <line num="243" count="1" type="stmt"/>
+        <line num="247" count="1" type="stmt"/>
+        <line num="248" count="3" type="stmt"/>
+        <line num="249" count="3" type="stmt"/>
+        <line num="261" count="3" type="stmt"/>
+        <line num="268" count="2" type="stmt"/>
+        <line num="269" count="2" type="stmt"/>
+        <line num="270" count="2" type="cond" truecount="2" falsecount="0"/>
+        <line num="272" count="1" type="stmt"/>
+        <line num="273" count="1" type="stmt"/>
+        <line num="277" count="1" type="stmt"/>
+        <line num="278" count="2" type="stmt"/>
+        <line num="279" count="2" type="stmt"/>
+        <line num="288" count="2" type="stmt"/>
+        <line num="295" count="1" type="stmt"/>
+        <line num="296" count="1" type="stmt"/>
+        <line num="297" count="1" type="stmt"/>
+        <line num="299" count="1" type="stmt"/>
+      </file>
+      <file name="data.ts" path="C:\Users\chous\odyssey\frontend\lib\requests\data.ts">
+        <metrics statements="42" coveredstatements="42" conditionals="1" coveredconditionals="1" methods="4" coveredmethods="4"/>
+        <line num="1" count="1" type="stmt"/>
+        <line num="2" count="1" type="stmt"/>
+        <line num="4" count="1" type="stmt"/>
+        <line num="5" count="1" type="stmt"/>
+        <line num="7" count="1" type="stmt"/>
+        <line num="8" count="2" type="stmt"/>
+        <line num="9" count="2" type="stmt"/>
+        <line num="17" count="2" type="stmt"/>
+        <line num="24" count="1" type="stmt"/>
+        <line num="25" count="1" type="stmt"/>
+        <line num="26" count="1" type="stmt"/>
+        <line num="28" count="1" type="stmt"/>
+        <line num="29" count="1" type="stmt"/>
+        <line num="33" count="1" type="stmt"/>
+        <line num="34" count="3" type="stmt"/>
+        <line num="35" count="3" type="stmt"/>
+        <line num="58" count="3" type="stmt"/>
+        <line num="66" count="2" type="cond" truecount="1" falsecount="0"/>
+        <line num="67" count="1" type="stmt"/>
+        <line num="70" count="1" type="stmt"/>
+        <line num="71" count="1" type="stmt"/>
+        <line num="72" count="1" type="stmt"/>
+        <line num="74" count="2" type="stmt"/>
+        <line num="75" count="2" type="stmt"/>
+        <line num="79" count="1" type="stmt"/>
+        <line num="80" count="2" type="stmt"/>
+        <line num="81" count="2" type="stmt"/>
+        <line num="96" count="2" type="stmt"/>
+        <line num="103" count="1" type="stmt"/>
+        <line num="104" count="1" type="stmt"/>
+        <line num="105" count="1" type="stmt"/>
+        <line num="107" count="1" type="stmt"/>
+        <line num="108" count="1" type="stmt"/>
+        <line num="112" count="1" type="stmt"/>
+        <line num="113" count="2" type="stmt"/>
+        <line num="114" count="2" type="stmt"/>
+        <line num="122" count="2" type="stmt"/>
+        <line num="129" count="1" type="stmt"/>
+        <line num="130" count="1" type="stmt"/>
+        <line num="131" count="1" type="stmt"/>
+        <line num="133" count="1" type="stmt"/>
+        <line num="134" count="1" type="stmt"/>
+      </file>
+      <file name="droplet.ts" path="C:\Users\chous\odyssey\frontend\lib\requests\droplet.ts">
+        <metrics statements="18" coveredstatements="18" conditionals="13" coveredconditionals="12" methods="6" coveredmethods="6"/>
+        <line num="5" count="1" type="stmt"/>
+        <line num="12" count="1" type="cond" truecount="1" falsecount="0"/>
+        <line num="24" count="4" type="stmt"/>
+        <line num="25" count="4" type="stmt"/>
+        <line num="32" count="4" type="stmt"/>
+        <line num="35" count="2" type="stmt"/>
+        <line num="44" count="1" type="stmt"/>
+        <line num="53" count="2" type="stmt"/>
+        <line num="54" count="2" type="stmt"/>
+        <line num="71" count="2" type="stmt"/>
+        <line num="73" count="1" type="stmt"/>
+        <line num="123" count="1" type="stmt"/>
+        <line num="132" count="2" type="stmt"/>
+        <line num="133" count="2" type="stmt"/>
+        <line num="144" count="2" type="stmt"/>
+        <line num="146" count="1" type="stmt"/>
+        <line num="150" count="1" type="stmt"/>
+        <line num="151" count="2" type="stmt"/>
+      </file>
+      <file name="enrollment.ts" path="C:\Users\chous\odyssey\frontend\lib\requests\enrollment.ts">
+        <metrics statements="53" coveredstatements="50" conditionals="29" coveredconditionals="25" methods="9" coveredmethods="9"/>
+        <line num="5" count="1" type="stmt"/>
+        <line num="7" count="1" type="stmt"/>
+        <line num="9" count="1" type="stmt"/>
+        <line num="17" count="1" type="stmt"/>
+        <line num="38" count="2" type="stmt"/>
+        <line num="39" count="2" type="stmt"/>
+        <line num="49" count="2" type="stmt"/>
+        <line num="63" count="1" type="stmt"/>
+        <line num="68" count="5" type="stmt"/>
+        <line num="69" count="5" type="stmt"/>
+        <line num="86" count="5" type="stmt"/>
+        <line num="87" count="3" type="stmt"/>
+        <line num="99" count="1" type="stmt"/>
+        <line num="103" count="1" type="stmt"/>
+        <line num="104" count="1" type="stmt"/>
+        <line num="117" count="1" type="stmt"/>
+        <line num="118" count="1" type="stmt"/>
+        <line num="119" count="1" type="cond" truecount="6" falsecount="2"/>
+        <line num="121" count="0" type="stmt"/>
+        <line num="122" count="0" type="stmt"/>
+        <line num="125" count="1" type="stmt"/>
+        <line num="129" count="3" type="stmt"/>
+        <line num="130" count="3" type="stmt"/>
+        <line num="131" count="3" type="cond" truecount="5" falsecount="0"/>
+        <line num="132" count="2" type="stmt"/>
+        <line num="135" count="1" type="stmt"/>
+        <line num="152" count="1" type="cond" truecount="0" falsecount="1"/>
+        <line num="153" count="0" type="stmt"/>
+        <line num="156" count="1" type="stmt"/>
+        <line num="157" count="1" type="stmt"/>
+        <line num="159" count="1" type="stmt"/>
+        <line num="161" count="2" type="stmt"/>
+        <line num="162" count="2" type="stmt"/>
+        <line num="171" count="1" type="stmt"/>
+        <line num="175" count="3" type="stmt"/>
+        <line num="176" count="3" type="stmt"/>
+        <line num="190" count="3" type="stmt"/>
+        <line num="191" count="3" type="stmt"/>
+        <line num="193" count="2" type="stmt"/>
+        <line num="195" count="1" type="stmt"/>
+        <line num="196" count="1" type="stmt"/>
+        <line num="205" count="1" type="stmt"/>
+        <line num="208" count="4" type="stmt"/>
+        <line num="209" count="4" type="stmt"/>
+        <line num="221" count="4" type="stmt"/>
+        <line num="222" count="4" type="stmt"/>
+        <line num="226" count="3" type="cond" truecount="3" falsecount="0"/>
+        <line num="227" count="2" type="stmt"/>
+        <line num="230" count="1" type="stmt"/>
+        <line num="231" count="5" type="cond" truecount="1" falsecount="1"/>
+        <line num="234" count="1" type="stmt"/>
+        <line num="236" count="1" type="stmt"/>
+        <line num="237" count="1" type="stmt"/>
+      </file>
+      <file name="feed.ts" path="C:\Users\chous\odyssey\frontend\lib\requests\feed.ts">
+        <metrics statements="74" coveredstatements="74" conditionals="10" coveredconditionals="10" methods="6" coveredmethods="6"/>
+        <line num="4" count="1" type="stmt"/>
+        <line num="5" count="1" type="stmt"/>
+        <line num="6" count="1" type="stmt"/>
+        <line num="8" count="1" type="stmt"/>
+        <line num="9" count="1" type="stmt"/>
+        <line num="11" count="1" type="stmt"/>
+        <line num="14" count="2" type="stmt"/>
+        <line num="15" count="2" type="stmt"/>
+        <line num="116" count="2" type="stmt"/>
+        <line num="123" count="1" type="stmt"/>
+        <line num="124" count="1" type="stmt"/>
+        <line num="126" count="1" type="stmt"/>
+        <line num="127" count="1" type="stmt"/>
+        <line num="131" count="1" type="stmt"/>
+        <line num="135" count="4" type="stmt"/>
+        <line num="136" count="4" type="stmt"/>
+        <line num="137" count="4" type="stmt"/>
+        <line num="156" count="3" type="cond" truecount="1" falsecount="0"/>
+        <line num="157" count="1" type="stmt"/>
+        <line num="158" count="1" type="stmt"/>
+        <line num="161" count="2" type="stmt"/>
+        <line num="162" count="2" type="stmt"/>
+        <line num="164" count="2" type="stmt"/>
+        <line num="165" count="2" type="stmt"/>
+        <line num="169" count="1" type="stmt"/>
+        <line num="173" count="4" type="stmt"/>
+        <line num="174" count="4" type="stmt"/>
+        <line num="190" count="3" type="cond" truecount="1" falsecount="0"/>
+        <line num="191" count="1" type="stmt"/>
+        <line num="194" count="2" type="stmt"/>
+        <line num="195" count="2" type="stmt"/>
+        <line num="198" count="2" type="stmt"/>
+        <line num="199" count="2" type="stmt"/>
+        <line num="200" count="2" type="stmt"/>
+        <line num="219" count="2" type="cond" truecount="1" falsecount="0"/>
+        <line num="220" count="1" type="stmt"/>
+        <line num="221" count="1" type="stmt"/>
+        <line num="224" count="1" type="stmt"/>
+        <line num="225" count="1" type="stmt"/>
+        <line num="227" count="1" type="stmt"/>
+        <line num="228" count="1" type="stmt"/>
+        <line num="232" count="1" type="stmt"/>
+        <line num="236" count="3" type="stmt"/>
+        <line num="237" count="3" type="stmt"/>
+        <line num="238" count="3" type="stmt"/>
+        <line num="257" count="2" type="cond" truecount="1" falsecount="0"/>
+        <line num="258" count="1" type="stmt"/>
+        <line num="259" count="1" type="stmt"/>
+        <line num="262" count="1" type="stmt"/>
+        <line num="263" count="1" type="stmt"/>
+        <line num="265" count="2" type="stmt"/>
+        <line num="266" count="2" type="stmt"/>
+        <line num="270" count="1" type="stmt"/>
+        <line num="271" count="3" type="stmt"/>
+        <line num="272" count="3" type="stmt"/>
+        <line num="273" count="3" type="stmt"/>
+        <line num="292" count="2" type="cond" truecount="1" falsecount="0"/>
+        <line num="293" count="1" type="stmt"/>
+        <line num="294" count="1" type="stmt"/>
+        <line num="297" count="1" type="stmt"/>
+        <line num="298" count="1" type="stmt"/>
+        <line num="300" count="2" type="stmt"/>
+        <line num="301" count="2" type="stmt"/>
+        <line num="305" count="1" type="stmt"/>
+        <line num="306" count="3" type="stmt"/>
+        <line num="307" count="3" type="stmt"/>
+        <line num="308" count="3" type="stmt"/>
+        <line num="327" count="2" type="cond" truecount="1" falsecount="0"/>
+        <line num="328" count="1" type="stmt"/>
+        <line num="329" count="1" type="stmt"/>
+        <line num="332" count="1" type="stmt"/>
+        <line num="333" count="1" type="stmt"/>
+        <line num="335" count="2" type="stmt"/>
+        <line num="336" count="2" type="stmt"/>
+      </file>
+      <file name="friends.ts" path="C:\Users\chous\odyssey\frontend\lib\requests\friends.ts">
+        <metrics statements="160" coveredstatements="139" conditionals="25" coveredconditionals="13" methods="29" coveredmethods="16"/>
+        <line num="2" count="1" type="stmt"/>
+        <line num="4" count="1" type="stmt"/>
+        <line num="5" count="1" type="stmt"/>
+        <line num="7" count="1" type="stmt"/>
+        <line num="8" count="1" type="stmt"/>
+        <line num="10" count="1" type="stmt"/>
+        <line num="13" count="3" type="stmt"/>
+        <line num="14" count="3" type="stmt"/>
+        <line num="51" count="3" type="stmt"/>
+        <line num="58" count="2" type="stmt"/>
+        <line num="59" count="2" type="stmt"/>
+        <line num="61" count="2" type="stmt"/>
+        <line num="62" count="4" type="stmt"/>
+        <line num="64" count="8" type="cond" truecount="3" falsecount="0"/>
+        <line num="66" count="0" type="stmt"/>
+        <line num="69" count="2" type="stmt"/>
+        <line num="73" count="2" type="stmt"/>
+        <line num="75" count="3" type="stmt"/>
+        <line num="79" count="1" type="stmt"/>
+        <line num="80" count="1" type="stmt"/>
+        <line num="84" count="1" type="stmt"/>
+        <line num="88" count="3" type="stmt"/>
+        <line num="89" count="3" type="stmt"/>
+        <line num="104" count="3" type="stmt"/>
+        <line num="111" count="2" type="stmt"/>
+        <line num="112" count="2" type="stmt"/>
+        <line num="114" count="2" type="stmt"/>
+        <line num="116" count="1" type="stmt"/>
+        <line num="117" count="1" type="stmt"/>
+        <line num="121" count="1" type="stmt"/>
+        <line num="124" count="2" type="stmt"/>
+        <line num="125" count="2" type="stmt"/>
+        <line num="140" count="2" type="stmt"/>
+        <line num="147" count="1" type="stmt"/>
+        <line num="148" count="1" type="stmt"/>
+        <line num="150" count="2" type="stmt"/>
+        <line num="152" count="1" type="stmt"/>
+        <line num="153" count="1" type="stmt"/>
+        <line num="157" count="1" type="stmt"/>
+        <line num="158" count="4" type="stmt"/>
+        <line num="159" count="4" type="stmt"/>
+        <line num="160" count="4" type="stmt"/>
+        <line num="176" count="3" type="cond" truecount="1" falsecount="0"/>
+        <line num="177" count="1" type="stmt"/>
+        <line num="178" count="1" type="stmt"/>
+        <line num="180" count="2" type="stmt"/>
+        <line num="198" count="2" type="cond" truecount="1" falsecount="0"/>
+        <line num="199" count="1" type="stmt"/>
+        <line num="200" count="1" type="stmt"/>
+        <line num="202" count="1" type="stmt"/>
+        <line num="203" count="1" type="stmt"/>
+        <line num="205" count="3" type="stmt"/>
+        <line num="206" count="3" type="stmt"/>
+        <line num="210" count="1" type="stmt"/>
+        <line num="214" count="4" type="stmt"/>
+        <line num="215" count="4" type="stmt"/>
+        <line num="216" count="4" type="stmt"/>
+        <line num="234" count="3" type="cond" truecount="1" falsecount="0"/>
+        <line num="235" count="1" type="stmt"/>
+        <line num="236" count="1" type="stmt"/>
+        <line num="240" count="2" type="stmt"/>
+        <line num="258" count="2" type="cond" truecount="1" falsecount="0"/>
+        <line num="259" count="1" type="stmt"/>
+        <line num="260" count="1" type="stmt"/>
+        <line num="263" count="1" type="stmt"/>
+        <line num="264" count="1" type="stmt"/>
+        <line num="266" count="3" type="stmt"/>
+        <line num="267" count="3" type="stmt"/>
+        <line num="271" count="1" type="stmt"/>
+        <line num="272" count="3" type="stmt"/>
+        <line num="273" count="3" type="stmt"/>
+        <line num="274" count="3" type="stmt"/>
+        <line num="292" count="2" type="cond" truecount="1" falsecount="0"/>
+        <line num="293" count="1" type="stmt"/>
+        <line num="294" count="1" type="stmt"/>
+        <line num="296" count="1" type="stmt"/>
+        <line num="297" count="1" type="stmt"/>
+        <line num="299" count="2" type="stmt"/>
+        <line num="300" count="2" type="stmt"/>
+        <line num="304" count="1" type="stmt"/>
+        <line num="305" count="3" type="stmt"/>
+        <line num="306" count="3" type="stmt"/>
+        <line num="307" count="3" type="stmt"/>
+        <line num="325" count="2" type="cond" truecount="1" falsecount="0"/>
+        <line num="326" count="1" type="stmt"/>
+        <line num="327" count="1" type="stmt"/>
+        <line num="329" count="1" type="stmt"/>
+        <line num="330" count="1" type="stmt"/>
+        <line num="332" count="2" type="stmt"/>
+        <line num="333" count="2" type="stmt"/>
+        <line num="337" count="1" type="stmt"/>
+        <line num="338" count="3" type="stmt"/>
+        <line num="339" count="3" type="stmt"/>
+        <line num="340" count="3" type="stmt"/>
+        <line num="358" count="2" type="cond" truecount="1" falsecount="0"/>
+        <line num="359" count="1" type="stmt"/>
+        <line num="360" count="1" type="stmt"/>
+        <line num="362" count="1" type="stmt"/>
+        <line num="363" count="1" type="stmt"/>
+        <line num="365" count="2" type="stmt"/>
+        <line num="366" count="2" type="stmt"/>
+        <line num="370" count="1" type="stmt"/>
+        <line num="371" count="3" type="stmt"/>
+        <line num="372" count="3" type="stmt"/>
+        <line num="373" count="3" type="stmt"/>
+        <line num="391" count="2" type="cond" truecount="1" falsecount="0"/>
+        <line num="392" count="1" type="stmt"/>
+        <line num="393" count="1" type="stmt"/>
+        <line num="395" count="1" type="stmt"/>
+        <line num="396" count="1" type="stmt"/>
+        <line num="398" count="2" type="stmt"/>
+        <line num="399" count="2" type="stmt"/>
+        <line num="403" count="1" type="stmt"/>
+        <line num="404" count="4" type="stmt"/>
+        <line num="405" count="4" type="stmt"/>
+        <line num="406" count="4" type="stmt"/>
+        <line num="427" count="4" type="stmt"/>
+        <line num="436" count="3" type="stmt"/>
+        <line num="437" count="3" type="stmt"/>
+        <line num="439" count="3" type="cond" truecount="1" falsecount="0"/>
+        <line num="440" count="1" type="stmt"/>
+        <line num="441" count="1" type="stmt"/>
+        <line num="444" count="2" type="stmt"/>
+        <line num="455" count="2" type="cond" truecount="1" falsecount="0"/>
+        <line num="456" count="1" type="stmt"/>
+        <line num="457" count="1" type="stmt"/>
+        <line num="459" count="1" type="stmt"/>
+        <line num="460" count="1" type="stmt"/>
+        <line num="462" count="3" type="stmt"/>
+        <line num="463" count="3" type="stmt"/>
+        <line num="467" count="1" type="stmt"/>
+        <line num="470" count="3" type="stmt"/>
+        <line num="471" count="3" type="stmt"/>
+        <line num="508" count="3" type="stmt"/>
+        <line num="515" count="2" type="stmt"/>
+        <line num="516" count="1" type="stmt"/>
+        <line num="517" count="1" type="stmt"/>
+        <line num="519" count="2" type="stmt"/>
+        <line num="520" count="2" type="stmt"/>
+        <line num="524" count="1" type="stmt"/>
+        <line num="527" count="0" type="stmt"/>
+        <line num="529" count="0" type="stmt"/>
+        <line num="532" count="0" type="stmt"/>
+        <line num="533" count="0" type="stmt"/>
+        <line num="535" count="0" type="cond" truecount="0" falsecount="2"/>
+        <line num="538" count="0" type="cond" truecount="0" falsecount="2"/>
+        <line num="540" count="0" type="stmt"/>
+        <line num="547" count="0" type="stmt"/>
+        <line num="550" count="0" type="stmt"/>
+        <line num="553" count="0" type="stmt"/>
+        <line num="555" count="0" type="stmt"/>
+        <line num="557" count="0" type="cond" truecount="0" falsecount="4"/>
+        <line num="560" count="0" type="stmt"/>
+        <line num="563" count="0" type="stmt"/>
+        <line num="567" count="0" type="cond" truecount="0" falsecount="4"/>
+        <line num="572" count="0" type="stmt"/>
+        <line num="573" count="0" type="stmt"/>
+        <line num="576" count="0" type="stmt"/>
+        <line num="578" count="0" type="stmt"/>
+        <line num="579" count="0" type="stmt"/>
+      </file>
+      <file name="groups.ts" path="C:\Users\chous\odyssey\frontend\lib\requests\groups.ts">
+        <metrics statements="198" coveredstatements="181" conditionals="140" coveredconditionals="123" methods="40" coveredmethods="40"/>
+        <line num="5" count="1" type="stmt"/>
+        <line num="6" count="1" type="stmt"/>
+        <line num="8" count="1" type="stmt"/>
+        <line num="9" count="1" type="stmt"/>
+        <line num="10" count="1" type="stmt"/>
+        <line num="11" count="1" type="stmt"/>
+        <line num="12" count="1" type="stmt"/>
+        <line num="14" count="1" type="stmt"/>
+        <line num="15" count="1" type="stmt"/>
+        <line num="23" count="1" type="stmt"/>
+        <line num="46" count="3" type="stmt"/>
+        <line num="47" count="3" type="stmt"/>
+        <line num="62" count="3" type="stmt"/>
+        <line num="75" count="1" type="stmt"/>
+        <line num="95" count="4" type="stmt"/>
+        <line num="96" count="4" type="stmt"/>
+        <line num="112" count="4" type="stmt"/>
+        <line num="115" count="3" type="cond" truecount="2" falsecount="0"/>
+        <line num="124" count="1" type="stmt"/>
+        <line num="159" count="3" type="stmt"/>
+        <line num="160" count="3" type="stmt"/>
+        <line num="171" count="3" type="stmt"/>
+        <line num="172" count="3" type="stmt"/>
+        <line num="174" count="3" type="stmt"/>
+        <line num="177" count="2" type="stmt"/>
+        <line num="186" count="1" type="stmt"/>
+        <line num="209" count="3" type="stmt"/>
+        <line num="210" count="3" type="stmt"/>
+        <line num="226" count="3" type="stmt"/>
+        <line num="238" count="1" type="stmt"/>
+        <line num="245" count="13" type="stmt"/>
+        <line num="246" count="13" type="stmt"/>
+        <line num="250" count="13" type="stmt"/>
+        <line num="252" count="13" type="cond" truecount="1" falsecount="0"/>
+        <line num="253" count="9" type="stmt"/>
+        <line num="256" count="13" type="cond" truecount="1" falsecount="0"/>
+        <line num="257" count="8" type="stmt"/>
+        <line num="260" count="13" type="stmt"/>
+        <line num="271" count="1" type="stmt"/>
+        <line num="276" count="3" type="stmt"/>
+        <line num="284" count="1" type="stmt"/>
+        <line num="289" count="3" type="stmt"/>
+        <line num="297" count="1" type="stmt"/>
+        <line num="303" count="3" type="stmt"/>
+        <line num="315" count="1" type="stmt"/>
+        <line num="333" count="4" type="stmt"/>
+        <line num="341" count="4" type="stmt"/>
+        <line num="343" count="4" type="stmt"/>
+        <line num="344" count="4" type="cond" truecount="3" falsecount="0"/>
+        <line num="345" count="2" type="stmt"/>
+        <line num="346" count="4" type="stmt"/>
+        <line num="351" count="4" type="stmt"/>
+        <line num="360" count="4" type="stmt"/>
+        <line num="376" count="2" type="stmt"/>
+        <line num="379" count="2" type="stmt"/>
+        <line num="383" count="4" type="stmt"/>
+        <line num="391" count="1" type="stmt"/>
+        <line num="427" count="4" type="stmt"/>
+        <line num="428" count="4" type="stmt"/>
+        <line num="436" count="4" type="stmt"/>
+        <line num="441" count="3" type="cond" truecount="2" falsecount="0"/>
+        <line num="444" count="1" type="stmt"/>
+        <line num="486" count="5" type="stmt"/>
+        <line num="489" count="5" type="stmt"/>
+        <line num="492" count="5" type="cond" truecount="1" falsecount="0"/>
+        <line num="493" count="5" type="cond" truecount="1" falsecount="0"/>
+        <line num="494" count="5" type="cond" truecount="1" falsecount="0"/>
+        <line num="495" count="5" type="cond" truecount="1" falsecount="0"/>
+        <line num="498" count="5" type="cond" truecount="1" falsecount="0"/>
+        <line num="499" count="1" type="stmt"/>
+        <line num="500" count="2" type="stmt"/>
+        <line num="504" count="5" type="cond" truecount="1" falsecount="0"/>
+        <line num="505" count="1" type="stmt"/>
+        <line num="506" count="1" type="stmt"/>
+        <line num="510" count="5" type="cond" truecount="1" falsecount="0"/>
+        <line num="512" count="3" type="stmt"/>
+        <line num="513" count="4" type="stmt"/>
+        <line num="516" count="3" type="stmt"/>
+        <line num="517" count="4" type="stmt"/>
+        <line num="522" count="5" type="cond" truecount="1" falsecount="0"/>
+        <line num="523" count="1" type="stmt"/>
+        <line num="524" count="2" type="stmt"/>
+        <line num="531" count="5" type="cond" truecount="1" falsecount="0"/>
+        <line num="532" count="1" type="stmt"/>
+        <line num="533" count="2" type="stmt"/>
+        <line num="539" count="5" type="stmt"/>
+        <line num="541" count="5" type="stmt"/>
+        <line num="553" count="5" type="stmt"/>
+        <line num="555" count="5" type="stmt"/>
+        <line num="556" count="8" type="stmt"/>
+        <line num="558" count="8" type="stmt"/>
+        <line num="559" count="8" type="cond" truecount="2" falsecount="0"/>
+        <line num="560" count="7" type="stmt"/>
+        <line num="563" count="1" type="stmt"/>
+        <line num="564" count="1" type="cond" truecount="3" falsecount="0"/>
+        <line num="565" count="1" type="stmt"/>
+        <line num="569" count="0" type="stmt"/>
+        <line num="573" count="5" type="stmt"/>
+        <line num="579" count="1" type="stmt"/>
+        <line num="583" count="5" type="stmt"/>
+        <line num="586" count="5" type="stmt"/>
+        <line num="596" count="5" type="stmt"/>
+        <line num="597" count="5" type="stmt"/>
+        <line num="606" count="4" type="stmt"/>
+        <line num="608" count="4" type="cond" truecount="4" falsecount="0"/>
+        <line num="609" count="2" type="stmt"/>
+        <line num="616" count="2" type="stmt"/>
+        <line num="622" count="1" type="stmt"/>
+        <line num="623" count="1" type="stmt"/>
+        <line num="631" count="1" type="stmt"/>
+        <line num="632" count="4" type="stmt"/>
+        <line num="633" count="4" type="cond" truecount="4" falsecount="2"/>
+        <line num="634" count="4" type="cond" truecount="4" falsecount="2"/>
+        <line num="635" count="6" type="stmt"/>
+        <line num="636" count="6" type="stmt"/>
+        <line num="640" count="6" type="stmt"/>
+        <line num="642" count="1" type="cond" truecount="2" falsecount="0"/>
+        <line num="647" count="4" type="cond" truecount="4" falsecount="2"/>
+        <line num="648" count="2" type="stmt"/>
+        <line num="649" count="2" type="cond" truecount="4" falsecount="2"/>
+        <line num="650" count="4" type="stmt"/>
+        <line num="651" count="4" type="stmt"/>
+        <line num="655" count="4" type="stmt"/>
+        <line num="657" count="0" type="cond" truecount="0" falsecount="4"/>
+        <line num="664" count="0" type="stmt"/>
+        <line num="665" count="0" type="stmt"/>
+        <line num="671" count="1" type="stmt"/>
+        <line num="676" count="4" type="stmt"/>
+        <line num="678" count="4" type="cond" truecount="3" falsecount="0"/>
+        <line num="679" count="1" type="stmt"/>
+        <line num="683" count="3" type="stmt"/>
+        <line num="685" count="3" type="stmt"/>
+        <line num="694" count="2" type="stmt"/>
+        <line num="696" count="2" type="cond" truecount="4" falsecount="0"/>
+        <line num="698" count="1" type="stmt"/>
+        <line num="699" count="1" type="stmt"/>
+        <line num="715" count="1" type="cond" truecount="0" falsecount="1"/>
+        <line num="716" count="0" type="stmt"/>
+        <line num="720" count="0" type="stmt"/>
+        <line num="724" count="1" type="stmt"/>
+        <line num="740" count="1" type="cond" truecount="1" falsecount="0"/>
+        <line num="741" count="1" type="stmt"/>
+        <line num="745" count="1" type="stmt"/>
+        <line num="749" count="1" type="stmt"/>
+        <line num="753" count="3" type="stmt"/>
+        <line num="756" count="2" type="stmt"/>
+        <line num="758" count="2" type="cond" truecount="1" falsecount="0"/>
+        <line num="759" count="1" type="stmt"/>
+        <line num="765" count="1" type="stmt"/>
+        <line num="766" count="1" type="stmt"/>
+        <line num="767" count="1" type="stmt"/>
+        <line num="768" count="1" type="stmt"/>
+        <line num="770" count="1" type="stmt"/>
+        <line num="772" count="1" type="stmt"/>
+        <line num="773" count="1" type="stmt"/>
+        <line num="777" count="1" type="stmt"/>
+        <line num="782" count="3" type="stmt"/>
+        <line num="784" count="3" type="cond" truecount="3" falsecount="0"/>
+        <line num="785" count="1" type="stmt"/>
+        <line num="789" count="2" type="stmt"/>
+        <line num="791" count="2" type="stmt"/>
+        <line num="801" count="1" type="stmt"/>
+        <line num="803" count="1" type="cond" truecount="3" falsecount="1"/>
+        <line num="805" count="0" type="stmt"/>
+        <line num="806" count="0" type="stmt"/>
+        <line num="822" count="0" type="cond" truecount="0" falsecount="1"/>
+        <line num="823" count="0" type="stmt"/>
+        <line num="827" count="0" type="stmt"/>
+        <line num="831" count="1" type="stmt"/>
+        <line num="847" count="1" type="cond" truecount="1" falsecount="0"/>
+        <line num="848" count="1" type="stmt"/>
+        <line num="852" count="1" type="stmt"/>
+        <line num="856" count="0" type="stmt"/>
+        <line num="860" count="2" type="stmt"/>
+        <line num="863" count="1" type="stmt"/>
+        <line num="865" count="1" type="cond" truecount="1" falsecount="0"/>
+        <line num="866" count="1" type="stmt"/>
+        <line num="872" count="0" type="stmt"/>
+        <line num="873" count="0" type="stmt"/>
+        <line num="874" count="0" type="stmt"/>
+        <line num="875" count="0" type="stmt"/>
+        <line num="877" count="0" type="stmt"/>
+        <line num="879" count="1" type="stmt"/>
+        <line num="880" count="1" type="stmt"/>
+        <line num="885" count="1" type="stmt"/>
+        <line num="886" count="5" type="stmt"/>
+        <line num="887" count="5" type="stmt"/>
+        <line num="904" count="4" type="stmt"/>
+        <line num="906" count="1" type="stmt"/>
+        <line num="907" count="1" type="stmt"/>
+        <line num="911" count="1" type="stmt"/>
+        <line num="921" count="6" type="stmt"/>
+        <line num="922" count="6" type="stmt"/>
+        <line num="940" count="6" type="stmt"/>
+        <line num="950" count="1" type="stmt"/>
+        <line num="960" count="7" type="stmt"/>
+        <line num="961" count="7" type="stmt"/>
+        <line num="980" count="7" type="stmt"/>
+      </file>
+      <file name="highlights.ts" path="C:\Users\chous\odyssey\frontend\lib\requests\highlights.ts">
+        <metrics statements="9" coveredstatements="9" conditionals="7" coveredconditionals="7" methods="2" coveredmethods="2"/>
+        <line num="5" count="1" type="stmt"/>
+        <line num="7" count="1" type="stmt"/>
+        <line num="16" count="4" type="stmt"/>
+        <line num="17" count="4" type="stmt"/>
+        <line num="34" count="4" type="stmt"/>
+        <line num="40" count="1" type="stmt"/>
+        <line num="49" count="5" type="stmt"/>
+        <line num="50" count="5" type="stmt"/>
+        <line num="76" count="5" type="stmt"/>
+      </file>
+      <file name="lesson.ts" path="C:\Users\chous\odyssey\frontend\lib\requests\lesson.ts">
+        <metrics statements="6" coveredstatements="6" conditionals="2" coveredconditionals="2" methods="2" coveredmethods="2"/>
+        <line num="3" count="1" type="stmt"/>
+        <line num="11" count="1" type="stmt"/>
+        <line num="15" count="2" type="stmt"/>
+        <line num="16" count="2" type="stmt"/>
+        <line num="35" count="2" type="stmt"/>
+        <line num="38" count="1" type="stmt"/>
+      </file>
+      <file name="notes.ts" path="C:\Users\chous\odyssey\frontend\lib\requests\notes.ts">
+        <metrics statements="43" coveredstatements="43" conditionals="13" coveredconditionals="13" methods="5" coveredmethods="5"/>
+        <line num="5" count="1" type="stmt"/>
+        <line num="6" count="1" type="stmt"/>
+        <line num="8" count="1" type="stmt"/>
+        <line num="9" count="1" type="stmt"/>
+        <line num="16" count="1" type="stmt"/>
+        <line num="25" count="2" type="stmt"/>
+        <line num="26" count="2" type="stmt"/>
+        <line num="47" count="2" type="stmt"/>
+        <line num="53" count="1" type="stmt"/>
+        <line num="62" count="3" type="stmt"/>
+        <line num="63" count="3" type="stmt"/>
+        <line num="94" count="3" type="stmt"/>
+        <line num="100" count="1" type="stmt"/>
+        <line num="101" count="3" type="stmt"/>
+        <line num="102" count="3" type="stmt"/>
+        <line num="118" count="2" type="cond" truecount="1" falsecount="0"/>
+        <line num="119" count="1" type="stmt"/>
+        <line num="122" count="1" type="stmt"/>
+        <line num="123" count="1" type="stmt"/>
+        <line num="125" count="1" type="stmt"/>
+        <line num="127" count="2" type="stmt"/>
+        <line num="128" count="2" type="stmt"/>
+        <line num="132" count="1" type="stmt"/>
+        <line num="133" count="3" type="stmt"/>
+        <line num="134" count="3" type="stmt"/>
+        <line num="150" count="2" type="cond" truecount="1" falsecount="0"/>
+        <line num="151" count="1" type="stmt"/>
+        <line num="154" count="1" type="stmt"/>
+        <line num="155" count="1" type="stmt"/>
+        <line num="157" count="1" type="stmt"/>
+        <line num="159" count="2" type="stmt"/>
+        <line num="160" count="2" type="stmt"/>
+        <line num="164" count="1" type="stmt"/>
+        <line num="171" count="4" type="stmt"/>
+        <line num="172" count="4" type="stmt"/>
+        <line num="194" count="3" type="cond" truecount="1" falsecount="0"/>
+        <line num="195" count="1" type="stmt"/>
+        <line num="196" count="1" type="stmt"/>
+        <line num="199" count="2" type="stmt"/>
+        <line num="200" count="2" type="stmt"/>
+        <line num="201" count="2" type="stmt"/>
+        <line num="203" count="1" type="stmt"/>
+        <line num="204" count="1" type="stmt"/>
+      </file>
+      <file name="playlist-enrollment.ts" path="C:\Users\chous\odyssey\frontend\lib\requests\playlist-enrollment.ts">
+        <metrics statements="29" coveredstatements="29" conditionals="13" coveredconditionals="12" methods="3" coveredmethods="3"/>
+        <line num="3" count="1" type="stmt"/>
+        <line num="4" count="1" type="stmt"/>
+        <line num="5" count="1" type="stmt"/>
+        <line num="7" count="1" type="stmt"/>
+        <line num="8" count="1" type="stmt"/>
+        <line num="14" count="1" type="stmt"/>
+        <line num="15" count="4" type="stmt"/>
+        <line num="16" count="4" type="stmt"/>
+        <line num="17" count="4" type="cond" truecount="5" falsecount="0"/>
+        <line num="18" count="1" type="stmt"/>
+        <line num="21" count="3" type="stmt"/>
+        <line num="29" count="3" type="cond" truecount="3" falsecount="1"/>
+        <line num="30" count="7" type="stmt"/>
+        <line num="33" count="3" type="stmt"/>
+        <line num="51" count="3" type="cond" truecount="1" falsecount="0"/>
+        <line num="52" count="1" type="stmt"/>
+        <line num="55" count="2" type="stmt"/>
+        <line num="56" count="2" type="stmt"/>
+        <line num="58" count="2" type="stmt"/>
+        <line num="60" count="2" type="stmt"/>
+        <line num="61" count="2" type="stmt"/>
+        <line num="65" count="1" type="stmt"/>
+        <line num="66" count="3" type="stmt"/>
+        <line num="67" count="3" type="stmt"/>
+        <line num="85" count="3" type="cond" truecount="1" falsecount="0"/>
+        <line num="86" count="2" type="stmt"/>
+        <line num="88" count="1" type="stmt"/>
+        <line num="90" count="2" type="stmt"/>
+        <line num="91" count="2" type="stmt"/>
+      </file>
+      <file name="playlist.ts" path="C:\Users\chous\odyssey\frontend\lib\requests\playlist.ts">
+        <metrics statements="21" coveredstatements="21" conditionals="16" coveredconditionals="15" methods="3" coveredmethods="3"/>
+        <line num="5" count="1" type="stmt"/>
+        <line num="6" count="1" type="stmt"/>
+        <line num="9" count="1" type="cond" truecount="2" falsecount="0"/>
+        <line num="11" count="1" type="cond" truecount="2" falsecount="0"/>
+        <line num="18" count="1" type="cond" truecount="1" falsecount="0"/>
+        <line num="36" count="2" type="stmt"/>
+        <line num="37" count="2" type="stmt"/>
+        <line num="45" count="2" type="stmt"/>
+        <line num="57" count="1" type="stmt"/>
+        <line num="76" count="2" type="stmt"/>
+        <line num="77" count="2" type="stmt"/>
+        <line num="90" count="2" type="stmt"/>
+        <line num="95" count="1" type="cond" truecount="1" falsecount="1"/>
+        <line num="104" count="1" type="stmt"/>
+        <line num="108" count="2" type="stmt"/>
+        <line num="109" count="2" type="stmt"/>
+        <line num="116" count="2" type="stmt"/>
+        <line num="124" count="1" type="stmt"/>
+        <line num="125" count="1" type="stmt"/>
+        <line num="127" count="1" type="stmt"/>
+        <line num="128" count="1" type="stmt"/>
+      </file>
+      <file name="tag.ts" path="C:\Users\chous\odyssey\frontend\lib\requests\tag.ts">
+        <metrics statements="9" coveredstatements="9" conditionals="2" coveredconditionals="2" methods="3" coveredmethods="3"/>
+        <line num="3" count="1" type="stmt"/>
+        <line num="5" count="1" type="cond" truecount="1" falsecount="0"/>
+        <line num="11" count="2" type="stmt"/>
+        <line num="12" count="2" type="stmt"/>
+        <line num="27" count="2" type="stmt"/>
+        <line num="30" count="1" type="stmt"/>
+        <line num="34" count="2" type="stmt"/>
+        <line num="35" count="2" type="stmt"/>
+        <line num="40" count="2" type="stmt"/>
+      </file>
+    </package>
+    <package name="testing.mocks">
+      <metrics statements="5" coveredstatements="5" conditionals="0" coveredconditionals="0" methods="0" coveredmethods="0"/>
+      <file name="authorizedUsersMock.js" path="C:\Users\chous\odyssey\frontend\testing\mocks\authorizedUsersMock.js">
+        <metrics statements="1" coveredstatements="1" conditionals="0" coveredconditionals="0" methods="0" coveredmethods="0"/>
+        <line num="1" count="4" type="stmt"/>
+      </file>
+      <file name="enrollmentsMock.js" path="C:\Users\chous\odyssey\frontend\testing\mocks\enrollmentsMock.js">
+        <metrics statements="1" coveredstatements="1" conditionals="0" coveredconditionals="0" methods="0" coveredmethods="0"/>
+        <line num="1" count="1" type="stmt"/>
+      </file>
+      <file name="groupsMock.js" path="C:\Users\chous\odyssey\frontend\testing\mocks\groupsMock.js">
+        <metrics statements="1" coveredstatements="1" conditionals="0" coveredconditionals="0" methods="0" coveredmethods="0"/>
+        <line num="1" count="3" type="stmt"/>
+      </file>
+      <file name="notesMock.js" path="C:\Users\chous\odyssey\frontend\testing\mocks\notesMock.js">
+        <metrics statements="1" coveredstatements="1" conditionals="0" coveredconditionals="0" methods="0" coveredmethods="0"/>
+        <line num="1" count="3" type="stmt"/>
+      </file>
+      <file name="strapiMock.js" path="C:\Users\chous\odyssey\frontend\testing\mocks\strapiMock.js">
+        <metrics statements="1" coveredstatements="1" conditionals="0" coveredconditionals="0" methods="0" coveredmethods="0"/>
+        <line num="1" count="4" type="stmt"/>
+      </file>
+    </package>
   </project>
 </coverage>
