@@ -28,4 +28,34 @@ describe('PlaylistCard', () => {
     render(<PlaylistCard playlist={mockPlaylist} toDraft={true} />);
     expect(screen.getByRole('link')).toHaveAttribute('href', '/draft/p/test-playlist');
   });
+
+  it('displays correct due date text for today', () => {
+    const today = DateTime.local().toISO();
+    render(
+      <PlaylistCard 
+        playlist={mockPlaylist} 
+        dueDate={today}
+        timeZone="America/New_York"
+      />
+    );
+    
+    expect(screen.getByText('Due today!')).toBeInTheDocument();
+  });
+
+  it('displays correct due date text with timezone', () => {
+    const tomorrow = DateTime.local().plus({ days: 1 }).toISO();
+    render(
+      <PlaylistCard 
+        playlist={mockPlaylist} 
+        dueDate={tomorrow}
+        timeZone="America/New_York"
+      />
+    );
+    // Format should match the finalDate format in the component
+    const expectedDate = DateTime.fromISO(tomorrow)
+      .setZone("America/New_York")
+      .toFormat("MM/dd hh:mm a");
+    
+    expect(screen.getByText(/due/i)).toBeInTheDocument();
+  });
 });

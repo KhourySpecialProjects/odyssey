@@ -27,4 +27,34 @@ describe('Filter', () => {
     render(<Filter dropletId={1} initial="LESSON" variant="type" />);
     expect(screen.getByText('Type')).toBeInTheDocument();
   });
+
+  it('updates focusArea when variant is focusArea', () => {
+    render(
+      <Filter
+        dropletId={1}
+        initial="beginner"
+        variant="focusArea"
+      />
+    );
+
+    const toggleItem = screen.getByText('Technical');
+    fireEvent.click(toggleItem);
+
+    expect(mockHandleChange).toHaveBeenCalledWith({ focusArea: 'technical' });
+  });
+
+  it('updates type when variant is type', () => {
+    render(
+      <Filter
+        dropletId={1}
+        initial="tutorial"
+        variant="type"
+      />
+    );
+
+    const toggleItem = screen.getByText('Knowledge');
+    fireEvent.click(toggleItem);
+
+    expect(mockHandleChange).toHaveBeenCalledWith({ type: 'knowledge' });
+  });
 });

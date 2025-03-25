@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import Link from "next/link";
 
 describe("Button", () => {
   it("renders button with text", () => {
@@ -19,5 +20,39 @@ describe("Button", () => {
   it("renders with different variants", () => {
     render(<Button variant="destructive">Delete</Button>);
     expect(screen.getByText("Delete")).toHaveClass("bg-red-500");
+  });
+
+  it('renders with before and after icons when asChild is true', () => {
+    const beforeIcon = <span data-testid="before-icon">Before</span>;
+    const afterIcon = <span data-testid="after-icon">After</span>;
+    
+    const { getByTestId } = render(
+      <Button asChild before={beforeIcon} after={afterIcon}>
+        <Link href="/">Link Text</Link>
+      </Button>
+    );
+
+    expect(getByTestId('before-icon')).toBeInTheDocument();
+    expect(getByTestId('after-icon')).toBeInTheDocument();
+  });
+
+  it('renders icons with correct classes', () => {
+    const icon = <span className="custom-class">Icon</span>;
+    
+    const { container } = render(
+      <Button before={icon}>Test</Button>
+    );
+
+    const iconElement = container.querySelector('.custom-class');
+    expect(iconElement).toHaveClass('w-4', 'h-4');
+  });
+  it('renders children without icons when no before/after props provided', () => {
+    const { container } = render(
+      <Button asChild>
+        <Link href="/">Link Text</Link>
+      </Button>
+    );
+
+    expect(container.textContent).toBe('Link Text');
   });
 });

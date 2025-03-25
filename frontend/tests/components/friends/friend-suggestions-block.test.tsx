@@ -77,11 +77,58 @@ describe('FriendSuggestionsBlock', () => {
         curUser={mockCurUser}
         suggUser={mockSuggUser}
         display={false}
+        requested={true}
+      />
+    );
+
+    expect(screen.getByText('Sent!')).toBeInTheDocument();
+  });
+
+  it('handles send request true', async () => {
+    (sendFriendRequest as jest.Mock).mockResolvedValue({ success: true });
+    
+    render(
+      <FriendSuggestionsBlock 
+        curUser={mockCurUser}
+        suggUser={mockSuggUser}
+        display={false}
+        requested={false}
+      />
+    );
+
+    fireEvent.click(screen.getByText('Send Request'));
+    expect(sendFriendRequest).toHaveBeenCalledWith(mockCurUser, mockSuggUser);
+  });
+
+  it('handles not visible', async () => {
+    (sendFriendRequest as jest.Mock).mockResolvedValue({ success: true });
+    
+    render(
+      <FriendSuggestionsBlock 
+        curUser={mockCurUser}
+        suggUser={mockSuggUser}
+        display={false}
+        requested={true}
+      />
+    );
+ 
+    expect(screen.getByRole('mainBox')).toHaveClass('visibility: hidden');
+  });
+
+  it('handles send request error', async () => {
+    (sendFriendRequest as jest.Mock).mockResolvedValue({ success: false });
+    
+    render(
+      <FriendSuggestionsBlock 
+        curUser={mockCurUser}
+        suggUser={mockSuggUser}
+        display={false}
         requested={false}
       />
     );
     fireEvent.click(screen.getByText('Send Request'));
     
     expect(sendFriendRequest).toHaveBeenCalledWith(mockCurUser, mockSuggUser);
+    expect(toast.success).not.toHaveBeenCalled();
   });
 });

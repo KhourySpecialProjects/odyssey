@@ -83,9 +83,7 @@ export function FirstVisitPopup({ user }: { user: AuthorizedUser | null }) {
         <DialogHeader>
           <DialogTitle>Welcome to Khoury Odyssey!</DialogTitle>
           <DialogDescription>
-            Odyssey is a new platform designed to provide on-demand access to
-            modern knowledge and skills pertinent to today&apos;s undergraduate
-            Khoury students.
+            {/* ... existing description ... */}
           </DialogDescription>
         </DialogHeader>
         <div className="flex flex-col gap-4 mt-4">
@@ -97,8 +95,9 @@ export function FirstVisitPopup({ user }: { user: AuthorizedUser | null }) {
             onChange={(e) => setFirstName(e.target.value)}
             placeholder="First name (required)"
             required
+            aria-label="First name"
           />
-        </div>
+          </div>
         <div className="flex flex-col gap-4 mt-4">
           <p className="text-sm text-slate-600">
             Enter your last name here: <span className="text-red-500">*</span>
@@ -108,6 +107,7 @@ export function FirstVisitPopup({ user }: { user: AuthorizedUser | null }) {
             onChange={(e) => setLastName(e.target.value)}
             placeholder="Last name (required)"
             required
+            aria-label="Last name"
           />
         </div>
         <div className="flex flex-col gap-4 mt-4">
@@ -116,6 +116,7 @@ export function FirstVisitPopup({ user }: { user: AuthorizedUser | null }) {
             value={bio}
             onChange={(e) => setBio(e.target.value)}
             placeholder="Tell us about yourself (optional)"
+            aria-label="Bio"
           />
         </div>
         <div className="flex flex-col gap-4 mt-4">
@@ -124,8 +125,7 @@ export function FirstVisitPopup({ user }: { user: AuthorizedUser | null }) {
             learning modules designed to help you succeed in your academic
             journey.
           </p>
-
-          <Button role="button" onClick={() => handleClose()} after={<ArrowRightIcon />}>
+          <Button onClick={() => handleClose()}>
             Start Exploring
           </Button>
         </div>

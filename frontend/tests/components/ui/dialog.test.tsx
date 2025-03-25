@@ -41,4 +41,18 @@ describe('Dialog', () => {
     fireEvent.click(screen.getByText('Open'))
     expect(screen.getByRole('dialog')).toHaveClass('fixed', 'z-50')
   })
+
+  it('renders DialogDescription with custom className', () => {
+    const { container } = render(
+      <Dialog>
+        <DialogDescription className="custom-class">
+          Description text
+        </DialogDescription>
+      </Dialog>
+    );
+
+    expect(container.firstChild).toHaveClass('custom-class');
+    expect(container.firstChild).toHaveClass('text-slate-500');
+    expect(container.firstChild).toHaveTextContent('Description text');
+  });
 })

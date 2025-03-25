@@ -1,6 +1,5 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { GroupHeader } from '@/components/group/group-header';
-import { deleteGroup } from '@/lib/actions';
 import { useRouter } from 'next/navigation';
 import { GroupSemester } from '@/types';
 

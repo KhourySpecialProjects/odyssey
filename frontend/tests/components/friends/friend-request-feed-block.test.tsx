@@ -1,104 +1,111 @@
-import { render, fireEvent, act, getByRole, screen } from '@testing-library/react'
-import { FriendRequestFeedBlock } from '@/components/friends/friend-request-feed-block'
-import { BlockUser, acceptFriendRequest, rejectFriendRequest, removeFriend } from '@/lib/requests/friends'
-import { toast } from 'sonner'
-import { AuthorizedUserRoleTitle } from '@/lib/globals'
-import { AuthorizedUserRole, TimeZone } from '@/types'
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { BlockUser, acceptFriendRequest, rejectFriendRequest, removeFriend } from '@/lib/requests/friends';
+import { toast } from 'sonner';
+import { FriendRequestFeedBlock } from '@/components/friends/friend-request-feed-block';
+import { TimeZone } from '@/types';
 
+// Mock the dependencies
 jest.mock('@/lib/requests/friends', () => ({
   BlockUser: jest.fn(),
   acceptFriendRequest: jest.fn(),
   rejectFriendRequest: jest.fn(),
-  removeFriend: jest.fn()
-}))
+  removeFriend: jest.fn(),
+}));
 
 jest.mock('sonner', () => ({
   toast: {
     success: jest.fn(),
-    error: jest.fn()
-  }
-}))
+    error: jest.fn(),
+  },
+}));
+
+jest.mock('@/components/friends/friend-completed-droplets', () => ({
+  FriendCompletedDroplets: () => <div>Completed Droplets Mock</div>,
+}));
 
 describe('FriendRequestFeedBlock', () => {
   const mockUser = {
     id: 1,
-    email: 'user@example.com',
-    firstName: 'John',
-    lastName: 'Doe',
-    bio: 'Test bio',
-    profilePhoto: 'https://example.com/photo.jpg',
+    email: `user@example.com`,
     isEnabled: true,
-    roles: [
-      { id: 1, title: AuthorizedUserRoleTitle.Faculty }
-    ],
+    roles: [],
     linkedin: "https://www.google.com/",
     github: "https://www.google.com/",
+    firstName: "first",
+    lastName: "last",
+    bio: "bio",
     firstTime: false,
     friendships: [],
     sent_requests: [],
     received_requests: [],
+    profilePhoto: "",
     blocked: [],
     was_blocked: [],
     timeZone: "America/New_York" as TimeZone,
-    isActive: true
-  } 
+  };
 
   const mockRequest = {
     id: 2,
-    email: 'user@example.com',
-    firstName: 'John',
-    lastName: 'Doe',
-    bio: 'Test bio',
-    profilePhoto: 'https://example.com/photo.jpg',
+    email: `user@example.com`,
     isEnabled: true,
-    roles: [
-      { id: 1, title: AuthorizedUserRoleTitle.Faculty }
-    ],
+    roles: [],
     linkedin: "https://www.google.com/",
     github: "https://www.google.com/",
+    firstName: "first",
+    lastName: "last",
+    bio: "bio",
     firstTime: false,
     friendships: [],
     sent_requests: [],
     received_requests: [],
+    profilePhoto: "",
     blocked: [],
     was_blocked: [],
     timeZone: "America/New_York" as TimeZone,
-    isActive: true
-  } 
+  };
 
   beforeEach(() => {
-    jest.clearAllMocks()
-  })
+    jest.clearAllMocks();
+  });
 
-  describe('friend request actions', () => {
-    it('accepts friend request successfully', async () => {
-      ;(acceptFriendRequest as jest.Mock).mockResolvedValueOnce({ success: true })
 
-      const { getByTitle } = render(
-        <FriendRequestFeedBlock user={mockUser} request={mockRequest} />
-      )
+  it('handles friend request acceptance', async () => {
+    (acceptFriendRequest as jest.Mock).mockResolvedValue({ success: true });
 
-      await act(async () => {
-        fireEvent.click(screen.getByRole('accept'))
-      })
+    render(<FriendRequestFeedBlock user={mockUser} request={mockRequest} />);
 
-      expect(acceptFriendRequest).toHaveBeenCalledWith(1, 2)
-      expect(toast.success).toHaveBeenCalledWith('Friend request accepted!')
-    })
+    const acceptButton = screen.getByRole('accept');
+    fireEvent.click(acceptButton);
 
-    it('rejects friend request successfully', async () => {
-      ;(rejectFriendRequest as jest.Mock).mockResolvedValueOnce({ success: true })
+    await waitFor(() => {
+      expect(acceptFriendRequest).toHaveBeenCalledWith(1, 2);
+      expect(toast.success).toHaveBeenCalledWith('Friend request accepted!');
+    });
+  });
 
-      const { getByTitle } = render(
-        <FriendRequestFeedBlock user={mockUser} request={mockRequest} />
-      )
+  it('handles friend request rejection', async () => {
+    (rejectFriendRequest as jest.Mock).mockResolvedValue({ success: true });
 
-      await act(async () => {
-        fireEvent.click(screen.getByRole('reject'))
-      })
+    render(<FriendRequestFeedBlock user={mockUser} request={mockRequest} />);
 
-      expect(rejectFriendRequest).toHaveBeenCalledWith(1, 2)
-      expect(toast.success).toHaveBeenCalledWith('Friend request rejected')
-    })
-  })
-})
+    const rejectButton = screen.getByRole('reject');
+    fireEvent.click(rejectButton);
+
+    await waitFor(() => {
+      expect(rejectFriendRequest).toHaveBeenCalledWith(1, 2);
+      expect(toast.success).toHaveBeenCalledWith('Friend request rejected');
+    });
+  });
+
+  it('displays user profile dialog when clicked', async () => {
+    render(<FriendRequestFeedBlock user={mockUser} request={mockRequest} />);
+
+    // Click the user's name button to open dialog
+    fireEvent.click(screen.getByText(`${mockRequest.firstName} ${mockRequest.lastName}`));
+
+    await waitFor(() => {
+      expect(screen.getByRole('dialog')).toBeInTheDocument();
+      expect(screen.getByText('Completed Droplets:')).toBeInTheDocument();
+    });
+  });
+});

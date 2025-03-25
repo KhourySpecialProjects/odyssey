@@ -198,7 +198,7 @@ export function PlaylistForm({
   );
 
   return (
-    <form onSubmit={handleSubmit} className="w-full max-w-6xl space-y-8">
+    <form onSubmit={handleSubmit} className="w-full max-w-6xl space-y-8" role="form">
       <div className="space-y-4">
         <div>
           <Label htmlFor="name">Playlist Name</Label>
