@@ -234,6 +234,6 @@ export async function getDropletAverageRating(
     return totalRating / enrollments.length;
   } catch (error) {
     console.error("Error calculating droplet average rating:", error);
-    return -1;
+    return Promise.reject(new Error("Error getting droplet average rating"));
   }
 }
