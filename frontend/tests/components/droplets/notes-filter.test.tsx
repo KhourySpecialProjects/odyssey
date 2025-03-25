@@ -43,4 +43,31 @@ describe('NotesFilter', () => {
       ])
     )
   })
+
+  it('toggles color selection and calls onFilterChange with updated colors', () => {
+    const mockOnFilterChange = jest.fn();
+    const { getByLabelText } = render(
+      <NotesFilter onFilterChange={mockOnFilterChange} />
+    );
+
+    expect(getByLabelText('Pink')).toBeChecked();
+
+    fireEvent.click(getByLabelText('Pink'));
+
+    expect(mockOnFilterChange).toHaveBeenCalledWith([
+      NoteTypeTitle.Orange,
+      NoteTypeTitle.Yellow,
+      NoteTypeTitle.Green,
+      NoteTypeTitle.Blue
+    ]);
+
+    fireEvent.click(getByLabelText('Pink'));
+    expect(mockOnFilterChange).toHaveBeenCalledWith([
+      NoteTypeTitle.Orange,
+      NoteTypeTitle.Yellow,
+      NoteTypeTitle.Green,
+      NoteTypeTitle.Blue,
+      NoteTypeTitle.Pink
+    ]);
+  });
 })

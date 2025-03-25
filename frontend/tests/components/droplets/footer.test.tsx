@@ -15,6 +15,10 @@ describe('DropletFooter', () => {
     ]
   };
 
+  const mockDroplet2 = {
+    slug: 'test-droplet',
+  };
+
   it('renders navigation for overview page', () => {
     (usePathname as jest.Mock).mockReturnValue('/d/test-droplet');
     
@@ -41,5 +45,12 @@ describe('DropletFooter', () => {
     expect(screen.getByText('Lesson 1')).toBeInTheDocument();
     expect(screen.getByText('Next')).toBeInTheDocument();
     expect(screen.getByText('Recap')).toBeInTheDocument();
+  });
+
+  it('returns null when no droplet lessons', () => {
+    (usePathname as jest.Mock).mockReturnValue('/d/test-droplet/lesson-2');
+    
+    const { container } = render(<DropletFooter droplet={mockDroplet2 as any} />);
+    expect(container.firstChild).toBeNull();
   });
 });

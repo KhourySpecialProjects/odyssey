@@ -1,4 +1,4 @@
-import { render, fireEvent } from '@testing-library/react'
+import { render, fireEvent, screen } from '@testing-library/react'
 import {
   Sheet,
   SheetTrigger,
@@ -36,3 +36,20 @@ describe('Sheet', () => {
     expect(getByText('Test Description')).toBeInTheDocument()
   })
 })
+
+describe('Sheet Components', () => {
+  describe('SheetTitle', () => {
+    it('applies correct default classes and additional classes', () => {
+      render(<Sheet><SheetTitle className="test-class">Test Title</SheetTitle></Sheet>);
+
+      const title = screen.getByText('Test Title');
+      expect(title).toHaveClass(
+        'text-lg',
+        'font-semibold',
+        'text-slate-950',
+        'dark:text-slate-50',
+        'test-class'
+      );
+    });
+  });
+});

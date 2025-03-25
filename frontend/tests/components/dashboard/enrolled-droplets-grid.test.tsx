@@ -4,6 +4,7 @@ import { getCurrentUser } from "@/lib/auth/session";
 import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
 import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
 import { getUserDueDates } from "@/lib/requests/groups";
+import { Enrollment } from "@/types";
 
 // Mock dependencies
 jest.mock("@/lib/auth/session", () => ({
@@ -74,6 +75,21 @@ describe("EnrolledDropletsGrid", () => {
     expect(
       screen.getByText("You haven't enrolled in any Droplets yet."),
     ).toBeInTheDocument();
+  });
+
+  it('displays message when no enrolled droplets exist', async () => {
+    const mockUser = { email: 'test@example.com' };
+    const mockAuthorizedUser = { id: 1 };
+    const mockEnrollments = [] as Enrollment[];
+
+    (getCurrentUser as jest.Mock).mockResolvedValue(mockUser);
+    (getAuthorizedUserByEmail as jest.Mock).mockResolvedValue(mockAuthorizedUser);
+    (getEnrollmentsByAuthorizedUser as jest.Mock).mockResolvedValue(mockEnrollments);
+
+    render(await EnrolledDropletsGrid());
+
+    expect(screen.getByText('No Enrolled Droplets')).toBeInTheDocument();
+    expect(screen.getByText("You haven't enrolled in any Droplets yet.")).toBeInTheDocument();
   });
 
   it("renders the grid when enrolled droplets are found", async () => {
