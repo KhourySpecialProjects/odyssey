@@ -17,6 +17,7 @@ const {
 const { getLessonBySlug } = require("../../lib/requests/lesson");
 const {
   togglePlaylistEnrollment,
+  enrollInPlaylist,
 } = require("../../lib/requests/playlist-enrollment");
 const {
   getPlaylistsByAuthor,
@@ -538,8 +539,148 @@ describe("Playlist enrollment tests", () => {
         }),
       );
 
-      expect(result).toEqual({ success: true })
+      expect(result).toEqual({ success: true });
 
+    });
+
+    it("should enroll user in playlist when not already enrolled", async () => {
+      // Mock user is not enrolled in playlist 4
+      getCurrentUser.mockResolvedValueOnce({
+        id: 12,
+        name: "Harry",
+        email: "hmerzin@northeastern.edu"
+      });
+
+      getAuthorizedUserByEmail.mockResolvedValueOnce({
+        id: 12,
+        email: "hmerzin@northeastern.edu",
+        playlists: [{ id: 1 }, { id: 2 }, { id: 3 }]
+      });
+
+      const mockResponse = {
+        ok: true,
+        json: async () => ({
+          data: {
+            id: 12,
+            attributes: {
+              playlists: {
+                data: [{ id: 1 }, { id: 2 }, { id: 3 }, { id: 4 }]
+              }
+            }
+          }
+        })
+      };
+
+      global.fetch.mockResolvedValueOnce(mockResponse);
+
+      const result = await togglePlaylistEnrollment(4);
+
+      // Check if fetch was called with correct parameters
+      expect(global.fetch).toHaveBeenCalledWith(
+        expect.stringContaining("/api/authorized-users/12"),
+        expect.objectContaining({
+          method: "PUT",
+          headers: expect.objectContaining({
+            "Content-Type": "application/json",
+            Authorization: expect.stringContaining("Bearer"),
+          }),
+          body: JSON.stringify({
+            data: {
+              playlists: {
+                connect: [4] // Since user wasn't enrolled, should connect
+              }
+            }
+          }),
+        }),
+      );
+
+      expect(result).toEqual({ success: true });
+    });
+
+    it("should throw the correct error when an API error occurs", async () => {
+      getCurrentUser.mockResolvedValueOnce({ name: "Harry", email: "hmerzin@northeastern.edu" });
+
+      getAuthorizedUserByEmail.mockResolvedValueOnce({
+        id: 12, email: "hmerzin@northeastern.edu", playlists: [{ id: 1 }, { id: 2 }, { id: 3 }]
+      })
+
+      global.fetch.mockResolvedValueOnce(new Error("API error"));
+
+      const result = await togglePlaylistEnrollment(2);
+
+      expect(result).toEqual({ success: false, error: "Failed to update enrollment" });
+    })
+
+  })
+
+  describe("enrollInPlaylist", () => {
+
+    it("should enroll the user in the specified playlist", async () => {
+
+      const mockResponse = {
+        ok: true,
+        json: async () => ({
+          data: {
+            id: 1,
+            attributes: {
+              playlists: {
+                data: [{ id: 1 }, { id: 3 }, { id: 4 }] // Playlist 4 added
+              }
+            }
+          }
+        })
+      };
+
+      global.fetch.mockResolvedValueOnce(mockResponse);
+
+      const result = await enrollInPlaylist(4, 1);
+
+      // Check if fetch was called with correct parameters
+      expect(global.fetch).toHaveBeenCalledWith(
+        expect.stringContaining("/api/authorized-users/1"),
+        expect.objectContaining({
+          method: "PUT",
+          headers: expect.objectContaining({
+            "Content-Type": "application/json",
+            Authorization: expect.stringContaining("Bearer"),
+          }),
+          body: JSON.stringify({
+            data: {
+              playlists: {
+                connect: [4]
+              }
+            }
+          }),
+        }),
+      );
+
+      expect(result).toEqual({ success: true })
+    })
+
+    it("should throw the correct error when an API error occurs", async () => {
+
+      global.fetch.mockResolvedValueOnce(new Error("API error"));
+
+      const result = await enrollInPlaylist(2, 1);
+
+      expect(result).toEqual({ success: false, error: "Failed to enroll in playlist" });
+    })
+
+    it("should handle non-ok response from the API", async () => {
+      // Mock a failed response with ok: false
+      global.fetch.mockResolvedValueOnce({
+        ok: false,
+        status: 400,
+        statusText: "Bad Request"
+      });
+
+      const result = await enrollInPlaylist(4, 1);
+
+      // Verify the error response
+      expect(result).toEqual({
+        success: false,
+        error: "Failed to enroll in playlist"
+      });
     })
 
   })
