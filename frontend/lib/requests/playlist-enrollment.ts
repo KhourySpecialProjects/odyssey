@@ -88,6 +88,6 @@ export async function enrollInPlaylist(playlistId: number, userId: number) {
     return { success: true };
   } catch (error) {
     console.error("Error updating playlists:", error);
-    return { success: false, error };
+    return { success: false, error: "Failed to enroll in playlist" };
   }
 }
