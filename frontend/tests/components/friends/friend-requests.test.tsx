@@ -1,4 +1,4 @@
-import { render, fireEvent } from '@testing-library/react'
+import { render } from '@testing-library/react'
 import { FriendRequests } from '@/components/friends/friend-requests'
 
 describe('FriendRequests', () => {
@@ -42,7 +42,7 @@ describe('FriendRequests', () => {
     )
 
     const requestElements = getAllByRole('listitem')
-    expect(requestElements).toHaveLength(1) // Only one user should remain
+    expect(requestElements).toHaveLength(1) 
   })
 
   it('handles pagination correctly', () => {
@@ -54,7 +54,6 @@ describe('FriendRequests', () => {
       />
     )
 
-    // Check initial page
     expect(getAllByRole('listitem')).toHaveLength(2)
 
   })

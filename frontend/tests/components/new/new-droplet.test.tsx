@@ -1,4 +1,3 @@
-import { render, screen } from '@testing-library/react';
 import { CreateDroplet } from '@/components/new/new-droplet';
 import { getCurrentUser } from '@/lib/auth/session';
 import { getTags } from '@/lib/requests/tag';

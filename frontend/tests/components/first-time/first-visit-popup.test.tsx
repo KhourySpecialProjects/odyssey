@@ -4,7 +4,6 @@ import { updateFirstTimeStatus, updateOnboardingInfo } from '@/lib/actions'
 import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
 
-// Mock dependencies
 jest.mock('@/lib/actions', () => ({
   updateFirstTimeStatus: jest.fn(),
   updateOnboardingInfo: jest.fn()
@@ -21,7 +20,6 @@ jest.mock('next/navigation', () => ({
   useRouter: jest.fn()
 }))
 
-// Mock next/image
 jest.mock('next/image', () => ({
   __esModule: true,
   default: (props: any) => <img {...props} />
@@ -56,8 +54,7 @@ describe('FirstVisitPopup', () => {
 
     it('shows error when trying to close without last name', async () => {
       const { getByText, getByLabelText } = render(<FirstVisitPopup user={mockUser} />)
-      
-      // Add aria-label to Input components in the actual component
+
       const firstNameInput = getByLabelText('First name')
       fireEvent.change(firstNameInput, {
         target: { value: 'John' }
@@ -101,8 +98,7 @@ describe('FirstVisitPopup', () => {
   describe('dialog behavior', () => {
     it('prevents closing dialog without required fields', async () => {
       const { getByRole } = render(<FirstVisitPopup user={mockUser} />)
-      
-      // Wait for dialog to be rendered
+
       const dialog = await getByRole('dialog', { hidden: true })
       
       await act(async () => {

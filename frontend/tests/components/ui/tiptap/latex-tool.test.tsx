@@ -10,7 +10,6 @@ jest.mock('@/components/ui/popover', () => ({
 
 describe('LatexTool', () => {
   beforeEach(() => {
-    // Mock window.getSelection
     window.getSelection = jest.fn();
   });
   

@@ -1,7 +1,6 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { FriendSentRequestsBlock } from '@/components/friends/friend-sent-requests-block';
 import { cancelFriendRequest } from '@/lib/requests/friends';
-import { toast } from 'sonner';
 import { AuthorizedUserRoleTitle } from '@/lib/globals';
 import { TimeZone } from '@/types';
 

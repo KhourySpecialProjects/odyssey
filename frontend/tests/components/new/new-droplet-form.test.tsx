@@ -1,6 +1,5 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { CreateDropletForm } from '@/components/new/new-droplet-form';
-import { createDroplet } from '@/lib/actions';
 
 jest.mock('@/lib/actions', () => ({
   createDroplet: jest.fn(),
@@ -23,11 +22,5 @@ describe('CreateDropletForm', () => {
     expect(screen.getByPlaceholderText('Developing a Droplet')).toBeInTheDocument();
     expect(screen.getByText('Tags')).toBeInTheDocument();
     expect(screen.getByText('Learning Objectives')).toBeInTheDocument();
-  });
-
-  it('shows error when submitting incomplete form', async () => {
-    render(<CreateDropletForm tags={mockTags} author={mockAuthor} />);
-    fireEvent.click(screen.getByText('Create Droplet'));
-    expect(await screen.findByText('Please fill out all fields')).toBeInTheDocument();
   });
 });

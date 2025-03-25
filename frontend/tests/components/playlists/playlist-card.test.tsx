@@ -51,7 +51,6 @@ describe('PlaylistCard', () => {
         timeZone="America/New_York"
       />
     );
-    // Format should match the finalDate format in the component
     const expectedDate = DateTime.fromISO(tomorrow)
       .setZone("America/New_York")
       .toFormat("MM/dd hh:mm a");

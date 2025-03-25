@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { Filter } from '@/components/explore/filter';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 

@@ -14,7 +14,6 @@ jest.mock('react-dnd-html5-backend', () => ({
   HTML5Backend: {}
 }));
 
-// Wrap component with DndProvider for testing
 const renderWithDnd = (ui: React.ReactElement) => {
   return render(
     <DndProvider backend={HTML5Backend}>
@@ -66,7 +65,6 @@ describe('DropletList', () => {
       />
     );
 
-    // Find and click the remove button (using the XCircleIcon)
     const removeButtons = screen.getAllByRole('button');
     fireEvent.click(removeButtons[0]);
 
@@ -85,8 +83,6 @@ describe('DropletList', () => {
       />
     );
 
-    // Note: Testing actual drag and drop is complex in JSDOM
-    // Instead, we can test that the moveDroplet function works
     const reorderedDroplets = [...mockDroplets].reverse();
     onReorder(reorderedDroplets);
 

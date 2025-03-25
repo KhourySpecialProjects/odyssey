@@ -1,5 +1,4 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
-import { updateNoteContent } from '@/lib/requests/notes'
+import { render, screen } from '@testing-library/react'
 import { NoteBlock } from '@/components/droplets/lessons/note-taking/note-block'
 import { DropletStatus, DropletType, FocusArea, HighlightColor, Tag } from '@/types'
 

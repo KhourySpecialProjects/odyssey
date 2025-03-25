@@ -72,7 +72,7 @@ export default async function DropletRoute({ params }: Props) {
   return (
     <>
       <GradientBackground className="px-0">
-        <div className="max-w-2xl mx-auto">
+        <div className="max-w-2xl mx-auto px-5 md:px-0">
           <div className="flex flex-row flex-0 flex-wrap gap-1.5">
             <Badge variant="outline" className="text-sm">
               {uppercaseFirstChar(droplet.focusArea)}
@@ -104,7 +104,7 @@ export default async function DropletRoute({ params }: Props) {
           ) : null}
         </div>
 
-        <div className="w-full max-w-2xl py-4 mx-auto space-y-8 lg:py-8 md:space-y-12">
+        <div className="w-full max-w-2xl py-4 mx-auto space-y-8 lg:py-8 md:space-y-12 px-5 md:px-0">
           {droplet.overview ? (
             <section>
               <h2 className="text-2xl font-bold text-slate-900 dark:text-white">

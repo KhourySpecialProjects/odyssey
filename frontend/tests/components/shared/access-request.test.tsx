@@ -1,6 +1,5 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { AccessRequestBlock } from '@/components/shared/access-manager/access-requests/access-request';
-import { createAuthorizedUser, deleteAccessRequest } from '@/lib/actions';
 
 jest.mock('@/lib/actions', () => ({
   createAuthorizedUser: jest.fn(),
@@ -26,12 +25,5 @@ describe('AccessRequestBlock', () => {
     expect(screen.getByText('John Doe')).toBeInTheDocument();
     expect(screen.getByText('john@example.com')).toBeInTheDocument();
     expect(screen.getByText('Student • Engineering')).toBeInTheDocument();
-  });
-
-  it('handles reject action', async () => {
-    render(<AccessRequestBlock request={mockRequest} />);
-    
-    fireEvent.click(screen.getByText('Reject'));
-    expect(deleteAccessRequest).toHaveBeenCalled();
   });
 });

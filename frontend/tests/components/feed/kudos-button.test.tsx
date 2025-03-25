@@ -3,7 +3,6 @@ import { KudosButton } from '@/components/feed/kudos-button';
 import { giveKudos } from '@/lib/kudos';
 import { toast } from 'sonner';
 
-// Mock dependencies
 jest.mock('@/lib/kudos', () => ({
   giveKudos: jest.fn()
 }));

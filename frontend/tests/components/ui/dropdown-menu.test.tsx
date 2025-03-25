@@ -2,7 +2,6 @@ import { render, screen } from '@testing-library/react'
 import { DropdownMenuShortcut } from '@/components/ui/dropdown-menu'
 import { cn } from '@/lib/utils'
 
-// Mock the cn utility function
 jest.mock('@/lib/utils', () => ({
   cn: jest.fn((...inputs) => inputs.join(' '))
 }))

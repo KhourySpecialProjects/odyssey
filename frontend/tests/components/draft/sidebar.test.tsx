@@ -1,7 +1,6 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { Sidebar } from '@/components/draft/sidebar';
 import { useRouter, usePathname } from 'next/navigation';
-import { signOut } from 'next-auth/react';
 
 jest.mock('next/navigation', () => ({
   useRouter: jest.fn(),

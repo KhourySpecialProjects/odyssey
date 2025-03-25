@@ -4,7 +4,6 @@ import { getCurrentUser } from "@/lib/auth/session";
 import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
 import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
 
-// Mock dependencies
 jest.mock("@/lib/auth/session", () => ({
   getCurrentUser: jest.fn(),
 }));
@@ -115,7 +114,7 @@ describe("StudentProgress", () => {
       }]
     };
     const mockEnrollments = [{
-      viewedLessons: [{ id: 1 }] // Student completed 1 out of 2 lessons
+      viewedLessons: [{ id: 1 }] 
     }];
 
     (getCurrentUser as jest.Mock).mockResolvedValue(mockUser);
@@ -124,7 +123,6 @@ describe("StudentProgress", () => {
 
     const { container } = render(await StudentProgress());
 
-    // Verify progress calculation (1/2 lessons = 50%)
     expect(container).toHaveTextContent(/student progress/i);
   });
 });

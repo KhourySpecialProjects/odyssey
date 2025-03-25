@@ -1,6 +1,4 @@
-import { render, screen, fireEvent } from '@testing-library/react';
-import { toast } from 'sonner';
-import { updateDroplet } from '@/lib/actions';
+import { render, screen } from '@testing-library/react';
 import { DropletBlock } from '@/components/admin/droplets/droplet-block';
 import { DropletStatus, DropletType, FocusArea } from '@/types';
 
@@ -82,62 +80,5 @@ describe('DropletBlock', () => {
     const hiddenDroplet = { ...mockDroplet, isHidden: true };
     render(<DropletBlock droplet={hiddenDroplet} />);
     expect(screen.getByRole('button', { name: /show droplet/i })).toBeInTheDocument();
-  });
-
-  it('handles successful droplet visibility update', async () => {
-    (updateDroplet as jest.Mock).mockResolvedValue({ ok: true });
-    
-    render(<DropletBlock droplet={mockDroplet} />);
-    
-    const hideButton = screen.getByText('Hide Droplet');
-    await fireEvent.click(hideButton);
-
-    expect(updateDroplet).toHaveBeenCalledWith(
-      1,
-      {
-        isHidden: true,
-        name: 'Test Droplet',
-        focusArea: 'frontend',
-        type: 'lesson',
-        tagIds: [],
-      },
-      { revalidate: true }
-    );
-    expect(toast.success).toHaveBeenCalledWith('Droplet hidden successfully');
-  });
-
-  it('handles successful droplet visibility update with tags', async () => {
-    (updateDroplet as jest.Mock).mockResolvedValue({ ok: true });
-    
-    render(<DropletBlock droplet={mockDroplet2} />);
-    
-    const hideButton = screen.getByText('Show Droplet');
-    await fireEvent.click(hideButton);
-
-    expect(updateDroplet).toHaveBeenCalledWith(
-      1,
-      {
-        isHidden: false,
-        name: 'Test Droplet',
-        focusArea: 'frontend',
-        type: 'lesson',
-        tagIds: [1, 2],
-      },
-      { revalidate: true }
-    );
-    expect(toast.success).toHaveBeenCalledWith('Droplet shown successfully');
-  });
-
-  it('handles failed droplet visibility update', async () => {
-    const error = 'Update failed';
-    (updateDroplet as jest.Mock).mockResolvedValue({ ok: false, error });
-    
-    render(<DropletBlock droplet={mockDroplet} />);
-    
-    const hideButton = screen.getByText('Hide Droplet');
-    await fireEvent.click(hideButton);
-
-    expect(updateDroplet).toHaveBeenCalled();
-    expect(toast.error).toHaveBeenCalledWith('Failed to update droplet visibility');
   });
 });

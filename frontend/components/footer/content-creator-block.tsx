@@ -29,7 +29,7 @@ export function ContentCreatorBlock({
         </div>
 
         <div
-          className={`overflow-hidden transition-[max-height] duration-300 ease-in-out ${
+          className={`overflow-hidden transition-[max-height] duration-500 ease-in-out ${
             isOpen ? "max-h-96" : "max-h-0"
           }`}
         >
@@ -60,7 +60,7 @@ export function ContentCreatorBlock({
               )}
             </div>
             {contentCreator.bio && (
-              <div className="flex justify-center pt-4 dark:text-slate-300">
+              <div className="flex justify-center mt-4 dark:text-slate-300 max-h-40 md:max-h-none overflow-scroll md:overflow-hidden">
                 {contentCreator.bio}
               </div>
             )}

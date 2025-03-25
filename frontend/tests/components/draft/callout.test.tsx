@@ -1,7 +1,6 @@
 import { render, screen, fireEvent } from "@testing-library/react";
 import { CalloutEditor } from "@/components/draft/lesson/blocks/callout";
 
-// Mock the dependencies
 jest.mock("@/lib/actions", () => ({
   revalidateLesson: jest.fn(),
 }));

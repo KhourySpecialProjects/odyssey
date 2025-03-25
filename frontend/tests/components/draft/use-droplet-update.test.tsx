@@ -3,7 +3,6 @@ import { updateDroplet } from '@/lib/actions';
 import { useRouter } from 'next/navigation';
 import { useDropletUpdate } from '@/components/draft/metadata/hooks/useDropletUpdate';
 
-// Mock dependencies
 jest.mock('@/lib/actions');
 jest.mock('next/navigation', () => ({
   useRouter: jest.fn(),

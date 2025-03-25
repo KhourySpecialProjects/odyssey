@@ -1,6 +1,5 @@
-import { render, screen, act } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { GroupProgressGrid } from '@/components/group/group-progress-grid';
-import { getEnrollmentsByAuthorizedUser } from '@/lib/requests/enrollment';
 import { DropletStatus, DropletType, FocusArea, GroupSemester } from '@/types';
 
 jest.mock('@/lib/requests/enrollment', () => ({

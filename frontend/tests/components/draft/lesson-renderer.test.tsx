@@ -1,9 +1,8 @@
 import { render, screen, fireEvent, act } from '@testing-library/react'
 import { LessonRenderer } from '@/components/draft/lesson/lesson-renderer'
-import { updateLesson, deleteLesson } from '@/lib/actions'
+import { updateLesson } from '@/lib/actions'
 import { useRouter } from 'next/navigation'
 
-// Mock all dependencies that might use ES Modules
 jest.mock('@/components/ui/tiptap/lesson-name-input', () => ({
   LessonNameInput: ({ initialContent, updateContent }: any) => (
     <div data-testid="lesson-name-input">
@@ -17,7 +16,7 @@ jest.mock('@/components/ui/tiptap/lesson-name-input', () => ({
 }))
 
 jest.mock('@/components/draft/lesson/blocks/expandable', () => ({
-  ExpandableEditor: ({ block, updateBlock, deleteBlock }: any) => (
+  ExpandableEditor: ({ deleteBlock }: any) => (
     <div data-testid="expandable-editor">
       Mock Expandable Editor
       <button onClick={deleteBlock}>Delete</button>
@@ -26,7 +25,7 @@ jest.mock('@/components/draft/lesson/blocks/expandable', () => ({
 }))
 
 jest.mock('@/components/draft/lesson/blocks/video', () => ({
-  VideoEditor: ({ block, updateBlock, deleteBlock }: any) => (
+  VideoEditor: ({ deleteBlock }: any) => (
     <div data-testid="video-editor">
       Mock Video Editor
       <button onClick={deleteBlock}>Delete</button>
@@ -35,7 +34,7 @@ jest.mock('@/components/draft/lesson/blocks/video', () => ({
 }))
 
 jest.mock('@/components/draft/lesson/blocks/generic', () => ({
-  GenericEditor: ({ block, updateBlock, deleteBlock }: any) => (
+  GenericEditor: ({ deleteBlock }: any) => (
     <div data-testid="generic-editor">
       Mock Generic Editor
       <button onClick={deleteBlock}>Delete</button>
@@ -44,7 +43,7 @@ jest.mock('@/components/draft/lesson/blocks/generic', () => ({
 }))
 
 jest.mock('@/components/draft/lesson/blocks/callout', () => ({
-  CalloutEditor: ({ block, updateBlock, deleteBlock }: any) => (
+  CalloutEditor: ({ deleteBlock }: any) => (
     <div data-testid="callout-editor">
       Mock Callout Editor
       <button onClick={deleteBlock}>Delete</button>
@@ -53,7 +52,7 @@ jest.mock('@/components/draft/lesson/blocks/callout', () => ({
 }))
 
 jest.mock('@/components/draft/lesson/blocks/quiz', () => ({
-  QuizEditor: ({ block, updateBlock, deleteBlock }: any) => (
+  QuizEditor: ({ deleteBlock }: any) => (
     <div data-testid="quiz-editor">
       Mock Quiz Editor
       <button onClick={deleteBlock}>Delete</button>
@@ -62,7 +61,7 @@ jest.mock('@/components/draft/lesson/blocks/quiz', () => ({
 }))
 
 jest.mock('@/components/draft/lesson/blocks/open-ended-quiz', () => ({
-  OpenEndedQuizEditor: ({ block, updateBlock, deleteBlock }: any) => (
+  OpenEndedQuizEditor: ({ deleteBlock }: any) => (
     <div data-testid="open-ended-quiz-editor">
       Mock Open Ended Quiz Editor
       <button onClick={deleteBlock}>Delete</button>

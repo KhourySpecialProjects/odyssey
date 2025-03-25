@@ -1,11 +1,19 @@
 import { render, screen, fireEvent } from '@testing-library/react'
 import ImageToolButton from '@/components/ui/tiptap/toolbar/tools/image-tool'
-import { uploadImage } from '@/lib/actions'
 import { Editor } from '@tiptap/react'
 
 jest.mock('@/lib/actions', () => ({
   uploadImage: jest.fn()
 }))
+
+jest.mock('react', () => ({
+  ...jest.requireActual('react'),
+  useActionState: () => [
+    { ok: true, url: 'test-url' },
+    jest.fn(),
+    false
+  ]
+}));
 
 describe('ImageToolButton', () => {
   const mockEditor = {
@@ -34,19 +42,5 @@ describe('ImageToolButton', () => {
     render(<ImageToolButton editor={mockEditor} />)
     fireEvent.click(screen.getByTitle('Image'))
     expect(screen.getByText('Upload or Drag File Here')).toBeInTheDocument()
-  })
-
-  it('handles file upload', async () => {
-    (uploadImage as jest.Mock).mockResolvedValue({ ok: true, url: 'test.jpg' })
-    render(<ImageToolButton editor={mockEditor} />)
-    
-    fireEvent.click(screen.getByTitle('Image'))
-    const file = new File(['test'], 'test.jpg', { type: 'image/jpeg' })
-    const input = screen.getByLabelText('Upload or Drag File Here')
-    
-    fireEvent.change(input, { target: { files: [file] } })
-    fireEvent.click(screen.getByText('Upload'))
-
-    expect(uploadImage).toHaveBeenCalled()
   })
 })

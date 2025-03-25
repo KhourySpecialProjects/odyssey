@@ -1,6 +1,6 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { DropletDueDateBlock } from '@/components/group/droplet-due-date-block';
-import { assignDropletDueDate, getGroupDueDate } from '@/lib/requests/groups';
+import { getGroupDueDate } from '@/lib/requests/groups';
 import { DropletStatus, DropletType, FocusArea, GroupSemester, Tag } from '@/types';
 
 jest.mock('@/lib/requests/groups', () => ({

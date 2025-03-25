@@ -4,7 +4,6 @@ import hljs from 'highlight.js'
 import katex from 'katex'
 import { HighlightColor } from '@/types'
 
-// Mock dependencies
 jest.mock('highlight.js', () => ({
   highlightAll: jest.fn()
 }))
@@ -31,7 +30,6 @@ describe('GenericBlockRenderer', () => {
 
   beforeEach(() => {
     jest.clearAllMocks()
-    // Mock window.getSelection
     window.getSelection = jest.fn().mockReturnValue({
       toString: jest.fn().mockReturnValue('selected text'),
       getRangeAt: jest.fn().mockReturnValue({
@@ -65,9 +63,8 @@ describe('GenericBlockRenderer', () => {
         }
       })
 
-      // Position should be set to clientY - top = 50
       fireEvent.mouseUp(contentDiv)
-      expect(mockProps.onHighlight).not.toHaveBeenCalled() // Should not highlight without isHighlighting=true
+      expect(mockProps.onHighlight).not.toHaveBeenCalled() 
     })
 
     it('handles highlight deletion', async () => {
@@ -84,12 +81,10 @@ describe('GenericBlockRenderer', () => {
       const { container } = render(<GenericBlockRenderer {...propsWithHighlight} />)
       const contentDiv = container.querySelector('.prose')!
 
-      // Simulate clicking on highlighted text
       await act(async () => {
         fireEvent.mouseUp(contentDiv)
       })
 
-      // Trigger delete
       const handlePopupDelete = container.querySelector('[role="button"]')
       if (handlePopupDelete) {
         fireEvent.click(handlePopupDelete)
@@ -101,7 +96,6 @@ describe('GenericBlockRenderer', () => {
       const { container } = render(<GenericBlockRenderer {...mockProps} />)
       const contentDiv = container.querySelector('.prose')!
 
-      // Simulate text selection
       fireEvent.mouseDown(contentDiv, {
         clientY: 100,
         currentTarget: {
@@ -113,7 +107,6 @@ describe('GenericBlockRenderer', () => {
         fireEvent.mouseUp(contentDiv)
       })
 
-      // Trigger note creation
       const handleCreateNote = container.querySelector('[role="button"]')
       if (handleCreateNote) {
         fireEvent.click(handleCreateNote)

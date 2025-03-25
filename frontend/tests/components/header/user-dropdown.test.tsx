@@ -1,6 +1,5 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { UserDropdown } from '@/components/header/user-dropdown';
-import { signOut } from 'next-auth/react';
 import { TimeZone } from '@/types';
 import { AuthorizedUserRoleTitle } from '@/lib/globals';
 
