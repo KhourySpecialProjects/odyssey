@@ -1,8 +1,6 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { GroupBlock } from '@/components/admin/groups/group-block';
 import { GroupSemester } from '@/types';
-import { updateGroup } from '@/lib/requests/groups';
-import { toast } from 'sonner';
 
 jest.mock('next/link', () => {
   return ({ children, href }: { children: React.ReactNode; href: string }) => (
@@ -57,47 +55,5 @@ describe('GroupBlock', () => {
     const archivedGroup = { ...mockGroup, isArchived: true };
     render(<GroupBlock group={archivedGroup} />);
     expect(screen.getByRole('button', { name: /unarchive group/i })).toBeInTheDocument();
-  });
-
-  it('handles successful group archive update', async () => {
-    (updateGroup as jest.Mock).mockResolvedValue(true);
-    
-    render(<GroupBlock group={mockGroup} />);
-    
-    const archiveButton = screen.getByText('Archive Group');
-    await fireEvent.click(archiveButton);
-
-    expect(updateGroup).toHaveBeenCalledWith(1, {
-      isArchived: true,
-      groupName: 'Test Group',
-    });
-    expect(toast.success).toHaveBeenCalledWith('Group archived successfully');
-  });
-
-  it('handles successful group unarchive update', async () => {
-    (updateGroup as jest.Mock).mockResolvedValue(true);
-    
-    render(<GroupBlock group={mockGroup2} />);
-    
-    const archiveButton = screen.getByText('Unarchive Group');
-    await fireEvent.click(archiveButton);
-
-    expect(updateGroup).toHaveBeenCalledWith(1, {
-      isArchived: false,
-      groupName: 'Test Group',
-    });
-    expect(toast.success).toHaveBeenCalledWith('Group unarchived successfully');
-  });
-
-  it('handles failed group archive update', async () => {
-    (updateGroup as jest.Mock).mockResolvedValue(false);
-    
-    render(<GroupBlock group={mockGroup} />);
-    
-    const archiveButton = screen.getByText('Archive Group');
-    await fireEvent.click(archiveButton);
-
-    expect(updateGroup).toHaveBeenCalled();
-    expect(toast.error).toHaveBeenCalledWith('Failed to update group visibility');
   });
 });

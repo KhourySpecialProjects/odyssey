@@ -4,7 +4,6 @@ import { createAccessRequest } from '@/lib/actions'
 import { toast } from 'sonner'
 import userEvent from '@testing-library/user-event'
 
-// Mock dependencies
 jest.mock('@/lib/actions', () => ({
   createAccessRequest: jest.fn()
 }))
@@ -28,12 +27,10 @@ describe('RequestAccessForm', () => {
   }
 
   it('handles successful form submission', async () => {
-    // Mock successful response
     (createAccessRequest as jest.Mock).mockResolvedValue({ ok: true });
     
     render(<RequestAccessForm />)
-    
-    // Fill out the form
+ 
     fireEvent.change(screen.getByPlaceholderText('Sam'), { 
       target: { value: 'John' } 
     })
@@ -44,11 +41,9 @@ describe('RequestAccessForm', () => {
       target: { value: 'john.doe@northeastern.edu' }
     })
     
-    // Select affiliation and college using ARIA roles
     await selectOption('Affiliation', 'Undergraduate Student')
     await selectOption('College', 'Khoury College of Computer Sciences')
-    
-    // Submit form
+
     fireEvent.click(screen.getByRole('button', { name: 'Submit Request' }))
     
     await waitFor(() => {
@@ -71,7 +66,6 @@ describe('RequestAccessForm', () => {
     
     render(<RequestAccessForm />);
     
-    // Fill out the form
     fireEvent.change(screen.getByPlaceholderText('Sam'), { 
       target: { value: 'John' } 
     })
@@ -81,13 +75,10 @@ describe('RequestAccessForm', () => {
     fireEvent.change(screen.getByPlaceholderText('serif.s@northeastern.edu'), {
       target: { value: 'john.doe@northeastern.edu' }
     })
-    
-    // Select affiliation and college using ARIA roles
+   
     await selectOption('Affiliation', 'Undergraduate Student')
     await selectOption('College', 'Khoury College of Computer Sciences')
-    
-    
-    // Submit the form
+
     await user.click(screen.getByRole('button', { name: /submit request/i }));
 
     await waitFor(() => {
@@ -102,8 +93,7 @@ describe('RequestAccessForm', () => {
     (createAccessRequest as jest.Mock).mockResolvedValue({ ok: false});
     
     render(<RequestAccessForm />);
-    
-    // Fill out the form
+   
     fireEvent.change(screen.getByPlaceholderText('Sam'), { 
       target: { value: 'John' } 
     })
@@ -114,12 +104,9 @@ describe('RequestAccessForm', () => {
       target: { value: 'john.doe@northeastern.edu' }
     })
     
-    // Select affiliation and college using ARIA roles
     await selectOption('Affiliation', 'Undergraduate Student')
     await selectOption('College', 'Khoury College of Computer Sciences')
-    
-    
-    // Submit the form
+
     await user.click(screen.getByRole('button', { name: /submit request/i }));
 
     await waitFor(() => {
@@ -130,14 +117,12 @@ describe('RequestAccessForm', () => {
   });
 
   it('disables submit button during submission', async () => {
-    // Mock a delayed response to test loading state
     (createAccessRequest as jest.Mock).mockImplementation(
       () => new Promise(resolve => setTimeout(() => resolve({ ok: true }), 100))
     );
     
     render(<RequestAccessForm />)
-    
-    // Fill out the form
+
     fireEvent.change(screen.getByPlaceholderText('Sam'), { 
       target: { value: 'John' } 
     })
@@ -148,16 +133,12 @@ describe('RequestAccessForm', () => {
       target: { value: 'john.doe@northeastern.edu' }
     })
     
-    // Select affiliation and college using ARIA roles
     await selectOption('Affiliation', 'Undergraduate Student')
     await selectOption('College', 'Khoury College of Computer Sciences')
-    
-    // Submit form
+ 
     const submitButton = screen.getByRole('button', { name: 'Submit Request' })
     fireEvent.click(submitButton)
-  
-    
-    // Wait for submission to complete
+ 
     await waitFor(() => {
       expect(submitButton).not.toBeDisabled()
     })

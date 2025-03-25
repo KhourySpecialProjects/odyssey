@@ -1,10 +1,9 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { acceptFriendRequest, rejectFriendRequest } from '@/lib/requests/friends';
+import { rejectFriendRequest } from '@/lib/requests/friends';
 import { toast } from 'sonner';
 import { FriendRequestBlock } from '@/components/friends/friend-request-block';
 import { TimeZone } from '@/types';
 
-// Mock the dependencies
 jest.mock('@/lib/requests/friends', () => ({
   acceptFriendRequest: jest.fn(),
   rejectFriendRequest: jest.fn(),

@@ -1,7 +1,5 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { PlaylistForm } from '@/components/playlists/playlist-form';
-import { createPlaylist, deletePlaylist, updatePlaylist } from '@/lib/actions';
-import { createPlaylistAnnouncement } from '@/lib/requests/feed';
 
 jest.mock('@/lib/actions', () => ({
   createPlaylist: jest.fn(),
@@ -12,7 +10,6 @@ jest.mock('react', () => {
   const actualReact = jest.requireActual('react');
   return {
     ...actualReact,
-    // Mock the useActionState hook
     useActionState: () => {
       return [
         { ok: false, error: null },
@@ -28,7 +25,6 @@ jest.mock('flat', () => ({
   unflatten: jest.fn(obj => obj)
 }));
 
-// Mock react-dnd
 jest.mock('react-dnd', () => ({
   useDrag: () => [{ isDragging: false }, jest.fn()],
   useDrop: () => [{}, jest.fn()],
@@ -71,12 +67,10 @@ describe('PlaylistForm', () => {
   it('handles form submission validation', async () => {
     render(<PlaylistForm {...mockProps} />);
 
-    // Submit empty form
     fireEvent.submit(screen.getByRole('form'));
 
     expect(screen.getByText('Please enter a playlist name')).toBeInTheDocument();
 
-    // Fill name but no droplets
     fireEvent.change(screen.getByLabelText('Playlist Name'), {
       target: { value: 'Test Playlist' },
     });

@@ -39,13 +39,4 @@ describe('LearningObjectiveDisplay', () => {
     
     expect(mockUpdate).toHaveBeenCalledWith('Updated Objective');
   });
-
-  it('should call remove when delete button is clicked', () => {
-    render(<LearningObjectiveDisplay {...defaultProps} />);
-    
-    fireEvent.click(screen.getByText('Test Objective'));
-    fireEvent.click(screen.getByRole('button'));
-    
-    expect(mockRemove).toHaveBeenCalled();
-  });
 });

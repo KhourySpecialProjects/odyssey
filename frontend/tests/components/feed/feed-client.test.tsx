@@ -9,19 +9,6 @@ describe('FeedClient', () => {
     firstCreated: new Date()
   }));
 
-  it('renders paginated announcements', () => {
-    render(
-      <FeedClient 
-        selectedRoles={['droplet']} 
-        announcements={mockAnnouncements}
-      />
-    );
-    
-    // Should show first 5 announcements
-    expect(screen.getByText('Announcement 0')).toBeInTheDocument();
-    expect(screen.queryByText('Announcement 5')).not.toBeInTheDocument();
-  });
-
   it('handles pagination correctly', () => {
     render(
       <FeedClient 

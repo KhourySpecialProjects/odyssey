@@ -1,7 +1,6 @@
 import { render, screen, fireEvent } from "@testing-library/react";
 import { QuizEditor } from "@/components/draft/lesson/blocks/quiz";
 
-// Mock dependencies
 jest.mock("@/components/draft/lesson/blocks/quiz-question-editor", () => ({
   QuizQuestionEditor: ({
     question,

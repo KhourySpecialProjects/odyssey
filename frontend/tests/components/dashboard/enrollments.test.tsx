@@ -6,7 +6,6 @@ import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
 import { notFound } from "next/navigation";
 import { Enrollment } from "@/types";
 
-// Mock dependencies
 jest.mock("@/lib/auth/session", () => ({
   getCurrentUser: jest.fn(),
 }));

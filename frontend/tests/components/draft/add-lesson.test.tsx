@@ -1,7 +1,5 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { AddLesson } from '@/components/draft/add-lesson';
-import { addLesson } from '@/lib/actions';
-import { useRouter } from 'next/navigation';
 
 jest.mock('@/lib/actions', () => ({
   addLesson: jest.fn()

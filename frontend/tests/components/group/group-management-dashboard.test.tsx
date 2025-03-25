@@ -84,7 +84,6 @@ describe('GroupDashboard', () => {
 
     expect(screen.getByText('Progress')).toBeInTheDocument();
 
-    // Rerender without edit permissions
     rerender(
       <GroupDashboard
         group={mockGroup}

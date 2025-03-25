@@ -65,3 +65,19 @@ beforeEach(() => {
   jest.clearAllMocks();
   id = 0; // Reset ID counter
 });
+
+const mockUseFormStatus = jest.fn(() => ({ pending: false }));
+jest.mock('react-dom', () => ({
+  ...jest.requireActual('react-dom'),
+  useFormStatus: () => mockUseFormStatus()
+}));
+
+// Mock useActionState
+jest.mock('react', () => ({
+  ...jest.requireActual('react'),
+  useActionState: () => [
+    { ok: false, error: null },
+    jest.fn(),
+    false
+  ]
+}));

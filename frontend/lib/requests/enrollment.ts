@@ -132,15 +132,6 @@ export async function changeEnrollmentRating(
       throw new Error("User not authenticated");
     }
 
-    const authorizedUser = await getAuthorizedUserByEmail(user.email, {
-      populate: {
-        playlists: {
-          fields: ["id"],
-        },
-      },
-    });
-
-    const userID = "" + authorizedUser.id;
     const response = await fetch(
       `${process.env.NEXT_PUBLIC_STRAPI_API_URL}/api/enrollments/${enrollmentID}`,
       {
@@ -243,6 +234,6 @@ export async function getDropletAverageRating(
     return totalRating / enrollments.length;
   } catch (error) {
     console.error("Error calculating droplet average rating:", error);
-    return -1;
+    return Promise.reject(new Error("Error getting droplet average rating"));
   }
 }

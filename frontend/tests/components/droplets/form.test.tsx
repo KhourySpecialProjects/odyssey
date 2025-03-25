@@ -1,9 +1,6 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
-import { createBugReport } from '@/lib/actions'
-import { toast } from 'sonner'
+import { render, screen } from '@testing-library/react'
 import { ReportBugForm } from '@/components/droplets/reports/bug/form'
 
-// Mock dependencies
 jest.mock('@/lib/actions')
 jest.mock('sonner')
 jest.mock('next/navigation', () => ({

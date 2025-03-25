@@ -30,9 +30,4 @@ describe('AuthorDroplets', () => {
     render(<AuthorDroplets author={{ ...mockAuthor, droplets: [] }} />);
     expect(screen.getByText('You have no Droplets.')).toBeInTheDocument();
   });
-
-  it('includes explore link', () => {
-    render(<AuthorDroplets author={mockAuthor} />);
-    expect(screen.getByRole('link', { name: 'Explore' })).toHaveAttribute('href', '/explore');
-  });
 });

@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { BatchAddUser } from '@/components/shared/access-manager/add-user/batch-add-user';
 import { createBatchAuthorizedUsers } from '@/lib/actions';
 
@@ -49,26 +49,21 @@ describe('BatchAddUser', () => {
 
 describe('BatchAddUser', () => {
   beforeEach(() => {
-    // Clear mocks before each test
     jest.clearAllMocks();
   });
 
   test('removes file when clicking remove button', () => {
     render(<BatchAddUser />);
-    
-    // Create a mock file and add it
+
     const file = new File(['email1@test.com'], 'test.csv', { type: 'text/csv' });
     const input = screen.getByLabelText(/Choose Files/i);
     fireEvent.change(input, { target: { files: [file] } });
 
-    // Verify file is added
     expect(screen.getByText('test.csv')).toBeInTheDocument();
 
-    // Click remove button
-    const removeButton = screen.getByRole('button', { name: '' }); // The remove button has no text
+    const removeButton = screen.getByRole('button', { name: '' }); 
     fireEvent.click(removeButton);
 
-    // Verify file is removed
     expect(screen.queryByText('test.csv')).not.toBeInTheDocument();
   });
 
@@ -76,11 +71,9 @@ describe('BatchAddUser', () => {
     render(<BatchAddUser />);
     
     const dropZone = screen.getByText(/Drag and drop CSV files here/i).parentElement!;
-    
-    // Create a mock file
+ 
     const file = new File(['email@test.com'], 'test.csv', { type: 'text/csv' });
-    
-    // Create a mock drop event
+
     const dropEvent = {
       preventDefault: jest.fn(),
       stopPropagation: jest.fn(),
@@ -89,10 +82,8 @@ describe('BatchAddUser', () => {
       }
     };
 
-    // Trigger drop event
     fireEvent.drop(dropZone, dropEvent);
 
-    // Verify file is added
     expect(screen.getByText('test.csv')).toBeInTheDocument();
   });
 });

@@ -84,10 +84,8 @@ describe('PlaylistEnrollButton', () => {
         isPublic={false}
       />
     );
-    // Open dialog
     fireEvent.click(screen.getByRole('button'));
-    
-    // Click Remove Playlist
+
     fireEvent.click(screen.getByText('Remove Playlist'));
     
     await waitFor(() => {

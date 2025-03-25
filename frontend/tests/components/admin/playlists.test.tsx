@@ -2,7 +2,6 @@ import { render, screen } from "@testing-library/react";
 import { Playlists } from "@/components/admin/playlists/playlists";
 import { getPlaylists } from "@/lib/requests/playlist";
 
-// Mock dependencies
 jest.mock("@/lib/requests/playlist", () => ({
   getPlaylists: jest.fn(),
 }));

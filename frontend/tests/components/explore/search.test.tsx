@@ -1,4 +1,3 @@
-// frontend/tests/components/explore/search.test.tsx
 import { render, screen, fireEvent } from '@testing-library/react';
 import { Search } from '@/components/explore/search';
 import { useRouter } from 'next/navigation';
@@ -23,8 +22,7 @@ describe('Search', () => {
     
     const input = screen.getByPlaceholderText('Search...');
     fireEvent.change(input, { target: { value: 'test query' } });
-    
-    // Submit the form
+
     const form = screen.getByRole('searchbox').closest('form');
     fireEvent.submit(form!);
     

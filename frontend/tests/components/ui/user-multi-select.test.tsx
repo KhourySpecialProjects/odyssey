@@ -2,7 +2,6 @@ import { render, fireEvent, waitFor } from '@testing-library/react'
 import { UserMultiSelect } from '@/components/ui/user-multi-select'
 import { fetchAllUsers } from '@/lib/requests/users'
 
-// Mock the fetchAllUsers function
 jest.mock('@/lib/requests/users', () => ({
   fetchAllUsers: jest.fn()
 }))

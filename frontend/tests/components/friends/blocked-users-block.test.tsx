@@ -3,7 +3,6 @@ import { BlockedUsersBlock } from '@/components/friends/blocked-users-block'
 import { unblockUser } from '@/lib/requests/friends'
 import { toast } from 'sonner'
 
-// Mock dependencies
 jest.mock('@/lib/requests/friends', () => ({
   unblockUser: jest.fn()
 }))

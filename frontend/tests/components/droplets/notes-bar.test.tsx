@@ -1,10 +1,8 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
-import { getNotesByAuthorizedUserAndLesson, createNote, updateNotePosition } from '@/lib/requests/notes'
-import { getEnrollByID } from '@/lib/requests/enrollment'
+import { getNotesByAuthorizedUserAndLesson, updateNotePosition } from '@/lib/requests/notes'
 import { NotesBar } from '@/components/droplets/lessons/note-taking/notes-bar'
 import { DropletStatus, DropletType, FocusArea, Tag } from '@/types'
 
-// Mock the API requests
 jest.mock('@/lib/requests/notes')
 jest.mock('@/lib/requests/enrollment')
 jest.mock('@/lib/actions', () => ({

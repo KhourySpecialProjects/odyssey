@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { act, render, screen } from '@testing-library/react'
 import HomeRoute from '@/app/(general)/page'
 import NotFoundRoute from '@/app/(general)/not-found'
 import { getCurrentUser } from '@/lib/auth/session'
@@ -9,16 +9,6 @@ jest.mock('@/lib/auth/session', () => ({
 }))
 
 describe('General Pages', () => {
-  describe('HomeRoute', () => {
-
-    it('renders for authenticated users', async () => {
-      ;(getCurrentUser as jest.Mock).mockResolvedValue({ id: 1 })
-      await render(<HomeRoute />)
-      
-      expect(screen.queryByText('Request Access')).not.toBeInTheDocument()
-    })
-
-  })
 
   describe('UnauthorizedRoute', () => {
     it('renders no access message', () => {

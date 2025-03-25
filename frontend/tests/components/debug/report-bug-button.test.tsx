@@ -1,7 +1,6 @@
 import { render, screen, fireEvent } from "@testing-library/react";
 import { ReportBugButton } from "@/components/debug/reportBugButton";
 
-// Mock the ReportBugDialog component
 jest.mock('@/components/droplets/reports/bug/dialog', () => ({
   ReportBugDialog: ({ open, onOpenChange }: { open: boolean, onOpenChange: () => void }) => (
     <div data-testid="report-bug-dialog" data-open={open} onClick={onOpenChange}>
@@ -43,13 +42,10 @@ describe("ReportBugButton", () => {
     
     const dialog = getByTestId('report-bug-dialog');
     
-    // Initial state should be closed
     expect(dialog).toHaveAttribute('data-open', 'false');
-    
-    // Click to toggle
+   
     fireEvent.click(dialog);
-    
-    // Dialog should now be open
+  
     expect(dialog).toHaveAttribute('data-open', 'true');
   });
 });

@@ -1,7 +1,6 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { PlaylistDueDateBlock } from '@/components/group/playlist-due-date-block';
-import { assignPlaylistDueDate, getGroupDueDate } from '@/lib/requests/groups';
-import { DateTime } from 'luxon';
+import { getGroupDueDate } from '@/lib/requests/groups';
 import { GroupSemester } from '@/types';
 
 jest.mock('@/lib/requests/groups', () => ({

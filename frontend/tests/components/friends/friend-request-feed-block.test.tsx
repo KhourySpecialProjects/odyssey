@@ -1,10 +1,9 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { BlockUser, acceptFriendRequest, rejectFriendRequest, removeFriend } from '@/lib/requests/friends';
+import { acceptFriendRequest, rejectFriendRequest } from '@/lib/requests/friends';
 import { toast } from 'sonner';
 import { FriendRequestFeedBlock } from '@/components/friends/friend-request-feed-block';
 import { TimeZone } from '@/types';
 
-// Mock the dependencies
 jest.mock('@/lib/requests/friends', () => ({
   BlockUser: jest.fn(),
   acceptFriendRequest: jest.fn(),
@@ -100,7 +99,6 @@ describe('FriendRequestFeedBlock', () => {
   it('displays user profile dialog when clicked', async () => {
     render(<FriendRequestFeedBlock user={mockUser} request={mockRequest} />);
 
-    // Click the user's name button to open dialog
     fireEvent.click(screen.getByText(`${mockRequest.firstName} ${mockRequest.lastName}`));
 
     await waitFor(() => {
