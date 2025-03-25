@@ -37,4 +37,73 @@ describe('PlaylistEnrollButton', () => {
       expect(togglePlaylistEnrollment).toHaveBeenCalledWith(1);
     });
   });
+
+  it('handles enrollment change error', async () => {
+    const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    (togglePlaylistEnrollment as jest.Mock).mockRejectedValue(new Error('Test error'));
+
+    render(
+      <PlaylistEnrollButton
+        playlistId={1}
+        isEnrolled={true}
+        isPublic={true}
+      />
+    );
+
+    fireEvent.click(screen.getByRole('button'));
+
+    await waitFor(() => {
+      expect(consoleSpy).toHaveBeenCalledWith('Error updating enrollment:', expect.any(Error));
+    });
+
+    consoleSpy.mockRestore();
+  });
+
+  it('shows warning dialog for private enrolled playlist', async () => {
+    render(
+      <PlaylistEnrollButton
+        playlistId={1}
+        isEnrolled={true}
+        isPublic={false}
+      />
+    );
+
+    fireEvent.click(screen.getByRole('button'));
+
+    expect(screen.getByText('Remove Private Playlist?')).toBeInTheDocument();
+    expect(screen.getByText(/This is a private playlist/)).toBeInTheDocument();
+  });
+
+  it('handles dialog actions correctly', async () => {
+    (togglePlaylistEnrollment as jest.Mock).mockResolvedValue({ success: true });
+
+    render(
+      <PlaylistEnrollButton
+        playlistId={1}
+        isEnrolled={true}
+        isPublic={false}
+      />
+    );
+    // Open dialog
+    fireEvent.click(screen.getByRole('button'));
+    
+    // Click Remove Playlist
+    fireEvent.click(screen.getByText('Remove Playlist'));
+    
+    await waitFor(() => {
+      expect(togglePlaylistEnrollment).toHaveBeenCalledWith(1);
+    });
+  });
+
+  it('does not render button for private unenrolled playlist', () => {
+    const { container } = render(
+      <PlaylistEnrollButton
+        playlistId={1}
+        isEnrolled={false}
+        isPublic={false}
+      />
+    );
+
+    expect(container).toBeEmptyDOMElement();
+  });
 });

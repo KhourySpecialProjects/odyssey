@@ -17,10 +17,13 @@ export function FriendCompletedDroplets({
   useEffect(() => {
     async function fetchCompletedDroplets() {
       const enrollments = await getEnrollmentsByAuthorizedUser(friend.id);
-      const completed = enrollments
-        .filter((e) => e.viewedLessons.length === e.droplet.lessons?.length)
-        .map((d) => d.droplet);
-      setCompletedDroplets(completed);
+      if (enrollments) {
+        const completed = enrollments
+          .filter((e) => e.viewedLessons.length === e.droplet.lessons?.length)
+          .map((d) => d.droplet);
+        setCompletedDroplets(completed);
+      }
+      
     }
 
     fetchCompletedDroplets();

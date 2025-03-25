@@ -1,6 +1,7 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { PlaylistForm } from '@/components/playlists/playlist-form';
-import { createPlaylist, updatePlaylist } from '@/lib/actions';
+import { createPlaylist, deletePlaylist, updatePlaylist } from '@/lib/actions';
+import { createPlaylistAnnouncement } from '@/lib/requests/feed';
 
 jest.mock('@/lib/actions', () => ({
   createPlaylist: jest.fn(),
@@ -65,5 +66,22 @@ describe('PlaylistForm', () => {
     render(<PlaylistForm {...mockProps} />);
     fireEvent.click(screen.getByText('Save Playlist'));
     expect(await screen.findByText('Please enter a playlist name')).toBeInTheDocument();
+  });
+
+  it('handles form submission validation', async () => {
+    render(<PlaylistForm {...mockProps} />);
+
+    // Submit empty form
+    fireEvent.submit(screen.getByRole('form'));
+
+    expect(screen.getByText('Please enter a playlist name')).toBeInTheDocument();
+
+    // Fill name but no droplets
+    fireEvent.change(screen.getByLabelText('Playlist Name'), {
+      target: { value: 'Test Playlist' },
+    });
+    fireEvent.submit(screen.getByRole('form'));
+
+    expect(screen.getByText('Please select at least one droplet')).toBeInTheDocument();
   });
 });

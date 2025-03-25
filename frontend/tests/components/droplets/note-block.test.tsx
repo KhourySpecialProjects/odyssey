@@ -68,4 +68,5 @@ describe('NoteBlock', () => {
     expect(screen.getByText('Test note content')).toBeInTheDocument()
   })
 
+
 })

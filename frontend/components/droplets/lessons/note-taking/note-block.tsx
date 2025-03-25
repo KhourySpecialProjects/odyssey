@@ -145,6 +145,8 @@ export function NoteBlock({
             variant="default"
             size="sm"
             onClick={() => onDelete(note.id)}
+            role="button"
+            name="delete"
           >
             <Trash2Icon className="cursor-pointer text-white" />
           </Button>

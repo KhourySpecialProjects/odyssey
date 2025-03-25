@@ -1,70 +1,100 @@
-import { render, fireEvent, act, getByRole, screen } from '@testing-library/react'
-import { FriendRequestBlock } from '@/components/friends/friend-request-block'
-import { acceptFriendRequest, rejectFriendRequest } from '@/lib/requests/friends'
-import { toast } from 'sonner'
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { acceptFriendRequest, rejectFriendRequest } from '@/lib/requests/friends';
+import { toast } from 'sonner';
+import { FriendRequestBlock } from '@/components/friends/friend-request-block';
+import { TimeZone } from '@/types';
 
 // Mock the dependencies
 jest.mock('@/lib/requests/friends', () => ({
   acceptFriendRequest: jest.fn(),
-  rejectFriendRequest: jest.fn()
-}))
+  rejectFriendRequest: jest.fn(),
+}));
 
 jest.mock('sonner', () => ({
   toast: {
     success: jest.fn(),
-    error: jest.fn()
-  }
-}))
+    error: jest.fn(),
+  },
+}));
 
 describe('FriendRequestBlock', () => {
   const mockUser = {
-    id: '1',
-    friendships: [
-      { authorized_users: ['2'] }
-    ]
-  } as any
+    id: 1,
+    email: `user@example.com`,
+    isEnabled: true,
+    roles: [],
+    linkedin: "https://www.google.com/",
+    github: "https://www.google.com/",
+    firstName: "first",
+    lastName: "last",
+    bio: "bio",
+    firstTime: false,
+    friendships: [],
+    sent_requests: [],
+    received_requests: [],
+    profilePhoto: "",
+    blocked: [],
+    was_blocked: [],
+    timeZone: "America/New_York" as TimeZone,
+  };
 
   const mockRequest = {
-    id: '2',
-    firstName: 'John',
-    lastName: 'Doe',
-    email: 'john@example.com'
-  } as any
+    id: 2,
+    email: `user@example.com`,
+    isEnabled: true,
+    roles: [],
+    linkedin: "https://www.google.com/",
+    github: "https://www.google.com/",
+    firstName: "first",
+    lastName: "last",
+    bio: "bio",
+    firstTime: false,
+    friendships: [],
+    sent_requests: [],
+    received_requests: [],
+    profilePhoto: "",
+    blocked: [],
+    was_blocked: [],
+    timeZone: "America/New_York" as TimeZone,
+  };
 
   beforeEach(() => {
-    jest.clearAllMocks()
-  })
+    jest.clearAllMocks();
+  });
 
-  describe('handleApprove', () => {
-    it('rejects if friendship already exists', async () => {
-      const { getByTitle } = render(
-        <FriendRequestBlock user={mockUser} request={mockRequest} />
-      )
+  it('handles existing friendship case', async () => {
+    const userWithExistingFriendship = {
+      ...mockUser,
+      friendships: [{ authorized_users: [2] }],
+    };
 
-      await act(async () => {
-        fireEvent.click(screen.getByRole('accept'))
-      })
+    render(
+      <FriendRequestBlock 
+        user={userWithExistingFriendship} 
+        request={mockRequest} 
+      />
+    );
 
-      expect(rejectFriendRequest).toHaveBeenCalledWith('1', '2')
-      expect(toast.error).toHaveBeenCalledWith('Friendship already exists with this user')
-    })
+    const approveButton = screen.getByRole('accept');
+    fireEvent.click(approveButton);
 
-  })
+    await waitFor(() => {
+      expect(rejectFriendRequest).toHaveBeenCalledWith(1, 2);
+      expect(toast.error).toHaveBeenCalledWith('Friendship already exists with this user');
+    });
+  });
 
-  describe('handleReject', () => {
-    it('rejects friend request successfully', async () => {
-      ;(rejectFriendRequest as jest.Mock).mockResolvedValueOnce({ success: true })
+  it('handles failed friend request rejection', async () => {
+    (rejectFriendRequest as jest.Mock).mockResolvedValue({ success: false });
 
-      const { getByTitle } = render(
-        <FriendRequestBlock user={mockUser} request={mockRequest} />
-      )
+    render(<FriendRequestBlock user={mockUser} request={mockRequest} />);
 
-      await act(async () => {
-        fireEvent.click(screen.getByRole('reject'))
-      })
+    const rejectButton = screen.getByRole('reject');
+    fireEvent.click(rejectButton);
 
-      expect(rejectFriendRequest).toHaveBeenCalledWith('1', '2')
-      expect(toast.success).toHaveBeenCalledWith('Friend request rejected')
-    })
-  })
-})
+    await waitFor(() => {
+      expect(rejectFriendRequest).toHaveBeenCalledWith(1, 2);
+      expect(toast.error).toHaveBeenCalledWith('Failed to reject friend request');
+    });
+  });
+});

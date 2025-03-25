@@ -180,7 +180,7 @@ export function FriendRequestFeedBlock({
                 className={`inline-flex items-center gap-2 ${user.blocked.includes(request) ? "visibility: hidden" : "visibility: visible"}`}
                 onClick={handleBlock}
               >
-                <Button size="sm" variant="destructive">
+                <Button size="sm" variant="destructive" role="blocking">
                   Block user
                 </Button>
               </div>

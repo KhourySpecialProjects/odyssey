@@ -65,11 +65,7 @@ export function UserBlock({
             >
               <AvatarImage src={user?.profilePhoto || undefined} />
               <AvatarFallback className="text-2xl">
-                {user?.firstName ? (
-                  getInitials(user.firstName + " " + user.lastName)
-                ) : (
-                  <User2Icon />
-                )}
+                { getInitials(user.firstName + " " + user.lastName)}
               </AvatarFallback>
             </Avatar>
           </div>
@@ -78,14 +74,14 @@ export function UserBlock({
           </DialogTitle>
           <div className="flex justify-center space-x-2">
             {user.linkedin && (
-              <Link href={user.linkedin} legacyBehavior>
+              <Link href={user.linkedin} legacyBehavior role="link">
                 <a target="_blank" rel="noopener noreferrer">
                   <Linkedin />
                 </a>
               </Link>
             )}
             {user.github && (
-              <Link href={user.github} legacyBehavior>
+              <Link href={user.github} legacyBehavior role="link">
                 <a target="_blank" rel="noopener noreferrer">
                   <Github />
                 </a>
