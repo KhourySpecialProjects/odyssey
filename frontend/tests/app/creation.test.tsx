@@ -1,7 +1,6 @@
 import { render, screen } from '@testing-library/react'
 import Loading from '@/app/(creation)/new/droplet/loading'
 
-// Mock the CreateDroplet component
 jest.mock('@/components/new/new-droplet', () => ({
   CreateDroplet: () => <div data-testid="create-droplet">Mock CreateDroplet Component</div>
 }))

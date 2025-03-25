@@ -19,5 +19,3 @@ describe('DropletOverviewInput', () => {
   })
 
 })
-
-

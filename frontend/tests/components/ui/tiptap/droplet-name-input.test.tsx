@@ -27,5 +27,3 @@ describe('DropletNameInput', () => {
     expect(editor).toHaveClass('hover:shadow', 'focus:shadow-lg')
   })
 })
-
-

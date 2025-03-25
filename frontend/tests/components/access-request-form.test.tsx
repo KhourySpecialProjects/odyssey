@@ -2,6 +2,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { RequestAccessForm } from '@/components/access-request-form'
 import { createAccessRequest } from '@/lib/actions'
 import { toast } from 'sonner'
+import userEvent from '@testing-library/user-event'
 
 // Mock dependencies
 jest.mock('@/lib/actions', () => ({
@@ -16,6 +17,9 @@ jest.mock('sonner', () => ({
 }))
 
 describe('RequestAccessForm', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  })
   const selectOption = async (triggerText: string, optionValue: string) => {
     const trigger = screen.getByRole('combobox', { name: triggerText })
     fireEvent.click(trigger)
@@ -60,6 +64,70 @@ describe('RequestAccessForm', () => {
       )
     })
   })
+
+  it('handles failed form submission', async () => {
+    const user = userEvent.setup();
+    (createAccessRequest as jest.Mock).mockResolvedValue({ ok: false, error: 'Test error' });
+    
+    render(<RequestAccessForm />);
+    
+    // Fill out the form
+    fireEvent.change(screen.getByPlaceholderText('Sam'), { 
+      target: { value: 'John' } 
+    })
+    fireEvent.change(screen.getByPlaceholderText('Serif'), { 
+      target: { value: 'Doe' } 
+    })
+    fireEvent.change(screen.getByPlaceholderText('serif.s@northeastern.edu'), {
+      target: { value: 'john.doe@northeastern.edu' }
+    })
+    
+    // Select affiliation and college using ARIA roles
+    await selectOption('Affiliation', 'Undergraduate Student')
+    await selectOption('College', 'Khoury College of Computer Sciences')
+    
+    
+    // Submit the form
+    await user.click(screen.getByRole('button', { name: /submit request/i }));
+
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith('Uh oh! Something went wrong.', {
+        description: 'Test error',
+      });
+    });
+  });
+
+  it('handles failed form submission no description', async () => {
+    const user = userEvent.setup();
+    (createAccessRequest as jest.Mock).mockResolvedValue({ ok: false});
+    
+    render(<RequestAccessForm />);
+    
+    // Fill out the form
+    fireEvent.change(screen.getByPlaceholderText('Sam'), { 
+      target: { value: 'John' } 
+    })
+    fireEvent.change(screen.getByPlaceholderText('Serif'), { 
+      target: { value: 'Doe' } 
+    })
+    fireEvent.change(screen.getByPlaceholderText('serif.s@northeastern.edu'), {
+      target: { value: 'john.doe@northeastern.edu' }
+    })
+    
+    // Select affiliation and college using ARIA roles
+    await selectOption('Affiliation', 'Undergraduate Student')
+    await selectOption('College', 'Khoury College of Computer Sciences')
+    
+    
+    // Submit the form
+    await user.click(screen.getByRole('button', { name: /submit request/i }));
+
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith('Uh oh! Something went wrong.', {
+        description: '',
+      });
+    });
+  });
 
   it('disables submit button during submission', async () => {
     // Mock a delayed response to test loading state

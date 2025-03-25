@@ -4,8 +4,8 @@ import { getCurrentUser } from '@/lib/auth/session'
 import { getAuthorizedUserByEmail } from '@/lib/requests/authorized-user'
 import { getGroupBySlugV2, getGroupDueDates } from '@/lib/requests/groups'
 import { isAuthorizedUserAdmin } from '@/lib/utils'
+import { notFound } from 'next/navigation'
 
-// Mock all the required functions
 jest.mock('@/lib/auth/session', () => ({
   getCurrentUser: jest.fn()
 }))
@@ -19,6 +19,10 @@ jest.mock('@/lib/requests/groups', () => ({
   getGroupDueDates: jest.fn(),
   getGroupBySlug: jest.fn(),
 }))
+
+jest.mock('next/navigation', () => ({
+  notFound: jest.fn()
+}));
 
 jest.mock('@/lib/utils', () => ({
   isAuthorizedUserAdmin: jest.fn()
@@ -54,7 +58,6 @@ describe('Group Detail Page', () => {
   ]
 
   beforeEach(() => {
-    // Clear all mocks before each test
     jest.clearAllMocks();
    
     (getCurrentUser as jest.Mock).mockResolvedValue(mockUser);
@@ -82,6 +85,19 @@ describe('Group Detail Page', () => {
     );
     
     expect(screen.queryByTestId('group-edit-controls')).not.toBeInTheDocument();
+  });
+
+
+  it('calls notFound when group is not found', async () => {
+    (getGroupBySlugV2 as jest.Mock).mockResolvedValue(null);
+    
+    try {
+      await GroupDetailPage({ params: Promise.resolve({ slug: 'test' }) });
+    } catch (error) {
+      // The test should reach this point
+    }
+    
+    expect(notFound).toHaveBeenCalled();
   });
 
 }); 
