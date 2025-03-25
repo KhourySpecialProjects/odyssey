@@ -39,4 +39,35 @@ describe('LearningObjectiveDisplay', () => {
     
     expect(mockUpdate).toHaveBeenCalledWith('Updated Objective');
   });
+
+describe('LearningObjectiveDisplay', () => {
+  const mockProps = {
+    objective: 'Test Objective',
+    update: jest.fn(),
+    remove: jest.fn(),
+  };
+
+  it('applies correct styling based on hover state', () => {
+    render(<LearningObjectiveDisplay {...mockProps} />);
+    
+    const listItem = screen.getByRole('listitem');
+    expect(listItem).toHaveClass('hover:shadow', 'cursor-pointer');
+    
+    fireEvent.click(listItem);
+    expect(listItem).toHaveClass('shadow-md');
+    expect(listItem).not.toHaveClass('hover:shadow', 'cursor-pointer');
+  });
+
+  it('toggles edit mode on click', () => {
+    render(<LearningObjectiveDisplay {...mockProps} />);
+    
+    expect(screen.getByText('Test Objective')).toBeInTheDocument();
+   
+    fireEvent.click(screen.getByRole('listitem'));
+    
+    expect(screen.getByRole('textbox')).toBeInTheDocument();
+    expect(screen.getByRole('textbox')).toHaveValue('Test Objective');
+  });
+
+});
 });

@@ -7,15 +7,17 @@ jest.mock('@/components/draft/metadata/hooks/useDropletUpdate', () => ({
 }));
 
 jest.mock('@/components/new/multi-select', () => ({
-  MultiSelect: ({ label, selected, setSelected, items }: any) => (
+  MultiSelect: ({ label, selected, setSelected }: any) => (
     <div data-testid="multi-select">
       <span>{label}</span>
-      <button 
-        onClick={() => setSelected([items[0]])} 
-        data-testid="select-item"
-      >
+      <button onClick={() => setSelected([{ id: 2, label: 'New Item' }])}>
         Select Item
       </button>
+      <div>
+        {selected.map((item: any) => (
+          <span key={item.id}>{item.label}</span>
+        ))}
+      </div>
     </div>
   )
 }));
@@ -89,5 +91,99 @@ describe('Selection', () => {
     );
 
     expect(screen.getByText('Test error')).toBeInTheDocument();
+  });
+
+  const mockSelectedItems = [
+    { id: 1, label: 'Item 1', name: "item 1" }
+  ];
+
+  beforeEach(() => {
+    (useDropletUpdate as jest.Mock).mockReturnValue({
+      error: null,
+      handleChange: jest.fn()
+    });
+  });
+
+  it('initializes with selected items', () => {
+    render(
+      <Selection
+        dropletId={1}
+        items={mockItems}
+        selectedItems={mockSelectedItems}
+        variant="tag"
+      />
+    );
+
+    expect(screen.getByText('Tags')).toBeInTheDocument();
+    expect(screen.getByText('Item 1')).toBeInTheDocument();
+  });
+
+  it('handles selection updates prerequisite', () => {
+    const mockHandleChange = jest.fn();
+    (useDropletUpdate as jest.Mock).mockReturnValue({
+      error: null,
+      handleChange: mockHandleChange
+    });
+
+    render(
+      <Selection
+        dropletId={1}
+        items={mockItems}
+        selectedItems={mockSelectedItems}
+        variant="prerequisite"
+      />
+    );
+
+    fireEvent.click(screen.getByText('Select Item'));
+
+    expect(mockHandleChange).toHaveBeenCalledWith({
+      prerequisiteIds: [2]
+    });
+  });
+
+  it('handles selection updates tag', () => {
+    const mockHandleChange = jest.fn();
+    (useDropletUpdate as jest.Mock).mockReturnValue({
+      error: null,
+      handleChange: mockHandleChange
+    });
+
+    render(
+      <Selection
+        dropletId={1}
+        items={mockItems}
+        selectedItems={mockSelectedItems}
+        variant="tag"
+      />
+    );
+
+    fireEvent.click(screen.getByText('Select Item'));
+
+    expect(mockHandleChange).toHaveBeenCalledWith({
+      tagIds: [2]
+    });
+  });
+
+  it('handles selection updates postrequisite', () => {
+    const mockHandleChange = jest.fn();
+    (useDropletUpdate as jest.Mock).mockReturnValue({
+      error: null,
+      handleChange: mockHandleChange
+    });
+
+    render(
+      <Selection
+        dropletId={1}
+        items={mockItems}
+        selectedItems={mockSelectedItems}
+        variant="postrequisite"
+      />
+    );
+
+    fireEvent.click(screen.getByText('Select Item'));
+
+    expect(mockHandleChange).toHaveBeenCalledWith({
+      postrequisiteIds: [2]
+    });
   });
 });

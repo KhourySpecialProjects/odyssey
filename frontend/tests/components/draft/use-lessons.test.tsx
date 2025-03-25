@@ -120,4 +120,39 @@ describe('useLessons', () => {
 
     consoleSpy.mockRestore();
   });
+
+  it('initializes with droplet lessons', () => {
+
+    const { result } = renderHook(() => useLessons(mockDroplet));
+    expect(result.current.lessons).toEqual(mockDroplet.lessons);
+  });
+
+  it('initializes with empty array when no lessons', () => {
+    const mockDroplet = {
+      id: 1,
+      lessons: undefined
+    };
+
+    const { result } = renderHook(() => useLessons(mockDroplet));
+    expect(result.current.lessons).toEqual([]);
+  });
+
+  it('updates lessons when droplet lessons change', () => {
+
+    const { result, rerender } = renderHook(
+      (props) => useLessons(props),
+      { initialProps: mockDroplet }
+    );
+
+    const updatedDroplet = {
+      id: 1,
+      lessons: [
+        mockLesson,
+     ],
+    };
+
+    rerender(updatedDroplet);
+    expect(result.current.lessons).toEqual(updatedDroplet.lessons);
+  });
 });
+
