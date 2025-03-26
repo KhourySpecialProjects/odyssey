@@ -1,6 +1,4 @@
 "use client";
-
-import { PERMITTED_EMAIL_DOMAINS } from "@/lib/globals";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useTransition } from "react";
 import { useForm } from "react-hook-form";
@@ -101,12 +99,6 @@ export function ReportBugForm({ name, email, onSuccess }: Props) {
                   {...field}
                 />
               </FormControl>
-              {!email ? (
-                <FormDescription>
-                  The following email domains are supported:{" "}
-                  {PERMITTED_EMAIL_DOMAINS.join(", ")}
-                </FormDescription>
-              ) : null}
               <FormMessage />
             </FormItem>
           )}
@@ -122,12 +114,6 @@ export function ReportBugForm({ name, email, onSuccess }: Props) {
                 <FormControl>
                   <Input type="text" disabled {...field} />
                 </FormControl>
-                {!email ? (
-                  <FormDescription>
-                    The following email domains are supported:{" "}
-                    {PERMITTED_EMAIL_DOMAINS.join(", ")}
-                  </FormDescription>
-                ) : null}
                 <FormMessage />
               </FormItem>
             )}
