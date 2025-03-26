@@ -235,6 +235,18 @@ describe("Data requests", () => {
 
       await expect(fetchGroups()).rejects.toThrow("Failed to fetch groups.");
     });
+
+    it("should throw an error when fetch returns a non-ok response", async () => {
+      // Mock a failed response with ok: false
+      global.fetch.mockResolvedValueOnce({
+        ok: false,
+        status: 400,
+        statusText: "Bad Request"
+      });
+
+      // The function should throw an error
+      await expect(fetchGroups()).rejects.toThrow("Failed to fetch groups.");
+    })
   });
 
   describe("fetchAccessRequests", () => {
@@ -609,6 +621,21 @@ describe("Playlist enrollment tests", () => {
       const result = await togglePlaylistEnrollment(2);
 
       expect(result).toEqual({ success: false, error: "Failed to update enrollment" });
+    })
+
+    it("should throw an error when the user is not authenticated", async () => {
+
+      getCurrentUser.mockResolvedValueOnce(undefined);
+
+      getAuthorizedUserByEmail.mockResolvedValueOnce({
+        id: 12, email: "hmerzin@northeastern.edu", playlists: [{ id: 1 }, { id: 2 }, { id: 3 }]
+      })
+
+
+      const result = await togglePlaylistEnrollment(2);
+
+      expect(result).toEqual({ success: false, error: "Failed to update enrollment" });
+
     })
 
   })
