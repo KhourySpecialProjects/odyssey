@@ -1,5 +1,5 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { rejectFriendRequest } from '@/lib/requests/friends';
+import { acceptFriendRequest, rejectFriendRequest } from '@/lib/requests/friends';
 import { toast } from 'sonner';
 import { FriendRequestBlock } from '@/components/friends/friend-request-block';
 import { TimeZone } from '@/types';
@@ -94,6 +94,20 @@ describe('FriendRequestBlock', () => {
     await waitFor(() => {
       expect(rejectFriendRequest).toHaveBeenCalledWith(1, 2);
       expect(toast.error).toHaveBeenCalledWith('Failed to reject friend request');
+    });
+  });
+
+  it('handles successful friend request rejection', async () => {
+    (rejectFriendRequest as jest.Mock).mockResolvedValue({ success: true });
+
+    render(<FriendRequestBlock user={mockUser} request={mockRequest} />);
+
+    const rejectButton = screen.getByRole('reject');
+    fireEvent.click(rejectButton);
+
+    await waitFor(() => {
+      expect(rejectFriendRequest).toHaveBeenCalledWith(1, 2);
+      expect(toast.success).toHaveBeenCalledWith('Friend request rejected');
     });
   });
 });

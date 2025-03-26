@@ -36,26 +36,16 @@ export function FriendBlock({
         >
           <AvatarImage src={friend?.profilePhoto || undefined} />
           <AvatarFallback>
-            {friend?.firstName ? (
-              getInitials(friend.firstName + " " + friend.lastName)
-            ) : (
-              <User2Icon />
-            )}
+              {getInitials(friend.firstName + " " + friend.lastName)}
           </AvatarFallback>
         </Avatar>
 
         <div className="flex-1 min-w-0">
           <p
-            title={`${
-              friend.firstName && friend.lastName
-                ? `${friend.firstName} ${friend.lastName}`
-                : friend.email
-            }`}
+            title={`${friend.firstName} ${friend.lastName}`}
             className="font-medium truncate overflow-hidden text-slate-900 dark:text-slate-300 max-w-[200px] md:max-w-sm inline-block"
           >
-            {friend.firstName && friend.lastName
-              ? `${friend.firstName} ${friend.lastName}`
-              : friend.email}
+            {friend.firstName} {friend.lastName}
           </p>
         </div>
         <UserBlock user={friend} curUser={user} />

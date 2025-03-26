@@ -69,4 +69,13 @@ describe('FriendBlock', () => {
 
     expect(removeFriend).toHaveBeenCalledWith(mockUser.id, mockFriend.id);
   });
+
+  it('handles remove friend action failed', async () => {
+    (removeFriend as jest.Mock).mockResolvedValue({ success: false });
+    
+    render(<FriendBlock user={mockUser} friend={mockFriend} />);
+    fireEvent.click(screen.getByText('Remove Friend'));
+
+    expect(removeFriend).toHaveBeenCalledWith(mockUser.id, mockFriend.id);
+  });
 });

@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { FeedBlock } from '@/components/feed/feed-block';
-import { DropletStatus, DropletType, FocusArea, Tag } from '@/types';
+import { AnnouncementType, DropletStatus, DropletType, FocusArea, Tag } from '@/types';
 
 describe('FeedBlock', () => {
   const mockDroplet = {
