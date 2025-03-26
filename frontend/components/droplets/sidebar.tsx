@@ -23,6 +23,9 @@ import {
   CheckCircle2,
   LockIcon,
   ArrowLeftIcon,
+  PanelRightClose,
+  Home,
+  ChevronsLeft,
 } from "lucide-react";
 import { signOut } from "next-auth/react";
 import Image from "next/image";
@@ -93,15 +96,15 @@ export default function Sidebar({
         onClick={() => setExpanded(false)}
       ></div>
 
-      <div className="z-20 inline-flex items-center w-full gap-2 px-3 py-2 text-sm border-b md:hidden border-b-slate-200">
+      <div className="z-20 inline-flex items-center w-full gap-2 px-3 py-2 text-sm border-b xl:hidden border-b-slate-200">
         <button
           aria-controls="sidebar"
           type="button"
-          className="z-20 inline-flex items-center p-2 text-sm rounded-lg text-slate-500 md:hidden hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-200 dark:text-slate-400 dark:hover:bg-slate-700 dark:focus:ring-slate-600"
+          className="z-20 inline-flex items-center p-2 text-sm rounded-lg text-slate-500 xl:hidden hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-200 dark:text-slate-400 dark:hover:bg-slate-700 dark:focus:ring-slate-600"
           onClick={() => setExpanded(true)}
         >
           <span className="sr-only">Open sidebar</span>
-          <MenuIcon />
+          <PanelRightClose className="dark:text-white" />
         </button>
         <Link
           href={getPath("droplet", droplet.slug)}
@@ -114,35 +117,36 @@ export default function Sidebar({
       <aside
         id="sidebar"
         className={cn(
-          "fixed md:sticky md:top-0 left-0 z-40 w-64 h-screen transition-transform",
-          expanded ? "translate-x-0" : "-translate-x-full md:translate-x-0",
+          "fixed xl:sticky xl:top-0 left-0 z-40 w-64 h-screen transition-transform",
+          expanded ? "translate-x-0" : "-translate-x-full xl:translate-x-0",
         )}
         aria-label="Sidebar"
       >
-        <div className="flex flex-col h-full py-4 overflow-y-auto lg:justify-between lg:pb-0 bg-slate-50 dark:bg-slate-800">
+        <div className="flex flex-col h-full py-4 overflow-y-auto xl:justify-between xl:pb-0 bg-slate-50 dark:bg-slate-800">
           <div className="px-3">
-            <Link href="/explore" className="block p-2 mb-4">
-              <Image
-                src="/logo.svg"
-                alt="Khoury Odyssey Logo"
-                width={200}
-                height={55}
-                priority
-              />
-            </Link>
+            <div className="flex flex-row justify-between pr-2">
+              <Link
+                type="button"
+                href="/explore"
+                className={cn(
+                  "flex items-center justify-start text-base  gap-2",
+                )}
+              >
+                <div className="w-6 flex justify-center">
+                  <ArrowLeftIcon className="shrink-0 w-5 h-5" />
+                </div>
+                <Home />
+              </Link>
 
-            <Link
-              type="button"
-              href="/explore"
-              className={cn(
-                "w-full flex items-center justify-start text-base px-4",
-              )}
-            >
-              <div className="w-6 flex justify-center">
-                <ArrowLeftIcon className="shrink-0 w-5 h-5" />
-              </div>
-              <span className="leading-snug ms-2">Back</span>
-            </Link>
+              <div className="w-full"></div>
+
+              <button
+                onClick={() => setExpanded(false)}
+                className={`xl:hidden`}
+              >
+                <ChevronsLeft />
+              </button>
+            </div>
 
             <p className="p-2 my-2 text-lg font-extrabold leading-7">
               {droplet.name}
@@ -169,6 +173,7 @@ export default function Sidebar({
                       ? activeLinkClasses
                       : inactiveLinkClasses
                   }
+                  onClick={() => setExpanded(false)}
                 >
                   <TargetIcon className="shrink-0" />
                   <span className="leading-snug ms-3">Overview</span>
@@ -200,6 +205,7 @@ export default function Sidebar({
                             : inactiveLinkClasses,
                           isLocked && "opacity-50",
                         )}
+                        onClick={() => setExpanded(false)}
                       >
                         {lesson.type === "activity" ? (
                           <HammerIcon className="shrink-0" />
@@ -228,6 +234,7 @@ export default function Sidebar({
                       ? activeLinkClasses
                       : inactiveLinkClasses
                   }
+                  onClick={() => setExpanded(false)}
                 >
                   <HistoryIcon className="shrink-0" />
                   <span className="leading-snug ms-3">Recap</span>
@@ -236,82 +243,11 @@ export default function Sidebar({
             </ul>
           </div>
 
-          <div className="bottom-0 left-0 w-full p-2 mt-4 space-y-4 border-t bg-slate-50 border-t-slate-200 lg:sticky lg:px-3 lg:mb-0 lg:flex-col dark:bg-slate-800">
+          <div className="bottom-0 left-0 w-full p-2 mt-4 space-y-4 border-t bg-slate-50 border-t-slate-200 xl:sticky xl:px-3 xl:mb-0 xl:flex-col dark:bg-slate-800">
             <div className="px-2">
               <Label>{dropletProgress}% complete</Label>
               <Progress value={dropletProgress} className="mt-1.5" />
             </div>
-
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <div className="w-full group flex shrink cursor-pointer select-none items-center justify-between gap-1 rounded-lg p-1.5 px-2 text-sm text-slate-600 transition-colors duration-100 wg-antialiased hover:bg-slate-100 dark:hover:bg-white/5">
-                  <div className="inline-flex flex-row items-center justify-between">
-                    {authorizedUser?.profilePhoto ? (
-                      <Avatar variant="round" size="xs">
-                        <AvatarImage
-                          src={
-                            authorizedUser?.profilePhoto ||
-                            user?.image ||
-                            undefined
-                          }
-                        />
-                      </Avatar>
-                    ) : user.image ? (
-                      <Avatar variant="round" size="xs">
-                        <AvatarImage src={user.image} />
-                        <AvatarFallback>
-                          {getInitials(user.name ?? "")}
-                        </AvatarFallback>
-                      </Avatar>
-                    ) : null}
-
-                    <span className="font-medium ms-2 dark:text-slate-300">
-                      Hi, <b>{user.name ?? user.email}</b>!
-                    </span>
-                  </div>
-
-                  <ChevronDownIcon className="w-5 h-5 trigger-icon text-slate-400" />
-                </div>
-              </DropdownMenuTrigger>
-
-              <DropdownMenuContent className="mb-3 min-w-[220px]">
-                <DropdownMenuLabel className="text-xs">
-                  {user.nuid ? "NUID:" + user.nuid || "unknown" : ""}
-                  <br />
-                  <p className="text-xs leading-none text-muted-foreground max-w-56">
-                    Role(s): {condenseRoleTitles(user.roles)}
-                  </p>
-                </DropdownMenuLabel>
-                <DropdownMenuItem asChild>
-                  <Link href="/explore">
-                    <ShipIcon className="w-4 h-4 mr-2" />
-                    <span>Explore</span>
-                  </Link>
-                </DropdownMenuItem>
-
-                <DropdownMenuItem asChild>
-                  <Link href="/settings">
-                    <PersonStanding className="w-4 h-4 mr-2" />
-                    <span>Profile</span>
-                  </Link>
-                </DropdownMenuItem>
-
-                <DropdownMenuSeparator />
-
-                <DropdownMenuItem
-                  onSelect={(e) => {
-                    e.preventDefault();
-                    signOut({
-                      callbackUrl: "/",
-                      redirect: true,
-                    });
-                  }}
-                >
-                  <LogOutIcon className="w-4 h-4 mr-2" />
-                  <span>Log Out</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
           </div>
         </div>
       </aside>
