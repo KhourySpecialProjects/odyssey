@@ -68,6 +68,27 @@ describe('LearningObjectiveDisplay', () => {
     expect(screen.getByRole('textbox')).toBeInTheDocument();
     expect(screen.getByRole('textbox')).toHaveValue('Test Objective');
   });
-
-});
+  
+    const mockUpdate = jest.fn();
+    const mockRemove = jest.fn();
+  
+    it('prevents opening when already open', () => {
+      render(
+        <LearningObjectiveDisplay
+          objective="Test objective"
+          update={mockUpdate}
+          remove={mockRemove}
+        />
+      );
+  
+      fireEvent.click(screen.getByText('Test objective'));
+      
+      const input = screen.getByRole('textbox');
+      expect(input).toBeInTheDocument();
+      
+      fireEvent.click(screen.getByRole('listitem'));
+      
+      expect(input).toBeInTheDocument();
+    });
+  });
 });
