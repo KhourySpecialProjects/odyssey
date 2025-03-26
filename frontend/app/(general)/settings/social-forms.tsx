@@ -14,6 +14,7 @@ import { AuthorizedUser } from "@/types";
 import { useState } from "react";
 import imageCompression from "browser-image-compression";
 import { Textarea } from "@/components/ui/textarea";
+import { Check } from "lucide-react";
 
 export function SocialForms({
   authorizedUser,
@@ -175,7 +176,11 @@ export function SocialForms({
           }}
           imagePreview={profileImage}
         />
-        <Button type="submit" className="w-[13%]" disabled={!profileFile}>
+        <Button
+          type="submit"
+          className="w-[13%] min-w-[50px] whitespace-normal"
+          disabled={!profileFile}
+        >
           Save Photo
         </Button>
       </form>
@@ -194,7 +199,7 @@ export function SocialForms({
         }}
         className="px-6 py-4 flex flex-row gap-4 items-center"
       >
-        <div className="w-[12%]">Bio:</div>
+        <div className="w-[12%] mr-5 sm:mr-0">Bio:</div>
         <Textarea
           name="bio"
           value={bioValue}
@@ -202,8 +207,17 @@ export function SocialForms({
           placeholder="Enter your bio"
           className="w-[50%]"
         />
-        <Button type="submit" className="w-[13%] dark:bg-slate-300">
+        <Button
+          type="submit"
+          className="min-w-[120px] dark:bg-slate-300 hidden sm:block"
+        >
           Save Bio
+        </Button>
+        <Button
+          type="submit"
+          className="w-[13%] dark:bg-slate-300 p-0 sm:hidden"
+        >
+          <Check className="h-5 w-5" />
         </Button>
       </form>
       <form
@@ -224,7 +238,7 @@ export function SocialForms({
         }}
         className="px-6 py-4 flex flex-row gap-4 items-center"
       >
-        <div className="w-[12%]">LinkedIn:</div>
+        <div className="w-[12%] mr-5 sm:mr-0">LinkedIn:</div>
         <Input
           name="linkedin"
           value={linkedinValue}
@@ -232,8 +246,17 @@ export function SocialForms({
           placeholder="Enter your LinkedIn url"
           className="w-[50%]"
         />
-        <Button type="submit" className="w-[13%] dark:bg-slate-300">
+        <Button
+          type="submit"
+          className="min-w-[120px] dark:bg-slate-300 hidden sm:block"
+        >
           Save LinkedIn
+        </Button>
+        <Button
+          type="submit"
+          className="w-[13%] dark:bg-slate-300 p-0 sm:hidden"
+        >
+          <Check className="h-5 w-5" />
         </Button>
       </form>
 
@@ -253,7 +276,7 @@ export function SocialForms({
         className="px-6 py-4 flex flex-row gap-4 items-center"
       >
         {" "}
-        <div className="w-[12%]">GitHub:</div>
+        <div className="w-[12%] mr-5 sm:mr-0">GitHub:</div>
         <Input
           name="github"
           value={githubValue}
@@ -261,8 +284,17 @@ export function SocialForms({
           placeholder="Enter your GitHub url"
           className="w-[50%]"
         />
-        <Button type="submit" className="w-[13%] dark:bg-slate-300">
+        <Button
+          type="submit"
+          className="min-w-[120px] dark:bg-slate-300 hidden sm:block"
+        >
           Save GitHub
+        </Button>
+        <Button
+          type="submit"
+          className="w-[13%] dark:bg-slate-300 p-0 sm:hidden"
+        >
+          <Check className="h-5 w-5" />
         </Button>
       </form>
     </>

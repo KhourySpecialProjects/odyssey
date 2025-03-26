@@ -149,7 +149,7 @@ export function LessonRenderer({
 
   if (isLocked) {
     return (
-      <div className="w-full mx-auto lg:py-8 max-w-prose">
+      <div className="w-full xl:py-8 max-w-prose mx-auto">
         <div className="p-6 text-center border rounded-md bg-slate-50 border-slate-200">
           <LockIcon className="w-12 h-12 mx-auto mb-4 text-slate-400" />
           <h2 className="text-xl font-bold text-slate-900">Lesson Locked</h2>
@@ -192,8 +192,8 @@ export function LessonRenderer({
 
   return (
     <>
-      <div className="w-full mx-auto lg:py-8 max-w-prose">
-        <div className="w-full mx-auto lg:py-8 max-w-prose relative">
+      <div className="w-full min-w-[300px] md:min-w-[700px] mx-auto py-8 max-w-prose">
+        <div className="w-full mx-auto xl:py-8 max-w-prose relative">
           <h1 className="text-4xl font-extrabold text-balance">
             {lesson.name}
           </h1>
@@ -314,7 +314,7 @@ function LessonBlockRenderer({
     case "droplets.callout":
       return (
         <div
-          className={`flex flex-row items-center dark:border-slate-500 px-6 py-6 border rounded-md md:-mx-8 ${block.color || "bg-sky-50"}`}
+          className={`flex flex-col items-center space-y-4 dark:border-slate-500 px-6 py-6 border rounded-md md:-mx-8 ${block.color || "bg-sky-50 dark:bg-sky-200"}`}
         >
           {block?.iconEnabled && (
             <div className="">
