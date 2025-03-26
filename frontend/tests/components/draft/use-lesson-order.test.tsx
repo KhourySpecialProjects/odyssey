@@ -126,4 +126,32 @@ describe('useLessonOrder', () => {
 
     consoleSpy.mockRestore();
   });
+
+  it('processes queue items in order', async () => {
+    (updateDroplet as jest.Mock).mockResolvedValue({ ok: true });
+
+    const { result } = renderHook(() => useLessonOrder(mockDroplet));
+
+    await act(async () => {
+      result.current.handleLessonReorder([
+        { id: 2, orderIndex: 0, lesson: mockLesson },
+        { id: 1, orderIndex: 1, lesson: mockLesson },
+      ]);
+      result.current.handleLessonReorder([
+        { id: 1, orderIndex: 0, lesson: mockLesson },
+        { id: 2, orderIndex: 1, lesson: mockLesson },
+      ]);
+    });
+
+    expect(updateDroplet).toHaveBeenLastCalledWith(
+      1,
+      {
+        droplet_lessons: [
+          { id: 2, orderIndex: 0 },
+          { id: 1, orderIndex: 1 },
+        ],
+      },
+      { revalidate: true }
+    );
+  });
 });

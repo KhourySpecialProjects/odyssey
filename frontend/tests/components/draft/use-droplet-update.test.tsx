@@ -36,4 +36,21 @@ describe('useDropletUpdate', () => {
     expect(mockRouter.replace).toHaveBeenCalledWith('/draft/d/new-slug');
     expect(result.current.error).toBe('');
   });
+
+  it('should handle failed update', async () => {
+    (updateDroplet as jest.Mock).mockResolvedValue({
+      error: 'error',
+    });
+
+    const { result } = renderHook(() => useDropletUpdate(1));
+
+    await act(async () => {
+      result.current.handleChange({ name: 'New Name' });
+    });
+
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+
+    expect(updateDroplet).toHaveBeenCalledWith(1, { name: 'New Name' });
+    expect(result.current.error).toBe('');
+  });
 });
