@@ -2,9 +2,14 @@ import { render, screen } from '@testing-library/react';
 import { BlockedUsers } from '@/components/friends/blocked-users';
 import { getCurrentUser } from '@/lib/auth/session';
 import { getAuthorizedUserByEmail } from '@/lib/requests/authorized-user';
+import { notFound } from 'next/navigation';
 
 jest.mock('@/lib/auth/session', () => ({
   getCurrentUser: jest.fn()
+}));
+
+jest.mock("next/navigation", () => ({
+  notFound: jest.fn(),
 }));
 
 jest.mock('@/lib/requests/authorized-user', () => ({
@@ -34,5 +39,13 @@ describe('BlockedUsers', () => {
 
     const { container } = await render(await BlockedUsers());
     expect(screen.getByText('You have no blocked users')).toBeInTheDocument();
+  });
+
+  it("calls notFound when user is not found", async () => {
+    (getCurrentUser as jest.Mock).mockResolvedValue(null);
+
+    await BlockedUsers();
+
+    expect(notFound).toHaveBeenCalled();
   });
 });

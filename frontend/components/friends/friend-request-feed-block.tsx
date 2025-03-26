@@ -78,28 +78,19 @@ export function FriendRequestFeedBlock({
         >
           <AvatarImage src={request?.profilePhoto || undefined} />
           <AvatarFallback>
-            {request?.firstName ? (
-              getInitials(request.firstName + " " + request.lastName)
-            ) : (
-              <User2Icon />
-            )}
+            {getInitials(request.firstName + " " + request.lastName)}
           </AvatarFallback>
         </Avatar>
 
         <button
           onClick={() => setOpen(true)}
           className="flex-1 min-w-0"
-          title={`${
-            request.firstName && request.lastName
-              ? `${request.firstName} ${request.lastName}`
-              : request.email
-          }`}
+          title={`${request.firstName} ${request.lastName}`}
+             
         >
           <div className="pl-2 w-full">
             <p className="font-medium truncate text-slate-900 dark:text-slate-300 text-left">
-              {request.firstName && request.lastName
-                ? `${request.firstName} ${request.lastName}`
-                : request.email}
+              {request.firstName} {request.lastName}
             </p>
           </div>
         </button>
@@ -151,11 +142,7 @@ export function FriendRequestFeedBlock({
                 >
                   <AvatarImage src={request?.profilePhoto || undefined} />
                   <AvatarFallback className="text-2xl">
-                    {request?.firstName ? (
-                      getInitials(request.firstName + " " + request.lastName)
-                    ) : (
-                      <User2Icon />
-                    )}
+                    {getInitials(request.firstName + " " + request.lastName)}
                   </AvatarFallback>
                 </Avatar>
               </div>
@@ -186,6 +173,7 @@ export function FriendRequestFeedBlock({
               <div
                 className={`inline-flex items-center gap-2 ${user.blocked.includes(request) ? "visibility: hidden" : "visibility: visible"}`}
                 onClick={handleBlock}
+                data-testid="block-button-container"
               >
                 <Button size="sm" variant="destructive" role="blocking">
                   Block user

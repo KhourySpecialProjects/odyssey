@@ -3,12 +3,19 @@ import { SortableLesson } from '@/components/draft/sortable-lesson';
 import { useRouter } from 'next/navigation';
 import { useSortable } from '@dnd-kit/sortable';
 
-jest.mock('next/navigation', () => ({
-  useRouter: jest.fn()
+jest.mock('@dnd-kit/sortable', () => ({
+  useSortable: () => ({
+    attributes: {},
+    listeners: {},
+    setNodeRef: jest.fn(),
+    transform: null,
+    transition: undefined,
+    isDragging: false
+  })
 }));
 
-jest.mock('@dnd-kit/sortable', () => ({
-  useSortable: jest.fn()
+jest.mock('next/navigation', () => ({
+  useRouter: jest.fn()
 }));
 
 describe('SortableLesson', () => {
@@ -84,14 +91,8 @@ describe('SortableLesson', () => {
   };
 
   beforeEach(() => {
-    (useSortable as jest.Mock).mockReturnValue({
-      attributes: {},
-      listeners: {},
-      setNodeRef: jest.fn(),
-      transform: null,
-      transition: null,
-      isDragging: false
-    });
+    jest.clearAllMocks();
+    (useRouter as jest.Mock).mockReturnValue(mockRouter);
   });
 
   it('renders lesson name and correct icon based on type', () => {
@@ -103,7 +104,7 @@ describe('SortableLesson', () => {
         classes={mockClasses}
       />
     );
-    expect(screen.getByText('Test Lesson')).toBeInTheDocument();
+    expect(screen.getByText(mockLesson.name)).toBeInTheDocument();
   });
 
   it('applies active class when pathname matches', () => {
@@ -133,5 +134,48 @@ describe('SortableLesson', () => {
 
     fireEvent.click(screen.getByRole('link'));
     expect(mockPush).toHaveBeenCalledWith('/draft/d/test-droplet/test-lesson');
+  });
+
+  const mockRouter = {
+    push: jest.fn()
+  };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    (useRouter as jest.Mock).mockReturnValue(mockRouter);
+  });
+
+  it('prevents default and navigates on lesson click', () => {
+    render(
+      <SortableLesson
+        lesson={mockLesson}
+        droplet={mockDroplet}
+        pathname="/test"
+        classes={mockClasses}
+      />
+    );
+
+    const link = screen.getByRole('link');
+    fireEvent.click(link);
+
+    expect(mockRouter.push).toHaveBeenCalledWith(
+      `/draft/d/${mockDroplet.slug}/${mockLesson.slug}`
+    );
+  });
+
+  it('applies active class when pathname matches', () => {
+    const currentPath = `/draft/d/test-droplet/test-lesson`;
+    
+    render(
+      <SortableLesson
+        lesson={mockLesson}
+        droplet={mockDroplet}
+        pathname={currentPath}
+        classes={mockClasses}
+      />
+    );
+
+    const link = screen.getByRole('link');
+    expect(link).toHaveClass(mockClasses.activeLink);
   });
 });

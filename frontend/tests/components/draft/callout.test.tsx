@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, act } from "@testing-library/react";
 import { CalloutEditor } from "@/components/draft/lesson/blocks/callout";
 
 jest.mock("@/lib/actions", () => ({
@@ -134,4 +134,49 @@ describe("CalloutEditor", () => {
       iconEnabled: false,
     });
   });
+
+jest.mock('@/lib/actions', () => ({
+  revalidateLesson: jest.fn()
+}));
+
+describe('CalloutEditor', () => {
+  const mockBlock = {
+    __component: 'droplets.callout',
+    content: 
+      {
+        type: 'paragraph',
+        children: [{ type: 'text', text: 'Test content' }]
+      }
+    ,
+    color: 'bg-red-300',
+    type: 'info',
+    iconEnabled: true
+  };
+
+  const mockUpdateBlock = jest.fn();
+  const mockDeleteBlock = jest.fn();
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('toggles icon visibility', () => {
+    render(
+      <CalloutEditor
+        block={mockBlock}
+        updateBlock={mockUpdateBlock}
+        deleteBlock={mockDeleteBlock}
+      />
+    );
+
+    const toggleButton = screen.getByTestId('update-content-button');
+    fireEvent.click(toggleButton);
+
+    expect(mockUpdateBlock).toHaveBeenCalledWith({
+      __component: 'droplets.callout',
+      content: {},
+      type: 'info',
+    });
+  });
+});
 });

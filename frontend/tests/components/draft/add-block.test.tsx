@@ -136,4 +136,44 @@ describe("AddBlock", () => {
       type: "info",
     });
   });
+
+describe('AddBlock', () => {
+  const mockAdd = jest.fn();
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('opens popover when Add Block button is clicked', () => {
+    render(<AddBlock add={mockAdd} />);
+    
+    const addButton = screen.getByText('Add Block');
+    fireEvent.click(addButton);
+
+    expect(screen.getByText('Text Block')).toBeInTheDocument();
+    expect(screen.getByText('Callout Block')).toBeInTheDocument();
+  });
+
+  it('adds a callout block with correct properties', () => {
+    render(<AddBlock add={mockAdd} />);
+    
+    fireEvent.click(screen.getByText('Add Block'));
+    
+    fireEvent.click(screen.getByText('Callout Block'));
+    
+    fireEvent.click(screen.getByText('Warning'));
+
+    expect(mockAdd).toHaveBeenCalledWith({
+      __component: 'droplets.callout',
+      content: [
+        {
+          type: 'paragraph',
+          children: [{ type: 'text', text: '' }],
+        },
+      ],
+      color: 'bg-red-300',
+      type: 'info',
+    });
+  });
+});
 });

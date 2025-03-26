@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react'
-import { DropdownMenuShortcut } from '@/components/ui/dropdown-menu'
+import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuPortal, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuSeparator, DropdownMenuShortcut, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { cn } from '@/lib/utils'
 
 jest.mock('@/lib/utils', () => ({
@@ -89,4 +89,49 @@ describe('DropdownMenuShortcut', () => {
       undefined
     )
   })
-})
+
+  it('renders DropdownMenuSeparator with custom className', () => {
+    const { container } = render(
+      <DropdownMenuSeparator className="custom-class" />
+    );
+
+    const separator = container.firstChild;
+    expect(separator).toHaveClass('custom-class');
+    expect(separator).toHaveClass('h-px');
+  });
+
+  it('exports all required components', () => {
+    expect(DropdownMenu).toBeDefined();
+    expect(DropdownMenuTrigger).toBeDefined();
+    expect(DropdownMenuContent).toBeDefined();
+    expect(DropdownMenuLabel).toBeDefined();
+    expect(DropdownMenuPortal).toBeDefined();
+    expect(DropdownMenuShortcut).toBeDefined();
+    expect(DropdownMenuSub).toBeDefined();
+    expect(DropdownMenuSubContent).toBeDefined();
+    expect(DropdownMenuSubTrigger).toBeDefined();
+    expect(DropdownMenuGroup).toBeDefined();
+    expect(DropdownMenuRadioGroup).toBeDefined();
+    expect(DropdownMenuItem).toBeDefined();
+    expect(DropdownMenuSeparator).toBeDefined();
+    expect(DropdownMenuRadioItem).toBeDefined();
+    expect(DropdownMenuCheckboxItem).toBeDefined();
+  });
+
+  it('renders DropdownMenuShortcut with custom className and props', () => {
+    const { container } = render(
+      <DropdownMenuShortcut 
+        className="custom-class"
+        data-testid="shortcut"
+      >
+        Ctrl+S
+      </DropdownMenuShortcut>
+    );
+
+    const shortcut = container.firstChild;
+    expect(shortcut).toHaveClass('custom-class');
+    expect(shortcut).toHaveClass('ml-auto');
+    expect(shortcut).toHaveClass('text-xs');
+    expect(shortcut).toHaveTextContent('Ctrl+S');
+  });
+});

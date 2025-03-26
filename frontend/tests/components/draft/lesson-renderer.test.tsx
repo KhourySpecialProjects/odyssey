@@ -1,6 +1,6 @@
 import { render, screen, fireEvent, act } from '@testing-library/react'
 import { LessonRenderer } from '@/components/draft/lesson/lesson-renderer'
-import { updateLesson } from '@/lib/actions'
+import { deleteLesson, updateLesson } from '@/lib/actions'
 import { useRouter } from 'next/navigation'
 
 jest.mock('@/components/ui/tiptap/lesson-name-input', () => ({
@@ -68,6 +68,11 @@ jest.mock('@/components/draft/lesson/blocks/open-ended-quiz', () => ({
     </div>
   )
 }))
+
+
+jest.mock('@/components/draft/lesson/blocks/generic', () => ({
+  GenericEditor: () => <div data-testid="generic-editor">Mock Generic Editor</div>
+}));
 
 jest.mock('@/lib/actions', () => ({
   updateLesson: jest.fn(),
@@ -196,4 +201,97 @@ describe('LessonRenderer', () => {
     expect(screen.getByTestId('quiz-editor')).toBeInTheDocument()
     expect(screen.getByTestId('open-ended-quiz-editor')).toBeInTheDocument()
   })
-})
+
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    (useRouter as jest.Mock).mockReturnValue(mockRouter);
+  });
+
+  it('renders lesson name and blocks', () => {
+    render(<LessonRenderer lesson={mockLesson} dropletSlug="test-droplet" />);
+    
+    const nameInput = screen.getByTestId('lesson-name-input');
+    expect(nameInput).toBeInTheDocument();
+    expect(screen.getByTestId('generic-editor')).toBeInTheDocument();
+  });
+
+  it('updates lesson name with debounce', async () => {
+    jest.useFakeTimers();
+    (updateLesson as jest.Mock).mockResolvedValue({
+      data: { attributes: { slug: 'new-slug' } }
+    });
+
+    render(<LessonRenderer lesson={mockLesson} dropletSlug="test-droplet" />);
+    
+    const nameInput = screen.getByTestId('lesson-name-input').querySelector('input');
+    fireEvent.change(nameInput!, { target: { value: '<h1>New Name</h1>' } });
+
+    await act(async () => {
+      jest.runAllTimers();
+    });
+
+    expect(updateLesson).toHaveBeenCalledWith(1, { name: 'New Name' });
+    jest.useRealTimers();
+  });
+
+  it('handles block deletion', async () => {
+    (updateLesson as jest.Mock).mockResolvedValue({ ok: true });
+
+    render(<LessonRenderer lesson={mockLesson} dropletSlug="test-droplet" />);
+    
+    const deleteButton = screen.getAllByRole('button', { name: 'Delete' });
+    await act(async () => {
+      fireEvent.click(deleteButton[0]);
+    });
+
+    expect(updateLesson).toHaveBeenCalledWith(
+      1,
+      { blocks: [
+        {
+          id: 1,
+          __component: 'droplets.generic',
+          content: 'Generic content',
+        },
+        {
+          id: 3,
+          __component: 'droplets.video',
+          url: 'https://example.com/video',
+        },
+        {
+          id: 4,
+          __component: 'droplets.callout',
+          content: 'Callout content',
+          type: 'info',
+          color: 'bg-sky-50',
+        },
+        {
+          id: 5,
+          __component: 'droplets.quiz',
+          questions: [
+            {
+              id: 1,
+              content: 'Quiz question',
+              answerOptions: [
+                { id: 1, content: 'Option 1', isCorrect: true },
+                { id: 2, content: 'Option 2', isCorrect: false },
+              ],
+            },
+          ],
+        },
+        {
+          id: 6,
+          __component: 'droplets.open-ended-quiz',
+          questions: [
+            {
+              id: 1,
+              content: 'Open ended question',
+              correctAnswer: 'Correct answer',
+            },
+          ],
+        },
+      ] },
+      { reload: true }
+    );
+  });
+});

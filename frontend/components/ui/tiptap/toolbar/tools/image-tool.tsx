@@ -72,7 +72,7 @@ export default function ImageToolButton({ editor }: { editor: Editor | null }) {
         </button>
       </PopoverTrigger>
       <PopoverContent>
-        <form action={formAction}>
+        <form action={formAction} role="form">
           <FileUpload file={file} setFile={setFile} />
 
           <div className="w-full flex justify-between items-center">

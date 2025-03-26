@@ -55,4 +55,36 @@ describe("Button", () => {
 
     expect(container.textContent).toBe('Link Text');
   });
+
+  describe('Button', () => {
+    it('renders icon with correct size when using renderIcon', () => {
+      const MockIcon = () => <svg data-testid="test-icon" />;
+      
+      render(
+        <Button before={<MockIcon />}>
+          Test Button
+        </Button>
+      );
+  
+      const icon = screen.getByTestId('test-icon');
+      const iconWrapper = icon.parentElement;
+      
+      expect(iconWrapper).toHaveClass('inline-flex bg-slate-900');
+    });
+  
+    it('applies icon classes while preserving custom classes', () => {
+      const MockIcon = () => <svg className="custom-class" data-testid="test-icon" />;
+      
+      render(
+        <Button before={<MockIcon />}>
+          Test Button
+        </Button>
+      );
+  
+      const icon = screen.getByTestId('test-icon');
+      const iconWrapper = icon.parentElement;
+      
+      expect(iconWrapper).toHaveClass('inline-flex text-slate-50');
+    });
+  });
 });
