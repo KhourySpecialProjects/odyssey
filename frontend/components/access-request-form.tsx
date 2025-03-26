@@ -1,6 +1,6 @@
 "use client";
 
-import { COLLEGES, PERMITTED_EMAIL_DOMAINS } from "@/lib/globals";
+import { COLLEGES } from "@/lib/globals";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useTransition } from "react";
 import { useForm } from "react-hook-form";
@@ -119,10 +119,6 @@ export function RequestAccessForm() {
                     {...field}
                   />
                 </FormControl>
-                <FormDescription>
-                  The following email domains are supported:{" "}
-                  {PERMITTED_EMAIL_DOMAINS.join(", ")}
-                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}

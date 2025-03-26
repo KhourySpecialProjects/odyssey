@@ -30,7 +30,9 @@ export function ReportBugDialog({
           before={<Bug />}
         >
           <span className="hidden sm:inline-block">Report Bug</span>
-          <span className="sm:hidden absolute left-1/2 transform -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap bg-black text-white text-xs rounded px-2 py-1 pointer-events-none">Report Bug</span>
+          <span className="sm:hidden absolute left-1/2 transform -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap bg-black text-white text-xs rounded px-2 py-1 pointer-events-none">
+            Report Bug
+          </span>
         </Button>
       </DialogTrigger>
 
