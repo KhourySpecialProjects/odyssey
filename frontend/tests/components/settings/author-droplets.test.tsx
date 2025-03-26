@@ -1,7 +1,17 @@
 import { render, screen } from '@testing-library/react';
 import { AuthorDroplets } from '@/components/settings/author-droplets';
 import { AuthorizedUserRoleTitle } from '@/lib/globals';
-import { TimeZone } from '@/types';
+import { DropletStatus, DropletType, FocusArea, TimeZone } from '@/types';
+import { getDropletAverageRating } from '@/lib/requests/enrollment';
+
+
+jest.mock('@/lib/requests/data', () => ({
+  fetchDropletsByAuthor: jest.fn()
+}));
+
+jest.mock('@/lib/requests/enrollment', () => ({
+  getDropletAverageRating: jest.fn()
+}));
 
 describe('AuthorDroplets', () => {
   const mockAuthor = {
@@ -26,8 +36,38 @@ describe('AuthorDroplets', () => {
     timeZone: "America/New_York" as TimeZone
   };
 
+  const mockDroplet = {
+    id: 1,
+    name: 'Test Droplet',
+    slug: 'test-droplet',
+    isHidden: false,
+    focusArea: 'frontend' as FocusArea,
+    type: 'lesson' as DropletType,
+    status: 'published' as DropletStatus,
+    learningObjectives: [],
+    droplet_lessons: []
+  };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    
+    // Mock the rating fetch to return a specific rating
+    (getDropletAverageRating as jest.Mock).mockResolvedValue({
+      rating: 4.5,
+      count: 10
+    });
+  });
+
   it('shows empty state when no droplets', () => {
     render(<AuthorDroplets author={{ ...mockAuthor, droplets: [] }} />);
     expect(screen.getByText('You have no Droplets.')).toBeInTheDocument();
   });
+
+  
+
+  it('renders author droplets with ratings', async () => {
+    render(<AuthorDroplets author={{ ...mockAuthor, droplets: [mockDroplet] }} />);
+    expect(screen.getByText('Here is a quick overview of some of your Droplets.')).toBeInTheDocument();
+  });
+
 });

@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, act } from '@testing-library/react';
 import { BatchAddUser } from '@/components/shared/access-manager/add-user/batch-add-user';
 import { createBatchAuthorizedUsers } from '@/lib/actions';
 
@@ -86,4 +86,78 @@ describe('BatchAddUser', () => {
 
     expect(screen.getByText('test.csv')).toBeInTheDocument();
   });
+
+describe('BatchAddUser', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('processes CSV file content correctly', async () => {
+    // Create a mock File with a text method
+    const mockFileContent = 'email1@test.com\nemail2@test.com';
+    const mockFile = new File([mockFileContent], 'test.csv', {
+      type: 'text/csv',
+    });
+    Object.defineProperty(mockFile, 'text', {
+      value: async () => mockFileContent
+    });
+    
+    (createBatchAuthorizedUsers as jest.Mock).mockResolvedValue({
+      ok: true,
+      data: { successful: ['email1@test.com'], failed: [] },
+      message: 'Success'
+    });
+
+    render(<BatchAddUser />);
+
+    // Simulate file upload
+    const input = screen.getByLabelText(/Choose Files/i);
+    await act(async () => {
+      fireEvent.change(input, { target: { files: [mockFile] } });
+    });
+
+    // Submit form
+    const form = screen.getByRole('form');
+    await act(async () => {
+      await fireEvent.submit(form);
+    });
+    expect(createBatchAuthorizedUsers).toHaveBeenCalledWith([
+      'email1@test.com',
+      'email2@test.com'
+    ]);
+  });
+
+  it('handles form submission with textarea input', async () => {
+    const mockEmails = 'test1@example.com, test2@example.com';
+    
+    render(<BatchAddUser />);
+    
+    const textarea = screen.getByPlaceholderText(/Enter email addresses/);
+    fireEvent.change(textarea, { target: { value: mockEmails } });
+    
+    const form = screen.getByRole('form');
+    await act(async () => {
+      fireEvent.submit(form);
+    });
+
+    expect(createBatchAuthorizedUsers).toHaveBeenCalledWith([
+      'test1@example.com',
+      'test2@example.com'
+    ]);
+  });
+
+  it('displays file selection count', () => {
+    render(<BatchAddUser />);
+    
+    const mockFiles = [
+      new File([''], 'test1.csv', { type: 'text/csv' }),
+      new File([''], 'test2.csv', { type: 'text/csv' })
+    ];
+
+    const input = screen.getByLabelText('Choose Files');
+    fireEvent.change(input, { target: { files: mockFiles } });
+
+    expect(screen.getByText('2 file(s) selected')).toBeInTheDocument();
+  });
+});
 });

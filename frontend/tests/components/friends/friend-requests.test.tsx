@@ -1,4 +1,4 @@
-import { render } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import { FriendRequests } from '@/components/friends/friend-requests'
 
 describe('FriendRequests', () => {
@@ -77,6 +77,42 @@ describe('FriendRequests', () => {
 
     expect(profileContainer.innerHTML).not.toBe(feedContainer.innerHTML)
   })
+
+  it('navigates to next page when Next button is clicked', () => {
+    render(
+      <FriendRequests
+        noProfile={false}
+        friendsPerPage={2}
+        authUser={mockAuthUser}
+      />
+    );
+
+    const nextButton = screen.getByRole('right');
+
+    fireEvent.click(nextButton);
+
+    expect(screen.queryByText(/john/i)).not.toBeInTheDocument();
+  });
+
+  it('navigates to previous page when Previous button is clicked', () => {
+    render(
+      <FriendRequests
+        noProfile={false}
+        friendsPerPage={2}
+        authUser={mockAuthUser}
+      />
+    );
+
+    const nextButton = screen.getByRole('right');
+
+    fireEvent.click(nextButton);
+
+    const prevButton = screen.getByRole('left');
+
+    fireEvent.click(prevButton);
+
+    expect(screen.queryByText(/john/i)).toBeInTheDocument();
+  });
 
   it('displays empty state message when no requests', () => {
     const emptyUser = {

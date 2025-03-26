@@ -1,4 +1,4 @@
-import { render, fireEvent, waitFor } from '@testing-library/react'
+import { render, fireEvent, waitFor, screen } from '@testing-library/react'
 import { UserMultiSelect } from '@/components/ui/user-multi-select'
 import { fetchAllUsers } from '@/lib/requests/users'
 
@@ -62,4 +62,37 @@ describe('UserMultiSelect', () => {
       expect(getByText('No users found.')).toBeInTheDocument()
     })
   })
+
+jest.mock('@/lib/requests/users', () => ({
+  fetchAllUsers: jest.fn()
+}));
+
+describe('UserMultiSelect', () => {
+  const mockUsers = [
+    { id: 1, firstName: 'John', lastName: 'Doe' },
+    { id: 2, firstName: 'Jane', lastName: 'Smith' }
+  ];
+
+  beforeEach(() => {
+    (fetchAllUsers as jest.Mock).mockResolvedValue(mockUsers);
+  });
+
+  it('handles user selection and deselection', async () => {
+    const mockOnChange = jest.fn();
+    
+    render(
+      <UserMultiSelect
+        selectedIds={[]}
+        onChange={mockOnChange}
+      />
+    );
+
+    fireEvent.click(screen.getByRole('combobox'));
+
+    await screen.findByText('John Doe');
+
+    fireEvent.click(screen.getByText('John Doe'));
+    expect(mockOnChange).toHaveBeenCalledWith([1]);
+  });
+});
 })

@@ -3,6 +3,7 @@ import { FriendSentRequestsBlock } from '@/components/friends/friend-sent-reques
 import { cancelFriendRequest } from '@/lib/requests/friends';
 import { AuthorizedUserRoleTitle } from '@/lib/globals';
 import { TimeZone } from '@/types';
+import {toast} from 'sonner'
 
 jest.mock('@/lib/requests/friends', () => ({
   cancelFriendRequest: jest.fn()
@@ -56,6 +57,10 @@ describe('FriendSentRequestsBlock', () => {
     timeZone: "America/New_York" as TimeZone
   };
 
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
   it('renders request information', () => {
     render(<FriendSentRequestsBlock user={mockUser} request={mockRequest} />);
     expect(screen.getByText('John Doe')).toBeInTheDocument();
@@ -65,8 +70,36 @@ describe('FriendSentRequestsBlock', () => {
     (cancelFriendRequest as jest.Mock).mockResolvedValue({ success: true });
     
     render(<FriendSentRequestsBlock user={mockUser} request={mockRequest} />);
-    fireEvent.click(screen.getByRole('x'));
+    await fireEvent.click(screen.getByRole('x'));
     
     expect(cancelFriendRequest).toHaveBeenCalledWith(mockUser.id, mockRequest.id);
+    expect(toast.success).toHaveBeenCalledWith('Friend request rejected')
+  });
+
+  it('handles cancel request failed', async () => {
+    (cancelFriendRequest as jest.Mock).mockResolvedValue({ success: false });
+    
+    render(<FriendSentRequestsBlock user={mockUser} request={mockRequest} />);
+    await fireEvent.click(screen.getByRole('x'));
+    
+    expect(cancelFriendRequest).toHaveBeenCalledWith(mockUser.id, mockRequest.id);
+    expect(toast.error).toHaveBeenCalledWith('Failed to reject friend request')
+  });
+
+  it('renders user information correctly', () => {
+    render(
+      <FriendSentRequestsBlock 
+        user={mockUser} 
+        request={mockRequest}
+      />
+    );
+
+    expect(screen.getByText('John Doe')).toBeInTheDocument();
+    
+    expect(screen.getByText('JD')).toBeInTheDocument();
+    
+    const nameElement = screen.getByTitle('John Doe');
+    expect(nameElement).toHaveClass('truncate');
+    expect(nameElement).toHaveClass('max-w-[200px]', 'md:max-w-sm');
   });
 });

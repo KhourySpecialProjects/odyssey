@@ -1,5 +1,7 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, act } from '@testing-library/react';
 import { AddLesson } from '@/components/draft/add-lesson';
+import { useRouter } from 'next/navigation';
+import { addLesson } from '@/lib/actions';
 
 jest.mock('@/lib/actions', () => ({
   addLesson: jest.fn()
@@ -18,8 +20,13 @@ describe('AddLesson', () => {
   };
   const mockOnAddLesson = jest.fn();
 
+  const mockRouter = {
+    push: jest.fn()
+  };
+
   beforeEach(() => {
     jest.clearAllMocks();
+    (useRouter as jest.Mock).mockReturnValue(mockRouter);
   });
 
   it('renders add lesson button', () => {
@@ -27,9 +34,16 @@ describe('AddLesson', () => {
     expect(screen.getByText('Lessons')).toBeInTheDocument();
   });
 
-  it('shows input field when plus icon is clicked', () => {
-    render(<AddLesson droplet={mockDroplet} onAddLesson={mockOnAddLesson} />);
-    fireEvent.click(screen.getByRole('button'));
+  it('shows input field when plus icon is clicked', async () => {
+    render(<AddLesson droplet={mockDroplet} onAddLesson={jest.fn()} />);
+    
+    const plusIcon = screen.getByRole('button');
+    fireEvent.click(plusIcon);
+
+    await act(async () => {
+      await new Promise(resolve => setTimeout(resolve, 0));
+    });
+
     expect(screen.getByPlaceholderText('Lesson Name')).toBeInTheDocument();
   });
 });

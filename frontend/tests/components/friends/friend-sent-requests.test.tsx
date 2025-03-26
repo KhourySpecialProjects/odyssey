@@ -41,4 +41,35 @@ describe('FriendSentRequests', () => {
     const { container } = await render(await FriendSentRequests());
     expect(screen.getByText('You have no sent requests')).toBeInTheDocument();
   });
+
+describe('FriendSentRequests', () => {
+  it('filters and sorts sent requests correctly', async () => {
+    const mockUser = {
+      email: 'test@example.com'
+    };
+
+    const mockAuthUser = {
+      sent_requests: [
+        { id: 1, lastName: 'Smith' },
+        { id: 2, lastName: 'Adams' },
+        { id: 3, lastName: 'Brown' }
+      ],
+      blocked: [{ id: 3 }],
+      was_blocked: []
+    };
+
+    (getCurrentUser as jest.Mock).mockResolvedValue(mockUser);
+    (getAuthorizedUserByEmail as jest.Mock).mockResolvedValue(mockAuthUser);
+
+    const Component = await FriendSentRequests();
+    const { container } = render(Component);
+
+    const requests = container.querySelectorAll('li');
+    expect(requests).toHaveLength(2);
+    
+    const firstRequest = requests[0].textContent;
+    const secondRequest = requests[1].textContent;
+    expect(firstRequest).toContain('View Profile');
+  });
+})
 });

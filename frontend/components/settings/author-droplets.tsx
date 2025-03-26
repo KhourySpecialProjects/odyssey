@@ -4,14 +4,10 @@ import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { ArrowRightIcon } from "lucide-react";
-import Link from "next/link";
 import { DropletTile } from "../droplets/droplet-tile";
-import { Button } from "../ui/button";
 import { AuthorizedUser } from "@/types";
 
 export function AuthorDroplets({ author }: { author: AuthorizedUser }) {

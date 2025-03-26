@@ -32,4 +32,15 @@ describe('KudosButton', () => {
       expect(screen.getByRole('button')).toBeVisible();
     });
   });
+
+  it('handles successful kudos submission', async () => {
+    (giveKudos as jest.Mock).mockResolvedValue({ success: true });
+    
+    render(<KudosButton announcementId={1} />);
+    fireEvent.click(screen.getByText('Give Kudos'));
+
+    await waitFor(() => {
+      expect(toast.success).toHaveBeenCalledWith('Kudos given!');
+    });
+  });
 });
