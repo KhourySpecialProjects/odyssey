@@ -57,33 +57,33 @@ export function FeedBlock({ announcement }: { announcement: Announcement }) {
 
   return (
     <li
-      className={`${backgroundColor[announcementType]} rounded-lg flex flex-col items-start gap-2 p-4 relative hover:scale-105`}
+      className={`${backgroundColor[announcementType]} rounded-lg flex flex-col items-start gap-2 p-4 pb-3 relative hover:scale-105`}
     >
 
       <div className="flex flex-row w-full h-full gap-3">
         <div className="dark:text-slate-300">
           {announcementIcon[announcementType]}
         </div>
-        <div className="flex flex-col gap-1 w-full justify-between pt-1">
+        <div className="flex flex-col gap-1 w-full justify-between">
           <div className="flex items-center space-x-4">
             <div className="flex-1 min-w-0">
               {announcementType === "playlist" && (
                 <Link href={`/p/${announcement.playlist?.slug}`}>
-                  <p className="font-medium text-slate-900 dark:text-slate-300 max-h-24 overflow-y-auto text-left">
+                  <p className="font-medium text-slate-900 dark:text-slate-300 max-h-24 overflow-y-auto text-left -mt-1">
                     {announcement.content}
                   </p>
                 </Link>
               )}
               {announcementType === "droplet" && (
                 <Link href={`/d/${announcement.droplet?.slug}`}>
-                  <p className="font-medium text-slate-900 dark:text-slate-300 max-h-24 overflow-y-auto text-left">
+                  <p className="font-medium text-slate-900 dark:text-slate-300 max-h-24 overflow-y-auto text-left -mt-1">
                     {announcement.content}
                   </p>
                 </Link>
               )}
               {announcementType === "group" && (
                 <Link href={`/g/${announcement.group?.slug}`}>
-                  <p className="font-medium text-slate-900 dark:text-slate-300 max-h-24 overflow-y-auto text-left">
+                  <p className="font-medium text-slate-900 dark:text-slate-300 max-h-24 overflow-y-auto text-left -mt-1">
                     {announcement.content}
                   </p>
                 </Link>
@@ -92,7 +92,7 @@ export function FeedBlock({ announcement }: { announcement: Announcement }) {
                 announcementType != "droplet" &&
                 announcementType != "playlist" && (
                   <>
-                    <p className="font-medium text-slate-900 dark:text-slate-300 max-h-24 overflow-y-auto text-left">
+                    <p className="font-medium text-slate-900 dark:text-slate-300 max-h-24 overflow-y-auto text-left -mt-1">
                       {announcement.content}
                     </p>
                     {announcementType === "friend" && !announcement.kudosGiven && (
