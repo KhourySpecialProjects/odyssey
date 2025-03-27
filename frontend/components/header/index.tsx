@@ -73,8 +73,9 @@ export async function Header() {
                 </nav>
               </SheetContent>
             </Sheet>
-            <Link href="/" className="w-max">
-              <Image
+
+            <Link href="/" className="w-max hidden sm:block">
+            <Image
                 src="/logo.svg"
                 alt="Khoury Odyssey Logo"
                 width={165}
@@ -85,7 +86,21 @@ export async function Header() {
                 Odyssey, a Khoury College Learning Platform
               </span>
             </Link>
+            
           </div>
+
+          <Link href="/" className="w-max sm:hidden">
+            <Image
+                src="/logo.svg"
+                alt="Khoury Odyssey Logo"
+                width={165}
+                height={45}
+                priority
+              />
+              <span className="sr-only">
+                Odyssey, a Khoury College Learning Platform
+              </span>
+            </Link>
 
           <nav className="flex-row items-center hidden xl:flex">
             <NavLinks
