@@ -17,6 +17,7 @@ import { AuthorizedUser } from "@/types";
 import { Input } from "../ui/input";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { Logo } from "../header/logo";
 
 export function FirstVisitPopup({ user }: { user: AuthorizedUser | null }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -73,13 +74,7 @@ export function FirstVisitPopup({ user }: { user: AuthorizedUser | null }) {
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[825px]">
-        <Image
-          src="/logo.svg"
-          alt="Khoury Odyssey Logo"
-          width={200}
-          height={55}
-          priority
-        />
+        <Logo width={200} height={55}/>
         <DialogHeader>
           <DialogTitle>Welcome to Khoury Odyssey!</DialogTitle>
           <DialogDescription>

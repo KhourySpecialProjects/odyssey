@@ -140,16 +140,6 @@ export default async function PlaylistPage({ params }: Props) {
   return (
     <div className="container py-8">
       <div className="max-w-4xl mx-auto">
-        {/* <Link href="/explore?contentType=playlists" className="block mb-8">
-          <Image
-            src="/logo.svg"
-            alt="Khoury Odyssey Logo"
-            width={165}
-            height={45}
-            priority
-          />
-        </Link> */}
-
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold mb-4">{playlist.name}</h1>
           <div className="flex justify-center gap-4 mb-6">
