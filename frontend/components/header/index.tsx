@@ -17,6 +17,7 @@ import { UserDropdown } from "./user-dropdown";
 import { AuthorizedUser } from "@/types";
 import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
 import { DarkMode } from "../explore/dark-mode";
+import { Logo } from "./logo";
 
 export async function Header() {
   const user = await getCurrentUser();
@@ -52,13 +53,7 @@ export async function Header() {
                 <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
                 <nav className="grid gap-6">
                   <Link href="/">
-                    <Image
-                      src="/logo.svg"
-                      alt="Khoury Odyssey Logo"
-                      width={165}
-                      height={45}
-                      priority
-                    />
+                    <Logo width={165} height={45} />
                     <span className="sr-only">
                       Odyssey, a Khoury College Learning Platform
                     </span>
@@ -74,13 +69,7 @@ export async function Header() {
               </SheetContent>
             </Sheet>
             <Link href="/" className="w-max">
-              <Image
-                src="/logo.svg"
-                alt="Khoury Odyssey Logo"
-                width={165}
-                height={45}
-                priority
-              />
+              <Logo width={165} height={45} />
               <span className="sr-only">
                 Odyssey, a Khoury College Learning Platform
               </span>
