@@ -3,7 +3,12 @@ import Image from "next/image";
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import {
+  Sheet,
+  SheetContent,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 import { getGeneralConfig } from "@/config/general";
 import { Menu } from "lucide-react";
 import { LoginButton } from "./login-button";
@@ -44,7 +49,8 @@ export async function Header() {
                 </Button>
               </SheetTrigger>
               <SheetContent side="left">
-                <nav className="grid gap-6" role="navigation">
+                <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
+                <nav className="grid gap-6">
                   <Link href="/">
                     <Image
                       src="/logo.svg"
