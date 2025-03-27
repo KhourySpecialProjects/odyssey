@@ -29,6 +29,15 @@ export default async function Page() {
   console.log("Admin check:", isAuthorizedUserAdmin(user?.roles));
   if (!user || !isAuthorizedUserAdmin(user.roles)) return notFound();
 
+  const pageContent = {
+    Users: <AuthorizedUsers />,
+          Droplets: <Droplets />,
+          Playlists: <Playlists />,
+          Groups: <Groups />,
+          "Access Manager": <AccessManager user={user} />,
+          Reports: <Reports />,
+  }
+
   return (
     <div className="w-full max-w-5xl mx-auto">
       <div className="w-full p-8 mx-auto my-4 text-center max-w-7xl">
@@ -81,27 +90,13 @@ export default async function Page() {
       <Session />
       <div className="hidden sm:flex sm:flex-col p-4">
       <AdminSelector
-        content={{
-          Users: <AuthorizedUsers />,
-          Droplets: <Droplets />,
-          Playlists: <Playlists />,
-          Groups: <Groups />,
-          "Access Manager": <AccessManager user={user} />,
-          Reports: <Reports />,
-        }}
+        content={pageContent}
       />
       </div>
 
       <div className="flex flex-col sm:hidden p-4">
         <FriendDropdown
-          content={{
-            Users: <AuthorizedUsers />,
-          Droplets: <Droplets />,
-          Playlists: <Playlists />,
-          Groups: <Groups />,
-          "Access Manager": <AccessManager user={user} />,
-          Reports: <Reports />,
-          }}
+          content={pageContent}
         />
       </div>
 
