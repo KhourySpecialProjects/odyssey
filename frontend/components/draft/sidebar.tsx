@@ -52,6 +52,7 @@ import { SortableLesson } from "@/components/draft/sortable-lesson";
 import { useLessonOrder } from "./metadata/hooks/useLessonOrder";
 import { Button } from "../ui/button";
 import { createDropletAnnouncement } from "@/lib/requests/feed";
+import { Logo } from "../header/logo";
 
 export function Sidebar({
   user,
@@ -239,13 +240,7 @@ export function Sidebar({
           <div className="px-3">
             {/* Logo */}
             <Link href="/explore" className="block p-2 mb-4">
-              <Image
-                src="/logo.svg"
-                alt="Khoury Odyssey Logo"
-                width={200}
-                height={55}
-                priority
-              />
+            <Logo width={200} height={55}/>
             </Link>
 
             <Separator />
