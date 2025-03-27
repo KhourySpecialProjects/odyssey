@@ -102,7 +102,7 @@ export async function Header() {
             ) : (
               <LoginButton />
             )}
-            <div className="hidden xl:block">
+            <div className="hidden sm:block">
               <DarkMode className="scale-[1.2]" />
             </div>
           </div>
