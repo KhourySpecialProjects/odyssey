@@ -48,8 +48,6 @@ export const COLLEGES: College[] = [
   { value: "other", label: "Other" },
 ];
 
-export const PERMITTED_EMAIL_DOMAINS = ["northeastern.edu", "neu.edu"];
-
 export type FilterOption = {
   label: string;
   value: string;
