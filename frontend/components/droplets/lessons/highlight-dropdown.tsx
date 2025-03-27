@@ -50,8 +50,8 @@ export function HighlightDropdown({
             <p>Highlighting Instructions:</p>
             <ul className="list-disc pl-4">
               <li>
-                Hover over the <Highlighter className="inline-block w-4 h-4" /> icon to
-                see actions.
+                Hover over the <Highlighter className="inline-block w-4 h-4" />{" "}
+                icon to see actions.
               </li>
               <li>
                 Press the <Highlighter className="inline-block w-4 h-4" /> icon
@@ -60,8 +60,8 @@ export function HighlightDropdown({
               <li>Use the toggle to switch highlighting mode.</li>
               <li>In highlighting mode, selected text is highlighted.</li>
               <li>
-                Press the <Trash2Icon className="inline-block w-4 h-4" /> icon to delete
-                a highlight.
+                Press the <Trash2Icon className="inline-block w-4 h-4" /> icon
+                to delete a highlight.
               </li>
               <li>
                 Press the <NotebookPen className="inline-block w-4 h-4" /> icon
