@@ -99,7 +99,7 @@ export function DropletTile({
           href={`/d/${droplet.slug}`}
         >
           <div className="flex flex-col gap-1 justify-center items-center text-center">
-            <span className="text-sm font-medium text-slate-900 text-center">
+            <span className="text-sm font-medium text-slate-900 text-center dark:text-white">
               {droplet.name}
             </span>
           </div>
