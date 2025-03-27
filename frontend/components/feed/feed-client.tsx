@@ -44,7 +44,7 @@ export function FeedClient({
       <div className="rounded-md">
         {paginatedAnnouncements.length > 0 ? (
           <>
-            <ul className="md:w-[80%] md:mx-auto grid gap-4 grid-cols-1 auto-rows-fr">
+            <ul className="md:w-[80%] md:mx-auto grid gap-4 grid-cols-1">
               {paginatedAnnouncements.map((post) => (
                 <FeedBlock key={post.id} announcement={post} />
               ))}

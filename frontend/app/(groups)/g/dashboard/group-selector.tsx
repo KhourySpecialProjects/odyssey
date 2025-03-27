@@ -5,6 +5,7 @@ import {
   AlignJustify,
   BellRing,
   CircleUserIcon,
+  Plus,
   PlusCircle,
   PlusCircleIcon,
   ShieldIcon,
@@ -131,9 +132,10 @@ export function GroupsSelector() {
           variant="default"
           size="sm"
           onClick={() => router.push("/g/management")}
-          className="lg:mr-4"
+          className="lg:mr-4 px-2 py-1 md:px-4 md:py-2"
         >
-          <PlusCircle className="h-4 w-4 md:mr-2" />
+          <PlusCircle className="h-4 w-4 mr-2 hidden md:block" />
+          <Plus className="h-5 w-6 md:hidden"/>
           <p className="hidden md:block">Create Group</p>
         </Button>
       )}
