@@ -74,7 +74,7 @@ export function FirstVisitPopup({ user }: { user: AuthorizedUser | null }) {
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[825px]">
-        <Logo width={200} height={55}/>
+        <Logo width={200} height={55} />
         <DialogHeader>
           <DialogTitle>Welcome to Khoury Odyssey!</DialogTitle>
           <DialogDescription>

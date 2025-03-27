@@ -53,7 +53,7 @@ export async function Header() {
                 <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
                 <nav className="grid gap-6">
                   <Link href="/">
-                  <Logo width={165} height={45}/>
+                    <Logo width={165} height={45} />
                     <span className="sr-only">
                       Odyssey, a Khoury College Learning Platform
                     </span>
@@ -69,7 +69,7 @@ export async function Header() {
               </SheetContent>
             </Sheet>
             <Link href="/" className="w-max">
-            <Logo width={165} height={45}/>
+              <Logo width={165} height={45} />
               <span className="sr-only">
                 Odyssey, a Khoury College Learning Platform
               </span>

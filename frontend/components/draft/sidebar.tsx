@@ -240,7 +240,7 @@ export function Sidebar({
           <div className="px-3">
             {/* Logo */}
             <Link href="/explore" className="block p-2 mb-4">
-            <Logo width={200} height={55}/>
+              <Logo width={200} height={55} />
             </Link>
 
             <Separator />
