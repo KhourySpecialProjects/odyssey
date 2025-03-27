@@ -1,6 +1,7 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { PlaylistEnrollButton } from '@/components/playlists/playlist-enroll-button';
 import { togglePlaylistEnrollment } from '@/lib/requests/playlist-enrollment';
+import { useRouter } from 'next/navigation';
 
 jest.mock('@/lib/requests/playlist-enrollment', () => ({
   togglePlaylistEnrollment: jest.fn(),
@@ -11,6 +12,10 @@ jest.mock('next/navigation', () => ({
 }));
 
 describe('PlaylistEnrollButton', () => {
+  const mockRouter = {
+    refresh: jest.fn()
+  };
+
   beforeEach(() => {
     jest.clearAllMocks();
   });
@@ -103,5 +108,35 @@ describe('PlaylistEnrollButton', () => {
     );
 
     expect(container).toBeEmptyDOMElement();
+  });
+
+  test('handleEnrollmentChange updates enrollment successfully', async () => {
+    (togglePlaylistEnrollment as jest.Mock).mockResolvedValue({ success: true });
+    
+    render(<PlaylistEnrollButton playlistId={1} isEnrolled={true} isPublic={true} />);
+    
+    const button = screen.getByRole('button');
+    await fireEvent.click(button);
+
+    await waitFor(() => {
+      expect(togglePlaylistEnrollment).toHaveBeenCalledWith(1);
+    });
+  });
+
+  test('does not render button for private unenrolled playlists', () => {
+    render(<PlaylistEnrollButton playlistId={1} isEnrolled={false} isPublic={false} />);
+    
+    const button = screen.queryByRole('button');
+    expect(button).not.toBeInTheDocument();
+  });
+
+  test('shows warning dialog when removing private playlist', async () => {
+    render(<PlaylistEnrollButton playlistId={1} isEnrolled={true} isPublic={false} />);
+    
+    const button = screen.getByRole('button');
+    await fireEvent.click(button);
+
+    expect(screen.getByText('Remove Private Playlist?')).toBeInTheDocument();
+    expect(screen.getByText(/This is a private playlist/)).toBeInTheDocument();
   });
 });

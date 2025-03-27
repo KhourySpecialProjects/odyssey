@@ -105,4 +105,39 @@ describe('DropletList', () => {
     expect(dropletItems[0].parentElement?.parentElement).toHaveClass('flex items-center p-4');
     expect(dropletItems[0].parentElement?.parentElement).toHaveClass('flex items-center p-4');
   });
+
+  test('renders droplet items correctly', () => {
+    const onReorder = jest.fn();
+    const onRemove = jest.fn();
+
+    render(
+      <DropletList
+        droplets={mockDroplets}
+        onReorder={onReorder}
+        onRemove={onRemove}
+      />
+    );
+
+    expect(screen.getByText('Droplet 1')).toBeInTheDocument();
+    expect(screen.getAllByText('Personal')[0]).toBeInTheDocument();
+    expect(screen.getAllByText('Knowledge')[0]).toBeInTheDocument();
+  });
+
+  test('handles remove action', () => {
+    const onReorder = jest.fn();
+    const onRemove = jest.fn();
+
+    render(
+      <DropletList
+        droplets={mockDroplets}
+        onReorder={onReorder}
+        onRemove={onRemove}
+      />
+    );
+
+    const removeButton = screen.getAllByRole('button');
+    fireEvent.click(removeButton[0]);
+
+    expect(onRemove).toHaveBeenCalledWith(1);
+  });
 });

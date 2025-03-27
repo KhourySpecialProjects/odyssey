@@ -79,6 +79,7 @@ export function UserDropdown({
         </DropdownMenuItem>
 
         <DropdownMenuItem
+        role="menuitem"
           onSelect={(e) => {
             e.preventDefault();
             signOut({

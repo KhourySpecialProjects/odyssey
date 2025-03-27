@@ -46,4 +46,54 @@ describe('PlaylistList', () => {
     
     expect(mockOnRemove).toHaveBeenCalledWith(1);
   });
+
+  test('renders playlist items correctly', () => {
+    const onReorder = jest.fn();
+    const onRemove = jest.fn();
+
+    render(
+      <PlaylistList
+        playlists={mockPlaylists}
+        onReorder={onReorder}
+        onRemove={onRemove}
+      />
+    );
+
+    expect(screen.getByText('Test Playlist')).toBeInTheDocument();
+    expect(screen.getByText('Private')).toBeInTheDocument();
+    expect(screen.getByText('Short')).toBeInTheDocument();
+  });
+
+  test('handles remove action', () => {
+    const onReorder = jest.fn();
+    const onRemove = jest.fn();
+
+    render(
+      <PlaylistList
+        playlists={mockPlaylists}
+        onReorder={onReorder}
+        onRemove={onRemove}
+      />
+    );
+
+    const removeButton = screen.getByRole('button');
+    fireEvent.click(removeButton);
+
+    expect(onRemove).toHaveBeenCalledWith(1);
+  });
+
+  test('displays correct droplet count', () => {
+    const onReorder = jest.fn();
+    const onRemove = jest.fn();
+
+    render(
+      <PlaylistList
+        playlists={mockPlaylists}
+        onReorder={onReorder}
+        onRemove={onRemove}
+      />
+    );
+
+    expect(screen.getByText('0 droplets')).toBeInTheDocument();
+  });
 });

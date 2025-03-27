@@ -33,4 +33,32 @@ describe('GroupCard', () => {
     render(<GroupCard group={mockGroup} role="admin" roleColors={mockRoleColors} />);
     expect(screen.getByText('admin')).toHaveClass('bg-yellow-100');
   });
+
+  test('displays member counts for admin roles correctly', () => {
+    render(
+      <GroupCard
+        group={mockGroup}
+        role="admin"
+        roleColors={mockRoleColors}
+      />
+    );
+
+    expect(screen.getByText('Admins: 0')).toBeInTheDocument();
+    expect(screen.getByText('Managers: 0')).toBeInTheDocument();
+    expect(screen.getByText('Members: 0')).toBeInTheDocument();
+  });
+
+  test('does not show member counts for regular members', () => {
+    render(
+      <GroupCard
+        group={mockGroup}
+        role="member"
+        roleColors={mockRoleColors}
+      />
+    );
+
+    expect(screen.queryByText('Admins:')).not.toBeInTheDocument();
+    expect(screen.queryByText('Managers:')).not.toBeInTheDocument();
+    expect(screen.queryByText('Members:')).not.toBeInTheDocument();
+  });
 });

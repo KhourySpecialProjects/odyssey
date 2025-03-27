@@ -28,4 +28,24 @@ describe('MemberTile', () => {
     render(<MemberTile member={mockMember} />);
     expect(screen.getByText('JD')).toBeInTheDocument();
   });
+
+  test('generates correct initials from email', () => {
+    render(<MemberTile member={mockMember} />);
+    expect(screen.getByText('JD')).toBeInTheDocument();
+  });
+
+  test('calls onRemove with correct email when remove button is clicked', () => {
+    const mockOnRemove = jest.fn();
+    render(
+      <MemberTile 
+        member={mockMember} 
+        onRemove={mockOnRemove}
+      />
+    );
+
+    const removeButton = screen.getByRole('button');
+    fireEvent.click(removeButton);
+
+    expect(mockOnRemove).toHaveBeenCalledWith('john.doe@example.com');
+  });
 });
