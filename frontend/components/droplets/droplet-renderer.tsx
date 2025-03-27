@@ -3,8 +3,6 @@
 import useDebugStore from "@/stores/debug-toggle-store";
 
 export function DropletRenderer({ droplet }: any) {
-  const isDebugEnabled = useDebugStore((state) => state.debugModeEnabled);
-
   return (
     <div className="w-full mx-auto max-w-prose">
       <p className="p-4 -mx-4 rounded-md bg-slate-50 text-slate-700">
@@ -17,12 +15,6 @@ export function DropletRenderer({ droplet }: any) {
       {droplet.lessons[0].blocks.map((b: any, i: number) => (
         <LessonBlockRenderer key={i} block={b} />
       ))}
-
-      {isDebugEnabled ? (
-        <pre className="p-4 mt-4 text-sm break-words whitespace-pre rounded-md bg-slate-100 text-wrap">
-          {JSON.stringify(droplet, null, 2)}
-        </pre>
-      ) : null}
     </div>
   );
 }

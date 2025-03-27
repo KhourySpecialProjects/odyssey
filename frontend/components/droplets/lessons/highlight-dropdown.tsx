@@ -90,6 +90,7 @@ export function HighlightDropdown({
           <Pen
             onMouseEnter={() => setVisible(true)}
             className="cursor-pointer dark:text-white"
+            data-testid="pen"
           />
 
           <div

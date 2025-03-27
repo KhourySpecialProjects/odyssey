@@ -172,7 +172,8 @@ export default async function PlaylistPage({ params }: Props) {
             </div>
           )}
           <div
-            data-testid="edit-button-container" className={`pb-2 ${playlist?.authors?.some((author) => author.email === user?.email) ? "visibility: visible" : "visibility: hidden"}`}
+            data-testid="edit-button-container"
+            className={`pb-2 ${playlist?.authors?.some((author) => author.email === user?.email) ? "visibility: visible" : "visibility: hidden"}`}
           >
             <Link href={`/draft/p/${playlist.slug}`}>
               <Button>Edit Playlist</Button>

@@ -1,30 +1,28 @@
-import { render, screen, fireEvent } from '@testing-library/react';
-import { FriendSuggestionsBlock } from '@/components/friends/friend-suggestions-block';
-import { sendFriendRequest } from '@/lib/requests/friends';
-import { toast } from 'sonner';
-import { AuthorizedUserRoleTitle } from '@/lib/globals';
-import { TimeZone } from '@/types';
+import { render, screen, fireEvent } from "@testing-library/react";
+import { FriendSuggestionsBlock } from "@/components/friends/friend-suggestions-block";
+import { sendFriendRequest } from "@/lib/requests/friends";
+import { toast } from "sonner";
+import { AuthorizedUserRoleTitle } from "@/lib/globals";
+import { TimeZone } from "@/types";
 
-jest.mock('@/lib/requests/friends', () => ({
-  sendFriendRequest: jest.fn()
+jest.mock("@/lib/requests/friends", () => ({
+  sendFriendRequest: jest.fn(),
 }));
 
-jest.mock('sonner', () => ({
-  toast: { success: jest.fn(), error: jest.fn() }
+jest.mock("sonner", () => ({
+  toast: { success: jest.fn(), error: jest.fn() },
 }));
 
-describe('FriendSuggestionsBlock', () => {
+describe("FriendSuggestionsBlock", () => {
   const mockCurUser = {
     id: 1,
-    email: 'user@example.com',
-    firstName: 'John',
-    lastName: 'Doe',
-    bio: 'Test bio',
-    profilePhoto: 'https://example.com/photo.jpg',
+    email: "user@example.com",
+    firstName: "John",
+    lastName: "Doe",
+    bio: "Test bio",
+    profilePhoto: "https://example.com/photo.jpg",
     isEnabled: true,
-    roles: [
-      { id: 1, title: AuthorizedUserRoleTitle.Faculty }
-    ],
+    roles: [{ id: 1, title: AuthorizedUserRoleTitle.Faculty }],
     linkedin: "https://www.google.com/",
     github: "https://www.google.com/",
     firstTime: false,
@@ -33,19 +31,17 @@ describe('FriendSuggestionsBlock', () => {
     received_requests: [],
     blocked: [],
     was_blocked: [],
-    timeZone: "America/New_York" as TimeZone
+    timeZone: "America/New_York" as TimeZone,
   };
   const mockSuggUser = {
     id: 1,
-    email: 'user@example.com',
-    firstName: 'John',
-    lastName: 'Doe',
-    bio: 'Test bio',
-    profilePhoto: 'https://example.com/photo.jpg',
+    email: "user@example.com",
+    firstName: "John",
+    lastName: "Doe",
+    bio: "Test bio",
+    profilePhoto: "https://example.com/photo.jpg",
     isEnabled: true,
-    roles: [
-      { id: 1, title: AuthorizedUserRoleTitle.Faculty }
-    ],
+    roles: [{ id: 1, title: AuthorizedUserRoleTitle.Faculty }],
     linkedin: "https://www.google.com/",
     github: "https://www.google.com/",
     firstTime: false,
@@ -54,80 +50,80 @@ describe('FriendSuggestionsBlock', () => {
     received_requests: [],
     blocked: [],
     was_blocked: [],
-    timeZone: "America/New_York" as TimeZone
+    timeZone: "America/New_York" as TimeZone,
   };
 
-  it('renders suggestion information', () => {
+  it("renders suggestion information", () => {
     render(
-      <FriendSuggestionsBlock 
+      <FriendSuggestionsBlock
         curUser={mockCurUser}
         suggUser={mockSuggUser}
         display={false}
         requested={false}
-      />
+      />,
     );
-    expect(screen.getByText('John Doe')).toBeInTheDocument();
+    expect(screen.getByText("John Doe")).toBeInTheDocument();
   });
 
-  it('handles send request', async () => {
+  it("handles send request", async () => {
     (sendFriendRequest as jest.Mock).mockResolvedValue({ success: true });
-    
+
     render(
-      <FriendSuggestionsBlock 
+      <FriendSuggestionsBlock
         curUser={mockCurUser}
         suggUser={mockSuggUser}
         display={false}
         requested={true}
-      />
+      />,
     );
 
-    expect(screen.getByText('Sent!')).toBeInTheDocument();
+    expect(screen.getByText("Sent!")).toBeInTheDocument();
   });
 
-  it('handles send request true', async () => {
+  it("handles send request true", async () => {
     (sendFriendRequest as jest.Mock).mockResolvedValue({ success: true });
-    
+
     render(
-      <FriendSuggestionsBlock 
+      <FriendSuggestionsBlock
         curUser={mockCurUser}
         suggUser={mockSuggUser}
         display={false}
         requested={false}
-      />
+      />,
     );
 
-    fireEvent.click(screen.getByText('Send Request'));
+    fireEvent.click(screen.getByText("Send Request"));
     expect(sendFriendRequest).toHaveBeenCalledWith(mockCurUser, mockSuggUser);
   });
 
-  it('handles not visible', async () => {
+  it("handles not visible", async () => {
     (sendFriendRequest as jest.Mock).mockResolvedValue({ success: true });
-    
+
     render(
-      <FriendSuggestionsBlock 
+      <FriendSuggestionsBlock
         curUser={mockCurUser}
         suggUser={mockSuggUser}
         display={false}
         requested={true}
-      />
+      />,
     );
- 
-    expect(screen.getByRole('mainBox')).toHaveClass('visibility: hidden');
+
+    expect(screen.getByRole("mainBox")).toHaveClass("visibility: hidden");
   });
 
-  it('handles send request error', async () => {
+  it("handles send request error", async () => {
     (sendFriendRequest as jest.Mock).mockResolvedValue({ success: false });
-    
+
     render(
-      <FriendSuggestionsBlock 
+      <FriendSuggestionsBlock
         curUser={mockCurUser}
         suggUser={mockSuggUser}
         display={false}
         requested={false}
-      />
+      />,
     );
-    fireEvent.click(screen.getByText('Send Request'));
-    
+    fireEvent.click(screen.getByText("Send Request"));
+
     expect(sendFriendRequest).toHaveBeenCalledWith(mockCurUser, mockSuggUser);
     expect(toast.success).not.toHaveBeenCalled();
   });

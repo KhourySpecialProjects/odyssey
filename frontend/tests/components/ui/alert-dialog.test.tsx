@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen, fireEvent } from "@testing-library/react";
 import {
   AlertDialog,
   AlertDialogTrigger,
@@ -9,9 +9,9 @@ import {
   AlertDialogFooter,
   AlertDialogAction,
   AlertDialogCancel,
-} from '@/components/ui/alert-dialog'
+} from "@/components/ui/alert-dialog";
 
-describe('AlertDialog', () => {
+describe("AlertDialog", () => {
   const TestDialog = () => (
     <AlertDialog>
       <AlertDialogTrigger>Open Dialog</AlertDialogTrigger>
@@ -26,24 +26,24 @@ describe('AlertDialog', () => {
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
-  )
+  );
 
-  it('renders trigger button', () => {
-    render(<TestDialog />)
-    expect(screen.getByText('Open Dialog')).toBeInTheDocument()
-  })
+  it("renders trigger button", () => {
+    render(<TestDialog />);
+    expect(screen.getByText("Open Dialog")).toBeInTheDocument();
+  });
 
-  it('shows dialog content when triggered', () => {
-    render(<TestDialog />)
-    fireEvent.click(screen.getByText('Open Dialog'))
-    expect(screen.getByText('Test Title')).toBeInTheDocument()
-    expect(screen.getByText('Test Description')).toBeInTheDocument()
-  })
+  it("shows dialog content when triggered", () => {
+    render(<TestDialog />);
+    fireEvent.click(screen.getByText("Open Dialog"));
+    expect(screen.getByText("Test Title")).toBeInTheDocument();
+    expect(screen.getByText("Test Description")).toBeInTheDocument();
+  });
 
-  it('applies correct styling to content', async () => {
-    render(<TestDialog />)
-    fireEvent.click(screen.getByText('Open Dialog'))
-    const dialog = await screen.findByRole('alertdialog')
-    expect(dialog).toHaveClass('fixed', 'z-50')
-  })
-})
+  it("applies correct styling to content", async () => {
+    render(<TestDialog />);
+    fireEvent.click(screen.getByText("Open Dialog"));
+    const dialog = await screen.findByRole("alertdialog");
+    expect(dialog).toHaveClass("fixed", "z-50");
+  });
+});

@@ -1,5 +1,5 @@
-import { render, screen } from '@testing-library/react'
-import { useForm } from 'react-hook-form'
+import { render, screen } from "@testing-library/react";
+import { useForm } from "react-hook-form";
 import {
   Form,
   FormField,
@@ -8,11 +8,11 @@ import {
   FormControl,
   FormDescription,
   FormMessage,
-} from '@/components/ui/form'
+} from "@/components/ui/form";
 
-describe('Form', () => {
+describe("Form", () => {
   const TestForm = () => {
-    const form = useForm()
+    const form = useForm();
     return (
       <Form {...form}>
         <form>
@@ -32,18 +32,18 @@ describe('Form', () => {
           />
         </form>
       </Form>
-    )
-  }
+    );
+  };
 
-  it('renders form components', () => {
-    render(<TestForm />)
-    expect(screen.getByText('Test Label')).toBeInTheDocument()
-    expect(screen.getByText('Test description')).toBeInTheDocument()
-  })
+  it("renders form components", () => {
+    render(<TestForm />);
+    expect(screen.getByText("Test Label")).toBeInTheDocument();
+    expect(screen.getByText("Test description")).toBeInTheDocument();
+  });
 
-  it('applies error styling when form has errors', () => {
-    render(<TestForm />)
-    const label = screen.getByText('Test Label')
-    expect(label).toHaveClass('text-sm', { exact: false })
-  })
-})
+  it("applies error styling when form has errors", () => {
+    render(<TestForm />);
+    const label = screen.getByText("Test Label");
+    expect(label).toHaveClass("text-sm", { exact: false });
+  });
+});

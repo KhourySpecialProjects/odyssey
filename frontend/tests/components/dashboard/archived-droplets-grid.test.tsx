@@ -70,19 +70,25 @@ describe("ArchivedDropletsGrid", () => {
     ).toBeInTheDocument();
   });
 
-  it('displays message when no archived droplets exist', async () => {
-    const mockUser = { email: 'test@example.com' };
+  it("displays message when no archived droplets exist", async () => {
+    const mockUser = { email: "test@example.com" };
     const mockAuthorizedUser = { id: 1 };
     const mockEnrollments = [] as Enrollment[];
 
     (getCurrentUser as jest.Mock).mockResolvedValue(mockUser);
-    (getAuthorizedUserByEmail as jest.Mock).mockResolvedValue(mockAuthorizedUser);
-    (getEnrollmentsByAuthorizedUser as jest.Mock).mockResolvedValue(mockEnrollments);
+    (getAuthorizedUserByEmail as jest.Mock).mockResolvedValue(
+      mockAuthorizedUser,
+    );
+    (getEnrollmentsByAuthorizedUser as jest.Mock).mockResolvedValue(
+      mockEnrollments,
+    );
 
     render(await ArchivedDropletsGrid());
 
-    expect(screen.getByText('No Archived Droplets')).toBeInTheDocument();
-    expect(screen.getByText("You haven't archived any Droplets yet.")).toBeInTheDocument();
+    expect(screen.getByText("No Archived Droplets")).toBeInTheDocument();
+    expect(
+      screen.getByText("You haven't archived any Droplets yet."),
+    ).toBeInTheDocument();
   });
 
   it("renders the grid when archived droplets are found", async () => {

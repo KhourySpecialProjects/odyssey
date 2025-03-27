@@ -23,7 +23,6 @@ export function FriendCompletedDroplets({
           .map((d) => d.droplet);
         setCompletedDroplets(completed);
       }
-      
     }
 
     fetchCompletedDroplets();

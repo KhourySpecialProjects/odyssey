@@ -1,9 +1,9 @@
-import { render, screen } from '@testing-library/react';
-import { AccessManager } from '@/components/shared/access-manager/access-manager';
-import { TimeZone } from '@/types';
-import { AuthorizedUserRoleTitle } from '@/lib/globals';
+import { render, screen } from "@testing-library/react";
+import { AccessManager } from "@/components/shared/access-manager/access-manager";
+import { TimeZone } from "@/types";
+import { AuthorizedUserRoleTitle } from "@/lib/globals";
 
-describe('AccessManager', () => {
+describe("AccessManager", () => {
   const mockUser = {
     id: 1,
     email: `user@example.com`,
@@ -22,7 +22,7 @@ describe('AccessManager', () => {
     blocked: [],
     was_blocked: [],
     timeZone: "America/New_York" as TimeZone,
-    isActive: true
+    isActive: true,
   };
 
   const mockAdminUser = {
@@ -30,14 +30,14 @@ describe('AccessManager', () => {
     isActive: true,
   };
 
-  it('renders add user components for all users', async () => {
+  it("renders add user components for all users", async () => {
     render(await AccessManager({ user: mockUser }));
-    expect(screen.getByText('Add User')).toBeInTheDocument();
-    expect(screen.getByText('Batch Add Users')).toBeInTheDocument();
+    expect(screen.getByText("Add User")).toBeInTheDocument();
+    expect(screen.getByText("Batch Add Users")).toBeInTheDocument();
   });
 
-  it('does not render access requests for non-admin users', async () => {
+  it("does not render access requests for non-admin users", async () => {
     render(await AccessManager({ user: mockUser }));
-    expect(screen.queryByText('Access Requests')).not.toBeInTheDocument();
+    expect(screen.queryByText("Access Requests")).not.toBeInTheDocument();
   });
 });

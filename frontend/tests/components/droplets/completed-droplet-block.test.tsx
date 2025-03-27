@@ -1,49 +1,50 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { CompletedDropletBlock } from '@/components/droplets/completed-droplet-block';
-import { updateEnrollmentFirstTime } from '@/lib/actions';
-import { createFriendAnnouncement } from '@/lib/requests/feed';
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { CompletedDropletBlock } from "@/components/droplets/completed-droplet-block";
+import { updateEnrollmentFirstTime } from "@/lib/actions";
+import { createFriendAnnouncement } from "@/lib/requests/feed";
+import userEvent from "@testing-library/user-event";
 
-jest.mock('@/lib/actions', () => ({
-  updateEnrollmentFirstTime: jest.fn()
+jest.mock("@/lib/actions", () => ({
+  updateEnrollmentFirstTime: jest.fn(),
 }));
 
-jest.mock('@/lib/requests/feed', () => ({
-  createFriendAnnouncement: jest.fn()
+jest.mock("@/lib/requests/feed", () => ({
+  createFriendAnnouncement: jest.fn(),
 }));
 
-describe('CompletedDropletBlock', () => {
+describe("CompletedDropletBlock", () => {
   const mockDroplet = {
     id: 1,
-    name: 'Test Droplet'
+    name: "Test Droplet",
   };
 
   const mockEnrollment = {
     id: 1,
-    isFirstTime: true
+    isFirstTime: true,
   };
 
   const mockAuthUser = {
     id: 1,
-    email: 'test@test.com'
+    email: "test@test.com",
   };
 
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  it('renders completion message with droplet name', () => {
+  it("renders completion message with droplet name", () => {
     render(
       <CompletedDropletBlock
         droplet={mockDroplet as any}
         enrollment={mockEnrollment as any}
         authUser={mockAuthUser as any}
-      />
+      />,
     );
     expect(screen.getByText(/Congratulations/)).toBeInTheDocument();
     expect(screen.getByText(/Test Droplet/)).toBeInTheDocument();
   });
 
-  it('handles share action correctly', async () => {
+  it("handles share action correctly", async () => {
     (createFriendAnnouncement as jest.Mock).mockResolvedValue({});
     (updateEnrollmentFirstTime as jest.Mock).mockResolvedValue({});
 
@@ -52,13 +53,43 @@ describe('CompletedDropletBlock', () => {
         droplet={mockDroplet as any}
         enrollment={mockEnrollment as any}
         authUser={mockAuthUser as any}
-      />
+      />,
     );
 
-    fireEvent.click(screen.getByText('Share with friends'));
+    fireEvent.click(screen.getByText("Share with friends"));
 
     await waitFor(() => {
-      expect(createFriendAnnouncement).toHaveBeenCalledWith(mockDroplet, mockAuthUser);
+      expect(createFriendAnnouncement).toHaveBeenCalledWith(
+        mockDroplet,
+        mockAuthUser,
+      );
+      expect(updateEnrollmentFirstTime).toHaveBeenCalledWith(mockEnrollment.id);
+    });
+  });
+
+  it("handles share button click", async () => {
+    const user = userEvent.setup();
+    (createFriendAnnouncement as jest.Mock).mockResolvedValue({});
+    (updateEnrollmentFirstTime as jest.Mock).mockResolvedValue({});
+
+    render(
+      <CompletedDropletBlock
+        droplet={mockDroplet as any}
+        enrollment={mockEnrollment as any}
+        authUser={mockAuthUser as any}
+      />,
+    );
+
+    const shareButton = screen.getByRole("button", {
+      name: /share with friends/i,
+    });
+    await user.click(shareButton);
+
+    await waitFor(() => {
+      expect(createFriendAnnouncement).toHaveBeenCalledWith(
+        mockDroplet,
+        mockAuthUser,
+      );
       expect(updateEnrollmentFirstTime).toHaveBeenCalledWith(mockEnrollment.id);
     });
   });

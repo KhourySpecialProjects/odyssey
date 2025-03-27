@@ -79,7 +79,7 @@ export function FriendSuggestionsBlock({
               onClick={handleRequest}
               className="text-white bg-sky-600 dark:bg-sky-600 dark:text-white dark:hover:bg-sky-700 hover:bg-sky-700 block md:hidden scale-75"
             >
-              <UserRoundPlus /> 
+              <UserRoundPlus />
             </Button>
           </div>
         </div>

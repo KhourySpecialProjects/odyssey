@@ -117,7 +117,11 @@ export async function UserPlaylistsGrid() {
           </h2>
           <div className="grid grid-flow-row grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 auto-rows-fr">
             {customPlaylists.map((playlist: Playlist, index) => (
-              <PlaylistCard key={playlist.id} playlist={playlist} data-testid={`playlist-card-${index}`}/>
+              <PlaylistCard
+                key={playlist.id}
+                playlist={playlist}
+                data-testid={`playlist-card-${index}`}
+              />
             ))}
           </div>
         </section>

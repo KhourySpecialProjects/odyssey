@@ -1,39 +1,63 @@
-import { render, screen } from '@testing-library/react';
-import { DropletRenderer } from '@/components/droplets/droplet-renderer';
-import useDebugStore from '@/stores/debug-toggle-store';
+import { render, screen } from "@testing-library/react";
+import { DropletRenderer } from "@/components/droplets/droplet-renderer";
+import useDebugStore from "@/stores/debug-toggle-store";
 
-jest.mock('@/stores/debug-toggle-store', () => ({
+jest.mock("@/stores/debug-toggle-store", () => ({
   __esModule: true,
-  default: jest.fn()
+  default: jest.fn(),
 }));
 
-describe('DropletRenderer', () => {
+describe("DropletRenderer", () => {
   const mockDroplet = {
-    name: 'Test Droplet',
-    type: 'tutorial',
-    focusArea: 'frontend',
-    lessons: [{
-      blocks: [
-        { __content: 'droplets.video', url: 'https://test.com' }
-      ]
-    }]
+    name: "Test Droplet",
+    type: "tutorial",
+    focusArea: "frontend",
+    lessons: [
+      {
+        blocks: [{ __content: "droplets.video", url: "https://test.com" }],
+      },
+    ],
   };
 
   beforeEach(() => {
     (useDebugStore as unknown as jest.Mock).mockReturnValue(false);
   });
 
-  it('renders droplet information', () => {
+  it("renders droplet information", () => {
     render(<DropletRenderer droplet={mockDroplet} />);
     expect(screen.getByText(/Test Droplet/)).toBeInTheDocument();
     expect(screen.getByText(/frontend/)).toBeInTheDocument();
   });
 
-  it('renders video block correctly', () => {
+  it("renders video block correctly", () => {
     render(<DropletRenderer droplet={mockDroplet} />);
-    expect(screen.getByTitle('Embedded YouTube video')).toHaveAttribute(
-      'src',
-      'https://test.com'
+    expect(screen.getByTitle("Embedded YouTube video")).toHaveAttribute(
+      "src",
+      "https://test.com",
     );
+  });
+
+  describe("DropletRenderer", () => {
+    it("renders null block correctly", () => {
+      const mockDroplet = {
+        name: "Test Droplet",
+        type: "course",
+        focusArea: "test",
+        lessons: [
+          {
+            blocks: [
+              {
+                __content: "",
+              },
+            ],
+          },
+        ],
+      };
+
+      const { container } = render(<DropletRenderer droplet={mockDroplet} />);
+
+      const iframe = container.querySelector("iframe");
+      expect(iframe).toBeNull();
+    });
   });
 });

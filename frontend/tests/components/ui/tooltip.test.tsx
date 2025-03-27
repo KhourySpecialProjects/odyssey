@@ -1,12 +1,12 @@
-import { render } from '@testing-library/react'
+import { render } from "@testing-library/react";
 import {
   Tooltip,
   TooltipTrigger,
   TooltipContent,
-  TooltipProvider
-} from '@/components/ui/tooltip'
+  TooltipProvider,
+} from "@/components/ui/tooltip";
 
-describe('Tooltip', () => {
+describe("Tooltip", () => {
   const TestTooltip = () => (
     <TooltipProvider>
       <Tooltip>
@@ -14,10 +14,10 @@ describe('Tooltip', () => {
         <TooltipContent>Tooltip content</TooltipContent>
       </Tooltip>
     </TooltipProvider>
-  )
+  );
 
-  it('renders tooltip trigger', () => {
-    const { getByText } = render(<TestTooltip />)
-    expect(getByText('Hover me')).toBeInTheDocument()
-  })
-})
+  it("renders tooltip trigger", () => {
+    const { getByText } = render(<TestTooltip />);
+    expect(getByText("Hover me")).toBeInTheDocument();
+  });
+});

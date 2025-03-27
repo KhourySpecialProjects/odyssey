@@ -123,7 +123,11 @@ export default async function GroupDetailPage({ params }: Props) {
           {dueDates && dueDates.length > 0 && (
             <>
               <Separator />
-              <DueDateAnnouncements group={group} dueDates={uniqueDueDates} data-testid="due-date-announcements"/>
+              <DueDateAnnouncements
+                group={group}
+                dueDates={uniqueDueDates}
+                data-testid="due-date-announcements"
+              />
             </>
           )}
 

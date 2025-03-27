@@ -10,7 +10,6 @@ import {
 } from "../ui/dialog";
 import { Button } from "../ui/button";
 import { Textarea } from "../ui/textarea";
-import { ArrowRightIcon } from "lucide-react";
 import { toast } from "sonner";
 import { updateFirstTimeStatus, updateOnboardingInfo } from "@/lib/actions";
 import { AuthorizedUser } from "@/types";
@@ -97,7 +96,7 @@ export function FirstVisitPopup({ user }: { user: AuthorizedUser | null }) {
             required
             aria-label="First name"
           />
-          </div>
+        </div>
         <div className="flex flex-col gap-4 mt-4">
           <p className="text-sm text-slate-600">
             Enter your last name here: <span className="text-red-500">*</span>
@@ -125,9 +124,7 @@ export function FirstVisitPopup({ user }: { user: AuthorizedUser | null }) {
             learning modules designed to help you succeed in your academic
             journey.
           </p>
-          <Button onClick={() => handleClose()}>
-            Start Exploring
-          </Button>
+          <Button onClick={() => handleClose()}>Start Exploring</Button>
         </div>
       </DialogContent>
     </Dialog>

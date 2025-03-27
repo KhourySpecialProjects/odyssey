@@ -1,27 +1,27 @@
-import { render, screen, fireEvent, act } from '@testing-library/react';
-import { AddLesson } from '@/components/draft/add-lesson';
-import { useRouter } from 'next/navigation';
-import { addLesson } from '@/lib/actions';
+import { render, screen, fireEvent, act } from "@testing-library/react";
+import { AddLesson } from "@/components/draft/add-lesson";
+import { useRouter } from "next/navigation";
+import { addLesson } from "@/lib/actions";
 
-jest.mock('@/lib/actions', () => ({
-  addLesson: jest.fn()
+jest.mock("@/lib/actions", () => ({
+  addLesson: jest.fn(),
 }));
 
-jest.mock('next/navigation', () => ({
-  useRouter: jest.fn()
+jest.mock("next/navigation", () => ({
+  useRouter: jest.fn(),
 }));
 
-describe('AddLesson', () => {
+describe("AddLesson", () => {
   const mockDroplet = {
     id: 1,
-    name: 'Test Droplet',
-    slug: 'test-droplet',
-    lessons: []
+    name: "Test Droplet",
+    slug: "test-droplet",
+    lessons: [],
   };
   const mockOnAddLesson = jest.fn();
 
   const mockRouter = {
-    push: jest.fn()
+    push: jest.fn(),
   };
 
   beforeEach(() => {
@@ -29,21 +29,21 @@ describe('AddLesson', () => {
     (useRouter as jest.Mock).mockReturnValue(mockRouter);
   });
 
-  it('renders add lesson button', () => {
+  it("renders add lesson button", () => {
     render(<AddLesson droplet={mockDroplet} onAddLesson={mockOnAddLesson} />);
-    expect(screen.getByText('Lessons')).toBeInTheDocument();
+    expect(screen.getByText("Lessons")).toBeInTheDocument();
   });
 
-  it('shows input field when plus icon is clicked', async () => {
+  it("shows input field when plus icon is clicked", async () => {
     render(<AddLesson droplet={mockDroplet} onAddLesson={jest.fn()} />);
-    
-    const plusIcon = screen.getByRole('button');
+
+    const plusIcon = screen.getByRole("button");
     fireEvent.click(plusIcon);
 
     await act(async () => {
-      await new Promise(resolve => setTimeout(resolve, 0));
+      await new Promise((resolve) => setTimeout(resolve, 0));
     });
 
-    expect(screen.getByPlaceholderText('Lesson Name')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText("Lesson Name")).toBeInTheDocument();
   });
 });

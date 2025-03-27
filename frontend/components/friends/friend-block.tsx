@@ -36,7 +36,7 @@ export function FriendBlock({
         >
           <AvatarImage src={friend?.profilePhoto || undefined} />
           <AvatarFallback>
-              {getInitials(friend.firstName + " " + friend.lastName)}
+            {getInitials(friend.firstName + " " + friend.lastName)}
           </AvatarFallback>
         </Avatar>
 

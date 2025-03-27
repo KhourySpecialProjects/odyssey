@@ -1,55 +1,87 @@
-import { render, screen, fireEvent } from '@testing-library/react';
-import { NextStepDisplay } from '@/components/draft/metadata/next-steps/next-step';
+import { render, screen, fireEvent } from "@testing-library/react";
+import { NextStepDisplay } from "@/components/draft/metadata/next-steps/next-step";
+import userEvent from "@testing-library/user-event";
 
-describe('NextStepDisplay', () => {
+describe("NextStepDisplay", () => {
   const mockInitial = {
     id: 1,
-    label: 'Test Label',
-    url: 'https://test.com'
+    label: "Test Label",
+    url: "https://test.com",
   };
   const mockUpdate = jest.fn();
   const mockRemove = jest.fn();
 
-  it('renders next step with label', () => {
+  it("renders next step with label", () => {
     render(
-      <NextStepDisplay 
+      <NextStepDisplay
         initial={mockInitial}
         update={mockUpdate}
         remove={mockRemove}
-      />
+      />,
     );
-    expect(screen.getByText('Test Label')).toBeInTheDocument();
+    expect(screen.getByText("Test Label")).toBeInTheDocument();
   });
 
-  it('shows edit form when clicked', () => {
+  it("shows edit form when clicked", () => {
     render(
-      <NextStepDisplay 
+      <NextStepDisplay
         initial={mockInitial}
         update={mockUpdate}
         remove={mockRemove}
-      />
+      />,
     );
-    fireEvent.click(screen.getByText('Test Label'));
-    expect(screen.getByDisplayValue('Test Label')).toBeInTheDocument();
-    expect(screen.getByDisplayValue('https://test.com')).toBeInTheDocument();
+    fireEvent.click(screen.getByText("Test Label"));
+    expect(screen.getByDisplayValue("Test Label")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("https://test.com")).toBeInTheDocument();
   });
 
-  it('updates next step on change', () => {
+  it("updates next step on change", () => {
     render(
-      <NextStepDisplay 
+      <NextStepDisplay
         initial={mockInitial}
         update={mockUpdate}
         remove={mockRemove}
-      />
+      />,
     );
-    fireEvent.click(screen.getByText('Test Label'));
-    fireEvent.change(screen.getByDisplayValue('Test Label'), {
-      target: { value: 'New Label' }
+    fireEvent.click(screen.getByText("Test Label"));
+    fireEvent.change(screen.getByDisplayValue("Test Label"), {
+      target: { value: "New Label" },
     });
     expect(mockUpdate).toHaveBeenCalledWith({
       id: 1,
-      label: 'New Label',
-      url: 'https://test.com'
+      label: "New Label",
+      url: "https://test.com",
+    });
+  });
+
+  describe("NextStepDisplay", () => {
+    const mockInitial = {
+      id: 1,
+      label: "Test Label",
+      url: "https://test.com",
+    };
+
+    const mockProps = {
+      initial: mockInitial,
+      update: jest.fn(),
+      remove: jest.fn(),
+    };
+
+    it("updates URL when input changes", async () => {
+      const user = userEvent.setup();
+      render(<NextStepDisplay {...mockProps} />);
+
+      await user.click(screen.getByText("Test Label"));
+
+      const urlInput = screen.getAllByRole("textbox")[1];
+      await user.clear(urlInput);
+      await user.type(urlInput, "https://newtest.com");
+
+      expect(mockProps.update).toHaveBeenCalledWith({
+        id: mockInitial.id,
+        url: "https://newtest.com",
+        label: mockInitial.label,
+      });
     });
   });
 });

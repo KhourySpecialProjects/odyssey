@@ -4,11 +4,11 @@ import { Badge } from "@/components/ui/badge";
 import { GripVertical } from "lucide-react";
 import { cn, uppercaseFirstChar } from "@/lib/utils";
 
-jest.mock('sonner', () => ({
+jest.mock("sonner", () => ({
   toast: {
     success: jest.fn(),
-    error: jest.fn()
-  }
+    error: jest.fn(),
+  },
 }));
 interface DraggableDropletWideTileProps {
   droplet: Droplet;

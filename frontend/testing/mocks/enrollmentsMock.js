@@ -1,4 +1,5 @@
-module.exports = [{
+module.exports = [
+  {
     id: "123",
     attributes: {
       authorizedUser: {
@@ -17,95 +18,95 @@ module.exports = [{
           },
         },
       },
-      rating: 3
+      rating: 3,
     },
   },
   {
-      id: "155",
-      attributes: {
-        authorizedUser: {
-          data: {
-            id: 2,
-            attributes: {
-              email: "test2@northeastern.edu",
-            },
+    id: "155",
+    attributes: {
+      authorizedUser: {
+        data: {
+          id: 2,
+          attributes: {
+            email: "test2@northeastern.edu",
           },
         },
-        droplet: {
-          data: {
-            id: 456,
-            attributes: {
-              name: "Test Droplet",
-            },
-          },
-        },
-        rating: 5
       },
+      droplet: {
+        data: {
+          id: 456,
+          attributes: {
+            name: "Test Droplet",
+          },
+        },
+      },
+      rating: 5,
     },
-    {
-      id: "107",
-      attributes: {
-        authorizedUser: {
-          data: {
-            id: 3,
-            attributes: {
-              email: "test3@northeastern.edu",
-            },
+  },
+  {
+    id: "107",
+    attributes: {
+      authorizedUser: {
+        data: {
+          id: 3,
+          attributes: {
+            email: "test3@northeastern.edu",
           },
         },
-        droplet: {
-          data: {
-            id: 456,
-            attributes: {
-              name: "Test Droplet",
-            },
-          },
-        },
-        rating: 1
       },
+      droplet: {
+        data: {
+          id: 456,
+          attributes: {
+            name: "Test Droplet",
+          },
+        },
+      },
+      rating: 1,
     },
-    {
-        id: "102",
-        attributes: {
-          authorizedUser: {
-            data: {
-              id: 4,
-              attributes: {
-                email: "test4@northeastern.edu",
-              },
-            },
+  },
+  {
+    id: "102",
+    attributes: {
+      authorizedUser: {
+        data: {
+          id: 4,
+          attributes: {
+            email: "test4@northeastern.edu",
           },
-          droplet: {
-            data: {
-              id: 456,
-              attributes: {
-                name: "Test Droplet",
-              },
-            },
-          },
-          rating: 5
         },
       },
-      {
-        id: "98",
-        attributes: {
-          authorizedUser: {
-            data: {
-              id: 5,
-              attributes: {
-                email: "test5@northeastern.edu",
-              },
-            },
+      droplet: {
+        data: {
+          id: 456,
+          attributes: {
+            name: "Test Droplet",
           },
-          droplet: {
-            data: {
-              id: 456,
-              attributes: {
-                name: "Test Droplet",
-              },
-            },
-          },
-          rating: 1
         },
       },
-]
+      rating: 5,
+    },
+  },
+  {
+    id: "98",
+    attributes: {
+      authorizedUser: {
+        data: {
+          id: 5,
+          attributes: {
+            email: "test5@northeastern.edu",
+          },
+        },
+      },
+      droplet: {
+        data: {
+          id: 456,
+          attributes: {
+            name: "Test Droplet",
+          },
+        },
+      },
+      rating: 1,
+    },
+  },
+];

@@ -92,7 +92,12 @@ export function FriendSearch({
                 {searchResults.slice(0, 10).map((user, index) => {
                   if (!friendIds.includes(user.id)) {
                     return (
-                      <FriendBlock user={curUser} friend={user} key={user.id} data-testid={`user-item-${index + 1}`}/>
+                      <FriendBlock
+                        user={curUser}
+                        friend={user}
+                        key={user.id}
+                        data-testid={`user-item-${index + 1}`}
+                      />
                     );
                   } else if (requestIds.includes(user.id)) {
                     return (
@@ -120,7 +125,9 @@ export function FriendSearch({
                 })}
               </ul>
             ) : (
-              <p className="p-1" data-testid="no-results">No users found.</p>
+              <p className="p-1" data-testid="no-results">
+                No users found.
+              </p>
             )}
           </div>
         )}

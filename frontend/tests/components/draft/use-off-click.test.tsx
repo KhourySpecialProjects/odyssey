@@ -1,7 +1,7 @@
-import { useOffClick } from '@/components/draft/metadata/hooks/useOffClick';
-import { renderHook, act } from '@testing-library/react';
+import { useOffClick } from "@/components/draft/metadata/hooks/useOffClick";
+import { renderHook, act } from "@testing-library/react";
 
-describe('useOffClick', () => {
+describe("useOffClick", () => {
   let mockRef: { current: { contains: jest.Mock } | null };
 
   beforeEach(() => {
@@ -12,9 +12,11 @@ describe('useOffClick', () => {
     };
   });
 
-  it('should handle click outside', () => {
+  it("should handle click outside", () => {
     const mockCallback = jest.fn();
-    const { result } = renderHook(() => useOffClick(mockRef as any, mockCallback));
+    const { result } = renderHook(() =>
+      useOffClick(mockRef as any, mockCallback),
+    );
 
     act(() => {
       result.current.setOpen(true);
@@ -25,16 +27,18 @@ describe('useOffClick', () => {
     mockRef.current!.contains.mockReturnValue(false);
 
     act(() => {
-      document.dispatchEvent(new MouseEvent('mousedown'));
+      document.dispatchEvent(new MouseEvent("mousedown"));
     });
 
     expect(result.current.open).toBe(false);
     expect(mockCallback).toHaveBeenCalled();
   });
 
-  it('should not trigger when clicking inside', () => {
+  it("should not trigger when clicking inside", () => {
     const mockCallback = jest.fn();
-    const { result } = renderHook(() => useOffClick(mockRef as any, mockCallback));
+    const { result } = renderHook(() =>
+      useOffClick(mockRef as any, mockCallback),
+    );
 
     act(() => {
       result.current.setOpen(true);
@@ -43,7 +47,7 @@ describe('useOffClick', () => {
     mockRef.current!.contains.mockReturnValue(true);
 
     act(() => {
-      document.dispatchEvent(new MouseEvent('mousedown'));
+      document.dispatchEvent(new MouseEvent("mousedown"));
     });
 
     expect(result.current.open).toBe(true);

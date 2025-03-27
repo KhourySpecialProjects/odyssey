@@ -27,11 +27,11 @@ describe("FeedFilter", () => {
     jest.clearAllMocks();
   });
 
-  it('toggles role selection correctly', () => {
+  it("toggles role selection correctly", () => {
     render(<FeedFilter onFilterChange={mockOnFilterChange} />);
 
-    const dropletButton = screen.getByText('Droplet').closest('button');
-    expect(dropletButton).toHaveClass('opacity-100'); 
+    const dropletButton = screen.getByText("Droplet").closest("button");
+    expect(dropletButton).toHaveClass("opacity-100");
 
     fireEvent.click(dropletButton!);
 
@@ -41,21 +41,21 @@ describe("FeedFilter", () => {
         AnnouncementTypeTitle.Group,
         AnnouncementTypeTitle.System,
         AnnouncementTypeTitle.Friend,
-        AnnouncementTypeTitle.Kudos
-      ])
+        AnnouncementTypeTitle.Kudos,
+      ]),
     );
     expect(mockOnFilterChange).toHaveBeenCalledWith(
-      expect.not.arrayContaining([AnnouncementTypeTitle.Droplet])
+      expect.not.arrayContaining([AnnouncementTypeTitle.Droplet]),
     );
 
-    expect(dropletButton).toHaveClass('opacity-30');
+    expect(dropletButton).toHaveClass("opacity-30");
   });
 
-  it('toggles role selection correctly not selected yet', () => {
+  it("toggles role selection correctly not selected yet", () => {
     render(<FeedFilter onFilterChange={mockOnFilterChange} />);
 
-    const dropletButton = screen.getByText('Droplet').closest('button');
-    expect(dropletButton).toHaveClass('opacity-100'); 
+    const dropletButton = screen.getByText("Droplet").closest("button");
+    expect(dropletButton).toHaveClass("opacity-100");
 
     fireEvent.click(dropletButton!);
 
@@ -65,11 +65,11 @@ describe("FeedFilter", () => {
         AnnouncementTypeTitle.Group,
         AnnouncementTypeTitle.System,
         AnnouncementTypeTitle.Friend,
-        AnnouncementTypeTitle.Kudos
-      ])
+        AnnouncementTypeTitle.Kudos,
+      ]),
     );
     expect(mockOnFilterChange).toHaveBeenCalledWith(
-      expect.not.arrayContaining([AnnouncementTypeTitle.Droplet])
+      expect.not.arrayContaining([AnnouncementTypeTitle.Droplet]),
     );
 
     fireEvent.click(dropletButton!);
@@ -81,22 +81,22 @@ describe("FeedFilter", () => {
         AnnouncementTypeTitle.System,
         AnnouncementTypeTitle.Friend,
         AnnouncementTypeTitle.Kudos,
-        AnnouncementTypeTitle.Droplet
-      ])
+        AnnouncementTypeTitle.Droplet,
+      ]),
     );
     expect(mockOnFilterChange).toHaveBeenCalledWith(
-      expect.arrayContaining([AnnouncementTypeTitle.Droplet])
+      expect.arrayContaining([AnnouncementTypeTitle.Droplet]),
     );
 
-    expect(dropletButton).toHaveClass('opacity-100');
+    expect(dropletButton).toHaveClass("opacity-100");
   });
 
-  it('initializes with all roles selected', () => {
+  it("initializes with all roles selected", () => {
     render(<FeedFilter onFilterChange={mockOnFilterChange} />);
 
-    const buttons = screen.getAllByRole('button');
-    buttons.forEach(button => {
-      expect(button).toHaveClass('opacity-100');
+    const buttons = screen.getAllByRole("button");
+    buttons.forEach((button) => {
+      expect(button).toHaveClass("opacity-100");
     });
   });
 });

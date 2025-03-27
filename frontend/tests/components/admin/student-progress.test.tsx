@@ -102,24 +102,32 @@ describe("StudentProgress", () => {
     expect(result).toBeNull();
   });
 
-  it('calculates correct progress for users in playlists', async () => {
-    const mockUser = { email: 'test@example.com' };
+  it("calculates correct progress for users in playlists", async () => {
+    const mockUser = { email: "test@example.com" };
     const mockAuthor = {
-      created_playlists: [{
-        id: 1,
-        authorized_users: [{ id: 1, email: 'student@test.com' }],
-        droplets: [{
-          lessons: [{ id: 1 }, { id: 2 }]
-        }]
-      }]
+      created_playlists: [
+        {
+          id: 1,
+          authorized_users: [{ id: 1, email: "student@test.com" }],
+          droplets: [
+            {
+              lessons: [{ id: 1 }, { id: 2 }],
+            },
+          ],
+        },
+      ],
     };
-    const mockEnrollments = [{
-      viewedLessons: [{ id: 1 }] 
-    }];
+    const mockEnrollments = [
+      {
+        viewedLessons: [{ id: 1 }],
+      },
+    ];
 
     (getCurrentUser as jest.Mock).mockResolvedValue(mockUser);
     (getAuthorizedUserByEmail as jest.Mock).mockResolvedValue(mockAuthor);
-    (getEnrollmentsByAuthorizedUser as jest.Mock).mockResolvedValue(mockEnrollments);
+    (getEnrollmentsByAuthorizedUser as jest.Mock).mockResolvedValue(
+      mockEnrollments,
+    );
 
     const { container } = render(await StudentProgress());
 
