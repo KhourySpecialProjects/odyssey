@@ -71,7 +71,7 @@ export async function getAuthorizedUserByEmail<
         fields: ["id", "playlistDueDates"],
       },
     },
-    fields = ["*", "firstName", "lastName", "bio", "id", "timeZone"],
+    fields = ["*", "firstName", "lastName", "bio", "id", "timeZone", "linkedin", "github"],
   }: StrapiRequestParams = {},
 ): Promise<T> {
   const path = `/authorized-users`;
@@ -106,6 +106,8 @@ export async function fetchAuthorizedUsers(): Promise<AuthorizedUser[]> {
         "lastName",
         "bio",
         "profilePhoto",
+        "linkedin",
+        "github",
       ],
       populate: {
         roles: { fields: ["title"] },
