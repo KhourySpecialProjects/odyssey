@@ -1,19 +1,28 @@
-import { render, screen, fireEvent } from '@testing-library/react';
-import { DropletLesson, DropletStatus, DropletType, FocusArea, GroupSemester, LearningObjective, Tag, TimeZone } from '@/types';
-import { GroupDashboard } from '@/components/group/group-management-dashboard';
+import { render, screen, fireEvent } from "@testing-library/react";
+import {
+  DropletLesson,
+  DropletStatus,
+  DropletType,
+  FocusArea,
+  GroupSemester,
+  LearningObjective,
+  Tag,
+  TimeZone,
+} from "@/types";
+import { GroupDashboard } from "@/components/group/group-management-dashboard";
 
-describe('GroupDashboard', () => {
+describe("GroupDashboard", () => {
   const mockGroup = {
     id: 1,
-    slug: 'test-group',
-    creator: { id: 1, name: 'Test Creator' },
-    admins: [{ id: 2, name: 'Test Admin' }],
-    managers: [{ id: 3, name: 'Test Manager' }],
+    slug: "test-group",
+    creator: { id: 1, name: "Test Creator" },
+    admins: [{ id: 2, name: "Test Admin" }],
+    managers: [{ id: 3, name: "Test Manager" }],
     members: [{ id: 1 }, { id: 2 }, { id: 3 }],
-    semester: 'Spring 2024' as GroupSemester,
-    description: 'Test group description',
+    semester: "Spring 2024" as GroupSemester,
+    description: "Test group description",
     groupName: "test group",
-    isArchived: false
+    isArchived: false,
   };
 
   const mockAuthUser = {
@@ -70,19 +79,17 @@ describe('GroupDashboard', () => {
     },
   ];
 
-
-
-  it('shows progress tab only for users who can edit', () => {
+  it("shows progress tab only for users who can edit", () => {
     const { rerender } = render(
       <GroupDashboard
         group={mockGroup}
         canEdit={true}
         authUser={mockAuthUser}
         dueDates={mockDueDates}
-      />
+      />,
     );
 
-    expect(screen.getByText('Progress')).toBeInTheDocument();
+    expect(screen.getByText("Progress")).toBeInTheDocument();
 
     rerender(
       <GroupDashboard
@@ -90,13 +97,13 @@ describe('GroupDashboard', () => {
         canEdit={false}
         authUser={mockAuthUser}
         dueDates={mockDueDates}
-      />
+      />,
     );
 
-    expect(screen.queryByText('Progress')).not.toBeInTheDocument();
+    expect(screen.queryByText("Progress")).not.toBeInTheDocument();
   });
 
-  it('displays empty state messages when no content', () => {
+  it("displays empty state messages when no content", () => {
     const emptyGroup = {
       ...mockGroup,
       droplets: [],
@@ -110,35 +117,39 @@ describe('GroupDashboard', () => {
         canEdit={true}
         authUser={mockAuthUser}
         dueDates={[]}
-      />
+      />,
     );
 
-    expect(screen.getByText('No droplets have been added to this group yet.')).toBeInTheDocument();
-    
-    fireEvent.click(screen.getByText('Playlists'));
-    expect(screen.getByText('No playlists have been added to this group yet.')).toBeInTheDocument();
+    expect(
+      screen.getByText("No droplets have been added to this group yet."),
+    ).toBeInTheDocument();
+
+    fireEvent.click(screen.getByText("Playlists"));
+    expect(
+      screen.getByText("No playlists have been added to this group yet."),
+    ).toBeInTheDocument();
   });
 
-  test('renders tabs correctly', () => {
+  test("renders tabs correctly", () => {
     render(
       <GroupDashboard
         group={mockGroup}
         canEdit={true}
         authUser={mockAuthUser}
         dueDates={[]}
-      />
+      />,
     );
 
-    expect(screen.getByText('Droplets')).toBeInTheDocument();
-    expect(screen.getByText('Playlists')).toBeInTheDocument();
-    expect(screen.getByText('Progress')).toBeInTheDocument();
+    expect(screen.getByText("Droplets")).toBeInTheDocument();
+    expect(screen.getByText("Playlists")).toBeInTheDocument();
+    expect(screen.getByText("Progress")).toBeInTheDocument();
   });
 
-  test('displays empty state messages correctly', () => {
+  test("displays empty state messages correctly", () => {
     const emptyGroup = {
       ...mockGroup,
       droplets: [],
-      playlists: []
+      playlists: [],
     };
 
     render(
@@ -147,9 +158,11 @@ describe('GroupDashboard', () => {
         canEdit={true}
         authUser={mockAuthUser}
         dueDates={[]}
-      />
+      />,
     );
 
-    expect(screen.getByText(/No droplets have been added/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/No droplets have been added/i),
+    ).toBeInTheDocument();
   });
 });

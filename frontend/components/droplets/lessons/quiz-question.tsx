@@ -67,13 +67,19 @@ export function QuizQuestionBlock({ question }: { question: QuizQuestion }) {
         <div className="px-8 py-12 mt-4 text-center border rounded-md border-slate-200">
           {areAnswersCorrect(form.getValues("answerIds")) ? (
             <>
-              <Badge className="text-green-700 bg-green-100 text-lg hover:bg-green-200">
+              <Badge
+                className="text-green-700 bg-green-100 text-lg hover:bg-green-200"
+                role="status"
+              >
                 That&rsquo;s Right!
               </Badge>
             </>
           ) : (
             <>
-              <Badge className="text-orange-700 bg-orange-100 text-lg hover:bg-orange-200">
+              <Badge
+                className="text-orange-700 bg-orange-100 text-lg hover:bg-orange-200"
+                role="status"
+              >
                 Not Quite
               </Badge>
 

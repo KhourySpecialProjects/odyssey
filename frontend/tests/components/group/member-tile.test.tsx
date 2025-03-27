@@ -1,51 +1,46 @@
-import { render, screen, fireEvent } from '@testing-library/react';
-import { MemberTile } from '@/components/group/member-tile';
+import { render, screen, fireEvent } from "@testing-library/react";
+import { MemberTile } from "@/components/group/member-tile";
 
-describe('MemberTile', () => {
+describe("MemberTile", () => {
   const mockMember = {
-    email: 'john.doe@example.com',
+    email: "john.doe@example.com",
     roles: [],
-    isActive: true
+    isActive: true,
   };
 
-  it('renders member email and role', () => {
+  it("renders member email and role", () => {
     render(<MemberTile member={mockMember} role="admin" />);
-    expect(screen.getByText('john.doe@example.com')).toBeInTheDocument();
-    expect(screen.getByText('admin')).toBeInTheDocument();
+    expect(screen.getByText("john.doe@example.com")).toBeInTheDocument();
+    expect(screen.getByText("admin")).toBeInTheDocument();
   });
 
-  it('shows remove button on hover', () => {
+  it("shows remove button on hover", () => {
     const onRemove = jest.fn();
     render(<MemberTile member={mockMember} onRemove={onRemove} />);
-    
-    const removeButton = screen.getByRole('button');
+
+    const removeButton = screen.getByRole("button");
     fireEvent.click(removeButton);
-    
-    expect(onRemove).toHaveBeenCalledWith('john.doe@example.com');
+
+    expect(onRemove).toHaveBeenCalledWith("john.doe@example.com");
   });
 
-  it('displays correct initials in avatar', () => {
+  it("displays correct initials in avatar", () => {
     render(<MemberTile member={mockMember} />);
-    expect(screen.getByText('JD')).toBeInTheDocument();
+    expect(screen.getByText("JD")).toBeInTheDocument();
   });
 
-  test('generates correct initials from email', () => {
+  test("generates correct initials from email", () => {
     render(<MemberTile member={mockMember} />);
-    expect(screen.getByText('JD')).toBeInTheDocument();
+    expect(screen.getByText("JD")).toBeInTheDocument();
   });
 
-  test('calls onRemove with correct email when remove button is clicked', () => {
+  test("calls onRemove with correct email when remove button is clicked", () => {
     const mockOnRemove = jest.fn();
-    render(
-      <MemberTile 
-        member={mockMember} 
-        onRemove={mockOnRemove}
-      />
-    );
+    render(<MemberTile member={mockMember} onRemove={mockOnRemove} />);
 
-    const removeButton = screen.getByRole('button');
+    const removeButton = screen.getByRole("button");
     fireEvent.click(removeButton);
 
-    expect(mockOnRemove).toHaveBeenCalledWith('john.doe@example.com');
+    expect(mockOnRemove).toHaveBeenCalledWith("john.doe@example.com");
   });
 });

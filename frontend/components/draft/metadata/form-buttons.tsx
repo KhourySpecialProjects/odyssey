@@ -9,9 +9,12 @@ export function DeleteButton() {
   return (
     <Button type="submit" size="sm" variant="destructive" role="button">
       {pending ? (
-      <div data-testid="loading-spinner">
-        <LoaderIcon className="animate-spin" />
-        </div> ) : "Delete"}
+        <div data-testid="loading-spinner">
+          <LoaderIcon className="animate-spin" />
+        </div>
+      ) : (
+        "Delete"
+      )}
     </Button>
   );
 }

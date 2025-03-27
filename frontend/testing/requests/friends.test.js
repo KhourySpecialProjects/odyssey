@@ -1046,11 +1046,11 @@ describe("Friends tests", () => {
       global.fetch.mockReset();
       revalidatePath.mockReset();
     });
-  
+
     it("should successfully remove a friend", async () => {
       const userId = 5;
       const friendId = 6;
-  
+
       // Mock the friendship search result
       global.fetch
         .mockResolvedValueOnce({
@@ -1064,9 +1064,9 @@ describe("Friends tests", () => {
           ok: true,
           json: async () => ({ data: null }),
         });
-  
+
       const result = await removeFriend(userId, friendId);
-  
+
       // Check first fetch call - searching for the friendship
       expect(global.fetch).toHaveBeenNthCalledWith(
         1,
@@ -1075,14 +1075,16 @@ describe("Friends tests", () => {
           headers: expect.objectContaining({
             Authorization: expect.stringContaining("Bearer"),
           }),
-        })
+        }),
       );
-  
+
       // Verify the search parameters include both user IDs
       const searchUrl = global.fetch.mock.calls[0][0];
       expect(searchUrl).toMatch(new RegExp(`authorized_users.*id.*${userId}`));
-      expect(searchUrl).toMatch(new RegExp(`authorized_users.*id.*${friendId}`));
-  
+      expect(searchUrl).toMatch(
+        new RegExp(`authorized_users.*id.*${friendId}`),
+      );
+
       // Check second fetch call - deleting the friendship
       expect(global.fetch).toHaveBeenNthCalledWith(
         2,
@@ -1093,20 +1095,20 @@ describe("Friends tests", () => {
             "Content-Type": "application/json",
             Authorization: expect.stringContaining("Bearer"),
           }),
-        })
+        }),
       );
-  
+
       // Check if revalidation function was called
       expect(revalidatePath).toHaveBeenCalledWith("/settings/friends");
-  
+
       // Check returned result
       expect(result).toEqual({ success: true });
     });
-  
+
     it("should handle error when friendship not found", async () => {
       const userId = 5;
       const friendId = 6;
-  
+
       // Mock empty search result (no friendship found)
       global.fetch.mockResolvedValueOnce({
         ok: true,
@@ -1114,30 +1116,30 @@ describe("Friends tests", () => {
           data: [],
         }),
       });
-  
+
       const consoleSpy = jest
         .spyOn(console, "error")
         .mockImplementation(() => {});
-  
+
       const result = await removeFriend(userId, friendId);
-  
+
       // Verify error handling
       expect(result).toEqual({ success: false, error: expect.any(Error) });
       expect(consoleSpy).toHaveBeenCalledWith(
         "Error:",
         expect.objectContaining({
-          message: "Friendship not found"
-        })
+          message: "Friendship not found",
+        }),
       );
       expect(revalidatePath).not.toHaveBeenCalled();
-  
+
       consoleSpy.mockRestore();
     });
-  
+
     it("should handle API errors during friendship deletion", async () => {
       const userId = 5;
       const friendId = 6;
-  
+
       // Mock successful friendship search but failed deletion
       global.fetch
         .mockResolvedValueOnce({
@@ -1150,34 +1152,34 @@ describe("Friends tests", () => {
           ok: false,
           text: async () => "Error deleting friendship",
         });
-  
+
       const consoleSpy = jest
         .spyOn(console, "error")
         .mockImplementation(() => {});
-  
+
       const result = await removeFriend(userId, friendId);
-  
+
       expect(result).toEqual({ success: false, error: expect.any(Error) });
       expect(revalidatePath).not.toHaveBeenCalled();
-  
+
       consoleSpy.mockRestore();
     });
-  
+
     it("should handle network errors", async () => {
       const userId = 5;
       const friendId = 6;
-  
+
       global.fetch.mockRejectedValueOnce(new Error("Network error"));
-  
+
       const consoleSpy = jest
         .spyOn(console, "error")
         .mockImplementation(() => {});
-  
+
       const result = await removeFriend(userId, friendId);
-  
+
       expect(result).toEqual({ success: false, error: expect.any(Error) });
       expect(revalidatePath).not.toHaveBeenCalled();
-  
+
       consoleSpy.mockRestore();
     });
   });
@@ -1186,10 +1188,10 @@ describe("Friends tests", () => {
     beforeEach(() => {
       global.fetch.mockReset();
     });
-  
+
     it("should fetch and return friendships for a user ID", async () => {
       const userId = 5;
-      
+
       const mockFriendships = [
         {
           id: 1,
@@ -1250,16 +1252,16 @@ describe("Friends tests", () => {
           },
         },
       ];
-  
+
       const mockStrapiResponse = {
         data: mockFriendships,
       };
-  
+
       global.fetch.mockResolvedValueOnce({
         ok: true,
         json: async () => mockStrapiResponse,
       });
-  
+
       // Define mock implementation for flattenAttributes
       flattenAttributes.mockImplementationOnce((data) => {
         return data.map((friendship) => ({
@@ -1274,9 +1276,9 @@ describe("Friends tests", () => {
           ),
         }));
       });
-  
+
       const result = await fetchFriendshipsById(userId);
-  
+
       // Verify the request URL contains expected parameters
       expect(global.fetch).toHaveBeenCalledWith(
         expect.stringMatching(/\/api\/friendships\?/),
@@ -1285,20 +1287,20 @@ describe("Friends tests", () => {
             Authorization: expect.stringContaining("Bearer"),
           }),
           cache: "no-store",
-        })
+        }),
       );
-  
+
       // Check the URL for specific query parameters
       const callUrl = global.fetch.mock.calls[0][0];
       expect(callUrl).toMatch(/filters/);
       expect(callUrl).toMatch(/pagination/);
       expect(callUrl).toMatch(/populate/);
       expect(callUrl).toMatch(new RegExp(`authorized_users.*id.*${userId}`));
-  
+
       // Verify the structure of the result
       expect(result).toEqual(expect.any(Array));
       expect(result).toHaveLength(2);
-      
+
       // Check first friendship
       expect(result[0]).toMatchObject({
         id: 1,
@@ -1307,7 +1309,7 @@ describe("Friends tests", () => {
           expect.objectContaining({ id: 6 }),
         ]),
       });
-      
+
       // Check second friendship
       expect(result[1]).toMatchObject({
         id: 2,
@@ -1317,21 +1319,20 @@ describe("Friends tests", () => {
         ]),
       });
     });
-  
+
     it("should handle fetch errors", async () => {
       const userId = 5;
       global.fetch.mockRejectedValueOnce(new Error("Network error"));
-  
+
       await expect(fetchFriendshipsById(userId)).rejects.toThrow(
-        "Failed to fetch friendships"
+        "Failed to fetch friendships",
       );
     });
-  
+
     it("should throw error for null user ID", async () => {
       await expect(fetchFriendshipsById(null)).rejects.toThrow(
-        "Failed to fetch friendships"
+        "Failed to fetch friendships",
       );
     });
   });
-  
 });

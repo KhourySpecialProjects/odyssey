@@ -86,7 +86,6 @@ export function FriendRequestFeedBlock({
           onClick={() => setOpen(true)}
           className="flex-1 min-w-0"
           title={`${request.firstName} ${request.lastName}`}
-             
         >
           <div className="pl-2 w-full">
             <p className="font-medium truncate text-slate-900 dark:text-slate-300 text-left">

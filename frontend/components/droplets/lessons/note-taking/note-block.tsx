@@ -147,6 +147,7 @@ export function NoteBlock({
             onClick={() => onDelete(note.id)}
             role="button"
             name="delete"
+            data-testid="deleteNote"
           >
             <Trash2Icon className="cursor-pointer text-white" />
           </Button>
@@ -161,7 +162,7 @@ export function NoteBlock({
           }}
         >
           <div className="bg-white dark:bg-slate-800 flex flex-row items-center w-full rounded-tl-md border dark:border-slate-500 rounded-tr-md">
-            <div className="flex-grow">
+            <div className="flex-grow" data-testid="toolbar">
               {toolbarVisible && (
                 <DefaultToolbar editor={editor!} note={true} />
               )}
@@ -172,13 +173,20 @@ export function NoteBlock({
             >
               <div className={`w-full ${toolbarVisible ? "hidden" : ""}`}></div>
               {!toolbarVisible ? (
-                <ChevronDown className="dark:bg-slate-800 rounded-tr-md" />
+                <ChevronDown
+                  className="dark:bg-slate-800 rounded-tr-md"
+                  data-testid="chevrondown"
+                />
               ) : (
                 <ChevronUp className="dark:bg-slate-800 rounded-tr-md" />
               )}
             </button>
           </div>
-          <EditorContent name="lesson-generic" editor={editor} />
+          <EditorContent
+            name="lesson-generic"
+            editor={editor}
+            data-testid="editor"
+          />
         </div>
       </div>
     </div>

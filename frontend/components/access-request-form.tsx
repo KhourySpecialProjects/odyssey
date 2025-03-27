@@ -71,7 +71,9 @@ export function RequestAccessForm() {
           name="givenName"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="dark:text-red-500">Given/First Name</FormLabel>
+              <FormLabel className="dark:text-red-500">
+                Given/First Name
+              </FormLabel>
               <FormControl>
                 <Input
                   placeholder="Sam"
@@ -90,7 +92,9 @@ export function RequestAccessForm() {
           name="familyName"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="dark:text-red-500">Family/Last Name</FormLabel>
+              <FormLabel className="dark:text-red-500">
+                Family/Last Name
+              </FormLabel>
               <FormControl>
                 <Input
                   placeholder="Serif"

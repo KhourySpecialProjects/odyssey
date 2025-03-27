@@ -104,7 +104,10 @@ export default function Sidebar({
           onClick={() => setExpanded(true)}
         >
           <span className="sr-only">Open sidebar</span>
-          <PanelRightClose className="dark:text-white" />
+          <PanelRightClose
+            className="dark:text-white"
+            data-testid="sidebar-overlay"
+          />
         </button>
         <Link
           href={getPath("droplet", droplet.slug)}
@@ -216,10 +219,16 @@ export default function Sidebar({
                         )}
                         <span className="leading-snug ms-3">{lesson.name}</span>
                         {isLocked && (
-                          <LockIcon className="ml-auto w-4 h-4 text-slate-400 shrink-0" />
+                          <LockIcon
+                            className="ml-auto w-4 h-4 text-slate-400 shrink-0"
+                            data-testid="lock-icon"
+                          />
                         )}
                         {completedLessonIds.includes(lesson.id) && (
-                          <CheckCircle2 className="ml-auto w-4 h-4 text-green-500 shrink-0" />
+                          <CheckCircle2
+                            className="ml-auto w-4 h-4 text-green-500 shrink-0"
+                            data-testid="check-circle-icon"
+                          />
                         )}
                       </Link>
                     </li>

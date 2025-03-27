@@ -65,7 +65,7 @@ export function UserBlock({
             >
               <AvatarImage src={user?.profilePhoto || undefined} />
               <AvatarFallback className="text-2xl">
-                { getInitials(user.firstName + " " + user.lastName)}
+                {getInitials(user.firstName + " " + user.lastName)}
               </AvatarFallback>
             </Avatar>
           </div>

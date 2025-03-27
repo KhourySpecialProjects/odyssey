@@ -1,5 +1,6 @@
 import { render, screen, fireEvent } from "@testing-library/react";
 import { QuizEditor } from "@/components/draft/lesson/blocks/quiz";
+import userEvent from "@testing-library/user-event";
 
 jest.mock("@/components/draft/lesson/blocks/quiz-question-editor", () => ({
   QuizQuestionEditor: ({
@@ -148,4 +149,54 @@ describe("QuizEditor", () => {
     });
   });
 
+  describe("QuizEditor", () => {
+    const mockBlock = {
+      __component: "quiz",
+      questions: [
+        {
+          id: 1,
+          content: "Test Question",
+          answerOptions: [
+            { id: 1, content: "True", isCorrect: true },
+            { id: 2, content: "False", isCorrect: false },
+          ],
+        },
+      ],
+    };
+
+    const mockProps = {
+      block: mockBlock,
+      updateBlock: jest.fn(),
+      deleteBlock: jest.fn(),
+    };
+
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+
+    it("adds a new true/false question correctly", async () => {
+      const user = userEvent.setup();
+      render(<QuizEditor {...mockProps} />);
+
+      await user.click(screen.getByText("Add Question"));
+
+      expect(mockProps.updateBlock).toHaveBeenCalledWith({
+        __component: "quiz",
+        questions: expect.arrayContaining([
+          expect.objectContaining({
+            content: "",
+            answerOptions: [
+              { content: "True", isCorrect: true, id: expect.any(Number) },
+              { content: "False", isCorrect: false, id: expect.any(Number) },
+            ],
+          }),
+        ]),
+      });
+    });
+
+    it("displays correct quiz type in header", () => {
+      render(<QuizEditor {...mockProps} />);
+      expect(screen.getByText("True/False Quiz")).toBeInTheDocument();
+    });
+  });
 });

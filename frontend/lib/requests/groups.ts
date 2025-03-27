@@ -633,14 +633,17 @@ export async function enrollUsers(group: Group) {
     group.members?.map(async (member) => {
       group.droplets?.map(async (droplet) => {
         try {
-        const enrollmentData = {
-          droplet: droplet.id,
-          viewedLessons: [],
-        };
-        return await createEnrollmentFromEmail(enrollmentData, member.email);
-      } catch (error) {
-        console.error(`Error enrolling this user in droplet [${droplet.name || droplet.id}]: `, error)
-      }
+          const enrollmentData = {
+            droplet: droplet.id,
+            viewedLessons: [],
+          };
+          return await createEnrollmentFromEmail(enrollmentData, member.email);
+        } catch (error) {
+          console.error(
+            `Error enrolling this user in droplet [${droplet.name || droplet.id}]: `,
+            error,
+          );
+        }
         //return await createEnrollment(enrollmentData);
       }) || [];
 
@@ -648,14 +651,20 @@ export async function enrollUsers(group: Group) {
         await enrollInPlaylist(playlist.id, member.id);
         playlist.droplets?.map(async (droplet) => {
           try {
-          const enrollmentData = {
-            droplet: droplet.id,
-            viewedLessons: [],
-          };
-          return await createEnrollmentFromEmail(enrollmentData, member.email);
-        } catch (error) {
-          console.error(`Error enrolling this user in playlist [${playlist.name || playlist.id}] droplet [${droplet.name || droplet.id}]: `, error)
-        }
+            const enrollmentData = {
+              droplet: droplet.id,
+              viewedLessons: [],
+            };
+            return await createEnrollmentFromEmail(
+              enrollmentData,
+              member.email,
+            );
+          } catch (error) {
+            console.error(
+              `Error enrolling this user in playlist [${playlist.name || playlist.id}] droplet [${droplet.name || droplet.id}]: `,
+              error,
+            );
+          }
           //return await createEnrollment(enrollmentData);
         }) || [];
       }) || [];

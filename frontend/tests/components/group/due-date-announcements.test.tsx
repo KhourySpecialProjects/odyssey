@@ -1,96 +1,97 @@
-import { render, screen, fireEvent } from '@testing-library/react';
-import DueDateAnnouncements from '@/components/group/due-date-announcements';
-import { DateTime } from 'luxon';
-import { DropletStatus, DropletType, FocusArea, GroupSemester, Tag } from '@/types';
+import { render, screen, fireEvent } from "@testing-library/react";
+import DueDateAnnouncements from "@/components/group/due-date-announcements";
+import { DateTime } from "luxon";
+import {
+  DropletStatus,
+  DropletType,
+  FocusArea,
+  GroupSemester,
+  Tag,
+} from "@/types";
 
-describe('DueDateAnnouncements', () => {
+describe("DueDateAnnouncements", () => {
   const mockGroup = {
     id: 1,
-    groupName: 'Test Group',
-    slug: 'test-group',
+    groupName: "Test Group",
+    slug: "test-group",
     isArchived: false,
-    semester: "SPRING" as GroupSemester
+    semester: "SPRING" as GroupSemester,
   };
   const tomorrow = DateTime.local().plus({ days: 1 }).toISO();
   const mockDroplet = {
     id: 1,
-    name: 'Test Droplet',
-    slug: 'test-droplet',
+    name: "Test Droplet",
+    slug: "test-droplet",
     isHidden: false,
-    focusArea: 'personal' as FocusArea,
-    type: 'knowledge' as DropletType,
-    tags: [{ id: 1, name: 'React' }] as Tag[],
+    focusArea: "personal" as FocusArea,
+    type: "knowledge" as DropletType,
+    tags: [{ id: 1, name: "React" }] as Tag[],
     learningObjectives: [],
     status: "published" as DropletStatus,
-    droplet_lessons: []
+    droplet_lessons: [],
   };
   const mockDueDates = [
-    { 
+    {
       id: 1,
       droplet: mockDroplet,
       dueDate: tomorrow,
       authorized_user: 1,
-      group: mockGroup
+      group: mockGroup,
     },
-    { 
+    {
       id: 1,
       droplet: mockDroplet,
       dueDate: tomorrow,
       authorized_user: 1,
-      group: mockGroup
+      group: mockGroup,
     },
-    { 
+    {
       id: 1,
       droplet: mockDroplet,
       dueDate: tomorrow,
       authorized_user: 1,
-      group: mockGroup
+      group: mockGroup,
     },
-    { 
+    {
       id: 1,
       droplet: mockDroplet,
       dueDate: tomorrow,
       authorized_user: 1,
-      group: mockGroup
+      group: mockGroup,
     },
-    { 
+    {
       id: 1,
       droplet: mockDroplet,
       dueDate: tomorrow,
       authorized_user: 1,
-      group: mockGroup
+      group: mockGroup,
     },
-    { 
+    {
       id: 1,
       droplet: mockDroplet,
       dueDate: tomorrow,
       authorized_user: 1,
-      group: mockGroup
-    }
+      group: mockGroup,
+    },
   ];
 
-  it('renders upcoming due dates', () => {
+  it("renders upcoming due dates", () => {
     render(<DueDateAnnouncements group={mockGroup} dueDates={mockDueDates} />);
     expect(screen.getAllByText(/Test Droplet/)[0]).toBeInTheDocument();
     expect(screen.getAllByText(/is due in 1 day!/)[0]).toBeInTheDocument();
   });
 
-  it('handles see more/less toggle', () => {
+  it("handles see more/less toggle", () => {
     const manyDueDates = Array(6).fill(mockDueDates[0]);
     render(<DueDateAnnouncements group={mockGroup} dueDates={manyDueDates} />);
-    
-    expect(screen.getByText('see more...')).toBeInTheDocument();
-    fireEvent.click(screen.getByText('see more...'));
-    expect(screen.getByText('see less...')).toBeInTheDocument();
+
+    expect(screen.getByText("see more...")).toBeInTheDocument();
+    fireEvent.click(screen.getByText("see more..."));
+    expect(screen.getByText("see less...")).toBeInTheDocument();
   });
 
-  test('handles see more/less toggle correctly', () => {
-    render(
-      <DueDateAnnouncements
-        group={mockGroup}
-        dueDates={mockDueDates}
-      />
-    );
+  test("handles see more/less toggle correctly", () => {
+    render(<DueDateAnnouncements group={mockGroup} dueDates={mockDueDates} />);
 
     expect(screen.getAllByText(/Droplet/)).toHaveLength(5);
 

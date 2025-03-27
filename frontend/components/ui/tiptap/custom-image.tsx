@@ -7,7 +7,7 @@ import { deleteImage } from "@/lib/actions";
 const CustomImage = Image.extend({
   addProseMirrorPlugins(): Plugin[] {
     return CustomImage.createPlugins();
-  }
+  },
 }) as typeof Image & {
   createPlugins: () => Plugin[];
   addProseMirrorPlugins: () => Plugin[];

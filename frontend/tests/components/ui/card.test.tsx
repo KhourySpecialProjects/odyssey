@@ -1,4 +1,4 @@
-import { render } from '@testing-library/react'
+import { render } from "@testing-library/react";
 import {
   Card,
   CardHeader,
@@ -6,10 +6,10 @@ import {
   CardTitle,
   CardDescription,
   CardContent,
-} from '@/components/ui/card'
+} from "@/components/ui/card";
 
-describe('Card', () => {
-  it('renders full card with all components', () => {
+describe("Card", () => {
+  it("renders full card with all components", () => {
     const { getByText } = render(
       <Card>
         <CardHeader>
@@ -18,27 +18,31 @@ describe('Card', () => {
         </CardHeader>
         <CardContent>Test Content</CardContent>
         <CardFooter>Test Footer</CardFooter>
-      </Card>
-    )
+      </Card>,
+    );
 
-    expect(getByText('Test Title')).toBeInTheDocument()
-    expect(getByText('Test Description')).toBeInTheDocument()
-    expect(getByText('Test Content')).toBeInTheDocument()
-    expect(getByText('Test Footer')).toBeInTheDocument()
-  })
+    expect(getByText("Test Title")).toBeInTheDocument();
+    expect(getByText("Test Description")).toBeInTheDocument();
+    expect(getByText("Test Content")).toBeInTheDocument();
+    expect(getByText("Test Footer")).toBeInTheDocument();
+  });
 
-  it('applies correct styling to card', () => {
-    const { container } = render(<Card>Content</Card>)
-    expect(container.firstChild).toHaveClass('rounded-lg', 'border', 'bg-white')
-  })
+  it("applies correct styling to card", () => {
+    const { container } = render(<Card>Content</Card>);
+    expect(container.firstChild).toHaveClass(
+      "rounded-lg",
+      "border",
+      "bg-white",
+    );
+  });
 
-  it('applies custom className to components', () => {
+  it("applies custom className to components", () => {
     const { container } = render(
       <Card className="test-class">
         <CardHeader className="header-class">Header</CardHeader>
-      </Card>
-    )
-    expect(container.firstChild).toHaveClass('test-class')
-    expect(container.querySelector('.header-class')).toBeInTheDocument()
-  })
-})
+      </Card>,
+    );
+    expect(container.firstChild).toHaveClass("test-class");
+    expect(container.querySelector(".header-class")).toBeInTheDocument();
+  });
+});

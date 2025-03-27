@@ -1,21 +1,25 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { htmlToText } from '@/lib/utils';
-import { useDropletUpdate } from '@/components/draft/metadata/hooks/useDropletUpdate';
-import { Description } from '@/components/draft/metadata/description';
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { htmlToText } from "@/lib/utils";
+import { useDropletUpdate } from "@/components/draft/metadata/hooks/useDropletUpdate";
+import { Description } from "@/components/draft/metadata/description";
 
-jest.mock('@/components/draft/metadata/hooks/useDropletUpdate', () => ({
+jest.mock("@/components/draft/metadata/hooks/useDropletUpdate", () => ({
   useDropletUpdate: jest.fn(),
 }));
 
-jest.mock('@/lib/utils', () => ({
+jest.mock("@/lib/utils", () => ({
   htmlToText: jest.fn((text: string) => text),
 }));
 
-jest.mock('@/components/ui/tiptap/droplet-description-input', () => ({
-  DropletDescriptionInput: ({ updateContent }: { updateContent: (content: string) => void }) => (
-    <div 
-      role="textbox" 
-      contentEditable 
+jest.mock("@/components/ui/tiptap/droplet-description-input", () => ({
+  DropletDescriptionInput: ({
+    updateContent,
+  }: {
+    updateContent: (content: string) => void;
+  }) => (
+    <div
+      role="textbox"
+      contentEditable
       onInput={async (e) => {
         await updateContent(e.currentTarget.innerHTML);
       }}
@@ -23,7 +27,7 @@ jest.mock('@/components/ui/tiptap/droplet-description-input', () => ({
   ),
 }));
 
-describe('Description', () => {
+describe("Description", () => {
   const mockHandleChange = jest.fn();
 
   beforeEach(() => {
@@ -34,70 +38,55 @@ describe('Description', () => {
     });
   });
 
-  it('converts HTML to text and updates description', async () => {
-    render(
-      <Description
-        dropletId={1}
-        initialContent="Initial content"
-      />
-    );
+  it("converts HTML to text and updates description", async () => {
+    render(<Description dropletId={1} initialContent="Initial content" />);
 
-    const descriptionInput = screen.getByRole('textbox');
-    const htmlContent = '<p>New description</p>';
+    const descriptionInput = screen.getByRole("textbox");
+    const htmlContent = "<p>New description</p>";
 
     fireEvent.input(descriptionInput, {
       target: { innerHTML: htmlContent },
-      currentTarget: { innerHTML: htmlContent }
+      currentTarget: { innerHTML: htmlContent },
     });
 
     await waitFor(() => {
       expect(htmlToText).toHaveBeenCalledWith(htmlContent);
       expect(mockHandleChange).toHaveBeenCalledWith({
-        description: htmlContent
+        description: htmlContent,
       });
     });
   });
 
-  it('shows error message when present', () => {
+  it("shows error message when present", () => {
     (useDropletUpdate as jest.Mock).mockReturnValue({
       handleChange: mockHandleChange,
-      error: 'Error updating description',
+      error: "Error updating description",
     });
 
-    render(
-      <Description
-        dropletId={1}
-        initialContent="Initial content"
-      />
-    );
+    render(<Description dropletId={1} initialContent="Initial content" />);
 
-    expect(screen.getByText('Error updating description')).toBeInTheDocument();
+    expect(screen.getByText("Error updating description")).toBeInTheDocument();
   });
 
-  it('properly converts HTML to text', async () => {
-    const htmlContent = '<p>Test <strong>content</strong></p>';
-    const plainText = 'Test content';
-    
+  it("properly converts HTML to text", async () => {
+    const htmlContent = "<p>Test <strong>content</strong></p>";
+    const plainText = "Test content";
+
     (htmlToText as jest.Mock).mockReturnValueOnce(plainText);
 
-    render(
-      <Description
-        dropletId={1}
-        initialContent="Initial content"
-      />
-    );
+    render(<Description dropletId={1} initialContent="Initial content" />);
 
-    const descriptionInput = screen.getByRole('textbox');
-    
+    const descriptionInput = screen.getByRole("textbox");
+
     fireEvent.input(descriptionInput, {
       target: { innerHTML: htmlContent },
-      currentTarget: { innerHTML: htmlContent }
+      currentTarget: { innerHTML: htmlContent },
     });
 
     await waitFor(() => {
       expect(htmlToText).toHaveBeenCalledWith(htmlContent);
       expect(mockHandleChange).toHaveBeenCalledWith({
-        description: plainText
+        description: plainText,
       });
     });
   });

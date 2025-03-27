@@ -8,7 +8,7 @@ jest.mock("@/lib/actions", () => ({
 jest.mock("@/lib/utils", () => ({
   strapiJSONToTiptapJSON: jest.fn(() => []),
   tiptapJSONToStrapiJSON: jest.fn(() => ({})),
-  cn: (...inputs: any[]) => inputs.filter(Boolean).join(' ')
+  cn: (...inputs: any[]) => inputs.filter(Boolean).join(" "),
 }));
 
 jest.mock("@/components/ui/tiptap/callout-block-input", () => ({
@@ -135,48 +135,46 @@ describe("CalloutEditor", () => {
     });
   });
 
-jest.mock('@/lib/actions', () => ({
-  revalidateLesson: jest.fn()
-}));
+  jest.mock("@/lib/actions", () => ({
+    revalidateLesson: jest.fn(),
+  }));
 
-describe('CalloutEditor', () => {
-  const mockBlock = {
-    __component: 'droplets.callout',
-    content: 
-      {
-        type: 'paragraph',
-        children: [{ type: 'text', text: 'Test content' }]
-      }
-    ,
-    color: 'bg-red-300',
-    type: 'info',
-    iconEnabled: true
-  };
+  describe("CalloutEditor", () => {
+    const mockBlock = {
+      __component: "droplets.callout",
+      content: {
+        type: "paragraph",
+        children: [{ type: "text", text: "Test content" }],
+      },
+      color: "bg-red-300",
+      type: "info",
+      iconEnabled: true,
+    };
 
-  const mockUpdateBlock = jest.fn();
-  const mockDeleteBlock = jest.fn();
+    const mockUpdateBlock = jest.fn();
+    const mockDeleteBlock = jest.fn();
 
-  beforeEach(() => {
-    jest.clearAllMocks();
-  });
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
 
-  it('toggles icon visibility', () => {
-    render(
-      <CalloutEditor
-        block={mockBlock}
-        updateBlock={mockUpdateBlock}
-        deleteBlock={mockDeleteBlock}
-      />
-    );
+    it("toggles icon visibility", () => {
+      render(
+        <CalloutEditor
+          block={mockBlock}
+          updateBlock={mockUpdateBlock}
+          deleteBlock={mockDeleteBlock}
+        />,
+      );
 
-    const toggleButton = screen.getByTestId('update-content-button');
-    fireEvent.click(toggleButton);
+      const toggleButton = screen.getByTestId("update-content-button");
+      fireEvent.click(toggleButton);
 
-    expect(mockUpdateBlock).toHaveBeenCalledWith({
-      __component: 'droplets.callout',
-      content: {},
-      type: 'info',
+      expect(mockUpdateBlock).toHaveBeenCalledWith({
+        __component: "droplets.callout",
+        content: {},
+        type: "info",
+      });
     });
   });
-});
 });

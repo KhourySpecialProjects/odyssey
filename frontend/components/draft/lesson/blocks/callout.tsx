@@ -60,7 +60,11 @@ export function CalloutEditor({
             <h2 className="text-lg font-bold text-black mr-3">Callout Block</h2>
             {block.color && !block.color.includes("sky") && (
               <div className="relative">
-                <Button variant="transparent" onClick={handleToggleIcon} role="toggleButton">
+                <Button
+                  variant="transparent"
+                  onClick={handleToggleIcon}
+                  role="toggleButton"
+                >
                   <CalloutIcon
                     color={block.color || "bg-sky-300"}
                   ></CalloutIcon>

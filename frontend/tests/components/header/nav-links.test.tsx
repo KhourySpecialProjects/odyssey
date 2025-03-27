@@ -1,30 +1,30 @@
-import { render, screen } from '@testing-library/react';
-import { NavLinks } from '@/components/header/nav-links';
-import { usePathname } from 'next/navigation';
+import { render, screen } from "@testing-library/react";
+import { NavLinks } from "@/components/header/nav-links";
+import { usePathname } from "next/navigation";
 
-jest.mock('next/navigation', () => ({
-  usePathname: jest.fn()
+jest.mock("next/navigation", () => ({
+  usePathname: jest.fn(),
 }));
 
-describe('NavLinks', () => {
+describe("NavLinks", () => {
   const mockItems = [
-    { href: '/feed', label: 'Feed' },
-    { href: '/explore', label: 'Explore' },
+    { href: "/feed", label: "Feed" },
+    { href: "/explore", label: "Explore" },
   ];
 
   beforeEach(() => {
-    jest.clearAllMocks()
-    ;(usePathname as jest.Mock).mockReturnValue('/explore')
-  })
-
-  it('renders all navigation items', () => {
-    render(<NavLinks items={mockItems} />);
-    expect(screen.getByText('Explore')).toBeInTheDocument();
-    expect(screen.getByText('Feed')).toBeInTheDocument();
+    jest.clearAllMocks();
+    (usePathname as jest.Mock).mockReturnValue("/explore");
   });
 
-  it('applies active styles to current path', () => {
+  it("renders all navigation items", () => {
     render(<NavLinks items={mockItems} />);
-    expect(screen.getByText('Explore').parentElement).toHaveClass('font-bold');
+    expect(screen.getByText("Explore")).toBeInTheDocument();
+    expect(screen.getByText("Feed")).toBeInTheDocument();
+  });
+
+  it("applies active styles to current path", () => {
+    render(<NavLinks items={mockItems} />);
+    expect(screen.getByText("Explore").parentElement).toHaveClass("font-bold");
   });
 });

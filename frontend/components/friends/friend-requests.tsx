@@ -89,14 +89,14 @@ export function FriendRequests({
               disabled={currentPage === 0}
               className={`px-4 py-2 mr-4 w-22`}
             >
-              <MoveLeft role="left"/>
+              <MoveLeft role="left" />
             </button>
             <button
               onClick={handleNextPage}
               disabled={currentPage === totalPages - 1}
               className={`px-4 py-2`}
             >
-              <MoveRight role="right"/>
+              <MoveRight role="right" />
             </button>
           </div>
         )}

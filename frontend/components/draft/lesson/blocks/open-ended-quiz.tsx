@@ -73,7 +73,12 @@ export function OpenEndedQuizEditor({
     <div className="w-full max-w-2xl">
       <div className="flex justify-between items-center mb-4">
         <h3 className="text-xl font-bold">Open Ended Quiz</h3>
-        <Button variant="ghost" size="sm" onClick={deleteBlock} aria-label="Delete quiz">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={deleteBlock}
+          aria-label="Delete quiz"
+        >
           <TrashIcon className="w-4 h-4" />
         </Button>
       </div>

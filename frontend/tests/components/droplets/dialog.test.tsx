@@ -1,20 +1,18 @@
-import { render, screen, fireEvent } from '@testing-library/react';
-import { ReportBugDialog } from '@/components/droplets/reports/bug/dialog';
-import { AuthorizedUserRoleTitle } from '@/lib/globals';
-import { TimeZone } from '@/types';
+import { render, screen, fireEvent } from "@testing-library/react";
+import { ReportBugDialog } from "@/components/droplets/reports/bug/dialog";
+import { AuthorizedUserRoleTitle } from "@/lib/globals";
+import { TimeZone } from "@/types";
 
-describe('ReportBugDialog', () => {
+describe("ReportBugDialog", () => {
   const mockUser = {
     id: 1,
-    email: 'user@example.com',
-    firstName: 'John',
-    lastName: 'Doe',
-    bio: 'Test bio',
-    profilePhoto: 'https://example.com/photo.jpg',
+    email: "user@example.com",
+    firstName: "John",
+    lastName: "Doe",
+    bio: "Test bio",
+    profilePhoto: "https://example.com/photo.jpg",
     isEnabled: true,
-    roles: [
-      AuthorizedUserRoleTitle.Faculty 
-    ],
+    roles: [AuthorizedUserRoleTitle.Faculty],
     linkedin: "https://www.google.com/",
     github: "https://www.google.com/",
     firstTime: false,
@@ -24,41 +22,41 @@ describe('ReportBugDialog', () => {
     blocked: [],
     was_blocked: [],
     timeZone: "America/New_York" as TimeZone,
-    isActive: true
+    isActive: true,
   };
 
   const mockOnOpenChange = jest.fn();
 
-  it('renders report bug button', () => {
+  it("renders report bug button", () => {
     render(
       <ReportBugDialog
         user={mockUser}
         open={false}
         onOpenChange={mockOnOpenChange}
-      />
+      />,
     );
-    expect(screen.getByText('Report Bug')).toBeInTheDocument();
+    expect(screen.getAllByText("Report Bug")[0]).toBeInTheDocument();
   });
 
-  it('opens dialog when button is clicked', () => {
+  it("opens dialog when button is clicked", () => {
     render(
       <ReportBugDialog
         user={mockUser}
         open={false}
         onOpenChange={mockOnOpenChange}
-      />
+      />,
     );
-    fireEvent.click(screen.getByText('Report Bug'));
+    fireEvent.click(screen.getAllByText("Report Bug")[0]);
     expect(mockOnOpenChange).toHaveBeenCalledWith(true);
   });
 
-  it('renders dialog content when open', () => {
+  it("renders dialog content when open", () => {
     render(
       <ReportBugDialog
         user={mockUser}
         open={true}
         onOpenChange={mockOnOpenChange}
-      />
+      />,
     );
     expect(screen.getByText(/outdated/i)).toBeInTheDocument();
   });

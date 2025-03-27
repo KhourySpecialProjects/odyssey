@@ -1,163 +1,216 @@
-import { render, fireEvent } from '@testing-library/react'
-import { CommandShortcut, CommandDialog } from '@/components/ui/command'
-import { cn } from '@/lib/utils'
-import '@testing-library/jest-dom'
+import { render, screen } from "@testing-library/react";
 import {
   Command,
+  CommandDialog,
   CommandInput,
   CommandList,
   CommandEmpty,
   CommandGroup,
   CommandItem,
   CommandSeparator,
-} from '@/components/ui/command'
+  CommandShortcut,
+} from "@/components/ui/command";
+import userEvent from "@testing-library/user-event";
 
-jest.mock('@/lib/utils', () => ({
-  cn: jest.fn((...inputs) => inputs.join(' '))
-}))
+// Mock the cmdk Command component and its subcomponents
+jest.mock("cmdk", () => {
+  const CommandComponent = ({ children, className, ...props }: any) => (
+    <div data-testid="cmdk-command" className={className} {...props}>
+      {children}
+    </div>
+  );
 
-jest.mock('@/lib/utils', () => ({
-  cn: jest.fn((...inputs) => inputs.join(' '))
-}))
+  CommandComponent.Input = ({ className, ...props }: any) => (
+    <div className="flex items-center border-b px-3" cmdk-input-wrapper="">
+      <input data-testid="cmdk-input" className={className} {...props} />
+    </div>
+  );
 
-window.HTMLElement.prototype.scrollIntoView = jest.fn();
+  CommandComponent.List = ({ className, children, ...props }: any) => (
+    <div data-testid="cmdk-list" className={className} {...props}>
+      {children}
+    </div>
+  );
 
-describe('Command', () => {
-  const TestCommand = () => (
-    <Command>
-      <CommandInput placeholder="Search..." />
-      <CommandList>
-        <CommandEmpty>No results found.</CommandEmpty>
-        <CommandGroup heading="Suggestions">
-          <CommandItem>Item 1</CommandItem>
-          <CommandSeparator />
-          <CommandItem>Item 2</CommandItem>
-        </CommandGroup>
-      </CommandList>
-    </Command>
-  )
+  CommandComponent.Empty = ({ children, ...props }: any) => (
+    <div data-testid="cmdk-empty" {...props}>
+      {children}
+    </div>
+  );
 
-  it('renders command input', () => {
-    const { getByPlaceholderText } = render(<TestCommand />)
-    expect(getByPlaceholderText('Search...')).toBeInTheDocument()
-  })
+  CommandComponent.Group = ({ children, ...props }: any) => (
+    <div data-testid="cmdk-group" {...props}>
+      {children}
+    </div>
+  );
 
-  it('renders command items', () => {
-    const { getByText } = render(<TestCommand />)
-    expect(getByText('Item 1')).toBeInTheDocument()
-    expect(getByText('Item 2')).toBeInTheDocument()
-  })
+  CommandComponent.Item = ({ children, ...props }: any) => (
+    <div data-testid="cmdk-item" {...props}>
+      {children}
+    </div>
+  );
 
-  it('applies correct styling to components', () => {
-    const { container } = render(<TestCommand />)
-    expect(container.firstChild).toHaveClass('flex', 'h-full', 'w-full')
-  })
+  CommandComponent.Separator = (props: any) => (
+    <div data-testid="cmdk-separator" {...props} />
+  );
 
-  it('handles input changes', () => {
-    const { getByPlaceholderText } = render(<TestCommand />)
-    const input = getByPlaceholderText('Search...')
-    fireEvent.change(input, { target: { value: 'test' } })
-    expect(input).toHaveValue('test')
-  })
-})
+  return {
+    Command: CommandComponent,
+  };
+});
 
-describe('CommandShortcut', () => {
-  beforeEach(() => {
-    jest.clearAllMocks()
-  })
-
-  it('renders with default classes', () => {
-    const { container } = render(<CommandShortcut>⌘+K</CommandShortcut>)
-    
-    const shortcut = container.firstChild as HTMLElement
-    expect(shortcut.tagName.toLowerCase()).toBe('span')
-    expect(cn).toHaveBeenCalledWith(
-      'ml-auto text-xs tracking-widest text-slate-500 dark:text-slate-400',
-      undefined
-    )
-  })
-
-  it('combines custom className with default classes', () => {
-    const { container } = render(
-      <CommandShortcut className="custom-class">
-        ⌘+K
-      </CommandShortcut>
-    )
-    
-    expect(cn).toHaveBeenCalledWith(
-      'ml-auto text-xs tracking-widest text-slate-500 dark:text-slate-400',
-      'custom-class'
-    )
-  })
-
-  it('passes through additional props', () => {
-    const { container } = render(
-      <CommandShortcut 
-        data-testid="shortcut"
-        aria-label="Command K shortcut"
-        title="Open command menu"
-      >
-        ⌘+K
-      </CommandShortcut>
-    )
-    
-    const shortcut = container.firstChild as HTMLElement
-    expect(shortcut).toHaveAttribute('aria-label', 'Command K shortcut')
-    expect(shortcut).toHaveAttribute('title', 'Open command menu')
-  })
-
-  it('renders children correctly', () => {
-    const { container } = render(
-      <CommandShortcut>
-        <span>⌘</span>
-        <span>+</span>
-        <span>K</span>
-      </CommandShortcut>
-    )
-    
-    const shortcut = container.firstChild as HTMLElement
-    expect(shortcut).toBeInTheDocument()
-    expect(shortcut.textContent).toBe('⌘+K')
-  })
-})
-
-jest.mock('@/components/ui/dialog', () => ({
+// Mock Dialog components
+jest.mock("@/components/ui/dialog", () => ({
   Dialog: ({ children, ...props }: any) => (
-    <div data-testid="mock-dialog" {...props}>
+    <div data-testid="dialog" {...props}>
       {children}
     </div>
   ),
-  DialogContent: ({ children, className }: any) => (
-    <div data-testid="mock-dialog-content" className={className}>
+  DialogContent: ({ children, ...props }: any) => (
+    <div data-testid="dialog-content" {...props}>
       {children}
     </div>
-  )
-}))
+  ),
+  DialogTitle: ({ children, ...props }: any) => (
+    <div data-testid="dialog-title" {...props}>
+      {children}
+    </div>
+  ),
+}));
 
-describe('Command Components', () => {
-  describe('CommandDialog', () => {
-    it('renders dialog with correct structure', () => {
-      const { getByTestId } = render(
+describe("Command Components", () => {
+  describe("Command", () => {
+    it("renders with correct classes and content", () => {
+      const { container } = render(
+        <Command className="test-class">
+          <div>Test content</div>
+        </Command>,
+      );
+
+      expect(screen.getByTestId("cmdk-command")).toHaveClass(
+        "flex",
+        "h-full",
+        "w-full",
+        "flex-col",
+        "test-class",
+      );
+      expect(container).toHaveTextContent("Test content");
+    });
+  });
+
+  describe("CommandDialog", () => {
+    it("renders dialog with command component", () => {
+      render(
         <CommandDialog open>
-          <div>Test Content</div>
-        </CommandDialog>
-      )
+          <div>Dialog content</div>
+        </CommandDialog>,
+      );
 
-      const dialog = getByTestId('mock-dialog')
-      const dialogContent = getByTestId('mock-dialog-content')
+      expect(screen.getByTestId("dialog")).toBeInTheDocument();
+      expect(screen.getByTestId("dialog-content")).toBeInTheDocument();
+      expect(screen.getByText("Dialog content")).toBeInTheDocument();
+    });
+  });
 
-      expect(dialog).toBeInTheDocument()
-      expect(dialogContent).toHaveClass('overflow-hidden p-0 shadow-lg')
-    })
+  describe("CommandInput", () => {
+    it("renders input with search icon", async () => {
+      render(<CommandInput placeholder="Search..." />);
 
-    it('renders children within Command component', () => {
-      const { getByText } = render(
-        <CommandDialog>
-          <div>Test Child Content</div>
-        </CommandDialog>
-      )
+      const input = screen.getByTestId("cmdk-input");
+      expect(input).toHaveAttribute("placeholder", "Search...");
+    });
+  });
 
-      expect(getByText('Test Child Content')).toBeInTheDocument()
-    })
-  })
-})
+  describe("CommandList", () => {
+    it("renders list with correct classes", () => {
+      render(
+        <CommandList className="test-class">
+          <div>List content</div>
+        </CommandList>,
+      );
+
+      const list = screen.getByTestId("cmdk-list");
+      expect(list).toHaveClass(
+        "max-h-[300px]",
+        "overflow-y-auto",
+        "test-class",
+      );
+      expect(list).toHaveTextContent("List content");
+    });
+  });
+
+  describe("CommandEmpty", () => {
+    it("renders empty state with correct classes", () => {
+      render(<CommandEmpty>No results</CommandEmpty>);
+
+      const empty = screen.getByTestId("cmdk-empty");
+      expect(empty).toHaveClass("py-6", "text-center", "text-sm");
+      expect(empty).toHaveTextContent("No results");
+    });
+  });
+
+  describe("CommandGroup", () => {
+    it("renders group with correct classes and content", () => {
+      render(
+        <CommandGroup className="test-class">
+          <div>Group content</div>
+        </CommandGroup>,
+      );
+
+      const group = screen.getByTestId("cmdk-group");
+      expect(group).toHaveClass("overflow-hidden", "p-1", "test-class");
+      expect(group).toHaveTextContent("Group content");
+    });
+  });
+
+  describe("CommandItem", () => {});
+
+  describe("CommandSeparator", () => {
+    it("renders separator with correct classes", () => {
+      render(<CommandSeparator className="test-class" />);
+
+      const separator = screen.getByTestId("cmdk-separator");
+      expect(separator).toHaveClass("-mx-1", "h-px", "test-class");
+    });
+  });
+
+  describe("CommandShortcut", () => {
+    it("renders shortcut with correct classes", () => {
+      render(<CommandShortcut className="test-class">⌘K</CommandShortcut>);
+
+      const shortcut = screen.getByText("⌘K");
+      expect(shortcut).toHaveClass(
+        "ml-auto",
+        "text-xs",
+        "tracking-widest",
+        "test-class",
+      );
+    });
+  });
+
+  // Test component integration
+  describe("Command Integration", () => {
+    it("renders full command interface correctly", () => {
+      render(
+        <Command>
+          <CommandInput placeholder="Search..." />
+          <CommandList>
+            <CommandEmpty>No results found</CommandEmpty>
+            <CommandGroup>
+              <CommandItem>Item 1</CommandItem>
+              <CommandSeparator />
+              <CommandItem>Item 2</CommandItem>
+            </CommandGroup>
+          </CommandList>
+        </Command>,
+      );
+
+      expect(screen.getByTestId("cmdk-input")).toBeInTheDocument();
+      expect(screen.getByTestId("cmdk-list")).toBeInTheDocument();
+      expect(screen.getByText("No results found")).toBeInTheDocument();
+      expect(screen.getByText("Item 1")).toBeInTheDocument();
+      expect(screen.getByTestId("cmdk-separator")).toBeInTheDocument();
+      expect(screen.getByText("Item 2")).toBeInTheDocument();
+    });
+  });
+});

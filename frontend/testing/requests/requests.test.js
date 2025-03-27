@@ -28,7 +28,7 @@ const {
 const { getTags, getTagBySlug } = require("../../lib/requests/tag");
 //import { data } from "./mocks/strapiMock";
 const { flattenAttributes } = require("../../lib/utils");
-const { getCurrentUser } = require("../../lib/auth/session")
+const { getCurrentUser } = require("../../lib/auth/session");
 const {
   getAuthorizedUserByEmail,
 } = require("../../lib/requests/authorized-user");
@@ -56,8 +56,8 @@ global.fetch = jest.fn();
 //Comment this out if working on error testing (suppresses console error logs from error mocking)
 
 beforeEach(() => {
-  jest.spyOn(console, "error").mockImplementation(() => { }); // Suppress console errors
-  jest.spyOn(console, "warn").mockImplementation(() => { }); // Suppress console warnings
+  jest.spyOn(console, "error").mockImplementation(() => {}); // Suppress console errors
+  jest.spyOn(console, "warn").mockImplementation(() => {}); // Suppress console warnings
 });
 
 afterEach(() => {
@@ -241,12 +241,12 @@ describe("Data requests", () => {
       global.fetch.mockResolvedValueOnce({
         ok: false,
         status: 400,
-        statusText: "Bad Request"
+        statusText: "Bad Request",
       });
 
       // The function should throw an error
       await expect(fetchGroups()).rejects.toThrow("Failed to fetch groups.");
-    })
+    });
   });
 
   describe("fetchAccessRequests", () => {
@@ -503,16 +503,18 @@ describe("getLessonBySlug", () => {
 
 // playlist-enrollment.ts tests
 describe("Playlist enrollment tests", () => {
-
   describe("togglePlaylistEnrollment", () => {
-
     it("should toggle the current user's enrollment in the playlist", async () => {
-
-      getCurrentUser.mockResolvedValueOnce({ name: "Harry", email: "hmerzin@northeastern.edu" });
+      getCurrentUser.mockResolvedValueOnce({
+        name: "Harry",
+        email: "hmerzin@northeastern.edu",
+      });
 
       getAuthorizedUserByEmail.mockResolvedValueOnce({
-        id: 12, email: "hmerzin@northeastern.edu", playlists: [{ id: 1 }, { id: 2 }, { id: 3 }]
-      })
+        id: 12,
+        email: "hmerzin@northeastern.edu",
+        playlists: [{ id: 1 }, { id: 2 }, { id: 3 }],
+      });
 
       const mockResponse = {
         ok: true,
@@ -521,14 +523,14 @@ describe("Playlist enrollment tests", () => {
             id: 12,
             attributes: {
               playlists: {
-                data: [{ id: 1 }, { id: 3 }] // Playlist 2 removed
-              }
-            }
-          }
-        })
+                data: [{ id: 1 }, { id: 3 }], // Playlist 2 removed
+              },
+            },
+          },
+        }),
       };
 
-      global.fetch.mockResolvedValueOnce(mockResponse)
+      global.fetch.mockResolvedValueOnce(mockResponse);
 
       const result = await togglePlaylistEnrollment(2);
 
@@ -552,7 +554,6 @@ describe("Playlist enrollment tests", () => {
       );
 
       expect(result).toEqual({ success: true });
-
     });
 
     it("should enroll user in playlist when not already enrolled", async () => {
@@ -560,13 +561,13 @@ describe("Playlist enrollment tests", () => {
       getCurrentUser.mockResolvedValueOnce({
         id: 12,
         name: "Harry",
-        email: "hmerzin@northeastern.edu"
+        email: "hmerzin@northeastern.edu",
       });
 
       getAuthorizedUserByEmail.mockResolvedValueOnce({
         id: 12,
         email: "hmerzin@northeastern.edu",
-        playlists: [{ id: 1 }, { id: 2 }, { id: 3 }]
+        playlists: [{ id: 1 }, { id: 2 }, { id: 3 }],
       });
 
       const mockResponse = {
@@ -576,11 +577,11 @@ describe("Playlist enrollment tests", () => {
             id: 12,
             attributes: {
               playlists: {
-                data: [{ id: 1 }, { id: 2 }, { id: 3 }, { id: 4 }]
-              }
-            }
-          }
-        })
+                data: [{ id: 1 }, { id: 2 }, { id: 3 }, { id: 4 }],
+              },
+            },
+          },
+        }),
       };
 
       global.fetch.mockResolvedValueOnce(mockResponse);
@@ -599,9 +600,9 @@ describe("Playlist enrollment tests", () => {
           body: JSON.stringify({
             data: {
               playlists: {
-                connect: [4] // Since user wasn't enrolled, should connect
-              }
-            }
+                connect: [4], // Since user wasn't enrolled, should connect
+              },
+            },
           }),
         }),
       );
@@ -610,40 +611,47 @@ describe("Playlist enrollment tests", () => {
     });
 
     it("should throw the correct error when an API error occurs", async () => {
-      getCurrentUser.mockResolvedValueOnce({ name: "Harry", email: "hmerzin@northeastern.edu" });
+      getCurrentUser.mockResolvedValueOnce({
+        name: "Harry",
+        email: "hmerzin@northeastern.edu",
+      });
 
       getAuthorizedUserByEmail.mockResolvedValueOnce({
-        id: 12, email: "hmerzin@northeastern.edu", playlists: [{ id: 1 }, { id: 2 }, { id: 3 }]
-      })
+        id: 12,
+        email: "hmerzin@northeastern.edu",
+        playlists: [{ id: 1 }, { id: 2 }, { id: 3 }],
+      });
 
       global.fetch.mockResolvedValueOnce(new Error("API error"));
 
       const result = await togglePlaylistEnrollment(2);
 
-      expect(result).toEqual({ success: false, error: "Failed to update enrollment" });
-    })
+      expect(result).toEqual({
+        success: false,
+        error: "Failed to update enrollment",
+      });
+    });
 
     it("should throw an error when the user is not authenticated", async () => {
-
       getCurrentUser.mockResolvedValueOnce(undefined);
 
       getAuthorizedUserByEmail.mockResolvedValueOnce({
-        id: 12, email: "hmerzin@northeastern.edu", playlists: [{ id: 1 }, { id: 2 }, { id: 3 }]
-      })
-
+        id: 12,
+        email: "hmerzin@northeastern.edu",
+        playlists: [{ id: 1 }, { id: 2 }, { id: 3 }],
+      });
 
       const result = await togglePlaylistEnrollment(2);
 
-      expect(result).toEqual({ success: false, error: "Failed to update enrollment" });
-
-    })
-
-  })
+      expect(result).toEqual({
+        success: false,
+        error: "Failed to update enrollment",
+      });
+    });
+  });
 
   describe("enrollInPlaylist", () => {
-
     it("should enroll the user in the specified playlist", async () => {
-
       const mockResponse = {
         ok: true,
         json: async () => ({
@@ -651,11 +659,11 @@ describe("Playlist enrollment tests", () => {
             id: 1,
             attributes: {
               playlists: {
-                data: [{ id: 1 }, { id: 3 }, { id: 4 }] // Playlist 4 added
-              }
-            }
-          }
-        })
+                data: [{ id: 1 }, { id: 3 }, { id: 4 }], // Playlist 4 added
+              },
+            },
+          },
+        }),
       };
 
       global.fetch.mockResolvedValueOnce(mockResponse);
@@ -674,31 +682,33 @@ describe("Playlist enrollment tests", () => {
           body: JSON.stringify({
             data: {
               playlists: {
-                connect: [4]
-              }
-            }
+                connect: [4],
+              },
+            },
           }),
         }),
       );
 
-      expect(result).toEqual({ success: true })
-    })
+      expect(result).toEqual({ success: true });
+    });
 
     it("should throw the correct error when an API error occurs", async () => {
-
       global.fetch.mockResolvedValueOnce(new Error("API error"));
 
       const result = await enrollInPlaylist(2, 1);
 
-      expect(result).toEqual({ success: false, error: "Failed to enroll in playlist" });
-    })
+      expect(result).toEqual({
+        success: false,
+        error: "Failed to enroll in playlist",
+      });
+    });
 
     it("should handle non-ok response from the API", async () => {
       // Mock a failed response with ok: false
       global.fetch.mockResolvedValueOnce({
         ok: false,
         status: 400,
-        statusText: "Bad Request"
+        statusText: "Bad Request",
       });
 
       const result = await enrollInPlaylist(4, 1);
@@ -706,13 +716,11 @@ describe("Playlist enrollment tests", () => {
       // Verify the error response
       expect(result).toEqual({
         success: false,
-        error: "Failed to enroll in playlist"
+        error: "Failed to enroll in playlist",
       });
-    })
-
-  })
-
-})
+    });
+  });
+});
 
 // playlist.ts tests
 describe("Playlist tests", () => {

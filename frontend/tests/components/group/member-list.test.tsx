@@ -1,20 +1,18 @@
-import { render, screen } from '@testing-library/react';
-import { MemberList } from '@/components/group/member-list';
-import { AuthorizedUserRoleTitle } from '@/lib/globals';
-import { TimeZone } from '@/types';
+import { render, screen } from "@testing-library/react";
+import { MemberList } from "@/components/group/member-list";
+import { AuthorizedUserRoleTitle } from "@/lib/globals";
+import { TimeZone } from "@/types";
 
-describe('MemberList', () => {
+describe("MemberList", () => {
   const mockUser = {
     id: 1,
-    email: 'user@example.com',
-    firstName: 'John',
-    lastName: 'Doe',
-    bio: 'Test bio',
-    profilePhoto: 'https://example.com/photo.jpg',
+    email: "user@example.com",
+    firstName: "John",
+    lastName: "Doe",
+    bio: "Test bio",
+    profilePhoto: "https://example.com/photo.jpg",
     isEnabled: true,
-    roles: [
-      { id: 1, title: AuthorizedUserRoleTitle.Faculty }
-    ],
+    roles: [{ id: 1, title: AuthorizedUserRoleTitle.Faculty }],
     linkedin: "https://www.google.com/",
     github: "https://www.google.com/",
     firstTime: false,
@@ -23,67 +21,48 @@ describe('MemberList', () => {
     received_requests: [],
     blocked: [],
     was_blocked: [],
-    timeZone: "America/New_York" as TimeZone
+    timeZone: "America/New_York" as TimeZone,
   };
-  const mockMembers = [
-    mockUser
-  ];
+  const mockMembers = [mockUser];
 
-  it('renders member list with title', () => {
+  it("renders member list with title", () => {
     render(
-      <MemberList
-        title="Test Members"
-        members={mockMembers}
-        variant="admin"
-      />
+      <MemberList title="Test Members" members={mockMembers} variant="admin" />,
     );
-    expect(screen.getByText('Test Members')).toBeInTheDocument();
-    expect(screen.getByText('John Doe')).toBeInTheDocument();
+    expect(screen.getByText("Test Members")).toBeInTheDocument();
+    expect(screen.getByText("John Doe")).toBeInTheDocument();
   });
 
-  it('applies correct variant styles', () => {
-    render(
-      <MemberList
-        title="Admins"
-        members={mockMembers}
-        variant="admin"
-      />
-    );
-    expect(screen.getByText('John Doe').parentElement?.parentElement)
-      .toHaveClass('bg-yellow-50');
+  it("applies correct variant styles", () => {
+    render(<MemberList title="Admins" members={mockMembers} variant="admin" />);
+    expect(
+      screen.getByText("John Doe").parentElement?.parentElement,
+    ).toHaveClass("bg-yellow-50");
   });
 
-  it('renders nothing when members array is empty', () => {
+  it("renders nothing when members array is empty", () => {
     const { container } = render(
-      <MemberList
-        title="Empty List"
-        members={[]}
-        variant="admin"
-      />
+      <MemberList title="Empty List" members={[]} variant="admin" />,
     );
     expect(container.firstChild).toBeNull();
   });
 
-  it('displays initials when no profile photo', () => {
+  it("displays initials when no profile photo", () => {
     render(
-      <MemberList
-        title="Members"
-        members={mockMembers}
-        variant="admin"
-      />
+      <MemberList title="Members" members={mockMembers} variant="admin" />,
     );
-    expect(screen.getByText('JD')).toBeInTheDocument();
+    expect(screen.getByText("JD")).toBeInTheDocument();
   });
 
-  test('displays member name correctly', () => {
+  test("displays member name correctly", () => {
     render(
-      <MemberList 
-        title="Test Members" 
-        members={mockMembers} 
-        variant="creator" 
-      />
+      <MemberList
+        title="Test Members"
+        members={mockMembers}
+        variant="creator"
+      />,
     );
 
-    expect(screen.getByText('John Doe')).toBeInTheDocument();
+    expect(screen.getByText("John Doe")).toBeInTheDocument();
   });
 });

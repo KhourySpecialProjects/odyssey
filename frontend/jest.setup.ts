@@ -1,4 +1,4 @@
-import '@testing-library/jest-dom';
+import "@testing-library/jest-dom";
 
 // Mock window.fetch and global fetch
 global.fetch = jest.fn();
@@ -10,11 +10,11 @@ global.Request = class Request {
 } as any;
 
 // Mock TextEncoder/TextDecoder
-if (typeof TextEncoder === 'undefined') {
-  global.TextEncoder = require('util').TextEncoder;
+if (typeof TextEncoder === "undefined") {
+  global.TextEncoder = require("util").TextEncoder;
 }
-if (typeof TextDecoder === 'undefined') {
-  global.TextDecoder = require('util').TextDecoder;
+if (typeof TextDecoder === "undefined") {
+  global.TextDecoder = require("util").TextDecoder;
 }
 
 // Mock ResizeObserver
@@ -32,16 +32,16 @@ document.createRange = () => {
     return {
       item: () => null,
       length: 0,
-      [Symbol.iterator]: jest.fn()
+      [Symbol.iterator]: jest.fn(),
     };
   };
   return range;
 };
 
 // Mock window.matchMedia
-Object.defineProperty(window, 'matchMedia', {
+Object.defineProperty(window, "matchMedia", {
   writable: true,
-  value: jest.fn().mockImplementation(query => ({
+  value: jest.fn().mockImplementation((query) => ({
     matches: false,
     media: query,
     onchange: null,
@@ -55,8 +55,8 @@ Object.defineProperty(window, 'matchMedia', {
 
 // Mock React.useId() for stable IDs in tests
 let id = 0;
-jest.mock('react', () => ({
-  ...jest.requireActual('react'),
+jest.mock("react", () => ({
+  ...jest.requireActual("react"),
   useId: () => (++id).toString(),
 }));
 
@@ -67,17 +67,13 @@ beforeEach(() => {
 });
 
 const mockUseFormStatus = jest.fn(() => ({ pending: false }));
-jest.mock('react-dom', () => ({
-  ...jest.requireActual('react-dom'),
-  useFormStatus: () => mockUseFormStatus()
+jest.mock("react-dom", () => ({
+  ...jest.requireActual("react-dom"),
+  useFormStatus: () => mockUseFormStatus(),
 }));
 
 // Mock useActionState
-jest.mock('react', () => ({
-  ...jest.requireActual('react'),
-  useActionState: () => [
-    { ok: false, error: null },
-    jest.fn(),
-    false
-  ]
+jest.mock("react", () => ({
+  ...jest.requireActual("react"),
+  useActionState: () => [{ ok: false, error: null }, jest.fn(), false],
 }));
