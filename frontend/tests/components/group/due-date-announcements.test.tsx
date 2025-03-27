@@ -31,13 +31,48 @@ describe('DueDateAnnouncements', () => {
       dueDate: tomorrow,
       authorized_user: 1,
       group: mockGroup
+    },
+    { 
+      id: 1,
+      droplet: mockDroplet,
+      dueDate: tomorrow,
+      authorized_user: 1,
+      group: mockGroup
+    },
+    { 
+      id: 1,
+      droplet: mockDroplet,
+      dueDate: tomorrow,
+      authorized_user: 1,
+      group: mockGroup
+    },
+    { 
+      id: 1,
+      droplet: mockDroplet,
+      dueDate: tomorrow,
+      authorized_user: 1,
+      group: mockGroup
+    },
+    { 
+      id: 1,
+      droplet: mockDroplet,
+      dueDate: tomorrow,
+      authorized_user: 1,
+      group: mockGroup
+    },
+    { 
+      id: 1,
+      droplet: mockDroplet,
+      dueDate: tomorrow,
+      authorized_user: 1,
+      group: mockGroup
     }
   ];
 
   it('renders upcoming due dates', () => {
     render(<DueDateAnnouncements group={mockGroup} dueDates={mockDueDates} />);
-    expect(screen.getByText(/Test Droplet/)).toBeInTheDocument();
-    expect(screen.getByText(/is due in 1 day!/)).toBeInTheDocument();
+    expect(screen.getAllByText(/Test Droplet/)[0]).toBeInTheDocument();
+    expect(screen.getAllByText(/is due in 1 day!/)[0]).toBeInTheDocument();
   });
 
   it('handles see more/less toggle', () => {
@@ -47,5 +82,25 @@ describe('DueDateAnnouncements', () => {
     expect(screen.getByText('see more...')).toBeInTheDocument();
     fireEvent.click(screen.getByText('see more...'));
     expect(screen.getByText('see less...')).toBeInTheDocument();
+  });
+
+  test('handles see more/less toggle correctly', () => {
+    render(
+      <DueDateAnnouncements
+        group={mockGroup}
+        dueDates={mockDueDates}
+      />
+    );
+
+    expect(screen.getAllByText(/Droplet/)).toHaveLength(5);
+
+    const toggleButton = screen.getByText(/see more/i);
+    fireEvent.click(toggleButton);
+
+    expect(screen.getAllByText(/Droplet/)).toHaveLength(6);
+
+    fireEvent.click(toggleButton);
+
+    expect(screen.getAllByText(/Droplet/)).toHaveLength(5);
   });
 });

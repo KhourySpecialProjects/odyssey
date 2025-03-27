@@ -74,4 +74,16 @@ describe('MemberList', () => {
     );
     expect(screen.getByText('JD')).toBeInTheDocument();
   });
+
+  test('displays member name correctly', () => {
+    render(
+      <MemberList 
+        title="Test Members" 
+        members={mockMembers} 
+        variant="creator" 
+      />
+    );
+
+    expect(screen.getByText('John Doe')).toBeInTheDocument();
+  });
 });

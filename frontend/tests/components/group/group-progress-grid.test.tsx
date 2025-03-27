@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { GroupProgressGrid } from '@/components/group/group-progress-grid';
 import { DropletStatus, DropletType, FocusArea, GroupSemester } from '@/types';
+import { getEnrollmentsByAuthorizedUser } from '@/lib/requests/enrollment';
 
 jest.mock('@/lib/requests/enrollment', () => ({
   getEnrollmentsByAuthorizedUser: jest.fn(),
@@ -46,5 +47,32 @@ describe('GroupProgressGrid', () => {
 
     render(<GroupProgressGrid group={groupWithManyDroplets} />);
     expect(screen.getByRole('button', { name: /next/i })).toBeInTheDocument();
+  });
+
+  beforeEach(() => {
+    (getEnrollmentsByAuthorizedUser as jest.Mock).mockResolvedValue([
+      {
+        droplet: { id: 1, lessons: [{ id: 1 }] },
+        viewedLessons: [{ id: 1 }]
+      }
+    ]);
+  });
+
+  test('renders pagination controls correctly', () => {
+    render(<GroupProgressGrid group={mockGroup} />);
+    
+    expect(screen.getByRole('button', { name: /next page/i })).toBeInTheDocument();
+  });
+
+  test('handles empty group data', () => {
+    const emptyGroup = {
+      ...mockGroup,
+      droplets: [],
+      members: []
+    };
+
+    render(<GroupProgressGrid group={emptyGroup} />);
+    
+    expect(screen.getByText(/No droplets have been added/i)).toBeInTheDocument();
   });
 });

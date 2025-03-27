@@ -118,4 +118,38 @@ describe('GroupDashboard', () => {
     fireEvent.click(screen.getByText('Playlists'));
     expect(screen.getByText('No playlists have been added to this group yet.')).toBeInTheDocument();
   });
+
+  test('renders tabs correctly', () => {
+    render(
+      <GroupDashboard
+        group={mockGroup}
+        canEdit={true}
+        authUser={mockAuthUser}
+        dueDates={[]}
+      />
+    );
+
+    expect(screen.getByText('Droplets')).toBeInTheDocument();
+    expect(screen.getByText('Playlists')).toBeInTheDocument();
+    expect(screen.getByText('Progress')).toBeInTheDocument();
+  });
+
+  test('displays empty state messages correctly', () => {
+    const emptyGroup = {
+      ...mockGroup,
+      droplets: [],
+      playlists: []
+    };
+
+    render(
+      <GroupDashboard
+        group={emptyGroup}
+        canEdit={true}
+        authUser={mockAuthUser}
+        dueDates={[]}
+      />
+    );
+
+    expect(screen.getByText(/No droplets have been added/i)).toBeInTheDocument();
+  });
 });

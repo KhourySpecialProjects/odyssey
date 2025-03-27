@@ -27,7 +27,19 @@ describe('GroupDropletTile', () => {
   it('shows due date when provided', () => {
     const tomorrow = DateTime.local().plus({ days: 1 }).toISO();
     render(<GroupDropletTile droplet={mockDroplet} dueDate={tomorrow} />);
-    expect(screen.getByText(/Due/)).toBeInTheDocument();
+    expect(screen.getByText(/due/i)).toBeInTheDocument();
+  });
+
+  it('shows due date late when provided', () => {
+    const yesterday = DateTime.local().minus({ days: 1 }).toISO();
+    render(<GroupDropletTile droplet={mockDroplet} dueDate={yesterday} />);
+    expect(screen.getByText(/late/i)).toBeInTheDocument();
+  });
+
+  it('shows due date today when provided', () => {
+    const today = DateTime.local().toISO();
+    render(<GroupDropletTile droplet={mockDroplet} dueDate={today} />);
+    expect(screen.getByText(/today/i)).toBeInTheDocument();
   });
 
   it('shows lesson count', () => {

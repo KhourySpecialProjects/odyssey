@@ -1,6 +1,6 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { PlaylistDueDateBlock } from '@/components/group/playlist-due-date-block';
-import { getGroupDueDate } from '@/lib/requests/groups';
+import { assignPlaylistDueDate, getGroupDueDate } from '@/lib/requests/groups';
 import { GroupSemester } from '@/types';
 
 jest.mock('@/lib/requests/groups', () => ({
@@ -34,5 +34,21 @@ describe('PlaylistDueDateBlock', () => {
   it('renders playlist name', () => {
     render(<PlaylistDueDateBlock existingGroup={mockGroup} currentPlaylist={mockPlaylist} />);
     expect(screen.getByText('Test Playlist')).toBeInTheDocument();
+  });
+
+  test('fetches and sets due date on mount', async () => {
+    const mockDueDate = '2024-03-20T15:00:00.000Z';
+    (getGroupDueDate as jest.Mock).mockResolvedValue({ dueDate: mockDueDate });
+
+    render(
+      <PlaylistDueDateBlock 
+        existingGroup={mockGroup} 
+        currentPlaylist={mockPlaylist} 
+      />
+    );
+
+    await waitFor(() => {
+      expect(getGroupDueDate).toHaveBeenCalledWith(mockPlaylist, mockGroup);
+    });
   });
 });
