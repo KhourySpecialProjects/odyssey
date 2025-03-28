@@ -99,7 +99,6 @@ export function AddMemberDialog({
                   size="sm"
                   className="mt-2 text-red-700 hover:bg-red-100"
                   onClick={() => {
-                    // Remove duplicate emails from the input
                     const cleanedEmails = parseEmails(emailInput)
                       .filter((email) => !duplicateEmails.includes(email))
                       .join(", ");

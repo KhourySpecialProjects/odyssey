@@ -46,7 +46,6 @@ export function SortedDropletsGrid({
     }
   };
 
-  // Use useMemo to sort droplets whenever the dependencies change
   const sortedDroplets = useMemo(() => {
     let sorted = [...droplets];
     if (sortKey) {

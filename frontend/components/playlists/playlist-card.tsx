@@ -41,7 +41,7 @@ export function PlaylistCard({
   let daysUntil = 0;
   if (dueDate && dueDate !== "") {
     const dueDateObject = DateTime.fromISO(dueDate);
-    const today = DateTime.local().startOf("day"); // Set to start of day
+    const today = DateTime.local().startOf("day");
     const diffDays = dueDateObject.startOf("day").diff(today, "days").days;
     daysUntil = Math.ceil(diffDays);
   }

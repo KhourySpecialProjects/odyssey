@@ -52,7 +52,7 @@ export function AddDropletDialog({
   };
 
   const handleDone = () => {
-    onAddDroplets(selectedDroplets); // Pass all selected droplets at once
+    onAddDroplets(selectedDroplets);
     setSelectedDroplets([]);
     setOpen(false);
   };

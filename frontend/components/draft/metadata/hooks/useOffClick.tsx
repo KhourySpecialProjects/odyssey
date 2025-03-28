@@ -10,17 +10,15 @@ export function useOffClick(
 
   const handleClickOutside = (event: any) => {
     if (ref.current && !ref.current.contains(event.target)) {
-      setOpen(false); // Action to perform when clicking outside
+      setOpen(false);
       func();
     }
   };
 
   useEffect(() => {
-    // Add event listener for clicks outside
     document.addEventListener("mousedown", handleClickOutside);
 
     return () => {
-      // Cleanup event listener on unmount
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);

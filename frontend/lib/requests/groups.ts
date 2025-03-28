@@ -318,13 +318,10 @@ export async function createGroup(
     description?: string;
     semester?: string;
     initialMembers?: {
-      // admins?: string[];
-      // managers?: string[];
       admins?: number[];
       managers?: number[];
       members?: string[];
     };
-    // Add additional fields as needed for the new group creation form
     droplets?: number[];
     playlists?: number[];
   },
@@ -345,7 +342,6 @@ export async function createGroup(
     return authorizedMembers.map((member) => ({ id: member.id }));
   };
 
-  // Process initial members
   const [processedAdmins, processedManagers, processedMembers] =
     await Promise.all([
       // processMembers(initialMembers?.admins),
@@ -484,16 +480,13 @@ export async function updateGroup(
 ): Promise<Group> {
   const path = `/groups/${groupId}`;
 
-  // Prepare the data object for Strapi
   const dataToSend: any = {};
 
-  // Map basic fields
   if (data.groupName) dataToSend.groupName = data.groupName;
   if (data.description) dataToSend.description = data.description;
   if (data.semester) dataToSend.semester = data.semester;
   if (data.isArchived !== undefined) dataToSend.isArchived = data.isArchived;
 
-  // Handle admins and managers
   if (data.admins) {
     dataToSend.admins = {
       set: data.admins.map((id) => ({ id })),
@@ -507,7 +500,6 @@ export async function updateGroup(
   }
 
   if (data.members) {
-    // Ensure all members are authorized users first
     const authorizedMembers = await ensureAuthorizedUsers(
       data.members.map((m) => m.email).filter((e): e is string => e != null),
     );
@@ -517,7 +509,6 @@ export async function updateGroup(
     };
   }
 
-  // Handle droplets
   if (data.droplets) {
     dataToSend.droplets = {
       set: data.droplets.map((droplet) => ({
@@ -526,7 +517,6 @@ export async function updateGroup(
     };
   }
 
-  // Handle playlists
   if (data.playlists) {
     dataToSend.playlists = {
       set: data.playlists.map((playlist) => ({
@@ -553,12 +543,10 @@ async function ensureAuthorizedUsers(
 
   for (const email of emails) {
     try {
-      // Try to find existing authorized user
       const existingUser = await getAuthorizedUserByEmail(email);
       if (existingUser) {
         results.push({ id: existingUser.id, email });
       } else {
-        // Create new authorized user if doesn't exist
         const newUser = await createAuthorizedUserInGroup(email);
         if (newUser.ok && newUser.data) {
           results.push({ id: newUser.data.id, email });
@@ -636,7 +624,6 @@ export async function enrollUsers(group: Group) {
           viewedLessons: [],
         };
         return await createEnrollmentFromEmail(enrollmentData, member.email);
-        //return await createEnrollment(enrollmentData);
       }) || [];
 
       group.playlists?.map(async (playlist) => {
@@ -647,7 +634,6 @@ export async function enrollUsers(group: Group) {
             viewedLessons: [],
           };
           return await createEnrollmentFromEmail(enrollmentData, member.email);
-          //return await createEnrollment(enrollmentData);
         }) || [];
       }) || [];
     }) || [];
@@ -665,14 +651,11 @@ export async function assignDropletDueDate(
   droplet: Droplet,
 ) {
   try {
-    // If no members in group, return early
     if (!group.members || group.members.length === 0) {
       return { success: false, error: "No members found in the group" };
     }
 
-    // Process due dates for all users in the group
     const dueDatePromises = group.members.map(async (member) => {
-      // First, check if a due date already exists
       const existingDueDateResponse = await fetch(
         `${STRAPI_API_URL}/api/due-dates?filters[authorized_user][id][$eq]=${member.id}&filters[droplet][id][$eq]=${droplet.id}&filters[group][id][$eq]=${group.id}`,
         {
@@ -685,7 +668,6 @@ export async function assignDropletDueDate(
       const existingDueDates = await existingDueDateResponse.json();
 
       if (existingDueDates.data && existingDueDates.data.length > 0) {
-        // Update existing due date
         const existingDueDate = existingDueDates.data[0];
         const response = await fetch(
           `${STRAPI_API_URL}/api/due-dates/${existingDueDate.id}`,
@@ -711,7 +693,6 @@ export async function assignDropletDueDate(
           return false;
         }
       } else {
-        // Create new due date
         const response = await fetch(`${STRAPI_API_URL}/api/due-dates`, {
           method: "POST",
           headers: {
@@ -740,10 +721,8 @@ export async function assignDropletDueDate(
       return true;
     });
 
-    // Wait for all requests to complete
     const results = await Promise.all(dueDatePromises);
 
-    // Check if any requests failed
     const allSuccessful = results.every((result) => result === true);
 
     if (!allSuccessful) {
@@ -771,14 +750,11 @@ export async function assignPlaylistDueDate(
   playlist: Playlist,
 ) {
   try {
-    // If no members in group, return early
     if (!group.members || group.members.length === 0) {
       return { success: false, error: "No members found in the group" };
     }
 
-    // Process due dates for all users in the group
     const dueDatePromises = group.members.map(async (member) => {
-      // First, check if a due date already exists
       const existingDueDateResponse = await fetch(
         `${STRAPI_API_URL}/api/due-dates?filters[authorized_user][id][$eq]=${member.id}&filters[playlist][id][$eq]=${playlist.id}&filters[group][id][$eq]=${group.id}`,
         {
@@ -791,7 +767,6 @@ export async function assignPlaylistDueDate(
       const existingDueDates = await existingDueDateResponse.json();
 
       if (existingDueDates.data && existingDueDates.data.length > 0) {
-        // Update existing due date
         const existingDueDate = existingDueDates.data[0];
         const response = await fetch(
           `${STRAPI_API_URL}/api/due-dates/${existingDueDate.id}`,
@@ -817,7 +792,6 @@ export async function assignPlaylistDueDate(
           return false;
         }
       } else {
-        // Create new due date
         const response = await fetch(`${STRAPI_API_URL}/api/due-dates`, {
           method: "POST",
           headers: {
@@ -846,10 +820,8 @@ export async function assignPlaylistDueDate(
       return true;
     });
 
-    // Wait for all requests to complete
     const results = await Promise.all(dueDatePromises);
 
-    // Check if any requests failed
     const allSuccessful = results.every((result) => result === true);
 
     if (!allSuccessful) {

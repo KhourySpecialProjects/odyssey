@@ -107,17 +107,14 @@ export async function fetchAPI<T>(
 }
 
 export function flattenAttributes(data: any): any {
-  // Base case for recursion
   if (!data) return null;
 
-  // Handling array data
   if (Array.isArray(data)) {
     return data.map(flattenAttributes);
   }
 
   let flattened: { [key: string]: any } = {};
 
-  // Handling attributes
   if (data.attributes) {
     for (let key in data.attributes) {
       if (

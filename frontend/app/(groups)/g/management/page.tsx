@@ -30,12 +30,10 @@ export default async function GroupManagementPage({ searchParams }: Props) {
   const authorizedUser = await getAuthorizedUserByEmail(user.email);
   if (!authorizedUser) return notFound();
 
-  // If we have a group slug, fetch the group for editing
   const p = await searchParams;
   const groupSlug = p?.slug as string | undefined;
   const group = groupSlug ? await getGroupBySlugV2(groupSlug) : null;
 
-  // Only allow editing if user is creator or admin
   if (group) {
     const isCreator = group.creator?.id === authorizedUser.id;
     const isAdmin = group.admins?.some(
