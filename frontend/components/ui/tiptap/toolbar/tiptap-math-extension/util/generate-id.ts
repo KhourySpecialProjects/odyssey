@@ -1,6 +1,4 @@
-// This is not a secure/unpredictable ID, but this is simple and good enough for our case
 export function generateID() {
-  // Note, that E is not included on purpose (to prevent any confusion with eulers number)
   const ALL_ALLOWED_CHARS_UPPER = [
     "A",
     "B",
@@ -42,6 +40,4 @@ export function generateID() {
     }
   }
   return id;
-  // Alternative: use uuidv4
-  // return v4()
 }

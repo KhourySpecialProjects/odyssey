@@ -57,10 +57,8 @@ export default async function DropletRoute({ params }: Props) {
   });
   if (!droplet) return notFound();
 
-  // Get enrollment status
   let isEnrolled = false;
   const user = await getCurrentUser();
-  const enroll = "";
 
   if (user?.email) {
     const authorizedUser = await getAuthorizedUserByEmail(user.email);

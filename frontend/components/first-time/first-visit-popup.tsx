@@ -15,7 +15,6 @@ import { toast } from "sonner";
 import { updateFirstTimeStatus, updateOnboardingInfo } from "@/lib/actions";
 import { AuthorizedUser } from "@/types";
 import { Input } from "../ui/input";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Logo } from "../header/logo";
 

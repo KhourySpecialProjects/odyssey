@@ -77,7 +77,6 @@ export function UserMultiSelect({
                   className="mr-2"
                 />
                 <div>
-                  {/* <div>{user.name}</div> */}
                   <div className="text-sm text-muted-foreground">
                     {user.firstName + " " + user.lastName}
                   </div>

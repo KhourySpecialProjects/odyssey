@@ -109,7 +109,6 @@ export function MultiSelect({
             <CommandList>
               <CommandGroup>
                 {items.map((option) => {
-                  //is the item in the selected list
                   const isSelected =
                     selected.filter((item) => item.id === option.id).length > 0;
 

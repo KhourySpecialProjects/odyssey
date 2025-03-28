@@ -31,7 +31,7 @@ export default function DueDateAnnouncements({
     let daysUntil = "0";
     if (dueDate && dueDate.dueDate !== "") {
       const dueDateObject = DateTime.fromISO(dueDate.dueDate);
-      const today = DateTime.local().startOf("day"); // Set to start of day
+      const today = DateTime.local().startOf("day");
       const diffDays = dueDateObject.startOf("day").diff(today, "days").days;
       daysUntil = String(Math.ceil(diffDays));
     }

@@ -185,7 +185,7 @@ export function AuthorizedUserBlock({ user }: { user: AuthorizedUser }) {
                             lastName,
                             bio,
                             selectedRoles,
-                            "", // Empty string for profilePhoto
+                            "",
                             user.id,
                           );
                           if (result.success) {

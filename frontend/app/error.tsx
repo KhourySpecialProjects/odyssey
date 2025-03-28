@@ -21,14 +21,7 @@ export default function Error({
     <Message>
       <MessageHeader subtitle={error.name} title="Something went wrong!" />
       <MessageActions>
-        <Button
-          size="lg"
-          before={<RefreshCwIcon />}
-          onClick={
-            // Attempt to recover by trying to re-render the segment
-            () => reset()
-          }
-        >
+        <Button size="lg" before={<RefreshCwIcon />} onClick={() => reset()}>
           Try again
         </Button>
         <Button size="lg" variant="link" after={<ArrowRightIcon />} asChild>
