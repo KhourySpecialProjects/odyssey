@@ -94,7 +94,7 @@ function SubmitButton({
       type="submit"
       size="sm"
       variant={destructive ? "destructive" : "link"}
-      className="text-slate-300 w-24"
+      className="w-24"
       aria-disabled={pending}
     >
       {children}
