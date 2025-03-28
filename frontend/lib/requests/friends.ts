@@ -525,10 +525,8 @@ export async function fetchSuggestionsById(
   userId: number,
 ): Promise<AuthorizedUser[]> {
   try {
-    // Get all friendships where userId is involved
     const userFriendships = await fetchFriendshipsById(userId);
 
-    // Get all direct friends (AuthorizedUsers that aren't the userId)
     const directFriends = userFriendships.flatMap((friendship) =>
       friendship.authorized_users.filter(
         (user) =>
@@ -543,7 +541,6 @@ export async function fetchSuggestionsById(
       ),
     );
 
-    // Get all friends of friends
     const friendsOfFriends = await Promise.all(
       directFriends.map(async (friend) => {
         // Get all friendships for each direct friend

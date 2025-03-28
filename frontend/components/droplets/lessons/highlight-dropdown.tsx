@@ -7,8 +7,7 @@ import {
   Highlighter,
   NotebookPen,
   NotepadText,
-  Pen,
-  X,
+  Trash2Icon,
 } from "lucide-react";
 import { HighlightColor } from "@/types";
 import { useState } from "react";
@@ -51,18 +50,18 @@ export function HighlightDropdown({
             <p>Highlighting Instructions:</p>
             <ul className="list-disc pl-4">
               <li>
-                Hover over the <Pen className="inline-block w-4 h-4" /> icon to
-                see actions.
+                Hover over the <Highlighter className="inline-block w-4 h-4" />{" "}
+                icon to see actions.
+              </li>
+              <li>
+                Press the <Highlighter className="inline-block w-4 h-4" /> icon
+                to highlight selected text.
               </li>
               <li>Use the toggle to switch highlighting mode.</li>
               <li>In highlighting mode, selected text is highlighted.</li>
               <li>
-                Press the <Highlighter className="inline-block w-4 h-4" /> icon
-                to highlight text.
-              </li>
-              <li>
-                Press the <X className="inline-block w-4 h-4" /> icon to delete
-                a highlight.
+                Press the <Trash2Icon className="inline-block w-4 h-4" /> icon
+                to delete a highlight.
               </li>
               <li>
                 Press the <NotebookPen className="inline-block w-4 h-4" /> icon
@@ -87,8 +86,9 @@ export function HighlightDropdown({
         onMouseLeave={() => setVisible(false)}
       >
         <div className="relative">
-          <Pen
+          <Highlighter
             onMouseEnter={() => setVisible(true)}
+            onClick={handlePopupHighlight}
             className="cursor-pointer dark:text-white"
             data-testid="pen"
           />
@@ -107,19 +107,11 @@ export function HighlightDropdown({
             </div>
 
             <button
-              title="Add Highlight"
-              onClick={handlePopupHighlight}
-              className="relative group"
-            >
-              <Highlighter size={30} />
-            </button>
-
-            <button
               title="Delete Highlight"
               onClick={handlePopupDelete}
               className="relative group"
             >
-              <X size={30} />
+              <Trash2Icon size={30} />
             </button>
 
             <button

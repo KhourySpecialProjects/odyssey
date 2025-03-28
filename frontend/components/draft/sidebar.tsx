@@ -1,13 +1,7 @@
 "use client";
 
 import UnauthorizedRoute from "@/app/(general)/unauthorized/page";
-import {
-  cn,
-  getInitials,
-  getPath,
-  isAuthorizedUserAdmin,
-  condenseRoleTitles,
-} from "@/lib/utils";
+import { cn, getInitials, getPath, condenseRoleTitles } from "@/lib/utils";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
 import { AuthorizedUser, Droplet, Lesson, User } from "@/types";
 import {
@@ -20,7 +14,6 @@ import {
   ArrowLeftIcon,
 } from "lucide-react";
 import { signOut } from "next-auth/react";
-import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import React, { useLayoutEffect, useState, useEffect } from "react";
@@ -52,6 +45,7 @@ import { SortableLesson } from "@/components/draft/sortable-lesson";
 import { useLessonOrder } from "./metadata/hooks/useLessonOrder";
 import { Button } from "../ui/button";
 import { createDropletAnnouncement } from "@/lib/requests/feed";
+import { Logo } from "../header/logo";
 
 export function Sidebar({
   user,
@@ -131,7 +125,7 @@ export function Sidebar({
 
       handleLessonReorder(
         newDropletLessons.map((dl) => ({
-          id: dl.id ?? 0, // Provide a default value if id is undefined
+          id: dl.id ?? 0,
           lesson: dl.lesson,
           orderIndex: dl.orderIndex,
         })),
@@ -179,16 +173,13 @@ export function Sidebar({
     );
   };
 
-  // Add this state to ensure consistent mounting
   const [mounted, setMounted] = useState(false);
   const router = useRouter();
 
-  // Use useEffect to handle client-side mounting
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  // Render nothing until mounted on client
   if (!mounted) return null;
 
   if (!user) return <UnauthorizedRoute />;
@@ -239,13 +230,7 @@ export function Sidebar({
           <div className="px-3">
             {/* Logo */}
             <Link href="/explore" className="block p-2 mb-4">
-              <Image
-                src="/logo.svg"
-                alt="Khoury Odyssey Logo"
-                width={200}
-                height={55}
-                priority
-              />
+              <Logo width={200} height={55} />
             </Link>
 
             <Separator />

@@ -16,23 +16,18 @@ export async function NoteSummary({
   const { width, height } = page.getSize();
 
   const stripHtmlTags = (html: string) => {
-    return (
-      html
-        .replace(/<[^>]*>/g, "")
-        // Replace common HTML entities
-        .replace(/&nbsp;/g, " ")
-        .replace(/&amp;/g, "&")
-        .replace(/&lt;/g, "<")
-        .replace(/&gt;/g, ">")
-        .replace(/&quot;/g, '"')
-        .replace(/&#39;/g, "'")
-        // Remove multiple spaces
-        .replace(/\s+/g, " ")
-        .trim()
-    );
+    return html
+      .replace(/<[^>]*>/g, "")
+      .replace(/&nbsp;/g, " ")
+      .replace(/&amp;/g, "&")
+      .replace(/&lt;/g, "<")
+      .replace(/&gt;/g, ">")
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'")
+      .replace(/\s+/g, " ")
+      .trim();
   };
 
-  // Helper function to draw lesson icon
   const drawLessonIcon = (x: number, y: number) => {
     page.drawRectangle({
       x: x,
@@ -197,10 +192,9 @@ export async function NoteSummary({
       yPosition = height - 50;
     }
 
-    // Draw lesson icon and name
     drawLessonIcon(50, yPosition);
     page.drawText(lessonData.lessonName, {
-      x: 75, // Moved right to accommodate the icon
+      x: 75,
       y: yPosition,
       size: 18,
       color: rgb(0, 0, 0),

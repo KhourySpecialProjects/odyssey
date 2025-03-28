@@ -379,9 +379,6 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
 
   return (
     <div className="">
-      {/* {block.id === genericBlocks[0] && enrollmentId && (
-        <div className="fixed top-36 sm:top-32 xs:top-32 bg-sky-100 w-16 h-36 right-4 z-20"></div>
-      )} */}
       {block.id === genericBlocks[0] && enrollmentId && (
         <HighlightDropdown
           selectedColor={selectedColor}
@@ -396,7 +393,6 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
         />
       )}
 
-      {/* Content */}
       <div
         ref={contentRef}
         onMouseUp={(e) => handleMouseUp()}

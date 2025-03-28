@@ -103,7 +103,6 @@ export function GroupProgressGrid({ group }: GroupProgressGridProps) {
 
   return (
     <div className="flex flex-col items-end">
-      {/* Navigation Buttons */}
       <div className="">
         <button
           onClick={handlePrevPage}
@@ -193,7 +192,7 @@ export function GroupProgressGrid({ group }: GroupProgressGridProps) {
                         >
                           <div
                             style={{
-                              width: `${getCompletionStatus(member.id, droplet.id)}%`, // Set width based on the percentage
+                              width: `${getCompletionStatus(member.id, droplet.id)}%`,
                               height: "100%",
                               backgroundColor: getCompletedDropletColor(
                                 getCompletionStatus(member.id, droplet.id),

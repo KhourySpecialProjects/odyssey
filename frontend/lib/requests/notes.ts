@@ -177,11 +177,6 @@ export async function createNote(
       },
       body: JSON.stringify({
         data: {
-          // content: content || "",
-          // lesson: lesson,
-          // enrollment: enrollment,
-          // positionY: position,
-          // highlight: highlight,
           content: "",
           lesson: lesson.id,
           enrollment: enrollment.id,

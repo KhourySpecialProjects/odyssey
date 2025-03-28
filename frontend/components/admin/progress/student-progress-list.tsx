@@ -47,13 +47,11 @@ export function StudentProgressList({ playlists }: StudentProgressListProps) {
       progress: (user.progress / 100).toFixed(2),
     }));
 
-    // Create CSV content
     const csvContent = [
       "email,progress",
       ...data.map((row) => `${row.email},${row.progress}`),
     ].join("\n");
 
-    // Create and trigger download
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
     const link = document.createElement("a");
     const url = URL.createObjectURL(blob);
@@ -65,7 +63,7 @@ export function StudentProgressList({ playlists }: StudentProgressListProps) {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    URL.revokeObjectURL(url); // Clean up the URL object
+    URL.revokeObjectURL(url);
   };
 
   if (!playlists || playlists.length === 0) {

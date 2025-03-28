@@ -53,7 +53,6 @@ async function fetchAPI(path: string, options: any = {}) {
 
   const url = new URL(`${STRAPI_URL}/api${path}`);
 
-  // Add query params if they exist
   if (options.params) {
     Object.entries(options.params).forEach(([key, value]) => {
       url.searchParams.append(key, String(value));
@@ -94,7 +93,6 @@ async function migrateDropletLessons() {
       totalPages = dropletsResponse.meta.pagination.pageCount;
 
       for (const droplet of droplets) {
-        // Safely access lessons
         const lessons = droplet.attributes.lessons?.data || [];
 
         for (let i = 0; i < lessons.length; i++) {

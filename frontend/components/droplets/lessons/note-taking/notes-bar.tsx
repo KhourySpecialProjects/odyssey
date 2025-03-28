@@ -81,7 +81,6 @@ export function NotesBar({
   const handleDragEnd = useCallback(async () => {
     if (!draggedNote) return;
 
-    // Remove event listeners immediately
     document.removeEventListener("mousemove", handleDragMove);
     document.removeEventListener("mouseup", handleDragEnd);
 
@@ -157,7 +156,6 @@ export function NotesBar({
       const scrollTop = window.scrollY || document.documentElement.scrollTop;
       const notesBarTop = rect.top + scrollTop;
 
-      // Calculate the actual click position relative to the notes bar
       const clickY = e.clientY + scrollTop - notesBarTop;
       setMousePositionY(clickY);
 
