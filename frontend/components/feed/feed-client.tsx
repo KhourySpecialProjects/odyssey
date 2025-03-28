@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { AnnouncementType, Announcement, AuthorizedUser } from "@/types";
+import { AnnouncementType, Announcement } from "@/types";
 import { FeedBlock } from "./feed-block";
 import { Button } from "../ui/button";
 

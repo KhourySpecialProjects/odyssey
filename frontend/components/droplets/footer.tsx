@@ -18,7 +18,6 @@ export default function DropletFooter({
 }) {
   const pathname = usePathname();
 
-  // if (!droplet.lessons || droplet.lessons.length === 0) return null;
   if (!droplet.droplet_lessons || droplet.droplet_lessons.length === 0)
     return null;
 

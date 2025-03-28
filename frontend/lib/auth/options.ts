@@ -37,9 +37,6 @@ export const authOptions: NextAuthOptions = {
       if (isAllowedToSignIn) {
         return true;
       } else {
-        // Return false to display a default error message
-        // return false;
-        // Or you can return a URL to redirect to:
         return "/unauthorized";
       }
     },
@@ -51,7 +48,6 @@ export const authOptions: NextAuthOptions = {
           account?.access_token as string,
         );
 
-        // Fetch user data from Strapi
         const authorizedUser = await getAuthorizedUserByEmail(
           user.email as string,
           { populate: { roles: { fields: ["title"] } } },
@@ -63,8 +59,8 @@ export const authOptions: NextAuthOptions = {
           email: user.email,
           image: user.image,
           nuid: graphProfile.nuid,
-          isActive: true, // TODO: Not sure why the build is only now requiring the isActive attribute???
-          roles: authorizedUser.roles.map((elem) => elem.title), //only need the string title
+          isActive: true,
+          roles: authorizedUser.roles.map((elem) => elem.title),
         };
       }
 
@@ -73,7 +69,6 @@ export const authOptions: NextAuthOptions = {
     session: async ({ session, token }) => {
       if (!token.user) throw new Error("No user data");
 
-      // Add properties to session
       session.user = token.user as User;
 
       return session;

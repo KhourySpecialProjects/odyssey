@@ -35,7 +35,7 @@ export function PlaylistEnrollButton({
     }
 
     if (!isPublic) {
-      return; // Don't allow enrolling in private playlists
+      return;
     }
 
     await handleEnrollmentChange();
@@ -57,7 +57,6 @@ export function PlaylistEnrollButton({
     }
   };
 
-  // Don't show button for private playlists that user isn't enrolled in
   if (!isPublic && !isEnrolled) {
     return null;
   }

@@ -60,7 +60,6 @@ export async function evaluateExpression(
       const variable: MathVariable = variables[id];
       variableObj[id] = variable.value;
       for (const alias of variable.aliases) {
-        // Replace all occurences of alias with
         const regexSafeAlias = alias.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
         const r = new RegExp(
           "(^|(?<=[^a-zA-Z]))" + regexSafeAlias + "($|(?=[^a-zA-Z]))",

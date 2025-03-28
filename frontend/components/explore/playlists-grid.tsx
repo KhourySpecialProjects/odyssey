@@ -33,7 +33,6 @@ export async function PlaylistsGrid({
   searchValue,
   sortKey,
 }: PlaylistsGridProps) {
-  // Only use server-side sorting for name
   const [field, direction] = (sortKey || "").split(":");
   const serverSortKey = field === "name" ? sortKey : undefined;
 
@@ -56,7 +55,6 @@ export async function PlaylistsGrid({
     },
   });
 
-  // Get user completion data
   const user = await getCurrentUser();
   let completedLessonIds: number[] = [];
   let authorizedUser: AuthorizedUser | null = null;
@@ -74,7 +72,6 @@ export async function PlaylistsGrid({
     dueDates = await getUserDueDates(authorizedUser.id);
   }
 
-  // Calculate completion percentage for each playlist
   let playlistsWithCompletion = playlists.map((playlist) => {
     const allLessonIds =
       playlist.droplets?.flatMap(
@@ -94,7 +91,6 @@ export async function PlaylistsGrid({
     };
   });
 
-  // Sort playlists
   if (sortKey) {
     const [field, direction] = sortKey.split(":");
     if (field === "name") {
