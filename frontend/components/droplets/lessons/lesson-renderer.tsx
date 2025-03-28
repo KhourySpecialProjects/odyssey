@@ -58,7 +58,6 @@ export function LessonRenderer({
   const [highlights, setHighlights] = useState<Highlight[]>([]);
 
   useEffect(() => {
-    // Fetch highlights when component mounts
     const fetchHighlights = async () => {
       const response = await getHighlightsForLesson(lesson.id);
       if (response.data) {
@@ -129,17 +128,14 @@ export function LessonRenderer({
     onUpdate();
   };
 
-  // Find the current lesson's position in this droplet
   const currentLessonOrder = droplet.droplet_lessons.find(
     (dl) => dl.lesson.id === lesson.id,
   )?.orderIndex;
 
-  // Find the previous lesson in this droplet
   const previousLesson = droplet.droplet_lessons.find(
     (dl) => dl.orderIndex === (currentLessonOrder as number) - 1,
   )?.lesson;
 
-  // Check if this lesson should be locked
   const isLocked =
     previousLesson &&
     !(droplet.shouldBeLocked === false) &&
