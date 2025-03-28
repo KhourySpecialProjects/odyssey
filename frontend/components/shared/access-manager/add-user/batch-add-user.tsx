@@ -39,12 +39,10 @@ export function BatchAddUser() {
       const result = await createBatchAuthorizedUsers(emailList);
 
       if (result.ok && result.data) {
-        // Clear form
         setEmails("");
         setCsvFiles([]);
         if (fileInputRef.current) fileInputRef.current.value = "";
 
-        // Show results
         const { successful, failed } = result.data;
         const failedDetails = failed
           .map((f) => `${f.email} (${f.reason})`)

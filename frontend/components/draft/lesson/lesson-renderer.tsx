@@ -55,7 +55,6 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
   const lastSavedBlocksRef = useRef<Block[]>(lastSavedBlocks);
   const [name, setName] = useState(lesson.name);
 
-  // Memoized update functions
   const updateBlocksBackend = useCallback(
     async (blocks: Block[]) => {
       const response = await updateLesson(lesson.id, { blocks });
@@ -108,7 +107,6 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
     }
   }, [lesson.id, dropletSlug, router]);
 
-  // Block manipulation functions
   const setBlock = useCallback((index: number) => {
     return (block: Partial<Block>) => {
       setBlocks((prevBlocks) =>
@@ -151,7 +149,6 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
     [blocks, updateBlocksBackendReload],
   );
 
-  // Debounced updates
   const debounceUpdate = useMemo(
     () => debounce(updateBlocksBackend, 1000, { maxWait: 3000 }),
     [updateBlocksBackend],
@@ -162,7 +159,6 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
     [updateNameBackend],
   );
 
-  // Effects
   useEffect(() => {
     debounceUpdate(blocks);
     return () => {

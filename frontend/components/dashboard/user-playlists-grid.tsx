@@ -59,14 +59,12 @@ export async function UserPlaylistsGrid() {
     },
   });
 
-  // Get completion data if available
   const enrollments = await getEnrollmentsByAuthorizedUser(authorizedUser.id);
   const completedLessonIds = enrollments.flatMap(
     (enrollment) =>
       enrollment.viewedLessons?.map((lesson: Lesson) => lesson.id) || [],
   );
 
-  // Map all playlists and calculate completion
   const allPlaylists = (authorizedUser.playlists || []).map(
     (playlist: Playlist) => {
       const allLessonIds =
@@ -88,7 +86,6 @@ export async function UserPlaylistsGrid() {
     },
   );
 
-  // Separate playlists into public and custom
   const publicPlaylists = allPlaylists.filter((p: Playlist) => p.isPublic);
   const customPlaylists = allPlaylists.filter((p: Playlist) => !p.isPublic);
 
@@ -103,8 +100,6 @@ export async function UserPlaylistsGrid() {
       </Message>
     );
   }
-
-  //Handle due dates
 
   const dueDates = await getUserDueDates(authorizedUser.id);
 

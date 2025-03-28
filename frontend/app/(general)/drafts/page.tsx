@@ -19,7 +19,6 @@ export const metadata: Metadata = {
 };
 
 export default async function CreateRoute() {
-  //get the current user's drafts
   const user = await getCurrentUser();
   if (
     !user ||
@@ -29,10 +28,8 @@ export default async function CreateRoute() {
     redirect("/unauthorized");
   const authorizedUser = await getAuthorizedUserByEmail(user.email);
 
-  //get the current user's playlists
   const playlists = authorizedUser.created_playlists;
 
-  //get all draft droplets
   let allDroplets: Awaited<ReturnType<typeof getDraftDroplets>> = [];
 
   if (isAuthorizedUserAdmin(user.roles)) {

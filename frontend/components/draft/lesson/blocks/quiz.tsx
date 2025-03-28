@@ -34,7 +34,7 @@ export function QuizEditor({
     let question = null;
     if (questions[0].answerOptions[0].content === "True") {
       const newQuestion: QuizQuestion = {
-        id: Math.random(), // Temporary ID for new questions
+        id: Math.random(),
         content: "",
         answerOptions: [
           { id: Math.random(), content: "True", isCorrect: true },
@@ -44,7 +44,7 @@ export function QuizEditor({
       question = newQuestion;
     } else {
       const newQuestion: QuizQuestion = {
-        id: Math.random(), // Temporary ID for new questions
+        id: Math.random(),
         content: "",
         answerOptions: [
           { id: Math.random(), content: "", isCorrect: true },

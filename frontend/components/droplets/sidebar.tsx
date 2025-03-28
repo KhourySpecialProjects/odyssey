@@ -155,7 +155,6 @@ export default function Sidebar({
               {droplet.name}
             </p>
 
-            {/*Both Authors and Admins should be able to see the edit button  */}
             {(author || isAdmin) && (
               <div className="pb-4 w-full text-center">
                 <Link
