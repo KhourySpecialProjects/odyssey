@@ -14,6 +14,7 @@ import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
 import { Droplets } from "@/components/admin/droplets/droplets";
 import { Groups } from "@/components/admin/groups/groups";
 import { Playlists } from "@/components/admin/playlists/playlists";
+import { LineChartIcon } from "lucide-react";
 
 export default async function Page() {
   const user = await getCurrentUser();
@@ -38,7 +39,9 @@ export default async function Page() {
           View Odyssey statistics and edit existing information.
         </p>
       </div>
-      <h2 className="text-lg mb-2 mt-4 dark:text-slate-300">Statistics</h2>
+      <h2 className="text-lg mb-2 mt-4 dark:text-slate-300 flex gap-2">
+        Statistics <LineChartIcon className=" inline" />
+      </h2>
       <Separator orientation="horizontal" className="mt-2 mb-4" />
       <CardContent className="flex flex-col items-start gap-x-8 text-center gap-y-6 sm:flex-row">
         <div className="flex items-center space-x-3">

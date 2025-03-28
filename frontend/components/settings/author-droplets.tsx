@@ -4,21 +4,17 @@ import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { ArrowRightIcon } from "lucide-react";
-import Link from "next/link";
 import { DropletTile } from "../droplets/droplet-tile";
-import { Button } from "../ui/button";
 import { AuthorizedUser } from "@/types";
 
 export function AuthorDroplets({ author }: { author: AuthorizedUser }) {
   const droplets = author.droplets;
 
   return (
-    <Card className="border dark:border-slate-500 hover:border-slate-300 dark:bg-slate-700">
+    <Card className="border dark:border-slate-500 hover:border-slate-300 dark:bg-slate-800">
       <CardHeader>
         <CardTitle>Droplets</CardTitle>
         <CardDescription className="dark:text-white">

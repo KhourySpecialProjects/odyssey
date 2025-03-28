@@ -48,6 +48,7 @@ export default async function AuthorProfileSettings() {
             Friends: <Friends />,
             "Friend Requests": (
               <FriendRequests
+                key={1}
                 noProfile={false}
                 friendsPerPage={20}
                 authUser={authorizedUser}
