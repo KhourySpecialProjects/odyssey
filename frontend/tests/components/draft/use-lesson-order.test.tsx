@@ -156,4 +156,20 @@ describe("useLessonOrder", () => {
       { revalidate: true },
     );
   });
+
+  it("should call processQueue when orderQueue length is greater than 0", async () => {
+    const { result } = renderHook(() => useLessonOrder(mockDroplet));
+
+    const newOrder = [
+      { id: 1, orderIndex: 1, lesson: mockLesson },
+      { id: 2, orderIndex: 0, lesson: mockLesson },
+    ];
+    
+    act(() => {
+      result.current.handleLessonReorder(newOrder);
+    });
+
+    expect(updateDroplet).toHaveBeenCalled(); 
+
+  });
 });

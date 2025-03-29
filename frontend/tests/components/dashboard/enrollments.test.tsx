@@ -111,4 +111,46 @@ describe("Enrollments", () => {
       },
     });
   });
+
+  it("calls notFound when user email is missing", async () => {
+    (getCurrentUser as jest.Mock).mockResolvedValue({ email: "" });
+  
+    await Enrollments();
+  
+    expect(notFound).toHaveBeenCalled();
+  });
+
+  it("correctly passes completed lesson IDs to DropletTile", async () => {
+    const mockEnrollments = [
+      {
+        id: 1,
+        droplet: {
+          id: 1,
+          name: "Enrolled Droplet 1",
+          tags: [],
+          lessons: [],
+        },
+        viewedLessons: [
+          { id: "lesson-1", name: "Lesson 1", slug: "lesson-1" },
+          { id: "lesson-2", name: "Lesson 2", slug: "lesson-2" },
+        ],
+      },
+    ];
+  
+    (getEnrollmentsByAuthorizedUser as jest.Mock).mockResolvedValue(
+      mockEnrollments,
+    );
+  
+    render(await Enrollments());
+  
+    expect(screen.getByTestId("droplet-1")).toBeInTheDocument();
+  });
+
+  it("renders correctly when there are no enrollments", async () => {
+    (getEnrollmentsByAuthorizedUser as jest.Mock).mockResolvedValue([]);
+  
+    render(await Enrollments());
+  
+    expect(screen.queryByTestId(/droplet-/)).not.toBeInTheDocument();
+  });
 });
