@@ -1,7 +1,8 @@
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import Error from "@/app/(droplets)/d/[slug]/[lessonSlug]/error";
 import { Confetti } from "@/app/(droplets)/d/[slug]/recap/confetti";
 import NotFound from "@/app/(droplets)/d/[slug]/not-found";
+import confetti from "canvas-confetti";
 
 jest.mock("@/components/droplets/lessons/droplet-lesson-wrapper", () => ({
   DropletLessonWrapper: jest.fn(() => (
@@ -174,6 +175,81 @@ describe("Droplet Lesson Pages", () => {
       expect(canvas).toBeInTheDocument();
 
       jest.useRealTimers();
+    });
+  });
+});
+
+jest.mock("canvas-confetti", () => ({
+  create: jest.fn(() => jest.fn()),
+}));
+
+describe("Confetti Component", () => {
+  beforeEach(() => {
+    document.body.innerHTML = ""; // Clear the DOM before each test
+  });
+
+  test("should render and trigger confetti effect", async () => {
+    render(<Confetti />);
+    
+    await waitFor(() => {
+      expect(document.querySelector("canvas")).toBeInTheDocument();
+    });
+  });
+
+  test("should remove canvas after 5 seconds", async () => {
+    jest.useFakeTimers();
+    render(<Confetti />);
+    
+    await waitFor(() => {
+      expect(document.querySelector("canvas")).toBeInTheDocument();
+    });
+    
+    jest.advanceTimersByTime(5000);
+    
+    await waitFor(() => {
+      expect(document.querySelector("canvas")).not.toBeInTheDocument();
+    });
+  });
+
+  test("confetti.create should be called with a canvas", async () => {
+    render(<Confetti />);
+
+    await waitFor(() => {
+      expect(confetti.create).toHaveBeenCalled();
+      expect(confetti.create).toHaveBeenCalledWith(
+        expect.any(HTMLCanvasElement),
+        expect.objectContaining({ resize: true })
+      );
+    });
+  });
+
+  test("should handle missing canvas context", async () => {
+    const mockCanvas = document.createElement('canvas');
+    jest.spyOn(mockCanvas, 'getContext').mockReturnValue(null);
+    jest.spyOn(document, 'createElement').mockReturnValue(mockCanvas);
+
+    render(<Confetti />);
+
+    await waitFor(() => {
+      expect(confetti.create).toHaveBeenCalled();
+    });
+  });
+
+  test("should handle missing pattern from context", async () => {
+    const mockCtx = {
+      drawImage: jest.fn(),
+      createPattern: jest.fn(() => null)
+    } as unknown as CanvasRenderingContext2D;
+
+    const mockCanvas = document.createElement('canvas');
+    jest.spyOn(mockCanvas, 'getContext').mockReturnValue(mockCtx);
+    jest.spyOn(document, 'createElement').mockReturnValue(mockCanvas);
+
+    render(<Confetti />);
+
+    await waitFor(() => {
+      expect(mockCtx.drawImage).toHaveBeenCalled();
+      expect(mockCtx.createPattern).toHaveBeenCalled();
     });
   });
 });
