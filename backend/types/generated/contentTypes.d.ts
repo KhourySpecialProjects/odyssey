@@ -454,7 +454,11 @@ export interface ApiAnnouncementAnnouncement extends Schema.CollectionType {
       'manyToOne',
       'api::group.group'
     >;
-    kudosGiven: Attribute.Boolean;
+    kudosGiven: Attribute.Relation<
+      'api::announcement.announcement',
+      'manyToMany',
+      'api::authorized-user.authorized-user'
+    >;
     playlist: Attribute.Relation<
       'api::announcement.announcement',
       'manyToOne',
@@ -625,6 +629,11 @@ export interface ApiAuthorizedUserAuthorizedUser extends Schema.CollectionType {
       'api::authorized-user.authorized-user',
       'manyToMany',
       'api::friendship.friendship'
+    >;
+    gaveKudos: Attribute.Relation<
+      'api::authorized-user.authorized-user',
+      'manyToMany',
+      'api::announcement.announcement'
     >;
     github: Attribute.String;
     groupAdmin: Attribute.Relation<
