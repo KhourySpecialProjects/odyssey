@@ -115,7 +115,7 @@ export function FriendRequestFeedBlock({
         >
           <div className="relative group">
             <Check className="w-3 h-3 group-hover:scale-110 transition-transform" />
-            <span className="absolute left-1/2 transform -translate-x-1/2 top-full mt-1 w-max px-2 py-1 text-xs text-white bg-gray-800 rounded opacity-0 group-hover:opacity-100 transition-opacity">
+            <span className="absolute left-1/2 transform -translate-x-1/2 top-full mt-1 w-max px-2 py-1 text-xs text-white bg-gray-800 rounded-md opacity-0 group-hover:opacity-100 transition-opacity">
               Accept
             </span>
           </div>
@@ -129,7 +129,7 @@ export function FriendRequestFeedBlock({
         >
           <div className="relative group">
             <X className="w-3 h-3" />
-            <span className="absolute left-1/2 transform -translate-x-1/2 top-full mt-1 w-max px-2 py-1 text-xs text-white bg-gray-800 rounded opacity-0 group-hover:opacity-100 transition-opacity">
+            <span className="absolute left-1/2 transform -translate-x-1/2 top-full mt-1 w-max px-2 py-1 text-xs text-white bg-gray-800 rounded-md opacity-0 group-hover:opacity-100 transition-opacity">
               Reject
             </span>
           </div>

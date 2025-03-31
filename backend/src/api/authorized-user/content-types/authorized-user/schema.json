@@ -197,6 +197,12 @@
       "relation": "oneToMany",
       "target": "api::due-date.due-date",
       "mappedBy": "authorized_user"
+    },
+    "gaveKudos": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::announcement.announcement",
+      "inversedBy": "kudosGiven"
     }
   }
 }
