@@ -187,7 +187,12 @@ export default async function DropletRecapRoute({ params }: Props) {
                 <NotesPdfButton
                   pdfBytes={pdfBytes}
                   name={`${droplet.name.replace(/\s/g, "")}-notes`}
-                  enrollments={enrollments}
+                  noNotes={
+                    !(
+                      allNotes.highlights.length > 0 ||
+                      allNotes.notes.length > 0
+                    )
+                  }
                 />
               </section>
               <NotesContainer
