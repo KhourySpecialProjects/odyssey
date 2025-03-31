@@ -40,6 +40,7 @@ export function FeedContainer({
             (role) => role.toLowerCase() as AnnouncementType,
           )}
           announcements={announcements}
+          authUser={authUser}
         />
 
         <button

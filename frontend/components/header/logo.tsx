@@ -1,22 +1,25 @@
 "use client";
 
+import { useTheme } from "next-themes";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 
 export function Logo({ width, height }: { width: number; height: number }) {
-  const [theme, setTheme] = useState<string | null>(null);
+  const { theme, resolvedTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    setTheme(
-      window.matchMedia("(prefers-color-scheme: dark)").matches
-        ? "dark"
-        : "light",
-    );
+    setMounted(true);
   }, []);
 
-  const image = theme === "dark" ? "/logo_dark.png" : "/logo.svg";
+  // Wait until mounted to avoid hydration mismatch
+  if (!mounted) return null;
 
-  if (!theme) return null;
+  const image =
+    theme === "dark" || resolvedTheme === "dark"
+      ? "/logo_dark.png"
+      : "/logo.svg";
+
   return (
     <Image
       src={image}

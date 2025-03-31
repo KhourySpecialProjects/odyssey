@@ -67,7 +67,7 @@ export function NextSteps({
   return (
     <section className="w-full">
       <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
-        Next Steps
+        Learn More
       </h2>
       <p className="text-slate-500 dark:text-slate-300">
         To further your understanding, we recommend exploring:

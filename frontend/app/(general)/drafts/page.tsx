@@ -40,7 +40,7 @@ export default async function CreateRoute() {
     <>
       <div className="w-full p-8 mx-auto my-4 text-center max-w-7xl">
         <h1 className="text-3xl font-bold tracking-tight light:text-slate-900 sm:text-4xl">
-          Drafts
+          My Content
         </h1>
         <p className="mt-4 text-lg leading-normal light:text-slate-600 dark:text-slate-300 text-balance">
           Create a new Droplet or Playlist draft or edit an existing one.
@@ -49,7 +49,7 @@ export default async function CreateRoute() {
 
       <div className="w-full max-w-5xl px-4 mx-auto mb-8 xl:p-0 s">
         <div className="w-full flex justify-between items-end">
-          <h2 className="text-lg dark:text-slate-300">Your Droplet Drafts</h2>
+          <h2 className="text-lg dark:text-slate-300">My Droplets</h2>
           <div className="flex items-center gap-2">
             <Link href="/new/droplet">
               <Button
@@ -75,7 +75,7 @@ export default async function CreateRoute() {
         {!authorizedUser.droplets || authorizedUser.droplets.length === 0 ? (
           <div className="flex items-center justify-center h-full">
             <p className="text-lg light:text-slate-500 dark:text-slate-400">
-              No drafts found.
+              No droplets found.
             </p>
           </div>
         ) : (
@@ -91,7 +91,7 @@ export default async function CreateRoute() {
           isAuthorizedUserAdmin(user.roles)) && (
           <>
             <h2 className="text-lg mb-2 mt-4 dark:text-slate-300">
-              Your Playlists
+              My Playlists
             </h2>
             <Separator orientation="horizontal" className="mt-2 mb-4" />
             {!playlists || playlists.length === 0 ? (

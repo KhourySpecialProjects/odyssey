@@ -181,7 +181,9 @@ export async function createKudosAnnouncement(
         },
         body: JSON.stringify({
           data: {
-            kudosGiven: true,
+            kudosGiven: {
+              connect: [user],
+            },
           },
         }),
       },
