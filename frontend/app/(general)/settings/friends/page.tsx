@@ -10,7 +10,11 @@ import {
 } from "@/lib/requests/authorized-user";
 import { FriendSentRequests } from "@/components/friends/friend-sent-requests";
 import { FriendSearch } from "@/components/friends/friend-search";
-import { getSentRequestIds, fetchFriends } from "@/lib/requests/friends";
+import {
+  getSentRequestIds,
+  fetchFriends,
+  fetchSuggestionsById,
+} from "@/lib/requests/friends";
 import { BlockedUsers } from "@/components/friends/blocked-users";
 import { FriendDropdown } from "@/components/friends/friend-dropdown";
 
@@ -33,6 +37,14 @@ export default async function AuthorProfileSettings() {
     .filter((user) => !friends.includes(user.id))
     .map((user) => user.id);
 
+  const friendsLength = await (await fetchFriends(authorizedUser)).length;
+  const friendRequestsLength = authorizedUser.sent_requests.length;
+  const friendReceivedRequestsLength = authorizedUser.received_requests.length;
+  const friendBlockedLength = authorizedUser.blocked.length;
+  const friendSuggestionsLength = await (
+    await fetchSuggestionsById(authorizedUser.id)
+  ).length;
+
   return (
     <div className="flex flex-col">
       <FriendSearch
@@ -45,8 +57,8 @@ export default async function AuthorProfileSettings() {
       <div className="hidden md:flex md:flex-col">
         <AdminSelector
           content={{
-            Friends: <Friends />,
-            "Friend Requests": (
+            [`Friends (${friendsLength})`]: <Friends />,
+            [`Friend Requests (${friendReceivedRequestsLength})`]: (
               <FriendRequests
                 key={1}
                 noProfile={false}
@@ -54,9 +66,11 @@ export default async function AuthorProfileSettings() {
                 authUser={authorizedUser}
               />
             ),
-            "People You May Know": <FriendSuggestions user={authorizedUser} />,
-            "Sent Requests": <FriendSentRequests />,
-            "Blocked Users": <BlockedUsers />,
+            [`People You May Know (${friendSuggestionsLength})`]: (
+              <FriendSuggestions user={authorizedUser} />
+            ),
+            [`Sent Requests (${friendRequestsLength})`]: <FriendSentRequests />,
+            [`Blocked Users (${friendBlockedLength})`]: <BlockedUsers />,
           }}
         />
       </div>
@@ -64,17 +78,19 @@ export default async function AuthorProfileSettings() {
       <div className="flex flex-col md:hidden">
         <FriendDropdown
           content={{
-            Friends: <Friends />,
-            "Friend Requests": (
+            [`Friends (${friendsLength})`]: <Friends />,
+            [`Friend Requests (${friendReceivedRequestsLength})`]: (
               <FriendRequests
                 noProfile={false}
                 friendsPerPage={20}
                 authUser={authorizedUser}
               />
             ),
-            "People You May Know": <FriendSuggestions user={authorizedUser} />,
-            "Sent Requests": <FriendSentRequests />,
-            "Blocked Users": <BlockedUsers />,
+            [`People You May Know (${friendSuggestionsLength})`]: (
+              <FriendSuggestions user={authorizedUser} />
+            ),
+            [`Sent Requests (${friendRequestsLength})`]: <FriendSentRequests />,
+            [`Blocked Users (${friendBlockedLength})`]: <BlockedUsers />,
           }}
         />
       </div>

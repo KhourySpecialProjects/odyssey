@@ -825,6 +825,22 @@ export async function deleteHighlight(id: number) {
   return response.json();
 }
 
+export async function deleteReport(id: string) {
+  const response = await fetch(`${STRAPI_API_URL}/api/reports/${id}`, {
+    method: "DELETE",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to delete report");
+  }
+  redirect("/admin?ts=" + Date.now());
+  return response.json();
+}
+
 export async function getHighlightsForLesson(lessonId: number) {
   const user = await getCurrentUser();
   if (!user?.email) throw new Error("No email identified");

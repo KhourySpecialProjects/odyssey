@@ -2,19 +2,26 @@
 
 import { cn } from "@/lib/utils";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { User } from "@/types";
 
-const tabs = [
-  { name: "Droplets", value: "droplets" },
-  { name: "Playlists", value: "playlists" },
-  { name: "Archived", value: "archived" },
-];
-
-export function ContentSelector({ user }: { user: User }) {
+export function ContentSelector({
+  droplets,
+  playlists,
+  archived,
+}: {
+  droplets: number;
+  playlists: number;
+  archived: number;
+}) {
   const searchParams = useSearchParams();
   const pathname = usePathname();
   const router = useRouter();
   const currentTab = searchParams.get("tab") || "droplets";
+
+  const tabs = [
+    { name: `Droplets (${droplets})`, value: "droplets" },
+    { name: `Playlists (${playlists})`, value: "playlists" },
+    { name: `Archived (${archived})`, value: "archived" },
+  ];
 
   const createQueryString = (name: string, value: string) => {
     const params = new URLSearchParams(searchParams);

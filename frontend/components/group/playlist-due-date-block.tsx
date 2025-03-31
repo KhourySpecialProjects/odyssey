@@ -6,6 +6,7 @@ import { assignPlaylistDueDate, getGroupDueDate } from "@/lib/requests/groups";
 
 import MUIDateTimePicker from "./datetime-picker";
 import { DateTime } from "luxon";
+import { Check, Trash2Icon } from "lucide-react";
 
 interface PlaylistDueDateBlockProps {
   existingGroup: Group;
@@ -63,7 +64,7 @@ export function PlaylistDueDateBlock({
   };
 
   return (
-    <div className="flex flex-row justify-between space-x-2 w-full bg-slate-50 border border-slate-200 rounded-lg p-4 items-center dark:bg-slate-800 dark:border dark:border-slate-500">
+    <div className="flex flex-row justify-between text-xl space-x-2 w-full bg-slate-50 border border-slate-200 rounded-lg p-4 items-center dark:bg-slate-800 dark:border dark:border-slate-500">
       {currentPlaylist.name}
       <div className="flex flex-row space-x-2 items-center">
         {isSaveClicked && <p className="text-slate-400">Saved!</p>}
@@ -76,25 +77,27 @@ export function PlaylistDueDateBlock({
           ></MUIDateTimePicker>
         </div>
 
-        <Button
-          onClick={() => {
-            handleSaveDate();
-          }}
-          variant="default"
-          className="bg-emerald-500 hover:bg-emerald-700 dark:bg-emerald-600 dark:hover:bg-emerald-700 dark:text-white dark:border dark:border-white"
-          disabled={!dueDate}
-        >
-          Save
-        </Button>
-        <div>
+        <div className="flex flex-col gap-2">
           <Button
-            onClick={() => setRemovePopupVisible(true)}
-            variant="default"
-            className="bg-red-500 hover:bg-red-700 dark:bg-red-600 dark:hover:bg-red-700 dark:text-white dark:border dark:border-white"
+            onClick={() => {
+              handleSaveDate();
+            }}
+            name="Save Due Date"
+            className="bg-sky-500 hover:bg-sky-600 dark:bg-sky-500 w-12 h-8 dark:hover:bg-sky-600 dark:text-white dark:border dark:border-white"
             disabled={!dueDate}
           >
-            Remove
+            <Check />
           </Button>
+          <div>
+            <Button
+              onClick={() => setRemovePopupVisible(true)}
+              name="Delete Due Date"
+              className="bg-red-500 hover:bg-red-700 dark:bg-red-600 w-12 h-8 dark:hover:bg-red-700 dark:text-white dark:border dark:border-white"
+              disabled={!dueDate}
+            >
+              <Trash2Icon />
+            </Button>
+          </div>
           <Dialog open={removePopupVisible}>
             <DialogContent>
               <DialogHeader className="flex flex-col items-center text-center">
