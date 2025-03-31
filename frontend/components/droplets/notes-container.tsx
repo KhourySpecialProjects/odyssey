@@ -27,7 +27,7 @@ export function NotesContainer({
 
   return (
     <div className="flex flex-row items-start">
-      <div className="w-2/3 text-center text-xl font-bold">
+      <div className="w-2/3 text-center text-xl font-bold p-4">
         <NotesSummary
           selectedColors={selectedColors.map(
             (color) => color.toLowerCase() as HighlightColor,

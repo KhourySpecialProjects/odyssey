@@ -50,6 +50,7 @@ export function PlaylistCard({
     .setZone(timeZone || "America/New_York")
     .toFormat("MM/dd hh:mm a");
 
+  console.log("info", playlist);
   return (
     <Link href={linkTo} className="block h-full">
       <Card className="bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-500 flex flex-col h-full">
@@ -83,7 +84,9 @@ export function PlaylistCard({
           </div>
           <CardTitle>{playlist.name}</CardTitle>
           <p className="text-sm text-muted-foreground">
-            {playlist.droplets?.length || 0} droplets
+            {playlist.droplets?.length === 1
+              ? "1 droplet"
+              : `${playlist.droplets?.length || 0} droplets`}
           </p>
         </CardHeader>
       </Card>

@@ -221,9 +221,9 @@ export function CreateDropletForm({
 
       <div className="flex items-center justify-center self-end space-x-4">
         <Button
-          variant="outline"
           before={<MoveLeftIcon />}
-          onClick={() => router.back()}
+          onClick={() => router.push("/drafts")}
+          className="dark:bg-slate-50 dark:text-black bg-black text-white"
         >
           <div className="w-30 flex items-center justify-center">Cancel</div>
         </Button>
@@ -241,12 +241,12 @@ function SubmitButton() {
   const { pending } = useFormStatus();
   return (
     <Button
-      type="submit"
       disabled={pending}
       after={
         pending ? <LoaderIcon className="animate-spin" /> : <MoveRightIcon />
       }
       variant="default"
+      className="dark:bg-slate-50 dark:text-black bg-black text-white"
     >
       <div className="w-30 flex items-center justify-center">
         Create Droplet

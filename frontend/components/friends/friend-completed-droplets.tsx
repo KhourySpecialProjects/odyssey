@@ -35,7 +35,9 @@ export function FriendCompletedDroplets({
           <FriendCompletedDropletsList droplets={completedDroplets} />
         </div>
       ) : (
-        <p className="text-sm text-slate-500 dark:text-slate-300">No completed droplets yet.</p>
+        <p className="text-sm text-slate-500 dark:text-slate-300">
+          No completed droplets yet.
+        </p>
       )}
     </div>
   );
