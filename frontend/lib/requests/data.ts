@@ -112,7 +112,7 @@ export async function fetchAccessRequests() {
 export async function fetchReports() {
   try {
     const query = qs.stringify({
-      sort: ["createdAt"],
+      sort: "createdAt:desc",
       fields: "*",
       pagination: {
         pageSize: 250,
