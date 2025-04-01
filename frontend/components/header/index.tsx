@@ -73,15 +73,14 @@ export async function Header() {
                 Odyssey, a Khoury College Learning Platform
               </span>
             </Link>
-            
           </div>
 
           <Link href="/" className="w-max sm:hidden">
-              <Logo width={165} height={45} />
-              <span className="sr-only">
-                Odyssey, a Khoury College Learning Platform
-              </span>
-            </Link>
+            <Logo width={165} height={45} />
+            <span className="sr-only">
+              Odyssey, a Khoury College Learning Platform
+            </span>
+          </Link>
 
           <nav className="flex-row items-center hidden xl:flex">
             <NavLinks

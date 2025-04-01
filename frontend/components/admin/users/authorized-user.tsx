@@ -142,7 +142,7 @@ export function AuthorizedUserBlock({ user }: { user: AuthorizedUser }) {
         </div>
 
         <div className="inline-flex items-center gap-2">
-          <Dialog open={open} onOpenChange={setOpen} >
+          <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
               <Button size="sm" className="bg-white dark:bg-slate-300">
                 <div className="relative group">
@@ -191,7 +191,9 @@ export function AuthorizedUserBlock({ user }: { user: AuthorizedUser }) {
                             );
                             if (result.success) {
                               setProfilePhoto("");
-                              toast.success("Profile photo removed successfully");
+                              toast.success(
+                                "Profile photo removed successfully",
+                              );
                             } else {
                               toast.error("Failed to remove profile photo");
                             }
