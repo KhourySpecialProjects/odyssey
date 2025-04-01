@@ -14,6 +14,7 @@ import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
 import { Droplets } from "@/components/admin/droplets/droplets";
 import { Groups } from "@/components/admin/groups/groups";
 import { Playlists } from "@/components/admin/playlists/playlists";
+import { FriendDropdown } from "@/components/friends/friend-dropdown";
 import { LineChartIcon } from "lucide-react";
 
 export default async function Page() {
@@ -28,6 +29,15 @@ export default async function Page() {
   console.log("User roles:", user?.roles);
   console.log("Admin check:", isAuthorizedUserAdmin(user?.roles));
   if (!user || !isAuthorizedUserAdmin(user.roles)) return notFound();
+
+  const pageContent = {
+    Users: <AuthorizedUsers />,
+    Droplets: <Droplets />,
+    Playlists: <Playlists />,
+    Groups: <Groups />,
+    "Access Manager": <AccessManager user={user} />,
+    Reports: <Reports />,
+  };
 
   return (
     <div className="w-full max-w-5xl mx-auto">
@@ -76,17 +86,15 @@ export default async function Page() {
         </div>
       </CardContent>
       <Separator orientation="horizontal" className="mt-2 mb-4" />
+
       <Session />
-      <AdminSelector
-        content={{
-          Users: <AuthorizedUsers />,
-          Droplets: <Droplets />,
-          Playlists: <Playlists />,
-          Groups: <Groups />,
-          "Access Manager": <AccessManager user={user} />,
-          Reports: <Reports />,
-        }}
-      />
+      <div className="hidden sm:flex sm:flex-col p-4">
+        <AdminSelector content={pageContent} />
+      </div>
+
+      <div className="flex flex-col sm:hidden p-4">
+        <FriendDropdown content={pageContent} />
+      </div>
     </div>
   );
 }

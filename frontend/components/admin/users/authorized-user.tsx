@@ -154,119 +154,125 @@ export function AuthorizedUserBlock({ user }: { user: AuthorizedUser }) {
               </Button>
             </DialogTrigger>
 
-            <DialogContent>
+            <DialogContent className="scale-75 sm:scale-100">
               <DialogHeader>
                 <DialogTitle>Edit User</DialogTitle>
                 <DialogDescription>Update user information</DialogDescription>
               </DialogHeader>
-              <form action={handleEditUser} className="space-y-4">
-                <input type="hidden" name="id" value={user.id} />
-                <p>Profile Photo</p>
-                <div
-                  {...getRootProps()}
-                  className="border dark:border-slate-500 p-4 rounded-lg cursor-pointer text-center"
-                >
-                  <input {...getInputProps()} name="profilePhoto" />
-                  {profilePhoto ? (
-                    <div className="flex flex-col items-center gap-4">
-                      <img
-                        src={profilePhoto}
-                        alt="Profile"
-                        className="w-32 h-32 rounded-full object-cover mx-auto"
-                      />
-                      <Button
-                        type="button"
-                        variant="destructive"
-                        size="sm"
-                        onClick={async (e) => {
-                          e.stopPropagation();
-                          const result = await updateUserInfo(
-                            firstName,
-                            lastName,
-                            bio,
-                            selectedRoles,
-                            "",
-                            user.id,
-                          );
-                          if (result.success) {
-                            setProfilePhoto("");
-                            toast.success("Profile photo removed successfully");
-                          } else {
-                            toast.error("Failed to remove profile photo");
-                          }
-                        }}
-                      >
-                        Remove Photo
-                      </Button>
-                    </div>
-                  ) : (
-                    <p>Drag & drop a photo here, or click to select one</p>
-                  )}
-                </div>
-                <Input
-                  name="firstName"
-                  value={firstName}
-                  onChange={(e) => setFirstName(e.target.value)}
-                  placeholder="First Name"
-                />
-                <Input
-                  name="lastName"
-                  value={lastName}
-                  onChange={(e) => setLastName(e.target.value)}
-                  placeholder="Last Name"
-                />
-                <Textarea
-                  name="bio"
-                  value={bio}
-                  onChange={(e) => setBio(e.target.value)}
-                  placeholder="Bio"
-                />
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Roles</label>
-                  <div className="space-y-2">
-                    {roleOptions.map((role) => (
-                      <div
-                        key={role.value}
-                        className="flex items-center space-x-2"
-                      >
-                        <Checkbox
-                          id={role.value}
-                          checked={selectedRoles.includes(role.value)}
-                          onCheckedChange={() => toggleRole(role.value)}
-                          className="border-sky-500 data-[state=checked]:bg-sky-500 data-[state=checked]:border-sky-500 focus-visible:ring-sky-500"
+              <div className="relative -mt-4">
+                <form action={handleEditUser} className="space-y-2">
+                  <input type="hidden" name="id" value={user.id} />
+                  <p>Profile Photo</p>
+                  <div
+                    {...getRootProps()}
+                    className="border dark:border-slate-500 p-4 rounded-lg cursor-pointer text-center"
+                  >
+                    <input {...getInputProps()} name="profilePhoto" />
+                    {profilePhoto ? (
+                      <div className="flex flex-row items-center gap-4 pr-4">
+                        <img
+                          src={profilePhoto}
+                          alt="Profile"
+                          className="w-32 h-32 rounded-full object-cover mx-auto"
                         />
-                        <label
-                          htmlFor={role.value}
-                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="sm"
+                          onClick={async (e) => {
+                            e.stopPropagation();
+                            const result = await updateUserInfo(
+                              firstName,
+                              lastName,
+                              bio,
+                              selectedRoles,
+                              "", // Empty string for profilePhoto
+                              user.id,
+                            );
+                            if (result.success) {
+                              setProfilePhoto("");
+                              toast.success(
+                                "Profile photo removed successfully",
+                              );
+                            } else {
+                              toast.error("Failed to remove profile photo");
+                            }
+                          }}
                         >
-                          {role.label}
-                        </label>
+                          Remove Photo
+                        </Button>
                       </div>
-                    ))}
+                    ) : (
+                      <p>Drag & drop a photo here, or click to select one</p>
+                    )}
                   </div>
-                </div>
-                <Button type="submit">Save Changes</Button>
-              </form>
+                  <Input
+                    name="firstName"
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                    placeholder="First Name"
+                  />
+                  <Input
+                    name="lastName"
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                    placeholder="Last Name"
+                  />
+                  <Textarea
+                    name="bio"
+                    value={bio}
+                    onChange={(e) => setBio(e.target.value)}
+                    placeholder="Bio"
+                  />
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Roles</label>
+                    <div className="space-y-2">
+                      {roleOptions.map((role) => (
+                        <div
+                          key={role.value}
+                          className="flex items-center space-x-2"
+                        >
+                          <Checkbox
+                            id={role.value}
+                            checked={selectedRoles.includes(role.value)}
+                            onCheckedChange={() => toggleRole(role.value)}
+                            className="border-sky-500 data-[state=checked]:bg-sky-500 data-[state=checked]:border-sky-500 focus-visible:ring-sky-500"
+                          />
+                          <label
+                            htmlFor={role.value}
+                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                          >
+                            {role.label}
+                          </label>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <Button type="submit">Save Changes</Button>
+                </form>
 
-              <form action={handleUpdateUser}>
-                <input
-                  id="id"
-                  name="id"
-                  type="number"
-                  defaultValue={user.id}
-                  hidden
-                />
-                <input
-                  id="isEnabled"
-                  name="isEnabled"
-                  type="text"
-                  defaultValue={String(!user.isEnabled)}
-                  hidden
-                />
-                <SubmitButton destructive={user.isEnabled}>
-                  {user.isEnabled ? "Disable Access" : "Enable Access"}
-                </SubmitButton>
-              </form>
+                <div className="absolute bottom-0 translate-x-[105%]">
+                  <form action={handleUpdateUser}>
+                    <input
+                      id="id"
+                      name="id"
+                      type="number"
+                      defaultValue={user.id}
+                      hidden
+                    />
+                    <input
+                      id="isEnabled"
+                      name="isEnabled"
+                      type="text"
+                      defaultValue={String(!user.isEnabled)}
+                      hidden
+                    />
+                    <SubmitButton destructive={user.isEnabled}>
+                      {user.isEnabled ? "Disable Access" : "Enable Access"}
+                    </SubmitButton>
+                  </form>
+                </div>
+              </div>
             </DialogContent>
           </Dialog>
         </div>
