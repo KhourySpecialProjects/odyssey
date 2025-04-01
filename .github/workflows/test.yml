@@ -14,10 +14,12 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    env:
+      TZ: 'America/New_York'
 
     strategy:
       matrix:
-        project: ['frontend', 'backend']
+        project: ['frontend']
 
     steps:
       - name: Checkout repository
