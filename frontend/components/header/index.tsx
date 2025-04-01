@@ -67,13 +67,20 @@ export async function Header() {
                 </nav>
               </SheetContent>
             </Sheet>
-            <Link href="/" className="w-max">
+            <Link href="/" className="w-max hidden sm:block">
               <Logo width={165} height={45} />
               <span className="sr-only">
                 Odyssey, a Khoury College Learning Platform
               </span>
             </Link>
           </div>
+
+          <Link href="/" className="w-max sm:hidden">
+            <Logo width={165} height={45} />
+            <span className="sr-only">
+              Odyssey, a Khoury College Learning Platform
+            </span>
+          </Link>
 
           <nav className="flex-row items-center hidden xl:flex">
             <NavLinks
@@ -90,7 +97,7 @@ export async function Header() {
             ) : (
               <LoginButton />
             )}
-            <div className="hidden xl:block">
+            <div className="hidden sm:block">
               <DarkMode className="scale-[1.2]" />
             </div>
           </div>
