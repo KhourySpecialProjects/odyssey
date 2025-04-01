@@ -31,7 +31,7 @@ export function KudosButton({ announcementId }: { announcementId: number }) {
       className={`bg-yellow-300 dark:bg-yellow-400 text-yellow-900 border border-yellow-600 hover:bg-gray-200 ${isVisible ? "visiblity: visible" : "visibility: hidden"}`}
     >
       {isPending ? "Giving..." : "Give Kudos"}
-      <ThumbsUp className="w-4 h-4"/>
+      <ThumbsUp className="w-4 h-4" />
     </Button>
   );
 }

@@ -54,9 +54,13 @@ export function AccessRequestBlock({ request }: { request: AccessRequest }) {
 
         <form action={handleDeleteRequest}>
           <input type="hidden" name="id" value={request.id} />
-          <Button variant="destructive" disabled={isPending} className="px-2 sm:px-4">
+          <Button
+            variant="destructive"
+            disabled={isPending}
+            className="px-2 sm:px-4"
+          >
             <p className="hidden sm:block">Reject</p>
-            <X/>
+            <X />
           </Button>
         </form>
       </div>

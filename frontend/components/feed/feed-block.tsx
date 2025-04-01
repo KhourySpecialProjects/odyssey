@@ -65,7 +65,6 @@ export function FeedBlock({
     <li
       className={`${backgroundColor[announcementType]} rounded-lg flex flex-col items-start gap-2 p-4 pb-3 relative hover:scale-105`}
     >
-
       <div className="flex flex-row w-full h-full gap-3">
         <div className="dark:text-slate-300">
           {announcementIcon[announcementType]}
@@ -102,11 +101,11 @@ export function FeedBlock({
                       {announcement.content}
                     </p>
                     {announcementType === "friend" &&
-                  !announcement.kudosGiven?.includes(authUser) && (
-                    <div className="absolute bottom-0 left-[50%] translate-x-[-50%] translate-y-[20%]">
-                      <KudosButton announcementId={announcement.id} />
-                    </div>
-                  )}
+                      !announcement.kudosGiven?.includes(authUser) && (
+                        <div className="absolute bottom-0 left-[50%] translate-x-[-50%] translate-y-[20%]">
+                          <KudosButton announcementId={announcement.id} />
+                        </div>
+                      )}
                   </>
                 )}
             </div>
@@ -119,7 +118,6 @@ export function FeedBlock({
           )}
         </div>
       </div>
-
     </li>
   );
 }

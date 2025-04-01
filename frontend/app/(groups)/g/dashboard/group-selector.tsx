@@ -50,20 +50,17 @@ export function GroupsSelector() {
     () =>
       canCreateGroup
         ? [
-          { name: "Creator", value: "creator", icon: PlusCircleIcon },
-          ...baseTabs,
-        ]
+            { name: "Creator", value: "creator", icon: PlusCircleIcon },
+            ...baseTabs,
+          ]
         : baseTabs,
     [canCreateGroup],
   );
-
 
   // TODO: Break this tabbed UI setup into its own reusable component. We are using it in a few different
   // places and it would be nice to abstract it out.
   return (
     <div className="border-b border-gray-200 flex items-center justify-between relative pb-1">
-
-
       <button
         onClick={() => setMenuExpanded(!menuExpanded)}
         className={`block md:hidden ${menuExpanded ? "bg-slate-300 rounded-md p-1 dark:bg-slate-600" : "p-1"}`}
@@ -80,13 +77,18 @@ export function GroupsSelector() {
             : "visibility: hidden",
         )}
       >
-        <nav className="-mb-px flex flex-col sm:flex-row sm:space-x-8" aria-label="Tabs">
+        <nav
+          className="-mb-px flex flex-col sm:flex-row sm:space-x-8"
+          aria-label="Tabs"
+        >
           {tabs.map((tab) => (
             <button
               key={tab.value}
               onClick={() => {
                 setMenuExpanded(false);
-                router.push(`${pathname}?${createQueryString("tab", tab.value)}`);
+                router.push(
+                  `${pathname}?${createQueryString("tab", tab.value)}`,
+                );
               }}
               className={cn(
                 tab.value === currentTab
@@ -102,30 +104,29 @@ export function GroupsSelector() {
         </nav>
       </div>
 
-
-      <nav className="-mb-px flex flex-row space-x-8 hidden md:flex" aria-label="Tabs">
-          {tabs.map((tab) => (
-            <button
-              key={tab.value}
-              onClick={() => {
-                setMenuExpanded(false);
-                router.push(`${pathname}?${createQueryString("tab", tab.value)}`);
-              }}
-              className={cn(
-                tab.value === currentTab
-                  ? "border-primary-500 light:text-primary-600 dark:text-primary-300"
-                  : "border-transparent light:text-gray-500 dark:text-slate-300 dark:hover:text-gray-400 hover:border-gray-300 hover:text-gray-700",
-                "whitespace-nowrap border-b-2 py-4 px-1 text-base font-medium flex items-center gap-2",
-              )}
-            >
-              <tab.icon className="h-4 w-4" />
-              {tab.name}
-            </button>
-          ))}
-        </nav>
-
-
-
+      <nav
+        className="-mb-px flex flex-row space-x-8 hidden md:flex"
+        aria-label="Tabs"
+      >
+        {tabs.map((tab) => (
+          <button
+            key={tab.value}
+            onClick={() => {
+              setMenuExpanded(false);
+              router.push(`${pathname}?${createQueryString("tab", tab.value)}`);
+            }}
+            className={cn(
+              tab.value === currentTab
+                ? "border-primary-500 light:text-primary-600 dark:text-primary-300"
+                : "border-transparent light:text-gray-500 dark:text-slate-300 dark:hover:text-gray-400 hover:border-gray-300 hover:text-gray-700",
+              "whitespace-nowrap border-b-2 py-4 px-1 text-base font-medium flex items-center gap-2",
+            )}
+          >
+            <tab.icon className="h-4 w-4" />
+            {tab.name}
+          </button>
+        ))}
+      </nav>
 
       {canCreateGroup && (
         <Button
@@ -135,11 +136,10 @@ export function GroupsSelector() {
           className="lg:mr-4 px-2 py-1 md:px-4 md:py-2"
         >
           <PlusCircle className="h-4 w-4 mr-2 hidden md:block" />
-          <Plus className="h-5 w-6 md:hidden"/>
+          <Plus className="h-5 w-6 md:hidden" />
           <p className="hidden md:block">Create Group</p>
         </Button>
       )}
-
     </div>
   );
 }

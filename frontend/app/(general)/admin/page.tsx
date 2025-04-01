@@ -37,7 +37,7 @@ export default async function Page() {
     Groups: <Groups />,
     "Access Manager": <AccessManager user={user} />,
     Reports: <Reports />,
-  }
+  };
 
   return (
     <div className="w-full max-w-5xl mx-auto">
@@ -63,44 +63,38 @@ export default async function Page() {
               {authorizedUsers.length}
             </div>
           </div>
-          </div>
-          <div className="flex items-center space-x-3">
-            <div>
-              <div className="font-medium dark:text-slate-300">
-                Number of Total Droplets
-              </div>
-              <div className="text-sm text-slate-500 dark:text-slate-400">
-                {droplets.length}
-              </div>
+        </div>
+        <div className="flex items-center space-x-3">
+          <div>
+            <div className="font-medium dark:text-slate-300">
+              Number of Total Droplets
+            </div>
+            <div className="text-sm text-slate-500 dark:text-slate-400">
+              {droplets.length}
             </div>
           </div>
-          <div className="flex items-center space-x-3">
-            <div>
-              <div className="font-medium dark:text-slate-300">
-                Number of Enrollments
-              </div>
-              <div className="text-sm text-slate-500 dark:text-slate-400">
-                {totalEnrollments}
-              </div>
+        </div>
+        <div className="flex items-center space-x-3">
+          <div>
+            <div className="font-medium dark:text-slate-300">
+              Number of Enrollments
+            </div>
+            <div className="text-sm text-slate-500 dark:text-slate-400">
+              {totalEnrollments}
             </div>
           </div>
-        </CardContent>
-        <Separator orientation="horizontal" className="mt-2 mb-4" />
+        </div>
+      </CardContent>
+      <Separator orientation="horizontal" className="mt-2 mb-4" />
 
-      
       <Session />
       <div className="hidden sm:flex sm:flex-col p-4">
-      <AdminSelector
-        content={pageContent}
-      />
+        <AdminSelector content={pageContent} />
       </div>
 
       <div className="flex flex-col sm:hidden p-4">
-        <FriendDropdown
-          content={pageContent}
-        />
+        <FriendDropdown content={pageContent} />
       </div>
-
-    </div >
+    </div>
   );
 }
