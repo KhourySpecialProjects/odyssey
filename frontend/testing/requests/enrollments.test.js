@@ -27,17 +27,15 @@ jest.mock("../../lib/utils", () => ({
 
 global.fetch = jest.fn();
 
-//Comment this out if working on error testing (suppresses console error logs from error mocking)
 beforeEach(() => {
-  jest.spyOn(console, "error").mockImplementation(() => {}); // Suppress console errors
-  jest.spyOn(console, "warn").mockImplementation(() => {}); // Suppress console warnings
+  jest.spyOn(console, "error").mockImplementation(() => {});
+  jest.spyOn(console, "warn").mockImplementation(() => {});
 });
 
 afterEach(() => {
-  jest.restoreAllMocks(); // Restore console after each test
+  jest.restoreAllMocks();
 });
 
-// Mock Next.js cache functions
 jest.mock("next/cache", () => ({
   revalidatePath: jest.fn(),
   revalidateTag: jest.fn(),
@@ -203,12 +201,10 @@ describe("Enrollment tests", () => {
         },
       };
 
-      // Mock the fetchAPI function
       fetchAPI.mockResolvedValueOnce([mockEnrollment]);
 
       const result = await getEnrollByID("123");
 
-      // Verify fetchAPI was called with correct parameters
       expect(fetchAPI).toHaveBeenCalledWith(
         "/enrollments",
         expect.objectContaining({
@@ -226,15 +222,12 @@ describe("Enrollment tests", () => {
         }),
       );
 
-      // Verify the returned data matches expected format
       expect(result).toEqual(mockEnrollment);
     });
 
     it("should handle errors correctly", async () => {
-      // Mock fetchAPI to throw an error
       fetchAPI.mockRejectedValueOnce(new Error("API Error"));
 
-      // Verify the function rejects with the correct error
       await expect(getEnrollByID("123")).rejects.toThrow("Try again");
     });
 
@@ -254,7 +247,6 @@ describe("Enrollment tests", () => {
 
       await getEnrollByID("123", customParams);
 
-      // Verify custom parameters were merged correctly
       expect(fetchAPI).toHaveBeenCalledWith(
         "/enrollments",
         expect.objectContaining({
@@ -303,7 +295,6 @@ describe("Enrollment tests", () => {
 
       const result = await changeEnrollmentRating(3, "24");
 
-      // Check if fetch was called with correct parameters
       expect(global.fetch).toHaveBeenCalledWith(
         expect.stringContaining("/api/enrollments/24"),
         expect.objectContaining({
@@ -321,17 +312,14 @@ describe("Enrollment tests", () => {
         }),
       );
 
-      // Check if revalidation functions were called
       expect(revalidatePath).toHaveBeenCalledWith("/p/[slug]", "page");
 
       expect(revalidatePath).toHaveBeenCalledWith("/dashboard", "page");
 
-      // Check returned result
       expect(result).toEqual({ success: true });
     });
 
     it("should handle API errors when updating note content", async () => {
-      // Mock a failed response
       global.fetch.mockResolvedValueOnce({
         ok: false,
         status: 400,
@@ -374,12 +362,10 @@ describe("Enrollment tests", () => {
 
   describe("getDropletAverageRating", () => {
     it("should fetch and return the average rating of a Droplet", async () => {
-      // Mock the fetchAPI function
       fetchAPI.mockResolvedValueOnce(flattenAttributes(mockEnrollments));
 
       const result = await getDropletAverageRating({ id: 456 });
 
-      // Verify fetchAPI was called with correct parameters
       expect(fetchAPI).toHaveBeenCalledWith(
         "/enrollments",
         expect.objectContaining({
@@ -397,7 +383,6 @@ describe("Enrollment tests", () => {
         }),
       );
 
-      // Verify the returned data matches expected format
       expect(result).toEqual(3);
     });
 
@@ -427,10 +412,8 @@ describe("Enrollment tests", () => {
     });
 
     it("should handle errors correctly", async () => {
-      // Mock fetchAPI to throw an error
       fetchAPI.mockRejectedValueOnce(new Error("API Error"));
 
-      // Verify the function rejects with the correct error
       await expect(getDropletAverageRating({ id: 456 })).rejects.toThrow(
         "Error getting droplet average rating",
       );

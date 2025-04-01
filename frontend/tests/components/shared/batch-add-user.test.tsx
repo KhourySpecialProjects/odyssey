@@ -103,7 +103,6 @@ describe("BatchAddUser", () => {
     });
 
     it("processes CSV file content correctly", async () => {
-      // Create a mock File with a text method
       const mockFileContent = "email1@test.com\nemail2@test.com";
       const mockFile = new File([mockFileContent], "test.csv", {
         type: "text/csv",
@@ -120,13 +119,11 @@ describe("BatchAddUser", () => {
 
       render(<BatchAddUser />);
 
-      // Simulate file upload
       const input = screen.getByLabelText(/Choose Files/i);
       await act(async () => {
         fireEvent.change(input, { target: { files: [mockFile] } });
       });
 
-      // Submit form
       const form = screen.getByRole("form");
       await act(async () => {
         await fireEvent.submit(form);

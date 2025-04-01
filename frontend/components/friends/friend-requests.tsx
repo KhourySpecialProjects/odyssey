@@ -46,16 +46,8 @@ export function FriendRequests({
   return (
     <div className={`flex flex-col`}>
       <section className="mt-4">
-        <h1
-          className={`font-bold ${noProfile ? "dark:text-slate-300" : "dark:text-white"}`}
-        >
-          Friend Requests
-        </h1>
-        <p
-          className={`${noProfile ? "dark:text-slate-300" : "dark:text-white"}`}
-        >
-          A list of your pending friend requests.
-        </p>
+        <h1 className="font-bold">Friend Requests</h1>
+        <p>A list of your pending friend requests.</p>
 
         <Separator className="mt-2 dark:bg-slate-600" />
 

@@ -1,6 +1,8 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { GroupBlock } from "@/components/admin/groups/group-block";
 import { GroupSemester } from "@/types";
+import { updateGroup } from "@/lib/requests/groups";
+import { toast } from "sonner";
 
 jest.mock("next/link", () => {
   return ({ children, href }: { children: React.ReactNode; href: string }) => (
@@ -59,5 +61,15 @@ describe("GroupBlock", () => {
     expect(
       screen.getByRole("button", { name: /unarchive group/i }),
     ).toBeInTheDocument();
+  });
+
+  it("shows correct button text based on group archive status", () => {
+    const archivedGroup = { ...mockGroup, isArchived: true };
+    const { rerender } = render(<GroupBlock group={mockGroup} />);
+
+    expect(screen.getByText("Archive Group")).toBeInTheDocument();
+
+    rerender(<GroupBlock group={archivedGroup} />);
+    expect(screen.getByText("Unarchive Group")).toBeInTheDocument();
   });
 });

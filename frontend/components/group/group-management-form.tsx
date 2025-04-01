@@ -298,7 +298,7 @@ export function GroupManagementForm({
           existingGroup.groupName,
           existingGroup.id,
         );
-        router.back();
+        router.push("/g/management");
       }
     } catch (error) {
       console.error("Failed to make playlist announcement: ", error);
@@ -591,10 +591,6 @@ export function GroupManagementForm({
           >
             Cancel
           </Button>
-          {/* <Button variant="destructive" className="gap-2" onClick={handleDelete}>
-            <X className="h-4 w-4" />
-            Delete Group
-          </Button> */}
           <Button
             type="submit"
             disabled={isSubmitting}
@@ -621,7 +617,7 @@ export function GroupManagementForm({
                 <Button
                   onClick={() => {
                     setIsOpen(false);
-                    router.back();
+                    router.push("/g/management");
                   }}
                 >
                   Not Now

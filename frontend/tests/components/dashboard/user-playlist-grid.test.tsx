@@ -76,8 +76,8 @@ describe("UserPlaylistsGrid", () => {
     const mockPlaylists = [
       {
         id: 1,
-        name: "Custom Playlist",
-        slug: "custom-playlist",
+        name: "Private Playlist",
+        slug: "private-playlist",
         isPublic: false,
         duration: "short",
         droplets: [],
@@ -95,7 +95,7 @@ describe("UserPlaylistsGrid", () => {
 
     render(await UserPlaylistsGrid());
 
-    expect(screen.getByText("Custom Playlists")).toBeInTheDocument();
+    expect(screen.getByText("Private Playlists")).toBeInTheDocument();
     expect(screen.getByTestId("playlist-1")).toBeInTheDocument();
   });
 

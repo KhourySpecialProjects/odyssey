@@ -45,7 +45,7 @@ export function DropletBlock({ droplet }: { droplet: Droplet }) {
         </div>
 
         <div className="inline-flex items-center gap-2">
-          <Link href={linkTo}>
+          <Link href={linkTo} target="_blank" rel="noopener noreferrer">
             <Button size="sm" className="bg-white dark:bg-slate-300">
               <div className="relative group">
                 <Pencil className="text-sky-600" />
@@ -94,7 +94,7 @@ function SubmitButton({
       type="submit"
       size="sm"
       variant={destructive ? "destructive" : "link"}
-      className="text-slate-300 w-24"
+      className="w-24"
       aria-disabled={pending}
     >
       {children}

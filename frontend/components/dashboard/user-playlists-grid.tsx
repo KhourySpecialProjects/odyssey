@@ -108,7 +108,7 @@ export async function UserPlaylistsGrid() {
       {customPlaylists.length > 0 && (
         <section>
           <h2 className="text-xl font-semibold mb-4 dark:text-slate-300">
-            Custom Playlists
+            Private Playlists
           </h2>
           <div className="grid grid-flow-row grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 auto-rows-fr">
             {customPlaylists.map((playlist: Playlist, index) => (

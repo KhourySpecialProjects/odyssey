@@ -34,9 +34,9 @@ describe("ContentSelector", () => {
   });
 
   it("navigates to the correct URL when a tab is clicked", () => {
-    render(<ContentSelector user={mockUser} />);
+    render(<ContentSelector droplets={1} playlists={1} archived={1} />);
 
-    fireEvent.click(screen.getByText("Playlists"));
+    fireEvent.click(screen.getByText(/playlists/i));
 
     expect(mockRouter.push).toHaveBeenCalledWith("/dashboard?tab=playlists");
   });

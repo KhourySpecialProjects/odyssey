@@ -5,6 +5,7 @@ import { NotesPdfButton } from "./notes-pdf-button";
 import { PDFDocument } from "pdf-lib";
 import { NoteSummary } from "./lessons/note-taking/note-summary";
 import { Enrollment, Highlight, Note } from "@/types";
+import { Button } from "../ui/button";
 
 export function NotesManager({
   enrollments,
@@ -25,13 +26,26 @@ export function NotesManager({
   const [pdfBytes, setPdfBytes] = useState<Uint8Array>(initialPdfBytes);
   const [isGenerating, setIsGenerating] = useState(false);
 
+  const handleSelectAll = () => {
+    const newSelection = new Set(filteredEnrollments.map((e) => e.droplet.id));
+    setSelectedDropletIds(newSelection);
+  };
+
+  const handleDeselectAll = () => {
+    const newSelection = new Set(selectedDropletIds);
+    filteredEnrollments.map((e) => {
+      newSelection.delete(e.droplet.id);
+    });
+    setSelectedDropletIds(newSelection);
+  };
+
   const generatePDF = async (selectedIds: Set<number>) => {
     setIsGenerating(true);
     try {
       const pdfDoc = await PDFDocument.create();
 
-      for (let i = 0; i < enrollments.length; i++) {
-        const enrollment = enrollments[i];
+      for (let i = 0; i < filteredEnrollments.length; i++) {
+        const enrollment = filteredEnrollments[i];
         if (!selectedIds.has(enrollment.droplet.id)) continue;
 
         const dropletData = allNotes[i];
@@ -73,6 +87,11 @@ export function NotesManager({
     generatePDF(selectedDropletIds);
   }, [selectedDropletIds]);
 
+  const filteredEnrollments = enrollments.filter((e, index) => {
+    const dropletData = allNotes[index];
+    return dropletData.highlights.length > 0 || dropletData.notes.length > 0;
+  });
+
   return (
     <>
       <div className="max-w-2xl mx-auto text-center">
@@ -90,9 +109,11 @@ export function NotesManager({
             <NotesPdfButton
               pdfBytes={pdfBytes}
               name="notes-summary"
-              enrollments={enrollments.filter((enrollment) =>
-                selectedDropletIds.has(enrollment.droplet.id),
-              )}
+              noNotes={
+                filteredEnrollments.filter((enrollment) =>
+                  selectedDropletIds.has(enrollment.droplet.id),
+                ).length === 0
+              }
             />
           )}
         </section>
@@ -101,8 +122,16 @@ export function NotesManager({
           the PDF
         </p>
       </div>
-      <div className="w-full max-w-2xl mx-auto space-y-4">
-        {enrollments.map((enrollment, index) => {
+      <div className="flex flex-row gap-2">
+        <Button onClick={handleSelectAll} className="w-24">
+          Select All
+        </Button>
+        <Button onClick={handleDeselectAll} className="w-24">
+          Deselect All
+        </Button>
+      </div>
+      <div className="w-full mx-auto space-y-4">
+        {filteredEnrollments.map((enrollment, index) => {
           const dropletData = allNotes[index];
           return (
             <NotesSummaryClient
@@ -113,6 +142,7 @@ export function NotesManager({
               enrollment={enrollment}
               allNotes={allNotes}
               onSelectionChange={handleSelectionChange}
+              selectedDropletIds={selectedDropletIds}
             />
           );
         })}

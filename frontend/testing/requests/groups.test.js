@@ -44,7 +44,6 @@ jest.mock("../../lib/utils", () => ({
   }),
 }));
 
-// Mock dependencies
 jest.mock("../../lib/utils", () => ({
   fetchAPI: jest.fn(),
 }));
@@ -72,11 +71,9 @@ jest.mock("next/cache", () => ({
 
 global.fetch = jest.fn();
 
-//Comment this out if working on error testing (suppresses console error logs from error mocking)
-
 beforeEach(() => {
-  jest.spyOn(console, "error").mockImplementation(() => {}); // Suppress console errors
-  jest.spyOn(console, "warn").mockImplementation(() => {}); // Suppress console warnings
+  jest.spyOn(console, "error").mockImplementation(() => {});
+  jest.spyOn(console, "warn").mockImplementation(() => {});
 });
 
 beforeEach(() => {
@@ -113,10 +110,8 @@ describe("Groups Tests", () => {
 
       const result = await getManagedGroups(authorizedUserId);
 
-      // Verify result matches expected data
       expect(result).toEqual(mockManagedGroups);
 
-      // Verify fetchAPI was called with correct parameters
       expect(fetchAPI).toHaveBeenCalledWith("/groups", {
         urlParams: expect.objectContaining({
           sort: ["groupName:asc"],
@@ -160,7 +155,6 @@ describe("Groups Tests", () => {
 
       await getManagedGroups(authorizedUserId, customParams);
 
-      // Verify custom parameters were passed to fetchAPI
       expect(fetchAPI).toHaveBeenCalledWith("/groups", {
         urlParams: expect.objectContaining({
           sort: ["semester:desc"],
@@ -202,10 +196,8 @@ describe("Groups Tests", () => {
 
       const result = await getGroupBySlug(slug, authorizedUserId);
 
-      // Verify result matches expected data
       expect(result).toEqual(mockGroup);
 
-      // Verify fetchAPI was called with correct parameters
       expect(fetchAPI).toHaveBeenCalledWith("/groups", {
         urlParams: expect.objectContaining({
           filters: {
@@ -268,7 +260,6 @@ describe("Groups Tests", () => {
         populate: customPopulate,
       });
 
-      // Verify custom populate options were passed to fetchAPI
       expect(fetchAPI).toHaveBeenCalledWith("/groups", {
         urlParams: expect.objectContaining({
           populate: customPopulate,
@@ -333,10 +324,8 @@ describe("Groups Tests", () => {
 
       const result = await getGroupByID(groupId);
 
-      // Verify result matches expected data
       expect(result).toEqual(mockGroup);
 
-      // Verify fetchAPI was called with correct parameters
       expect(fetchAPI).toHaveBeenCalledWith("/groups", {
         urlParams: expect.objectContaining({
           filters: {
@@ -350,7 +339,6 @@ describe("Groups Tests", () => {
         cache: "no-store",
       });
 
-      // Verify revalidatePath was called for paths that need refreshing
       expect(revalidatePath).toHaveBeenCalledWith("/dashboard");
       expect(revalidatePath).toHaveBeenCalledWith("/explore");
     });
@@ -367,7 +355,6 @@ describe("Groups Tests", () => {
 
       await getGroupByID(groupId, { populate: customPopulate });
 
-      // Verify custom populate options were passed to fetchAPI
       expect(fetchAPI).toHaveBeenCalledWith("/groups", {
         urlParams: expect.objectContaining({
           populate: customPopulate,
@@ -411,10 +398,8 @@ describe("Groups Tests", () => {
 
       const result = await getUserGroups(authorizedUserId);
 
-      // Verify result matches expected data
       expect(result).toEqual(mockUserGroups);
 
-      // Verify fetchAPI was called with correct parameters
       expect(fetchAPI).toHaveBeenCalledWith("/groups", {
         urlParams: expect.objectContaining({
           sort: ["groupName:asc"],
@@ -447,7 +432,6 @@ describe("Groups Tests", () => {
 
       await getUserGroups(authorizedUserId, customParams);
 
-      // Verify custom parameters were passed to fetchAPI
       expect(fetchAPI).toHaveBeenCalledWith("/groups", {
         urlParams: expect.objectContaining({
           sort: ["semester:desc"],
@@ -492,10 +476,8 @@ describe("Groups Tests", () => {
 
       const result = await updateGroupMembers(groupId, updates);
 
-      // Verify result matches expected data
       expect(result).toEqual(mockUpdatedGroup);
 
-      // Verify fetchAPI was called with correct parameters
       expect(fetchAPI).toHaveBeenCalledWith(`/groups/${groupId}`, {
         options: {
           method: "PUT",
@@ -524,7 +506,6 @@ describe("Groups Tests", () => {
 
       const result = await updateGroupMembers(groupId, updates);
 
-      // Verify fetchAPI was called with correct parameters
       expect(fetchAPI).toHaveBeenCalledWith(`/groups/${groupId}`, {
         options: {
           method: "PUT",
@@ -548,7 +529,6 @@ describe("Groups Tests", () => {
 
       await updateGroupMembers(groupId, updates);
 
-      // Verify fetchAPI was called with correct parameters
       expect(fetchAPI).toHaveBeenCalledWith(`/groups/${groupId}`, {
         options: {
           method: "PUT",
@@ -595,10 +575,8 @@ describe("Groups Tests", () => {
 
       const result = await addGroupMembers(groupId, userIds);
 
-      // Verify result matches expected data
       expect(result).toEqual(mockUpdatedGroup);
 
-      // Verify fetchAPI was called with correct parameters
       expect(fetchAPI).toHaveBeenCalledWith(`/groups/${groupId}`, {
         options: {
           method: "PUT",
@@ -620,7 +598,6 @@ describe("Groups Tests", () => {
 
       await addGroupMembers(groupId, userIds, role);
 
-      // Verify fetchAPI was called with correct parameters
       expect(fetchAPI).toHaveBeenCalledWith(`/groups/${groupId}`, {
         options: {
           method: "PUT",
@@ -659,10 +636,8 @@ describe("Groups Tests", () => {
 
       const result = await removeGroupMembers(groupId, userIds);
 
-      // Verify result matches expected data
       expect(result).toEqual(mockUpdatedGroup);
 
-      // Verify fetchAPI was called with correct parameters
       expect(fetchAPI).toHaveBeenCalledWith(`/groups/${groupId}`, {
         options: {
           method: "PUT",
@@ -684,7 +659,6 @@ describe("Groups Tests", () => {
 
       await removeGroupMembers(groupId, userIds, role);
 
-      // Verify fetchAPI was called with correct parameters
       expect(fetchAPI).toHaveBeenCalledWith(`/groups/${groupId}`, {
         options: {
           method: "PUT",
@@ -734,10 +708,8 @@ describe("Groups Tests", () => {
         toRole,
       );
 
-      // Verify result matches expected data
       expect(result).toEqual(mockUpdatedGroup);
 
-      // Verify fetchAPI was called with correct parameters
       expect(fetchAPI).toHaveBeenCalledWith(`/groups/${groupId}`, {
         options: {
           method: "PUT",
@@ -762,7 +734,6 @@ describe("Groups Tests", () => {
 
       await changeGroupMemberRole(groupId, userId, fromRole, toRole);
 
-      // Verify fetchAPI was called with correct parameters
       expect(fetchAPI).toHaveBeenCalledWith(`/groups/${groupId}`, {
         options: {
           method: "PUT",
@@ -807,7 +778,6 @@ describe("Groups Tests", () => {
         playlists: [3, 4],
       };
 
-      // Mock getAuthorizedUserByEmail for member emails
       getAuthorizedUserByEmail.mockResolvedValueOnce({
         id: 20,
         email: "member1@northeastern.edu",
@@ -829,10 +799,8 @@ describe("Groups Tests", () => {
 
       const result = await createGroup(authorizedUserId, groupData);
 
-      // Verify the result is the created group
       expect(result).toEqual(mockCreatedGroup);
 
-      // Verify fetchAPI was called with correct parameters
       expect(fetchAPI).toHaveBeenCalledWith("/groups", {
         options: {
           method: "POST",
@@ -840,10 +808,8 @@ describe("Groups Tests", () => {
         },
       });
 
-      // Parse the request body to validate its structure
       const actualBody = JSON.parse(fetchAPI.mock.calls[0][1].options.body);
 
-      // Verify key properties are present
       expect(actualBody.data).toHaveProperty("groupName", "Test Group");
       expect(actualBody.data).toHaveProperty(
         "description",
@@ -856,12 +822,10 @@ describe("Groups Tests", () => {
         expect.stringMatching(/random-slug-\d+/),
       );
 
-      // Verify member role assignments
       expect(actualBody.data.admins).toHaveProperty("set", [10, 11]);
       expect(actualBody.data.managers).toHaveProperty("set", [12]);
       expect(actualBody.data.members.set).toEqual([{ id: 20 }, { id: 21 }]);
 
-      // Verify droplets and playlists
       expect(actualBody.data.droplets).toHaveProperty("connect");
       expect(actualBody.data.droplets.connect).toEqual([{ id: 1 }, { id: 2 }]);
       expect(actualBody.data.playlists).toHaveProperty("connect");
@@ -885,13 +849,11 @@ describe("Groups Tests", () => {
 
       const result = await createGroup(authorizedUserId, groupData);
 
-      // Verify the result
       expect(result).toEqual(mockCreatedGroup);
 
-      // Verify request body contains default values
       const requestBody = JSON.parse(fetchAPI.mock.calls[0][1].options.body);
       expect(requestBody.data).toHaveProperty("groupName", "Minimal Group");
-      expect(requestBody.data).toHaveProperty("semester", "Open Membership"); // Default value
+      expect(requestBody.data).toHaveProperty("semester", "Open Membership");
       expect(requestBody.data).toHaveProperty("creator", 5);
       expect(requestBody.data).not.toHaveProperty("droplets");
       expect(requestBody.data).not.toHaveProperty("playlists");
@@ -906,27 +868,22 @@ describe("Groups Tests", () => {
         },
       };
 
-      // First email exists
       getAuthorizedUserByEmail.mockResolvedValueOnce({
         id: 30,
         email: "existing@northeastern.edu",
       });
 
-      // Second email doesn't exist, so createAuthorizedUserInGroup is called
       getAuthorizedUserByEmail.mockResolvedValueOnce(null);
 
-      // Mock the fetch call for creating new user
       global.fetch = jest.fn().mockResolvedValueOnce({
         ok: true,
         json: async () => ({ data: { id: 31 } }),
       });
 
-      // Mock the successful group creation
       fetchAPI.mockResolvedValueOnce({ id: 125, groupName: "Test Group" });
 
       await createGroup(authorizedUserId, groupData);
 
-      // Check that all expected user processing occurred
       expect(getAuthorizedUserByEmail).toHaveBeenCalledWith(
         "existing@northeastern.edu",
       );
@@ -934,12 +891,8 @@ describe("Groups Tests", () => {
         "new@northeastern.edu",
       );
 
-      // Parse the body of the group creation to verify members
       const requestBody = JSON.parse(fetchAPI.mock.calls[0][1].options.body);
-      expect(requestBody.data.members.set).toEqual([
-        { id: 30 }, // Existing user
-        { id: 31 }, // Newly created user
-      ]);
+      expect(requestBody.data.members.set).toEqual([{ id: 30 }, { id: 31 }]);
     });
 
     it("should handle errors during group creation", async () => {
@@ -948,10 +901,8 @@ describe("Groups Tests", () => {
         groupName: "Error Group",
       };
 
-      // Mock the error
       fetchAPI.mockRejectedValueOnce(new Error("Failed to create group"));
 
-      // Verify the error is propagated
       await expect(createGroup(authorizedUserId, groupData)).rejects.toThrow(
         "Failed to create group",
       );
@@ -1009,10 +960,8 @@ describe("Groups Tests", () => {
 
       const result = await getGroupBySlugV2(slug);
 
-      // Verify result matches expected data
       expect(result).toEqual(mockGroup);
 
-      // Verify fetchAPI was called with correct parameters
       expect(fetchAPI).toHaveBeenCalledWith("/groups", {
         urlParams: {
           filters: {
@@ -1084,7 +1033,6 @@ describe("Groups Tests", () => {
 
       await getGroupBySlugV2(slug, customParams);
 
-      // Verify custom parameters were passed to fetchAPI
       expect(fetchAPI).toHaveBeenCalledWith("/groups", {
         urlParams: expect.objectContaining({
           populate: customParams.populate,
@@ -1131,7 +1079,6 @@ describe("Groups Tests", () => {
         ],
       };
 
-      // Mock for ensureAuthorizedUsers
       getAuthorizedUserByEmail.mockResolvedValueOnce({
         id: 20,
         email: "member1@northeastern.edu",
@@ -1153,10 +1100,8 @@ describe("Groups Tests", () => {
 
       const result = await updateGroup(groupId, updateData);
 
-      // Verify result
       expect(result).toEqual(mockUpdatedGroup);
 
-      // Verify fetchAPI was called correctly
       expect(fetchAPI).toHaveBeenCalledWith(`/groups/${groupId}`, {
         options: {
           method: "PUT",
@@ -1164,13 +1109,10 @@ describe("Groups Tests", () => {
         },
       });
 
-      // Verify revalidatePath was called
       expect(revalidatePath).toHaveBeenCalledWith("/admin");
 
-      // Parse the body and check its structure
       const requestBody = JSON.parse(fetchAPI.mock.calls[0][1].options.body);
 
-      // Verify basic fields
       expect(requestBody.data).toHaveProperty("groupName", "Updated Group");
       expect(requestBody.data).toHaveProperty(
         "description",
@@ -1179,7 +1121,6 @@ describe("Groups Tests", () => {
       expect(requestBody.data).toHaveProperty("semester", "Spring 2024");
       expect(requestBody.data).toHaveProperty("isArchived", true);
 
-      // Verify relations are correctly formatted
       expect(requestBody.data.admins.set).toEqual([{ id: 10 }, { id: 11 }]);
       expect(requestBody.data.managers.set).toEqual([{ id: 12 }]);
       expect(requestBody.data.members.set).toEqual([{ id: 20 }, { id: 21 }]);
@@ -1202,7 +1143,6 @@ describe("Groups Tests", () => {
 
       await updateGroup(groupId, partialUpdateData);
 
-      // Parse the body and check that only specified fields are included
       const requestBody = JSON.parse(fetchAPI.mock.calls[0][1].options.body);
       expect(requestBody.data).toHaveProperty("groupName", "Renamed Group");
       expect(requestBody.data).toHaveProperty("description", "New description");
@@ -1219,14 +1159,13 @@ describe("Groups Tests", () => {
       const groupId = 1;
       const updateData = {
         groupName: "Updated Group",
-        members: [], // Empty members array
+        members: [],
       };
 
       fetchAPI.mockResolvedValueOnce({ id: 1, groupName: "Updated Group" });
 
       await updateGroup(groupId, updateData);
 
-      // Verify the data structure - members should still be set with empty array
       const requestBody = JSON.parse(fetchAPI.mock.calls[0][1].options.body);
       expect(requestBody.data).toHaveProperty("groupName", "Updated Group");
       expect(requestBody.data).toHaveProperty("members");
@@ -1243,7 +1182,6 @@ describe("Groups Tests", () => {
         ],
       };
 
-      // Mock the user lookups
       getAuthorizedUserByEmail.mockResolvedValueOnce({
         id: 101,
         email: "email1@northeastern.edu",
@@ -1257,7 +1195,6 @@ describe("Groups Tests", () => {
 
       await updateGroup(groupId, updateData);
 
-      // Verify correct processing of member emails
       const requestBody = JSON.parse(fetchAPI.mock.calls[0][1].options.body);
       expect(requestBody.data.members.set).toEqual([{ id: 101 }, { id: 102 }]);
     });
@@ -1268,10 +1205,8 @@ describe("Groups Tests", () => {
         groupName: "Error Group",
       };
 
-      // Mock the error
       fetchAPI.mockRejectedValueOnce(new Error("Failed to update group"));
 
-      // Verify the error is propagated but revalidatePath is still called
       await expect(updateGroup(groupId, updateData)).rejects.toThrow(
         "Failed to update group",
       );
@@ -1281,12 +1216,10 @@ describe("Groups Tests", () => {
 
   describe("createAuthorizedUserInGroup", () => {
     it("should successfully create an authorized user", async () => {
-      // Setup test data
       const email = "test@northeastern.edu";
       const isEnabled = true;
       const roleID = 1;
 
-      // Mock successful API response
       global.fetch.mockResolvedValueOnce({
         ok: true,
         json: async () => ({
@@ -1300,17 +1233,14 @@ describe("Groups Tests", () => {
         }),
       });
 
-      // Execute the function
       const result = await createAuthorizedUserInGroup(email, isEnabled);
 
-      // Verify the result is correct
       expect(result).toEqual({
         ok: true,
         message: `User ${email} created!`,
         data: { id: 123 },
       });
 
-      // Verify the fetch call was made with correct parameters
       expect(global.fetch).toHaveBeenCalledWith(
         expect.stringContaining("/api/authorized-users"),
         {
@@ -1335,7 +1265,6 @@ describe("Groups Tests", () => {
     it("should handle API error responses", async () => {
       const email = "error@northeastern.edu";
 
-      // Mock API error response
       global.fetch.mockResolvedValueOnce({
         ok: false,
         json: async () => ({
@@ -1345,10 +1274,8 @@ describe("Groups Tests", () => {
         }),
       });
 
-      // Execute the function
       const result = await createAuthorizedUserInGroup(email);
 
-      // Verify the error result
       expect(result).toEqual({
         ok: false,
         error: "Email already exists",
@@ -1359,7 +1286,6 @@ describe("Groups Tests", () => {
     it("should handle successful response with error property", async () => {
       const email = "edge-case@northeastern.edu";
 
-      // Mock API response that is "ok" but contains an error (edge case)
       global.fetch.mockResolvedValueOnce({
         ok: true,
         json: async () => ({
@@ -1369,10 +1295,8 @@ describe("Groups Tests", () => {
         }),
       });
 
-      // Execute the function
       const result = await createAuthorizedUserInGroup(email);
 
-      // Verify the error result
       expect(result).toEqual({
         ok: false,
         error: "Validation error",
@@ -1383,27 +1307,22 @@ describe("Groups Tests", () => {
     it("should handle network errors", async () => {
       const email = "network-error@northeastern.edu";
 
-      // Mock network error
       global.fetch.mockRejectedValueOnce(new Error("Network failure"));
 
-      // Execute the function
       const result = await createAuthorizedUserInGroup(email);
 
-      // Verify the error result
       expect(result).toEqual({
         ok: false,
         error: "Database Error: Failed to Create Authorized User.",
         data: null,
       });
 
-      // Verify error was logged
       expect(console.error).toHaveBeenCalled();
     });
   });
 
   describe("enrollUsers", () => {
     it("should enroll all members in all droplets and playlists", async () => {
-      // Setup a mock group
       const mockGroup = {
         id: 1,
         groupName: "Test Group",
@@ -1427,11 +1346,9 @@ describe("Groups Tests", () => {
         ],
       };
 
-      // Mock successful enrollments
       createEnrollmentFromEmail.mockResolvedValue({ id: 1, success: true });
       enrollInPlaylist.mockResolvedValue({ success: true });
 
-      // Execute the function
       const result = await enrollUsers(mockGroup);
 
       // Verify createEnrollmentFromEmail was called for each member-droplet pair
@@ -1440,7 +1357,6 @@ describe("Groups Tests", () => {
       // Total: 8 calls
       expect(createEnrollmentFromEmail).toHaveBeenCalledTimes(8);
 
-      // Check specific calls for direct droplets
       expect(createEnrollmentFromEmail).toHaveBeenCalledWith(
         { droplet: 101, viewedLessons: [] },
         "member1@northeastern.edu",
@@ -1458,12 +1374,10 @@ describe("Groups Tests", () => {
         "member2@northeastern.edu",
       );
 
-      // Verify enrollInPlaylist was called for each member-playlist pair
       expect(enrollInPlaylist).toHaveBeenCalledTimes(2);
       expect(enrollInPlaylist).toHaveBeenCalledWith(201, 10);
       expect(enrollInPlaylist).toHaveBeenCalledWith(201, 11);
 
-      // Verify playlist droplet enrollments
       expect(createEnrollmentFromEmail).toHaveBeenCalledWith(
         { droplet: 103, viewedLessons: [] },
         "member1@northeastern.edu",
@@ -1485,7 +1399,6 @@ describe("Groups Tests", () => {
 
       await enrollUsers(mockGroup);
 
-      // Verify no enrollment functions were called
       expect(createEnrollmentFromEmail).not.toHaveBeenCalled();
       expect(enrollInPlaylist).not.toHaveBeenCalled();
     });
@@ -1501,7 +1414,6 @@ describe("Groups Tests", () => {
 
       await enrollUsers(mockGroup);
 
-      // Verify no enrollment functions were called
       expect(createEnrollmentFromEmail).not.toHaveBeenCalled();
       expect(enrollInPlaylist).not.toHaveBeenCalled();
     });
@@ -1515,15 +1427,12 @@ describe("Groups Tests", () => {
         playlists: [],
       };
 
-      //Mock first enrollment succeeding, second failing
       createEnrollmentFromEmail
         .mockRejectedValueOnce(new Error("Enrollment failed"))
         .mockResolvedValueOnce({ id: 1, success: true });
 
-      // Should not throw, but log the error
       const result = await enrollUsers(mockGroup);
 
-      // Verify both enrollment attempts were made
       expect(createEnrollmentFromEmail).toHaveBeenCalledTimes(2);
       expect(createEnrollmentFromEmail).toHaveBeenCalledWith(
         { droplet: 101, viewedLessons: [] },
@@ -1534,7 +1443,6 @@ describe("Groups Tests", () => {
         "member@northeastern.edu",
       );
 
-      // // Verify error was logged
       expect(console.error).toHaveBeenCalled();
     });
   });
@@ -1657,7 +1565,6 @@ describe("Groups Tests", () => {
                 });
         */
     it("should update existing due dates if they already exist", async () => {
-      // Setup test data
       const date = "2023-12-31";
       const mockGroup = {
         id: 1,
@@ -1665,33 +1572,27 @@ describe("Groups Tests", () => {
       };
       const mockDroplet = { id: 101, name: "Test Droplet" };
 
-      // Mock existing due date found, updating it
       global.fetch
-        // First fetch: check for existing due dates
         .mockResolvedValueOnce({
           json: async () => ({
             data: [
               {
                 id: 201,
                 attributes: {
-                  dueDate: "2023-10-15", // Old date
+                  dueDate: "2023-10-15",
                 },
               },
             ],
           }),
         })
-        // Second fetch: update existing due date
         .mockResolvedValueOnce({
           ok: true,
         });
 
-      // Execute the function
       const result = await assignDropletDueDate(date, mockGroup, mockDroplet);
 
-      // Verify the result
       expect(result).toEqual({ success: true });
 
-      // Check if fetch was called with correct parameters
       expect(global.fetch).toHaveBeenNthCalledWith(
         2,
         expect.stringContaining("/api/due-dates/201"),
@@ -1714,20 +1615,17 @@ describe("Groups Tests", () => {
       const date = "2023-12-31";
       const mockGroup = {
         id: 1,
-        members: [], // No members
+        members: [],
       };
       const mockDroplet = { id: 101 };
 
-      // Execute the function
       const result = await assignDropletDueDate(date, mockGroup, mockDroplet);
 
-      // Verify the error result
       expect(result).toEqual({
         success: false,
         error: "No members found in the group",
       });
 
-      // Verify no API calls were made
       expect(global.fetch).not.toHaveBeenCalled();
     });
 
@@ -1739,28 +1637,22 @@ describe("Groups Tests", () => {
       };
       const mockDroplet = { id: 101 };
 
-      // Mock API failure when creating due date
       global.fetch
-        // First fetch: check for existing due dates
         .mockResolvedValueOnce({
           json: async () => ({ data: [] }),
         })
-        // Second fetch: fail to create due date
         .mockResolvedValueOnce({
           ok: false,
           text: async () => "Server error",
         });
 
-      // Execute the function
       const result = await assignDropletDueDate(date, mockGroup, mockDroplet);
 
-      // Verify the error result
       expect(result).toEqual({
         success: false,
         error: "Failed to process due dates for some users",
       });
 
-      // Verify error was logged
       expect(console.error).toHaveBeenCalled();
     });
 
@@ -1772,19 +1664,15 @@ describe("Groups Tests", () => {
       };
       const mockDroplet = { id: 101 };
 
-      // Mock network error
       global.fetch.mockRejectedValueOnce(new Error("Network failure"));
 
-      // Execute the function
       const result = await assignDropletDueDate(date, mockGroup, mockDroplet);
 
-      // Verify the error result
       expect(result).toEqual({
         success: false,
         error: "Failed to process request",
       });
 
-      // Verify error was logged
       expect(console.error).toHaveBeenCalled();
     });
   });
@@ -1933,20 +1821,17 @@ describe("Groups Tests", () => {
       const date = "2023-12-31";
       const mockGroup = {
         id: 1,
-        members: [], // No members
+        members: [],
       };
       const mockPlaylist = { id: 201 };
 
-      // Execute the function
       const result = await assignPlaylistDueDate(date, mockGroup, mockPlaylist);
 
-      // Verify the error result
       expect(result).toEqual({
         success: false,
         error: "No members found in the group",
       });
 
-      // Verify no API calls were made
       expect(global.fetch).not.toHaveBeenCalled();
     });
 
@@ -1958,28 +1843,22 @@ describe("Groups Tests", () => {
       };
       const mockPlaylist = { id: 201 };
 
-      // Mock API failure when creating due date
       global.fetch
-        // First fetch: check for existing due dates
         .mockResolvedValueOnce({
           json: async () => ({ data: [] }),
         })
-        // Second fetch: fail to create due date
         .mockResolvedValueOnce({
           ok: false,
           text: async () => "Server error",
         });
 
-      // Execute the function
       const result = await assignPlaylistDueDate(date, mockGroup, mockPlaylist);
 
-      // Verify the error result
       expect(result).toEqual({
         success: false,
         error: "Failed to process due dates for some users",
       });
 
-      // Verify error was logged
       expect(console.error).toHaveBeenCalled();
     });
 
@@ -1991,19 +1870,15 @@ describe("Groups Tests", () => {
       };
       const mockPlaylist = { id: 201 };
 
-      // Mock network error
       global.fetch.mockRejectedValueOnce(new Error("Network failure"));
 
-      // Execute the function
       const result = await assignPlaylistDueDate(date, mockGroup, mockPlaylist);
 
-      // Verify the error result
       expect(result).toEqual({
         success: false,
         error: "Failed to process request",
       });
 
-      // Verify error was logged
       expect(console.error).toHaveBeenCalled();
     });
     /*
@@ -2062,7 +1937,6 @@ describe("Groups Tests", () => {
   });
 
   describe("getGroupDueDate", () => {
-    // ===== DROPLET TESTS =====
     it("should fetch due date for a droplet in a group", async () => {
       const mockGroup = { id: 1, groupName: "Test Group" };
       const mockDroplet = { id: 101, name: "Test Droplet", type: "video" };
@@ -2114,7 +1988,6 @@ describe("Groups Tests", () => {
       expect(result).toEqual(mockDueDates[0]);
     });
 
-    // ===== PLAYLIST TESTS =====
     it("should fetch due date for a playlist in a group", async () => {
       const mockGroup = { id: 1, groupName: "Test Group" };
       const mockPlaylist = { id: 201, name: "Test Playlist" };
@@ -2141,7 +2014,6 @@ describe("Groups Tests", () => {
       expect(result).toEqual(mockDueDate);
     });
 
-    // ===== EDGE CASES =====
     it("should return undefined when no due dates exist", async () => {
       const mockGroup = { id: 1, groupName: "Test Group" };
       const mockDroplet = { id: 101, name: "Test Droplet", type: "video" };
@@ -2153,7 +2025,6 @@ describe("Groups Tests", () => {
       expect(result).toBeUndefined();
     });
 
-    // ===== ERROR HANDLING =====
     it("should handle API errors", async () => {
       const mockGroup = { id: 1, groupName: "Test Group" };
       const mockDroplet = { id: 101, name: "Test Droplet", type: "video" };
@@ -2172,7 +2043,6 @@ describe("Groups Tests", () => {
   });
 
   describe("getGroupDueDates", () => {
-    // ===== HAPPY PATH =====
     it("should fetch all due dates for a group with default parameters", async () => {
       const mockGroup = { id: 1, groupName: "Test Group" };
       const mockDueDates = [
@@ -2267,7 +2137,6 @@ describe("Groups Tests", () => {
 
       await getGroupDueDates(mockGroup, { fields: customFields });
 
-      // Fields should include both custom fields and the required dueDate field
       expect(fetchAPI).toHaveBeenCalledWith(
         "/due-dates",
         expect.objectContaining({
@@ -2278,7 +2147,6 @@ describe("Groups Tests", () => {
       );
     });
 
-    // ===== EDGE CASES =====
     it("should handle empty result sets", async () => {
       const mockGroup = { id: 1, groupName: "Test Group" };
 
@@ -2289,7 +2157,6 @@ describe("Groups Tests", () => {
       expect(result).toEqual([]);
     });
 
-    // ===== ERROR HANDLING =====
     it("should handle API errors", async () => {
       const mockGroup = { id: 1, groupName: "Test Group" };
       const mockError = new Error("API error");
@@ -2301,7 +2168,6 @@ describe("Groups Tests", () => {
   });
 
   describe("getUserDueDates", () => {
-    // ===== HAPPY PATH =====
     it("should fetch all due dates for a user with default parameters", async () => {
       const userId = 10;
       const mockDueDates = [
@@ -2406,7 +2272,6 @@ describe("Groups Tests", () => {
       );
     });
 
-    // ===== EDGE CASES =====
     it("should handle empty result sets", async () => {
       const userId = 10;
 
@@ -2426,7 +2291,6 @@ describe("Groups Tests", () => {
       await expect(getUserDueDates(invalidUserId)).rejects.toThrow();
     });
 
-    // ===== ERROR HANDLING =====
     it("should handle API errors", async () => {
       const userId = 10;
       const mockError = new Error("API error");

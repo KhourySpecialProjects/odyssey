@@ -56,7 +56,7 @@ export function UserBlock({
         </div>
       </DialogTrigger>
 
-      <DialogContent>
+      <DialogContent className="dark:bg-slate-700">
         <DialogHeader>
           <div className="flex justify-center items-center">
             <Avatar
@@ -89,12 +89,12 @@ export function UserBlock({
             )}
           </div>
           {user.bio && (
-            <DialogDescription className="text-center">
+            <DialogDescription className="text-center dark:text-slate-300">
               {user.bio}
             </DialogDescription>
           )}
-          <hr></hr>
-          <DialogDescription className="text-center font-bold">
+          <hr className="dark:text-slate-300"></hr>
+          <DialogDescription className="text-center font-bold dark:text-slate-300">
             Completed Droplets:{" "}
           </DialogDescription>
           <FriendCompletedDroplets friend={user} />
@@ -104,7 +104,7 @@ export function UserBlock({
           >
             <Button
               size="sm"
-              className="bg-red-600 text-white hover:bg-red-700"
+              className="bg-red-600 dark:bg-red-300 text-white hover:bg-red-700"
             >
               Block user
             </Button>

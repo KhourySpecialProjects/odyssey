@@ -21,56 +21,56 @@ export function FeedFilter({ onFilterChange }: FeedFilterProps) {
     {
       value: AnnouncementTypeTitle.Droplet,
       label: (
-        <div className="flex items-center justify-between w-full gap-1">
-          <span>Droplet</span>
+        <>
+          <span role="droplet">Droplet</span>
           <Droplet size={20} />
-        </div>
+        </>
       ),
       color: "bg-blue-200 dark:bg-blue-800 dark:text-slate-300",
     },
     {
       value: AnnouncementTypeTitle.Playlist,
       label: (
-        <div className="flex items-center justify-between w-full gap-1">
-          <span>Playlist</span>
+        <>
+          <span role="playlist">Playlist</span>
           <ListVideo size={20} />
-        </div>
+        </>
       ),
       color: "bg-green-200 dark:bg-green-800 dark:text-slate-300",
     },
     {
       value: AnnouncementTypeTitle.Group,
       label: (
-        <div className="flex items-center justify-between w-full gap-1">
-          Group <UsersRound size={20} />
-        </div>
+        <>
+          <span role="group">Group</span> <UsersRound size={20} />
+        </>
       ),
       color: "bg-purple-200 dark:bg-purple-800 dark:text-slate-300",
     },
     {
       value: AnnouncementTypeTitle.System,
       label: (
-        <div className="flex items-center justify-between w-full gap-1">
-          System <CircleAlert size={20} />
-        </div>
+        <>
+          <span role="system">System</span> <CircleAlert size={20} />
+        </>
       ),
       color: "bg-red-200 dark:bg-red-800 dark:text-slate-300",
     },
     {
       value: AnnouncementTypeTitle.Friend,
       label: (
-        <div className="flex items-center justify-between w-full gap-1">
-          Friend <Handshake size={20} />
-        </div>
+        <>
+          <span role="friend">Friend</span> <Handshake size={20} />
+        </>
       ),
       color: "bg-yellow-200 dark:bg-yellow-800 dark:text-slate-300",
     },
     {
       value: AnnouncementTypeTitle.Kudos,
       label: (
-        <div className="flex items-center justify-between w-full gap-1">
-          Kudos <PartyPopper size={20} />
-        </div>
+        <>
+          <span role="kudos">Kudos</span> <PartyPopper size={20} />
+        </>
       ),
       color: "bg-orange-200 dark:bg-orange-800 dark:text-slate-300",
     },
@@ -94,19 +94,16 @@ export function FeedFilter({ onFilterChange }: FeedFilterProps) {
       {roleOptions.map((role) => (
         <div
           key={role.value}
-          className={`flex items-center space-x-2 p-1 rounded-lg ${role.color} scale-125 ml-2`}
+          className={`flex items-center space-x-2 p-1 rounded-md ${role.color} scale-125 ml-2`}
         >
           <button
             id={role.value}
             onClick={() => toggleRole(role.value)}
-            className={`${selectedRoles.includes(role.value) ? "opacity-100" : "opacity-30"} focus-visible:ring-sky-500 pl-1`}
+            className={`${selectedRoles.includes(role.value) ? "opacity-100" : "opacity-30"} focus-visible:ring-sky-500 pl-1 cursor-pointer w-[100px]`}
           >
-            <label
-              htmlFor={role.value}
-              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex-1"
-            >
+            <span className="text-sm font-medium leading-none flex items-center justify-between w-full gap-1">
               {role.label}
-            </label>
+            </span>
           </button>
         </div>
       ))}

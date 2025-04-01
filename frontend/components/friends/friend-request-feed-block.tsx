@@ -106,7 +106,7 @@ export function FriendRequestFeedBlock({
         >
           <div className="relative group">
             <Check className="w-3 h-3 group-hover:scale-110 transition-transform" />
-            <span className="absolute left-1/2 transform -translate-x-1/2 top-full mt-1 w-max px-2 py-1 text-xs text-white bg-gray-800 rounded opacity-0 group-hover:opacity-100 transition-opacity">
+            <span className="absolute left-1/2 transform -translate-x-1/2 top-full mt-1 w-max px-2 py-1 text-xs text-white bg-gray-800 rounded-md opacity-0 group-hover:opacity-100 transition-opacity">
               Accept
             </span>
           </div>
@@ -121,7 +121,7 @@ export function FriendRequestFeedBlock({
         >
           <div className="relative group">
             <X className="w-3 h-3" />
-            <span className="absolute left-1/2 transform -translate-x-1/2 top-full mt-1 w-max px-2 py-1 text-xs text-white bg-gray-800 rounded opacity-0 group-hover:opacity-100 transition-opacity">
+            <span className="absolute left-1/2 transform -translate-x-1/2 top-full mt-1 w-max px-2 py-1 text-xs text-white bg-gray-800 rounded-md opacity-0 group-hover:opacity-100 transition-opacity">
               Reject
             </span>
           </div>
@@ -132,7 +132,7 @@ export function FriendRequestFeedBlock({
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild></DialogTrigger>
 
-          <DialogContent>
+          <DialogContent className="dark:bg-slate-700">
             <DialogHeader>
               <div className="flex justify-center items-center">
                 <Avatar
@@ -141,6 +141,7 @@ export function FriendRequestFeedBlock({
                 >
                   <AvatarImage src={request?.profilePhoto || undefined} />
                   <AvatarFallback className="text-2xl">
+                    {getInitials(request.firstName + " " + request.lastName)}
                     {getInitials(request.firstName + " " + request.lastName)}
                   </AvatarFallback>
                 </Avatar>
@@ -165,16 +166,24 @@ export function FriendRequestFeedBlock({
                 )}
               </div>
               {request.bio && (
-                <DialogDescription>{request.bio}</DialogDescription>
+                <DialogDescription className="dark:text-slate-300">
+                  {request.bio}
+                </DialogDescription>
               )}
-              <DialogDescription>Completed Droplets: </DialogDescription>
+              <hr className="dark:text-slate-300"></hr>
+              <DialogDescription className="text-center font-bold dark:text-slate-300">
+                Completed Droplets:{" "}
+              </DialogDescription>
               <FriendCompletedDroplets friend={request} />
               <div
                 className={`inline-flex items-center gap-2 ${user.blocked.includes(request) ? "visibility: hidden" : "visibility: visible"}`}
                 onClick={handleBlock}
                 data-testid="block-button-container"
               >
-                <Button size="sm" variant="destructive" role="blocking">
+                <Button
+                  size="sm"
+                  className="bg-red-600 dark:bg-red-400 text-white hover:bg-red-700"
+                >
                   Block user
                 </Button>
               </div>

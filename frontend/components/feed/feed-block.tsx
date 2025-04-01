@@ -12,7 +12,13 @@ import {
   UsersRound,
 } from "lucide-react";
 
-export function FeedBlock({ announcement }: { announcement: Announcement }) {
+export function FeedBlock({
+  announcement,
+  authUser,
+}: {
+  announcement: Announcement;
+  authUser: AuthorizedUser;
+}) {
   const announcementType = announcement.type;
 
   function formatDate(dateInput: string | Date | undefined) {
@@ -57,7 +63,7 @@ export function FeedBlock({ announcement }: { announcement: Announcement }) {
 
   return (
     <li
-      className={`${backgroundColor[announcementType]} rounded-lg flex flex-col items-center gap-2 p-2`}
+      className={`${backgroundColor[announcementType]} rounded-md flex flex-col items-center gap-2 p-2`}
     >
       {formattedDate && (
         <div className="text-sm text-slate-500 dark:text-slate-300">
@@ -97,9 +103,10 @@ export function FeedBlock({ announcement }: { announcement: Announcement }) {
                 <p className="font-medium text-slate-900 dark:text-slate-300 max-h-24 overflow-y-auto">
                   {announcement.content}
                 </p>
-                {announcementType === "friend" && !announcement.kudosGiven && (
-                  <KudosButton announcementId={announcement.id} />
-                )}
+                {announcementType === "friend" &&
+                  !announcement.kudosGiven?.includes(authUser) && (
+                    <KudosButton announcementId={announcement.id} />
+                  )}
               </>
             )}
         </div>

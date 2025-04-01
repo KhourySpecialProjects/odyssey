@@ -151,11 +151,9 @@ describe("AddDropletDialog", () => {
       expect(screen.getByText("Droplet 1")).toBeInTheDocument();
     });
 
-    // Click the add button for the first droplet
     const addButtons = screen.getAllByRole("button");
-    fireEvent.click(addButtons[1]); // First droplet's add button
+    fireEvent.click(addButtons[1]);
 
-    // Click done
     fireEvent.click(screen.getByText("Add 1 Droplet"));
 
     expect(handleAddDroplets).toHaveBeenCalledWith([mockDroplets[0]]);

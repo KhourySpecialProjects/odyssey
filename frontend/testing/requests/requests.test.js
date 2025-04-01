@@ -26,7 +26,6 @@ const {
   getPlaylists,
 } = require("../../lib/requests/playlist");
 const { getTags, getTagBySlug } = require("../../lib/requests/tag");
-//import { data } from "./mocks/strapiMock";
 const { flattenAttributes } = require("../../lib/utils");
 const { getCurrentUser } = require("../../lib/auth/session");
 const {
@@ -53,18 +52,15 @@ jest.mock("../../lib/utils", () => ({
 
 global.fetch = jest.fn();
 
-//Comment this out if working on error testing (suppresses console error logs from error mocking)
-
 beforeEach(() => {
-  jest.spyOn(console, "error").mockImplementation(() => {}); // Suppress console errors
-  jest.spyOn(console, "warn").mockImplementation(() => {}); // Suppress console warnings
+  jest.spyOn(console, "error").mockImplementation(() => {});
+  jest.spyOn(console, "warn").mockImplementation(() => {});
 });
 
 afterEach(() => {
-  jest.restoreAllMocks(); // Restore console after each test
+  jest.restoreAllMocks();
 });
 
-// Mock Next.js cache functions
 jest.mock("next/cache", () => ({
   revalidatePath: jest.fn(),
   revalidateTag: jest.fn(),
@@ -78,7 +74,6 @@ jest.mock("../../lib/requests/authorized-user", () => ({
   getAuthorizedUserByEmail: jest.fn(),
 }));
 
-// authorized-user-roles.ts tests
 describe("getAuthorizedUserRoleIdByTitle", () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -116,7 +111,6 @@ describe("getAuthorizedUserRoleIdByTitle", () => {
   });
 });
 
-// data.ts tests
 describe("Data requests", () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -203,18 +197,14 @@ describe("Data requests", () => {
         }),
       );
 
-      // Test individual query parameters
       const callUrl = global.fetch.mock.calls[0][0];
 
-      // Verify sort parameter
       expect(callUrl).toMatch(/sort%5B0%5D=groupName%3Aasc/);
 
-      // Verify fields
       expect(callUrl).toMatch(
         /fields%5B0%5D=id&fields%5B1%5D=groupName&fields%5B2%5D=slug&fields%5B3%5D=isArchived/,
       );
 
-      // Verify pagination
       expect(callUrl).toMatch(/pagination%5BpageSize%5D=250/);
       expect(callUrl).toMatch(/pagination%5Bpage%5D=1/);
 
@@ -237,14 +227,12 @@ describe("Data requests", () => {
     });
 
     it("should throw an error when fetch returns a non-ok response", async () => {
-      // Mock a failed response with ok: false
       global.fetch.mockResolvedValueOnce({
         ok: false,
         status: 400,
         statusText: "Bad Request",
       });
 
-      // The function should throw an error
       await expect(fetchGroups()).rejects.toThrow("Failed to fetch groups.");
     });
   });
@@ -339,7 +327,6 @@ describe("Data requests", () => {
   });
 });
 
-// droplet.ts tests
 describe("Droplet tests", () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -476,7 +463,6 @@ describe("Droplet tests", () => {
   });
 });
 
-// lesson.ts tests
 describe("getLessonBySlug", () => {
   it("should return the lesson corresponding to the given slug", async () => {
     const mockLesson = [
@@ -501,7 +487,6 @@ describe("getLessonBySlug", () => {
   });
 });
 
-// playlist-enrollment.ts tests
 describe("Playlist enrollment tests", () => {
   describe("togglePlaylistEnrollment", () => {
     it("should toggle the current user's enrollment in the playlist", async () => {
@@ -523,7 +508,7 @@ describe("Playlist enrollment tests", () => {
             id: 12,
             attributes: {
               playlists: {
-                data: [{ id: 1 }, { id: 3 }], // Playlist 2 removed
+                data: [{ id: 1 }, { id: 3 }],
               },
             },
           },
@@ -534,7 +519,6 @@ describe("Playlist enrollment tests", () => {
 
       const result = await togglePlaylistEnrollment(2);
 
-      // Check if fetch was called with correct parameters
       expect(global.fetch).toHaveBeenCalledWith(
         expect.stringContaining("/api/authorized-users/12"),
         expect.objectContaining({
@@ -557,7 +541,6 @@ describe("Playlist enrollment tests", () => {
     });
 
     it("should enroll user in playlist when not already enrolled", async () => {
-      // Mock user is not enrolled in playlist 4
       getCurrentUser.mockResolvedValueOnce({
         id: 12,
         name: "Harry",
@@ -588,7 +571,6 @@ describe("Playlist enrollment tests", () => {
 
       const result = await togglePlaylistEnrollment(4);
 
-      // Check if fetch was called with correct parameters
       expect(global.fetch).toHaveBeenCalledWith(
         expect.stringContaining("/api/authorized-users/12"),
         expect.objectContaining({
@@ -600,7 +582,7 @@ describe("Playlist enrollment tests", () => {
           body: JSON.stringify({
             data: {
               playlists: {
-                connect: [4], // Since user wasn't enrolled, should connect
+                connect: [4],
               },
             },
           }),
@@ -659,7 +641,7 @@ describe("Playlist enrollment tests", () => {
             id: 1,
             attributes: {
               playlists: {
-                data: [{ id: 1 }, { id: 3 }, { id: 4 }], // Playlist 4 added
+                data: [{ id: 1 }, { id: 3 }, { id: 4 }],
               },
             },
           },
@@ -670,7 +652,6 @@ describe("Playlist enrollment tests", () => {
 
       const result = await enrollInPlaylist(4, 1);
 
-      // Check if fetch was called with correct parameters
       expect(global.fetch).toHaveBeenCalledWith(
         expect.stringContaining("/api/authorized-users/1"),
         expect.objectContaining({
@@ -704,7 +685,6 @@ describe("Playlist enrollment tests", () => {
     });
 
     it("should handle non-ok response from the API", async () => {
-      // Mock a failed response with ok: false
       global.fetch.mockResolvedValueOnce({
         ok: false,
         status: 400,
@@ -713,7 +693,6 @@ describe("Playlist enrollment tests", () => {
 
       const result = await enrollInPlaylist(4, 1);
 
-      // Verify the error response
       expect(result).toEqual({
         success: false,
         error: "Failed to enroll in playlist",
@@ -722,7 +701,6 @@ describe("Playlist enrollment tests", () => {
   });
 });
 
-// playlist.ts tests
 describe("Playlist tests", () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -844,7 +822,6 @@ describe("Playlist tests", () => {
   });
 });
 
-// tag.ts tests
 describe("Tag tests", () => {
   beforeEach(() => {
     jest.clearAllMocks();

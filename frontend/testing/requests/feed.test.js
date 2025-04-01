@@ -23,18 +23,15 @@ jest.mock("../../lib/utils", () => ({
 
 global.fetch = jest.fn();
 
-//Comment this out if working on error testing (suppresses console error logs from error mocking)
-
 beforeEach(() => {
-  jest.spyOn(console, "error").mockImplementation(() => {}); // Suppress console errors
-  jest.spyOn(console, "warn").mockImplementation(() => {}); // Suppress console warnings
+  jest.spyOn(console, "error").mockImplementation(() => {});
+  jest.spyOn(console, "warn").mockImplementation(() => {});
 });
 
 afterEach(() => {
-  jest.restoreAllMocks(); // Restore console after each test
+  jest.restoreAllMocks();
 });
 
-// Mock Next.js cache functions
 jest.mock("next/cache", () => ({
   revalidatePath: jest.fn(),
   revalidateTag: jest.fn(),
@@ -89,7 +86,6 @@ describe("Feed tests", () => {
 
       const result = await fetchAnnouncements(mockUser);
 
-      // Verify the request URL contains expected query parameters
       expect(global.fetch).toHaveBeenCalledWith(
         expect.stringMatching(/\/api\/announcements\?/),
         expect.objectContaining({
@@ -100,14 +96,12 @@ describe("Feed tests", () => {
         }),
       );
 
-      // Check that the URL includes specific filters and sort parameters
       const callUrl = global.fetch.mock.calls[0][0];
       expect(callUrl).toMatch(/sort/);
       expect(callUrl).toMatch(/filters/);
       expect(callUrl).toMatch(/populate/);
       expect(callUrl).toMatch(/pagination/);
 
-      // Verify the result is processed correctly
       expect(result).toEqual(expect.any(Array));
       expect(result.length).toBe(mockAnnouncements.length);
       expect(flattenAttributes).toHaveBeenCalledWith(mockStrapiResponse.data);
@@ -147,7 +141,6 @@ describe("Feed tests", () => {
 
       const result = await createFriendAnnouncement(mockDroplet, mockUser);
 
-      // Check if fetch was called with correct parameters
       expect(global.fetch).toHaveBeenCalledWith(
         expect.stringContaining("/api/announcements"),
         expect.objectContaining({
@@ -160,7 +153,6 @@ describe("Feed tests", () => {
         }),
       );
 
-      // Verify the announcement content contains the user name and droplet name
       const requestBody = JSON.parse(global.fetch.mock.calls[0][1].body);
       expect(requestBody.data.content).toContain(mockUser.firstName);
       expect(requestBody.data.content).toContain(mockUser.lastName);
@@ -168,10 +160,8 @@ describe("Feed tests", () => {
       expect(requestBody.data.type).toBe("friend");
       expect(requestBody.data.authorized_user).toBe(mockUser.id);
 
-      // Check if revalidation function was called
       expect(revalidatePath).toHaveBeenCalledWith("/feed");
 
-      // Check returned result
       expect(result).toEqual({ success: true });
     });
 
@@ -188,7 +178,6 @@ describe("Feed tests", () => {
 
       await createFriendAnnouncement(mockDroplet, mockUser);
 
-      // Verify the announcement content contains the email instead of name
       const requestBody = JSON.parse(global.fetch.mock.calls[0][1].body);
       expect(requestBody.data.content).toContain(mockUser.email);
       expect(requestBody.data.content).toContain(mockDroplet.name);
@@ -198,7 +187,6 @@ describe("Feed tests", () => {
       const mockDroplet = { id: 101, name: "Test Droplet" };
       const mockUser = { id: 5 };
 
-      // Mock a failed response
       global.fetch.mockResolvedValueOnce({
         ok: false,
         text: async () => "Bad Request",
@@ -252,7 +240,6 @@ describe("Feed tests", () => {
       };
       const announcementId = 123;
 
-      // Mock responses for both API calls
       global.fetch
         .mockResolvedValueOnce({
           ok: true,
@@ -265,7 +252,6 @@ describe("Feed tests", () => {
 
       const result = await createKudosAnnouncement(mockUser, announcementId);
 
-      // Check if first fetch (update) was called with correct parameters
       expect(global.fetch).toHaveBeenNthCalledWith(
         1,
         `http://test-api-url/api/announcements/${announcementId}`,
@@ -277,13 +263,14 @@ describe("Feed tests", () => {
           }),
           body: JSON.stringify({
             data: {
-              kudosGiven: true,
+              kudosGiven: {
+                connect: [mockUser],
+              },
             },
           }),
         }),
       );
 
-      // Check if second fetch (create) was called with correct parameters
       expect(global.fetch).toHaveBeenNthCalledWith(
         2,
         expect.stringContaining("/api/announcements"),
@@ -297,17 +284,14 @@ describe("Feed tests", () => {
         }),
       );
 
-      // Verify the kudos announcement content
       const requestBody = JSON.parse(global.fetch.mock.calls[1][1].body);
       expect(requestBody.data.content).toContain(mockUser.firstName);
       expect(requestBody.data.content).toContain("kudos");
       expect(requestBody.data.type).toBe("kudos");
       expect(requestBody.data.authorized_user).toBe(mockUser.id);
 
-      // Check if revalidation function was called
       expect(revalidatePath).toHaveBeenCalledWith("/feed");
 
-      // Check returned result
       expect(result).toEqual({ success: true });
     });
 
@@ -315,7 +299,6 @@ describe("Feed tests", () => {
       const mockUser = { id: 5 };
       const announcementId = 123;
 
-      // Mock a failed response for the first API call
       global.fetch.mockResolvedValueOnce({
         ok: false,
         statusText: "Bad Request",
@@ -329,7 +312,6 @@ describe("Feed tests", () => {
         createKudosAnnouncement(mockUser, announcementId),
       ).rejects.toThrow("Failed to update kudos status");
 
-      // Check that the second fetch was not called
       expect(global.fetch).toHaveBeenCalledTimes(1);
       expect(revalidatePath).not.toHaveBeenCalled();
 
@@ -340,7 +322,6 @@ describe("Feed tests", () => {
       const mockUser = { id: 5 };
       const announcementId = 123;
 
-      // Mock successful first call but failed second call
       global.fetch
         .mockResolvedValueOnce({
           ok: true,
@@ -400,7 +381,6 @@ describe("Feed tests", () => {
 
       const result = await createPlaylistAnnouncement(playlistName, playlistId);
 
-      // Check if fetch was called with correct parameters
       expect(global.fetch).toHaveBeenCalledWith(
         expect.stringContaining("/api/announcements"),
         expect.objectContaining({
@@ -413,17 +393,14 @@ describe("Feed tests", () => {
         }),
       );
 
-      // Verify the announcement content and metadata
       const requestBody = JSON.parse(global.fetch.mock.calls[0][1].body);
       expect(requestBody.data.content).toContain(playlistName);
       expect(requestBody.data.type).toBe("playlist");
       expect(requestBody.data.playlist).toBe(playlistId);
       expect(requestBody.data.firstCreated).toBeDefined();
 
-      // Check if revalidation function was called
       expect(revalidatePath).toHaveBeenCalledWith("/feed");
 
-      // Check returned result
       expect(result).toEqual({ success: true });
     });
 
@@ -431,7 +408,6 @@ describe("Feed tests", () => {
       const playlistName = "Test Playlist";
       const playlistId = 101;
 
-      // Mock a failed response
       global.fetch.mockResolvedValueOnce({
         ok: false,
         text: async () => "Bad Request",
@@ -487,7 +463,6 @@ describe("Feed tests", () => {
 
       const result = await createGroupAnnouncement(groupName, groupId);
 
-      // Check if fetch was called with correct parameters
       expect(global.fetch).toHaveBeenCalledWith(
         expect.stringContaining("/api/announcements"),
         expect.objectContaining({
@@ -500,17 +475,14 @@ describe("Feed tests", () => {
         }),
       );
 
-      // Verify the announcement content and metadata
       const requestBody = JSON.parse(global.fetch.mock.calls[0][1].body);
       expect(requestBody.data.content).toContain(groupName);
       expect(requestBody.data.type).toBe("group");
       expect(requestBody.data.group).toBe(groupId);
       expect(requestBody.data.firstCreated).toBeDefined();
 
-      // Check if revalidation function was called
       expect(revalidatePath).toHaveBeenCalledWith("/feed");
 
-      // Check returned result
       expect(result).toEqual({ success: true });
     });
 
@@ -518,7 +490,6 @@ describe("Feed tests", () => {
       const groupName = "Test Group";
       const groupId = 101;
 
-      // Mock a failed response
       global.fetch.mockResolvedValueOnce({
         ok: false,
         text: async () => "Bad Request",
@@ -574,7 +545,6 @@ describe("Feed tests", () => {
 
       const result = await createDropletAnnouncement(dropletName, dropletId);
 
-      // Check if fetch was called with correct parameters
       expect(global.fetch).toHaveBeenCalledWith(
         expect.stringContaining("/api/announcements"),
         expect.objectContaining({
@@ -587,17 +557,14 @@ describe("Feed tests", () => {
         }),
       );
 
-      // Verify the announcement content and metadata
       const requestBody = JSON.parse(global.fetch.mock.calls[0][1].body);
       expect(requestBody.data.content).toContain(dropletName);
       expect(requestBody.data.type).toBe("droplet");
       expect(requestBody.data.droplet).toBe(dropletId);
       expect(requestBody.data.firstCreated).toBeDefined();
 
-      // Check if revalidation function was called
       expect(revalidatePath).toHaveBeenCalledWith("/feed");
 
-      // Check returned result
       expect(result).toEqual({ success: true });
     });
 
@@ -605,7 +572,6 @@ describe("Feed tests", () => {
       const dropletName = "Test Droplet";
       const dropletId = 101;
 
-      // Mock a failed response
       global.fetch.mockResolvedValueOnce({
         ok: false,
         text: async () => "Bad Request",

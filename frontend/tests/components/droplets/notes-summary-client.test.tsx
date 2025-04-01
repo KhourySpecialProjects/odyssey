@@ -51,6 +51,7 @@ describe("NotesSummaryClient", () => {
       },
     ],
     onSelectionChange: jest.fn(),
+    selectedDropletIds: new Set<number>(),
   };
 
   it("renders droplet name", () => {

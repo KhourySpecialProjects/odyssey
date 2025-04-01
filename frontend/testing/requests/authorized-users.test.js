@@ -28,19 +28,16 @@ jest.mock("../../lib/utils", () => ({
 
 global.fetch = jest.fn();
 
-//Comment this out if working on error testing (suppresses console error logs from error mocking)
-
 beforeEach(() => {
-  jest.spyOn(console, "error").mockImplementation(() => {}); // Suppress console errors
-  jest.spyOn(console, "warn").mockImplementation(() => {}); // Suppress console warnings
+  jest.spyOn(console, "error").mockImplementation(() => {});
+  jest.spyOn(console, "warn").mockImplementation(() => {});
 });
 
 afterEach(() => {
-  jest.restoreAllMocks(); // Restore console after each test
+  jest.restoreAllMocks();
 });
 
 describe("Authorized User Tests", () => {
-  // authorized-user.ts tests
   describe("getAuthorizedUserByEmail", () => {
     it("should return an authorized user based on the given email", async () => {
       const testEmail = "palmer.gi@northeastern.edu";
@@ -237,21 +234,16 @@ describe("Authorized User Tests", () => {
         }),
       );
 
-      // Test individual query parameters
       const callUrl = global.fetch.mock.calls[0][0];
 
-      // Verify sort parameter
       expect(callUrl).toMatch(/sort%5B0%5D=lastName/);
 
-      // Verify role filter
       expect(callUrl).toMatch(
         /filters%5Broles%5D%5Btitle%5D%5B%24eq%5D=Content%20Creator/,
       );
 
-      // Verify droplets filter
       expect(callUrl).toMatch(/filters%5Bdroplets%5D%5B%24null%5D=false/);
 
-      // Verify pagination
       expect(callUrl).toMatch(/pagination%5BpageSize%5D=100/);
       expect(callUrl).toMatch(/pagination%5Bpage%5D=1/);
 
@@ -314,18 +306,14 @@ describe("Authorized User Tests", () => {
         }),
       );
 
-      // Test individual query parameters
       const callUrl = global.fetch.mock.calls[0][0];
 
-      // Verify sort parameter
       expect(callUrl).toMatch(/sort%5B0%5D=lastName/);
 
-      // Verify role filter
       expect(callUrl).toMatch(
         /filters%5Broles%5D%5Btitle%5D%5B%24eq%5D=Website%20Creator/,
       );
 
-      // Verify pagination
       expect(callUrl).toMatch(/pagination%5BpageSize%5D=100/);
       expect(callUrl).toMatch(/pagination%5Bpage%5D=1/);
 
@@ -388,18 +376,14 @@ describe("Authorized User Tests", () => {
         }),
       );
 
-      // Test individual query parameters
       const callUrl = global.fetch.mock.calls[0][0];
 
-      // Verify sort parameter
       expect(callUrl).toMatch(/sort%5B0%5D=lastName%3Aasc/);
 
-      // Verify fields
       expect(callUrl).toMatch(
         /fields%5B0%5D=email&fields%5B1%5D=firstName&fields%5B2%5D=lastName/,
       );
 
-      // Verify pagination
       expect(callUrl).toMatch(/pagination%5BpageSize%5D=100/);
       expect(callUrl).toMatch(/pagination%5Bpage%5D=1/);
 

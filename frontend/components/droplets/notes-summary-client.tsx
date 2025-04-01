@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Enrollment, Highlight, Note } from "@/types";
 import { Card } from "../ui/card";
 import Link from "next/link";
@@ -15,6 +15,7 @@ export function NotesSummaryClient({
   enrollment,
   allNotes,
   onSelectionChange,
+  selectedDropletIds,
 }: {
   index: number;
   dropletHighlights: Highlight[];
@@ -26,13 +27,23 @@ export function NotesSummaryClient({
     highlights: Highlight[];
   }[];
   onSelectionChange: (dropletId: number, isSelected: boolean) => void;
+  selectedDropletIds: Set<number>;
 }) {
   const [openDroplets, setOpenDroplets] = useState<{ [key: number]: boolean }>(
     {},
   );
-  const [selectedDroplets, setSelectedDroplets] = useState<{
-    [key: number]: boolean;
-  }>({});
+  const [selectedDroplets, setSelectedDroplets] = useState<
+    Record<number, boolean>
+  >(Object.fromEntries(Array.from(selectedDropletIds).map((id) => [id, true])));
+
+  useEffect(() => {
+    setSelectedDroplets(
+      Object.fromEntries(
+        Array.from(selectedDropletIds).map((id) => [id, true]),
+      ),
+    );
+  }, [selectedDropletIds]);
+
   const toggleDroplets = (dropletId: number) => {
     setOpenDroplets((prev) => ({
       ...prev,
@@ -52,7 +63,7 @@ export function NotesSummaryClient({
   return (
     <Card key={`enrollment-${enrollment.id}`} className="dark:bg-slate-800 p-2">
       <div
-        className={`text-2xl text-center flex ${openDroplets[enrollment.droplet.id] ? "border-b dark:border-slate-500" : ""} p-2 font-bold`}
+        className={`text-2xl text-center flex ${openDroplets[enrollment.droplet.id] ? "border-b dark:border-slate-500" : ""} p-2 font-bold items-center`}
       >
         <Checkbox
           id={enrollment.droplet.name}
@@ -64,6 +75,9 @@ export function NotesSummaryClient({
           <Link href={`/d/${enrollment.droplet.slug}`}>
             {enrollment.droplet.name}
           </Link>
+        </div>
+        <div className="pr-2">
+          ({allNotes[index].highlights.length + allNotes[index].notes.length})
         </div>
         <button
           className="ml-auto font-bold border dark:border-slate-500 flex justify-end py-2"

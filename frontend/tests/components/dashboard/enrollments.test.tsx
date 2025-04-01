@@ -114,9 +114,9 @@ describe("Enrollments", () => {
 
   it("calls notFound when user email is missing", async () => {
     (getCurrentUser as jest.Mock).mockResolvedValue({ email: "" });
-  
+
     await Enrollments();
-  
+
     expect(notFound).toHaveBeenCalled();
   });
 
@@ -136,21 +136,21 @@ describe("Enrollments", () => {
         ],
       },
     ];
-  
+
     (getEnrollmentsByAuthorizedUser as jest.Mock).mockResolvedValue(
       mockEnrollments,
     );
-  
+
     render(await Enrollments());
-  
+
     expect(screen.getByTestId("droplet-1")).toBeInTheDocument();
   });
 
   it("renders correctly when there are no enrollments", async () => {
     (getEnrollmentsByAuthorizedUser as jest.Mock).mockResolvedValue([]);
-  
+
     render(await Enrollments());
-  
+
     expect(screen.queryByTestId(/droplet-/)).not.toBeInTheDocument();
   });
 });

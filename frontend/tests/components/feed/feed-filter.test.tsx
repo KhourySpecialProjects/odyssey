@@ -8,16 +8,16 @@ describe("FeedFilter", () => {
     const mockOnFilterChange = jest.fn();
     render(<FeedFilter onFilterChange={mockOnFilterChange} />);
 
-    expect(screen.getByLabelText("Droplet")).toBeInTheDocument();
-    expect(screen.getByLabelText("Playlist")).toBeInTheDocument();
-    expect(screen.getByLabelText("Group")).toBeInTheDocument();
+    expect(screen.getByRole("droplet")).toBeInTheDocument();
+    expect(screen.getByRole("playlist")).toBeInTheDocument();
+    expect(screen.getByRole("group")).toBeInTheDocument();
   });
 
   it("calls onFilterChange when a filter is toggled", async () => {
     const mockOnFilterChange = jest.fn();
     render(<FeedFilter onFilterChange={mockOnFilterChange} />);
 
-    await userEvent.click(screen.getByLabelText("Droplet"));
+    await userEvent.click(screen.getByRole("droplet"));
     expect(mockOnFilterChange).toHaveBeenCalled();
   });
 
@@ -30,7 +30,7 @@ describe("FeedFilter", () => {
   it("toggles role selection correctly", () => {
     render(<FeedFilter onFilterChange={mockOnFilterChange} />);
 
-    const dropletButton = screen.getByText("Droplet").closest("button");
+    const dropletButton = screen.getByRole("droplet").closest("button");
     expect(dropletButton).toHaveClass("opacity-100");
 
     fireEvent.click(dropletButton!);
@@ -54,7 +54,7 @@ describe("FeedFilter", () => {
   it("toggles role selection correctly not selected yet", () => {
     render(<FeedFilter onFilterChange={mockOnFilterChange} />);
 
-    const dropletButton = screen.getByText("Droplet").closest("button");
+    const dropletButton = screen.getByRole("droplet").closest("button");
     expect(dropletButton).toHaveClass("opacity-100");
 
     fireEvent.click(dropletButton!);

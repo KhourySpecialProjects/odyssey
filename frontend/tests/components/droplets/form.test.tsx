@@ -3,12 +3,14 @@ import { ReportBugForm } from "@/components/droplets/reports/bug/form";
 import userEvent from "@testing-library/user-event";
 import { createBugReport } from "@/lib/actions";
 import { toast } from "sonner";
+import { usePathname } from "next/navigation";
+import * as navigation from "next/navigation";
 
 jest.mock("@/lib/actions");
 jest.mock("sonner");
 jest.mock("next/navigation", () => ({
   redirect: jest.fn(),
-  usePathname: () => "/test-path",
+  usePathname: jest.fn(),
 }));
 
 describe("ReportBugForm", () => {
@@ -144,6 +146,56 @@ describe("ReportBugForm", () => {
             description: "",
           },
         );
+      });
+    });
+  });
+
+  jest.mock("next/navigation", () => ({
+    usePathname: jest.fn(),
+    redirect: jest.fn(),
+  }));
+
+  describe("ReportBugForm", () => {
+    const mockOnSuccess = jest.fn();
+
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+
+    describe("path field initialization", () => {
+      it("uses pathname when available", () => {
+        (usePathname as jest.Mock).mockReturnValue("/test-path");
+
+        render(<ReportBugForm onSuccess={mockOnSuccess} />);
+
+        const pathInput = screen.getByLabelText(/path/i);
+        expect(pathInput).toHaveValue("/test-path");
+      });
+
+      it('uses "Unknown" when pathname is null', async () => {
+        (usePathname as jest.Mock).mockReturnValue(null);
+
+        const { rerender } = render(
+          <ReportBugForm onSuccess={mockOnSuccess} />,
+        );
+
+        rerender(<ReportBugForm onSuccess={mockOnSuccess} />);
+
+        const pathInput = await screen.findByLabelText(/path/i);
+        expect(pathInput).toHaveValue("Unknown");
+      });
+
+      it('uses "Unknown" when pathname is undefined', async () => {
+        (usePathname as jest.Mock).mockReturnValue(undefined);
+
+        const { rerender } = render(
+          <ReportBugForm onSuccess={mockOnSuccess} />,
+        );
+
+        rerender(<ReportBugForm onSuccess={mockOnSuccess} />);
+
+        const pathInput = await screen.findByLabelText(/path/i);
+        expect(pathInput).toHaveValue("Unknown");
       });
     });
   });

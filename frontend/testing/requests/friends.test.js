@@ -35,18 +35,15 @@ jest.mock("../../lib/utils", () => ({
 
 global.fetch = jest.fn();
 
-//Comment this out if working on error testing (suppresses console error logs from error mocking)
-
 beforeEach(() => {
-  jest.spyOn(console, "error").mockImplementation(() => {}); // Suppress console errors
-  jest.spyOn(console, "warn").mockImplementation(() => {}); // Suppress console warnings
+  jest.spyOn(console, "error").mockImplementation(() => {});
+  jest.spyOn(console, "warn").mockImplementation(() => {});
 });
 
 afterEach(() => {
-  jest.restoreAllMocks(); // Restore console after each test
+  jest.restoreAllMocks();
 });
 
-// Mock Next.js cache functions
 jest.mock("next/cache", () => ({
   revalidatePath: jest.fn(),
   revalidateTag: jest.fn(),
@@ -140,7 +137,6 @@ describe("Friends tests", () => {
         json: async () => mockStrapiResponse,
       });
 
-      // Define mock implementation for flattenAttributes
       flattenAttributes.mockImplementationOnce((data) => {
         return data.map((friendship) => ({
           id: friendship.id,
@@ -157,7 +153,6 @@ describe("Friends tests", () => {
 
       const result = await fetchFriends(mockUser);
 
-      // Verify the request URL contains expected query parameters
       expect(global.fetch).toHaveBeenCalledWith(
         expect.stringMatching(/\/api\/friendships\?/),
         expect.objectContaining({
@@ -168,14 +163,12 @@ describe("Friends tests", () => {
         }),
       );
 
-      // Check that the URL includes specific filters and sort parameters
       const callUrl = global.fetch.mock.calls[0][0];
       expect(callUrl).toMatch(/filters/);
       expect(callUrl).toMatch(/populate/);
       expect(callUrl).toMatch(/pagination/);
       expect(callUrl).toMatch(/sort/);
 
-      // Verify the result is processed correctly
       expect(result).toEqual(expect.any(Array));
       expect(result.length).toBe(2);
       expect(result).toContainEqual(
@@ -292,7 +285,6 @@ describe("Friends tests", () => {
 
       const result = await fetchFriends(mockUser);
 
-      // Verify only the non-blocked friend is returned
       expect(result.length).toBe(1);
       expect(result[0].id).toBe(6);
       expect(result[0].firstName).toBe("Friend");
@@ -315,7 +307,7 @@ describe("Friends tests", () => {
       const requestee = { id: 6, email: "friend.one@northeastern.edu" };
 
       const mockStrapiResponse = {
-        data: [{ id: 5 }], // Non-empty array indicates request exists
+        data: [{ id: 5 }],
       };
 
       global.fetch.mockResolvedValueOnce({
@@ -327,7 +319,6 @@ describe("Friends tests", () => {
 
       const result = await getSentRequest(requester, requestee);
 
-      // Verify the request URL contains expected parameters
       expect(global.fetch).toHaveBeenCalledWith(
         expect.stringMatching(/\/api\/authorized-users\?/),
         expect.objectContaining({
@@ -338,7 +329,6 @@ describe("Friends tests", () => {
         }),
       );
 
-      // Verify the result
       expect(result).toBe(true);
     });
 
@@ -347,7 +337,7 @@ describe("Friends tests", () => {
       const requestee = { id: 6, email: "friend.one@northeastern.edu" };
 
       const mockStrapiResponse = {
-        data: [], // Empty array indicates no request exists
+        data: [],
       };
 
       global.fetch.mockResolvedValueOnce({
@@ -398,7 +388,6 @@ describe("Friends tests", () => {
 
       const result = await getSentRequestIds(mockUser);
 
-      // Verify the request URL contains expected parameters
       expect(global.fetch).toHaveBeenCalledWith(
         expect.stringMatching(/\/api\/authorized-users\?/),
         expect.objectContaining({
@@ -409,13 +398,11 @@ describe("Friends tests", () => {
         }),
       );
 
-      // Verify the URL includes specific filters and pagination
       const callUrl = global.fetch.mock.calls[0][0];
       expect(callUrl).toMatch(/filters/);
       expect(callUrl).toMatch(/pagination/);
       expect(callUrl).toMatch(/fields/);
 
-      // Verify the result is processed correctly
       expect(result).toEqual([6, 7]);
     });
 
@@ -439,7 +426,6 @@ describe("Friends tests", () => {
       const userId = 5;
       const requesterId = 6;
 
-      // Mock successful responses for both API calls
       global.fetch
         .mockResolvedValueOnce({
           ok: true,
@@ -452,7 +438,6 @@ describe("Friends tests", () => {
 
       const result = await acceptFriendRequest(userId, requesterId);
 
-      // Check first fetch call - creating the friendship
       expect(global.fetch).toHaveBeenNthCalledWith(
         1,
         expect.stringContaining("/api/friendships"),
@@ -470,7 +455,6 @@ describe("Friends tests", () => {
         }),
       );
 
-      // Check second fetch call - removing the friend request
       expect(global.fetch).toHaveBeenNthCalledWith(
         2,
         expect.stringContaining(`/api/authorized-users/${userId}`),
@@ -490,10 +474,8 @@ describe("Friends tests", () => {
         }),
       );
 
-      // Check if revalidation function was called
       expect(revalidatePath).toHaveBeenCalledWith("/settings/friends");
 
-      // Check returned result
       expect(result).toEqual({ success: true });
     });
 
@@ -501,7 +483,6 @@ describe("Friends tests", () => {
       const userId = 5;
       const requesterId = 6;
 
-      // Mock a failed response for the first API call
       global.fetch.mockResolvedValueOnce({
         ok: false,
         text: async () => "Error creating friendship",
@@ -523,7 +504,6 @@ describe("Friends tests", () => {
       const userId = 5;
       const requesterId = 6;
 
-      // Mock successful first call but failed second call
       global.fetch
         .mockResolvedValueOnce({
           ok: true,
@@ -574,7 +554,6 @@ describe("Friends tests", () => {
       const requester = { id: 5, email: "requester@northeastern.edu" };
       const requestee = { id: 6, email: "requestee@northeastern.edu" };
 
-      // Mock successful responses for both API calls
       global.fetch
         .mockResolvedValueOnce({
           ok: true,
@@ -587,7 +566,6 @@ describe("Friends tests", () => {
 
       const result = await sendFriendRequest(requester, requestee);
 
-      // Check first fetch call - updating requestee's received_requests
       expect(global.fetch).toHaveBeenNthCalledWith(
         1,
         expect.stringContaining(`/api/authorized-users/${requestee.id}`),
@@ -607,7 +585,6 @@ describe("Friends tests", () => {
         }),
       );
 
-      // Check second fetch call - updating requester's sent_requests
       expect(global.fetch).toHaveBeenNthCalledWith(
         2,
         expect.stringContaining(`/api/authorized-users/${requester.id}`),
@@ -627,10 +604,8 @@ describe("Friends tests", () => {
         }),
       );
 
-      // Check if revalidation function was called
       expect(revalidatePath).toHaveBeenCalledWith("/settings/friends");
 
-      // Check returned result
       expect(result).toEqual({ success: true });
     });
 
@@ -638,7 +613,6 @@ describe("Friends tests", () => {
       const requester = { id: 5, email: "requester@northeastern.edu" };
       const requestee = { id: 6, email: "requestee@northeastern.edu" };
 
-      // Mock a failed response for the first API call
       global.fetch.mockResolvedValueOnce({
         ok: false,
         text: async () => "Error updating requestee",
@@ -660,7 +634,6 @@ describe("Friends tests", () => {
       const requester = { id: 5, email: "requester@northeastern.edu" };
       const requestee = { id: 6, email: "requestee@northeastern.edu" };
 
-      // Mock successful first call but failed second call
       global.fetch
         .mockResolvedValueOnce({
           ok: true,
@@ -711,7 +684,6 @@ describe("Friends tests", () => {
       const userId = 5;
       const requesterId = 6;
 
-      // Mock successful response
       global.fetch.mockResolvedValueOnce({
         ok: true,
         json: async () => ({ data: { id: 5 } }),
@@ -719,7 +691,6 @@ describe("Friends tests", () => {
 
       const result = await rejectFriendRequest(userId, requesterId);
 
-      // Check fetch call - removing the friend request
       expect(global.fetch).toHaveBeenCalledWith(
         expect.stringContaining(`/api/authorized-users/${userId}`),
         expect.objectContaining({
@@ -738,10 +709,8 @@ describe("Friends tests", () => {
         }),
       );
 
-      // Check if revalidation function was called
       expect(revalidatePath).toHaveBeenCalledWith("/settings/friends");
 
-      // Check returned result
       expect(result).toEqual({ success: true });
     });
 
@@ -749,7 +718,6 @@ describe("Friends tests", () => {
       const userId = 5;
       const requesterId = 6;
 
-      // Mock a failed response
       global.fetch.mockResolvedValueOnce({
         ok: false,
         text: async () => "Error rejecting friend request",
@@ -796,7 +764,6 @@ describe("Friends tests", () => {
       const userId = 5;
       const requesteeId = 6;
 
-      // Mock successful response
       global.fetch.mockResolvedValueOnce({
         ok: true,
         json: async () => ({ data: { id: 5 } }),
@@ -804,7 +771,6 @@ describe("Friends tests", () => {
 
       const result = await cancelFriendRequest(userId, requesteeId);
 
-      // Check fetch call - removing the sent request
       expect(global.fetch).toHaveBeenCalledWith(
         expect.stringContaining(`/api/authorized-users/${userId}`),
         expect.objectContaining({
@@ -823,10 +789,8 @@ describe("Friends tests", () => {
         }),
       );
 
-      // Check if revalidation function was called
       expect(revalidatePath).toHaveBeenCalledWith("/settings/friends");
 
-      // Check returned result
       expect(result).toEqual({ success: true });
     });
 
@@ -834,7 +798,6 @@ describe("Friends tests", () => {
       const userId = 5;
       const requesteeId = 6;
 
-      // Mock a failed response
       global.fetch.mockResolvedValueOnce({
         ok: false,
         text: async () => "Error canceling friend request",
@@ -881,7 +844,6 @@ describe("Friends tests", () => {
       const userId = 5;
       const blockedUserId = 6;
 
-      // Mock successful response
       global.fetch.mockResolvedValueOnce({
         ok: true,
         json: async () => ({ data: { id: 5 } }),
@@ -889,7 +851,6 @@ describe("Friends tests", () => {
 
       const result = await unblockUser(userId, blockedUserId);
 
-      // Check fetch call - updating blocked list
       expect(global.fetch).toHaveBeenCalledWith(
         expect.stringContaining(`/api/authorized-users/${userId}`),
         expect.objectContaining({
@@ -908,10 +869,8 @@ describe("Friends tests", () => {
         }),
       );
 
-      // Check if revalidation function was called
       expect(revalidatePath).toHaveBeenCalledWith("/settings/friends");
 
-      // Check returned result
       expect(result).toEqual({ success: true });
     });
 
@@ -919,7 +878,6 @@ describe("Friends tests", () => {
       const userId = 5;
       const blockedUserId = 6;
 
-      // Mock a failed response
       global.fetch.mockResolvedValueOnce({
         ok: false,
         text: async () => "Error unblocking user",
@@ -966,7 +924,6 @@ describe("Friends tests", () => {
       const userId = 5;
       const userToBlockId = 6;
 
-      // Mock successful response
       global.fetch.mockResolvedValueOnce({
         ok: true,
         json: async () => ({ data: { id: 5 } }),
@@ -974,7 +931,6 @@ describe("Friends tests", () => {
 
       const result = await BlockUser(userId, userToBlockId);
 
-      // Check fetch call - updating blocked list
       expect(global.fetch).toHaveBeenCalledWith(
         expect.stringContaining(`/api/authorized-users/${userId}`),
         expect.objectContaining({
@@ -993,10 +949,8 @@ describe("Friends tests", () => {
         }),
       );
 
-      // Check if revalidation function was called
       expect(revalidatePath).toHaveBeenCalledWith("/settings/friends");
 
-      // Check returned result
       expect(result).toEqual({ success: true });
     });
 
@@ -1004,7 +958,6 @@ describe("Friends tests", () => {
       const userId = 5;
       const userToBlockId = 6;
 
-      // Mock a failed response
       global.fetch.mockResolvedValueOnce({
         ok: false,
         text: async () => "Error blocking user",
@@ -1051,7 +1004,6 @@ describe("Friends tests", () => {
       const userId = 5;
       const friendId = 6;
 
-      // Mock the friendship search result
       global.fetch
         .mockResolvedValueOnce({
           ok: true,
@@ -1059,7 +1011,6 @@ describe("Friends tests", () => {
             data: [{ id: 123, attributes: {} }],
           }),
         })
-        // Mock the delete friendship response
         .mockResolvedValueOnce({
           ok: true,
           json: async () => ({ data: null }),
@@ -1067,7 +1018,6 @@ describe("Friends tests", () => {
 
       const result = await removeFriend(userId, friendId);
 
-      // Check first fetch call - searching for the friendship
       expect(global.fetch).toHaveBeenNthCalledWith(
         1,
         expect.stringMatching(/\/api\/friendships\?/),
@@ -1078,14 +1028,12 @@ describe("Friends tests", () => {
         }),
       );
 
-      // Verify the search parameters include both user IDs
       const searchUrl = global.fetch.mock.calls[0][0];
       expect(searchUrl).toMatch(new RegExp(`authorized_users.*id.*${userId}`));
       expect(searchUrl).toMatch(
         new RegExp(`authorized_users.*id.*${friendId}`),
       );
 
-      // Check second fetch call - deleting the friendship
       expect(global.fetch).toHaveBeenNthCalledWith(
         2,
         expect.stringContaining("/api/friendships/123"),
@@ -1098,10 +1046,8 @@ describe("Friends tests", () => {
         }),
       );
 
-      // Check if revalidation function was called
       expect(revalidatePath).toHaveBeenCalledWith("/settings/friends");
 
-      // Check returned result
       expect(result).toEqual({ success: true });
     });
 
@@ -1109,7 +1055,6 @@ describe("Friends tests", () => {
       const userId = 5;
       const friendId = 6;
 
-      // Mock empty search result (no friendship found)
       global.fetch.mockResolvedValueOnce({
         ok: true,
         json: async () => ({
@@ -1123,7 +1068,6 @@ describe("Friends tests", () => {
 
       const result = await removeFriend(userId, friendId);
 
-      // Verify error handling
       expect(result).toEqual({ success: false, error: expect.any(Error) });
       expect(consoleSpy).toHaveBeenCalledWith(
         "Error:",
@@ -1140,7 +1084,6 @@ describe("Friends tests", () => {
       const userId = 5;
       const friendId = 6;
 
-      // Mock successful friendship search but failed deletion
       global.fetch
         .mockResolvedValueOnce({
           ok: true,
@@ -1262,7 +1205,6 @@ describe("Friends tests", () => {
         json: async () => mockStrapiResponse,
       });
 
-      // Define mock implementation for flattenAttributes
       flattenAttributes.mockImplementationOnce((data) => {
         return data.map((friendship) => ({
           id: friendship.id,
@@ -1279,7 +1221,6 @@ describe("Friends tests", () => {
 
       const result = await fetchFriendshipsById(userId);
 
-      // Verify the request URL contains expected parameters
       expect(global.fetch).toHaveBeenCalledWith(
         expect.stringMatching(/\/api\/friendships\?/),
         expect.objectContaining({
@@ -1290,18 +1231,15 @@ describe("Friends tests", () => {
         }),
       );
 
-      // Check the URL for specific query parameters
       const callUrl = global.fetch.mock.calls[0][0];
       expect(callUrl).toMatch(/filters/);
       expect(callUrl).toMatch(/pagination/);
       expect(callUrl).toMatch(/populate/);
       expect(callUrl).toMatch(new RegExp(`authorized_users.*id.*${userId}`));
 
-      // Verify the structure of the result
       expect(result).toEqual(expect.any(Array));
       expect(result).toHaveLength(2);
 
-      // Check first friendship
       expect(result[0]).toMatchObject({
         id: 1,
         authorized_users: expect.arrayContaining([
@@ -1310,7 +1248,6 @@ describe("Friends tests", () => {
         ]),
       });
 
-      // Check second friendship
       expect(result[1]).toMatchObject({
         id: 2,
         authorized_users: expect.arrayContaining([

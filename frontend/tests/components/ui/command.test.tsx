@@ -10,9 +10,7 @@ import {
   CommandSeparator,
   CommandShortcut,
 } from "@/components/ui/command";
-import userEvent from "@testing-library/user-event";
 
-// Mock the cmdk Command component and its subcomponents
 jest.mock("cmdk", () => {
   const CommandComponent = ({ children, className, ...props }: any) => (
     <div data-testid="cmdk-command" className={className} {...props}>
@@ -59,7 +57,6 @@ jest.mock("cmdk", () => {
   };
 });
 
-// Mock Dialog components
 jest.mock("@/components/ui/dialog", () => ({
   Dialog: ({ children, ...props }: any) => (
     <div data-testid="dialog" {...props}>
@@ -188,7 +185,6 @@ describe("Command Components", () => {
     });
   });
 
-  // Test component integration
   describe("Command Integration", () => {
     it("renders full command interface correctly", () => {
       render(
