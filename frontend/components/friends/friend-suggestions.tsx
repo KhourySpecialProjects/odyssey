@@ -7,8 +7,8 @@ export async function FriendSuggestions({ user }: { user: AuthorizedUser }) {
 
   return (
     <section className="mt-4">
-      <h1 className="font-bold dark:text-slate-300">Friend Suggestions</h1>
-      <p className="dark:text-slate-300">A list of your people you may know.</p>
+      <h1 className="font-bold">Friend Suggestions</h1>
+      <p>A list of your people you may know.</p>
 
       <div className="p-1 md:p-4 mt-4 rounded-md bg-slate-100 dark:bg-slate-800">
         {suggestions.length > 0 ? (

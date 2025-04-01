@@ -20,18 +20,15 @@ jest.mock("../../lib/utils", () => ({
 
 global.fetch = jest.fn();
 
-//Comment this out if working on error testing (suppresses console error logs from error mocking)
-
 beforeEach(() => {
-  jest.spyOn(console, "error").mockImplementation(() => {}); // Suppress console errors
-  jest.spyOn(console, "warn").mockImplementation(() => {}); // Suppress console warnings
+  jest.spyOn(console, "error").mockImplementation(() => {});
+  jest.spyOn(console, "warn").mockImplementation(() => {});
 });
 
 afterEach(() => {
-  jest.restoreAllMocks(); // Restore console after each test
+  jest.restoreAllMocks();
 });
 
-// Mock Next.js cache functions
 jest.mock("next/cache", () => ({
   revalidatePath: jest.fn(),
   revalidateTag: jest.fn(),
@@ -67,10 +64,8 @@ describe("Highlights Tests", () => {
       const text = "This is an important concept";
       const result = await getHighlights(authorizedUserId, text);
 
-      // Verify the result matches expected highlights
       expect(result).toEqual(mockHighlights);
 
-      // Verify fetchAPI was called with correct parameters
       expect(fetchAPI).toHaveBeenCalledWith("/highlights", {
         urlParams: expect.objectContaining({
           filters: {
@@ -108,7 +103,6 @@ describe("Highlights Tests", () => {
 
       await getHighlights(authorizedUserId, text, customParams);
 
-      // Verify custom parameters were passed to fetchAPI
       expect(fetchAPI).toHaveBeenCalledWith("/highlights", {
         urlParams: expect.objectContaining({
           sort: ["id:desc"],
@@ -169,10 +163,8 @@ describe("Highlights Tests", () => {
       const dropletId = 10;
       const result = await getHighlightsByDroplet(authorizedUserId, dropletId);
 
-      // Verify the result matches expected highlights
       expect(result).toEqual(mockHighlights);
 
-      // Verify fetchAPI was called with correct parameters
       expect(fetchAPI).toHaveBeenCalledWith("/highlights", {
         urlParams: expect.objectContaining({
           sort: ["yLevel:asc"],
@@ -220,7 +212,6 @@ describe("Highlights Tests", () => {
 
       await getHighlightsByDroplet(authorizedUserId, dropletId, customParams);
 
-      // Verify custom parameters were passed to fetchAPI
       expect(fetchAPI).toHaveBeenCalledWith("/highlights", {
         urlParams: expect.objectContaining({
           sort: ["color:asc"],
@@ -252,7 +243,6 @@ describe("Highlights Tests", () => {
     it("should handle numeric and string inputs for IDs", async () => {
       fetchAPI.mockResolvedValueOnce([]);
 
-      // Test with string droplet ID (which should be converted to a number in the function)
       await getHighlightsByDroplet(5, "10");
 
       expect(fetchAPI).toHaveBeenCalledWith(

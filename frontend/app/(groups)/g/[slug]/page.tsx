@@ -12,7 +12,6 @@ import { isAuthorizedUserAdmin } from "@/lib/utils";
 import DueDateAnnouncements from "@/components/group/due-date-announcements";
 import { getGroupDueDates } from "@/lib/requests/groups";
 
-// Ensure fresh data by disabling caching for this route
 export const fetchCache = "force-no-store";
 export const revalidate = 0;
 
@@ -41,7 +40,6 @@ export default async function GroupDetailPage({ params }: Props) {
 
   const dueDates = await getGroupDueDates(group);
 
-  // Filter to keep only one due date per item (earliest one)
   const filteredDueDates = dueDates.reduce(
     (acc, curr) => {
       const itemId = curr.droplet?.id || curr.playlist?.id;

@@ -66,7 +66,6 @@ export function AddLesson({
             isHidden: false,
             status: "draft",
             droplet_lessons: [],
-            // lessons: droplet.lessons || [],
           },
         ],
         notes: [],

@@ -6,7 +6,13 @@ import {
   act,
 } from "@testing-library/react";
 import { NotesManager } from "@/components/droplets/notes-manager";
-import { DropletStatus, DropletType, FocusArea, Tag } from "@/types";
+import {
+  DropletStatus,
+  DropletType,
+  FocusArea,
+  HighlightColor,
+  Tag,
+} from "@/types";
 import { PDFDocument } from "pdf-lib";
 
 jest.mock("pdf-lib", () => ({
@@ -53,7 +59,14 @@ describe("NotesManager", () => {
       {
         dropletId: 1,
         notes: [],
-        highlights: [],
+        highlights: [
+          {
+            id: 1,
+            text: "test",
+            position: { start: 0, end: 4 },
+            color: "#fff300" as HighlightColor,
+          },
+        ],
       },
     ],
     initialPdfBytes: new Uint8Array(),

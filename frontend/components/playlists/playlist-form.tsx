@@ -73,7 +73,7 @@ export function PlaylistForm({
           existingPlaylist.name,
           existingPlaylist?.id,
         );
-        router.back();
+        router.push("/drafts");
       }
     } catch (error) {
       console.error("Failed to make playlist announcement: ", error);
@@ -236,22 +236,16 @@ export function PlaylistForm({
 
         <Separator className="mb-4 dark:bg-slate-300" />
 
-        {/*TODO: Why aren't the buttons the same size?
-           This may not be the best placement for the buttons.  But at the bottom of the columns 
-           seems like a bad choice as well, especially as the list of droplets increases*/}
         <div className="flex justify-end space-x-4 pt-4 pb-4">
           <Button
             type="button"
             variant="outline"
-            onClick={() => router.back()}
+            onClick={() => router.push("/drafts")}
             className="h-12 bg-white text-black dark:bg-slate-300 dark:hover:bg-slate-400 dark:hover:text-black"
           >
             <MoveLeftIcon size={16} />
             Cancel
           </Button>
-          {/* <Button variant="destructive" className="h-12" onClick={handleDelete}>
-            Delete Playlist
-          </Button> */}
           <Button
             type="submit"
             className="h-12 dark:bg-slate-300 dark:hover:bg-slate-400 dark:hover:text-black"
@@ -279,7 +273,7 @@ export function PlaylistForm({
                   className="dark:bg-slate-300"
                   onClick={() => {
                     setIsOpen(false);
-                    router.back();
+                    router.push("/drafts");
                   }}
                 >
                   Not Now

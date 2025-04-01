@@ -1,6 +1,6 @@
 "use client";
 
-import { AuthorizedUser, Droplet, Group, User } from "@/types";
+import { Group, User } from "@/types";
 import { useRouter } from "next/navigation";
 import { DropletDueDateBlock } from "./droplet-due-date-block";
 import { ContentSelector } from "./content-selector";

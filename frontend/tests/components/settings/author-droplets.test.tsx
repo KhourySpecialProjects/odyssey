@@ -48,7 +48,6 @@ describe("AuthorDroplets", () => {
   beforeEach(() => {
     jest.clearAllMocks();
 
-    // Mock the rating fetch to return a specific rating
     (getDropletAverageRating as jest.Mock).mockResolvedValue({
       rating: 4.5,
       count: 10,

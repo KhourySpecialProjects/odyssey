@@ -407,6 +407,7 @@ export async function getGroupBySlugV2(
             fields: ["id", "name", "slug", "type"],
           },
         },
+        sort: "name:asc",
       },
       playlists: {
         fields: ["id", "name", "slug", "isPublic"],
@@ -415,6 +416,7 @@ export async function getGroupBySlugV2(
             fields: ["id", "name", "slug", "type"],
           },
         },
+        sort: "name:asc",
       },
     },
     fields = ["*", "dropletDueDates"],
@@ -895,9 +897,7 @@ export async function getGroupDueDates(
   group: Group,
   {
     sort = ["dueDate:asc"],
-    filters,
     pagination = { pageSize: 250, page: 1 },
-    populate,
     fields,
   }: StrapiRequestParams = {},
 ): Promise<DueDate[]> {

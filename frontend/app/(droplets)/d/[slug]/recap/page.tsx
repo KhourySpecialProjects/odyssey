@@ -187,7 +187,12 @@ export default async function DropletRecapRoute({ params }: Props) {
                 <NotesPdfButton
                   pdfBytes={pdfBytes}
                   name={`${droplet.name.replace(/\s/g, "")}-notes`}
-                  enrollments={enrollments}
+                  noNotes={
+                    !(
+                      allNotes.highlights.length > 0 ||
+                      allNotes.notes.length > 0
+                    )
+                  }
                 />
               </section>
               <NotesContainer
@@ -202,7 +207,7 @@ export default async function DropletRecapRoute({ params }: Props) {
           {droplet.nextSteps && droplet.nextSteps.length > 0 ? (
             <section>
               <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
-                Next Steps
+                Learn More
               </h2>
               <p className="text-slate-500 dark:text-slate-300">
                 To further your understanding, we recommend exploring:

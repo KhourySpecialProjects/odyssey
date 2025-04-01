@@ -1,6 +1,8 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { DropletBlock } from "@/components/admin/droplets/droplet-block";
 import { DropletStatus, DropletType, FocusArea } from "@/types";
+import { updateDroplet } from "@/lib/actions";
+import { toast } from "sonner";
 
 jest.mock("sonner", () => ({
   toast: {
@@ -85,6 +87,20 @@ describe("DropletBlock", () => {
     render(<DropletBlock droplet={hiddenDroplet} />);
     expect(
       screen.getByRole("button", { name: /show droplet/i }),
+    ).toBeInTheDocument();
+  });
+
+  it("shows correct button text based on droplet visibility", () => {
+    const hiddenDroplet = { ...mockDroplet, isHidden: true };
+    const { rerender } = render(<DropletBlock droplet={mockDroplet} />);
+
+    expect(
+      screen.getByRole("button", { name: "Hide Droplet" }),
+    ).toBeInTheDocument();
+
+    rerender(<DropletBlock droplet={hiddenDroplet} />);
+    expect(
+      screen.getByRole("button", { name: "Show Droplet" }),
     ).toBeInTheDocument();
   });
 });

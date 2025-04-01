@@ -79,7 +79,7 @@ describe("DropletDueDateBlock", () => {
     );
 
     await waitFor(() => {
-      const saveButton = screen.getByText("Save");
+      const saveButton = screen.getByRole("save");
       fireEvent.click(saveButton);
       expect(assignDropletDueDate).toHaveBeenCalled();
       expect(screen.getByText("Saved!")).toBeInTheDocument();

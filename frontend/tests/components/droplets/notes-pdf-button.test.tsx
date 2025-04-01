@@ -44,7 +44,7 @@ describe("NotesPdfButton", () => {
   });
 
   it("is disabled when no enrollments are provided", () => {
-    render(<NotesPdfButton {...mockProps} enrollments={[]} />);
+    render(<NotesPdfButton {...mockProps} noNotes={true} />);
     expect(screen.getByRole("button")).toBeDisabled();
   });
 

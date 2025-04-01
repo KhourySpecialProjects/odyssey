@@ -185,12 +185,12 @@ jest.mock("canvas-confetti", () => ({
 
 describe("Confetti Component", () => {
   beforeEach(() => {
-    document.body.innerHTML = ""; // Clear the DOM before each test
+    document.body.innerHTML = "";
   });
 
   test("should render and trigger confetti effect", async () => {
     render(<Confetti />);
-    
+
     await waitFor(() => {
       expect(document.querySelector("canvas")).toBeInTheDocument();
     });
@@ -199,13 +199,13 @@ describe("Confetti Component", () => {
   test("should remove canvas after 5 seconds", async () => {
     jest.useFakeTimers();
     render(<Confetti />);
-    
+
     await waitFor(() => {
       expect(document.querySelector("canvas")).toBeInTheDocument();
     });
-    
+
     jest.advanceTimersByTime(5000);
-    
+
     await waitFor(() => {
       expect(document.querySelector("canvas")).not.toBeInTheDocument();
     });
@@ -218,15 +218,15 @@ describe("Confetti Component", () => {
       expect(confetti.create).toHaveBeenCalled();
       expect(confetti.create).toHaveBeenCalledWith(
         expect.any(HTMLCanvasElement),
-        expect.objectContaining({ resize: true })
+        expect.objectContaining({ resize: true }),
       );
     });
   });
 
   test("should handle missing canvas context", async () => {
-    const mockCanvas = document.createElement('canvas');
-    jest.spyOn(mockCanvas, 'getContext').mockReturnValue(null);
-    jest.spyOn(document, 'createElement').mockReturnValue(mockCanvas);
+    const mockCanvas = document.createElement("canvas");
+    jest.spyOn(mockCanvas, "getContext").mockReturnValue(null);
+    jest.spyOn(document, "createElement").mockReturnValue(mockCanvas);
 
     render(<Confetti />);
 
@@ -238,12 +238,12 @@ describe("Confetti Component", () => {
   test("should handle missing pattern from context", async () => {
     const mockCtx = {
       drawImage: jest.fn(),
-      createPattern: jest.fn(() => null)
+      createPattern: jest.fn(() => null),
     } as unknown as CanvasRenderingContext2D;
 
-    const mockCanvas = document.createElement('canvas');
-    jest.spyOn(mockCanvas, 'getContext').mockReturnValue(mockCtx);
-    jest.spyOn(document, 'createElement').mockReturnValue(mockCanvas);
+    const mockCanvas = document.createElement("canvas");
+    jest.spyOn(mockCanvas, "getContext").mockReturnValue(mockCtx);
+    jest.spyOn(document, "createElement").mockReturnValue(mockCanvas);
 
     render(<Confetti />);
 

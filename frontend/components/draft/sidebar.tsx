@@ -59,7 +59,6 @@ export function Sidebar({
   const [expanded, setExpanded] = useState(false);
   const pathname = usePathname();
 
-  // Convert droplet_lessons to lessons for existing logic
   const lessons = droplet.droplet_lessons
     .sort((a, b) => a.orderIndex - b.orderIndex)
     .map((dl) => dl.lesson);
@@ -95,14 +94,12 @@ export function Sidebar({
     activeLink: "font-bold dark:bg-slate-500 light:bg-sky-100",
   };
 
-  // Handle window resize
   useLayoutEffect(() => {
     const handleResize = () => setExpanded(false);
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // DnD sensors setup
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor),
@@ -116,7 +113,6 @@ export function Sidebar({
       const newIndex = lessons.findIndex((item) => item.id === over?.id);
       const newLessons = arrayMove(lessons, oldIndex, newIndex);
 
-      // Convert lessons back to droplet_lessons format
       const newDropletLessons = newLessons.map((lesson, index) => ({
         id: dropletLessons.find((dl) => dl.lesson.id === lesson.id)?.id,
         lesson,
@@ -228,11 +224,6 @@ export function Sidebar({
         <div className="flex flex-col h-full py-4 overflow-y-auto md:justify-between md:pb-0 bg-slate-50 dark:bg-slate-800">
           {/* Top section */}
           <div className="px-3">
-            {/* Logo */}
-            <Link href="/explore" className="block p-2 mb-4">
-              <Logo width={200} height={55} />
-            </Link>
-
             <Separator />
 
             {/* Droplet name */}
@@ -274,20 +265,6 @@ export function Sidebar({
                     </div>
                   </DialogContent>
                 </Dialog>
-                <Link
-                  href={`/draft/d/${droplet.slug}`}
-                  className={cn(
-                    "w-full flex items-center justify-start text-base px-4 dark:bg-black",
-                    classes.link,
-                    pathname === `/draft/d/${droplet.slug}` &&
-                      classes.activeLink,
-                  )}
-                >
-                  <div className="w-6 flex justify-center">
-                    <SettingsIcon className="shrink-0 w-5 h-5" />
-                  </div>
-                  <span className="leading-snug ms-2">Metadata</span>
-                </Link>
               </li>
               <li className="pb-2 w-full text-center">
                 <Link
@@ -303,6 +280,20 @@ export function Sidebar({
               orientation="horizontal"
               className="my-2 dark:bg-slate-500"
             />
+
+            <Link
+              href={`/draft/d/${droplet.slug}`}
+              className={cn(
+                "w-full flex items-center justify-start text-base px-4 dark:bg-black",
+                classes.link,
+                pathname === `/draft/d/${droplet.slug}` && classes.activeLink,
+              )}
+            >
+              <div className="w-6 flex justify-center">
+                <SettingsIcon className="shrink-0 w-5 h-5" />
+              </div>
+              <span className="leading-snug ms-2">Metadata</span>
+            </Link>
 
             {/* Add lesson section */}
             <AddLesson droplet={droplet} onAddLesson={addLessonCallback} />

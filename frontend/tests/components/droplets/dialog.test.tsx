@@ -84,17 +84,21 @@ jest.mock("@/components/droplets/reports/bug/form.tsx", () => ({
 
 describe("ReportBugDialog", () => {
   const mockOnOpenChange = jest.fn();
-  
+
   const mockUser: User = {
     name: "John Doe",
     email: "johndoe@example.com",
     roles: [],
-    isActive: true
+    isActive: true,
   };
 
   it("passes the correct props to ReportBugForm", () => {
     render(
-      <ReportBugDialog user={mockUser} open={true} onOpenChange={mockOnOpenChange} />
+      <ReportBugDialog
+        user={mockUser}
+        open={true}
+        onOpenChange={mockOnOpenChange}
+      />,
     );
 
     const nameInput = screen.getByTestId("name-input");
@@ -106,7 +110,11 @@ describe("ReportBugDialog", () => {
 
   it("calls onOpenChange when the form is submitted", () => {
     render(
-      <ReportBugDialog user={mockUser} open={true} onOpenChange={mockOnOpenChange} />
+      <ReportBugDialog
+        user={mockUser}
+        open={true}
+        onOpenChange={mockOnOpenChange}
+      />,
     );
 
     const submitButton = screen.getByText("Submit");

@@ -37,6 +37,11 @@ export async function getAuthorizedUserByEmail<
       },
       created_playlists: {
         fields: ["*"],
+        populate: {
+          droplets: {
+            fields: "*",
+          },
+        },
       },
       friendships: {
         populate: {

@@ -28,18 +28,15 @@ jest.mock("../../lib/utils", () => ({
 
 global.fetch = jest.fn();
 
-//Comment this out if working on error testing (suppresses console error logs from error mocking)
-
 beforeEach(() => {
-  jest.spyOn(console, "error").mockImplementation(() => {}); // Suppress console errors
-  jest.spyOn(console, "warn").mockImplementation(() => {}); // Suppress console warnings
+  jest.spyOn(console, "error").mockImplementation(() => {});
+  jest.spyOn(console, "warn").mockImplementation(() => {});
 });
 
 afterEach(() => {
-  jest.restoreAllMocks(); // Restore console after each test
+  jest.restoreAllMocks();
 });
 
-// Mock Next.js cache functions
 jest.mock("next/cache", () => ({
   revalidatePath: jest.fn(),
   revalidateTag: jest.fn(),
@@ -61,10 +58,8 @@ describe("Notes Tests", () => {
       const mockStrapiResponse = {
         data: mockNotes.map((note) => ({
           id: note.id,
-          //attributes: {
           content: note.attributes.content,
           positionY: note.attributes.positionY,
-          //},
         })),
       };
 
@@ -220,7 +215,6 @@ describe("Notes Tests", () => {
 
       const result = await updateNoteContent(1, "Updated content");
 
-      // Check if fetch was called with correct parameters
       expect(global.fetch).toHaveBeenCalledWith(
         expect.stringContaining("/api/notes/1"),
         expect.objectContaining({
@@ -237,19 +231,16 @@ describe("Notes Tests", () => {
         }),
       );
 
-      // Check if revalidation functions were called
       expect(revalidatePath).toHaveBeenCalledWith(
         "/d/[slug]/[lessonSlug]",
         "page",
       );
       expect(revalidateTag).toHaveBeenCalledWith("notes");
 
-      // Check returned result
       expect(result).toEqual({ success: true });
     });
 
     it("should handle API errors when updating note content", async () => {
-      // Mock a failed response
       global.fetch.mockResolvedValueOnce({
         ok: false,
         status: 400,
@@ -303,7 +294,6 @@ describe("Notes Tests", () => {
 
       const result = await updateNotePosition(1, 150);
 
-      // Check if fetch was called with correct parameters
       expect(global.fetch).toHaveBeenCalledWith(
         expect.stringContaining("/api/notes/1"),
         expect.objectContaining({
@@ -320,19 +310,16 @@ describe("Notes Tests", () => {
         }),
       );
 
-      // Check if revalidation functions were called
       expect(revalidatePath).toHaveBeenCalledWith(
         "/d/[slug]/[lessonSlug]",
         "page",
       );
       expect(revalidateTag).toHaveBeenCalledWith("notes");
 
-      // Check returned result
       expect(result).toEqual({ success: true });
     });
 
     it("should handle API errors when updating note position", async () => {
-      // Mock a failed response
       global.fetch.mockResolvedValueOnce({
         ok: false,
         status: 400,
@@ -416,7 +403,6 @@ describe("Notes Tests", () => {
         mockContent,
       );
 
-      // Check if fetch was called with correct parameters
       expect(global.fetch).toHaveBeenCalledWith(
         expect.stringContaining("/api/notes"),
         expect.objectContaining({
@@ -437,14 +423,12 @@ describe("Notes Tests", () => {
         }),
       );
 
-      // Check if revalidation functions were called
       expect(revalidatePath).toHaveBeenCalledWith(
         "/d/[slug]/[lessonSlug]",
         "page",
       );
       expect(revalidateTag).toHaveBeenCalledWith("notes");
 
-      // Check returned result
       expect(result).toEqual({ success: true });
     });
 
@@ -462,7 +446,6 @@ describe("Notes Tests", () => {
 
       const result = await createNote(mockLesson, mockEnrollment, mockPosition);
 
-      // Verify the body includes undefined for highlight
       expect(global.fetch).toHaveBeenCalledWith(
         expect.anything(),
         expect.objectContaining({
@@ -486,7 +469,6 @@ describe("Notes Tests", () => {
       const mockEnrollment = { id: 201, authorizedUser: { id: 4 } };
       const mockPosition = 150;
 
-      // Mock a failed response
       global.fetch.mockResolvedValueOnce({
         ok: false,
         text: async () => "Bad Request",

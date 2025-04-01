@@ -1,8 +1,5 @@
 "use client";
 
-//Refactored the rendering of generic blocks into this separate component
-//to make it easier to handle syntax highlighting of code blocks.
-
 import React, { useEffect, useRef, useState } from "react";
 import hljs from "highlight.js";
 import { Highlight, HighlightColor } from "@/types";
@@ -114,7 +111,6 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
         }
       });
 
-      // Continue with existing code highlighting
       const codeBlocks = contentRef.current.querySelectorAll("pre code");
       codeBlocks.forEach((codeBlock) => {
         if (codeBlock.classList.contains("language-plaintext")) {

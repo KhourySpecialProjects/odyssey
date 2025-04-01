@@ -37,7 +37,7 @@ export function GroupBlock({ group }: { group: Group }) {
         </div>
 
         <div className="inline-flex items-center gap-2">
-          <Link href={linkTo}>
+          <Link href={linkTo} target="_blank" rel="noopener noreferrer">
             <Button size="sm" className="bg-white dark:bg-slate-300">
               <div className="relative group">
                 <Pencil className="text-sky-600" />
@@ -47,7 +47,7 @@ export function GroupBlock({ group }: { group: Group }) {
               </div>
             </Button>
           </Link>
-          <form action={handleUpdateGroup}>
+          <form action={handleUpdateGroup} data-testid="group-form">
             <input
               id="id"
               name="id"

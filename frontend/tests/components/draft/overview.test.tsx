@@ -79,7 +79,7 @@ jest.mock("@/components/ui/tiptap/droplet-overview-input", () => ({
 
 describe("Overview Component", () => {
   const mockHandleChange = jest.fn();
-  
+
   beforeEach(() => {
     (useDropletUpdate as jest.Mock).mockReturnValue({
       error: null,
@@ -89,9 +89,7 @@ describe("Overview Component", () => {
 
   it("renders DropletOverviewInput with initial content", () => {
     const initialContent = "Initial Overview Content";
-    render(
-      <Overview dropletId={1} initialContent={initialContent} />
-    );
+    render(<Overview dropletId={1} initialContent={initialContent} />);
 
     const textarea = screen.getByTestId("overview-textarea");
     expect(textarea).toHaveValue(initialContent);
@@ -99,9 +97,7 @@ describe("Overview Component", () => {
 
   it("calls handleChange when content is updated", () => {
     const initialContent = "Initial Overview Content";
-    render(
-      <Overview dropletId={1} initialContent={initialContent} />
-    );
+    render(<Overview dropletId={1} initialContent={initialContent} />);
 
     const textarea = screen.getByTestId("overview-textarea");
 

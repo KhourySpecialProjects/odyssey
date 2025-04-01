@@ -83,7 +83,7 @@ describe("PlaylistsGrid", () => {
     it("calculates completion percentage correctly", async () => {
       const { container } = await render(await PlaylistsGrid({}));
 
-      expect(container).toHaveTextContent("Playlist 11 droplets");
+      expect(container).toHaveTextContent("Playlist 11 droplet"); // because playlist 1 has 1 droplet
     });
 
     it("sorts playlists by name correctly", async () => {

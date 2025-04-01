@@ -13,7 +13,6 @@ const CustomImage = Image.extend({
   addProseMirrorPlugins: () => Plugin[];
 };
 
-// Define the static method separately
 CustomImage.createPlugins = (): Plugin[] => [
   new Plugin({
     props: {

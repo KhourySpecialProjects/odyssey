@@ -14,7 +14,7 @@ export function AuthorDroplets({ author }: { author: AuthorizedUser }) {
   const droplets = author.droplets;
 
   return (
-    <Card className="border dark:border-slate-500 hover:border-slate-300 dark:bg-slate-700">
+    <Card className="border dark:border-slate-500 hover:border-slate-300 dark:bg-slate-800">
       <CardHeader>
         <CardTitle>Droplets</CardTitle>
         <CardDescription className="dark:text-white">
