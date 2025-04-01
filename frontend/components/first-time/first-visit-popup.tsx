@@ -10,7 +10,6 @@ import {
 } from "../ui/dialog";
 import { Button } from "../ui/button";
 import { Textarea } from "../ui/textarea";
-import { ArrowRightIcon } from "lucide-react";
 import { toast } from "sonner";
 import { updateFirstTimeStatus, updateOnboardingInfo } from "@/lib/actions";
 import { AuthorizedUser } from "@/types";
@@ -77,9 +76,7 @@ export function FirstVisitPopup({ user }: { user: AuthorizedUser | null }) {
         <DialogHeader>
           <DialogTitle>Welcome to Khoury Odyssey!</DialogTitle>
           <DialogDescription>
-            Odyssey is a new platform designed to provide on-demand access to
-            modern knowledge and skills pertinent to today&apos;s undergraduate
-            Khoury students.
+            {/* ... existing description ... */}
           </DialogDescription>
         </DialogHeader>
         <div className="flex flex-col gap-4 mt-4">
@@ -91,6 +88,7 @@ export function FirstVisitPopup({ user }: { user: AuthorizedUser | null }) {
             onChange={(e) => setFirstName(e.target.value)}
             placeholder="First name (required)"
             required
+            aria-label="First name"
           />
         </div>
         <div className="flex flex-col gap-4 mt-4">
@@ -102,6 +100,7 @@ export function FirstVisitPopup({ user }: { user: AuthorizedUser | null }) {
             onChange={(e) => setLastName(e.target.value)}
             placeholder="Last name (required)"
             required
+            aria-label="Last name"
           />
         </div>
         <div className="flex flex-col gap-4 mt-4">
@@ -110,6 +109,7 @@ export function FirstVisitPopup({ user }: { user: AuthorizedUser | null }) {
             value={bio}
             onChange={(e) => setBio(e.target.value)}
             placeholder="Tell us about yourself (optional)"
+            aria-label="Bio"
           />
         </div>
         <div className="flex flex-col gap-4 mt-4">
@@ -118,10 +118,7 @@ export function FirstVisitPopup({ user }: { user: AuthorizedUser | null }) {
             learning modules designed to help you succeed in your academic
             journey.
           </p>
-
-          <Button onClick={() => handleClose()} after={<ArrowRightIcon />}>
-            Start Exploring
-          </Button>
+          <Button onClick={() => handleClose()}>Start Exploring</Button>
         </div>
       </DialogContent>
     </Dialog>

@@ -958,7 +958,6 @@ export async function updateDroplet(
         };
       }
     }
-    // Handle updating the main droplets collection
     const response = await fetch(STRAPI_API_URL + "/api/droplets/" + id, {
       method: "PUT",
       body: JSON.stringify({ data: dataToSend }),

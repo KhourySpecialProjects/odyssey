@@ -21,7 +21,11 @@ export function AddUser() {
         Invite a new user by entering their email address.
       </p>
 
-      <form onSubmit={handleSubmit} className="mt-4">
+      <form
+        data-testid="add-user-form"
+        onSubmit={handleSubmit}
+        className="mt-4"
+      >
         <div className="flex items-center space-x-2">
           <Input
             type="email"

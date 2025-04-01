@@ -36,11 +36,7 @@ export function MemberList({ title, members, variant }: MemberListProps) {
             <Avatar variant="round" className="w-8 h-8">
               <AvatarImage src={member.profilePhoto || undefined} />
               <AvatarFallback>
-                {member.firstName ? (
-                  getInitials(member.firstName + " " + member.lastName)
-                ) : (
-                  <User2Icon />
-                )}
+                {getInitials(member.firstName + " " + member.lastName)}
               </AvatarFallback>
             </Avatar>
             <div className="min-w-0 flex-1">

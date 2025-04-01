@@ -78,28 +78,18 @@ export function FriendRequestFeedBlock({
         >
           <AvatarImage src={request?.profilePhoto || undefined} />
           <AvatarFallback>
-            {request?.firstName ? (
-              getInitials(request.firstName + " " + request.lastName)
-            ) : (
-              <User2Icon />
-            )}
+            {getInitials(request.firstName + " " + request.lastName)}
           </AvatarFallback>
         </Avatar>
 
         <button
           onClick={() => setOpen(true)}
           className="flex-1 min-w-0"
-          title={`${
-            request.firstName && request.lastName
-              ? `${request.firstName} ${request.lastName}`
-              : request.email
-          }`}
+          title={`${request.firstName} ${request.lastName}`}
         >
           <div className="pl-2 w-full">
             <p className="font-medium truncate text-slate-900 dark:text-slate-300 text-left">
-              {request.firstName && request.lastName
-                ? `${request.firstName} ${request.lastName}`
-                : request.email}
+              {request.firstName} {request.lastName}
             </p>
           </div>
         </button>
@@ -112,6 +102,7 @@ export function FriendRequestFeedBlock({
           size="sm"
           variant="outline"
           onClick={handleApprove}
+          role="accept"
         >
           <div className="relative group">
             <Check className="w-3 h-3 group-hover:scale-110 transition-transform" />
@@ -126,6 +117,7 @@ export function FriendRequestFeedBlock({
           size="sm"
           onClick={handleReject}
           style={{ height: "15px", width: "50px" }}
+          role="reject"
         >
           <div className="relative group">
             <X className="w-3 h-3" />
@@ -149,6 +141,7 @@ export function FriendRequestFeedBlock({
                 >
                   <AvatarImage src={request?.profilePhoto || undefined} />
                   <AvatarFallback className="text-2xl">
+                    {getInitials(request.firstName + " " + request.lastName)}
                     {getInitials(request.firstName + " " + request.lastName)}
                   </AvatarFallback>
                 </Avatar>
@@ -185,6 +178,7 @@ export function FriendRequestFeedBlock({
               <div
                 className={`inline-flex items-center gap-2 ${user.blocked.includes(request) ? "visibility: hidden" : "visibility: visible"}`}
                 onClick={handleBlock}
+                data-testid="block-button-container"
               >
                 <Button
                   size="sm"

@@ -16,12 +16,6 @@ interface GroupHeaderProps {
 export function GroupHeader({ group, canEdit }: GroupHeaderProps) {
   const router = useRouter();
 
-  const handleDelete = async () => {
-    const response = await deleteGroup(group.id);
-    if (response.ok && !response.error) {
-      router.replace(`/g/dashboard`);
-    }
-  };
   return (
     <div className="flex justify-between items-start">
       <div className="space-y-4">
