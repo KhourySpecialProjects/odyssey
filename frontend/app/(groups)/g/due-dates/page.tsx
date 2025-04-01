@@ -16,12 +16,10 @@ export default async function GroupDueDatesPage({ searchParams }: Props) {
   const authorizedUser = await getAuthorizedUserByEmail(user.email);
   if (!authorizedUser) redirect("/");
 
-  // If we have a group slug, fetch the group for editing
   const p = await searchParams;
   const groupSlug = p?.slug as string;
   const group = await getGroupBySlugV2(groupSlug);
 
-  // Only allow editing if user is creator or admin
   if (group) {
     const isCreator = group.creator?.id === authorizedUser.id;
     const isAdmin = group.admins?.some(

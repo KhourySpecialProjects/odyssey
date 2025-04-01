@@ -36,7 +36,6 @@ export function DropletTile({
 }: DropletTileProps) {
   const [averageRating, setAverageRating] = useState<number>(0);
 
-  // Calculate completion percentage
   const dropletLessonIds = droplet.lessons?.map((l) => l.id) || [];
   const completedLessonsInDroplet = completedLessonIds.filter((id) =>
     dropletLessonIds.includes(id),
@@ -51,7 +50,7 @@ export function DropletTile({
   let daysUntil = 0;
   if (dueDate && dueDate !== "") {
     const dueDateObject = DateTime.fromISO(dueDate);
-    const today = DateTime.local().startOf("day"); // Set to start of day
+    const today = DateTime.local().startOf("day");
     const diffDays = dueDateObject.startOf("day").diff(today, "days").days;
     daysUntil = Math.ceil(diffDays);
   }
@@ -159,9 +158,6 @@ export function DropletTile({
                 variant="outline"
               >
                 <Clock size={15} className="mr-1" />
-                {/* {daysUntil > 0
-                  ? `Due in ${daysUntil} ${daysUntil > 1 ? "days" : "day"}!`
-                  : "This Droplet is Late!"} */}
 
                 {(() => {
                   if (

@@ -8,7 +8,6 @@ import { Announcement, AnnouncementType, AuthorizedUser } from "@/types";
 import { BellRing, SlidersHorizontal, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { FriendRequests } from "../friends/friend-requests";
-import { Button } from "../ui/button";
 
 export function FeedContainer({
   announcements,
@@ -41,6 +40,7 @@ export function FeedContainer({
             (role) => role.toLowerCase() as AnnouncementType,
           )}
           announcements={announcements}
+          authUser={authUser}
         />
 
         <button

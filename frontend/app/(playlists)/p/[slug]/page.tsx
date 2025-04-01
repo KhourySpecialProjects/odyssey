@@ -86,18 +86,15 @@ export default async function PlaylistPage({ params }: Props) {
       ) || false;
   }
 
-  // Check if user can access this playlist
   if (!playlist.isPublic && !isEnrolled) {
     notFound();
   }
 
-  // Get all lesson IDs from the playlist's droplets
   const playlistLessonIds =
     playlist.droplets?.flatMap(
       (droplet) => droplet.lessons?.map((lesson: Lesson) => lesson.id) || [],
     ) || [];
 
-  // Calculate completion status for each droplet while preserving order
   const dropletStatus =
     playlist.droplets?.map((droplet, index) => {
       const dropletLessonIds = droplet.lessons?.map((l: Lesson) => l.id) || [];
@@ -117,7 +114,6 @@ export default async function PlaylistPage({ params }: Props) {
       };
     }) || [];
 
-  // Organize droplets by status while preserving original order
   const completedDroplets = dropletStatus.filter((d) => d.isComplete);
   const incompleteDroplets = dropletStatus
     .filter((d) => !d.isComplete)
@@ -140,16 +136,6 @@ export default async function PlaylistPage({ params }: Props) {
   return (
     <div className="container py-8">
       <div className="max-w-4xl mx-auto">
-        {/* <Link href="/explore?contentType=playlists" className="block mb-8">
-          <Image
-            src="/logo.svg"
-            alt="Khoury Odyssey Logo"
-            width={165}
-            height={45}
-            priority
-          />
-        </Link> */}
-
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold mb-4">{playlist.name}</h1>
           <div className="flex justify-center gap-4 mb-6">
