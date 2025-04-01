@@ -2,6 +2,7 @@
 
 import { Button } from "../ui/button";
 import { giveKudos } from "@/lib/kudos";
+import { PartyPopper, ThumbsUp } from "lucide-react";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 
@@ -27,9 +28,10 @@ export function KudosButton({ announcementId }: { announcementId: number }) {
       size="xs"
       onClick={handleClick}
       disabled={isPending}
-      className={`bg-yellow-400 dark:bg-yellow-300 dark:text-black text-black border border-yellow-600 hover:bg-gray-200 ${isVisible ? "visiblity: visible" : "visibility: hidden"}`}
+      className={`bg-yellow-300 dark:bg-yellow-400 text-yellow-900 border border-yellow-600 hover:bg-gray-200 ${isVisible ? "visiblity: visible" : "visibility: hidden"}`}
     >
       {isPending ? "Giving..." : "Give Kudos"}
+      <ThumbsUp className="w-4 h-4" />
     </Button>
   );
 }
