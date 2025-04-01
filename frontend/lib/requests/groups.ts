@@ -10,6 +10,7 @@ import { getAuthorizedUserRoleIdByTitle } from "./authorized-user-roles";
 import { createEnrollmentFromEmail } from "@/lib/actions";
 import { revalidatePath } from "next/cache";
 import { enrollInPlaylist } from "./playlist-enrollment";
+
 const STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
 
@@ -621,21 +622,40 @@ export async function enrollUsers(group: Group) {
   try {
     group.members?.map(async (member) => {
       group.droplets?.map(async (droplet) => {
-        const enrollmentData = {
-          droplet: droplet.id,
-          viewedLessons: [],
-        };
-        return await createEnrollmentFromEmail(enrollmentData, member.email);
-      }) || [];
-
-      group.playlists?.map(async (playlist) => {
-        await enrollInPlaylist(playlist.id, member.id);
-        playlist.droplets?.map(async (droplet) => {
+        try {
           const enrollmentData = {
             droplet: droplet.id,
             viewedLessons: [],
           };
           return await createEnrollmentFromEmail(enrollmentData, member.email);
+        } catch (error) {
+          console.error(
+            `Error enrolling this user in droplet [${droplet.name || droplet.id}]: `,
+            error,
+          );
+        }
+        //return await createEnrollment(enrollmentData);
+      }) || [];
+
+      group.playlists?.map(async (playlist) => {
+        await enrollInPlaylist(playlist.id, member.id);
+        playlist.droplets?.map(async (droplet) => {
+          try {
+            const enrollmentData = {
+              droplet: droplet.id,
+              viewedLessons: [],
+            };
+            return await createEnrollmentFromEmail(
+              enrollmentData,
+              member.email,
+            );
+          } catch (error) {
+            console.error(
+              `Error enrolling this user in playlist [${playlist.name || playlist.id}] droplet [${droplet.name || droplet.id}]: `,
+              error,
+            );
+          }
+          //return await createEnrollment(enrollmentData);
         }) || [];
       }) || [];
     }) || [];
@@ -761,6 +781,7 @@ export async function assignPlaylistDueDate(
         `${STRAPI_API_URL}/api/due-dates?filters[authorized_user][id][$eq]=${member.id}&filters[playlist][id][$eq]=${playlist.id}&filters[group][id][$eq]=${group.id}`,
         {
           headers: {
+            "Content-Type": "application/json",
             Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
           },
         },

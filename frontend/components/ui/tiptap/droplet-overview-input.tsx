@@ -39,5 +39,7 @@ export function DropletOverviewInput({
     immediatelyRender: false,
   });
 
-  return <EditorContent name="droplet-overview" editor={editor} />;
+  return (
+    <EditorContent role="textbox" name="droplet-overview" editor={editor} />
+  );
 }

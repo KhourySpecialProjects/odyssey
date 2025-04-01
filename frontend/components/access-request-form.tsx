@@ -4,7 +4,6 @@ import { COLLEGES } from "@/lib/globals";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useTransition } from "react";
 import { useForm } from "react-hook-form";
-import { toast } from "sonner";
 import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
@@ -31,6 +30,7 @@ import {
   accessRequestSchema as formSchema,
 } from "@/lib/validations/access-request";
 import { ArrowRightIcon, LoaderIcon } from "lucide-react";
+import { toast } from "sonner";
 
 export function RequestAccessForm() {
   const [isPending, startTransition] = useTransition();
@@ -71,7 +71,9 @@ export function RequestAccessForm() {
           name="givenName"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Given/First Name</FormLabel>
+              <FormLabel className="dark:text-red-500">
+                Given/First Name
+              </FormLabel>
               <FormControl>
                 <Input
                   placeholder="Sam"
@@ -90,7 +92,9 @@ export function RequestAccessForm() {
           name="familyName"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Family/Last Name</FormLabel>
+              <FormLabel className="dark:text-red-500">
+                Family/Last Name
+              </FormLabel>
               <FormControl>
                 <Input
                   placeholder="Serif"
@@ -110,7 +114,7 @@ export function RequestAccessForm() {
             name="email"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Email</FormLabel>
+                <FormLabel className="dark:text-red-500">Email</FormLabel>
                 <FormControl>
                   <Input
                     placeholder="serif.s@northeastern.edu"
@@ -130,7 +134,7 @@ export function RequestAccessForm() {
           name="affiliation"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Affiliation</FormLabel>
+              <FormLabel className="dark:text-red-500">Affiliation</FormLabel>
               <Select onValueChange={field.onChange}>
                 <FormControl>
                   <SelectTrigger>
@@ -155,7 +159,7 @@ export function RequestAccessForm() {
           name="college"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>College</FormLabel>
+              <FormLabel className="dark:text-red-500">College</FormLabel>
               <Select onValueChange={field.onChange}>
                 <FormControl>
                   <SelectTrigger>

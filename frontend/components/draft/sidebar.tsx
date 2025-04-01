@@ -59,7 +59,6 @@ export function Sidebar({
   const [expanded, setExpanded] = useState(false);
   const pathname = usePathname();
 
-  // Convert droplet_lessons to lessons for existing logic
   const lessons = droplet.droplet_lessons
     .sort((a, b) => a.orderIndex - b.orderIndex)
     .map((dl) => dl.lesson);
@@ -95,14 +94,12 @@ export function Sidebar({
     activeLink: "font-bold dark:bg-slate-500 light:bg-sky-100",
   };
 
-  // Handle window resize
   useLayoutEffect(() => {
     const handleResize = () => setExpanded(false);
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // DnD sensors setup
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor),
@@ -116,7 +113,6 @@ export function Sidebar({
       const newIndex = lessons.findIndex((item) => item.id === over?.id);
       const newLessons = arrayMove(lessons, oldIndex, newIndex);
 
-      // Convert lessons back to droplet_lessons format
       const newDropletLessons = newLessons.map((lesson, index) => ({
         id: dropletLessons.find((dl) => dl.lesson.id === lesson.id)?.id,
         lesson,

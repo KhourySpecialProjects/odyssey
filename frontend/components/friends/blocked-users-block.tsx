@@ -37,25 +37,15 @@ export function BlockedUsersBlock({
         >
           <AvatarImage src={blocked?.profilePhoto || undefined} />
           <AvatarFallback>
-            {blocked?.firstName ? (
-              getInitials(blocked.firstName + " " + blocked.lastName)
-            ) : (
-              <User2Icon />
-            )}
+            {getInitials(blocked.firstName + " " + blocked.lastName)}
           </AvatarFallback>
         </Avatar>
         <div className="flex-1 min-w-0">
           <p
-            title={`${
-              blocked.firstName && blocked.lastName
-                ? `${blocked.firstName} ${blocked.lastName}`
-                : blocked.email
-            }`}
+            title={`${blocked.firstName} ${blocked.lastName}`}
             className="font-medium truncate overflow-hidden text-slate-900 text-slate-900 dark:text-slate-300 max-w-[175px] md:max-w-sm inline-block"
           >
-            {blocked.firstName && blocked.lastName
-              ? `${blocked.firstName} ${blocked.lastName}`
-              : blocked.email}
+            {blocked.firstName} ${blocked.lastName}
           </p>
         </div>
         <div className="flex items-center -space-x-1 md:space-x-4">

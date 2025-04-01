@@ -66,7 +66,7 @@ export function QuizQuestionEditor({
 
       <div className="space-y-4 pt-4">
         <h5 className="font-semibold">
-          {question.answerOptions[0].content === "True"
+          {question.answerOptions[0]?.content === "True"
             ? "Answer Options"
             : "Answer Options (choose multiple if applicable)"}
         </h5>

@@ -22,7 +22,7 @@ export function FeedFilter({ onFilterChange }: FeedFilterProps) {
       value: AnnouncementTypeTitle.Droplet,
       label: (
         <>
-          <span>Droplet</span>
+          <span role="droplet">Droplet</span>
           <Droplet size={20} />
         </>
       ),
@@ -32,7 +32,7 @@ export function FeedFilter({ onFilterChange }: FeedFilterProps) {
       value: AnnouncementTypeTitle.Playlist,
       label: (
         <>
-          <span>Playlist</span>
+          <span role="playlist">Playlist</span>
           <ListVideo size={20} />
         </>
       ),
@@ -42,7 +42,7 @@ export function FeedFilter({ onFilterChange }: FeedFilterProps) {
       value: AnnouncementTypeTitle.Group,
       label: (
         <>
-          <span>Group</span> <UsersRound size={20} />
+          <span role="group">Group</span> <UsersRound size={20} />
         </>
       ),
       color: "bg-purple-200 dark:bg-purple-800 dark:text-slate-300",
@@ -51,7 +51,7 @@ export function FeedFilter({ onFilterChange }: FeedFilterProps) {
       value: AnnouncementTypeTitle.System,
       label: (
         <>
-          <span>System</span> <CircleAlert size={20} />
+          <span role="system">System</span> <CircleAlert size={20} />
         </>
       ),
       color: "bg-red-200 dark:bg-red-800 dark:text-slate-300",
@@ -60,7 +60,7 @@ export function FeedFilter({ onFilterChange }: FeedFilterProps) {
       value: AnnouncementTypeTitle.Friend,
       label: (
         <>
-          <span>Friend</span> <Handshake size={20} />
+          <span role="friend">Friend</span> <Handshake size={20} />
         </>
       ),
       color: "bg-yellow-200 dark:bg-yellow-800 dark:text-slate-300",
@@ -69,7 +69,7 @@ export function FeedFilter({ onFilterChange }: FeedFilterProps) {
       value: AnnouncementTypeTitle.Kudos,
       label: (
         <>
-          <span>Kudos</span> <PartyPopper size={20} />
+          <span role="kudos">Kudos</span> <PartyPopper size={20} />
         </>
       ),
       color: "bg-orange-200 dark:bg-orange-800 dark:text-slate-300",

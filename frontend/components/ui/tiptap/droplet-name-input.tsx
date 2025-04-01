@@ -38,5 +38,5 @@ export function DropletNameInput({
     immediatelyRender: false,
   });
 
-  return <EditorContent name="droplet-name" editor={editor} />;
+  return <EditorContent name="droplet-name" editor={editor} role="textbox" />;
 }

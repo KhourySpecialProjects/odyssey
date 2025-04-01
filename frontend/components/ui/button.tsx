@@ -61,7 +61,6 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     const useAsChild = asChild && React.isValidElement(children);
     const Comp = asChild ? Slot : "button";
 
-    // Render an icon with size, variant, and destructive properties applied.
     const renderIcon = (icon: React.ReactElement<HTMLElement>) => {
       const Component = React.isValidElement(icon) ? Slot : "span";
       const iconClasses = cn(icon.props?.className, "w-4 h-4");

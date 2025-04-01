@@ -12,7 +12,6 @@ export function Logo({ width, height }: { width: number; height: number }) {
     setMounted(true);
   }, []);
 
-  // Wait until mounted to avoid hydration mismatch
   if (!mounted) return null;
 
   const image =

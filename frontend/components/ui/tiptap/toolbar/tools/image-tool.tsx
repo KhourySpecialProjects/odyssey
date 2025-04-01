@@ -50,8 +50,8 @@ export default function ImageToolButton({ editor }: { editor: Editor | null }) {
   );
 
   const disabled = !(
-    editor?.view.state.selection.$from.node().type.name == "doc" ||
-    editor?.view.state.selection.$from.node(-1).type.name == "doc"
+    editor?.view?.state.selection.$from.node().type.name == "doc" ||
+    editor?.view?.state.selection.$from.node(-1).type.name == "doc"
   );
 
   return (
@@ -72,7 +72,7 @@ export default function ImageToolButton({ editor }: { editor: Editor | null }) {
         </button>
       </PopoverTrigger>
       <PopoverContent>
-        <form action={formAction}>
+        <form action={formAction} role="form">
           <FileUpload file={file} setFile={setFile} />
 
           <div className="w-full flex justify-between items-center">
