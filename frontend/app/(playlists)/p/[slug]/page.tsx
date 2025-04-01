@@ -119,12 +119,9 @@ export default async function PlaylistPage({ params }: Props) {
     .filter((d) => !d.isComplete)
     .sort((a, b) => a.index - b.index);
 
-  // The first incomplete droplet is "Pick Up Where "
   const pickUpWhereYouLeftOffDroplet = incompleteDroplets[0];
-  // The rest are "Upcoming"
   const startSomethingNewDroplets = incompleteDroplets.slice(1);
 
-  // Calculate overall progress
   const totalLessons = playlistLessonIds.length;
   const completedLessons = completedLessonIds.filter((id) =>
     playlistLessonIds.includes(id),
@@ -170,6 +167,7 @@ export default async function PlaylistPage({ params }: Props) {
             </div>
           )}
           <div
+            data-testid="edit-button-container"
             className={`pb-2 ${playlist?.authors?.some((author) => author.email === user?.email) ? "visibility: visible" : "visibility: hidden"}`}
           >
             <Link href={`/draft/p/${playlist.slug}`}>

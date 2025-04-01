@@ -73,10 +73,19 @@ export async function getAuthorizedUserByEmail<
             fields: ["id"],
           },
         },
-        fields: ["id", "playlistDueDates"],
+        fields: ["id"],
       },
     },
-    fields = ["*", "firstName", "lastName", "bio", "id", "timeZone"],
+    fields = [
+      "*",
+      "firstName",
+      "lastName",
+      "bio",
+      "id",
+      "timeZone",
+      "linkedin",
+      "github",
+    ],
   }: StrapiRequestParams = {},
 ): Promise<T> {
   const path = `/authorized-users`;
@@ -111,6 +120,8 @@ export async function fetchAuthorizedUsers(): Promise<AuthorizedUser[]> {
         "lastName",
         "bio",
         "profilePhoto",
+        "linkedin",
+        "github",
       ],
       populate: {
         roles: { fields: ["title"] },
@@ -245,7 +256,7 @@ export async function fetchWebsiteCreators(): Promise<AuthorizedUser[]> {
     return flattenAttributes(data.data);
   } catch (error) {
     console.error("Database Error:", error);
-    throw new Error("Failed to fetch content creators.");
+    throw new Error("Failed to fetch website creators.");
   }
 }
 
@@ -301,7 +312,6 @@ export async function getAllAuthorizedUsers(): Promise<AuthorizedUser[]> {
     const authorizedUsers = flattenAttributes(data.data);
     return authorizedUsers;
   } catch (error) {
-    console.error("Failed to fetch authorized users:", error);
-    return [];
+    throw new Error("Failed to fetch authorized users:");
   }
 }

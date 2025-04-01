@@ -1,11 +1,24 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  reactStrictMode: true,
   images: {
-    deviceSizes: [320, 420, 768, 1024, 1200],
-    loader: "default",
-    domains: [process.env.AWS_CDN_URL],
+    domains: [
+      "localhost",
+      "strapi.odyssey.khoury.northeastern.edu",
+      "odyssey.khoury.northeastern.edu",
+    ],
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "**",
+      },
+    ],
   },
-  transpilePackages: ["lucide-react"],
+  experimental: {
+    serverActions: {
+      allowedOrigins: ["localhost:3000"],
+    },
+  },
 };
 
 export default nextConfig;

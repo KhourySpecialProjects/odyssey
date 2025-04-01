@@ -32,8 +32,8 @@ export default function LatexTool({ editor }: { editor: Editor | null }) {
   };
 
   const disabled = !(
-    editor?.view.state.selection.$from.node().type.name == "doc" ||
-    editor?.view.state.selection.$from.node(-1).type.name == "doc"
+    editor?.view?.state.selection.$from.node().type.name == "doc" ||
+    editor?.view?.state.selection.$from.node(-1).type.name == "doc"
   );
 
   const addNewBlockLatex = (selection: Selection | null) => {

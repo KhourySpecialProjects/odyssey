@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { useDropletUpdate } from "./hooks/useDropletUpdate";
 import { htmlToText } from "@/lib/utils";
 import { DropletDescriptionInput } from "@/components/ui/tiptap/droplet-description-input";
@@ -20,7 +19,7 @@ export function Description({
   };
 
   return (
-    <div>
+    <div role="textbox-spot">
       <DropletDescriptionInput
         initialContent={initialContent}
         updateContent={updateDescription}

@@ -63,25 +63,15 @@ export function FriendRequestBlock({
         >
           <AvatarImage src={request?.profilePhoto || undefined} />
           <AvatarFallback>
-            {request?.firstName ? (
-              getInitials(request.firstName + " " + request.lastName)
-            ) : (
-              <User2Icon />
-            )}
+            {getInitials(request.firstName + " " + request.lastName)}
           </AvatarFallback>
         </Avatar>
         <div className="flex-1 min-w-0">
           <p
-            title={`${
-              request.firstName && request.lastName
-                ? `${request.firstName} ${request.lastName}`
-                : request.email
-            }`}
+            title={`${request.firstName} ${request.lastName}`}
             className="font-medium truncate text-slate-900 dark:text-slate-300"
           >
-            {request.firstName && request.lastName
-              ? `${request.firstName} ${request.lastName}`
-              : request.email}
+            {request.firstName} {request.lastName}
           </p>
         </div>
         <UserBlock user={request} curUser={user} />
@@ -89,6 +79,7 @@ export function FriendRequestBlock({
           className="bg-green-600 text-white hover:bg-green-700 dark:bg-green-600 dark:hover:bg-green-700 scale-75 md:scale-100"
           size="sm"
           onClick={handleApprove}
+          role="accept"
         >
           <div className="relative group">
             <Check />
@@ -101,6 +92,7 @@ export function FriendRequestBlock({
           className="bg-red-600 text-white hover:bg-red-700 dark:bg-red-600 dark:hover:bg-red-700 scale-75 md:scale-100"
           size="sm"
           onClick={handleReject}
+          role="reject"
         >
           <div className="relative group">
             <X />

@@ -64,7 +64,7 @@ export async function fetchGroups() {
     );
 
     if (!response.ok) {
-      throw new Error("Failed to fetch groups");
+      throw new Error("Failed to fetch groups.");
     }
 
     const data = await response.json();

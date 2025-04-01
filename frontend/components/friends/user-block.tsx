@@ -74,14 +74,14 @@ export function UserBlock({
           </DialogTitle>
           <div className="flex justify-center space-x-2">
             {user.linkedin && (
-              <Link href={user.linkedin} legacyBehavior>
+              <Link href={user.linkedin} legacyBehavior role="link">
                 <a target="_blank" rel="noopener noreferrer">
                   <Linkedin />
                 </a>
               </Link>
             )}
             {user.github && (
-              <Link href={user.github} legacyBehavior>
+              <Link href={user.github} legacyBehavior role="link">
                 <a target="_blank" rel="noopener noreferrer">
                   <Github />
                 </a>
@@ -99,7 +99,7 @@ export function UserBlock({
           </DialogDescription>
           <FriendCompletedDroplets friend={user} />
           <div
-            className={`inline-flex items-center gap-2 ${curUser == user || curUser.blocked.includes(user) ? "visibility: hidden" : "visibility: visible"}`}
+            className={`inline-flex items-center gap-2 ${curUser === user || curUser?.blocked?.includes(user) ? "visibility: hidden" : "visibility: visible"}`}
             onClick={handleBlock}
           >
             <Button

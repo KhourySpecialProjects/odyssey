@@ -66,7 +66,6 @@ export function AddLesson({
             isHidden: false,
             status: "draft",
             droplet_lessons: [],
-            // lessons: droplet.lessons || [],
           },
         ],
         notes: [],
@@ -83,7 +82,7 @@ export function AddLesson({
       <div className="w-full flex justify-between items-center">
         <p className="p-2 text-lg font-bold leading-7">Lessons</p>
         <div className="p-2 cursor-pointer">
-          <PlusIcon onClick={handleClick} />
+          <PlusIcon role="button" onClick={handleClick} />
         </div>
       </div>
 
@@ -94,6 +93,7 @@ export function AddLesson({
               action={add}
               className="flex flex-row justify-between items-center"
               autoComplete="off"
+              role="form"
             >
               <input
                 ref={inputRef}

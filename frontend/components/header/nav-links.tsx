@@ -17,7 +17,10 @@ export function NavLinks({
   return (
     <ul className={cn("flex", className)}>
       {items.map((item) => (
-        <li key={item.href}>
+        <li
+          key={item.href}
+          className={`${pathname.startsWith(item.href) ? "font-bold" : ""}`}
+        >
           <Link
             href={item.href}
             className={cn(
