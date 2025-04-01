@@ -4,6 +4,7 @@ import { createAuthorizedUser, deleteAccessRequest } from "@/lib/actions";
 import { Button } from "@/components/ui/button";
 import type { AccessRequest } from "./access-requests";
 import { useTransition } from "react";
+import { Check, X } from "lucide-react";
 
 export function AccessRequestBlock({ request }: { request: AccessRequest }) {
   const [isPending, startTransition] = useTransition();
@@ -44,16 +45,22 @@ export function AccessRequestBlock({ request }: { request: AccessRequest }) {
       <div className="flex gap-2">
         <Button
           onClick={handleApprove}
-          className="bg-green-600 dark:bg-green-800 dark:hover:bg-green-900 text-white dark:text-white hover:bg-green-700"
+          className="bg-green-600 dark:bg-green-800 dark:hover:bg-green-900 text-white dark:text-white hover:bg-green-700 px-2 sm:px-4"
           disabled={isPending}
         >
-          Accept
+          <Check />
+          <p className="hidden sm:block">Accept</p>
         </Button>
 
         <form action={handleDeleteRequest}>
           <input type="hidden" name="id" value={request.id} />
-          <Button variant="destructive" disabled={isPending}>
-            Reject
+          <Button
+            variant="destructive"
+            disabled={isPending}
+            className="px-2 sm:px-4"
+          >
+            <p className="hidden sm:block">Reject</p>
+            <X />
           </Button>
         </form>
       </div>
