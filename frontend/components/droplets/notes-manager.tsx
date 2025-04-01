@@ -98,7 +98,7 @@ export function NotesManager({
         <h1 className="text-6xl font-black text-slate-900 dark:text-white">
           Saved Notes
         </h1>
-        <p className="dark:text-slate-300">
+        <p className="dark:text-slate-300 pb-2">
           A collection of notes and highlights that you have created
         </p>
         <hr></hr>
