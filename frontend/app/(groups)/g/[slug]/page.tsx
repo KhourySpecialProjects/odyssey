@@ -12,7 +12,6 @@ import { isAuthorizedUserAdmin } from "@/lib/utils";
 import DueDateAnnouncements from "@/components/group/due-date-announcements";
 import { getGroupDueDates } from "@/lib/requests/groups";
 
-// Ensure fresh data by disabling caching for this route
 export const fetchCache = "force-no-store";
 export const revalidate = 0;
 
@@ -31,7 +30,9 @@ export default async function GroupDetailPage({ params }: Props) {
 
   const p = await params;
   const group = await getGroupBySlugV2(p?.slug);
-  if (!group) notFound();
+  if (!group) {
+    return notFound();
+  }
 
   const isCreator = group.creator?.id === authorizedUser.id;
   const isAdmin = group.admins?.some((admin) => admin.id === authorizedUser.id);
@@ -39,7 +40,6 @@ export default async function GroupDetailPage({ params }: Props) {
 
   const dueDates = await getGroupDueDates(group);
 
-  // Filter to keep only one due date per item (earliest one)
   const filteredDueDates = dueDates.reduce(
     (acc, curr) => {
       const itemId = curr.droplet?.id || curr.playlist?.id;
@@ -61,7 +61,6 @@ export default async function GroupDetailPage({ params }: Props) {
       <GroupHeader group={group} canEdit={canEdit} />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Sidebar with member information */}
         <div className="space-y-8">
           <div>
             <h2 className="text-xl font-semibold mb-4">Group Leadership</h2>
@@ -105,7 +104,6 @@ export default async function GroupDetailPage({ params }: Props) {
           </div>
         </div>
 
-        {/* Main content area */}
         <div className="lg:col-span-2 space-y-6">
           <ContentSection
             title="Group Description"
@@ -123,7 +121,11 @@ export default async function GroupDetailPage({ params }: Props) {
           {dueDates && dueDates.length > 0 && (
             <>
               <Separator />
-              <DueDateAnnouncements group={group} dueDates={uniqueDueDates} />
+              <DueDateAnnouncements
+                group={group}
+                dueDates={uniqueDueDates}
+                data-testid="due-date-announcements"
+              />
             </>
           )}
 
@@ -135,6 +137,7 @@ export default async function GroupDetailPage({ params }: Props) {
               canEdit={canEdit}
               authUser={authorizedUser}
               dueDates={dueDates}
+              data-testid="group-edit-controls"
             />
           </ContentSection>
 

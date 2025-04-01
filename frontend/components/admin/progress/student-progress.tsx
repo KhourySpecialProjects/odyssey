@@ -22,7 +22,6 @@ export async function StudentProgress() {
   const playlists = author.created_playlists;
   if (!playlists) return null;
 
-  // Calculate progress for each user in each playlist
   const playlistsWithProgress = await Promise.all(
     playlists.map(async (playlist) => {
       const usersWithProgress = await Promise.all(

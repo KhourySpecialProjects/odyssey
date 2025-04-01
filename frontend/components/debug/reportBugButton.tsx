@@ -13,6 +13,7 @@ export function ReportBugButton({ user }: { user: User | undefined }) {
         user={user}
         open={showDialog}
         onOpenChange={() => setShowDialog(!showDialog)}
+        data-testid="report-bug-dialog"
       />
     </>
   );

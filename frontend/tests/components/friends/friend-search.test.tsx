@@ -1,0 +1,121 @@
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { FriendSearch } from "@/components/friends/friend-search";
+import { AuthorizedUserRoleTitle } from "@/lib/globals";
+import { TimeZone } from "@/types";
+
+describe("FriendSearch", () => {
+  const mockAuthUsers = [
+    {
+      id: 1,
+      email: "user@example.com",
+      firstName: "John",
+      lastName: "Doe",
+      bio: "Test bio",
+      profilePhoto: "https://example.com/photo.jpg",
+      isEnabled: true,
+      roles: [{ id: 1, title: AuthorizedUserRoleTitle.Faculty }],
+      linkedin: "https://www.google.com/",
+      github: "https://www.google.com/",
+      firstTime: false,
+      friendships: [],
+      sent_requests: [],
+      received_requests: [],
+      blocked: [],
+      was_blocked: [],
+      timeZone: "America/New_York" as TimeZone,
+    },
+  ];
+
+  const mockCurUser = {
+    id: 1,
+    email: "user@example.com",
+    firstName: "John",
+    lastName: "Doe",
+    bio: "Test bio",
+    profilePhoto: "https://example.com/photo.jpg",
+    isEnabled: true,
+    roles: [{ id: 1, title: AuthorizedUserRoleTitle.Faculty }],
+    linkedin: "https://www.google.com/",
+    github: "https://www.google.com/",
+    firstTime: false,
+    friendships: [],
+    sent_requests: [],
+    received_requests: [],
+    blocked: [],
+    was_blocked: [],
+    timeZone: "America/New_York" as TimeZone,
+  };
+
+  it("renders search input", () => {
+    render(
+      <FriendSearch
+        authUsers={mockAuthUsers}
+        curUser={mockCurUser}
+        requestIds={[]}
+        friendIds={[]}
+      />,
+    );
+    expect(screen.getByPlaceholderText("Search...")).toBeInTheDocument();
+  });
+
+  it("filters users based on search term", () => {
+    render(
+      <FriendSearch
+        authUsers={mockAuthUsers}
+        curUser={mockCurUser}
+        requestIds={[]}
+        friendIds={[]}
+      />,
+    );
+
+    const searchInput = screen.getByPlaceholderText("Search...");
+    fireEvent.change(searchInput, { target: { value: "John" } });
+
+    expect(screen.queryByTestId("user-item-2")).not.toBeInTheDocument();
+  });
+
+  it("filters out blocked users from search results", async () => {
+    const blockedUser = {
+      ...mockCurUser,
+      blocked: [mockAuthUsers[0]],
+    };
+
+    render(
+      <FriendSearch
+        authUsers={mockAuthUsers}
+        curUser={blockedUser}
+        requestIds={[]}
+        friendIds={[]}
+      />,
+    );
+
+    const searchInput = screen.getByPlaceholderText("Search...");
+    fireEvent.change(searchInput, { target: { value: "john" } });
+
+    fireEvent.mouseEnter(searchInput);
+
+    await waitFor(() => {
+      expect(screen.queryByText("John Doe")).not.toBeInTheDocument();
+    });
+  });
+
+  it("displays search results based on name or email", async () => {
+    render(
+      <FriendSearch
+        authUsers={mockAuthUsers}
+        curUser={mockCurUser}
+        requestIds={[]}
+        friendIds={[]}
+      />,
+    );
+
+    const searchInput = screen.getByPlaceholderText("Search...");
+
+    fireEvent.change(searchInput, { target: { value: "john" } });
+    fireEvent.mouseEnter(searchInput);
+
+    await waitFor(() => {
+      expect(screen.getByTitle("John Doe")).toBeInTheDocument();
+    });
+  });
+});

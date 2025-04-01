@@ -40,6 +40,7 @@ export function FriendSuggestionsBlock({
           ? "visibility: hidden"
           : "visibility: visible"
       }`}
+      role="mainBox"
     >
       <li className="py-0 [&:not(:first-child)]:pt-3">
         <div className="flex items-center md:space-x-4">
@@ -49,25 +50,15 @@ export function FriendSuggestionsBlock({
           >
             <AvatarImage src={suggUser?.profilePhoto || undefined} />
             <AvatarFallback>
-              {suggUser?.firstName ? (
-                getInitials(suggUser.firstName + " " + suggUser.lastName)
-              ) : (
-                <User2Icon />
-              )}
+              {getInitials(suggUser.firstName + " " + suggUser.lastName)}
             </AvatarFallback>
           </Avatar>
           <div className="flex-1 min-w-0">
             <p
-              title={`${
-                suggUser.firstName && suggUser.lastName
-                  ? `${suggUser.firstName} ${suggUser.lastName}`
-                  : suggUser.email
-              }`}
+              title={`${suggUser.firstName} ${suggUser.lastName}`}
               className="font-medium truncate overflow-hidden text-slate-900 dark:text-slate-300 max-w-[200px] md:max-w-[250px] inline-block"
             >
-              {suggUser.firstName && suggUser.lastName
-                ? suggUser.firstName + " " + suggUser.lastName
-                : suggUser.email}
+              {suggUser.firstName + " " + suggUser.lastName}
             </p>
           </div>
 
@@ -88,7 +79,7 @@ export function FriendSuggestionsBlock({
               onClick={handleRequest}
               className="text-white bg-sky-600 dark:bg-sky-600 dark:text-white dark:hover:bg-sky-700 hover:bg-sky-700 block md:hidden scale-75"
             >
-              {requested ? <UserRoundPlus /> : <UserRoundPlus />}
+              <UserRoundPlus />
             </Button>
           </div>
         </div>

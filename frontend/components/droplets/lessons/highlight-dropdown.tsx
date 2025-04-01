@@ -90,6 +90,7 @@ export function HighlightDropdown({
             onMouseEnter={() => setVisible(true)}
             onClick={handlePopupHighlight}
             className="cursor-pointer dark:text-white"
+            data-testid="pen"
           />
 
           <div

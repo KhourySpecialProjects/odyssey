@@ -102,6 +102,7 @@ export function AddPlaylistDialog({
                   size="lg"
                   className="absolute top-1/2 right-4 -translate-y-1/2"
                   onClick={() => handleAddPlaylist(playlist)}
+                  data-testid="addPlaylist"
                 >
                   <PlusCircle className="h-6 w-6 text-green-700" />
                 </Button>
