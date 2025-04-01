@@ -96,15 +96,6 @@ export type GeneralConfig = {
   mainNav: NavItem[];
 };
 
-// export type Author = {
-//   id: number;
-//   name: string;
-//   bio?: string;
-//   photo?: StrapiMediaParams;
-//   droplets?: Droplet[];
-//   authorizedUser?: AuthorizedUser;
-// };
-
 export type Lesson = {
   id: number;
   name: string;
@@ -294,7 +285,7 @@ export type Announcement = {
   group?: Group;
   authorized_user?: AuthorizedUser;
   playlist?: Playlist;
-  kudosGiven?: boolean;
+  kudosGiven?: AuthorizedUser[];
 };
 
 export type Note = {

@@ -56,7 +56,6 @@ export function GroupDashboard({
           title=""
           emptyMessage="No droplets have been added to this group yet."
         >
-          {/* Droplet components will go here */}
           {group.droplets && group.droplets.length > 0 ? (
             <div className="flex flex-col gap-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 auto-rows-fr">

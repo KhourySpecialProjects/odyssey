@@ -11,7 +11,7 @@
       "url": "https://khouryodyssey.org"
     },
     "license": null,
-    "x-generation-date": "2025-03-27T17:09:54.763Z"
+    "x-generation-date": "2025-03-31T15:21:56.719Z"
   },
   "x-strapi-config": {
     "plugins": [
@@ -629,7 +629,18 @@
                 "example": "string or id"
               },
               "kudosGiven": {
-                "type": "boolean"
+                "type": "array",
+                "items": {
+                  "oneOf": [
+                    {
+                      "type": "integer"
+                    },
+                    {
+                      "type": "string"
+                    }
+                  ],
+                  "example": "string or id"
+                }
               }
             }
           }
@@ -2616,7 +2627,24 @@
                                                                                             }
                                                                                           },
                                                                                           "kudosGiven": {
-                                                                                            "type": "boolean"
+                                                                                            "type": "object",
+                                                                                            "properties": {
+                                                                                              "data": {
+                                                                                                "type": "array",
+                                                                                                "items": {
+                                                                                                  "type": "object",
+                                                                                                  "properties": {
+                                                                                                    "id": {
+                                                                                                      "type": "number"
+                                                                                                    },
+                                                                                                    "attributes": {
+                                                                                                      "type": "object",
+                                                                                                      "properties": {}
+                                                                                                    }
+                                                                                                  }
+                                                                                                }
+                                                                                              }
+                                                                                            }
                                                                                           },
                                                                                           "createdAt": {
                                                                                             "type": "string",
@@ -3334,6 +3362,26 @@
                                                     }
                                                   }
                                                 },
+                                                "gaveKudos": {
+                                                  "type": "object",
+                                                  "properties": {
+                                                    "data": {
+                                                      "type": "array",
+                                                      "items": {
+                                                        "type": "object",
+                                                        "properties": {
+                                                          "id": {
+                                                            "type": "number"
+                                                          },
+                                                          "attributes": {
+                                                            "type": "object",
+                                                            "properties": {}
+                                                          }
+                                                        }
+                                                      }
+                                                    }
+                                                  }
+                                                },
                                                 "createdAt": {
                                                   "type": "string",
                                                   "format": "date-time"
@@ -3863,7 +3911,24 @@
             }
           },
           "kudosGiven": {
-            "type": "boolean"
+            "type": "object",
+            "properties": {
+              "data": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "number"
+                    },
+                    "attributes": {
+                      "type": "object",
+                      "properties": {}
+                    }
+                  }
+                }
+              }
+            }
           },
           "createdAt": {
             "type": "string",
@@ -6111,7 +6176,24 @@
                                                                                               }
                                                                                             },
                                                                                             "kudosGiven": {
-                                                                                              "type": "boolean"
+                                                                                              "type": "object",
+                                                                                              "properties": {
+                                                                                                "data": {
+                                                                                                  "type": "array",
+                                                                                                  "items": {
+                                                                                                    "type": "object",
+                                                                                                    "properties": {
+                                                                                                      "id": {
+                                                                                                        "type": "number"
+                                                                                                      },
+                                                                                                      "attributes": {
+                                                                                                        "type": "object",
+                                                                                                        "properties": {}
+                                                                                                      }
+                                                                                                    }
+                                                                                                  }
+                                                                                                }
+                                                                                              }
                                                                                             },
                                                                                             "createdAt": {
                                                                                               "type": "string",
@@ -6823,6 +6905,26 @@
                                                                   }
                                                                 }
                                                               }
+                                                            }
+                                                          }
+                                                        }
+                                                      }
+                                                    }
+                                                  },
+                                                  "gaveKudos": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                      "data": {
+                                                        "type": "array",
+                                                        "items": {
+                                                          "type": "object",
+                                                          "properties": {
+                                                            "id": {
+                                                              "type": "number"
+                                                            },
+                                                            "attributes": {
+                                                              "type": "object",
+                                                              "properties": {}
                                                             }
                                                           }
                                                         }
@@ -7731,6 +7833,20 @@
                 ]
               },
               "due_dates": {
+                "type": "array",
+                "items": {
+                  "oneOf": [
+                    {
+                      "type": "integer"
+                    },
+                    {
+                      "type": "string"
+                    }
+                  ],
+                  "example": "string or id"
+                }
+              },
+              "gaveKudos": {
                 "type": "array",
                 "items": {
                   "oneOf": [
@@ -9202,7 +9318,24 @@
                                                                                                                         }
                                                                                                                       },
                                                                                                                       "kudosGiven": {
-                                                                                                                        "type": "boolean"
+                                                                                                                        "type": "object",
+                                                                                                                        "properties": {
+                                                                                                                          "data": {
+                                                                                                                            "type": "array",
+                                                                                                                            "items": {
+                                                                                                                              "type": "object",
+                                                                                                                              "properties": {
+                                                                                                                                "id": {
+                                                                                                                                  "type": "number"
+                                                                                                                                },
+                                                                                                                                "attributes": {
+                                                                                                                                  "type": "object",
+                                                                                                                                  "properties": {}
+                                                                                                                                }
+                                                                                                                              }
+                                                                                                                            }
+                                                                                                                          }
+                                                                                                                        }
                                                                                                                       },
                                                                                                                       "createdAt": {
                                                                                                                         "type": "string",
@@ -10119,6 +10252,26 @@
                                                                                             }
                                                                                           }
                                                                                         }
+                                                                                      }
+                                                                                    }
+                                                                                  }
+                                                                                }
+                                                                              }
+                                                                            },
+                                                                            "gaveKudos": {
+                                                                              "type": "object",
+                                                                              "properties": {
+                                                                                "data": {
+                                                                                  "type": "array",
+                                                                                  "items": {
+                                                                                    "type": "object",
+                                                                                    "properties": {
+                                                                                      "id": {
+                                                                                        "type": "number"
+                                                                                      },
+                                                                                      "attributes": {
+                                                                                        "type": "object",
+                                                                                        "properties": {}
                                                                                       }
                                                                                     }
                                                                                   }
@@ -11298,6 +11451,26 @@
             ]
           },
           "due_dates": {
+            "type": "object",
+            "properties": {
+              "data": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "number"
+                    },
+                    "attributes": {
+                      "type": "object",
+                      "properties": {}
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "gaveKudos": {
             "type": "object",
             "properties": {
               "data": {
@@ -13481,7 +13654,24 @@
                                                                                               }
                                                                                             },
                                                                                             "kudosGiven": {
-                                                                                              "type": "boolean"
+                                                                                              "type": "object",
+                                                                                              "properties": {
+                                                                                                "data": {
+                                                                                                  "type": "array",
+                                                                                                  "items": {
+                                                                                                    "type": "object",
+                                                                                                    "properties": {
+                                                                                                      "id": {
+                                                                                                        "type": "number"
+                                                                                                      },
+                                                                                                      "attributes": {
+                                                                                                        "type": "object",
+                                                                                                        "properties": {}
+                                                                                                      }
+                                                                                                    }
+                                                                                                  }
+                                                                                                }
+                                                                                              }
                                                                                             },
                                                                                             "createdAt": {
                                                                                               "type": "string",
@@ -14517,6 +14707,26 @@
                                         }
                                       }
                                     }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        },
+                        "gaveKudos": {
+                          "type": "object",
+                          "properties": {
+                            "data": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "id": {
+                                    "type": "number"
+                                  },
+                                  "attributes": {
+                                    "type": "object",
+                                    "properties": {}
                                   }
                                 }
                               }
@@ -16314,7 +16524,24 @@
                                                                                                                           }
                                                                                                                         },
                                                                                                                         "kudosGiven": {
-                                                                                                                          "type": "boolean"
+                                                                                                                          "type": "object",
+                                                                                                                          "properties": {
+                                                                                                                            "data": {
+                                                                                                                              "type": "array",
+                                                                                                                              "items": {
+                                                                                                                                "type": "object",
+                                                                                                                                "properties": {
+                                                                                                                                  "id": {
+                                                                                                                                    "type": "number"
+                                                                                                                                  },
+                                                                                                                                  "attributes": {
+                                                                                                                                    "type": "object",
+                                                                                                                                    "properties": {}
+                                                                                                                                  }
+                                                                                                                                }
+                                                                                                                              }
+                                                                                                                            }
+                                                                                                                          }
                                                                                                                         },
                                                                                                                         "createdAt": {
                                                                                                                           "type": "string",
@@ -17231,6 +17458,26 @@
                                                                                               }
                                                                                             }
                                                                                           }
+                                                                                        }
+                                                                                      }
+                                                                                    }
+                                                                                  }
+                                                                                }
+                                                                              },
+                                                                              "gaveKudos": {
+                                                                                "type": "object",
+                                                                                "properties": {
+                                                                                  "data": {
+                                                                                    "type": "array",
+                                                                                    "items": {
+                                                                                      "type": "object",
+                                                                                      "properties": {
+                                                                                        "id": {
+                                                                                          "type": "number"
+                                                                                        },
+                                                                                        "attributes": {
+                                                                                          "type": "object",
+                                                                                          "properties": {}
                                                                                         }
                                                                                       }
                                                                                     }
@@ -20342,7 +20589,24 @@
                                                                                             }
                                                                                           },
                                                                                           "kudosGiven": {
-                                                                                            "type": "boolean"
+                                                                                            "type": "object",
+                                                                                            "properties": {
+                                                                                              "data": {
+                                                                                                "type": "array",
+                                                                                                "items": {
+                                                                                                  "type": "object",
+                                                                                                  "properties": {
+                                                                                                    "id": {
+                                                                                                      "type": "number"
+                                                                                                    },
+                                                                                                    "attributes": {
+                                                                                                      "type": "object",
+                                                                                                      "properties": {}
+                                                                                                    }
+                                                                                                  }
+                                                                                                }
+                                                                                              }
+                                                                                            }
                                                                                           },
                                                                                           "createdAt": {
                                                                                             "type": "string",
@@ -21054,6 +21318,26 @@
                                                                 }
                                                               }
                                                             }
+                                                          }
+                                                        }
+                                                      }
+                                                    }
+                                                  }
+                                                },
+                                                "gaveKudos": {
+                                                  "type": "object",
+                                                  "properties": {
+                                                    "data": {
+                                                      "type": "array",
+                                                      "items": {
+                                                        "type": "object",
+                                                        "properties": {
+                                                          "id": {
+                                                            "type": "number"
+                                                          },
+                                                          "attributes": {
+                                                            "type": "object",
+                                                            "properties": {}
                                                           }
                                                         }
                                                       }
@@ -23751,7 +24035,24 @@
                                                                                             }
                                                                                           },
                                                                                           "kudosGiven": {
-                                                                                            "type": "boolean"
+                                                                                            "type": "object",
+                                                                                            "properties": {
+                                                                                              "data": {
+                                                                                                "type": "array",
+                                                                                                "items": {
+                                                                                                  "type": "object",
+                                                                                                  "properties": {
+                                                                                                    "id": {
+                                                                                                      "type": "number"
+                                                                                                    },
+                                                                                                    "attributes": {
+                                                                                                      "type": "object",
+                                                                                                      "properties": {}
+                                                                                                    }
+                                                                                                  }
+                                                                                                }
+                                                                                              }
+                                                                                            }
                                                                                           },
                                                                                           "createdAt": {
                                                                                             "type": "string",
@@ -24787,6 +25088,26 @@
                                       }
                                     }
                                   }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      },
+                      "gaveKudos": {
+                        "type": "object",
+                        "properties": {
+                          "data": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "number"
+                                },
+                                "attributes": {
+                                  "type": "object",
+                                  "properties": {}
                                 }
                               }
                             }
@@ -27106,7 +27427,24 @@
                                                                                             }
                                                                                           },
                                                                                           "kudosGiven": {
-                                                                                            "type": "boolean"
+                                                                                            "type": "object",
+                                                                                            "properties": {
+                                                                                              "data": {
+                                                                                                "type": "array",
+                                                                                                "items": {
+                                                                                                  "type": "object",
+                                                                                                  "properties": {
+                                                                                                    "id": {
+                                                                                                      "type": "number"
+                                                                                                    },
+                                                                                                    "attributes": {
+                                                                                                      "type": "object",
+                                                                                                      "properties": {}
+                                                                                                    }
+                                                                                                  }
+                                                                                                }
+                                                                                              }
+                                                                                            }
                                                                                           },
                                                                                           "createdAt": {
                                                                                             "type": "string",
@@ -28142,6 +28480,26 @@
                                       }
                                     }
                                   }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      },
+                      "gaveKudos": {
+                        "type": "object",
+                        "properties": {
+                          "data": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "number"
+                                },
+                                "attributes": {
+                                  "type": "object",
+                                  "properties": {}
                                 }
                               }
                             }
@@ -30427,7 +30785,24 @@
                                                                                               }
                                                                                             },
                                                                                             "kudosGiven": {
-                                                                                              "type": "boolean"
+                                                                                              "type": "object",
+                                                                                              "properties": {
+                                                                                                "data": {
+                                                                                                  "type": "array",
+                                                                                                  "items": {
+                                                                                                    "type": "object",
+                                                                                                    "properties": {
+                                                                                                      "id": {
+                                                                                                        "type": "number"
+                                                                                                      },
+                                                                                                      "attributes": {
+                                                                                                        "type": "object",
+                                                                                                        "properties": {}
+                                                                                                      }
+                                                                                                    }
+                                                                                                  }
+                                                                                                }
+                                                                                              }
                                                                                             },
                                                                                             "createdAt": {
                                                                                               "type": "string",
@@ -31463,6 +31838,26 @@
                                         }
                                       }
                                     }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        },
+                        "gaveKudos": {
+                          "type": "object",
+                          "properties": {
+                            "data": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "id": {
+                                    "type": "number"
+                                  },
+                                  "attributes": {
+                                    "type": "object",
+                                    "properties": {}
                                   }
                                 }
                               }
@@ -33806,7 +34201,24 @@
                                                                                               }
                                                                                             },
                                                                                             "kudosGiven": {
-                                                                                              "type": "boolean"
+                                                                                              "type": "object",
+                                                                                              "properties": {
+                                                                                                "data": {
+                                                                                                  "type": "array",
+                                                                                                  "items": {
+                                                                                                    "type": "object",
+                                                                                                    "properties": {
+                                                                                                      "id": {
+                                                                                                        "type": "number"
+                                                                                                      },
+                                                                                                      "attributes": {
+                                                                                                        "type": "object",
+                                                                                                        "properties": {}
+                                                                                                      }
+                                                                                                    }
+                                                                                                  }
+                                                                                                }
+                                                                                              }
                                                                                             },
                                                                                             "createdAt": {
                                                                                               "type": "string",
@@ -34842,6 +35254,26 @@
                                         }
                                       }
                                     }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        },
+                        "gaveKudos": {
+                          "type": "object",
+                          "properties": {
+                            "data": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "id": {
+                                    "type": "number"
+                                  },
+                                  "attributes": {
+                                    "type": "object",
+                                    "properties": {}
                                   }
                                 }
                               }
@@ -37235,7 +37667,24 @@
                                                                                             }
                                                                                           },
                                                                                           "kudosGiven": {
-                                                                                            "type": "boolean"
+                                                                                            "type": "object",
+                                                                                            "properties": {
+                                                                                              "data": {
+                                                                                                "type": "array",
+                                                                                                "items": {
+                                                                                                  "type": "object",
+                                                                                                  "properties": {
+                                                                                                    "id": {
+                                                                                                      "type": "number"
+                                                                                                    },
+                                                                                                    "attributes": {
+                                                                                                      "type": "object",
+                                                                                                      "properties": {}
+                                                                                                    }
+                                                                                                  }
+                                                                                                }
+                                                                                              }
+                                                                                            }
                                                                                           },
                                                                                           "createdAt": {
                                                                                             "type": "string",
@@ -38271,6 +38720,26 @@
                                       }
                                     }
                                   }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      },
+                      "gaveKudos": {
+                        "type": "object",
+                        "properties": {
+                          "data": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "number"
+                                },
+                                "attributes": {
+                                  "type": "object",
+                                  "properties": {}
                                 }
                               }
                             }
@@ -40554,7 +41023,24 @@
                                                                                               }
                                                                                             },
                                                                                             "kudosGiven": {
-                                                                                              "type": "boolean"
+                                                                                              "type": "object",
+                                                                                              "properties": {
+                                                                                                "data": {
+                                                                                                  "type": "array",
+                                                                                                  "items": {
+                                                                                                    "type": "object",
+                                                                                                    "properties": {
+                                                                                                      "id": {
+                                                                                                        "type": "number"
+                                                                                                      },
+                                                                                                      "attributes": {
+                                                                                                        "type": "object",
+                                                                                                        "properties": {}
+                                                                                                      }
+                                                                                                    }
+                                                                                                  }
+                                                                                                }
+                                                                                              }
                                                                                             },
                                                                                             "createdAt": {
                                                                                               "type": "string",
@@ -41266,6 +41752,26 @@
                                                                   }
                                                                 }
                                                               }
+                                                            }
+                                                          }
+                                                        }
+                                                      }
+                                                    }
+                                                  },
+                                                  "gaveKudos": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                      "data": {
+                                                        "type": "array",
+                                                        "items": {
+                                                          "type": "object",
+                                                          "properties": {
+                                                            "id": {
+                                                              "type": "number"
+                                                            },
+                                                            "attributes": {
+                                                              "type": "object",
+                                                              "properties": {}
                                                             }
                                                           }
                                                         }
@@ -43843,7 +44349,24 @@
                                                                                                           }
                                                                                                         },
                                                                                                         "kudosGiven": {
-                                                                                                          "type": "boolean"
+                                                                                                          "type": "object",
+                                                                                                          "properties": {
+                                                                                                            "data": {
+                                                                                                              "type": "array",
+                                                                                                              "items": {
+                                                                                                                "type": "object",
+                                                                                                                "properties": {
+                                                                                                                  "id": {
+                                                                                                                    "type": "number"
+                                                                                                                  },
+                                                                                                                  "attributes": {
+                                                                                                                    "type": "object",
+                                                                                                                    "properties": {}
+                                                                                                                  }
+                                                                                                                }
+                                                                                                              }
+                                                                                                            }
+                                                                                                          }
                                                                                                         },
                                                                                                         "createdAt": {
                                                                                                           "type": "string",
@@ -44555,6 +45078,26 @@
                                                                               }
                                                                             }
                                                                           }
+                                                                        }
+                                                                      }
+                                                                    }
+                                                                  }
+                                                                }
+                                                              },
+                                                              "gaveKudos": {
+                                                                "type": "object",
+                                                                "properties": {
+                                                                  "data": {
+                                                                    "type": "array",
+                                                                    "items": {
+                                                                      "type": "object",
+                                                                      "properties": {
+                                                                        "id": {
+                                                                          "type": "number"
+                                                                        },
+                                                                        "attributes": {
+                                                                          "type": "object",
+                                                                          "properties": {}
                                                                         }
                                                                       }
                                                                     }
@@ -47450,7 +47993,24 @@
                                                                                               }
                                                                                             },
                                                                                             "kudosGiven": {
-                                                                                              "type": "boolean"
+                                                                                              "type": "object",
+                                                                                              "properties": {
+                                                                                                "data": {
+                                                                                                  "type": "array",
+                                                                                                  "items": {
+                                                                                                    "type": "object",
+                                                                                                    "properties": {
+                                                                                                      "id": {
+                                                                                                        "type": "number"
+                                                                                                      },
+                                                                                                      "attributes": {
+                                                                                                        "type": "object",
+                                                                                                        "properties": {}
+                                                                                                      }
+                                                                                                    }
+                                                                                                  }
+                                                                                                }
+                                                                                              }
                                                                                             },
                                                                                             "createdAt": {
                                                                                               "type": "string",
@@ -48162,6 +48722,26 @@
                                                                   }
                                                                 }
                                                               }
+                                                            }
+                                                          }
+                                                        }
+                                                      }
+                                                    }
+                                                  },
+                                                  "gaveKudos": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                      "data": {
+                                                        "type": "array",
+                                                        "items": {
+                                                          "type": "object",
+                                                          "properties": {
+                                                            "id": {
+                                                              "type": "number"
+                                                            },
+                                                            "attributes": {
+                                                              "type": "object",
+                                                              "properties": {}
                                                             }
                                                           }
                                                         }
@@ -51272,7 +51852,24 @@
                                                                                               }
                                                                                             },
                                                                                             "kudosGiven": {
-                                                                                              "type": "boolean"
+                                                                                              "type": "object",
+                                                                                              "properties": {
+                                                                                                "data": {
+                                                                                                  "type": "array",
+                                                                                                  "items": {
+                                                                                                    "type": "object",
+                                                                                                    "properties": {
+                                                                                                      "id": {
+                                                                                                        "type": "number"
+                                                                                                      },
+                                                                                                      "attributes": {
+                                                                                                        "type": "object",
+                                                                                                        "properties": {}
+                                                                                                      }
+                                                                                                    }
+                                                                                                  }
+                                                                                                }
+                                                                                              }
                                                                                             },
                                                                                             "createdAt": {
                                                                                               "type": "string",
@@ -51984,6 +52581,26 @@
                                                                   }
                                                                 }
                                                               }
+                                                            }
+                                                          }
+                                                        }
+                                                      }
+                                                    }
+                                                  },
+                                                  "gaveKudos": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                      "data": {
+                                                        "type": "array",
+                                                        "items": {
+                                                          "type": "object",
+                                                          "properties": {
+                                                            "id": {
+                                                              "type": "number"
+                                                            },
+                                                            "attributes": {
+                                                              "type": "object",
+                                                              "properties": {}
                                                             }
                                                           }
                                                         }
@@ -52752,7 +53369,8 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object"
+              "type": "object",
+              "additionalProperties": true
             },
             "style": "deepObject"
           },
@@ -53257,7 +53875,8 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object"
+              "type": "object",
+              "additionalProperties": true
             },
             "style": "deepObject"
           },
@@ -53762,7 +54381,8 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object"
+              "type": "object",
+              "additionalProperties": true
             },
             "style": "deepObject"
           },
@@ -54267,7 +54887,8 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object"
+              "type": "object",
+              "additionalProperties": true
             },
             "style": "deepObject"
           },
@@ -54772,7 +55393,8 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object"
+              "type": "object",
+              "additionalProperties": true
             },
             "style": "deepObject"
           },
@@ -55277,7 +55899,8 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object"
+              "type": "object",
+              "additionalProperties": true
             },
             "style": "deepObject"
           },
@@ -55782,7 +56405,8 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object"
+              "type": "object",
+              "additionalProperties": true
             },
             "style": "deepObject"
           },
@@ -56287,7 +56911,8 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object"
+              "type": "object",
+              "additionalProperties": true
             },
             "style": "deepObject"
           },
@@ -56792,7 +57417,8 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object"
+              "type": "object",
+              "additionalProperties": true
             },
             "style": "deepObject"
           },
@@ -57297,7 +57923,8 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object"
+              "type": "object",
+              "additionalProperties": true
             },
             "style": "deepObject"
           },
@@ -57802,7 +58429,8 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object"
+              "type": "object",
+              "additionalProperties": true
             },
             "style": "deepObject"
           },
@@ -58307,7 +58935,8 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object"
+              "type": "object",
+              "additionalProperties": true
             },
             "style": "deepObject"
           },
@@ -58812,7 +59441,8 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object"
+              "type": "object",
+              "additionalProperties": true
             },
             "style": "deepObject"
           },
@@ -59317,7 +59947,8 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object"
+              "type": "object",
+              "additionalProperties": true
             },
             "style": "deepObject"
           },
@@ -59822,7 +60453,8 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object"
+              "type": "object",
+              "additionalProperties": true
             },
             "style": "deepObject"
           },
@@ -60327,7 +60959,8 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object"
+              "type": "object",
+              "additionalProperties": true
             },
             "style": "deepObject"
           },
@@ -60832,7 +61465,8 @@
             "deprecated": false,
             "required": false,
             "schema": {
-              "type": "object"
+              "type": "object",
+              "additionalProperties": true
             },
             "style": "deepObject"
           },

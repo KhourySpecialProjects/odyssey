@@ -48,7 +48,6 @@ export default async function Page({ params }: Props) {
   //TODO: Clean up this section - there are too many accesses to
   // user functions
 
-  // Get completed lessons
   const session = await getServerSession();
   let completedLessonIds: number[] = [];
   let enrollmentId: string | undefined;

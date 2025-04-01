@@ -11,8 +11,8 @@ export async function BlockedUsers() {
 
   return (
     <section className="mt-4">
-      <h1 className="font-bold dark:text-slate-300">Blocked Users</h1>
-      <p className="dark:text-slate-300">A list of people you have blocked.</p>
+      <h1 className="font-bold">Blocked Users</h1>
+      <p>A list of people you have blocked.</p>
 
       <div className="p-1 md:p-4 mt-4 rounded-md bg-slate-100 dark:bg-slate-800">
         {blockedUsers.length > 0 ? (

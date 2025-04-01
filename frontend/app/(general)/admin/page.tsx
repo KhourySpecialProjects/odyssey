@@ -15,6 +15,7 @@ import { Droplets } from "@/components/admin/droplets/droplets";
 import { Groups } from "@/components/admin/groups/groups";
 import { Playlists } from "@/components/admin/playlists/playlists";
 import { FriendDropdown } from "@/components/friends/friend-dropdown";
+import { LineChartIcon } from "lucide-react";
 
 export default async function Page() {
   const user = await getCurrentUser();
@@ -31,11 +32,11 @@ export default async function Page() {
 
   const pageContent = {
     Users: <AuthorizedUsers />,
-          Droplets: <Droplets />,
-          Playlists: <Playlists />,
-          Groups: <Groups />,
-          "Access Manager": <AccessManager user={user} />,
-          Reports: <Reports />,
+    Droplets: <Droplets />,
+    Playlists: <Playlists />,
+    Groups: <Groups />,
+    "Access Manager": <AccessManager user={user} />,
+    Reports: <Reports />,
   }
 
   return (
@@ -48,20 +49,20 @@ export default async function Page() {
           View Odyssey statistics and edit existing information.
         </p>
       </div>
-
-      <div className="w-full mx-auto text-center max-w-7xl">
-        <h2 className="text-lg mb-2 mt-4 dark:text-slate-300">Statistics</h2>
-        <Separator orientation="horizontal" className="mt-2 mb-4" />
-        <CardContent className="flex flex-col items-center justify-center gap-x-8 text-center gap-y-3 sm:flex-row">
-          <div className="flex items-center space-x-3">
-            <div>
-              <div className="font-medium dark:text-slate-300">
-                Number of Users
-              </div>
-              <div className="text-sm text-slate-500 dark:text-slate-400">
-                {authorizedUsers.length}
-              </div>
+      <h2 className="text-lg mb-2 mt-4 dark:text-slate-300 flex gap-2">
+        Statistics <LineChartIcon className=" inline" />
+      </h2>
+      <Separator orientation="horizontal" className="mt-2 mb-4" />
+      <CardContent className="flex flex-col items-start gap-x-8 text-center gap-y-6 sm:flex-row">
+        <div className="flex items-center space-x-3">
+          <div>
+            <div className="font-medium dark:text-slate-300">
+              Number of Users
             </div>
+            <div className="text-sm text-slate-500 dark:text-slate-400">
+              {authorizedUsers.length}
+            </div>
+          </div>
           </div>
           <div className="flex items-center space-x-3">
             <div>
@@ -86,7 +87,7 @@ export default async function Page() {
         </CardContent>
         <Separator orientation="horizontal" className="mt-2 mb-4" />
 
-      </div>
+      
       <Session />
       <div className="hidden sm:flex sm:flex-col p-4">
       <AdminSelector
@@ -100,6 +101,6 @@ export default async function Page() {
         />
       </div>
 
-    </div>
+    </div >
   );
 }
