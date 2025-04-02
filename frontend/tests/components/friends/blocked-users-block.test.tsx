@@ -17,6 +17,7 @@ jest.mock("sonner", () => ({
 describe("BlockedUsersBlock", () => {
   const mockUser = {
     id: "1",
+    blocked: [],
   } as any;
 
   const mockBlocked = {

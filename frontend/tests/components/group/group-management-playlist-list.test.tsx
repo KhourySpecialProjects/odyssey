@@ -1,6 +1,16 @@
 import { render, screen, fireEvent } from "@testing-library/react";
 import { PlaylistList } from "@/components/group/group-management-playlist-list";
 
+jest.mock("react-dnd", () => ({
+  useDrag: () => [{ isDragging: false }, jest.fn()],
+  useDrop: () => [{}, jest.fn()],
+  DndProvider: ({ children }: { children: React.ReactNode }) => children,
+}));
+
+jest.mock("react-dnd-html5-backend", () => ({
+  HTML5Backend: {},
+}));
+
 describe("PlaylistList", () => {
   const mockPlaylist = {
     id: 1,

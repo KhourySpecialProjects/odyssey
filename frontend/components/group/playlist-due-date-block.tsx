@@ -7,6 +7,7 @@ import { assignPlaylistDueDate, getGroupDueDate } from "@/lib/requests/groups";
 import MUIDateTimePicker from "./datetime-picker";
 import { DateTime } from "luxon";
 import { Check, Trash2Icon } from "lucide-react";
+import Link from "next/link";
 
 interface PlaylistDueDateBlockProps {
   existingGroup: Group;
@@ -65,15 +66,16 @@ export function PlaylistDueDateBlock({
 
   return (
     <div className="flex flex-row justify-between text-xl space-x-2 w-full bg-slate-50 border border-slate-200 rounded-lg p-4 items-center dark:bg-slate-800 dark:border dark:border-slate-500">
-      {currentPlaylist.name}
+      <Link href={`/p/${currentPlaylist.slug}`}>{currentPlaylist.name}</Link>
       <div className="flex flex-row space-x-2 items-center">
         {isSaveClicked && <p className="text-slate-400">Saved!</p>}
         {isRemoveClicked && <p className="text-slate-400">Removed!</p>}
 
-        <div className="dark:bg-slate-50 p-3 rounded-md">
+        <div className="dark:bg-slate-50 rounded-md">
           <MUIDateTimePicker
             onChange={handleInputChange}
             date={dueDate}
+            data-testid="picker"
           ></MUIDateTimePicker>
         </div>
 

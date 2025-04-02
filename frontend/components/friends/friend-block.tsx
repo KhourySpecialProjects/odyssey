@@ -3,12 +3,12 @@
 import { Button } from "@/components/ui/button";
 import { removeFriend } from "@/lib/requests/friends";
 import { AuthorizedUser } from "@/types";
-import { startTransition } from "react";
+import { startTransition, useState } from "react";
 import { toast } from "sonner";
-import { UserBlock } from "./user-block";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
-import { User2Icon, X } from "lucide-react";
+import { X } from "lucide-react";
 import { getInitials } from "@/lib/utils";
+import { ProfileBlock } from "./profile-block";
 
 export function FriendBlock({
   user,
@@ -17,6 +17,8 @@ export function FriendBlock({
   user: AuthorizedUser;
   friend: AuthorizedUser;
 }) {
+  const [open, setOpen] = useState(false);
+
   const handleRemove = () => {
     startTransition(async () => {
       const result = await removeFriend(user.id, friend.id);
@@ -48,7 +50,13 @@ export function FriendBlock({
             {friend.firstName} {friend.lastName}
           </p>
         </div>
-        <UserBlock user={friend} curUser={user} />
+        <ProfileBlock
+          otherUser={friend}
+          user={user}
+          isFeed={false}
+          isOpen={open}
+          setIsOpen={setOpen}
+        />
         <div className="inline-flex items-center " onClick={handleRemove}>
           <Button
             size="sm"
