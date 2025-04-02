@@ -6,12 +6,12 @@ import {
   rejectFriendRequest,
 } from "@/lib/requests/friends";
 import { AuthorizedUser } from "@/types";
-import { Check, User2Icon, X } from "lucide-react";
-import { startTransition } from "react";
+import { Check, X } from "lucide-react";
+import { startTransition, useState } from "react";
 import { toast } from "sonner";
-import { UserBlock } from "./user-block";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { getInitials } from "@/lib/utils";
+import { ProfileBlock } from "./profile-block";
 
 export function FriendRequestBlock({
   user,
@@ -20,6 +20,8 @@ export function FriendRequestBlock({
   user: AuthorizedUser;
   request: AuthorizedUser;
 }) {
+  const [open, setOpen] = useState(false);
+
   const handleApprove = () => {
     if (
       user.friendships.map((friendship) =>
@@ -74,7 +76,13 @@ export function FriendRequestBlock({
             {request.firstName} {request.lastName}
           </p>
         </div>
-        <UserBlock user={request} curUser={user} />
+        <ProfileBlock
+          otherUser={request}
+          user={user}
+          isFeed={false}
+          isOpen={open}
+          setIsOpen={setOpen}
+        />
         <Button
           className="bg-green-600 text-white hover:bg-green-700 dark:bg-green-600 dark:hover:bg-green-700 scale-75 md:scale-100"
           size="sm"

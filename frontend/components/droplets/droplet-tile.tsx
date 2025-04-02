@@ -11,7 +11,7 @@ import { useEffect, useState } from "react";
 import { Button } from "../ui/button";
 import { toast } from "sonner";
 import { archiveDroplet } from "@/lib/actions";
-import { Archive, Clock } from "lucide-react";
+import { Archive, ArchiveRestore, Clock } from "lucide-react";
 import { getDueDateBadgeColor } from "@/lib/utils";
 import { DateTime } from "luxon";
 
@@ -134,7 +134,7 @@ export function DropletTile({
         className={`${isArchived === true || isArchived === false ? "visibility: visible" : "visibility: hidden"} bg-white dark:bg-slate-300`}
       >
         <div className="relative group">
-          <Archive className="text-purple-800" />
+          {isArchived ? <ArchiveRestore className="text-purple-800" /> : <Archive className="text-purple-800" />}
           <span className="absolute left-1/2 transform -translate-x-1/2 top-full mt-1 w-max px-2 py-1 text-xs text-white bg-gray-800 rounded opacity-0 group-hover:opacity-100 transition-opacity">
             {isArchived ? "Unarchive" : "Archive"}
           </span>

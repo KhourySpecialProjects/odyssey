@@ -357,7 +357,7 @@ export async function createGroup(
     groupName,
     description,
     semester,
-    slug: `random-slug-${Math.floor(Math.random() * 90000) + 10000}`,
+    slug: `${groupName.replace(/\s+/g, '-').toLowerCase()}-${Math.floor(Math.random() * 90000) + 10000}`,
     creator: authorizedUserId,
     ...(processedAdmins && {
       admins: { set: processedAdmins },

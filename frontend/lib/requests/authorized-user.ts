@@ -43,6 +43,14 @@ export async function getAuthorizedUserByEmail<
           },
         },
       },
+      playlists: {
+        fields: ["*"],
+        populate: {
+          droplets: {
+            fields: "*",
+          },
+        },
+      },
       friendships: {
         populate: {
           authorized_users: {
