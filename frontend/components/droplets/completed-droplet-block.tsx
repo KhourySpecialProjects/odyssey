@@ -39,10 +39,10 @@ export function CompletedDropletBlock({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent>
+      <DialogContent className="border dark:border-slate-500">
         <DialogTitle></DialogTitle>
         <DialogHeader>
-          <GradientBackground className="px-0">
+          <GradientBackground className="px-0 h-60 min-h-0">
             <div className="max-w-2xl mx-auto">
               <p className="text-slate-500 text-pretty md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed dark:text-slate-400">
                 <strong>You did it!</strong> Congratulations on completing this
