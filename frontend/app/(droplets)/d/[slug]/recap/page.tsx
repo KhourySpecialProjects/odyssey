@@ -179,7 +179,7 @@ export default async function DropletRecapRoute({ params }: Props) {
               <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
                 Notes
               </h2>
-              <p className="text-slate-500 dark:text-slate-300">
+              <p className="text-slate-500 dark:text-slate-300 pb-2">
                 A collection of notes and highlights that you created throughout
                 this droplet:
               </p>

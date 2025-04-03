@@ -86,12 +86,11 @@ export function CreateDropletForm({
       !data.name ||
       !data.focusArea ||
       !data.type ||
-      !data.tagIds ||
       !data.learningObjectives ||
       data.tagIds.length === 0 ||
       data.learningObjectives.length === 0
     ) {
-      setSubmissionState({ error: "Please fill out all fields" });
+      setSubmissionState({ error: "Please fill out all required fields" });
       return;
     }
 
@@ -122,7 +121,9 @@ export function CreateDropletForm({
         </div>
         <div className="w-full flex flex-col gap-3 border rounded-md border-slate-200 dark:border-slate-500 p-8 bg-white dark:bg-slate-800">
           <div>
-            <div className="font-semibold text-sm py-0.5 pb-2">Name</div>
+            <div className="font-semibold text-sm py-0.5 pb-2">
+              Name <span className="text-red-500">*</span>
+            </div>
             <Input
               id="name"
               name="name"
@@ -140,7 +141,8 @@ export function CreateDropletForm({
               >
                 <SelectGroup className="flex flex-col items-start lg:w-1/2 xs:w-full">
                   <SelectLabel className="pl-0 pb-2">
-                    {focusAreaFilter.label}
+                    {focusAreaFilter.label}{" "}
+                    <span className="text-red-500">*</span>
                   </SelectLabel>
                   <SelectTrigger className="w-full">
                     <SelectValue
@@ -159,7 +161,6 @@ export function CreateDropletForm({
                 </SelectContent>
               </Select>
             )}
-
             <RadioSelect
               label="Type"
               items={
@@ -173,6 +174,7 @@ export function CreateDropletForm({
               }
               selected={typeValue}
               setSelected={setTypeValue}
+              firstTime={true}
             />
           </div>
           <div className="flex lg:flex-row xs:flex-col items-start justify-start gap-y-8 gap-x-10">
@@ -216,6 +218,7 @@ export function CreateDropletForm({
           className="w-full flex flex-col gap-3 border rounded-md border-slate-200 dark:border-slate-500 p-8 bg-white dark:bg-slate-800"
           learningObjectives={learningObjectives}
           setLearningObjectives={setLearningObjectives}
+          firstTime={true}
         />
       </div>
 

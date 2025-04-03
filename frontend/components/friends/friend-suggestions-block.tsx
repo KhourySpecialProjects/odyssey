@@ -2,14 +2,13 @@
 
 import { Button } from "@/components/ui/button";
 import { AuthorizedUser } from "@/types";
-import { useState } from "react";
 import { toast } from "sonner";
-import { startTransition } from "react";
+import { startTransition, useState } from "react";
 import { sendFriendRequest } from "@/lib/requests/friends";
-import { UserBlock } from "./user-block";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { getInitials } from "@/lib/utils";
-import { User2Icon, UserRoundPlus } from "lucide-react";
+import { UserRoundPlus } from "lucide-react";
+import { ProfileBlock } from "./profile-block";
 
 export function FriendSuggestionsBlock({
   suggUser,
@@ -22,6 +21,8 @@ export function FriendSuggestionsBlock({
   display: boolean;
   requested: boolean;
 }) {
+  const [open, setOpen] = useState(false);
+
   const handleRequest = () => {
     startTransition(async () => {
       const result = await sendFriendRequest(curUser, suggUser);
@@ -62,7 +63,13 @@ export function FriendSuggestionsBlock({
             </p>
           </div>
 
-          <UserBlock user={suggUser} curUser={curUser} />
+          <ProfileBlock
+            otherUser={suggUser}
+            user={curUser}
+            isFeed={false}
+            isOpen={open}
+            setIsOpen={setOpen}
+          />
 
           <div className="inline-flex items-center">
             <Button

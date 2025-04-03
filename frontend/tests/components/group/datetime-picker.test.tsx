@@ -8,7 +8,7 @@ describe("MUIDateTimePicker", () => {
 
   it("renders date time picker", () => {
     render(<MUIDateTimePicker date={mockDate} onChange={mockOnChange} />);
-    expect(screen.getByLabelText("Enter due date")).toBeInTheDocument();
+    expect(screen.getByTestId("picker")).toBeInTheDocument();
   });
 
   it("displays selected date", () => {
@@ -44,7 +44,7 @@ describe("MUIDateTimePicker", () => {
 
       render(<MUIDateTimePicker date={mockDate} onChange={mockOnChange} />);
 
-      const picker = screen.getByLabelText("Enter due date");
+      const picker = screen.getByTestId("picker");
       expect(picker).toHaveValue("03/20/2024 11:00 AM");
     });
   });
