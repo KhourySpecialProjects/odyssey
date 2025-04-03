@@ -8,10 +8,12 @@ export function LearningObjectivesInput({
   learningObjectives,
   setLearningObjectives,
   className,
+  firstTime,
 }: {
   learningObjectives: string[];
   setLearningObjectives: (learningObjectives: string[]) => void;
   className?: string;
+  firstTime?: boolean;
 }) {
   function addEmptyLearningObjective() {
     if (!learningObjectives.includes("")) {
@@ -26,7 +28,10 @@ export function LearningObjectivesInput({
       )}
     >
       <div className="w-full flex items-center justify-between mb-0">
-        <h2 className="font-semibold text-sm">Learning Objectives</h2>
+        <h2 className="font-semibold text-sm">
+          Learning Objectives{" "}
+          {firstTime && <span className="text-red-500">*</span>}
+        </h2>
         <Button
           type="button"
           onClick={addEmptyLearningObjective}

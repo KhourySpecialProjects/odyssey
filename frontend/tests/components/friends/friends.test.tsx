@@ -32,6 +32,7 @@ describe("Friends", () => {
     const mockAuthUser = {
       id: 1,
       email: "test@example.com",
+      blocked: [],
     };
 
     const mockFriends = [
@@ -40,6 +41,7 @@ describe("Friends", () => {
         firstName: "John",
         lastName: "Doe",
         email: "john@test.com",
+        blocked: [],
       },
     ];
 

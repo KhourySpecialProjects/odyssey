@@ -6,6 +6,10 @@ jest.mock("next-auth/react", () => ({
   signIn: jest.fn(),
 }));
 
+jest.mock("next/navigation", () => ({
+  usePathname: jest.fn().mockReturnValue("/"),
+}));
+
 describe("LoginButton", () => {
   it("renders login button", () => {
     render(<LoginButton />);

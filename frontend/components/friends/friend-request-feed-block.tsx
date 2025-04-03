@@ -4,27 +4,14 @@ import { Button } from "@/components/ui/button";
 import {
   acceptFriendRequest,
   rejectFriendRequest,
-  removeFriend,
 } from "@/lib/requests/friends";
 import { AuthorizedUser } from "@/types";
-import { Check, User2Icon, X } from "lucide-react";
+import { Check, X } from "lucide-react";
 import { startTransition, useState } from "react";
 import { toast } from "sonner";
-
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "../ui/dialog";
-import Link from "next/link";
-import { Github, Linkedin } from "lucide-react";
-import { FriendCompletedDroplets } from "./friend-completed-droplets";
-import { BlockUser } from "@/lib/requests/friends";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { getInitials } from "@/lib/utils";
+import { ProfileBlock } from "./profile-block";
 
 export function FriendRequestFeedBlock({
   user,
@@ -34,17 +21,6 @@ export function FriendRequestFeedBlock({
   request: AuthorizedUser;
 }) {
   const [open, setOpen] = useState(false);
-  const handleBlock = () => {
-    startTransition(async () => {
-      const result = await BlockUser(user.id, request.id);
-      await removeFriend(user.id, request.id);
-      if (result.success) {
-        toast.success("User blocked");
-      } else {
-        toast.error("Failed to block user");
-      }
-    });
-  };
 
   const handleApprove = () => {
     startTransition(async () => {
@@ -129,67 +105,13 @@ export function FriendRequestFeedBlock({
       </div>
 
       <div>
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild></DialogTrigger>
-
-          <DialogContent className="dark:bg-slate-700">
-            <DialogHeader>
-              <div className="flex justify-center items-center">
-                <Avatar
-                  variant="round"
-                  className="border border-sky-800 w-20 h-20 items-center"
-                >
-                  <AvatarImage src={request?.profilePhoto || undefined} />
-                  <AvatarFallback className="text-2xl">
-                    {getInitials(request.firstName + " " + request.lastName)}
-                    {getInitials(request.firstName + " " + request.lastName)}
-                  </AvatarFallback>
-                </Avatar>
-              </div>
-              <DialogTitle style={{ fontSize: "2rem", textAlign: "center" }}>
-                {request.firstName} {request.lastName}
-              </DialogTitle>
-              <div className="flex justify-center space-x-2">
-                {request.linkedin && (
-                  <Link href={request.linkedin} legacyBehavior>
-                    <a target="_blank" rel="noopener noreferrer">
-                      <Linkedin />
-                    </a>
-                  </Link>
-                )}
-                {request.github && (
-                  <Link href={request.github} legacyBehavior>
-                    <a target="_blank" rel="noopener noreferrer">
-                      <Github />
-                    </a>
-                  </Link>
-                )}
-              </div>
-              {request.bio && (
-                <DialogDescription className="dark:text-slate-300">
-                  {request.bio}
-                </DialogDescription>
-              )}
-              <hr className="dark:text-slate-300"></hr>
-              <DialogDescription className="text-center font-bold dark:text-slate-300">
-                Completed Droplets:{" "}
-              </DialogDescription>
-              <FriendCompletedDroplets friend={request} />
-              <div
-                className={`inline-flex items-center gap-2 ${user.blocked.includes(request) ? "visibility: hidden" : "visibility: visible"}`}
-                onClick={handleBlock}
-                data-testid="block-button-container"
-              >
-                <Button
-                  size="sm"
-                  className="bg-red-600 dark:bg-red-400 text-white hover:bg-red-700"
-                >
-                  Block user
-                </Button>
-              </div>
-            </DialogHeader>
-          </DialogContent>
-        </Dialog>
+        <ProfileBlock
+          user={user}
+          otherUser={request}
+          isOpen={open}
+          setIsOpen={setOpen}
+          isFeed={true}
+        />
       </div>
     </div>
   );

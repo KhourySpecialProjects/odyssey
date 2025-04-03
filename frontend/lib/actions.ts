@@ -14,7 +14,7 @@ import { AuthorizedUserRoleTitle } from "./globals";
 import { getAuthorizedUserRoleIdByTitle } from "./requests/authorized-user-roles";
 import { DropletSchema } from "./validations/droplet";
 import { LessonSchema } from "./validations/lesson";
-import type { Droplet, Lesson, TimeZone } from "@/types";
+import type { Droplet, Group, Lesson, TimeZone } from "@/types";
 import { getDropletById } from "./requests/droplet";
 import {
   S3Client,
@@ -893,6 +893,49 @@ export async function archiveDroplet(droplet: Droplet, archiveState: boolean) {
     return { success: true };
   } catch (error) {
     console.error("Error archiving droplet:", error);
+    return { success: false, error };
+  }
+}
+
+export async function archiveGroup(group: Group, archiveState: boolean) {
+  try {
+    const user = await getCurrentUser();
+    if (!user?.email) throw new Error("No email identified");
+    const authorizedUser = await getAuthorizedUserByEmail(user.email);
+
+    const requestBody = {
+      data: {
+        users_archived: archiveState
+          ? { connect: [{ id: authorizedUser.id }] }
+          : { disconnect: [{ id: authorizedUser.id }] },
+      },
+    };
+
+    const response = await fetch(`${STRAPI_API_URL}/api/groups/${group.id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+      },
+      body: JSON.stringify(requestBody),
+    });
+
+    const responseText = await response.text();
+
+    if (!response.ok) {
+      console.error("Archive group error response:", responseText);
+      console.error("Response status:", response.status);
+      throw new Error("Failed to archive group");
+    }
+
+    revalidateTag("dashboard");
+    revalidatePath("/");
+    revalidatePath("/draft");
+    revalidatePath("/dashboard");
+    revalidatePath("/dashboard/archived");
+    return { success: true };
+  } catch (error) {
+    console.error("Error archiving group:", error);
     return { success: false, error };
   }
 }

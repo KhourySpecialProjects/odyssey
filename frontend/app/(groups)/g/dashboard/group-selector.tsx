@@ -3,24 +3,20 @@
 import { cn, isAuthorizedUserAdmin } from "@/lib/utils";
 import {
   AlignJustify,
-  BellRing,
   CircleUserIcon,
   Plus,
   PlusCircle,
   PlusCircleIcon,
   ShieldIcon,
-  StarIcon,
-  UserIcon,
 } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { isContentCreator, isAuthorizedUserFaculty } from "@/lib/utils";
 import { useSession } from "next-auth/react";
 import { useMemo, useState } from "react";
-import { FeedFilter } from "@/components/feed/feed-filter";
 
 const baseTabs = [
-  { name: "Member", value: "member", icon: UserIcon },
+  // { name: "Member", value: "member", icon: UserIcon },
   { name: "Admin", value: "admin", icon: ShieldIcon },
   { name: "Manager", value: "manager", icon: CircleUserIcon },
   // { name: "Favs", value: "favorites", icon: StarIcon },
@@ -38,7 +34,7 @@ export function GroupsSelector() {
       isAuthorizedUserAdmin(session.user.roles) ||
       isAuthorizedUserFaculty(session.user.roles));
 
-  const currentTab = searchParams.get("tab") || "member";
+  const currentTab = searchParams.get("tab") || "creator";
 
   const createQueryString = (name: string, value: string) => {
     const params = new URLSearchParams(searchParams);

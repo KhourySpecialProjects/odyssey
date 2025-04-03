@@ -819,7 +819,7 @@ describe("Groups Tests", () => {
       expect(actualBody.data).toHaveProperty("creator", 5);
       expect(actualBody.data).toHaveProperty(
         "slug",
-        expect.stringMatching(/random-slug-\d+/),
+        expect.stringMatching(/test-group-\d+/),
       );
 
       expect(actualBody.data.admins).toHaveProperty("set", [10, 11]);

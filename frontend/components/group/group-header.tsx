@@ -5,7 +5,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Clock, PencilIcon } from "lucide-react";
 import Link from "next/link";
-import { deleteGroup } from "@/lib/actions";
 import { useRouter } from "next/navigation";
 
 interface GroupHeaderProps {
@@ -31,7 +30,7 @@ export function GroupHeader({ group, canEdit }: GroupHeaderProps) {
           <Link href={`/g/management?slug=${group.slug}`}>
             <Button
               variant="default"
-              className="gap-2 dark:bg-slate-800 border dark:border-slate-500 dark:text-white dark:hover:text-slate-800"
+              className="gap-2 dark:bg-slate-800 border dark:border-slate-500 dark:text-white dark:hover:text-slate-800 w-36"
             >
               <PencilIcon size={17} />
               Edit Group
@@ -40,7 +39,7 @@ export function GroupHeader({ group, canEdit }: GroupHeaderProps) {
           <Link href={`/g/due-dates?slug=${group.slug}`}>
             <Button
               variant="default"
-              className="gap-2 dark:bg-slate-800 border dark:border-slate-500 dark:text-white dark:hover:text-slate-800"
+              className="gap-2 dark:bg-slate-800 border dark:border-slate-500 dark:text-white dark:hover:text-slate-800 w-36"
             >
               <Clock size={17} /> Due Dates
             </Button>

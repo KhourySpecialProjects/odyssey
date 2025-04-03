@@ -32,7 +32,7 @@ export function ExpandableBlockInput({
       Placeholder.configure({
         placeholder: "Nothing here yet...",
         emptyEditorClass:
-          "before:content-[attr(data-placeholder)] before:text-gray-500 before:absolute before:top-2 before:left-2 before:pointer-events-none before:select-none",
+          "before:content-[attr(data-placeholder)] before:text-gray-500 dark:before:text-slate-300 before:absolute before:top-2 before:left-2 before:pointer-events-none before:select-none",
       }),
       CodeBlockLowlight.extend({
         addNodeView() {
@@ -55,7 +55,7 @@ export function ExpandableBlockInput({
     editorProps: {
       attributes: {
         class:
-          "prose prose-sky prose-headings:text-inherit prose-code:text-inherit prose-strong:text-inherit p-2 max-w-full min-h-32 border rounded-b-md border-slate-200 dark:border-slate-500 hover:shadow focus:shadow-lg outline-none",
+          "prose prose-sky prose-headings:text-inherit prose-code:text-inherit prose-strong:text-inherit p-2 max-w-full min-h-32 border rounded-b-md border-slate-200 dark:border-slate-500 hover:shadow focus:shadow-lg outline-none dark:text-slate-300",
       },
       handleKeyDown: (view: any, event: KeyboardEvent) => {
         if (event.key === "Tab") {

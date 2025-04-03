@@ -1,8 +1,9 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { BlockUser, removeFriend } from "@/lib/requests/friends";
 import { toast } from "sonner";
-import { UserBlock } from "@/components/friends/user-block";
 import { TimeZone } from "@/types";
+import { ProfileBlock } from "@/components/friends/profile-block";
+import { useState } from "react";
 
 jest.mock("@/lib/requests/friends", () => ({
   BlockUser: jest.fn(),
@@ -66,7 +67,15 @@ describe("UserBlock", () => {
   });
 
   it("renders user profile information correctly", () => {
-    render(<UserBlock user={mockUser} curUser={mockCurrentUser} />);
+    render(
+      <ProfileBlock
+        otherUser={mockUser}
+        user={mockCurrentUser}
+        isFeed={false}
+        isOpen={true}
+        setIsOpen={() => {}}
+      />,
+    );
 
     fireEvent.click(screen.getByText("View Profile"));
 
@@ -80,7 +89,15 @@ describe("UserBlock", () => {
     (BlockUser as jest.Mock).mockResolvedValue({ success: true });
     (removeFriend as jest.Mock).mockResolvedValue({ success: true });
 
-    render(<UserBlock user={mockUser} curUser={mockCurrentUser} />);
+    render(
+      <ProfileBlock
+        otherUser={mockUser}
+        user={mockCurrentUser}
+        isFeed={false}
+        isOpen={true}
+        setIsOpen={() => {}}
+      />,
+    );
 
     fireEvent.click(screen.getByText("View Profile"));
     fireEvent.click(screen.getByText("Block user"));
@@ -98,7 +115,15 @@ describe("UserBlock", () => {
   it("handles blocking user failure", async () => {
     (BlockUser as jest.Mock).mockResolvedValue({ success: false });
 
-    render(<UserBlock user={mockUser} curUser={mockCurrentUser} />);
+    render(
+      <ProfileBlock
+        otherUser={mockUser}
+        user={mockCurrentUser}
+        isFeed={false}
+        isOpen={true}
+        setIsOpen={() => {}}
+      />,
+    );
 
     fireEvent.click(screen.getByText("View Profile"));
     fireEvent.click(screen.getByText("Block user"));
@@ -110,7 +135,15 @@ describe("UserBlock", () => {
 
   it("shows avatar fallback when no profile photo", () => {
     const userWithoutPhoto = { ...mockUser, profilePhoto: "" };
-    render(<UserBlock user={userWithoutPhoto} curUser={mockCurrentUser} />);
+    render(
+      <ProfileBlock
+        otherUser={mockUser}
+        user={mockCurrentUser}
+        isFeed={false}
+        isOpen={true}
+        setIsOpen={() => {}}
+      />,
+    );
 
     fireEvent.click(screen.getByText("View Profile"));
 
