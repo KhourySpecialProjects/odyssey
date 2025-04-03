@@ -6,7 +6,7 @@ export const GroupSchema = z.object({
   description: z.string().optional(),
   semester: z.string().optional(),
   isArchived: z.boolean().optional().default(false),
-  users_archived: z.array(z.any()).optional(), 
+  users_archived: z.array(z.any()).optional(),
   slug: z.string().optional(),
   members: z.array(z.any()).optional(),
   admins: z.array(z.number()).optional(),

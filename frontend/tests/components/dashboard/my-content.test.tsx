@@ -4,6 +4,7 @@ import { getCurrentUser } from "@/lib/auth/session";
 import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
 import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
 import { notFound } from "next/navigation";
+import { getUserGroups } from "@/lib/requests/groups";
 
 jest.mock("@/lib/auth/session", () => ({
   getCurrentUser: jest.fn(),
@@ -15,6 +16,10 @@ jest.mock("@/lib/requests/authorized-user", () => ({
 
 jest.mock("@/lib/requests/enrollment", () => ({
   getEnrollmentsByAuthorizedUser: jest.fn(),
+}));
+
+jest.mock("@/lib/requests/groups", () => ({
+  getUserGroups: jest.fn().mockResolvedValue([]),
 }));
 
 jest.mock("@/components/dashboard/user-playlists-grid", () => ({
@@ -72,6 +77,7 @@ describe("MyContent", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     (getCurrentUser as jest.Mock).mockResolvedValue(mockUser);
+    (getUserGroups as jest.Mock).mockResolvedValue([]);
   });
 
   it("renders the content selector", async () => {

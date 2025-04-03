@@ -121,7 +121,9 @@ export function CreateDropletForm({
         </div>
         <div className="w-full flex flex-col gap-3 border rounded-md border-slate-200 dark:border-slate-500 p-8 bg-white dark:bg-slate-800">
           <div>
-            <div className="font-semibold text-sm py-0.5 pb-2">Name <span className="text-red-500">*</span></div>
+            <div className="font-semibold text-sm py-0.5 pb-2">
+              Name <span className="text-red-500">*</span>
+            </div>
             <Input
               id="name"
               name="name"
@@ -139,7 +141,8 @@ export function CreateDropletForm({
               >
                 <SelectGroup className="flex flex-col items-start lg:w-1/2 xs:w-full">
                   <SelectLabel className="pl-0 pb-2">
-                    {focusAreaFilter.label} <span className="text-red-500">*</span>
+                    {focusAreaFilter.label}{" "}
+                    <span className="text-red-500">*</span>
                   </SelectLabel>
                   <SelectTrigger className="w-full">
                     <SelectValue
@@ -159,7 +162,7 @@ export function CreateDropletForm({
               </Select>
             )}
             <RadioSelect
-              label="Type" 
+              label="Type"
               items={
                 DROPLET_FILTERS.find(
                   (filter) => filter.name === "type",
@@ -172,7 +175,7 @@ export function CreateDropletForm({
               selected={typeValue}
               setSelected={setTypeValue}
               firstTime={true}
-            /> 
+            />
           </div>
           <div className="flex lg:flex-row xs:flex-col items-start justify-start gap-y-8 gap-x-10">
             <div className="lg:w-1/2 xs:w-full">

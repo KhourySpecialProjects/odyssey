@@ -151,7 +151,7 @@ export type Droplet = {
   droplet_lessons: DropletLesson[];
   shouldBeLocked?: boolean;
   authorized_users?: AuthorizedUser[];
-  isArchived?: boolean
+  isArchived?: boolean;
 };
 
 export type QuizAnswerOption = {
@@ -252,7 +252,6 @@ export type Group = {
   members?: AuthorizedUser[];
   droplets?: Droplet[];
   playlists?: Playlist[];
-  isArchived?: boolean;
   users_archived?: AuthorizedUser[];
 };
 

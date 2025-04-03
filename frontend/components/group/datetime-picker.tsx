@@ -21,34 +21,33 @@ export default function MUIDateTimePicker({
         slotProps={{
           textField: {
             inputProps: {
-              "data-testid": "picker"
-            }
-          }
+              "data-testid": "picker",
+            },
+          },
         }}
         sx={{
-          backgroundColor: '#CBD5E1',
-          borderRadius: '6px',
-          width: '240px', 
-          '& .MuiOutlinedInput-root': {
-            backgroundColor: '#CBD5E1',  
-            borderRadius: '6px',
-            '& fieldset': {
-              border: 'none',
+          backgroundColor: "#CBD5E1",
+          borderRadius: "6px",
+          width: "240px",
+          "& .MuiOutlinedInput-root": {
+            backgroundColor: "#CBD5E1",
+            borderRadius: "6px",
+            "& fieldset": {
+              border: "none",
             },
-            '&:hover fieldset': {
-              border: 'none',
+            "&:hover fieldset": {
+              border: "none",
             },
-            '&.Mui-focused fieldset': {
-              border: 'none',
+            "&.Mui-focused fieldset": {
+              border: "none",
             },
           },
-          '& .MuiInputBase-input': {
-            height: 'auto',
-            padding: '12px',
-            borderRadius: '6px',
-            fontSize: '0.925rem',
+          "& .MuiInputBase-input": {
+            height: "auto",
+            padding: "12px",
+            borderRadius: "6px",
+            fontSize: "0.925rem",
           },
-         
         }}
       />
     </LocalizationProvider>

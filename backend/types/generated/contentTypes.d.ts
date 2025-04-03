@@ -586,6 +586,11 @@ export interface ApiAuthorizedUserAuthorizedUser extends Schema.CollectionType {
       'oneToMany',
       'api::announcement.announcement'
     >;
+    archived_groups: Attribute.Relation<
+      'api::authorized-user.authorized-user',
+      'manyToMany',
+      'api::group.group'
+    >;
     author: Attribute.Relation<
       'api::authorized-user.authorized-user',
       'oneToOne',
@@ -1147,7 +1152,7 @@ export interface ApiGroupGroup extends Schema.CollectionType {
     users_archived: Attribute.Relation<
       'api::group.group',
       'manyToMany',
-      'api::access-request.access-request'
+      'api::authorized-user.authorized-user'
     >;
   };
 }

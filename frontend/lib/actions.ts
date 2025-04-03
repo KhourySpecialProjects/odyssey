@@ -905,36 +905,29 @@ export async function archiveGroup(group: Group, archiveState: boolean) {
 
     const requestBody = {
       data: {
-        users_archived: {
-          [archiveState ? 'connect' : 'disconnect']: [authorizedUser.id] 
-        }
-      }
+        users_archived: archiveState
+          ? { connect: [{ id: authorizedUser.id }] }
+          : { disconnect: [{ id: authorizedUser.id }] },
+      },
     };
 
-    console.log('Request body:', JSON.stringify(requestBody, null, 2));
-    console.log('Group ID:', group.id);
-    console.log('User ID:', authorizedUser.id);
-    console.log('Archive State:', archiveState);
-
-    const response = await fetch(
-      `${STRAPI_API_URL}/api/groups/${group.id}`,
-      {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
-        },
-        body: JSON.stringify(requestBody),
+    const response = await fetch(`${STRAPI_API_URL}/api/groups/${group.id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
       },
-    );
+      body: JSON.stringify(requestBody),
+    });
+
+    const responseText = await response.text();
 
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error("Archive group error response:", errorText);
+      console.error("Archive group error response:", responseText);
       console.error("Response status:", response.status);
-      console.error("Response headers:", Object.fromEntries(response.headers.entries()));
       throw new Error("Failed to archive group");
     }
+
     revalidateTag("dashboard");
     revalidatePath("/");
     revalidatePath("/draft");

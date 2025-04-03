@@ -134,7 +134,11 @@ export function DropletTile({
         className={`${isArchived === true || isArchived === false ? "visibility: visible" : "visibility: hidden"} bg-white dark:bg-slate-300 hover:bg-slate-300`}
       >
         <div className="relative group">
-          {isArchived ? <ArchiveRestore className="text-purple-800" /> : <Archive className="text-purple-800" />}
+          {isArchived ? (
+            <ArchiveRestore className="text-purple-800" />
+          ) : (
+            <Archive className="text-purple-800" />
+          )}
           <span className="absolute left-1/2 transform -translate-x-1/2 top-full mt-1 w-max px-2 py-1 text-xs text-white bg-gray-800 rounded opacity-0 group-hover:opacity-100 transition-opacity">
             {isArchived ? "Unarchive" : "Archive"}
           </span>

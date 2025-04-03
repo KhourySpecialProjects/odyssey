@@ -60,13 +60,13 @@ export async function NoteSummary({
 
   const calculateLines = (text: string, maxWidth: number, fontSize: number) => {
     const avgCharWidth = fontSize * 0.4;
-    const words = text.split(' ');
+    const words = text.split(" ");
     let currentLineWidth = 0;
     let lineCount = 1;
 
     for (const word of words) {
-      const wordWidth = (word.length + 1) * avgCharWidth; 
-      
+      const wordWidth = (word.length + 1) * avgCharWidth;
+
       if (currentLineWidth + wordWidth > maxWidth) {
         lineCount++;
         currentLineWidth = wordWidth;
