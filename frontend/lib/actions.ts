@@ -14,7 +14,7 @@ import { AuthorizedUserRoleTitle } from "./globals";
 import { getAuthorizedUserRoleIdByTitle } from "./requests/authorized-user-roles";
 import { DropletSchema } from "./validations/droplet";
 import { LessonSchema } from "./validations/lesson";
-import type { Droplet, Lesson, TimeZone } from "@/types";
+import type { Droplet, Group, Lesson, TimeZone } from "@/types";
 import { getDropletById } from "./requests/droplet";
 import {
   S3Client,
@@ -893,6 +893,56 @@ export async function archiveDroplet(droplet: Droplet, archiveState: boolean) {
     return { success: true };
   } catch (error) {
     console.error("Error archiving droplet:", error);
+    return { success: false, error };
+  }
+}
+
+export async function archiveGroup(group: Group, archiveState: boolean) {
+  try {
+    const user = await getCurrentUser();
+    if (!user?.email) throw new Error("No email identified");
+    const authorizedUser = await getAuthorizedUserByEmail(user.email);
+
+    const requestBody = {
+      data: {
+        users_archived: {
+          [archiveState ? 'connect' : 'disconnect']: [authorizedUser.id] 
+        }
+      }
+    };
+
+    console.log('Request body:', JSON.stringify(requestBody, null, 2));
+    console.log('Group ID:', group.id);
+    console.log('User ID:', authorizedUser.id);
+    console.log('Archive State:', archiveState);
+
+    const response = await fetch(
+      `${STRAPI_API_URL}/api/groups/${group.id}`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+        },
+        body: JSON.stringify(requestBody),
+      },
+    );
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("Archive group error response:", errorText);
+      console.error("Response status:", response.status);
+      console.error("Response headers:", Object.fromEntries(response.headers.entries()));
+      throw new Error("Failed to archive group");
+    }
+    revalidateTag("dashboard");
+    revalidatePath("/");
+    revalidatePath("/draft");
+    revalidatePath("/dashboard");
+    revalidatePath("/dashboard/archived");
+    return { success: true };
+  } catch (error) {
+    console.error("Error archiving group:", error);
     return { success: false, error };
   }
 }

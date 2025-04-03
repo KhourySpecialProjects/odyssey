@@ -31,13 +31,11 @@ export default async function GroupsPage({ searchParams }: Props) {
   const user = await getCurrentUser();
   if (!user?.email) {
     redirect("/not-found");
-    return null;
   }
 
   const authorizedUser = await getAuthorizedUserByEmail(user.email);
   if (!authorizedUser) {
     redirect("/not-found");
-    return null;
   }
 
   const allGroups = await getUserGroups(authorizedUser.id);
@@ -126,6 +124,7 @@ export default async function GroupsPage({ searchParams }: Props) {
                         group={group}
                         role={role}
                         roleColors={roleColors}
+                        isArchived={false}
                       />
                     </div>
                   ),
