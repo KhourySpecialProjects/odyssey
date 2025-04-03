@@ -203,6 +203,12 @@
       "relation": "manyToMany",
       "target": "api::announcement.announcement",
       "inversedBy": "kudosGiven"
+    },
+    "archived_groups": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::group.group",
+      "mappedBy": "users_archived"
     }
   }
 }

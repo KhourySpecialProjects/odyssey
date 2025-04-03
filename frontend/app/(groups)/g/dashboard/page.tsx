@@ -10,6 +10,7 @@ import {
 } from "@/components/message";
 import { redirect } from "next/navigation";
 import { GroupCard } from "@/components/group/group-card";
+import { isAuthorizedUserAdmin, isContentCreator } from "@/lib/utils";
 
 type GroupWithRole = {
   group: Group;
@@ -29,13 +30,17 @@ export default async function GroupsPage({ searchParams }: Props) {
   const tab = params.tab || "member";
 
   const user = await getCurrentUser();
-  if (!user?.email) {
-    redirect("/not-found");
+  if (
+    !user ||
+    !user.email ||
+    (!isAuthorizedUserAdmin(user.roles) && !isContentCreator(user.roles))
+  ) {
+    redirect("/unauthorized");
   }
 
   const authorizedUser = await getAuthorizedUserByEmail(user.email);
   if (!authorizedUser) {
-    redirect("/not-found");
+    redirect("/unauthorized");
   }
 
   const allGroups = await getUserGroups(authorizedUser.id);
@@ -83,7 +88,7 @@ export default async function GroupsPage({ searchParams }: Props) {
           My Groups
         </h1>
         <p className="mt-4 text-lg leading-normal light:text-slate-600 text-balance">
-          View and manage your group memberships
+          View and manage your group information
         </p>
       </div>
 

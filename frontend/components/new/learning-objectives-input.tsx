@@ -28,7 +28,10 @@ export function LearningObjectivesInput({
       )}
     >
       <div className="w-full flex items-center justify-between mb-0">
-        <h2 className="font-semibold text-sm">Learning Objectives {firstTime && <span className="text-red-500">*</span>}</h2>
+        <h2 className="font-semibold text-sm">
+          Learning Objectives{" "}
+          {firstTime && <span className="text-red-500">*</span>}
+        </h2>
         <Button
           type="button"
           onClick={addEmptyLearningObjective}

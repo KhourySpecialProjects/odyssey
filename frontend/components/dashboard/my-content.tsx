@@ -8,6 +8,11 @@ import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
 import { notFound } from "next/navigation";
 import { getUserGroups } from "@/lib/requests/groups";
 import { GroupCard } from "../group/group-card";
+import {
+  Message,
+  MessageDescription,
+  MessageHeader,
+} from "@/components/message";
 
 export async function MyContent({
   searchParams,
@@ -24,9 +29,16 @@ export async function MyContent({
   const authorizedUser = await getAuthorizedUserByEmail(user.email);
   const allDroplets = await getEnrollmentsByAuthorizedUser(authorizedUser.id);
   const allPlaylists = authorizedUser.playlists?.length || 0;
-  const allGroups = (await getUserGroups(authorizedUser.id)).filter((group) => group.members?.some((member) => member.id === authorizedUser.id));
-  const activeGroups = allGroups.filter((group) => !group.users_archived?.includes(authorizedUser))
-  const archivedGroups = allGroups.filter((group) => group.users_archived?.includes(authorizedUser))
+  const allGroups = (await getUserGroups(authorizedUser.id)).filter((group) =>
+    group.members?.some((member) => member.id === authorizedUser.id),
+  );
+  const activeGroups = allGroups.filter(
+    (group) =>
+      !group.users_archived?.some((user) => user.id === authorizedUser.id),
+  );
+  const archivedGroups = allGroups.filter((group) =>
+    group.users_archived?.some((user) => user.id === authorizedUser.id),
+  );
   const activeDroplets = allDroplets.filter((drop) => !drop.isArchived).length;
   const archivedDroplets = allDroplets.length - activeDroplets;
 
@@ -44,9 +56,20 @@ export async function MyContent({
         ) : tab === "playlists" ? (
           <UserPlaylistsGrid />
         ) : tab === "groups" ? (
-          <div className="grid grid-flow-row grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 auto-rows-fr">
-            {activeGroups.map(
-              ( group ) => (
+          <>
+            {activeGroups.length === 0 && (
+              <Message className="mb-8 border border-dashed rounded-md border-slate-200 dark:bg-slate-800 dark:border-slate-500">
+                <MessageHeader
+                  subtitle="No Results"
+                  title="No Enrolled Groups"
+                />
+                <MessageDescription>
+                  You haven&apos;t enrolled in any Groups yet.
+                </MessageDescription>
+              </Message>
+            )}
+            <div className="grid grid-flow-row grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 auto-rows-fr">
+              {activeGroups.map((group) => (
                 <div key={`group-${group.id}`} className="h-full pb-2">
                   <GroupCard
                     key={group.id}
@@ -55,25 +78,37 @@ export async function MyContent({
                     isArchived={false}
                   />
                 </div>
-              ),
-            )}
-          </div>
+              ))}
+            </div>
+          </>
         ) : (
           <>
+            <div className="font-bold text-xl pb-2">Droplets</div>
             <ArchivedDropletsGrid />
+            <hr className="pb-2" />
+            <div className="font-bold text-xl pb-2">Groups</div>
+            {archivedGroups.length === 0 && (
+              <Message className="mb-8 border border-dashed rounded-md border-slate-200 dark:bg-slate-800 dark:border-slate-500">
+                <MessageHeader
+                  subtitle="No Results"
+                  title="No Archived Groups"
+                />
+                <MessageDescription>
+                  You haven&apos;t archived any Groups yet.
+                </MessageDescription>
+              </Message>
+            )}
             <div className="grid grid-flow-row grid-cols-1 gap-4 mt-4 sm:grid-cols-2">
-              {activeGroups.map(
-                ( group ) => (
-                  <div key={`group-${group.id}`} className="h-full pb-2">
-                    <GroupCard
-                      key={group.id}
-                      group={group}
-                      role={"member"}
-                      isArchived={false}
-                    />
-                  </div>
-                ),
-              )}
+              {archivedGroups.map((group) => (
+                <div key={`group-${group.id}`} className="h-full pb-2">
+                  <GroupCard
+                    key={group.id}
+                    group={group}
+                    role={"member"}
+                    isArchived={true}
+                  />
+                </div>
+              ))}
             </div>
           </>
         )}

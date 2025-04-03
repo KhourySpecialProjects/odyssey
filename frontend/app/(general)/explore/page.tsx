@@ -4,7 +4,12 @@ import { Filter } from "@/components/explore/filter";
 import { Search } from "@/components/explore/search";
 import { Sort } from "@/components/explore/sort";
 import { TagFilter } from "@/components/explore/tag-filter";
-import { defaultSort, DROPLET_FILTERS, sorting } from "@/lib/globals";
+import {
+  defaultSort,
+  DROPLET_FILTERS,
+  playlistSorting,
+  sorting,
+} from "@/lib/globals";
 import { Metadata } from "next";
 import { Suspense } from "react";
 import { ContentTypeSelector } from "@/components/explore/content-type-selector";
@@ -55,7 +60,12 @@ export default async function ExplorePage({
                   />
                 ))}
               {contentType === "droplets" && <TagFilter />}
-              <Sort options={sorting} defaultValue={defaultSort} />
+              {contentType === "droplets" && (
+                <Sort options={sorting} defaultValue={defaultSort} />
+              )}
+              {contentType === "playlists" && (
+                <Sort options={playlistSorting} defaultValue={defaultSort} />
+              )}
             </div>
             <Search />
           </div>

@@ -127,4 +127,9 @@ export const sorting: SortFilterItem[] = [
   },
 ];
 
+export const playlistSorting: SortFilterItem[] = [
+  { label: "A-Z", slug: "name:asc", sortKey: "name:asc" },
+  { label: "Z-A", slug: "name:desc", sortKey: "name:desc" },
+];
+
 export const defaultSort: SortFilterItem = sorting[0];
