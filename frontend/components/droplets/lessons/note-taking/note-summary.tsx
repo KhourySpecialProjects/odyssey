@@ -59,8 +59,23 @@ export async function NoteSummary({
   };
 
   const calculateLines = (text: string, maxWidth: number, fontSize: number) => {
-    const charsPerLine = Math.floor(maxWidth / (fontSize * 0.6));
-    return Math.ceil(text.length / charsPerLine);
+    const avgCharWidth = fontSize * 0.4;
+    const words = text.split(' ');
+    let currentLineWidth = 0;
+    let lineCount = 1;
+
+    for (const word of words) {
+      const wordWidth = (word.length + 1) * avgCharWidth; 
+      
+      if (currentLineWidth + wordWidth > maxWidth) {
+        lineCount++;
+        currentLineWidth = wordWidth;
+      } else {
+        currentLineWidth += wordWidth;
+      }
+    }
+
+    return lineCount;
   };
 
   const drawTextWithBackground = (
@@ -73,7 +88,7 @@ export async function NoteSummary({
     backgroundColor: { r: number; g: number; b: number },
   ) => {
     const lines = calculateLines(text, maxWidth, fontSize);
-    const lineHeight = fontSize * 1.2;
+    const lineHeight = fontSize * 1.6;
     const totalHeight = lines * lineHeight;
 
     if (!hasTextBelow) {
@@ -116,7 +131,7 @@ export async function NoteSummary({
     maxWidth: number,
   ) => {
     const lines = calculateLines(text, maxWidth, fontSize);
-    const lineHeight = fontSize * 1.2;
+    const lineHeight = fontSize * 1.6;
     const totalHeight = lines * lineHeight;
 
     page.drawLine({

@@ -131,7 +131,7 @@ export function DropletTile({
       <Button
         size="sm"
         onClick={changeVisibility}
-        className={`${isArchived === true || isArchived === false ? "visibility: visible" : "visibility: hidden"} bg-white dark:bg-slate-300`}
+        className={`${isArchived === true || isArchived === false ? "visibility: visible" : "visibility: hidden"} bg-white dark:bg-slate-300 hover:bg-slate-300`}
       >
         <div className="relative group">
           {isArchived ? <ArchiveRestore className="text-purple-800" /> : <Archive className="text-purple-800" />}

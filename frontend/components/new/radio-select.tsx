@@ -12,16 +12,18 @@ export function RadioSelect({
   selected,
   setSelected,
   className = "",
+  firstTime
 }: {
   label: string;
   items: RadioItem[];
   selected: string | null;
   setSelected: (selected: string) => void;
   className?: string;
+  firstTime?: boolean
 }) {
   return (
     <div className={`flex flex-col items-start ${className}`}>
-      <div className="font-semibold text-sm py-1.5">{label}</div>
+      <div className="font-semibold text-sm py-1.5">{label} {firstTime && <span className="text-red-500">*</span>}</div>
       <RadioGroup
         className="flex md:flex-row xs:flex-col gap-4"
         value={selected ?? undefined}

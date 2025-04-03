@@ -252,6 +252,8 @@ export type Group = {
   members?: AuthorizedUser[];
   droplets?: Droplet[];
   playlists?: Playlist[];
+  isArchived?: boolean;
+  users_archived?: AuthorizedUser[];
 };
 
 export type GroupListResponse = {
