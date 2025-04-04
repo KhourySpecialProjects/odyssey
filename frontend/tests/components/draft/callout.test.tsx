@@ -176,5 +176,25 @@ describe("CalloutEditor", () => {
         type: "info",
       });
     });
+
+  describe("Content Updates", () => {
+
+    it("should not show icon toggle for default sky color", () => {
+      const skyBlock = {
+        ...mockBlock,
+        color: "bg-sky-50",
+      };
+
+      render(
+        <CalloutEditor
+          block={skyBlock}
+          updateBlock={mockUpdateBlock}
+          deleteBlock={mockDeleteBlock}
+        />
+      );
+
+      expect(screen.queryByRole("toggleButton")).not.toBeInTheDocument();
+    });
   });
 });
+  });

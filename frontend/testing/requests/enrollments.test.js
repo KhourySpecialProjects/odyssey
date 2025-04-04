@@ -419,4 +419,43 @@ describe("Enrollment tests", () => {
       );
     });
   });
+
+  describe("changeEnrollmentRating", () => {
+    it("updates enrollment rating and completion status", async () => {
+      const mockUser = { email: "test@test.com" };
+      jest.spyOn(require("@/lib/auth/session"), "getCurrentUser")
+        .mockResolvedValue(mockUser);
+  
+      global.fetch = jest.fn().mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({ data: { id: 1 } })
+      });
+  
+      const result = await changeEnrollmentRating(5, "123");
+      
+      expect(global.fetch).toHaveBeenCalledWith(
+        expect.stringContaining("/api/enrollments/123"),
+        expect.objectContaining({
+          method: "PUT",
+          body: JSON.stringify({
+            data: {
+              rating: 5,
+              isComplete: true
+            }
+          })
+        })
+      );
+      expect(result).toEqual({ success: true });
+    });
+
+    it("handles errors when user is not authenticated", async () => {
+      (getCurrentUser as jest.Mock).mockResolvedValue({ email: null });
+
+      const result = await changeEnrollmentRating(5, "123");
+      expect(result).toEqual({ 
+        success: false, 
+        error: "Failed to rate enrollment" 
+      });
+    });
+  });
 });
