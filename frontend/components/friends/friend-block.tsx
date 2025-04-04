@@ -6,7 +6,7 @@ import { AuthorizedUser } from "@/types";
 import { startTransition, useState } from "react";
 import { toast } from "sonner";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
-import { X } from "lucide-react";
+import { User2Icon, X } from "lucide-react";
 import { getInitials } from "@/lib/utils";
 import { ProfileBlock } from "./profile-block";
 
@@ -38,16 +38,26 @@ export function FriendBlock({
         >
           <AvatarImage src={friend?.profilePhoto || undefined} />
           <AvatarFallback>
-            {getInitials(friend.firstName + " " + friend.lastName)}
+            {friend.firstName && friend.lastName ? (
+              getInitials(friend.firstName + " " + friend.lastName)
+            ) : (
+              <User2Icon />
+            )}
           </AvatarFallback>
         </Avatar>
 
         <div className="flex-1 min-w-0">
           <p
-            title={`${friend.firstName} ${friend.lastName}`}
+            title={
+              friend.firstName && friend.lastName
+                ? `${friend.firstName} ${friend.lastName}`
+                : `${friend.email}`
+            }
             className="font-medium truncate overflow-hidden text-slate-900 dark:text-slate-300 max-w-[200px] md:max-w-sm inline-block"
           >
-            {friend.firstName} {friend.lastName}
+            {friend.firstName && friend.lastName
+              ? friend.firstName + " " + friend.lastName
+              : friend.email}
           </p>
         </div>
         <ProfileBlock

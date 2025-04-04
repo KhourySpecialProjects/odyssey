@@ -209,4 +209,21 @@ describe("Sidebar", () => {
     const sidebar = screen.getByRole("complementary");
     expect(sidebar).toHaveClass("-transform-none");
   });
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    (useRouter as jest.Mock).mockReturnValue(mockRouter);
+    (usePathname as jest.Mock).mockReturnValue("/draft/d/test-droplet");
+  });
+
+  it("should handle mobile menu expansion", () => {
+    render(
+      <Sidebar user={mockUser} droplet={mockDroplet} authorizedUser={null} />,
+    );
+
+    const menuButton = screen.getByRole("button", { name: /open sidebar/i });
+    fireEvent.click(menuButton);
+
+    expect(screen.getByRole("complementary")).toHaveClass("md:translate-x-80");
+  });
 });

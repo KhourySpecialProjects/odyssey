@@ -26,7 +26,7 @@ export default async function Page() {
           Faculty
         </h1>
       </div>
-      <Session />
+      {/* <Session /> */}
       <AdminSelector
         content={{
           Users: <AuthorizedUsers />,

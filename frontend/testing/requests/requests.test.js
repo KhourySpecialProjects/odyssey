@@ -864,4 +864,17 @@ describe("Tag tests", () => {
       await expect(getTagBySlug("invalid")).rejects.toThrow();
     });
   });
+
+  describe("getDropletBySlug", () => {
+    it("returns first droplet from results", async () => {
+      const mockDroplet = { id: 1, name: "JavaScript", slug: "javascript" };
+      global.fetch = jest.fn().mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({ data: [mockDroplet] }),
+      });
+
+      const result = await getDropletBySlug("test-slug", {});
+      expect(result).toEqual(mockDroplet);
+    });
+  });
 });
