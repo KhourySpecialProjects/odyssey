@@ -13,7 +13,7 @@ import {
   DialogTrigger,
 } from "../ui/dialog";
 import { Button } from "../ui/button";
-import { Github, Linkedin, UserRound } from "lucide-react";
+import { Github, Linkedin, User2Icon, UserRound } from "lucide-react";
 import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { getInitials } from "@/lib/utils";
@@ -75,12 +75,18 @@ export function ProfileBlock({
             >
               <AvatarImage src={otherUser?.profilePhoto || undefined} />
               <AvatarFallback className="text-2xl">
-                {getInitials(otherUser.firstName + " " + otherUser.lastName)}
+                {otherUser.firstName && otherUser.lastName ? (
+                  getInitials(otherUser.firstName + " " + otherUser.lastName)
+                ) : (
+                  <User2Icon />
+                )}
               </AvatarFallback>
             </Avatar>
           </div>
           <DialogTitle style={{ fontSize: "2rem", textAlign: "center" }}>
-            {otherUser.firstName} {otherUser.lastName}
+            {otherUser.firstName && otherUser.lastName
+              ? otherUser.firstName + " " + otherUser.lastName
+              : otherUser.email}
           </DialogTitle>
           <div className="flex justify-center space-x-2">
             {otherUser.linkedin && (

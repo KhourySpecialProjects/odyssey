@@ -378,7 +378,8 @@ export async function createGroup(
       playlists: { connect: playlists.map((id) => ({ id })) },
     }),
   };
-
+  revalidatePath("/g/dashboard");
+  revalidatePath("/g/dashboard?tab=creator");
   return await fetchAPI<Group>(path, {
     options: {
       method: "POST",

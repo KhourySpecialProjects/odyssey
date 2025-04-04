@@ -7,7 +7,7 @@ import { startTransition, useState } from "react";
 import { sendFriendRequest } from "@/lib/requests/friends";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { getInitials } from "@/lib/utils";
-import { UserRoundPlus } from "lucide-react";
+import { User2Icon, UserRoundPlus } from "lucide-react";
 import { ProfileBlock } from "./profile-block";
 
 export function FriendSuggestionsBlock({
@@ -51,15 +51,25 @@ export function FriendSuggestionsBlock({
           >
             <AvatarImage src={suggUser?.profilePhoto || undefined} />
             <AvatarFallback>
-              {getInitials(suggUser.firstName + " " + suggUser.lastName)}
+              {suggUser.firstName && suggUser.lastName ? (
+                getInitials(suggUser.firstName + " " + suggUser.lastName)
+              ) : (
+                <User2Icon />
+              )}
             </AvatarFallback>
           </Avatar>
           <div className="flex-1 min-w-0">
             <p
-              title={`${suggUser.firstName} ${suggUser.lastName}`}
+              title={
+                suggUser.firstName && suggUser.lastName
+                  ? `${suggUser.firstName} ${suggUser.lastName}`
+                  : suggUser.email
+              }
               className="font-medium truncate overflow-hidden text-slate-900 dark:text-slate-300 max-w-[200px] md:max-w-[250px] inline-block"
             >
-              {suggUser.firstName + " " + suggUser.lastName}
+              {suggUser.firstName && suggUser.lastName
+                ? suggUser.firstName + " " + suggUser.lastName
+                : suggUser.email}
             </p>
           </div>
 

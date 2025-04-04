@@ -90,13 +90,20 @@ export function GroupCard({
                 </div>
               </div>
             )}
-            {role === "member" && (
+            {!(
+              role === "creator" ||
+              role === "admin" ||
+              role === "manager"
+            ) && (
               <div className="text-sm light:text-slate-600 dark:text-slate-300 pt-2">
                 <div className="flex gap-3">
                   <span>Members: {group.members?.length || 0}</span>
                 </div>
                 <div className="text-sm light:text-slate-600 dark:text-slate-300 pt-2">
-                  Creator: {group.creator.firstName} {group.creator.lastName}
+                  Creator:{" "}
+                  {group.creator.firstName && group.creator.lastName
+                    ? group.creator?.firstName + " " + group.creator?.lastName
+                    : group.creator.email}
                 </div>
               </div>
             )}

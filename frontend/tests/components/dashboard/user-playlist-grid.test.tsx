@@ -172,4 +172,60 @@ describe("UserPlaylistsGrid", () => {
     const result = await UserPlaylistsGrid();
     expect(result).toBeNull();
   });
+
+  jest.mock("@/lib/auth/session", () => ({
+    getCurrentUser: jest.fn(),
+  }));
+
+  jest.mock("@/lib/requests/authorized-user", () => ({
+    getAuthorizedUserByEmail: jest.fn(),
+  }));
+
+  jest.mock("@/lib/requests/enrollment", () => ({
+    getEnrollmentsByAuthorizedUser: jest.fn(),
+  }));
+
+  jest.mock("@/lib/requests/groups", () => ({
+    getUserDueDates: jest.fn(),
+  }));
+
+  describe("UserPlaylistsGrid", () => {
+    const mockUser = {
+      id: 1,
+      email: "test@example.com",
+    };
+
+    const mockPlaylists = [
+      {
+        id: 1,
+        name: "Public Playlist",
+        isPublic: true,
+        droplets: [{ lessons: [{ id: 1 }] }],
+      },
+      {
+        id: 2,
+        name: "Private Playlist",
+        isPublic: false,
+        droplets: [{ lessons: [{ id: 2 }] }],
+      },
+    ];
+
+    beforeEach(() => {
+      jest.clearAllMocks();
+      (getCurrentUser as jest.Mock).mockResolvedValue(mockUser);
+      (getAuthorizedUserByEmail as jest.Mock).mockResolvedValue({
+        ...mockUser,
+        playlists: mockPlaylists,
+      });
+      (getEnrollmentsByAuthorizedUser as jest.Mock).mockResolvedValue([]);
+      (getUserDueDates as jest.Mock).mockResolvedValue([]);
+    });
+
+    it("should render public and private playlists correctly", async () => {
+      render(await UserPlaylistsGrid());
+
+      expect(screen.getByText("Public Playlist")).toBeInTheDocument();
+      expect(screen.getByText("Private Playlist")).toBeInTheDocument();
+    });
+  });
 });

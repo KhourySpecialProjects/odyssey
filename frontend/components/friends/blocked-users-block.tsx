@@ -8,6 +8,7 @@ import { unblockUser } from "@/lib/requests/friends";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { getInitials } from "@/lib/utils";
 import { ProfileBlock } from "./profile-block";
+import { User2Icon } from "lucide-react";
 
 export function BlockedUsersBlock({
   user,
@@ -38,15 +39,25 @@ export function BlockedUsersBlock({
         >
           <AvatarImage src={blocked?.profilePhoto || undefined} />
           <AvatarFallback>
-            {getInitials(blocked.firstName + " " + blocked.lastName)}
+            {blocked.firstName && blocked.lastName ? (
+              getInitials(blocked.firstName + " " + blocked.lastName)
+            ) : (
+              <User2Icon />
+            )}
           </AvatarFallback>
         </Avatar>
         <div className="flex-1 min-w-0">
           <p
-            title={`${blocked.firstName} ${blocked.lastName}`}
+            title={
+              blocked.firstName && blocked.lastName
+                ? `${blocked.firstName} ${blocked.lastName}`
+                : `${blocked.email}`
+            }
             className="font-medium truncate overflow-hidden text-slate-900 text-slate-900 dark:text-slate-300 max-w-[175px] md:max-w-sm inline-block"
           >
-            {blocked.firstName} {blocked.lastName}
+            {blocked.firstName && blocked.lastName
+              ? blocked.firstName + " " + blocked.lastName
+              : blocked.email}
           </p>
         </div>
         <div className="flex items-center -space-x-1 md:space-x-4">
