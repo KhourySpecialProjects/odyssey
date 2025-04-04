@@ -218,11 +218,7 @@ describe("Sidebar", () => {
 
   it("should handle mobile menu expansion", () => {
     render(
-      <Sidebar 
-        user={mockUser} 
-        droplet={mockDroplet} 
-        authorizedUser={null} 
-      />
+      <Sidebar user={mockUser} droplet={mockDroplet} authorizedUser={null} />,
     );
 
     const menuButton = screen.getByRole("button", { name: /open sidebar/i });

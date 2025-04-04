@@ -191,31 +191,30 @@ describe("SortableLesson", () => {
         droplet={mockDroplet}
         pathname="/some/path"
         classes={mockClasses}
-      />
+      />,
     );
 
     const lessonLink = screen.getByRole("link");
     fireEvent.click(lessonLink);
 
     expect(mockRouter.push).toHaveBeenCalledWith(
-      "/draft/d/test-droplet/test-lesson"
+      "/draft/d/test-droplet/test-lesson",
     );
   });
 
   it("should apply correct styling based on pathname", () => {
     const activePath = "/draft/d/test-droplet/test-lesson";
-    
+
     render(
       <SortableLesson
         lesson={mockLesson}
         droplet={mockDroplet}
         pathname={activePath}
         classes={mockClasses}
-      />
+      />,
     );
 
     const link = screen.getByRole("link");
     expect(link).toHaveClass("test-link", "test-active");
   });
-
 });

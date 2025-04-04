@@ -78,7 +78,9 @@ export function UserMultiSelect({
                 />
                 <div>
                   <div className="text-sm text-muted-foreground">
-                    {user.firstName + " " + user.lastName}
+                    {user.firstName && user.lastName
+                      ? user.firstName + " " + user.lastName
+                      : user.email}
                   </div>
                 </div>
               </CommandItem>

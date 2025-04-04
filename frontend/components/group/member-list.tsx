@@ -36,12 +36,18 @@ export function MemberList({ title, members, variant }: MemberListProps) {
             <Avatar variant="round" className="w-8 h-8">
               <AvatarImage src={member.profilePhoto || undefined} />
               <AvatarFallback>
-                {getInitials(member.firstName + " " + member.lastName)}
+                {member.firstName && member.lastName ? (
+                  getInitials(member.firstName + " " + member.lastName)
+                ) : (
+                  <User2Icon />
+                )}
               </AvatarFallback>
             </Avatar>
             <div className="min-w-0 flex-1">
               <p className="text-sm font-medium truncate">
-                {member.firstName + " " + member.lastName}
+                {member.firstName && member.lastName
+                  ? member.firstName + " " + member.lastName
+                  : member.email}
               </p>
             </div>
           </div>
