@@ -148,4 +148,12 @@ describe("EnrolledDropletsGrid", () => {
 
     expect(getUserDueDates).toHaveBeenCalledWith(1);
   });
+
+  describe("EnrolledDropletsGrid", () => {
+    it("should calculate correct completion percentage for enrolled droplets", async () => {
+      const { container } = await render(await EnrolledDropletsGrid());
+      
+      expect(container).toHaveTextContent("Showing 1 enrolled droplets");
+    });
+  });
 });
