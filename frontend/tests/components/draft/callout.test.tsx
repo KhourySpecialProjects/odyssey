@@ -177,24 +177,23 @@ describe("CalloutEditor", () => {
       });
     });
 
-  describe("Content Updates", () => {
+    describe("Content Updates", () => {
+      it("should not show icon toggle for default sky color", () => {
+        const skyBlock = {
+          ...mockBlock,
+          color: "bg-sky-50",
+        };
 
-    it("should not show icon toggle for default sky color", () => {
-      const skyBlock = {
-        ...mockBlock,
-        color: "bg-sky-50",
-      };
+        render(
+          <CalloutEditor
+            block={skyBlock}
+            updateBlock={mockUpdateBlock}
+            deleteBlock={mockDeleteBlock}
+          />,
+        );
 
-      render(
-        <CalloutEditor
-          block={skyBlock}
-          updateBlock={mockUpdateBlock}
-          deleteBlock={mockDeleteBlock}
-        />
-      );
-
-      expect(screen.queryByRole("toggleButton")).not.toBeInTheDocument();
+        expect(screen.queryByRole("toggleButton")).not.toBeInTheDocument();
+      });
     });
   });
 });
-  });

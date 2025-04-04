@@ -21,7 +21,9 @@ jest.mock("@/lib/requests/authorized-user", () => ({
 }));
 
 jest.mock("next-auth/next", () => ({
-  getServerSession: jest.fn().mockResolvedValue({ user: { email: "test@test.com" } })
+  getServerSession: jest
+    .fn()
+    .mockResolvedValue({ user: { email: "test@test.com" } }),
 }));
 
 describe("kudos", () => {
@@ -31,29 +33,30 @@ describe("kudos", () => {
 
   describe("createKudos", () => {
     it("should successfully create kudos", async () => {
-      (getCurrentUser as jest.Mock).mockResolvedValue({ email: "test@test.com" });
-      
-      (getAuthorizedUserByEmail as jest.Mock).mockResolvedValue({ 
-        id: 1, 
-        email: "test@test.com" 
+      (getCurrentUser as jest.Mock).mockResolvedValue({
+        email: "test@test.com",
+      });
+
+      (getAuthorizedUserByEmail as jest.Mock).mockResolvedValue({
+        id: 1,
+        email: "test@test.com",
       });
 
       const mockResponse = { data: { id: 1 }, ok: true };
       (fetchAPI as jest.Mock).mockResolvedValue(mockResponse);
 
       const result = await giveKudos(1);
-      
+
       expect(getCurrentUser).toHaveBeenCalled();
       expect(getAuthorizedUserByEmail).toHaveBeenCalledWith("test@test.com");
     });
 
     it("calls notFound when user is not found", async () => {
       (getCurrentUser as jest.Mock).mockResolvedValue(null);
-  
+
       await giveKudos(1);
-  
+
       expect(notFound).toHaveBeenCalled();
     });
-
   });
 });

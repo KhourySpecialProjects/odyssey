@@ -136,33 +136,41 @@ describe("StudentProgress", () => {
 
   it("should calculate correct progress percentage", async () => {
     (getCurrentUser as jest.Mock).mockResolvedValue({ email: "test@test.com" });
-    
+
     const mockAuthorizedUser = {
       id: 1,
       email: "test@test.com",
-      created_playlists: [{
-        id: 1,
-        authorized_users: [{ id: 2, email: "student@test.com" }],
-        droplets: [{
-          lessons: [{ id: 1 }, { id: 2 }, { id: 3 }, { id: 4 }]
-        }]
-      }]
+      created_playlists: [
+        {
+          id: 1,
+          authorized_users: [{ id: 2, email: "student@test.com" }],
+          droplets: [
+            {
+              lessons: [{ id: 1 }, { id: 2 }, { id: 3 }, { id: 4 }],
+            },
+          ],
+        },
+      ],
     };
-    (getAuthorizedUserByEmail as jest.Mock).mockResolvedValue(mockAuthorizedUser);
-    
-    (getEnrollmentsByAuthorizedUser as jest.Mock).mockResolvedValue([{
-      viewedLessons: [{ id: 1 }, { id: 2 }]
-    }]);
+    (getAuthorizedUserByEmail as jest.Mock).mockResolvedValue(
+      mockAuthorizedUser,
+    );
+
+    (getEnrollmentsByAuthorizedUser as jest.Mock).mockResolvedValue([
+      {
+        viewedLessons: [{ id: 1 }, { id: 2 }],
+      },
+    ]);
 
     const { container } = await render(await StudentProgress());
-    
+
     expect(container).toHaveTextContent(/in your private playlists/i);
   });
 
   it("should handle empty playlist case", async () => {
     (getCurrentUser as jest.Mock).mockResolvedValue({ email: "test@test.com" });
     (getAuthorizedUserByEmail as jest.Mock).mockResolvedValue({
-      created_playlists: []
+      created_playlists: [],
     });
 
     const { container } = await render(await StudentProgress());
@@ -172,12 +180,16 @@ describe("StudentProgress", () => {
   it("should handle no lessons case", async () => {
     (getCurrentUser as jest.Mock).mockResolvedValue({ email: "test@test.com" });
     const mockAuthorizedUser = {
-      created_playlists: [{
-        authorized_users: [{ id: 1 }],
-        droplets: [{ lessons: [] }]
-      }]
+      created_playlists: [
+        {
+          authorized_users: [{ id: 1 }],
+          droplets: [{ lessons: [] }],
+        },
+      ],
     };
-    (getAuthorizedUserByEmail as jest.Mock).mockResolvedValue(mockAuthorizedUser);
+    (getAuthorizedUserByEmail as jest.Mock).mockResolvedValue(
+      mockAuthorizedUser,
+    );
     (getEnrollmentsByAuthorizedUser as jest.Mock).mockResolvedValue([]);
 
     const { container } = await render(await StudentProgress());

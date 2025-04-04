@@ -177,61 +177,63 @@ describe("AddBlock", () => {
     });
   });
 
-describe("AddBlock", () => {
-  const mockAdd = jest.fn();
+  describe("AddBlock", () => {
+    const mockAdd = jest.fn();
 
-  beforeEach(() => {
-    jest.clearAllMocks();
-  });
-
-  describe("Callout Block Creation", () => {
-    it("should create warning callout block", () => {
-      render(<AddBlock add={mockAdd} />);
-      
-      // Open main menu
-      fireEvent.click(screen.getByText("Add Block"));
-      // Open callout submenu
-      fireEvent.click(screen.getByText("Callout Block"));
-      // Click warning option
-      fireEvent.click(screen.getByText("Warning"));
-
-      expect(mockAdd).toHaveBeenCalledWith({
-        __component: "droplets.callout",
-        content: [
-          {
-            type: "paragraph",
-            children: [{ type: "text", text: "" }],
-          },
-        ],
-        color: "bg-red-300",
-        type: "info",
-      });
+    beforeEach(() => {
+      jest.clearAllMocks();
     });
 
-    it("should create each type of callout block with correct colors", () => {
-      render(<AddBlock add={mockAdd} />);
+    describe("Callout Block Creation", () => {
+      it("should create warning callout block", () => {
+        render(<AddBlock add={mockAdd} />);
 
-      const calloutTypes = [
-        { name: "Question", color: "bg-blue-300" },
-        { name: "Important", color: "bg-orange-300" },
-        { name: "Definition", color: "bg-green-300" },
-        { name: "More Information", color: "bg-purple-300" },
-        { name: "Caution", color: "bg-amber-300" },
-        { name: "Default", color: "bg-sky-50" },
-      ];
+        // Open main menu
+        fireEvent.click(screen.getByText("Add Block"));
+        // Open callout submenu
+        fireEvent.click(screen.getByText("Callout Block"));
+        // Click warning option
+        fireEvent.click(screen.getByText("Warning"));
 
-      fireEvent.click(screen.getByText("Add Block"));
-      fireEvent.click(screen.getByText("Callout Block"));
-
-      calloutTypes.forEach(({ name, color }) => {
-        fireEvent.click(screen.getByText(name));
-        expect(mockAdd).toHaveBeenCalledWith(expect.objectContaining({
+        expect(mockAdd).toHaveBeenCalledWith({
           __component: "droplets.callout",
-          color,
+          content: [
+            {
+              type: "paragraph",
+              children: [{ type: "text", text: "" }],
+            },
+          ],
+          color: "bg-red-300",
           type: "info",
-        }));
+        });
+      });
+
+      it("should create each type of callout block with correct colors", () => {
+        render(<AddBlock add={mockAdd} />);
+
+        const calloutTypes = [
+          { name: "Question", color: "bg-blue-300" },
+          { name: "Important", color: "bg-orange-300" },
+          { name: "Definition", color: "bg-green-300" },
+          { name: "More Information", color: "bg-purple-300" },
+          { name: "Caution", color: "bg-amber-300" },
+          { name: "Default", color: "bg-sky-50" },
+        ];
+
+        fireEvent.click(screen.getByText("Add Block"));
+        fireEvent.click(screen.getByText("Callout Block"));
+
+        calloutTypes.forEach(({ name, color }) => {
+          fireEvent.click(screen.getByText(name));
+          expect(mockAdd).toHaveBeenCalledWith(
+            expect.objectContaining({
+              __component: "droplets.callout",
+              color,
+              type: "info",
+            }),
+          );
+        });
       });
     });
   });
-});
 });

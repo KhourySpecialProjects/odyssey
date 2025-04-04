@@ -2,7 +2,9 @@ import { getCurrentUser } from "@/lib/auth/session";
 import { getServerSession } from "next-auth";
 
 jest.mock("next-auth/next", () => ({
-  getServerSession: jest.fn().mockResolvedValue({ user: { email: "test@test.com" } })
+  getServerSession: jest
+    .fn()
+    .mockResolvedValue({ user: { email: "test@test.com" } }),
 }));
 
 describe("session", () => {
@@ -16,7 +18,7 @@ describe("session", () => {
       (getServerSession as jest.Mock).mockResolvedValue({ user: mockUser });
 
       const result = await getCurrentUser();
-      
+
       expect(result).toEqual(mockUser);
     });
   });

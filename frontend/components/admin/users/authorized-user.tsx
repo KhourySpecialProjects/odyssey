@@ -122,18 +122,18 @@ export function AuthorizedUserBlock({ user }: { user: AuthorizedUser }) {
             <Avatar variant="round" size="sm">
               <AvatarImage src={user.profilePhoto || undefined} />
               <AvatarFallback>
-                {user.firstName[0] + user.lastName[0]}
+                {user.firstName && user.lastName ? (
+                  user.firstName[0] + user.lastName[0]
+                ) : (
+                  <User2Icon />
+                )}
               </AvatarFallback>
             </Avatar>
             <p className="font-medium truncate text-slate-900 dark:text-slate-300">
-              <div data-testid="user-name">
-                {user.firstName && user.lastName
-                  ? user.firstName + " " + user.lastName
-                  : user.email}
-              </div>
-              <div data-testid="user-status">
-                {!user.isEnabled ? " (Disabled)" : ""}
-              </div>
+              {user.firstName && user.lastName
+                ? user.firstName + " " + user.lastName
+                : user.email}
+              {!user.isEnabled ? " (Disabled)" : ""}
             </p>
             <p
               className="text-sm truncate text-slate-500 dark:text-slate-300"

@@ -870,9 +870,9 @@ describe("Tag tests", () => {
       const mockDroplet = { id: 1, name: "JavaScript", slug: "javascript" };
       global.fetch = jest.fn().mockResolvedValue({
         ok: true,
-        json: () => Promise.resolve({ data: [mockDroplet] })
+        json: () => Promise.resolve({ data: [mockDroplet] }),
       });
-  
+
       const result = await getDropletBySlug("test-slug", {});
       expect(result).toEqual(mockDroplet);
     });
