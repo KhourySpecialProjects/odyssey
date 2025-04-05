@@ -166,4 +166,25 @@ describe("OpenEndedQuizEditor", () => {
 
     expect(mockDeleteBlock).toHaveBeenCalled();
   });
+
+  test('removes a question when delete button is clicked', () => {
+    const mockUpdateBlock = jest.fn();
+    const mockDeleteBlock = jest.fn();
+
+    render(
+      <OpenEndedQuizEditor
+        block={mockBlock}
+        updateBlock={mockUpdateBlock}
+        deleteBlock={mockDeleteBlock}
+      />
+    );
+
+    const deleteButtons = screen.getAllByLabelText(/Delete question/);
+    fireEvent.click(deleteButtons[0]);
+
+    expect(mockUpdateBlock).toHaveBeenCalledWith({
+      __component: 'droplets.open-ended-quiz',
+      questions: []
+    });
+  });
 });

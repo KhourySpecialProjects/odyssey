@@ -1,12 +1,21 @@
 import { render, screen } from "@testing-library/react";
 import DraggableTileList from "@/components/droplets/draggable_tile_list";
-import { useDrop } from "react-dnd";
+import { DndProvider, useDrop } from "react-dnd";
+import { HTML5Backend } from "react-dnd-html5-backend";
 
 jest.mock("react-dnd", () => ({
   useDrop: jest.fn().mockImplementation(() => [{ isOver: false }, jest.fn()]),
   useDrag: jest
     .fn()
     .mockImplementation(() => [{ isDragging: false }, jest.fn()]),
+}));
+
+jest.mock("react-dnd-html5-backend", () => ({
+  HTML5Backend: {},
+}));
+
+jest.mock('@/components/droplets/draggable_tile_list_client', () => ({
+  DraggableTileListClient: jest.fn(() => null)
 }));
 
 jest.mock("lib/utils", () => ({
@@ -92,4 +101,5 @@ describe("DraggableTileList", () => {
     expect(canDrop({ sourceList: "source" })).toBe(false);
     expect(canDrop({ sourceList: "selected" })).toBe(true);
   });
-});
+
+})

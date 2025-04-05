@@ -199,4 +199,151 @@ describe("QuizEditor", () => {
       expect(screen.getByText("True/False Quiz")).toBeInTheDocument();
     });
   });
+
+describe('QuizEditor', () => {
+  const mockTrueFalseBlock = {
+    __component: 'quiz',
+    questions: [
+      {
+        id: 1,
+        content: 'Is this true?',
+        answerOptions: [
+          { id: 1, content: 'True', isCorrect: true },
+          { id: 2, content: 'False', isCorrect: false }
+        ]
+      }
+    ]
+  };
+
+  const mockMultipleChoiceBlock = {
+    __component: 'quiz',
+    questions: [
+      {
+        id: 1,
+        content: 'What is your choice?',
+        answerOptions: [
+          { id: 1, content: 'Option 1', isCorrect: true },
+          { id: 2, content: 'Option 2', isCorrect: false }
+        ]
+      }
+    ]
+  };
+
+  test('renders correct title for True/False quiz', () => {
+    render(
+      <QuizEditor
+        block={mockTrueFalseBlock}
+        updateBlock={jest.fn()}
+        deleteBlock={jest.fn()}
+      />
+    );
+
+    expect(screen.getByText('True/False Quiz')).toBeInTheDocument();
+  });
+
+  test('renders correct title for Multiple Choice quiz', () => {
+    render(
+      <QuizEditor
+        block={mockMultipleChoiceBlock}
+        updateBlock={jest.fn()}
+        deleteBlock={jest.fn()}
+      />
+    );
+
+    expect(screen.getByText('Multiple Choice Quiz')).toBeInTheDocument();
+  });
+
+  test('renders QuizQuestionEditor for each question', () => {
+    const multipleQuestionBlock = {
+      __component: 'quiz',
+      questions: [
+        {
+          id: 1,
+          content: 'Question 1',
+          answerOptions: [
+            { id: 1, content: 'True', isCorrect: true },
+            { id: 2, content: 'False', isCorrect: false }
+          ]
+        },
+        {
+          id: 2,
+          content: 'Question 2',
+          answerOptions: [
+            { id: 3, content: 'True', isCorrect: true },
+            { id: 4, content: 'False', isCorrect: false }
+          ]
+        }
+      ]
+    };
+
+    render(
+      <QuizEditor
+        block={multipleQuestionBlock}
+        updateBlock={jest.fn()}
+        deleteBlock={jest.fn()}
+      />
+    );
+
+    const questionEditors = screen.getAllByText(/question/i);
+    expect(questionEditors).toHaveLength(3);
+  });
+
+  test('adds new question when Add Question button is clicked', () => {
+    const mockUpdateBlock = jest.fn();
+    
+    render(
+      <QuizEditor
+        block={mockTrueFalseBlock}
+        updateBlock={mockUpdateBlock}
+        deleteBlock={jest.fn()}
+      />
+    );
+
+    const addButton = screen.getByText('Add Question');
+    fireEvent.click(addButton);
+
+    expect(mockUpdateBlock).toHaveBeenCalledWith({
+      __component: 'quiz',
+      questions: expect.arrayContaining([
+        ...mockTrueFalseBlock.questions,
+        expect.objectContaining({
+          content: '',
+          answerOptions: [
+            expect.objectContaining({ content: 'True', isCorrect: true }),
+            expect.objectContaining({ content: 'False', isCorrect: false })
+          ]
+        })
+      ])
+    });
+  });
+
+  test('adds new multiple choice question when Add Question button is clicked', () => {
+    const mockUpdateBlock = jest.fn();
+    
+    render(
+      <QuizEditor
+        block={mockMultipleChoiceBlock}
+        updateBlock={mockUpdateBlock}
+        deleteBlock={jest.fn()}
+      />
+    );
+
+    const addButton = screen.getByText('Add Question');
+    fireEvent.click(addButton);
+
+    expect(mockUpdateBlock).toHaveBeenCalledWith({
+      __component: 'quiz',
+      questions: expect.arrayContaining([
+        ...mockMultipleChoiceBlock.questions,
+        expect.objectContaining({
+          content: '',
+          answerOptions: [
+            expect.objectContaining({ content: '', isCorrect: true }),
+            expect.objectContaining({ content: '', isCorrect: false })
+          ]
+        })
+      ])
+    });
+  });
+});
 });
