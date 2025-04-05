@@ -1,10 +1,15 @@
 import { render, screen } from "@testing-library/react";
 import DraggableDropletWideTile from "@/components/droplets/draggable-droplet-wide-tile";
-import { useDrag, useDrop } from "react-dnd";
+import { DndProvider, useDrag, useDrop } from "react-dnd";
+import { HTML5Backend } from "react-dnd-html5-backend";
 
 jest.mock("react-dnd", () => ({
   useDrag: jest.fn(),
   useDrop: jest.fn(),
+}));
+
+jest.mock("react-dnd-html5-backend", () => ({
+  HTML5Backend: {},
 }));
 
 describe("DraggableDropletWideTile", () => {
