@@ -1,4 +1,10 @@
-import { render, screen, fireEvent, renderHook, waitFor } from "@testing-library/react";
+import {
+  render,
+  screen,
+  fireEvent,
+  renderHook,
+  waitFor,
+} from "@testing-library/react";
 import { NextSteps } from "@/components/draft/metadata/next-steps/next-steps";
 import { updateDroplet } from "@/lib/actions";
 import { act, useState } from "react";
@@ -61,61 +67,61 @@ describe("NextSteps", () => {
     expect(screen.getByText("Step 2")).toBeInTheDocument();
   });
 
-jest.mock('@/lib/actions', () => ({
-  updateDroplet: jest.fn()
-}));
+  jest.mock("@/lib/actions", () => ({
+    updateDroplet: jest.fn(),
+  }));
 
-jest.mock('sonner', () => ({
-  toast: {
-    error: jest.fn()
-  }
-}));
+  jest.mock("sonner", () => ({
+    toast: {
+      error: jest.fn(),
+    },
+  }));
 
-describe('NextSteps', () => {
-  const mockNextSteps = [
-    { id: 1, label: 'Test 1', url: 'https://test1.com' },
-    { id: 2, label: 'Test 2', url: 'https://test2.com' }
-  ];
+  describe("NextSteps", () => {
+    const mockNextSteps = [
+      { id: 1, label: "Test 1", url: "https://test1.com" },
+      { id: 2, label: "Test 2", url: "https://test2.com" },
+    ];
 
-  beforeEach(() => {
-    jest.clearAllMocks();
-  });
-
-  test('updateNextStep updates the correct next step', () => {
-    const { result } = renderHook(() => {
-      const [nextSteps, setNextSteps] = useState(mockNextSteps);
-      return { nextSteps, setNextSteps };
+    beforeEach(() => {
+      jest.clearAllMocks();
     });
 
-    const updatedStep = {
-      id: 1,
-      label: 'Updated Label',
-      url: 'https://updated.com'
-    };
-
-    act(() => {
-      result.current.setNextSteps(prevSteps => {
-        const newNextSteps = [...prevSteps];
-        newNextSteps.filter(ns => ns.id === 1)[0].label = updatedStep.label;
-        newNextSteps.filter(ns => ns.id === 1)[0].url = updatedStep.url;
-        return newNextSteps;
+    test("updateNextStep updates the correct next step", () => {
+      const { result } = renderHook(() => {
+        const [nextSteps, setNextSteps] = useState(mockNextSteps);
+        return { nextSteps, setNextSteps };
       });
+
+      const updatedStep = {
+        id: 1,
+        label: "Updated Label",
+        url: "https://updated.com",
+      };
+
+      act(() => {
+        result.current.setNextSteps((prevSteps) => {
+          const newNextSteps = [...prevSteps];
+          newNextSteps.filter((ns) => ns.id === 1)[0].label = updatedStep.label;
+          newNextSteps.filter((ns) => ns.id === 1)[0].url = updatedStep.url;
+          return newNextSteps;
+        });
+      });
+
+      expect(result.current.nextSteps[0].label).toBe("Updated Label");
+      expect(result.current.nextSteps[0].url).toBe("https://updated.com");
     });
 
-    expect(result.current.nextSteps[0].label).toBe('Updated Label');
-    expect(result.current.nextSteps[0].url).toBe('https://updated.com');
+    test("renders form inputs correctly", () => {
+      render(<NextSteps dropletId={1} nextSteps={mockNextSteps} />);
+
+      const urlInput = screen.getByPlaceholderText("URL");
+      const labelInput = screen.getByPlaceholderText("Label");
+      const addButton = screen.getByRole("button");
+
+      expect(urlInput).toBeInTheDocument();
+      expect(labelInput).toBeInTheDocument();
+      expect(addButton).toBeInTheDocument();
+    });
   });
-
-  test('renders form inputs correctly', () => {
-    render(<NextSteps dropletId={1} nextSteps={mockNextSteps} />);
-
-    const urlInput = screen.getByPlaceholderText('URL');
-    const labelInput = screen.getByPlaceholderText('Label');
-    const addButton = screen.getByRole('button');
-
-    expect(urlInput).toBeInTheDocument();
-    expect(labelInput).toBeInTheDocument();
-    expect(addButton).toBeInTheDocument();
-  });
-});
 });

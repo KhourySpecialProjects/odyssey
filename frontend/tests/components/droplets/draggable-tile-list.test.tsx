@@ -14,8 +14,8 @@ jest.mock("react-dnd-html5-backend", () => ({
   HTML5Backend: {},
 }));
 
-jest.mock('@/components/droplets/draggable_tile_list_client', () => ({
-  DraggableTileListClient: jest.fn(() => null)
+jest.mock("@/components/droplets/draggable_tile_list_client", () => ({
+  DraggableTileListClient: jest.fn(() => null),
 }));
 
 jest.mock("lib/utils", () => ({
@@ -101,5 +101,4 @@ describe("DraggableTileList", () => {
     expect(canDrop({ sourceList: "source" })).toBe(false);
     expect(canDrop({ sourceList: "selected" })).toBe(true);
   });
-
-})
+});

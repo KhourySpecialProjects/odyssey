@@ -5,13 +5,13 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { MoveLeftIcon, SearchIcon, X } from "lucide-react";
+import { MoveLeftIcon, SearchIcon } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import DraggableTileList from "@/components/droplets/draggable_tile_list";
 import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
-import { createPlaylist, deletePlaylist } from "@/lib/actions";
+import { createPlaylist } from "@/lib/actions";
 import { updatePlaylist } from "@/lib/actions";
 import { createPlaylistAnnouncement } from "@/lib/requests/feed";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
@@ -56,15 +56,6 @@ export function PlaylistForm({
     (sum, droplet) => sum + (droplet.lessons?.length || 0),
     0,
   );
-
-  const handleDelete = async () => {
-    if (existingPlaylist) {
-      const response = await deletePlaylist(existingPlaylist.id);
-      if (response.ok && !response.error) {
-        router.replace(`/drafts`);
-      }
-    }
-  };
 
   const handlePlaylistPost = async () => {
     try {
