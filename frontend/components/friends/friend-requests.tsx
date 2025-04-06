@@ -45,11 +45,18 @@ export function FriendRequests({
 
   return (
     <div className={`flex flex-col`}>
-      <section className="mt-4">
-        <h1 className="font-bold">Friend Requests</h1>
-        <p>A list of your pending friend requests.</p>
-
-        <Separator className="mt-2 dark:bg-slate-600" />
+      <section className={`${noProfile ? "" : "mt-4"}`}>
+        {noProfile ? (
+          <div className="absolute -top-[60px] left-0 translate-x-[50%]">
+            <h1 className="font-bold text-xl text-center">Friend Requests</h1>
+          </div>
+        ) : (
+          <div>
+            <h1 className="font-bold">Friend Requests</h1>
+            <p>A list of your pending friend requests.</p>
+            <Separator className="mt-2 dark:bg-slate-600" />
+          </div>
+        )}
 
         <div className="p-1 lg:p-4 rounded-md bg-slate-50 dark:bg-slate-800">
           {friendRequests.length > 0 ? (
