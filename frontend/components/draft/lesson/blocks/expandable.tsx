@@ -42,6 +42,7 @@ export function ExpandableEditor({
         <Trash2Icon
           className="cursor-pointer text-red-600 hover:text-red-700"
           onClick={deleteBlock}
+          role="trash"
         />
       </div>
       <div className="inline-flex mb-4 flex-row items-center gap-2 font-bold text-sky-600 w-full">

@@ -29,7 +29,9 @@ export function GroupDueDateDashboard({
   const playlists = existingGroup?.playlists || [];
 
   const handleCancel = () => {
-    router.push(existingGroup ? `/g/${existingGroup.slug}` : "/g/dashboard");
+    router.push(
+      existingGroup ? `/g/${existingGroup.slug}` : "/g/dashboard?tab=creator",
+    );
   };
 
   return (

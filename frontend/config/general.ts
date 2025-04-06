@@ -22,8 +22,10 @@ export const getMainNav = (user: User) => {
       label: "My Dashboard",
     },
     {
-      href: "/g/dashboard",
+      href: "/g/dashboard?tab=creator",
       label: "My Groups",
+      isHidden:
+        !isContentCreator(user.roles) && !isAuthorizedUserAdmin(user.roles),
     },
     {
       href: "/drafts",

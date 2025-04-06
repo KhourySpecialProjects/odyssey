@@ -41,7 +41,6 @@ export function StudentProgressList({ playlists }: StudentProgressListProps) {
     playlistName: string,
     users: { email: string; progress: number }[],
   ) => {
-    // Convert progress to decimal (e.g., 31% becomes 0.31)
     const data = users.map((user) => ({
       email: user.email,
       progress: (user.progress / 100).toFixed(2),
@@ -108,8 +107,9 @@ export function StudentProgressList({ playlists }: StudentProgressListProps) {
                   <Button
                     variant="outline"
                     size="sm"
+                    role="export"
                     onClick={(e) => {
-                      e.preventDefault(); // Prevent collapsible from toggling
+                      e.preventDefault();
                       exportProgress(playlist.name, playlist.authorized_users);
                     }}
                     className="w-full mb-4"

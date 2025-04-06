@@ -122,10 +122,10 @@ export function AuthorizedUserBlock({ user }: { user: AuthorizedUser }) {
             <Avatar variant="round" size="sm">
               <AvatarImage src={user.profilePhoto || undefined} />
               <AvatarFallback>
-                {user?.firstName && user?.lastName ? (
+                {user.firstName && user.lastName ? (
                   user.firstName[0] + user.lastName[0]
                 ) : (
-                  <User2Icon className="w-4 h-4" />
+                  <User2Icon />
                 )}
               </AvatarFallback>
             </Avatar>
@@ -135,7 +135,10 @@ export function AuthorizedUserBlock({ user }: { user: AuthorizedUser }) {
                 : user.email}
               {!user.isEnabled ? " (Disabled)" : ""}
             </p>
-            <p className="text-sm truncate text-slate-500 dark:text-slate-300">
+            <p
+              className="text-sm truncate text-slate-500 dark:text-slate-300"
+              data-testid="user-role"
+            >
               {isAdmin ? "Admin" : ""}
             </p>
           </div>
@@ -144,7 +147,12 @@ export function AuthorizedUserBlock({ user }: { user: AuthorizedUser }) {
         <div className="inline-flex items-center gap-2">
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-              <Button size="sm" className="bg-white dark:bg-slate-300">
+              <Button
+                size="sm"
+                className="bg-white dark:bg-slate-300"
+                role="button"
+                aria-label="edit user"
+              >
                 <div className="relative group">
                   <Pencil className="text-sky-600" />
                   <span className="absolute left-1/2 transform -translate-x-1/2 top-full mt-1 w-max px-2 py-1 text-xs text-white bg-gray-800 rounded opacity-0 group-hover:opacity-100 transition-opacity">

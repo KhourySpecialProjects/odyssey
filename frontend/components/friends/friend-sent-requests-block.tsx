@@ -6,9 +6,9 @@ import { startTransition, useState } from "react";
 import { User2Icon, X } from "lucide-react";
 import { toast } from "sonner";
 import { cancelFriendRequest } from "@/lib/requests/friends";
-import { UserBlock } from "./user-block";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { getInitials } from "@/lib/utils";
+import { ProfileBlock } from "./profile-block";
 
 export function FriendSentRequestsBlock({
   user,
@@ -17,6 +17,8 @@ export function FriendSentRequestsBlock({
   user: AuthorizedUser;
   request: AuthorizedUser;
 }) {
+  const [open, setOpen] = useState(false);
+
   const handleReject = () => {
     startTransition(async () => {
       const result = await cancelFriendRequest(user.id, request.id);
@@ -58,12 +60,19 @@ export function FriendSentRequestsBlock({
               : request.email}
           </p>
         </div>
-        <UserBlock user={request} curUser={user} />
+        <ProfileBlock
+          otherUser={request}
+          user={user}
+          isFeed={false}
+          isOpen={open}
+          setIsOpen={setOpen}
+        />
         <Button
           variant="destructive"
           size="sm"
           onClick={handleReject}
           className="scale-75 md:scale-100"
+          role="x"
         >
           <div className="relative group">
             <X />

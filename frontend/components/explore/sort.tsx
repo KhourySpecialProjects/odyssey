@@ -41,7 +41,7 @@ export function Sort({
       <DropdownMenuTrigger asChild>
         <Button variant="outline" size="sm" className="gap-0.25 border-dashed">
           <ArrowUpDownIcon className="mr-2 w-4 h-4" />
-          {options.find((item) => item.slug === selectedValue)!.label}
+          {options.find((item) => item.slug === selectedValue)?.label}
         </Button>
       </DropdownMenuTrigger>
 

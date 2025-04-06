@@ -60,7 +60,11 @@ export function CalloutEditor({
             <h2 className="text-lg font-bold text-black mr-3">Callout Block</h2>
             {block.color && !block.color.includes("sky") && (
               <div className="relative">
-                <Button variant="transparent" onClick={handleToggleIcon}>
+                <Button
+                  variant="transparent"
+                  onClick={handleToggleIcon}
+                  role="toggleButton"
+                >
                   <CalloutIcon
                     color={block.color || "bg-sky-300"}
                   ></CalloutIcon>
@@ -79,6 +83,7 @@ export function CalloutEditor({
               className="cursor-pointer text-black"
               onClick={deleteBlock}
               size={30}
+              role="trash"
             />
           </div>
         </div>
@@ -93,6 +98,7 @@ export function CalloutEditor({
               content: strapiJSONToTiptapJSON(block.content),
             } as JSONContent
           }
+          data-testid="text-input"
         />
       </div>
     </>

@@ -38,7 +38,7 @@ export async function Header() {
         <div className="flex flex-row justify-between xl:grid w-full xl:grid-cols-[1fr_auto_1fr]">
           <div className="flex flex-row gap-4">
             <Sheet>
-              <SheetTrigger asChild>
+              <SheetTrigger asChild role="banner">
                 <Button
                   variant="outline"
                   size="icon"

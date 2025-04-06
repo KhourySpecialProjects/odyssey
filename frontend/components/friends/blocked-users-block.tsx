@@ -2,12 +2,12 @@
 
 import { Button } from "@/components/ui/button";
 import { AuthorizedUser } from "@/types";
-import { startTransition } from "react";
+import { startTransition, useState } from "react";
 import { toast } from "sonner";
 import { unblockUser } from "@/lib/requests/friends";
-import { UserBlock } from "./user-block";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { getInitials } from "@/lib/utils";
+import { ProfileBlock } from "./profile-block";
 import { User2Icon } from "lucide-react";
 
 export function BlockedUsersBlock({
@@ -17,6 +17,8 @@ export function BlockedUsersBlock({
   user: AuthorizedUser;
   blocked: AuthorizedUser;
 }) {
+  const [open, setOpen] = useState(false);
+
   const handleUnblock = () => {
     startTransition(async () => {
       const result = await unblockUser(user.id, blocked.id);
@@ -37,7 +39,7 @@ export function BlockedUsersBlock({
         >
           <AvatarImage src={blocked?.profilePhoto || undefined} />
           <AvatarFallback>
-            {blocked?.firstName ? (
+            {blocked.firstName && blocked.lastName ? (
               getInitials(blocked.firstName + " " + blocked.lastName)
             ) : (
               <User2Icon />
@@ -46,20 +48,26 @@ export function BlockedUsersBlock({
         </Avatar>
         <div className="flex-1 min-w-0">
           <p
-            title={`${
+            title={
               blocked.firstName && blocked.lastName
                 ? `${blocked.firstName} ${blocked.lastName}`
-                : blocked.email
-            }`}
+                : `${blocked.email}`
+            }
             className="font-medium truncate overflow-hidden text-slate-900 text-slate-900 dark:text-slate-300 max-w-[175px] md:max-w-sm inline-block"
           >
             {blocked.firstName && blocked.lastName
-              ? `${blocked.firstName} ${blocked.lastName}`
+              ? blocked.firstName + " " + blocked.lastName
               : blocked.email}
           </p>
         </div>
         <div className="flex items-center -space-x-1 md:space-x-4">
-          <UserBlock user={blocked} curUser={user} />
+          <ProfileBlock
+            otherUser={blocked}
+            user={user}
+            isFeed={false}
+            isOpen={open}
+            setIsOpen={setOpen}
+          />
           <div className="flex items-center" onClick={handleUnblock}>
             <Button
               size="sm"

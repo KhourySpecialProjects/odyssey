@@ -7,11 +7,11 @@ import {
 } from "@/lib/requests/friends";
 import { AuthorizedUser } from "@/types";
 import { Check, User2Icon, X } from "lucide-react";
-import { startTransition } from "react";
+import { startTransition, useState } from "react";
 import { toast } from "sonner";
-import { UserBlock } from "./user-block";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { getInitials } from "@/lib/utils";
+import { ProfileBlock } from "./profile-block";
 
 export function FriendRequestBlock({
   user,
@@ -20,6 +20,8 @@ export function FriendRequestBlock({
   user: AuthorizedUser;
   request: AuthorizedUser;
 }) {
+  const [open, setOpen] = useState(false);
+
   const handleApprove = () => {
     if (
       user.friendships.map((friendship) =>
@@ -63,7 +65,7 @@ export function FriendRequestBlock({
         >
           <AvatarImage src={request?.profilePhoto || undefined} />
           <AvatarFallback>
-            {request?.firstName ? (
+            {request.firstName && request.lastName ? (
               getInitials(request.firstName + " " + request.lastName)
             ) : (
               <User2Icon />
@@ -72,23 +74,30 @@ export function FriendRequestBlock({
         </Avatar>
         <div className="flex-1 min-w-0">
           <p
-            title={`${
+            title={
               request.firstName && request.lastName
                 ? `${request.firstName} ${request.lastName}`
-                : request.email
-            }`}
+                : `${request.email}`
+            }
             className="font-medium truncate text-slate-900 dark:text-slate-300"
           >
             {request.firstName && request.lastName
-              ? `${request.firstName} ${request.lastName}`
+              ? request.firstName + " " + request.lastName
               : request.email}
           </p>
         </div>
-        <UserBlock user={request} curUser={user} />
+        <ProfileBlock
+          otherUser={request}
+          user={user}
+          isFeed={false}
+          isOpen={open}
+          setIsOpen={setOpen}
+        />
         <Button
           className="bg-green-600 text-white hover:bg-green-700 dark:bg-green-600 dark:hover:bg-green-700 scale-75 md:scale-100"
           size="sm"
           onClick={handleApprove}
+          role="accept"
         >
           <div className="relative group">
             <Check />
@@ -101,6 +110,7 @@ export function FriendRequestBlock({
           className="bg-red-600 text-white hover:bg-red-700 dark:bg-red-600 dark:hover:bg-red-700 scale-75 md:scale-100"
           size="sm"
           onClick={handleReject}
+          role="reject"
         >
           <div className="relative group">
             <X />

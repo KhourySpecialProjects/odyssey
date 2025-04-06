@@ -114,6 +114,7 @@ export function GroupProgressGrid({ group }: GroupProgressGridProps) {
         <button
           onClick={handleNextPage}
           disabled={currentPage === totalPages - 1}
+          aria-label="Next page"
           className={`px-4 py-2 ${currentPage >= totalPages - 1 ? "visibility: hidden" : "visibility: visible"}`}
         >
           <MoveRight />
