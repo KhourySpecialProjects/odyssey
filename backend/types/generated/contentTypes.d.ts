@@ -807,11 +807,6 @@ export interface ApiAccessRequestAccessRequest extends Schema.CollectionType {
       ['undergraduateStudent', 'graduateStudent', 'faculty', 'staff', 'other']
     > &
       Attribute.Required;
-    archived_groups: Attribute.Relation<
-      'api::access-request.access-request',
-      'manyToMany',
-      'api::group.group'
-    >;
     college: Attribute.Enumeration<
       [
         'BV',
@@ -828,6 +823,11 @@ export interface ApiAccessRequestAccessRequest extends Schema.CollectionType {
       ]
     > &
       Attribute.Required;
+    archived_groups: Attribute.Relation<
+      'api::access-request.access-request',
+      'manyToMany',
+      'api::group.group'
+    >;
     createdAt: Attribute.DateTime;
     updatedAt: Attribute.DateTime;
     createdBy: Attribute.Relation<
@@ -975,16 +975,6 @@ export interface ApiAuthorizedUserAuthorizedUser extends Schema.CollectionType {
     isEnabled: Attribute.Boolean &
       Attribute.Required &
       Attribute.DefaultTo<true>;
-    announcements: Attribute.Relation<
-      'api::authorized-user.authorized-user',
-      'oneToMany',
-      'api::announcement.announcement'
-    >;
-    archived_groups: Attribute.Relation<
-      'api::authorized-user.authorized-user',
-      'manyToMany',
-      'api::group.group'
-    >;
     author: Attribute.Relation<
       'api::authorized-user.authorized-user',
       'oneToOne',
@@ -1133,6 +1123,11 @@ export interface ApiAuthorizedUserAuthorizedUser extends Schema.CollectionType {
       'api::authorized-user.authorized-user',
       'manyToMany',
       'api::announcement.announcement'
+    >;
+    archived_groups: Attribute.Relation<
+      'api::authorized-user.authorized-user',
+      'manyToMany',
+      'api::group.group'
     >;
     createdAt: Attribute.DateTime;
     updatedAt: Attribute.DateTime;
@@ -1516,15 +1511,6 @@ export interface ApiGroupGroup extends Schema.CollectionType {
       'manyToMany',
       'api::authorized-user.authorized-user'
     >;
-    description: Attribute.Text;
-    dropletDueDates: Attribute.JSON;
-    droplets: Attribute.Relation<
-      'api::group.group',
-      'manyToMany',
-      'api::droplet.droplet'
-    >;
-    groupName: Attribute.String & Attribute.Required;
-    isArchived: Attribute.Boolean;
     managers: Attribute.Relation<
       'api::group.group',
       'manyToMany',
@@ -1552,7 +1538,6 @@ export interface ApiGroupGroup extends Schema.CollectionType {
     > &
       Attribute.DefaultTo<'Open Membership'>;
     slug: Attribute.UID<'api::group.group', 'groupName'> & Attribute.Required;
-    isArchived: Attribute.Boolean & Attribute.DefaultTo<false>;
     creator: Attribute.Relation<
       'api::group.group',
       'manyToOne',
@@ -1575,6 +1560,12 @@ export interface ApiGroupGroup extends Schema.CollectionType {
     >;
     dropletDueDates: Attribute.JSON;
     playlistDueDates: Attribute.JSON;
+    users_archived: Attribute.Relation<
+      'api::group.group',
+      'manyToMany',
+      'api::authorized-user.authorized-user'
+    >;
+    isArchived: Attribute.Boolean;
     createdAt: Attribute.DateTime;
     updatedAt: Attribute.DateTime;
     createdBy: Attribute.Relation<
@@ -1589,11 +1580,6 @@ export interface ApiGroupGroup extends Schema.CollectionType {
       'admin::user'
     > &
       Attribute.Private;
-    users_archived: Attribute.Relation<
-      'api::group.group',
-      'manyToMany',
-      'api::authorized-user.authorized-user'
-    >;
   };
 }
 
