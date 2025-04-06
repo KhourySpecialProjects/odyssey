@@ -70,7 +70,7 @@ export default async function DropletRoute({ params }: Props) {
   return (
     <>
       <GradientBackground className="px-0">
-        <div className="max-w-2xl mx-auto px-5 md:px-0">
+        <div className="max-w-2xl mx-auto px-5 md:px-0 ">
           <div className="flex flex-row flex-0 flex-wrap gap-1.5">
             <Badge variant="outline" className="text-sm">
               {uppercaseFirstChar(droplet.focusArea)}

@@ -44,8 +44,8 @@ export function FirstVisitPopup({ user }: { user: AuthorizedUser | null }) {
       if (user) {
         await updateFirstTimeStatus(user.id);
         await updateOnboardingInfo(firstName, lastName, bio, user.id);
-        await createSystemAnnouncement("You can also see how your friends are doing, head to your profile page to follow them!", user)
-        await createSystemAnnouncement("Welcome to Odyssey! Any announcements about changes in droplets, playlists, or groups will show up here.", user)
+        await createSystemAnnouncement("Want to see what your friends are up to? Their activity will appear here on your feed — just head to your profile to follow them!", user)
+        await createSystemAnnouncement("Hey there — welcome to Odyssey! This is where you'll see updates to your droplets, playlists, and groups.", user)
         setIsOpen(false);
         router.push("/d/introduction-to-odyssey");
       }
