@@ -338,3 +338,72 @@ export async function createDropletAnnouncement(name: string, id: number) {
     return { success: false, error };
   }
 }
+
+export async function fetchAnnouncementById(id: number) {
+  try {
+    const query = qs.stringify({
+      sort: ["firstCreated:desc"],
+      filters: {
+        id: { $eq: id },
+      },
+      populate: {
+        authorized_users: {
+          fields: [
+            "id",
+            "email",
+            "firstName",
+            "lastName",
+            "bio",
+            "github",
+            "linkedin",
+            "profilePhoto",
+          ],
+          populate: {
+            blocked: {
+              fields: ["id"],
+            },
+            was_blocked: {
+              fields: ["id"],
+            },
+          },
+        },
+        playlist: {
+          fields: ["id", "name", "slug", "description", "isPublic"],
+          populate: {
+            droplets: {
+              fields: ["id", "name", "slug"],
+              populate: {
+                lessons: {
+                  fields: ["id", "name", "slug"],
+                },
+              },
+            },
+          },
+        },
+        droplet: {
+          fields: ["id", "name", "slug"],
+        },
+        group: {
+          fields: ["id", "name", "slug"],
+        },
+      },
+      pagination: {
+        pageSize: 100,
+        page: 1,
+      },
+    });
+
+    const response = await fetch(
+      NEXT_PUBLIC_STRAPI_API_URL + "/api/announcements?" + query,
+      {
+        headers: { Authorization: "Bearer " + STRAPI_ACCESS_TOKEN },
+        cache: "no-store",
+      },
+    );
+    const data = await response.json();
+    return flattenAttributes(data.data);
+  } catch (error) {
+    console.error("Database Error:", error);
+    throw new Error("Failed to fetch announcement data.");
+  }
+}
