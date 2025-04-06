@@ -35,7 +35,7 @@ export function AuthorizedUserClient({
     <div className="p-4 mt-4 rounded-md bg-slate-100 dark:bg-slate-800">
       {authorizedUsers.length > 0 ? (
         <>
-          <ul className="divide-y divide-slate-200 dark:divide-slate-300 md:space-y-4">
+          <ul className="divide-y divide-slate-200 dark:divide-slate-300 md:space-y-4 md:columns-2">
             {paginatedUsers.map((user) => (
               <AuthorizedUserBlock user={user} key={user.id} />
             ))}
