@@ -47,7 +47,7 @@ export function FriendRequestFeedBlock({
 
   return (
     <div className="flex flex-col justify-center">
-      <div className="flex flex-row items-start mt-2">
+      <div className="flex flex-row items-start mt-2 gap-2 items-center">
         <Avatar
           variant="round"
           className="border border-sky-800 w-8 h-8 flex-shrink-0"
@@ -71,7 +71,7 @@ export function FriendRequestFeedBlock({
               : `${request.email}`
           }
         >
-          <div className="pl-2 w-full">
+          <div className="w-full ">
             <p className="font-medium truncate text-slate-900 dark:text-slate-300 text-left">
               {request.firstName && request.lastName
                 ? request.firstName + " " + request.lastName
@@ -79,12 +79,11 @@ export function FriendRequestFeedBlock({
             </p>
           </div>
         </button>
-      </div>
 
-      <div className="flex flex-row justify-center mt-2">
+        <div className="flex flex-col gap-1 justify-center">
         <Button
-          className="bg-green-600 dark:bg-green-900 text-white hover:bg-green-700 mr-3 flex items-center justify-center"
-          style={{ height: "15px", width: "50px" }}
+          className="bg-emerald-400 dark:bg-emerald-700 dark:hover:bg-emerald-800 hover:text-white hover:bg-emerald-600 text-white mr-3 flex items-center justify-center"
+          style={{ height: "20px", width: "50px" }}
           size="sm"
           variant="outline"
           onClick={handleApprove}
@@ -92,27 +91,24 @@ export function FriendRequestFeedBlock({
         >
           <div className="relative group">
             <Check className="w-3 h-3 group-hover:scale-110 transition-transform" />
-            <span className="absolute left-1/2 transform -translate-x-1/2 top-full mt-1 w-max px-2 py-1 text-xs text-white bg-gray-800 rounded-md opacity-0 group-hover:opacity-100 transition-opacity">
-              Accept
-            </span>
           </div>
         </Button>
         <Button
-          className="flex items-center justify-center"
+          className="flex items-center justify-center hover:bg-red-600 dark:bg-red-700 dark:hover:bg-red-800"
           variant="destructive"
           size="sm"
           onClick={handleReject}
-          style={{ height: "15px", width: "50px" }}
+          style={{ height: "20px", width: "50px" }}
           role="reject"
         >
           <div className="relative group">
-            <X className="w-3 h-3" />
-            <span className="absolute left-1/2 transform -translate-x-1/2 top-full mt-1 w-max px-2 py-1 text-xs text-white bg-gray-800 rounded-md opacity-0 group-hover:opacity-100 transition-opacity">
-              Reject
-            </span>
+            <X className="w-3 h-3 group-hover:scale-110 transition-transform" />
           </div>
         </Button>
       </div>
+      </div>
+
+      
 
       <div>
         <ProfileBlock
