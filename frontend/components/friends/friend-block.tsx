@@ -3,12 +3,12 @@
 import { Button } from "@/components/ui/button";
 import { removeFriend } from "@/lib/requests/friends";
 import { AuthorizedUser } from "@/types";
-import { startTransition } from "react";
+import { startTransition, useState } from "react";
 import { toast } from "sonner";
-import { UserBlock } from "./user-block";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { User2Icon, X } from "lucide-react";
 import { getInitials } from "@/lib/utils";
+import { ProfileBlock } from "./profile-block";
 
 export function FriendBlock({
   user,
@@ -17,6 +17,8 @@ export function FriendBlock({
   user: AuthorizedUser;
   friend: AuthorizedUser;
 }) {
+  const [open, setOpen] = useState(false);
+
   const handleRemove = () => {
     startTransition(async () => {
       const result = await removeFriend(user.id, friend.id);
@@ -36,7 +38,7 @@ export function FriendBlock({
         >
           <AvatarImage src={friend?.profilePhoto || undefined} />
           <AvatarFallback>
-            {friend?.firstName ? (
+            {friend.firstName && friend.lastName ? (
               getInitials(friend.firstName + " " + friend.lastName)
             ) : (
               <User2Icon />
@@ -46,19 +48,25 @@ export function FriendBlock({
 
         <div className="flex-1 min-w-0">
           <p
-            title={`${
+            title={
               friend.firstName && friend.lastName
                 ? `${friend.firstName} ${friend.lastName}`
-                : friend.email
-            }`}
+                : `${friend.email}`
+            }
             className="font-medium truncate overflow-hidden text-slate-900 dark:text-slate-300 max-w-[200px] md:max-w-sm inline-block"
           >
             {friend.firstName && friend.lastName
-              ? `${friend.firstName} ${friend.lastName}`
+              ? friend.firstName + " " + friend.lastName
               : friend.email}
           </p>
         </div>
-        <UserBlock user={friend} curUser={user} />
+        <ProfileBlock
+          otherUser={friend}
+          user={user}
+          isFeed={false}
+          isOpen={open}
+          setIsOpen={setOpen}
+        />
         <div className="inline-flex items-center " onClick={handleRemove}>
           <Button
             size="sm"

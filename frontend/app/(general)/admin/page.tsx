@@ -87,7 +87,7 @@ export default async function Page() {
       </CardContent>
       <Separator orientation="horizontal" className="mt-2 mb-4" />
 
-      <Session />
+      {/* <Session /> */}
       <div className="hidden sm:flex sm:flex-col p-4">
         <AdminSelector content={pageContent} />
       </div>

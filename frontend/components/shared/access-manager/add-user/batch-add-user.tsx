@@ -65,7 +65,7 @@ export function BatchAddUser() {
         Enter multiple email addresses or upload a CSV file.
       </p>
 
-      <form onSubmit={handleSubmit} className="mt-4">
+      <form onSubmit={handleSubmit} className="mt-4" role="form">
         <div className="space-y-4">
           <div>
             <Textarea

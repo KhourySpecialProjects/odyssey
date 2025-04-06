@@ -1,0 +1,41 @@
+name: Run Tests
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+    branches:
+      - main
+      - develop
+      - 'feature/**'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      TZ: 'America/New_York'
+
+    strategy:
+      matrix:
+        project: ['frontend']
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install dependencies
+        run: |
+          cd ./${{ matrix.project }}
+          npm ci
+
+      - name: Run tests
+        run: |
+          cd ./${{ matrix.project }}
+          npm test

@@ -51,7 +51,6 @@ export default async function EditPlaylistPage({ params }: Props) {
     },
   });
 
-  // Verify the user has permission to edit this playlist
   if (
     !playlist ||
     (!playlist.authors?.some((author) => author.id === authUser.id) &&
@@ -60,7 +59,6 @@ export default async function EditPlaylistPage({ params }: Props) {
     return notFound();
   }
 
-  // Get all available droplets for selection
   const allDroplets = await getDroplets({
     filters: {
       $and: [{ status: { $eq: "published" } }, { isHidden: false }],
@@ -72,7 +70,6 @@ export default async function EditPlaylistPage({ params }: Props) {
     },
   });
 
-  // Filter out droplets that are already in the playlist
   const availableDroplets = allDroplets.filter(
     (droplet) => !playlist.droplets?.some((pd) => pd.id === droplet.id),
   );

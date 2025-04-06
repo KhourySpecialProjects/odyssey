@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
 import MUIDateTimePicker from "./datetime-picker";
 import { DateTime } from "luxon";
 import { Check, Trash2Icon } from "lucide-react";
+import Link from "next/link";
 
 interface DropletDueDateBlockProps {
   existingGroup: Group;
@@ -65,15 +66,16 @@ export function DropletDueDateBlock({
 
   return (
     <div className="flex flex-row text-xl justify-between space-x-2 w-full bg-slate-50 border border-slate-200 rounded-lg p-4 items-center dark:bg-slate-800 dark:border dark:border-slate-500">
-      {currentDroplet.name}
+      <Link href={`/d/${currentDroplet.slug}`}>{currentDroplet.name}</Link>
       <div className="flex flex-row space-x-2 items-center">
         {isSaveClicked && <p className="text-slate-400">Saved!</p>}
         {isRemoveClicked && <p className="text-slate-400">Removed!</p>}
 
-        <div className="dark:bg-slate-50 p-3 rounded-md">
+        <div className="dark:bg-slate-50 rounded-md">
           <MUIDateTimePicker
             onChange={handleInputChange}
             date={dueDate}
+            data-testid="picker"
           ></MUIDateTimePicker>
         </div>
         <div className="flex flex-col gap-2">
@@ -84,6 +86,7 @@ export function DropletDueDateBlock({
             name="Save Due Date"
             className="bg-sky-500 hover:bg-sky-600 dark:bg-sky-500 w-12 h-8 dark:hover:bg-sky-600 dark:text-white dark:border dark:border-white"
             disabled={!dueDate}
+            role="save"
           >
             <Check />
           </Button>
@@ -93,6 +96,7 @@ export function DropletDueDateBlock({
               name="Delete Due Date"
               className="bg-red-500 hover:bg-red-700 dark:bg-red-600 w-12 h-8 dark:hover:bg-red-700 dark:text-white dark:border dark:border-white"
               disabled={!dueDate}
+              role="delete"
             >
               <Trash2Icon />
             </Button>

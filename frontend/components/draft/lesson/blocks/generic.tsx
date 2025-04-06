@@ -27,6 +27,7 @@ export function GenericEditor({
         <Trash2Icon
           className="cursor-pointer text-red-600 hover:text-red-700"
           onClick={deleteBlock}
+          data-testid="delete-block"
         />
       </div>
       <GenericBlockInput

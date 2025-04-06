@@ -40,7 +40,7 @@ export default function LinkToolButton({ editor }: { editor: Editor | null }) {
       <PopoverTrigger asChild onClick={handleOpen}>
         <button
           className={cn(
-            editor?.isActive("link") ? "bg-slate-200" : "",
+            editor?.isActive("link") ? "bg-slate-200 dark:bg-slate-700" : "",
             "p-2.5 rounded-md border border-transparent hover:border-slate-200",
           )}
           title="Link"

@@ -54,9 +54,7 @@ export default function TimeZoneSelector({
   currentZone,
   userId,
 }: TimeZoneSelectorProps) {
-  const [selectedTimeZone, setSelectedTimeZone] = useState(
-    currentZone || "America/New_York",
-  );
+  const [selectedTimeZone, setSelectedTimeZone] = useState(currentZone);
 
   const handleChange = async (zone: string) => {
     await setTimeZone(zone, userId);

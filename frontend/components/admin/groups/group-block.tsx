@@ -11,7 +11,7 @@ import { toast } from "sonner";
 export function GroupBlock({ group }: { group: Group }) {
   const linkTo = `/g/management?slug=${group.slug}`;
 
-  const handleUpdateGroup = async (formData: FormData) => {
+  const handleUpdateGroup = async () => {
     const result = await updateGroup(group.id, {
       isArchived: !group.isArchived,
       groupName: group.groupName,
@@ -47,7 +47,7 @@ export function GroupBlock({ group }: { group: Group }) {
               </div>
             </Button>
           </Link>
-          <form action={handleUpdateGroup}>
+          <form action={handleUpdateGroup} data-testid="group-form">
             <input
               id="id"
               name="id"

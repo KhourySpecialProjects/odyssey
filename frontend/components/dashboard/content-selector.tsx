@@ -6,10 +6,12 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 export function ContentSelector({
   droplets,
   playlists,
+  groups,
   archived,
 }: {
   droplets: number;
   playlists: number;
+  groups: number;
   archived: number;
 }) {
   const searchParams = useSearchParams();
@@ -20,6 +22,7 @@ export function ContentSelector({
   const tabs = [
     { name: `Droplets (${droplets})`, value: "droplets" },
     { name: `Playlists (${playlists})`, value: "playlists" },
+    { name: `Groups (${groups})`, value: "groups" },
     { name: `Archived (${archived})`, value: "archived" },
   ];
 

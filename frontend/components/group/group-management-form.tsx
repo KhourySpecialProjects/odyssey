@@ -145,15 +145,6 @@ export function GroupManagementForm({
     }
   };
 
-  const handleDelete = async () => {
-    if (existingGroup) {
-      const response = await deleteGroup(existingGroup.id);
-      if (response.ok && !response.error) {
-        router.replace(`/g/dashboard`);
-      }
-    }
-  };
-
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -213,7 +204,9 @@ export function GroupManagementForm({
       );
       if (!confirmed) return;
     }
-    router.push(existingGroup ? `/g/${existingGroup.slug}` : "/g/dashboard");
+    router.push(
+      existingGroup ? `/g/${existingGroup.slug}` : "/g/dashboard?tab=creator",
+    );
   };
 
   const onSubmit = async (data: z.infer<typeof formSchema>) => {
@@ -269,12 +262,9 @@ export function GroupManagementForm({
       if (existingGroup) {
         const response = await updateGroup(existingGroup.id, updateGroupData);
         await enrollUsers(await getGroupByID(existingGroup.id));
-
-        //router.push(`/g/${response.slug}`);
       } else {
         const newGroup = await createGroup(currentUser.id, createGroupData);
         await enrollUsers(await getGroupByID(newGroup.id));
-        router.push(`/g/${newGroup.slug}`);
       }
     } catch (error) {
       console.error("Failed to update group", error);
@@ -298,10 +288,10 @@ export function GroupManagementForm({
           existingGroup.groupName,
           existingGroup.id,
         );
-        router.push("/g/management");
+        router.push("/g/dashboard?tab=creator");
       }
     } catch (error) {
-      console.error("Failed to make playlist announcement: ", error);
+      console.error("Failed to make group announcement: ", error);
     }
   };
 
@@ -617,7 +607,7 @@ export function GroupManagementForm({
                 <Button
                   onClick={() => {
                     setIsOpen(false);
-                    router.push("/g/management");
+                    router.push("/g/dashboard?tab=creator");
                   }}
                 >
                   Not Now
