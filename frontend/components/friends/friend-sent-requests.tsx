@@ -34,7 +34,7 @@ export async function FriendSentRequests() {
             ))}
           </ul>
         ) : (
-          <p>You haven't sent any requests.</p>
+          <p>You have no sent requests</p>
         )}
       </div>
     </section>
