@@ -339,6 +339,44 @@ export async function createDropletAnnouncement(name: string, id: number) {
   }
 }
 
+export async function createSystemAnnouncement(
+  content: string,
+  authUser: AuthorizedUser,
+) {
+  try {
+    const curDate = new Date();
+    const response = await fetch(
+      NEXT_PUBLIC_STRAPI_API_URL + "/api/announcements",
+      {
+        method: "POST",
+        body: JSON.stringify({
+          data: {
+            authorized_user: authUser.id,
+            content: content,
+            firstCreated: curDate,
+            type: "system",
+          },
+        }),
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+        },
+      },
+    );
+
+    if (!response.ok) {
+      console.error("Response:", await response.text());
+      throw new Error("Failed to create announcement");
+    }
+
+    revalidatePath("/feed");
+    return { success: true };
+  } catch (error) {
+    console.error("Error:", error);
+    return { success: false, error };
+  }
+}
+
 export async function fetchAnnouncementById(id: number) {
   try {
     const query = qs.stringify({
