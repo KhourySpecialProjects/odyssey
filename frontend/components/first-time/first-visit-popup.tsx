@@ -16,6 +16,7 @@ import { AuthorizedUser } from "@/types";
 import { Input } from "../ui/input";
 import { useRouter } from "next/navigation";
 import { Logo } from "../header/logo";
+import { createSystemAnnouncement } from "@/lib/requests/feed";
 
 export function FirstVisitPopup({ user }: { user: AuthorizedUser | null }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -43,6 +44,8 @@ export function FirstVisitPopup({ user }: { user: AuthorizedUser | null }) {
       if (user) {
         await updateFirstTimeStatus(user.id);
         await updateOnboardingInfo(firstName, lastName, bio, user.id);
+        await createSystemAnnouncement("You can also see how your friends are doing, head to your profile page to follow them!", user)
+        await createSystemAnnouncement("Welcome to Odyssey! Any announcements about changes in droplets, playlists, or groups will show up here.", user)
         setIsOpen(false);
         router.push("/d/introduction-to-odyssey");
       }
@@ -80,7 +83,7 @@ export function FirstVisitPopup({ user }: { user: AuthorizedUser | null }) {
           </DialogDescription>
         </DialogHeader>
         <div className="flex flex-col gap-4 mt-4">
-          <p className="text-sm text-slate-600">
+          <p className="text-sm text-slate-600 dark:text-slate-400">
             Enter your first name here: <span className="text-red-500">*</span>
           </p>
           <Input
@@ -92,7 +95,7 @@ export function FirstVisitPopup({ user }: { user: AuthorizedUser | null }) {
           />
         </div>
         <div className="flex flex-col gap-4 mt-4">
-          <p className="text-sm text-slate-600">
+          <p className="text-sm text-slate-600 dark:text-slate-400">
             Enter your last name here: <span className="text-red-500">*</span>
           </p>
           <Input
@@ -104,21 +107,25 @@ export function FirstVisitPopup({ user }: { user: AuthorizedUser | null }) {
           />
         </div>
         <div className="flex flex-col gap-4 mt-4">
-          <p className="text-sm text-slate-600">Enter a brief bio here:</p>
+          <p className="text-sm text-slate-600 dark:text-slate-400">Enter a brief bio here:</p>
           <Textarea
             value={bio}
             onChange={(e) => setBio(e.target.value)}
             placeholder="Tell us about yourself (optional)"
             aria-label="Bio"
+            className="focus:ring-0"
           />
         </div>
         <div className="flex flex-col gap-4 mt-4">
-          <p className="text-sm text-slate-600">
+          <p className="text-sm text-slate-600 dark:text-slate-400">
             Get started by exploring our collection of Droplets - bite-sized
             learning modules designed to help you succeed in your academic
             journey.
           </p>
-          <Button onClick={() => handleClose()}>Start Exploring</Button>
+          <Button 
+          className="dark:shadow-[0px_0px_16px_rgb(0,255,255)]"
+          
+          onClick={() => handleClose()}>Start Exploring</Button>
         </div>
       </DialogContent>
     </Dialog>
