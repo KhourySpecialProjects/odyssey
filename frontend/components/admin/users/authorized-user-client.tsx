@@ -4,7 +4,7 @@ import { AuthorizedUserBlock } from "./authorized-user";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 
-const ITEMS_PER_PAGE = 20;
+const ITEMS_PER_PAGE = 10;
 
 export function AuthorizedUserClient({
   authorizedUsers,
