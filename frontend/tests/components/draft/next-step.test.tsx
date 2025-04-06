@@ -85,59 +85,59 @@ describe("NextStepDisplay", () => {
     });
   });
 
-describe('NextStepDisplay', () => {
-  const mockResource = {
-    id: 1,
-    label: 'Test Label',
-    url: 'https://test.com'
-  };
-
-  test('displays label when available', () => {
-    render(
-      <NextStepDisplay
-        initial={mockResource}
-        update={jest.fn()}
-        remove={jest.fn()}
-      />
-    );
-
-    expect(screen.getByText('Test Label')).toBeInTheDocument();
-  });
-
-  test('falls back to URL when label is not available', () => {
-    const noLabelResource = {
+  describe("NextStepDisplay", () => {
+    const mockResource = {
       id: 1,
-      label: '',
-      url: 'https://test.com'
+      label: "Test Label",
+      url: "https://test.com",
     };
 
-    const { container } = render(
-      <NextStepDisplay
-        initial={noLabelResource}
-        update={jest.fn()}
-        remove={jest.fn()}
-      />
-    );
+    test("displays label when available", () => {
+      render(
+        <NextStepDisplay
+          initial={mockResource}
+          update={jest.fn()}
+          remove={jest.fn()}
+        />,
+      );
 
-    expect(container.textContent).toContain('');
+      expect(screen.getByText("Test Label")).toBeInTheDocument();
+    });
+
+    test("falls back to URL when label is not available", () => {
+      const noLabelResource = {
+        id: 1,
+        label: "",
+        url: "https://test.com",
+      };
+
+      const { container } = render(
+        <NextStepDisplay
+          initial={noLabelResource}
+          update={jest.fn()}
+          remove={jest.fn()}
+        />,
+      );
+
+      expect(container.textContent).toContain("");
+    });
+
+    test("falls back to URL when label is null", () => {
+      const nullLabelResource = {
+        id: 1,
+        label: undefined,
+        url: "https://test.com",
+      };
+
+      render(
+        <NextStepDisplay
+          initial={nullLabelResource}
+          update={jest.fn()}
+          remove={jest.fn()}
+        />,
+      );
+
+      expect(screen.getByText("https://test.com")).toBeInTheDocument();
+    });
   });
-
-  test('falls back to URL when label is null', () => {
-    const nullLabelResource = {
-      id: 1,
-      label: undefined,
-      url: 'https://test.com'
-    };
-
-    render(
-      <NextStepDisplay
-        initial={nullLabelResource}
-        update={jest.fn()}
-        remove={jest.fn()}
-      />
-    );
-
-    expect(screen.getByText('https://test.com')).toBeInTheDocument();
-  });
-});
 });

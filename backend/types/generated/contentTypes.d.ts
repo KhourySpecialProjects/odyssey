@@ -1103,7 +1103,7 @@ export interface ApiGroupGroup extends Schema.CollectionType {
       'api::droplet.droplet'
     >;
     groupName: Attribute.String & Attribute.Required;
-    isArchived: Attribute.Boolean;
+    isArchived: Attribute.Boolean & Attribute.DefaultTo<false>;
     managers: Attribute.Relation<
       'api::group.group',
       'manyToMany',

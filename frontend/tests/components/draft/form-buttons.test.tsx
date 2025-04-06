@@ -29,42 +29,43 @@ describe("Form Buttons", () => {
     });
   });
 
-  jest.mock('react-dom', () => ({
-    ...jest.requireActual('react-dom'),
-    experimental_useFormStatus: () => ({ pending: false }), 
-    useFormStatus: () => ({ pending: false }) 
+  jest.mock("react-dom", () => ({
+    ...jest.requireActual("react-dom"),
+    experimental_useFormStatus: () => ({ pending: false }),
+    useFormStatus: () => ({ pending: false }),
   }));
 
-describe('Form Buttons', () => {
-  describe('DeleteButton', () => {
+  describe("Form Buttons", () => {
+    describe("DeleteButton", () => {
+      test("shows delete text when not pending", () => {
+        mockUseFormStatus.mockReturnValue({ pending: false });
 
-    test('shows delete text when not pending', () => {
-      mockUseFormStatus.mockReturnValue({ pending: false });
-      
-      render(<DeleteButton />);
-      
-      expect(screen.queryByTestId('loading-spinner')).not.toBeInTheDocument();
-      expect(screen.getByText('Delete')).toBeInTheDocument();
+        render(<DeleteButton />);
+
+        expect(screen.queryByTestId("loading-spinner")).not.toBeInTheDocument();
+        expect(screen.getByText("Delete")).toBeInTheDocument();
+      });
+    });
+
+    describe("AddButton", () => {
+      test("shows loading spinner when pending", () => {
+        mockUseFormStatus.mockReturnValue({ pending: false });
+
+        render(<AddButton />);
+
+        expect(screen.getByRole("button")).toBeInTheDocument();
+      });
+
+      test("shows corner-down-left icon when not pending", () => {
+        mockUseFormStatus.mockReturnValue({ pending: false });
+
+        render(<AddButton />);
+
+        expect(screen.getByRole("button")).toBeInTheDocument();
+        expect(
+          screen.getByRole("button").querySelector("svg"),
+        ).toBeInTheDocument();
+      });
     });
   });
-
-  describe('AddButton', () => {
-    test('shows loading spinner when pending', () => {
-      mockUseFormStatus.mockReturnValue({ pending: false });
-      
-      render(<AddButton />);
-      
-      expect(screen.getByRole('button')).toBeInTheDocument();
-    });
-
-    test('shows corner-down-left icon when not pending', () => {
-      mockUseFormStatus.mockReturnValue({ pending: false });
-      
-      render(<AddButton />);
-      
-      expect(screen.getByRole('button')).toBeInTheDocument();
-      expect(screen.getByRole('button').querySelector('svg')).toBeInTheDocument();
-    });
-  });
-});
 });
