@@ -64,6 +64,10 @@
       "targetField": "groupName",
       "required": true
     },
+    "isArchived": {
+      "type": "boolean",
+      "default": false
+    },
     "creator": {
       "type": "relation",
       "relation": "manyToOne",
@@ -99,9 +103,6 @@
       "relation": "manyToMany",
       "target": "api::authorized-user.authorized-user",
       "inversedBy": "archived_groups"
-    },
-    "isArchived": {
-      "type": "boolean"
     }
   }
 }
