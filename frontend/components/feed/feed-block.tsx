@@ -102,7 +102,7 @@ export function FeedBlock({
                     </p>
                     {announcementType === "friend" &&
                       !announcement.kudosGiven?.includes(authUser) && (
-                        <div className="absolute bottom-0 left-[50%] translate-x-[-50%] translate-y-[20%]">
+                        <div className="absolute bottom-0 left-[50%] translate-x-[-50%] translate-y-[40%]">
                           <KudosButton announcementId={announcement.id} />
                         </div>
                       )}
