@@ -5,14 +5,13 @@ import {
 } from "@/components/message";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
-import { getDroplets } from "@/lib/requests/droplet";
 import {
   getDropletAverageRating,
   getEnrollmentsByAuthorizedUser,
 } from "@/lib/requests/enrollment";
 import { DropletTile } from "../droplets/droplet-tile";
 import { SortedDropletsGrid } from "./sorted-droplets-grid";
-import { DueDate, Enrollment } from "@/types";
+import { Droplet, DueDate, Enrollment } from "@/types";
 import { getUserDueDates } from "@/lib/requests/groups";
 
 interface Lesson {
@@ -23,21 +22,13 @@ interface Lesson {
 
 export async function DropletsGrid({
   sortKey,
-  searchValue,
-  type,
-  focusArea,
-  tags,
   completion,
+  droplets,
 }: {
-  searchValue?: string;
   sortKey?: string;
-  type?: string;
-  focusArea?: string;
-  tags?: string;
   completion?: boolean;
+  droplets: Droplet[];
 }) {
-  const [field, direction] = (sortKey || "").split(":");
-  const serverSortKey = field === "name" ? sortKey : undefined;
   const user = await getCurrentUser();
   let enrolledDropletIds: number[] = [];
   let completedDropletIds: number[] = [];
@@ -61,41 +52,6 @@ export async function DropletsGrid({
     dueDates = await getUserDueDates(authorizedUser.id);
   }
 
-  const droplets = await getDroplets({
-    sort: serverSortKey,
-    filters: {
-      $and: [
-        { status: { $eq: "published" } },
-        { isHidden: { $eq: false } },
-        searchValue ? { name: { $containsi: searchValue } } : {},
-        completion ? { id: { $in: completedDropletIds } } : {},
-        type
-          ? { $or: type.split(",").map((val) => ({ type: { $eq: val } })) }
-          : {},
-        focusArea
-          ? {
-              $or: focusArea
-                .split(",")
-                .map((val) => ({ focusArea: { $eq: val } })),
-            }
-          : {},
-        tags
-          ? {
-              $or: tags
-                .split(",")
-                .map((val) => ({ tags: { slug: { $eq: val } } })),
-            }
-          : {},
-      ].filter((item) => Object.keys(item).length > 0),
-    },
-    populate: {
-      tags: true,
-      lessons: {
-        fields: ["id", "name", "slug"],
-      },
-    },
-  });
-
   let dropletsWithCompletion = droplets.map((droplet) => {
     const dropletLessonIds = droplet.lessons?.map((l: Lesson) => l.id) || [];
     const completedLessonsInDroplet = completedLessonIds.filter((id) =>
@@ -116,9 +72,7 @@ export async function DropletsGrid({
       <Message className="mb-8 border border-dashed rounded-md border-slate-200 dark:border-slate-500 dark:bg-slate-800">
         <MessageHeader subtitle="No Results" title="No Droplets Found" />
         <MessageDescription>
-          {searchValue
-            ? `There are no Droplets that match "${searchValue}".`
-            : "There are no droplets that match those filters."}
+          There are no droplets that match those filters.
         </MessageDescription>
       </Message>
     );
@@ -145,7 +99,7 @@ export async function DropletsGrid({
     }
     return (
       <ul className="grid grid-flow-row grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-        {dropletsWithCompletion.map((droplet) => (
+        {completedDroplets.map((droplet) => (
           <DropletTile
             key={droplet.id}
             droplet={droplet}

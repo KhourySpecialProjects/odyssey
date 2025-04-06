@@ -26,6 +26,9 @@ export async function getEnrollmentsByAuthorizedUser(
           lessons: {
             fields: ["id", "name", "slug", "rating"],
           },
+          tags: {
+            fields: ["*"],
+          },
         },
       },
       viewedLessons: {

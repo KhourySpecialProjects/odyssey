@@ -14,6 +14,9 @@ import { Metadata } from "next";
 import { Suspense } from "react";
 import { ContentTypeSelector } from "@/components/explore/content-type-selector";
 import { PlaylistsGrid } from "@/components/explore/playlists-grid";
+import { getDroplets } from "@/lib/requests/droplet";
+import { getPlaylists } from "@/lib/requests/playlist";
+import { SearchProvider } from "@/contexts/SearchContext";
 
 export const metadata: Metadata = {
   title: "Explore",
@@ -28,19 +31,67 @@ export default async function ExplorePage({
 }) {
   const {
     sort,
-    q: searchValue,
     type,
     focusArea,
     tags,
     contentType = "droplets",
   } = (await searchParams) as { [key: string]: string };
   const { sortKey } = sorting.find((item) => item.slug === sort) || defaultSort;
+  const droplets = await getDroplets({
+    sort: sortKey,
+    filters: {
+      $and: [
+        { status: { $eq: "published" } },
+        { isHidden: false },
+        type
+          ? { $or: type.split(",").map((val) => ({ type: { $eq: val } })) }
+          : {},
+        focusArea
+          ? {
+              $or: focusArea
+                .split(",")
+                .map((val) => ({ focusArea: { $eq: val } })),
+            }
+          : {},
+        tags
+          ? {
+              $or: tags
+                .split(",")
+                .map((val) => ({ tags: { slug: { $eq: val } } })),
+            }
+          : {},
+      ],
+    },
+    populate: {
+      lessons: {
+        fields: ["*"],
+      },
+      tags: {
+        fields: ["*"],
+      },
+    },
+    fields: ["*"],
+  });
+
+  const playlists = await getPlaylists({
+    sort: sortKey,
+    filters: {
+      $and: [{ isPublic: true }],
+    },
+    populate: {
+      droplets: {
+        populate: {
+          lessons: {
+            fields: ["id", "name", "slug"],
+          },
+        },
+      },
+    },
+  });
+
   return (
-    <>
-      <div
-        className="w-full p-8 mx-auto my-4 text-center max-w-7xl"
-        suppressHydrationWarning
-      >
+    <SearchProvider>
+      <div className="w-full p-8 mx-auto my-4 text-center max-w-7xl">
         <h1 className="text-5xl font-bold">Explore</h1>
       </div>
 
@@ -74,20 +125,14 @@ export default async function ExplorePage({
       <div className="w-full px-4 mx-auto mb-8 max-w-7xl xl:p-0">
         {contentType === "droplets" ? (
           <Suspense fallback={<DropletsSkeleton />}>
-            <DropletsGrid
-              searchValue={searchValue}
-              type={type}
-              focusArea={focusArea}
-              tags={tags}
-              sortKey={sortKey}
-            />
+            <DropletsGrid droplets={droplets} sortKey={sortKey} />
           </Suspense>
         ) : (
           <Suspense fallback={<DropletsSkeleton />}>
-            <PlaylistsGrid searchValue={searchValue} sortKey={sortKey} />
+            <PlaylistsGrid playlists={playlists} sortKey={sortKey} />
           </Suspense>
         )}
       </div>
-    </>
+    </SearchProvider>
   );
 }
