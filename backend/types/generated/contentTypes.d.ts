@@ -1511,6 +1511,15 @@ export interface ApiGroupGroup extends Schema.CollectionType {
       'manyToMany',
       'api::authorized-user.authorized-user'
     >;
+    description: Attribute.Text;
+    dropletDueDates: Attribute.JSON;
+    droplets: Attribute.Relation<
+      'api::group.group',
+      'manyToMany',
+      'api::droplet.droplet'
+    >;
+    groupName: Attribute.String & Attribute.Required;
+    isArchived: Attribute.Boolean & Attribute.DefaultTo<false>;
     managers: Attribute.Relation<
       'api::group.group',
       'manyToMany',

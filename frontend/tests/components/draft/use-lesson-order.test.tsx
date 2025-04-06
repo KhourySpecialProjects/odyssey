@@ -171,4 +171,39 @@ describe("useLessonOrder", () => {
 
     expect(updateDroplet).toHaveBeenCalled();
   });
+
+  jest.mock("@/lib/actions", () => ({
+    updateDroplet: jest.fn(),
+  }));
+
+  test("processes multiple queue items sequentially", async () => {
+    (updateDroplet as jest.Mock).mockResolvedValue({ ok: true });
+
+    const { result } = renderHook(() => useLessonOrder(mockDroplet));
+
+    await act(async () => {
+      result.current.handleLessonReorder([
+        { id: 2, orderIndex: 0, lesson: mockLesson },
+        { id: 1, orderIndex: 1, lesson: mockLesson },
+      ]);
+    });
+
+    await act(async () => {
+      result.current.handleLessonReorder([
+        { id: 1, orderIndex: 0, lesson: mockLesson },
+        { id: 2, orderIndex: 1, lesson: mockLesson },
+      ]);
+    });
+
+    expect(updateDroplet).toHaveBeenLastCalledWith(
+      1,
+      {
+        droplet_lessons: [
+          { id: 1, orderIndex: 0 },
+          { id: 2, orderIndex: 1 },
+        ],
+      },
+      { revalidate: true },
+    );
+  });
 });

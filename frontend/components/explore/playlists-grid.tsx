@@ -1,18 +1,18 @@
 import { getCurrentUser } from "@/lib/auth/session";
 import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
 import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
-import { getPlaylists } from "@/lib/requests/playlist";
 import { PlaylistCard } from "../playlists/playlist-card";
 import {
   Message,
   MessageDescription,
   MessageHeader,
 } from "@/components/message";
-import { AuthorizedUser, DueDate } from "@/types";
+import { AuthorizedUser, DueDate, Playlist } from "@/types";
 import { getUserDueDates } from "@/lib/requests/groups";
+import { SortedPlaylistsGrid } from "./sorted-playlists-grid";
 
 interface PlaylistsGridProps {
-  searchValue?: string;
+  playlists: Playlist[];
   sortKey?: string;
 }
 
@@ -30,35 +30,13 @@ interface Droplet {
 }
 
 export async function PlaylistsGrid({
-  searchValue,
+  playlists,
   sortKey,
 }: PlaylistsGridProps) {
-  const [field, direction] = (sortKey || "").split(":");
-  const serverSortKey = field === "name" ? sortKey : undefined;
-
-  const playlists = await getPlaylists({
-    sort: serverSortKey,
-    filters: {
-      $and: [
-        { isPublic: true },
-        searchValue ? { name: { $containsi: searchValue } } : {},
-      ],
-    },
-    populate: {
-      droplets: {
-        populate: {
-          lessons: {
-            fields: ["id", "name", "slug"],
-          },
-        },
-      },
-    },
-  });
-
   const user = await getCurrentUser();
   let completedLessonIds: number[] = [];
   let authorizedUser: AuthorizedUser | null = null;
-  let dueDates: DueDate[];
+  let dueDates: DueDate[] = [];
 
   if (user?.email) {
     authorizedUser = (await getAuthorizedUserByEmail(
@@ -72,7 +50,7 @@ export async function PlaylistsGrid({
     dueDates = await getUserDueDates(authorizedUser.id);
   }
 
-  let playlistsWithCompletion = playlists.map((playlist) => {
+  let playlistsWithCompletion = playlists?.map((playlist) => {
     const allLessonIds =
       playlist.droplets?.flatMap(
         (d: Droplet) => d.lessons?.map((l: Lesson) => l.id) || [],
@@ -94,13 +72,13 @@ export async function PlaylistsGrid({
   if (sortKey) {
     const [field, direction] = sortKey.split(":");
     if (field === "name") {
-      playlistsWithCompletion.sort((a, b) => {
+      playlistsWithCompletion?.sort((a, b) => {
         return direction === "asc"
           ? a.name.localeCompare(b.name)
           : b.name.localeCompare(a.name);
       });
     } else if (field === "completion") {
-      playlistsWithCompletion.sort((a, b) => {
+      playlistsWithCompletion?.sort((a, b) => {
         return direction === "asc"
           ? a.completionPercentage - b.completionPercentage
           : b.completionPercentage - a.completionPercentage;
@@ -120,19 +98,9 @@ export async function PlaylistsGrid({
   }
 
   return (
-    <section>
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {playlistsWithCompletion.map((playlist) => (
-          <PlaylistCard
-            key={playlist.id}
-            playlist={playlist}
-            dueDate={
-              dueDates?.find((dueDate) => dueDate.playlist?.id === playlist.id)
-                ?.dueDate || ""
-            }
-          />
-        ))}
-      </div>
-    </section>
+    <SortedPlaylistsGrid
+      playlistsWithCompletion={playlistsWithCompletion}
+      dueDates={dueDates}
+    />
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { Droplet, DueDate, Enrollment } from "@/types";
+import { Droplet, DueDate } from "@/types";
 import { DropletTile } from "../droplets/droplet-tile";
 import { useMemo, useState } from "react";
 import {
@@ -9,6 +9,7 @@ import {
   MessageHeader,
 } from "@/components/message";
 import { Button } from "../ui/button";
+import { useSearch } from "@/contexts/SearchContext";
 
 interface SortedDropletsGridProps {
   droplets: Array<Droplet & { completionPercentage: number }>;
@@ -31,20 +32,6 @@ export function SortedDropletsGrid({
 }: SortedDropletsGridProps) {
   const ITEMS_PER_PAGE = 9;
   const [currentPage, setCurrentPage] = useState(1);
-  const totalPages = Math.ceil(droplets.length / ITEMS_PER_PAGE);
-  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-
-  const handleNextPage = () => {
-    if (currentPage < totalPages) {
-      setCurrentPage((prev) => prev + 1);
-    }
-  };
-
-  const handlePrevPage = () => {
-    if (currentPage > 1) {
-      setCurrentPage((prev) => prev - 1);
-    }
-  };
 
   const sortedDroplets = useMemo(() => {
     let sorted = [...droplets];
@@ -76,12 +63,35 @@ export function SortedDropletsGrid({
     return sorted;
   }, [droplets, sortKey, ratingsMap]);
 
-  const paginatedDroplets = sortedDroplets.slice(
+  const { searchQuery } = useSearch();
+
+  const filteredDroplets = useMemo(() => {
+    return sortedDroplets.filter((droplet) =>
+      droplet.name.toLowerCase().includes(searchQuery.toLowerCase()),
+    );
+  }, [sortedDroplets, searchQuery]);
+
+  const totalPages = Math.ceil(filteredDroplets.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+
+  const handleNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage((prev) => prev + 1);
+    }
+  };
+
+  const handlePrevPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage((prev) => prev - 1);
+    }
+  };
+
+  const paginatedDroplets = filteredDroplets.slice(
     startIndex,
     startIndex + ITEMS_PER_PAGE,
   );
 
-  if (!sortedDroplets || sortedDroplets.length === 0) {
+  if (!filteredDroplets || filteredDroplets.length === 0) {
     return (
       <Message className="mb-8 border border-dashed rounded-md border-slate-200 dark:border-slate-500 dark:bg-slate-800">
         <MessageHeader subtitle="No Results" title="No Droplets Found" />
