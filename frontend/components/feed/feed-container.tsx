@@ -27,11 +27,11 @@ export function FeedContainer({
       <div className="flex justify-end relative md:w-1/4 text-center h-full">
         <div className="absolute top-[-12px] transition-colors border rounded-md border-slate-200 dark:border-slate-500 hover:border-slate-300 bg-slate-50 dark:bg-slate-800 p-2 lg:p-4 hidden md:block min-w-[200px]">
           <div className="relative">
-          <FriendRequests
-            noProfile={true}
-            friendsPerPage={5}
-            authUser={authUser}
-          ></FriendRequests>
+            <FriendRequests
+              noProfile={true}
+              friendsPerPage={5}
+              authUser={authUser}
+            ></FriendRequests>
           </div>
         </div>
       </div>
