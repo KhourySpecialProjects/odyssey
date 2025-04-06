@@ -44,8 +44,14 @@ export function FirstVisitPopup({ user }: { user: AuthorizedUser | null }) {
       if (user) {
         await updateFirstTimeStatus(user.id);
         await updateOnboardingInfo(firstName, lastName, bio, user.id);
-        await createSystemAnnouncement("Want to see what your friends are up to? Their activity will appear here on your feed — just head to your profile to follow them!", user)
-        await createSystemAnnouncement("Hey there — welcome to Odyssey! This is where you'll see updates to your droplets, playlists, and groups.", user)
+        await createSystemAnnouncement(
+          "Want to see what your friends are up to? Their activity will appear here on your feed — just head to your profile to follow them!",
+          user,
+        );
+        await createSystemAnnouncement(
+          "Hey there — welcome to Odyssey! This is where you'll see updates to your droplets, playlists, and groups.",
+          user,
+        );
         setIsOpen(false);
         router.push("/d/introduction-to-odyssey");
       }
@@ -107,7 +113,9 @@ export function FirstVisitPopup({ user }: { user: AuthorizedUser | null }) {
           />
         </div>
         <div className="flex flex-col gap-4 mt-4">
-          <p className="text-sm text-slate-600 dark:text-slate-400">Enter a brief bio here:</p>
+          <p className="text-sm text-slate-600 dark:text-slate-400">
+            Enter a brief bio here:
+          </p>
           <Textarea
             value={bio}
             onChange={(e) => setBio(e.target.value)}
@@ -122,10 +130,12 @@ export function FirstVisitPopup({ user }: { user: AuthorizedUser | null }) {
             learning modules designed to help you succeed in your academic
             journey.
           </p>
-          <Button 
-          className="dark:shadow-[0px_0px_16px_rgb(0,255,255)]"
-          
-          onClick={() => handleClose()}>Start Exploring</Button>
+          <Button
+            className="dark:shadow-[0px_0px_16px_rgb(0,255,255)]"
+            onClick={() => handleClose()}
+          >
+            Start Exploring
+          </Button>
         </div>
       </DialogContent>
     </Dialog>

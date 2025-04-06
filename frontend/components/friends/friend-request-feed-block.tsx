@@ -81,34 +81,32 @@ export function FriendRequestFeedBlock({
         </button>
 
         <div className="flex flex-col gap-1 justify-center">
-        <Button
-          className="bg-emerald-400 dark:bg-emerald-700 dark:hover:bg-emerald-800 hover:text-white hover:bg-emerald-600 text-white mr-3 flex items-center justify-center"
-          style={{ height: "20px", width: "50px" }}
-          size="sm"
-          variant="outline"
-          onClick={handleApprove}
-          role="accept"
-        >
-          <div className="relative group">
-            <Check className="w-3 h-3 group-hover:scale-110 transition-transform" />
-          </div>
-        </Button>
-        <Button
-          className="flex items-center justify-center hover:bg-red-600 dark:bg-red-700 dark:hover:bg-red-800"
-          variant="destructive"
-          size="sm"
-          onClick={handleReject}
-          style={{ height: "20px", width: "50px" }}
-          role="reject"
-        >
-          <div className="relative group">
-            <X className="w-3 h-3 group-hover:scale-110 transition-transform" />
-          </div>
-        </Button>
+          <Button
+            className="bg-emerald-400 dark:bg-emerald-700 dark:hover:bg-emerald-800 hover:text-white hover:bg-emerald-600 text-white mr-3 flex items-center justify-center"
+            style={{ height: "20px", width: "50px" }}
+            size="sm"
+            variant="outline"
+            onClick={handleApprove}
+            role="accept"
+          >
+            <div className="relative group">
+              <Check className="w-3 h-3 group-hover:scale-110 transition-transform" />
+            </div>
+          </Button>
+          <Button
+            className="flex items-center justify-center hover:bg-red-600 dark:bg-red-700 dark:hover:bg-red-800"
+            variant="destructive"
+            size="sm"
+            onClick={handleReject}
+            style={{ height: "20px", width: "50px" }}
+            role="reject"
+          >
+            <div className="relative group">
+              <X className="w-3 h-3 group-hover:scale-110 transition-transform" />
+            </div>
+          </Button>
+        </div>
       </div>
-      </div>
-
-      
 
       <div>
         <ProfileBlock
