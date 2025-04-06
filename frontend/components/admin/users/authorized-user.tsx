@@ -115,7 +115,7 @@ export function AuthorizedUserBlock({ user }: { user: AuthorizedUser }) {
   };
 
   return (
-    <li className="py-0 [&:not(:first-child)]:pt-3">
+    <li className="py-0 [&:not(:first-child)]:pt-3 pb-3 md:pb-0">
       <div className="flex items-center space-x-4">
         <div className="flex-1 min-w-0">
           <div className="flex items-center space-x-3">
