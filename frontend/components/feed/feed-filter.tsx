@@ -10,6 +10,7 @@ import {
   ListVideo,
   PartyPopper,
   UsersRound,
+  Info,
 } from "lucide-react";
 
 interface FeedFilterProps {
@@ -51,7 +52,7 @@ export function FeedFilter({ onFilterChange }: FeedFilterProps) {
       value: AnnouncementTypeTitle.System,
       label: (
         <>
-          <span role="system">System</span> <CircleAlert size={20} />
+          <span role="system">System</span> <Info size={20}/>
         </>
       ),
       color: "bg-red-200 dark:bg-red-800 dark:text-slate-300",

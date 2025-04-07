@@ -63,6 +63,18 @@ export async function fetchAnnouncements(
           },
           {
             type: "system",
+            $or: [
+              {
+                authorized_user: {
+                   id: {$null: true} 
+                  }
+              },
+              {
+                authorized_user: {
+                  id: { $eq: user.id }
+                }
+              }
+            ]
           },
         ],
       },
