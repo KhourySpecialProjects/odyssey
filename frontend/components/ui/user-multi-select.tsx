@@ -43,11 +43,12 @@ export function UserMultiSelect({
   const filteredUsers = useMemo(() => {
     const searchLower = search.toLowerCase();
     return users.filter((user) => {
-      const fullName = `${user.firstName} ${user.lastName}`.toLowerCase();
+      const fullName = `${user.firstName} ${user.lastName}`
+        .toLowerCase()
+        .trim();
       const email = user.email.toLowerCase();
       return fullName.includes(searchLower) || email.includes(searchLower);
     });
-    
   }, [users, search]);
 
   return (
@@ -70,7 +71,10 @@ export function UserMultiSelect({
       </PopoverTrigger>
       <PopoverContent className="w-[400px] p-0">
         <Command>
-          <CommandInput placeholder="Search users..." onValueChange={setSearch}/>
+          <CommandInput
+            placeholder="Search users..."
+            onValueChange={setSearch}
+          />
           <CommandEmpty>No users found.</CommandEmpty>
           <CommandGroup className="max-h-[260px] overflow-y-auto">
             {filteredUsers.map((user) => (
