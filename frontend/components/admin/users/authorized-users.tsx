@@ -4,6 +4,11 @@ import { AuthorizedUserClient } from "./authorized-user-client";
 
 export async function AuthorizedUsers() {
   const authorizedUsers = await fetchAuthorizedUsers();
+  const sortedUsers = [...authorizedUsers].sort((a, b) => {
+    const aValue = a.lastName || a.email;
+    const bValue = b.lastName || b.email;
+    return aValue.localeCompare(bValue);
+  });
 
   return (
     <section>
@@ -16,7 +21,7 @@ export async function AuthorizedUsers() {
         <CreateUser />
       </div>
 
-      <AuthorizedUserClient authorizedUsers={authorizedUsers} />
+      <AuthorizedUserClient authorizedUsers={sortedUsers} />
     </section>
   );
 }

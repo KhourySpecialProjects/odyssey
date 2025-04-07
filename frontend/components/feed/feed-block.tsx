@@ -10,6 +10,7 @@ import {
   ListVideo,
   PartyPopper,
   UsersRound,
+  Info,
 } from "lucide-react";
 
 export function FeedBlock({
@@ -58,7 +59,7 @@ export function FeedBlock({
     group: <UsersRound />,
     friend: <Handshake />,
     kudos: <PartyPopper />,
-    system: <CircleAlert />,
+    system: <Info />,
   };
 
   return (
