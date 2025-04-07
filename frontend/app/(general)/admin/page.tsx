@@ -26,8 +26,6 @@ export default async function Page() {
     const enrollments = await getEnrollmentsByAuthorizedUser(user.id);
     totalEnrollments += enrollments.length;
   }
-  console.log("User roles:", user?.roles);
-  console.log("Admin check:", isAuthorizedUserAdmin(user?.roles));
   if (!user || !isAuthorizedUserAdmin(user.roles)) return notFound();
 
   const pageContent = {
