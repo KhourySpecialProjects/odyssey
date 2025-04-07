@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { ChevronsUpDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -30,6 +30,7 @@ export function UserMultiSelect({
 }: UserMultiSelectProps) {
   const [open, setOpen] = useState(false);
   const [users, setUsers] = useState<AuthorizedUser[]>([]);
+  const [search, setSearch] = useState("");
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -38,6 +39,17 @@ export function UserMultiSelect({
     };
     fetchUsers();
   }, []);
+
+  const filteredUsers = useMemo(() => {
+    const searchLower = search.toLowerCase();
+    return users.filter((user) => {
+      const fullName = `${user.firstName} ${user.lastName}`
+        .toLowerCase()
+        .trim();
+      const email = user.email.toLowerCase();
+      return fullName.includes(searchLower) || email.includes(searchLower);
+    });
+  }, [users, search]);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -59,12 +71,16 @@ export function UserMultiSelect({
       </PopoverTrigger>
       <PopoverContent className="w-[400px] p-0">
         <Command>
-          <CommandInput placeholder="Search users..." />
+          <CommandInput
+            placeholder="Search users..."
+            onValueChange={setSearch}
+          />
           <CommandEmpty>No users found.</CommandEmpty>
-          <CommandGroup>
-            {users.map((user) => (
+          <CommandGroup className="max-h-[260px] overflow-y-auto">
+            {filteredUsers.map((user) => (
               <CommandItem
                 key={user.id}
+                value={`${user.firstName} ${user.lastName} ${user.email}`}
                 onSelect={() => {
                   const newSelected = selectedIds.includes(user.id)
                     ? selectedIds.filter((id) => id !== user.id)
