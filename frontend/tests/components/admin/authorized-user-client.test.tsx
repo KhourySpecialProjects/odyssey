@@ -9,7 +9,7 @@ jest.mock("@/components/admin/users/authorized-user", () => ({
 }));
 
 describe("AuthorizedUserClient", () => {
-  const mockUsers = Array.from({ length: 15 }, (_, i) => ({
+  const mockUsers = Array.from({ length: 25 }, (_, i) => ({
     id: i + 1,
     email: `user${i + 1}@example.com`,
     isEnabled: true,
@@ -41,7 +41,8 @@ describe("AuthorizedUserClient", () => {
 
     expect(screen.getByTestId("user-1")).toBeInTheDocument();
     expect(screen.getByTestId("user-10")).toBeInTheDocument();
-    expect(screen.queryByTestId("user-11")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("user-11")).toBeInTheDocument();
+    expect(screen.queryByTestId("user-21")).not.toBeInTheDocument();
 
     expect(screen.getByText("Next")).toBeInTheDocument();
     const prevButton = screen.getByText("Previous");
@@ -55,8 +56,11 @@ describe("AuthorizedUserClient", () => {
     fireEvent.click(screen.getByText("Next"));
 
     expect(screen.queryByTestId("user-1")).not.toBeInTheDocument();
-    expect(screen.getByTestId("user-11")).toBeInTheDocument();
-    expect(screen.getByTestId("user-15")).toBeInTheDocument();
+    expect(screen.getByTestId("user-11")).not.toBeInTheDocument();
+    expect(screen.getByTestId("user-15")).not.toBeInTheDocument();
+    expect(screen.getByTestId("user-21")).toBeInTheDocument();
+    expect(screen.getByTestId("user-24")).toBeInTheDocument();
+
 
     expect(screen.getByText("Previous")).toBeInTheDocument();
     const nextButton = screen.getByText("Next");
@@ -73,7 +77,8 @@ describe("AuthorizedUserClient", () => {
 
     expect(screen.getByTestId("user-1")).toBeInTheDocument();
     expect(screen.getByTestId("user-10")).toBeInTheDocument();
-    expect(screen.queryByTestId("user-11")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("user-11")).toBeInTheDocument();
+    expect(screen.queryByTestId("user-21")).not.toBeInTheDocument();
   });
 
   it("displays a message when there are no users", () => {
