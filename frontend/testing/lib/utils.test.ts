@@ -364,13 +364,19 @@ describe("utils", () => {
 
           const result = tiptapJSONToStrapiJSON(input);
           expect(result[0]).toEqual({
-            bold: false,
-            italic: false,
-            underline: false,
-            strikethrough: false,
-            code: false,
-            text: "Link",
-            type: "text",
+            type: "link",
+            url: "https://example.com",
+            children: [
+              {
+                type: "text",
+                text: "Link",
+                bold: false,
+                italic: false,
+                underline: false,
+                strikethrough: false,
+                code: false,
+              }
+            ]
           });
         });
       });
