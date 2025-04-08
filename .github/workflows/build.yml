@@ -19,6 +19,20 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::851725173181 
+          aws-region: us-east-2
+
+      - name: Get PostHog Key from Secrets Manager
+        id: posthog_secret
+        run: |
+          SECRET_VALUE=$(aws secretsmanager get-secret-value --secret-id 'arn:aws:secretsmanager:us-east-2:851725173181:secret:odyssey/dev/frontend-1ZWCId' --query SecretString --output text)
+          # Add jq parsing here if your secret is JSON: | jq -r .your_key
+          echo "::add-mask::$SECRET_VALUE" 
+          echo "POSTHOG_KEY=$SECRET_VALUE" >> $GITHUB_ENV # Store fetched key in GITHUB_ENV
       
       
 
@@ -36,6 +50,7 @@ jobs:
       - name: Build frontend
         env:
           AWS_CDN_URL: ${{ secrets.AWS_CDN_URL }}
+          NEXT_PUBLIC_POSTHOG_KEY: ${{ env.POSTHOG_KEY }} 
         run: |
           cd ./frontend 
           npm run build
