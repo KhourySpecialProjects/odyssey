@@ -3,8 +3,9 @@ import { AuthorizedUser } from "@/types";
 import { AuthorizedUserBlock } from "./authorized-user";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
 
-const ITEMS_PER_PAGE = 10;
+const ITEMS_PER_PAGE = 20;
 
 export function AuthorizedUserClient({
   authorizedUsers,
@@ -35,12 +36,11 @@ export function AuthorizedUserClient({
     <div className="p-4 mt-4 rounded-md bg-slate-100 dark:bg-slate-800">
       {authorizedUsers.length > 0 ? (
         <>
-          <ul className="divide-y divide-slate-200 dark:divide-slate-300 md:space-y-4 md:columns-2">
+          <ul className=" md:space-y-4 md:columns-2 md:gap-4">
             {paginatedUsers.map((user) => (
               <AuthorizedUserBlock user={user} key={user.id} />
             ))}
           </ul>
-          <hr className="h-px my-4 bg-gray-200 border-0 dark:bg-gray-700"></hr>
           <div className="flex justify-end items-center mt-4 ">
             <div className="flex gap-2">
               <Button
