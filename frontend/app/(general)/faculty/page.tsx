@@ -12,9 +12,6 @@ import { Groups } from "@/components/admin/groups/groups";
 
 export default async function Page() {
   const user = await getCurrentUser();
-  console.log("Full user object:", user);
-  console.log("User roles:", user?.roles);
-  console.log("Faculty check:", isAuthorizedUserFaculty(user?.roles));
   await new Promise((resolve) => setTimeout(resolve, 1000));
 
   if (!user || !isAuthorizedUserFaculty(user.roles)) return notFound();
