@@ -42,8 +42,8 @@ export function getInitials(name: string): string {
 export type PopulateValue =
   | string
   | {
-      [key: string]: PopulateValue;
-    };
+    [key: string]: PopulateValue;
+  };
 
 export async function fetchAPI<T>(
   path: string,
@@ -314,15 +314,28 @@ export function tiptapJSONToStrapiJSON(
   return jsonContent.map((node) => {
     switch (node.type) {
       case "text":
+        if (node.marks?.some(mark => mark.type === "link")) {
+          return {
+            type: "link",
+            url: node.marks.find(mark => mark.type === "link")?.attrs?.href || "",
+            children: [{
+              type: "text",
+              text: node.text || "",
+              bold: node.marks?.some((mark) => mark.type === "bold") || false,
+              italic: node.marks?.some((mark) => mark.type === "italic") || false,
+              underline: node.marks?.some((mark) => mark.type === "underline") || false,
+              strikethrough: node.marks?.some((mark) => mark.type === "strike") || false,
+              code: node.marks?.some((mark) => mark.type === "code") || false,
+            }]
+          };
+        }
         return {
           type: "text",
           text: node.text || "",
           bold: node.marks?.some((mark) => mark.type === "bold") || false,
           italic: node.marks?.some((mark) => mark.type === "italic") || false,
-          underline:
-            node.marks?.some((mark) => mark.type === "underline") || false,
-          strikethrough:
-            node.marks?.some((mark) => mark.type === "strike") || false,
+          underline: node.marks?.some((mark) => mark.type === "underline") || false,
+          strikethrough: node.marks?.some((mark) => mark.type === "strike") || false,
           code: node.marks?.some((mark) => mark.type === "code") || false,
         };
 

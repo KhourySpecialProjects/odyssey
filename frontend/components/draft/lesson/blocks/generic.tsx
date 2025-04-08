@@ -13,6 +13,8 @@ export function GenericEditor({
   deleteBlock: () => void;
 }) {
   const handleChange = (content: string) => {
+    //console.log("this is the temp data ", content)
+
     updateBlock({
       id: block.id,
       __component: "droplets.generic",

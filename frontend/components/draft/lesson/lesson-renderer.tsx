@@ -183,6 +183,7 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
         deleteBlock: deleteBlock(index),
       };
 
+
       switch (block.__component) {
         case "droplets.generic":
           return <GenericEditor {...props} />;
