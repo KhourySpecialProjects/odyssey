@@ -38,7 +38,7 @@ export function AuthorizedUserClient({
         <>
           <ul className=" md:space-y-4 md:columns-2 md:gap-4">
             {paginatedUsers.map((user) => (
-                <AuthorizedUserBlock user={user} key={user.id} />
+              <AuthorizedUserBlock user={user} key={user.id} />
             ))}
           </ul>
           <div className="flex justify-end items-center mt-4 ">
