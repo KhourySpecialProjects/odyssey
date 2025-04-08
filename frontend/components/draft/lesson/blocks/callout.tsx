@@ -28,6 +28,8 @@ export function CalloutEditor({
       JSON.stringify(tiptapJSONToStrapiJSON(content.content ?? [])),
     );
 
+
+
     updateBlock({
       __component: "droplets.callout",
       content: temp,
