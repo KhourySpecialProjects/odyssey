@@ -61,7 +61,6 @@ describe("AuthorizedUserClient", () => {
     expect(screen.getByTestId("user-21")).toBeInTheDocument();
     expect(screen.getByTestId("user-24")).toBeInTheDocument();
 
-
     expect(screen.getByText("Previous")).toBeInTheDocument();
     const nextButton = screen.getByText("Next");
     expect(nextButton).toBeInTheDocument();

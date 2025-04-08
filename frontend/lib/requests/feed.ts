@@ -66,15 +66,15 @@ export async function fetchAnnouncements(
             $or: [
               {
                 authorized_user: {
-                   id: {$null: true} 
-                  }
+                  id: { $null: true },
+                },
               },
               {
                 authorized_user: {
-                  id: { $eq: user.id }
-                }
-              }
-            ]
+                  id: { $eq: user.id },
+                },
+              },
+            ],
           },
         ],
       },
