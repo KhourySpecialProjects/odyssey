@@ -1,33 +1,17 @@
 "use client";
 
-import {
-  useEditor,
-  EditorContent,
-  ReactNodeViewRenderer,
-  JSONContent,
-  Editor,
-} from "@tiptap/react";
-import Document from "@tiptap/extension-document";
-import Paragraph from "@tiptap/extension-paragraph";
-import ListItem from "@tiptap/extension-list-item";
-import BulletList from "@tiptap/extension-bullet-list";
-import Text from "@tiptap/extension-text";
-import OrderedList from "@tiptap/extension-ordered-list";
-import Heading from "@tiptap/extension-heading";
+import { useEditor, EditorContent, ReactNodeViewRenderer } from "@tiptap/react";
 import Placeholder from "@tiptap/extension-placeholder";
-import Image from "@tiptap/extension-image";
 import StartingKit from "@tiptap/starter-kit";
-import { Bold, Star } from "lucide-react";
-import { Suspense, useState, useActionState, useEffect, useRef } from "react";
-import { cn } from "@/lib/utils";
 import Underline from "@tiptap/extension-underline";
-import Strike from "@tiptap/extension-strike";
 import Link from "@tiptap/extension-link";
 import CustomImage from "./custom-image";
 import CodeBlockLowlight from "@tiptap/extension-code-block-lowlight";
 import { CodeBlockComponent } from "./toolbar/tools/code-tool/code-tool";
 import { all, createLowlight } from "lowlight";
 import GeneralToolbar from "./toolbar/general-toolbar";
+import Math from "@aarkue/tiptap-math-extension";
+import "katex/dist/katex.min.css";
 
 const lowlight = createLowlight(all);
 
@@ -49,6 +33,15 @@ export function GenericBlockInput({
       }),
       Underline,
       StartingKit,
+      Math.configure({
+        katexOptions: {
+          throwOnError: false,
+          output: "html",
+          strict: false,
+          trust: true,
+        },
+        addInlineMath: true,
+      }),
       CodeBlockLowlight.extend({
         addNodeView() {
           return ReactNodeViewRenderer(CodeBlockComponent);
@@ -63,7 +56,7 @@ export function GenericBlockInput({
       Placeholder.configure({
         placeholder: "Nothing here yet...",
         emptyEditorClass:
-          "before:content-[attr(data-placeholder)] before:text-gray-500 before:absolute before:top-3 before:left-3 before:pointer-events-none before:select-none",
+          "cursor-text before:content-[attr(data-placeholder)] before:text-gray-500 dark:before:text-slate-300 before:absolute before:top-3 before:left-3 before:pointer-events-none before:select-none",
       }),
     ],
 
@@ -75,7 +68,7 @@ export function GenericBlockInput({
     editorProps: {
       attributes: {
         class:
-          "w-full border min-h-32 border-slate-200 p-3 prose prose-lg prose-sky prose-table:block prose-table:overflow-x-scroll rounded-b-md hover:shadow focus:shadow-lg outline-none",
+          "w-full border min-h-32 prose-code:text-inherit border-slate-200 dark:border-slate-500 p-3 prose prose-lg prose-sky prose-headings:text-inherit prose-strong:text-inherit prose-table:block prose-table:overflow-x-scroll rounded-b-md hover:shadow focus:shadow-lg outline-none dark:text-slate-300",
       },
       handleKeyDown: (view: any, event: KeyboardEvent) => {
         if (event.key === "Tab") {
@@ -98,7 +91,7 @@ export function GenericBlockInput({
 
   return (
     <div>
-      <GeneralToolbar editor={editor!} />
+      <GeneralToolbar editor={editor!} isDroplet={true} />
       <EditorContent name="lesson-generic" editor={editor} />
     </div>
   );
