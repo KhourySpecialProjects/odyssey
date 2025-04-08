@@ -375,8 +375,8 @@ describe("utils", () => {
                 underline: false,
                 strikethrough: false,
                 code: false,
-              }
-            ]
+              },
+            ],
           });
         });
       });
