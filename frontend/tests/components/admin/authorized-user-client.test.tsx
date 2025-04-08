@@ -41,7 +41,7 @@ describe("AuthorizedUserClient", () => {
 
     expect(screen.getByTestId("user-1")).toBeInTheDocument();
     expect(screen.getByTestId("user-10")).toBeInTheDocument();
-    expect(screen.queryByTestId("user-11")).toBeInTheDocument();
+    expect(screen.getByTestId("user-11")).toBeInTheDocument();
     expect(screen.queryByTestId("user-21")).not.toBeInTheDocument();
 
     expect(screen.getByText("Next")).toBeInTheDocument();
@@ -56,8 +56,8 @@ describe("AuthorizedUserClient", () => {
     fireEvent.click(screen.getByText("Next"));
 
     expect(screen.queryByTestId("user-1")).not.toBeInTheDocument();
-    expect(screen.getByTestId("user-11")).not.toBeInTheDocument();
-    expect(screen.getByTestId("user-15")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("user-11")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("user-15")).not.toBeInTheDocument();
     expect(screen.getByTestId("user-21")).toBeInTheDocument();
     expect(screen.getByTestId("user-24")).toBeInTheDocument();
 
@@ -76,7 +76,7 @@ describe("AuthorizedUserClient", () => {
 
     expect(screen.getByTestId("user-1")).toBeInTheDocument();
     expect(screen.getByTestId("user-10")).toBeInTheDocument();
-    expect(screen.queryByTestId("user-11")).toBeInTheDocument();
+    expect(screen.getByTestId("user-11")).toBeInTheDocument();
     expect(screen.queryByTestId("user-21")).not.toBeInTheDocument();
   });
 
