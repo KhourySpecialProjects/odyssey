@@ -1,24 +1,13 @@
 "use client";
 
 import UnauthorizedRoute from "@/app/(general)/unauthorized/page";
-import {
-  cn,
-  getInitials,
-  getPath,
-  isAuthorizedUserAdmin,
-  condenseRoleTitles,
-} from "@/lib/utils";
+import { cn, getPath, isAuthorizedUserAdmin } from "@/lib/utils";
 import { AuthorizedUser, Droplet, User } from "@/types";
 import {
   BookTextIcon,
-  ChevronDownIcon,
-  PersonStanding,
   FilePieChartIcon,
   HammerIcon,
   HistoryIcon,
-  LogOutIcon,
-  MenuIcon,
-  ShipIcon,
   TargetIcon,
   CheckCircle2,
   LockIcon,
@@ -27,20 +16,9 @@ import {
   Home,
   ChevronsLeft,
 } from "lucide-react";
-import { signOut } from "next-auth/react";
-import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useLayoutEffect, useState } from "react";
-import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "../ui/dropdown-menu";
 import { Label } from "../ui/label";
 import { Progress } from "../ui/progress";
 
@@ -159,7 +137,7 @@ export default function Sidebar({
               <div className="pb-4 w-full text-center">
                 <Link
                   className="w-full px-6 py-2 rounded-full text-white bg-green-600 hover:bg-green-700"
-                  href={`/draft/d/${droplet.slug}`}
+                  href={`/draft/d/${pathname.split("d/")[1]}`}
                 >
                   Edit
                 </Link>
