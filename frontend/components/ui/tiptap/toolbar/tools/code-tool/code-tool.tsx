@@ -33,7 +33,7 @@ function CodeBlockComponent({
         contentEditable={false}
         defaultValue={defaultLanguage}
         onChange={(event) => updateAttributes({ language: event.target.value })}
-        className="text-sm rounded-md px-2 py-1 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+        className="text-sm rounded-md px-2 py-1 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:text-black"
       >
         <option value="null">auto</option>
         <option disabled>—</option>
@@ -69,7 +69,7 @@ function CodeTool({ editor }: { editor: Editor }) {
     <button
       onClick={() => editor.chain().focus().toggleCodeBlock().run()}
       className={cn(
-        editor?.isActive("codeBlock") ? "bg-slate-200" : "",
+        editor?.isActive("codeBlock") ? "bg-slate-200 dark:bg-slate-700" : "",
         "p-2.5 rounded-md border border-transparent hover:border-slate-200",
       )}
     >
