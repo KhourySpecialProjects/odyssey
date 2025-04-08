@@ -4,8 +4,9 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Droplet } from "@/types";
 import { DropletBlock } from "./droplet-block";
+import { PageNav } from "@/components/ui/page-nav";
 
-const ITEMS_PER_PAGE = 10;
+const ITEMS_PER_PAGE = 2;
 
 export function DropletClient({ droplets }: { droplets: Droplet[] }) {
   const [currentPage, setCurrentPage] = useState(1);
@@ -60,6 +61,8 @@ export function DropletClient({ droplets }: { droplets: Droplet[] }) {
               </Button>
             </div>
           </div>
+
+          <PageNav currentPage={currentPage} updatePage={setCurrentPage} totalPages={totalPages}/>
         </>
       ) : (
         <p>There are no created droplets.</p>
