@@ -1,4 +1,4 @@
-import { Droplet, AuthorizedUser, Group } from "@/types";
+import { Droplet, Group } from "@/types";
 import { useState, useEffect } from "react";
 import { Button } from "../ui/button";
 import { assignDropletDueDate, getGroupDueDate } from "@/lib/requests/groups";

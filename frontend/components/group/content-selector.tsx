@@ -3,7 +3,6 @@
 import { cn } from "@/lib/utils";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { User } from "@/types";
-import { isAuthorizedUserAdmin } from "@/lib/utils";
 
 const tabs = [
   { name: "Droplets", value: "droplets" },

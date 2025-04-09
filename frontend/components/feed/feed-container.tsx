@@ -5,7 +5,7 @@ import { AnnouncementTypeTitle } from "@/lib/globals";
 import { FeedClient } from "./feed-client";
 import { FeedFilter } from "./feed-filter";
 import { Announcement, AnnouncementType, AuthorizedUser } from "@/types";
-import { BellRing, SlidersHorizontal, X } from "lucide-react";
+import { BellRing, SlidersHorizontal } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { FriendRequests } from "../friends/friend-requests";
 
