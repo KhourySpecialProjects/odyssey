@@ -34,7 +34,8 @@ jobs:
       - name: Build frontend
         env:
           AWS_CDN_URL: ${{ secrets.AWS_CDN_URL }}
-          NEXT_PUBLIC_POSTHOG_KEY: ${{ env.POSTHOG_KEY }} 
+          NEXT_PUBLIC_POSTHOG_KEY: ${{ secrets.NEXT_PUBLIC_POSTHOG_KEY }}
+          NEXT_PUBLIC_POSTHOG_HOST: ${{ secrets.NEXT_PUBLIC_POSTHOG_HOST }}
         run: |
           cd ./frontend 
           npm run build
