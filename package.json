@@ -41,7 +41,8 @@
     "react-dropzone": "^14.3.5",
     "react-router-dom": "^7.1.5",
     "react-tabs": "^6.1.0",
-    "reactjs-popup": "^2.0.6"
+    "reactjs-popup": "^2.0.6",
+    "styled-components": "^6.1.17"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^6.6.3",
