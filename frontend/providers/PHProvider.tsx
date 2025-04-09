@@ -12,6 +12,14 @@ export function PHProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     // Initialize PostHog only on the client side
+    console.log(
+      "process",
+      process.env.NEXT_PUBLIC_POSTHOG_KEY?.substring(0, 3),
+    );
+    console.log(
+      "process",
+      process.env.NEXT_PUBLIC_POSTHOG_KEY?.substring(10, 13),
+    );
     posthog.init(process.env.NEXT_PUBLIC_POSTHOG_KEY || "", {
       api_host: process.env.NEXT_PUBLIC_POSTHOG_HOST,
     });
