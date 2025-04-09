@@ -36,22 +36,26 @@ describe("DropletClient", () => {
     expect(screen.getByTestId("droplet-10")).toBeInTheDocument();
     expect(screen.queryByTestId("droplet-11")).not.toBeInTheDocument();
 
-    expect(screen.getByRole('button', { name: /chevron-right/i })).toBeInTheDocument();
-    const prevButton = screen.getByRole('button', { name: /chevron-left/i });
+    expect(
+      screen.getByRole("button", { name: /chevron-right/i }),
+    ).toBeInTheDocument();
+    const prevButton = screen.getByRole("button", { name: /chevron-left/i });
     expect(prevButton).toBeDisabled();
   });
 
   it("navigates to next page when Next button is clicked", () => {
     render(<DropletClient droplets={mockDroplets} />);
 
-    const nextButton = screen.getByRole('button', { name: /chevron-right/i });
+    const nextButton = screen.getByRole("button", { name: /chevron-right/i });
     fireEvent.click(nextButton);
 
     expect(screen.queryByTestId("droplet-1")).not.toBeInTheDocument();
     expect(screen.getByTestId("droplet-11")).toBeInTheDocument();
     expect(screen.getByTestId("droplet-15")).toBeInTheDocument();
 
-    expect(screen.getByRole('button', { name: /chevron-left/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /chevron-left/i }),
+    ).toBeInTheDocument();
     expect(nextButton).toBeInTheDocument();
     expect(nextButton).toBeDisabled();
   });
@@ -59,10 +63,10 @@ describe("DropletClient", () => {
   it("navigates to previous page when Previous button is clicked", () => {
     render(<DropletClient droplets={mockDroplets} />);
 
-    const nextButton = screen.getByRole('button', { name: /chevron-right/i });
+    const nextButton = screen.getByRole("button", { name: /chevron-right/i });
     fireEvent.click(nextButton);
 
-    const prevButton = screen.getByRole('button', { name: /chevron-left/i });
+    const prevButton = screen.getByRole("button", { name: /chevron-left/i });
     fireEvent.click(prevButton);
 
     expect(screen.getByTestId("droplet-1")).toBeInTheDocument();

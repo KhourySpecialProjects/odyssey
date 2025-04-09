@@ -44,15 +44,14 @@ describe("AuthorizedUserClient", () => {
     expect(screen.getByTestId("user-11")).toBeInTheDocument();
     expect(screen.queryByTestId("user-21")).not.toBeInTheDocument();
 
-    const prevButton = screen.getByRole('button', { name: /chevron-left/i });
+    const prevButton = screen.getByRole("button", { name: /chevron-left/i });
     expect(prevButton).toBeDisabled();
-
   });
 
   it("navigates to next page when Next button is clicked", () => {
     render(<AuthorizedUserClient authorizedUsers={mockUsers} />);
 
-    const nextButton = screen.getByRole('button', { name: /chevron-right/i });
+    const nextButton = screen.getByRole("button", { name: /chevron-right/i });
     fireEvent.click(nextButton);
 
     expect(screen.queryByTestId("user-1")).not.toBeInTheDocument();
@@ -61,7 +60,9 @@ describe("AuthorizedUserClient", () => {
     expect(screen.getByTestId("user-21")).toBeInTheDocument();
     expect(screen.getByTestId("user-24")).toBeInTheDocument();
 
-    expect(screen.getByRole('button', { name: /chevron-left/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /chevron-left/i }),
+    ).toBeInTheDocument();
     expect(nextButton).toBeInTheDocument();
     expect(nextButton).toBeDisabled();
   });
@@ -69,10 +70,10 @@ describe("AuthorizedUserClient", () => {
   it("navigates to previous page when Previous button is clicked", () => {
     render(<AuthorizedUserClient authorizedUsers={mockUsers} />);
 
-    const nextButton = screen.getByRole('button', { name: /chevron-right/i });
+    const nextButton = screen.getByRole("button", { name: /chevron-right/i });
     fireEvent.click(nextButton);
 
-    const prevButton = screen.getByRole('button', { name: /chevron-left/i });
+    const prevButton = screen.getByRole("button", { name: /chevron-left/i });
     fireEvent.click(prevButton);
 
     expect(screen.getByTestId("user-1")).toBeInTheDocument();
