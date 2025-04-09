@@ -20,6 +20,10 @@ export function PHProvider({ children }: { children: React.ReactNode }) {
       "process",
       process.env.NEXT_PUBLIC_POSTHOG_KEY?.substring(10, 13),
     );
+    console.log(
+      "already works",
+      process.env.GITHUB_CLIENT_ID?.substring(10, 13),
+    );
     posthog.init(process.env.NEXT_PUBLIC_POSTHOG_KEY || "", {
       api_host: process.env.NEXT_PUBLIC_POSTHOG_HOST,
     });

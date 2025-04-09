@@ -2,9 +2,7 @@
 
 import { useState } from "react";
 import { AnnouncementTypeTitle } from "@/lib/globals";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
-  CircleAlert,
   Droplet,
   Handshake,
   ListVideo,

@@ -40,7 +40,6 @@ import { enrollUsers } from "@/lib/requests/groups";
 import { getGroupByID } from "@/lib/requests/groups";
 import { createGroupAnnouncement } from "@/lib/requests/feed";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
-import { deleteGroup } from "@/lib/actions";
 
 const SEMESTER_OPTIONS: GroupSemester[] = [
   "Open Membership",
