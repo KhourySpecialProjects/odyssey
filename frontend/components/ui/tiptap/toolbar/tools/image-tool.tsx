@@ -17,6 +17,8 @@ import {
 } from "@/components/ui/popover";
 import { uploadImage } from "@/lib/actions";
 import { cn } from "@/lib/utils";
+import imageCompression from "browser-image-compression";
+import { toast } from "sonner";
 
 export default function ImageToolButton({ editor }: { editor: Editor | null }) {
   const [open, setOpen] = useState(false);
@@ -101,6 +103,20 @@ export default function ImageToolButton({ editor }: { editor: Editor | null }) {
   );
 }
 
+const compressImage = async (imageFile: File) => {
+  const options = {
+    maxSizeMB: 1,
+    maxWidthOrHeight: 1024,
+    useWebWorker: true,
+  };
+  try {
+    return await imageCompression(imageFile, options);
+  } catch (error) {
+    console.error("Error compressing image:", error);
+    return imageFile;
+  }
+};
+
 const FileUpload = ({
   file,
   setFile,
@@ -110,24 +126,28 @@ const FileUpload = ({
 }) => {
   const [isDragging, setIsDragging] = useState(false);
 
-  const handleFileChange = (e: any) => {
-    console.log(e);
-    if (e.target.files.length > 0) {
-      setFile(e.target.files[0]);
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file && file.type.startsWith("image/")) {
+      const compressedFile = await compressImage(file);
+      setFile(compressedFile);
     }
   };
 
-  const handleDrop = (e: any) => {
+  const handleDrop = async (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     setIsDragging(false);
 
-    if (e.dataTransfer.files.length > 0) {
-      setFile(e.dataTransfer.files[0]);
-      console.log(e.dataTransfer.files[0]);
+    const file = e.dataTransfer.files[0];
+    if (file && file.type.startsWith("image/")) {
+      const compressedFile = await compressImage(file);
+      setFile(compressedFile);
+    } else {
+      toast.error("Please upload a valid image file");
     }
   };
 
-  const handleDragOver = (e: any) => {
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     setIsDragging(true);
   };
