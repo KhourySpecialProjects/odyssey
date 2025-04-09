@@ -56,7 +56,11 @@ export function EnrolledDropletsGridClient({
           />
         ))}
       </ul>
-      <PageNav currentPage={currentPage} updatePage={setCurrentPage} totalPages={totalPages}/>
+      <PageNav
+        currentPage={currentPage}
+        updatePage={setCurrentPage}
+        totalPages={totalPages}
+      />
     </>
   );
 }

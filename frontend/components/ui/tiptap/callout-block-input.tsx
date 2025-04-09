@@ -32,8 +32,8 @@ export function CalloutBlockInput({
       StartingKit,
       Link.configure({
         HTMLAttributes: {
-          target: '_blank',
-          rel: 'noopener noreferrer',
+          target: "_blank",
+          rel: "noopener noreferrer",
         },
       }),
       Underline,
