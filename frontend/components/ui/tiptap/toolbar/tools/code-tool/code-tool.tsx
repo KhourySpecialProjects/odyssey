@@ -51,7 +51,11 @@ function CodeBlockComponent({
             {Array.from({
               length: (node.textContent.match(/\n/g) || []).length + 1,
             }).map((_, i) => (
-              <span key={i} className="text-right pr-2 leading-5 block" style={{ paddingTop: '0.15rem', paddingBottom: '0.15rem' }}>
+              <span
+                key={i}
+                className="text-right pr-2 leading-5 block"
+                style={{ paddingTop: "0.15rem", paddingBottom: "0.15rem" }}
+              >
                 {i + 1}
               </span>
             ))}
