@@ -7,7 +7,6 @@
 # misc
 .DS_Store
 *.pem
-.env.production
 
 # debug
 npm-debug.log*
