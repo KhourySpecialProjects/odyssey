@@ -19,8 +19,6 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-      
-      
 
 
       - name: Set up Node.js
@@ -36,6 +34,7 @@ jobs:
       - name: Build frontend
         env:
           AWS_CDN_URL: ${{ secrets.AWS_CDN_URL }}
+          NEXT_PUBLIC_POSTHOG_KEY: ${{ env.POSTHOG_KEY }} 
         run: |
           cd ./frontend 
           npm run build
