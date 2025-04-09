@@ -26,7 +26,7 @@ jobs:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: 'arn:aws:iam::851725173181:role/aws-reserved/sso.amazonaws.com/AWSReservedSSO_Odyssey-FullAdmin_a1c76a0edf21210a'
+          role-to-assume: 'arn:aws:iam::851725173181:oidc-provider/oidc.eks.us-east-2.amazonaws.com/id/2ACE99A9FC45E718063209E71A24B18F'
           aws-region: us-east-2 
 
       - name: Get PostHog Key from Secrets Manager
