@@ -2,7 +2,7 @@
 
 import { Button } from "../ui/button";
 import { giveKudos } from "@/lib/kudos";
-import { PartyPopper, ThumbsUp } from "lucide-react";
+import { ThumbsUp } from "lucide-react";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 

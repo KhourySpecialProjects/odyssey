@@ -2,7 +2,7 @@
 
 import { LessonRenderer } from "./lesson-renderer";
 import { NotesBar } from "./note-taking/notes-bar";
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { Droplet, Lesson, User, AuthorizedUser, Note } from "@/types";
 import { getNotesByAuthorizedUserAndLesson } from "@/lib/requests/notes";
 import { cn } from "@/lib/utils";

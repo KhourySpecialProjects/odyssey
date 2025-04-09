@@ -1,7 +1,6 @@
 import { getCurrentUser } from "@/lib/auth/session";
 import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
 import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
-import { PlaylistCard } from "../playlists/playlist-card";
 import {
   Message,
   MessageDescription,

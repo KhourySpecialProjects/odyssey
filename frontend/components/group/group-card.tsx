@@ -2,7 +2,6 @@
 
 import { Group } from "@/types";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { Archive, ArchiveRestore, UsersIcon } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
