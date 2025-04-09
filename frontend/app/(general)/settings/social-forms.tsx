@@ -26,7 +26,9 @@ export function SocialForms({
     authorizedUser?.linkedin || "",
   );
   const [githubValue, setGithubValue] = useState(authorizedUser?.github || "");
-  const [profileImage, setProfileImage] = useState<string | null>(authorizedUser?.profilePhoto || "");
+  const [profileImage, setProfileImage] = useState<string | null>(
+    authorizedUser?.profilePhoto || "",
+  );
   const [profileFile, setProfileFile] = useState<File | null>(null);
 
   const compressImage = async (imageFile: File) => {
@@ -109,7 +111,7 @@ export function SocialForms({
         )}
 
         <label className="bg-blue-500 text-white py-2 px-4 rounded cursor-pointer">
-          {(file || profileImage) ? "Change Photo" : "Upload Photo"}
+          {file || profileImage ? "Change Photo" : "Upload Photo"}
           <input
             name="profilePhoto"
             type="file"
@@ -186,11 +188,11 @@ export function SocialForms({
           </Button>
           <Button
             onClick={async () => {
-              setProfileImage(""); 
+              setProfileImage("");
               if (authorizedUser) {
                 await updatePhoto("", authorizedUser?.id);
               }
-              }}
+            }}
             className="min-w-[50px] whitespace-normal bg-red-500 dark:bg-red-400 dark:hover:bg-red-300"
             disabled={!profileImage}
           >

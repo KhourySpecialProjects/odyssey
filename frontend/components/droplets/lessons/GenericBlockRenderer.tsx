@@ -119,6 +119,36 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
       });
       hljs.highlightAll();
 
+      const preBlocks = contentRef.current.querySelectorAll("pre");
+
+      preBlocks.forEach((pre) => {
+        const code = pre.querySelector("code");
+        if (!code) return;
+
+        const lines = (code.textContent?.match(/\n/g) || []).length + 1;
+
+        const lineNumbers = document.createElement("div");
+        lineNumbers.className =
+          "absolute left-0 top-0 bottom-0 min-w-[2.5rem] flex flex-col text-slate-500 text-sm select-none border-r border-slate-300 bg-slate-50";
+
+        const lineContainer = document.createElement("div");
+        lineContainer.className = "pt-3 pl-3";
+
+        for (let i = 1; i <= lines; i++) {
+          const line = document.createElement("span");
+          line.className = "text-right pr-2 leading-5 block";
+          line.style.paddingTop = "0.15rem";
+          line.style.paddingBottom = "0.18rem";
+          line.textContent = `${i}`;
+          lineContainer.appendChild(line);
+        }
+
+        lineNumbers.appendChild(lineContainer);
+        pre.style.position = "relative";
+        pre.style.paddingLeft = "3rem";
+        pre.style.paddingTop = "0rem";
+        pre.insertBefore(lineNumbers, pre.firstChild);
+      });
       const sortedHighlights = [...highlights].sort(
         (a, b) => (a.position?.start || 0) - (b.position?.start || 0),
       );
