@@ -15,10 +15,30 @@ on:
 jobs:
   frontend-build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: 'arn:aws:iam::851725173181:role/aws-reserved/sso.amazonaws.com/AWSReservedSSO_Odyssey-FullAdmin_a1c76a0edf21210a'
+          aws-region: us-east-2 
+
+      - name: Get PostHog Key from Secrets Manager
+        id: posthog_secret
+        run: |
+            # Fetch the entire JSON secret
+            SECRET_JSON=$(aws secretsmanager get-secret-value --secret-id 'arn:aws:secretsmanager:us-east-2:851725173181:secret:odyssey/dev/frontend-1ZWCId' --query SecretString --output text)
+            POSTHOG_KEY=$(echo $SECRET_JSON | jq -r .NEXT_PUBLIC_POSTHOG_KEY)
+            echo "::add-mask::$POSTHOG_KEY" # Mask the secret in logs
+            echo "POSTHOG_KEY=$POSTHOG_KEY" >> $GITHUB_ENV
+
+
 
 
       - name: Set up Node.js
@@ -34,7 +54,7 @@ jobs:
       - name: Build frontend
         env:
           AWS_CDN_URL: ${{ secrets.AWS_CDN_URL }}
-          NEXT_PUBLIC_POSTHOG_KEY: ${{ secrets.NEXT_PUBLIC_POSTHOG_KEY }}
+          NEXT_PUBLIC_POSTHOG_KEY: ${{ env.POSTHOG_KEY }} # Use the fetched secret
           NEXT_PUBLIC_POSTHOG_HOST: ${{ secrets.NEXT_PUBLIC_POSTHOG_HOST }}
         run: |
           cd ./frontend 
@@ -46,9 +66,6 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        
-        
-
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
