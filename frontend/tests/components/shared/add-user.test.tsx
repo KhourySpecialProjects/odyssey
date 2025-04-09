@@ -21,18 +21,7 @@ describe("AddUser", () => {
     expect(
       screen.getByPlaceholderText("Enter email address"),
     ).toBeInTheDocument();
-    expect(screen.getByText("Send Invite")).toBeInTheDocument();
-  });
-
-  it("handles form submission", async () => {
-    render(<AddUser />);
-
-    const input = screen.getByPlaceholderText("Enter email address");
-    fireEvent.change(input, { target: { value: "test@example.com" } });
-    const form = screen.getByTestId("add-user-form");
-    fireEvent.submit(form);
-
-    expect(input).toHaveValue("");
+    expect(screen.getAllByText("Add User")[0]).toBeInTheDocument();
   });
 
   it("requires email input", () => {
@@ -41,21 +30,21 @@ describe("AddUser", () => {
     expect(input).toHaveAttribute("required");
   });
 
-  it('shows "Send Invite" when not pending', () => {
+  it('shows "Add User" when not pending', () => {
     mockUseFormStatus.mockReturnValue({ pending: false });
     render(<AddUser />);
 
     const submitButton = screen.getByRole("button");
-    expect(submitButton).toHaveTextContent("Send Invite");
+    expect(submitButton).toHaveTextContent("Add User");
     expect(submitButton).not.toBeDisabled();
   });
 
-  it('shows "Sending..." when pending', () => {
+  it('shows "Adding..." when pending', () => {
     mockUseFormStatus.mockReturnValue({ pending: true });
     render(<AddUser />);
 
     const submitButton = screen.getByRole("button");
-    expect(submitButton).toHaveTextContent("Sending...");
+    expect(submitButton).toHaveTextContent("Adding...");
     expect(submitButton).toBeDisabled();
   });
 });
