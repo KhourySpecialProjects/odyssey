@@ -423,7 +423,7 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
         ref={contentRef}
         onMouseUp={(e) => handleMouseUp()}
         onMouseDown={(e) => handleMouseDown(e)}
-        className="mt-2 prose prose-lg prose-sky prose-table:block prose-code:text-inherit prose-table:overflow-x-scroll select-text dark:text-slate-300 prose-headings:text-inherit prose-strong:text-inherit"
+        className="mt-2 prose prose-lg prose-sky prose-table:block prose-code:text-inherit prose-table:overflow-x-scroll prose-p:my-1 prose-li:my-1 select-text dark:text-slate-300 prose-headings:text-inherit prose-strong:text-inherit"
         dangerouslySetInnerHTML={{ __html: block.content }}
       ></div>
     </div>
