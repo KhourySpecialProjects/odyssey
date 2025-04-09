@@ -40,7 +40,11 @@ export function DropletClient({ droplets }: { droplets: Droplet[] }) {
           </ul>
           <hr className="h-px my-4 bg-gray-200 border-0 dark:bg-gray-700"></hr>
 
-          <PageNav currentPage={currentPage} updatePage={setCurrentPage} totalPages={totalPages}/>
+          <PageNav
+            currentPage={currentPage}
+            updatePage={setCurrentPage}
+            totalPages={totalPages}
+          />
         </>
       ) : (
         <p>There are no created droplets.</p>

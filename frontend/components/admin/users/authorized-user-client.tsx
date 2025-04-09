@@ -42,8 +42,12 @@ export function AuthorizedUserClient({
               <AuthorizedUserBlock user={user} key={user.id} />
             ))}
           </ul>
-          
-          <PageNav currentPage={currentPage} updatePage={setCurrentPage} totalPages={totalPages}/>
+
+          <PageNav
+            currentPage={currentPage}
+            updatePage={setCurrentPage}
+            totalPages={totalPages}
+          />
         </>
       ) : (
         <p>There are no authorized users.</p>
