@@ -4,13 +4,20 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useFormStatus } from "react-dom";
+import { createBatchAuthorizedUsers } from "@/lib/actions";
+import { toast } from "sonner";
 
 export function AddUser() {
   const [email, setEmail] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // await sendAccessRequest(email);
+    const result = await createBatchAuthorizedUsers([email]);
+    if (result.ok) {
+      toast.success("User added successfully");
+    } else {
+      toast.error("error adding user");
+    }
     setEmail("");
   };
 
@@ -47,7 +54,7 @@ function SubmitButton() {
 
   return (
     <Button type="submit" className="dark:bg-slate-300" disabled={pending}>
-      {pending ? "Sending..." : "Send Invite"}
+      {pending ? "Adding..." : "Add User"}
     </Button>
   );
 }
