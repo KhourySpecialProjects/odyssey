@@ -32,7 +32,7 @@ describe("AccessManager", () => {
 
   it("renders add user components for all users", async () => {
     render(await AccessManager({ user: mockUser }));
-    expect(screen.getByText("Add User")).toBeInTheDocument();
+    expect(screen.getAllByText("Add User")[0]).toBeInTheDocument();
     expect(screen.getByText("Batch Add Users")).toBeInTheDocument();
   });
 

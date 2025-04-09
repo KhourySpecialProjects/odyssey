@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { createBatchAuthorizedUsers } from "@/lib/actions";
 import { useFormStatus } from "react-dom";
+import { toast } from "sonner";
 
 export function BatchAddUser() {
   const [emails, setEmails] = useState("");
@@ -41,19 +42,10 @@ export function BatchAddUser() {
       if (result.ok && result.data) {
         setEmails("");
         setCsvFiles([]);
+        toast.success("Users added successfully!");
         if (fileInputRef.current) fileInputRef.current.value = "";
-
-        const { successful, failed } = result.data;
-        const failedDetails = failed
-          .map((f) => `${f.email} (${f.reason})`)
-          .join("\n");
-
-        alert(
-          `${result.message}\n\n` +
-            (failed.length > 0 ? `Failed emails:\n${failedDetails}` : ""),
-        );
       } else {
-        alert(`Error: ${result.error}`);
+        toast.error(`Error adding user: ${result.error}`);
       }
     }
   };
@@ -146,7 +138,7 @@ function SubmitButton() {
 
   return (
     <Button type="submit" className="dark:bg-slate-300" disabled={pending}>
-      {pending ? "Sending..." : "Send Invites"}
+      {pending ? "Adding..." : "Add Users"}
     </Button>
   );
 }
