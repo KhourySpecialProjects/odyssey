@@ -40,6 +40,7 @@ export function PageNav({ currentPage, updatePage, totalPages }: PageNavProps) {
           key="prev"
           onClick={handlePrevPage}
           disabled={currentPage === 1}
+          aria-label="chevron-left"
           className={`${currentPage === 1 ? "dark:text-slate-600 text-slate-400" : ""}`}
         >
           <ChevronLeft />
@@ -70,6 +71,7 @@ export function PageNav({ currentPage, updatePage, totalPages }: PageNavProps) {
           key="next"
           onClick={handleNextPage}
           disabled={currentPage === totalPages}
+          aria-label="chevron-right"
           className={`${currentPage === totalPages ? "dark:text-slate-600 text-slate-400" : ""}`}
         >
           <ChevronRight />

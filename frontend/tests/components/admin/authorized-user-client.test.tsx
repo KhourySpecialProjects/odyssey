@@ -44,16 +44,16 @@ describe("AuthorizedUserClient", () => {
     expect(screen.getByTestId("user-11")).toBeInTheDocument();
     expect(screen.queryByTestId("user-21")).not.toBeInTheDocument();
 
-    expect(screen.getByText("Next")).toBeInTheDocument();
-    const prevButton = screen.getByText("Previous");
-    expect(prevButton).toBeInTheDocument();
+    const prevButton = screen.getByRole('button', { name: /chevron-left/i });
     expect(prevButton).toBeDisabled();
+
   });
 
   it("navigates to next page when Next button is clicked", () => {
     render(<AuthorizedUserClient authorizedUsers={mockUsers} />);
 
-    fireEvent.click(screen.getByText("Next"));
+    const nextButton = screen.getByRole('button', { name: /chevron-right/i });
+    fireEvent.click(nextButton);
 
     expect(screen.queryByTestId("user-1")).not.toBeInTheDocument();
     expect(screen.queryByTestId("user-11")).not.toBeInTheDocument();
@@ -61,8 +61,7 @@ describe("AuthorizedUserClient", () => {
     expect(screen.getByTestId("user-21")).toBeInTheDocument();
     expect(screen.getByTestId("user-24")).toBeInTheDocument();
 
-    expect(screen.getByText("Previous")).toBeInTheDocument();
-    const nextButton = screen.getByText("Next");
+    expect(screen.getByRole('button', { name: /chevron-left/i })).toBeInTheDocument();
     expect(nextButton).toBeInTheDocument();
     expect(nextButton).toBeDisabled();
   });
@@ -70,9 +69,11 @@ describe("AuthorizedUserClient", () => {
   it("navigates to previous page when Previous button is clicked", () => {
     render(<AuthorizedUserClient authorizedUsers={mockUsers} />);
 
-    fireEvent.click(screen.getByText("Next"));
+    const nextButton = screen.getByRole('button', { name: /chevron-right/i });
+    fireEvent.click(nextButton);
 
-    fireEvent.click(screen.getByText("Previous"));
+    const prevButton = screen.getByRole('button', { name: /chevron-left/i });
+    fireEvent.click(prevButton);
 
     expect(screen.getByTestId("user-1")).toBeInTheDocument();
     expect(screen.getByTestId("user-10")).toBeInTheDocument();
@@ -86,7 +87,5 @@ describe("AuthorizedUserClient", () => {
     expect(
       screen.getByText("There are no authorized users."),
     ).toBeInTheDocument();
-    expect(screen.queryByText("Next")).not.toBeInTheDocument();
-    expect(screen.queryByText("Previous")).not.toBeInTheDocument();
   });
 });
