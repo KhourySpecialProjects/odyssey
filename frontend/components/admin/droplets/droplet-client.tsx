@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Droplet } from "@/types";
 import { DropletBlock } from "./droplet-block";
+import { PageNav } from "@/components/ui/page-nav";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -38,28 +39,12 @@ export function DropletClient({ droplets }: { droplets: Droplet[] }) {
             ))}
           </ul>
           <hr className="h-px my-4 bg-gray-200 border-0 dark:bg-gray-700"></hr>
-          <div className="flex justify-end items-center mt-4 ">
-            <div className="flex gap-2">
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={handlePrevPage}
-                disabled={currentPage === 1}
-                className={`${currentPage === 1 ? "visibility: hidden" : "visibility: visible"} dark:bg-slate-300 dark:text-black`}
-              >
-                Previous
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={handleNextPage}
-                disabled={currentPage === totalPages}
-                className={`${currentPage === totalPages ? "visibility: hidden" : "visibility: visible"} dark:bg-slate-300 dark:text-black`}
-              >
-                Next
-              </Button>
-            </div>
-          </div>
+
+          <PageNav
+            currentPage={currentPage}
+            updatePage={setCurrentPage}
+            totalPages={totalPages}
+          />
         </>
       ) : (
         <p>There are no created droplets.</p>

@@ -63,7 +63,9 @@ describe("EnrolledDropletsGridClient", () => {
     expect(screen.getByTestId("droplet-9")).toBeInTheDocument();
     expect(screen.queryByTestId("droplet-10")).not.toBeInTheDocument();
 
-    expect(screen.getByText("Next")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /chevron-right/i }),
+    ).toBeInTheDocument();
   });
 
   it("navigates to next page when Next button is clicked", () => {
@@ -75,7 +77,8 @@ describe("EnrolledDropletsGridClient", () => {
       />,
     );
 
-    fireEvent.click(screen.getByText("Next"));
+    const nextButton = screen.getByRole("button", { name: /chevron-right/i });
+    fireEvent.click(nextButton);
 
     expect(screen.queryByTestId("droplet-1")).not.toBeInTheDocument();
     expect(screen.getByTestId("droplet-10")).toBeInTheDocument();
@@ -91,9 +94,11 @@ describe("EnrolledDropletsGridClient", () => {
       />,
     );
 
-    fireEvent.click(screen.getByText("Next"));
+    const nextButton = screen.getByRole("button", { name: /chevron-right/i });
+    fireEvent.click(nextButton);
 
-    fireEvent.click(screen.getByText("Previous"));
+    const prevButton = screen.getByRole("button", { name: /chevron-left/i });
+    fireEvent.click(prevButton);
 
     expect(screen.getByTestId("droplet-1")).toBeInTheDocument();
     expect(screen.getByTestId("droplet-9")).toBeInTheDocument();

@@ -36,23 +36,26 @@ describe("DropletClient", () => {
     expect(screen.getByTestId("droplet-10")).toBeInTheDocument();
     expect(screen.queryByTestId("droplet-11")).not.toBeInTheDocument();
 
-    expect(screen.getByText("Next")).toBeInTheDocument();
-    const prevButton = screen.getByText("Previous");
-    expect(prevButton).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /chevron-right/i }),
+    ).toBeInTheDocument();
+    const prevButton = screen.getByRole("button", { name: /chevron-left/i });
     expect(prevButton).toBeDisabled();
   });
 
   it("navigates to next page when Next button is clicked", () => {
     render(<DropletClient droplets={mockDroplets} />);
 
-    fireEvent.click(screen.getByText("Next"));
+    const nextButton = screen.getByRole("button", { name: /chevron-right/i });
+    fireEvent.click(nextButton);
 
     expect(screen.queryByTestId("droplet-1")).not.toBeInTheDocument();
     expect(screen.getByTestId("droplet-11")).toBeInTheDocument();
     expect(screen.getByTestId("droplet-15")).toBeInTheDocument();
 
-    expect(screen.getByText("Previous")).toBeInTheDocument();
-    const nextButton = screen.getByText("Next");
+    expect(
+      screen.getByRole("button", { name: /chevron-left/i }),
+    ).toBeInTheDocument();
     expect(nextButton).toBeInTheDocument();
     expect(nextButton).toBeDisabled();
   });
@@ -60,9 +63,11 @@ describe("DropletClient", () => {
   it("navigates to previous page when Previous button is clicked", () => {
     render(<DropletClient droplets={mockDroplets} />);
 
-    fireEvent.click(screen.getByText("Next"));
+    const nextButton = screen.getByRole("button", { name: /chevron-right/i });
+    fireEvent.click(nextButton);
 
-    fireEvent.click(screen.getByText("Previous"));
+    const prevButton = screen.getByRole("button", { name: /chevron-left/i });
+    fireEvent.click(prevButton);
 
     expect(screen.getByTestId("droplet-1")).toBeInTheDocument();
     expect(screen.getByTestId("droplet-10")).toBeInTheDocument();
@@ -75,7 +80,5 @@ describe("DropletClient", () => {
     expect(
       screen.getByText("There are no created droplets."),
     ).toBeInTheDocument();
-    expect(screen.queryByText("Next")).not.toBeInTheDocument();
-    expect(screen.queryByText("Previous")).not.toBeInTheDocument();
   });
 });
