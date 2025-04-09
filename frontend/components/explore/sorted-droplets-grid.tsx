@@ -10,6 +10,7 @@ import {
 } from "@/components/message";
 import { Button } from "../ui/button";
 import { useSearch } from "@/contexts/SearchContext";
+import { PageNav } from "../ui/page-nav";
 
 interface SortedDropletsGridProps {
   droplets: Array<Droplet & { completionPercentage: number }>;
@@ -120,28 +121,7 @@ export function SortedDropletsGrid({
           />
         ))}
       </ul>
-      <div className="flex justify-end items-center mt-4 ">
-        <div className="flex gap-2">
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={handlePrevPage}
-            disabled={currentPage === 1}
-            className={`${currentPage === 1 ? "visibility: hidden" : "visibility: visible"} dark:bg-slate-300 dark:text-black`}
-          >
-            Previous
-          </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={handleNextPage}
-            disabled={currentPage === totalPages}
-            className={`${currentPage === totalPages ? "visibility: hidden" : "visibility: visible"} dark:bg-slate-300 dark:text-black`}
-          >
-            Next
-          </Button>
-        </div>
-      </div>
+      <PageNav currentPage={currentPage} updatePage={setCurrentPage} totalPages={totalPages} />
     </>
   );
 }

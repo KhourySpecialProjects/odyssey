@@ -43,9 +43,10 @@ export function PageNav({ currentPage, updatePage, totalPages }: PageNavProps) {
         <div className="flex justify-end items-center mt-4 ">
             <div className="flex gap-2">
                 <button
+                    key="prev"
                     onClick={handlePrevPage}
                     disabled={currentPage === 1}
-                    className={`${currentPage === 1 ? "dark:text-slate-600 text-slate-400" : ""} dark:text-white`}
+                    className={`${currentPage === 1 ? "dark:text-slate-600 text-slate-400" : ""}`}
                 >
                     <ChevronLeft />
                 </button>
@@ -54,26 +55,27 @@ export function PageNav({ currentPage, updatePage, totalPages }: PageNavProps) {
                 {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
                     (pageNum >= curPage - 1 && pageNum <= curPage + 1) || pageNum == totalPages || pageNum == 1 ? (
                         <button
-                            key={pageNum}
+                            key={`page-${pageNum}`}
                             onClick={() => handlePageClick(pageNum)}
                             disabled={curPage == pageNum}
-                            className={`text-white p-2 ${pageNum === curPage ? "dark:text-slate-600 text-slate-400" : ""}`}
+                            className={`p-2 ${pageNum === curPage ? "border border-slate-300 rounded-md" : ""} font-bold`}
                         >
                             {pageNum}
                         </button>
 
-                ) : totalPages > 3 && (pageNum === totalPages - 1) ? (
-                <div className="flex items-end pb-2">
-                    <p key={pageNum - 0.5} >...</p>
+                ) : totalPages > 3 && (pageNum === totalPages - 1 || pageNum === 2) ? (
+                <div key={`ellipsis-${pageNum}`}className="flex items-end pb-2">
+                    <p >...</p>
                 </div>
                 ) : null
                 ))}
 
 
                 <button
+                    key="next"
                     onClick={handleNextPage}
                     disabled={currentPage === totalPages}
-                    className={`${currentPage === totalPages ? "dark:text-slate-600 text-slate-400" : ""} text-white`}
+                    className={`${currentPage === totalPages ? "dark:text-slate-600 text-slate-400" : ""}`}
                 >
                     <ChevronRight />
                 </button>

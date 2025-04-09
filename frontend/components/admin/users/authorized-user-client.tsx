@@ -4,6 +4,7 @@ import { AuthorizedUserBlock } from "./authorized-user";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { PageNav } from "@/components/ui/page-nav";
 
 const ITEMS_PER_PAGE = 20;
 
@@ -41,28 +42,8 @@ export function AuthorizedUserClient({
               <AuthorizedUserBlock user={user} key={user.id} />
             ))}
           </ul>
-          <div className="flex justify-end items-center mt-4 ">
-            <div className="flex gap-2">
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={handlePrevPage}
-                disabled={currentPage === 1}
-                className={`${currentPage === 1 ? "visibility: hidden" : "visibility: visible"} dark:bg-slate-300 dark:text-black`}
-              >
-                Previous
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={handleNextPage}
-                disabled={currentPage === totalPages}
-                className={`${currentPage === totalPages ? "visibility: hidden" : "visibility: visible"} dark:bg-slate-300 dark:text-black`}
-              >
-                Next
-              </Button>
-            </div>
-          </div>
+          
+          <PageNav currentPage={currentPage} updatePage={setCurrentPage} totalPages={totalPages}/>
         </>
       ) : (
         <p>There are no authorized users.</p>
