@@ -30,7 +30,12 @@ export function CalloutBlockInput({
   const editor = useEditor({
     extensions: [
       StartingKit,
-      Link,
+      Link.configure({
+        HTMLAttributes: {
+          target: "_blank",
+          rel: "noopener noreferrer",
+        },
+      }),
       Underline,
       CustomImage.configure({
         inline: false,
