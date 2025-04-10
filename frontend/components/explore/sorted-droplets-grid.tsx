@@ -8,7 +8,6 @@ import {
   MessageDescription,
   MessageHeader,
 } from "@/components/message";
-import { Button } from "../ui/button";
 import { useSearch } from "@/contexts/SearchContext";
 import { PageNav } from "../ui/page-nav";
 
@@ -74,18 +73,6 @@ export function SortedDropletsGrid({
 
   const totalPages = Math.ceil(filteredDroplets.length / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-
-  const handleNextPage = () => {
-    if (currentPage < totalPages) {
-      setCurrentPage((prev) => prev + 1);
-    }
-  };
-
-  const handlePrevPage = () => {
-    if (currentPage > 1) {
-      setCurrentPage((prev) => prev - 1);
-    }
-  };
 
   const paginatedDroplets = filteredDroplets.slice(
     startIndex,

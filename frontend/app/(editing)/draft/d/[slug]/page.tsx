@@ -83,7 +83,6 @@ export default async function Droplet({ params }: Props) {
         <div className="flex flex-row w-full items-center space-x-10 my-3">
           <RegenerateSlugButton dropletId={droplet.id} name={droplet.name} />
         </div>
-        
       </div>
 
       <div className="w-full max-w-2xl space-y-10 mt-10">

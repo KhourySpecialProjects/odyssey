@@ -6,17 +6,18 @@ import { UserMultiSelect } from "@/components/ui/user-multi-select";
 
 export function Authors({
   dropletId,
-  selectedIds: initialSelectedIds
+  selectedIds: initialSelectedIds,
 }: {
   dropletId: number;
   selectedIds: number[];
 }) {
   const { error, handleChange } = useDropletUpdate(dropletId);
-  const [currentSelectedIds, setCurrentSelectedIds] = useState<number[]>(initialSelectedIds); 
+  const [currentSelectedIds, setCurrentSelectedIds] =
+    useState<number[]>(initialSelectedIds);
 
   const handleSelectionChange = (newSelectedIds: number[]) => {
-    setCurrentSelectedIds(newSelectedIds); 
-    handleChange({ authorized_users: newSelectedIds }); 
+    setCurrentSelectedIds(newSelectedIds);
+    handleChange({ authorized_users: newSelectedIds });
   };
 
   return (

@@ -194,7 +194,7 @@ export function AuthorizedUserBlock({ user }: { user: AuthorizedUser }) {
                               lastName,
                               bio,
                               selectedRoles,
-                              "", 
+                              "",
                               user.id,
                             );
                             if (result.success) {
