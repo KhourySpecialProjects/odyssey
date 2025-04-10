@@ -1,17 +1,21 @@
 "use client";
 
-import { useState } from "react";
+import { ChangeEvent, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Group } from "@/types";
 import { GroupBlock } from "./group-block";
+import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
 
 const ITEMS_PER_PAGE = 10;
 
 export function GroupClient({ groups }: { groups: Group[] }) {
   const [currentPage, setCurrentPage] = useState(1);
+  const [searchTerm, setSearchItem] = useState("");
+  const [searchResults, setSearchResults] = useState<Group[]>(groups);
   const totalPages = Math.ceil(groups.length / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const paginatedGroups = groups.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  const paginatedGroups = searchResults.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
   const handleNextPage = () => {
     if (currentPage < totalPages) {
@@ -25,8 +29,34 @@ export function GroupClient({ groups }: { groups: Group[] }) {
     }
   };
 
+  const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
+    setCurrentPage(1);
+    const searchTerm = e.target.value;
+    setSearchItem(searchTerm);
+
+
+    const filteredGroups = groups.filter((group) => group.groupName?.toLowerCase().includes(searchTerm.toLowerCase()));
+    if (!searchTerm.trim()) {
+      setSearchResults(groups);
+      //return;
+    } else {
+      setSearchResults(filteredGroups);
+    }
+  }
+
   return (
     <div className="p-4 mt-4 rounded-md bg-slate-100 dark:bg-slate-800">
+      <div className="pb-4">
+        <Input
+          type="search"
+          placeholder="Search..."
+          className={cn(
+            "w-full sm:w-[30%] flex items-center justify-center",
+          )}
+          value={searchTerm}
+          onChange={(e) => handleInputChange(e)}
+        />
+      </div>
       {paginatedGroups.length > 0 ? (
         <>
           <ul className="divide-y divide-slate-200 dark:divide-slate-700 md:space-y-4">
