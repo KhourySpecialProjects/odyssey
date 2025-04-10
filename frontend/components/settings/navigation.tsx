@@ -14,7 +14,7 @@ export function SettingsNavigation({ items }: { items: NavItem[] }) {
         if (item.isHidden) return null;
 
         return (
-          <div className="flex flex-row">
+          <div className="flex flex-row" key={`item-${item.href}`}>
           <Link
             key={item.href}
             href={item.href}
