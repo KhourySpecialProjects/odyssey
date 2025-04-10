@@ -10,7 +10,7 @@ import Placeholder from "@tiptap/extension-placeholder";
 import StartingKit from "@tiptap/starter-kit";
 import Underline from "@tiptap/extension-underline";
 import Link from "@tiptap/extension-link";
-import BulletList from '@tiptap/extension-bullet-list'
+import BulletList from "@tiptap/extension-bullet-list";
 import CustomImage from "./custom-image";
 import CodeBlockLowlight from "@tiptap/extension-code-block-lowlight";
 import { CodeBlockComponent } from "./toolbar/tools/code-tool/code-tool";
@@ -60,7 +60,7 @@ export function CalloutBlockInput({
       }),
       BulletList.configure({
         HTMLAttributes: {
-          class: 'callout-bullet-list',  // Custom class for our bullet list
+          class: "callout-bullet-list", // Custom class for our bullet list
         },
       }),
     ],

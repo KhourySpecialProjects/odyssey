@@ -34,19 +34,20 @@ export function PlaylistClient({ playlists }: { playlists: Playlist[] }) {
   };
 
   const handleInputChange = (value: string) => {
-
-    const filteredPlaylists = playlists.filter((playlist) => playlist.name?.toLowerCase().includes(value.toLowerCase()));
+    const filteredPlaylists = playlists.filter((playlist) =>
+      playlist.name?.toLowerCase().includes(value.toLowerCase()),
+    );
     if (!value.trim()) {
       setSearchResults(playlists);
       //return;
     } else {
       setSearchResults(filteredPlaylists);
     }
-  }
+  };
 
   const debouncedSearch = useCallback(
     debounce((value: string) => handleInputChange(value), 500),
-    []
+    [],
   );
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -60,9 +61,7 @@ export function PlaylistClient({ playlists }: { playlists: Playlist[] }) {
         <Input
           type="search"
           placeholder="Search..."
-          className={cn(
-            "w-full sm:w-[30%] flex items-center justify-center",
-          )}
+          className={cn("w-full sm:w-[30%] flex items-center justify-center")}
           value={searchTerm}
           onChange={(e) => handleChange(e)}
         />

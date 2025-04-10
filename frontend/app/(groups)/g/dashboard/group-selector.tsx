@@ -68,10 +68,9 @@ export function GroupsSelector() {
         </div>
       </button>
 
-      
-        <Badge>
-        {currentTab.substring(0,1).toUpperCase()+currentTab.substring(1)}
-        </Badge>
+      <Badge>
+        {currentTab.substring(0, 1).toUpperCase() + currentTab.substring(1)}
+      </Badge>
 
       <div
         className={cn(

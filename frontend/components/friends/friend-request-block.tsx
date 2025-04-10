@@ -24,7 +24,7 @@ export function FriendRequestBlock({
 
   const handleApprove = () => {
     const friendshipExists = user.friendships.some((friendship) =>
-      friendship.authorized_users.includes(request.id)
+      friendship.authorized_users.includes(request.id),
     );
     if (friendshipExists) {
       startTransition(async () => {
