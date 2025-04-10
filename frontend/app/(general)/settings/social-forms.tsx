@@ -193,7 +193,7 @@ export function SocialForms({
                 await updatePhoto("", authorizedUser?.id);
               }
             }}
-            className="min-w-[50px] whitespace-normal bg-red-500 dark:bg-red-400 dark:hover:bg-red-300"
+            className="min-w-[50px] whitespace-normal bg-red-500 dark:bg-red-400 dark:hover:bg-red-300 hover:bg-red-400"
             disabled={!profileImage}
           >
             Remove Photo

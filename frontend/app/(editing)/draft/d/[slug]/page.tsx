@@ -12,6 +12,7 @@ import { Description } from "@/components/draft/metadata/description";
 import { uppercaseFirstChar } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { RegenerateSlugButton } from "@/components/draft/metadata/regenerate-slug";
+import { Authors } from "@/components/draft/metadata/authors";
 
 type Props = {
   params: Promise<Params>;
@@ -81,31 +82,14 @@ export default async function Droplet({ params }: Props) {
         />
         <div className="flex flex-row w-full items-center space-x-10 my-3">
           <RegenerateSlugButton dropletId={droplet.id} name={droplet.name} />
-          {/* <DeleteDropletButton dropletId={droplet.id} /> */}
         </div>
-
-        {/* TODO: Turn this into a component */}
-        <div className="text-xl font-semibold mt-10">
-          {droplet.authorized_users && droplet.authorized_users.length > 1
-            ? "Authors"
-            : "Author"}
-        </div>
-        {droplet.authorized_users && droplet.authorized_users.length > 0 && (
-          <div
-            className={`mt-4 rounded-lg border p-4 border-gray-300 dark:border-slate-500`}
-          >
-            <ul className="list-disc list-inside">
-              {droplet.authorized_users.map((author) => (
-                <div key={author.id} className="dark:text-slate-300">
-                  {author.firstName + " " + author.lastName}
-                </div>
-              ))}
-            </ul>
-          </div>
-        )}
       </div>
 
       <div className="w-full max-w-2xl space-y-10 mt-10">
+        <Authors
+          dropletId={droplet.id}
+          selectedIds={droplet.authorized_users?.map((user) => user.id) || []}
+        />
         <Description
           dropletId={droplet.id}
           initialContent={droplet.description ?? ""}
