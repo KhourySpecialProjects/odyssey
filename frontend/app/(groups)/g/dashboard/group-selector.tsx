@@ -8,12 +8,14 @@ import {
   PlusCircle,
   PlusCircleIcon,
   ShieldIcon,
+  UsersRound,
 } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { isContentCreator, isAuthorizedUserFaculty } from "@/lib/utils";
 import { useSession } from "next-auth/react";
 import { useMemo, useState } from "react";
+import { Badge } from "@/components/ui/badge";
 
 const baseTabs = [
   // { name: "Member", value: "member", icon: UserIcon },
@@ -59,10 +61,17 @@ export function GroupsSelector() {
     <div className="border-b border-gray-200 flex items-center justify-between relative pb-1">
       <button
         onClick={() => setMenuExpanded(!menuExpanded)}
-        className={`block md:hidden ${menuExpanded ? "bg-slate-300 rounded-md p-1 dark:bg-slate-600" : "p-1"}`}
+        className={`block md:hidden ${menuExpanded ? "bg-slate-300 rounded-md dark:bg-slate-600" : ""}`}
       >
-        <AlignJustify className="w-6 h-6" />
+        <div className="p-2 border border-slate-300 rounded-md">
+          <UsersRound className="h-6 w-6" />
+        </div>
       </button>
+
+      
+        <Badge>
+        {currentTab.substring(0,1).toUpperCase()+currentTab.substring(1)}
+        </Badge>
 
       <div
         className={cn(

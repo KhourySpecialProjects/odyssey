@@ -52,7 +52,7 @@ export default async function Page() {
           Statistics <LineChartIcon className=" inline" />
         </h2>
         <Separator orientation="horizontal" className="mt-2 mb-4" />
-        <CardContent className="flex flex-col items-start gap-x-8 text-center gap-y-6 sm:flex-row">
+        <CardContent className="flex flex-col items-center gap-x-8 text-center gap-y-6 sm:flex-row">
           <div className="flex items-center space-x-3">
             <div>
               <div className="font-medium dark:text-slate-300">
