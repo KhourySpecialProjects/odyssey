@@ -319,7 +319,7 @@ function LessonBlockRenderer({
           )}
 
           <div className="">
-            <div className="mx-auto prose prose-sky  prose-headings:text-inherit prose-code:text-inherit prose-strong:text-inherit justify-left">
+            <div className="mx-auto prose prose-sky  prose-headings:text-inherit prose-code:text-inherit prose-strong:text-inherit justify-left prose-li:marker:text-slate-700">
               <BlocksRenderer content={block.content} />
             </div>
           </div>
