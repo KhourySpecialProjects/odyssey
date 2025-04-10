@@ -1,5 +1,5 @@
 import { render, screen, fireEvent } from "@testing-library/react";
-import { FriendDropdown } from "@/components/friends/friend-dropdown";
+import { FriendDropdown } from "@/components/friends/component-dropdown";
 
 describe("FriendDropdown", () => {
   const mockContent = {

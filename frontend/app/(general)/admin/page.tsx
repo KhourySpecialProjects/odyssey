@@ -14,7 +14,7 @@ import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
 import { Droplets } from "@/components/admin/droplets/droplets";
 import { Groups } from "@/components/admin/groups/groups";
 import { Playlists } from "@/components/admin/playlists/playlists";
-import { FriendDropdown } from "@/components/friends/friend-dropdown";
+import { ComponentDropdown } from "@/components/friends/component-dropdown";
 import { LineChartIcon } from "lucide-react";
 
 export default async function Page() {
@@ -93,7 +93,7 @@ export default async function Page() {
       </div>
 
       <div className="flex flex-col sm:hidden p-4">
-        <FriendDropdown content={pageContent} />
+        <ComponentDropdown content={pageContent} />
       </div>
     </div>
   );

@@ -38,6 +38,7 @@
     "react-confetti": "^6.2.2",
     "react-datetime-picker": "^6.0.1",
     "react-dom": "^18.2.0",
+    "react-dropdown": "^1.11.0",
     "react-dropzone": "^14.3.5",
     "react-router-dom": "^7.1.5",
     "react-tabs": "^6.1.0",
