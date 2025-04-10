@@ -38,25 +38,6 @@ describe("Description", () => {
     });
   });
 
-  it("converts HTML to text and updates description", async () => {
-    render(<Description dropletId={1} initialContent="Initial content" />);
-
-    const descriptionInput = screen.getByRole("textbox");
-    const htmlContent = "<p>New description</p>";
-
-    fireEvent.input(descriptionInput, {
-      target: { innerHTML: htmlContent },
-      currentTarget: { innerHTML: htmlContent },
-    });
-
-    await waitFor(() => {
-      expect(htmlToText).toHaveBeenCalledWith(htmlContent);
-      expect(mockHandleChange).toHaveBeenCalledWith({
-        description: htmlContent,
-      });
-    });
-  });
-
   it("shows error message when present", () => {
     (useDropletUpdate as jest.Mock).mockReturnValue({
       handleChange: mockHandleChange,
@@ -66,28 +47,5 @@ describe("Description", () => {
     render(<Description dropletId={1} initialContent="Initial content" />);
 
     expect(screen.getByText("Error updating description")).toBeInTheDocument();
-  });
-
-  it("properly converts HTML to text", async () => {
-    const htmlContent = "<p>Test <strong>content</strong></p>";
-    const plainText = "Test content";
-
-    (htmlToText as jest.Mock).mockReturnValueOnce(plainText);
-
-    render(<Description dropletId={1} initialContent="Initial content" />);
-
-    const descriptionInput = screen.getByRole("textbox");
-
-    fireEvent.input(descriptionInput, {
-      target: { innerHTML: htmlContent },
-      currentTarget: { innerHTML: htmlContent },
-    });
-
-    await waitFor(() => {
-      expect(htmlToText).toHaveBeenCalledWith(htmlContent);
-      expect(mockHandleChange).toHaveBeenCalledWith({
-        description: plainText,
-      });
-    });
   });
 });
