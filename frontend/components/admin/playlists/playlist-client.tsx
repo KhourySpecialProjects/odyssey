@@ -1,18 +1,19 @@
 "use client";
 
-import { ChangeEvent, useState } from "react";
+import { ChangeEvent, useCallback, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Playlist } from "@/types";
 import { PlaylistBlock } from "./playlist-block";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { debounce } from "lodash";
 
 const ITEMS_PER_PAGE = 10;
 
 export function PlaylistClient({ playlists }: { playlists: Playlist[] }) {
   const [currentPage, setCurrentPage] = useState(1);
-    const [searchTerm, setSearchItem] = useState("");
-    const [searchResults, setSearchResults] = useState<Playlist[]>(playlists);
+  const [searchTerm, setSearchItem] = useState("");
+  const [searchResults, setSearchResults] = useState<Playlist[]>(playlists);
   const totalPages = Math.ceil(playlists.length / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
   const paginatedPlaylists = searchResults.slice(
@@ -32,34 +33,40 @@ export function PlaylistClient({ playlists }: { playlists: Playlist[] }) {
     }
   };
 
-  const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
-          setCurrentPage(1);
-          const searchTerm = e.target.value;
-          setSearchItem(searchTerm);
-      
-          
-          const filteredPlaylists = playlists.filter((playlist) => playlist.name?.toLowerCase().includes(searchTerm.toLowerCase()));
-          if (!searchTerm.trim()) {
-            setSearchResults(playlists);
-            //return;
-          } else {
-          setSearchResults(filteredPlaylists);
-          }
-        }
+  const handleInputChange = (value: string) => {
+
+    const filteredPlaylists = playlists.filter((playlist) => playlist.name?.toLowerCase().includes(value.toLowerCase()));
+    if (!value.trim()) {
+      setSearchResults(playlists);
+      //return;
+    } else {
+      setSearchResults(filteredPlaylists);
+    }
+  }
+
+  const debouncedSearch = useCallback(
+    debounce((value: string) => handleInputChange(value), 500),
+    []
+  );
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchItem(e.target.value);
+    debouncedSearch(e.target.value);
+  };
 
   return (
     <div className="p-4 mt-4 rounded-md bg-slate-100 dark:bg-slate-800">
       <div className="pb-4">
-      <Input
+        <Input
           type="search"
           placeholder="Search..."
           className={cn(
             "w-full sm:w-[30%] flex items-center justify-center",
           )}
           value={searchTerm}
-          onChange={(e) => handleInputChange(e)}
+          onChange={(e) => handleChange(e)}
         />
-        </div>
+      </div>
       {paginatedPlaylists.length > 0 ? (
         <>
           <ul className="divide-y divide-slate-200 dark:divide-slate-700 md:space-y-4">
