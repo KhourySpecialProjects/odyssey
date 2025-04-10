@@ -18,7 +18,7 @@ export async function FriendSentRequests() {
     .sort((a, b) => a.lastName?.localeCompare(b.lastName));
 
   return (
-    <section className="mt-4">
+    <section className="md:mt-4">
       <h1 className="font-bold">Sent Requests</h1>
       <p>A list of people you have sent friend requests to.</p>
 
