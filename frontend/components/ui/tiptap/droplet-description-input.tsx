@@ -16,16 +16,11 @@ export function DropletDescriptionInput({
   const editor = useEditor({
     extensions: [
       Document,
-      Paragraph.configure({
-        HTMLAttributes: {
-          class:
-            "text-slate-500 text-pretty md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed dark:text-slate-400",
-        },
-      }),
+      Paragraph,
       Placeholder.configure({
-        placeholder: "Type droplet description here...",
+        placeholder: "Nothing here yet...",
         emptyEditorClass:
-          "before:content-[attr(data-placeholder)] before:text-gray-500 before:absolute before:top-2 before:left-4 before:pointer-events-none before:select-none",
+          "before:content-[attr(data-placeholder)] before:text-gray-500 before:absolute before:top-8 before:left-8 before:pointer-events-none before:select-none",
       }),
       Text,
     ],
@@ -38,11 +33,13 @@ export function DropletDescriptionInput({
     editorProps: {
       attributes: {
         class:
-          "mt-1 w-full hover:shadow focus:shadow-lg outline-none rounded-md px-4 py-2",
+          "prose prose-sky w-full max-w-2xl p-8 mt-4 border rounded-md bg-slate-50 dark:bg-slate-800 border-slate-200 dark:text-slate-300 dark:border-slate-500 hover:shadow focus:shadow-lg outline-none",
       },
     },
     immediatelyRender: false,
   });
 
-  return <EditorContent name="droplet-description" editor={editor} />;
+  return (
+    <EditorContent role="textbox" name="droplet-description" editor={editor} />
+  );
 }
