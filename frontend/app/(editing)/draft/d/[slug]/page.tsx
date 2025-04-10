@@ -103,14 +103,14 @@ export default async function Droplet({ params }: Props) {
             </ul>
           </div>
         )}
+      </div>
 
+      <div className="w-full max-w-2xl space-y-10 mt-10">
         <Description
           dropletId={droplet.id}
           initialContent={droplet.description ?? ""}
         />
-      </div>
 
-      <div className="w-full max-w-2xl space-y-10 mt-10">
         <Overview
           dropletId={droplet.id}
           initialContent={droplet.overview ?? ""}

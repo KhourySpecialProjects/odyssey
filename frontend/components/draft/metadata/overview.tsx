@@ -17,6 +17,9 @@ export function Overview({
       <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
         Overview
       </h2>
+      <p className="text-slate-500 dark:text-slate-300">
+        Longer summary of droplet
+      </p>
       <DropletOverviewInput
         updateContent={(content: string) => handleChange({ overview: content })}
         initialContent={initialContent}
