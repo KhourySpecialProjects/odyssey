@@ -953,6 +953,7 @@ export async function updateDroplet(
       ...(data.name && { name: data.name }),
       ...(data.focusArea && { focusArea: data.focusArea }),
       ...(data.type && { type: data.type }),
+      ...(data.authorized_users && { authorized_users: data.authorized_users }),
       ...(data.tagIds && { tags: data.tagIds }),
       ...(data.isHidden !== undefined && { isHidden: data.isHidden }),
       ...(data.learningObjectives && {

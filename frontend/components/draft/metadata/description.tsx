@@ -13,19 +13,21 @@ export function Description({
 }) {
   const { error, handleChange } = useDropletUpdate(dropletId);
 
-  const updateDescription = async (description: string) => {
-    const descriptionText = htmlToText(description);
-    handleChange({ description: descriptionText });
-  };
-
   return (
-    <div role="textbox-spot">
+    <section className="w-full max-w-2xl">
+      <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
+        Description
+      </h2>
+      <p className="text-slate-500 dark:text-slate-300">
+        Short summary of droplet
+      </p>
       <DropletDescriptionInput
+        updateContent={(content: string) =>
+          handleChange({ description: content })
+        }
         initialContent={initialContent}
-        updateContent={updateDescription}
       />
-
       {error && <div className="text-red-500 mt-2">{error}</div>}
-    </div>
+    </section>
   );
 }

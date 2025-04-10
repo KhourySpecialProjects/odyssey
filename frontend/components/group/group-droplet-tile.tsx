@@ -31,7 +31,7 @@ export function GroupDropletTile({
   }
 
   return (
-    <Link href={`/d/${droplet.slug}`}>
+    <Link href={`/d/${droplet.slug}`} target="_blank" rel="noopener noreferrer">
       <Card className="bg-slate-50 border-slate-200 hover:shadow-md transition-shadow h-full dark:bg-slate-800 dark:border-slate-500">
         <CardHeader className={`${dueDate && dueDate !== "" ? "" : ""} `}>
           <div className="flex flex-row gap-2 mb-2 items-center">

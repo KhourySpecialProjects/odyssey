@@ -61,7 +61,7 @@ const SEMESTER_OPTIONS: GroupSemester[] = [
 ];
 
 const formSchema = z.object({
-  groupName: z.string().min(1, "Group name is required"),
+  groupName: z.string(),
   description: z.string().optional(),
   semester: z.string(),
   admins: z.array(z.number()),
@@ -123,6 +123,13 @@ export function GroupManagementForm({
   currentUser,
   existingGroup,
 }: GroupManagementFormProps) {
+  const initialSubmissionState: any = {
+    error: null,
+  };
+
+  const [submissionState, setSubmissionState] = useState(
+    initialSubmissionState,
+  );
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [droplets, setDroplets] = useState<Droplet[]>(
@@ -196,6 +203,10 @@ export function GroupManagementForm({
     return () => subscription.unsubscribe();
   }, [form]);
 
+  useEffect(() => {
+    setSubmissionState(initialSubmissionState);
+  }, [hasChanges]);
+
   const handleCancel = () => {
     if (hasChanges) {
       const confirmed = window.confirm(
@@ -209,6 +220,12 @@ export function GroupManagementForm({
   };
 
   const onSubmit = async (data: z.infer<typeof formSchema>) => {
+    if (!data.groupName || data.groupName === "") {
+      setSubmissionState({ error: "Please fill out group name" });
+      return;
+    }
+    setSubmissionState({ error: null });
+    setIsOpen(true);
     try {
       const updateGroupData = {
         groupName: data.groupName,
@@ -291,6 +308,7 @@ export function GroupManagementForm({
       }
     } catch (error) {
       console.error("Failed to make group announcement: ", error);
+      setSubmissionState({ error: error });
     }
   };
 
@@ -350,7 +368,9 @@ export function GroupManagementForm({
             name="groupName"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Group Name</FormLabel>
+                <FormLabel>
+                  Group Name <span className="text-red-500">*</span>
+                </FormLabel>
                 <FormControl>
                   <Input
                     placeholder="Enter group name"
@@ -571,7 +591,7 @@ export function GroupManagementForm({
           )}
         </ContentSection>
 
-        <div className="flex justify-end gap-4">
+        <div className="flex justify-end gap-4 align-center">
           <Button
             type="button"
             variant="outline"
@@ -583,7 +603,6 @@ export function GroupManagementForm({
           <Button
             type="submit"
             disabled={isSubmitting}
-            onClick={() => setIsOpen(true)}
             className="dark:bg-slate-100"
           >
             {isSubmitting
@@ -592,29 +611,32 @@ export function GroupManagementForm({
                 ? "Update Group"
                 : "Create Group"}
           </Button>
-          <Dialog open={isOpen} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-[825px]">
-              <DialogHeader>
-                <DialogTitle>
-                  Would you like to announce these changes to everyone enrolled
-                  in this group?
-                </DialogTitle>
-              </DialogHeader>
-
-              <div className="flex flex-col gap-4 mt-4">
-                <Button onClick={handleGroupPost}>Share</Button>
-                <Button
-                  onClick={() => {
-                    setIsOpen(false);
-                    router.push("/g/dashboard?tab=creator");
-                  }}
-                >
-                  Not Now
-                </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
         </div>
+        {submissionState.error ? (
+          <p className="text-red-500 text-center">{submissionState.error}</p>
+        ) : null}
+        <Dialog open={isOpen} onOpenChange={onOpenChange}>
+          <DialogContent className="sm:max-w-[825px]">
+            <DialogHeader>
+              <DialogTitle>
+                Would you like to announce these changes to everyone enrolled in
+                this group?
+              </DialogTitle>
+            </DialogHeader>
+
+            <div className="flex flex-col gap-4 mt-4">
+              <Button onClick={handleGroupPost}>Share</Button>
+              <Button
+                onClick={() => {
+                  setIsOpen(false);
+                  router.push("/g/dashboard?tab=creator");
+                }}
+              >
+                Not Now
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </form>
     </Form>
   );
