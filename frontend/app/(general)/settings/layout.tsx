@@ -28,7 +28,7 @@ export default async function SettingsLayout({
 
   return (
     <div className="flex flex-col flex-1 min-h-screen gap-4 p-4 bg-slate-50 dark:bg-slate-950 md:gap-8 md:p-10 ">
-      <div className="mx-auto grid w-full max-w-6xl items-start gap-6 md:grid-cols-[180px_1fr] lg:grid-cols-[250px_1fr] pt-8">
+      <div className="mx-auto grid w-full max-w-6xl items-start gap-6 md:grid-cols-[180px_1fr] lg:grid-cols-[150px_1fr] pt-8">
         <SettingsNavigation items={navItems} />
 
         <div className="grid gap-6">{children}</div>
