@@ -23,11 +23,10 @@ export function FriendRequestBlock({
   const [open, setOpen] = useState(false);
 
   const handleApprove = () => {
-    if (
-      user.friendships.map((friendship) =>
-        friendship.authorized_users.includes(request.id),
-      )
-    ) {
+    const friendshipExists = user.friendships.some((friendship) =>
+      friendship.authorized_users.includes(request.id),
+    );
+    if (friendshipExists) {
       startTransition(async () => {
         await rejectFriendRequest(user.id, request.id);
         toast.error("Friendship already exists with this user");
