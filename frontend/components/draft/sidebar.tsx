@@ -8,10 +8,12 @@ import {
   ChevronDownIcon,
   PersonStanding,
   LogOutIcon,
-  MenuIcon,
   ShipIcon,
   SettingsIcon,
   ArrowLeftIcon,
+  PanelRightClose,
+  PanelRightOpen,
+  Home,
 } from "lucide-react";
 import { signOut } from "next-auth/react";
 import Link from "next/link";
@@ -45,7 +47,6 @@ import { SortableLesson } from "@/components/draft/sortable-lesson";
 import { useLessonOrder } from "./metadata/hooks/useLessonOrder";
 import { Button } from "../ui/button";
 import { createDropletAnnouncement } from "@/lib/requests/feed";
-import { Logo } from "../header/logo";
 
 export function Sidebar({
   user,
@@ -72,6 +73,11 @@ export function Sidebar({
 
   const [isOpen, setIsOpen] = useState(false);
 
+  useLayoutEffect(() => {
+    window.addEventListener("resize", () => setExpanded(false));
+    return () => window.removeEventListener("resize", () => setExpanded(false));
+  }, []);
+
   const handleDropletPost = async () => {
     try {
       await createDropletAnnouncement(droplet.name, droplet.id);
@@ -93,12 +99,6 @@ export function Sidebar({
     link: "flex items-center p-2 rounded-lg text-slate-900 dark:text-white hover:bg-slate-100 dark:hover:bg-slate-700 group transition-colors",
     activeLink: "font-bold dark:bg-slate-500 light:bg-sky-100",
   };
-
-  useLayoutEffect(() => {
-    const handleResize = () => setExpanded(false);
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -155,20 +155,6 @@ export function Sidebar({
     };
   };
 
-  const handleLessonDelete = (lessonId: string) => {
-    const newLessons = lessons.filter(
-      (lesson) => lesson.id.toString() !== lessonId,
-    );
-    // updateDropletLessons(newLessons);
-    updateDropletLessons(
-      newLessons.map((lesson, index) => ({
-        id: 0,
-        lesson,
-        orderIndex: index,
-      })),
-    );
-  };
-
   const [mounted, setMounted] = useState(false);
   const router = useRouter();
 
@@ -182,7 +168,6 @@ export function Sidebar({
 
   return (
     <>
-      {/* Mobile overlay */}
       <div
         className={cn(
           "bg-slate-900/50 dark:bg-slate-900/80 fixed inset-0 transition-opacity",
@@ -191,16 +176,18 @@ export function Sidebar({
         onClick={() => setExpanded(false)}
       />
 
-      {/* Mobile header */}
-      <div className="z-20 inline-flex items-center w-full gap-2 px-3 py-2 text-sm border-b md:hidden border-b-slate-200">
+      <div className="z-20 inline-flex items-center w-full gap-2 px-3 py-2 text-sm border-b xl:hidden border-b-slate-200">
         <button
           aria-controls="sidebar"
           type="button"
-          className="z-20 inline-flex items-center p-2 text-sm rounded-lg text-slate-500 md:hidden hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-200 dark:text-slate-400 dark:hover:bg-slate-700 dark:focus:ring-slate-600"
+          className="z-20 inline-flex items-center p-2 text-sm rounded-lg text-slate-500 xl:hidden hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-200 dark:text-slate-400 dark:hover:bg-slate-700 dark:focus:ring-slate-600"
           onClick={() => setExpanded(true)}
         >
           <span className="sr-only">Open sidebar</span>
-          <MenuIcon />
+          <PanelRightClose
+            className="dark:text-white"
+            data-testid="sidebar-overlay"
+          />
         </button>
         <Link
           href={getPath("droplet", droplet.slug)}
@@ -210,44 +197,45 @@ export function Sidebar({
         </Link>
       </div>
 
-      {/* Sidebar */}
       <aside
         id="sidebar"
         className={cn(
-          "fixed md:sticky md:top-0 left-0 z-40 w-64 h-screen transition-transform",
-          expanded
-            ? "md:translate-x-80 -transform-none"
-            : "md:translate-x-0 -translate-x-full",
+          "fixed xl:sticky xl:top-0 left-0 z-40 w-64 h-screen transition-transform",
+          expanded ? "translate-x-0" : "-translate-x-full xl:translate-x-0",
         )}
         aria-label="Sidebar"
       >
-        <div className="flex flex-col h-full py-4 overflow-y-auto md:justify-between md:pb-0 bg-slate-50 dark:bg-slate-800">
-          {/* Top section */}
+        <div className="flex flex-col h-full py-4 overflow-y-auto xl:justify-between xl:pb-0 bg-slate-50 dark:bg-slate-800">
           <div className="px-3">
-            <Separator />
+            <div className="flex flex-row justify-between pr-2">
+              <Link
+                type="button"
+                href="/explore"
+                onClick={() => setIsOpen(true)}
+                className={cn(
+                  "flex items-center justify-start text-base gap-2",
+                )}
+              >
+                <div className="w-6 flex justify-center">
+                  <ArrowLeftIcon className="shrink-0 w-5 h-5" />
+                </div>
+                <Home data-testid="home" />
+              </Link>
+              <div className="w-full"></div>
 
-            {/* Droplet name */}
-            <div className="flex items-center justify-between p-2 my-2">
-              <p className="text-lg font-extrabold leading-7">{droplet.name}</p>
+              <button
+                onClick={() => setExpanded(false)}
+                className={`xl:hidden`}
+              >
+                <PanelRightOpen />
+              </button>
             </div>
+            <p className="p-2 my-2 text-lg font-extrabold leading-7">
+              {droplet.name}
+            </p>
 
-            {/* Metadata link */}
-            <ul className="space-y-4 w-full font-medium flex flex-col items-center">
+            <ul className="w-full font-medium flex flex-col items-center">
               <li className="w-full space-y-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setIsOpen(true)}
-                  className={cn(
-                    classes.link,
-                    "w-full flex items-center justify-start text-base px-4",
-                  )}
-                >
-                  <div className="w-6 flex justify-center">
-                    <ArrowLeftIcon className="shrink-0 w-5 h-5" />
-                  </div>
-                  <span className="leading-snug ms-2">Save Droplet</span>
-                </Button>
                 <Dialog open={isOpen} onOpenChange={onOpenChange}>
                   <DialogContent className="sm:max-w-[825px]">
                     <DialogHeader>
@@ -322,7 +310,6 @@ export function Sidebar({
               </SortableContext>
             </DndContext>
 
-            {/* Loading indicator when processing updates */}
             {isProcessing && (
               <div className="text-sm text-slate-500 dark:text-slate-400 p-2 text-center">
                 Updating lesson order...
@@ -330,7 +317,6 @@ export function Sidebar({
             )}
           </div>
 
-          {/* User menu section */}
           <div className="bottom-0 left-0 w-full p-2 mt-4 space-y-4 border-t bg-slate-50 border-t-slate-200 md:sticky md:px-3 md:mb-0 md:flex-col dark:bg-slate-800">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
