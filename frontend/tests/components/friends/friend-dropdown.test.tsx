@@ -8,9 +8,9 @@ describe("FriendDropdown", () => {
   };
 
   it("renders dropdown select menu", () => {
-      render(<ComponentDropdown content={mockContent} />);
-      expect(screen.getByRole("select")).toBeInTheDocument();
-    });
+    render(<ComponentDropdown content={mockContent} />);
+    expect(screen.getByRole("select")).toBeInTheDocument();
+  });
 
   // it("renders dropdown button", () => {
   //   render(<ComponentDropdown content={mockContent} />);
