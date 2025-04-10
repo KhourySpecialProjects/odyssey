@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { AlignJustify } from "lucide-react";
+import { AlignJustify, Folders } from "lucide-react";
 import React from "react";
 
 export interface AdminContent {
@@ -16,7 +16,9 @@ export function FriendDropdown({ content }: { content: AdminContent }) {
   return (
     <div className="">
       <button onClick={() => setExpanded(!expanded)}>
-        <AlignJustify />
+      <div className={`p-2 border border-slate-300 ${expanded ? "bg-slate-300 rounded-md dark:bg-slate-600" : ""} rounded-md`}>
+          <Folders className="h-6 w-6" />
+        </div>
       </button>
 
       <div
