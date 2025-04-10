@@ -35,39 +35,38 @@ export function DropletClient({ droplets }: { droplets: Droplet[] }) {
   };
 
   const handleInputChange = (value: string) => {
-        
-        const filteredDroplets = droplets.filter((droplet) => droplet.name?.toLowerCase().includes(value.toLowerCase()));
-        if (!value.trim()) {
-          setSearchResults(droplets);
-          //return;
-        } else {
-        setSearchResults(filteredDroplets);
-        }
-      }
+    const filteredDroplets = droplets.filter((droplet) =>
+      droplet.name?.toLowerCase().includes(value.toLowerCase()),
+    );
+    if (!value.trim()) {
+      setSearchResults(droplets);
+      //return;
+    } else {
+      setSearchResults(filteredDroplets);
+    }
+  };
 
-      const debouncedSearch = useCallback(
-          debounce((value: string) => handleInputChange(value), 500),
-          []
-        );
-      
-        const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-          setSearchItem(e.target.value);
-          debouncedSearch(e.target.value);
-        };
+  const debouncedSearch = useCallback(
+    debounce((value: string) => handleInputChange(value), 500),
+    [],
+  );
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchItem(e.target.value);
+    debouncedSearch(e.target.value);
+  };
 
   return (
     <div className="p-4 mt-4 rounded-md bg-slate-100 dark:bg-slate-800">
       <div className="pb-4">
-      <Input
+        <Input
           type="search"
           placeholder="Search..."
-          className={cn(
-            "w-full sm:w-[30%] flex items-center justify-center",
-          )}
+          className={cn("w-full sm:w-[30%] flex items-center justify-center")}
           value={searchTerm}
           onChange={(e) => handleChange(e)}
         />
-        </div>
+      </div>
       {paginatedDroplets.length > 0 ? (
         <>
           <ul className="divide-y divide-slate-200 dark:divide-slate-700 md:space-y-4">

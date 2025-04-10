@@ -3,7 +3,12 @@
 import { cn } from "@/lib/utils";
 import { AlignJustify, Folders, ChevronDown } from "lucide-react";
 import React from "react";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@radix-ui/react-dropdown-menu";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@radix-ui/react-dropdown-menu";
 
 export interface AdminContent {
   [name: string]: React.ReactNode;

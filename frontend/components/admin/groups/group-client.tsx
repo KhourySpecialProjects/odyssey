@@ -16,7 +16,10 @@ export function GroupClient({ groups }: { groups: Group[] }) {
   const [searchResults, setSearchResults] = useState<Group[]>(groups);
   const totalPages = Math.ceil(groups.length / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const paginatedGroups = searchResults.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  const paginatedGroups = searchResults.slice(
+    startIndex,
+    startIndex + ITEMS_PER_PAGE,
+  );
 
   const handleNextPage = () => {
     if (currentPage < totalPages) {
@@ -31,19 +34,20 @@ export function GroupClient({ groups }: { groups: Group[] }) {
   };
 
   const handleInputChange = (value: string) => {
-
-    const filteredGroups = groups.filter((group) => group.groupName?.toLowerCase().includes(value.toLowerCase()));
+    const filteredGroups = groups.filter((group) =>
+      group.groupName?.toLowerCase().includes(value.toLowerCase()),
+    );
     if (!value.trim()) {
       setSearchResults(groups);
       //return;
     } else {
       setSearchResults(filteredGroups);
     }
-  }
+  };
 
   const debouncedSearch = useCallback(
     debounce((value: string) => handleInputChange(value), 500),
-    []
+    [],
   );
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -57,9 +61,7 @@ export function GroupClient({ groups }: { groups: Group[] }) {
         <Input
           type="search"
           placeholder="Search..."
-          className={cn(
-            "w-full sm:w-[30%] flex items-center justify-center",
-          )}
+          className={cn("w-full sm:w-[30%] flex items-center justify-center")}
           value={searchTerm}
           onChange={(e) => handleChange(e)}
         />

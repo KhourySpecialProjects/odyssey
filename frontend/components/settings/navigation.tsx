@@ -15,17 +15,17 @@ export function SettingsNavigation({ items }: { items: NavItem[] }) {
 
         return (
           <div className="flex flex-row" key={`item-${item.href}`}>
-          <Link
-            key={item.href}
-            href={item.href}
-            className={cn(
-              "font-semibold dark:text-slate-300 text-xl",
-              pathname == item.href && "text-sky-600 dark:text-sky-600",
-            )}
-          >
-            {item.label}
-          </Link>
-          <div className="flex flex-1"></div>
+            <Link
+              key={item.href}
+              href={item.href}
+              className={cn(
+                "font-semibold dark:text-slate-300 text-xl",
+                pathname == item.href && "text-sky-600 dark:text-sky-600",
+              )}
+            >
+              {item.label}
+            </Link>
+            <div className="flex flex-1"></div>
           </div>
         );
       })}

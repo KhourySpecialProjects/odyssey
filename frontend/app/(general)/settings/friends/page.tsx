@@ -47,7 +47,7 @@ export default async function AuthorProfileSettings() {
   ).length;
 
   const content = {
-    [`Friends (${friendsLength})`]: <Friends/>,
+    [`Friends (${friendsLength})`]: <Friends />,
     [`Friend Requests (${friendReceivedRequestsLength})`]: (
       <FriendRequests
         noProfile={false}
@@ -60,7 +60,7 @@ export default async function AuthorProfileSettings() {
     ),
     [`Sent Requests (${friendRequestsLength})`]: <FriendSentRequests />,
     [`Blocked Users (${friendBlockedLength})`]: <BlockedUsers />,
-  }
+  };
 
   return (
     <div className="flex flex-col">
@@ -72,17 +72,12 @@ export default async function AuthorProfileSettings() {
       ></FriendSearch>
 
       <div className="hidden md:flex md:flex-col">
-        <AdminSelector
-          content={content}
-        />
+        <AdminSelector content={content} />
       </div>
 
       <div className="flex flex-col md:hidden">
-        <ComponentDropdown
-          content={content}
-        />
+        <ComponentDropdown content={content} />
       </div>
-      
     </div>
   );
 }
