@@ -3,13 +3,18 @@ import { FriendBlock } from "./friend-block";
 import { getCurrentUser } from "@/lib/auth/session";
 import { notFound } from "next/navigation";
 import { fetchFriends } from "@/lib/requests/friends";
+import { AuthorizedUser } from "@/types";
 
-export async function Friends() {
+interface FriendsProps {
+  friends: AuthorizedUser[];
+}
+
+export async function Friends({friends} : FriendsProps) {
   const user = await getCurrentUser();
   if (!user || !user?.email) return notFound();
   const authUser = await getAuthorizedUserByEmail(user.email);
 
-  const friends = await fetchFriends(authUser);
+  //const friends = await fetchFriends(authUser);
 
   return (
     <section className="md:mt-4">
