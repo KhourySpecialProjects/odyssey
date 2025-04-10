@@ -10,7 +10,7 @@ export async function BlockedUsers() {
   const blockedUsers = authUser.blocked;
 
   return (
-    <section className="mt-4">
+    <section className="md:mt-4">
       <h1 className="font-bold">Blocked Users</h1>
       <p>A list of people you have blocked.</p>
 

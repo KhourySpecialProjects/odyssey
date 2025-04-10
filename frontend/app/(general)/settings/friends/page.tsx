@@ -16,7 +16,7 @@ import {
   fetchSuggestionsById,
 } from "@/lib/requests/friends";
 import { BlockedUsers } from "@/components/friends/blocked-users";
-import { FriendDropdown } from "@/components/friends/friend-dropdown";
+import { ComponentDropdown } from "@/components/friends/component-dropdown";
 
 export default async function AuthorProfileSettings() {
   const authorizedUsers = await fetchAuthorizedUsers();
@@ -37,13 +37,30 @@ export default async function AuthorProfileSettings() {
     .filter((user) => !friends.includes(user.id))
     .map((user) => user.id);
 
-  const friendsLength = await (await fetchFriends(authorizedUser)).length;
+  const friendsList = await fetchFriends(authorizedUser);
+  const friendsLength = friendsList.length;
   const friendRequestsLength = authorizedUser.sent_requests.length;
   const friendReceivedRequestsLength = authorizedUser.received_requests.length;
   const friendBlockedLength = authorizedUser.blocked.length;
   const friendSuggestionsLength = await (
     await fetchSuggestionsById(authorizedUser.id)
   ).length;
+
+  const content = {
+    [`Friends (${friendsLength})`]: <Friends />,
+    [`Friend Requests (${friendReceivedRequestsLength})`]: (
+      <FriendRequests
+        noProfile={false}
+        friendsPerPage={20}
+        authUser={authorizedUser}
+      />
+    ),
+    [`People You May Know (${friendSuggestionsLength})`]: (
+      <FriendSuggestions user={authorizedUser} />
+    ),
+    [`Sent Requests (${friendRequestsLength})`]: <FriendSentRequests />,
+    [`Blocked Users (${friendBlockedLength})`]: <BlockedUsers />,
+  };
 
   return (
     <div className="flex flex-col">
@@ -55,44 +72,11 @@ export default async function AuthorProfileSettings() {
       ></FriendSearch>
 
       <div className="hidden md:flex md:flex-col">
-        <AdminSelector
-          content={{
-            [`Friends (${friendsLength})`]: <Friends />,
-            [`Friend Requests (${friendReceivedRequestsLength})`]: (
-              <FriendRequests
-                key={1}
-                noProfile={false}
-                friendsPerPage={20}
-                authUser={authorizedUser}
-              />
-            ),
-            [`People You May Know (${friendSuggestionsLength})`]: (
-              <FriendSuggestions user={authorizedUser} />
-            ),
-            [`Sent Requests (${friendRequestsLength})`]: <FriendSentRequests />,
-            [`Blocked Users (${friendBlockedLength})`]: <BlockedUsers />,
-          }}
-        />
+        <AdminSelector content={content} />
       </div>
 
       <div className="flex flex-col md:hidden">
-        <FriendDropdown
-          content={{
-            [`Friends (${friendsLength})`]: <Friends />,
-            [`Friend Requests (${friendReceivedRequestsLength})`]: (
-              <FriendRequests
-                noProfile={false}
-                friendsPerPage={20}
-                authUser={authorizedUser}
-              />
-            ),
-            [`People You May Know (${friendSuggestionsLength})`]: (
-              <FriendSuggestions user={authorizedUser} />
-            ),
-            [`Sent Requests (${friendRequestsLength})`]: <FriendSentRequests />,
-            [`Blocked Users (${friendBlockedLength})`]: <BlockedUsers />,
-          }}
-        />
+        <ComponentDropdown content={content} />
       </div>
     </div>
   );
