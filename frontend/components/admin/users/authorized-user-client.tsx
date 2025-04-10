@@ -1,13 +1,13 @@
 "use client";
 import { AuthorizedUser } from "@/types";
 import { AuthorizedUserBlock } from "./authorized-user";
-import { ChangeEvent, useState } from "react";
+import { ChangeEvent, useCallback, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { PageNav } from "@/components/ui/page-nav";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
-import { filter } from "lodash";
+import { debounce, filter } from "lodash";
 
 const ITEMS_PER_PAGE = 20;
 
@@ -40,22 +40,29 @@ export function AuthorizedUserClient({
   };
 
 
-  const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const searchTerm = e.target.value;
-    setSearchItem(searchTerm);
-
+  const handleInputChange = (value: string) => {
 
     const filteredUsers = authorizedUsers.filter((user) =>
-      user.lastName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email?.toLowerCase().includes(searchTerm.toLowerCase()));
-    if (!searchTerm.trim()) {
+      user.lastName?.toLowerCase().includes(value.toLowerCase()) ||
+      user.firstName?.toLowerCase().includes(value.toLowerCase()) ||
+      user.email?.toLowerCase().includes(value.toLowerCase()));
+    if (!value.trim()) {
       setSearchResults(authorizedUsers);
       //return;
     } else {
       setSearchResults(filteredUsers);
     }
   }
+
+  const debouncedSearch = useCallback(
+    debounce((value: string) => handleInputChange(value), 500),
+    []
+  );
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchItem(e.target.value);
+    debouncedSearch(e.target.value);
+  };
 
   return (
     <div className="p-4 mt-4 rounded-md bg-slate-100 dark:bg-slate-800">
@@ -67,7 +74,7 @@ export function AuthorizedUserClient({
             "w-full sm:w-[30%] flex items-center justify-center",
           )}
           value={searchTerm}
-          onChange={(e) => handleInputChange(e)}
+          onChange={(e) => handleChange(e)}
         />
       </div>
       {paginatedUsers.length > 0 ? (

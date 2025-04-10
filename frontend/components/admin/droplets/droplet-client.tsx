@@ -1,12 +1,13 @@
 "use client";
 
-import { ChangeEvent, useState } from "react";
+import { ChangeEvent, useCallback, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Droplet } from "@/types";
 import { DropletBlock } from "./droplet-block";
 import { PageNav } from "@/components/ui/page-nav";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
+import { debounce } from "lodash";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -33,20 +34,26 @@ export function DropletClient({ droplets }: { droplets: Droplet[] }) {
     }
   };
 
-  const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
-        setCurrentPage(1);
-        const searchTerm = e.target.value;
-        setSearchItem(searchTerm);
-    
+  const handleInputChange = (value: string) => {
         
-        const filteredDroplets = droplets.filter((droplet) => droplet.name?.toLowerCase().includes(searchTerm.toLowerCase()));
-        if (!searchTerm.trim()) {
+        const filteredDroplets = droplets.filter((droplet) => droplet.name?.toLowerCase().includes(value.toLowerCase()));
+        if (!value.trim()) {
           setSearchResults(droplets);
           //return;
         } else {
         setSearchResults(filteredDroplets);
         }
       }
+
+      const debouncedSearch = useCallback(
+          debounce((value: string) => handleInputChange(value), 500),
+          []
+        );
+      
+        const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+          setSearchItem(e.target.value);
+          debouncedSearch(e.target.value);
+        };
 
   return (
     <div className="p-4 mt-4 rounded-md bg-slate-100 dark:bg-slate-800">
@@ -58,7 +65,7 @@ export function DropletClient({ droplets }: { droplets: Droplet[] }) {
             "w-full sm:w-[30%] flex items-center justify-center",
           )}
           value={searchTerm}
-          onChange={(e) => handleInputChange(e)}
+          onChange={(e) => handleChange(e)}
         />
         </div>
       {paginatedDroplets.length > 0 ? (
