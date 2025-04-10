@@ -16,7 +16,7 @@ import {
   fetchSuggestionsById,
 } from "@/lib/requests/friends";
 import { BlockedUsers } from "@/components/friends/blocked-users";
-import { FriendDropdown } from "@/components/friends/friend-dropdown";
+import { ComponentDropdown } from "@/components/friends/component-dropdown";
 
 export default async function AuthorProfileSettings() {
   const authorizedUsers = await fetchAuthorizedUsers();
@@ -76,7 +76,7 @@ export default async function AuthorProfileSettings() {
       </div>
 
       <div className="flex flex-col md:hidden">
-        <FriendDropdown
+        <ComponentDropdown
           content={{
             [`Friends (${friendsLength})`]: <Friends />,
             [`Friend Requests (${friendReceivedRequestsLength})`]: (
@@ -94,6 +94,7 @@ export default async function AuthorProfileSettings() {
           }}
         />
       </div>
+      
     </div>
   );
 }
