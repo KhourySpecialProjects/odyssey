@@ -64,8 +64,8 @@ export default async function Lesson({ params }: Props) {
   });
   if (!lesson) return notFound();
   return (
-    <>
+    <div className="xl:-ml-48">
       <LessonRenderer lesson={lesson} dropletSlug={p.slug} />
-    </>
+    </div>
   );
 }
