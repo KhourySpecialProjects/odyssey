@@ -47,7 +47,7 @@ export default async function AuthorProfileSettings() {
   ).length;
 
   const content = {
-    [`Friends (${friendsLength})`]: <Friends friends={friendsList} />,
+    [`Friends (${friendsLength})`]: <Friends/>,
     [`Friend Requests (${friendReceivedRequestsLength})`]: (
       <FriendRequests
         noProfile={false}
