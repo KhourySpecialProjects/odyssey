@@ -13,11 +13,6 @@ export function Description({
 }) {
   const { error, handleChange } = useDropletUpdate(dropletId);
 
-  const updateDescription = async (description: string) => {
-    const descriptionText = htmlToText(description);
-    handleChange({ description: descriptionText });
-  };
-
   return (
     <section className="w-full max-w-2xl">
       <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
