@@ -1,5 +1,5 @@
 import { render, screen, fireEvent } from "@testing-library/react";
-import { FriendDropdown } from "@/components/friends/component-dropdown";
+import { ComponentDropdown } from "@/components/friends/component-dropdown";
 
 describe("FriendDropdown", () => {
   const mockContent = {
@@ -8,12 +8,12 @@ describe("FriendDropdown", () => {
   };
 
   it("renders dropdown button", () => {
-    render(<FriendDropdown content={mockContent} />);
+    render(<ComponentDropdown content={mockContent} />);
     expect(screen.getByRole("button")).toBeInTheDocument();
   });
 
   it("shows options when clicked", () => {
-    render(<FriendDropdown content={mockContent} />);
+    render(<ComponentDropdown content={mockContent} />);
     fireEvent.click(screen.getByRole("button"));
 
     expect(screen.getByText("Option 1")).toBeInTheDocument();
@@ -21,7 +21,7 @@ describe("FriendDropdown", () => {
   });
 
   it("changes content when option is selected", () => {
-    render(<FriendDropdown content={mockContent} />);
+    render(<ComponentDropdown content={mockContent} />);
     fireEvent.click(screen.getByRole("button"));
     fireEvent.click(screen.getByText("Option 2"));
 
