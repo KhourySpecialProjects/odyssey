@@ -63,7 +63,7 @@ export default async function DropletRoute({ params }: Props) {
       learningObjectives: { populate: "*" },
       lessons: { populate: "*" },
       tags: { populate: "*" },
-      authorized_users: { populate: "*" },
+      authorized_users: { populate: "*", fields: ["*"] },
       prerequisites: { populate: ["id", "name", "slug"] },
       postrequisites: { populate: ["id", "name", "slug"] },
     },
