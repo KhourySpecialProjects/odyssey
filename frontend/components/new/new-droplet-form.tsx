@@ -55,11 +55,6 @@ export function CreateDropletForm({
     initialSubmissionState,
   );
 
-  const states = [
-    { value: focusAreaValue, setValue: setFocusAreaValue },
-    { value: typeValue, setValue: setTypeValue },
-  ];
-
   //resets error message when changes made to fields
   useEffect(() => {
     setSubmissionState(initialSubmissionState);
