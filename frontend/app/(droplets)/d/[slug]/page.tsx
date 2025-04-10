@@ -29,6 +29,19 @@ type params = {
   slug: string;
 };
 
+const stripHtmlTags = (html: string) => {
+  return html
+    .replace(/<[^>]*>/g, "")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/\s+/g, " ")
+    .trim();
+};
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const p = await params;
   const droplet = await getDropletBySlug<Pick<Droplet, "name">>(p.slug, {
@@ -50,7 +63,7 @@ export default async function DropletRoute({ params }: Props) {
       learningObjectives: { populate: "*" },
       lessons: { populate: "*" },
       tags: { populate: "*" },
-      authorized_users: { populate: "*" },
+      authorized_users: { populate: "*", fields: ["*"] },
       prerequisites: { populate: ["id", "name", "slug"] },
       postrequisites: { populate: ["id", "name", "slug"] },
     },
@@ -97,7 +110,7 @@ export default async function DropletRoute({ params }: Props) {
           </h1>
           {droplet.description ? (
             <p className="mt-3 text-slate-500 text-pretty md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed dark:text-slate-300">
-              {droplet.description}
+              {stripHtmlTags(droplet.description)}
             </p>
           ) : null}
         </div>
