@@ -15,17 +15,11 @@ export function PHProvider({ children }: { children: React.ReactNode }) {
     const phKey = "phc_KbnlFRdLihV6ZjwM2X0A87eRPyw5yG1VbkqSWaKqj1x";
     const phHost = "https://app.posthog.com";
 
-    console.log("PostHog Key available:", !!phKey);
-    console.log("PostHog Host:", phHost);
-
     if (phKey) {
       posthog.init(phKey, {
         api_host: phHost || "https://app.posthog.com",
       });
-      console.log("PostHog initialized successfully");
-    } else {
-      console.error("Missing PostHog Key - initialization failed");
-    }
+    } 
   }, []);
 
   return <PostHogProvider client={posthog}>{children}</PostHogProvider>;
