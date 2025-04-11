@@ -14,7 +14,7 @@ export function PHProvider({ children }: { children: React.ReactNode }) {
     // Initialize PostHog only on the client side
     const phKey = "phc_KbnlFRdLihV6ZjwM2X0A87eRPyw5yG1VbkqSWaKqj1x";
     const phHost = "https://app.posthog.com";
-    
+
     console.log("PostHog Key available:", !!phKey);
     console.log("PostHog Host:", phHost);
 
@@ -30,4 +30,3 @@ export function PHProvider({ children }: { children: React.ReactNode }) {
 
   return <PostHogProvider client={posthog}>{children}</PostHogProvider>;
 }
-
