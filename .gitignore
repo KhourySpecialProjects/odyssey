@@ -3,7 +3,6 @@
 /.pnp
 .pnp.js
 .yarn/install-state.gz
-/frontend/providers/PHProvider.tsx
 
 # misc
 .DS_Store
