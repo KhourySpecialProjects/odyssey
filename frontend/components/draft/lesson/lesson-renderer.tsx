@@ -18,6 +18,7 @@ import { LessonNameInput } from "@/components/ui/tiptap/lesson-name-input";
 import { QuizEditor } from "./blocks/quiz";
 import { QuizQuestion } from "@/types";
 import { OpenEndedQuizEditor } from "./blocks/open-ended-quiz";
+import { getDropletBySlug } from "@/lib/requests/droplet";
 
 export interface BaseBlock {
   __component: string;
@@ -100,7 +101,12 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
   );
 
   const deleteLessonBackend = useCallback(async () => {
-    const response = await deleteLesson(lesson.id);
+    // const dropletId = (await getDropletBySlug(dropletSlug)).id
+    // const response = await deleteLesson(lesson.id, true, dropletId);
+    const response = await getDropletBySlug(dropletSlug).then(droplet => 
+      deleteLesson(lesson.id, true, droplet.id)
+    );
+    console.log("response is ", response)
     if (response && !response.error) {
       router.replace(`/draft/d/${dropletSlug}`);
       return;

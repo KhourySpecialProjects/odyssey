@@ -1194,8 +1194,46 @@ export async function createBatchAuthorizedUsers(emails: string[]) {
   }
 }
 
-export async function deleteLesson(id: number, revalidate: boolean = true) {
+export async function deleteLesson(id: number, revalidate: boolean = true, dropletId?: number) {
   try {
+    // First, delete the droplet_lesson if dropletId is provided
+    if (dropletId) {
+      // Get the droplet to find the droplet_lesson id
+      const droplet = await getDropletById<Droplet>(dropletId, {
+        populate: {
+          droplet_lessons: {
+            populate: ["lesson"],
+          },
+        },
+      });
+
+      // Find the droplet_lesson that connects this lesson to the droplet
+      const dropletLesson = droplet.droplet_lessons.find(
+        (dl) => dl.lesson.id === id
+      );
+
+      if (dropletLesson) {
+        const deleteDropletLessonResponse = await fetch(
+          STRAPI_API_URL + "/api/droplet-lessons/" + dropletLesson.id,
+          {
+            method: "DELETE",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+            },
+          }
+        );
+
+        if (!deleteDropletLessonResponse.ok) {
+          console.error("Failed to delete droplet_lesson");
+          // Continue with lesson deletion even if droplet_lesson deletion fails
+        }
+      }
+    } else {
+      console.log("didnt recieve a droplet id")
+    }
+
+    // Delete the lesson itself
     const response = await fetch(STRAPI_API_URL + "/api/lessons/" + id, {
       method: "DELETE",
       headers: {
@@ -1214,7 +1252,7 @@ export async function deleteLesson(id: number, revalidate: boolean = true) {
     return { ok: true, error: null, data: data.data };
   } catch (err) {
     console.error(err);
-    return { error: "Database Error: Failed to Delete Authorized User." };
+    return { error: "Database Error: Failed to Delete Lesson." };
   }
 }
 
