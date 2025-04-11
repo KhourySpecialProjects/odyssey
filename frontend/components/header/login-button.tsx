@@ -8,6 +8,19 @@ import { usePathname } from "next/navigation";
 export function LoginButton() {
   const pathname = usePathname();
 
+  console.log(
+    "process",
+    process.env.NEXT_PUBLIC_POSTHOG_KEY?.substring(0, 3),
+  );
+  console.log(
+    "process",
+    process.env.NEXT_PUBLIC_POSTHOG_KEY?.substring(10, 13),
+  );
+  console.log(
+    "already works",
+    process.env.GITHUB_CLIENT_ID?.substring(10, 13),
+  );
+
   return (
     !pathname.endsWith("/auth/login") && (
       <Button
