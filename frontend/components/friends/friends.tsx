@@ -12,7 +12,7 @@ export async function Friends() {
   const friends = await fetchFriends(authUser);
 
   return (
-    <section className="mt-4">
+    <section className="md:mt-4">
       <h1 className="font-bold">Friends</h1>
       <p>A list of your friends.</p>
 
@@ -28,7 +28,7 @@ export async function Friends() {
             ))}
           </ul>
         ) : (
-          <p>You have no friends &#58;&#40;</p>
+          <p>You have no friends &#58;&#40; </p>
         )}
       </div>
     </section>

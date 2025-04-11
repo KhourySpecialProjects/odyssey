@@ -43,3 +43,7 @@
 .sliding-notes-bar {
   animation: slideInFromRight 300ms ease-out; /* ease-out for smooth animation */
 }
+
+.callout-bullet-list li::marker {
+  color: #334155; /* Replace with your desired color (red in this example) */
+}
