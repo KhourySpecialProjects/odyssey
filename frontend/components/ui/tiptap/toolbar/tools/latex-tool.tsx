@@ -1,6 +1,6 @@
 "use client";
 import { Editor } from "@tiptap/react";
-import { useState } from "react";
+import { useRef } from "react";
 import { TypeIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -9,9 +9,11 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
+import { useOffClick } from "@/components/draft/metadata/hooks/useOffClick";
 
 export default function LatexTool({ editor }: { editor: Editor | null }) {
-  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+  const { open, setOpen } = useOffClick(ref);
 
   const addNewLatex = (selection: Selection | null) => {
     if (!selection || !selection.toString().trim()) {
@@ -71,7 +73,7 @@ export default function LatexTool({ editor }: { editor: Editor | null }) {
           <TypeIcon size={17} />
         </button>
       </PopoverTrigger>
-      <PopoverContent>
+      <PopoverContent ref={ref}>
         <div className="w-full flex justify-between items-center">
           <Button
             onClick={() => addNewLatex(window.getSelection())}
