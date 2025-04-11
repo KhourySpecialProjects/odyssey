@@ -1,6 +1,6 @@
 "use client";
 import { Editor } from "@tiptap/react";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useActionState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -19,9 +19,11 @@ import { uploadImage } from "@/lib/actions";
 import { cn } from "@/lib/utils";
 import imageCompression from "browser-image-compression";
 import { toast } from "sonner";
+import { useOffClick } from "@/components/draft/metadata/hooks/useOffClick";
 
 export default function ImageToolButton({ editor }: { editor: Editor | null }) {
-  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+  const { open, setOpen } = useOffClick(ref);
   const [file, setFile] = useState<File | null>(null);
 
   const insertImage = async (prevState: any, formData: FormData) => {
@@ -73,7 +75,7 @@ export default function ImageToolButton({ editor }: { editor: Editor | null }) {
           <ImagePlusIcon size={17} />
         </button>
       </PopoverTrigger>
-      <PopoverContent>
+      <PopoverContent ref={ref}>
         <form action={formAction} role="form">
           <FileUpload file={file} setFile={setFile} />
 
