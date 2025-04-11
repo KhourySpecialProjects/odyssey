@@ -8,7 +8,10 @@ import { usePathname } from "next/navigation";
 export function LoginButton() {
   const pathname = usePathname();
 
-  console.log("login button", process.env.NEXT_PUBLIC_POSTHOG_KEY?.substring(0, 3));
+  console.log(
+    "login button",
+    process.env.NEXT_PUBLIC_POSTHOG_KEY?.substring(0, 3),
+  );
   console.log(
     "login button",
     process.env.NEXT_PUBLIC_POSTHOG_KEY?.substring(10, 13),
