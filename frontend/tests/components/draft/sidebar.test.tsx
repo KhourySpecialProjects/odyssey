@@ -152,7 +152,9 @@ describe("Sidebar", () => {
     );
     const menuButton = screen.getByRole("button", { name: /open sidebar/i });
     fireEvent.click(menuButton);
-    expect(screen.getByRole("complementary")).toHaveClass("md:translate-x-80");
+    expect(screen.getByRole("complementary")).toHaveClass(
+      "fixed xl:sticky xl:top-0 left-0 z-40 w-64 h-screen transition-transform translate-x-0",
+    );
   });
 
   const mockRouter = {
@@ -168,7 +170,7 @@ describe("Sidebar", () => {
       />,
     );
 
-    fireEvent.click(screen.getByText("Save Droplet"));
+    fireEvent.click(screen.getByTestId("home"));
 
     await act(async () => {
       fireEvent.click(screen.getByText("Share"));
@@ -207,7 +209,9 @@ describe("Sidebar", () => {
     fireEvent.click(menuButton);
 
     const sidebar = screen.getByRole("complementary");
-    expect(sidebar).toHaveClass("-transform-none");
+    expect(sidebar).toHaveClass(
+      "fixed xl:sticky xl:top-0 left-0 z-40 w-64 h-screen transition-transform translate-x-0",
+    );
   });
 
   beforeEach(() => {
@@ -224,6 +228,8 @@ describe("Sidebar", () => {
     const menuButton = screen.getByRole("button", { name: /open sidebar/i });
     fireEvent.click(menuButton);
 
-    expect(screen.getByRole("complementary")).toHaveClass("md:translate-x-80");
+    expect(screen.getByRole("complementary")).toHaveClass(
+      "fixed xl:sticky xl:top-0 left-0 z-40 w-64 h-screen transition-transform translate-x-0",
+    );
   });
 });
