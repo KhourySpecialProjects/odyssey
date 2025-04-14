@@ -126,7 +126,8 @@ export function PlaylistForm({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name) {
+    console.log("name: ", name);
+    if (!name || name === "") {
       setError("Please enter a playlist name");
       return;
     }
@@ -134,6 +135,7 @@ export function PlaylistForm({
       setError("Please select at least one droplet");
       return;
     }
+    setIsOpen(true);
 
     const updatePlaylistData = {
       name,
@@ -196,7 +198,9 @@ export function PlaylistForm({
     >
       <div className="space-y-4">
         <div>
-          <Label htmlFor="name">Playlist Name</Label>
+          <Label htmlFor="name">
+            Playlist Name <span className="text-red-500">*</span>
+          </Label>
           <Input
             id="name"
             value={name}
@@ -240,7 +244,6 @@ export function PlaylistForm({
           <Button
             type="submit"
             className="h-12 dark:bg-slate-300 dark:hover:bg-slate-400 dark:hover:text-black"
-            onClick={() => setIsOpen(true)}
           >
             Save Playlist
           </Button>
@@ -273,6 +276,7 @@ export function PlaylistForm({
             </DialogContent>
           </Dialog>
         </div>
+        {error && <p className="text-red-500 text-center">{error}</p>}
 
         <div
           className="flex items-center space-x-2 xs:max-w-sm"
@@ -329,8 +333,6 @@ export function PlaylistForm({
           </div>
         </DndProvider>
       </div>
-
-      {error && <p className="text-red-500">{error}</p>}
     </form>
   );
 }

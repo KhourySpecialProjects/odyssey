@@ -28,10 +28,7 @@ export default function CalloutTypeTool({
           onClick={() => {
             setOpen(!open);
           }}
-          className={cn(
-            open ? "" : "",
-            "p-2.5 rounded-md border border-transparent",
-          )}
+          className={cn(open ? "" : "", "rounded-md border border-transparent")}
         >
           <Menu color="#000000" />
         </button>
