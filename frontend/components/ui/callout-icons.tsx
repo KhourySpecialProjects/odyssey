@@ -12,17 +12,17 @@ export function CalloutIcon({ color }: { color: string }) {
     const iconStyle = "text-black";
     switch (color.split("-")[1]) {
       case "red":
-        return <TriangleAlert className={iconStyle} strokeWidth={2.5} />;
+        return <TriangleAlert className={iconStyle} />;
       case "blue":
-        return <CircleHelp className={iconStyle} strokeWidth={2.5} />;
+        return <CircleHelp className={iconStyle} />;
       case "orange":
-        return <CircleAlert className={iconStyle} strokeWidth={2.5} />;
+        return <CircleAlert className={iconStyle} />;
       case "green":
-        return <BookOpenText className={iconStyle} strokeWidth={2.5} />;
+        return <BookOpenText className={iconStyle} />;
       case "purple":
-        return <BadgeInfo className={iconStyle} strokeWidth={2.5} />;
+        return <BadgeInfo className={iconStyle} />;
       case "amber":
-        return <Bell className={iconStyle} strokeWidth={2.5} />;
+        return <Bell className={iconStyle} />;
       default:
         return <div />;
     }
