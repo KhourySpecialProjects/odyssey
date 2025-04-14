@@ -8,8 +8,8 @@ export function PHProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     // Initialize PostHog only on the client side
-    posthog.init("phc_KbnlFRdLihV6ZjwM2X0A87eRPyw5yG1VbkqSWaKqj1x", {
-      api_host: "https://app.posthog.com",
+    posthog.init(process.env.NEXT_PUBLIC_POSTHOG_KEY || "", {
+      api_host: process.env.NEXT_PUBLIC_POSTHOG_HOST,
     });
   }, []);
 

@@ -28,7 +28,7 @@ jobs:
         run: |
           cd ./frontend
           docker build \
-            --build-arg NEXT_PUBLIC_POSTHOG_KEY= ${{ secrets.NEXT_PUBLIC_POSTHOG_KEY }} \
+            --build-arg NEXT_PUBLIC_POSTHOG_KEY=${{ secrets.NEXT_PUBLIC_POSTHOG_KEY }} \
             --build-arg NEXT_PUBLIC_POSTHOG_HOST=${{ secrets.NEXT_PUBLIC_POSTHOG_HOST }} \
             -t ${{ secrets.ECR_DEV_FRONTEND_REPOSITORY }}:latest \
             -f kubernetes.Dockerfile .
