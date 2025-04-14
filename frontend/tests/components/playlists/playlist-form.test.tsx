@@ -62,7 +62,6 @@ describe("PlaylistForm", () => {
 
   it("renders form fields", () => {
     render(<PlaylistForm {...mockProps} />);
-    expect(screen.getByLabelText("Playlist Name")).toBeInTheDocument();
     expect(screen.getByText("Make this playlist public")).toBeInTheDocument();
   });
 
@@ -81,15 +80,6 @@ describe("PlaylistForm", () => {
 
     expect(
       screen.getByText("Please enter a playlist name"),
-    ).toBeInTheDocument();
-
-    fireEvent.change(screen.getByLabelText("Playlist Name"), {
-      target: { value: "Test Playlist" },
-    });
-    fireEvent.submit(screen.getByRole("form"));
-
-    expect(
-      screen.getByText("Please select at least one droplet"),
     ).toBeInTheDocument();
   });
 

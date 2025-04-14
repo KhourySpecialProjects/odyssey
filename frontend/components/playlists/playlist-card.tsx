@@ -81,7 +81,9 @@ export function PlaylistCard({
               </Badge>
             )}
           </div>
-          <CardTitle>{playlist.name}</CardTitle>
+          <CardTitle className="block w-full text-3xl font-black text-slate-950 place-self-end dark:text-slate-300">
+            {playlist.name}
+          </CardTitle>
           <p className="text-sm text-muted-foreground">
             {playlist.droplets?.length === 1
               ? "1 droplet"
