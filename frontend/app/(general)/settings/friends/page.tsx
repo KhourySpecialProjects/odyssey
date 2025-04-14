@@ -18,7 +18,13 @@ import {
 import { BlockedUsers } from "@/components/friends/blocked-users";
 import { ComponentDropdown } from "@/components/friends/component-dropdown";
 
-export default async function AuthorProfileSettings() {
+export default async function AuthorProfileSettings({
+  searchParams,
+}: {
+  searchParams: { tab?: string };
+}) {
+  const selectedTab = (await searchParams).tab;
+
   const authorizedUsers = await fetchAuthorizedUsers();
 
   const user = await getCurrentUser();
@@ -72,7 +78,7 @@ export default async function AuthorProfileSettings() {
       ></FriendSearch>
 
       <div className="hidden md:flex md:flex-col">
-        <AdminSelector content={content} />
+        <AdminSelector content={content} initialTab={selectedTab}/>
       </div>
 
       <div className="flex flex-col md:hidden">
