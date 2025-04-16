@@ -7,20 +7,25 @@ export interface AdminContent {
   [name: string]: React.ReactNode;
 }
 
-export function AdminSelector({ content, initialTab }: { content: AdminContent; initialTab?: string }) {
+export function AdminSelector({
+  content,
+  initialTab,
+}: {
+  content: AdminContent;
+  initialTab?: string;
+}) {
   const keys = Object.keys(content);
   const searchParams = useSearchParams();
   const router = useRouter();
 
   const tabFromUrl = searchParams.get("tab");
-  const fallbackTab = initialTab && keys.includes(initialTab)
-  ? initialTab
-  : keys[0];
+  const fallbackTab =
+    initialTab && keys.includes(initialTab) ? initialTab : keys[0];
 
   const [selected, setSelected] = useState(fallbackTab);
 
   useEffect(() => {
-    console.log("content is ", content)
+    console.log("content is ", content);
     const currentTab = searchParams.get("tab");
 
     if (currentTab !== tabFromUrl) {
