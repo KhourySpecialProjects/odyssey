@@ -15,6 +15,14 @@ RUN chmod +x /usr/local/bin/set_env.sh
 
 ENV AWS_CDN_URL=https://odyssey-dev-bucket.s3.us-east-2.amazonaws.com
 
+# Accept build arguments from GitHub Actions
+ARG NEXT_PUBLIC_POSTHOG_KEY
+ARG NEXT_PUBLIC_POSTHOG_HOST
+
+# Promote to ENV so Next.js can use them during `next build`
+ENV NEXT_PUBLIC_POSTHOG_KEY=$NEXT_PUBLIC_POSTHOG_KEY
+ENV NEXT_PUBLIC_POSTHOG_HOST=$NEXT_PUBLIC_POSTHOG_HOST
+
 # Copy package.json and package-lock.json to the working directory
 COPY package*.json ./
 

@@ -51,13 +51,13 @@ export function CalloutEditor({
   return (
     <>
       <div
-        className={`hover:shadow-md px-6 py-6 border dark:border-slate-500 rounded-md w-full ${block.color || "bg-sky-50 dark:bg-sky-200"} `}
+        className={`w-full rounded-md border border-slate-200 dark:border-slate-500 p-4 hover:shadow-md ${block.color || "bg-sky-50 dark:bg-sky-200"} `}
       >
         <div
-          className={`w-full flex flex-row  mb-4 justify-between items-center`}
+          className={`w-full flex flex-row mb-4 justify-between items-center`}
         >
           <div className="flex flex-row items-center">
-            <h2 className="text-lg font-bold text-black mr-3">Callout Block</h2>
+            <h2 className="text-lg dark:text-black">Callout Block</h2>
             {block.color && !block.color.includes("sky") && (
               <div className="relative">
                 <Button
@@ -76,13 +76,12 @@ export function CalloutEditor({
             )}
           </div>
 
-          <div className="flex flex-row items-center">
+          <div className="flex flex-row items-center gap-2">
             <CalloutTypeTool block={block} updateBlock={updateBlock} />
 
             <Trash2Icon
-              className="cursor-pointer text-black"
+              className="cursor-pointer text-red-600 hover:text-red-700"
               onClick={deleteBlock}
-              size={30}
               role="trash"
             />
           </div>

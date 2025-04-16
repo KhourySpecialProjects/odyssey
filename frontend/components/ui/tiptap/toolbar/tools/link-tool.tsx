@@ -1,6 +1,6 @@
 "use client";
 import { Editor } from "@tiptap/react";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import {
   Popover,
   PopoverTrigger,
@@ -11,9 +11,11 @@ import { Input } from "../../../input";
 import { Button } from "../../../button";
 import { XIcon, Link2Icon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useOffClick } from "@/components/draft/metadata/hooks/useOffClick";
 
 export default function LinkToolButton({ editor }: { editor: Editor | null }) {
-  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+  const { open, setOpen } = useOffClick(ref);
   const [url, setUrl] = useState("");
 
   const insertLink = () => {
@@ -49,7 +51,7 @@ export default function LinkToolButton({ editor }: { editor: Editor | null }) {
         </button>
       </PopoverTrigger>
 
-      <PopoverContent autoFocus={false}>
+      <PopoverContent autoFocus={false} ref={ref}>
         <Input
           value={url}
           onChange={(e: any) => setUrl(e.target.value)}

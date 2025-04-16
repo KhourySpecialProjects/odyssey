@@ -14,7 +14,7 @@ import {
   ArrowLeftIcon,
   PanelRightClose,
   Home,
-  ChevronsLeft,
+  PanelRightOpen,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -110,7 +110,7 @@ export default function Sidebar({
                 type="button"
                 href="/explore"
                 className={cn(
-                  "flex items-center justify-start text-base  gap-2",
+                  "flex items-center justify-start text-base gap-2",
                 )}
               >
                 <div className="w-6 flex justify-center">
@@ -125,7 +125,7 @@ export default function Sidebar({
                 onClick={() => setExpanded(false)}
                 className={`xl:hidden`}
               >
-                <ChevronsLeft />
+                <PanelRightOpen />
               </button>
             </div>
 

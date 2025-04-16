@@ -230,7 +230,7 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
 
   return (
     <>
-      <div className="flex flex-col justify-center items-center border border-slate-200 dark:border-slate-500 rounded-md pt-4 px-4 pb-7 mb-5">
+      <div className="flex flex-col justify-start items-center border border-slate-200 dark:border-slate-500 rounded-md pt-4 px-4 pb-7 mb-5">
         <LessonNameInput
           className="w-[700px] max-w-2xl mb-3"
           initialContent={`<h1>${name}</h1>`}
