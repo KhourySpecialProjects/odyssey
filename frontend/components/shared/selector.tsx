@@ -1,39 +1,14 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import React, { useEffect } from "react";
 
 export interface AdminContent {
   [name: string]: React.ReactNode;
 }
 
-export function AdminSelector({
-  content,
-  initialTab,
-}: {
-  content: AdminContent;
-  initialTab?: string;
-}) {
-  const keys = Object.keys(content);
-  const searchParams = useSearchParams();
-  const router = useRouter();
-
-  const tabFromUrl = searchParams.get("tab");
-  const fallbackTab =
-    initialTab && keys.includes(initialTab) ? initialTab : keys[0];
-
-  const [selected, setSelected] = useState(fallbackTab);
-
-  useEffect(() => {
-    console.log("content is ", content);
-    const currentTab = searchParams.get("tab");
-
-    if (currentTab !== tabFromUrl) {
-      const params = new URLSearchParams(searchParams.toString());
-      params.set("tab", selected);
-      router.push(`?${params.toString()}`, { scroll: false });
-    }
-  }, [selected]);
+export function AdminSelector({ content }: { content: AdminContent }) {
+  const keys = Object.keys(content!);
+  const [selected, setSelected] = React.useState(keys[0]);
 
   return (
     <>
