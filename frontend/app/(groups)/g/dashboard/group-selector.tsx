@@ -68,7 +68,7 @@ export function GroupsSelector() {
         </div>
       </button>
 
-      <Badge className="visible md:hidden">
+      <Badge className="md:hidden">
         {currentTab.substring(0, 1).toUpperCase() + currentTab.substring(1)}
       </Badge>
 
