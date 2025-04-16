@@ -14,7 +14,7 @@ import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
 import { Droplets } from "@/components/admin/droplets/droplets";
 import { Groups } from "@/components/admin/groups/groups";
 import { Playlists } from "@/components/admin/playlists/playlists";
-import { ComponentDropdown } from "@/components/friends/component-dropdown";
+import { ComponentDropdown } from "@/components/shared/component-dropdown";
 import { LineChartIcon } from "lucide-react";
 
 export default async function Page() {
