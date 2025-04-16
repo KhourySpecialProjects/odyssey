@@ -16,7 +16,7 @@ import {
   fetchSuggestionsById,
 } from "@/lib/requests/friends";
 import { BlockedUsers } from "@/components/friends/blocked-users";
-import { ComponentDropdown } from "@/components/friends/component-dropdown";
+import { ComponentDropdown } from "@/components/shared/component-dropdown";
 import { FriendsSelector } from "@/components/friends/friends-selector";
 
 export default async function AuthorProfileSettings({

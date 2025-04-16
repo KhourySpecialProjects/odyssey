@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
+import { X } from "lucide-react"; // for the X icon
 import hljs from "highlight.js";
 import { Highlight, HighlightColor } from "@/types";
 import { HighlightDropdown } from "./highlight-dropdown";
@@ -17,6 +18,11 @@ interface GenericBlockRendererProps {
   enrollmentId: string | undefined;
   expanded: boolean;
   setExpanded: (expanded: boolean) => void;
+}
+
+interface EnlargedImage {
+  src: string;
+  alt: string;
 }
 
 const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
@@ -49,6 +55,8 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
   const [isHighlighting, setIsHighlighting] = useState(false);
   const [selectedColor, setSelectedColor] = useState<HighlightColor>("#fff300");
   const currentSelectionRef = useRef<Range | null>(null);
+  const [enlargedImage, setEnlargedImage] = useState<EnlargedImage | null>(null);
+
 
   const processLatex = (content: string) => {
     content = content.replace(/\$\$(.*?)\$\$/g, (match, latex) => {
@@ -167,7 +175,7 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
         while (
           currentNode &&
           currentPosition + (currentNode.textContent?.length || 0) <=
-            highlight.position.start
+          highlight.position.start
         ) {
           currentPosition += currentNode.textContent?.length || 0;
           currentNode = walker.nextNode();
@@ -183,7 +191,7 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
         while (
           currentNode &&
           currentPosition + (currentNode.textContent?.length || 0) <
-            highlight.position.end
+          highlight.position.end
         ) {
           currentPosition += currentNode.textContent?.length || 0;
           currentNode = walker.nextNode();
@@ -242,6 +250,9 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
     const notesBarTop = rect.top + scrollTop;
     const clickY = e.clientY + scrollTop - notesBarTop;
     setMousePositionY(clickY);
+
+
+
   };
 
   const handleMouseUp = () => {
@@ -403,6 +414,23 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
     );
   };
 
+  const handleImageClick = (e: React.MouseEvent) => {
+    const target = e.target as HTMLElement;
+    console.log("target name ", target.tagName)
+    if (target.tagName === 'IMG') {
+      e.preventDefault();
+      e.stopPropagation();
+      setEnlargedImage({
+        src: target.getAttribute('src') || '',
+        alt: target.getAttribute('alt') || '',
+      });
+    }
+  };
+
+  const handleCloseEnlarged = () => {
+    setEnlargedImage(null);
+  };
+
   return (
     <div className="">
       {block.id === genericBlocks[0] && enrollmentId && (
@@ -423,9 +451,25 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
         ref={contentRef}
         onMouseUp={(e) => handleMouseUp()}
         onMouseDown={(e) => handleMouseDown(e)}
+        onClick={handleImageClick}
         className="mt-2 prose prose-lg prose-sky prose-table:block prose-code:text-inherit prose-table:overflow-x-scroll prose-p:my-1 prose-li:my-1 select-text dark:text-slate-300 prose-headings:text-inherit prose-strong:text-inherit"
         dangerouslySetInnerHTML={{ __html: block.content }}
       ></div>
+
+
+      {enlargedImage && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-gray-800/50"
+          onClick={handleCloseEnlarged}
+        >
+            <img
+              src={enlargedImage?.src}
+              alt={enlargedImage?.alt}
+              className="h-full max-w-[75%] max-h-[75%] object-contain absolute top-1/2 -translate-y-[40%] left-1/2 -translate-x-[50%] xl:-translate-x-[35%]"
+              onClick={(e) => e.stopPropagation()}
+            />
+        </div>
+      )}
     </div>
   );
 };
