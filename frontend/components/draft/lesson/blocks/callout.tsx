@@ -5,7 +5,7 @@ import { revalidateLesson } from "@/lib/actions";
 import { strapiJSONToTiptapJSON, tiptapJSONToStrapiJSON } from "@/lib/utils";
 import { useCallback } from "react";
 import { debounce } from "lodash";
-import { Trash2Icon, Ban } from "lucide-react";
+import { Trash2Icon, Ban, GripVertical } from "lucide-react";
 import { CalloutBlockInput } from "@/components/ui/tiptap/callout-block-input";
 import { useState } from "react";
 import CalloutTypeTool from "@/components/ui/tiptap/toolbar/tools/callout-type-tool";
@@ -49,7 +49,10 @@ export function CalloutEditor({
   };
 
   return (
-    <>
+    <div className="flex flex-row items-center">
+      <div className="cursor-grab active:cursor-grabbing text-slate-400 hover:text-slate-600 z-10">
+        <GripVertical size={20} />
+      </div>
       <div
         className={`w-full rounded-md border border-slate-200 dark:border-slate-500 p-4 hover:shadow-md ${block.color || "bg-sky-50 dark:bg-sky-200"} `}
       >
@@ -100,6 +103,6 @@ export function CalloutEditor({
           data-testid="text-input"
         />
       </div>
-    </>
+    </div>
   );
 }
