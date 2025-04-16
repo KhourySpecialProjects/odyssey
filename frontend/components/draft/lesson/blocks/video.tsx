@@ -1,6 +1,6 @@
 "use client";
 import { Input } from "@/components/ui/input";
-import { PencilIcon, CheckIcon, Trash2Icon } from "lucide-react";
+import { PencilIcon, CheckIcon, Trash2Icon, GripVertical } from "lucide-react";
 import { useRef, useState } from "react";
 import { useOffClick } from "../../metadata/hooks/useOffClick";
 import { youtubeUrlToEmbeddedUrl, embeddedUrlToYoutubeUrl } from "@/lib/utils";
@@ -39,61 +39,66 @@ export function VideoEditor({
   */
 
   return (
-    <div
-      className={
-        "w-full text-lg rounded border hover:shadow border-slate-200 dark:border-slate-500 p-4 " +
-        (open ? "shadow-md" : "")
-      }
-      ref={ref}
-    >
-      <div className="flex items-center justify-between mb-4">
-        <div className="w-full flex flex-row  mb-4 justify-between items-center">
-          <div className="w-full flex flex-row justify-between items-center mr-4">
-            <h2 className="text-lg">Video Block</h2>
-            <Trash2Icon
-              className="cursor-pointer text-red-600 hover:text-red-700"
-              onClick={deleteBlock}
-              role="trash"
-            />
-          </div>
-
-          {open ? (
-            <CheckIcon
-              className="cursor-pointer text-slate-700 hover:text-slate-800"
-              onClick={() => {
-                setOpen(false);
-                updateBlock({
-                  __component: "droplets.video",
-                  url: youtubeUrlToEmbeddedUrl(url),
-                });
-              }}
-              role="button"
-              aria-label="save"
-            />
-          ) : (
-            <PencilIcon
-              className="cursor-pointer text-slate-700 hover:text-slate-800"
-              onClick={() => setOpen(true)}
-              role="button"
-              aria-label="edit"
-            />
-          )}
-        </div>
+    <div className="flex flex-row items-center">
+      <div className="cursor-grab active:cursor-grabbing text-slate-400 hover:text-slate-600 z-10">
+        <GripVertical size={20} />
       </div>
+      <div
+        className={
+          "w-full text-lg rounded border hover:shadow border-slate-200 dark:border-slate-500 p-4 " +
+          (open ? "shadow-md" : "")
+        }
+        ref={ref}
+      >
+        <div className="flex items-center justify-between mb-4">
+          <div className="w-full flex flex-row  mb-4 justify-between items-center">
+            <div className="w-full flex flex-row justify-between items-center mr-4">
+              <h2 className="text-lg">Video Block</h2>
+              <Trash2Icon
+                className="cursor-pointer text-red-600 hover:text-red-700"
+                onClick={deleteBlock}
+                role="trash"
+              />
+            </div>
 
-      {open ? (
-        <Input value={url} onChange={(e) => setUrl(e.target.value)} />
-      ) : (
-        <iframe
-          width="100%"
-          height="400"
-          src={block.url}
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-          allowFullScreen
-          title="Embedded YouTube video"
-          className="rounded-md"
-        />
-      )}
+            {open ? (
+              <CheckIcon
+                className="cursor-pointer text-slate-700 hover:text-slate-800"
+                onClick={() => {
+                  setOpen(false);
+                  updateBlock({
+                    __component: "droplets.video",
+                    url: youtubeUrlToEmbeddedUrl(url),
+                  });
+                }}
+                role="button"
+                aria-label="save"
+              />
+            ) : (
+              <PencilIcon
+                className="cursor-pointer text-slate-700 hover:text-slate-800"
+                onClick={() => setOpen(true)}
+                role="button"
+                aria-label="edit"
+              />
+            )}
+          </div>
+        </div>
+
+        {open ? (
+          <Input value={url} onChange={(e) => setUrl(e.target.value)} />
+        ) : (
+          <iframe
+            width="100%"
+            height="400"
+            src={block.url}
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+            title="Embedded YouTube video"
+            className="rounded-md"
+          />
+        )}
+      </div>
     </div>
   );
 }
