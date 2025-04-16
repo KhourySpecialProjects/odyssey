@@ -14,6 +14,9 @@ export interface AdminContent {
   [name: string]: React.ReactNode;
 }
 
+//WARNING: this dropdown has not been modified to retain which tab its on
+//so if each page is making calls that revalidate the page, the dropdown
+//will reset with each call
 export function ComponentDropdown({ content }: { content: AdminContent }) {
   const keys = Object.keys(content!);
   const [selected, setSelected] = React.useState(keys[0]);
