@@ -22,7 +22,7 @@ import { FriendsSelector } from "@/components/friends/friends-selector";
 export default async function AuthorProfileSettings({
   searchParams,
 }: {
-  searchParams: { tab?: string };
+  searchParams: { [key: string]: string | string[] | undefined };
 }) {
   const tab = (await searchParams)?.tab || "friends";
 
