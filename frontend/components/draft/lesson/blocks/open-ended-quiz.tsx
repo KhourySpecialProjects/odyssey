@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { OpenEndedQuizQuestion } from "@/types";
-import { TrashIcon, PlusIcon, GripVertical } from "lucide-react";
+import { TrashIcon, PlusIcon, GripVertical, Trash2Icon } from "lucide-react";
 import { GenericBlockInput as TipTapEditor } from "@/components/ui/tiptap/generic-block-input";
 import { useState } from "react";
 import { Block } from "../lesson-renderer";
@@ -75,16 +75,13 @@ export function OpenEndedQuizEditor({
         <GripVertical size={20} />
       </div>
       <div className="w-full max-w-2xl">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-xl font-bold">Open Ended Quiz</h3>
-          <Button
-            variant="ghost"
-            size="sm"
+        <div className="w-full flex flex-row mb-4 justify-between items-center p-4">
+          <h2 className="text-lg">Open Ended Quiz</h2>
+          <Trash2Icon
+            className="cursor-pointer text-red-600 hover:text-red-700 "
             onClick={deleteBlock}
-            aria-label="Delete quiz"
-          >
-            <TrashIcon className="w-4 h-4" />
-          </Button>
+            data-testid="delete-block"
+          />
         </div>
 
         <div className="space-y-6">

@@ -1,7 +1,7 @@
 import { QuizQuestion } from "@/types";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { GripVertical, PlusIcon, TrashIcon } from "lucide-react";
+import { GripVertical, PlusIcon, Trash2Icon, TrashIcon } from "lucide-react";
 import { QuizQuestionEditor } from "./quiz-question-editor";
 
 interface QuizEditorProps {
@@ -95,15 +95,15 @@ export function QuizEditor({
         <GripVertical size={20} />
       </div>
       <div className="w-full max-w-2xl">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-xl font-bold">
-            {questions[0].answerOptions[0].content === "True"
+        <div className="w-full flex flex-row mb-4 justify-between items-center p-4">
+          <h2 className="text-lg">{questions[0].answerOptions[0].content === "True"
               ? "True/False Quiz"
-              : "Multiple Choice Quiz"}
-          </h3>
-          <Button variant="ghost" size="sm" onClick={deleteBlock}>
-            <TrashIcon className="w-4 h-4" />
-          </Button>
+              : "Multiple Choice Quiz"}</h2>
+          <Trash2Icon
+            className="cursor-pointer text-red-600 hover:text-red-700 "
+            onClick={deleteBlock}
+            data-testid="delete-block"
+          />
         </div>
 
         <div className="space-y-6">

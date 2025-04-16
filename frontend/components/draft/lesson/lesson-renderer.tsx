@@ -230,7 +230,6 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
             <DraggableBlockList
               blocks={blocks}
               onReorder={handleReorderSource}
-              lesson={lesson}
               onAddBlock={handleAddBlock}
               setBlock={setBlock}
               deleteBlock={deleteBlock}

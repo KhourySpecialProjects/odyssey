@@ -1,16 +1,13 @@
 "use client";
 
 import { useCallback } from "react";
-import { Lesson } from "@/types/index.d";
 import { useDrop } from "react-dnd";
-import { cn } from "@/lib/utils";
 import { Block } from "./lesson-renderer";
 import { DraggableBlockListClient } from "./draggable_block_list_client";
 
 interface DraggableCardListProps {
   blocks: Block[];
   onReorder: (fromIndex: number, toIndex: number) => void;
-  lesson: Lesson;
   onAddBlock: (index: number, block: Block) => void;
   setBlock: (index: number) => (block: any) => void;
   deleteBlock: (index: number) => () => void;
@@ -19,7 +16,6 @@ interface DraggableCardListProps {
 export default function DraggableBlockList({
   blocks,
   onReorder,
-  lesson,
   onAddBlock,
   setBlock,
   deleteBlock,
@@ -59,7 +55,6 @@ export default function DraggableBlockList({
       <DraggableBlockListClient
         blocks={blocks}
         moveCard={moveCard}
-        lesson={lesson}
         onAddBlock={onAddBlock}
         setBlock={setBlock}
         deleteBlock={deleteBlock}

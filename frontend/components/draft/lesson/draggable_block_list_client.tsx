@@ -1,23 +1,19 @@
 "use client";
 
 import { useCallback } from "react";
-import { Lesson } from "@/types";
 import { Block } from "./lesson-renderer";
 import { AddBlock } from "./add-block";
-import { updateLesson } from "@/lib/actions";
 import DraggableBlockTile from "./draggable_block_tile";
 
 export function DraggableBlockListClient({
   blocks,
   moveCard,
-  lesson,
   onAddBlock,
   setBlock,
   deleteBlock,
 }: {
   blocks: Block[];
   moveCard: (dragIndex: number, hoverIndex: number) => void;
-  lesson: Lesson;
   onAddBlock: (index: number, block: Block) => void;
   setBlock: (index: number) => (block: any) => void;
   deleteBlock: (index: number) => () => void;
@@ -42,7 +38,6 @@ export function DraggableBlockListClient({
             <DraggableBlockTile
               block={block}
               index={index}
-              lesson={lesson}
               moveCard={moveCard}
               setBlock={setBlock}
               deleteBlock={deleteBlock}
