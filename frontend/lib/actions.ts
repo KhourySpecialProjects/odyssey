@@ -1194,7 +1194,11 @@ export async function createBatchAuthorizedUsers(emails: string[]) {
   }
 }
 
-export async function deleteLesson(id: number, revalidate: boolean = true, dropletId?: number) {
+export async function deleteLesson(
+  id: number,
+  revalidate: boolean = true,
+  dropletId?: number,
+) {
   try {
     // First, delete the droplet_lesson if dropletId is provided
     if (dropletId) {
@@ -1209,7 +1213,7 @@ export async function deleteLesson(id: number, revalidate: boolean = true, dropl
 
       // Find the droplet_lesson that connects this lesson to the droplet
       const dropletLesson = droplet.droplet_lessons.find(
-        (dl) => dl.lesson.id === id
+        (dl) => dl.lesson.id === id,
       );
 
       if (dropletLesson) {
@@ -1221,7 +1225,7 @@ export async function deleteLesson(id: number, revalidate: boolean = true, dropl
               "Content-Type": "application/json",
               Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
             },
-          }
+          },
         );
 
         if (!deleteDropletLessonResponse.ok) {
@@ -1230,7 +1234,7 @@ export async function deleteLesson(id: number, revalidate: boolean = true, dropl
         }
       }
     } else {
-      console.log("didnt recieve a droplet id")
+      console.log("didnt recieve a droplet id");
     }
 
     // Delete the lesson itself

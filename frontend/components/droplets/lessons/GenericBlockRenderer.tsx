@@ -55,8 +55,9 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
   const [isHighlighting, setIsHighlighting] = useState(false);
   const [selectedColor, setSelectedColor] = useState<HighlightColor>("#fff300");
   const currentSelectionRef = useRef<Range | null>(null);
-  const [enlargedImage, setEnlargedImage] = useState<EnlargedImage | null>(null);
-
+  const [enlargedImage, setEnlargedImage] = useState<EnlargedImage | null>(
+    null,
+  );
 
   const processLatex = (content: string) => {
     content = content.replace(/\$\$(.*?)\$\$/g, (match, latex) => {
@@ -175,7 +176,7 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
         while (
           currentNode &&
           currentPosition + (currentNode.textContent?.length || 0) <=
-          highlight.position.start
+            highlight.position.start
         ) {
           currentPosition += currentNode.textContent?.length || 0;
           currentNode = walker.nextNode();
@@ -191,7 +192,7 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
         while (
           currentNode &&
           currentPosition + (currentNode.textContent?.length || 0) <
-          highlight.position.end
+            highlight.position.end
         ) {
           currentPosition += currentNode.textContent?.length || 0;
           currentNode = walker.nextNode();
@@ -250,9 +251,6 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
     const notesBarTop = rect.top + scrollTop;
     const clickY = e.clientY + scrollTop - notesBarTop;
     setMousePositionY(clickY);
-
-
-
   };
 
   const handleMouseUp = () => {
@@ -416,13 +414,13 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
 
   const handleImageClick = (e: React.MouseEvent) => {
     const target = e.target as HTMLElement;
-    console.log("target name ", target.tagName)
-    if (target.tagName === 'IMG') {
+    console.log("target name ", target.tagName);
+    if (target.tagName === "IMG") {
       e.preventDefault();
       e.stopPropagation();
       setEnlargedImage({
-        src: target.getAttribute('src') || '',
-        alt: target.getAttribute('alt') || '',
+        src: target.getAttribute("src") || "",
+        alt: target.getAttribute("alt") || "",
       });
     }
   };
@@ -456,18 +454,17 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
         dangerouslySetInnerHTML={{ __html: block.content }}
       ></div>
 
-
       {enlargedImage && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-gray-800/50"
           onClick={handleCloseEnlarged}
         >
-            <img
-              src={enlargedImage?.src}
-              alt={enlargedImage?.alt}
-              className="w-full xl:w-auto xl:h-full max-w-[75%] max-h-[75%] object-contain absolute top-1/2 -translate-y-[40%] left-1/2 -translate-x-[50%] xl:-translate-x-[35%] bg-cyan-300"
-              onClick={(e) => e.stopPropagation()}
-            />
+          <img
+            src={enlargedImage?.src}
+            alt={enlargedImage?.alt}
+            className="w-full xl:w-auto xl:h-full max-w-[75%] max-h-[75%] object-contain absolute top-1/2 -translate-y-[40%] left-1/2 -translate-x-[50%] xl:-translate-x-[35%] bg-cyan-300"
+            onClick={(e) => e.stopPropagation()}
+          />
         </div>
       )}
     </div>
