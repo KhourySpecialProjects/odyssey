@@ -16,9 +16,16 @@ import {
   fetchSuggestionsById,
 } from "@/lib/requests/friends";
 import { BlockedUsers } from "@/components/friends/blocked-users";
-import { ComponentDropdown } from "@/components/friends/component-dropdown";
+import { ComponentDropdown } from "@/components/shared/component-dropdown";
+import { FriendsSelector } from "@/components/friends/friends-selector";
 
-export default async function AuthorProfileSettings() {
+export default async function AuthorProfileSettings({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | undefined }>;
+}) {
+  const tab = (await searchParams)?.tab || "friends";
+
   const authorizedUsers = await fetchAuthorizedUsers();
 
   const user = await getCurrentUser();
@@ -64,7 +71,7 @@ export default async function AuthorProfileSettings() {
   };
 
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col ">
       <FriendSearch
         authUsers={authorizedUsers}
         curUser={authorizedUser}
@@ -72,12 +79,31 @@ export default async function AuthorProfileSettings() {
         friendIds={friendedAuthUsers}
       ></FriendSearch>
 
-      <div className="hidden md:flex md:flex-col">
-        <AdminSelector content={content} />
-      </div>
-
-      <div className="flex flex-col md:hidden">
-        <ComponentDropdown content={content} />
+      <div className="flex flex-col">
+        <FriendsSelector
+          friends={friendsLength}
+          recieved_requests={friendReceivedRequestsLength}
+          suggestions={friendSuggestionsLength}
+          sent_requests={friendRequestsLength}
+          blocked={friendBlockedLength}
+        />
+        <div className="mt-6">
+          {tab === "friends" ? (
+            <Friends />
+          ) : tab === "recieved_requests" ? (
+            <FriendRequests
+              noProfile={false}
+              friendsPerPage={20}
+              authUser={authorizedUser}
+            />
+          ) : tab === "suggestions" ? (
+            <FriendSuggestions user={authorizedUser} />
+          ) : tab === "sent_requests" ? (
+            <FriendSentRequests />
+          ) : (
+            <BlockedUsers />
+          )}
+        </div>
       </div>
     </div>
   );

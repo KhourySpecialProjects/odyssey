@@ -5,7 +5,6 @@ import { PostHogProvider } from "posthog-js/react";
 import { useEffect } from "react";
 
 export function PHProvider({ children }: { children: React.ReactNode }) {
-
   useEffect(() => {
     // Initialize PostHog only on the client side
     posthog.init(process.env.NEXT_PUBLIC_POSTHOG_KEY || "", {
@@ -14,5 +13,4 @@ export function PHProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   return <PostHogProvider client={posthog}>{children}</PostHogProvider>;
-
 }
