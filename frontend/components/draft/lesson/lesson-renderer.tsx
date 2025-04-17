@@ -1,11 +1,6 @@
 "use client";
 
 import { Lesson, OpenEndedQuizQuestion } from "@/types";
-import { ExpandableEditor } from "@/components/draft/lesson/blocks/expandable";
-import { VideoEditor } from "@/components/draft/lesson/blocks/video";
-import { CalloutEditor } from "./blocks/callout";
-import { GenericEditor } from "./blocks/generic";
-import { AddBlock } from "./add-block";
 import { useState, useCallback, useEffect, useRef } from "react";
 import { debounce } from "lodash";
 import { updateLesson, deleteLesson } from "@/lib/actions";
@@ -15,9 +10,10 @@ import { Button } from "@/components/ui/button";
 import { DeleteLessonButton } from "./delete-lesson";
 import { useMemo } from "react";
 import { LessonNameInput } from "@/components/ui/tiptap/lesson-name-input";
-import { QuizEditor } from "./blocks/quiz";
 import { QuizQuestion } from "@/types";
-import { OpenEndedQuizEditor } from "./blocks/open-ended-quiz";
+import DraggableBlockList from "./draggable_block_list";
+import { DndProvider } from "react-dnd";
+import { HTML5Backend } from "react-dnd-html5-backend";
 import { getDropletBySlug } from "@/lib/requests/droplet";
 
 export interface BaseBlock {
@@ -74,6 +70,38 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
     [lesson.id],
   );
 
+  const deleteBlock = useCallback(
+    (index: number) => {
+      return () => {
+        const updatedBlocks = [...blocks];
+        updatedBlocks.splice(index, 1);
+        updateBlocksBackendReload(updatedBlocks);
+      };
+    },
+    [blocks, updateBlocksBackendReload],
+  );
+
+  const debounceUpdate = useMemo(
+    () => debounce(updateBlocksBackend, 1000, { maxWait: 3000 }),
+    [updateBlocksBackend],
+  );
+
+  useEffect(() => {
+    debounceUpdate(blocks);
+    return () => {
+      debounceUpdate.cancel();
+    };
+  }, [blocks, debounceUpdate]);
+
+  useEffect(() => {
+    setBlocks(lesson.blocks);
+    setLastSavedBlocks(lesson.blocks);
+  }, [lesson]);
+
+  useEffect(() => {
+    lastSavedBlocksRef.current = lastSavedBlocks;
+  }, [lastSavedBlocks]);
+
   const updateNameBackend = useCallback(
     async (name: string) => {
       const response = await updateLesson(lesson.id, { name });
@@ -100,19 +128,6 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
     [lesson.id, dropletSlug, router],
   );
 
-  const deleteLessonBackend = useCallback(async () => {
-    // const dropletId = (await getDropletBySlug(dropletSlug)).id
-    // const response = await deleteLesson(lesson.id, true, dropletId);
-    const response = await getDropletBySlug(dropletSlug).then((droplet) =>
-      deleteLesson(lesson.id, true, droplet.id),
-    );
-    console.log("response is ", response);
-    if (response && !response.error) {
-      router.replace(`/draft/d/${dropletSlug}`);
-      return;
-    }
-  }, [lesson.id, dropletSlug, router]);
-
   const setBlock = useCallback((index: number) => {
     return (block: Partial<Block>) => {
       setBlocks((prevBlocks) =>
@@ -133,36 +148,32 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
     };
   }, []);
 
-  const deleteBlock = useCallback(
-    (index: number) => {
-      return () => {
-        const updatedBlocks = [...blocks];
-        updatedBlocks.splice(index, 1);
-        updateBlocksBackendReload(updatedBlocks);
-      };
-    },
-    [blocks, updateBlocksBackendReload],
-  );
-
-  const addBlock = useCallback(
-    (index: number) => {
-      return (block: Block) => {
-        const updatedBlocks = [...blocks];
-        updatedBlocks.splice(index, 0, block);
-        updateBlocksBackendReload(updatedBlocks);
-      };
-    },
-    [blocks, updateBlocksBackendReload],
-  );
-
-  const debounceUpdate = useMemo(
-    () => debounce(updateBlocksBackend, 1000, { maxWait: 3000 }),
-    [updateBlocksBackend],
-  );
+  const deleteLessonBackend = useCallback(async () => {
+    // const dropletId = (await getDropletBySlug(dropletSlug)).id
+    // const response = await deleteLesson(lesson.id, true, dropletId);
+    const response = await getDropletBySlug(dropletSlug).then((droplet) =>
+      deleteLesson(lesson.id, true),
+    );
+    console.log("response is ", response);
+    if (response && !response.error) {
+      router.replace(`/draft/d/${dropletSlug}`);
+      return;
+    }
+  }, [lesson.id, dropletSlug, router]);
 
   const debouncedNameUpdate = useMemo(
     () => debounce(updateNameBackend, 1000),
     [updateNameBackend],
+  );
+
+  const handleAddBlock = useCallback(
+    (index: number, block: Block) => {
+      const updatedBlocks = [...blocks];
+      updatedBlocks.splice(index, 0, block);
+      setBlocks(updatedBlocks);
+      updateBlocksBackendReload(updatedBlocks);
+    },
+    [blocks, updateBlocksBackendReload],
   );
 
   useEffect(() => {
@@ -181,52 +192,14 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
     lastSavedBlocksRef.current = lastSavedBlocks;
   }, [lastSavedBlocks]);
 
-  const renderBlock = useCallback(
-    (block: Block, index: number) => {
-      const props = {
-        block,
-        updateBlock: setBlock(index),
-        deleteBlock: deleteBlock(index),
-      };
-
-      switch (block.__component) {
-        case "droplets.generic":
-          return <GenericEditor {...props} />;
-        case "droplets.expandable":
-          return <ExpandableEditor {...props} />;
-        case "droplets.video":
-          return <VideoEditor {...props} />;
-        case "droplets.callout":
-          return <CalloutEditor {...props} />;
-        case "droplets.quiz":
-          return (
-            <QuizEditor
-              block={{
-                ...(props.block as QuizBlock),
-                questions: (props.block.questions as QuizQuestion[]) || [],
-              }}
-              updateBlock={props.updateBlock}
-              deleteBlock={props.deleteBlock}
-            />
-          );
-        case "droplets.open-ended-quiz":
-          return (
-            <OpenEndedQuizEditor
-              block={{
-                ...(props.block as OpenEndedQuizBlock),
-                questions:
-                  (props.block.questions as OpenEndedQuizQuestion[]) || [],
-              }}
-              updateBlock={props.updateBlock}
-              deleteBlock={props.deleteBlock}
-            />
-          );
-        default:
-          return null;
-      }
-    },
-    [setBlock, deleteBlock],
-  );
+  const handleReorderSource = (fromIndex: number, toIndex: number) => {
+    setBlocks((current) => {
+      const newItems = [...current];
+      const [removed] = newItems.splice(fromIndex, 1);
+      newItems.splice(toIndex, 0, removed);
+      return newItems;
+    });
+  };
 
   return (
     <>
@@ -252,16 +225,17 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
       </div>
 
       <div className="space-y-4 w-full flex flex-col items-center justify-center">
-        {<AddBlock add={addBlock(0)} />}
-        {blocks.map((block, index) => (
-          <div
-            key={`${block.__component}-${block.id}`}
-            className={`w-full flex flex-col items-center justify-center max-w-2xl space-y-4`}
-          >
-            {renderBlock(block, index)}
-            <AddBlock add={addBlock(index + 1)} />
+        <DndProvider backend={HTML5Backend}>
+          <div className="w-full max-w-2xl">
+            <DraggableBlockList
+              blocks={blocks}
+              onReorder={handleReorderSource}
+              onAddBlock={handleAddBlock}
+              setBlock={setBlock}
+              deleteBlock={deleteBlock}
+            />
           </div>
-        ))}
+        </DndProvider>
       </div>
     </>
   );
