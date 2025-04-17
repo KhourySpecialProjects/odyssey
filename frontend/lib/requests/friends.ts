@@ -293,6 +293,7 @@ export async function rejectFriendRequest(userId: number, requestId: number) {
       console.error("Delete Response:", await deleteResponse.text());
       throw new Error("Failed to delete friend request");
     }
+
     revalidatePath("/settings/friends");
     return { success: true };
   } catch (error) {
