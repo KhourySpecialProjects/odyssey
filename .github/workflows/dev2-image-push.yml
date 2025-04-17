@@ -63,7 +63,7 @@ jobs:
         run: |
           aws ecs describe-task-definition \
             --task-definition ${{ secrets.ECS_FRONTEND_TASK_DEF_NAME }} \
-            --query taskDefinition \
+            --query "taskDefinition | {family, taskRoleArn, executionRoleArn, networkMode, containerDefinitions, volumes, placementConstraints, requiresCompatibilities, cpu, memory, tags, pidMode, ipcMode, proxyConfiguration, inferenceAccelerators, ephemeralStorage, runtimePlatform}" \
             > task-def.json
 
       - name: Update task definition with new image
