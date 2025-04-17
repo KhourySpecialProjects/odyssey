@@ -65,12 +65,16 @@ jobs:
             --task-definition ${{ secrets.ECS_FRONTEND_TASK_DEF_NAME }} \
             --query 'taskDefinition | {family, taskRoleArn, executionRoleArn, networkMode, containerDefinitions, volumes, placementConstraints, requiresCompatibilities, cpu, memory, tags, pidMode, ipcMode, proxyConfiguration, inferenceAccelerators, ephemeralStorage, runtimePlatform}'
             > task-def.json
+          echo "Task definition content:"
+          cat task-def.json
 
       - name: Update task definition with new image
         id: new-td
         run: |
           IMAGE_URI=${{ steps.login-ecr.outputs.registry }}/${{ secrets.ECR_DEV2_FRONTEND_REPOSITORY }}:latest
           jq --arg IMAGE_URI "$IMAGE_URI" '.containerDefinitions[0].image = $IMAGE_URI' task-def.json > new-task-def.json
+          echo "Content of new-task-def.json after update:"
+          cat new-task-def.json
 
       - name: Register new task definition revision
         id: register-task-def
