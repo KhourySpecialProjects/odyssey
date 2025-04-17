@@ -63,7 +63,7 @@ jobs:
         run: |
           aws ecs describe-task-definition \
             --task-definition ${{ secrets.ECS_FRONTEND_TASK_DEF_NAME }} \
-            --query taskDefinition \
+            --query "taskDefinition | {family, taskRoleArn, executionRoleArn, networkMode, containerDefinitions, volumes, placementConstraints, requiresCompatibilities, cpu, memory, tags, pidMode, ipcMode, proxyConfiguration, inferenceAccelerators, ephemeralStorage, runtimePlatform}" \
             > task-def.json
           echo "Task definition content:"
           cat task-def.json
@@ -76,15 +76,11 @@ jobs:
           echo "Content of new-task-def.json after update:"
           cat new-task-def.json
 
-      - name: Sanitize task definition JSON
-        run: |
-          jq 'del(.status, .revision, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy)' new-task-def.json > sanitized-task-def.json
-
       - name: Register new task definition revision
         id: register-task-def
         run: |
           NEW_TASK_DEF_ARN=$(aws ecs register-task-definition \
-            --cli-input-json file://sanitized-task-def.json \
+            --cli-input-json file://new-task-def.json \
             --query 'taskDefinition.taskDefinitionArn' \
             --output text)
           echo "TASK_DEF_ARN=$NEW_TASK_DEF_ARN" >> $GITHUB_ENV
@@ -159,15 +155,11 @@ jobs:
           IMAGE_URI=${{ steps.login-ecr.outputs.registry }}/${{ secrets.ECR_DEV2_BACKEND_REPOSITORY }}:latest
           jq --arg IMAGE_URI "$IMAGE_URI" '.containerDefinitions[0].image = $IMAGE_URI' task-def.json > new-task-def.json
 
-      - name: Sanitize task definition JSON
-        run: |
-          jq 'del(.status, .revision, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy)' new-task-def.json > sanitized-task-def.json
-
       - name: Register new task definition revision
         id: register-task-def
         run: |
           NEW_TASK_DEF_ARN=$(aws ecs register-task-definition \
-            --cli-input-json file://sanitized-task-def.json \
+            --cli-input-json file://new-task-def.json \
             --query 'taskDefinition.taskDefinitionArn' \
             --output text)
           echo "TASK_DEF_ARN=$NEW_TASK_DEF_ARN" >> $GITHUB_ENV
