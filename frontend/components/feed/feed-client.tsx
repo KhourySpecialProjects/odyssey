@@ -87,10 +87,10 @@ export function FeedClient({
               style={{ borderStyle: "dotted", borderTopStyle: "solid" }}
             ></div>
           </div>
-        ) : announcements.length > 0 ? (
+        ) : filteredAnnouncements.length > 0 ? (
           <>
             <ul className="md:w-[80%] md:mx-auto grid gap-4 grid-cols-1">
-              {announcements.map((post) => (
+              {filteredAnnouncements.map((post) => (
                 <FeedBlock
                   key={post.id}
                   announcement={post}
@@ -104,7 +104,7 @@ export function FeedClient({
                 <div className="w-6 h-6 mx-auto border-4 border-slate-500 border-t-transparent rounded-full animate-spin"
                   style={{ borderStyle: "dotted", borderTopStyle: "solid" }}></div>
               )}
-              {!hasMore && announcements.length > 0 && (
+              {!hasMore && filteredAnnouncements.length > 0 && (
                 <p className="text-slate-500">No more announcements</p>
               )}
             </div>
