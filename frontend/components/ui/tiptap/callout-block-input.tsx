@@ -60,7 +60,7 @@ export function CalloutBlockInput({
       }),
       BulletList.configure({
         HTMLAttributes: {
-          class: "callout-bullet-list", // Custom class for our bullet list
+          class: "callout-bullet-list",
         },
       }),
     ],

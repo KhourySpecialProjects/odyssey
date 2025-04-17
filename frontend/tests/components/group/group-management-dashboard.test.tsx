@@ -165,4 +165,30 @@ describe("GroupDashboard", () => {
       screen.getByText(/No droplets have been added/i),
     ).toBeInTheDocument();
   });
+
+  const mockProps = {
+    group: mockGroup,
+    canEdit: true,
+    authUser: { id: "1", timeZone: "UTC" } as any,
+    dueDates: [],
+  };
+
+  test("empty state renders correctly", () => {
+    const emptyGroup = {
+      ...mockGroup,
+      droplets: [],
+    };
+
+    render(<GroupDashboard {...mockProps} group={emptyGroup} />);
+
+    expect(
+      screen.getByText("No droplets have been added to this group yet."),
+    ).toBeInTheDocument();
+  });
+
+  test("renders correct number of items per page", () => {
+    render(<GroupDashboard {...mockProps} />);
+
+    expect(screen.getAllByText(/Droplet/)).toHaveLength(1);
+  });
 });
