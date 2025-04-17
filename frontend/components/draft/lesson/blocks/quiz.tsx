@@ -96,9 +96,11 @@ export function QuizEditor({
       </div>
       <div className="w-full max-w-2xl">
         <div className="w-full flex flex-row mb-4 justify-between items-center p-4">
-          <h2 className="text-lg">{questions[0].answerOptions[0].content === "True"
+          <h2 className="text-lg">
+            {questions[0].answerOptions[0].content === "True"
               ? "True/False Quiz"
-              : "Multiple Choice Quiz"}</h2>
+              : "Multiple Choice Quiz"}
+          </h2>
           <Trash2Icon
             className="cursor-pointer text-red-600 hover:text-red-700 "
             onClick={deleteBlock}

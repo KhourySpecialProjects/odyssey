@@ -1,0 +1,176 @@
+name: Redeploy to ECS
+
+on:
+  push:
+    branches:
+      - 'develop'
+
+jobs:
+  build-and-push-frontend-to-dev2:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION}}
+
+      - name: Login to AWS ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Build and tag Docker image
+        run: |
+          cd ./frontend
+          docker build \
+            --build-arg NEXT_PUBLIC_POSTHOG_KEY=${{ secrets.NEXT_PUBLIC_POSTHOG_KEY }} \
+            --build-arg NEXT_PUBLIC_POSTHOG_HOST=${{ secrets.NEXT_PUBLIC_POSTHOG_HOST }} \
+            -t ${{ secrets.ECR_DEV2_FRONTEND_REPOSITORY }}:latest \
+            -f ecs.Dockerfile .
+
+
+      - name: Push Docker image to ECR 
+        run: |
+          docker tag ${{ secrets.ECR_DEV2_FRONTEND_REPOSITORY }}:latest ${{ steps.login-ecr.outputs.registry }}/${{ secrets.ECR_DEV2_FRONTEND_REPOSITORY }}:latest
+          docker push ${{ steps.login-ecr.outputs.registry }}/${{ secrets.ECR_DEV2_FRONTEND_REPOSITORY }}:latest
+      
+      # - name: Set up kubectl
+      #   run: |
+      #     curl -LO "https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl"
+      #     chmod +x ./kubectl
+      #     sudo mv ./kubectl /usr/local/bin/kubectl
+
+      # - name: Verify kubectl installation
+      #   run: kubectl version --client
+
+      # - name: Configure kubectl
+      #   env:
+      #     KUBECONFIG: ${{ secrets.KUBECONFIG }}
+      #   run: |
+      #     mkdir -p $HOME/.kube
+      #     echo "${{ secrets.KUBECONFIG }}" > $HOME/.kube/config
+
+      # - name: Apply Kubernetes configuration
+      #   run: kubectl rollout restart deployment/frontend-deployment 
+
+      - name: Download existing ECS task definition
+        id: get-td
+        run: |
+          aws ecs describe-task-definition \
+            --task-definition ${{ secrets.ECS_FRONTEND_TASK_DEF_NAME }} \
+            --query 'taskDefinition | {family: family, taskRoleArn: taskRoleArn, executionRoleArn: executionRoleArn, networkMode: networkMode, containerDefinitions: containerDefinitions, volumes: volumes, placementConstraints: placementConstraints, requiresCompatibilities: requiresCompatibilities, cpu: cpu, memory: memory}' \
+            > task-def.json
+          echo "Task definition content:"
+          cat task-def.json
+
+      - name: Update task definition with new image
+        id: new-td
+        run: |
+          IMAGE_URI=${{ steps.login-ecr.outputs.registry }}/${{ secrets.ECR_DEV2_FRONTEND_REPOSITORY }}:latest
+          jq --arg IMAGE_URI "$IMAGE_URI" '.containerDefinitions[0].image = $IMAGE_URI' task-def.json > new-task-def.json
+          echo "Content of new-task-def.json after update:"
+          cat new-task-def.json
+
+      - name: Register new task definition revision
+        id: register-task-def
+        run: |
+          NEW_TASK_DEF_ARN=$(aws ecs register-task-definition \
+            --cli-input-json file://new-task-def.json \
+            --query 'taskDefinition.taskDefinitionArn' \
+            --output text)
+          echo "TASK_DEF_ARN=$NEW_TASK_DEF_ARN" >> $GITHUB_ENV
+
+      - name: Update ECS service
+        run: |
+          aws ecs update-service \
+            --cluster ${{ secrets.ECS_CLUSTER_NAME }} \
+            --service ${{ secrets.ECS_FRONTEND_SERVICE_NAME }} \
+            --task-definition ${{ env.TASK_DEF_ARN }}
+
+
+  build-and-push-backend-to-dev2:
+    runs-on: ubuntu-latest
+      
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION}}
+      
+      - name: Login to AWS ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+        
+      - name: Build and tag Docker image
+        run: |
+          cd ./backend
+          docker build -t ${{ secrets.ECR_DEV2_BACKEND_REPOSITORY }}:latest -f ecs.Dockerfile .
+        
+        
+      - name: Push Docker image to ECR
+        run: |
+          docker tag ${{ secrets.ECR_DEV2_BACKEND_REPOSITORY }}:latest ${{ steps.login-ecr.outputs.registry }}/${{ secrets.ECR_DEV2_BACKEND_REPOSITORY }}:latest
+          docker push ${{ steps.login-ecr.outputs.registry }}/${{ secrets.ECR_DEV2_BACKEND_REPOSITORY }}:latest
+              
+      # - name: Set up kubectl
+      #   run: |
+      #     curl -LO "https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl"
+      #     chmod +x ./kubectl
+      #     sudo mv ./kubectl /usr/local/bin/kubectl
+        
+      # - name: Verify kubectl installation
+      #   run: kubectl version --client
+        
+      # - name: Configure kubectl
+      #   env:
+      #     KUBECONFIG: ${{ secrets.KUBECONFIG }}
+      #   run: |
+      #     mkdir -p $HOME/.kube
+      #     echo "${{ secrets.KUBECONFIG }}" > $HOME/.kube/config
+        
+      # - name: Apply Kubernetes configuration
+      #   run: kubectl rollout restart deployment/backend-deployment
+
+      - name: Download existing ECS task definition
+        id: get-td
+        run: |
+          aws ecs describe-task-definition \
+            --task-definition ${{ secrets.ECS_BACKEND_TASK_DEF_NAME }} \
+            --query 'taskDefinition | {family: family, taskRoleArn: taskRoleArn, executionRoleArn: executionRoleArn, networkMode: networkMode, containerDefinitions: containerDefinitions, volumes: volumes, placementConstraints: placementConstraints, requiresCompatibilities: requiresCompatibilities, cpu: cpu, memory: memory}' \
+            > task-def.json
+          echo "Task definition content:"
+          cat task-def.json
+
+      - name: Update task definition with new image
+        id: new-td
+        run: |
+          IMAGE_URI=${{ steps.login-ecr.outputs.registry }}/${{ secrets.ECR_DEV2_BACKEND_REPOSITORY }}:latest
+          jq --arg IMAGE_URI "$IMAGE_URI" '.containerDefinitions[0].image = $IMAGE_URI' task-def.json > new-task-def.json
+
+      - name: Register new task definition revision
+        id: register-task-def
+        run: |
+          NEW_TASK_DEF_ARN=$(aws ecs register-task-definition \
+            --cli-input-json file://new-task-def.json \
+            --query 'taskDefinition.taskDefinitionArn' \
+            --output text)
+          echo "TASK_DEF_ARN=$NEW_TASK_DEF_ARN" >> $GITHUB_ENV
+
+      - name: Update ECS service
+        run: |
+          aws ecs update-service \
+            --cluster ${{ secrets.ECS_CLUSTER_NAME }} \
+            --service ${{ secrets.ECS_BACKEND_SERVICE_NAME }} \
+            --task-definition ${{ env.TASK_DEF_ARN }}
+        
+            

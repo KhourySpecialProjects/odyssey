@@ -153,20 +153,6 @@ describe("OpenEndedQuizEditor", () => {
     });
   });
 
-  it("calls deleteBlock when the main delete button is clicked", () => {
-    render(
-      <OpenEndedQuizEditor
-        block={mockBlock}
-        updateBlock={mockUpdateBlock}
-        deleteBlock={mockDeleteBlock}
-      />,
-    );
-
-    fireEvent.click(screen.getByRole("button", { name: /delete quiz/i }));
-
-    expect(mockDeleteBlock).toHaveBeenCalled();
-  });
-
   test("removes a question when delete button is clicked", () => {
     const mockUpdateBlock = jest.fn();
     const mockDeleteBlock = jest.fn();

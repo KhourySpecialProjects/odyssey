@@ -15,6 +15,65 @@ jest.mock("@/components/ui/tiptap/lesson-name-input", () => ({
   ),
 }));
 
+// Add this mock at the top with your other mocks
+jest.mock("@/components/draft/lesson/draggable_block_list", () => ({
+  __esModule: true,
+  default: ({ blocks, setBlock, deleteBlock }: any) => (
+    <div data-testid="draggable-block-list">
+      {blocks.map((block: any, index: number) => (
+        <div key={block.id}>
+          {block.__component === "droplets.video" && (
+            <div data-testid="video-editor">
+              Mock Video Editor
+              <button onClick={() => deleteBlock(index)()}>Delete</button>
+            </div>
+          )}
+          {block.__component === "droplets.generic" && (
+            <div data-testid="generic-editor">
+              Mock Generic Editor
+              <button onClick={() => deleteBlock(index)()}>Delete</button>
+            </div>
+          )}
+          {block.__component === "droplets.expandable" && (
+            <div data-testid="expandable-editor">
+              Mock Expandable Editor
+              <button onClick={() => deleteBlock(index)()}>Delete</button>
+            </div>
+          )}
+          {block.__component === "droplets.callout" && (
+            <div data-testid="callout-editor">
+              Mock Callout Editor
+              <button onClick={() => deleteBlock(index)()}>Delete</button>
+            </div>
+          )}
+          {block.__component === "droplets.quiz" && (
+            <div data-testid="quiz-editor">
+              Mock Quiz Editor
+              <button onClick={() => deleteBlock(index)()}>Delete</button>
+            </div>
+          )}
+          {block.__component === "droplets.open-ended-quiz" && (
+            <div data-testid="open-ended-quiz-editor">
+              Mock Open Ended Quiz Editor
+              <button onClick={() => deleteBlock(index)()}>Delete</button>
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  ),
+}));
+
+jest.mock("react-dnd", () => ({
+  useDrag: () => [{ isDragging: false }, () => {}],
+  useDrop: () => [{}, () => {}],
+  DndProvider: ({ children }: { children: React.ReactNode }) => children,
+}));
+
+jest.mock("react-dnd-html5-backend", () => ({
+  HTML5Backend: "HTML5Backend",
+}));
+
 jest.mock("@/components/draft/lesson/blocks/expandable", () => ({
   ExpandableEditor: ({ deleteBlock }: any) => (
     <div data-testid="expandable-editor">
@@ -259,9 +318,10 @@ describe("LessonRenderer", () => {
       {
         blocks: [
           {
-            id: 1,
-            __component: "droplets.generic",
-            content: "Generic content",
+            id: 2,
+            __component: "droplets.expandable",
+            content: "Expandable content",
+            title: "Expandable title",
           },
           {
             id: 3,
