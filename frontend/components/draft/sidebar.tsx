@@ -128,18 +128,6 @@ export function Sidebar({
       );
     }
   };
-  // // Handle drag end and reorder
-  // const handleDragEnd = (event: DragEndEvent) => {
-  //   const { active, over } = event;
-
-  //   if (active.id !== over?.id) {
-  //     const oldIndex = lessons.findIndex((item) => item.id === active.id);
-  //     const newIndex = lessons.findIndex((item) => item.id === over?.id);
-  //     const newLessons = arrayMove(lessons, oldIndex, newIndex);
-
-  //     handleLessonReorder(newLessons);
-  //   }
-  // };
 
   const addLessonCallback = (newLesson: Lesson) => {
     // updateDropletLessons([...lessons, newLesson]);

@@ -19,7 +19,6 @@ export function RegenerateSlugButton({
       { name: name },
       { regenerateSlug: true },
     );
-    console.log(response);
     if (response.ok && !response.error) {
       router.replace(`/draft/d/${response.data.attributes.slug}`);
     }

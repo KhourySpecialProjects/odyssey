@@ -126,7 +126,6 @@ export function PlaylistForm({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("name: ", name);
     if (!name || name === "") {
       setError("Please enter a playlist name");
       return;
@@ -160,16 +159,12 @@ export function PlaylistForm({
           existingPlaylist.id,
           updatePlaylistData,
         );
-        if (response.ok) {
-          //router.push(`/p/${response.data.attributes.slug}`);
-        } else {
+        if (!response.ok) {
           setError(response.error || "Failed to update Playlist!");
         }
       } else {
         response = await createPlaylist(playlistData);
-        if (response.ok) {
-          //router.push(`/p/${response.data.attributes.slug}`);
-        } else {
+        if (!response.ok) {
           setError(response.error || "Failed to create Playlist!");
         }
       }

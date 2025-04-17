@@ -74,7 +74,7 @@ export function OpenEndedQuizEditor({
       <div className="cursor-grab active:cursor-grabbing text-slate-400 hover:text-slate-600 z-10">
         <GripVertical size={20} />
       </div>
-      <div className="w-full max-w-2xl">
+      <div className="w-full max-w-2xl pb-4">
         <div className="w-full flex flex-row mb-4 justify-between items-center p-4">
           <h2 className="text-lg">Open Ended Quiz</h2>
           <Trash2Icon
@@ -128,7 +128,7 @@ export function OpenEndedQuizEditor({
           ))}
         </div>
 
-        <Button onClick={addQuestion} variant="outline" className="mt-4">
+        <Button onClick={addQuestion} variant="outline" className="mt-4 ">
           <PlusIcon className="w-4 h-4 mr-2" />
           Add Question
         </Button>

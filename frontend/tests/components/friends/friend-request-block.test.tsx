@@ -117,4 +117,67 @@ describe("FriendRequestBlock", () => {
       expect(toast.success).toHaveBeenCalledWith("Friend request rejected");
     });
   });
+
+  jest.mock("@/lib/requests/friends");
+
+  describe("FriendRequestBlock", () => {
+    const mockUser = {
+      id: "1",
+      friendships: [{ authorized_users: ["3", "4"] }],
+      blocked: [],
+    } as any;
+
+    const mockRequest = {
+      id: "2",
+      firstName: "Jane",
+      lastName: "Doe",
+      email: "jane@example.com",
+      blocked: [],
+    } as any;
+
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+
+    test("handles approve when friendship already exists", async () => {
+      const userWithExistingFriendship = {
+        ...mockUser,
+        friendships: [{ authorized_users: ["2"] }],
+      };
+
+      render(
+        <FriendRequestBlock
+          user={userWithExistingFriendship}
+          request={mockRequest}
+        />,
+      );
+
+      const approveButton = screen.getByRole("accept");
+      fireEvent.click(approveButton);
+
+      expect(rejectFriendRequest).toHaveBeenCalledWith("1", "2");
+    });
+
+    test("handles approve when friendship does not exist", async () => {
+      (acceptFriendRequest as jest.Mock).mockResolvedValue({ success: true });
+
+      render(<FriendRequestBlock user={mockUser} request={mockRequest} />);
+
+      const approveButton = screen.getByRole("accept");
+      fireEvent.click(approveButton);
+
+      expect(acceptFriendRequest).toHaveBeenCalledWith("1", "2");
+    });
+
+    test("handles approve failure", async () => {
+      (acceptFriendRequest as jest.Mock).mockResolvedValue({ success: false });
+
+      render(<FriendRequestBlock user={mockUser} request={mockRequest} />);
+
+      const approveButton = screen.getByRole("accept");
+      fireEvent.click(approveButton);
+
+      expect(acceptFriendRequest).toHaveBeenCalledWith("1", "2");
+    });
+  });
 });

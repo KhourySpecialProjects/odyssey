@@ -86,7 +86,6 @@ export async function evaluateExpression(
       if (definedVariableID === undefined) {
         definedVariableID = generateID();
       }
-      // Cyclic dependency! Fail early
       if (usedVars.has(definedVariableID)) {
         return undefined;
       }
@@ -109,7 +108,6 @@ export async function evaluateExpression(
       result: resNum,
     };
   } catch (e) {
-    console.log(e);
     return undefined;
   }
 }
@@ -180,8 +178,6 @@ function parseInnerVariablePart(
       } else if (mode === "after") {
         after += c;
       }
-      // Unless in a "group" {...}, go back to main mode
-      // or command
       if ((mode === "sub" || mode == "sup") && depth === 0 && !inCommand) {
         mode = "main";
       }

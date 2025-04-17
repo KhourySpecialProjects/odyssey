@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import { X } from "lucide-react"; // for the X icon
 import hljs from "highlight.js";
 import { Highlight, HighlightColor } from "@/types";
 import { HighlightDropdown } from "./highlight-dropdown";
@@ -268,7 +267,7 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
     //     span.style.backgroundColor = "rgb(0, 120, 215)";
     //     span.style.color = "white"
     //     span.style.userSelect = "text";
-    //     span.style.padding = "5px 0"; // Add vertical padding
+    //     span.style.padding = "5px 0";
     //     currentSelectionRef.current.surroundContents(span);
 
     let text = selection.toString();
