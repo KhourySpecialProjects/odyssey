@@ -10,7 +10,7 @@ const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
 
 export async function fetchAnnouncements(
   user: AuthorizedUser,
-  page?: number
+  page?: number,
 ): Promise<Announcement[]> {
   try {
     const query = qs.stringify({

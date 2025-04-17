@@ -16,7 +16,7 @@ export function FeedClient({
   authUser: AuthorizedUser;
 }) {
   const [currentPage, setCurrentPage] = useState(1);
-  const [announcements, setAnnouncements] = useState<Announcement[]>([])
+  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [isLoadingInitial, setIsLoadingInitial] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
@@ -29,15 +29,15 @@ export function FeedClient({
       setIsLoadingMore(true);
       const nextPage = currentPage + 1;
       const newAnnouncements = await fetchAnnouncements(authUser, nextPage);
-      
+
       if (newAnnouncements.length === 0) {
         setHasMore(false);
       } else {
-        setAnnouncements(prev => [...prev, ...newAnnouncements]);
+        setAnnouncements((prev) => [...prev, ...newAnnouncements]);
         setCurrentPage(nextPage);
       }
     } catch (error) {
-      console.error('Error loading more announcements:', error);
+      console.error("Error loading more announcements:", error);
     } finally {
       setIsLoadingMore(false);
     }
@@ -46,14 +46,18 @@ export function FeedClient({
   useEffect(() => {
     const grabAnnouncements = async () => {
       if (announcements.length === 0) {
-        const firstPage = await fetchAnnouncements(authUser, 1)
-        setAnnouncements(firstPage);
-        setHasMore(firstPage.length === ITEMS_PER_PAGE);
+        try {
+          const firstPage = await fetchAnnouncements(authUser, 1);
+          setAnnouncements(firstPage);
+          setHasMore(firstPage.length === ITEMS_PER_PAGE);
+        } catch (error) {
+          console.error("Error loading initial announcements:", error);
+        }
         setIsLoadingInitial(false);
       }
-    }
-    grabAnnouncements(); 
-  },[authUser]);
+    };
+    grabAnnouncements();
+  }, [authUser]);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -62,7 +66,7 @@ export function FeedClient({
           loadMoreAnnouncements();
         }
       },
-      { threshold: 0.1 }
+      { threshold: 0.1 },
     );
 
     if (observerTarget.current) {
@@ -76,13 +80,13 @@ export function FeedClient({
     selectedRoles.includes(post.type),
   );
 
-
   return (
     <section className="pb-8 content">
       <div className="rounded-md">
         {isLoadingInitial ? (
           <div className="flex justify-center items-center py-8">
             <div
+              data-testid="loading-spinner"
               className="w-6 h-6 border-4 border-slate-500 border-t-transparent rounded-full animate-spin"
               style={{ borderStyle: "dotted", borderTopStyle: "solid" }}
             ></div>
@@ -101,8 +105,10 @@ export function FeedClient({
             {/* Loading indicator and observer target */}
             <div ref={observerTarget} className="py-4 text-center">
               {isLoadingMore && (
-                <div className="w-6 h-6 mx-auto border-4 border-slate-500 border-t-transparent rounded-full animate-spin"
-                  style={{ borderStyle: "dotted", borderTopStyle: "solid" }}></div>
+                <div
+                  className="w-6 h-6 mx-auto border-4 border-slate-500 border-t-transparent rounded-full animate-spin"
+                  style={{ borderStyle: "dotted", borderTopStyle: "solid" }}
+                ></div>
               )}
               {!hasMore && filteredAnnouncements.length > 0 && (
                 <p className="text-slate-500">No more announcements</p>
