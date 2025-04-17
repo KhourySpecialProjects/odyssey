@@ -63,7 +63,7 @@ jobs:
         run: |
           aws ecs describe-task-definition \
             --task-definition ${{ secrets.ECS_FRONTEND_TASK_DEF_NAME }} \
-            --query 'taskDefinition | {family: family, taskRoleArn: taskRoleArn, executionRoleArn: executionRoleArn, networkMode: networkMode, containerDefinitions: containerDefinitions, volumes: volumes, placementConstraints: placementConstraints, requiresCompatibilities: requiresCompatibilities, cpu: cpu, memory: memory, tags: tags, pidMode: pidMode, ipcMode: ipcMode, proxyConfiguration: proxyConfiguration, inferenceAccelerators: inferenceAccelerators, ephemeralStorage: ephemeralStorage, runtimePlatform: runtimePlatform}' \
+            --query 'taskDefinition | {family: family, taskRoleArn: taskRoleArn, executionRoleArn: executionRoleArn, networkMode: networkMode, containerDefinitions: containerDefinitions, volumes: volumes, placementConstraints: placementConstraints, requiresCompatibilities: requiresCompatibilities, cpu: cpu, memory: memory}' \
             > task-def.json
           echo "Task definition content:"
           cat task-def.json
