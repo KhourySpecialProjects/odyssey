@@ -17,7 +17,6 @@ export default async function FeedPage() {
   if (!user || !user?.email) return notFound();
   const authUser = await getAuthorizedUserByEmail(user.email);
   const announcements = await fetchAnnouncements(authUser);
-  console.log("announcements are ", announcements);
 
   return (
     <>

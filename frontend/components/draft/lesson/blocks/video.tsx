@@ -18,26 +18,6 @@ export function VideoEditor({
   const { open, setOpen } = useOffClick(ref);
   const [url, setUrl] = useState(embeddedUrlToYoutubeUrl(block.url));
 
-  /*
-  const updateBackend = async (url: string) => {
-    const updatedBlocks = blocks.map((b: any) => {
-      if (b.id === id) {
-        return {
-          __component: "droplets.video",
-          url: url,
-        };
-      }
-      return b;
-    });
-    const response = await updateLesson(
-      lessonId,
-      { blocks: updatedBlocks },
-      false,
-    );
-    console.log(response);
-  };
-  */
-
   return (
     <div className="flex flex-row items-center">
       <div className="cursor-grab active:cursor-grabbing text-slate-400 hover:text-slate-600 z-10">

@@ -127,4 +127,42 @@ describe("FriendSuggestionsBlock", () => {
     expect(sendFriendRequest).toHaveBeenCalledWith(mockCurUser, mockSuggUser);
     expect(toast.success).not.toHaveBeenCalled();
   });
+
+  test("visibility when display is true and requested is false", () => {
+    render(
+      <FriendSuggestionsBlock
+        curUser={mockCurUser}
+        suggUser={mockSuggUser}
+        display={true}
+        requested={false}
+      />,
+    );
+    const mainBox = screen.getByRole("mainBox");
+    expect(mainBox).toHaveClass("visibility: visible");
+  });
+
+  test("visibility when requested is true and display is false", () => {
+    render(
+      <FriendSuggestionsBlock
+        curUser={mockCurUser}
+        suggUser={mockSuggUser}
+        display={false}
+        requested={true}
+      />,
+    );
+    const mainBox = screen.getByRole("mainBox");
+    expect(mainBox).toHaveClass("visibility: hidden");
+  });
+
+  test("displays user name when available", () => {
+    render(
+      <FriendSuggestionsBlock
+        curUser={mockCurUser}
+        suggUser={mockSuggUser}
+        display={false}
+        requested={false}
+      />,
+    );
+    expect(screen.getByText("John Doe")).toBeInTheDocument();
+  });
 });

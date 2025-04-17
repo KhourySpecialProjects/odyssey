@@ -39,7 +39,6 @@ export function PlaylistClient({ playlists }: { playlists: Playlist[] }) {
     );
     if (!value.trim()) {
       setSearchResults(playlists);
-      //return;
     } else {
       setSearchResults(filteredPlaylists);
     }

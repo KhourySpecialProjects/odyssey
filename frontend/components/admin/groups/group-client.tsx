@@ -39,7 +39,6 @@ export function GroupClient({ groups }: { groups: Group[] }) {
     );
     if (!value.trim()) {
       setSearchResults(groups);
-      //return;
     } else {
       setSearchResults(filteredGroups);
     }
