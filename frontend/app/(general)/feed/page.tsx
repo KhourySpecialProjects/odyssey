@@ -19,6 +19,8 @@ export default async function FeedPage() {
   const announcements = await fetchAnnouncements(authUser);
   console.log("announcements are ", announcements);
 
+
+
   return (
     <>
       <div className="w-full p-8 mx-auto my-4 text-center max-w-7xl">
