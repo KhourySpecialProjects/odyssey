@@ -40,7 +40,6 @@ export function DropletClient({ droplets }: { droplets: Droplet[] }) {
     );
     if (!value.trim()) {
       setSearchResults(droplets);
-      //return;
     } else {
       setSearchResults(filteredDroplets);
     }

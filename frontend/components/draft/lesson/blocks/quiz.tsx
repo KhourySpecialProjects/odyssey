@@ -1,7 +1,7 @@
 import { QuizQuestion } from "@/types";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { GripVertical, PlusIcon, Trash2Icon, TrashIcon } from "lucide-react";
+import { GripVertical, PlusIcon, Trash2Icon } from "lucide-react";
 import { QuizQuestionEditor } from "./quiz-question-editor";
 
 interface QuizEditorProps {
@@ -94,7 +94,7 @@ export function QuizEditor({
       <div className="cursor-grab active:cursor-grabbing text-slate-400 hover:text-slate-600 z-10">
         <GripVertical size={20} />
       </div>
-      <div className="w-full max-w-2xl">
+      <div className="w-full max-w-2xl pb-4">
         <div className="w-full flex flex-row mb-4 justify-between items-center p-4">
           <h2 className="text-lg">
             {questions[0].answerOptions[0].content === "True"
