@@ -1,69 +1,225 @@
-import { render, screen, fireEvent } from "@testing-library/react";
+import {
+  render,
+  screen,
+  waitFor,
+  act,
+  fireEvent,
+} from "@testing-library/react";
 import { FeedClient } from "@/components/feed/feed-client";
-import { AnnouncementType } from "@/types";
+import { AnnouncementType, Announcement, AuthorizedUser } from "@/types";
+import { fetchAnnouncements } from "@/lib/requests/feed";
+
+// Mock the fetchAnnouncements function
+jest.mock("@/lib/requests/feed", () => ({
+  fetchAnnouncements: jest.fn(),
+}));
 
 describe("FeedClient", () => {
-  const mockAnnouncements = Array.from({ length: 6 }, (_, i) => ({
-    id: i,
-    type: "droplet" as const,
-    content: `Announcement ${i}`,
-    firstCreated: new Date(),
-  }));
+  // Mock IntersectionObserver
+  const mockIntersectionObserver = jest.fn();
+  let intersectionObserverCallback: (
+    entries: { isIntersecting: boolean }[],
+  ) => void;
 
-  it("handles pagination correctly", () => {
-    render(
-      <FeedClient
-        selectedRoles={["droplet"]}
-        announcements={mockAnnouncements}
-      />,
-    );
+  beforeEach(() => {
+    // Reset all mocks
+    jest.clearAllMocks();
 
-    fireEvent.click(screen.getByText("Next"));
-    expect(screen.getByText("Announcement 5")).toBeInTheDocument();
+    // Reset fetchAnnouncements mock
+    (fetchAnnouncements as jest.Mock).mockReset();
 
-    fireEvent.click(screen.getByText("Previous"));
-    expect(screen.getByText("Announcement 0")).toBeInTheDocument();
+    mockIntersectionObserver.mockReset();
+    mockIntersectionObserver.mockImplementation((callback) => {
+      intersectionObserverCallback = callback;
+      return {
+        observe: jest.fn(),
+        unobserve: jest.fn(),
+        disconnect: jest.fn(),
+      };
+    });
+    window.IntersectionObserver = mockIntersectionObserver;
+    jest.useRealTimers();
+    jest.spyOn(console, "error").mockRestore();
   });
 
-  const mockAnnouncements2 = Array.from({ length: 25 }, (_, i) => ({
-    id: i + 1,
-    type: "playlist" as AnnouncementType,
-    content: `Announcement ${i + 1}`,
-    firstCreated: new Date(),
-    kudosGiven: false,
-  }));
-
-  it("handles pagination navigation correctly", () => {
-    render(
-      <FeedClient
-        selectedRoles={["playlist"]}
-        announcements={mockAnnouncements2}
-      />,
-    );
-
-    expect(screen.getAllByText(/Announcement/)).toHaveLength(20);
-
-    fireEvent.click(screen.getByText("Next"));
-    expect(screen.getAllByText(/Announcement/)).toHaveLength(5);
-
-    fireEvent.click(screen.getByText("Previous"));
-    expect(screen.getAllByText(/Announcement/)).toHaveLength(20);
+  afterAll(() => {
+    jest.restoreAllMocks();
   });
 
-  it("disables navigation buttons appropriately", () => {
-    render(
-      <FeedClient
-        selectedRoles={["playlist"]}
-        announcements={mockAnnouncements2}
-      />,
+  const mockAuthUser: AuthorizedUser = {
+    id: 1,
+    email: "test@test.com",
+    roles: [],
+    isEnabled: true,
+    linkedin: "",
+    github: "",
+    firstTime: false,
+    firstName: "",
+    lastName: "",
+    bio: "",
+    friendships: [],
+    sent_requests: [],
+    received_requests: [],
+    profilePhoto: "",
+    blocked: [],
+    was_blocked: [],
+    timeZone: "America/New_York",
+  };
+
+  const generateMockAnnouncements = (
+    count: number,
+    startId = 0,
+  ): Announcement[] => {
+    return Array.from({ length: count }, (_, i) => ({
+      id: startId + i,
+      type: "droplet" as AnnouncementType,
+      content: `Announcement ${startId + i}`,
+      firstCreated: new Date(),
+    }));
+  };
+
+  it("renders initial loading state", () => {
+    render(<FeedClient selectedRoles={["droplet"]} authUser={mockAuthUser} />);
+    // Find the loading spinner by its unique class and style combination
+    const loadingSpinner = screen.getByTestId("loading-spinner");
+    expect(loadingSpinner).toHaveClass(
+      "w-6 h-6 border-4 border-slate-500 border-t-transparent rounded-full animate-spin",
+    );
+    expect(loadingSpinner).toHaveStyle({
+      borderStyle: "dotted",
+      borderTopStyle: "solid",
+    });
+  });
+
+  it("loads and displays initial announcements", async () => {
+    const mockInitialAnnouncements = generateMockAnnouncements(20);
+    (fetchAnnouncements as jest.Mock).mockResolvedValueOnce(
+      mockInitialAnnouncements,
     );
 
-    expect(screen.getByText("Previous")).toHaveClass("visibility: hidden");
-    expect(screen.getByText("Next")).not.toHaveClass("visibility: hidden");
+    render(<FeedClient selectedRoles={["droplet"]} authUser={mockAuthUser} />);
 
-    fireEvent.click(screen.getByText("Next"));
+    await waitFor(() => {
+      expect(screen.getByText("Announcement 0")).toBeInTheDocument();
+    });
 
-    expect(screen.getByText("Next")).toHaveClass("visibility: hidden");
-    expect(screen.getByText("Previous")).not.toHaveClass("visibility: hidden");
+    expect(screen.getAllByText(/Announcement/)).toHaveLength(20);
+    expect(fetchAnnouncements).toHaveBeenCalledWith(mockAuthUser, 1);
+  });
+
+  it("loads more announcements when scrolling to bottom", async () => {
+    const mockInitialAnnouncements = generateMockAnnouncements(20);
+    const mockNextAnnouncements = generateMockAnnouncements(10, 20);
+
+    (fetchAnnouncements as jest.Mock)
+      .mockResolvedValueOnce(mockInitialAnnouncements)
+      .mockResolvedValueOnce(mockNextAnnouncements);
+
+    render(<FeedClient selectedRoles={["droplet"]} authUser={mockAuthUser} />);
+
+    // Wait for initial load
+    await waitFor(() => {
+      expect(screen.getByText("Announcement 0")).toBeInTheDocument();
+    });
+
+    // Simulate intersection observer callback
+    act(() => {
+      intersectionObserverCallback([{ isIntersecting: true }]);
+    });
+
+    // Wait for next page to load
+    await waitFor(() => {
+      expect(screen.getByText("Announcement 20")).toBeInTheDocument();
+    });
+
+    expect(screen.getAllByText(/Announcement/)).toHaveLength(30);
+    expect(fetchAnnouncements).toHaveBeenCalledTimes(2);
+    expect(fetchAnnouncements).toHaveBeenLastCalledWith(mockAuthUser, 2);
+  });
+
+  it("shows no more announcements message when all are loaded", async () => {
+    const mockInitialAnnouncements = generateMockAnnouncements(10);
+    const mockEmptyNextPage: Announcement[] = [];
+
+    (fetchAnnouncements as jest.Mock)
+      .mockResolvedValueOnce(mockInitialAnnouncements)
+      .mockResolvedValueOnce(mockEmptyNextPage);
+
+    render(<FeedClient selectedRoles={["droplet"]} authUser={mockAuthUser} />);
+
+    // Wait for initial load
+    await waitFor(() => {
+      expect(screen.getByText("Announcement 0")).toBeInTheDocument();
+    });
+
+    // Simulate intersection observer callback
+    act(() => {
+      intersectionObserverCallback([{ isIntersecting: true }]);
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText("No more announcements")).toBeInTheDocument();
+    });
+  });
+
+  it("filters announcements based on selected roles", async () => {
+    const mixedAnnouncements = [
+      {
+        id: 1,
+        type: "droplet" as AnnouncementType,
+        content: "Droplet Announcement",
+        firstCreated: new Date(),
+      },
+      {
+        id: 2,
+        type: "playlist" as AnnouncementType,
+        content: "Playlist Announcement",
+        firstCreated: new Date(),
+      },
+    ];
+
+    (fetchAnnouncements as jest.Mock).mockResolvedValueOnce(mixedAnnouncements);
+
+    render(<FeedClient selectedRoles={["droplet"]} authUser={mockAuthUser} />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Droplet Announcement")).toBeInTheDocument();
+      expect(
+        screen.queryByText("Playlist Announcement"),
+      ).not.toBeInTheDocument();
+    });
+  });
+
+  it("handles fetch errors gracefully and shows no announcements", async () => {
+    // Mock console.error before the test
+    const consoleSpy = jest
+      .spyOn(console, "error")
+      .mockImplementation(() => {});
+
+    // Mock the fetchAnnouncements to reject with an error
+    (fetchAnnouncements as jest.Mock).mockRejectedValueOnce(
+      new Error("Failed to fetch"),
+    );
+
+    render(<FeedClient selectedRoles={["droplet"]} authUser={mockAuthUser} />);
+
+    // Wait for the error to be logged
+    await waitFor(() => {
+      expect(consoleSpy).toHaveBeenCalledWith(
+        "Error loading initial announcements:",
+        expect.any(Error),
+      );
+    });
+
+    // Verify loading state is removed
+    await waitFor(() => {
+      expect(screen.queryByRole("status")).not.toBeInTheDocument();
+    });
+
+    // Verify error state shows no announcements message
+    expect(screen.getByText("No announcements found")).toBeInTheDocument();
+
+    // Clean up
+    consoleSpy.mockRestore();
   });
 });

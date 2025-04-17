@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "next lint",
     "test": "jest",
-    "test:watch": "jest --watch"
+    "test:watch": "jest --watch",
+    "test:failures": "jest --onlyFailures"
   },
   "dependencies": {
     "@aarkue/tiptap-math-extension": "^1.3.4",
