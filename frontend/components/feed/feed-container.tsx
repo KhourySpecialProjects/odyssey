@@ -8,6 +8,7 @@ import { Announcement, AnnouncementType, AuthorizedUser } from "@/types";
 import { BellRing, SlidersHorizontal } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { FriendRequests } from "../friends/friend-requests";
+import { createSystemAnnouncement } from "@/lib/requests/feed";
 
 export function FeedContainer({
   announcements,
@@ -22,8 +23,19 @@ export function FeedContainer({
   const [filtersExpanded, setFiltersExpanded] = useState(false);
   const [requestsExpanded, setRequestsExpanded] = useState(false);
 
+  const [index, setIndex] = useState(0);
+
+  const handleCreateAnnouncement = () => {
+    const create = async () => {
+      await createSystemAnnouncement(`announcement-${index}`, authUser)
+      setIndex(index + 1)
+    }
+    create();
+  }
+
   return (
     <div className="flex flex-row">
+      
       <div className="flex justify-end relative md:w-1/4 text-center h-full">
         <div className="absolute top-[-12px] transition-colors border rounded-md border-slate-200 dark:border-slate-500 hover:border-slate-300 bg-slate-50 dark:bg-slate-800 p-2 lg:p-4 hidden md:block min-w-[200px]">
           <div className="relative">
@@ -32,6 +44,7 @@ export function FeedContainer({
               friendsPerPage={5}
               authUser={authUser}
             ></FriendRequests>
+            <button onClick={handleCreateAnnouncement}>create announcement</button>
           </div>
         </div>
       </div>
@@ -41,7 +54,6 @@ export function FeedContainer({
           selectedRoles={selectedRoles.map(
             (role) => role.toLowerCase() as AnnouncementType,
           )}
-          announcements={announcements}
           authUser={authUser}
         />
 
