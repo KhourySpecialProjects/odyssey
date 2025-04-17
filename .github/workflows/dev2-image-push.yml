@@ -73,26 +73,26 @@ jobs:
           jq --arg IMAGE_URI "$IMAGE_URI" '.containerDefinitions[0].image = $IMAGE_URI' task-def.json > new-task-def.json
 
       - name: Sanitize task definition JSON
-      run: |
-        jq '.taskDefinition | {
-          family,
-          taskRoleArn,
-          executionRoleArn,
-          networkMode,
-          containerDefinitions,
-          volumes,
-          placementConstraints,
-          requiresCompatibilities,
-          cpu,
-          memory,
-          tags,
-          pidMode,
-          ipcMode,
-          proxyConfiguration,
-          inferenceAccelerators,
-          ephemeralStorage,
-          runtimePlatform
-        }' new-task-def.json > sanitized-task-def.json
+        run: |
+          jq '.taskDefinition | {
+            family,
+            taskRoleArn,
+            executionRoleArn,
+            networkMode,
+            containerDefinitions,
+            volumes,
+            placementConstraints,
+            requiresCompatibilities,
+            cpu,
+            memory,
+            tags,
+            pidMode,
+            ipcMode,
+            proxyConfiguration,
+            inferenceAccelerators,
+            ephemeralStorage,
+            runtimePlatform
+          }' new-task-def.json > sanitized-task-def.json
 
       - name: Register new task definition revision
         id: register-task-def
