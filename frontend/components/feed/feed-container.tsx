@@ -23,16 +23,6 @@ export function FeedContainer({
   const [filtersExpanded, setFiltersExpanded] = useState(false);
   const [requestsExpanded, setRequestsExpanded] = useState(false);
 
-  const [index, setIndex] = useState(0);
-
-  const handleCreateAnnouncement = () => {
-    const create = async () => {
-      await createSystemAnnouncement(`announcement-${index}`, authUser)
-      setIndex(index + 1)
-    }
-    create();
-  }
-
   return (
     <div className="flex flex-row">
       
@@ -44,7 +34,6 @@ export function FeedContainer({
               friendsPerPage={5}
               authUser={authUser}
             ></FriendRequests>
-            <button onClick={handleCreateAnnouncement}>create announcement</button>
           </div>
         </div>
       </div>
