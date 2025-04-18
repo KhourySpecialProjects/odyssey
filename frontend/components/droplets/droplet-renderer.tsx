@@ -1,7 +1,5 @@
 "use client";
 
-import useDebugStore from "@/stores/debug-toggle-store";
-
 export function DropletRenderer({ droplet }: any) {
   return (
     <div className="w-full mx-auto max-w-prose">

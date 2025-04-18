@@ -110,13 +110,6 @@ export default async function GroupDetailPage({ params }: Props) {
             content={createDOMPurifier.sanitize(
               group.description || "No Description Provided.",
             )}
-            // content={
-            //   <div
-            //     dangerouslySetInnerHTML={{
-            //       __html: group.description || "No description provided.",
-            //     }}
-            //   />
-            // }
           />
           {dueDates && dueDates.length > 0 && (
             <>

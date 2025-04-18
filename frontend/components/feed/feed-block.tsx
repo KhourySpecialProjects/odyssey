@@ -4,7 +4,6 @@ import { Announcement, AuthorizedUser } from "@/types";
 import Link from "next/link";
 import { KudosButton } from "./kudos-button";
 import {
-  CircleAlert,
   Droplet,
   Handshake,
   ListVideo,
