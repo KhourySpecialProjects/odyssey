@@ -25,7 +25,7 @@ export function FeedClient({
   const loadMoreAnnouncements = useCallback(async () => {
     if (isLoadingMore || !hasMore) return;
 
-    console.log("loading more announcements")
+    console.log("loading more announcements");
 
     try {
       setIsLoadingMore(true);
@@ -84,7 +84,7 @@ export function FeedClient({
     if (announcements.length !== 0) {
       loadMoreAnnouncements();
     }
-  }, [selectedRoles])
+  }, [selectedRoles]);
 
   const filteredAnnouncements = announcements.filter((post) =>
     selectedRoles.includes(post.type),
