@@ -98,9 +98,9 @@ export function FeedFilter({ onFilterChange }: FeedFilterProps) {
           <button
             id={role.value}
             onClick={() => toggleRole(role.value)}
-            className={`${selectedRoles.includes(role.value) ? "opacity-100" : "opacity-30"} focus-visible:ring-sky-500 pl-1 cursor-pointer w-[100px]`}
+            className={`${selectedRoles.includes(role.value) ? "opacity-100" : "opacity-30"} focus-visible:ring-sky-500 pl-1 cursor-pointer w-[90px]`}
           >
-            <span className="text-sm font-medium leading-none flex items-center justify-between w-full gap-1">
+            <span className="text-sm font-medium leading-none flex items-center justify-between w-full gap-1 px-1">
               {role.label}
             </span>
           </button>
