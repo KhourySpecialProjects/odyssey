@@ -25,6 +25,8 @@ export function FeedClient({
   const loadMoreAnnouncements = useCallback(async () => {
     if (isLoadingMore || !hasMore) return;
 
+    console.log("loading more announcements");
+
     try {
       setIsLoadingMore(true);
       const nextPage = currentPage + 1;
@@ -41,7 +43,7 @@ export function FeedClient({
     } finally {
       setIsLoadingMore(false);
     }
-  }, [currentPage, isLoadingMore, hasMore, authUser]);
+  }, [currentPage, isLoadingMore, hasMore, authUser, selectedRoles]);
 
   useEffect(() => {
     const grabAnnouncements = async () => {
@@ -57,8 +59,10 @@ export function FeedClient({
       }
     };
     grabAnnouncements();
-  }, [authUser]);
+  }, [authUser, selectedRoles]);
 
+  //checks if the user is at the bottom of the announcements
+  //and loads more if so
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
@@ -75,6 +79,12 @@ export function FeedClient({
 
     return () => observer.disconnect();
   }, [loadMoreAnnouncements, isLoadingInitial]);
+
+  useEffect(() => {
+    if (announcements.length !== 0) {
+      loadMoreAnnouncements();
+    }
+  }, [selectedRoles]);
 
   const filteredAnnouncements = announcements.filter((post) =>
     selectedRoles.includes(post.type),
