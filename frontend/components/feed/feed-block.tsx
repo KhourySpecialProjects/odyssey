@@ -75,21 +75,21 @@ export function FeedBlock({
             <div className="flex-1 min-w-0">
               {announcementType === "playlist" && (
                 <Link href={`/p/${announcement.playlist?.slug}`}>
-                  <p className="font-medium text-slate-900 dark:text-slate-300 max-h-24 overflow-y-auto text-left -mt-1">
+                  <p className="font-medium text-slate-900 dark:text-slate-300 text-left -mt-1">
                     {announcement.content}
                   </p>
                 </Link>
               )}
               {announcementType === "droplet" && (
                 <Link href={`/d/${announcement.droplet?.slug}`}>
-                  <p className="font-medium text-slate-900 dark:text-slate-300 max-h-24 overflow-y-auto text-left -mt-1">
+                  <p className="font-medium text-slate-900 dark:text-slate-300 text-left -mt-1">
                     {announcement.content}
                   </p>
                 </Link>
               )}
               {announcementType === "group" && (
                 <Link href={`/g/${announcement.group?.slug}`}>
-                  <p className="font-medium text-slate-900 dark:text-slate-300 max-h-24 overflow-y-auto text-left -mt-1">
+                  <p className="font-medium text-slate-900 dark:text-slate-300 text-left -mt-1">
                     {announcement.content}
                   </p>
                 </Link>
@@ -98,7 +98,7 @@ export function FeedBlock({
                 announcementType != "droplet" &&
                 announcementType != "playlist" && (
                   <>
-                    <p className="font-medium text-slate-900 dark:text-slate-300 max-h-24 overflow-y-auto text-left -mt-1">
+                    <p className="font-medium text-slate-900 dark:text-slate-300 text-left -mt-1">
                       {announcement.content}
                     </p>
                     {announcementType === "friend" &&
