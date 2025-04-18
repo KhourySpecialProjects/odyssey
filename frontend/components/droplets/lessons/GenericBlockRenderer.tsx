@@ -53,7 +53,6 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
   const [mousePositionY, setMousePositionY] = useState(0);
   const [isHighlighting, setIsHighlighting] = useState(false);
   const [selectedColor, setSelectedColor] = useState<HighlightColor>("#fff300");
-  const currentSelectionRef = useRef<Range | null>(null);
   const [enlargedImage, setEnlargedImage] = useState<EnlargedImage | null>(
     null,
   );
@@ -81,6 +80,7 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
   };
 
   useEffect(() => {
+    if (!contentRef.current) return;
     if (contentRef.current) {
       const processedContent = processLatex(block.content);
       contentRef.current.innerHTML = processedContent;
@@ -162,7 +162,9 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
       );
 
       sortedHighlights.forEach((highlight) => {
-        if (!highlight.position?.start || !highlight.position?.end) return;
+        console.log("current", highlight);
+        console.log("start", highlight.position?.start);
+        console.log("end", highlight.position?.end);
 
         const walker = document.createTreeWalker(
           contentRef.current!,
@@ -172,14 +174,18 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
         let currentPosition = 0;
         let currentNode = walker.nextNode();
 
-        while (
-          currentNode &&
-          currentPosition + (currentNode.textContent?.length || 0) <=
-            highlight.position.start
-        ) {
-          currentPosition += currentNode.textContent?.length || 0;
+        while (currentNode) {
+          const nodeLength = currentNode.textContent?.length || 0;
+          if (
+            currentPosition <= highlight.position.start &&
+            highlight.position.start <= currentPosition + nodeLength
+          ) {
+            break;
+          }
+          currentPosition += nodeLength;
           currentNode = walker.nextNode();
         }
+
         if (!currentNode) return;
 
         const startNode = currentNode;
@@ -187,15 +193,21 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
 
         let endNode = startNode;
         let endOffset = highlight.position.end - currentPosition;
+        let endPosition = currentPosition;
 
-        while (
-          currentNode &&
-          currentPosition + (currentNode.textContent?.length || 0) <
-            highlight.position.end
-        ) {
-          currentPosition += currentNode.textContent?.length || 0;
+        // Find the end node if different from start node
+        while (currentNode) {
+          const nodeLength = currentNode.textContent?.length || 0;
+          if (endPosition + nodeLength >= highlight.position.end) {
+            endNode = currentNode;
+            endOffset = Math.min(
+              nodeLength,
+              highlight.position.end - endPosition,
+            );
+            break;
+          }
+          endPosition += nodeLength;
           currentNode = walker.nextNode();
-          if (currentNode) endNode = currentNode;
         }
 
         if (currentNode) {
@@ -260,15 +272,6 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
 
     let range = selection.getRangeAt(0);
     savedSelectionRef.current = range.cloneRange();
-    //currentSelectionRef.current = range.cloneRange();
-
-    // const span = document.createElement("span");
-    //     //span.style.borderRadius = "8px";
-    //     span.style.backgroundColor = "rgb(0, 120, 215)";
-    //     span.style.color = "white"
-    //     span.style.userSelect = "text";
-    //     span.style.padding = "5px 0";
-    //     currentSelectionRef.current.surroundContents(span);
 
     let text = selection.toString();
     const latexParent = range.startContainer.parentElement?.closest(
@@ -278,10 +281,24 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
       text = decodeURIComponent(latexParent.getAttribute("data-latex") || text);
     }
     if (text.length > 0 && contentRef.current) {
-      const blockOffset = getTextOffset(
+      // Find the correct text node and offset for highlighting
+      const walker = document.createTreeWalker(
         contentRef.current,
-        range.startContainer,
+        NodeFilter.SHOW_TEXT,
       );
+
+      let currentPosition = 0;
+      let currentNode = walker.nextNode();
+      let startNode = range.startContainer;
+      let endNode = range.endContainer;
+
+      // Calculate the correct blockOffset
+      while (currentNode && currentNode !== startNode) {
+        currentPosition += currentNode.textContent?.length || 0;
+        currentNode = walker.nextNode();
+      }
+
+      const blockOffset = currentPosition;
       const startContainer = range.startContainer;
       const endContainer = range.endContainer;
       const highlightSpan =
@@ -289,6 +306,7 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
           'span[style*="background-color"]',
         ) ||
         endContainer?.parentElement?.closest('span[style*="background-color"]');
+
       if (highlightSpan) {
         popupRef.current.x = blockOffset + range.startOffset;
         popupRef.current.y = blockOffset + range.endOffset;
@@ -298,6 +316,15 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
       }
 
       if (isHighlighting && text) {
+        console.log("Starting highlight process");
+        console.log("Text:", text);
+        console.log("Range start offset:", range.startOffset);
+        console.log("Range end offset:", range.endOffset);
+        console.log("Block offset:", blockOffset);
+        console.log("Start container:", range.startContainer);
+        console.log("End container:", range.endContainer);
+        console.log("Start container parent:", range.startContainer.parentNode);
+
         onHighlight({
           text,
           position: {
@@ -306,11 +333,31 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
           },
           color: selectedColor,
         });
+
+        // Create a new range to work with
+        const newRange = document.createRange();
+        newRange.setStart(range.startContainer, range.startOffset);
+        newRange.setEnd(range.endContainer, range.endOffset);
+
+        // Create the highlight span
         const span = document.createElement("span");
         span.style.borderRadius = "8px";
         span.style.backgroundColor = selectedColor;
-        range.surroundContents(span);
+
+        // Create a text node with the selected text
+        const textNode = document.createTextNode(text);
+        span.appendChild(textNode);
+
+        // Delete the original content and insert our highlighted version
+        newRange.deleteContents();
+        newRange.insertNode(span);
+
+        // Normalize the parent to clean up any empty text nodes
+        if (span.parentNode) {
+          span.parentNode.normalize();
+        }
       }
+
       popupRef.current.x = blockOffset + range.startOffset;
       popupRef.current.y = blockOffset + range.endOffset;
       popupRef.current.highlightSpan = null;
@@ -363,12 +410,30 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
         isWithNote,
       );
       popupRef.current.highlightSpan = null;
-    }
 
-    const span = document.createElement("span");
-    span.style.borderRadius = "8px";
-    span.style.backgroundColor = selectedColor;
-    range.surroundContents(span);
+      // Create a new range to work with
+      const newRange = document.createRange();
+      newRange.setStart(range.startContainer, startOffset);
+      newRange.setEnd(range.endContainer, endOffset);
+
+      // Create the highlight span
+      const span = document.createElement("span");
+      span.style.borderRadius = "8px";
+      span.style.backgroundColor = selectedColor;
+
+      // Create a text node with the selected text
+      const textNode = document.createTextNode(text);
+      span.appendChild(textNode);
+
+      // Delete the original content and insert our highlighted version
+      newRange.deleteContents();
+      newRange.insertNode(span);
+
+      // Normalize the parent to clean up any empty text nodes
+      if (span.parentNode) {
+        span.parentNode.normalize();
+      }
+    }
   };
 
   const handleApplyColor = (color: HighlightColor) => {
@@ -413,15 +478,16 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
 
   const handleImageClick = (e: React.MouseEvent) => {
     const target = e.target as HTMLElement;
-    console.log("target name ", target.tagName);
-    if (target.tagName === "IMG") {
-      e.preventDefault();
-      e.stopPropagation();
-      setEnlargedImage({
-        src: target.getAttribute("src") || "",
-        alt: target.getAttribute("alt") || "",
-      });
+    if (target.tagName !== "IMG") {
+      return; // Early return if not an image
     }
+    console.log("target name ", target.tagName);
+    e.preventDefault();
+    e.stopPropagation();
+    setEnlargedImage({
+      src: target.getAttribute("src") || "",
+      alt: target.getAttribute("alt") || "",
+    });
   };
 
   const handleCloseEnlarged = () => {
