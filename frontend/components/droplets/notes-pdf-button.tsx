@@ -1,5 +1,4 @@
 "use client";
-import { Enrollment } from "@/types";
 import { FileTextIcon } from "lucide-react";
 
 export function NotesPdfButton({

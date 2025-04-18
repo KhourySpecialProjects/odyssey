@@ -22,7 +22,6 @@ export function ContentSection({
         {action}
       </div>
       {content ? (
-        // <p className="text-slate-600 leading-relaxed">{content}</p>
         <div
           dangerouslySetInnerHTML={{
             __html: content || "No description provided.",

@@ -154,7 +154,6 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
     const response = await getDropletBySlug(dropletSlug).then((droplet) =>
       deleteLesson(lesson.id, true),
     );
-    console.log("response is ", response);
     if (response && !response.error) {
       router.replace(`/draft/d/${dropletSlug}`);
       return;

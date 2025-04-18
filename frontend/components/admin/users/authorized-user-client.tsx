@@ -49,7 +49,6 @@ export function AuthorizedUserClient({
     );
     if (!value.trim()) {
       setSearchResults(authorizedUsers);
-      //return;
     } else {
       setSearchResults(filteredUsers);
     }

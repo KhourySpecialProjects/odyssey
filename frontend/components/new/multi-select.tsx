@@ -139,7 +139,10 @@ export function MultiSelect({
                     </CommandItem>
                   );
                 })}
-                <div className="flex pt-3" onClick={() => setIsOpen(true)}>
+                <div
+                  className={`flex pt-3 ${label === "Tags" ? "visibility: visible" : "visibility: hidden"}`}
+                  onClick={() => setIsOpen(true)}
+                >
                   <Plus size={20} />
                   Add Tag
                 </div>
