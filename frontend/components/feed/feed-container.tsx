@@ -84,7 +84,8 @@ export function FeedContainer({
           )}
         >
           <div>
-            <div className=" dark:bg-slate-800 bg-slate-50 rounded-md p-4">
+            <div className=" dark:bg-slate-800 bg-slate-50 rounded-md p-4 px-2">
+              Friend Requests
               <FriendRequests
                 noProfile={true}
                 friendsPerPage={5}

@@ -82,7 +82,7 @@ export function FriendRequestFeedBlock({
 
         <div className="flex flex-col gap-1 justify-center">
           <Button
-            className="bg-emerald-400 dark:bg-emerald-700 dark:hover:bg-emerald-800 hover:text-white hover:bg-emerald-600 text-white mr-3 flex items-center justify-center"
+            className="bg-emerald-400 dark:bg-emerald-700 dark:hover:bg-emerald-800 hover:text-white hover:bg-emerald-600 text-white flex items-center justify-center"
             style={{ height: "20px", width: "50px" }}
             size="sm"
             variant="outline"
