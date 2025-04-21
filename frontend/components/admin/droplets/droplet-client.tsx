@@ -22,18 +22,6 @@ export function DropletClient({ droplets }: { droplets: Droplet[] }) {
     startIndex + ITEMS_PER_PAGE,
   );
 
-  const handleNextPage = () => {
-    if (currentPage < totalPages) {
-      setCurrentPage((prev) => prev + 1);
-    }
-  };
-
-  const handlePrevPage = () => {
-    if (currentPage > 1) {
-      setCurrentPage((prev) => prev - 1);
-    }
-  };
-
   const handleInputChange = (value: string) => {
     const filteredDroplets = droplets.filter((droplet) =>
       droplet.name?.toLowerCase().includes(value.toLowerCase()),

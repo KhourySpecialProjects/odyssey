@@ -33,6 +33,8 @@ export function FriendSuggestionsBlock({
       }
     });
   };
+  console.log("current", curUser.id)
+  console.log("suggested", suggUser.id)
 
   return (
     <div
@@ -81,12 +83,12 @@ export function FriendSuggestionsBlock({
             setIsOpen={setOpen}
           />
 
-          <div className="inline-flex items-center">
+          <div className={`inline-flex items-center ${suggUser.id === curUser.id ? "visibility: hidden" : "visibility: visible"}`}>
             <Button
               size="sm"
               disabled={requested}
               onClick={handleRequest}
-              className="text-white bg-sky-600 dark:bg-sky-600 dark:text-white dark:hover:bg-sky-700 hover:bg-sky-700 hidden md:block w-32"
+              className={`text-white bg-sky-600 dark:bg-sky-600 dark:text-white dark:hover:bg-sky-700 hover:bg-sky-700 hidden md:block w-32`}
             >
               {requested ? "Sent!" : "Send Request"}
             </Button>

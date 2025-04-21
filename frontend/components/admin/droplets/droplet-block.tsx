@@ -7,9 +7,13 @@ import { Pencil } from "lucide-react";
 import { useFormStatus } from "react-dom";
 import { toast } from "sonner";
 import Link from "next/link";
+import { redirect, usePathname } from "next/navigation";
+import { useRouter } from "next/navigation";
 
 export function DropletBlock({ droplet }: { droplet: Droplet }) {
   const linkTo = `/draft/d/${droplet.slug}`;
+  const path = usePathname();
+  const router = useRouter();
 
   const handleUpdateDroplet = async () => {
     const result = await updateDroplet(
@@ -28,6 +32,7 @@ export function DropletBlock({ droplet }: { droplet: Droplet }) {
       toast.success(
         `Droplet ${!droplet.isHidden ? "hidden" : "shown"} successfully`,
       );
+      router.refresh()
     } else {
       toast.error("Failed to update droplet visibility");
       console.error(result.error);
