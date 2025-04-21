@@ -26,6 +26,7 @@ import { AuthorizedUserRoleTitle } from "@/lib/globals";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Textarea } from "@/components/ui/textarea";
+import { useRouter } from "next/navigation";
 
 export function AuthorizedUserBlock({ user }: { user: AuthorizedUser }) {
   const [open, setOpen] = useState(false);
@@ -95,7 +96,10 @@ export function AuthorizedUserBlock({ user }: { user: AuthorizedUser }) {
 
   const handleUpdateUser = async (formData: FormData) => {
     await updateAuthorizedUser(formData);
+    router.refresh()
   };
+
+  const router = useRouter()
 
   const handleEditUser = async (formData: FormData) => {
     const result = await updateUserInfo(
@@ -108,6 +112,7 @@ export function AuthorizedUserBlock({ user }: { user: AuthorizedUser }) {
     );
     if (result.success) {
       toast.success("Information updated successfully");
+      router.refresh()
     } else {
       toast.error("Failed to update information");
     }
@@ -301,8 +306,7 @@ function SubmitButton({
   return (
     <Button
       type="submit"
-      size="sm"
-      variant={destructive ? "destructive" : "link"}
+      className={destructive ? "bg-red-400 dark:bg-red-400" : "bg-slate-100 dark:bg-slate-100"}
       aria-disabled={pending}
     >
       {children}
