@@ -162,9 +162,6 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
       );
 
       sortedHighlights.forEach((highlight) => {
-        console.log("current", highlight);
-        console.log("start", highlight.position?.start);
-        console.log("end", highlight.position?.end);
 
         const walker = document.createTreeWalker(
           contentRef.current!,
@@ -195,7 +192,6 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
         let endOffset = highlight.position.end - currentPosition;
         let endPosition = currentPosition;
 
-        // Find the end node if different from start node
         while (currentNode) {
           const nodeLength = currentNode.textContent?.length || 0;
           if (endPosition + nodeLength >= highlight.position.end) {
@@ -281,7 +277,6 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
       text = decodeURIComponent(latexParent.getAttribute("data-latex") || text);
     }
     if (text.length > 0 && contentRef.current) {
-      // Find the correct text node and offset for highlighting
       const walker = document.createTreeWalker(
         contentRef.current,
         NodeFilter.SHOW_TEXT,
@@ -292,7 +287,6 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
       let startNode = range.startContainer;
       let endNode = range.endContainer;
 
-      // Calculate the correct blockOffset
       while (currentNode && currentNode !== startNode) {
         currentPosition += currentNode.textContent?.length || 0;
         currentNode = walker.nextNode();
@@ -316,14 +310,6 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
       }
 
       if (isHighlighting && text) {
-        console.log("Starting highlight process");
-        console.log("Text:", text);
-        console.log("Range start offset:", range.startOffset);
-        console.log("Range end offset:", range.endOffset);
-        console.log("Block offset:", blockOffset);
-        console.log("Start container:", range.startContainer);
-        console.log("End container:", range.endContainer);
-        console.log("Start container parent:", range.startContainer.parentNode);
 
         onHighlight({
           text,
@@ -334,25 +320,20 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
           color: selectedColor,
         });
 
-        // Create a new range to work with
         const newRange = document.createRange();
         newRange.setStart(range.startContainer, range.startOffset);
         newRange.setEnd(range.endContainer, range.endOffset);
 
-        // Create the highlight span
         const span = document.createElement("span");
         span.style.borderRadius = "8px";
         span.style.backgroundColor = selectedColor;
 
-        // Create a text node with the selected text
         const textNode = document.createTextNode(text);
         span.appendChild(textNode);
 
-        // Delete the original content and insert our highlighted version
         newRange.deleteContents();
         newRange.insertNode(span);
 
-        // Normalize the parent to clean up any empty text nodes
         if (span.parentNode) {
           span.parentNode.normalize();
         }
@@ -411,25 +392,20 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
       );
       popupRef.current.highlightSpan = null;
 
-      // Create a new range to work with
       const newRange = document.createRange();
       newRange.setStart(range.startContainer, startOffset);
       newRange.setEnd(range.endContainer, endOffset);
 
-      // Create the highlight span
       const span = document.createElement("span");
       span.style.borderRadius = "8px";
       span.style.backgroundColor = selectedColor;
 
-      // Create a text node with the selected text
       const textNode = document.createTextNode(text);
       span.appendChild(textNode);
 
-      // Delete the original content and insert our highlighted version
       newRange.deleteContents();
       newRange.insertNode(span);
 
-      // Normalize the parent to clean up any empty text nodes
       if (span.parentNode) {
         span.parentNode.normalize();
       }
@@ -479,9 +455,8 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
   const handleImageClick = (e: React.MouseEvent) => {
     const target = e.target as HTMLElement;
     if (target.tagName !== "IMG") {
-      return; // Early return if not an image
+      return; 
     }
-    console.log("target name ", target.tagName);
     e.preventDefault();
     e.stopPropagation();
     setEnlargedImage({
