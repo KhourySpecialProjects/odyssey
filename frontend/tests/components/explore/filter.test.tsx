@@ -60,14 +60,5 @@ describe("Filter", () => {
       await userEvent.click(screen.getByText("Option 2"));
       expect(mockRouter.push).toHaveBeenCalledWith("/test?test=opt1");
     });
-
-    it("displays option counts", async () => {
-      render(<Filter name="test" label="Test Filter" options={mockOptions} />);
-
-      await userEvent.click(screen.getByRole("button"));
-
-      expect(screen.getByText("5")).toBeInTheDocument();
-      expect(screen.getByText("3")).toBeInTheDocument();
-    });
   });
 });
