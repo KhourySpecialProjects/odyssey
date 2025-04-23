@@ -54,6 +54,7 @@ export function DraggableTileListClient({
           <Button
             size="sm"
             variant="outline"
+            type="button"
             onClick={handlePrevPage}
             disabled={currentPage === 1}
             className={`${currentPage === 1 ? "visibility: hidden" : "visibility: visible"} dark:bg-slate-300 dark:text-black`}
@@ -63,6 +64,7 @@ export function DraggableTileListClient({
           <Button
             size="sm"
             variant="outline"
+            type="button"
             onClick={handleNextPage}
             disabled={currentPage >= totalPages}
             className={`${currentPage >= totalPages ? "visibility: hidden" : "visibility: visible"} dark:bg-slate-300 dark:text-black`}

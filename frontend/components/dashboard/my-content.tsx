@@ -34,7 +34,8 @@ export async function MyContent({
   );
   const activeGroups = allGroups.filter(
     (group) =>
-      !group.users_archived?.some((user) => user.id === authorizedUser.id),
+      !group.users_archived?.some((user) => user.id === authorizedUser.id) &&
+      !group.isArchived,
   );
   const archivedGroups = allGroups.filter((group) =>
     group.users_archived?.some((user) => user.id === authorizedUser.id),

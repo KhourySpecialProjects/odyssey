@@ -162,7 +162,6 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
       );
 
       sortedHighlights.forEach((highlight) => {
-
         const walker = document.createTreeWalker(
           contentRef.current!,
           NodeFilter.SHOW_TEXT,
@@ -310,7 +309,6 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
       }
 
       if (isHighlighting && text) {
-
         onHighlight({
           text,
           position: {
@@ -455,7 +453,7 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
   const handleImageClick = (e: React.MouseEvent) => {
     const target = e.target as HTMLElement;
     if (target.tagName !== "IMG") {
-      return; 
+      return;
     }
     e.preventDefault();
     e.stopPropagation();

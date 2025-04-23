@@ -33,8 +33,6 @@ export function FriendSuggestionsBlock({
       }
     });
   };
-  console.log("current", curUser.id)
-  console.log("suggested", suggUser.id)
 
   return (
     <div
@@ -83,7 +81,9 @@ export function FriendSuggestionsBlock({
             setIsOpen={setOpen}
           />
 
-          <div className={`inline-flex items-center ${suggUser.id === curUser.id ? "visibility: hidden" : "visibility: visible"}`}>
+          <div
+            className={`inline-flex items-center ${suggUser.id === curUser.id ? "visibility: hidden" : "visibility: visible"}`}
+          >
             <Button
               size="sm"
               disabled={requested}
