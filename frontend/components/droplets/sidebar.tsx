@@ -31,10 +31,7 @@ export default function Sidebar({
 }: {
   user?: User | null;
   author: boolean;
-  droplet: Pick<
-    Droplet,
-    "name" | "slug" | "droplet_lessons" | "shouldBeLocked"
-  >;
+  droplet: Pick<Droplet, "name" | "slug" | "droplet_lessons">;
   authorizedUser: AuthorizedUser | null;
   completedLessonIds: number[];
 }) {
@@ -170,7 +167,6 @@ export default function Sidebar({
                       : null;
                   const isLocked =
                     previousLesson &&
-                    !(droplet.shouldBeLocked === false) &&
                     !completedLessonIds.includes(previousLesson.id) &&
                     !author &&
                     !isAdmin;

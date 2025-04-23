@@ -149,7 +149,6 @@ export type Droplet = {
   isHidden: boolean;
   status: DropletStatus;
   droplet_lessons: DropletLesson[];
-  shouldBeLocked?: boolean;
   authorized_users?: AuthorizedUser[];
   isArchived?: boolean;
 };
