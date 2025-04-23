@@ -15,24 +15,12 @@ export function DropletClient({ droplets }: { droplets: Droplet[] }) {
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchItem] = useState("");
   const [searchResults, setSearchResults] = useState<Droplet[]>(droplets);
-  const totalPages = Math.ceil(droplets.length / ITEMS_PER_PAGE);
+  const totalPages = Math.ceil(searchResults.length / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
   const paginatedDroplets = searchResults.slice(
     startIndex,
     startIndex + ITEMS_PER_PAGE,
   );
-
-  const handleNextPage = () => {
-    if (currentPage < totalPages) {
-      setCurrentPage((prev) => prev + 1);
-    }
-  };
-
-  const handlePrevPage = () => {
-    if (currentPage > 1) {
-      setCurrentPage((prev) => prev - 1);
-    }
-  };
 
   const handleInputChange = (value: string) => {
     const filteredDroplets = droplets.filter((droplet) =>

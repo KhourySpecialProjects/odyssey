@@ -134,7 +134,6 @@ export function PlaylistForm({
       setError("Please select at least one droplet");
       return;
     }
-    setIsOpen(true);
 
     const updatePlaylistData = {
       name,
@@ -162,6 +161,8 @@ export function PlaylistForm({
         if (!response.ok) {
           setError(response.error || "Failed to update Playlist!");
         }
+        console.log("here");
+        setIsOpen(true);
       } else {
         response = await createPlaylist(playlistData);
         if (!response.ok) {
@@ -296,6 +297,7 @@ export function PlaylistForm({
             before={<SearchIcon />}
             onClick={() => updateQueryString(tempQuery)}
             className="dark:bg-slate-300"
+            type="button"
           >
             <span className="sr-only md:not-sr-only">Search</span>
           </Button>

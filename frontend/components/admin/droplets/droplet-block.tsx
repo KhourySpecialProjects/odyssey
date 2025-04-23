@@ -7,11 +7,19 @@ import { Pencil } from "lucide-react";
 import { useFormStatus } from "react-dom";
 import { toast } from "sonner";
 import Link from "next/link";
+import { useState } from "react";
 
-export function DropletBlock({ droplet }: { droplet: Droplet }) {
+export function DropletBlock({
+  droplet: initialDroplet,
+}: {
+  droplet: Droplet;
+}) {
+  const [droplet, setDroplet] = useState(initialDroplet);
   const linkTo = `/draft/d/${droplet.slug}`;
 
   const handleUpdateDroplet = async () => {
+    setDroplet((prev) => ({ ...prev, isHidden: !prev.isHidden }));
+
     const result = await updateDroplet(
       droplet.id,
       {
@@ -29,6 +37,7 @@ export function DropletBlock({ droplet }: { droplet: Droplet }) {
         `Droplet ${!droplet.isHidden ? "hidden" : "shown"} successfully`,
       );
     } else {
+      setDroplet((prev) => ({ ...prev, isHidden: !prev.isHidden }));
       toast.error("Failed to update droplet visibility");
       console.error(result.error);
     }
