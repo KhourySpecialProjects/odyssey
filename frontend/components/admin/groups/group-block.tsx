@@ -5,13 +5,16 @@ import { updateGroup } from "@/lib/requests/groups";
 import { Group } from "@/types";
 import { Pencil } from "lucide-react";
 import Link from "next/link";
+import { useState } from "react";
 import { useFormStatus } from "react-dom";
 import { toast } from "sonner";
 
-export function GroupBlock({ group }: { group: Group }) {
+export function GroupBlock({ group: initialGroup }: { group: Group }) {
+  const [group, setGroup] = useState(initialGroup);
   const linkTo = `/g/management?slug=${group.slug}`;
 
   const handleUpdateGroup = async () => {
+    setGroup((prev) => ({ ...prev, isArchived: !prev.isArchived }));
     const result = await updateGroup(group.id, {
       isArchived: !group.isArchived,
       groupName: group.groupName,

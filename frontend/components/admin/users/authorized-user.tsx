@@ -27,7 +27,12 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Textarea } from "@/components/ui/textarea";
 
-export function AuthorizedUserBlock({ user }: { user: AuthorizedUser }) {
+export function AuthorizedUserBlock({
+  user: initialUser,
+}: {
+  user: AuthorizedUser;
+}) {
+  const [user, setUser] = useState(initialUser);
   const [open, setOpen] = useState(false);
   const isAdmin = isAuthorizedUserAdmin(user.roles.map((role) => role.title));
   const [firstName, setFirstName] = useState(user.firstName || "");
@@ -94,7 +99,9 @@ export function AuthorizedUserBlock({ user }: { user: AuthorizedUser }) {
   });
 
   const handleUpdateUser = async (formData: FormData) => {
-    await updateAuthorizedUser(formData);
+    setUser((prev) => ({ ...prev, isEnabled: !prev.isEnabled }));
+
+    const result = await updateAuthorizedUser(formData);
   };
 
   const handleEditUser = async (formData: FormData) => {
@@ -301,8 +308,11 @@ function SubmitButton({
   return (
     <Button
       type="submit"
-      size="sm"
-      variant={destructive ? "destructive" : "link"}
+      className={
+        destructive
+          ? "bg-red-400 dark:bg-red-400 dark:hover:bg-red-300"
+          : "bg-slate-100 dark:bg-slate-100"
+      }
       aria-disabled={pending}
     >
       {children}

@@ -1,7 +1,6 @@
 import { FriendRequests } from "@/components/friends/friend-requests";
 import { FriendSuggestions } from "@/components/friends/friend-suggestions";
 import { Friends } from "@/components/friends/friends";
-import { AdminSelector } from "@/components/shared/selector";
 import { getCurrentUser } from "@/lib/auth/session";
 import { notFound } from "next/navigation";
 import {
@@ -16,7 +15,6 @@ import {
   fetchSuggestionsById,
 } from "@/lib/requests/friends";
 import { BlockedUsers } from "@/components/friends/blocked-users";
-import { ComponentDropdown } from "@/components/shared/component-dropdown";
 import { FriendsSelector } from "@/components/friends/friends-selector";
 
 export default async function AuthorProfileSettings({
@@ -52,23 +50,6 @@ export default async function AuthorProfileSettings({
   const friendSuggestionsLength = await (
     await fetchSuggestionsById(authorizedUser.id)
   ).length;
-
-  const content = {
-    [`Friends (${friendsLength})`]: <Friends />,
-    [`Friend Requests (${friendReceivedRequestsLength})`]: (
-      <FriendRequests
-        key={1}
-        noProfile={false}
-        friendsPerPage={20}
-        authUser={authorizedUser}
-      />
-    ),
-    [`People You May Know (${friendSuggestionsLength})`]: (
-      <FriendSuggestions user={authorizedUser} />
-    ),
-    [`Sent Requests (${friendRequestsLength})`]: <FriendSentRequests />,
-    [`Blocked Users (${friendBlockedLength})`]: <BlockedUsers />,
-  };
 
   return (
     <div className="flex flex-col ">

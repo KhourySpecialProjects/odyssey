@@ -1,13 +1,11 @@
 "use client";
 import { AuthorizedUser } from "@/types";
 import { AuthorizedUserBlock } from "./authorized-user";
-import { ChangeEvent, useCallback, useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
+import { useCallback, useState } from "react";
 import { PageNav } from "@/components/ui/page-nav";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
-import { debounce, filter } from "lodash";
+import { debounce } from "lodash";
 
 const ITEMS_PER_PAGE = 20;
 
@@ -21,24 +19,12 @@ export function AuthorizedUserClient({
   const [searchResults, setSearchResults] =
     useState<AuthorizedUser[]>(authorizedUsers);
 
-  const totalPages = Math.ceil(authorizedUsers.length / ITEMS_PER_PAGE);
+  const totalPages = Math.ceil(searchResults.length / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
   const paginatedUsers = searchResults.slice(
     startIndex,
     startIndex + ITEMS_PER_PAGE,
   );
-
-  const handleNextPage = () => {
-    if (currentPage < totalPages) {
-      setCurrentPage((prev) => prev + 1);
-    }
-  };
-
-  const handlePrevPage = () => {
-    if (currentPage > 1) {
-      setCurrentPage((prev) => prev - 1);
-    }
-  };
 
   const handleInputChange = (value: string) => {
     const filteredUsers = authorizedUsers.filter(
