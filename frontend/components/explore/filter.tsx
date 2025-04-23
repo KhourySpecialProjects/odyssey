@@ -126,11 +126,11 @@ export function Filter({
                       <CheckIcon className="w-4 h-4" />
                     </div>
                     <span>{option.label}</span>
-                    {option.count ? (
+                    {/* {option.count ? (
                       <span className="flex items-center justify-center w-4 h-4 ml-auto font-mono text-xs">
                         {option.count}
                       </span>
-                    ) : null}
+                    ) : null} */}
                   </CommandItem>
                 );
               })}
