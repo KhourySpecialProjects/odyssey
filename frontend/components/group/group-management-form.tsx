@@ -305,6 +305,8 @@ export function GroupManagementForm({
           existingGroup.id,
         );
         router.push("/g/dashboard?tab=creator");
+      } else {
+        router.push("/g/dashboard?tab=creator");
       }
     } catch (error) {
       console.error("Failed to make group announcement: ", error);
