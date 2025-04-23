@@ -30,7 +30,7 @@ import { getHighlights } from "@/lib/requests/highlights";
 
 interface LessonRendererProps {
   lesson: Lesson;
-  droplet: Pick<Droplet, "id" | "droplet_lessons" | "shouldBeLocked">;
+  droplet: Pick<Droplet, "id" | "droplet_lessons">;
   enrollmentId?: string;
   completedLessonIds: number[];
   user?: User | null;
@@ -138,7 +138,6 @@ export function LessonRenderer({
 
   const isLocked =
     previousLesson &&
-    !(droplet.shouldBeLocked === false) &&
     !completedLessonIds.includes(previousLesson.id) &&
     !author &&
     !(user && isAuthorizedUserAdmin(user.roles));

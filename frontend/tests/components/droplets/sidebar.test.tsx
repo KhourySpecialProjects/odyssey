@@ -146,7 +146,6 @@ describe("Sidebar", () => {
           },
         },
       ],
-      shouldBeLocked: false,
     },
     authorizedUser: null,
     completedLessonIds: [],
