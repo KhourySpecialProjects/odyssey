@@ -59,9 +59,9 @@ export function MultiSelect({
       if (tagName) {
         const result = await createNewTag(tagName);
         if (result.success) {
-          toast.success("tag created successfully");
+          toast.success("Tag created successfully");
         } else {
-          console.error("failed to create tag", result.error);
+          console.error("Failed to create tag", result.error);
         }
         setIsOpen(false);
       }
