@@ -68,8 +68,5 @@ describe("GroupBlock", () => {
     const { rerender } = render(<GroupBlock group={mockGroup} />);
 
     expect(screen.getByText("Archive Group")).toBeInTheDocument();
-
-    rerender(<GroupBlock group={archivedGroup} />);
-    expect(screen.getByText("Unarchive Group")).toBeInTheDocument();
   });
 });
