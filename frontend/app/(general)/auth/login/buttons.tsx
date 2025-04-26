@@ -24,7 +24,7 @@ export default function LoginButtons({
             after={<ArrowRightIcon />}
             className="dark:bg-slate-300"
           >
-            Log in with {provider.name}
+            {provider.name === "Azure Active Directory" ? "Log in with My Northeastern" : `Log in with  ${provider.name}`}
           </Button>
         </div>
       ))}

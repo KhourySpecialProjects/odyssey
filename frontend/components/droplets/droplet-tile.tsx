@@ -174,7 +174,7 @@ export function DropletTile({
                   } else if (daysUntil > 0) {
                     return `Due in ${daysUntil} days`;
                   } else {
-                    return "This Droplet is Late!";
+                    return "Late!";
                   }
                 })()}
               </Badge>
