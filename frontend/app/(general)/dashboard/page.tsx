@@ -12,7 +12,7 @@ export default async function DashboardRoute({ searchParams }: Props) {
     <>
       <div className="w-full p-8 mx-auto my-4 max-w-7xl text-center">
         <h1 className="text-3xl font-bold tracking-tight light:text-slate-900 sm:text-4xl">
-          My Dashboard
+          Dashboard
         </h1>
         <p className="mt-4 text-lg leading-normal light:text-slate-600 text-balance">
           View and manage your enrolled content
