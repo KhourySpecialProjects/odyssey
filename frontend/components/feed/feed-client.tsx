@@ -25,8 +25,6 @@ export function FeedClient({
   const loadMoreAnnouncements = useCallback(async () => {
     if (isLoadingMore || !hasMore) return;
 
-    console.log("loading more announcements");
-
     try {
       setIsLoadingMore(true);
       const nextPage = currentPage + 1;
