@@ -72,7 +72,7 @@ describe("FriendSentRequestsBlock", () => {
       mockUser.id,
       mockRequest.id,
     );
-    expect(toast.success).toHaveBeenCalledWith("Friend request rejected");
+    expect(toast.success).toHaveBeenCalledWith("Friend request removed");
   });
 
   it("handles cancel request failed", async () => {
@@ -85,7 +85,7 @@ describe("FriendSentRequestsBlock", () => {
       mockUser.id,
       mockRequest.id,
     );
-    expect(toast.error).toHaveBeenCalledWith("Failed to reject friend request");
+    expect(toast.error).toHaveBeenCalledWith("Failed to remove friend request");
   });
 
   it("renders user information correctly", () => {

@@ -30,8 +30,8 @@ export default async function SignIn() {
             Log In
           </h2>
           <p className="mt-4 text-lg leading-normal text-slate-600 dark:text-slate-300 text-balance">
-            Authenticate with GitHub or with your Northeastern 
-            account to access Khoury Odyssey.
+            Authenticate with GitHub or with your Northeastern account to access
+            Khoury Odyssey.
           </p>
         </div>
 
