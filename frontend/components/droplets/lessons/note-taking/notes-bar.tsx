@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/popover";
 import { deleteNote } from "@/lib/actions";
 import { updateNotePosition } from "@/lib/requests/notes";
+import { Badge } from "@/components/ui/badge";
 
 export function NotesBar({
   userId,
@@ -158,6 +159,7 @@ export function NotesBar({
 
       const clickY = e.clientY + scrollTop - notesBarTop;
       setMousePositionY(clickY);
+      console.log("mouse y is ", mousePositionY);
 
       const rightOffset = ((rect.right - e.clientX) / rect.width) * 100;
       setMousePositionX(100 - rightOffset);
@@ -173,17 +175,17 @@ export function NotesBar({
       //If we want to add input box before Note is created. Better response time.
       const newNote: Note = {
         id: 0,
-        content: "",
+        content: "Loading...",
         lesson: lesson,
         enrollment: {} as Enrollment,
-        positionY: mousePositionY - 300,
+        positionY: mousePositionY,
       };
       const tempNotes = notes;
       tempNotes.push(newNote);
       setNotes(tempNotes);
 
       const enrollment = await getEnrollByID(String(enrollmentId));
-      const result = await createNote(lesson, enrollment, mousePositionY - 300);
+      const result = await createNote(lesson, enrollment, mousePositionY);
 
       if (result.success) {
         await fetchNotes();
@@ -225,6 +227,7 @@ export function NotesBar({
     <div className="">
       <div className={`text-center mt-5`}>
         <h1 className="text-2xl font-extrabold">My Notes</h1>
+        <Badge className="bg-sky-100 text-slate-600 hover:bg-sky-100">Click anywhere to create a note</Badge>
       </div>
 
       <div
@@ -263,8 +266,8 @@ export function NotesBar({
                 ${draggedNote?.id === note.id ? "cursor-grabbing" : ""}
                 ${focused === note.id ? "z-20" : "z-0"}`}
             style={{
-              top: `${note.positionY + 195}px`,
-              //top: `${Math.max(0, Math.min(note.positionY, window.innerHeight - 100))}px`,
+              top: `${note.positionY}px`,
+              //top: `${Math.max(0, Math.min(note.positionY, window.innerHeight - 100))}px`, fhseihfhe
               transform: `translateY(-50%)`,
             }}
             onMouseDown={(e) => handleDragStart(note, e)}
