@@ -131,7 +131,7 @@ export function NoteBlock({
             <div className="flex flex-row justify-between w-full">
               <Badge
                 variant="secondary"
-                className={`text-center text-slate-700 bg-slate-200 border border-slate-400 hover:text-white dark:hover:bg-slate-800`}
+                className={`text-center text-slate-700 bg-slate-200 border border-slate-400 hover:bg-slate-200`}
               >
                 General Note
               </Badge>
