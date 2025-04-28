@@ -39,7 +39,7 @@ export function HighlightDropdown({
 
   return (
     <div
-      className={`fixed flex ${expanded ? "right-[355px] top-36 md:top-36 xs:top-44 flex-col" : "right-0 top-36 flex-col"} gap-2 z-20`}
+      className={`fixed flex ${expanded ? "right-[355px] top-36 md:top-36 xs:top-44 flex-col" : "right-5 top-36 flex-col"} gap-2 z-20`}
     >
       <div
         className={`dark:bg-slate-700 dark:text-white border dark:border-white border-black z-30 bg-blue-100 p-2 rounded shadow-lg`}

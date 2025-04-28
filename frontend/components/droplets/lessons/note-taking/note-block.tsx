@@ -47,10 +47,10 @@ export function NoteBlock({
   }, [content, note.id, onUpdate]);
 
   function stripHtml(html: string): string {
-    if (!html) return "";
+    if (!html) return "General Note";
     const div = document.createElement("div");
     div.innerHTML = html;
-    return div.textContent || div.innerText || "";
+    return div.textContent || div.innerText || "General Note";
   }
 
   const getHighlightColor = (color: string | undefined) => {
@@ -137,7 +137,7 @@ export function NoteBlock({
             <div className="flex flex-row justify-start w-full">
               <Badge
                 variant="secondary"
-                className={`text-center text-slate-700 bg-slate-200 border border-slate-400 hover:bg-slate-200`}
+                className={`text-center text-slate-700 bg-slate-200 border border-slate-400 hover:bg-slate-200 py-1 text-sm`}
               >
                 {noteExpanded
                   ? "General Note"
@@ -160,11 +160,11 @@ export function NoteBlock({
             <div className={`w-full ${noteExpanded ? "hidden" : ""}`}></div>
             {!noteExpanded ? (
               <ChevronDown
-                className="dark:bg-slate-800 rounded-tr-md"
+                className="dark:bg-slate-700 rounded-tr-md"
                 data-testid="chevrondown"
               />
             ) : (
-              <ChevronUp className="dark:bg-slate-800 rounded-tr-md" />
+              <ChevronUp className="dark:bg-slate-700 rounded-tr-md" />
             )}
           </button>
 
