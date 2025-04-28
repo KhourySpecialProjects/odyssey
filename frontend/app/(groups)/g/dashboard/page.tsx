@@ -85,7 +85,7 @@ export default async function GroupsPage({ searchParams }: Props) {
     <div className="w-full max-w-7xl p-8 mx-auto space-y-12 my-4">
       <div className="text-center">
         <h1 className="text-3xl font-bold tracking-tight light:text-slate-900 sm:text-4xl">
-          My Groups
+          Groups
         </h1>
         <p className="mt-4 text-lg leading-normal light:text-slate-600 text-balance">
           View and manage your group information

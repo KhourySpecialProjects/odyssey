@@ -115,7 +115,7 @@ export function ProfileBlock({
           </DialogDescription>
           <FriendCompletedDroplets friend={otherUser} />
           <div
-            className={`inline-flex items-center gap-2 ${otherUser === user || user.blocked.includes(otherUser) ? "visibility: hidden" : "visibility: visible"}`}
+            className={`inline-flex items-center gap-2 ${otherUser.id === user.id || user.blocked.includes(otherUser) ? "visibility: hidden" : "visibility: visible"}`}
             onClick={handleBlock}
             data-testid="block-button-container"
           >

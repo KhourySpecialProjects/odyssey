@@ -38,7 +38,7 @@ describe("Logo", () => {
     const logoImage = screen.getByAltText("Khoury Odyssey Logo");
     expect(logoImage).toHaveAttribute(
       "src",
-      expect.stringMatching("/logo.svg"),
+      expect.stringContaining("/_next/image?url=%2Flogo.png&w=256&q=75"),
     );
   });
 

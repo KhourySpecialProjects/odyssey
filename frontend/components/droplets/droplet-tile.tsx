@@ -127,30 +127,31 @@ export function DropletTile({
   }
 
   return (
-    <li className="transition-colors border rounded-md border-slate-200 dark:border-slate-500 hover:border-slate-300 bg-slate-50 dark:bg-slate-800 h-full p-2">
-      <Button
-        size="sm"
-        onClick={changeVisibility}
-        className={`${isArchived === true || isArchived === false ? "visibility: visible" : "visibility: hidden"} bg-white dark:bg-slate-300 hover:bg-slate-300`}
-      >
-        <div className="relative group">
-          {isArchived ? (
-            <ArchiveRestore className="text-purple-800" />
-          ) : (
-            <Archive className="text-purple-800" />
-          )}
-          <span className="absolute left-1/2 transform -translate-x-1/2 top-full mt-1 w-max px-2 py-1 text-xs text-white bg-gray-800 rounded opacity-0 group-hover:opacity-100 transition-opacity">
-            {isArchived ? "Unarchive" : "Archive"}
-          </span>
-        </div>
-      </Button>
-      <Link
-        className="relative inline-flex w-full p-6"
-        href={
-          (droplet.status == "draft" ? `/draft` : "") + `/d/${droplet.slug}`
-        }
-      >
-        <div className="flex flex-col justify-end gap-3">
+    <Link
+      href={(droplet.status == "draft" ? `/draft` : "") + `/d/${droplet.slug}`}
+    >
+      <li className="transition-colors border rounded-md border-slate-200 dark:border-slate-500 hover:border-slate-300 bg-slate-50 dark:bg-slate-800 h-full p-2">
+        <Button
+          size="sm"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            changeVisibility();
+          }}
+          className={`${isArchived === true || isArchived === false ? "visibility: visible" : "visibility: hidden"} bg-white dark:bg-slate-300 hover:bg-slate-300`}
+        >
+          <div className="relative group">
+            {isArchived ? (
+              <ArchiveRestore className="text-purple-800" />
+            ) : (
+              <Archive className="text-purple-800" />
+            )}
+            <span className="absolute left-1/2 transform -translate-x-1/2 top-full mt-1 w-max px-2 py-1 text-xs text-white bg-gray-800 rounded opacity-0 group-hover:opacity-100 transition-opacity">
+              {isArchived ? "Unarchive" : "Archive"}
+            </span>
+          </div>
+        </Button>
+        <div className="flex flex-col justify-end gap-3 p-4">
           <div className="flex flex-row flex-wrap flex-0 gap-1.5">
             {droplet.status == "draft" ? (
               <Badge variant="destructive">Draft</Badge>
@@ -174,7 +175,7 @@ export function DropletTile({
                   } else if (daysUntil > 0) {
                     return `Due in ${daysUntil} days`;
                   } else {
-                    return "This Droplet is Late!";
+                    return "Late!";
                   }
                 })()}
               </Badge>
@@ -217,7 +218,7 @@ export function DropletTile({
             </div>
           ) : null}
         </div>
-      </Link>
-    </li>
+      </li>
+    </Link>
   );
 }

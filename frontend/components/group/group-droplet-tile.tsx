@@ -63,7 +63,7 @@ export function GroupDropletTile({
                     } else if (daysUntil > 0) {
                       return `Due ${finalDate}`;
                     } else {
-                      return "This Droplet is Late!";
+                      return "Late!";
                     }
                   })()}
                 </Badge>

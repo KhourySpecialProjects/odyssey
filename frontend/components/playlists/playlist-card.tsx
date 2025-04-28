@@ -75,7 +75,7 @@ export function PlaylistCard({
                       ? `Due ${finalDate}`
                       : `Due in ${daysUntil} days`;
                   } else {
-                    return "This Droplet is Late!";
+                    return "Late!";
                   }
                 })()}
               </Badge>
