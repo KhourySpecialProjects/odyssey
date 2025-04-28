@@ -227,7 +227,7 @@ export function NotesBar({
     <div className="">
       <div className={`text-center mt-5 mb-10`}>
         <h1 className="text-2xl font-extrabold">My Notes</h1>
-        <Badge className="bg-sky-100 text-slate-600 hover:bg-sky-100">Click anywhere to create a note</Badge>
+        <Badge className="bg-sky-100 dark:text-white dark:bg-slate-700 border border-slate-400 dark:border-white text-slate-600 hover:bg-sky-100">Click anywhere to create a note</Badge>
       </div>
 
       <div
@@ -277,13 +277,13 @@ export function NotesBar({
                   ${!focused || focused === note.id ? "opacity-100" : "opacity-30"}
                   ${draggedNote?.id !== note.id ? "scale-100" : "scale-105"}`}
             >
-              <NoteBlock
-                note={note}
-                onUpdate={fetchNotes}
-                disabled={noteDisabled}
-                onDelete={handleDeleteNote}
-                onFocus={setFocused}
-              />
+                <NoteBlock
+                  note={note}
+                  onUpdate={fetchNotes}
+                  disabled={noteDisabled}
+                  onDelete={handleDeleteNote}
+                  onFocus={setFocused}
+                />
             </div>
           </div>
         ))}
