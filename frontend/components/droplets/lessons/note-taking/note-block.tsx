@@ -69,7 +69,7 @@ export function NoteBlock({
       Underline,
       StartingKit,
       Placeholder.configure({
-        placeholder: "Nothing here yet...",
+        placeholder: "Type something...",
         emptyEditorClass:
           "cursor-text before:content-[attr(data-placeholder)] before:text-gray-500 dark:before:text-black before:absolute before:top-3 before:left-3 before:pointer-events-none before:select-none",
       }),

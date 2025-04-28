@@ -83,7 +83,7 @@ export function DropletLessonWrapper({
           <>
             <div
               className={cn(
-                "absolute min-w-[375px] lg:w-[25%] min-h-screen h-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-500",
+                "absolute min-w-[375px] min-h-screen h-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-500",
                 "z-10 overflow-y-hidden sliding-notes-bar",
                 expanded
                   ? "right-0 top-0 visibility: visible "
