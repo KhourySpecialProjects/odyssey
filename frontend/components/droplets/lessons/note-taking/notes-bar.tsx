@@ -60,12 +60,12 @@ export function NotesBar({
       if (!draggedNote) return;
       let newPosition = e.pageY - dragOffset;
 
-      if (newPosition < -100) {
-        newPosition = -100;
+      if (newPosition < 50) {
+        newPosition = 50;
       }
 
-      if (pageHeight && newPosition > pageHeight - 450) {
-        newPosition = pageHeight - 450;
+      if (pageHeight && newPosition > pageHeight - 350) {
+        newPosition = pageHeight - 350;
       }
 
       setNotes((prev) =>
@@ -178,14 +178,14 @@ export function NotesBar({
         content: "Loading...",
         lesson: lesson,
         enrollment: {} as Enrollment,
-        positionY: mousePositionY,
+        positionY: mousePositionY + 50,
       };
       const tempNotes = notes;
       tempNotes.push(newNote);
       setNotes(tempNotes);
 
       const enrollment = await getEnrollByID(String(enrollmentId));
-      const result = await createNote(lesson, enrollment, mousePositionY);
+      const result = await createNote(lesson, enrollment, mousePositionY + 50);
 
       if (result.success) {
         await fetchNotes();
@@ -225,7 +225,7 @@ export function NotesBar({
 
   return (
     <div className="">
-      <div className={`text-center mt-5`}>
+      <div className={`text-center mt-5 mb-10`}>
         <h1 className="text-2xl font-extrabold">My Notes</h1>
         <Badge className="bg-sky-100 text-slate-600 hover:bg-sky-100">Click anywhere to create a note</Badge>
       </div>
