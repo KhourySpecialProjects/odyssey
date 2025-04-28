@@ -174,7 +174,9 @@ export function CreateDropletForm({
           </div>
           <div className="flex lg:flex-row xs:flex-col items-start justify-start gap-y-8 gap-x-10">
             <div className="lg:w-1/2 xs:w-full">
-              <div className="font-semibold text-sm py-1.5">Tags</div>
+              <div className="font-semibold text-sm py-1.5">
+                Tags <span className="text-red-500">*</span>
+              </div>
               <MultiSelect
                 label="Tags"
                 items={tags}

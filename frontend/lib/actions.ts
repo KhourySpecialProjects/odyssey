@@ -1233,8 +1233,6 @@ export async function deleteLesson(
           // Continue with lesson deletion even if droplet_lesson deletion fails
         }
       }
-    } else {
-      console.log("didnt recieve a droplet id");
     }
 
     // Delete the lesson itself
