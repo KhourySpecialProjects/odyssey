@@ -34,7 +34,7 @@ export function NoteBlock({
   onFocus: (focused: number | null) => void;
 }) {
   const [content, setContent] = useState(note.content);
-  const [toolbarVisible, setToolbarVisible] = useState(false);
+  const [noteExpanded, setNoteExpanded] = useState(true);
   const [focused, setFocused] = useState(false);
 
   const handleBlur = useCallback(async () => {
@@ -45,6 +45,13 @@ export function NoteBlock({
       onUpdate();
     }
   }, [content, note.id, onUpdate]);
+
+  function stripHtml(html: string): string {
+    if (!html) return "";
+    const div = document.createElement("div");
+    div.innerHTML = html;
+    return div.textContent || div.innerText || "";
+  }
 
   const getHighlightColor = (color: string | undefined) => {
     switch (color) {
@@ -125,20 +132,41 @@ export function NoteBlock({
                 {note.highlight.text.substring(0, 25)}{" "}
                 {note.highlight.text.length > 25 ? "..." : ""}
               </Badge>
-              <MessageSquareText className="text-slate-[#6c6060] dark:text-slate-300" />
             </div>
           ) : (
-            <div className="flex flex-row justify-between w-full">
+            <div className="flex flex-row justify-start w-full">
               <Badge
                 variant="secondary"
                 className={`text-center text-slate-700 bg-slate-200 border border-slate-400 hover:bg-slate-200`}
               >
-                General Note
+                {noteExpanded
+                  ? "General Note"
+                  : (
+                    <>
+                      {stripHtml(content).substring(0, 15)}
+                      {stripHtml(content).length > 15 ? "..." : ""}
+                    </>
+                  )
+                }
               </Badge>
-
-              <FileText className="text-slate-[#6c6060] dark:text-slate-300" />
             </div>
           )}
+
+
+          <button
+            className={`ml-auto ${noteExpanded ? "" : "flex flex-row justify-between w-full"} `}
+            onClick={() => setNoteExpanded(!noteExpanded)}
+          >
+            <div className={`w-full ${noteExpanded ? "hidden" : ""}`}></div>
+            {!noteExpanded ? (
+              <ChevronDown
+                className="dark:bg-slate-800 rounded-tr-md"
+                data-testid="chevrondown"
+              />
+            ) : (
+              <ChevronUp className="dark:bg-slate-800 rounded-tr-md" />
+            )}
+          </button>
 
           <Button
             className="p-0 mb-1 ml-2 h-full bg-red-700 dark:bg-red-700 hover:bg-red-900 dark:hover:bg-red-900 trash-icon"
@@ -153,41 +181,29 @@ export function NoteBlock({
           </Button>
         </div>
 
-        <div
-          onBlur={() => {
-            handleBlur(), onFocus(null), setFocused(false);
-          }}
-          onFocus={() => {
-            onFocus(note.id), setFocused(true);
-          }}
-        >
-          <div className="bg-white dark:bg-slate-800 flex flex-row items-center w-full rounded-tl-md border dark:border-slate-500 rounded-tr-md">
-            <div className="flex-grow" data-testid="toolbar">
-              {toolbarVisible && (
+        {noteExpanded ? (
+          <div
+            onBlur={() => {
+              handleBlur(), onFocus(null), setFocused(false);
+            }}
+            onFocus={() => {
+              onFocus(note.id), setFocused(true);
+            }}
+          >
+            <div className="bg-white dark:bg-slate-800 flex flex-row items-center w-full rounded-tl-md border dark:border-slate-500 rounded-tr-md">
+              <div className="flex-grow" data-testid="toolbar">
                 <DefaultToolbar editor={editor!} note={true} />
-              )}
+              </div>
             </div>
-            <button
-              className={`ml-auto ${toolbarVisible ? "" : "flex flex-row justify-between w-full"} `}
-              onClick={() => setToolbarVisible(!toolbarVisible)}
-            >
-              <div className={`w-full ${toolbarVisible ? "hidden" : ""}`}></div>
-              {!toolbarVisible ? (
-                <ChevronDown
-                  className="dark:bg-slate-800 rounded-tr-md"
-                  data-testid="chevrondown"
-                />
-              ) : (
-                <ChevronUp className="dark:bg-slate-800 rounded-tr-md" />
-              )}
-            </button>
+            <EditorContent
+              name="lesson-generic"
+              editor={editor}
+              data-testid="editor"
+            />
           </div>
-          <EditorContent
-            name="lesson-generic"
-            editor={editor}
-            data-testid="editor"
-          />
-        </div>
+        ) : (
+          <div />
+        )}
       </div>
     </div>
   );
