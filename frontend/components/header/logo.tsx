@@ -17,7 +17,7 @@ export function Logo({ width, height }: { width: number; height: number }) {
   const image =
     theme === "dark" || resolvedTheme === "dark"
       ? "/logo_dark.png"
-      : "/logo.svg";
+      : "/logo.png";
 
   return (
     <Image

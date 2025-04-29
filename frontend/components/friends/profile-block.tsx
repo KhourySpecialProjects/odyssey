@@ -25,12 +25,14 @@ export function ProfileBlock({
   isOpen,
   setIsOpen,
   isFeed,
+  isProfile,
 }: {
   user: AuthorizedUser;
   otherUser: AuthorizedUser;
   isOpen: boolean;
   setIsOpen: (member: boolean) => void;
   isFeed: boolean;
+  isProfile?: boolean;
 }) {
   const handleBlock = () => {
     startTransition(async () => {
@@ -53,7 +55,7 @@ export function ProfileBlock({
               size="sm"
               className="bg-sky-300 text-black hover:bg-sky-400 dark:bg-sky-300 dark:hover:bg-sky-400 hidden md:block"
             >
-              View Profile
+              {isProfile ? "Preview Profile" : "View Profile"}
             </Button>
 
             <Button
@@ -115,7 +117,7 @@ export function ProfileBlock({
           </DialogDescription>
           <FriendCompletedDroplets friend={otherUser} />
           <div
-            className={`inline-flex items-center gap-2 ${otherUser === user || user.blocked.includes(otherUser) ? "visibility: hidden" : "visibility: visible"}`}
+            className={`inline-flex items-center gap-2 ${otherUser.id === user.id || user.blocked.includes(otherUser) ? "visibility: hidden" : "visibility: visible"}`}
             onClick={handleBlock}
             data-testid="block-button-container"
           >

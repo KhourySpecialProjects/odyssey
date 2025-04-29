@@ -17,7 +17,6 @@ import { AuthorizedUser } from "@/types";
 import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
 import { DarkMode } from "../explore/dark-mode";
 import { Logo } from "./logo";
-import { createSystemAnnouncement } from "@/lib/requests/feed";
 
 export async function Header() {
   const user = await getCurrentUser();

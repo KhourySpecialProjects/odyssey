@@ -23,9 +23,9 @@ export function FriendSentRequestsBlock({
     startTransition(async () => {
       const result = await cancelFriendRequest(user.id, request.id);
       if (result.success) {
-        toast.success("Friend request rejected");
+        toast.success("Friend request removed");
       } else {
-        toast.error("Failed to reject friend request");
+        toast.error("Failed to remove friend request");
       }
     });
   };
