@@ -135,7 +135,7 @@ describe("NoteBlock", () => {
       />,
     );
 
-    const toggleButton = screen.getByTestId("chevrondown");
+    const toggleButton = screen.getByTestId("chevronup");
     await userEvent.click(toggleButton);
 
     expect(screen.getByTestId("toolbar")).toBeInTheDocument();
