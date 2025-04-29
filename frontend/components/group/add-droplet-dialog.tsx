@@ -33,7 +33,9 @@ export function AddDropletDialog({
     if (open) {
       getDroplets().then((droplets) => {
         const filtered = droplets.filter(
-          (d) => !currentDroplets.find((cd) => cd.id === d.id),
+          (d) =>
+            !currentDroplets.find((cd) => cd.id === d.id) &&
+            d.status !== "draft",
         );
         setAvailableDroplets(filtered);
       });

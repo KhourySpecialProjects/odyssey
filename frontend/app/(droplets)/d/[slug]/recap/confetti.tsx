@@ -34,7 +34,7 @@ export function Confetti() {
     });
 
     const image = new Image();
-    image.src = "/logo.svg";
+    image.src = "/logo.png";
     image.onload = () => {
       if (!ctx) return;
 

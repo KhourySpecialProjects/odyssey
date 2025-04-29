@@ -9,23 +9,19 @@ import { FeedClient } from "@/components/feed/feed-client";
 import { AnnouncementType, Announcement, AuthorizedUser } from "@/types";
 import { fetchAnnouncements } from "@/lib/requests/feed";
 
-// Mock the fetchAnnouncements function
 jest.mock("@/lib/requests/feed", () => ({
   fetchAnnouncements: jest.fn(),
 }));
 
 describe("FeedClient", () => {
-  // Mock IntersectionObserver
   const mockIntersectionObserver = jest.fn();
   let intersectionObserverCallback: (
     entries: { isIntersecting: boolean }[],
   ) => void;
 
   beforeEach(() => {
-    // Reset all mocks
     jest.clearAllMocks();
 
-    // Reset fetchAnnouncements mock
     (fetchAnnouncements as jest.Mock).mockReset();
 
     mockIntersectionObserver.mockReset();
@@ -80,7 +76,6 @@ describe("FeedClient", () => {
 
   it("renders initial loading state", () => {
     render(<FeedClient selectedRoles={["droplet"]} authUser={mockAuthUser} />);
-    // Find the loading spinner by its unique class and style combination
     const loadingSpinner = screen.getByTestId("loading-spinner");
     expect(loadingSpinner).toHaveClass(
       "w-6 h-6 border-4 border-slate-500 border-t-transparent rounded-full animate-spin",
@@ -117,17 +112,14 @@ describe("FeedClient", () => {
 
     render(<FeedClient selectedRoles={["droplet"]} authUser={mockAuthUser} />);
 
-    // Wait for initial load
     await waitFor(() => {
       expect(screen.getByText("Announcement 0")).toBeInTheDocument();
     });
 
-    // Simulate intersection observer callback
     act(() => {
       intersectionObserverCallback([{ isIntersecting: true }]);
     });
 
-    // Wait for next page to load
     await waitFor(() => {
       expect(screen.getByText("Announcement 20")).toBeInTheDocument();
     });
@@ -147,12 +139,10 @@ describe("FeedClient", () => {
 
     render(<FeedClient selectedRoles={["droplet"]} authUser={mockAuthUser} />);
 
-    // Wait for initial load
     await waitFor(() => {
       expect(screen.getByText("Announcement 0")).toBeInTheDocument();
     });
 
-    // Simulate intersection observer callback
     act(() => {
       intersectionObserverCallback([{ isIntersecting: true }]);
     });
@@ -191,19 +181,16 @@ describe("FeedClient", () => {
   });
 
   it("handles fetch errors gracefully and shows no announcements", async () => {
-    // Mock console.error before the test
     const consoleSpy = jest
       .spyOn(console, "error")
       .mockImplementation(() => {});
 
-    // Mock the fetchAnnouncements to reject with an error
     (fetchAnnouncements as jest.Mock).mockRejectedValueOnce(
       new Error("Failed to fetch"),
     );
 
     render(<FeedClient selectedRoles={["droplet"]} authUser={mockAuthUser} />);
 
-    // Wait for the error to be logged
     await waitFor(() => {
       expect(consoleSpy).toHaveBeenCalledWith(
         "Error loading initial announcements:",
@@ -211,15 +198,12 @@ describe("FeedClient", () => {
       );
     });
 
-    // Verify loading state is removed
     await waitFor(() => {
       expect(screen.queryByRole("status")).not.toBeInTheDocument();
     });
 
-    // Verify error state shows no announcements message
     expect(screen.getByText("No announcements found")).toBeInTheDocument();
 
-    // Clean up
     consoleSpy.mockRestore();
   });
 });

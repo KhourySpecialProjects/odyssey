@@ -89,7 +89,6 @@ describe("FeedBlock", () => {
         <FeedBlock announcement={invalidAnnouncement} authUser={mockUser} />,
       );
 
-      // Wait for next tick to allow for async operations
       setTimeout(() => {
         expect(consoleErrorSpy).toHaveBeenCalledWith(
           "Error formatting date:",
@@ -124,7 +123,6 @@ describe("FeedBlock", () => {
         <FeedBlock announcement={nullDateAnnouncement} authUser={mockUser} />,
       );
 
-      // Wait for next tick to allow for async operations
       setTimeout(() => {
         expect(consoleErrorSpy).toHaveBeenCalledWith(
           "Error formatting date:",

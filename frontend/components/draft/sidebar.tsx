@@ -81,7 +81,7 @@ export function Sidebar({
   const handleDropletPost = async () => {
     try {
       await createDropletAnnouncement(droplet.name, droplet.id);
-      router.push(`/explore`);
+      router.push(`/drafts`);
     } catch (error) {
       console.error("Failed to make playlist announcement: ", error);
     }
@@ -196,19 +196,18 @@ export function Sidebar({
         <div className="flex flex-col h-full py-4 overflow-y-auto xl:justify-between xl:pb-0 bg-slate-50 dark:bg-slate-800">
           <div className="px-3">
             <div className="flex flex-row justify-between pr-2">
-              <Link
+              <Button
                 type="button"
-                href="/explore"
                 onClick={() => setIsOpen(true)}
                 className={cn(
-                  "flex items-center justify-start text-base gap-2",
+                  "flex items-center justify-start text-base gap-2 bg-slate-50 text-black hover:bg-slate-100 dark:bg-slate-800 dark:text-white dark:hover:bg-slate-700",
                 )}
               >
                 <div className="w-6 flex justify-center">
                   <ArrowLeftIcon className="shrink-0 w-5 h-5" />
                 </div>
                 <Home data-testid="home" />
-              </Link>
+              </Button>
               <div className="w-full"></div>
 
               <button
@@ -235,7 +234,7 @@ export function Sidebar({
 
                     <div className="flex flex-col gap-4 mt-4">
                       <Button onClick={handleDropletPost}>Share</Button>
-                      <Button onClick={() => router.push(`/explore`)}>
+                      <Button onClick={() => router.push(`/drafts`)}>
                         Not Now
                       </Button>
                     </div>

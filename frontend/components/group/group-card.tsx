@@ -40,28 +40,33 @@ export function GroupCard({
   }
 
   return (
-    <div className="transition-colors border dark:bg-slate-800 rounded-md border-slate-200 dark:border-slate-500 hover:border-slate-300 bg-slate-50 h-full p-2">
-      <Button
-        size="sm"
-        onClick={changeVisibility}
-        className={`${isArchived === true || isArchived === false ? "visibility: visible" : "visibility: hidden"} bg-white dark:bg-slate-300 hover:bg-slate-300`}
-      >
-        <div className="relative group">
-          {isArchived ? (
-            <ArchiveRestore className="text-purple-800" />
-          ) : (
-            <Archive className="text-purple-800" />
-          )}
-          <span className="absolute left-1/2 transform -translate-x-1/2 top-full mt-1 w-max px-2 py-1 text-xs text-white bg-gray-800 rounded opacity-0 group-hover:opacity-100 transition-opacity">
-            {isArchived ? "Unarchive" : "Archive"}
-          </span>
-        </div>
-      </Button>
-      <Link
-        href={`/g/${group.slug}`}
-        className="relative inline-block w-full p-6"
-      >
-        <div className="bg-slate-50 dark:bg-slate-800 rounded-md flex flex-col h-full">
+    <Link
+      href={`/g/${group.slug}`}
+      className=" inline-block w-full h-full border border-slate-200 dark:border-slate-500 hover:border-slate-300 rounded-md dark:bg-slate-800 bg-slate-50"
+    >
+      <div className="transition-colors p-2">
+        <Button
+          size="sm"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            changeVisibility();
+          }}
+          className={`${isArchived === true || isArchived === false ? "visibility: visible" : "visibility: hidden"} bg-white dark:bg-slate-300 hover:bg-slate-300`}
+        >
+          <div className="relative group">
+            {isArchived ? (
+              <ArchiveRestore className="text-purple-800" />
+            ) : (
+              <Archive className="text-purple-800" />
+            )}
+            <span className="absolute left-1/2 transform -translate-x-1/2 top-full mt-1 w-max px-2 py-1 text-xs text-white bg-gray-800 rounded opacity-0 group-hover:opacity-100 transition-opacity">
+              {isArchived ? "Unarchive" : "Archive"}
+            </span>
+          </div>
+        </Button>
+
+        <div className="bg-slate-50 dark:bg-slate-800 rounded-md flex flex-col h-full p-6">
           <div className="flex-grow">
             <div className="flex items-center justify-between">
               <h3 className="text-3xl font-black text-slate-950 dark:text-slate-300">
@@ -108,7 +113,7 @@ export function GroupCard({
             )}
           </div>
         </div>
-      </Link>
-    </div>
+      </div>
+    </Link>
   );
 }

@@ -16,10 +16,10 @@ import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
 import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
 import { AuthorizedUser, Droplet, TimeZone } from "@/types";
 import { DropletsGrid } from "@/components/explore/droplets-grid";
-import TimeZoneSelector from "@/components/settings/time-zone-selector";
 import { Suspense } from "react";
 import { DropletsSkeleton } from "@/components/explore/droplets-skeleton";
 import { AuthorDroplets } from "@/components/settings/author-droplets";
+import { ProfileBlock } from "@/components/friends/profile-block";
 
 export default async function Settings() {
   const user = await getCurrentUser();
@@ -121,10 +121,10 @@ export default async function Settings() {
         </div>
         <SocialForms authorizedUser={authorizedUser} />
 
-        <TimeZoneSelector
+        {/* <TimeZoneSelector
           currentZone={timeZone || "America/New_York"}
           userId={userId}
-        ></TimeZoneSelector>
+        ></TimeZoneSelector> */}
       </Card>
 
       {isContentCreator(user?.roles) && (

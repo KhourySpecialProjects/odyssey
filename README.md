@@ -1,4 +1,4 @@
-![Khoury Odyssey Logo](frontend/public/logo.svg)
+![Khoury Odyssey Logo](frontend/public/logo.png)
 
 # Khoury Odyssey Monorepo
 

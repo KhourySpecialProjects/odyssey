@@ -130,12 +130,7 @@ export function FirstVisitPopup({ user }: { user: AuthorizedUser | null }) {
             learning modules designed to help you succeed in your academic
             journey.
           </p>
-          <Button
-            className="dark:shadow-[0px_0px_16px_rgb(0,255,255)]"
-            onClick={() => handleClose()}
-          >
-            Start Exploring
-          </Button>
+          <Button onClick={() => handleClose()}>Start Exploring</Button>
         </div>
       </DialogContent>
     </Dialog>

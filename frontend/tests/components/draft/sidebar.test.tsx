@@ -180,7 +180,7 @@ describe("Sidebar", () => {
       mockDroplet.name,
       mockDroplet.id,
     );
-    expect(mockRouter.push).toHaveBeenCalledWith("/explore");
+    expect(mockRouter.push).toHaveBeenCalledWith("/drafts");
   });
 
   it("handles lesson reordering", () => {

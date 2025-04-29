@@ -28,10 +28,15 @@ export function LearningObjectivesInput({
       )}
     >
       <div className="w-full flex items-center justify-between mb-0">
-        <h2 className="font-semibold text-sm">
-          Learning Objectives{" "}
-          {firstTime && <span className="text-red-500">*</span>}
-        </h2>
+        <div>
+          <h2 className="font-semibold text-sm">
+            Learning Objectives{" "}
+            {firstTime && <span className="text-red-500">*</span>}
+          </h2>
+          <p className="text-slate-500 mb-4 text-sm dark:text-slate-300">
+            By completing this Droplet, you should:
+          </p>
+        </div>
         <Button
           type="button"
           onClick={addEmptyLearningObjective}
