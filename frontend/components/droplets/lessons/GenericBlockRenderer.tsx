@@ -80,10 +80,6 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
   };
 
   function highlightRange(startNode: Node, startOffset: number, endNode: Node, endOffset: number, color: HighlightColor) {
-    console.log("start", startOffset)
-    console.log("start node", startNode)
-    console.log("end", endOffset)
-    console.log("end node", endNode)
     const range = document.createRange();
     range.setStart(startNode, startOffset);
     range.setEnd(endNode, endOffset);
@@ -206,7 +202,6 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
       );
 
       sortedHighlights.forEach((highlight) => {
-        console.log("highlight", highlight)
         const walker = document.createTreeWalker(
           contentRef.current!,
           NodeFilter.SHOW_TEXT
@@ -302,7 +297,6 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
     savedSelectionRef.current = range.cloneRange();
 
     let text = selection.toString();
-    console.log("text", text)
     const latexParent = range.startContainer.parentElement?.closest(
       ".katex-inline, .katex-block",
     );
@@ -390,24 +384,44 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
   }
 
   const handlePopupDelete = () => {
-    if (popupRef.current.highlightSpan) {
-      const highlightId = highlights.find(
-        (h) => h.text === popupRef.current.highlightSpan?.textContent,
-      )?.id;
+    const savedRange = popupRef.current.savedRange;
+  
+    if (!contentRef.current || !savedRange) return;
 
-      if (highlightId) {
-        onDeleteHighlight(highlightId);
-        const parent = popupRef.current.highlightSpan.parentNode;
+    const spans = Array.from(
+      contentRef.current.querySelectorAll('span[style*="background-color"]')
+    );
+  
+    spans.forEach((span) => {
+      const spanRange = document.createRange();
+      spanRange.selectNodeContents(span);
+  
+      const rangeIntersects =
+        savedRange.compareBoundaryPoints(Range.END_TO_START, spanRange) < 0 &&
+        savedRange.compareBoundaryPoints(Range.START_TO_END, spanRange) > 0;
+  
+      if (rangeIntersects) {
+        const highlightId = highlights.find(
+          (h) => h.text === span.textContent || h.text.includes(span.textContent || "")
+        )?.id;
+  
+        if (highlightId) {
+          onDeleteHighlight(highlightId);
+        }
+  
+        const textNode = document.createTextNode(span.textContent || "");
+        const parent = span.parentNode;
         if (parent) {
-          const textNode = document.createTextNode(
-            popupRef.current.highlightSpan.textContent || "",
-          );
-          parent.replaceChild(textNode, popupRef.current.highlightSpan);
+          parent.replaceChild(textNode, span);
           parent.normalize();
         }
       }
-    }
+    });
+  
+    popupRef.current.highlightSpan = null;
+    popupRef.current.savedRange = null;
   };
+  
 
   const handlePopupHighlight = (isWithNote?: boolean) => {
     if (!contentRef.current || !popupRef.current.savedRange) return;
