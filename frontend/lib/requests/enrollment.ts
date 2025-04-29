@@ -30,6 +30,7 @@ export async function getEnrollmentsByAuthorizedUser(
             fields: ["*"],
           },
         },
+        fields: ["id", "*"]
       },
       viewedLessons: {
         fields: ["id", "name", "slug"],
