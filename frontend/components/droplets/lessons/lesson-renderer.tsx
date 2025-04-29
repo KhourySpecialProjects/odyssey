@@ -108,6 +108,7 @@ export function LessonRenderer({
   };
 
   const handleCreateNote = async (notePos: number, text: string) => {
+    setExpanded(true);
     const enrollment = await getEnrollByID(String(enrollmentId));
 
     //code that takes the text and notePos and gets the highlight
