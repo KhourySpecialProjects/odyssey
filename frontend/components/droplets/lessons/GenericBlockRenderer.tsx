@@ -79,6 +79,50 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
     return content;
   };
 
+  function highlightRange(startNode: Node, startOffset: number, endNode: Node, endOffset: number, color: HighlightColor) {
+    console.log("start", startOffset)
+    console.log("start node", startNode)
+    console.log("end", endOffset)
+    console.log("end node", endNode)
+    const range = document.createRange();
+    range.setStart(startNode, startOffset);
+    range.setEnd(endNode, endOffset);
+  
+    const walker = document.createTreeWalker(
+      range.commonAncestorContainer,
+      NodeFilter.SHOW_TEXT,
+      {
+        acceptNode: (node) => {
+          return range.intersectsNode(node) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
+        }
+      }
+    );
+  
+    const textNodes = [];
+    let node;
+    while ((node = walker.nextNode())) {
+      textNodes.push(node);
+    }
+  
+    for (const node of textNodes) {
+      let nodeRange = document.createRange();
+      let nodeStart = node === startNode ? startOffset : 0;
+      let nodeEnd = node === endNode ? endOffset : node.textContent?.length;
+  
+      nodeRange.setStart(node, nodeStart);
+      nodeRange.setEnd(node, nodeEnd || 0);
+  
+      const span = document.createElement("span");
+      span.style.backgroundColor = color;
+      span.style.borderRadius = "8px";
+      span.style.color = "black";
+  
+      const contents = nodeRange.extractContents();
+      span.appendChild(contents);
+      nodeRange.insertNode(span);
+    }
+  }
+
   useEffect(() => {
     if (!contentRef.current) return;
     if (contentRef.current) {
@@ -162,69 +206,58 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
       );
 
       sortedHighlights.forEach((highlight) => {
+        console.log("highlight", highlight)
         const walker = document.createTreeWalker(
           contentRef.current!,
-          NodeFilter.SHOW_TEXT,
+          NodeFilter.SHOW_TEXT
         );
-
+      
         let currentPosition = 0;
-        let currentNode = walker.nextNode();
-
-        while (currentNode) {
-          const nodeLength = currentNode.textContent?.length || 0;
+        let startNode: Node | null = null;
+        let endNode: Node | null = null;
+        let startOffset = 0;
+        let endOffset = 0;
+      
+        let node = walker.nextNode();
+      
+        while (node) {
+          const nodeLength = node.textContent?.length || 0;
+      
           if (
-            currentPosition <= highlight.position.start &&
-            highlight.position.start <= currentPosition + nodeLength
+            !startNode &&
+            currentPosition + nodeLength >= highlight.position.start
           ) {
-            break;
+            startNode = node;
+            startOffset = highlight.position.start - currentPosition;
           }
+      
+          if (
+            !endNode &&
+            currentPosition + nodeLength >= highlight.position.end
+          ) {
+            endNode = node;
+            endOffset = highlight.position.end - currentPosition;
+            break; 
+          }
+      
           currentPosition += nodeLength;
-          currentNode = walker.nextNode();
+          node = walker.nextNode();
         }
-
-        if (!currentNode) return;
-
-        const startNode = currentNode;
-        const startOffset = highlight.position.start - currentPosition;
-
-        let endNode = startNode;
-        let endOffset = highlight.position.end - currentPosition;
-        let endPosition = currentPosition;
-
-        while (currentNode) {
-          const nodeLength = currentNode.textContent?.length || 0;
-          if (endPosition + nodeLength >= highlight.position.end) {
-            endNode = currentNode;
-            endOffset = Math.min(
-              nodeLength,
-              highlight.position.end - endPosition,
-            );
-            break;
-          }
-          endPosition += nodeLength;
-          currentNode = walker.nextNode();
-        }
-
-        if (currentNode) {
-          endOffset = Math.min(
-            currentNode.textContent?.length || 0,
-            highlight.position.end - currentPosition,
-          );
-
+      
+        if (!startNode || !endNode) return;
+      
+        try {
           const range = document.createRange();
           range.setStart(startNode, startOffset);
           range.setEnd(endNode, endOffset);
-
+      
           const span = document.createElement("span");
           span.style.borderRadius = "8px";
           span.style.backgroundColor = highlight.color;
           span.style.color = "black";
-
-          try {
-            range.surroundContents(span);
-          } catch (e) {
-            console.warn("Failed to highlight range:", e);
-          }
+          range.surroundContents(span);
+        } catch (e) {
+          highlightRange(startNode, startOffset, endNode, endOffset, highlight.color);
         }
       });
     }
@@ -269,6 +302,7 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
     savedSelectionRef.current = range.cloneRange();
 
     let text = selection.toString();
+    console.log("text", text)
     const latexParent = range.startContainer.parentElement?.closest(
       ".katex-inline, .katex-block",
     );
@@ -282,67 +316,78 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
       );
 
       let currentPosition = 0;
-      let currentNode = walker.nextNode();
-      let startNode = range.startContainer;
-      let endNode = range.endContainer;
+  let startOffset = -1;
+  let endOffset = -1;
+  let node = walker.nextNode();
 
-      while (currentNode && currentNode !== startNode) {
-        currentPosition += currentNode.textContent?.length || 0;
-        currentNode = walker.nextNode();
-      }
+  while (node) {
+    const nodeLength = node.textContent?.length || 0;
 
-      const blockOffset = currentPosition;
-      const startContainer = range.startContainer;
-      const endContainer = range.endContainer;
-      const highlightSpan =
-        startContainer.parentElement?.closest(
-          'span[style*="background-color"]',
-        ) ||
-        endContainer?.parentElement?.closest('span[style*="background-color"]');
-
-      if (highlightSpan) {
-        popupRef.current.x = blockOffset + range.startOffset;
-        popupRef.current.y = blockOffset + range.endOffset;
-        popupRef.current.highlightSpan = highlightSpan as HTMLElement;
-        popupRef.current.savedRange = savedSelectionRef.current;
-        return;
-      }
-
-      if (isHighlighting && text) {
-        onHighlight({
-          text,
-          position: {
-            start: blockOffset + range.startOffset,
-            end: blockOffset + range.endOffset,
-          },
-          color: selectedColor,
-        });
-
-        const newRange = document.createRange();
-        newRange.setStart(range.startContainer, range.startOffset);
-        newRange.setEnd(range.endContainer, range.endOffset);
-
-        const span = document.createElement("span");
-        span.style.borderRadius = "8px";
-        span.style.backgroundColor = selectedColor;
-
-        const textNode = document.createTextNode(text);
-        span.appendChild(textNode);
-
-        newRange.deleteContents();
-        newRange.insertNode(span);
-
-        if (span.parentNode) {
-          span.parentNode.normalize();
-        }
-      }
-
-      popupRef.current.x = blockOffset + range.startOffset;
-      popupRef.current.y = blockOffset + range.endOffset;
-      popupRef.current.highlightSpan = null;
-      popupRef.current.savedRange = savedSelectionRef.current;
+    if (node === range.startContainer && startOffset === -1) {
+      startOffset = currentPosition + range.startOffset;
     }
-  };
+    if (node === range.endContainer && endOffset === -1) {
+      endOffset = currentPosition + range.endOffset;
+      break; // Once we find both, we can stop early
+    }
+
+    currentPosition += nodeLength;
+    node = walker.nextNode();
+  }
+
+  if (startOffset === -1 || endOffset === -1) return;
+
+  // Ensure correct ordering
+  const highlightStart = Math.min(startOffset, endOffset);
+  const highlightEnd = Math.max(startOffset, endOffset);
+
+  const highlightSpan =
+    range.startContainer.parentElement?.closest('span[style*="background-color"]') ||
+    range.endContainer?.parentElement?.closest('span[style*="background-color"]');
+
+  if (highlightSpan) {
+    popupRef.current.x = highlightStart;
+    popupRef.current.y = highlightEnd;
+    popupRef.current.highlightSpan = highlightSpan as HTMLElement;
+    popupRef.current.savedRange = savedSelectionRef.current;
+    return;
+  }
+
+  if (isHighlighting && text) {
+    onHighlight({
+      text,
+      position: {
+        start: highlightStart,
+        end: highlightEnd,
+      },
+      color: selectedColor,
+    });
+
+    const newRange = document.createRange();
+    newRange.setStart(range.startContainer, range.startOffset);
+    newRange.setEnd(range.endContainer, range.endOffset);
+
+    const span = document.createElement("span");
+    span.style.borderRadius = "8px";
+    span.style.backgroundColor = selectedColor;
+
+    const textNode = document.createTextNode(text);
+    span.appendChild(textNode);
+
+    newRange.deleteContents();
+    newRange.insertNode(span);
+
+    if (span.parentNode) {
+      span.parentNode.normalize();
+    }
+  }
+
+  popupRef.current.x = highlightStart;
+  popupRef.current.y = highlightEnd;
+  popupRef.current.highlightSpan = null;
+  popupRef.current.savedRange = savedSelectionRef.current;
+};
+  }
 
   const handlePopupDelete = () => {
     if (popupRef.current.highlightSpan) {
@@ -365,50 +410,77 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
   };
 
   const handlePopupHighlight = (isWithNote?: boolean) => {
-    if (!contentRef.current || !popupRef.current.savedRange) {
-      return;
-    }
-
+    if (!contentRef.current || !popupRef.current.savedRange) return;
+  
     const range = popupRef.current.savedRange;
     const text = range.toString();
-    const blockOffset = getTextOffset(contentRef.current, range.startContainer);
-
-    const startOffset = range.startOffset;
-    const endOffset = range.endOffset;
-
+  
+    
+    const walker = document.createTreeWalker(
+      contentRef.current,
+      NodeFilter.SHOW_TEXT
+    );
+  
+    let currentPosition = 0;
+    let startOffset = -1;
+    let endOffset = -1;
+  
+    let node = walker.nextNode();
+    while (node) {
+      const nodeLength = node.textContent?.length || 0;
+  
+      if (node === range.startContainer && startOffset === -1) {
+        startOffset = currentPosition + range.startOffset;
+      }
+      if (node === range.endContainer && endOffset === -1) {
+        endOffset = currentPosition + range.endOffset;
+        break; 
+      }
+  
+      currentPosition += nodeLength;
+      node = walker.nextNode();
+    }
+  
+    if (startOffset === -1 || endOffset === -1) return;
+  
+    const globalStart = Math.min(startOffset, endOffset);
+    const globalEnd = Math.max(startOffset, endOffset);
+  
     if (text) {
       onHighlight(
         {
           text,
           position: {
-            start: blockOffset + startOffset,
-            end: blockOffset + endOffset,
+            start: globalStart,
+            end: globalEnd,
           },
           color: selectedColor,
         },
-        isWithNote,
+        isWithNote
       );
+  
       popupRef.current.highlightSpan = null;
-
+  
       const newRange = document.createRange();
-      newRange.setStart(range.startContainer, startOffset);
-      newRange.setEnd(range.endContainer, endOffset);
-
+      newRange.setStart(range.startContainer, range.startOffset);
+      newRange.setEnd(range.endContainer, range.endOffset);
+  
       const span = document.createElement("span");
       span.style.borderRadius = "8px";
       span.style.backgroundColor = selectedColor;
-
+  
       const textNode = document.createTextNode(text);
       span.appendChild(textNode);
-
+  
       newRange.deleteContents();
       newRange.insertNode(span);
-
+  
       if (span.parentNode) {
         span.parentNode.normalize();
       }
     }
   };
+  
 
   const handleApplyColor = (color: HighlightColor) => {
     if (
