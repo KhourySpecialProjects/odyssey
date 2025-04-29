@@ -42,14 +42,14 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
     highlightSpan: HTMLElement | null;
     showColors: boolean;
     savedRange: Range | null;
-    savedText: string
+    savedText: string;
   }>({
     x: 0,
     y: 0,
     highlightSpan: null,
     showColors: false,
     savedRange: null,
-    savedText: ""
+    savedText: "",
   });
   const savedSelectionRef = useRef<Range | null>(null);
   const [mousePositionY, setMousePositionY] = useState(0);
@@ -81,40 +81,48 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
     return content;
   };
 
-  function highlightRange(startNode: Node, startOffset: number, endNode: Node, endOffset: number, color: HighlightColor) {
+  function highlightRange(
+    startNode: Node,
+    startOffset: number,
+    endNode: Node,
+    endOffset: number,
+    color: HighlightColor,
+  ) {
     const range = document.createRange();
     range.setStart(startNode, startOffset);
     range.setEnd(endNode, endOffset);
-  
+
     const walker = document.createTreeWalker(
       range.commonAncestorContainer,
       NodeFilter.SHOW_TEXT,
       {
         acceptNode: (node) => {
-          return range.intersectsNode(node) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
-        }
-      }
+          return range.intersectsNode(node)
+            ? NodeFilter.FILTER_ACCEPT
+            : NodeFilter.FILTER_REJECT;
+        },
+      },
     );
-  
+
     const textNodes = [];
     let node;
     while ((node = walker.nextNode())) {
       textNodes.push(node);
     }
-  
+
     for (const node of textNodes) {
       let nodeRange = document.createRange();
       let nodeStart = node === startNode ? startOffset : 0;
       let nodeEnd = node === endNode ? endOffset : node.textContent?.length;
-  
+
       nodeRange.setStart(node, nodeStart);
       nodeRange.setEnd(node, nodeEnd || 0);
-  
+
       const span = document.createElement("span");
       span.style.backgroundColor = color;
       span.style.borderRadius = "8px";
       span.style.color = "black";
-  
+
       const contents = nodeRange.extractContents();
       span.appendChild(contents);
       nodeRange.insertNode(span);
@@ -206,20 +214,20 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
       sortedHighlights.forEach((highlight) => {
         const walker = document.createTreeWalker(
           contentRef.current!,
-          NodeFilter.SHOW_TEXT
+          NodeFilter.SHOW_TEXT,
         );
-      
+
         let currentPosition = 0;
         let startNode: Node | null = null;
         let endNode: Node | null = null;
         let startOffset = 0;
         let endOffset = 0;
-      
+
         let node = walker.nextNode();
-      
+
         while (node) {
           const nodeLength = node.textContent?.length || 0;
-      
+
           if (
             !startNode &&
             currentPosition + nodeLength >= highlight.position.start
@@ -227,34 +235,40 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
             startNode = node;
             startOffset = highlight.position.start - currentPosition;
           }
-      
+
           if (
             !endNode &&
             currentPosition + nodeLength >= highlight.position.end
           ) {
             endNode = node;
             endOffset = highlight.position.end - currentPosition;
-            break; 
+            break;
           }
-      
+
           currentPosition += nodeLength;
           node = walker.nextNode();
         }
-      
+
         if (!startNode || !endNode) return;
-      
+
         try {
           const range = document.createRange();
           range.setStart(startNode, startOffset);
           range.setEnd(endNode, endOffset);
-      
+
           const span = document.createElement("span");
           span.style.borderRadius = "8px";
           span.style.backgroundColor = highlight.color;
           span.style.color = "black";
           range.surroundContents(span);
         } catch (e) {
-          highlightRange(startNode, startOffset, endNode, endOffset, highlight.color);
+          highlightRange(
+            startNode,
+            startOffset,
+            endNode,
+            endOffset,
+            highlight.color,
+          );
         }
       });
     }
@@ -314,104 +328,110 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
       );
 
       let currentPosition = 0;
-  let startOffset = -1;
-  let endOffset = -1;
-  let node = walker.nextNode();
+      let startOffset = -1;
+      let endOffset = -1;
+      let node = walker.nextNode();
 
-  while (node) {
-    const nodeLength = node.textContent?.length || 0;
+      while (node) {
+        const nodeLength = node.textContent?.length || 0;
 
-    if (node === range.startContainer && startOffset === -1) {
-      startOffset = currentPosition + range.startOffset;
+        if (node === range.startContainer && startOffset === -1) {
+          startOffset = currentPosition + range.startOffset;
+        }
+        if (node === range.endContainer && endOffset === -1) {
+          endOffset = currentPosition + range.endOffset;
+          break;
+        }
+
+        currentPosition += nodeLength;
+        node = walker.nextNode();
+      }
+
+      if (startOffset === -1 || endOffset === -1) return;
+
+      const highlightStart = Math.min(startOffset, endOffset);
+      const highlightEnd = Math.max(startOffset, endOffset);
+
+      const highlightSpan =
+        range.startContainer.parentElement?.closest(
+          'span[style*="background-color"]',
+        ) ||
+        range.endContainer?.parentElement?.closest(
+          'span[style*="background-color"]',
+        );
+
+      if (highlightSpan) {
+        popupRef.current.x = highlightStart;
+        popupRef.current.y = highlightEnd;
+        popupRef.current.highlightSpan = highlightSpan as HTMLElement;
+        popupRef.current.savedRange = savedSelectionRef.current;
+        return;
+      }
+
+      if (isHighlighting && text) {
+        onHighlight({
+          text,
+          position: {
+            start: highlightStart,
+            end: highlightEnd,
+          },
+          color: selectedColor,
+        });
+
+        const newRange = document.createRange();
+        newRange.setStart(range.startContainer, range.startOffset);
+        newRange.setEnd(range.endContainer, range.endOffset);
+
+        const span = document.createElement("span");
+        span.style.borderRadius = "8px";
+        span.style.backgroundColor = selectedColor;
+
+        const textNode = document.createTextNode(text);
+        span.appendChild(textNode);
+
+        newRange.deleteContents();
+        newRange.insertNode(span);
+
+        if (span.parentNode) {
+          span.parentNode.normalize();
+        }
+      }
+
+      popupRef.current.x = highlightStart;
+      popupRef.current.y = highlightEnd;
+      popupRef.current.highlightSpan = null;
+      popupRef.current.savedRange = savedSelectionRef.current;
     }
-    if (node === range.endContainer && endOffset === -1) {
-      endOffset = currentPosition + range.endOffset;
-      break; 
-    }
-
-    currentPosition += nodeLength;
-    node = walker.nextNode();
-  }
-
-  if (startOffset === -1 || endOffset === -1) return;
-
-  const highlightStart = Math.min(startOffset, endOffset);
-  const highlightEnd = Math.max(startOffset, endOffset);
-
-  const highlightSpan =
-    range.startContainer.parentElement?.closest('span[style*="background-color"]') ||
-    range.endContainer?.parentElement?.closest('span[style*="background-color"]');
-
-  if (highlightSpan) {
-    popupRef.current.x = highlightStart;
-    popupRef.current.y = highlightEnd;
-    popupRef.current.highlightSpan = highlightSpan as HTMLElement;
-    popupRef.current.savedRange = savedSelectionRef.current;
-    return;
-  }
-
-  if (isHighlighting && text) {
-    onHighlight({
-      text,
-      position: {
-        start: highlightStart,
-        end: highlightEnd,
-      },
-      color: selectedColor,
-    });
-
-    const newRange = document.createRange();
-    newRange.setStart(range.startContainer, range.startOffset);
-    newRange.setEnd(range.endContainer, range.endOffset);
-
-    const span = document.createElement("span");
-    span.style.borderRadius = "8px";
-    span.style.backgroundColor = selectedColor;
-
-    const textNode = document.createTextNode(text);
-    span.appendChild(textNode);
-
-    newRange.deleteContents();
-    newRange.insertNode(span);
-
-    if (span.parentNode) {
-      span.parentNode.normalize();
-    }
-  }
-
-  popupRef.current.x = highlightStart;
-  popupRef.current.y = highlightEnd;
-  popupRef.current.highlightSpan = null;
-  popupRef.current.savedRange = savedSelectionRef.current;
-};
-  }
+  };
 
   const handlePopupDelete = () => {
     const savedRange = popupRef.current.savedRange;
-  
+
     if (!contentRef.current || !savedRange) return;
 
     const spans = Array.from(
-      contentRef.current.querySelectorAll('span[style*="background-color"]')
+      contentRef.current.querySelectorAll('span[style*="background-color"]'),
     );
-  
+
     spans.forEach((span) => {
       const spanRange = document.createRange();
       spanRange.selectNodeContents(span);
-  
+
       const rangeIntersects =
         savedRange.compareBoundaryPoints(Range.END_TO_START, spanRange) < 0 &&
         savedRange.compareBoundaryPoints(Range.START_TO_END, spanRange) > 0;
-  
+
       if (rangeIntersects) {
         const highlightId = highlights.find(
-          (h) => h.text === span.textContent || h.text.includes(span.textContent || "")
+          (h) =>
+            h.text === span.textContent ||
+            h.text.includes(span.textContent || ""),
         )?.id;
-  
+
         if (highlightId) {
           onDeleteHighlight(highlightId);
         }
-  
+
         const textNode = document.createTextNode(span.textContent || "");
         const parent = span.parentNode;
         if (parent) {
@@ -420,49 +440,47 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
         }
       }
     });
-  
+
     popupRef.current.highlightSpan = null;
     popupRef.current.savedRange = null;
   };
-  
 
   const handlePopupHighlight = (isWithNote?: boolean) => {
     if (!contentRef.current || !popupRef.current.savedRange) return;
-  
+
     const range = popupRef.current.savedRange;
     const text = range.toString();
-  
-    
+
     const walker = document.createTreeWalker(
       contentRef.current,
-      NodeFilter.SHOW_TEXT
+      NodeFilter.SHOW_TEXT,
     );
-  
+
     let currentPosition = 0;
     let startOffset = -1;
     let endOffset = -1;
-  
+
     let node = walker.nextNode();
     while (node) {
       const nodeLength = node.textContent?.length || 0;
-  
+
       if (node === range.startContainer && startOffset === -1) {
         startOffset = currentPosition + range.startOffset;
       }
       if (node === range.endContainer && endOffset === -1) {
         endOffset = currentPosition + range.endOffset;
-        break; 
+        break;
       }
-  
+
       currentPosition += nodeLength;
       node = walker.nextNode();
     }
-  
+
     if (startOffset === -1 || endOffset === -1) return;
-  
+
     const globalStart = Math.min(startOffset, endOffset);
     const globalEnd = Math.max(startOffset, endOffset);
-  
+
     if (text) {
       onHighlight(
         {
@@ -473,31 +491,30 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
           },
           color: selectedColor,
         },
-        isWithNote
+        isWithNote,
       );
-  
+
       popupRef.current.highlightSpan = null;
-  
+
       const newRange = document.createRange();
       newRange.setStart(range.startContainer, range.startOffset);
       newRange.setEnd(range.endContainer, range.endOffset);
-  
+
       const span = document.createElement("span");
       span.style.borderRadius = "8px";
       span.style.backgroundColor = selectedColor;
-  
+
       const textNode = document.createTextNode(text);
       span.appendChild(textNode);
-  
+
       newRange.deleteContents();
       newRange.insertNode(span);
-  
+
       if (span.parentNode) {
         span.parentNode.normalize();
       }
     }
   };
-  
 
   const handleApplyColor = (color: HighlightColor) => {
     if (
@@ -532,7 +549,10 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
 
   const handleCreateNote = () => {
     handlePopupHighlight(true);
-    onNote(mousePositionY, popupRef.current.savedText.replace(/[\r\n]+/g,"") || "");
+    onNote(
+      mousePositionY,
+      popupRef.current.savedText.replace(/[\r\n]+/g, "") || "",
+    );
   };
 
   const handleImageClick = (e: React.MouseEvent) => {
