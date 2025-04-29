@@ -498,6 +498,9 @@ export async function fetchFriendshipsById(
             was_blocked: {
               fields: ["id"],
             },
+            received_requests: {
+              fields: ["id"],
+            },
           },
         },
       },
@@ -559,6 +562,9 @@ export async function fetchSuggestionsById(
                 ) &&
                 !user.was_blocked.some(
                   (blockedUser: AuthorizedUser) => blockedUser.id === userId,
+                ) &&
+                !user.received_requests.some(
+                  (otherUser: AuthorizedUser) => otherUser.id === userId,
                 ),
             ),
           )
