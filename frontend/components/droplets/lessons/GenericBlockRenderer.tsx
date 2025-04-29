@@ -42,12 +42,14 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
     highlightSpan: HTMLElement | null;
     showColors: boolean;
     savedRange: Range | null;
+    savedText: string
   }>({
     x: 0,
     y: 0,
     highlightSpan: null,
     showColors: false,
     savedRange: null,
+    savedText: ""
   });
   const savedSelectionRef = useRef<Range | null>(null);
   const [mousePositionY, setMousePositionY] = useState(0);
@@ -297,6 +299,8 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
     savedSelectionRef.current = range.cloneRange();
 
     let text = selection.toString();
+    popupRef.current.savedText = text;
+    popupRef.current.savedRange = savedSelectionRef.current;
     const latexParent = range.startContainer.parentElement?.closest(
       ".katex-inline, .katex-block",
     );
@@ -322,7 +326,7 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
     }
     if (node === range.endContainer && endOffset === -1) {
       endOffset = currentPosition + range.endOffset;
-      break; // Once we find both, we can stop early
+      break; 
     }
 
     currentPosition += nodeLength;
@@ -331,7 +335,6 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
 
   if (startOffset === -1 || endOffset === -1) return;
 
-  // Ensure correct ordering
   const highlightStart = Math.min(startOffset, endOffset);
   const highlightEnd = Math.max(startOffset, endOffset);
 
@@ -529,11 +532,7 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
 
   const handleCreateNote = () => {
     handlePopupHighlight(true);
-    onNote(mousePositionY, popupRef.current.savedRange?.toString() || "");
-    console.log(
-      "this is the highlight noted ",
-      popupRef.current.savedRange?.toString(),
-    );
+    onNote(mousePositionY, popupRef.current.savedText.replace(/[\r\n]+/g,"") || "");
   };
 
   const handleImageClick = (e: React.MouseEvent) => {
