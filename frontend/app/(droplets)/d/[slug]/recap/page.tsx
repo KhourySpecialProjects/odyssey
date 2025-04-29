@@ -79,6 +79,7 @@ export default async function DropletRecapRoute({ params }: Props) {
         droplet.tags && {
           tags: { slug: { $in: droplet.tags.map((tag) => tag.slug) } },
         },
+        { status: "published" },
       ],
     },
     pagination: {
@@ -133,7 +134,7 @@ export default async function DropletRecapRoute({ params }: Props) {
       <>
         {enrollment &&
           enrollment.viewedLessons.length ===
-            enrollment.droplet.lessons?.length &&
+          enrollment.droplet.lessons?.length &&
           !(enrollment.isFirstTime === false) && (
             <>
               <CompletedDropletBlock
