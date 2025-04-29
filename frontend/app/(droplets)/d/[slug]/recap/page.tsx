@@ -79,7 +79,12 @@ export default async function DropletRecapRoute({ params }: Props) {
         droplet.tags && {
           tags: { slug: { $in: droplet.tags.map((tag) => tag.slug) } },
         },
-        { status: "published" },
+        {
+          $or: [
+            { status: "published" },
+            { status: { $null: true } }
+          ]
+        }
       ],
     },
     pagination: {
