@@ -80,11 +80,8 @@ export default async function DropletRecapRoute({ params }: Props) {
           tags: { slug: { $in: droplet.tags.map((tag) => tag.slug) } },
         },
         {
-          $or: [
-            { status: "published" },
-            { status: { $null: true } }
-          ]
-        }
+          $or: [{ status: "published" }, { status: { $null: true } }],
+        },
       ],
     },
     pagination: {
@@ -139,7 +136,7 @@ export default async function DropletRecapRoute({ params }: Props) {
       <>
         {enrollment &&
           enrollment.viewedLessons.length ===
-          enrollment.droplet.lessons?.length &&
+            enrollment.droplet.lessons?.length &&
           !(enrollment.isFirstTime === false) && (
             <>
               <CompletedDropletBlock
