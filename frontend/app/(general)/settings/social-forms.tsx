@@ -15,12 +15,18 @@ import { useState } from "react";
 import imageCompression from "browser-image-compression";
 import { Textarea } from "@/components/ui/textarea";
 import { Check } from "lucide-react";
+import { ProfileBlock } from "@/components/friends/profile-block";
+import { notFound } from "next/navigation";
 
 export function SocialForms({
   authorizedUser,
 }: {
   authorizedUser: AuthorizedUser | null;
 }) {
+  if (!authorizedUser) {
+    return notFound();
+  }
+  const [open, setOpen] = useState(false);
   const [bioValue, setBioValue] = useState(authorizedUser?.bio || "");
   const [linkedinValue, setLinkedinValue] = useState(
     authorizedUser?.linkedin || "",
@@ -30,6 +36,14 @@ export function SocialForms({
     authorizedUser?.profilePhoto || "",
   );
   const [profileFile, setProfileFile] = useState<File | null>(null);
+
+  function isValidGithubUrl(url: string) {
+    return /^https:\/\/(www\.)?github\.com\/[A-Za-z0-9_-]+\/?$/.test(url);
+  }
+
+  function isValidLinkedinUrl(url: string) {
+    return /^https:\/\/(www\.)?linkedin\.com\/in\/[A-Za-z0-9_-]+\/?$/.test(url);
+  }
 
   const compressImage = async (imageFile: File) => {
     const options = {
@@ -239,11 +253,12 @@ export function SocialForms({
       <form
         action={async (formData: FormData) => {
           const linkedin = formData.get("linkedin") as string;
-          if (linkedin && authorizedUser?.id) {
-            const result = await updateLinkedin(
-              { linkedin },
-              authorizedUser.id,
-            );
+          if (!isValidLinkedinUrl(linkedin) && linkedin !== "") {
+            toast.error("Please enter a valid LinkedIn profile URL");
+            return;
+          }
+          if (authorizedUser?.id) {
+            const result = await updateLinkedin(linkedin, authorizedUser.id);
             if (result.success) {
               setLinkedinValue(linkedin);
               toast.success("LinkedIn URL updated successfully");
@@ -279,8 +294,12 @@ export function SocialForms({
       <form
         action={async (formData: FormData) => {
           const github = formData.get("github") as string;
-          if (github && authorizedUser?.id) {
-            const result = await updateGithub({ github }, authorizedUser.id);
+          if (!isValidGithubUrl(github) && github !== "") {
+            toast.error("Please enter a valid GitHub profile URL");
+            return;
+          }
+          if (authorizedUser?.id) {
+            const result = await updateGithub(github, authorizedUser.id);
             if (result.success) {
               setGithubValue(github);
               toast.success("GitHub URL updated successfully");
@@ -313,6 +332,16 @@ export function SocialForms({
           <Check className="h-5 w-5" />
         </Button>
       </form>
+      <div className="p-4">
+        <ProfileBlock
+          user={authorizedUser}
+          otherUser={authorizedUser}
+          isOpen={open}
+          setIsOpen={setOpen}
+          isFeed={false}
+          isProfile={true}
+        />
+      </div>
     </>
   );
 }
