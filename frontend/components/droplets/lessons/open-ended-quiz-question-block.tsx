@@ -13,12 +13,17 @@ export function OpenEndedQuizQuestionBlock({
   const [userAnswer, setUserAnswer] = useState("");
   const [showResult, setShowResult] = useState(false);
   const [isCorrect, setIsCorrect] = useState(false);
+  const [numTries, setNumTries] = useState(0);
+  const [revealAnswer, setRevealAnswer] = useState(false);
 
   const checkAnswer = () => {
     const isAnswerCorrect =
       userAnswer.trim().toLowerCase() ===
       question.correctAnswer.trim().toLowerCase();
     setIsCorrect(isAnswerCorrect);
+    if (!isCorrect) {
+      setNumTries(numTries + 1);
+    }
     setShowResult(true);
   };
 
@@ -61,6 +66,19 @@ export function OpenEndedQuizQuestionBlock({
             </>
           )}
         </div>
+      ) : revealAnswer ? (
+        <>
+          <p className="mt-4 font-medium pb-2">
+            Correct Answer: {question.correctAnswer}
+          </p>
+          <Button
+            before={<ArrowLeftIcon />}
+            variant="outline"
+            onClick={() => setRevealAnswer(false)}
+          >
+            Back to Question
+          </Button>
+        </>
       ) : (
         <div className="mt-4 space-y-4">
           <Textarea
@@ -69,7 +87,13 @@ export function OpenEndedQuizQuestionBlock({
             placeholder="Type your answer here..."
             className="Textarea min-h-[100px] dark:bg-slate-900 dark:border dark:border-slate-500 dark:text-slate-300"
           />
-          <div className="flex justify-end">
+          <div className="flex justify-end gap-2">
+            <Button
+              onClick={() => setRevealAnswer(true)}
+              className={`${numTries >= 3 ? "visibility: visible" : "visibility: hidden"}`}
+            >
+              View Correct Answer
+            </Button>
             <Button onClick={checkAnswer}>Check Answer</Button>
           </div>
         </div>
