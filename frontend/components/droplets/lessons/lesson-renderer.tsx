@@ -72,6 +72,7 @@ export function LessonRenderer({
   }, [lesson.id]);
 
   const handleHighlight = async (highlight: any, isWithNote?: boolean) => {
+    console.log("is with note", isWithNote);
     const response = await createHighlight({
       data: {
         text: highlight.text,
@@ -111,6 +112,7 @@ export function LessonRenderer({
     const enrollment = await getEnrollByID(String(enrollmentId));
 
     //code that takes the text and notePos and gets the highlight
+    console.log("text", text);
     if (authUser) {
       const highlight = await getHighlights(authUser.id, text);
       const result = await createNote(
