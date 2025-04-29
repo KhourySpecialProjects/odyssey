@@ -170,6 +170,6 @@ describe("NotesBar", () => {
     );
 
     const noteElements = screen.getAllByText(/Note/i);
-    expect(noteElements).toHaveLength(3);
+    expect(noteElements).toHaveLength(4);
   });
 });
