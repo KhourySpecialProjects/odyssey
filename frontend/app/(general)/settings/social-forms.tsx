@@ -21,11 +21,8 @@ import { notFound } from "next/navigation";
 export function SocialForms({
   authorizedUser,
 }: {
-  authorizedUser: AuthorizedUser | null;
+  authorizedUser: AuthorizedUser;
 }) {
-  if (!authorizedUser) {
-    return notFound();
-  }
   const [open, setOpen] = useState(false);
   const [bioValue, setBioValue] = useState(authorizedUser?.bio || "");
   const [linkedinValue, setLinkedinValue] = useState(
