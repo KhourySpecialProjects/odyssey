@@ -15,6 +15,7 @@ import { Playlist } from "@/types";
 import { getPlaylists } from "@/lib/requests/playlist";
 import { Badge } from "../ui/badge";
 import { uppercaseFirstChar } from "@/lib/utils";
+import Link from "next/link";
 
 interface AddPlaylistDialogProps {
   currentPlaylists: Playlist[];
@@ -79,34 +80,41 @@ export function AddPlaylistDialog({
           />
           <div className="flex flex-col gap-6 max-h-[60vh] overflow-y-auto">
             {filteredPlaylists.map((playlist) => (
-              <div key={playlist.id} className="relative group h-[120px]">
-                <div className="p-4 h-full border rounded-md bg-slate-50 dark:bg-slate-800 dark:border-slate-500">
-                  <div className="flex flex-col h-full">
-                    <span className="text-xl font-bold dark:text-slate-300">
-                      {playlist.name}
-                    </span>
-                    <div className="flex gap-2 mt-2">
-                      <Badge variant="outline">
-                        {playlist.isPublic ? "Public" : "Private"}
-                      </Badge>
-                      {playlist.duration && (
+              <Link
+                key={playlist.id}
+                href={`/p/${playlist.slug}`}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <div key={playlist.id} className="relative group h-[120px]">
+                  <div className="p-4 h-full border rounded-md bg-slate-50 dark:bg-slate-800 dark:border-slate-500">
+                    <div className="flex flex-col h-full">
+                      <span className="text-xl font-bold dark:text-slate-300">
+                        {playlist.name}
+                      </span>
+                      <div className="flex gap-2 mt-2">
                         <Badge variant="outline">
-                          {uppercaseFirstChar(playlist.duration)}
+                          {playlist.isPublic ? "Public" : "Private"}
                         </Badge>
-                      )}
+                        {playlist.duration && (
+                          <Badge variant="outline">
+                            {uppercaseFirstChar(playlist.duration)}
+                          </Badge>
+                        )}
+                      </div>
                     </div>
                   </div>
+                  <Button
+                    variant="ghost"
+                    size="lg"
+                    className="absolute top-1/2 right-4 -translate-y-1/2"
+                    onClick={() => handleAddPlaylist(playlist)}
+                    data-testid="addPlaylist"
+                  >
+                    <PlusCircle className="h-6 w-6 text-green-700" />
+                  </Button>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="lg"
-                  className="absolute top-1/2 right-4 -translate-y-1/2"
-                  onClick={() => handleAddPlaylist(playlist)}
-                  data-testid="addPlaylist"
-                >
-                  <PlusCircle className="h-6 w-6 text-green-700" />
-                </Button>
-              </div>
+              </Link>
             ))}
           </div>
           <div className="flex justify-end pt-4 border-t">

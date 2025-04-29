@@ -25,8 +25,6 @@ import { v4 as uuidv4 } from "uuid";
 import { Buffer } from "node:buffer";
 import { getGroupByID } from "./requests/groups";
 import { getPlaylistById } from "./requests/playlist";
-import { LinkedinSchema } from "./validations/linkedin";
-import { GithubSchema } from "./validations/github";
 
 const STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
@@ -589,13 +587,8 @@ export async function createNote(
   }
 }*/
 
-export async function updateLinkedin(
-  data: z.infer<typeof LinkedinSchema>,
-  userId: number,
-) {
+export async function updateLinkedin(data: string, userId: number) {
   try {
-    const validatedData = LinkedinSchema.parse({ linkedin: data.linkedin });
-
     const response = await fetch(
       `${STRAPI_API_URL}/api/authorized-users/${userId}`,
       {
@@ -606,7 +599,7 @@ export async function updateLinkedin(
         },
         body: JSON.stringify({
           data: {
-            linkedin: data.linkedin,
+            linkedin: data,
           },
         }),
       },
@@ -622,12 +615,8 @@ export async function updateLinkedin(
   }
 }
 
-export async function updateGithub(
-  data: z.infer<typeof GithubSchema>,
-  userId: number,
-) {
+export async function updateGithub(data: string, userId: number) {
   try {
-    const validatedData = GithubSchema.parse({ github: data.github });
     const response = await fetch(
       `${STRAPI_API_URL}/api/authorized-users/${userId}`,
       {
@@ -638,7 +627,7 @@ export async function updateGithub(
         },
         body: JSON.stringify({
           data: {
-            github: data.github,
+            github: data,
           },
         }),
       },
