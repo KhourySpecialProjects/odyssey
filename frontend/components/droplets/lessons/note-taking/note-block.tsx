@@ -142,19 +142,17 @@ export function NoteBlock({
                 variant="secondary"
                 className={`text-center text-slate-700 bg-slate-200 border border-slate-400 hover:bg-slate-200 py-1 text-sm`}
               >
-                {noteExpanded
-                  ? "General Note"
-                  : (
-                    <>
-                      {stripHtml(content).substring(0, 15)}
-                      {stripHtml(content).length > 15 ? "..." : ""}
-                    </>
-                  )
-                }
+                {noteExpanded ? (
+                  "General Note"
+                ) : (
+                  <>
+                    {stripHtml(content).substring(0, 15)}
+                    {stripHtml(content).length > 15 ? "..." : ""}
+                  </>
+                )}
               </Badge>
             </div>
           )}
-
 
           <button
             className={`ml-auto ${noteExpanded ? "" : "flex flex-row justify-between w-full"} `}

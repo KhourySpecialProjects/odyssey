@@ -173,7 +173,7 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
             "Skipping invalid highlight:",
             highlight,
             "Total text length:",
-            totalTextLength
+            totalTextLength,
           );
           return;
         }
