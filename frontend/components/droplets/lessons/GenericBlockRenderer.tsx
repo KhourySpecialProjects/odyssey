@@ -162,7 +162,6 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
       );
 
       sortedHighlights.forEach((highlight) => {
-
         const walker = document.createTreeWalker(
           contentRef.current!,
           NodeFilter.SHOW_TEXT,
