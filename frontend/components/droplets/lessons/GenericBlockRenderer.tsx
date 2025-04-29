@@ -162,21 +162,6 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
       );
 
       sortedHighlights.forEach((highlight) => {
-        // Validate highlight positions
-        const totalTextLength = contentRef.current!.innerText.length;
-        if (
-          highlight.position.start < 0 ||
-          highlight.position.end > totalTextLength ||
-          highlight.position.start > highlight.position.end
-        ) {
-          console.warn(
-            "Skipping invalid highlight:",
-            highlight,
-            "Total text length:",
-            totalTextLength,
-          );
-          return;
-        }
 
         const walker = document.createTreeWalker(
           contentRef.current!,
