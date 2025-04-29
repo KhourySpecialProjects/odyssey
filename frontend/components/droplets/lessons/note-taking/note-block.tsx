@@ -165,7 +165,8 @@ export function NoteBlock({
                 data-testid="chevrondown"
               />
             ) : (
-              <ChevronUp className="dark:bg-slate-700 rounded-tr-md" />
+              <ChevronUp className="dark:bg-slate-700 rounded-tr-md"
+              data-testid="chevronup" />
             )}
           </button>
 
