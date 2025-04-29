@@ -14,12 +14,11 @@ import { getInitials, condenseRoleTitles, isContentCreator } from "@/lib/utils";
 import { User2Icon } from "lucide-react";
 import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
 import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
-import { AuthorizedUser, Droplet, TimeZone } from "@/types";
+import { AuthorizedUser, Droplet } from "@/types";
 import { DropletsGrid } from "@/components/explore/droplets-grid";
 import { Suspense } from "react";
 import { DropletsSkeleton } from "@/components/explore/droplets-skeleton";
 import { AuthorDroplets } from "@/components/settings/author-droplets";
-import { ProfileBlock } from "@/components/friends/profile-block";
 
 export default async function Settings() {
   const user = await getCurrentUser();
