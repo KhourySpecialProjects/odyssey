@@ -36,12 +36,15 @@ export function NoteBlock({
   const [content, setContent] = useState(note.content);
   const [noteExpanded, setNoteExpanded] = useState(true);
   const [focused, setFocused] = useState(false);
+  const [noteMessage, setNoteMessage] = useState("Save");
 
   const handleBlur = useCallback(async () => {
+    setNoteMessage("Saving");
     const result = await updateNoteContent(note.id, content);
     if (!result.success) {
       console.error("Failed to update note content");
     } else {
+      setNoteMessage("Saved");
       onUpdate();
     }
   }, [content, note.id, onUpdate]);
@@ -194,6 +197,13 @@ export function NoteBlock({
               <div className="flex-grow" data-testid="toolbar">
                 <DefaultToolbar editor={editor!} note={true} />
               </div>
+              {/*<Button 
+                variant="outline" 
+                size="sm" 
+                className="h-full bg-slate-200 rounded-md mr-4 dark:bg-slate-700 dark:border-white"
+                onClick={handleBlur} >
+                  {noteMessage}
+              </Button>*/}
             </div>
             <EditorContent
               name="lesson-generic"
