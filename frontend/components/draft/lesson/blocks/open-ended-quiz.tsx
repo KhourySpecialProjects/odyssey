@@ -74,8 +74,8 @@ export function OpenEndedQuizEditor({
       <div className="cursor-grab active:cursor-grabbing text-slate-400 hover:text-slate-600 z-10">
         <GripVertical size={20} />
       </div>
-      <div className="w-full max-w-2xl pb-4">
-        <div className="w-full flex flex-row mb-4 justify-between items-center p-4">
+      <div className="w-full max-w-2xl">
+        <div className="w-full flex flex-row justify-between items-center p-4">
           <h2 className="text-lg">Open Ended Quiz</h2>
           <Trash2Icon
             className="cursor-pointer text-red-600 hover:text-red-700 "
@@ -83,6 +83,10 @@ export function OpenEndedQuizEditor({
             data-testid="delete-block"
           />
         </div>
+        <p className="pb-4 p-4">
+          Note: when users are typing answers in, their response must match the
+          correct answer exactly but it doesn&apos;t have to be case sensitive
+        </p>
 
         <div className="space-y-6">
           {questions.map((question, index) => (

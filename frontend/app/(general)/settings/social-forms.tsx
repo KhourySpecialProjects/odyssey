@@ -16,7 +16,6 @@ import imageCompression from "browser-image-compression";
 import { Textarea } from "@/components/ui/textarea";
 import { Check } from "lucide-react";
 import { ProfileBlock } from "@/components/friends/profile-block";
-import { notFound } from "next/navigation";
 
 export function SocialForms({
   authorizedUser,
