@@ -39,10 +39,10 @@ export function HighlightDropdown({
 
   return (
     <div
-      className={`fixed flex ${expanded ? "right-[335px] xl:right-[22.5%] top-36 md:top-36 xs:top-44 flex-col" : "right-0 top-36 flex-col"} gap-2 z-20`}
+      className={`fixed flex ${expanded ? "right-[355px] top-36 md:top-36 xs:top-44 flex-col" : "right-5 top-36 flex-col"} gap-2 z-20`}
     >
       <div
-        className={`dark:bg-slate-700 dark:text-white border dark:border-white border-black z-30 transform -translate-x-1/2 bg-blue-100 p-2 rounded shadow-lg`}
+        className={`dark:bg-slate-700 dark:text-white border dark:border-white border-black z-30 bg-blue-100 p-2 rounded shadow-lg`}
       >
         <div className="relative group">
           <CircleHelp className="cursor-pointer" />
@@ -74,7 +74,7 @@ export function HighlightDropdown({
       </div>
       <div
         title={expanded ? "Hide Notes Bar" : "View Notes Bar"}
-        className="z-20 dark:text-white dark:bg-slate-700 p-2 transform -translate-x-1/2 bg-blue-100 border dark:border-white border-black rounded shadow-lg"
+        className="z-20 dark:text-white dark:bg-slate-700 p-2 bg-blue-100 border dark:border-white border-black rounded shadow-lg"
       >
         <NotepadText
           onClick={() => setExpanded(!expanded)}
@@ -82,7 +82,7 @@ export function HighlightDropdown({
         />
       </div>
       <div
-        className="dark:text-black dark:bg-slate-700 z-20 transform -translate-x-1/2 border border-black dark:border-white bg-blue-100 p-2 rounded shadow-lg group"
+        className="dark:text-black dark:bg-slate-700 z-20 border border-black dark:border-white bg-blue-100 p-2 rounded shadow-lg group"
         onMouseLeave={() => setVisible(false)}
       >
         <div className="relative">

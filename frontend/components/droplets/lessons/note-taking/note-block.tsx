@@ -34,17 +34,27 @@ export function NoteBlock({
   onFocus: (focused: number | null) => void;
 }) {
   const [content, setContent] = useState(note.content);
-  const [toolbarVisible, setToolbarVisible] = useState(false);
+  const [noteExpanded, setNoteExpanded] = useState(true);
   const [focused, setFocused] = useState(false);
+  const [noteMessage, setNoteMessage] = useState("Save");
 
   const handleBlur = useCallback(async () => {
+    setNoteMessage("Saving");
     const result = await updateNoteContent(note.id, content);
     if (!result.success) {
       console.error("Failed to update note content");
     } else {
+      setNoteMessage("Saved");
       onUpdate();
     }
   }, [content, note.id, onUpdate]);
+
+  function stripHtml(html: string): string {
+    if (!html) return "General Note";
+    const div = document.createElement("div");
+    div.innerHTML = html;
+    return div.textContent || div.innerText || "General Note";
+  }
 
   const getHighlightColor = (color: string | undefined) => {
     switch (color) {
@@ -69,7 +79,7 @@ export function NoteBlock({
       Underline,
       StartingKit,
       Placeholder.configure({
-        placeholder: "Nothing here yet...",
+        placeholder: "Type something...",
         emptyEditorClass:
           "cursor-text before:content-[attr(data-placeholder)] before:text-gray-500 dark:before:text-black before:absolute before:top-3 before:left-3 before:pointer-events-none before:select-none",
       }),
@@ -125,20 +135,42 @@ export function NoteBlock({
                 {note.highlight.text.substring(0, 25)}{" "}
                 {note.highlight.text.length > 25 ? "..." : ""}
               </Badge>
-              <MessageSquareText className="text-slate-[#6c6060] dark:text-slate-300" />
             </div>
           ) : (
-            <div className="flex flex-row justify-between w-full">
+            <div className="flex flex-row justify-start w-full">
               <Badge
                 variant="secondary"
-                className={`text-center text-slate-700 bg-slate-200 border border-slate-400 hover:text-white dark:hover:bg-slate-800`}
+                className={`text-center text-slate-700 bg-slate-200 border border-slate-400 hover:bg-slate-200 py-1 text-sm`}
               >
-                General Note
+                {noteExpanded ? (
+                  "General Note"
+                ) : (
+                  <>
+                    {stripHtml(content).substring(0, 15)}
+                    {stripHtml(content).length > 15 ? "..." : ""}
+                  </>
+                )}
               </Badge>
-
-              <FileText className="text-slate-[#6c6060] dark:text-slate-300" />
             </div>
           )}
+
+          <button
+            className={`ml-auto ${noteExpanded ? "" : "flex flex-row justify-between w-full"} `}
+            onClick={() => setNoteExpanded(!noteExpanded)}
+          >
+            <div className={`w-full ${noteExpanded ? "hidden" : ""}`}></div>
+            {!noteExpanded ? (
+              <ChevronDown
+                className="dark:bg-slate-700 rounded-tr-md"
+                data-testid="chevrondown"
+              />
+            ) : (
+              <ChevronUp
+                className="dark:bg-slate-700 rounded-tr-md"
+                data-testid="chevronup"
+              />
+            )}
+          </button>
 
           <Button
             className="p-0 mb-1 ml-2 h-full bg-red-700 dark:bg-red-700 hover:bg-red-900 dark:hover:bg-red-900 trash-icon"
@@ -153,41 +185,36 @@ export function NoteBlock({
           </Button>
         </div>
 
-        <div
-          onBlur={() => {
-            handleBlur(), onFocus(null), setFocused(false);
-          }}
-          onFocus={() => {
-            onFocus(note.id), setFocused(true);
-          }}
-        >
-          <div className="bg-white dark:bg-slate-800 flex flex-row items-center w-full rounded-tl-md border dark:border-slate-500 rounded-tr-md">
-            <div className="flex-grow" data-testid="toolbar">
-              {toolbarVisible && (
+        {noteExpanded ? (
+          <div
+            onBlur={() => {
+              handleBlur(), onFocus(null), setFocused(false);
+            }}
+            onFocus={() => {
+              onFocus(note.id), setFocused(true);
+            }}
+          >
+            <div className="bg-white dark:bg-slate-800 flex flex-row items-center w-full rounded-tl-md border dark:border-slate-500 rounded-tr-md">
+              <div className="flex-grow" data-testid="toolbar">
                 <DefaultToolbar editor={editor!} note={true} />
-              )}
+              </div>
+              {/*<Button 
+                variant="outline" 
+                size="sm" 
+                className="h-full bg-slate-200 rounded-md mr-4 dark:bg-slate-700 dark:border-white"
+                onClick={handleBlur} >
+                  {noteMessage}
+              </Button>*/}
             </div>
-            <button
-              className={`ml-auto ${toolbarVisible ? "" : "flex flex-row justify-between w-full"} `}
-              onClick={() => setToolbarVisible(!toolbarVisible)}
-            >
-              <div className={`w-full ${toolbarVisible ? "hidden" : ""}`}></div>
-              {!toolbarVisible ? (
-                <ChevronDown
-                  className="dark:bg-slate-800 rounded-tr-md"
-                  data-testid="chevrondown"
-                />
-              ) : (
-                <ChevronUp className="dark:bg-slate-800 rounded-tr-md" />
-              )}
-            </button>
+            <EditorContent
+              name="lesson-generic"
+              editor={editor}
+              data-testid="editor"
+            />
           </div>
-          <EditorContent
-            name="lesson-generic"
-            editor={editor}
-            data-testid="editor"
-          />
-        </div>
+        ) : (
+          <div />
+        )}
       </div>
     </div>
   );
