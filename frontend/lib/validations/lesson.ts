@@ -13,5 +13,6 @@ const BlockSchema = z.object({
 export const LessonSchema = z.object({
   name: z.string().min(2).max(100),
   dropletId: z.number().int(),
+  orderIndex: z.number(),
   blocks: BlockSchema.array(),
 });
