@@ -10,7 +10,11 @@ export function useLessons(droplet: Pick<Droplet, "id" | "lessons">) {
   }, [droplet.lessons]);
 
   const addNewLesson = async (lessonData: { name: string }) => {
-    const response = await addLesson({ ...lessonData, dropletId: droplet.id });
+    const response = await addLesson({
+      ...lessonData,
+      dropletId: droplet.id,
+      orderIndex: lessons.length,
+    });
     if (response.ok) {
       setLessons((prevLessons) => [...prevLessons, response.data]);
       return { slug: response.data.attributes.slug };
