@@ -45,6 +45,7 @@ export function AddLesson({
     const response = await addLesson({
       name: formData.get("name") as string,
       dropletId: parseInt(formData.get("dropletId") as string),
+      orderIndex: droplet.lessons?.length || 0,
     });
 
     if (response && !response.error) {

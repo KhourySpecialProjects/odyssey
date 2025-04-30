@@ -458,7 +458,11 @@ export async function createDroplet(data: z.infer<typeof CreateDropletSchema>) {
   }
 }
 
-const CreateLessonSchema = LessonSchema.pick({ name: true, dropletId: true });
+const CreateLessonSchema = LessonSchema.pick({
+  name: true,
+  dropletId: true,
+  orderIndex: true,
+});
 export async function addLesson(formData: z.infer<typeof CreateLessonSchema>) {
   try {
     const lessonData = {
@@ -488,7 +492,7 @@ export async function addLesson(formData: z.infer<typeof CreateLessonSchema>) {
     const dropletLessonData = {
       droplet: formData.dropletId,
       lesson: lessonResult.data.id,
-      orderIndex: 9999, // Will be updated by the reorder hook
+      orderIndex: formData.orderIndex,
     };
 
     const dropletLessonResponse = await fetch(
