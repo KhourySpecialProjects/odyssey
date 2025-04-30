@@ -80,13 +80,13 @@ export function AddPlaylistDialog({
           />
           <div className="flex flex-col gap-6 max-h-[60vh] overflow-y-auto">
             {filteredPlaylists.map((playlist) => (
-              <Link
-                key={playlist.id}
-                href={`/p/${playlist.slug}`}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <div key={playlist.id} className="relative group h-[120px]">
+              <div key={playlist.id} className="relative group h-[120px]">
+                <Link
+                  key={playlist.id}
+                  href={`/p/${playlist.slug}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
                   <div className="p-4 h-full border rounded-md bg-slate-50 dark:bg-slate-800 dark:border-slate-500">
                     <div className="flex flex-col h-full">
                       <span className="text-xl font-bold dark:text-slate-300">
@@ -104,17 +104,17 @@ export function AddPlaylistDialog({
                       </div>
                     </div>
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="lg"
-                    className="absolute top-1/2 right-4 -translate-y-1/2"
-                    onClick={() => handleAddPlaylist(playlist)}
-                    data-testid="addPlaylist"
-                  >
-                    <PlusCircle className="h-6 w-6 text-green-700" />
-                  </Button>
-                </div>
-              </Link>
+                </Link>
+                <Button
+                  variant="ghost"
+                  size="lg"
+                  className="absolute top-1/2 right-4 -translate-y-1/2"
+                  onClick={() => handleAddPlaylist(playlist)}
+                  data-testid="addPlaylist"
+                >
+                  <PlusCircle className="h-6 w-6 text-green-700" />
+                </Button>
+              </div>
             ))}
           </div>
           <div className="flex justify-end pt-4 border-t">
