@@ -16,17 +16,22 @@ describe("ContentSelector", () => {
   });
 
   it("renders all tabs", () => {
-    render(<ContentSelector droplets={1} playlists={1} archived={1} />);
+    render(
+      <ContentSelector droplets={1} playlists={1} archived={1} groups={1} />,
+    );
     expect(screen.getByText(/droplets/i)).toBeInTheDocument();
     expect(screen.getByText(/playlists/i)).toBeInTheDocument();
     expect(screen.getByText(/archived/i)).toBeInTheDocument();
+    expect(screen.getByText(/groups/i)).toBeInTheDocument();
   });
 
   it("highlights active tab", () => {
     (useSearchParams as jest.Mock).mockReturnValue(
       new URLSearchParams("tab=playlists"),
     );
-    render(<ContentSelector droplets={1} playlists={1} archived={1} />);
+    render(
+      <ContentSelector droplets={1} playlists={1} archived={1} groups={1} />,
+    );
     expect(screen.getByText(/playlists/i).parentElement).toHaveClass(
       "space-x-8",
     );

@@ -21,7 +21,7 @@ describe("RegenerateSlugButton", () => {
 
   it("renders button with correct text", () => {
     render(<RegenerateSlugButton name="Test Droplet" dropletId={1} />);
-    expect(screen.getByText("Regenerate Slug")).toBeInTheDocument();
+    expect(screen.getByText("Change URL")).toBeInTheDocument();
   });
 
   it("calls updateDroplet with correct parameters when clicked", async () => {
@@ -31,7 +31,7 @@ describe("RegenerateSlugButton", () => {
     });
 
     render(<RegenerateSlugButton name="Test Droplet" dropletId={1} />);
-    fireEvent.click(screen.getByText("Regenerate Slug"));
+    fireEvent.click(screen.getByText("Change URL"));
 
     expect(updateDroplet).toHaveBeenCalledWith(
       1,
@@ -47,9 +47,9 @@ describe("RegenerateSlugButton", () => {
     });
 
     render(<RegenerateSlugButton name="Test Droplet" dropletId={1} />);
-    fireEvent.click(screen.getByText("Regenerate Slug"));
+    fireEvent.click(screen.getByText("Change URL"));
 
-    await screen.findByText("Regenerate Slug");
+    await screen.findByText("Change URL");
     expect(mockRouter.replace).toHaveBeenCalledWith("/draft/d/new-slug");
   });
 });

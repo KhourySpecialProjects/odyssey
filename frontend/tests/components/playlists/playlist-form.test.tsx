@@ -1,7 +1,7 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { PlaylistForm } from "@/components/playlists/playlist-form";
 import { useRouter } from "next/navigation";
-import { createPlaylist, updatePlaylist } from "@/lib/actions";
+import { updatePlaylist } from "@/lib/actions";
 
 jest.mock("react", () => {
   const actualReact = jest.requireActual("react");

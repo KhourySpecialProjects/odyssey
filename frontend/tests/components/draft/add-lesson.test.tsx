@@ -1,7 +1,6 @@
 import { render, screen, fireEvent, act } from "@testing-library/react";
 import { AddLesson } from "@/components/draft/add-lesson";
 import { useRouter } from "next/navigation";
-import { addLesson } from "@/lib/actions";
 
 jest.mock("@/lib/actions", () => ({
   addLesson: jest.fn(),
@@ -80,7 +79,6 @@ describe("AddLesson", () => {
       const plusButton = screen.getByRole("button");
       fireEvent.click(plusButton);
 
-      // Wait for setTimeout
       await act(async () => {
         await new Promise((resolve) => setTimeout(resolve, 0));
       });

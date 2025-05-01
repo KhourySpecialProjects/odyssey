@@ -30,7 +30,7 @@ export function RegenerateSlugButton({
       className="dark:bg-slate-800 dark:outline dark:outline-slate-500"
       onClick={() => regenerateSlug(dropletId)}
     >
-      Regenerate Slug
+      Change URL
     </Button>
   );
 }
