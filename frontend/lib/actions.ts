@@ -1439,7 +1439,9 @@ export async function markLessonAsComplete(
   }
 }
 
-const s3 = new S3Client({});
+const s3 = new S3Client({
+  region: process.env.AWS_REGION || "us-east-2", 
+});
 
 export async function uploadImage(formData: FormData) {
   if (
