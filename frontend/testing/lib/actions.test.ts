@@ -53,7 +53,6 @@ describe("actions", () => {
     });
   });
 
-  // Mock the external dependencies
   jest.mock("next/cache", () => ({
     revalidatePath: jest.fn(),
     revalidateTag: jest.fn(),

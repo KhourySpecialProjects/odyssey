@@ -1,5 +1,4 @@
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
-import { htmlToText } from "@/lib/utils";
+import { render, screen } from "@testing-library/react";
 import { useDropletUpdate } from "@/components/draft/metadata/hooks/useDropletUpdate";
 import { Description } from "@/components/draft/metadata/description";
 

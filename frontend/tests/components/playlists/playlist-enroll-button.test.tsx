@@ -1,7 +1,6 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { PlaylistEnrollButton } from "@/components/playlists/playlist-enroll-button";
 import { togglePlaylistEnrollment } from "@/lib/requests/playlist-enrollment";
-import { useRouter } from "next/navigation";
 
 jest.mock("@/lib/requests/playlist-enrollment", () => ({
   togglePlaylistEnrollment: jest.fn(),

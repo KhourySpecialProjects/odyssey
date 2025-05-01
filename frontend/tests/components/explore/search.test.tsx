@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { Search } from "@/components/explore/search";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import userEvent from "@testing-library/user-event";
 import { SearchProvider } from "@/contexts/SearchContext";
 
