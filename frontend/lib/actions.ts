@@ -25,6 +25,7 @@ import { v4 as uuidv4 } from "uuid";
 import { Buffer } from "node:buffer";
 import { getGroupByID } from "./requests/groups";
 import { getPlaylistById } from "./requests/playlist";
+import { fromNodeProviderChain } from "@aws-sdk/credential-providers";
 
 const STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
@@ -1439,11 +1440,7 @@ export async function markLessonAsComplete(
 }
 
 const s3 = new S3Client({
-  region: process.env.AWS_S3_BUCKET_REGION,
-  credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
-  },
+  region: process.env.AWS_REGION || "us-east-2", 
 });
 
 export async function uploadImage(formData: FormData) {
@@ -1473,6 +1470,9 @@ export async function uploadImage(formData: FormData) {
       ContentType: file.type,
     };
 
+    const creds = await fromNodeProviderChain()();
+
+    console.log("Resolved credentials:", creds);
     const response = await s3.send(new PutObjectCommand(uploadParams));
     if (response["$metadata"].httpStatusCode != 200) {
       return { ok: false, error: "Failed to upload image.", url: null };
