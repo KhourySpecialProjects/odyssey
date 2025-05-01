@@ -1460,6 +1460,11 @@ export async function uploadImage(formData: FormData) {
     const bucketName = process.env.AWS_S3_BUCKET_NAME!;
     const rootPath = process.env.AWS_S3_BUCKET_ROOT!;
     const buffer = Buffer.from(await file.arrayBuffer());
+    console.log("file", file);
+    console.log("fileName", fileName);
+    console.log("bucketName", bucketName);
+    console.log("rootPath", rootPath);
+    console.log("buffer", buffer);
 
     const uploadParams = {
       Bucket: bucketName,
