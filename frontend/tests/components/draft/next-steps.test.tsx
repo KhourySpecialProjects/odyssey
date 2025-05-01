@@ -1,15 +1,7 @@
-import {
-  render,
-  screen,
-  fireEvent,
-  renderHook,
-  waitFor,
-} from "@testing-library/react";
+import { render, screen, fireEvent, renderHook } from "@testing-library/react";
 import { NextSteps } from "@/components/draft/metadata/next-steps/next-steps";
 import { updateDroplet } from "@/lib/actions";
 import { act, useState } from "react";
-import { toast } from "sonner";
-import userEvent from "@testing-library/user-event";
 
 jest.mock("@/lib/actions", () => ({
   updateDroplet: jest.fn(() => Promise.resolve({ data: true, error: null })),

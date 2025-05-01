@@ -1193,9 +1193,7 @@ export async function deleteLesson(
   dropletId?: number,
 ) {
   try {
-    // First, delete the droplet_lesson if dropletId is provided
     if (dropletId) {
-      // Get the droplet to find the droplet_lesson id
       const droplet = await getDropletById<Droplet>(dropletId, {
         populate: {
           droplet_lessons: {
@@ -1204,7 +1202,6 @@ export async function deleteLesson(
         },
       });
 
-      // Find the droplet_lesson that connects this lesson to the droplet
       const dropletLesson = droplet.droplet_lessons.find(
         (dl) => dl.lesson.id === id,
       );
@@ -1223,12 +1220,10 @@ export async function deleteLesson(
 
         if (!deleteDropletLessonResponse.ok) {
           console.error("Failed to delete droplet_lesson");
-          // Continue with lesson deletion even if droplet_lesson deletion fails
         }
       }
     }
 
-    // Delete the lesson itself
     const response = await fetch(STRAPI_API_URL + "/api/lessons/" + id, {
       method: "DELETE",
       headers: {

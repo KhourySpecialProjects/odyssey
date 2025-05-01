@@ -4,7 +4,6 @@ import { getCurrentUser } from "@/lib/auth/session";
 import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
 import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
 import { Enrollment } from "@/types";
-import { EnrolledDropletsGrid } from "@/components/dashboard/enrolled-droplets-grid";
 
 jest.mock("@/lib/auth/session", () => ({
   getCurrentUser: jest.fn(),

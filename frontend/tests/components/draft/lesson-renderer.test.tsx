@@ -1,6 +1,6 @@
 import { render, screen, fireEvent, act } from "@testing-library/react";
 import { LessonRenderer } from "@/components/draft/lesson/lesson-renderer";
-import { deleteLesson, updateLesson } from "@/lib/actions";
+import { updateLesson } from "@/lib/actions";
 import { useRouter } from "next/navigation";
 
 jest.mock("@/components/ui/tiptap/lesson-name-input", () => ({
@@ -15,7 +15,6 @@ jest.mock("@/components/ui/tiptap/lesson-name-input", () => ({
   ),
 }));
 
-// Add this mock at the top with your other mocks
 jest.mock("@/components/draft/lesson/draggable_block_list", () => ({
   __esModule: true,
   default: ({ blocks, setBlock, deleteBlock }: any) => (
