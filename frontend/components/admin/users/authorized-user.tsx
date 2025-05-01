@@ -311,7 +311,7 @@ function SubmitButton({
       className={
         destructive
           ? "bg-red-400 dark:bg-red-400 dark:hover:bg-red-300"
-          : "bg-slate-100 dark:bg-slate-100"
+          : "bg-black dark:bg-slate-100"
       }
       aria-disabled={pending}
     >

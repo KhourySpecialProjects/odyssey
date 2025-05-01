@@ -188,11 +188,8 @@ describe("AddBlock", () => {
       it("should create warning callout block", () => {
         render(<AddBlock add={mockAdd} />);
 
-        // Open main menu
         fireEvent.click(screen.getByText("Add Block"));
-        // Open callout submenu
         fireEvent.click(screen.getByText("Callout Block"));
-        // Click warning option
         fireEvent.click(screen.getByText("Warning"));
 
         expect(mockAdd).toHaveBeenCalledWith({

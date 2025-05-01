@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, act } from "@testing-library/react";
+import { render, screen, fireEvent } from "@testing-library/react";
 import { CalloutEditor } from "@/components/draft/lesson/blocks/callout";
 
 jest.mock("@/lib/actions", () => ({

@@ -1,7 +1,6 @@
 import { render, screen, fireEvent } from "@testing-library/react";
 import { SortableLesson } from "@/components/draft/sortable-lesson";
 import { useRouter } from "next/navigation";
-import { useSortable } from "@dnd-kit/sortable";
 
 jest.mock("@dnd-kit/sortable", () => ({
   useSortable: () => ({

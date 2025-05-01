@@ -3,7 +3,6 @@ import {
   DeleteButton,
   AddButton,
 } from "@/components/draft/metadata/form-buttons";
-import ReactDOM from "react-dom";
 
 const mockUseFormStatus = jest.fn();
 
