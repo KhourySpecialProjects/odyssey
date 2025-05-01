@@ -19,22 +19,26 @@ const nextConfig = {
       allowedOrigins: ["localhost:3000"],
     },
   },
-  async headers() {
+  headers() {
     return [
       {
         source: "/:path*",
         headers: [
           {
             key: "Content-Security-Policy",
-            value: [
-              "default-src 'self'",
-              "script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://us-assets.i.posthog.com https://cdn.jsdelivr.net",
-              "connect-src 'self' https://app.posthog.com https://*.posthog.com",
-              "style-src 'self' 'unsafe-inline'",
-              "img-src 'self' data: blob: https:",
-              "font-src 'self' data:",
-              "worker-src 'self' blob:",
-            ].join("; "),
+            value: `
+              default-src 'self';
+              script-src 'self' 'unsafe-inline' 'unsafe-eval' https://us-assets.i.posthog.com https://cdn.jsdelivr.net;
+              connect-src 'self' https://app.posthog.com https://*.posthog.com;
+              style-src 'self' 'unsafe-inline';
+              img-src 'self' data: https:;
+              font-src 'self' data:;
+              media-src 'self' https: blob:;
+              child-src 'self' https://www.youtube.com https://player.vimeo.com;
+              frame-src 'self' https://www.youtube.com https://player.vimeo.com;
+            `
+              .replace(/\s{2,}/g, " ")
+              .trim(),
           },
         ],
       },
