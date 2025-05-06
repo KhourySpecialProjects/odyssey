@@ -21,5 +21,5 @@ certificate_arn = "arn:aws:acm:us-east-2:851725173181:certificate/1a26efdf-5050-
 be_certificate_arn = "arn:aws:acm:us-east-2:851725173181:certificate/2abdecfd-4009-4d10-928e-af6e5d9e12f6"
 
 
-database_username = "odysseyadmin"
-database_password = "oisef?JOIJIOJoif4873!!812y8y???vddx" 
+database_username = "postgres"
+database_password = "jklaraiogdad!" 
