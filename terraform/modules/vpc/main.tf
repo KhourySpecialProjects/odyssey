@@ -100,7 +100,7 @@ resource "aws_route_table" "private" {
    Name = "private-route-table"
  }
 }
-
+ 
 
 resource "aws_route_table_association" "private" {
  for_each = aws_subnet.private
