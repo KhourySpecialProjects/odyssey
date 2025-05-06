@@ -16,3 +16,6 @@ yarn-error.log*
 
 # IDEA config files (JetBrains Devs)
 .idea/
+
+# terraform
+.terraform/
