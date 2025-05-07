@@ -2,7 +2,6 @@
 
 import { cn, isAuthorizedUserAdmin } from "@/lib/utils";
 import {
-  AlignJustify,
   CircleUserIcon,
   Plus,
   PlusCircle,

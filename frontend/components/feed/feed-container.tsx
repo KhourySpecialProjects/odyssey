@@ -8,7 +8,6 @@ import { Announcement, AnnouncementType, AuthorizedUser } from "@/types";
 import { BellRing, SlidersHorizontal } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { FriendRequests } from "../friends/friend-requests";
-import { createSystemAnnouncement } from "@/lib/requests/feed";
 
 export function FeedContainer({
   announcements,

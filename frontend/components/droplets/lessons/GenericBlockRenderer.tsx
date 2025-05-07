@@ -111,9 +111,9 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
     }
 
     for (const node of textNodes) {
-      let nodeRange = document.createRange();
-      let nodeStart = node === startNode ? startOffset : 0;
-      let nodeEnd = node === endNode ? endOffset : node.textContent?.length;
+      const nodeRange = document.createRange();
+      const nodeStart = node === startNode ? startOffset : 0;
+      const nodeEnd = node === endNode ? endOffset : node.textContent?.length;
 
       nodeRange.setStart(node, nodeStart);
       nodeRange.setEnd(node, nodeEnd || 0);
@@ -309,7 +309,7 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
       return;
     }
 
-    let range = selection.getRangeAt(0);
+    const range = selection.getRangeAt(0);
     savedSelectionRef.current = range.cloneRange();
 
     let text = selection.toString();

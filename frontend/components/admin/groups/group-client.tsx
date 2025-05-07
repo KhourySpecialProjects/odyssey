@@ -1,6 +1,6 @@
 "use client";
 
-import { ChangeEvent, useCallback, useState } from "react";
+import { useCallback, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Group } from "@/types";
 import { GroupBlock } from "./group-block";

@@ -15,17 +15,18 @@ import { createPlaylist } from "@/lib/actions";
 import { updatePlaylist } from "@/lib/actions";
 import { createPlaylistAnnouncement } from "@/lib/requests/feed";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
+import { AuthorizedUser, Droplet } from "@/types";
 
 interface PlaylistFormProps {
-  droplets: any[];
-  author: any;
+  droplets: Droplet[];
+  author: AuthorizedUser;
   userId: number;
   existingPlaylist?: {
     id: number;
     name: string;
     slug: string;
     isPublic: boolean;
-    droplets?: any[];
+    droplets?: Droplet[];
   };
 }
 
@@ -41,7 +42,7 @@ export function PlaylistForm({
   const [selectedDroplets, setSelectedDroplets] = useState(
     existingPlaylist?.droplets || [],
   );
-  const [slug, setSlug] = useState(existingPlaylist?.slug || "");
+  const [slug] = useState(existingPlaylist?.slug || "");
   const [error, setError] = useState("");
   const [sourceDroplets, setSourceDroplets] = useState(() => {
     if (existingPlaylist?.droplets) {

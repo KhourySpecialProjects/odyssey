@@ -1,5 +1,4 @@
 import { AuthorizedUser } from "@/components/admin/users/authorized-users";
-import { type StrapiMediaParams } from "./strapi";
 import { AuthorizedUserRoleTitle } from "@/lib/globals";
 
 export type FocusArea = "personal" | "professional" | "technical";

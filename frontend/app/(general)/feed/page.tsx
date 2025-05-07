@@ -1,5 +1,4 @@
 import { Metadata } from "next";
-import { FriendRequests } from "@/components/friends/friend-requests";
 import { FeedContainer } from "@/components/feed/feed-container";
 import { notFound } from "next/navigation";
 import { fetchAnnouncements } from "@/lib/requests/feed";

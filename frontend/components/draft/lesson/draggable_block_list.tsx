@@ -32,7 +32,7 @@ export default function DraggableBlockList({
     block: Block;
   }
 
-  const [{ isOver }, drop] = useDrop<DragItem, unknown, { isOver: boolean }>({
+  const [{  }, drop] = useDrop<DragItem, unknown, { isOver: boolean }>({
     accept: "BLOCK",
     drop: (item: { block: Block; sourceList: string }) => {
       return { moved: true };

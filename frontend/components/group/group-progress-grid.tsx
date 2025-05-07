@@ -49,7 +49,6 @@ export function GroupProgressGrid({ group }: GroupProgressGridProps) {
 
   useEffect(() => {
     const fetchCompletionStatuses = async () => {
-      const statuses: Record<string, boolean> = {};
 
       try {
         await Promise.all(
