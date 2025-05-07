@@ -38,8 +38,8 @@ const nextConfig = {
               child-src 'self' https://www.youtube.com https://player.vimeo.com;
               frame-src 'self' https://www.youtube.com https://player.vimeo.com;
             `
-            .replace(/\s{2,}/g, " ")
-            .trim()
+              .replace(/\s{2,}/g, " ")
+              .trim(),
           },
         ],
       },
