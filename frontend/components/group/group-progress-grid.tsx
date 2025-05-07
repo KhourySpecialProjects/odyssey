@@ -49,7 +49,6 @@ export function GroupProgressGrid({ group }: GroupProgressGridProps) {
 
   useEffect(() => {
     const fetchCompletionStatuses = async () => {
-
       try {
         await Promise.all(
           (group.members || []).map(async (member) => {

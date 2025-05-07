@@ -12,7 +12,6 @@ interface GroupHeaderProps {
 }
 
 export function GroupHeader({ group, canEdit }: GroupHeaderProps) {
-
   return (
     <div className="flex justify-between items-start">
       <div className="space-y-4">

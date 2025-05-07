@@ -83,7 +83,7 @@ describe("DueDateAnnouncements", () => {
 
   it("handles see more/less toggle", () => {
     const manyDueDates = Array(6).fill(mockDueDates[0]);
-    render(<DueDateAnnouncements  dueDates={manyDueDates} />);
+    render(<DueDateAnnouncements dueDates={manyDueDates} />);
 
     expect(screen.getByText("see more...")).toBeInTheDocument();
     fireEvent.click(screen.getByText("see more..."));
