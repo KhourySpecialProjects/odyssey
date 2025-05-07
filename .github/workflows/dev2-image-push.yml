@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - 'develop'
+      - 'production'
 
 jobs:
   build-and-push-frontend-to-dev2:
