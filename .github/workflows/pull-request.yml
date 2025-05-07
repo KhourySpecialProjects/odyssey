@@ -11,9 +11,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       
-      - name: Check if PR to main is from develop
+      - name: Check if PR to production is from develop
         run: |
-          if [ ${{ github.head_ref }} != "develop" ] && [ ${{ github.base_ref }} == "main" ]; then
+          if [ ${{ github.head_ref }} != "develop" ] && [ ${{ github.base_ref }} == "production" ]; then
             echo "Merge requests to main branch are only allowed from develop branch."
             exit 1
           fi
