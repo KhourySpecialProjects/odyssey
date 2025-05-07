@@ -6,7 +6,7 @@ describe("CalloutTypeTool", () => {
     content: "Test content",
     type: "info" as "info",
     color: "bg-sky-50",
-    __component: "droplets.callout" as "droplets.callout"
+    __component: "droplets.callout" as "droplets.callout",
   };
   const mockUpdateBlock = jest.fn();
 
@@ -39,7 +39,7 @@ describe("CalloutTypeTool", () => {
       content: "Test content",
       type: "info" as "info",
       color: "bg-sky-50",
-      __component: "droplets.callout" as "droplets.callout"
+      __component: "droplets.callout" as "droplets.callout",
     };
 
     const mockUpdateBlock = jest.fn();

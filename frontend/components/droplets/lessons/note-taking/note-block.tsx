@@ -2,12 +2,7 @@ import { Note } from "@/types";
 import { useState, useCallback } from "react";
 import { updateNoteContent } from "@/lib/requests/notes";
 import { Badge } from "@/components/ui/badge";
-import {
-  GripVertical,
-  Trash2Icon,
-  ChevronDown,
-  ChevronUp,
-} from "lucide-react";
+import { GripVertical, Trash2Icon, ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 import { useEditor, EditorContent } from "@tiptap/react";
