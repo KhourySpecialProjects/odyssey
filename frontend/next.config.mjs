@@ -31,9 +31,10 @@ const nextConfig = {
               script-src 'self' 'unsafe-inline' 'unsafe-eval' https://us-assets.i.posthog.com https://cdn.jsdelivr.net;
               connect-src 'self' https://app.posthog.com https://*.posthog.com;
               style-src 'self' 'unsafe-inline';
-              img-src 'self' data: https:;
+              img-src 'self' data: https: blob:;
               font-src 'self' data:;
               media-src 'self' https: blob:;
+              worker-src 'self' blob:;
               child-src 'self' https://www.youtube.com https://player.vimeo.com;
               frame-src 'self' https://www.youtube.com https://player.vimeo.com;
             `
