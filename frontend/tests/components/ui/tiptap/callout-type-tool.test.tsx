@@ -4,8 +4,9 @@ import CalloutTypeTool from "@/components/ui/tiptap/toolbar/tools/callout-type-t
 describe("CalloutTypeTool", () => {
   const mockBlock = {
     content: "Test content",
-    type: "info",
+    type: "info" as "info",
     color: "bg-sky-50",
+    __component: "droplets.callout" as "droplets.callout"
   };
   const mockUpdateBlock = jest.fn();
 
@@ -36,8 +37,9 @@ describe("CalloutTypeTool", () => {
   describe("CalloutTypeTool", () => {
     const mockBlock = {
       content: "Test content",
-      type: "info",
+      type: "info" as "info",
       color: "bg-sky-50",
+      __component: "droplets.callout" as "droplets.callout"
     };
 
     const mockUpdateBlock = jest.fn();

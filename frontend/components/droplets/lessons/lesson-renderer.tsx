@@ -182,7 +182,7 @@ export function LessonRenderer({
       headings = headings.concat(extractHeadings(b.content));
     });
 
-  let genericBlocks = lesson.blocks
+  const genericBlocks = lesson.blocks
     .filter((b: any) => b.__component === "droplets.generic")
     .map((b) => b.id);
 

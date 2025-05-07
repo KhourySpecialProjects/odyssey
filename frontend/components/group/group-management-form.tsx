@@ -131,7 +131,7 @@ export function GroupManagementForm({
     initialSubmissionState,
   );
   const router = useRouter();
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSubmitting] = useState(false);
   const [droplets, setDroplets] = useState<Droplet[]>(
     existingGroup?.droplets?.sort((a, b) => a.name.localeCompare(b.name)) || [],
   );

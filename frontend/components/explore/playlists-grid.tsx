@@ -49,7 +49,7 @@ export async function PlaylistsGrid({
     dueDates = await getUserDueDates(authorizedUser.id);
   }
 
-  let playlistsWithCompletion = playlists?.map((playlist) => {
+  const playlistsWithCompletion = playlists?.map((playlist) => {
     const allLessonIds =
       playlist.droplets?.flatMap(
         (d: Droplet) => d.lessons?.map((l: Lesson) => l.id) || [],

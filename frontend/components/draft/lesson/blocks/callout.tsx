@@ -24,7 +24,7 @@ export function CalloutEditor({
   const [iconEnabled, setIconEnabled] = useState(block.iconEnabled);
 
   const handleUpdate = useCallback((content: any) => {
-    let temp: any = JSON.parse(
+    const temp: any = JSON.parse(
       JSON.stringify(tiptapJSONToStrapiJSON(content.content ?? [])),
     );
 
@@ -35,7 +35,7 @@ export function CalloutEditor({
     });
   }, []);
 
-  const debounceUpdate = useCallback(debounce(handleUpdate, 1000), []);
+  useCallback(debounce(handleUpdate, 1000), []);
 
   const handleToggleIcon = () => {
     updateBlock({
