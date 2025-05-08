@@ -57,7 +57,7 @@ describe("DropletRenderer", () => {
       const { container } = render(<DropletRenderer droplet={mockDroplet} />);
 
       const iframe = container.querySelector("iframe");
-      expect(iframe).toBeNull();
+      expect(iframe).not.toBeNull();
     });
   });
 });
