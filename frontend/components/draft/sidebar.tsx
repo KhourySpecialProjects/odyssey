@@ -130,14 +130,17 @@ export function Sidebar({
   };
 
   const addLessonCallback = (newLesson: Lesson) => {
-    updateDropletLessons([
-      ...dropletLessons,
-      {
-        id: 0,
-        lesson: newLesson,
-        orderIndex: dropletLessons.length,
-      },
-    ]);
+    // updateDropletLessons([...lessons, newLesson]);
+    const addLessonCallback = (newLesson: Lesson) => {
+      updateDropletLessons([
+        ...dropletLessons,
+        {
+          id: 0,
+          lesson: newLesson,
+          orderIndex: dropletLessons.length,
+        },
+      ]);
+    };
   };
 
   const [mounted, setMounted] = useState(false);

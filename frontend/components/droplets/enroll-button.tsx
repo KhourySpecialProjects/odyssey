@@ -17,7 +17,7 @@ interface EnrollButtonProps {
 
 export function EnrollButton({ droplet, isEnrolled }: EnrollButtonProps) {
   const router = useRouter();
-  const [, startTransition] = useTransition();
+  const [_, startTransition] = useTransition();
 
   if (!droplet.lessons || droplet.lessons.length === 0) {
     return null;
@@ -37,7 +37,7 @@ export function EnrollButton({ droplet, isEnrolled }: EnrollButtonProps) {
             toast.error("Uh oh! Something went wrong.");
           }
         });
-      } catch {
+      } catch (error) {
         toast.error("Failed to enroll in the course");
       }
     }

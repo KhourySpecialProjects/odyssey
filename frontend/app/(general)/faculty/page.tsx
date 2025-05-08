@@ -1,4 +1,5 @@
 import { AccessManager } from "@/components/shared/access-manager/access-manager";
+import { Session } from "@/components/shared/session";
 import { AdminSelector } from "@/components/shared/selector";
 import { getCurrentUser } from "@/lib/auth/session";
 import { notFound } from "next/navigation";

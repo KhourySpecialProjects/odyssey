@@ -36,7 +36,7 @@ export function NextSteps({
   const removeNextStep = (id: number) => {
     return async () => {
       const newNextSteps = [...nextSteps].filter((ns) => ns.id != id);
-      await updateDroplet(dropletId, {
+      const response = await updateDroplet(dropletId, {
         nextSteps: newNextSteps.map((ns) => {
           return { label: ns.label, url: ns.url };
         }),

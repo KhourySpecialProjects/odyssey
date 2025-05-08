@@ -2,7 +2,14 @@ import { Note } from "@/types";
 import { useState, useCallback } from "react";
 import { updateNoteContent } from "@/lib/requests/notes";
 import { Badge } from "@/components/ui/badge";
-import { GripVertical, Trash2Icon, ChevronDown, ChevronUp } from "lucide-react";
+import {
+  MessageSquareText,
+  GripVertical,
+  Trash2Icon,
+  FileText,
+  ChevronDown,
+  ChevronUp,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 import { useEditor, EditorContent } from "@tiptap/react";
@@ -12,23 +19,24 @@ import Underline from "@tiptap/extension-underline";
 import Link from "@tiptap/extension-link";
 import DefaultToolbar from "@/components/ui/tiptap/toolbar/general-toolbar";
 import { cn } from "@/lib/utils";
-import { EditorView } from "@tiptap/pm/view";
 
 export function NoteBlock({
   note,
   onUpdate,
+  disabled,
   onDelete,
   onFocus,
 }: {
   note: Note;
   onUpdate: () => void;
+  disabled: boolean;
   onDelete: (noteId: number) => void;
   onFocus: (focused: number | null) => void;
 }) {
   const [content, setContent] = useState(note.content);
   const [noteExpanded, setNoteExpanded] = useState(true);
   const [focused, setFocused] = useState(false);
-  const [, setNoteMessage] = useState("Save");
+  const [noteMessage, setNoteMessage] = useState("Save");
 
   const handleBlur = useCallback(async () => {
     setNoteMessage("Saving");
@@ -86,7 +94,7 @@ export function NoteBlock({
       attributes: {
         class: `w-full min-h-22 bg-white border border-slate-200 dark:border-slate-500 p-3 rounded-br-xl rounded-bl-xl outline-none dark:text-black cursor-text ${content.length > 200 ? "overflow-scroll" : "overflow-hidden"} ${focused ? "max-h-[150px]" : "max-h-[24px]"} overflow-x-hidden`,
       },
-      handleKeyDown: (view: EditorView, event: KeyboardEvent) => {
+      handleKeyDown: (view: any, event: KeyboardEvent) => {
         if (event.key === "Tab") {
           if (view.state.selection.$from.parent.type.name === "codeBlock") {
             event.preventDefault();
@@ -180,13 +188,10 @@ export function NoteBlock({
         {noteExpanded ? (
           <div
             onBlur={() => {
-              handleBlur();
-              onFocus(null);
-              setFocused(false);
+              handleBlur(), onFocus(null), setFocused(false);
             }}
             onFocus={() => {
-              onFocus(note.id);
-              setFocused(true);
+              onFocus(note.id), setFocused(true);
             }}
           >
             <div className="bg-white dark:bg-slate-800 flex flex-row items-center w-full rounded-tl-md border dark:border-slate-500 rounded-tr-md">

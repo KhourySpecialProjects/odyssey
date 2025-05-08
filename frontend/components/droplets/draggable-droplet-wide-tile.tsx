@@ -1,5 +1,5 @@
 import { useDrag, useDrop } from "react-dnd";
-import { Droplet, Tag } from "@/types/index.d";
+import { Droplet } from "@/types/index.d";
 import { Badge } from "@/components/ui/badge";
 import { GripVertical } from "lucide-react";
 import { cn, uppercaseFirstChar } from "@/lib/utils";
@@ -73,7 +73,7 @@ export default function DraggableDropletWideTile({
             >
               {uppercaseFirstChar(droplet.type)}
             </Badge>
-            {droplet.tags?.map((tag: Tag) => (
+            {droplet.tags?.map((tag: any) => (
               <Badge key={tag.id} variant="outline">
                 {tag.name}
               </Badge>

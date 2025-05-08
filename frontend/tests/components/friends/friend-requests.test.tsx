@@ -46,7 +46,7 @@ describe("FriendRequests", () => {
   });
 
   it("handles pagination correctly", () => {
-    const { getAllByRole } = render(
+    const { getByRole, getAllByRole } = render(
       <FriendRequests
         noProfile={false}
         friendsPerPage={2}

@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Clock, PencilIcon } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 interface GroupHeaderProps {
   group: Group;
@@ -12,6 +13,8 @@ interface GroupHeaderProps {
 }
 
 export function GroupHeader({ group, canEdit }: GroupHeaderProps) {
+  const router = useRouter();
+
   return (
     <div className="flex justify-between items-start">
       <div className="space-y-4">

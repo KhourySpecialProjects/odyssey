@@ -12,7 +12,7 @@ export function FriendRequests({
   friendsPerPage,
   authUser,
 }: {
-  noProfile: boolean;
+  noProfile: Boolean;
   friendsPerPage: number;
   authUser: AuthorizedUser;
 }) {

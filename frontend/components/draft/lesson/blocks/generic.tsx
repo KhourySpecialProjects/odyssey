@@ -3,19 +3,13 @@ import { revalidateLesson } from "@/lib/actions";
 import { GripVertical, Trash2Icon } from "lucide-react";
 import { GenericBlockInput } from "@/components/ui/tiptap/generic-block-input";
 
-export type GenericBlock = {
-  __component: "droplets.generic";
-  id: number;
-  content: string;
-};
-
 export function GenericEditor({
   block,
   updateBlock,
   deleteBlock,
 }: {
-  block: GenericBlock;
-  updateBlock: (block: GenericBlock) => void;
+  block: any;
+  updateBlock: (block: any) => void;
   deleteBlock: () => void;
 }) {
   const handleChange = (content: string) => {

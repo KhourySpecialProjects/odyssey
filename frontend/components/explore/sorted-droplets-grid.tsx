@@ -34,7 +34,7 @@ export function SortedDropletsGrid({
   const [currentPage, setCurrentPage] = useState(1);
 
   const sortedDroplets = useMemo(() => {
-    const sorted = [...droplets];
+    let sorted = [...droplets];
     if (sortKey) {
       const [field, direction] = sortKey.split(":");
       sorted.sort((a, b) => {

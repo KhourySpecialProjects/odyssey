@@ -12,7 +12,6 @@ import { all, createLowlight } from "lowlight";
 import GeneralToolbar from "./toolbar/general-toolbar";
 import Math from "@aarkue/tiptap-math-extension";
 import "katex/dist/katex.min.css";
-import { EditorView } from "@tiptap/pm/view";
 
 const lowlight = createLowlight(all);
 
@@ -71,7 +70,7 @@ export function GenericBlockInput({
         class:
           "w-full border min-h-32 prose-code:text-inherit border-slate-200 dark:border-slate-500 p-3 prose prose-lg prose-p:my-1 prose-li:my-1 prose-sky prose-headings:text-inherit prose-strong:text-inherit prose-table:block prose-table:overflow-x-scroll rounded-b-md hover:shadow focus:shadow-lg outline-none dark:text-slate-300",
       },
-      handleKeyDown: (view: EditorView, event: KeyboardEvent) => {
+      handleKeyDown: (view: any, event: KeyboardEvent) => {
         if (event.key === "Tab") {
           if (view.state.selection.$from.parent.type.name === "codeBlock") {
             event.preventDefault();

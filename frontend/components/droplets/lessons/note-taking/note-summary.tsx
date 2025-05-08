@@ -13,7 +13,7 @@ export async function NoteSummary({
   const pdfDoc = await PDFDocument.create();
 
   let page = pdfDoc.addPage([595.28, 841.89]);
-  const { height } = page.getSize();
+  const { width, height } = page.getSize();
 
   const stripHtmlTags = (html: string) => {
     return html
@@ -201,7 +201,7 @@ export async function NoteSummary({
     return acc;
   }, lessonNotes);
 
-  Object.entries(lessonHighlights).forEach(([, lessonData]) => {
+  Object.entries(lessonHighlights).forEach(([lessonId, lessonData]) => {
     if (yPosition < 100) {
       page = pdfDoc.addPage([595.28, 841.89]);
       yPosition = height - 50;
