@@ -10,7 +10,7 @@ jest.mock("@/lib/utils", () => ({
 describe("VideoEditor", () => {
   const mockBlock = {
     url: "https://www.youtube.com/embed/test123",
-    __component: "droplets.video",
+    __component: "droplets.video" as "droplets.video",
   };
 
   const mockUpdateBlock = jest.fn();
