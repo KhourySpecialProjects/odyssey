@@ -1,6 +1,13 @@
 import { generateID } from "../util/generate-id";
 
-let evaluatex: any;
+let evaluatex:
+  | ((
+      latex: string,
+      options: object,
+      context: { latex: boolean },
+    ) => { tokens: { type: string; value: string }[] })
+  | undefined;
+
 try {
   evaluatex = require("evaluatex").default;
 } catch (e) {
@@ -8,7 +15,7 @@ try {
 }
 
 export type VariableUpdateListeners =
-  | { id: string; onUpdate: () => any }[]
+  | { id: string; onUpdate: () => void }[]
   | undefined;
 export type AllVariableUpdateListeners = Record<
   string,
@@ -80,7 +87,18 @@ export async function evaluateExpression(
         .filter((t: { type: string; value: string }) => t.type === "SYMBOL")
         .map((t: { type: string; value: string }) => t.value),
     );
-    const resNum = res(variableObj);
+    const resNum = res.tokens.reduce(
+      (acc: number, token: { type: string; value: string }) => {
+        if (token.type === "NUMBER") {
+          return parseFloat(token.value);
+        }
+        if (token.type === "SYMBOL" && variableObj[token.value] !== undefined) {
+          return variableObj[token.value];
+        }
+        return acc;
+      },
+      0,
+    );
 
     if (definesVariable !== undefined) {
       if (definedVariableID === undefined) {
@@ -107,7 +125,7 @@ export async function evaluateExpression(
       variablesUsed: usedVars,
       result: resNum,
     };
-  } catch (e) {
+  } catch {
     return undefined;
   }
 }

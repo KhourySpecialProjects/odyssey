@@ -22,19 +22,19 @@ export interface StrapiRequestParams extends StrapiBaseRequestParams {
 }
 
 export interface StrapiMediaParams {
-  name: String;
-  alternativeText?: String;
-  caption?: String;
+  name: string;
+  alternativeText?: string;
+  caption?: string;
   width?: Integer;
   height?: Integer;
   formats?: JSON<any>;
-  hash: String;
-  ext?: String;
-  mime: String;
+  hash: string;
+  ext?: string;
+  mime: string;
   size: Decimal;
-  url: String;
-  previewUrl?: String;
-  provider: String;
+  url: string;
+  previewUrl?: string;
+  provider: string;
   provider_metadata?: JSON;
   createdAt?: DateTime;
   updatedAt?: DateTime;

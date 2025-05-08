@@ -81,7 +81,6 @@ export default async function RootLayout({ params, children }: Props) {
         author={isAuthor || false}
         user={user}
         droplet={droplet}
-        authorizedUser={authorizedUser}
         completedLessonIds={completedLessonIds}
       />
       <main className="flex-1 w-full">{children}</main>

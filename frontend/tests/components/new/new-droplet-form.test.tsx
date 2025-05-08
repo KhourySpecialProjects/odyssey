@@ -1,8 +1,5 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { CreateDropletForm } from "@/components/new/new-droplet-form";
-import { useRouter } from "next/navigation";
-import { createDroplet } from "@/lib/actions";
-import userEvent from "@testing-library/user-event";
 
 jest.mock("@/lib/actions", () => ({
   createDroplet: jest.fn(),
@@ -19,11 +16,6 @@ describe("CreateDropletForm", () => {
     email: "test@example.com",
     roles: [],
     isActive: true,
-  };
-
-  const mockRouter = {
-    push: jest.fn(),
-    back: jest.fn(),
   };
 
   beforeEach(() => {

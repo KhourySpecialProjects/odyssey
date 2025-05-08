@@ -15,6 +15,7 @@ import DraggableBlockList from "./draggable_block_list";
 import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import { getDropletBySlug } from "@/lib/requests/droplet";
+import { Block } from "./add-block";
 
 export interface BaseBlock {
   __component: string;
@@ -35,8 +36,6 @@ export interface OpenEndedQuizBlock extends BaseBlock {
   questions?: OpenEndedQuizQuestion[];
 }
 
-export type Block = QuizBlock | OpenEndedQuizBlock;
-
 interface LessonRendererProps {
   lesson: Lesson;
   dropletSlug: string;
@@ -53,7 +52,7 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
   const [name, setName] = useState(lesson.name);
 
   const updateBlocksBackend = useCallback(
-    async (blocks: Block[]) => {
+    async (blocks: any[]) => {
       const response = await updateLesson(lesson.id, { blocks });
 
       if (!response || response.error || !response.ok) {
@@ -64,7 +63,7 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
   );
 
   const updateBlocksBackendReload = useCallback(
-    async (blocks: Block[]) => {
+    async (blocks: any[]) => {
       await updateLesson(lesson.id, { blocks }, { reload: true });
     },
     [lesson.id],
@@ -137,7 +136,7 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
             return { ...b, ...block } as QuizBlock;
           }
           if (
-            b.__component === "droplets.open_ended_quiz" &&
+            b.__component === "droplets.open-ended-quiz" &&
             "questions" in block
           ) {
             return { ...b, ...block } as OpenEndedQuizBlock;

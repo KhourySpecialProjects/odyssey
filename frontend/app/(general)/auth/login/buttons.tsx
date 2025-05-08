@@ -17,7 +17,7 @@ export default function LoginButtons({
 
   return (
     <div className="space-y-3">
-      {Object.values(providers).map((provider: any) => (
+      {Object.values(providers).map((provider: ClientSafeProvider) => (
         <div key={provider.name}>
           <Button
             onClick={() => signIn(provider.id)}
