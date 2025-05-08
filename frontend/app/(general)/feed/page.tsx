@@ -1,6 +1,8 @@
 import { Metadata } from "next";
+import { FriendRequests } from "@/components/friends/friend-requests";
 import { FeedContainer } from "@/components/feed/feed-container";
 import { notFound } from "next/navigation";
+import { fetchAnnouncements } from "@/lib/requests/feed";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
 
@@ -14,6 +16,7 @@ export default async function FeedPage() {
   const user = await getCurrentUser();
   if (!user || !user?.email) return notFound();
   const authUser = await getAuthorizedUserByEmail(user.email);
+  const announcements = await fetchAnnouncements(authUser);
 
   return (
     <>
@@ -24,7 +27,7 @@ export default async function FeedPage() {
         </p>
       </div>
       <div className="w-full px-4 sm:px-16">
-        <FeedContainer authUser={authUser} />
+        <FeedContainer announcements={announcements} authUser={authUser} />
       </div>
     </>
   );

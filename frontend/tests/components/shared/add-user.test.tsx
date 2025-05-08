@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, fireEvent } from "@testing-library/react";
 import { AddUser } from "@/components/shared/access-manager/add-user/add-user";
 
 const mockUseFormStatus = jest.fn();

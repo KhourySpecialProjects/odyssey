@@ -115,6 +115,7 @@ export default async function GroupDetailPage({ params }: Props) {
             <>
               <Separator />
               <DueDateAnnouncements
+                group={group}
                 dueDates={uniqueDueDates}
                 data-testid="due-date-announcements"
               />

@@ -11,29 +11,20 @@ import { useState } from "react";
 import CalloutTypeTool from "@/components/ui/tiptap/toolbar/tools/callout-type-tool";
 import { Button } from "@lemonsqueezy/wedges";
 import { CalloutIcon } from "@/components/ui/callout-icons";
-import { BlockNode } from "@/types/strapi";
-
-export type CalloutBlock = {
-  __component: "droplets.callout";
-  content: BlockNode[];
-  iconEnabled?: boolean;
-  type: "info";
-  color?: string;
-};
 
 export function CalloutEditor({
   block,
   updateBlock,
   deleteBlock,
 }: {
-  block: CalloutBlock;
-  updateBlock: (block: CalloutBlock) => void;
+  block: any;
+  updateBlock: (block: any) => void;
   deleteBlock: () => void;
 }) {
   const [iconEnabled, setIconEnabled] = useState(block.iconEnabled);
 
-  const handleUpdate = useCallback((content: JSONContent) => {
-    const temp: BlockNode[] = JSON.parse(
+  const handleUpdate = useCallback((content: any) => {
+    let temp: any = JSON.parse(
       JSON.stringify(tiptapJSONToStrapiJSON(content.content ?? [])),
     );
 
@@ -44,7 +35,7 @@ export function CalloutEditor({
     });
   }, []);
 
-  useCallback(debounce(handleUpdate, 1000), []);
+  const debounceUpdate = useCallback(debounce(handleUpdate, 1000), []);
 
   const handleToggleIcon = () => {
     updateBlock({

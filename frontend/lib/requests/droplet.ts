@@ -72,6 +72,53 @@ export async function getDropletBySlug<T extends Partial<Droplet> = Droplet>(
     urlParams,
   }).then((droplets) => droplets[0]);
 }
+// // export async function getDropletBySlug<T extends Partial<Droplet> = Droplet>(
+// //   slug: string,
+// //   { sort, filters, populate = "*", fields = ["*"] }: StrapiRequestParams = {},
+// // ): Promise<T> {
+// //   const path = `/droplets`;
+// //   const urlParams = {
+// //     sort,
+// //     filters: { ...filters, slug },
+// //     populate: {
+// //       populate,  //confirm this doesn't need a spread
+// //       droplet_lessons: {
+// //         populate: ["lesson"],
+// //         sort: ["orderIndex:asc"], // Ensure lessons are returned in order
+// //       },
+// //     },
+// //     fields,
+// //     pagination: {
+// //       pageSize: 1,
+// //       page: 1,
+// //     },
+// //   };
+
+//   return await fetchAPI<T[]>(path, {
+//     urlParams,
+//   }).then((droplets) => droplets[0]);
+// }
+
+// export async function getDropletBySlug<T extends Partial<Droplet> = Droplet>(
+//   slug: string,
+//   { sort, filters, populate = "*", fields = ["*"] }: StrapiRequestParams = {},
+// ): Promise<T> {
+//   const path = `/droplets`;
+//   const urlParams = {
+//     sort,
+//     filters: { ...filters, slug },
+//     populate,
+//     fields,
+//     pagination: {
+//       pageSize: 1,
+//       page: 1,
+//     },
+//   };
+
+//   return await fetchAPI<T[]>(path, {
+//     urlParams,
+//   }).then((droplets) => droplets[0]);
+// }
 
 export async function getDropletById<T extends Partial<Droplet> = Droplet>(
   id: number,
@@ -99,6 +146,7 @@ export async function getDropletById<T extends Partial<Droplet> = Droplet>(
   }).then((droplet) => droplet);
 }
 
+// get all droplets that are in draft status
 export async function getDraftDroplets(): Promise<Droplet[]> {
   return await getDroplets({
     filters: { status: "draft" },

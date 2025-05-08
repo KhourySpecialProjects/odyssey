@@ -348,6 +348,8 @@ export async function createGroup(
 
   const [processedAdmins, processedManagers, processedMembers] =
     await Promise.all([
+      // processMembers(initialMembers?.admins),
+      // processMembers(initialMembers?.managers),
       initialMembers?.admins,
       initialMembers?.managers,
       processMembers(initialMembers?.members),

@@ -55,7 +55,7 @@ export function FirstVisitPopup({ user }: { user: AuthorizedUser | null }) {
         setIsOpen(false);
         router.push("/d/introduction-to-odyssey");
       }
-    } catch {
+    } catch (error) {
       console.error("Failed to save your information. Please try again.");
     }
   };

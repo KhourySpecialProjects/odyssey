@@ -2,7 +2,7 @@
 
 import UnauthorizedRoute from "@/app/(general)/unauthorized/page";
 import { cn, getPath, isAuthorizedUserAdmin } from "@/lib/utils";
-import { Droplet, User } from "@/types";
+import { AuthorizedUser, Droplet, User } from "@/types";
 import {
   BookTextIcon,
   FilePieChartIcon,
@@ -26,11 +26,13 @@ export default function Sidebar({
   user,
   author = false,
   droplet,
+  authorizedUser,
   completedLessonIds = [],
 }: {
   user?: User | null;
   author: boolean;
   droplet: Pick<Droplet, "name" | "slug" | "droplet_lessons">;
+  authorizedUser: AuthorizedUser | null;
   completedLessonIds: number[];
 }) {
   const [expanded, setExpanded] = useState(false);

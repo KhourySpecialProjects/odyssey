@@ -5,18 +5,13 @@ import { useRef, useState } from "react";
 import { useOffClick } from "../../metadata/hooks/useOffClick";
 import { youtubeUrlToEmbeddedUrl, embeddedUrlToYoutubeUrl } from "@/lib/utils";
 
-export type VideoBlock = {
-  __component: "droplets.video";
-  url: string;
-};
-
 export function VideoEditor({
   block,
   updateBlock,
   deleteBlock,
 }: {
-  block: VideoBlock;
-  updateBlock: (block: VideoBlock) => void;
+  block: any;
+  updateBlock: (block: any) => void;
   deleteBlock: () => void;
 }) {
   const ref = useRef(null);
