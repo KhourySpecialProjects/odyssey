@@ -23,7 +23,7 @@ export function DropletRenderer({ droplet }: DropletProps) {
 
       <div className="h-8"></div>
 
-      {droplet.lessons[0].blocks.map((b: any, i: number) => (
+      {droplet.lessons[0].blocks.map((b: Block, i: number) => (
         <LessonBlockRenderer key={i} block={b} />
       ))}
     </div>

@@ -191,7 +191,6 @@ describe("Sidebar", () => {
         user={mockProps.user}
         author={false}
         droplet={mockProps.droplet}
-        authorizedUser={null}
         completedLessonIds={[1]}
       />,
     );
@@ -205,7 +204,6 @@ describe("Sidebar", () => {
         user={mockProps.user}
         author={false}
         droplet={mockProps.droplet}
-        authorizedUser={null}
         completedLessonIds={[]}
       />,
     );
@@ -220,7 +218,6 @@ describe("Sidebar", () => {
         user={mockProps.user}
         author={false}
         droplet={mockProps.droplet}
-        authorizedUser={null}
         completedLessonIds={[1]}
       />,
     );
@@ -234,7 +231,6 @@ describe("Sidebar", () => {
         user={mockProps.user}
         author={false}
         droplet={mockProps.droplet}
-        authorizedUser={null}
         completedLessonIds={[]}
       />,
     );

@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { Droplet } from "@/types";
+import { Droplet, DropletLesson } from "@/types";
 import { ArrowLeftIcon, ArrowRightIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -28,7 +28,10 @@ export default function DropletFooter({
 
   if (pathSegments.length > 3) {
     const lessonSlug = pathname.split("/").at(-1);
-    const lessonSlugs = droplet.droplet_lessons.map((l: any) => l.lesson.slug);
+    if (!lessonSlug) return null;
+    const lessonSlugs = droplet.droplet_lessons.map(
+      (l: DropletLesson) => l.lesson.slug,
+    );
     const currentLessonSlugIndex = lessonSlugs.indexOf(lessonSlug);
 
     if (currentLessonSlugIndex === 0) {

@@ -1,5 +1,4 @@
 import { AuthorizedUser } from "@/components/admin/users/authorized-users";
-import { type StrapiMediaParams } from "./strapi";
 import { AuthorizedUserRoleTitle } from "@/lib/globals";
 
 export type FocusArea = "personal" | "professional" | "technical";
@@ -95,6 +94,40 @@ export type NavItem = {
 export type GeneralConfig = {
   mainNav: NavItem[];
 };
+
+export type Block =
+  | {
+      __component: "droplets.generic";
+      content: string;
+    }
+  | {
+      __component: "droplets.expandable";
+      title: string;
+      content: string;
+    }
+  | {
+      __component: "droplets.callout";
+      content: { type: string; children: { type: string; text: string }[] }[];
+      color: string;
+      type: "info" | "warning";
+      iconEnabled?: boolean;
+    }
+  | {
+      __component: "droplets.video";
+      url: string;
+    }
+  | {
+      __component: "droplets.quiz";
+      questions: {
+        id: number;
+        content: string;
+        answerOptions: { id: number; content: string; isCorrect: boolean }[];
+      }[];
+    }
+  | {
+      __component: "droplets.open-ended-quiz";
+      questions: { id: number; content: string; correctAnswer: string }[];
+    };
 
 export type Lesson = {
   id: number;

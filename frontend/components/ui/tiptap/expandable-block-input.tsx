@@ -10,6 +10,7 @@ import CodeBlockLowlight from "@tiptap/extension-code-block-lowlight";
 import { CodeBlockComponent } from "./toolbar/tools/code-tool/code-tool";
 import { all, createLowlight } from "lowlight";
 import GeneralToolbar from "./toolbar/general-toolbar";
+import { EditorView } from "prosemirror-view";
 
 const lowlight = createLowlight(all);
 
@@ -57,7 +58,7 @@ export function ExpandableBlockInput({
         class:
           "prose prose-sky prose-headings:text-inherit prose-code:text-inherit prose-strong:text-inherit p-2 max-w-full min-h-32 border rounded-b-md border-slate-200 dark:border-slate-500 hover:shadow focus:shadow-lg outline-none dark:text-slate-300",
       },
-      handleKeyDown: (view: any, event: KeyboardEvent) => {
+      handleKeyDown: (view: EditorView, event: KeyboardEvent) => {
         if (event.key === "Tab") {
           if (view.state.selection.$from.parent.type.name === "codeBlock") {
             event.preventDefault();

@@ -1,8 +1,5 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { MultiSelect } from "@/components/new/multi-select";
-import { createNewTag } from "@/lib/actions";
-import { toast } from "sonner";
-import userEvent from "@testing-library/user-event";
 
 jest.mock("@/lib/actions");
 jest.mock("sonner");
