@@ -26,7 +26,7 @@ export default function ImageToolButton({ editor }: { editor: Editor | null }) {
   const { open, setOpen } = useOffClick(ref);
   const [file, setFile] = useState<File | null>(null);
 
-  const insertImage = async (prevState: any, formData: FormData) => {
+  const insertImage = async () => {
     const newFormData: FormData = new FormData();
     newFormData.append("image", file as Blob);
 
@@ -43,15 +43,11 @@ export default function ImageToolButton({ editor }: { editor: Editor | null }) {
     }
     setOpen(false);
     setFile(null);
-    console.log(response);
   };
 
   const initialState: any = { image: null };
 
-  const [state, formAction, isPending] = useActionState(
-    insertImage,
-    initialState,
-  );
+  const [, formAction, isPending] = useActionState(insertImage, initialState);
 
   const disabled = !(
     editor?.view?.state.selection.$from.node().type.name == "doc" ||

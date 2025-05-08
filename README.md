@@ -20,10 +20,10 @@ Odyssey is a new platform designed to provide on-demand access to modern knowled
 ### Architecture
 
 **Production:**
-The frontend and backend are both deployed through Digital Ocean. Assets are uploaded to Digital Ocean Spaces. Platform content—managed through the backend—is stored in a Digital Ocean Postgres database.
+The frontend and backend are both deployed through AWS ECS using Terraform to assemble all necessary aspects. The frontend and backend are each deployed in a separate service. The database is deployed through AWS RDS. Media is stored in AWS S3.
 
 **Development:**
-The frontend and backend are deployed through AWS EKS. Each is deployed in a separate cluster stemming from a Docker image built from the `kubernetes.Dockerfile` in the root of their respective subdirectory. The database is deployed through AWS RDS. Media is stored in AWS S3. 
+The frontend and backend are both deployed through AWS ECS. Each is deployed in a separate service. The database is deployed through AWS RDS. Media is stored in AWS S3. 
 
 ## Installation
 
@@ -182,7 +182,7 @@ There are two options: using data from the development server or starting from s
 
 #### Using Old Data
 
-Before getting the production data, we need to make sure that you’ll be allowed to sign into Strapi on your local development. To ensure this, have a current team member sign you up through [dev.data.khouryodyssey.org](http://dev.data.khouryodyssey.org). 
+Before getting the production data, we need to make sure that you’ll be allowed to sign into Strapi on your local development. To ensure this, have a current team member sign you up through [dev2.data.khouryodyssey.org](http://dev2.data.khouryodyssey.org). 
 
 Once you are signed up through strapi. Request for a current team member to send you the SQL startup file (it should be named `data.sql`). When the docker containers are started for the first time, the database will be populated with the current data in the development server through the commands in the `data.sql` file. 
 
@@ -306,4 +306,4 @@ To contribute to Odyssey's source code:
 
 Sponsor: [@MarkFontenot](https://github.com/MarkFontenot)
 
-This platform was built by Jay Sella ([@jaysella](https://github.com/jaysella)), Bobby Palazzi ([@bpalazzi512](https://github.com/bpalazzi512)), and William Gadala ([@wjgadala](https://github.com/wjgadala)).
+This platform was built by Jay Sella ([@jaysella](https://github.com/jaysella)), Bobby Palazzi ([@bpalazzi512](https://github.com/bpalazzi512)), Chase Houser ([@chouser63](https://github.com/chouser63)), Gillian Palmer ([@gpalmer27](https://github.com/gpalmer27)), William Gadala ([@wjgadala](https://github.com/wjgadala)), and Martin Hema ([@martin0he](https://github.com/martin0he)).

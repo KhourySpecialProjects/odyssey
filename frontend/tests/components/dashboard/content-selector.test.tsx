@@ -34,7 +34,9 @@ describe("ContentSelector", () => {
   });
 
   it("navigates to the correct URL when a tab is clicked", () => {
-    render(<ContentSelector droplets={1} playlists={1} archived={1} />);
+    render(
+      <ContentSelector droplets={1} playlists={1} archived={1} groups={1} />,
+    );
 
     fireEvent.click(screen.getByText(/playlists/i));
 

@@ -48,7 +48,7 @@ export function LearningObjectives({
       const newLearningObjectives = [...learningObjectives].filter(
         (obj) => obj.id != id,
       );
-      const response = await updateDroplet(dropletId, {
+      await updateDroplet(dropletId, {
         learningObjectives: newLearningObjectives.map((obj) => obj.objective),
       });
     };

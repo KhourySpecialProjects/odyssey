@@ -29,7 +29,7 @@ export function GroupProgressGrid({ group }: GroupProgressGridProps) {
     Record<string, number>
   >({});
 
-  const [isPending, startTransition] = useTransition();
+  const [, startTransition] = useTransition();
   const [currentPage, setCurrentPage] = useState(0);
   const lessonsPerPage = 4;
 
@@ -49,8 +49,6 @@ export function GroupProgressGrid({ group }: GroupProgressGridProps) {
 
   useEffect(() => {
     const fetchCompletionStatuses = async () => {
-      const statuses: Record<string, boolean> = {};
-
       try {
         await Promise.all(
           (group.members || []).map(async (member) => {
