@@ -2,14 +2,14 @@
 
 import { useCallback } from "react";
 import { useDrop } from "react-dnd";
-import { Block } from "./lesson-renderer";
+import { Block } from "./add-block";
 import { DraggableBlockListClient } from "./draggable_block_list_client";
 
 interface DraggableCardListProps {
   blocks: Block[];
   onReorder: (fromIndex: number, toIndex: number) => void;
   onAddBlock: (index: number, block: Block) => void;
-  setBlock: (index: number) => (block: any) => void;
+  setBlock: (index: number) => (block: Block) => void;
   deleteBlock: (index: number) => () => void;
 }
 
@@ -32,9 +32,9 @@ export default function DraggableBlockList({
     block: Block;
   }
 
-  const [{ isOver }, drop] = useDrop<DragItem, unknown, { isOver: boolean }>({
+  const [, drop] = useDrop<DragItem, unknown, { isOver: boolean }>({
     accept: "BLOCK",
-    drop: (item: { block: Block; sourceList: string }) => {
+    drop: () => {
       return { moved: true };
     },
     collect: (monitor) => ({

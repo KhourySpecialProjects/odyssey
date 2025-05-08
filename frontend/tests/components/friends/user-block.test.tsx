@@ -3,7 +3,6 @@ import { BlockUser, removeFriend } from "@/lib/requests/friends";
 import { toast } from "sonner";
 import { TimeZone } from "@/types";
 import { ProfileBlock } from "@/components/friends/profile-block";
-import { useState } from "react";
 
 jest.mock("@/lib/requests/friends", () => ({
   BlockUser: jest.fn(),
@@ -134,7 +133,6 @@ describe("UserBlock", () => {
   });
 
   it("shows avatar fallback when no profile photo", () => {
-    const userWithoutPhoto = { ...mockUser, profilePhoto: "" };
     render(
       <ProfileBlock
         otherUser={mockUser}

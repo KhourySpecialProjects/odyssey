@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback } from "react";
-import { Block } from "./lesson-renderer";
+import { Block } from "./add-block";
 import { AddBlock } from "./add-block";
 import DraggableBlockTile from "./draggable_block_tile";
 
@@ -32,7 +32,7 @@ export function DraggableBlockListClient({
       <div className="space-y-8 grid grid-cols-1">
         {blocks.map((block, index) => (
           <div
-            key={`${block.__component}-${block.id}`}
+            key={`${block.__component}-${index}`}
             className="w-full flex flex-col items-center justify-center"
           >
             <DraggableBlockTile

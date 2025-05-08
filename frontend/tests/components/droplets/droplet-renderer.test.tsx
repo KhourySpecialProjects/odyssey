@@ -14,7 +14,13 @@ describe("DropletRenderer", () => {
     focusArea: "frontend",
     lessons: [
       {
-        blocks: [{ __content: "droplets.video", url: "https://test.com" }],
+        blocks: [
+          {
+            __component: "droplets.video",
+            url: "https://test.com",
+            content: "",
+          },
+        ],
       },
     ],
   };
