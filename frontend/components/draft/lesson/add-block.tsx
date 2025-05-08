@@ -10,8 +10,9 @@ import { useRef } from "react";
 import { useOffClick } from "../metadata/hooks/useOffClick";
 import { CalloutIcon } from "@/components/ui/callout-icons";
 import { useState } from "react";
+import { OpenEndedQuizBlock, QuizBlock } from "./lesson-renderer";
 
-type Block =
+export type Block =
   | { __component: "droplets.generic"; content: string }
   | { __component: "droplets.expandable"; title: string; content: string }
   | {
@@ -32,7 +33,9 @@ type Block =
   | {
       __component: "droplets.open-ended-quiz";
       questions: { id: number; content: string; correctAnswer: string }[];
-    };
+    }
+  | QuizBlock
+  | OpenEndedQuizBlock;
 
 export function AddBlock({ add }: { add: (block: Block) => void }) {
   const ref = useRef(null);

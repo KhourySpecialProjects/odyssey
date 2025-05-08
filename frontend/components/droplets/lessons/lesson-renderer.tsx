@@ -27,7 +27,8 @@ import { Highlight } from "@/types";
 import { getEnrollByID } from "@/lib/requests/enrollment";
 import { createNote } from "@/lib/requests/notes";
 import { getHighlights } from "@/lib/requests/highlights";
-import { Block } from "@/components/draft/lesson/lesson-renderer";
+import { Block } from "@/components/draft/lesson/add-block";
+import { GenericBlock } from "@/components/draft/lesson/blocks/generic";
 
 interface LessonRendererProps {
   lesson: Lesson;
@@ -199,7 +200,7 @@ export function LessonRenderer({
   lesson.blocks
     .filter((b: Block) => b.__component === "droplets.generic")
     .forEach((b: Block) => {
-      headings = headings.concat(extractHeadings(b.content));
+      headings = headings.concat(extractHeadings((b as GenericBlock).content));
     });
 
   const genericBlocks = lesson.blocks

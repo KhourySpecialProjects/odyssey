@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import { ExpandableBlockInput } from "@/components/ui/tiptap/expandable-block-input";
 
-type ExpandableBlock = {
+export type ExpandableBlock = {
   __component: "droplets.expandable";
   title: string;
   content: string;

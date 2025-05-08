@@ -13,7 +13,7 @@ import { Button } from "@lemonsqueezy/wedges";
 import { CalloutIcon } from "@/components/ui/callout-icons";
 import { BlockNode } from "@/types/strapi";
 
-type CalloutBlock = {
+export type CalloutBlock = {
   __component: "droplets.callout";
   content: BlockNode[];
   iconEnabled?: boolean;
