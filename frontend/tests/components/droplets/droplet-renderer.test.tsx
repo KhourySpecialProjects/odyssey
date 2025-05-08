@@ -35,4 +35,11 @@ describe("DropletRenderer", () => {
     expect(screen.getByText(/frontend/)).toBeInTheDocument();
   });
 
+  it("renders video block correctly", () => {
+    render(<DropletRenderer droplet={mockDroplet} />);
+    expect(screen.getByTitle("Embedded YouTube video")).toHaveAttribute(
+      "src",
+      "https://test.com",
+    );
+  });
 });
