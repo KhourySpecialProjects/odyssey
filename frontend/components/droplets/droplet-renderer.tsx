@@ -1,6 +1,6 @@
 "use client";
 
-import { Block } from "../draft/lesson/lesson-renderer";
+import { Block } from "../draft/lesson/add-block";
 
 interface DropletProps {
   droplet: {
@@ -31,7 +31,7 @@ export function DropletRenderer({ droplet }: DropletProps) {
 }
 
 function LessonBlockRenderer({ block }: { block: Block }) {
-  switch (block.content) {
+  switch (block.__component) {
     case "droplets.video":
       return (
         <iframe
