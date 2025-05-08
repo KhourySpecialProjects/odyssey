@@ -29,7 +29,7 @@ export function GroupProgressGrid({ group }: GroupProgressGridProps) {
     Record<string, number>
   >({});
 
-  const [isPending, startTransition] = useTransition();
+  const [, startTransition] = useTransition();
   const [currentPage, setCurrentPage] = useState(0);
   const lessonsPerPage = 4;
 

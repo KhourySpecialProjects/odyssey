@@ -32,9 +32,9 @@ export default function DraggableBlockList({
     block: Block;
   }
 
-  const [{}, drop] = useDrop<DragItem, unknown, { isOver: boolean }>({
+  const [, drop] = useDrop<DragItem, unknown, { isOver: boolean }>({
     accept: "BLOCK",
-    drop: (item: { block: Block; sourceList: string }) => {
+    drop: (_item: { block: Block; sourceList: string }) => {
       return { moved: true };
     },
     collect: (monitor) => ({

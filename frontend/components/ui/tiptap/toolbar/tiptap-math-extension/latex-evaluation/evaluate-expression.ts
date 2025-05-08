@@ -1,6 +1,7 @@
 import { generateID } from "../util/generate-id";
 
 let evaluatex: any;
+
 try {
   evaluatex = require("evaluatex").default;
 } catch (e) {
@@ -107,7 +108,7 @@ export async function evaluateExpression(
       variablesUsed: usedVars,
       result: resNum,
     };
-  } catch (e) {
+  } catch {
     return undefined;
   }
 }

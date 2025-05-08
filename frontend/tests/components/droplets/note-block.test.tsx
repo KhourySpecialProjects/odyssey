@@ -90,7 +90,6 @@ describe("NoteBlock", () => {
       <NoteBlock
         note={mockNote}
         onUpdate={mockOnUpdate}
-        disabled={false}
         onDelete={mockOnDelete}
         onFocus={mockOnFocus}
       />,
@@ -105,7 +104,6 @@ describe("NoteBlock", () => {
       <NoteBlock
         note={mockNote}
         onUpdate={mockOnUpdate}
-        disabled={false}
         onDelete={mockOnDelete}
         onFocus={mockOnFocus}
       />,
@@ -129,7 +127,6 @@ describe("NoteBlock", () => {
       <NoteBlock
         note={mockNote}
         onUpdate={mockOnUpdate}
-        disabled={false}
         onDelete={mockOnDelete}
         onFocus={mockOnFocus}
       />,
