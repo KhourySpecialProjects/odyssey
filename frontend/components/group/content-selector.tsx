@@ -2,14 +2,13 @@
 
 import { cn } from "@/lib/utils";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { User } from "@/types";
 
 const tabs = [
   { name: "Droplets", value: "droplets" },
   { name: "Playlists", value: "playlists" },
 ];
 
-export function ContentSelector({ user }: { user: User }) {
+export function ContentSelector() {
   const searchParams = useSearchParams();
   const pathname = usePathname();
   const router = useRouter();

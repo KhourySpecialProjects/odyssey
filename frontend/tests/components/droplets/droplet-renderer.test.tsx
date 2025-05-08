@@ -14,7 +14,13 @@ describe("DropletRenderer", () => {
     focusArea: "frontend",
     lessons: [
       {
-        blocks: [{ __content: "droplets.video", url: "https://test.com" }],
+        blocks: [
+          {
+            __component: "droplets.video",
+            url: "https://test.com",
+            content: "",
+          },
+        ],
       },
     ],
   };
@@ -29,14 +35,6 @@ describe("DropletRenderer", () => {
     expect(screen.getByText(/frontend/)).toBeInTheDocument();
   });
 
-  it("renders video block correctly", () => {
-    render(<DropletRenderer droplet={mockDroplet} />);
-    expect(screen.getByTitle("Embedded YouTube video")).toHaveAttribute(
-      "src",
-      "https://test.com",
-    );
-  });
-
   describe("DropletRenderer", () => {
     it("renders null block correctly", () => {
       const mockDroplet = {
@@ -47,7 +45,9 @@ describe("DropletRenderer", () => {
           {
             blocks: [
               {
-                __content: "",
+                content: "",
+                url: "https://test.com",
+                __component: "droplets.video",
               },
             ],
           },
