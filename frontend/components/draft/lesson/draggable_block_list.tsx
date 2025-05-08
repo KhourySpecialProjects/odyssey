@@ -9,7 +9,7 @@ interface DraggableCardListProps {
   blocks: Block[];
   onReorder: (fromIndex: number, toIndex: number) => void;
   onAddBlock: (index: number, block: Block) => void;
-  setBlock: (index: number) => (block: any) => void;
+  setBlock: (index: number) => (block: Block) => void;
   deleteBlock: (index: number) => () => void;
 }
 
@@ -34,7 +34,7 @@ export default function DraggableBlockList({
 
   const [, drop] = useDrop<DragItem, unknown, { isOver: boolean }>({
     accept: "BLOCK",
-    drop: (_item: { block: Block; sourceList: string }) => {
+    drop: () => {
       return { moved: true };
     },
     collect: (monitor) => ({

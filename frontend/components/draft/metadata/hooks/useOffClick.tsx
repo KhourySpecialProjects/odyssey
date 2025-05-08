@@ -8,8 +8,8 @@ export function useOffClick(
 ) {
   const [open, setOpen] = useState(false);
 
-  const handleClickOutside = (event: any) => {
-    if (ref.current && !ref.current.contains(event.target)) {
+  const handleClickOutside = (event: MouseEvent) => {
+    if (ref.current && !ref.current.contains(event.target as Node)) {
       setOpen(false);
       func();
     }

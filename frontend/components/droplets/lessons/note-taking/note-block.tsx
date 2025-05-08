@@ -180,10 +180,13 @@ export function NoteBlock({
         {noteExpanded ? (
           <div
             onBlur={() => {
-              handleBlur(), onFocus(null), setFocused(false);
+              handleBlur();
+              onFocus(null);
+              setFocused(false);
             }}
             onFocus={() => {
-              onFocus(note.id), setFocused(true);
+              onFocus(note.id);
+              setFocused(true);
             }}
           >
             <div className="bg-white dark:bg-slate-800 flex flex-row items-center w-full rounded-tl-md border dark:border-slate-500 rounded-tr-md">

@@ -42,6 +42,20 @@ interface LessonRendererProps {
   setExpanded: (expanded: boolean) => void;
 }
 
+export interface Heading {
+  text: string;
+  level: number;
+}
+
+interface HighlightResponseItem {
+  id: number;
+  attributes: {
+    text: string;
+    position: number;
+    color: string;
+  };
+}
+
 export function LessonRenderer({
   lesson,
   droplet,
@@ -62,10 +76,12 @@ export function LessonRenderer({
     const fetchHighlights = async () => {
       const response = await getHighlightsForLesson(lesson.id);
       if (response.data) {
-        const formattedHighlights = response.data.map((item: any) => ({
-          ...item.attributes,
-          id: item.id,
-        }));
+        const formattedHighlights = response.data.map(
+          (item: HighlightResponseItem) => ({
+            ...item.attributes,
+            id: item.id,
+          }),
+        );
         setHighlights(formattedHighlights);
       }
     };
@@ -179,7 +195,7 @@ export function LessonRenderer({
     });
   }
 
-  let headings: any[] = [];
+  let headings: Heading[] = [];
   lesson.blocks
     .filter((b: Block) => b.__component === "droplets.generic")
     .forEach((b: Block) => {

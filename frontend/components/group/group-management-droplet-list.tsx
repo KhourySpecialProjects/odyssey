@@ -10,8 +10,10 @@ import React from "react";
 import { Badge } from "@/components/ui/badge";
 import { uppercaseFirstChar } from "@/lib/utils";
 
-function useCombinedRefs(...refs: any[]) {
-  const targetRef = useRef(null);
+function useCombinedRefs<T>(
+  ...refs: (React.Ref<T> | ((instance: T | null) => void))[]
+): React.RefObject<T> {
+  const targetRef = useRef<T>(null);
 
   React.useEffect(() => {
     refs.forEach((ref) => {
@@ -20,7 +22,7 @@ function useCombinedRefs(...refs: any[]) {
       if (typeof ref === "function") {
         ref(targetRef.current);
       } else {
-        ref.current = targetRef.current;
+        (ref as React.MutableRefObject<T>).current = targetRef.current as T;
       }
     });
   }, [refs]);
@@ -59,7 +61,7 @@ const DropletItem = ({
     },
   });
 
-  const combinedRef = useCombinedRefs(drag, drop);
+  const combinedRef = useCombinedRefs<HTMLDivElement>(drag, drop);
 
   return (
     <div
