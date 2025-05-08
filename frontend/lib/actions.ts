@@ -224,8 +224,6 @@ export async function createBugReport(formData: z.infer<typeof reportSchema>) {
     console.error(err);
     return { error: "Database Error: Failed to create bug report." };
   }
-
-  // redirect(formData.path + "?ts=" + Date.now());
 }
 
 export async function updateAuthorBio(bio: string, userId: number) {
@@ -384,9 +382,6 @@ export async function createEnrollmentFromEmail(
         const errorMessage = `${data.error.message} (${errorPath})`;
         return { ok: false, error: errorMessage, data: null };
       }
-
-      //revalidateTag("enrollments");
-      //revalidatePath("/(general)/dashboard", "page");
     }
   } catch (err) {
     console.error(err);
@@ -747,10 +742,6 @@ export async function updateUserInfo(
         }),
       },
     );
-
-    // if (!response.ok) {
-    //   throw new Error("Failed to update user info");
-    // }
     revalidatePath("/admin");
     return { success: true };
   } catch (error) {
@@ -1432,7 +1423,6 @@ export async function markLessonAsComplete(
 
     return true;
   } catch (error) {
-    //throw new Error(`Failed to mark lesson as complete: ${error}`);
     console.error("Error marking lesson as complete:", error);
     return false;
   }
@@ -1567,7 +1557,7 @@ export async function updatePlaylist(
     droplets?: { id: number }[];
     authors?: { id: number };
     userId?: number;
-    slug?: string; //TODO Should slug be optional for updating a playlist?
+    slug?: string;
   },
 ) {
   try {

@@ -27,6 +27,8 @@ import { Highlight } from "@/types";
 import { getEnrollByID } from "@/lib/requests/enrollment";
 import { createNote } from "@/lib/requests/notes";
 import { getHighlights } from "@/lib/requests/highlights";
+import { Block } from "@/components/draft/lesson/add-block";
+import { GenericBlock } from "@/components/draft/lesson/blocks/generic";
 
 interface LessonRendererProps {
   lesson: Lesson;
@@ -39,6 +41,20 @@ interface LessonRendererProps {
   onUpdate: () => void;
   expanded: boolean;
   setExpanded: (expanded: boolean) => void;
+}
+
+export interface Heading {
+  text: string;
+  level: number;
+}
+
+interface HighlightResponseItem {
+  id: number;
+  attributes: {
+    text: string;
+    position: number;
+    color: string;
+  };
 }
 
 export function LessonRenderer({
@@ -61,17 +77,22 @@ export function LessonRenderer({
     const fetchHighlights = async () => {
       const response = await getHighlightsForLesson(lesson.id);
       if (response.data) {
-        const formattedHighlights = response.data.map((item: any) => ({
-          ...item.attributes,
-          id: item.id,
-        }));
+        const formattedHighlights = response.data.map(
+          (item: HighlightResponseItem) => ({
+            ...item.attributes,
+            id: item.id,
+          }),
+        );
         setHighlights(formattedHighlights);
       }
     };
     fetchHighlights();
   }, [lesson.id]);
 
-  const handleHighlight = async (highlight: any, isWithNote?: boolean) => {
+  const handleHighlight = async (
+    highlight: Highlight,
+    isWithNote?: boolean,
+  ) => {
     const response = await createHighlight({
       data: {
         text: highlight.text,
@@ -175,15 +196,15 @@ export function LessonRenderer({
     });
   }
 
-  let headings: any[] = [];
+  let headings: Heading[] = [];
   lesson.blocks
-    .filter((b: any) => b.__component === "droplets.generic")
-    .forEach((b: any) => {
-      headings = headings.concat(extractHeadings(b.content));
+    .filter((b: Block) => b.__component === "droplets.generic")
+    .forEach((b: Block) => {
+      headings = headings.concat(extractHeadings((b as GenericBlock).content));
     });
 
-  let genericBlocks = lesson.blocks
-    .filter((b: any) => b.__component === "droplets.generic")
+  const genericBlocks = lesson.blocks
+    .filter((b: Block) => b.__component === "droplets.generic")
     .map((b) => b.id);
 
   return (
@@ -211,7 +232,7 @@ export function LessonRenderer({
           )}
 
           <div className="mt-8 space-y-12">
-            {lesson.blocks.map((b: any, i: number) => (
+            {lesson.blocks.map((b: Block, i: number) => (
               <LessonBlockRenderer
                 key={i}
                 block={b}
@@ -261,8 +282,8 @@ function LessonBlockRenderer({
   setExpanded,
 }: {
   block: any;
-  highlights: any[];
-  onHighlight: (highlight: any, isWithNote?: boolean) => void;
+  highlights: Highlight[];
+  onHighlight: (highlight: Highlight, isWithNote?: boolean) => void;
   onDeleteHighlight: (id: number) => void;
   onNote: (notePos: number, text: string) => void;
   genericBlocks: number[];

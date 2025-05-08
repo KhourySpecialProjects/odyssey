@@ -76,14 +76,14 @@ describe("DueDateAnnouncements", () => {
   ];
 
   it("renders upcoming due dates", () => {
-    render(<DueDateAnnouncements group={mockGroup} dueDates={mockDueDates} />);
+    render(<DueDateAnnouncements dueDates={mockDueDates} />);
     expect(screen.getAllByText(/Test Droplet/)[0]).toBeInTheDocument();
     expect(screen.getAllByText(/is due in 1 day!/)[0]).toBeInTheDocument();
   });
 
   it("handles see more/less toggle", () => {
     const manyDueDates = Array(6).fill(mockDueDates[0]);
-    render(<DueDateAnnouncements group={mockGroup} dueDates={manyDueDates} />);
+    render(<DueDateAnnouncements dueDates={manyDueDates} />);
 
     expect(screen.getByText("see more...")).toBeInTheDocument();
     fireEvent.click(screen.getByText("see more..."));
@@ -91,7 +91,7 @@ describe("DueDateAnnouncements", () => {
   });
 
   test("handles see more/less toggle correctly", () => {
-    render(<DueDateAnnouncements group={mockGroup} dueDates={mockDueDates} />);
+    render(<DueDateAnnouncements dueDates={mockDueDates} />);
 
     expect(screen.getAllByText(/Droplet/)).toHaveLength(5);
 

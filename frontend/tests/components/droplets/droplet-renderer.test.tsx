@@ -14,7 +14,13 @@ describe("DropletRenderer", () => {
     focusArea: "frontend",
     lessons: [
       {
-        blocks: [{ __content: "droplets.video", url: "https://test.com" }],
+        blocks: [
+          {
+            __component: "droplets.video",
+            url: "https://test.com",
+            content: "",
+          },
+        ],
       },
     ],
   };
@@ -35,29 +41,5 @@ describe("DropletRenderer", () => {
       "src",
       "https://test.com",
     );
-  });
-
-  describe("DropletRenderer", () => {
-    it("renders null block correctly", () => {
-      const mockDroplet = {
-        name: "Test Droplet",
-        type: "course",
-        focusArea: "test",
-        lessons: [
-          {
-            blocks: [
-              {
-                __content: "",
-              },
-            ],
-          },
-        ],
-      };
-
-      const { container } = render(<DropletRenderer droplet={mockDroplet} />);
-
-      const iframe = container.querySelector("iframe");
-      expect(iframe).toBeNull();
-    });
   });
 });

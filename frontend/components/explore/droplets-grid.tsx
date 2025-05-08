@@ -31,7 +31,6 @@ export async function DropletsGrid({
 }) {
   const user = await getCurrentUser();
   let enrolledDropletIds: number[] = [];
-  let completedDropletIds: number[] = [];
   let completedLessonIds: number[] = [];
 
   let enrollments: Enrollment[] = [];
@@ -46,13 +45,10 @@ export async function DropletsGrid({
       (enrollment) =>
         enrollment.viewedLessons?.map((lesson: Lesson) => lesson.id) || [],
     );
-    completedDropletIds = enrollments
-      .filter((e) => e.viewedLessons.length === e.droplet.lessons?.length)
-      .map((d) => d.droplet.id);
     dueDates = await getUserDueDates(authorizedUser.id);
   }
 
-  let dropletsWithCompletion = droplets.map((droplet) => {
+  const dropletsWithCompletion = droplets.map((droplet) => {
     const dropletLessonIds = droplet.lessons?.map((l: Lesson) => l.id) || [];
     const completedLessonsInDroplet = completedLessonIds.filter((id) =>
       dropletLessonIds.includes(id),

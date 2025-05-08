@@ -30,7 +30,11 @@ import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { getInitials } from "@/lib/utils";
 import { RadioSelect } from "./radio-select";
 
-const initialSubmissionState: any = {
+type SubmissionState = {
+  error: string | null;
+};
+
+const initialSubmissionState: SubmissionState = {
   error: null,
 };
 
