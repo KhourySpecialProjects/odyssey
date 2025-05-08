@@ -1,6 +1,6 @@
 "use client";
 
-import { DueDate } from "@/types";
+import { DueDate, Group } from "@/types";
 import { useState } from "react";
 import Link from "next/link";
 import { Button } from "../ui/button";
@@ -9,10 +9,12 @@ import { Droplet, ListVideo } from "lucide-react";
 import { DateTime } from "luxon";
 
 interface DueDateAnnouncementsProps {
+  group: Group;
   dueDates: DueDate[];
 }
 
 export default function DueDateAnnouncements({
+  group,
   dueDates,
 }: DueDateAnnouncementsProps) {
   const [visibleDates, setVisibleDates] = useState<number | undefined>(5);

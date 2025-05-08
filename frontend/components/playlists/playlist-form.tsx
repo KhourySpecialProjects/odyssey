@@ -15,18 +15,17 @@ import { createPlaylist } from "@/lib/actions";
 import { updatePlaylist } from "@/lib/actions";
 import { createPlaylistAnnouncement } from "@/lib/requests/feed";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
-import { AuthorizedUser, Droplet } from "@/types";
 
 interface PlaylistFormProps {
-  droplets: Droplet[];
-  author: AuthorizedUser;
+  droplets: any[];
+  author: any;
   userId: number;
   existingPlaylist?: {
     id: number;
     name: string;
     slug: string;
     isPublic: boolean;
-    droplets?: Droplet[];
+    droplets?: any[];
   };
 }
 
@@ -42,7 +41,7 @@ export function PlaylistForm({
   const [selectedDroplets, setSelectedDroplets] = useState(
     existingPlaylist?.droplets || [],
   );
-  const [slug] = useState(existingPlaylist?.slug || "");
+  const [slug, setSlug] = useState(existingPlaylist?.slug || "");
   const [error, setError] = useState("");
   const [sourceDroplets, setSourceDroplets] = useState(() => {
     if (existingPlaylist?.droplets) {
@@ -72,12 +71,12 @@ export function PlaylistForm({
     }
   };
 
-  const handleDropToSelected = useCallback((droplet: Droplet) => {
+  const handleDropToSelected = useCallback((droplet: any) => {
     setSourceDroplets((current) => current.filter((d) => d.id !== droplet.id));
     setSelectedDroplets((current) => [...current, droplet]);
   }, []);
 
-  const handleDropToSource = useCallback((droplet: Droplet) => {
+  const handleDropToSource = useCallback((droplet: any) => {
     setSelectedDroplets((current) =>
       current.filter((d) => d.id !== droplet.id),
     );

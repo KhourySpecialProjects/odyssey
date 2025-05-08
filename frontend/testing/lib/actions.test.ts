@@ -1,6 +1,10 @@
+// actions.test.ts
 import { fetchAPI } from "@/lib/utils";
 import {
   updateDroplet,
+  updateLesson,
+  deleteLesson,
+  archiveGroup,
   completeLesson,
   markLessonAsComplete,
   uploadImage,
@@ -8,7 +12,11 @@ import {
   deleteNote,
   setTimeZone,
 } from "@/lib/actions";
-import { S3Client } from "@aws-sdk/client-s3";
+import {
+  DeleteObjectCommand,
+  PutObjectCommand,
+  S3Client,
+} from "@aws-sdk/client-s3";
 import { revalidatePath, revalidateTag } from "next/cache";
 
 jest.mock("@/lib/utils", () => ({
@@ -56,6 +64,7 @@ describe("actions", () => {
     beforeEach(() => {
       jest.clearAllMocks();
       global.fetch = jest.fn();
+      // Setup S3 mock properly
       mockS3Send = jest.fn();
       (S3Client as jest.Mock).mockImplementation(() => ({
         send: mockS3Send,

@@ -44,7 +44,9 @@ describe("FriendSuggestions", () => {
   it("shows empty state when no suggestions", async () => {
     (fetchSuggestionsById as jest.Mock).mockResolvedValue([]);
 
-    await render(await FriendSuggestions({ user: mockUser }));
+    const { container } = await render(
+      await FriendSuggestions({ user: mockUser }),
+    );
     expect(
       screen.getByText("There are no friend suggestions."),
     ).toBeInTheDocument();

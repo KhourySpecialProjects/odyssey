@@ -125,7 +125,7 @@ export function NotesBar({
   const [mousePositionY, setMousePositionY] = useState(0);
   const [mousePositionX, setMousePositionX] = useState(0);
   const [selectedNote, setSelectedNote] = useState(false);
-  const [, setNoteDisabled] = useState(false);
+  const [noteDisabled, setNoteDisabled] = useState(false);
   const [focused, setFocused] = useState<number | null>(null);
 
   if (!enrollmentId) {
@@ -281,6 +281,7 @@ export function NotesBar({
               <NoteBlock
                 note={note}
                 onUpdate={fetchNotes}
+                disabled={noteDisabled}
                 onDelete={handleDeleteNote}
                 onFocus={setFocused}
               />

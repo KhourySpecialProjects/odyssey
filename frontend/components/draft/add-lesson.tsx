@@ -28,12 +28,8 @@ export function AddLesson({
     }, 0);
   };
 
-  const handleClickOutside = (event: MouseEvent) => {
-    if (
-      ref.current &&
-      event.target instanceof Node &&
-      !ref.current.contains(event.target)
-    ) {
+  const handleClickOutside = (event: any) => {
+    if (ref.current && !ref.current.contains(event.target)) {
       setIsHidden(true);
     }
   };

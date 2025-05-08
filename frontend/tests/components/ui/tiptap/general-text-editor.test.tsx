@@ -31,7 +31,9 @@ jest.mock("@tiptap/react", () => ({
 
 jest.mock("@/components/ui/tiptap/toolbar/general-toolbar", () => ({
   __esModule: true,
-  default: () => <div data-testid="general-toolbar">Toolbar</div>,
+  default: ({ editor }: any) => (
+    <div data-testid="general-toolbar">Toolbar</div>
+  ),
 }));
 
 jest.mock("@tiptap/starter-kit", () => ({}));
@@ -81,6 +83,7 @@ describe("GeneralTextEditor", () => {
 
   it("calls updateContent when editor content changes", async () => {
     const mockUpdateContent = jest.fn();
+    let triggerUpdate: ((html: string) => void) | null = null;
 
     (useEditor as jest.Mock).mockImplementation(({ onUpdate }) => ({
       ...mockEditor,
@@ -109,7 +112,7 @@ describe("GeneralTextEditor", () => {
   it("applies custom className", () => {
     (useEditor as jest.Mock).mockReturnValue(mockEditor);
 
-    render(
+    const { container } = render(
       <GeneralTextEditor
         initialContent=""
         updateContent={() => {}}

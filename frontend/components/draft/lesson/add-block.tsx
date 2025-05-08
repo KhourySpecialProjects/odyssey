@@ -10,34 +10,8 @@ import { useRef } from "react";
 import { useOffClick } from "../metadata/hooks/useOffClick";
 import { CalloutIcon } from "@/components/ui/callout-icons";
 import { useState } from "react";
-import { OpenEndedQuizBlock, QuizBlock } from "./lesson-renderer";
 
-export type Block =
-  | { __component: "droplets.generic"; content: string }
-  | { __component: "droplets.expandable"; title: string; content: string }
-  | {
-      __component: "droplets.callout";
-      content: { type: string; children: { type: string; text: string }[] }[];
-      color: string;
-      type: string;
-    }
-  | { __component: "droplets.video"; url: string }
-  | {
-      __component: "droplets.quiz";
-      questions: {
-        id: number;
-        content: string;
-        answerOptions: { id: number; content: string; isCorrect: boolean }[];
-      }[];
-    }
-  | {
-      __component: "droplets.open-ended-quiz";
-      questions: { id: number; content: string; correctAnswer: string }[];
-    }
-  | QuizBlock
-  | OpenEndedQuizBlock;
-
-export function AddBlock({ add }: { add: (block: Block) => void }) {
+export function AddBlock({ add }: { add: (block: any) => void }) {
   const ref = useRef(null);
   const { open, setOpen } = useOffClick(ref);
   const [dropdownVisible, setDropdownVisible] = useState(false);

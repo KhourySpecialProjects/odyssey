@@ -11,6 +11,10 @@ jest.mock("next/navigation", () => ({
 }));
 
 describe("PlaylistEnrollButton", () => {
+  const mockRouter = {
+    refresh: jest.fn(),
+  };
+
   beforeEach(() => {
     jest.clearAllMocks();
   });

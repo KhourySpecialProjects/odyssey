@@ -18,7 +18,7 @@ const CustomImage = Image.extend({
                 const { selection } = state;
                 const { from, to } = selection;
 
-                state.doc.nodesBetween(from, to, (node) => {
+                state.doc.nodesBetween(from, to, (node, pos) => {
                   if (node.type.name === "image") {
                     const imageUrl = node.attrs.src;
                     const fileName = imageUrl.split("/").pop();

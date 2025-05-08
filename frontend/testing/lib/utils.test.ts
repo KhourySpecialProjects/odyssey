@@ -3,6 +3,7 @@ import {
   fetchAPI,
   getPath,
   htmlToText,
+  getInitials,
   strapiJSONToTiptapJSON,
   tiptapJSONToStrapiJSON,
   getStrapiURL,

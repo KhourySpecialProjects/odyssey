@@ -10,10 +10,8 @@ import React from "react";
 import { Badge } from "@/components/ui/badge";
 import { uppercaseFirstChar } from "@/lib/utils";
 
-function useCombinedRefs<T>(
-  ...refs: (React.Ref<T> | ((instance: T | null) => void))[]
-): React.RefObject<T> {
-  const targetRef = useRef<T>(null);
+function useCombinedRefs(...refs: any[]) {
+  const targetRef = useRef(null);
 
   React.useEffect(() => {
     refs.forEach((ref) => {
@@ -22,7 +20,7 @@ function useCombinedRefs<T>(
       if (typeof ref === "function") {
         ref(targetRef.current);
       } else {
-        (ref as React.MutableRefObject<T>).current = targetRef.current as T;
+        ref.current = targetRef.current;
       }
     });
   }, [refs]);
@@ -61,7 +59,7 @@ const PlaylistItem = ({
     },
   });
 
-  const combinedRef = useCombinedRefs<HTMLDivElement>(drag, drop);
+  const combinedRef = useCombinedRefs(drag, drop);
 
   return (
     <div

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { ChangeEvent, useCallback, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Playlist } from "@/types";
 import { PlaylistBlock } from "./playlist-block";

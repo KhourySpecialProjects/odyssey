@@ -101,7 +101,7 @@ export function AuthorizedUserBlock({
   const handleUpdateUser = async (formData: FormData) => {
     setUser((prev) => ({ ...prev, isEnabled: !prev.isEnabled }));
 
-    await updateAuthorizedUser(formData);
+    const result = await updateAuthorizedUser(formData);
   };
 
   const handleEditUser = async (formData: FormData) => {

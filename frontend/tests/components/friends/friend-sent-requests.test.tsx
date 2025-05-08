@@ -40,7 +40,7 @@ describe("FriendSentRequests", () => {
     };
     (getAuthorizedUserByEmail as jest.Mock).mockResolvedValue(mockAuthUser);
 
-    await render(await FriendSentRequests());
+    const { container } = await render(await FriendSentRequests());
     expect(screen.getByText("You have no sent requests")).toBeInTheDocument();
   });
 
@@ -70,6 +70,7 @@ describe("FriendSentRequests", () => {
       expect(requests).toHaveLength(2);
 
       const firstRequest = requests[0].textContent;
+      const secondRequest = requests[1].textContent;
       expect(firstRequest).toContain("View Profile");
     });
   });
