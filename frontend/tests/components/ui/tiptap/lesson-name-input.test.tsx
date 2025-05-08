@@ -1,8 +1,8 @@
-import { act, render, screen } from "@testing-library/react";
+import { render } from "@testing-library/react";
 import { LessonNameInput } from "@/components/ui/tiptap/lesson-name-input";
 
 jest.mock("@tiptap/react", () => ({
-  useEditor: ({ content, editorProps }: any) => ({
+  useEditor: ({ content }: any) => ({
     getHTML: () => content,
   }),
   EditorContent: ({ editor, className }: any) => (

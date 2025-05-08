@@ -1,9 +1,8 @@
 "use client";
 
-import { Suspense, useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { AnnouncementType, Announcement, AuthorizedUser } from "@/types";
 import { FeedBlock } from "./feed-block";
-import { Button } from "../ui/button";
 import { fetchAnnouncements } from "@/lib/requests/feed";
 
 const ITEMS_PER_PAGE = 20;

@@ -54,9 +54,6 @@ describe("PlaylistCard", () => {
         timeZone="America/New_York"
       />,
     );
-    const expectedDate = DateTime.fromISO(tomorrow)
-      .setZone("America/New_York")
-      .toFormat("MM/dd hh:mm a");
 
     expect(screen.getByText(/due/i)).toBeInTheDocument();
   });

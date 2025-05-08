@@ -7,8 +7,13 @@ import { HighlightDropdown } from "./highlight-dropdown";
 import "katex/dist/katex.min.css";
 import katex from "katex";
 
+interface Block {
+  content: string;
+  id: number;
+}
+
 interface GenericBlockRendererProps {
-  block: any;
+  block: Block;
   highlights: Highlight[];
   onHighlight: (highlight: Highlight, isWithNote?: boolean) => void;
   onDeleteHighlight: (highlightId: number) => void;
@@ -111,9 +116,9 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
     }
 
     for (const node of textNodes) {
-      let nodeRange = document.createRange();
-      let nodeStart = node === startNode ? startOffset : 0;
-      let nodeEnd = node === endNode ? endOffset : node.textContent?.length;
+      const nodeRange = document.createRange();
+      const nodeStart = node === startNode ? startOffset : 0;
+      const nodeEnd = node === endNode ? endOffset : node.textContent?.length;
 
       nodeRange.setStart(node, nodeStart);
       nodeRange.setEnd(node, nodeEnd || 0);
@@ -261,7 +266,7 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
           span.style.backgroundColor = highlight.color;
           span.style.color = "black";
           range.surroundContents(span);
-        } catch (e) {
+        } catch {
           highlightRange(
             startNode,
             startOffset,
@@ -309,7 +314,7 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
       return;
     }
 
-    let range = selection.getRangeAt(0);
+    const range = selection.getRangeAt(0);
     savedSelectionRef.current = range.cloneRange();
 
     let text = selection.toString();
@@ -590,7 +595,7 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
 
       <div
         ref={contentRef}
-        onMouseUp={(e) => handleMouseUp()}
+        onMouseUp={() => handleMouseUp()}
         onMouseDown={(e) => handleMouseDown(e)}
         onClick={handleImageClick}
         className="mt-2 prose prose-lg prose-sky prose-table:block prose-code:text-inherit prose-table:overflow-x-scroll prose-p:my-1 prose-li:my-1 select-text dark:text-slate-300 prose-headings:text-inherit prose-strong:text-inherit"

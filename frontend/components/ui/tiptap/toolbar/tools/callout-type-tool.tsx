@@ -9,13 +9,21 @@ import {
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { CalloutIcon } from "@/components/ui/callout-icons";
+import { BlockNode } from "@/types/strapi";
+
+interface CalloutBlock {
+  __component: "droplets.callout";
+  content: BlockNode[];
+  type: "info";
+  color?: string;
+}
 
 export default function CalloutTypeTool({
   block,
   updateBlock,
 }: {
-  block: any;
-  updateBlock: (block: any) => void;
+  block: CalloutBlock;
+  updateBlock: (block: CalloutBlock) => void;
 }) {
   const [open, setOpen] = useState(false);
 

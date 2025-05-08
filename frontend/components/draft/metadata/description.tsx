@@ -1,7 +1,6 @@
 "use client";
 
 import { useDropletUpdate } from "./hooks/useDropletUpdate";
-import { htmlToText } from "@/lib/utils";
 import { DropletDescriptionInput } from "@/components/ui/tiptap/droplet-description-input";
 
 export function Description({

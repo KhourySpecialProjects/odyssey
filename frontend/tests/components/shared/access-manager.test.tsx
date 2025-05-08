@@ -1,7 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { AccessManager } from "@/components/shared/access-manager/access-manager";
 import { TimeZone } from "@/types";
-import { AuthorizedUserRoleTitle } from "@/lib/globals";
 
 describe("AccessManager", () => {
   const mockUser = {
@@ -22,11 +21,6 @@ describe("AccessManager", () => {
     blocked: [],
     was_blocked: [],
     timeZone: "America/New_York" as TimeZone,
-    isActive: true,
-  };
-
-  const mockAdminUser = {
-    roles: [AuthorizedUserRoleTitle.AcadAdmin],
     isActive: true,
   };
 

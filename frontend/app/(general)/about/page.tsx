@@ -1,8 +1,5 @@
 import { GradientBackground } from "@/components/gradient-bg";
-import { Button } from "@/components/ui/button";
-import { getCurrentUser } from "@/lib/auth/session";
 import {
-  ArrowRightIcon,
   BinaryIcon,
   BrainIcon,
   BriefcaseIcon,
@@ -10,7 +7,6 @@ import {
   UserIcon,
 } from "lucide-react";
 import { Metadata } from "next";
-import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "About",
@@ -53,7 +49,6 @@ const focusAreas = [
 ];
 
 export default async function AboutPage() {
-  const user = await getCurrentUser();
   return (
     <GradientBackground>
       <>

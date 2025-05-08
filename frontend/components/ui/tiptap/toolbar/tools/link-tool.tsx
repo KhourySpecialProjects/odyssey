@@ -54,7 +54,9 @@ export default function LinkToolButton({ editor }: { editor: Editor | null }) {
       <PopoverContent autoFocus={false} ref={ref}>
         <Input
           value={url}
-          onChange={(e: any) => setUrl(e.target.value)}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+            setUrl(e.target.value)
+          }
           type="text"
           tabIndex={-1}
         />

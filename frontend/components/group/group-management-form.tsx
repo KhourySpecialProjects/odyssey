@@ -123,7 +123,7 @@ export function GroupManagementForm({
   currentUser,
   existingGroup,
 }: GroupManagementFormProps) {
-  const initialSubmissionState: any = {
+  const initialSubmissionState: { error: string | null | unknown } = {
     error: null,
   };
 
@@ -131,7 +131,7 @@ export function GroupManagementForm({
     initialSubmissionState,
   );
   const router = useRouter();
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSubmitting] = useState(false);
   const [droplets, setDroplets] = useState<Droplet[]>(
     existingGroup?.droplets?.sort((a, b) => a.name.localeCompare(b.name)) || [],
   );
@@ -276,7 +276,7 @@ export function GroupManagementForm({
       };
 
       if (existingGroup) {
-        const response = await updateGroup(existingGroup.id, updateGroupData);
+        await updateGroup(existingGroup.id, updateGroupData);
         await enrollUsers(await getGroupByID(existingGroup.id));
       } else {
         const newGroup = await createGroup(currentUser.id, createGroupData);
@@ -615,7 +615,9 @@ export function GroupManagementForm({
           </Button>
         </div>
         {submissionState.error ? (
-          <p className="text-red-500 text-center">{submissionState.error}</p>
+          <p className="text-red-500 text-center">
+            {submissionState.error as string}
+          </p>
         ) : null}
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
           <DialogContent className="sm:max-w-[825px]">
