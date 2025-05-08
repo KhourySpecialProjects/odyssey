@@ -95,6 +95,40 @@ export type GeneralConfig = {
   mainNav: NavItem[];
 };
 
+export type Block =
+  | {
+      __component: "droplets.generic";
+      content: string;
+    }
+  | {
+      __component: "droplets.expandable";
+      title: string;
+      content: string;
+    }
+  | {
+      __component: "droplets.callout";
+      content: { type: string; children: { type: string; text: string }[] }[];
+      color: string;
+      type: "info" | "warning";
+      iconEnabled?: boolean;
+    }
+  | {
+      __component: "droplets.video";
+      url: string;
+    }
+  | {
+      __component: "droplets.quiz";
+      questions: {
+        id: number;
+        content: string;
+        answerOptions: { id: number; content: string; isCorrect: boolean }[];
+      }[];
+    }
+  | {
+      __component: "droplets.open-ended-quiz";
+      questions: { id: number; content: string; correctAnswer: string }[];
+    };
+
 export type Lesson = {
   id: number;
   name: string;

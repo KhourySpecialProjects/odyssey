@@ -5,7 +5,7 @@ import { useRef, useState } from "react";
 import { useOffClick } from "../../metadata/hooks/useOffClick";
 import { youtubeUrlToEmbeddedUrl, embeddedUrlToYoutubeUrl } from "@/lib/utils";
 
-type VideoBlock = {
+export type VideoBlock = {
   __component: "droplets.video";
   url: string;
 };
