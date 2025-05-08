@@ -5,7 +5,11 @@ import { GripVertical, PlusIcon, Trash2Icon } from "lucide-react";
 import { QuizQuestionEditor } from "./quiz-question-editor";
 
 interface QuizEditorProps {
-  block: Block;
+  block: {
+    id?: number;
+    __component: string;
+    questions: QuizQuestion[];
+  };
   updateBlock: (block: Partial<Block>) => void;
   deleteBlock: () => void;
 }
@@ -14,7 +18,7 @@ interface Block {
   __component: string;
   content?: string;
   id?: number;
-  questions?: QuizQuestion[];
+  [key: string]: any;
 }
 
 export function QuizEditor({

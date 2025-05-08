@@ -5,6 +5,7 @@ import { Suspense } from "react";
 import { getCurrentUser } from "@/lib/auth/session";
 import { isContentCreator, isAuthorizedUserAdmin } from "@/lib/utils";
 import { redirect } from "next/navigation";
+import { getDraftDroplets } from "@/lib/requests/droplet";
 import { DropletTile } from "@/components/droplets/droplet-tile";
 import { DropletsSkeleton } from "@/components/explore/droplets-skeleton";
 import { Separator } from "@/components/ui/separator";
@@ -28,6 +29,12 @@ export default async function CreateRoute() {
   const authorizedUser = await getAuthorizedUserByEmail(user.email);
 
   const playlists = authorizedUser.created_playlists;
+
+  let allDroplets: Awaited<ReturnType<typeof getDraftDroplets>> = [];
+
+  if (isAuthorizedUserAdmin(user.roles)) {
+    allDroplets = await getDraftDroplets();
+  }
 
   return (
     <>

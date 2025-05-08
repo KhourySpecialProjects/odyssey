@@ -4,12 +4,19 @@ import { useState } from "react";
 import { AnnouncementTypeTitle } from "@/lib/globals";
 import { FeedClient } from "./feed-client";
 import { FeedFilter } from "./feed-filter";
-import { AnnouncementType, AuthorizedUser } from "@/types";
+import { Announcement, AnnouncementType, AuthorizedUser } from "@/types";
 import { BellRing, SlidersHorizontal } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { FriendRequests } from "../friends/friend-requests";
+import { createSystemAnnouncement } from "@/lib/requests/feed";
 
-export function FeedContainer({ authUser }: { authUser: AuthorizedUser }) {
+export function FeedContainer({
+  announcements,
+  authUser,
+}: {
+  announcements: Announcement[];
+  authUser: AuthorizedUser;
+}) {
   const [selectedRoles, setSelectedRoles] = useState<AnnouncementTypeTitle[]>(
     Object.values(AnnouncementTypeTitle),
   );

@@ -1,5 +1,8 @@
 import { fetchReports } from "@/lib/requests/data";
 import { ReportBlock } from "./report";
+import { Trash2Icon } from "lucide-react";
+import { toast } from "sonner";
+import { deleteReport } from "@/lib/actions";
 
 export type Report = {
   id: string;

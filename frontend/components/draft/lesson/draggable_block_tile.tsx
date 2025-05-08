@@ -1,6 +1,5 @@
 import { useDrag, useDrop } from "react-dnd";
-import { OpenEndedQuizBlock, QuizBlock } from "./lesson-renderer";
-import { Block } from "./add-block";
+import { Block, OpenEndedQuizBlock, QuizBlock } from "./lesson-renderer";
 import { useCallback } from "react";
 import { OpenEndedQuizQuestion, QuizQuestion } from "@/types";
 import { GenericEditor } from "./blocks/generic";
@@ -10,10 +9,6 @@ import { QuizEditor } from "./blocks/quiz";
 import { OpenEndedQuizEditor } from "./blocks/open-ended-quiz";
 import { cn } from "@/lib/utils";
 import { VideoEditor } from "./blocks/video";
-import type { GenericBlock } from "./blocks/generic";
-import type { ExpandableBlock } from "./blocks/expandable";
-import type { VideoBlock } from "./blocks/video";
-import type { CalloutBlock } from "./blocks/callout";
 
 export default function DraggableBlockTile({
   block,
@@ -28,7 +23,7 @@ export default function DraggableBlockTile({
   setBlock: (index: number) => (block: any) => void;
   deleteBlock: (index: number) => () => void;
 }) {
-  const [, drag] = useDrag({
+  const [{ isDragging }, drag] = useDrag({
     type: "BLOCKTILE",
     item: { index, block },
     collect: (monitor) => ({
@@ -77,7 +72,7 @@ export default function DraggableBlockTile({
               }}
               className={blockClassName}
             >
-              <GenericEditor {...props} block={block as GenericBlock} />
+              <GenericEditor {...props} />
             </div>
           );
         case "droplets.expandable":
@@ -91,7 +86,7 @@ export default function DraggableBlockTile({
               }}
               className={blockClassName}
             >
-              <ExpandableEditor {...props} block={block as ExpandableBlock} />
+              <ExpandableEditor {...props} />
             </div>
           );
         case "droplets.video":
@@ -105,7 +100,7 @@ export default function DraggableBlockTile({
               }}
               className={blockClassName}
             >
-              <VideoEditor {...props} block={block as VideoBlock} />
+              <VideoEditor {...props} />
             </div>
           );
         case "droplets.callout":
@@ -119,10 +114,7 @@ export default function DraggableBlockTile({
               }}
               className={blockClassName}
             >
-              <CalloutEditor
-                {...props}
-                block={block as unknown as CalloutBlock}
-              />
+              <CalloutEditor {...props} />
             </div>
           );
         case "droplets.quiz":
@@ -139,9 +131,7 @@ export default function DraggableBlockTile({
               <QuizEditor
                 block={{
                   ...(props.block as QuizBlock),
-                  questions:
-                    ((props.block as QuizBlock).questions as QuizQuestion[]) ||
-                    [],
+                  questions: (props.block.questions as QuizQuestion[]) || [],
                 }}
                 updateBlock={props.updateBlock}
                 deleteBlock={props.deleteBlock}
@@ -163,8 +153,7 @@ export default function DraggableBlockTile({
                 block={{
                   ...(props.block as OpenEndedQuizBlock),
                   questions:
-                    ((props.block as OpenEndedQuizBlock)
-                      .questions as OpenEndedQuizQuestion[]) || [],
+                    (props.block.questions as OpenEndedQuizQuestion[]) || [],
                 }}
                 updateBlock={props.updateBlock}
                 deleteBlock={props.deleteBlock}

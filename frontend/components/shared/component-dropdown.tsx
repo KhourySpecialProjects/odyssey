@@ -1,6 +1,14 @@
 "use client";
 
+import { cn } from "@/lib/utils";
+import { AlignJustify, Folders, ChevronDown } from "lucide-react";
 import React from "react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@radix-ui/react-dropdown-menu";
 
 export interface AdminContent {
   [name: string]: React.ReactNode;
@@ -12,6 +20,7 @@ export interface AdminContent {
 export function ComponentDropdown({ content }: { content: AdminContent }) {
   const keys = Object.keys(content!);
   const [selected, setSelected] = React.useState(keys[0]);
+  const [expanded, setExpanded] = React.useState(false);
 
   return (
     <div className="">

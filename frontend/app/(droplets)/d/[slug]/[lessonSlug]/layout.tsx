@@ -1,3 +1,4 @@
+import DropletFooter from "@/components/droplets/footer";
 import { getDropletBySlug } from "@/lib/requests/droplet";
 import { Droplet } from "@/types";
 import { notFound } from "next/navigation";

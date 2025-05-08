@@ -5,25 +5,19 @@ import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import { ExpandableBlockInput } from "@/components/ui/tiptap/expandable-block-input";
 
-export type ExpandableBlock = {
-  __component: "droplets.expandable";
-  title: string;
-  content: string;
-};
-
 export function ExpandableEditor({
   block,
   updateBlock,
   deleteBlock,
 }: {
-  block: ExpandableBlock;
-  updateBlock: (block: ExpandableBlock) => void;
+  block: any;
+  updateBlock: (block: any) => void;
   deleteBlock: () => void;
 }) {
   const [content, setContent] = useState(block.content);
   const [title, setTitle] = useState(block.title);
 
-  const updateTitle = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const updateTitle = (e: any) => {
     setTitle(e.target.value);
     updateBlock({
       __component: "droplets.expandable",

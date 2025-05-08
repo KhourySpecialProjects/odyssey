@@ -1,19 +1,6 @@
 "use client";
 
-import { Block } from "../draft/lesson/lesson-renderer";
-
-interface DropletProps {
-  droplet: {
-    name: string;
-    type: string;
-    focusArea: string;
-    lessons: {
-      blocks: Block[];
-    }[];
-  };
-}
-
-export function DropletRenderer({ droplet }: DropletProps) {
+export function DropletRenderer({ droplet }: any) {
   return (
     <div className="w-full mx-auto max-w-prose">
       <p className="p-4 -mx-4 rounded-md bg-slate-50 text-slate-700">
@@ -23,15 +10,15 @@ export function DropletRenderer({ droplet }: DropletProps) {
 
       <div className="h-8"></div>
 
-      {droplet.lessons[0].blocks.map((b: Block, i: number) => (
+      {droplet.lessons[0].blocks.map((b: any, i: number) => (
         <LessonBlockRenderer key={i} block={b} />
       ))}
     </div>
   );
 }
 
-function LessonBlockRenderer({ block }: { block: Block }) {
-  switch (block.content) {
+function LessonBlockRenderer({ block }: { block: any }) {
+  switch (block.__content) {
     case "droplets.video":
       return (
         <iframe
