@@ -44,7 +44,6 @@ describe("DropdownMenuShortcut", () => {
       <DropdownMenuShortcut className="custom-class">⌘+S</DropdownMenuShortcut>,
     );
 
-    const shortcut = screen.getByText("⌘+S");
     expect(cn).toHaveBeenCalledWith(
       "ml-auto text-xs tracking-widest opacity-60",
       "custom-class",

@@ -27,6 +27,7 @@ import { Highlight } from "@/types";
 import { getEnrollByID } from "@/lib/requests/enrollment";
 import { createNote } from "@/lib/requests/notes";
 import { getHighlights } from "@/lib/requests/highlights";
+import { Block } from "@/components/draft/lesson/lesson-renderer";
 
 interface LessonRendererProps {
   lesson: Lesson;
@@ -71,7 +72,10 @@ export function LessonRenderer({
     fetchHighlights();
   }, [lesson.id]);
 
-  const handleHighlight = async (highlight: any, isWithNote?: boolean) => {
+  const handleHighlight = async (
+    highlight: Highlight,
+    isWithNote?: boolean,
+  ) => {
     const response = await createHighlight({
       data: {
         text: highlight.text,
@@ -177,13 +181,13 @@ export function LessonRenderer({
 
   let headings: any[] = [];
   lesson.blocks
-    .filter((b: any) => b.__component === "droplets.generic")
-    .forEach((b: any) => {
+    .filter((b: Block) => b.__component === "droplets.generic")
+    .forEach((b: Block) => {
       headings = headings.concat(extractHeadings(b.content));
     });
 
   const genericBlocks = lesson.blocks
-    .filter((b: any) => b.__component === "droplets.generic")
+    .filter((b: Block) => b.__component === "droplets.generic")
     .map((b) => b.id);
 
   return (
@@ -211,7 +215,7 @@ export function LessonRenderer({
           )}
 
           <div className="mt-8 space-y-12">
-            {lesson.blocks.map((b: any, i: number) => (
+            {lesson.blocks.map((b: Block, i: number) => (
               <LessonBlockRenderer
                 key={i}
                 block={b}
@@ -261,8 +265,8 @@ function LessonBlockRenderer({
   setExpanded,
 }: {
   block: any;
-  highlights: any[];
-  onHighlight: (highlight: any, isWithNote?: boolean) => void;
+  highlights: Highlight[];
+  onHighlight: (highlight: Highlight, isWithNote?: boolean) => void;
   onDeleteHighlight: (id: number) => void;
   onNote: (notePos: number, text: string) => void;
   genericBlocks: number[];

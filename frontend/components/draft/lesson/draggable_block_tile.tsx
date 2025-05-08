@@ -23,7 +23,7 @@ export default function DraggableBlockTile({
   setBlock: (index: number) => (block: any) => void;
   deleteBlock: (index: number) => () => void;
 }) {
-  const [{ isDragging }, drag] = useDrag({
+  const [, drag] = useDrag({
     type: "BLOCKTILE",
     item: { index, block },
     collect: (monitor) => ({

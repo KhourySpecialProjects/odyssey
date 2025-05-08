@@ -72,12 +72,12 @@ export function PlaylistForm({
     }
   };
 
-  const handleDropToSelected = useCallback((droplet: any) => {
+  const handleDropToSelected = useCallback((droplet: Droplet) => {
     setSourceDroplets((current) => current.filter((d) => d.id !== droplet.id));
     setSelectedDroplets((current) => [...current, droplet]);
   }, []);
 
-  const handleDropToSource = useCallback((droplet: any) => {
+  const handleDropToSource = useCallback((droplet: Droplet) => {
     setSelectedDroplets((current) =>
       current.filter((d) => d.id !== droplet.id),
     );

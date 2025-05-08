@@ -47,10 +47,7 @@ export default function ImageToolButton({ editor }: { editor: Editor | null }) {
 
   const initialState: any = { image: null };
 
-  const [state, formAction, isPending] = useActionState(
-    insertImage,
-    initialState,
-  );
+  const [, formAction, isPending] = useActionState(insertImage, initialState);
 
   const disabled = !(
     editor?.view?.state.selection.$from.node().type.name == "doc" ||

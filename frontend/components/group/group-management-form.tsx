@@ -276,7 +276,7 @@ export function GroupManagementForm({
       };
 
       if (existingGroup) {
-        const response = await updateGroup(existingGroup.id, updateGroupData);
+        await updateGroup(existingGroup.id, updateGroupData);
         await enrollUsers(await getGroupByID(existingGroup.id));
       } else {
         const newGroup = await createGroup(currentUser.id, createGroupData);

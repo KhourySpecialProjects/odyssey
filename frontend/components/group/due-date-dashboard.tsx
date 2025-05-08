@@ -1,6 +1,6 @@
 "use client";
 
-import { Group, User } from "@/types";
+import { Group } from "@/types";
 import { useRouter } from "next/navigation";
 import { DropletDueDateBlock } from "./droplet-due-date-block";
 import { ContentSelector } from "./content-selector";
@@ -11,7 +11,6 @@ import { ArrowLeft } from "lucide-react";
 interface GroupDueDateDashboardProps {
   existingGroup: Group;
   searchParams?: { [key: string]: string | string[] | undefined };
-  user: User;
 }
 // TODO: Technical debt abounds.  There are some minor differences between
 // several different user types that have caused some headaches.
@@ -20,7 +19,6 @@ interface GroupDueDateDashboardProps {
 export function GroupDueDateDashboard({
   existingGroup,
   searchParams,
-  user,
 }: GroupDueDateDashboardProps) {
   const router = useRouter();
   const tab = searchParams?.tab || "droplets";
@@ -46,7 +44,7 @@ export function GroupDueDateDashboard({
         </Button>
       </div>
 
-      <ContentSelector user={user} />
+      <ContentSelector />
       <div className="mt-6 space-y-1">
         {tab === "droplets" ? (
           <>
