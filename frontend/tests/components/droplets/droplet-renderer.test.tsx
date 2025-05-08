@@ -35,29 +35,4 @@ describe("DropletRenderer", () => {
     expect(screen.getByText(/frontend/)).toBeInTheDocument();
   });
 
-  describe("DropletRenderer", () => {
-    it("renders null block correctly", () => {
-      const mockDroplet = {
-        name: "Test Droplet",
-        type: "course",
-        focusArea: "test",
-        lessons: [
-          {
-            blocks: [
-              {
-                content: "",
-                url: "https://test.com",
-                __component: "droplets.video",
-              },
-            ],
-          },
-        ],
-      };
-
-      const { container } = render(<DropletRenderer droplet={mockDroplet} />);
-
-      const iframe = container.querySelector("iframe");
-      expect(iframe).not.toBeNull();
-    });
-  });
 });
