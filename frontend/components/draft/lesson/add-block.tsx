@@ -47,7 +47,7 @@ export function AddBlock({ add }: { add: (block: Block) => void }) {
   return (
     <>
       {open && <div className="fixed inset-0 bg-black/30 z-40" />}
-      <div className="w-full flex justify-center items-center gap-3 flex-wrap max-w-2xl pb-4 ">
+      <div className="w-full flex justify-center items-center gap-3 flex-wrap max-w-2xl pb-4">
         <Popover open={open}>
           <PopoverTrigger
             asChild
@@ -61,7 +61,10 @@ export function AddBlock({ add }: { add: (block: Block) => void }) {
             </Button>
           </PopoverTrigger>
 
-          <PopoverContent className="space-y-1" ref={ref}>
+          <PopoverContent
+            className="space-y-1 overflow-y-auto max-h-[calc(100vh-4rem)] z-50"
+            ref={ref}
+          >
             <Button
               onClick={() => {
                 setOpen(false);
@@ -90,20 +93,16 @@ export function AddBlock({ add }: { add: (block: Block) => void }) {
               Expandable Block
             </Button>
 
-            <Popover open={dropdownVisible}>
-              <PopoverTrigger asChild>
-                <Button
-                  onClick={() => {
-                    setDropdownVisible(!dropdownVisible);
-                  }}
-                  variant="ghost"
-                  className="w-full border border-slate-200"
-                >
-                  Callout Block
-                </Button>
-              </PopoverTrigger>
+            <Button
+              onClick={() => setDropdownVisible(!dropdownVisible)}
+              variant="ghost"
+              className="w-full border border-slate-200"
+            >
+              Callout Block
+            </Button>
 
-              <PopoverContent className="divide-y divide-slate-300 mb-3 min-w-[220px] bg-white cursor-pointer text-black text-center p-2 space-y-1 shadow-none">
+            {dropdownVisible && (
+              <div className="divide-y divide-slate-300 mb-3 min-w-[220px] cursor-pointer text-black text-center p-2 space-y-1 shadow border rounded-md">
                 <div>
                   <Button
                     onClick={(e) => {
@@ -260,15 +259,15 @@ export function AddBlock({ add }: { add: (block: Block) => void }) {
                     {<CalloutIcon color={"bg-sky-50"}></CalloutIcon>}
                   </Button>
                 </div>
-              </PopoverContent>
-            </Popover>
+              </div>
+            )}
 
             <Button
               onClick={() => {
                 setOpen(false);
                 add({
                   __component: "droplets.video",
-                  url: "https://www.youtube.com/watch?v=_ZCTvmaPgao",
+                  url: "",
                 });
               }}
               variant="ghost"

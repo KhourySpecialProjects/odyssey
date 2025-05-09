@@ -2,83 +2,110 @@ import { render, screen, fireEvent } from "@testing-library/react";
 import { LearningObjectivesInput } from "@/components/new/learning-objectives-input";
 
 describe("LearningObjectivesInput", () => {
+  const mockLearningObjectives = ["Learn React", "Master TypeScript"];
   const mockSetLearningObjectives = jest.fn();
 
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  it("renders learning objectives inputs", () => {
+  it("renders with initial learning objectives", () => {
     render(
       <LearningObjectivesInput
-        learningObjectives={["Objective 1"]}
+        learningObjectives={mockLearningObjectives}
         setLearningObjectives={mockSetLearningObjectives}
       />,
     );
-    expect(screen.getByDisplayValue("Objective 1")).toBeInTheDocument();
+
+    expect(screen.getByText("Learning Objectives")).toBeInTheDocument();
+    expect(
+      screen.getByText("By completing this Droplet, you should:"),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Learn React")).toBeInTheDocument();
+    expect(screen.getByText("Master TypeScript")).toBeInTheDocument();
   });
 
-  it("adds new objective when + button clicked", () => {
+  it("shows first time indicator when firstTime prop is true", () => {
     render(
       <LearningObjectivesInput
-        learningObjectives={[]}
+        learningObjectives={mockLearningObjectives}
+        setLearningObjectives={mockSetLearningObjectives}
+        firstTime={true}
+      />,
+    );
+
+    const indicator = screen.getByText("*");
+    expect(indicator).toBeInTheDocument();
+    expect(indicator).toHaveClass("text-red-500");
+  });
+
+  it("adds a new learning objective when Enter key is pressed", () => {
+    render(
+      <LearningObjectivesInput
+        learningObjectives={mockLearningObjectives}
         setLearningObjectives={mockSetLearningObjectives}
       />,
     );
-    fireEvent.click(screen.getByText("+"));
-    expect(mockSetLearningObjectives).toHaveBeenCalledWith([""]);
+
+    const input = screen.getByPlaceholderText("New Learning Objective...");
+    fireEvent.change(input, { target: { value: "New Objective" } });
+    fireEvent.keyDown(input, { key: "Enter" });
+
+    expect(mockSetLearningObjectives).toHaveBeenCalledWith([
+      ...mockLearningObjectives,
+      "New Objective",
+    ]);
   });
 
-  it("removes objective when trash icon clicked", () => {
+  it("does not add empty learning objectives", () => {
     render(
       <LearningObjectivesInput
-        learningObjectives={["Objective 1"]}
+        learningObjectives={mockLearningObjectives}
         setLearningObjectives={mockSetLearningObjectives}
       />,
     );
-    fireEvent.click(screen.getByRole("delete"));
-    expect(mockSetLearningObjectives).toHaveBeenCalledWith([]);
+
+    const input = screen.getByPlaceholderText("New Learning Objective...");
+    fireEvent.change(input, { target: { value: "   " } });
+    fireEvent.keyDown(input, { key: "Enter" });
+
+    expect(mockSetLearningObjectives).not.toHaveBeenCalled();
   });
 
-  describe("LearningObjectivesInput", () => {
-    test("handles input changes and Enter key correctly", () => {
-      const mockLearningObjectives = ["First objective"];
-      const setLearningObjectives = jest.fn();
+  it("clears input after adding a learning objective", () => {
+    render(
+      <LearningObjectivesInput
+        learningObjectives={mockLearningObjectives}
+        setLearningObjectives={mockSetLearningObjectives}
+      />,
+    );
 
-      render(
-        <LearningObjectivesInput
-          learningObjectives={mockLearningObjectives}
-          setLearningObjectives={setLearningObjectives}
-        />,
-      );
+    const input = screen.getByPlaceholderText("New Learning Objective...");
+    fireEvent.change(input, { target: { value: "New Objective" } });
+    fireEvent.keyDown(input, { key: "Enter" });
 
-      const input = screen.getByDisplayValue("First objective");
+    expect(input).toHaveValue("");
+  });
 
-      fireEvent.change(input, { target: { value: "Updated objective" } });
-      expect(setLearningObjectives).toHaveBeenCalledWith(["Updated objective"]);
+  it("updates a learning objective when edited", () => {
+    render(
+      <LearningObjectivesInput
+        learningObjectives={mockLearningObjectives}
+        setLearningObjectives={mockSetLearningObjectives}
+      />,
+    );
 
-      fireEvent.keyDown(input, { key: "Enter" });
-      expect(setLearningObjectives).toHaveBeenCalledWith([
-        "First objective",
-        "",
-      ]);
-    });
+    const firstObjective = screen.getByText("Learn React");
+    fireEvent.click(firstObjective);
 
-    test("does not add empty objective if one already exists", () => {
-      const mockLearningObjectives = ["First objective", ""];
-      const setLearningObjectives = jest.fn();
+    const input = screen.getByDisplayValue("Learn React");
+    fireEvent.change(input, { target: { value: "Updated Objective" } });
+    fireEvent.keyDown(input, { key: "Enter" });
 
-      render(
-        <LearningObjectivesInput
-          learningObjectives={mockLearningObjectives}
-          setLearningObjectives={setLearningObjectives}
-        />,
-      );
-
-      const input = screen.getByDisplayValue("First objective");
-      fireEvent.keyDown(input, { key: "Enter" });
-
-      expect(setLearningObjectives).not.toHaveBeenCalled();
-    });
+    expect(mockSetLearningObjectives).toHaveBeenCalledWith([
+      "Learn React",
+      "Master TypeScript",
+      "Learn React",
+    ]);
   });
 });

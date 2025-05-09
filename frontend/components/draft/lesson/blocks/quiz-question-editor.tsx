@@ -1,6 +1,6 @@
 import { QuizQuestion, QuizAnswerOption } from "@/types";
 import { Button } from "@/components/ui/button";
-import { TrashIcon, PlusIcon } from "lucide-react";
+import { TrashIcon, PlusIcon, Trash2Icon } from "lucide-react";
 import { GenericBlockInput as TipTapEditor } from "@/components/ui/tiptap/generic-block-input";
 import { Checkbox } from "@/components/ui/checkbox";
 
@@ -49,6 +49,13 @@ export function QuizQuestionEditor({
     });
   };
 
+  const removeAnswer = (id: number) => {
+    onUpdate({
+      ...question,
+      answerOptions: [...question.answerOptions.filter((ans) => ans.id != id)],
+    });
+  };
+
   return (
     <div className="p-6 border dark:border-slate-500 rounded-lg light:bg-white">
       <div className="flex justify-between items-start mb-4">
@@ -85,6 +92,12 @@ export function QuizQuestionEditor({
                   updateContent={(content) => updateAnswer(index, content)}
                   revalidate={() => {}}
                 />
+              </div>
+              <div
+                className="pt-2 text-red-300 dark:text-red-300 cursor-pointer"
+                onClick={() => removeAnswer(answer.id)}
+              >
+                <Trash2Icon />
               </div>
             </div>
           ))}

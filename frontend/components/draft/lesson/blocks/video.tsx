@@ -3,7 +3,7 @@ import { Input } from "@/components/ui/input";
 import { PencilIcon, CheckIcon, Trash2Icon, GripVertical } from "lucide-react";
 import { useRef, useState } from "react";
 import { useOffClick } from "../../metadata/hooks/useOffClick";
-import { youtubeUrlToEmbeddedUrl, embeddedUrlToYoutubeUrl } from "@/lib/utils";
+import { youtubeUrlToEmbeddedUrl } from "@/lib/utils";
 
 export type VideoBlock = {
   __component: "droplets.video";
@@ -20,8 +20,8 @@ export function VideoEditor({
   deleteBlock: () => void;
 }) {
   const ref = useRef(null);
-  const { open, setOpen } = useOffClick(ref);
-  const [url, setUrl] = useState(embeddedUrlToYoutubeUrl(block.url));
+  const { open, setOpen } = useOffClick(ref, () => {}, true);
+  const [url, setUrl] = useState(block.url);
 
   return (
     <div className="flex flex-row items-center">
@@ -48,7 +48,7 @@ export function VideoEditor({
 
             {open ? (
               <CheckIcon
-                className="cursor-pointer text-slate-700 hover:text-slate-800"
+                className="cursor-pointer text-slate-700 dark:text-slate-300 dark:hover:text-slate-400 hover:text-slate-800"
                 onClick={() => {
                   setOpen(false);
                   updateBlock({
@@ -61,7 +61,7 @@ export function VideoEditor({
               />
             ) : (
               <PencilIcon
-                className="cursor-pointer text-slate-700 hover:text-slate-800"
+                className="cursor-pointer text-slate-700 dark:text-slate-300 dark:hover:text-slate-400 hover:text-slate-800"
                 onClick={() => setOpen(true)}
                 role="button"
                 aria-label="edit"
@@ -71,7 +71,11 @@ export function VideoEditor({
         </div>
 
         {open ? (
-          <Input value={url} onChange={(e) => setUrl(e.target.value)} />
+          <Input
+            value={url}
+            placeholder="Enter URL here"
+            onChange={(e) => setUrl(e.target.value || "www.youtube.com/")}
+          />
         ) : (
           <iframe
             width="100%"
