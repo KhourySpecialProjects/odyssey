@@ -3,6 +3,11 @@
 import { Button } from "../ui/button";
 import { Trash } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useState } from "react";
+import { updateDroplet } from "@/lib/actions";
+import { LearningObjectiveDisplay } from "../draft/metadata/learning-objectives/learning-objective";
+import { Input } from "../ui/input";
+import { AddButton } from "../draft/metadata/form-buttons";
 
 export function LearningObjectivesInput({
   learningObjectives,
@@ -15,11 +20,19 @@ export function LearningObjectivesInput({
   className?: string;
   firstTime?: boolean;
 }) {
-  function addEmptyLearningObjective() {
-    if (!learningObjectives.includes("")) {
-      setLearningObjectives([...learningObjectives, ""]);
-    }
-  }
+  const [newObjective, setNewObjective] = useState("");
+
+  const addLearningObjective = (obj: string) => {
+    setLearningObjectives([...learningObjectives, obj]);
+    setNewObjective("");
+  };
+
+  const removeLearningObjective = (obj: string) => {
+    setLearningObjectives(
+      learningObjectives.filter((object) => object !== obj),
+    );
+  };
+
   return (
     <div
       className={cn(
@@ -37,15 +50,6 @@ export function LearningObjectivesInput({
             By completing this Droplet, you should:
           </p>
         </div>
-        <Button
-          type="button"
-          onClick={addEmptyLearningObjective}
-          size="sm"
-          className="text-lg"
-        >
-          {" "}
-          +{" "}
-        </Button>
       </div>
       <div className="w-full space-y-1.5 h-40 overflow-y-scroll rounded p-2">
         <style jsx>{`
@@ -65,45 +69,38 @@ export function LearningObjectivesInput({
             background: #555;
           }
         `}</style>
-        {learningObjectives.map((objective, index) => (
-          <div
-            key={index}
-            className="w-full flex flex-row justify-between items-center relative rounded-md gap-1"
-          >
-            <input
-              id={`learning-objective-${index}`}
-              name={`learning-objective-${index}`}
-              value={objective}
-              placeholder="New Learning Objective"
-              autoComplete="off"
-              className="w-full text-sm rounded-md border-1 dark:bg-black border-slate-200 outline-0 focus:outline-none focus:ring-0 dark:focus:outline-none dark:focus:ring-0 ring-0 focus:border-slate-200 focus-visible:outline-none focus-visible:ring-0 px-3 py-2"
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault();
-                  if (!learningObjectives.includes("")) {
-                    setLearningObjectives([...learningObjectives, ""]);
+        <ul className="flex flex-col divide-y divide-slate-200 dark:divide-slate-500 dark:text-slate-300">
+          {learningObjectives.map((objective, index) => (
+            <LearningObjectiveDisplay
+              objective={objective}
+              key={index}
+              update={() => addLearningObjective(objective)}
+              remove={() => removeLearningObjective(objective)}
+            />
+          ))}
+          <li className="px-4 py-3 ">
+            <div className="flex flex-row items-center justify-between flex-nowrap w-full space-x-1.5">
+              <Input
+                name="objective"
+                value={newObjective}
+                onChange={(e) => {
+                  setNewObjective(e.target.value);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    if (newObjective.trim() !== "") {
+                      addLearningObjective(newObjective);
+                    }
                   }
-                }
-              }}
-              onChange={(e) => {
-                const newObjectives = [...learningObjectives];
-                newObjectives[index] = e.target.value;
-                setLearningObjectives(newObjectives);
-              }}
-            />
-            <Trash
-              width={37}
-              height={37}
-              role="delete"
-              className="text-slate-500 hover:text-slate-600 bg-slate-200 cursor-pointer rounded-md border border-slate-200 p-1.5"
-              onClick={() => {
-                const newObjectives = [...learningObjectives];
-                newObjectives.splice(index, 1);
-                setLearningObjectives(newObjectives);
-              }}
-            />
-          </div>
-        ))}
+                }}
+                placeholder="New Learning Objective..."
+                autoComplete="off"
+              />
+              <AddButton />
+            </div>
+          </li>
+        </ul>
       </div>
     </div>
   );

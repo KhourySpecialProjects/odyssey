@@ -16,7 +16,11 @@ const nextConfig = {
   },
   experimental: {
     serverActions: {
-      allowedOrigins: ["localhost:3000"],
+      allowedOrigins: [
+        "localhost:3000",
+        "dev2.khouryodyssey.org",
+        "www.khouryodyssey.org",
+      ],
     },
   },
   headers() {
@@ -29,7 +33,7 @@ const nextConfig = {
             value: `
               default-src 'self';
               script-src 'self' 'unsafe-inline' 'unsafe-eval' https://us-assets.i.posthog.com https://cdn.jsdelivr.net;
-              connect-src 'self' https://app.posthog.com https://*.posthog.com;
+              connect-src 'self' https://app.posthog.com https://*.posthog.com https://strapi.odyssey.khoury.northeastern.edu;
               style-src 'self' 'unsafe-inline';
               img-src 'self' data: https: blob:;
               font-src 'self' data:;
