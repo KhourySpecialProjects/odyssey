@@ -59,7 +59,7 @@ describe("AddBlock", () => {
 
     expect(mockAdd).toHaveBeenCalledWith({
       __component: "droplets.video",
-      url: "https://www.youtube.com/watch?v=_ZCTvmaPgao",
+      url: "",
     });
   });
 

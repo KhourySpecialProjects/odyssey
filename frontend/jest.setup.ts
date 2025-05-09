@@ -68,3 +68,8 @@ jest.mock("react", () => ({
   ...jest.requireActual("react"),
   useActionState: () => [{ ok: false, error: null }, jest.fn(), false],
 }));
+// Mock the flat package
+jest.mock("flat", () => ({
+  flatten: (obj: any) => obj,
+  unflatten: (obj: any) => obj,
+}));

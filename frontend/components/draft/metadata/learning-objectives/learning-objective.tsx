@@ -1,9 +1,10 @@
 import { useState, useRef } from "react";
-import { GoalIcon } from "lucide-react";
+import { GoalIcon, Trash2Icon } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { useOffClick } from "../hooks/useOffClick";
 import { DeleteButton } from "@/components/draft/metadata/form-buttons";
+import { Button } from "@lemonsqueezy/wedges";
 
 export function LearningObjectiveDisplay({
   objective,
@@ -38,9 +39,14 @@ export function LearningObjectiveDisplay({
               update(e.target.value);
             }}
           />
-          <form action={remove}>
-            <DeleteButton />
-          </form>
+          <Button
+            size="sm"
+            className="bg-red-300 dark:bg-red-300 text-black dark:text-black"
+            type="button"
+            onClick={remove}
+          >
+            <Trash2Icon />
+          </Button>
         </div>
       ) : (
         learningObjective

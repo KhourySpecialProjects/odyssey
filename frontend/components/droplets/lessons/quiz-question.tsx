@@ -59,7 +59,7 @@ export function QuizQuestionBlock({ question }: { question: QuizQuestion }) {
   return (
     <>
       <div
-        className="prose prose-sky prose-table:text-left prose-p:text-center dark:text-slate-300"
+        className="prose prose-sky prose-table:text-left prose-p:text-center dark:text-slate-300 prose-strong:text-inherit prose-code:text-inherit prose-headings:text-inherit"
         dangerouslySetInnerHTML={{ __html: question.content }}
       ></div>
 
