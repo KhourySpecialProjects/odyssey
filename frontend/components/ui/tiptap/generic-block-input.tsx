@@ -57,7 +57,7 @@ export function GenericBlockInput({
       Placeholder.configure({
         placeholder: "Nothing here yet...",
         emptyEditorClass:
-          "cursor-text before:content-[attr(data-placeholder)] before:text-gray-500 dark:before:text-slate-300 before:absolute before:top-3 before:left-3 before:pointer-events-none before:select-none",
+          "cursor-text before:content-[attr(data-placeholder)] before:text-gray-500 dark:before:text-slate-300 before:absolute before:top-4 before:left-3 before:pointer-events-none before:select-none",
       }),
     ],
 

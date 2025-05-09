@@ -25,7 +25,7 @@ export default ({ env }) => ({
       servers: [
         { url: "http://localhost:1337/api", description: "Development server" },
         {
-          url: "https://data.khouryodyssey.org/api",
+          url: "https://www.data.khouryodyssey.org/api",
           description: "Production server",
         },
       ],
