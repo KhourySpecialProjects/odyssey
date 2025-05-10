@@ -56,7 +56,7 @@ export default async function RootLayout({
               <TooltipProvider delayDuration={250}>
                 <NuqsAdapter>
                   <div className="flex min-h-screen flex-col">
-                    <div className="z-50 sticky top-0 ">
+                    <div className="sticky top-0 z-50">
                       <EnvironmentBanner />
                       <Suspense>
                         <Header />

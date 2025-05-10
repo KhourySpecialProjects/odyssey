@@ -34,7 +34,7 @@ export function DeleteDropletButton({ dropletId }: { dropletId: number }) {
           <DialogTitle>Delete Droplet</DialogTitle>
 
           <DialogDescription
-            className="my-4 text-lg text-black flex flex-col items-center justify-center"
+            className="my-4 flex flex-col items-center justify-center text-lg text-black"
             asChild
           >
             <div>

@@ -68,7 +68,7 @@ export default function DropletFooter({
   }
 
   return (
-    <div className="w-full flex flex-col justify-left">
+    <div className="justify-left flex w-full flex-col">
       {/* {pathSegments.length > 3 &&
         pathSegments.at(-1)?.toLowerCase() !== "introduction" &&
         !pathSegments.at(-1)?.toLowerCase().includes("recap") && (
@@ -87,10 +87,10 @@ export default function DropletFooter({
           </div>
         )} */}
 
-      <div className="flex flex-col gap-2 pb-2 mt-8 max-w-2xl xl:w-full md:flex-row md:justify-between mx-auto">
+      <div className="mx-auto mt-8 flex max-w-2xl flex-col gap-2 pb-2 md:flex-row md:justify-between xl:w-full">
         {previous ? (
           <PaginationLinkWrapper link={previous.link}>
-            <div className="p-2 rounded-full bg-sky-100">
+            <div className="rounded-full bg-sky-100 p-2">
               <ArrowLeftIcon />
             </div>
             <div>
@@ -111,7 +111,7 @@ export default function DropletFooter({
               <p className="font-bold">Next</p>
               <p className="text-sm">{next.name}</p>
             </div>
-            <div className="p-2 rounded-full bg-sky-100">
+            <div className="rounded-full bg-sky-100 p-2">
               <ArrowRightIcon />
             </div>
           </PaginationLinkWrapper>
@@ -134,11 +134,11 @@ const PaginationLinkWrapper = ({
 }) => (
   <Link
     href={link}
-    className="flex-1 p-4 leading-tight transition-colors border rounded-md bg-sky-50 hover:bg-sky-100 border-sky-200"
+    className="flex-1 rounded-md border border-sky-200 bg-sky-50 p-4 leading-tight transition-colors hover:bg-sky-100"
   >
     <div
       className={cn(
-        "inline-flex items-center h-full gap-3 text-sky-700",
+        "inline-flex h-full items-center gap-3 text-sky-700",
         className,
       )}
     >

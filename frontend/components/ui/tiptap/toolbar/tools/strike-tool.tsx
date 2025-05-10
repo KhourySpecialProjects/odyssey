@@ -8,7 +8,7 @@ export default function StrikeTool({ editor }: { editor: Editor }) {
       onClick={() => editor.chain().focus().toggleStrike().run()}
       className={cn(
         editor?.isActive("strike") ? "bg-slate-200 dark:bg-slate-700" : "",
-        "p-2.5 rounded-md border border-transparent hover:border-slate-200",
+        "rounded-md border border-transparent p-2.5 hover:border-slate-200",
       )}
       title="Strikethrough"
     >

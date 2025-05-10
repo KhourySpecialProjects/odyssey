@@ -93,14 +93,14 @@ export function FeedFilter({ onFilterChange }: FeedFilterProps) {
       {roleOptions.map((role) => (
         <div
           key={role.value}
-          className={`flex items-center space-x-2 p-1 rounded-md ${role.color} scale-125 ml-2`}
+          className={`flex items-center space-x-2 rounded-md p-1 ${role.color} ml-2 scale-125`}
         >
           <button
             id={role.value}
             onClick={() => toggleRole(role.value)}
-            className={`${selectedRoles.includes(role.value) ? "opacity-100" : "opacity-30"} focus-visible:ring-sky-500 pl-1 cursor-pointer w-[90px]`}
+            className={`${selectedRoles.includes(role.value) ? "opacity-100" : "opacity-30"} w-[90px] cursor-pointer pl-1 focus-visible:ring-sky-500`}
           >
-            <span className="text-sm font-medium leading-none flex items-center justify-between w-full gap-1 px-1">
+            <span className="flex w-full items-center justify-between gap-1 px-1 text-sm leading-none font-medium">
               {role.label}
             </span>
           </button>

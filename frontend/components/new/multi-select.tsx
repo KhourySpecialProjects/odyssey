@@ -80,12 +80,12 @@ export function MultiSelect({
           >
             {selected?.length > 0 ? (
               <>
-                <div className="gap-1 flex flex-wrap items-center justify-start w-full">
+                <div className="flex w-full flex-wrap items-center justify-start gap-1">
                   {selected.map((option) => (
                     <Badge
                       variant="secondary"
                       key={option.id}
-                      className="px-1 py-0 font-normal rounded-sm dark:text-black"
+                      className="rounded-sm px-1 py-0 font-normal dark:text-black"
                     >
                       {option.name}
                     </Badge>
@@ -133,7 +133,7 @@ export function MultiSelect({
                             : "opacity-50 [&_svg]:invisible",
                         )}
                       >
-                        <CheckIcon className="w-4 h-4" />
+                        <CheckIcon className="h-4 w-4" />
                       </div>
                       <span>{option.name}</span>
                     </CommandItem>
@@ -152,7 +152,7 @@ export function MultiSelect({
                       <DialogTitle>Enter the name of your new tag</DialogTitle>
                     </DialogHeader>
 
-                    <div className="flex flex-col gap-4 mt-4">
+                    <div className="mt-4 flex flex-col gap-4">
                       <Input
                         id="name"
                         value={tagName}

@@ -25,10 +25,10 @@ export function NotesPdfButton({
   return (
     <button
       onClick={handleDownload}
-      className={`inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white ${noNotes ? "bg-slate-300 dark:text-black light:text-black" : "bg-sky-600 hover:bg-sky-700"} rounded-md `}
+      className={`inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white ${noNotes ? "light:text-black bg-slate-300 dark:text-black" : "bg-sky-600 hover:bg-sky-700"} rounded-md`}
       disabled={noNotes}
     >
-      <FileTextIcon className="w-4 h-4" />
+      <FileTextIcon className="h-4 w-4" />
       Download Notes as PDF
     </button>
   );

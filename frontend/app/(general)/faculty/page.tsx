@@ -16,9 +16,9 @@ export default async function Page() {
   if (!user || !isAuthorizedUserFaculty(user.roles)) return notFound();
 
   return (
-    <div className="w-full max-w-5xl mx-auto">
-      <div className="w-full p-8 mx-auto my-4 text-center max-w-7xl">
-        <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-4xl">
+    <div className="mx-auto w-full max-w-5xl">
+      <div className="mx-auto my-4 w-full max-w-7xl p-8 text-center">
+        <h1 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl dark:text-white">
           Faculty
         </h1>
       </div>

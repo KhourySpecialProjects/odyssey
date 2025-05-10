@@ -57,11 +57,11 @@ export function QuizQuestionEditor({
   };
 
   return (
-    <div className="p-6 border dark:border-slate-500 rounded-lg light:bg-white">
-      <div className="flex justify-between items-start mb-4">
+    <div className="light:bg-white rounded-lg border p-6 dark:border-slate-500">
+      <div className="mb-4 flex items-start justify-between">
         <h4 className="font-semibold">Question</h4>
         <Button variant="ghost" size="sm" onClick={onDelete}>
-          <TrashIcon className="w-4 h-4" />
+          <TrashIcon className="h-4 w-4" />
         </Button>
       </div>
 
@@ -79,7 +79,7 @@ export function QuizQuestionEditor({
         </h5>
         <div className="space-y-4">
           {question.answerOptions.map((answer, index) => (
-            <div key={answer.id} className="flex items-start space-x-3 w-full">
+            <div key={answer.id} className="flex w-full items-start space-x-3">
               <Checkbox
                 id={answer.id.toString()}
                 checked={answer.isCorrect}
@@ -94,7 +94,7 @@ export function QuizQuestionEditor({
                 />
               </div>
               <div
-                className="pt-2 text-red-300 dark:text-red-300 cursor-pointer"
+                className="cursor-pointer pt-2 text-red-300 dark:text-red-300"
                 onClick={() => removeAnswer(answer.id)}
               >
                 <Trash2Icon />
@@ -110,7 +110,7 @@ export function QuizQuestionEditor({
             question.answerOptions[1].content === "False"
           ) && (
             <Button variant="outline" size="sm" onClick={addAnswer}>
-              <PlusIcon className="w-4 h-4 mr-2" />
+              <PlusIcon className="mr-2 h-4 w-4" />
               Add Answer Option
             </Button>
           )}

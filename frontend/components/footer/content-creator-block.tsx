@@ -16,11 +16,11 @@ export function ContentCreatorBlock({
     <div>
       <li
         onClick={() => setIsOpen(!isOpen)}
-        className="py-4 px-6 [&:not(:first-child)]:pt-3 relative border border-gray-300 rounded-md transition duration-150 hover:border-gray-500 cursor-pointer"
+        className="relative cursor-pointer rounded-md border border-gray-300 px-6 py-4 transition duration-150 hover:border-gray-500 [&:not(:first-child)]:pt-3"
       >
         <div className="flex items-center space-x-4">
-          <div className="flex-1 min-w-0">
-            <p className="text-xl font-bold truncate text-slate-900 dark:text-slate-300 text-center">
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-center text-xl font-bold text-slate-900 dark:text-slate-300">
               {contentCreator.firstName && contentCreator.lastName
                 ? contentCreator.firstName + " " + contentCreator.lastName
                 : contentCreator.email}
@@ -35,11 +35,11 @@ export function ContentCreatorBlock({
         >
           <div>
             {contentCreator.profilePhoto && (
-              <div className="flex justify-center items-center pt-4">
+              <div className="flex items-center justify-center pt-4">
                 <img
                   src={contentCreator.profilePhoto}
                   alt={`${contentCreator.firstName}'s profile`}
-                  className="w-20 h-20 rounded-full object-cover"
+                  className="h-20 w-20 rounded-full object-cover"
                 />
               </div>
             )}
@@ -60,7 +60,7 @@ export function ContentCreatorBlock({
               )}
             </div>
             {contentCreator.bio && (
-              <div className="flex justify-center mt-4 dark:text-slate-300 max-h-40 md:max-h-none overflow-scroll md:overflow-hidden">
+              <div className="mt-4 flex max-h-40 justify-center overflow-scroll md:max-h-none md:overflow-hidden dark:text-slate-300">
                 {contentCreator.bio}
               </div>
             )}

@@ -91,7 +91,7 @@ export async function UserPlaylistsGrid() {
 
   if (!allPlaylists || allPlaylists.length === 0) {
     return (
-      <Message className="mb-8 border border-dashed rounded-md border-slate-200">
+      <Message className="mb-8 rounded-md border border-dashed border-slate-200">
         <MessageHeader subtitle="No Results" title="No Saved Playlists" />
         <MessageDescription>
           You haven&apos;t saved any playlists yet. Browse the explore page to
@@ -107,10 +107,10 @@ export async function UserPlaylistsGrid() {
     <div className="space-y-8">
       {customPlaylists.length > 0 && (
         <section>
-          <h2 className="text-xl font-semibold mb-4 dark:text-slate-300">
+          <h2 className="mb-4 text-xl font-semibold dark:text-slate-300">
             Private Playlists
           </h2>
-          <div className="grid grid-flow-row grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 auto-rows-fr">
+          <div className="grid grid-flow-row auto-rows-fr grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
             {customPlaylists.map((playlist: Playlist, index) => (
               <PlaylistCard
                 key={playlist.id}
@@ -124,8 +124,8 @@ export async function UserPlaylistsGrid() {
 
       {publicPlaylists.length > 0 && (
         <section>
-          <h2 className="text-xl font-semibold mb-4">Public Playlists</h2>
-          <div className="grid grid-flow-row grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 auto-rows-fr">
+          <h2 className="mb-4 text-xl font-semibold">Public Playlists</h2>
+          <div className="grid grid-flow-row auto-rows-fr grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
             {publicPlaylists.map((playlist: Playlist) => (
               <div key={`group-${playlist.id}`} className="h-full">
                 <PlaylistCard

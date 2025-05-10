@@ -14,9 +14,9 @@ export async function BlockedUsers() {
       <h1 className="font-bold">Blocked Users</h1>
       <p>A list of people you have blocked.</p>
 
-      <div className="p-1 md:p-4 mt-4 rounded-md bg-slate-100 dark:bg-slate-800">
+      <div className="mt-4 rounded-md bg-slate-100 p-1 md:p-4 dark:bg-slate-800">
         {blockedUsers.length > 0 ? (
-          <ul className="divide-y divide-slate-200 dark:divide-slate-700 md:space-y-4">
+          <ul className="divide-y divide-slate-200 md:space-y-4 dark:divide-slate-700">
             {blockedUsers.map((block) => (
               <BlockedUsersBlock
                 user={authUser}

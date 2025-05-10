@@ -16,7 +16,7 @@ const DebugToggle = React.forwardRef<
     <Button
       ref={ref}
       onClick={toggleDebug}
-      className={`fixed z-50 -bottom-1 -right-1 ${className}`}
+      className={`fixed -right-1 -bottom-1 z-50 ${className}`}
       size="icon"
       aria-label="Debug"
       {...props}

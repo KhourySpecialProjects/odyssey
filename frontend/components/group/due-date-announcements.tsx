@@ -41,7 +41,7 @@ export default function DueDateAnnouncements({
   });
 
   return (
-    <div className="space-y-3 w-2/3">
+    <div className="w-2/3 space-y-3">
       <h2 className="text-2xl font-semibold">Upcoming Due Dates</h2>
       <div className="space-y-5">
         {processedDueDates.slice(0, visibleDates).map((dueDate, index) => (
@@ -50,10 +50,10 @@ export default function DueDateAnnouncements({
             href={`/${dueDate.droplet ? "d" : "p"}/${dueDate.droplet ? dueDate.droplet?.slug : dueDate.playlist?.slug}`}
           >
             <div
-              className={` p-2 rounded-md flex flex-row mb-1 hover:scale-105 ${getDueDateBadgeColor(Number(getDaysUntil(dueDate)), false)}`}
+              className={`mb-1 flex flex-row rounded-md p-2 hover:scale-105 ${getDueDateBadgeColor(Number(getDaysUntil(dueDate)), false)}`}
             >
               {dueDate.droplet ? <Droplet /> : <ListVideo />}
-              <p className="font-bold ml-1">
+              <p className="ml-1 font-bold">
                 {dueDate.droplet
                   ? dueDate.droplet.name
                   : dueDate.playlist?.name}

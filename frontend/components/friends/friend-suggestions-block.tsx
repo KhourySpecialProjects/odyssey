@@ -47,7 +47,7 @@ export function FriendSuggestionsBlock({
         <div className="flex items-center md:space-x-4">
           <Avatar
             variant="round"
-            className="border border-sky-800 w-12 h-12 scale-75 md:scale-100"
+            className="h-12 w-12 scale-75 border border-sky-800 md:scale-100"
           >
             <AvatarImage src={suggUser?.profilePhoto || undefined} />
             <AvatarFallback>
@@ -58,14 +58,14 @@ export function FriendSuggestionsBlock({
               )}
             </AvatarFallback>
           </Avatar>
-          <div className="flex-1 min-w-0">
+          <div className="min-w-0 flex-1">
             <p
               title={
                 suggUser.firstName && suggUser.lastName
                   ? `${suggUser.firstName} ${suggUser.lastName}`
                   : suggUser.email
               }
-              className="font-medium truncate overflow-hidden text-slate-900 dark:text-slate-300 max-w-[200px] md:max-w-[250px] inline-block"
+              className="inline-block max-w-[200px] truncate overflow-hidden font-medium text-slate-900 md:max-w-[250px] dark:text-slate-300"
             >
               {suggUser.firstName && suggUser.lastName
                 ? suggUser.firstName + " " + suggUser.lastName
@@ -88,7 +88,7 @@ export function FriendSuggestionsBlock({
               size="sm"
               disabled={requested}
               onClick={handleRequest}
-              className={`text-white bg-sky-600 dark:bg-sky-600 dark:text-white dark:hover:bg-sky-700 hover:bg-sky-700 hidden md:block w-32`}
+              className={`hidden w-32 bg-sky-600 text-white hover:bg-sky-700 md:block dark:bg-sky-600 dark:text-white dark:hover:bg-sky-700`}
             >
               {requested ? "Sent!" : "Send Request"}
             </Button>
@@ -96,7 +96,7 @@ export function FriendSuggestionsBlock({
               size="sm"
               disabled={requested}
               onClick={handleRequest}
-              className="text-white bg-sky-600 dark:bg-sky-600 dark:text-white dark:hover:bg-sky-700 hover:bg-sky-700 block md:hidden scale-75"
+              className="block scale-75 bg-sky-600 text-white hover:bg-sky-700 md:hidden dark:bg-sky-600 dark:text-white dark:hover:bg-sky-700"
             >
               <UserRoundPlus />
             </Button>

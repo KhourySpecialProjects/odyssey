@@ -155,17 +155,17 @@ export function Sidebar({
     <>
       <div
         className={cn(
-          "bg-slate-900/50 dark:bg-slate-900/80 fixed inset-0 transition-opacity",
-          expanded ? "opacity-1 z-30" : "opacity-0 -z-10",
+          "fixed inset-0 bg-slate-900/50 transition-opacity dark:bg-slate-900/80",
+          expanded ? "z-30 opacity-1" : "-z-10 opacity-0",
         )}
         onClick={() => setExpanded(false)}
       />
 
-      <div className="z-20 inline-flex items-center w-full gap-2 px-3 py-2 text-sm border-b xl:hidden border-b-slate-200">
+      <div className="z-20 inline-flex w-full items-center gap-2 border-b border-b-slate-200 px-3 py-2 text-sm xl:hidden">
         <button
           aria-controls="sidebar"
           type="button"
-          className="z-20 inline-flex items-center p-2 text-sm rounded-lg text-slate-500 xl:hidden hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-200 dark:text-slate-400 dark:hover:bg-slate-700 dark:focus:ring-slate-600"
+          className="z-20 inline-flex items-center rounded-lg p-2 text-sm text-slate-500 hover:bg-slate-100 focus:ring-2 focus:ring-slate-200 focus:outline-none xl:hidden dark:text-slate-400 dark:hover:bg-slate-700 dark:focus:ring-slate-600"
           onClick={() => setExpanded(true)}
         >
           <span className="sr-only">Open sidebar</span>
@@ -185,23 +185,23 @@ export function Sidebar({
       <aside
         id="sidebar"
         className={cn(
-          "fixed xl:sticky xl:top-0 left-0 z-40 w-64 h-screen transition-transform",
+          "fixed left-0 z-40 h-screen w-64 transition-transform xl:sticky xl:top-0",
           expanded ? "translate-x-0" : "-translate-x-full xl:translate-x-0",
         )}
         aria-label="Sidebar"
       >
-        <div className="flex flex-col h-full py-4 overflow-y-auto xl:justify-between xl:pb-0 bg-slate-50 dark:bg-slate-800">
+        <div className="flex h-full flex-col overflow-y-auto bg-slate-50 py-4 xl:justify-between xl:pb-0 dark:bg-slate-800">
           <div className="px-3">
             <div className="flex flex-row justify-between pr-2">
               <Button
                 type="button"
                 onClick={() => setIsOpen(true)}
                 className={cn(
-                  "flex items-center justify-start text-base gap-2 bg-slate-50 text-black hover:bg-slate-100 dark:bg-slate-800 dark:text-white dark:hover:bg-slate-700",
+                  "flex items-center justify-start gap-2 bg-slate-50 text-base text-black hover:bg-slate-100 dark:bg-slate-800 dark:text-white dark:hover:bg-slate-700",
                 )}
               >
-                <div className="w-6 flex justify-center">
-                  <ArrowLeftIcon className="shrink-0 w-5 h-5" />
+                <div className="flex w-6 justify-center">
+                  <ArrowLeftIcon className="h-5 w-5 shrink-0" />
                 </div>
                 <Home data-testid="home" />
               </Button>
@@ -214,11 +214,11 @@ export function Sidebar({
                 <PanelRightOpen />
               </button>
             </div>
-            <p className="p-2 my-2 text-lg font-extrabold leading-7">
+            <p className="my-2 p-2 text-lg leading-7 font-extrabold">
               {droplet.name}
             </p>
 
-            <ul className="w-full font-medium flex flex-col items-center">
+            <ul className="flex w-full flex-col items-center font-medium">
               <li className="w-full space-y-2">
                 <Dialog open={isOpen} onOpenChange={onOpenChange}>
                   <DialogContent className="sm:max-w-[825px]">
@@ -229,7 +229,7 @@ export function Sidebar({
                       </DialogTitle>
                     </DialogHeader>
 
-                    <div className="flex flex-col gap-4 mt-4">
+                    <div className="mt-4 flex flex-col gap-4">
                       <Button onClick={handleDropletPost}>Share</Button>
                       <Button onClick={() => router.push(`/drafts`)}>
                         Not Now
@@ -238,9 +238,9 @@ export function Sidebar({
                   </DialogContent>
                 </Dialog>
               </li>
-              <li className="pb-2 w-full text-center">
+              <li className="w-full pb-2 text-center">
                 <Link
-                  className="w-full px-6 py-2 rounded-full text-white bg-purple-500 hover:bg-purple-600"
+                  className="w-full rounded-full bg-purple-500 px-6 py-2 text-white hover:bg-purple-600"
                   href={`/d/${pathname.split("d/")[1]}`}
                 >
                   Preview
@@ -256,15 +256,15 @@ export function Sidebar({
             <Link
               href={`/draft/d/${droplet.slug}`}
               className={cn(
-                "w-full flex items-center justify-start text-base px-4 dark:bg-black",
+                "flex w-full items-center justify-start px-4 text-base dark:bg-black",
                 classes.link,
                 pathname === `/draft/d/${droplet.slug}` && classes.activeLink,
               )}
             >
-              <div className="w-6 flex justify-center">
-                <SettingsIcon className="shrink-0 w-5 h-5" />
+              <div className="flex w-6 justify-center">
+                <SettingsIcon className="h-5 w-5 shrink-0" />
               </div>
-              <span className="leading-snug ms-2">Metadata</span>
+              <span className="ms-2 leading-snug">Metadata</span>
             </Link>
 
             {/* Add lesson section */}
@@ -295,16 +295,16 @@ export function Sidebar({
             </DndContext>
 
             {isProcessing && (
-              <div className="text-sm text-slate-500 dark:text-slate-400 p-2 text-center">
+              <div className="p-2 text-center text-sm text-slate-500 dark:text-slate-400">
                 Updating lesson order...
               </div>
             )}
           </div>
 
-          <div className="bottom-0 left-0 w-full p-2 mt-4 space-y-4 border-t bg-slate-50 border-t-slate-200 md:sticky md:px-3 md:mb-0 md:flex-col dark:bg-slate-800">
+          <div className="bottom-0 left-0 mt-4 w-full space-y-4 border-t border-t-slate-200 bg-slate-50 p-2 md:sticky md:mb-0 md:flex-col md:px-3 dark:bg-slate-800">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <div className="w-full group flex shrink cursor-pointer select-none items-center justify-between gap-1 rounded-lg p-1.5 px-2 text-sm text-slate-600 transition-colors duration-100 wg-antialiased hover:bg-slate-100 dark:hover:bg-white/5">
+                <div className="group wg-antialiased flex w-full shrink cursor-pointer items-center justify-between gap-1 rounded-lg p-1.5 px-2 text-sm text-slate-600 transition-colors duration-100 select-none hover:bg-slate-100 dark:hover:bg-white/5">
                   <div className="inline-flex flex-row items-center justify-between">
                     {authorizedUser?.profilePhoto ? (
                       <Avatar variant="round" size="xs">
@@ -325,12 +325,12 @@ export function Sidebar({
                       </Avatar>
                     ) : null}
 
-                    <span className="font-medium ms-2 dark:text-slate-300">
+                    <span className="ms-2 font-medium dark:text-slate-300">
                       Hi, <b>{user.name ?? user.email}</b>!
                     </span>
                   </div>
 
-                  <ChevronDownIcon className="w-5 h-5 trigger-icon text-slate-400" />
+                  <ChevronDownIcon className="trigger-icon h-5 w-5 text-slate-400" />
                 </div>
               </DropdownMenuTrigger>
 
@@ -338,21 +338,21 @@ export function Sidebar({
                 <DropdownMenuLabel className="text-xs">
                   NUID: {user.nuid || "unknown"}
                   <br />
-                  <p className="text-xs leading-none text-muted-foreground max-w-56">
+                  <p className="text-muted-foreground max-w-56 text-xs leading-none">
                     Role(s): {condenseRoleTitles(user.roles)}
                   </p>
                 </DropdownMenuLabel>
 
                 <DropdownMenuItem asChild>
                   <Link href="/explore">
-                    <ShipIcon className="w-4 h-4 mr-2" />
+                    <ShipIcon className="mr-2 h-4 w-4" />
                     <span>Explore</span>
                   </Link>
                 </DropdownMenuItem>
 
                 <DropdownMenuItem asChild>
                   <Link href="/settings">
-                    <PersonStanding className="w-4 h-4 mr-2" />
+                    <PersonStanding className="mr-2 h-4 w-4" />
                     <span>Profile</span>
                   </Link>
                 </DropdownMenuItem>
@@ -361,7 +361,7 @@ export function Sidebar({
                   onClick={() => signOut()}
                   className="cursor-pointer"
                 >
-                  <LogOutIcon className="w-4 h-4 mr-2" />
+                  <LogOutIcon className="mr-2 h-4 w-4" />
                   <span>Sign out</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>

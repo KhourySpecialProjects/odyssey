@@ -59,16 +59,16 @@ export function QuizQuestionBlock({ question }: { question: QuizQuestion }) {
   return (
     <>
       <div
-        className="prose prose-sky prose-table:text-left prose-p:text-center dark:text-slate-300 prose-strong:text-inherit prose-code:text-inherit prose-headings:text-inherit"
+        className="prose prose-sky prose-table:text-left prose-p:text-center prose-strong:text-inherit prose-code:text-inherit prose-headings:text-inherit dark:text-slate-300"
         dangerouslySetInnerHTML={{ __html: question.content }}
       ></div>
 
       {showResult ? (
-        <div className="px-8 py-12 mt-4 text-center border rounded-md border-slate-200">
+        <div className="mt-4 rounded-md border border-slate-200 px-8 py-12 text-center">
           {areAnswersCorrect(form.getValues("answerIds")) ? (
             <>
               <Badge
-                className="text-green-700 bg-green-100 text-lg hover:bg-green-200"
+                className="bg-green-100 text-lg text-green-700 hover:bg-green-200"
                 role="status"
               >
                 That&rsquo;s Right!
@@ -77,14 +77,14 @@ export function QuizQuestionBlock({ question }: { question: QuizQuestion }) {
           ) : (
             <>
               <Badge
-                className="text-orange-700 bg-orange-100 text-lg hover:bg-orange-200"
+                className="bg-orange-100 text-lg text-orange-700 hover:bg-orange-200"
                 role="status"
               >
                 Not Quite
               </Badge>
 
               <div className="my-8">
-                <span className="text-sm font-bold uppercase text-sky-700">
+                <span className="text-sm font-bold text-sky-700 uppercase">
                   You selected:
                 </span>
                 <ul>
@@ -144,7 +144,7 @@ export function QuizQuestionBlock({ question }: { question: QuizQuestion }) {
                             <FormControl>
                               <RadioGroupItem value={String(answer.id)} />
                             </FormControl>
-                            <FormLabel className="cursor-pointer flex-1">
+                            <FormLabel className="flex-1 cursor-pointer">
                               <span
                                 dangerouslySetInnerHTML={{
                                   __html: answer.content,
@@ -178,7 +178,7 @@ export function QuizQuestionBlock({ question }: { question: QuizQuestion }) {
                                 }}
                               />
                             </FormControl>
-                            <FormLabel className="cursor-pointer flex-1">
+                            <FormLabel className="flex-1 cursor-pointer">
                               <span
                                 dangerouslySetInnerHTML={{
                                   __html: answer.content,
@@ -193,7 +193,7 @@ export function QuizQuestionBlock({ question }: { question: QuizQuestion }) {
                 </FormItem>
               )}
             />
-            <div className="flex justify-end mt-4">
+            <div className="mt-4 flex justify-end">
               <Button type="submit" after={<ArrowRightIcon />}>
                 Check Answer
               </Button>

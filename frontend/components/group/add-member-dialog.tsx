@@ -56,7 +56,7 @@ export function AddMemberDialog({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm">
-          <PlusCircle className="h-4 w-4 mr-2" />
+          <PlusCircle className="mr-2 h-4 w-4" />
           Add Members
         </Button>
       </DialogTrigger>
@@ -65,7 +65,7 @@ export function AddMemberDialog({
         <DialogHeader>
           <DialogTitle>Add Members to Group</DialogTitle>
         </DialogHeader>
-        <div className="space-y-4 min-h-[400px]">
+        <div className="min-h-[400px] space-y-4">
           <div className="space-y-2">
             <label className="text-sm text-slate-500">
               Enter email addresses (separated by commas or spaces)
@@ -77,9 +77,9 @@ export function AddMemberDialog({
               placeholder="john@example.com, jane@example.com"
             />
             {duplicateEmails.length > 0 && (
-              <div className="mt-2 p-3 bg-red-50 border border-red-200 rounded-md flex justify-between items-center">
+              <div className="mt-2 flex items-center justify-between rounded-md border border-red-200 bg-red-50 p-3">
                 <div>
-                  <p className="text-sm text-red-700 mb-2">
+                  <p className="mb-2 text-sm text-red-700">
                     The following email addresses are already part of the group.
                     Please remove them before proceeding:
                   </p>
@@ -87,7 +87,7 @@ export function AddMemberDialog({
                     {duplicateEmails.map((email) => (
                       <span
                         key={email}
-                        className="bg-red-100 text-red-700 px-2 py-1 rounded text-sm"
+                        className="rounded bg-red-100 px-2 py-1 text-sm text-red-700"
                       >
                         {email}
                       </span>

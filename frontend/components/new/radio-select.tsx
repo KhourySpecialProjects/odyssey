@@ -23,18 +23,18 @@ export function RadioSelect({
 }) {
   return (
     <div className={`flex flex-col items-start ${className}`}>
-      <div className="font-semibold text-sm py-1.5">
+      <div className="py-1.5 text-sm font-semibold">
         {label} {firstTime && <span className="text-red-500">*</span>}
       </div>
       <RadioGroup
-        className="flex md:flex-row xs:flex-col gap-4"
+        className="xs:flex-col flex gap-4 md:flex-row"
         value={selected ?? undefined}
         onValueChange={setSelected}
       >
         {items.map((item) => (
           <div
             key={item.id}
-            className="flex flex-row items-center justify-start gap-2 m-1"
+            className="m-1 flex flex-row items-center justify-start gap-2"
           >
             <p>{item.name}</p>
             <RadioGroupItem value={item.value}>

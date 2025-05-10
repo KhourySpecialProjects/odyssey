@@ -71,19 +71,19 @@ export function OpenEndedQuizEditor({
 
   return (
     <div className="flex flex-row items-center">
-      <div className="cursor-grab active:cursor-grabbing text-slate-400 hover:text-slate-600 z-10">
+      <div className="z-10 cursor-grab text-slate-400 hover:text-slate-600 active:cursor-grabbing">
         <GripVertical size={20} />
       </div>
       <div className="w-full max-w-2xl">
-        <div className="w-full flex flex-row justify-between items-center p-4">
+        <div className="flex w-full flex-row items-center justify-between p-4">
           <h2 className="text-lg">Open Ended Quiz</h2>
           <Trash2Icon
-            className="cursor-pointer text-red-600 hover:text-red-700 "
+            className="cursor-pointer text-red-600 hover:text-red-700"
             onClick={deleteBlock}
             data-testid="delete-block"
           />
         </div>
-        <p className="pb-4 p-4">
+        <p className="p-4 pb-4">
           Note: when users are typing answers in, their response must match the
           correct answer exactly but it doesn&apos;t have to be case sensitive
         </p>
@@ -92,9 +92,9 @@ export function OpenEndedQuizEditor({
           {questions.map((question, index) => (
             <div
               key={question.id}
-              className="p-6 border dark:border-slate-500 rounded-lg light:bg-white"
+              className="light:bg-white rounded-lg border p-6 dark:border-slate-500"
             >
-              <div className="flex justify-between items-start mb-4">
+              <div className="mb-4 flex items-start justify-between">
                 <h4 className="font-semibold">Question {index + 1}</h4>
                 <Button
                   variant="ghost"
@@ -102,7 +102,7 @@ export function OpenEndedQuizEditor({
                   onClick={() => removeQuestion(index)}
                   aria-label={`Delete question ${index + 1}`}
                 >
-                  <TrashIcon className="w-4 h-4" />
+                  <TrashIcon className="h-4 w-4" />
                 </Button>
               </div>
 
@@ -132,8 +132,8 @@ export function OpenEndedQuizEditor({
           ))}
         </div>
 
-        <Button onClick={addQuestion} variant="outline" className="mt-4 ">
-          <PlusIcon className="w-4 h-4 mr-2" />
+        <Button onClick={addQuestion} variant="outline" className="mt-4">
+          <PlusIcon className="mr-2 h-4 w-4" />
           Add Question
         </Button>
       </div>

@@ -98,7 +98,7 @@ const StarRating: React.FC<StarRatingProps> = ({
           );
         })}
         <div className="">
-          <p className="ml-3 block w-full text-3xl font-normal text-slate-950 text-3xl dark:text-slate-300">
+          <p className="ml-3 block w-full text-3xl font-normal text-slate-950 dark:text-slate-300">
             {rating.toFixed(1)}
           </p>
         </div>
@@ -128,7 +128,7 @@ const StarRating: React.FC<StarRatingProps> = ({
                 stroke={
                   ratingValue <= (hover || rating) ? "#ffc107" : "#e4e5e9"
                 }
-                className="w-8 h-8"
+                className="h-8 w-8"
               />
             </label>
           );

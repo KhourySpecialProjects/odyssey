@@ -42,7 +42,7 @@ export default function NotesSummary({
     <>
       <div className=" ">
         {filteredNewHighlights.length > 0 || filteredNewNotes.length > 0 ? (
-          <div className="mt-4 border rounded-md bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-500">
+          <div className="mt-4 rounded-md border border-slate-200 bg-slate-50 dark:border-slate-500 dark:bg-slate-800">
             <ul className="flex flex-col">
               {mappedLessons.map((lesson) => {
                 const lessonNotes = allNotes.notes.filter(
@@ -64,18 +64,18 @@ export default function NotesSummary({
                   <div key={`lesson-${lesson.id}`} className="flex flex-col">
                     {(filteredNotes.length > 0 ||
                       filteredHighlights.length > 0) && (
-                      <p className="pl-4 font-bold border dark:border-slate-500">
+                      <p className="border pl-4 font-bold dark:border-slate-500">
                         {lesson.lesson.name}
                       </p>
                     )}
                     {filteredHighlights.map((highlight) => (
                       <li
                         key={highlight.id}
-                        className="inline-flex items-center gap-2 px-4 py-3 leading-snug dark:text-slate-300 border dark:border-slate-500"
+                        className="inline-flex items-center gap-2 border px-4 py-3 leading-snug dark:border-slate-500 dark:text-slate-300"
                       >
-                        <HighlighterIcon className="w-5 h-5 mr-0.5 shrink-0" />
+                        <HighlighterIcon className="mr-0.5 h-5 w-5 shrink-0" />
                         <span
-                          className={`bg-[${highlight.color}] px-1 rounded dark:text-black`}
+                          className={`bg-[${highlight.color}] rounded px-1 dark:text-black`}
                         >
                           {highlight.text}
                         </span>
@@ -84,15 +84,15 @@ export default function NotesSummary({
                     {filteredNotes.map((note) => (
                       <li
                         key={note.id}
-                        className="inline-flex items-center gap-2 px-4 py-3 leading-snug dark:text-slate-300 border dark:border-slate-500"
+                        className="inline-flex items-center gap-2 border px-4 py-3 leading-snug dark:border-slate-500 dark:text-slate-300"
                         data-testid={`note-${note.id}`}
                       >
-                        <NotebookPen className="w-5 h-5 mr-0.5 shrink-0" />
+                        <NotebookPen className="mr-0.5 h-5 w-5 shrink-0" />
                         <span>
                           {note.highlight ? (
                             <>
                               <div
-                                className={`bg-[${note.highlight.color}] px-1 rounded dark:text-black text-left`}
+                                className={`bg-[${note.highlight.color}] rounded px-1 text-left dark:text-black`}
                               >
                                 {note.highlight.text}
                               </div>

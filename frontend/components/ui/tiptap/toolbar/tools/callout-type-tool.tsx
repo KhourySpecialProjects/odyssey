@@ -55,7 +55,7 @@ export default function CalloutTypeTool({
               });
             }}
             variant={dropdownVariants}
-            className="w-full border border-slate-200 bg-red-300 dark:bg-red-300 dark:text-black mb-1"
+            className="mb-1 w-full border border-slate-200 bg-red-300 dark:bg-red-300 dark:text-black"
           >
             Warning
             {<CalloutIcon color={"bg-red-300"}></CalloutIcon>}
@@ -72,7 +72,7 @@ export default function CalloutTypeTool({
               });
             }}
             variant={dropdownVariants}
-            className="w-full border border-slate-200 bg-blue-300 dark:bg-blue-300 dark:text-black mb-1"
+            className="mb-1 w-full border border-slate-200 bg-blue-300 dark:bg-blue-300 dark:text-black"
           >
             Question
             {<CalloutIcon color={"bg-blue-300"}></CalloutIcon>}
@@ -89,7 +89,7 @@ export default function CalloutTypeTool({
               });
             }}
             variant={dropdownVariants}
-            className="w-full border border-slate-200 bg-orange-300 dark:bg-orange-300 dark:text-black mb-1"
+            className="mb-1 w-full border border-slate-200 bg-orange-300 dark:bg-orange-300 dark:text-black"
           >
             Important
             {<CalloutIcon color={"bg-orange-300"}></CalloutIcon>}
@@ -106,7 +106,7 @@ export default function CalloutTypeTool({
               });
             }}
             variant={dropdownVariants}
-            className="w-full border border-slate-200 bg-green-300 dark:bg-green-300 dark:text-black mb-1"
+            className="mb-1 w-full border border-slate-200 bg-green-300 dark:bg-green-300 dark:text-black"
           >
             Definition
             {<CalloutIcon color={"bg-green-300"}></CalloutIcon>}
@@ -123,7 +123,7 @@ export default function CalloutTypeTool({
               });
             }}
             variant={dropdownVariants}
-            className="w-full border border-slate-200 bg-purple-300 dark:bg-purple-300 dark:text-black mb-1"
+            className="mb-1 w-full border border-slate-200 bg-purple-300 dark:bg-purple-300 dark:text-black"
           >
             More Information
             {<CalloutIcon color={"bg-purple-300"}></CalloutIcon>}
@@ -140,7 +140,7 @@ export default function CalloutTypeTool({
               });
             }}
             variant={dropdownVariants}
-            className="w-full border border-slate-200 bg-amber-300 dark:bg-amber-300 dark:text-black mb-1"
+            className="mb-1 w-full border border-slate-200 bg-amber-300 dark:bg-amber-300 dark:text-black"
           >
             Caution
             {<CalloutIcon color={"bg-amber-300"}></CalloutIcon>}
@@ -157,7 +157,7 @@ export default function CalloutTypeTool({
               });
             }}
             variant={dropdownVariants}
-            className="bg-sky-50 dark:bg-sky-200 dark:text-black w-full border border-slate-200"
+            className="w-full border border-slate-200 bg-sky-50 dark:bg-sky-200 dark:text-black"
           >
             Default
             {<CalloutIcon color={"bg-sky-50"}></CalloutIcon>}

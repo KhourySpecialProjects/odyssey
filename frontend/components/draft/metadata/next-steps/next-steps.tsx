@@ -72,7 +72,7 @@ export function NextSteps({
       <p className="text-slate-500 dark:text-slate-300">
         To further your understanding, we recommend exploring:
       </p>
-      <div className="mt-4 border rounded-md bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-500">
+      <div className="mt-4 rounded-md border border-slate-200 bg-slate-50 dark:border-slate-500 dark:bg-slate-800">
         <ul className="flex flex-col divide-y divide-slate-200 dark:divide-slate-500 dark:text-slate-300">
           {nextSteps.map((ns) => (
             <NextStepDisplay
@@ -82,10 +82,10 @@ export function NextSteps({
               remove={removeNextStep(ns.id)}
             />
           ))}
-          <li className="px-4 py-3 ">
+          <li className="px-4 py-3">
             <form
               action={addNextStep}
-              className="flex flex-row items-center justify-between flex-nowrap w-full space-x-1.5"
+              className="flex w-full flex-row flex-nowrap items-center justify-between space-x-1.5"
               role="form"
             >
               <Input
@@ -111,7 +111,7 @@ export function NextSteps({
           </li>
         </ul>
       </div>
-      {error && <div className="text-red-500 mt-2">{error}</div>}
+      {error && <div className="mt-2 text-red-500">{error}</div>}
     </section>
   );
 }

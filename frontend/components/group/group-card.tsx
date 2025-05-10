@@ -42,9 +42,9 @@ export function GroupCard({
   return (
     <Link
       href={`/g/${group.slug}`}
-      className=" inline-block w-full h-full border border-slate-200 dark:border-slate-500 hover:border-slate-300 rounded-md dark:bg-slate-800 bg-slate-50"
+      className="inline-block h-full w-full rounded-md border border-slate-200 bg-slate-50 hover:border-slate-300 dark:border-slate-500 dark:bg-slate-800"
     >
-      <div className="transition-colors p-2">
+      <div className="p-2 transition-colors">
         <Button
           size="sm"
           onClick={(e) => {
@@ -52,21 +52,21 @@ export function GroupCard({
             e.stopPropagation();
             changeVisibility();
           }}
-          className={`${isArchived === true || isArchived === false ? "visibility: visible" : "visibility: hidden"} bg-white dark:bg-slate-300 hover:bg-slate-300`}
+          className={`${isArchived === true || isArchived === false ? "visibility: visible" : "visibility: hidden"} bg-white hover:bg-slate-300 dark:bg-slate-300`}
         >
-          <div className="relative group">
+          <div className="group relative">
             {isArchived ? (
               <ArchiveRestore className="text-purple-800" />
             ) : (
               <Archive className="text-purple-800" />
             )}
-            <span className="absolute left-1/2 transform -translate-x-1/2 top-full mt-1 w-max px-2 py-1 text-xs text-white bg-gray-800 rounded opacity-0 group-hover:opacity-100 transition-opacity">
+            <span className="absolute top-full left-1/2 mt-1 w-max -translate-x-1/2 transform rounded bg-gray-800 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100">
               {isArchived ? "Unarchive" : "Archive"}
             </span>
           </div>
         </Button>
 
-        <div className="bg-slate-50 dark:bg-slate-800 rounded-md flex flex-col h-full p-6">
+        <div className="flex h-full flex-col rounded-md bg-slate-50 p-6 dark:bg-slate-800">
           <div className="flex-grow">
             <div className="flex items-center justify-between">
               <h3 className="text-3xl font-black text-slate-950 dark:text-slate-300">
@@ -76,7 +76,7 @@ export function GroupCard({
                 className={
                   roleColors
                     ? roleColors[role]
-                    : "bg-green-100 text-green-800 dark:hover:bg-green-100 hover:bg-green-100"
+                    : "bg-green-100 text-green-800 hover:bg-green-100 dark:hover:bg-green-100"
                 }
               >
                 {role}
@@ -85,7 +85,7 @@ export function GroupCard({
           </div>
           <div>
             {(role === "creator" || role === "admin" || role === "manager") && (
-              <div className="flex items-center gap-4 text-sm light:text-slate-600 dark:text-slate-300">
+              <div className="light:text-slate-600 flex items-center gap-4 text-sm dark:text-slate-300">
                 <UsersIcon className="h-4 w-4" />
                 <div className="flex gap-3">
                   <span>Admins: {group.admins?.length || 0}</span>
@@ -99,11 +99,11 @@ export function GroupCard({
               role === "admin" ||
               role === "manager"
             ) && (
-              <div className="text-sm light:text-slate-600 dark:text-slate-300 pt-2">
+              <div className="light:text-slate-600 pt-2 text-sm dark:text-slate-300">
                 <div className="flex gap-3">
                   <span>Members: {group.members?.length || 0}</span>
                 </div>
-                <div className="text-sm light:text-slate-600 dark:text-slate-300 pt-2">
+                <div className="light:text-slate-600 pt-2 text-sm dark:text-slate-300">
                   Creator:{" "}
                   {group.creator.firstName && group.creator.lastName
                     ? group.creator?.firstName + " " + group.creator?.lastName

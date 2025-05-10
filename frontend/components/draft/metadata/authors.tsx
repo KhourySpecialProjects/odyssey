@@ -22,14 +22,14 @@ export function Authors({
 
   return (
     <section className="w-full max-w-2xl">
-      <h2 className="text-2xl font-bold text-slate-900 dark:text-white pb-4">
+      <h2 className="pb-4 text-2xl font-bold text-slate-900 dark:text-white">
         Author(s)
       </h2>
       <UserMultiSelect
         selectedIds={currentSelectedIds}
         onChange={handleSelectionChange}
       />
-      {error && <div className="text-red-500 mt-2">{error}</div>}
+      {error && <div className="mt-2 text-red-500">{error}</div>}
     </section>
   );
 }
