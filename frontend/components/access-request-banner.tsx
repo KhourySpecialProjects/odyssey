@@ -10,7 +10,7 @@ export default async function AccessRequestBanner() {
 
   return (
     <>
-      <div className="relative isolate flex items-center gap-x-6 overflow-hidden bg-white dark:bg-slate-900 px-6 py-2.5 sm:px-3.5 sm:before:flex-1 border-b dark:border-slate-500">
+      <div className="relative isolate flex items-center gap-x-6 overflow-hidden border-b bg-white px-6 py-2.5 sm:px-3.5 sm:before:flex-1 dark:border-slate-500 dark:bg-slate-900">
         {/* <div
           className="absolute left-[max(-7rem,calc(50%-52rem))] top-1/2 -z-10 -translate-y-1/2 transform-gpu blur-2xl"
           aria-hidden="true"
@@ -36,7 +36,7 @@ export default async function AccessRequestBanner() {
           ></div>
         </div> */}
 
-        <div className="flex flex-wrap items-center justify-center flex-grow w-full gap-x-4 gap-y-2">
+        <div className="flex w-full flex-grow flex-wrap items-center justify-center gap-x-4 gap-y-2">
           <p
             className="text-sm leading-6 text-slate-900 dark:text-slate-300"
             data-testid="access-banner-title"

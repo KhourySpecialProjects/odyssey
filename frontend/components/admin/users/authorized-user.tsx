@@ -122,9 +122,9 @@ export function AuthorizedUserBlock({
   };
 
   return (
-    <li className="py-0 [&:not(:first-child)]:pt-0 pb-3 md:pb-0">
+    <li className="py-0 pb-3 md:pb-0 [&:not(:first-child)]:pt-0">
       <div className="flex items-center space-x-4">
-        <div className="flex-1 min-w-0">
+        <div className="min-w-0 flex-1">
           <div className="flex items-center space-x-3">
             <Avatar variant="round" size="sm">
               <AvatarImage src={user.profilePhoto || undefined} />
@@ -136,14 +136,14 @@ export function AuthorizedUserBlock({
                 )}
               </AvatarFallback>
             </Avatar>
-            <p className="font-medium truncate text-slate-900 dark:text-slate-300">
+            <p className="truncate font-medium text-slate-900 dark:text-slate-300">
               {user.firstName && user.lastName
                 ? user.firstName + " " + user.lastName
                 : user.email}
               {!user.isEnabled ? " (Disabled)" : ""}
             </p>
             <p
-              className="text-sm truncate text-slate-500 dark:text-slate-300"
+              className="truncate text-sm text-slate-500 dark:text-slate-300"
               data-testid="user-role"
             >
               {isAdmin ? "Admin" : ""}
@@ -160,9 +160,9 @@ export function AuthorizedUserBlock({
                 role="button"
                 aria-label="edit user"
               >
-                <div className="relative group">
+                <div className="group relative">
                   <Pencil className="text-sky-600" />
-                  <span className="absolute left-1/2 transform -translate-x-1/2 top-full mt-1 w-max px-2 py-1 text-xs text-white bg-gray-800 rounded opacity-0 group-hover:opacity-100 transition-opacity">
+                  <span className="absolute top-full left-1/2 mt-1 w-max -translate-x-1/2 transform rounded bg-gray-800 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100">
                     Edit User
                   </span>
                 </div>
@@ -180,7 +180,7 @@ export function AuthorizedUserBlock({
                   <p>Profile Photo</p>
                   <div
                     {...getRootProps()}
-                    className="border dark:border-slate-500 p-4 rounded-lg cursor-pointer text-center"
+                    className="cursor-pointer rounded-lg border p-4 text-center dark:border-slate-500"
                   >
                     <input {...getInputProps()} name="profilePhoto" />
                     {profilePhoto ? (
@@ -188,7 +188,7 @@ export function AuthorizedUserBlock({
                         <img
                           src={profilePhoto}
                           alt="Profile"
-                          className="w-32 h-32 rounded-full object-cover mx-auto"
+                          className="mx-auto h-32 w-32 rounded-full object-cover"
                         />
                         <Button
                           type="button"
@@ -251,11 +251,11 @@ export function AuthorizedUserBlock({
                             id={role.value}
                             checked={selectedRoles.includes(role.value)}
                             onCheckedChange={() => toggleRole(role.value)}
-                            className="border-sky-500 data-[state=checked]:bg-sky-500 data-[state=checked]:border-sky-500 focus-visible:ring-sky-500"
+                            className="border-sky-500 focus-visible:ring-sky-500 data-[state=checked]:border-sky-500 data-[state=checked]:bg-sky-500"
                           />
                           <label
                             htmlFor={role.value}
-                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                            className="text-sm leading-none font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                           >
                             {role.label}
                           </label>

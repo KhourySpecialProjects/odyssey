@@ -20,9 +20,9 @@ export async function AccessRequests() {
         The following individuals have requested access to this application.
       </p>
 
-      <div className="p-4 mt-4 rounded-md bg-slate-100 dark:bg-slate-800">
+      <div className="mt-4 rounded-md bg-slate-100 p-4 dark:bg-slate-800">
         {accessRequests.length > 0 ? (
-          <ul className="divide-y divide-slate-200 dark:divide-slate-700 md:space-y-4">
+          <ul className="divide-y divide-slate-200 md:space-y-4 dark:divide-slate-700">
             {accessRequests.map((request: AccessRequest) => (
               <AccessRequestBlock request={request} key={request.id} />
             ))}

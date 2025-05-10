@@ -37,21 +37,21 @@ export default async function Page() {
   };
 
   return (
-    <div className="w-full max-w-5xl mx-auto">
-      <div className="w-full p-8 mx-auto my-4 text-center max-w-7xl">
-        <h1 className="text-3xl font-bold tracking-tight light:text-slate-900 sm:text-4xl">
+    <div className="mx-auto w-full max-w-5xl">
+      <div className="mx-auto my-4 w-full max-w-7xl p-8 text-center">
+        <h1 className="light:text-slate-900 text-3xl font-bold tracking-tight sm:text-4xl">
           Admin
         </h1>
-        <p className="mt-4 text-lg leading-normal light:text-slate-600 text-balance">
+        <p className="light:text-slate-600 mt-4 text-lg leading-normal text-balance">
           View Odyssey statistics and edit existing information.
         </p>
       </div>
-      <div className="w-full flex flex-col items-center">
-        <h2 className="text-lg mb-2 mt-4 dark:text-slate-300 flex gap-2">
-          Statistics <LineChartIcon className=" inline" />
+      <div className="flex w-full flex-col items-center">
+        <h2 className="mt-4 mb-2 flex gap-2 text-lg dark:text-slate-300">
+          Statistics <LineChartIcon className="inline" />
         </h2>
         <Separator orientation="horizontal" className="mt-2 mb-4" />
-        <CardContent className="flex flex-col items-center gap-x-8 text-center gap-y-6 sm:flex-row">
+        <CardContent className="flex flex-col items-center gap-x-8 gap-y-6 text-center sm:flex-row">
           <div className="flex items-center space-x-3">
             <div>
               <div className="font-medium dark:text-slate-300">
@@ -87,11 +87,11 @@ export default async function Page() {
       </div>
 
       {/* <Session /> */}
-      <div className="hidden sm:flex sm:flex-col p-4">
+      <div className="hidden p-4 sm:flex sm:flex-col">
         <AdminSelector content={pageContent} />
       </div>
 
-      <div className="flex flex-col sm:hidden p-4">
+      <div className="flex flex-col p-4 sm:hidden">
         <ComponentDropdown content={pageContent} />
       </div>
     </div>

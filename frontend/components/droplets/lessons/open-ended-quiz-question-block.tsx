@@ -35,10 +35,10 @@ export function OpenEndedQuizQuestionBlock({
       />
 
       {showResult ? (
-        <div className="px-8 py-12 mt-4 text-center border rounded-md border-slate-200">
+        <div className="mt-4 rounded-md border border-slate-200 px-8 py-12 text-center">
           {isCorrect ? (
             <>
-              <Badge className="text-green-700 bg-green-100 text-lg">
+              <Badge className="bg-green-100 text-lg text-green-700">
                 That&rsquo;s Right!
               </Badge>
               <p className="mt-4 font-medium">
@@ -47,11 +47,11 @@ export function OpenEndedQuizQuestionBlock({
             </>
           ) : (
             <>
-              <Badge className="text-orange-700 bg-orange-100 text-lg">
+              <Badge className="bg-orange-100 text-lg text-orange-700">
                 Not Quite
               </Badge>
               <div className="my-8">
-                <span className="text-sm font-bold uppercase text-sky-700">
+                <span className="text-sm font-bold text-sky-700 uppercase">
                   Your answer:
                 </span>
                 <p className="mt-2 font-medium">{userAnswer}</p>
@@ -68,7 +68,7 @@ export function OpenEndedQuizQuestionBlock({
         </div>
       ) : revealAnswer ? (
         <>
-          <p className="mt-4 font-medium pb-2">
+          <p className="mt-4 pb-2 font-medium">
             Correct Answer: {question.correctAnswer}
           </p>
           <Button
@@ -85,7 +85,7 @@ export function OpenEndedQuizQuestionBlock({
             value={userAnswer}
             onChange={(e) => setUserAnswer(e.target.value)}
             placeholder="Type your answer here..."
-            className="Textarea min-h-[100px] dark:bg-slate-900 dark:border dark:border-slate-500 dark:text-slate-300"
+            className="Textarea min-h-[100px] dark:border dark:border-slate-500 dark:bg-slate-900 dark:text-slate-300"
           />
           <div className="flex justify-end gap-2">
             <Button

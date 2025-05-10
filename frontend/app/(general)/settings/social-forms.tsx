@@ -102,8 +102,7 @@ export function SocialForms({
 
     return (
       <div
-        className={`flex flex-col items-center p-6 border-2 rounded-lg cursor-pointer w-[64%]
-          ${isDragging ? "border-blue-300 bg-blue-50 dark:bg-slate-800" : "border-gray-300 dark:border-slate-500 border-dashed"}`}
+        className={`flex w-[64%] cursor-pointer flex-col items-center rounded-lg border-2 p-6 ${isDragging ? "border-blue-300 bg-blue-50 dark:bg-slate-800" : "border-dashed border-gray-300 dark:border-slate-500"}`}
         onDrop={handleDrop}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
@@ -112,15 +111,15 @@ export function SocialForms({
           <img
             src={imagePreview}
             alt="Profile"
-            className="w-32 h-32 object-cover rounded-full border mb-4"
+            className="mb-4 h-32 w-32 rounded-full border object-cover"
           />
         ) : (
-          <p className="text-gray-500 dark:text-slate-400 mb-4">
+          <p className="mb-4 text-gray-500 dark:text-slate-400">
             Drag & drop to update your profile photo here
           </p>
         )}
 
-        <label className="bg-blue-500 text-white py-2 px-4 rounded cursor-pointer">
+        <label className="cursor-pointer rounded bg-blue-500 px-4 py-2 text-white">
           {file || profileImage ? "Change Photo" : "Upload Photo"}
           <input
             name="profilePhoto"
@@ -132,11 +131,11 @@ export function SocialForms({
         </label>
 
         {file && (
-          <div className="flex items-center justify-between w-full mt-4">
-            <span className="truncate flex-grow">{file.name}</span>
+          <div className="mt-4 flex w-full items-center justify-between">
+            <span className="flex-grow truncate">{file.name}</span>
             <button
               type="button"
-              className="bg-red-500 text-white py-1 px-2 rounded ml-2"
+              className="ml-2 rounded bg-red-500 px-2 py-1 text-white"
               onClick={handleRemoveFile}
             >
               Remove
@@ -174,7 +173,7 @@ export function SocialForms({
             }
           }
         }}
-        className="px-6 py-4 flex flex-row gap-4 items-center"
+        className="flex flex-row items-center gap-4 px-6 py-4"
       >
         <FileUpload
           file={profileFile}
@@ -191,7 +190,7 @@ export function SocialForms({
         <div className="flex flex-col gap-2">
           <Button
             type="submit"
-            className=" min-w-[50px] whitespace-normal"
+            className="min-w-[50px] whitespace-normal"
             disabled={!profileFile}
           >
             Save Photo
@@ -203,7 +202,7 @@ export function SocialForms({
                 await updatePhoto("", authorizedUser?.id);
               }
             }}
-            className="min-w-[50px] whitespace-normal bg-red-500 dark:bg-red-400 dark:hover:bg-red-300 hover:bg-red-400"
+            className="min-w-[50px] bg-red-500 whitespace-normal hover:bg-red-400 dark:bg-red-400 dark:hover:bg-red-300"
             disabled={!profileImage}
           >
             Remove Photo
@@ -223,9 +222,9 @@ export function SocialForms({
             }
           }
         }}
-        className="px-6 py-4 flex flex-row gap-4 items-center"
+        className="flex flex-row items-center gap-4 px-6 py-4"
       >
-        <div className="w-[12%] mr-5 sm:mr-0">Bio:</div>
+        <div className="mr-5 w-[12%] sm:mr-0">Bio:</div>
         <Textarea
           name="bio"
           value={bioValue}
@@ -235,13 +234,13 @@ export function SocialForms({
         />
         <Button
           type="submit"
-          className="min-w-[120px] dark:bg-slate-300 hidden sm:block"
+          className="hidden min-w-[120px] sm:block dark:bg-slate-300"
         >
           Save Bio
         </Button>
         <Button
           type="submit"
-          className="w-[13%] dark:bg-slate-300 p-0 sm:hidden"
+          className="w-[13%] p-0 sm:hidden dark:bg-slate-300"
         >
           <Check className="h-5 w-5" />
         </Button>
@@ -263,9 +262,9 @@ export function SocialForms({
             }
           }
         }}
-        className="px-6 py-4 flex flex-row gap-4 items-center"
+        className="flex flex-row items-center gap-4 px-6 py-4"
       >
-        <div className="w-[12%] mr-5 sm:mr-0">LinkedIn:</div>
+        <div className="mr-5 w-[12%] sm:mr-0">LinkedIn:</div>
         <Input
           name="linkedin"
           value={linkedinValue}
@@ -275,13 +274,13 @@ export function SocialForms({
         />
         <Button
           type="submit"
-          className="min-w-[120px] dark:bg-slate-300 hidden sm:block"
+          className="hidden min-w-[120px] sm:block dark:bg-slate-300"
         >
           Save LinkedIn
         </Button>
         <Button
           type="submit"
-          className="w-[13%] dark:bg-slate-300 p-0 sm:hidden"
+          className="w-[13%] p-0 sm:hidden dark:bg-slate-300"
         >
           <Check className="h-5 w-5" />
         </Button>
@@ -304,10 +303,10 @@ export function SocialForms({
             }
           }
         }}
-        className="px-6 py-4 flex flex-row gap-4 items-center"
+        className="flex flex-row items-center gap-4 px-6 py-4"
       >
         {" "}
-        <div className="w-[12%] mr-5 sm:mr-0">GitHub:</div>
+        <div className="mr-5 w-[12%] sm:mr-0">GitHub:</div>
         <Input
           name="github"
           value={githubValue}
@@ -317,13 +316,13 @@ export function SocialForms({
         />
         <Button
           type="submit"
-          className="min-w-[120px] dark:bg-slate-300 hidden sm:block"
+          className="hidden min-w-[120px] sm:block dark:bg-slate-300"
         >
           Save GitHub
         </Button>
         <Button
           type="submit"
-          className="w-[13%] dark:bg-slate-300 p-0 sm:hidden"
+          className="w-[13%] p-0 sm:hidden dark:bg-slate-300"
         >
           <Check className="h-5 w-5" />
         </Button>

@@ -62,16 +62,16 @@ export function FriendSearch({
   };
 
   return (
-    <div className="relative flex justify-center mb-4">
+    <div className="relative mb-4 flex justify-center">
       <div className="relative">
         <Input
           type="search"
           placeholder="Search..."
           className={cn(
-            "w-[300px] md:w-[500px] flex items-center justify-center",
+            "flex w-[300px] items-center justify-center md:w-[500px]",
             focused
-              ? "dark:shadow-[0px_0px_16px_rgb(0,255,255)] shadow-[0px_0px_16px_rgb(29,58,138)]"
-              : "dark:shadow-[0px_0px_6px_rgb(0,255,255)] shadow-[0px_0px_8px_rgb(29,58,138)]",
+              ? "shadow-[0px_0px_16px_rgb(29,58,138)] dark:shadow-[0px_0px_16px_rgb(0,255,255)]"
+              : "shadow-[0px_0px_8px_rgb(29,58,138)] dark:shadow-[0px_0px_6px_rgb(0,255,255)]",
           )}
           value={searchTerm}
           onChange={(e) => handleInputChange(e)}
@@ -83,12 +83,12 @@ export function FriendSearch({
 
         {isHovered && searchTerm != "" && (
           <div
-            className="absolute z-50 w-screen left-1/2 transform -translate-x-1/2 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-500 rounded-md shadow-lg md:max-w-[600px]"
+            className="absolute left-1/2 z-50 w-screen -translate-x-1/2 transform rounded-md border border-gray-200 bg-white shadow-lg md:max-w-[600px] dark:border-slate-500 dark:bg-slate-800"
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
           >
             {searchResults.length > 0 ? (
-              <ul className="md:space-y-4 p-4">
+              <ul className="p-4 md:space-y-4">
                 {searchResults.slice(0, 10).map((user, index) => {
                   if (!friendIds.includes(user.id)) {
                     return (

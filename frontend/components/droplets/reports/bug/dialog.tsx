@@ -26,11 +26,11 @@ export function ReportBugDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>
         <Button
-          className="bg-red-300 dark:bg-red-300 hover:bg-red-400 dark:hover:bg-red-400 h-6 text-black group"
+          className="group h-6 bg-red-300 text-black hover:bg-red-400 dark:bg-red-300 dark:hover:bg-red-400"
           before={<Bug />}
         >
           <span className="hidden sm:inline-block">Report Bug</span>
-          <span className="sm:hidden absolute left-1/2 transform -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap bg-black text-white text-xs rounded px-2 py-1 pointer-events-none">
+          <span className="pointer-events-none absolute left-1/2 -translate-x-1/2 transform rounded bg-black px-2 py-1 text-xs whitespace-nowrap text-white opacity-0 transition-opacity group-hover:opacity-100 sm:hidden">
             Report Bug
           </span>
         </Button>

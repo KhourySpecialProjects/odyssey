@@ -43,9 +43,9 @@ export function Selection({
         selected={selected}
         setSelected={update}
         align="start"
-        className="w-full flex flex-row justify-around items-center"
+        className="flex w-full flex-row items-center justify-around"
       />
-      {error && <div className="text-red-500 mt-2">{error}</div>}
+      {error && <div className="mt-2 text-red-500">{error}</div>}
     </>
   );
 }

@@ -8,7 +8,7 @@ export function FriendCompletedDropletsList({
 }) {
   return (
     <div className="mt-2 space-y-2">
-      <ul className="list-none p-0 space-y-1">
+      <ul className="list-none space-y-1 p-0">
         {droplets.map((droplet) => (
           <DropletTile
             key={droplet.id}

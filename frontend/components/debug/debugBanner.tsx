@@ -10,7 +10,7 @@ export function DebugBanner({ className }: { className?: string }) {
   return (
     <div
       className={cn(
-        "relative py-1 z-10 w-full text-center text-xs uppercase font-mono font-medium text-white bg-sky-800",
+        "relative z-10 w-full bg-sky-800 py-1 text-center font-mono text-xs font-medium text-white uppercase",
         className,
       )}
     >

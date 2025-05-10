@@ -56,13 +56,13 @@ export function Filter({
           size="sm"
           className="gap-0.25 border-dashed dark:text-slate-300"
         >
-          <PlusCircleIcon className="w-4 h-4 mr-2" />
+          <PlusCircleIcon className="mr-2 h-4 w-4" />
 
           {label}
 
           {selectedValues?.length > 0 && (
             <>
-              <Separator orientation="vertical" className="h-4 mx-2" />
+              <Separator orientation="vertical" className="mx-2 h-4" />
 
               <Badge variant="secondary" className="px-1 font-normal lg:hidden">
                 {selectedValues.length}
@@ -80,7 +80,7 @@ export function Filter({
                       <Badge
                         variant="secondary"
                         key={option.value}
-                        className="px-1 font-normal rounded-sm dark:bg-slate-800"
+                        className="rounded-sm px-1 font-normal dark:bg-slate-800"
                       >
                         {option.label}
                       </Badge>
@@ -123,7 +123,7 @@ export function Filter({
                           : "opacity-50 [&_svg]:invisible",
                       )}
                     >
-                      <CheckIcon className="w-4 h-4" />
+                      <CheckIcon className="h-4 w-4" />
                     </div>
                     <span>{option.label}</span>
                     {/* {option.count ? (

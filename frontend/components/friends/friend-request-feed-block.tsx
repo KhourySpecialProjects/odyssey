@@ -47,10 +47,10 @@ export function FriendRequestFeedBlock({
 
   return (
     <div className="flex flex-col justify-center">
-      <div className="flex flex-row items-start mt-2 gap-2 items-center">
+      <div className="mt-2 flex flex-row items-center items-start gap-2">
         <Avatar
           variant="round"
-          className="border border-sky-800 w-8 h-8 flex-shrink-0"
+          className="h-8 w-8 flex-shrink-0 border border-sky-800"
         >
           <AvatarImage src={request?.profilePhoto || undefined} />
           <AvatarFallback>
@@ -64,15 +64,15 @@ export function FriendRequestFeedBlock({
 
         <button
           onClick={() => setOpen(true)}
-          className="flex-1 min-w-0"
+          className="min-w-0 flex-1"
           title={
             request.firstName && request.lastName
               ? `${request.firstName} ${request.lastName}`
               : `${request.email}`
           }
         >
-          <div className="w-full ">
-            <p className="font-medium truncate text-slate-900 dark:text-slate-300 text-left">
+          <div className="w-full">
+            <p className="truncate text-left font-medium text-slate-900 dark:text-slate-300">
               {request.firstName && request.lastName
                 ? request.firstName + " " + request.lastName
                 : request.email}
@@ -80,17 +80,17 @@ export function FriendRequestFeedBlock({
           </div>
         </button>
 
-        <div className="flex flex-col gap-1 justify-center">
+        <div className="flex flex-col justify-center gap-1">
           <Button
-            className="bg-emerald-400 dark:bg-emerald-700 dark:hover:bg-emerald-800 hover:text-white hover:bg-emerald-600 text-white flex items-center justify-center"
+            className="flex items-center justify-center bg-emerald-400 text-white hover:bg-emerald-600 hover:text-white dark:bg-emerald-700 dark:hover:bg-emerald-800"
             style={{ height: "20px", width: "50px" }}
             size="sm"
             variant="outline"
             onClick={handleApprove}
             role="accept"
           >
-            <div className="relative group">
-              <Check className="w-3 h-3 group-hover:scale-110 transition-transform" />
+            <div className="group relative">
+              <Check className="h-3 w-3 transition-transform group-hover:scale-110" />
             </div>
           </Button>
           <Button
@@ -101,8 +101,8 @@ export function FriendRequestFeedBlock({
             style={{ height: "20px", width: "50px" }}
             role="reject"
           >
-            <div className="relative group">
-              <X className="w-3 h-3 group-hover:scale-110 transition-transform" />
+            <div className="group relative">
+              <X className="h-3 w-3 transition-transform group-hover:scale-110" />
             </div>
           </Button>
         </div>

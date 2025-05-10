@@ -28,7 +28,7 @@ export function Search() {
   }, [searchQuery, pathname, router, searchParams]);
 
   return (
-    <div className="flex items-center space-x-2 xs:max-w-sm">
+    <div className="xs:max-w-sm flex items-center space-x-2">
       <Input
         type="search"
         placeholder="Search..."

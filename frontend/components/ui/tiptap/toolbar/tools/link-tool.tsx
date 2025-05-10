@@ -43,7 +43,7 @@ export default function LinkToolButton({ editor }: { editor: Editor | null }) {
         <button
           className={cn(
             editor?.isActive("link") ? "bg-slate-200 dark:bg-slate-700" : "",
-            "p-2.5 rounded-md border border-transparent hover:border-slate-200",
+            "rounded-md border border-transparent p-2.5 hover:border-slate-200",
           )}
           title="Link"
         >
@@ -60,7 +60,7 @@ export default function LinkToolButton({ editor }: { editor: Editor | null }) {
           type="text"
           tabIndex={-1}
         />
-        <div className="w-full flex justify-between items-center">
+        <div className="flex w-full items-center justify-between">
           <PopoverClose onClick={() => setOpen(false)} asChild>
             <Button before={<XIcon />} className="m-2">
               Close

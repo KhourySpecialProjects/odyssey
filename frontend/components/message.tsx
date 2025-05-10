@@ -8,8 +8,8 @@ export function Message({
   children: React.ReactNode;
 }) {
   return (
-    <div className={cn("w-full max-w-5xl p-8 mx-auto", className)}>
-      <div className="grid min-h-full px-6 py-24 text-center bg-white dark:bg-slate-800 place-items-center sm:py-32 lg:px-8">
+    <div className={cn("mx-auto w-full max-w-5xl p-8", className)}>
+      <div className="grid min-h-full place-items-center bg-white px-6 py-24 text-center sm:py-32 lg:px-8 dark:bg-slate-800">
         {children}
       </div>
     </div>
@@ -25,10 +25,10 @@ export function MessageHeader({
 }) {
   return (
     <>
-      <p className="text-base font-semibold uppercase text-sky-600">
+      <p className="text-base font-semibold text-sky-600 uppercase">
         {subtitle}
       </p>
-      <h1 className="mt-4 text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-300 sm:text-5xl">
+      <h1 className="mt-4 text-3xl font-bold tracking-tight text-slate-900 sm:text-5xl dark:text-slate-300">
         {title}
       </h1>
     </>
@@ -49,7 +49,7 @@ export function MessageDescription({
 
 export function MessageActions({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex flex-col items-center justify-center mt-10 md:flex-row gap-x-4 gap-y-3">
+    <div className="mt-10 flex flex-col items-center justify-center gap-x-4 gap-y-3 md:flex-row">
       {children}
     </div>
   );

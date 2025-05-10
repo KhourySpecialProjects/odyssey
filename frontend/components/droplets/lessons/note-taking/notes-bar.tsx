@@ -224,15 +224,15 @@ export function NotesBar({
 
   return (
     <div className="">
-      <div className={`text-center mt-5 mb-10`}>
+      <div className={`mt-5 mb-10 text-center`}>
         <h1 className="text-2xl font-extrabold">My Notes</h1>
-        <Badge className="bg-sky-100 dark:text-white dark:bg-slate-700 border border-slate-400 dark:border-white text-slate-600 hover:bg-sky-100">
+        <Badge className="border border-slate-400 bg-sky-100 text-slate-600 hover:bg-sky-100 dark:border-white dark:bg-slate-700 dark:text-white">
           Click anywhere to create a note
         </Badge>
       </div>
 
       <div
-        className="space-y-4 w-full relative cursor-pointer notes-bar"
+        className="notes-bar relative w-full cursor-pointer space-y-4"
         onClick={(e) => handleMouseClick(e)}
         style={{ height: pageHeight + "px" }}
       >
@@ -246,12 +246,12 @@ export function NotesBar({
         >
           <Popover open={dialogOpen}>
             <PopoverTrigger disabled={false}></PopoverTrigger>
-            <PopoverContent className="w-max p-0 z-[100]">
+            <PopoverContent className="z-[100] w-max p-0">
               <div className="p-0">
                 <Button
                   size="sm"
                   onClick={handleAddNote}
-                  className="justify-center bg-white text-slate-600 hover:bg-slate-600 hover:text-white z-[100] dark:bg-slate-700 dark:text-white border dark:border-white"
+                  className="z-[100] justify-center border bg-white text-slate-600 hover:bg-slate-600 hover:text-white dark:border-white dark:bg-slate-700 dark:text-white"
                 >
                   Create a Note?
                 </Button>
@@ -263,9 +263,7 @@ export function NotesBar({
         {notes.map((note) => (
           <div
             key={note.id}
-            className={`absolute w-full transform -translate-y-1/2  transition-transform 
-                ${draggedNote?.id === note.id ? "cursor-grabbing" : ""}
-                ${focused === note.id ? "z-20" : "z-0"}`}
+            className={`absolute w-full -translate-y-1/2 transform transition-transform ${draggedNote?.id === note.id ? "cursor-grabbing" : ""} ${focused === note.id ? "z-20" : "z-0"}`}
             style={{
               top: `${note.positionY}px`,
               //top: `${Math.max(0, Math.min(note.positionY, window.innerHeight - 100))}px`, fhseihfhe
@@ -274,9 +272,7 @@ export function NotesBar({
             onMouseDown={(e) => handleDragStart(note, e)}
           >
             <div
-              className={`flex flex-row justify-center items-center 
-                  ${!focused || focused === note.id ? "opacity-100" : "opacity-30"}
-                  ${draggedNote?.id !== note.id ? "scale-100" : "scale-105"}`}
+              className={`flex flex-row items-center justify-center ${!focused || focused === note.id ? "opacity-100" : "opacity-30"} ${draggedNote?.id !== note.id ? "scale-100" : "scale-105"}`}
             >
               <NoteBlock
                 note={note}
