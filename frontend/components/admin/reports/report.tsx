@@ -20,17 +20,17 @@ export function ReportBlock({ report }: { report: Report }) {
   return (
     <li className="py-0 [&:not(:first-child)]:pt-3">
       <div className="flex items-center space-x-4">
-        <div className="flex-1 min-w-0">
+        <div className="min-w-0 flex-1">
           <p className="truncate text-slate-900 dark:text-white">
             <span className="font-bold dark:text-slate-300">
               {report.fullName} &middot; {report.email} ({report.type})
             </span>
           </p>
 
-          <p className="mt-2 font-medium truncate text-slate-900 dark:text-slate-300">
+          <p className="mt-2 truncate font-medium text-slate-900 dark:text-slate-300">
             {report.description}
           </p>
-          <p className="mt-2 font-medium truncate text-slate-900 dark:text-slate-300">
+          <p className="mt-2 truncate font-medium text-slate-900 dark:text-slate-300">
             Path: {report.path}
           </p>
         </div>

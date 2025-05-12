@@ -39,32 +39,32 @@ export function HighlightDropdown({
 
   return (
     <div
-      className={`fixed flex ${expanded ? "right-[355px] top-36 md:top-36 xs:top-44 flex-col" : "right-5 top-36 flex-col"} gap-2 z-20`}
+      className={`fixed flex ${expanded ? "xs:top-44 top-36 right-[355px] flex-col md:top-36" : "top-36 right-5 flex-col"} z-20 gap-2`}
     >
       <div
-        className={`dark:bg-slate-700 dark:text-white border dark:border-white border-black z-30 bg-blue-100 p-2 rounded shadow-lg`}
+        className={`z-30 rounded border border-black bg-blue-100 p-2 shadow-lg dark:border-white dark:bg-slate-700 dark:text-white`}
       >
-        <div className="relative group">
+        <div className="group relative">
           <CircleHelp className="cursor-pointer" />
-          <div className="absolute left-0 transform -translate-x-[100%] top-full mt-2 w-max gap-2 bg-white p-4 rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center pointer-events-none text-black">
+          <div className="pointer-events-none absolute top-full left-0 mt-2 flex w-max -translate-x-[100%] transform flex-col items-center gap-2 rounded bg-white p-4 text-black opacity-0 shadow-lg transition-opacity group-hover:opacity-100">
             <p>Highlighting Instructions:</p>
             <ul className="list-disc pl-4">
               <li>
-                Hover over the <Highlighter className="inline-block w-4 h-4" />{" "}
+                Hover over the <Highlighter className="inline-block h-4 w-4" />{" "}
                 icon to see actions.
               </li>
               <li>
-                Press the <Highlighter className="inline-block w-4 h-4" /> icon
+                Press the <Highlighter className="inline-block h-4 w-4" /> icon
                 to highlight selected text.
               </li>
               <li>Use the toggle to switch highlighting mode.</li>
               <li>In highlighting mode, selected text is highlighted.</li>
               <li>
-                Press the <Trash2Icon className="inline-block w-4 h-4" /> icon
+                Press the <Trash2Icon className="inline-block h-4 w-4" /> icon
                 to delete a highlight.
               </li>
               <li>
-                Press the <NotebookPen className="inline-block w-4 h-4" /> icon
+                Press the <NotebookPen className="inline-block h-4 w-4" /> icon
                 to add a note to text.
               </li>
               <li>Click a colored circle to change highlight color.</li>
@@ -74,15 +74,15 @@ export function HighlightDropdown({
       </div>
       <div
         title={expanded ? "Hide Notes Bar" : "View Notes Bar"}
-        className="z-20 dark:text-white dark:bg-slate-700 p-2 bg-blue-100 border dark:border-white border-black rounded shadow-lg"
+        className="z-20 rounded border border-black bg-blue-100 p-2 shadow-lg dark:border-white dark:bg-slate-700 dark:text-white"
       >
         <NotepadText
           onClick={() => setExpanded(!expanded)}
-          className="cursor-pointer "
+          className="cursor-pointer"
         />
       </div>
       <div
-        className="dark:text-black dark:bg-slate-700 z-20 border border-black dark:border-white bg-blue-100 p-2 rounded shadow-lg group"
+        className="group z-20 rounded border border-black bg-blue-100 p-2 shadow-lg dark:border-white dark:bg-slate-700 dark:text-black"
         onMouseLeave={() => setVisible(false)}
       >
         <div className="relative">
@@ -94,7 +94,7 @@ export function HighlightDropdown({
           />
 
           <div
-            className={`absolute left-1/2 transform -translate-x-1/2 top-full mt-2 w-max gap-2 bg-white p-4 rounded shadow-lg ${visible ? "visible" : "hidden"} transition-opacity flex flex-col items-center`}
+            className={`absolute top-full left-1/2 mt-2 w-max -translate-x-1/2 transform gap-2 rounded bg-white p-4 shadow-lg ${visible ? "visible" : "hidden"} flex flex-col items-center transition-opacity`}
           >
             <div title="Highlighting Mode">
               <Switch
@@ -109,7 +109,7 @@ export function HighlightDropdown({
             <button
               title="Delete Highlight"
               onClick={handlePopupDelete}
-              className="relative group"
+              className="group relative"
             >
               <Trash2Icon size={30} />
             </button>
@@ -117,7 +117,7 @@ export function HighlightDropdown({
             <button
               title="Take Note"
               onClick={handleCreateNote}
-              className="relative group note-button"
+              className="group note-button relative"
             >
               <NotebookPen size={30} />
             </button>
@@ -125,27 +125,27 @@ export function HighlightDropdown({
             <button
               title="Highlight Pink"
               onClick={() => handleApplyColor("#f9a8d4")}
-              className={`w-6 h-6 rounded-full ${selectedColor === "#f9a8d4" ? "border-2 border-black" : "border border-gray-300"} bg-[#f9a8d4]`}
+              className={`h-6 w-6 rounded-full ${selectedColor === "#f9a8d4" ? "border-2 border-black" : "border border-gray-300"} bg-[#f9a8d4]`}
             />
             <button
               title="Highlight Orange"
               onClick={() => handleApplyColor("#fbd38d")}
-              className={`w-6 h-6 rounded-full ${selectedColor === "#fbd38d" ? "border-2 border-black" : "border border-gray-300"} bg-[#fbd38d]`}
+              className={`h-6 w-6 rounded-full ${selectedColor === "#fbd38d" ? "border-2 border-black" : "border border-gray-300"} bg-[#fbd38d]`}
             />
             <button
               title="Highlight Yellow"
               onClick={() => handleApplyColor("#fff300")}
-              className={`w-6 h-6 rounded-full ${selectedColor === "#fff300" ? "border-2 border-black" : "border border-gray-300"} bg-[#fff300]`}
+              className={`h-6 w-6 rounded-full ${selectedColor === "#fff300" ? "border-2 border-black" : "border border-gray-300"} bg-[#fff300]`}
             />
             <button
               title="Highlight Green"
               onClick={() => handleApplyColor("#86efac")}
-              className={`w-6 h-6 rounded-full ${selectedColor === "#86efac" ? "border-2 border-black" : "border border-gray-300"} bg-[#86efac]`}
+              className={`h-6 w-6 rounded-full ${selectedColor === "#86efac" ? "border-2 border-black" : "border border-gray-300"} bg-[#86efac]`}
             />
             <button
               title="Highlight Blue"
               onClick={() => handleApplyColor("#93c5fd")}
-              className={`w-6 h-6 rounded-full ${selectedColor === "#93c5fd" ? "border-2 border-black" : "border border-gray-300"} bg-[#93c5fd]`}
+              className={`h-6 w-6 rounded-full ${selectedColor === "#93c5fd" ? "border-2 border-black" : "border border-gray-300"} bg-[#93c5fd]`}
             />
           </div>
         </div>

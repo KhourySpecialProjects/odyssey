@@ -27,7 +27,7 @@ export function NotesContainer({
 
   return (
     <div className="flex flex-row items-start">
-      <div className="w-2/3 text-center text-xl font-bold p-4">
+      <div className="w-2/3 p-4 text-center text-xl font-bold">
         <NotesSummary
           selectedColors={selectedColors.map(
             (color) => color.toLowerCase() as HighlightColor,
@@ -38,7 +38,7 @@ export function NotesContainer({
           allNotes={allNotes}
         />
       </div>
-      <div className="w-1/3 text-center text-xl font-bold flex flex-col items-center justify-center dark:text-slate-300 pt-2">
+      <div className="flex w-1/3 flex-col items-center justify-center pt-2 text-center text-xl font-bold dark:text-slate-300">
         Filters
         <NotesFilter onFilterChange={setSelectedColors} />
       </div>

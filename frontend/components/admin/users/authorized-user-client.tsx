@@ -51,19 +51,19 @@ export function AuthorizedUserClient({
   };
 
   return (
-    <div className="p-4 mt-4 rounded-md bg-slate-100 dark:bg-slate-800">
+    <div className="mt-4 rounded-md bg-slate-100 p-4 dark:bg-slate-800">
       <div className="pb-4">
         <Input
           type="search"
           placeholder="Search..."
-          className={cn("w-full sm:w-[30%] flex items-center justify-center")}
+          className={cn("flex w-full items-center justify-center sm:w-[30%]")}
           value={searchTerm}
           onChange={(e) => handleChange(e)}
         />
       </div>
       {paginatedUsers.length > 0 ? (
         <>
-          <ul className=" md:space-y-4 md:columns-2 md:gap-4">
+          <ul className="md:columns-2 md:gap-4 md:space-y-4">
             {paginatedUsers?.map((user) => (
               <AuthorizedUserBlock user={user} key={user.id} />
             ))}

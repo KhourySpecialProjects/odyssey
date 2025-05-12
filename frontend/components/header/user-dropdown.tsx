@@ -30,7 +30,7 @@ export function UserDropdown({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <div className="w-full group flex shrink cursor-pointer select-none items-center justify-between gap-1 rounded-lg p-1.5 px-1 text-sm light:text-slate-600 transition-colors duration-100 wg-antialiased hover:bg-slate-100 dark:hover:bg-white/5">
+        <div className="group light:text-slate-600 wg-antialiased flex w-full shrink cursor-pointer items-center justify-between gap-1 rounded-lg p-1.5 px-1 text-sm transition-colors duration-100 select-none hover:bg-slate-100 dark:hover:bg-white/5">
           <div className="inline-flex flex-row items-center justify-between">
             <Avatar variant="round" size="xs">
               <AvatarImage
@@ -40,30 +40,30 @@ export function UserDropdown({
                 {user.name ? (
                   getInitials(user.name)
                 ) : (
-                  <User2Icon className="w-4 h-4" />
+                  <User2Icon className="h-4 w-4" />
                 )}
               </AvatarFallback>
             </Avatar>
 
-            <span className="font-medium ms-2 hidden sm:block">
+            <span className="ms-2 hidden font-medium sm:block">
               Hi, <b>{authorizedUser?.firstName ?? user.name ?? user.email}</b>!
             </span>
           </div>
 
-          <ChevronDownIcon className="w-5 h-5 trigger-icon text-slate-400" />
+          <ChevronDownIcon className="trigger-icon h-5 w-5 text-slate-400" />
         </div>
       </DropdownMenuTrigger>
 
       <DropdownMenuContent className="mb-3 min-w-[220px]">
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
-            <p className="text-sm font-semibold leading-none">
+            <p className="text-sm leading-none font-semibold">
               {user.name} {user.nuid ? ` (${user.nuid})` : ""}
             </p>
-            <p className="text-xs leading-none text-muted-foreground">
+            <p className="text-muted-foreground text-xs leading-none">
               {user.email}
             </p>
-            <p className="text-xs leading-none text-muted-foreground max-w-40">
+            <p className="text-muted-foreground max-w-40 text-xs leading-none">
               Role(s): {condenseRoleTitles(user.roles)}
             </p>
           </div>
@@ -73,7 +73,7 @@ export function UserDropdown({
 
         <DropdownMenuItem asChild data-testid="profile-link">
           <Link href="/settings">
-            <PersonStanding className="w-4 h-4 mr-2" />
+            <PersonStanding className="mr-2 h-4 w-4" />
             <span>Profile</span>
           </Link>
         </DropdownMenuItem>
@@ -88,7 +88,7 @@ export function UserDropdown({
             });
           }}
         >
-          <LogOutIcon className="w-4 h-4 mr-2" />
+          <LogOutIcon className="mr-2 h-4 w-4" />
           <span>Log Out</span>
         </DropdownMenuItem>
       </DropdownMenuContent>

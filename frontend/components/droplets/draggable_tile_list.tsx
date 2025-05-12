@@ -51,7 +51,7 @@ export default function DraggableTileList({
         }
       }}
       className={cn(
-        "min-h-[200px] p-4 border-2 border-dashed dark:border-slate-500 rounded-lg transition-colors",
+        "min-h-[200px] rounded-lg border-2 border-dashed p-4 transition-colors dark:border-slate-500",
         isOver ? "border-slate-400 bg-slate-100/50" : "border-slate-200",
       )}
       data-testid="droplet-list"

@@ -81,7 +81,7 @@ export function SortedDropletsGrid({
 
   if (!filteredDroplets || filteredDroplets.length === 0) {
     return (
-      <Message className="mb-8 border border-dashed rounded-md border-slate-200 dark:border-slate-500 dark:bg-slate-800">
+      <Message className="mb-8 rounded-md border border-dashed border-slate-200 dark:border-slate-500 dark:bg-slate-800">
         <MessageHeader subtitle="No Results" title="No Droplets Found" />
         <MessageDescription>
           {searchValue

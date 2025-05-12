@@ -15,12 +15,12 @@ export function RequestsPopup({
   if (!user || !friendships) return null;
 
   return (
-    <div className="flex flex-col relative">
+    <div className="relative flex flex-col">
       <h1 className="font-bold">Friend Requests</h1>
       <p>A list of your friend requests.</p>
-      <div className="p-4 mt-4 rounded-md bg-slate-100">
+      <div className="mt-4 rounded-md bg-slate-100 p-4">
         {friendships.length > 0 ? (
-          <ul className="divide-y divide-slate-200 dark:divide-slate-700 md:space-y-4">
+          <ul className="divide-y divide-slate-200 md:space-y-4 dark:divide-slate-700">
             {showPopup
               ? friendships.map((friendship) => (
                   <FriendRequestFeedBlock

@@ -66,7 +66,7 @@ export default function LatexTool({ editor }: { editor: Editor | null }) {
           }}
           className={cn(
             open ? "bg-slate-200 dark:bg-slate-700" : "",
-            "p-2.5 rounded-md border border-transparent hover:border-slate-200",
+            "rounded-md border border-transparent p-2.5 hover:border-slate-200",
           )}
           title="LaTeX"
         >
@@ -74,7 +74,7 @@ export default function LatexTool({ editor }: { editor: Editor | null }) {
         </button>
       </PopoverTrigger>
       <PopoverContent ref={ref}>
-        <div className="w-full flex justify-between items-center">
+        <div className="flex w-full items-center justify-between">
           <Button
             onClick={() => addNewLatex(window.getSelection())}
             className="m-2"

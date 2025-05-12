@@ -110,17 +110,17 @@ export function CreateDropletForm({
 
   return (
     <form
-      className="w-4/5 flex flex-col items-center justify-center space-y-4 h-min p-5"
+      className="flex h-min w-4/5 flex-col items-center justify-center space-y-4 p-5"
       action={addDroplet}
       autoComplete="off"
     >
-      <div className="w-full flex flex-col items-start justify-between gap-2">
-        <div className="w-full font-semibold text-sm py-0.5 pb-2 text-slate-400">
+      <div className="flex w-full flex-col items-start justify-between gap-2">
+        <div className="w-full py-0.5 pb-2 text-sm font-semibold text-slate-400">
           Metadata
         </div>
-        <div className="w-full flex flex-col gap-3 border rounded-md border-slate-200 dark:border-slate-500 p-8 bg-white dark:bg-slate-800">
+        <div className="flex w-full flex-col gap-3 rounded-md border border-slate-200 bg-white p-8 dark:border-slate-500 dark:bg-slate-800">
           <div>
-            <div className="font-semibold text-sm py-0.5 pb-2">
+            <div className="py-0.5 pb-2 text-sm font-semibold">
               Name <span className="text-red-500">*</span>
             </div>
             <Input
@@ -131,15 +131,15 @@ export function CreateDropletForm({
               onChange={(e) => setDropletName(e.target.value)}
             />
           </div>
-          <div className="flex lg:flex-row xs:flex-col items-start justify-start gap-y-8 gap-x-10">
+          <div className="xs:flex-col flex items-start justify-start gap-x-10 gap-y-8 lg:flex-row">
             {focusAreaFilter && (
               <Select
                 key={focusAreaFilter.name}
                 name={focusAreaFilter.name}
                 onValueChange={setFocusAreaValue}
               >
-                <SelectGroup className="flex flex-col items-start lg:w-1/2 xs:w-full">
-                  <SelectLabel className="pl-0 pb-2">
+                <SelectGroup className="xs:w-full flex flex-col items-start lg:w-1/2">
+                  <SelectLabel className="pb-2 pl-0">
                     {focusAreaFilter.label}{" "}
                     <span className="text-red-500">*</span>
                   </SelectLabel>
@@ -176,9 +176,9 @@ export function CreateDropletForm({
               firstTime={true}
             />
           </div>
-          <div className="flex lg:flex-row xs:flex-col items-start justify-start gap-y-8 gap-x-10">
-            <div className="lg:w-1/2 xs:w-full">
-              <div className="font-semibold text-sm py-1.5">
+          <div className="xs:flex-col flex items-start justify-start gap-x-10 gap-y-8 lg:flex-row">
+            <div className="xs:w-full lg:w-1/2">
+              <div className="py-1.5 text-sm font-semibold">
                 Tags <span className="text-red-500">*</span>
               </div>
               <MultiSelect
@@ -186,13 +186,13 @@ export function CreateDropletForm({
                 items={tags}
                 selected={selectedTags}
                 setSelected={setSelectedTags}
-                className="w-full flex justify-start"
+                className="flex w-full justify-start"
                 align="start"
               />
             </div>
 
             <div>
-              <div className="font-semibold text-sm py-1.5">Author(s)</div>
+              <div className="py-1.5 text-sm font-semibold">Author(s)</div>
               <div className="flex flex-row items-center gap-2">
                 <Avatar variant="round" size="sm">
                   <AvatarImage src={author.image ?? undefined} />
@@ -200,7 +200,7 @@ export function CreateDropletForm({
                     {author.name ? (
                       getInitials(author.name)
                     ) : (
-                      <User2Icon className="w-4 h-4" />
+                      <User2Icon className="h-4 w-4" />
                     )}
                   </AvatarFallback>
                 </Avatar>
@@ -211,25 +211,25 @@ export function CreateDropletForm({
         </div>
       </div>
 
-      <div className="w-full flex flex-col items-start justify-between gap-2">
-        <div className="w-full font-semibold text-sm py-0.5 pb-2 text-slate-400">
+      <div className="flex w-full flex-col items-start justify-between gap-2">
+        <div className="w-full py-0.5 pb-2 text-sm font-semibold text-slate-400">
           Overview
         </div>
         <LearningObjectivesInput
-          className="w-full flex flex-col gap-3 border rounded-md border-slate-200 dark:border-slate-500 p-8 bg-white dark:bg-slate-800"
+          className="flex w-full flex-col gap-3 rounded-md border border-slate-200 bg-white p-8 dark:border-slate-500 dark:bg-slate-800"
           learningObjectives={learningObjectives}
           setLearningObjectives={setLearningObjectives}
           firstTime={true}
         />
       </div>
 
-      <div className="flex items-center justify-center self-end space-x-4">
+      <div className="flex items-center justify-center space-x-4 self-end">
         <Button
           before={<MoveLeftIcon />}
           onClick={() => router.push("/drafts")}
-          className="dark:bg-slate-50 dark:text-black bg-black text-white"
+          className="bg-black text-white dark:bg-slate-50 dark:text-black"
         >
-          <div className="w-30 flex items-center justify-center">Cancel</div>
+          <div className="flex w-30 items-center justify-center">Cancel</div>
         </Button>
 
         <SubmitButton />
@@ -250,9 +250,9 @@ function SubmitButton() {
         pending ? <LoaderIcon className="animate-spin" /> : <MoveRightIcon />
       }
       variant="default"
-      className="dark:bg-slate-50 dark:text-black bg-black text-white"
+      className="bg-black text-white dark:bg-slate-50 dark:text-black"
     >
-      <div className="w-30 flex items-center justify-center">
+      <div className="flex w-30 items-center justify-center">
         Create Droplet
       </div>
     </Button>

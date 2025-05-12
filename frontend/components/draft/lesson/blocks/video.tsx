@@ -25,19 +25,19 @@ export function VideoEditor({
 
   return (
     <div className="flex flex-row items-center">
-      <div className="cursor-grab active:cursor-grabbing text-slate-400 hover:text-slate-600 z-10">
+      <div className="z-10 cursor-grab text-slate-400 hover:text-slate-600 active:cursor-grabbing">
         <GripVertical size={20} />
       </div>
       <div
         className={
-          "w-full text-lg rounded border hover:shadow border-slate-200 dark:border-slate-500 p-4 " +
+          "w-full rounded border border-slate-200 p-4 text-lg hover:shadow dark:border-slate-500 " +
           (open ? "shadow-md" : "")
         }
         ref={ref}
       >
-        <div className="flex items-center justify-between mb-4">
-          <div className="w-full flex flex-row  mb-4 justify-between items-center">
-            <div className="w-full flex flex-row justify-between items-center mr-4">
+        <div className="mb-4 flex items-center justify-between">
+          <div className="mb-4 flex w-full flex-row items-center justify-between">
+            <div className="mr-4 flex w-full flex-row items-center justify-between">
               <h2 className="text-lg">Video Block</h2>
               <Trash2Icon
                 className="cursor-pointer text-red-600 hover:text-red-700"
@@ -48,7 +48,7 @@ export function VideoEditor({
 
             {open ? (
               <CheckIcon
-                className="cursor-pointer text-slate-700 dark:text-slate-300 dark:hover:text-slate-400 hover:text-slate-800"
+                className="cursor-pointer text-slate-700 hover:text-slate-800 dark:text-slate-300 dark:hover:text-slate-400"
                 onClick={() => {
                   setOpen(false);
                   updateBlock({
@@ -61,7 +61,7 @@ export function VideoEditor({
               />
             ) : (
               <PencilIcon
-                className="cursor-pointer text-slate-700 dark:text-slate-300 dark:hover:text-slate-400 hover:text-slate-800"
+                className="cursor-pointer text-slate-700 hover:text-slate-800 dark:text-slate-300 dark:hover:text-slate-400"
                 onClick={() => setOpen(true)}
                 role="button"
                 aria-label="edit"

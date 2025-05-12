@@ -58,7 +58,7 @@ export function GroupDashboard({
         >
           {group.droplets && group.droplets.length > 0 ? (
             <div className="flex flex-col gap-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 auto-rows-fr">
+              <div className="grid auto-rows-fr grid-cols-1 gap-4 sm:grid-cols-2">
                 {paginatedDroplets?.map((droplet) => (
                   <div key={droplet.id} className="h-full w-full">
                     <GroupDropletTile
@@ -74,7 +74,7 @@ export function GroupDashboard({
                   </div>
                 ))}
               </div>
-              <div className="flex gap-2 justify-end">
+              <div className="flex justify-end gap-2">
                 <Button
                   size="sm"
                   variant="outline"
@@ -96,7 +96,7 @@ export function GroupDashboard({
               </div>
             </div>
           ) : (
-            <div className="p-8 text-center text-slate-500 dark:text-slate-300 border border-dashed dark:border-slate-500 rounded-lg">
+            <div className="rounded-lg border border-dashed p-8 text-center text-slate-500 dark:border-slate-500 dark:text-slate-300">
               No droplets have been added to this group yet.
             </div>
           )}
@@ -123,7 +123,7 @@ export function GroupDashboard({
               ))}
             </div>
           ) : (
-            <div className="p-8 text-center text-slate-500 border border-dashed rounded-lg dark:text-slate-300 dark:border-slate-500">
+            <div className="rounded-lg border border-dashed p-8 text-center text-slate-500 dark:border-slate-500 dark:text-slate-300">
               No playlists have been added to this group yet.
             </div>
           )}
@@ -145,7 +145,7 @@ export function GroupDashboard({
                 </div>
               </div>
             ) : (
-              <div className="p-8 text-center text-slate-500 border border-dashed rounded-lg dark:text-slate-300 dark:border-slate-500">
+              <div className="rounded-lg border border-dashed p-8 text-center text-slate-500 dark:border-slate-500 dark:text-slate-300">
                 No droplets or members have been added to this group yet.
               </div>
             )}

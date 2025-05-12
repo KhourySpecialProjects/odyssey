@@ -15,7 +15,7 @@ export function RequestsPopupWrapper({
   const [showPopup, setShowPopup] = useState(false);
 
   return (
-    <div className="flex flex-row relative">
+    <div className="relative flex flex-row">
       <Button
         onClick={() => setShowPopup(!showPopup)}
         variant="link"
@@ -25,7 +25,7 @@ export function RequestsPopupWrapper({
         {showPopup ? "Hide Requests" : "Show All Requests"}
       </Button>
 
-      <div className="absolute top-[50px] left-[-15px] bg-slate-100 p-3 rounded-2xl w-full">
+      <div className="absolute top-[50px] left-[-15px] w-full rounded-2xl bg-slate-100 p-3">
         <RequestsPopup
           user={user}
           friendships={friendships}

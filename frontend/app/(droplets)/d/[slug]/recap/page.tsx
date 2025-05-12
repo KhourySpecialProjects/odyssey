@@ -148,12 +148,12 @@ export default async function DropletRecapRoute({ params }: Props) {
             </>
           )}
 
-        <div className="max-w-2xl mx-auto">
+        <div className="mx-auto max-w-2xl">
           <h1 className="mt-3 text-6xl font-black text-slate-900 dark:text-white">
             Recap
           </h1>
         </div>
-        <div className="w-full max-w-2xl py-8 mx-auto space-y-8 md:space-y-12">
+        <div className="mx-auto w-full max-w-2xl space-y-8 py-8 md:space-y-12">
           <section>
             <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
               Learning Objectives
@@ -162,14 +162,14 @@ export default async function DropletRecapRoute({ params }: Props) {
               Now that you have completed this Droplet, you should:
             </p>
 
-            <div className="mt-4 border rounded-md bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-500">
+            <div className="mt-4 rounded-md border border-slate-200 bg-slate-50 dark:border-slate-500 dark:bg-slate-800">
               <ul className="flex flex-col divide-y divide-slate-200 dark:divide-slate-500">
                 {droplet.learningObjectives.map((objective) => (
                   <li
                     key={objective.id}
                     className="inline-flex items-center gap-2 px-4 py-3 leading-snug dark:text-slate-300"
                   >
-                    <GoalIcon className="w-5 h-5 mr-0.5 shrink-0" />
+                    <GoalIcon className="mr-0.5 h-5 w-5 shrink-0" />
                     {objective.objective}
                   </li>
                 ))}
@@ -182,7 +182,7 @@ export default async function DropletRecapRoute({ params }: Props) {
               <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
                 Notes
               </h2>
-              <p className="text-slate-500 dark:text-slate-300 pb-2">
+              <p className="pb-2 text-slate-500 dark:text-slate-300">
                 A collection of notes and highlights that you created throughout
                 this droplet:
               </p>
@@ -216,7 +216,7 @@ export default async function DropletRecapRoute({ params }: Props) {
                 To further your understanding, we recommend exploring:
               </p>
 
-              <div className="mt-4 border rounded-md bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-500">
+              <div className="mt-4 rounded-md border border-slate-200 bg-slate-50 dark:border-slate-500 dark:bg-slate-800">
                 <ul className="flex flex-col divide-y divide-slate-200 dark:divide-slate-500">
                   {droplet.nextSteps.map((resource) => (
                     <li key={resource.id}>
@@ -224,9 +224,9 @@ export default async function DropletRecapRoute({ params }: Props) {
                         href={resource.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center gap-2 px-4 py-3 dark:text-slate-300 leading-snug transition-colors hover:text-sky-700"
+                        className="inline-flex items-center gap-2 px-4 py-3 leading-snug transition-colors hover:text-sky-700 dark:text-slate-300"
                       >
-                        <Link2Icon className="w-5 h-5 mr-0.5 shrink-0" />
+                        <Link2Icon className="mr-0.5 h-5 w-5 shrink-0" />
                         {resource.label ?? resource.url}
                       </Link>
                     </li>
@@ -245,7 +245,7 @@ export default async function DropletRecapRoute({ params }: Props) {
                 Have you explored these Droplets yet?
               </p>
 
-              <ul className="grid grid-flow-row grid-cols-1 gap-4 mt-4 sm:grid-cols-2">
+              <ul className="mt-4 grid grid-flow-row grid-cols-1 gap-4 sm:grid-cols-2">
                 {dropletRecommendations.map((droplet) => (
                   <DropletTile key={droplet.id} droplet={droplet} />
                 ))}

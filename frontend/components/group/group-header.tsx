@@ -13,9 +13,9 @@ interface GroupHeaderProps {
 
 export function GroupHeader({ group, canEdit }: GroupHeaderProps) {
   return (
-    <div className="flex justify-between items-start">
+    <div className="flex items-start justify-between">
       <div className="space-y-4">
-        <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-4xl">
+        <h1 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl dark:text-white">
           {group.groupName}
         </h1>
         <div className="flex items-center gap-4">
@@ -27,7 +27,7 @@ export function GroupHeader({ group, canEdit }: GroupHeaderProps) {
           <Link href={`/g/management?slug=${group.slug}`}>
             <Button
               variant="default"
-              className="gap-2 dark:bg-slate-800 border dark:border-slate-500 dark:text-white dark:hover:text-slate-800 w-36"
+              className="w-36 gap-2 border dark:border-slate-500 dark:bg-slate-800 dark:text-white dark:hover:text-slate-800"
             >
               <PencilIcon size={17} />
               Edit Group
@@ -36,7 +36,7 @@ export function GroupHeader({ group, canEdit }: GroupHeaderProps) {
           <Link href={`/g/due-dates?slug=${group.slug}`}>
             <Button
               variant="default"
-              className="gap-2 dark:bg-slate-800 border dark:border-slate-500 dark:text-white dark:hover:text-slate-800 w-36"
+              className="w-36 gap-2 border dark:border-slate-500 dark:bg-slate-800 dark:text-white dark:hover:text-slate-800"
             >
               <Clock size={17} /> Due Dates
             </Button>

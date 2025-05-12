@@ -63,32 +63,32 @@ export function FeedBlock({
 
   return (
     <li
-      className={`${backgroundColor[announcementType]} rounded-lg flex flex-col items-start gap-2 p-4 pb-3 relative hover:scale-105`}
+      className={`${backgroundColor[announcementType]} relative flex flex-col items-start gap-2 rounded-lg p-4 pb-3 hover:scale-105`}
     >
-      <div className="flex flex-row w-full h-full gap-3">
+      <div className="flex h-full w-full flex-row gap-3">
         <div className="dark:text-slate-300">
           {announcementIcon[announcementType]}
         </div>
-        <div className="flex flex-col gap-1 w-full justify-between">
+        <div className="flex w-full flex-col justify-between gap-1">
           <div className="flex items-center space-x-4">
-            <div className="flex-1 min-w-0">
+            <div className="min-w-0 flex-1">
               {announcementType === "playlist" && (
                 <Link href={`/p/${announcement.playlist?.slug}`}>
-                  <p className="font-medium text-slate-900 dark:text-slate-300 text-left -mt-1">
+                  <p className="-mt-1 text-left font-medium text-slate-900 dark:text-slate-300">
                     {announcement.content}
                   </p>
                 </Link>
               )}
               {announcementType === "droplet" && (
                 <Link href={`/d/${announcement.droplet?.slug}`}>
-                  <p className="font-medium text-slate-900 dark:text-slate-300 text-left -mt-1">
+                  <p className="-mt-1 text-left font-medium text-slate-900 dark:text-slate-300">
                     {announcement.content}
                   </p>
                 </Link>
               )}
               {announcementType === "group" && (
                 <Link href={`/g/${announcement.group?.slug}`}>
-                  <p className="font-medium text-slate-900 dark:text-slate-300 text-left -mt-1">
+                  <p className="-mt-1 text-left font-medium text-slate-900 dark:text-slate-300">
                     {announcement.content}
                   </p>
                 </Link>
@@ -97,7 +97,7 @@ export function FeedBlock({
                 announcementType != "droplet" &&
                 announcementType != "playlist" && (
                   <>
-                    <p className="font-medium text-slate-900 dark:text-slate-300 text-left -mt-1">
+                    <p className="-mt-1 text-left font-medium text-slate-900 dark:text-slate-300">
                       {announcement.content}
                     </p>
                     {announcementType === "friend" &&
@@ -112,7 +112,7 @@ export function FeedBlock({
           </div>
 
           {formattedDate && (
-            <div className="text-sm text-slate-500 dark:text-slate-300 w-full text-right">
+            <div className="w-full text-right text-sm text-slate-500 dark:text-slate-300">
               {formattedDate}
             </div>
           )}

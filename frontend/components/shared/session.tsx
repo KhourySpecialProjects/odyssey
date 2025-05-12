@@ -14,12 +14,12 @@ export function Session() {
       {status === "loading" ? (
         <div
           role="status"
-          className="animate-pulse mt-4 p-4 h-48 rounded-md bg-slate-100 dark:bg-slate-800 items-center justify-center flex "
+          className="mt-4 flex h-48 animate-pulse items-center justify-center rounded-md bg-slate-100 p-4 dark:bg-slate-800"
         >
           <LoaderIcon className="animate-spin" />
         </div>
       ) : (
-        <pre className="mt-4 p-4 text-sm break-words whitespace-pre rounded-md bg-slate-100  dark:bg-slate-800 text-wrap">
+        <pre className="mt-4 rounded-md bg-slate-100 p-4 text-sm text-wrap break-words whitespace-pre dark:bg-slate-800">
           {JSON.stringify(session, null, 2)}
         </pre>
       )}

@@ -49,7 +49,7 @@ export function DraggableTileListClient({
           />
         ))}
       </div>
-      <div className="flex justify-end items-center mt-4 ">
+      <div className="mt-4 flex items-center justify-end">
         <div className="flex gap-2">
           <Button
             size="sm"

@@ -14,7 +14,7 @@ export function AuthorDroplets({ author }: { author: AuthorizedUser }) {
   const droplets = author.droplets;
 
   return (
-    <Card className="border dark:border-slate-500 hover:border-slate-300 dark:bg-slate-800">
+    <Card className="border hover:border-slate-300 dark:border-slate-500 dark:bg-slate-800">
       <CardHeader>
         <CardTitle>Droplets</CardTitle>
         <CardDescription className="dark:text-white">
@@ -24,7 +24,7 @@ export function AuthorDroplets({ author }: { author: AuthorizedUser }) {
 
       <CardContent>
         {!droplets || droplets.length === 0 ? (
-          <div className="p-4 text-sm border border-dashed rounded-md border-slate-200 dark:border-slate-500 dark:text-slate-300">
+          <div className="rounded-md border border-dashed border-slate-200 p-4 text-sm dark:border-slate-500 dark:text-slate-300">
             You have no Droplets.
           </div>
         ) : (

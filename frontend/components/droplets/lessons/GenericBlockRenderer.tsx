@@ -598,7 +598,7 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
         onMouseUp={() => handleMouseUp()}
         onMouseDown={(e) => handleMouseDown(e)}
         onClick={handleImageClick}
-        className="mt-2 prose prose-lg prose-sky prose-table:block prose-code:text-inherit prose-table:overflow-x-scroll prose-p:my-1 prose-li:my-1 select-text dark:text-slate-300 prose-headings:text-inherit prose-strong:text-inherit"
+        className="prose prose-lg prose-sky prose-table:block prose-code:text-inherit prose-table:overflow-x-scroll prose-p:my-1 prose-li:my-1 prose-headings:text-inherit prose-strong:text-inherit mt-2 select-text dark:text-slate-300"
         dangerouslySetInnerHTML={{ __html: block.content }}
       ></div>
 
@@ -610,7 +610,7 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
           <img
             src={enlargedImage?.src}
             alt={enlargedImage?.alt}
-            className="w-full xl:w-auto xl:h-full max-w-[75%] max-h-[75%] object-contain absolute top-1/2 -translate-y-[40%] left-1/2 -translate-x-[50%] xl:-translate-x-[35%] bg-cyan-300"
+            className="absolute top-1/2 left-1/2 max-h-[75%] w-full max-w-[75%] -translate-x-[50%] -translate-y-[40%] bg-cyan-300 object-contain xl:h-full xl:w-auto xl:-translate-x-[35%]"
             onClick={(e) => e.stopPropagation()}
           />
         </div>

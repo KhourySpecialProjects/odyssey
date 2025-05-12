@@ -65,13 +65,13 @@ export function PlaylistDueDateBlock({
   };
 
   return (
-    <div className="flex flex-row justify-between text-xl space-x-2 w-full bg-slate-50 border border-slate-200 rounded-lg p-4 items-center dark:bg-slate-800 dark:border dark:border-slate-500">
+    <div className="flex w-full flex-row items-center justify-between space-x-2 rounded-lg border border-slate-200 bg-slate-50 p-4 text-xl dark:border dark:border-slate-500 dark:bg-slate-800">
       <Link href={`/p/${currentPlaylist.slug}`}>{currentPlaylist.name}</Link>
-      <div className="flex flex-row space-x-2 items-center">
+      <div className="flex flex-row items-center space-x-2">
         {isSaveClicked && <p className="text-slate-400">Saved!</p>}
         {isRemoveClicked && <p className="text-slate-400">Removed!</p>}
 
-        <div className="dark:bg-slate-50 rounded-md">
+        <div className="rounded-md dark:bg-slate-50">
           <MUIDateTimePicker
             onChange={handleInputChange}
             date={dueDate}
@@ -85,7 +85,7 @@ export function PlaylistDueDateBlock({
               handleSaveDate();
             }}
             name="Save Due Date"
-            className="bg-sky-500 hover:bg-sky-600 dark:bg-sky-500 w-12 h-8 dark:hover:bg-sky-600 dark:text-white dark:border dark:border-white"
+            className="h-8 w-12 bg-sky-500 hover:bg-sky-600 dark:border dark:border-white dark:bg-sky-500 dark:text-white dark:hover:bg-sky-600"
             disabled={!dueDate}
           >
             <Check />
@@ -94,7 +94,7 @@ export function PlaylistDueDateBlock({
             <Button
               onClick={() => setRemovePopupVisible(true)}
               name="Delete Due Date"
-              className="bg-red-500 hover:bg-red-700 dark:bg-red-600 w-12 h-8 dark:hover:bg-red-700 dark:text-white dark:border dark:border-white"
+              className="h-8 w-12 bg-red-500 hover:bg-red-700 dark:border dark:border-white dark:bg-red-600 dark:text-white dark:hover:bg-red-700"
               disabled={!dueDate}
             >
               <Trash2Icon />
@@ -108,11 +108,11 @@ export function PlaylistDueDateBlock({
                 </DialogTitle>
               </DialogHeader>
 
-              <div className="flex flex-row justify-center space-x-2 items-center">
+              <div className="flex flex-row items-center justify-center space-x-2">
                 <div className="w-1/3"></div>
                 <Button
                   onClick={() => handleRemoveDate()}
-                  className="bg-red-500 hover:bg-red-700 dark:bg-red-600 dark:text-white dark:border dark:border-white"
+                  className="bg-red-500 hover:bg-red-700 dark:border dark:border-white dark:bg-red-600 dark:text-white"
                 >
                   Yes, remove it
                 </Button>

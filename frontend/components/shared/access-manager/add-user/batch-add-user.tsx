@@ -69,7 +69,7 @@ export function BatchAddUser() {
             />
           </div>
           <div
-            className="relative border-2 border-dashed border-gray-300 dark:border-slate-500 rounded-lg p-6 hover:border-gray-400 transition-colors duration-200 ease-in-out"
+            className="relative rounded-lg border-2 border-dashed border-gray-300 p-6 transition-colors duration-200 ease-in-out hover:border-gray-400 dark:border-slate-500"
             onDragOver={(e) => {
               e.preventDefault();
               e.stopPropagation();
@@ -97,7 +97,7 @@ export function BatchAddUser() {
             />
             <label
               htmlFor="csv-file-input"
-              className="inline-flex items-center px-4 py-2 bg-slate-100 dark:bg-slate-300 border border-gray-300 rounded-md font-semibold text-xs text-gray-700 uppercase tracking-widest shadow-sm hover:bg-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-25 transition ease-in-out duration-150 cursor-pointer"
+              className="inline-flex cursor-pointer items-center rounded-md border border-gray-300 bg-slate-100 px-4 py-2 text-xs font-semibold tracking-widest text-gray-700 uppercase shadow-sm transition duration-150 ease-in-out hover:bg-slate-200 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none disabled:opacity-25 dark:bg-slate-300"
             >
               Choose Files
             </label>
@@ -109,13 +109,13 @@ export function BatchAddUser() {
             {csvFiles.length > 0 && (
               <ul className="mt-2 text-sm text-gray-600">
                 {csvFiles.map((file, index) => (
-                  <li key={index} className="flex items-center space-x-2 mb-1">
+                  <li key={index} className="mb-1 flex items-center space-x-2">
                     <button
                       type="button"
                       onClick={() => removeFile(index)}
-                      className="w-4 h-4 bg-red-500 rounded-full flex items-center justify-center hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                      className="flex h-4 w-4 items-center justify-center rounded-full bg-red-500 hover:bg-red-600 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:outline-none"
                     >
-                      <span className="w-2 h-0.5 bg-white"></span>
+                      <span className="h-0.5 w-2 bg-white"></span>
                     </button>
                     <span>{file.name}</span>
                   </li>

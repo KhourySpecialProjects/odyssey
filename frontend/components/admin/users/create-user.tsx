@@ -45,7 +45,7 @@ export function CreateUser() {
         <form action={formAction} className="flex flex-col gap-4 text-left">
           {state?.ok ? (
             <>
-              <p className="p-4 rounded-md bg-slate-100 border-2 border-slate-200 text-center">
+              <p className="rounded-md border-2 border-slate-200 bg-slate-100 p-4 text-center">
                 {state?.message}
               </p>
 
@@ -82,7 +82,7 @@ export function CreateUser() {
           {state?.error ? (
             <p
               aria-live="polite"
-              className="p-4 rounded-md bg-slate-100 border-2 border-slate-200"
+              className="rounded-md border-2 border-slate-200 bg-slate-100 p-4"
             >
               {state?.error}. Confirm that no other user exists with this email
               address.

@@ -52,7 +52,7 @@ export function PlaylistCard({
 
   return (
     <Link href={linkTo} className="block h-full">
-      <Card className="bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-500 flex flex-col h-full">
+      <Card className="flex h-full flex-col border-slate-200 bg-slate-50 dark:border-slate-500 dark:bg-slate-800">
         <CardHeader>
           <div>
             {dueDate && dueDate !== "" && daysUntil > -2 && (
@@ -81,10 +81,10 @@ export function PlaylistCard({
               </Badge>
             )}
           </div>
-          <CardTitle className="block w-full text-3xl font-black text-slate-950 place-self-end dark:text-slate-300">
+          <CardTitle className="block w-full place-self-end text-3xl font-black text-slate-950 dark:text-slate-300">
             {playlist.name}
           </CardTitle>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-muted-foreground text-sm">
             {playlist.droplets?.length === 1
               ? "1 droplet"
               : `${playlist.droplets?.length || 0} droplets`}

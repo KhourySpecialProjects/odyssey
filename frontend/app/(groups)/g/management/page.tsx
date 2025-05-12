@@ -45,12 +45,12 @@ export default async function GroupManagementPage({ searchParams }: Props) {
   }
 
   return (
-    <div className="w-full max-w-4xl p-8 mx-auto space-y-12 dark:bg-slate-800 bg-slate-100">
+    <div className="mx-auto w-full max-w-4xl space-y-12 bg-slate-100 p-8 dark:bg-slate-800">
       <div className="text-center">
-        <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-4xl">
+        <h1 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl dark:text-white">
           {group ? "Edit Group" : "Create New Group"}
         </h1>
-        <p className="mt-4 text-lg leading-normal text-slate-600 dark:text-slate-300 text-balance">
+        <p className="mt-4 text-lg leading-normal text-balance text-slate-600 dark:text-slate-300">
           {group
             ? "Modify your group settings and manage members"
             : "Set up a new group and invite members"}

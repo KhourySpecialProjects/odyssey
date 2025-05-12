@@ -67,7 +67,7 @@ export function StudentProgressList({ playlists }: StudentProgressListProps) {
 
   if (!playlists || playlists.length === 0) {
     return (
-      <div className="text-center py-8 text-gray-500">
+      <div className="py-8 text-center text-gray-500">
         You haven&apos;t created any private playlists yet
       </div>
     );
@@ -86,7 +86,7 @@ export function StudentProgressList({ playlists }: StudentProgressListProps) {
               <CardHeader className="flex flex-row items-center justify-between">
                 <div>
                   <h3 className="font-medium">{playlist.name}</h3>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-muted-foreground text-sm">
                     {playlist.authorized_users.length} enrolled student
                     {playlist.authorized_users.length !== 1 ? "s" : ""}
                   </p>
@@ -95,7 +95,7 @@ export function StudentProgressList({ playlists }: StudentProgressListProps) {
                   className={cn(
                     "h-4 w-4 transition-transform duration-200",
                     openPlaylists.includes(playlist.id)
-                      ? "transform rotate-180"
+                      ? "rotate-180 transform"
                       : "",
                   )}
                 />
@@ -112,9 +112,9 @@ export function StudentProgressList({ playlists }: StudentProgressListProps) {
                       e.preventDefault();
                       exportProgress(playlist.name, playlist.authorized_users);
                     }}
-                    className="w-full mb-4"
+                    className="mb-4 w-full"
                   >
-                    <Download className="h-4 w-4 mr-2" />
+                    <Download className="mr-2 h-4 w-4" />
                     Export Progress as CSV
                   </Button>
                   {playlist.authorized_users.map((user) => (

@@ -25,17 +25,17 @@ export default async function SignIn() {
   return (
     <GradientBackground>
       <>
-        <div className="max-w-2xl mx-auto text-center">
-          <h2 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-4xl">
+        <div className="mx-auto max-w-2xl text-center">
+          <h2 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl dark:text-white">
             Log In
           </h2>
-          <p className="mt-4 text-lg leading-normal text-slate-600 dark:text-slate-300 text-balance">
+          <p className="mt-4 text-lg leading-normal text-balance text-slate-600 dark:text-slate-300">
             Authenticate with GitHub or with your Northeastern account to access
             Khoury Odyssey.
           </p>
         </div>
 
-        <div className="max-w-2xl mx-auto mt-8 text-center sm:mt-12">
+        <div className="mx-auto mt-8 max-w-2xl text-center sm:mt-12">
           <LoginButtons providers={providers} />
         </div>
       </>
