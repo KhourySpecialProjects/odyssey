@@ -72,7 +72,7 @@ jobs:
           aws ecs update-service \
             --cluster ${{ secrets.ECS_CLUSTER_NAME }} \
             --service ${{ secrets.ECS_FRONTEND_SERVICE_NAME }} \
-            --task-definition ${{ env.TASK_DEF_ARN }}
+            --task-definition ${{ env.TASK_DEF_ARN }} \
             --force-new-deployment
 
 
