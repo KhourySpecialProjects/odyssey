@@ -35,7 +35,7 @@ export function FriendSentRequestsBlock({
       <div className="flex items-center md:space-x-4">
         <Avatar
           variant="round"
-          className="border border-sky-800 w-12 h-12 scale-75 md:scale-100"
+          className="h-12 w-12 scale-75 border border-sky-800 md:scale-100"
         >
           <AvatarImage src={request?.profilePhoto || undefined} />
           <AvatarFallback>
@@ -46,14 +46,14 @@ export function FriendSentRequestsBlock({
             )}
           </AvatarFallback>
         </Avatar>
-        <div className="flex-1 min-w-0">
+        <div className="min-w-0 flex-1">
           <p
             title={`${
               request.firstName && request.lastName
                 ? `${request.firstName} ${request.lastName}`
                 : request.email
             }`}
-            className="font-medium truncate text-slate-900 dark:text-slate-300 max-w-[200px] md:max-w-sm inline-block"
+            className="inline-block max-w-[200px] truncate font-medium text-slate-900 md:max-w-sm dark:text-slate-300"
           >
             {request.firstName && request.lastName
               ? `${request.firstName} ${request.lastName}`
@@ -74,9 +74,9 @@ export function FriendSentRequestsBlock({
           className="scale-75 md:scale-100"
           role="x"
         >
-          <div className="relative group">
+          <div className="group relative">
             <X />
-            <span className="absolute left-1/2 transform -translate-x-1/2 top-full mt-1 w-max px-2 py-1 text-xs text-white bg-gray-800 rounded opacity-0 group-hover:opacity-100 transition-opacity">
+            <span className="absolute top-full left-1/2 mt-1 w-max -translate-x-1/2 transform rounded bg-gray-800 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100">
               Cancel Request
             </span>
           </div>

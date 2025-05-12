@@ -57,13 +57,13 @@ export default async function GroupDetailPage({ params }: Props) {
   const uniqueDueDates = Object.values(filteredDueDates);
 
   return (
-    <div className="w-full max-w-7xl p-8 mx-auto space-y-12">
+    <div className="mx-auto w-full max-w-7xl space-y-12 p-8">
       <GroupHeader group={group} canEdit={canEdit} />
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
         <div className="space-y-8">
           <div>
-            <h2 className="text-xl font-semibold mb-4">Group Leadership</h2>
+            <h2 className="mb-4 text-xl font-semibold">Group Leadership</h2>
             <div className="space-y-6">
               <MemberList
                 title="Creator"
@@ -84,7 +84,7 @@ export default async function GroupDetailPage({ params }: Props) {
           </div>
 
           <div>
-            <h2 className="text-xl font-semibold mb-4">Group Details</h2>
+            <h2 className="mb-4 text-xl font-semibold">Group Details</h2>
             <dl className="space-y-4 text-sm">
               <div>
                 <dt className="text-slate-500 dark:text-slate-100">Semester</dt>
@@ -104,7 +104,7 @@ export default async function GroupDetailPage({ params }: Props) {
           </div>
         </div>
 
-        <div className="lg:col-span-2 space-y-6">
+        <div className="space-y-6 lg:col-span-2">
           <ContentSection
             title="Group Description"
             content={createDOMPurifier.sanitize(

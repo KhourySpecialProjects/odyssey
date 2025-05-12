@@ -24,7 +24,7 @@ export function Overview({
         updateContent={(content: string) => handleChange({ overview: content })}
         initialContent={initialContent}
       />
-      {error && <div className="text-red-500 mt-2">{error}</div>}
+      {error && <div className="mt-2 text-red-500">{error}</div>}
     </section>
   );
 }

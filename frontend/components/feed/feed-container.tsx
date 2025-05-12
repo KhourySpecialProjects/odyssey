@@ -18,8 +18,8 @@ export function FeedContainer({ authUser }: { authUser: AuthorizedUser }) {
 
   return (
     <div className="flex flex-row">
-      <div className="flex justify-end relative md:w-1/4 text-center h-full">
-        <div className="absolute top-[-12px] transition-colors border rounded-md border-slate-200 dark:border-slate-500 hover:border-slate-300 bg-slate-50 dark:bg-slate-800 p-2 lg:p-4 hidden md:block min-w-[200px]">
+      <div className="relative flex h-full justify-end text-center md:w-1/4">
+        <div className="absolute top-[-12px] hidden min-w-[200px] rounded-md border border-slate-200 bg-slate-50 p-2 transition-colors hover:border-slate-300 md:block lg:p-4 dark:border-slate-500 dark:bg-slate-800">
           <div className="relative">
             <FriendRequests
               noProfile={true}
@@ -30,7 +30,7 @@ export function FeedContainer({ authUser }: { authUser: AuthorizedUser }) {
         </div>
       </div>
 
-      <div className="relative w-full md:w-1/2 text-center text-xl font-bold justify-center items-center">
+      <div className="relative w-full items-center justify-center text-center text-xl font-bold md:w-1/2">
         <FeedClient
           selectedRoles={selectedRoles.map(
             (role) => role.toLowerCase() as AnnouncementType,
@@ -40,24 +40,24 @@ export function FeedContainer({ authUser }: { authUser: AuthorizedUser }) {
 
         <button
           onClick={() => setFiltersExpanded(!filtersExpanded)}
-          className={`absolute top-0 right-0 translate-y-[-150%] block md:hidden ${filtersExpanded ? "bg-slate-300 rounded-md p-1 dark:bg-slate-600" : "p-1"}`}
+          className={`absolute top-0 right-0 block translate-y-[-150%] md:hidden ${filtersExpanded ? "rounded-md bg-slate-300 p-1 dark:bg-slate-600" : "p-1"}`}
         >
-          <SlidersHorizontal className="w-6 h-6" />
+          <SlidersHorizontal className="h-6 w-6" />
         </button>
 
         <button
           onClick={() => setRequestsExpanded(!requestsExpanded)}
-          className={`absolute top-0 left-0 translate-y-[-150%] block md:hidden ${requestsExpanded ? "bg-slate-300 rounded-md p-1 dark:bg-slate-600" : "p-1"}`}
+          className={`absolute top-0 left-0 block translate-y-[-150%] md:hidden ${requestsExpanded ? "rounded-md bg-slate-300 p-1 dark:bg-slate-600" : "p-1"}`}
         >
-          <BellRing className="w-6 h-6" />
+          <BellRing className="h-6 w-6" />
         </button>
 
         <div
           className={cn(
-            "absolute px-5 pb-5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-500 rounded-md",
-            "z-10 overflow-y-hidden feed-mobile-filters",
+            "absolute rounded-md border border-slate-200 bg-slate-50 px-5 pb-5 dark:border-slate-500 dark:bg-slate-800",
+            "feed-mobile-filters z-10 overflow-y-hidden",
             filtersExpanded
-              ? "right-0 top-0 visibility: visible "
+              ? "visibility: visible top-0 right-0"
               : "visibility: hidden",
           )}
         >
@@ -69,15 +69,15 @@ export function FeedContainer({ authUser }: { authUser: AuthorizedUser }) {
 
         <div
           className={cn(
-            "absolute px-5 pb-5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-500 rounded-md",
-            "z-10 overflow-y-hidden feed-mobile-friend-requests",
+            "absolute rounded-md border border-slate-200 bg-slate-50 px-5 pb-5 dark:border-slate-500 dark:bg-slate-800",
+            "feed-mobile-friend-requests z-10 overflow-y-hidden",
             requestsExpanded
-              ? "left-0 top-0 visibility: visible "
+              ? "visibility: visible top-0 left-0"
               : "visibility: hidden",
           )}
         >
           <div>
-            <div className=" dark:bg-slate-800 bg-slate-50 rounded-md p-4 px-2">
+            <div className="rounded-md bg-slate-50 p-4 px-2 dark:bg-slate-800">
               Friend Requests
               <FriendRequests
                 noProfile={true}
@@ -90,9 +90,9 @@ export function FeedContainer({ authUser }: { authUser: AuthorizedUser }) {
       </div>
 
       <div
-        className={`relative w-1/4 text-center text-xl font-bold flex flex-row justify-start dark:text-slate-300 hidden md:flex`}
+        className={`relative flex hidden w-1/4 flex-row justify-start text-center text-xl font-bold md:flex dark:text-slate-300`}
       >
-        <div className="flex flex-col items-center absolute top-0 translate-y-[-20%]">
+        <div className="absolute top-0 flex translate-y-[-20%] flex-col items-center">
           Filters
           <FeedFilter onFilterChange={setSelectedRoles} />
         </div>

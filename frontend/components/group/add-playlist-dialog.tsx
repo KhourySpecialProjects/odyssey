@@ -63,7 +63,7 @@ export function AddPlaylistDialog({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm">
-          <PlusCircle className="h-4 w-4 mr-2" />
+          <PlusCircle className="mr-2 h-4 w-4" />
           Add Playlist
         </Button>
       </DialogTrigger>
@@ -78,21 +78,21 @@ export function AddPlaylistDialog({
             onChange={(e) => setSearch(e.target.value)}
             className="w-full"
           />
-          <div className="flex flex-col gap-6 max-h-[60vh] overflow-y-auto">
+          <div className="flex max-h-[60vh] flex-col gap-6 overflow-y-auto">
             {filteredPlaylists.map((playlist) => (
-              <div key={playlist.id} className="relative group h-[120px]">
+              <div key={playlist.id} className="group relative h-[120px]">
                 <Link
                   key={playlist.id}
                   href={`/p/${playlist.slug}`}
                   target="_blank"
                   rel="noopener noreferrer"
                 >
-                  <div className="p-4 h-full border rounded-md bg-slate-50 dark:bg-slate-800 dark:border-slate-500">
-                    <div className="flex flex-col h-full">
+                  <div className="h-full rounded-md border bg-slate-50 p-4 dark:border-slate-500 dark:bg-slate-800">
+                    <div className="flex h-full flex-col">
                       <span className="text-xl font-bold dark:text-slate-300">
                         {playlist.name}
                       </span>
-                      <div className="flex gap-2 mt-2">
+                      <div className="mt-2 flex gap-2">
                         <Badge variant="outline">
                           {playlist.isPublic ? "Public" : "Private"}
                         </Badge>
@@ -117,7 +117,7 @@ export function AddPlaylistDialog({
               </div>
             ))}
           </div>
-          <div className="flex justify-end pt-4 border-t">
+          <div className="flex justify-end border-t pt-4">
             <Button
               onClick={handleDone}
               disabled={selectedPlaylists.length === 0}

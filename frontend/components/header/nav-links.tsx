@@ -26,8 +26,8 @@ export function NavLinks({
             className={cn(
               "block px-3 py-2",
               pathname.startsWith(item.href.split("?")[0])
-                ? "font-bold text-white bg-sky-700 rounded md:bg-transparent md:text-sky-700 md:p-0 md:dark:text-sky-500"
-                : "text-slate-900 rounded hover:bg-slate-100 md:hover:bg-transparent md:hover:text-sky-700 md:p-0 md:dark:hover:text-sky-500 dark:text-white dark:hover:bg-slate-700 dark:hover:text-white md:dark:hover:bg-transparent dark:border-slate-700",
+                ? "rounded bg-sky-700 font-bold text-white md:bg-transparent md:p-0 md:text-sky-700 md:dark:text-sky-500"
+                : "rounded text-slate-900 hover:bg-slate-100 md:p-0 md:hover:bg-transparent md:hover:text-sky-700 dark:border-slate-700 dark:text-white dark:hover:bg-slate-700 dark:hover:text-white md:dark:hover:bg-transparent md:dark:hover:text-sky-500",
             )}
           >
             {item.label}

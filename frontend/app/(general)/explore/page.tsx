@@ -91,16 +91,16 @@ export default async function ExplorePage({
 
   return (
     <SearchProvider>
-      <div className="w-full p-8 mx-auto my-4 text-center max-w-7xl">
+      <div className="mx-auto my-4 w-full max-w-7xl p-8 text-center">
         <h1 className="text-5xl font-bold">Explore</h1>
       </div>
 
-      <div className="w-full px-4 mx-auto mt-4 mb-8 max-w-7xl xl:p-0">
-        <div className="flex flex-col gap-4 p-4 border rounded-md bg-slate-50 border-slate-200 dark:border-slate-500 dark:bg-slate-800">
+      <div className="mx-auto mt-4 mb-8 w-full max-w-7xl px-4 xl:p-0">
+        <div className="flex flex-col gap-4 rounded-md border border-slate-200 bg-slate-50 p-4 dark:border-slate-500 dark:bg-slate-800">
           <ContentTypeSelector />
 
           <div className="flex flex-col gap-2 md:flex-row md:items-center">
-            <div className="flex flex-row flex-wrap items-center flex-1 gap-2">
+            <div className="flex flex-1 flex-row flex-wrap items-center gap-2">
               {contentType === "droplets" &&
                 DROPLET_FILTERS.map((filter) => (
                   <Filter
@@ -122,7 +122,7 @@ export default async function ExplorePage({
           </div>
         </div>
       </div>
-      <div className="w-full px-4 mx-auto mb-8 max-w-7xl xl:p-0">
+      <div className="mx-auto mb-8 w-full max-w-7xl px-4 xl:p-0">
         {contentType === "droplets" ? (
           <Suspense fallback={<DropletsSkeleton />}>
             <DropletsGrid droplets={droplets} sortKey={sortKey} />

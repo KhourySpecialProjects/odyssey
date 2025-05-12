@@ -61,9 +61,9 @@ export function DropletLessonWrapper({
 
   return (
     <>
-      <div className="z-30 relative w-full h-full lesson-wrapper overflow-x-hidden">
+      <div className="lesson-wrapper relative z-30 h-full w-full overflow-x-hidden">
         <div
-          className={`pl-10 pr-10 xl:pl-0 md:min-w-[500px] flex flex-col justify-center items-center ${expanded ? "w-[65%]" : "w-full"}`}
+          className={`flex flex-col items-center justify-center pr-10 pl-10 md:min-w-[500px] xl:pl-0 ${expanded ? "w-[65%]" : "w-full"}`}
         >
           <LessonRenderer
             lesson={lesson}
@@ -83,16 +83,16 @@ export function DropletLessonWrapper({
           <>
             <div
               className={cn(
-                "absolute min-w-[375px] min-h-screen h-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-500",
-                "z-10 overflow-y-hidden sliding-notes-bar",
+                "absolute h-full min-h-screen min-w-[375px] border border-slate-200 bg-slate-50 dark:border-slate-500 dark:bg-slate-800",
+                "sliding-notes-bar z-10 overflow-y-hidden",
                 expanded
-                  ? "right-0 top-0 visibility: visible "
+                  ? "visibility: visible top-0 right-0"
                   : "visibility: hidden",
               )}
             >
-              <div className="flex justify-end items-center p-4 border-b border-slate-200 dark:border-slate-500">
+              <div className="flex items-center justify-end border-b border-slate-200 p-4 dark:border-slate-500">
                 <button onClick={() => setExpanded(false)}>
-                  <X className="w-5 h-5" />
+                  <X className="h-5 w-5" />
                 </button>
               </div>
               <div>

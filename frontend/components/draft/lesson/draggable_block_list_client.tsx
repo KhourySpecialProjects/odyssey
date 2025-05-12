@@ -29,11 +29,11 @@ export function DraggableBlockListClient({
 
   return (
     <>
-      <div className="space-y-8 grid grid-cols-1">
+      <div className="grid grid-cols-1 space-y-8">
         {blocks.map((block, index) => (
           <div
             key={`${block.__component}-${index}`}
-            className="w-full flex flex-col items-center justify-center"
+            className="flex w-full flex-col items-center justify-center"
           >
             <DraggableBlockTile
               block={block}

@@ -57,12 +57,12 @@ export function GroupsSelector() {
   // TODO: Break this tabbed UI setup into its own reusable component. We are using it in a few different
   // places and it would be nice to abstract it out.
   return (
-    <div className="border-b border-gray-200 flex items-center justify-between relative pb-1">
+    <div className="relative flex items-center justify-between border-b border-gray-200 pb-1">
       <button
         onClick={() => setMenuExpanded(!menuExpanded)}
-        className={`block md:hidden ${menuExpanded ? "bg-slate-300 rounded-md dark:bg-slate-600" : ""}`}
+        className={`block md:hidden ${menuExpanded ? "rounded-md bg-slate-300 dark:bg-slate-600" : ""}`}
       >
-        <div className="p-2 border border-slate-300 rounded-md">
+        <div className="rounded-md border border-slate-300 p-2">
           <UsersRound className="h-6 w-6" />
         </div>
       </button>
@@ -73,10 +73,10 @@ export function GroupsSelector() {
 
       <div
         className={cn(
-          "absolute px-5 pb-5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-500 rounded-md",
-          "z-10 overflow-y-hidden feed-mobile-filters",
+          "absolute rounded-md border border-slate-200 bg-slate-50 px-5 pb-5 dark:border-slate-500 dark:bg-slate-800",
+          "feed-mobile-filters z-10 overflow-y-hidden",
           menuExpanded
-            ? "bottom-0 translate-y-[100%] visibility: visible "
+            ? "visibility: visible bottom-0 translate-y-[100%]"
             : "visibility: hidden",
         )}
       >
@@ -96,8 +96,8 @@ export function GroupsSelector() {
               className={cn(
                 tab.value === currentTab
                   ? "border-primary-500 light:text-primary-600 dark:text-primary-300"
-                  : "border-transparent light:text-gray-500 dark:text-slate-300 dark:hover:text-gray-400 hover:border-gray-300 hover:text-gray-700",
-                "whitespace-nowrap border-b-2 py-4 px-1 text-base font-medium flex items-center gap-2",
+                  : "light:text-gray-500 border-transparent hover:border-gray-300 hover:text-gray-700 dark:text-slate-300 dark:hover:text-gray-400",
+                "flex items-center gap-2 border-b-2 px-1 py-4 text-base font-medium whitespace-nowrap",
               )}
             >
               <tab.icon className="h-4 w-4" />
@@ -108,7 +108,7 @@ export function GroupsSelector() {
       </div>
 
       <nav
-        className="-mb-px flex flex-row space-x-8 hidden md:flex"
+        className="-mb-px flex hidden flex-row space-x-8 md:flex"
         aria-label="Tabs"
       >
         {tabs.map((tab) => (
@@ -121,8 +121,8 @@ export function GroupsSelector() {
             className={cn(
               tab.value === currentTab
                 ? "border-primary-500 light:text-primary-600 dark:text-primary-300"
-                : "border-transparent light:text-gray-500 dark:text-slate-300 dark:hover:text-gray-400 hover:border-gray-300 hover:text-gray-700",
-              "whitespace-nowrap border-b-2 py-4 px-1 text-base font-medium flex items-center gap-2",
+                : "light:text-gray-500 border-transparent hover:border-gray-300 hover:text-gray-700 dark:text-slate-300 dark:hover:text-gray-400",
+              "flex items-center gap-2 border-b-2 px-1 py-4 text-base font-medium whitespace-nowrap",
             )}
           >
             <tab.icon className="h-4 w-4" />
@@ -136,9 +136,9 @@ export function GroupsSelector() {
           variant="default"
           size="sm"
           onClick={() => router.push("/g/management")}
-          className="lg:mr-4 px-2 py-1 md:px-4 md:py-2"
+          className="px-2 py-1 md:px-4 md:py-2 lg:mr-4"
         >
-          <PlusCircle className="h-4 w-4 mr-2 hidden md:block" />
+          <PlusCircle className="mr-2 hidden h-4 w-4 md:block" />
           <Plus className="h-5 w-6 md:hidden" />
           <p className="hidden md:block">Create Group</p>
         </Button>

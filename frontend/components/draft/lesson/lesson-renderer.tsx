@@ -199,9 +199,9 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
 
   return (
     <>
-      <div className="flex flex-col justify-start items-center border border-slate-200 dark:border-slate-500 rounded-md pt-4 px-4 pb-7 mb-5">
+      <div className="mb-5 flex flex-col items-center justify-start rounded-md border border-slate-200 px-4 pt-4 pb-7 dark:border-slate-500">
         <LessonNameInput
-          className="w-[700px] max-w-2xl mb-3"
+          className="mb-3 w-[700px] max-w-2xl"
           initialContent={`<h1>${name}</h1>`}
           updateContent={(content: string) => {
             const textContent = htmlToText(content);
@@ -220,7 +220,7 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
         </div>
       </div>
 
-      <div className="space-y-4 w-full flex flex-col items-center justify-center">
+      <div className="flex w-full flex-col items-center justify-center space-y-4">
         <DndProvider backend={HTML5Backend}>
           <div className="w-full max-w-2xl">
             <DraggableBlockList

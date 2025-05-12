@@ -61,15 +61,15 @@ export function NotesSummaryClient({
   };
 
   return (
-    <Card key={`enrollment-${enrollment.id}`} className="dark:bg-slate-800 p-2">
+    <Card key={`enrollment-${enrollment.id}`} className="p-2 dark:bg-slate-800">
       <div
-        className={`text-2xl text-center flex ${openDroplets[enrollment.droplet.id] ? "border-b dark:border-slate-500" : ""} p-2 font-bold items-center`}
+        className={`flex text-center text-2xl ${openDroplets[enrollment.droplet.id] ? "border-b dark:border-slate-500" : ""} items-center p-2 font-bold`}
       >
         <Checkbox
           id={enrollment.droplet.name}
           checked={selectedDroplets[enrollment.droplet.id]}
           onCheckedChange={() => toggleSelectedDroplets(enrollment.droplet.id)}
-          className="border-sky-500 data-[state=checked]:bg-sky-500 data-[state=checked]:border-sky-500 focus-visible:ring-sky-500"
+          className="border-sky-500 focus-visible:ring-sky-500 data-[state=checked]:border-sky-500 data-[state=checked]:bg-sky-500"
         />
         <div className="flex-1 text-center">
           <Link href={`/d/${enrollment.droplet.slug}`}>
@@ -80,13 +80,13 @@ export function NotesSummaryClient({
           ({allNotes[index].highlights.length + allNotes[index].notes.length})
         </div>
         <button
-          className="ml-auto font-bold border dark:border-slate-500 flex justify-end py-2"
+          className="ml-auto flex justify-end border py-2 font-bold dark:border-slate-500"
           onClick={() => toggleDroplets(enrollment.droplet.id)}
         >
           {openDroplets[enrollment.droplet.id] ? (
-            <ChevronDown className="w-5 h-5" />
+            <ChevronDown className="h-5 w-5" />
           ) : (
-            <ChevronRight className="w-5 h-5" />
+            <ChevronRight className="h-5 w-5" />
           )}
         </button>
       </div>

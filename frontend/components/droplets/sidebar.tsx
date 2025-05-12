@@ -63,17 +63,17 @@ export default function Sidebar({
     <>
       <div
         className={cn(
-          "bg-slate-900/50 dark:bg-slate-900/80 fixed inset-0 transition-opacity",
-          expanded ? "opacity-1 z-30" : "opacity-0 -z-10",
+          "fixed inset-0 bg-slate-900/50 transition-opacity dark:bg-slate-900/80",
+          expanded ? "z-30 opacity-1" : "-z-10 opacity-0",
         )}
         onClick={() => setExpanded(false)}
       ></div>
 
-      <div className="z-20 inline-flex items-center w-full gap-2 px-3 py-2 text-sm border-b xl:hidden border-b-slate-200">
+      <div className="z-20 inline-flex w-full items-center gap-2 border-b border-b-slate-200 px-3 py-2 text-sm xl:hidden">
         <button
           aria-controls="sidebar"
           type="button"
-          className="z-20 inline-flex items-center p-2 text-sm rounded-lg text-slate-500 xl:hidden hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-200 dark:text-slate-400 dark:hover:bg-slate-700 dark:focus:ring-slate-600"
+          className="z-20 inline-flex items-center rounded-lg p-2 text-sm text-slate-500 hover:bg-slate-100 focus:ring-2 focus:ring-slate-200 focus:outline-none xl:hidden dark:text-slate-400 dark:hover:bg-slate-700 dark:focus:ring-slate-600"
           onClick={() => setExpanded(true)}
         >
           <span className="sr-only">Open sidebar</span>
@@ -93,23 +93,23 @@ export default function Sidebar({
       <aside
         id="sidebar"
         className={cn(
-          "fixed xl:sticky xl:top-0 left-0 z-40 w-64 h-screen transition-transform",
+          "fixed left-0 z-40 h-screen w-64 transition-transform xl:sticky xl:top-0",
           expanded ? "translate-x-0" : "-translate-x-full xl:translate-x-0",
         )}
         aria-label="Sidebar"
       >
-        <div className="flex flex-col h-full py-4 overflow-y-auto xl:justify-between xl:pb-0 bg-slate-50 dark:bg-slate-800">
+        <div className="flex h-full flex-col overflow-y-auto bg-slate-50 py-4 xl:justify-between xl:pb-0 dark:bg-slate-800">
           <div className="px-3">
             <div className="flex flex-row justify-between pr-2">
               <Link
                 type="button"
                 href="/explore"
                 className={cn(
-                  "flex items-center justify-start text-base gap-2",
+                  "flex items-center justify-start gap-2 text-base",
                 )}
               >
-                <div className="w-6 flex justify-center">
-                  <ArrowLeftIcon className="shrink-0 w-5 h-5" />
+                <div className="flex w-6 justify-center">
+                  <ArrowLeftIcon className="h-5 w-5 shrink-0" />
                 </div>
                 <Home />
               </Link>
@@ -124,14 +124,14 @@ export default function Sidebar({
               </button>
             </div>
 
-            <p className="p-2 my-2 text-lg font-extrabold leading-7">
+            <p className="my-2 p-2 text-lg leading-7 font-extrabold">
               {droplet.name}
             </p>
 
             {(author || isAdmin) && (
-              <div className="pb-4 w-full text-center">
+              <div className="w-full pb-4 text-center">
                 <Link
-                  className="w-full px-6 py-2 rounded-full text-white bg-green-600 hover:bg-green-700"
+                  className="w-full rounded-full bg-green-600 px-6 py-2 text-white hover:bg-green-700"
                   href={`/draft/d/${pathname.split("d/")[1]}`}
                 >
                   Edit
@@ -151,7 +151,7 @@ export default function Sidebar({
                   onClick={() => setExpanded(false)}
                 >
                   <TargetIcon className="shrink-0" />
-                  <span className="leading-snug ms-3">Overview</span>
+                  <span className="ms-3 leading-snug">Overview</span>
                 </Link>
               </li>
 
@@ -184,20 +184,20 @@ export default function Sidebar({
                         {lesson.type === "activity" ? (
                           <HammerIcon className="shrink-0" />
                         ) : lesson.type === "caseStudy" ? (
-                          <FilePieChartIcon className="w-5 h-5 mr-0.5 shrink-0" />
+                          <FilePieChartIcon className="mr-0.5 h-5 w-5 shrink-0" />
                         ) : (
                           <BookTextIcon className="shrink-0" />
                         )}
-                        <span className="leading-snug ms-3">{lesson.name}</span>
+                        <span className="ms-3 leading-snug">{lesson.name}</span>
                         {isLocked && (
                           <LockIcon
-                            className="ml-auto w-4 h-4 text-slate-400 shrink-0"
+                            className="ml-auto h-4 w-4 shrink-0 text-slate-400"
                             data-testid="lock-icon"
                           />
                         )}
                         {completedLessonIds.includes(lesson.id) && (
                           <CheckCircle2
-                            className="ml-auto w-4 h-4 text-green-500 shrink-0"
+                            className="ml-auto h-4 w-4 shrink-0 text-green-500"
                             data-testid="check-circle-icon"
                           />
                         )}
@@ -217,13 +217,13 @@ export default function Sidebar({
                   onClick={() => setExpanded(false)}
                 >
                   <HistoryIcon className="shrink-0" />
-                  <span className="leading-snug ms-3">Recap</span>
+                  <span className="ms-3 leading-snug">Recap</span>
                 </Link>
               </li>
             </ul>
           </div>
 
-          <div className="bottom-0 left-0 w-full p-2 mt-4 space-y-4 border-t bg-slate-50 border-t-slate-200 xl:sticky xl:px-3 xl:mb-0 xl:flex-col dark:bg-slate-800">
+          <div className="bottom-0 left-0 mt-4 w-full space-y-4 border-t border-t-slate-200 bg-slate-50 p-2 xl:sticky xl:mb-0 xl:flex-col xl:px-3 dark:bg-slate-800">
             <div className="px-2">
               <Label>{dropletProgress}% complete</Label>
               <Progress value={dropletProgress} className="mt-1.5" />

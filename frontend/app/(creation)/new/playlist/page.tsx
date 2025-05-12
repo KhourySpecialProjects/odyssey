@@ -29,8 +29,8 @@ export default async function NewPlaylist() {
   });
 
   return (
-    <div className="flex flex-col min-h-screen w-full light:bg-slate-100 px-24 items-center pt-12">
-      <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-4xl mb-7">
+    <div className="light:bg-slate-100 flex min-h-screen w-full flex-col items-center px-24 pt-12">
+      <h1 className="mb-7 text-2xl font-bold tracking-tight text-slate-900 sm:text-4xl dark:text-white">
         Create New Playlist
       </h1>
       <PlaylistForm

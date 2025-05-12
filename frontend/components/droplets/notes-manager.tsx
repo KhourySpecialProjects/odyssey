@@ -94,11 +94,11 @@ export function NotesManager({
 
   return (
     <>
-      <div className="max-w-2xl mx-auto text-center">
+      <div className="mx-auto max-w-2xl text-center">
         <h1 className="text-6xl font-black text-slate-900 dark:text-white">
           Saved Notes
         </h1>
-        <p className="dark:text-slate-300 pb-2">
+        <p className="pb-2 dark:text-slate-300">
           A collection of notes and highlights that you have created
         </p>
         <hr></hr>
@@ -117,7 +117,7 @@ export function NotesManager({
             />
           )}
         </section>
-        <p className="dark:text-slate-300 text-sm pt-2">
+        <p className="pt-2 text-sm dark:text-slate-300">
           Use the check boxes to select which notes you would like included in
           the PDF
         </p>
@@ -130,7 +130,7 @@ export function NotesManager({
           Deselect All
         </Button>
       </div>
-      <div className="w-full mx-auto space-y-4">
+      <div className="mx-auto w-full space-y-4">
         {filteredEnrollments.map((enrollment, index) => {
           const dropletData = allNotes[index];
           return (

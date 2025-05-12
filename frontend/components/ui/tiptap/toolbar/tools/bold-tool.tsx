@@ -8,7 +8,7 @@ export default function BoldTool({ editor }: { editor: Editor }) {
       onClick={() => editor.chain().focus().toggleBold().run()}
       className={cn(
         editor?.isActive("bold") ? "bg-slate-200 dark:bg-slate-700" : "",
-        "p-2.5 rounded-md border border-transparent hover:border-slate-200",
+        "rounded-md border border-transparent p-2.5 hover:border-slate-200",
       )}
       title="Bold"
     >

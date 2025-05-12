@@ -88,7 +88,7 @@ export function FirstVisitPopup({ user }: { user: AuthorizedUser | null }) {
             {/* ... existing description ... */}
           </DialogDescription>
         </DialogHeader>
-        <div className="flex flex-col gap-4 mt-4">
+        <div className="mt-4 flex flex-col gap-4">
           <p className="text-sm text-slate-600 dark:text-slate-400">
             Enter your first name here: <span className="text-red-500">*</span>
           </p>
@@ -100,7 +100,7 @@ export function FirstVisitPopup({ user }: { user: AuthorizedUser | null }) {
             aria-label="First name"
           />
         </div>
-        <div className="flex flex-col gap-4 mt-4">
+        <div className="mt-4 flex flex-col gap-4">
           <p className="text-sm text-slate-600 dark:text-slate-400">
             Enter your last name here: <span className="text-red-500">*</span>
           </p>
@@ -112,7 +112,7 @@ export function FirstVisitPopup({ user }: { user: AuthorizedUser | null }) {
             aria-label="Last name"
           />
         </div>
-        <div className="flex flex-col gap-4 mt-4">
+        <div className="mt-4 flex flex-col gap-4">
           <p className="text-sm text-slate-600 dark:text-slate-400">
             Enter a brief bio here:
           </p>
@@ -124,7 +124,7 @@ export function FirstVisitPopup({ user }: { user: AuthorizedUser | null }) {
             className="focus:ring-0"
           />
         </div>
-        <div className="flex flex-col gap-4 mt-4">
+        <div className="mt-4 flex flex-col gap-4">
           <p className="text-sm text-slate-600 dark:text-slate-400">
             Get started by exploring our collection of Droplets - bite-sized
             learning modules designed to help you succeed in your academic

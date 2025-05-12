@@ -20,9 +20,9 @@ export async function Reports() {
         The following reports have been received from users.
       </p>
 
-      <div className="p-4 mt-4 rounded-md bg-slate-100 dark:bg-slate-800 dark:text-slate-300">
+      <div className="mt-4 rounded-md bg-slate-100 p-4 dark:bg-slate-800 dark:text-slate-300">
         {reports.length > 0 ? (
-          <ul className="divide-y divide-slate-200 dark:divide-slate-700 md:space-y-4">
+          <ul className="divide-y divide-slate-200 md:space-y-4 dark:divide-slate-700">
             {reports.map((report: Report) => (
               <div key={report.id}>
                 <ReportBlock report={report} key={report.id} />

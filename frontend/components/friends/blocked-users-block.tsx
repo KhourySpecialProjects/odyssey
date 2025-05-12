@@ -35,7 +35,7 @@ export function BlockedUsersBlock({
       <div className="flex items-center md:space-x-4">
         <Avatar
           variant="round"
-          className="border border-sky-800 w-12 h-12 scale-75 md:scale-100"
+          className="h-12 w-12 scale-75 border border-sky-800 md:scale-100"
         >
           <AvatarImage src={blocked?.profilePhoto || undefined} />
           <AvatarFallback>
@@ -46,14 +46,14 @@ export function BlockedUsersBlock({
             )}
           </AvatarFallback>
         </Avatar>
-        <div className="flex-1 min-w-0">
+        <div className="min-w-0 flex-1">
           <p
             title={
               blocked.firstName && blocked.lastName
                 ? `${blocked.firstName} ${blocked.lastName}`
                 : `${blocked.email}`
             }
-            className="font-medium truncate overflow-hidden text-slate-900 text-slate-900 dark:text-slate-300 max-w-[175px] md:max-w-sm inline-block"
+            className="inline-block max-w-[175px] truncate overflow-hidden font-medium text-slate-900 md:max-w-sm dark:text-slate-300"
           >
             {blocked.firstName && blocked.lastName
               ? blocked.firstName + " " + blocked.lastName
@@ -71,7 +71,7 @@ export function BlockedUsersBlock({
           <div className="flex items-center" onClick={handleUnblock}>
             <Button
               size="sm"
-              className="scale-75 md:scale-100 dark:bg-black dark:text-white dark:hover:bg-slate-800 dark:border dark:border-slate-500"
+              className="scale-75 md:scale-100 dark:border dark:border-slate-500 dark:bg-black dark:text-white dark:hover:bg-slate-800"
             >
               Unblock
             </Button>

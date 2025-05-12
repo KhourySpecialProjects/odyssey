@@ -92,13 +92,13 @@ export function DropletTile({
 
   if (compact) {
     return (
-      <li className="transition-colors border rounded-md border-slate-200 hover:border-slate-300 bg-slate-50 dark:bg-slate-800">
+      <li className="rounded-md border border-slate-200 bg-slate-50 transition-colors hover:border-slate-300 dark:bg-slate-800">
         <Link
-          className="relative inline-flex w-full h-full p-2"
+          className="relative inline-flex h-full w-full p-2"
           href={`/d/${droplet.slug}`}
         >
-          <div className="flex flex-col gap-1 justify-center items-center text-center">
-            <span className="text-sm font-medium text-slate-900 text-center dark:text-white">
+          <div className="flex flex-col items-center justify-center gap-1 text-center">
+            <span className="text-center text-sm font-medium text-slate-900 dark:text-white">
               {droplet.name}
             </span>
           </div>
@@ -109,15 +109,15 @@ export function DropletTile({
 
   if (profilePage) {
     return (
-      <li className="transition-colors border rounded-md border-slate-200 hover:border-slate-300 bg-slate-50 dark:bg-slate-800 dark:border-slate-500">
+      <li className="rounded-md border border-slate-200 bg-slate-50 transition-colors hover:border-slate-300 dark:border-slate-500 dark:bg-slate-800">
         <Link
-          className="relative inline-flex w-full h-full p-6"
+          className="relative inline-flex h-full w-full p-6"
           href={
             (droplet.status == "draft" ? `/draft` : "") + `/d/${droplet.slug}`
           }
         >
-          <div className="flex flex-col items-center justify-center gap-3 w-full h-full">
-            <span className="block text-center text-3lg font-black text-slate-950 dark:text-slate-300">
+          <div className="flex h-full w-full flex-col items-center justify-center gap-3">
+            <span className="text-3lg block text-center font-black text-slate-950 dark:text-slate-300">
               {droplet.name}
             </span>
           </div>
@@ -130,7 +130,7 @@ export function DropletTile({
     <Link
       href={(droplet.status == "draft" ? `/draft` : "") + `/d/${droplet.slug}`}
     >
-      <li className="transition-colors border rounded-md border-slate-200 dark:border-slate-500 hover:border-slate-300 bg-slate-50 dark:bg-slate-800 h-full p-2">
+      <li className="h-full rounded-md border border-slate-200 bg-slate-50 p-2 transition-colors hover:border-slate-300 dark:border-slate-500 dark:bg-slate-800">
         <Button
           size="sm"
           onClick={(e) => {
@@ -138,21 +138,21 @@ export function DropletTile({
             e.stopPropagation();
             changeVisibility();
           }}
-          className={`${isArchived === true || isArchived === false ? "visibility: visible" : "visibility: hidden"} bg-white dark:bg-slate-300 hover:bg-slate-300`}
+          className={`${isArchived === true || isArchived === false ? "visibility: visible" : "visibility: hidden"} bg-white hover:bg-slate-300 dark:bg-slate-300`}
         >
-          <div className="relative group">
+          <div className="group relative">
             {isArchived ? (
               <ArchiveRestore className="text-purple-800" />
             ) : (
               <Archive className="text-purple-800" />
             )}
-            <span className="absolute left-1/2 transform -translate-x-1/2 top-full mt-1 w-max px-2 py-1 text-xs text-white bg-gray-800 rounded opacity-0 group-hover:opacity-100 transition-opacity">
+            <span className="absolute top-full left-1/2 mt-1 w-max -translate-x-1/2 transform rounded bg-gray-800 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100">
               {isArchived ? "Unarchive" : "Archive"}
             </span>
           </div>
         </Button>
         <div className="flex flex-col justify-end gap-3 p-4">
-          <div className="flex flex-row flex-wrap flex-0 gap-1.5">
+          <div className="flex flex-0 flex-row flex-wrap gap-1.5">
             {droplet.status == "draft" ? (
               <Badge variant="destructive">Draft</Badge>
             ) : null}
@@ -187,28 +187,28 @@ export function DropletTile({
               </Badge>
             )}
 
-            <Badge className="bg-white dark:bg-slate-300 text-black border-black pointer-events-none">
+            <Badge className="pointer-events-none border-black bg-white text-black dark:bg-slate-300">
               {uppercaseFirstChar(droplet.focusArea)}
             </Badge>
-            <Badge className="bg-white dark:bg-slate-300 text-black border-black pointer-events-none">
+            <Badge className="pointer-events-none border-black bg-white text-black dark:bg-slate-300">
               {uppercaseFirstChar(droplet.type)}
             </Badge>
             {droplet.tags?.map((tag) => (
               <Badge
                 key={tag.id}
-                className="bg-white dark:bg-slate-300 text-black border-black pointer-events-none"
+                className="pointer-events-none border-black bg-white text-black dark:bg-slate-300"
               >
                 {tag.name}
               </Badge>
             ))}
           </div>
 
-          <span className="block w-full text-3xl font-black text-slate-950 place-self-end dark:text-slate-300">
+          <span className="block w-full place-self-end text-3xl font-black text-slate-950 dark:text-slate-300">
             {droplet.name}
           </span>
 
           {averageRating != 0 ? (
-            <div className="flex items-start w-full scale-[0.55] origin-left">
+            <div className="flex w-full origin-left scale-[0.55] items-start">
               <StarRating
                 value={averageRating}
                 enrollmentID={""}

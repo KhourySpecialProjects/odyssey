@@ -105,7 +105,7 @@ export function GroupProgressGrid({ group }: GroupProgressGridProps) {
         <button
           onClick={handlePrevPage}
           disabled={currentPage === 0}
-          className={`px-4 py-2 mr-4 w-22 ${currentPage === 0 ? "visibility: hidden" : "visibility: visible"}`}
+          className={`mr-4 w-22 px-4 py-2 ${currentPage === 0 ? "visibility: hidden" : "visibility: visible"}`}
         >
           <MoveLeft />
         </button>
@@ -123,8 +123,8 @@ export function GroupProgressGrid({ group }: GroupProgressGridProps) {
         {group.droplets && group.droplets.length > 0 ? (
           <div className="flex flex-row justify-start">
             <div className="flex flex-col justify-self-start">
-              <div className="transition-colors border-slate-200 hover:border-slate-300 bg-white-50 p-4 h-24 w-55 flex items-center justify-center">
-                <span className="text-center text-sm font-semibold text-slate-950 line-clamp-3">
+              <div className="bg-white-50 flex h-24 w-55 items-center justify-center border-slate-200 p-4 transition-colors hover:border-slate-300">
+                <span className="line-clamp-3 text-center text-sm font-semibold text-slate-950">
                   {""}
                 </span>
               </div>
@@ -132,11 +132,11 @@ export function GroupProgressGrid({ group }: GroupProgressGridProps) {
               {group.members?.map((member) => (
                 <div
                   key={member.id}
-                  className="transition-colors  border-slate-200 hover:border-slate-300 bg-white-50 p-4 h-24 w-55 flex items-center justify-center"
+                  className="bg-white-50 flex h-24 w-55 items-center justify-center border-slate-200 p-4 transition-colors hover:border-slate-300"
                 >
                   <span
                     title={member.email}
-                    className="text-center text-sm font-semibold text-slate-950 dark:text-slate-300 line-clamp-3"
+                    className="line-clamp-3 text-center text-sm font-semibold text-slate-950 dark:text-slate-300"
                   >
                     {member.firstName || member.lastName
                       ? `${member.firstName ?? ""} ${member.lastName ?? ""}`.trim()
@@ -151,11 +151,11 @@ export function GroupProgressGrid({ group }: GroupProgressGridProps) {
                 {paginatedLessons?.map((droplet) => (
                   <div
                     key={droplet.id}
-                    className="transition-colors  border-slate-200 hover:border-slate-300 bg-white-50 p-4 h-24 w-36 flex items-center justify-center"
+                    className="bg-white-50 flex h-24 w-36 items-center justify-center border-slate-200 p-4 transition-colors hover:border-slate-300"
                   >
                     <span
                       title={droplet.name}
-                      className="text-center text-sm font-semibold text-slate-950 dark:text-slate-300 line-clamp-3"
+                      className="line-clamp-3 text-center text-sm font-semibold text-slate-950 dark:text-slate-300"
                     >
                       {droplet.name}
                     </span>
@@ -174,7 +174,7 @@ export function GroupProgressGrid({ group }: GroupProgressGridProps) {
                     {group.members?.map((member) => (
                       <div
                         key={member.id * droplet.id * 100}
-                        className="transition-colors border border-slate-200 hover:border-slate-300 bg-white-50 p-4 h-24 w-36 flex items-center justify-center"
+                        className="bg-white-50 flex h-24 w-36 items-center justify-center border border-slate-200 p-4 transition-colors hover:border-slate-300"
                       >
                         <div
                           title={
@@ -207,7 +207,7 @@ export function GroupProgressGrid({ group }: GroupProgressGridProps) {
             </div>
           </div>
         ) : (
-          <div className="p-8 text-center text-slate-500 border border-dashed rounded-lg">
+          <div className="rounded-lg border border-dashed p-8 text-center text-slate-500">
             No droplets have been added to this group yet.
           </div>
         )}

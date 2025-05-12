@@ -59,7 +59,7 @@ export async function MyContent({
         ) : tab === "groups" ? (
           <>
             {activeGroups.length === 0 && (
-              <Message className="mb-8 border border-dashed rounded-md border-slate-200 dark:bg-slate-800 dark:border-slate-500">
+              <Message className="mb-8 rounded-md border border-dashed border-slate-200 dark:border-slate-500 dark:bg-slate-800">
                 <MessageHeader
                   subtitle="No Results"
                   title="No Enrolled Groups"
@@ -69,7 +69,7 @@ export async function MyContent({
                 </MessageDescription>
               </Message>
             )}
-            <div className="grid grid-flow-row grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 auto-rows-fr">
+            <div className="grid grid-flow-row auto-rows-fr grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
               {activeGroups.map((group) => (
                 <div key={`group-${group.id}`} className="h-full pb-2">
                   <GroupCard
@@ -84,12 +84,12 @@ export async function MyContent({
           </>
         ) : (
           <>
-            <div className="font-bold text-xl pb-2">Droplets</div>
+            <div className="pb-2 text-xl font-bold">Droplets</div>
             <ArchivedDropletsGrid />
             <hr className="pb-2" />
-            <div className="font-bold text-xl pb-2">Groups</div>
+            <div className="pb-2 text-xl font-bold">Groups</div>
             {archivedGroups.length === 0 && (
-              <Message className="mb-8 border border-dashed rounded-md border-slate-200 dark:bg-slate-800 dark:border-slate-500">
+              <Message className="mb-8 rounded-md border border-dashed border-slate-200 dark:border-slate-500 dark:bg-slate-800">
                 <MessageHeader
                   subtitle="No Results"
                   title="No Archived Groups"
@@ -99,7 +99,7 @@ export async function MyContent({
                 </MessageDescription>
               </Message>
             )}
-            <div className="grid grid-flow-row grid-cols-1 gap-4 mt-4 sm:grid-cols-2">
+            <div className="mt-4 grid grid-flow-row grid-cols-1 gap-4 sm:grid-cols-2">
               {archivedGroups.map((group) => (
                 <div key={`group-${group.id}`} className="h-full pb-2">
                   <GroupCard

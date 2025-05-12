@@ -88,19 +88,19 @@ export function FeedClient({
   );
 
   return (
-    <section className="pb-8 content">
+    <section className="content pb-8">
       <div className="rounded-md">
         {isLoadingInitial ? (
-          <div className="flex justify-center items-center py-8">
+          <div className="flex items-center justify-center py-8">
             <div
               data-testid="loading-spinner"
-              className="w-6 h-6 border-4 border-slate-500 border-t-transparent rounded-full animate-spin"
+              className="h-6 w-6 animate-spin rounded-full border-4 border-slate-500 border-t-transparent"
               style={{ borderStyle: "dotted", borderTopStyle: "solid" }}
             ></div>
           </div>
         ) : filteredAnnouncements.length > 0 ? (
           <>
-            <ul className="md:w-[80%] md:mx-auto grid gap-4 grid-cols-1">
+            <ul className="grid grid-cols-1 gap-4 md:mx-auto md:w-[80%]">
               {filteredAnnouncements.map((post) => (
                 <FeedBlock
                   key={post.id}
@@ -113,7 +113,7 @@ export function FeedClient({
             <div ref={observerTarget} className="py-4 text-center">
               {isLoadingMore && (
                 <div
-                  className="w-6 h-6 mx-auto border-4 border-slate-500 border-t-transparent rounded-full animate-spin"
+                  className="mx-auto h-6 w-6 animate-spin rounded-full border-4 border-slate-500 border-t-transparent"
                   style={{ borderStyle: "dotted", borderTopStyle: "solid" }}
                 ></div>
               )}

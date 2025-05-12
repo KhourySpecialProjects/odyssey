@@ -83,8 +83,8 @@ export default async function DropletRoute({ params }: Props) {
   return (
     <>
       <GradientBackground className="px-0">
-        <div className="max-w-2xl mx-auto px-5 md:px-0 ">
-          <div className="flex flex-row flex-0 flex-wrap gap-1.5">
+        <div className="mx-auto max-w-2xl px-5 md:px-0">
+          <div className="flex flex-0 flex-row flex-wrap gap-1.5">
             <Badge variant="outline" className="text-sm">
               {uppercaseFirstChar(droplet.focusArea)}
             </Badge>
@@ -109,22 +109,22 @@ export default async function DropletRoute({ params }: Props) {
             {droplet.name}
           </h1>
           {droplet.description ? (
-            <p className="mt-3 text-slate-500 text-pretty md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed dark:text-slate-300">
+            <p className="mt-3 text-pretty text-slate-500 md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed dark:text-slate-300">
               {stripHtmlTags(droplet.description)}
             </p>
           ) : null}
         </div>
 
-        <div className="w-full max-w-2xl py-4 mx-auto space-y-8 lg:py-8 md:space-y-12 px-5 md:px-0">
+        <div className="mx-auto w-full max-w-2xl space-y-8 px-5 py-4 md:space-y-12 md:px-0 lg:py-8">
           {droplet.overview ? (
             <section>
               <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
                 Overview
               </h2>
 
-              <div className="w-full p-8 mt-4 border rounded-md bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-500">
+              <div className="mt-4 w-full rounded-md border border-slate-200 bg-slate-50 p-8 dark:border-slate-500 dark:bg-slate-800">
                 <div
-                  className="mx-auto prose prose-sky prose-code:text-inherit prose-strong:text-inherit prose-headings:text-inherit dark:text-slate-300"
+                  className="prose prose-sky prose-code:text-inherit prose-strong:text-inherit prose-headings:text-inherit mx-auto dark:text-slate-300"
                   dangerouslySetInnerHTML={{ __html: droplet.overview }}
                 ></div>
               </div>
@@ -141,7 +141,7 @@ export default async function DropletRoute({ params }: Props) {
                 Droplets:
               </p>
 
-              <ul className="grid grid-flow-row grid-cols-1 gap-4 mt-4 sm:grid-cols-2">
+              <ul className="mt-4 grid grid-flow-row grid-cols-1 gap-4 sm:grid-cols-2">
                 {droplet.prerequisites.map((droplet) => (
                   <DropletTile key={droplet.id} droplet={droplet} />
                 ))}
@@ -157,14 +157,14 @@ export default async function DropletRoute({ params }: Props) {
               By completing this Droplet, you should:
             </p>
 
-            <div className="mt-4 border rounded-md bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-500">
+            <div className="mt-4 rounded-md border border-slate-200 bg-slate-50 dark:border-slate-500 dark:bg-slate-800">
               <ul className="flex flex-col divide-y divide-slate-200 dark:divide-slate-500">
                 {droplet.learningObjectives.map((objective) => (
                   <li
                     key={`objective-${objective.id}`}
                     className="inline-flex items-center gap-2 px-4 py-3 leading-snug dark:text-slate-300"
                   >
-                    <GoalIcon className="w-5 h-5 mr-0.5 shrink-0" />
+                    <GoalIcon className="mr-0.5 h-5 w-5 shrink-0" />
                     {objective.objective}
                   </li>
                 ))}
@@ -181,7 +181,7 @@ export default async function DropletRoute({ params }: Props) {
             </p>
 
             {droplet.droplet_lessons && droplet.droplet_lessons.length > 0 ? (
-              <div className="mt-4 border rounded-md bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-500">
+              <div className="mt-4 rounded-md border border-slate-200 bg-slate-50 dark:border-slate-500 dark:bg-slate-800">
                 <ul className="flex flex-col divide-y divide-slate-200 dark:divide-slate-500">
                   {droplet.droplet_lessons
                     .sort((a, b) => a.orderIndex - b.orderIndex)
@@ -193,11 +193,11 @@ export default async function DropletRoute({ params }: Props) {
                           className="inline-flex items-center gap-2 px-4 py-3 leading-snug dark:text-slate-300"
                         >
                           {lesson.type === "activity" ? (
-                            <HammerIcon className="w-5 h-5 mr-0.5 shrink-0" />
+                            <HammerIcon className="mr-0.5 h-5 w-5 shrink-0" />
                           ) : lesson.type === "caseStudy" ? (
-                            <FilePieChartIcon className="w-5 h-5 mr-0.5 shrink-0" />
+                            <FilePieChartIcon className="mr-0.5 h-5 w-5 shrink-0" />
                           ) : (
-                            <BookTextIcon className="w-5 h-5 mr-0.5 shrink-0" />
+                            <BookTextIcon className="mr-0.5 h-5 w-5 shrink-0" />
                           )}
                           {lesson.name}
                         </li>
@@ -206,7 +206,7 @@ export default async function DropletRoute({ params }: Props) {
                 </ul>
               </div>
             ) : (
-              <div className="p-4 mt-2 border rounded-md bg-slate-50 dark:bg-slate-800 dark:text-slate-300 border-slate-200 dark:border-slate-500">
+              <div className="mt-2 rounded-md border border-slate-200 bg-slate-50 p-4 dark:border-slate-500 dark:bg-slate-800 dark:text-slate-300">
                 This Droplet does not have any lessons yet. Check back soon!
               </div>
             )}
@@ -220,7 +220,7 @@ export default async function DropletRoute({ params }: Props) {
               This Droplet was written by the following individuals:
             </p>
 
-            <ul className="flex flex-col mt-4 border divide-y rounded-md bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-500 divide-slate-200 dark:divide-slate-500">
+            <ul className="mt-4 flex flex-col divide-y divide-slate-200 rounded-md border border-slate-200 bg-slate-50 dark:divide-slate-500 dark:border-slate-500 dark:bg-slate-800">
               {droplet.authorized_users?.map((author) => (
                 <li
                   key={`author-${author.id}`}
@@ -232,7 +232,7 @@ export default async function DropletRoute({ params }: Props) {
                       {author?.firstName && author?.lastName ? (
                         author.firstName[0] + author.lastName[0]
                       ) : (
-                        <User2Icon className="w-4 h-4" />
+                        <User2Icon className="h-4 w-4" />
                       )}
                     </AvatarFallback>
                   </Avatar>
@@ -240,7 +240,7 @@ export default async function DropletRoute({ params }: Props) {
                   <div
                     className={!author.bio ? "flex flex-row items-center" : ""}
                   >
-                    <span className="font-bold leading-relaxed">
+                    <span className="leading-relaxed font-bold">
                       {author.firstName + " " + author.lastName}
                     </span>
 

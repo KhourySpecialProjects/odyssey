@@ -55,17 +55,17 @@ export function NotesFilter({ onFilterChange }: NotesFilterProps) {
       {colorOptions.map((color) => (
         <div
           key={color.value}
-          className={`flex items-center space-x-2 p-1 rounded-md ${color.color}`}
+          className={`flex items-center space-x-2 rounded-md p-1 ${color.color}`}
         >
           <Checkbox
             id={color.value}
             checked={selectedColors.includes(color.value)}
             onCheckedChange={() => toggleRole(color.value)}
-            className="border-sky-500 data-[state=checked]:bg-sky-500 data-[state=checked]:border-sky-500 focus-visible:ring-sky-500"
+            className="border-sky-500 focus-visible:ring-sky-500 data-[state=checked]:border-sky-500 data-[state=checked]:bg-sky-500"
           />
           <label
             htmlFor={color.value}
-            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+            className="text-sm leading-none font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
           >
             {color.label}
           </label>
