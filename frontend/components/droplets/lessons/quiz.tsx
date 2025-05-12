@@ -16,6 +16,7 @@ export function QuizBlock({ data }: { data: Quiz }) {
           return (
             <div
               key={question.id}
+              id="quiz-question"
               className="mx-auto mt-8 w-full max-w-lg divide-slate-200 rounded-md border border-slate-200 bg-white p-6 dark:border-slate-500 dark:bg-slate-900"
             >
               <QuizQuestionBlock question={question} />

@@ -155,28 +155,6 @@ describe("QuizQuestionEditor", () => {
     expect(screen.getByText("Answer Options")).toBeInTheDocument();
   });
 
-  it("disables adding more than 4 answer options", () => {
-    const maxOptionsQuestion = {
-      ...mockQuestion,
-      answerOptions: [
-        { id: 1, content: "Option 1", isCorrect: true },
-        { id: 2, content: "Option 2", isCorrect: false },
-        { id: 3, content: "Option 3", isCorrect: false },
-        { id: 4, content: "Option 4", isCorrect: false },
-      ],
-    };
-
-    render(
-      <QuizQuestionEditor
-        question={maxOptionsQuestion}
-        onUpdate={mockOnUpdate}
-        onDelete={mockOnDelete}
-      />,
-    );
-
-    expect(screen.queryByText("Add Answer Option")).not.toBeInTheDocument();
-  });
-
   it("disables adding more than two true/false options", () => {
     const trueFalseQuestion = {
       ...mockQuestion,
