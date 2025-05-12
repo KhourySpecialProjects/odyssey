@@ -24,14 +24,14 @@ export function MemberTile({
     .join("");
 
   return (
-    <div className="relative group">
-      <div className="p-4 border rounded-lg bg-slate-50 dark:bg-slate-800 dark:border-slate-500 hover:bg-slate-100 transition-colors">
+    <div className="group relative">
+      <div className="rounded-lg border bg-slate-50 p-4 transition-colors hover:bg-slate-100 dark:border-slate-500 dark:bg-slate-800">
         <div className="flex items-center gap-3">
           <Avatar>
             <AvatarFallback>{initials}</AvatarFallback>
           </Avatar>
-          <div className="flex flex-col min-w-0">
-            <span className="text-sm font-medium truncate">{member.email}</span>
+          <div className="flex min-w-0 flex-col">
+            <span className="truncate text-sm font-medium">{member.email}</span>
             <Badge variant="outline" className="w-fit">
               {role}
             </Badge>
@@ -43,7 +43,7 @@ export function MemberTile({
           variant="ghost"
           size="sm"
           onClick={() => onRemove?.(member.email ?? "")}
-          className="absolute top-2 right-2 text-slate-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+          className="absolute top-2 right-2 text-slate-400 opacity-0 transition-opacity group-hover:opacity-100 hover:text-red-500"
         >
           <XCircle className="h-5 w-5" />
         </Button>

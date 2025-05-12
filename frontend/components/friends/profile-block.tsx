@@ -53,14 +53,14 @@ export function ProfileBlock({
           <div>
             <Button
               size="sm"
-              className="bg-sky-300 text-black hover:bg-sky-400 dark:bg-sky-300 dark:hover:bg-sky-400 hidden md:block"
+              className="hidden bg-sky-300 text-black hover:bg-sky-400 md:block dark:bg-sky-300 dark:hover:bg-sky-400"
             >
               {isProfile ? "Preview Profile" : "View Profile"}
             </Button>
 
             <Button
               size="sm"
-              className="bg-sky-300 text-black hover:bg-sky-400 dark:bg-sky-300 dark:hover:bg-sky-400 block md:hidden scale-75"
+              className="block scale-75 bg-sky-300 text-black hover:bg-sky-400 md:hidden dark:bg-sky-300 dark:hover:bg-sky-400"
             >
               <UserRound />
             </Button>
@@ -70,10 +70,10 @@ export function ProfileBlock({
 
       <DialogContent className="dark:bg-slate-700">
         <DialogHeader>
-          <div className="flex justify-center items-center">
+          <div className="flex items-center justify-center">
             <Avatar
               variant="round"
-              className="border border-sky-800 w-20 h-20 items-center"
+              className="h-20 w-20 items-center border border-sky-800"
             >
               <AvatarImage src={otherUser?.profilePhoto || undefined} />
               <AvatarFallback className="text-2xl">
@@ -123,7 +123,7 @@ export function ProfileBlock({
           >
             <Button
               size="sm"
-              className="bg-red-600 dark:bg-red-400 text-white hover:bg-red-700"
+              className="bg-red-600 text-white hover:bg-red-700 dark:bg-red-400"
             >
               Block user
             </Button>

@@ -31,17 +31,17 @@ export default async function CreateRoute() {
 
   return (
     <>
-      <div className="w-full p-8 mx-auto my-4 text-center max-w-7xl">
-        <h1 className="text-3xl font-bold tracking-tight light:text-slate-900 sm:text-4xl">
+      <div className="mx-auto my-4 w-full max-w-7xl p-8 text-center">
+        <h1 className="light:text-slate-900 text-3xl font-bold tracking-tight sm:text-4xl">
           My Content
         </h1>
-        <p className="mt-4 text-lg leading-normal light:text-slate-600 dark:text-slate-300 text-balance">
+        <p className="light:text-slate-600 mt-4 text-lg leading-normal text-balance dark:text-slate-300">
           Create a new Droplet or Playlist draft or edit an existing one.
         </p>
       </div>
 
-      <div className="w-full max-w-5xl px-4 mx-auto mb-8 xl:p-0 s">
-        <div className="w-full flex justify-between items-end">
+      <div className="s mx-auto mb-8 w-full max-w-5xl px-4 xl:p-0">
+        <div className="flex w-full items-end justify-between">
           <h2 className="text-lg dark:text-slate-300">My Droplets</h2>
           <div className="flex items-center gap-2">
             <Link href="/new/droplet">
@@ -66,8 +66,8 @@ export default async function CreateRoute() {
         </div>
         <Separator orientation="horizontal" className="mt-2 mb-4" />
         {!authorizedUser.droplets || authorizedUser.droplets.length === 0 ? (
-          <div className="flex items-center justify-center h-full">
-            <p className="text-lg light:text-slate-500 dark:text-slate-400">
+          <div className="flex h-full items-center justify-center">
+            <p className="light:text-slate-500 text-lg dark:text-slate-400">
               No droplets found.
             </p>
           </div>
@@ -83,13 +83,13 @@ export default async function CreateRoute() {
         {(isContentCreator(user.roles) ||
           isAuthorizedUserAdmin(user.roles)) && (
           <>
-            <h2 className="text-lg mb-2 mt-4 dark:text-slate-300">
+            <h2 className="mt-4 mb-2 text-lg dark:text-slate-300">
               My Playlists
             </h2>
             <Separator orientation="horizontal" className="mt-2 mb-4" />
             {!playlists || playlists.length === 0 ? (
-              <div className="flex items-center justify-center h-full">
-                <p className="text-lg light:text-slate-500 dark:text-slate-400">
+              <div className="flex h-full items-center justify-center">
+                <p className="light:text-slate-500 text-lg dark:text-slate-400">
                   No playlists found.
                 </p>
               </div>

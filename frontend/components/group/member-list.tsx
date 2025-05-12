@@ -29,11 +29,11 @@ export function MemberList({ title, members, variant }: MemberListProps) {
           <div
             key={member.id}
             className={cn(
-              "flex items-center gap-3 p-2 rounded-lg ",
+              "flex items-center gap-3 rounded-lg p-2",
               variantStyles[variant],
             )}
           >
-            <Avatar variant="round" className="w-8 h-8">
+            <Avatar variant="round" className="h-8 w-8">
               <AvatarImage src={member.profilePhoto || undefined} />
               <AvatarFallback>
                 {member.firstName && member.lastName ? (
@@ -44,7 +44,7 @@ export function MemberList({ title, members, variant }: MemberListProps) {
               </AvatarFallback>
             </Avatar>
             <div className="min-w-0 flex-1">
-              <p className="text-sm font-medium truncate">
+              <p className="truncate text-sm font-medium">
                 {member.firstName && member.lastName
                   ? member.firstName + " " + member.lastName
                   : member.email}

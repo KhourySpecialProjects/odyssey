@@ -84,26 +84,26 @@ export function AddLesson({
 
   return (
     <>
-      <div className="w-full flex justify-between items-center">
-        <p className="p-2 text-lg font-bold leading-7">Lessons</p>
-        <div className="p-2 cursor-pointer">
+      <div className="flex w-full items-center justify-between">
+        <p className="p-2 text-lg leading-7 font-bold">Lessons</p>
+        <div className="cursor-pointer p-2">
           <PlusIcon role="button" onClick={handleClick} />
         </div>
       </div>
 
       <ul>
         {!isHidden ? (
-          <li ref={ref} className="w-full rounded shadow mb-2">
+          <li ref={ref} className="mb-2 w-full rounded shadow">
             <form
               action={add}
-              className="flex flex-row justify-between items-center"
+              className="flex flex-row items-center justify-between"
               autoComplete="off"
               role="form"
             >
               <input
                 ref={inputRef}
                 type="text"
-                className="border-0 bg-transparent outline-none focus:outline-none ring-0 focus:ring-0"
+                className="border-0 bg-transparent ring-0 outline-none focus:ring-0 focus:outline-none"
                 placeholder="Lesson Name"
                 name="name"
               />

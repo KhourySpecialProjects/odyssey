@@ -26,7 +26,7 @@ export function DropletName({
 
   return (
     <>
-      <Label htmlFor="name" className="font-bold pb-4" hidden>
+      <Label htmlFor="name" className="pb-4 font-bold" hidden>
         Droplet Name
       </Label>
       <DropletNameInput
@@ -34,7 +34,7 @@ export function DropletName({
         initialContent={`<h1>${name}</h1>`}
       />
 
-      {error && <div className="text-red-500 mt-2">{error}</div>}
+      {error && <div className="mt-2 text-red-500">{error}</div>}
     </>
   );
 }

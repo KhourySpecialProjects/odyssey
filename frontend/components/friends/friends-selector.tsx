@@ -41,9 +41,9 @@ export function FriendsSelector({
   return (
     <>
       <div className="md:hidden">
-        <div className="w-full flex flex-row justify-center pb-4">
+        <div className="flex w-full flex-row justify-center pb-4">
           <select
-            className="w-[65%] px-3 py-2 border text-sm border-slate-300 focus:border-slate-500 dark:text-white dark:border-slate-400 rounded-md dark:bg-black dark:focus:border-slate-200 focus:outline-none focus:ring-0"
+            className="w-[65%] rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-slate-500 focus:ring-0 focus:outline-none dark:border-slate-400 dark:bg-black dark:text-white dark:focus:border-slate-200"
             value={currentTab}
             onChange={(e) => {
               router.push(
@@ -60,7 +60,7 @@ export function FriendsSelector({
         </div>
       </div>
 
-      <div className="border-b border-gray-200 hidden sm:block">
+      <div className="hidden border-b border-gray-200 sm:block">
         <nav className="-mb-px flex space-x-8" aria-label="Tabs">
           {tabs.map((tab) => (
             <button
@@ -73,8 +73,8 @@ export function FriendsSelector({
               className={cn(
                 tab.value === currentTab
                   ? "border-primary-500 light:text-primary-600 dark:text-primary-300"
-                  : "border-transparent light:text-gray-500 dark:text-slate-300 dark:hover:text-gray-400 hover:border-gray-300 hover:text-gray-700",
-                "whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium",
+                  : "light:text-gray-500 border-transparent hover:border-gray-300 hover:text-gray-700 dark:text-slate-300 dark:hover:text-gray-400",
+                "border-b-2 px-1 py-4 text-sm font-medium whitespace-nowrap",
               )}
             >
               {tab.name}

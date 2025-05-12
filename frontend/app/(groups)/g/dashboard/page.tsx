@@ -82,12 +82,12 @@ export default async function GroupsPage({ searchParams }: Props) {
   };
 
   return (
-    <div className="w-full max-w-7xl p-8 mx-auto space-y-12 my-4">
+    <div className="mx-auto my-4 w-full max-w-7xl space-y-12 p-8">
       <div className="text-center">
-        <h1 className="text-3xl font-bold tracking-tight light:text-slate-900 sm:text-4xl">
+        <h1 className="light:text-slate-900 text-3xl font-bold tracking-tight sm:text-4xl">
           Groups
         </h1>
-        <p className="mt-4 text-lg leading-normal light:text-slate-600 text-balance">
+        <p className="light:text-slate-600 mt-4 text-lg leading-normal text-balance">
           View and manage your group information
         </p>
       </div>
@@ -96,7 +96,7 @@ export default async function GroupsPage({ searchParams }: Props) {
 
       <div className="mt-6">
         {tab === "favorites" ? (
-          <Message className="mb-8 border border-dashed rounded-md border-slate-200 dark:border-slate-500 dark:bg-slate-800">
+          <Message className="mb-8 rounded-md border border-dashed border-slate-200 dark:border-slate-500 dark:bg-slate-800">
             <MessageHeader
               title="Favorites Coming Soon"
               subtitle="Future enhancements on the way!"
@@ -107,7 +107,7 @@ export default async function GroupsPage({ searchParams }: Props) {
             </MessageDescription>
           </Message>
         ) : tab === "creator" && groupsByRole.creator.length === 0 ? (
-          <Message className="mb-8 border border-dashed rounded-md border-slate-200 dark:border-slate-500">
+          <Message className="mb-8 rounded-md border border-dashed border-slate-200 dark:border-slate-500">
             <MessageHeader
               title="Create Your First Group"
               subtitle="Get started with Khoury Odyssey groups!"
@@ -120,7 +120,7 @@ export default async function GroupsPage({ searchParams }: Props) {
         ) : (
           <div>
             {groupsByRole[tab as keyof typeof groupsByRole].length > 0 ? (
-              <div className="grid grid-flow-row grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 auto-rows-fr">
+              <div className="grid grid-flow-row auto-rows-fr grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {groupsByRole[tab as keyof typeof groupsByRole].map(
                   ({ group, role }) => (
                     <div key={`group-${group.id}`} className="h-full">
@@ -136,7 +136,7 @@ export default async function GroupsPage({ searchParams }: Props) {
                 )}
               </div>
             ) : (
-              <div className="p-8 text-center light:text-slate-500 border border-dashed dark:border-slate-500 rounded-lg">
+              <div className="light:text-slate-500 rounded-lg border border-dashed p-8 text-center dark:border-slate-500">
                 <p className="text-lg dark:text-slate-300">
                   {roleMessages[tab as keyof typeof roleMessages]}
                 </p>

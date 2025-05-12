@@ -56,11 +56,11 @@ export function FriendRequestBlock({
   };
 
   return (
-    <li className="py-0 [&:not(:first-child)]:pt-3 ">
+    <li className="py-0 [&:not(:first-child)]:pt-3">
       <div className="flex items-center md:space-x-4">
         <Avatar
           variant="round"
-          className="border border-sky-800 w-12 h-12 scale-75 md:scale-100"
+          className="h-12 w-12 scale-75 border border-sky-800 md:scale-100"
         >
           <AvatarImage src={request?.profilePhoto || undefined} />
           <AvatarFallback>
@@ -71,14 +71,14 @@ export function FriendRequestBlock({
             )}
           </AvatarFallback>
         </Avatar>
-        <div className="flex-1 min-w-0">
+        <div className="min-w-0 flex-1">
           <p
             title={
               request.firstName && request.lastName
                 ? `${request.firstName} ${request.lastName}`
                 : `${request.email}`
             }
-            className="font-medium truncate text-slate-900 dark:text-slate-300"
+            className="truncate font-medium text-slate-900 dark:text-slate-300"
           >
             {request.firstName && request.lastName
               ? request.firstName + " " + request.lastName
@@ -93,27 +93,27 @@ export function FriendRequestBlock({
           setIsOpen={setOpen}
         />
         <Button
-          className="bg-green-600 text-white hover:bg-green-700 dark:bg-green-600 dark:hover:bg-green-700 scale-75 md:scale-100"
+          className="scale-75 bg-green-600 text-white hover:bg-green-700 md:scale-100 dark:bg-green-600 dark:hover:bg-green-700"
           size="sm"
           onClick={handleApprove}
           role="accept"
         >
-          <div className="relative group">
+          <div className="group relative">
             <Check />
-            <span className="absolute left-1/2 transform -translate-x-1/2 top-full mt-1 w-max px-2 py-1 text-xs text-white bg-gray-800 rounded opacity-0 group-hover:opacity-100 transition-opacity">
+            <span className="absolute top-full left-1/2 mt-1 w-max -translate-x-1/2 transform rounded bg-gray-800 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100">
               Accept
             </span>
           </div>
         </Button>
         <Button
-          className="bg-red-600 text-white hover:bg-red-700 dark:bg-red-600 dark:hover:bg-red-700 scale-75 md:scale-100"
+          className="scale-75 bg-red-600 text-white hover:bg-red-700 md:scale-100 dark:bg-red-600 dark:hover:bg-red-700"
           size="sm"
           onClick={handleReject}
           role="reject"
         >
-          <div className="relative group">
+          <div className="group relative">
             <X />
-            <span className="absolute left-1/2 transform -translate-x-1/2 top-full mt-1 w-max px-2 py-1 text-xs text-white bg-gray-800 rounded opacity-0 group-hover:opacity-100 transition-opacity">
+            <span className="absolute top-full left-1/2 mt-1 w-max -translate-x-1/2 transform rounded bg-gray-800 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100">
               Reject
             </span>
           </div>

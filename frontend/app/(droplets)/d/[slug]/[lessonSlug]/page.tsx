@@ -74,7 +74,7 @@ export default async function Page({ params }: Props) {
     droplet.authorized_users.map((author) => author.id).includes(authUser.id);
 
   return (
-    <div className="flex flex-row w-full h-full">
+    <div className="flex h-full w-full flex-row">
       <div className="w-full">
         <DropletLessonWrapper
           lesson={lesson}

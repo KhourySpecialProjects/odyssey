@@ -33,14 +33,14 @@ export function PageNav({ currentPage, updatePage, totalPages }: PageNavProps) {
   };
 
   return (
-    <div className="flex justify-end items-center mt-4 ">
+    <div className="mt-4 flex items-center justify-end">
       <div className="flex gap-2">
         <button
           key="prev"
           onClick={handlePrevPage}
           disabled={currentPage === 1}
           aria-label="chevron-left"
-          className={`${currentPage === 1 ? "dark:text-slate-600 text-slate-400" : ""}`}
+          className={`${currentPage === 1 ? "text-slate-400 dark:text-slate-600" : ""}`}
         >
           <ChevronLeft />
         </button>
@@ -54,7 +54,7 @@ export function PageNav({ currentPage, updatePage, totalPages }: PageNavProps) {
               key={`page-${pageNum}`}
               onClick={() => handlePageClick(pageNum)}
               disabled={curPage == pageNum}
-              className={`p-2 ${pageNum === curPage ? "border border-slate-300 rounded-md" : ""} font-bold`}
+              className={`p-2 ${pageNum === curPage ? "rounded-md border border-slate-300" : ""} font-bold`}
             >
               {pageNum}
             </button>
@@ -71,7 +71,7 @@ export function PageNav({ currentPage, updatePage, totalPages }: PageNavProps) {
           onClick={handleNextPage}
           disabled={currentPage === totalPages}
           aria-label="chevron-right"
-          className={`${currentPage === totalPages ? "dark:text-slate-600 text-slate-400" : ""}`}
+          className={`${currentPage === totalPages ? "text-slate-400 dark:text-slate-600" : ""}`}
         >
           <ChevronRight />
         </button>

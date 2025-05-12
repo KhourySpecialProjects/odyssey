@@ -47,8 +47,8 @@ export function FriendRequests({
     <div className={`flex flex-col`}>
       <section className={`${noProfile ? "" : "md:mt-4"}`}>
         {noProfile ? (
-          <div className="absolute -top-[60px] left-1/2 transform -translate-x-1/2 w-full">
-            <h1 className="font-bold text-xl text-center">Friend Requests</h1>
+          <div className="absolute -top-[60px] left-1/2 w-full -translate-x-1/2 transform">
+            <h1 className="text-center text-xl font-bold">Friend Requests</h1>
           </div>
         ) : (
           <div>
@@ -59,10 +59,10 @@ export function FriendRequests({
         )}
 
         <div
-          className={`p-1 rounded-md ${noProfile ? "bg-slate-50" : "bg-slate-100 mt-4 md:p-4"} dark:bg-slate-800`}
+          className={`rounded-md p-1 ${noProfile ? "bg-slate-50" : "mt-4 bg-slate-100 md:p-4"} dark:bg-slate-800`}
         >
           {friendRequests.length > 0 ? (
-            <ul className="grid grid-cols-1 auto-cols-auto divide-y divide-slate-200 dark:divide-slate-700 space-y-2 md:space-y-4">
+            <ul className="grid auto-cols-auto grid-cols-1 space-y-2 divide-y divide-slate-200 md:space-y-4 dark:divide-slate-700">
               {noProfile
                 ? paginatedRequests.map((friendship) => (
                     <FriendRequestFeedBlock
@@ -88,7 +88,7 @@ export function FriendRequests({
             <button
               onClick={handlePrevPage}
               disabled={currentPage === 0}
-              className={`px-4 py-2 mr-4 w-22`}
+              className={`mr-4 w-22 px-4 py-2`}
             >
               <MoveLeft role="left" />
             </button>

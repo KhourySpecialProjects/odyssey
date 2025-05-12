@@ -97,7 +97,7 @@ export function UserMultiSelect({
                   className="mr-2"
                 />
                 <div>
-                  <div className="text-sm text-muted-foreground">
+                  <div className="text-muted-foreground text-sm">
                     {user.firstName && user.lastName
                       ? user.firstName + " " + user.lastName
                       : user.email}

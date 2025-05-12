@@ -45,7 +45,7 @@ export function AccessRequestBlock({ request }: { request: AccessRequest }) {
       <div className="flex gap-2">
         <Button
           onClick={handleApprove}
-          className="bg-green-600 dark:bg-green-800 dark:hover:bg-green-900 text-white dark:text-white hover:bg-green-700 px-2 sm:px-4"
+          className="bg-green-600 px-2 text-white hover:bg-green-700 sm:px-4 dark:bg-green-800 dark:text-white dark:hover:bg-green-900"
           disabled={isPending}
           role="button"
         >

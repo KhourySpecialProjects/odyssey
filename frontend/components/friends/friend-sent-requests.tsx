@@ -22,9 +22,9 @@ export async function FriendSentRequests() {
       <h1 className="font-bold">Sent Requests</h1>
       <p>A list of people you have sent friend requests to.</p>
 
-      <div className="p-1 md:p-4 mt-4 rounded-md bg-slate-100 dark:bg-slate-800">
+      <div className="mt-4 rounded-md bg-slate-100 p-1 md:p-4 dark:bg-slate-800">
         {sentRequests.length > 0 ? (
-          <ul className="divide-y divide-slate-200 dark:divide-slate-700 md:space-y-4">
+          <ul className="divide-y divide-slate-200 md:space-y-4 dark:divide-slate-700">
             {sentRequests.map((friendship) => (
               <FriendSentRequestsBlock
                 user={authUser}

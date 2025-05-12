@@ -46,8 +46,8 @@ export function AddBlock({ add }: { add: (block: Block) => void }) {
 
   return (
     <>
-      {open && <div className="fixed inset-0 bg-black/30 z-40" />}
-      <div className="w-full flex justify-center items-center gap-3 flex-wrap max-w-2xl pb-4">
+      {open && <div className="fixed inset-0 z-40 bg-black/30" />}
+      <div className="flex w-full max-w-2xl flex-wrap items-center justify-center gap-3 pb-4">
         <Popover open={open}>
           <PopoverTrigger
             asChild
@@ -56,13 +56,13 @@ export function AddBlock({ add }: { add: (block: Block) => void }) {
               setOpen(true);
             }}
           >
-            <Button className="bg-slate-600 text-white px-3 py-2 rounded-md hover:bg-slate-700">
+            <Button className="rounded-md bg-slate-600 px-3 py-2 text-white hover:bg-slate-700">
               Add Block
             </Button>
           </PopoverTrigger>
 
           <PopoverContent
-            className="space-y-1 overflow-y-auto max-h-[calc(100vh-4rem)] z-50"
+            className="z-50 max-h-[calc(100vh-4rem)] space-y-1 overflow-y-auto"
             ref={ref}
           >
             <Button
@@ -102,7 +102,7 @@ export function AddBlock({ add }: { add: (block: Block) => void }) {
             </Button>
 
             {dropdownVisible && (
-              <div className="divide-y divide-slate-300 mb-3 min-w-[220px] cursor-pointer text-black text-center p-2 space-y-1 shadow border rounded-md">
+              <div className="mb-3 min-w-[220px] cursor-pointer space-y-1 divide-y divide-slate-300 rounded-md border p-2 text-center text-black shadow">
                 <div>
                   <Button
                     onClick={(e) => {
@@ -121,7 +121,7 @@ export function AddBlock({ add }: { add: (block: Block) => void }) {
                       });
                     }}
                     variant={dropdownVariants}
-                    className="w-full border border-slate-200 bg-red-300 dark:bg-red-300 dark:text-black mb-1 justify-between"
+                    className="mb-1 w-full justify-between border border-slate-200 bg-red-300 dark:bg-red-300 dark:text-black"
                   >
                     Warning
                     {<CalloutIcon color={"bg-red-300"}></CalloutIcon>}
@@ -143,7 +143,7 @@ export function AddBlock({ add }: { add: (block: Block) => void }) {
                       });
                     }}
                     variant={dropdownVariants}
-                    className="w-full border border-slate-200 bg-blue-300 dark:bg-blue-300 dark:text-black mb-1 justify-between"
+                    className="mb-1 w-full justify-between border border-slate-200 bg-blue-300 dark:bg-blue-300 dark:text-black"
                   >
                     Question
                     {<CalloutIcon color={"bg-blue-300"}></CalloutIcon>}
@@ -165,7 +165,7 @@ export function AddBlock({ add }: { add: (block: Block) => void }) {
                       });
                     }}
                     variant={dropdownVariants}
-                    className="w-full border border-slate-200 bg-orange-300 dark:bg-orange-300 dark:text-black mb-1 justify-between"
+                    className="mb-1 w-full justify-between border border-slate-200 bg-orange-300 dark:bg-orange-300 dark:text-black"
                   >
                     Important
                     {<CalloutIcon color={"bg-orange-300"}></CalloutIcon>}
@@ -187,7 +187,7 @@ export function AddBlock({ add }: { add: (block: Block) => void }) {
                       });
                     }}
                     variant={dropdownVariants}
-                    className="w-full border border-slate-200 bg-green-300 dark:bg-green-300 dark:text-black mb-1 justify-between"
+                    className="mb-1 w-full justify-between border border-slate-200 bg-green-300 dark:bg-green-300 dark:text-black"
                   >
                     Definition
                     {<CalloutIcon color={"bg-green-300"}></CalloutIcon>}
@@ -209,7 +209,7 @@ export function AddBlock({ add }: { add: (block: Block) => void }) {
                       });
                     }}
                     variant={dropdownVariants}
-                    className="w-full border border-slate-200 bg-purple-300 dark:bg-purple-300 dark:text-black mb-1 justify-between"
+                    className="mb-1 w-full justify-between border border-slate-200 bg-purple-300 dark:bg-purple-300 dark:text-black"
                   >
                     More Information
                     {<CalloutIcon color={"bg-purple-300"}></CalloutIcon>}
@@ -231,7 +231,7 @@ export function AddBlock({ add }: { add: (block: Block) => void }) {
                       });
                     }}
                     variant={dropdownVariants}
-                    className="w-full border border-slate-200 bg-amber-300 dark:bg-amber-300 dark:text-black mb-1 justify-between"
+                    className="mb-1 w-full justify-between border border-slate-200 bg-amber-300 dark:bg-amber-300 dark:text-black"
                   >
                     Caution
                     {<CalloutIcon color={"bg-amber-300"}></CalloutIcon>}
@@ -253,7 +253,7 @@ export function AddBlock({ add }: { add: (block: Block) => void }) {
                       });
                     }}
                     variant={dropdownVariants}
-                    className="w-full border border-slate-200 bg-sky-50 dark:bg-sky-50 dark:text-black justify-between"
+                    className="w-full justify-between border border-slate-200 bg-sky-50 dark:bg-sky-50 dark:text-black"
                   >
                     Default
                     {<CalloutIcon color={"bg-sky-50"}></CalloutIcon>}

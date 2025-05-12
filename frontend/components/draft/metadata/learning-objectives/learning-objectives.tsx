@@ -56,13 +56,13 @@ export function LearningObjectives({
 
   return (
     <div>
-      <h2 className="text-2xl font-bold text-slate-900 mb-2 dark:text-white">
+      <h2 className="mb-2 text-2xl font-bold text-slate-900 dark:text-white">
         Learning Objectives
       </h2>
-      <p className="text-slate-500 mb-4 dark:text-slate-300">
+      <p className="mb-4 text-slate-500 dark:text-slate-300">
         By completing this Droplet, you should:
       </p>
-      <div className="mt-4 border rounded-md bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-500 ">
+      <div className="mt-4 rounded-md border border-slate-200 bg-slate-50 dark:border-slate-500 dark:bg-slate-800">
         <ul className="flex flex-col divide-y divide-slate-200 dark:divide-slate-500 dark:text-slate-300">
           {learningObjectives.map((objective) => (
             <LearningObjectiveDisplay
@@ -72,10 +72,10 @@ export function LearningObjectives({
               remove={removeLearningObjective(objective.id)}
             />
           ))}
-          <li className="px-4 py-3 ">
+          <li className="px-4 py-3">
             <form
               action={addLearningObjective}
-              className="flex flex-row items-center justify-between flex-nowrap w-full space-x-1.5"
+              className="flex w-full flex-row flex-nowrap items-center justify-between space-x-1.5"
             >
               <Input
                 name="objective"
@@ -91,7 +91,7 @@ export function LearningObjectives({
           </li>
         </ul>
       </div>
-      {error && <div className="text-red-500 mt-2">{error}</div>}
+      {error && <div className="mt-2 text-red-500">{error}</div>}
     </div>
   );
 }

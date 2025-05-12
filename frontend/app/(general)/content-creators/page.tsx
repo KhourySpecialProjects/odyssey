@@ -11,13 +11,13 @@ export default async function ContentCreatorsPage() {
   return (
     <GradientBackground className="flex-grow">
       <div className="flex flex-col items-center">
-        <div className="max-w-2xl mx-auto text-center">
-          <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-4xl pb-8">
+        <div className="mx-auto max-w-2xl text-center">
+          <h1 className="pb-8 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl dark:text-white">
             Content Creators
           </h1>
         </div>
-        <div className="w-[85%] md:w-[50%] ">
-          <ul className=" divide-slate-200 dark:divide-slate-700 md:space-y-0">
+        <div className="w-[85%] md:w-[50%]">
+          <ul className="divide-slate-200 md:space-y-0 dark:divide-slate-700">
             {(await fetchContentCreators())?.map((creator) => (
               <ContentCreatorBlock contentCreator={creator} key={creator.id} />
             ))}

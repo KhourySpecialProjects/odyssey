@@ -531,7 +531,7 @@ export function GroupManagementForm({
               ))}
             </div>
           ) : (
-            <div className="p-8 text-center text-slate-500 border border-dashed dark:border-slate-500 rounded-lg">
+            <div className="rounded-lg border border-dashed p-8 text-center text-slate-500 dark:border-slate-500">
               No members have been added to this group yet
             </div>
           )}
@@ -558,7 +558,7 @@ export function GroupManagementForm({
               onRemove={handleDropletRemove}
             />
           ) : (
-            <div className="p-8 text-center text-slate-500 border border-dashed dark:border-slate-500 rounded-lg">
+            <div className="rounded-lg border border-dashed p-8 text-center text-slate-500 dark:border-slate-500">
               No droplets have been added to this group yet
             </div>
           )}
@@ -587,13 +587,13 @@ export function GroupManagementForm({
               onRemove={handlePlaylistRemove}
             />
           ) : (
-            <div className="p-8 text-center text-slate-500 border border-dashed dark:border-slate-500 rounded-lg">
+            <div className="rounded-lg border border-dashed p-8 text-center text-slate-500 dark:border-slate-500">
               No playlists have been added to this group yet
             </div>
           )}
         </ContentSection>
 
-        <div className="flex justify-end gap-4 align-center">
+        <div className="align-center flex justify-end gap-4">
           <Button
             type="button"
             variant="outline"
@@ -615,7 +615,7 @@ export function GroupManagementForm({
           </Button>
         </div>
         {submissionState.error ? (
-          <p className="text-red-500 text-center">
+          <p className="text-center text-red-500">
             {submissionState.error as string}
           </p>
         ) : null}
@@ -628,7 +628,7 @@ export function GroupManagementForm({
               </DialogTitle>
             </DialogHeader>
 
-            <div className="flex flex-col gap-4 mt-4">
+            <div className="mt-4 flex flex-col gap-4">
               <Button onClick={handleGroupPost}>Share</Button>
               <Button
                 onClick={() => {

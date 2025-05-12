@@ -218,7 +218,7 @@ export function PlaylistForm({
       </div>
 
       <div>
-        <div className="flex justify-between items-center mb-4">
+        <div className="mb-4 flex items-center justify-between">
           <h2 className="text-lg font-semibold">Select and Arrange Droplets</h2>
           <p className="text-sm text-slate-600 dark:text-slate-300">
             {selectedDroplets.length} droplets selected ({totalLessons} lessons
@@ -253,7 +253,7 @@ export function PlaylistForm({
                 </DialogTitle>
               </DialogHeader>
 
-              <div className="flex flex-col gap-4 mt-4">
+              <div className="mt-4 flex flex-col gap-4">
                 <Button
                   className="dark:bg-slate-300"
                   onClick={handlePlaylistPost}
@@ -273,10 +273,10 @@ export function PlaylistForm({
             </DialogContent>
           </Dialog>
         </div>
-        {error && <p className="text-red-500 text-center">{error}</p>}
+        {error && <p className="text-center text-red-500">{error}</p>}
 
         <div
-          className="flex items-center space-x-2 xs:max-w-sm"
+          className="xs:max-w-sm flex items-center space-x-2"
           onSubmit={(e) => {
             e.preventDefault();
             updateQueryString(tempQuery);

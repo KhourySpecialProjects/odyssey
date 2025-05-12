@@ -8,7 +8,7 @@ export default function OrderedListTool({ editor }: { editor: Editor }) {
       onClick={() => editor.chain().focus().toggleOrderedList().run()}
       className={cn(
         editor?.isActive("orderedList") ? "bg-slate-200 dark:bg-slate-700" : "",
-        "p-2.5 rounded-md border border-transparent hover:border-slate-200",
+        "rounded-md border border-transparent p-2.5 hover:border-slate-200",
       )}
       title="Ordered list"
     >
