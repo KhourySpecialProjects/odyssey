@@ -166,9 +166,9 @@ export function LessonRenderer({
 
   if (isLocked) {
     return (
-      <div className="w-full xl:py-8 max-w-prose mx-auto">
-        <div className="p-6 text-center border rounded-md bg-slate-50 border-slate-200">
-          <LockIcon className="w-12 h-12 mx-auto mb-4 text-slate-400" />
+      <div className="mx-auto w-full max-w-prose xl:py-8">
+        <div className="rounded-md border border-slate-200 bg-slate-50 p-6 text-center">
+          <LockIcon className="mx-auto mb-4 h-12 w-12 text-slate-400" />
           <h2 className="text-xl font-bold text-slate-900">Lesson Locked</h2>
           <p className="mt-2 text-slate-600">
             Complete {previousLesson.name} to unlock this content.
@@ -209,16 +209,16 @@ export function LessonRenderer({
 
   return (
     <>
-      <div className="w-full min-w-[300px] md:min-w-[700px] mx-auto py-8 max-w-prose">
-        <div className="w-full mx-auto xl:py-8 max-w-prose relative">
+      <div className="mx-auto w-full max-w-prose min-w-[300px] py-8 md:min-w-[700px]">
+        <div className="relative mx-auto w-full max-w-prose xl:py-8">
           <h1 className="text-4xl font-extrabold text-balance">
             {lesson.name}
           </h1>
 
           {headings.length > 2 && (
-            <div className="p-6 mt-8 border rounded-md bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-500">
+            <div className="mt-8 rounded-md border border-slate-200 bg-slate-50 p-6 dark:border-slate-500 dark:bg-slate-800">
               <h2 className="text-xl font-bold">Contents</h2>
-              <ul className="mt-3 ml-4 list-disc list-inside">
+              <ul className="mt-3 ml-4 list-inside list-disc">
                 {headings.map((heading, index) => (
                   <li
                     key={index}
@@ -247,7 +247,7 @@ export function LessonRenderer({
               />
             ))}
           </div>
-          <div className="mt-8 flex justify-between items-center">
+          <div className="mt-8 flex items-center justify-between">
             <button
               onClick={handleMarkAsComplete}
               disabled={
@@ -255,7 +255,7 @@ export function LessonRenderer({
                 !enrollmentId ||
                 completedLessonIds.includes(lesson.id)
               }
-              className="px-4 py-2 bg-sky-600 text-white rounded-lg hover:bg-sky-700 disabled:opacity-50"
+              className="rounded-lg bg-sky-600 px-4 py-2 text-white hover:bg-sky-700 disabled:opacity-50"
             >
               {isPending
                 ? "Marking as complete..."
@@ -331,7 +331,7 @@ function LessonBlockRenderer({
     case "droplets.callout":
       return (
         <div
-          className={`flex flex-col items-center space-y-4 dark:border-slate-500 px-6 py-6 border rounded-md md:-mx-8 ${block.color || "bg-sky-50 dark:bg-sky-200"}`}
+          className={`flex flex-col items-center space-y-4 rounded-md border px-6 py-6 md:-mx-8 dark:border-slate-500 ${block.color || "bg-sky-50 dark:bg-sky-200"}`}
         >
           {block?.iconEnabled && (
             <div className="">
@@ -340,7 +340,7 @@ function LessonBlockRenderer({
           )}
 
           <div className="">
-            <div className="mx-auto prose prose-sky  prose-headings:text-inherit prose-code:text-inherit prose-strong:text-inherit justify-left prose-li:marker:text-slate-700">
+            <div className="prose prose-sky prose-headings:text-inherit prose-code:text-inherit prose-strong:text-inherit justify-left prose-li:marker:text-slate-700 mx-auto">
               <BlocksRenderer content={block.content} />
             </div>
           </div>
@@ -349,14 +349,14 @@ function LessonBlockRenderer({
 
     case "droplets.expandable":
       return (
-        <Collapsible className="w-full p-4 border rounded-md border-slate-200 dark:border-slate-500">
+        <Collapsible className="w-full rounded-md border border-slate-200 p-4 dark:border-slate-500">
           <CollapsibleTrigger className="inline-flex flex-row items-center gap-2 font-bold text-sky-600">
             {block.title}
-            <ArrowDownFromLineIcon className="w-4 h-4 text-sky-400" />
+            <ArrowDownFromLineIcon className="h-4 w-4 text-sky-400" />
           </CollapsibleTrigger>
-          <CollapsibleContent className="pt-3 mt-4 border-t border-t-slate-200 dark:border-slate-500">
+          <CollapsibleContent className="mt-4 border-t border-t-slate-200 pt-3 dark:border-slate-500">
             <div
-              className="prose prose-sky dark:text-slate-300 prose-headings:text-inherit prose-strong:text-inherit prose-code:text-inherit"
+              className="prose prose-sky prose-headings:text-inherit prose-strong:text-inherit prose-code:text-inherit dark:text-slate-300"
               dangerouslySetInnerHTML={{ __html: block.content }}
             ></div>
           </CollapsibleContent>

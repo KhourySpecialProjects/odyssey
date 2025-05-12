@@ -66,17 +66,17 @@ const PlaylistItem = ({
   return (
     <div
       ref={combinedRef}
-      className={`relative group transition-colors border rounded-md border-slate-200 dark:border-slate-500 hover:border-slate-300 bg-slate-50 dark:bg-slate-800 ${
+      className={`group relative rounded-md border border-slate-200 bg-slate-50 transition-colors hover:border-slate-300 dark:border-slate-500 dark:bg-slate-800 ${
         isDragging ? "opacity-50 shadow-lg" : ""
       }`}
     >
       <div className="flex items-center p-4">
-        <div {...drag} className="cursor-grab active:cursor-grabbing mr-4">
-          <GripVertical className="w-5 h-5 text-slate-400 shrink-0" />
+        <div {...drag} className="mr-4 cursor-grab active:cursor-grabbing">
+          <GripVertical className="h-5 w-5 shrink-0 text-slate-400" />
         </div>
 
         <div className="flex-grow">
-          <div className="flex flex-row flex-wrap flex-0 gap-1.5 mb-2">
+          <div className="mb-2 flex flex-0 flex-row flex-wrap gap-1.5">
             <Badge variant="default" className="dark:bg-slate-700">
               {playlist.isPublic ? "Public" : "Private"}
             </Badge>
@@ -90,7 +90,7 @@ const PlaylistItem = ({
           </span>
 
           {playlist.droplets && (
-            <p className="text-sm text-muted-foreground mt-1">
+            <p className="text-muted-foreground mt-1 text-sm">
               {playlist.droplets.length} droplets
             </p>
           )}
@@ -100,7 +100,7 @@ const PlaylistItem = ({
           variant="ghost"
           size="sm"
           onClick={() => onRemove(playlist.id)}
-          className="text-slate-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+          className="text-slate-400 opacity-0 transition-opacity group-hover:opacity-100 hover:text-red-500"
         >
           <XCircleIcon className="h-5 w-5" />
         </Button>

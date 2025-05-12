@@ -7,17 +7,17 @@ export function FAQList() {
 
   return (
     <div className="w-[85%] md:w-[50%]">
-      <ul className="divide-slate-200 dark:divide-slate-700 md:space-y-0">
+      <ul className="divide-slate-200 md:space-y-0 dark:divide-slate-700">
         <div>
           {[0, 1, 2].map((index) => (
             <li
               key={index}
               onClick={() => setOpenIndex(openIndex === index ? null : index)}
-              className="py-4 px-6 [&:not(:first-child)]:pt-3 relative border border-gray-300 rounded-md transition duration-150 hover:border-gray-500 cursor-pointer"
+              className="relative cursor-pointer rounded-md border border-gray-300 px-6 py-4 transition duration-150 hover:border-gray-500 [&:not(:first-child)]:pt-3"
             >
               <div className="flex items-center space-x-4">
-                <div className="flex-1 min-w-0">
-                  <p className="text-xl font-bold whitespace-normal text-slate-900 dark:text-slate-300 text-center">
+                <div className="min-w-0 flex-1">
+                  <p className="text-center text-xl font-bold whitespace-normal text-slate-900 dark:text-slate-300">
                     {index === 0 && "How can I create a droplet?"}
                     {index === 1 && "When was Odyssey first created?"}
                     {index === 2 &&
@@ -27,7 +27,7 @@ export function FAQList() {
               </div>
 
               <div
-                className={`overflow-hidden transition-[max-height] duration-500 ease-in-out text-center dark:text-slate-300 ${
+                className={`overflow-hidden text-center transition-[max-height] duration-500 ease-in-out dark:text-slate-300 ${
                   openIndex === index ? "max-h-96" : "max-h-0"
                 }`}
               >

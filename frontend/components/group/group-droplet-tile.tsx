@@ -32,10 +32,10 @@ export function GroupDropletTile({
 
   return (
     <Link href={`/d/${droplet.slug}`} target="_blank" rel="noopener noreferrer">
-      <Card className="bg-slate-50 border-slate-200 hover:shadow-md transition-shadow h-full dark:bg-slate-800 dark:border-slate-500">
+      <Card className="h-full border-slate-200 bg-slate-50 transition-shadow hover:shadow-md dark:border-slate-500 dark:bg-slate-800">
         <CardHeader className={`${dueDate && dueDate !== "" ? "" : ""} `}>
-          <div className="flex flex-row gap-2 mb-2 items-center">
-            <div className="h-1/2 flex flex-row w-2/3 space-x-1">
+          <div className="mb-2 flex flex-row items-center gap-2">
+            <div className="flex h-1/2 w-2/3 flex-row space-x-1">
               <Badge variant="default" className="text-xs">
                 {uppercaseFirstChar(droplet.focusArea)}
               </Badge>
@@ -47,7 +47,7 @@ export function GroupDropletTile({
               </Badge>
             </div>
             {dueDate && dueDate !== "" && daysUntil > -2 && (
-              <div className="flex justify-end w-2/3 ml-0">
+              <div className="ml-0 flex w-2/3 justify-end">
                 <Badge
                   className={`${getDueDateBadgeColor(daysUntil, true)}`}
                   variant="outline"
@@ -71,7 +71,7 @@ export function GroupDropletTile({
             )}
           </div>
           <CardTitle className="dark:text-slate-300">{droplet.name}</CardTitle>
-          <p className="text-sm text-muted-foreground dark:text-slate-400">
+          <p className="text-muted-foreground text-sm dark:text-slate-400">
             {droplet.lessons?.length || 0} lessons
           </p>
         </CardHeader>

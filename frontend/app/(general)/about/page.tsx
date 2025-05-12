@@ -52,26 +52,26 @@ export default async function AboutPage() {
   return (
     <GradientBackground>
       <>
-        <div className="max-w-2xl mx-auto text-center">
-          <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-4xl">
+        <div className="mx-auto max-w-2xl text-center">
+          <h1 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl dark:text-white">
             About Odyssey
           </h1>
-          <p className="mt-4 text-lg leading-normal text-slate-600 dark:text-slate-300 text-balance">
+          <p className="mt-4 text-lg leading-normal text-balance text-slate-600 dark:text-slate-300">
             Odyssey is an all-new on-demand learning platform built by Khoury
             College, for Khoury College.
           </p>
         </div>
 
-        <div className="px-6 mx-auto mt-24 max-w-7xl lg:px-8">
-          <div className="grid max-w-2xl grid-cols-1 mx-auto gap-x-8 gap-y-16 sm:gap-y-20 lg:mx-0 lg:max-w-none lg:grid-cols-2">
-            <div className="lg:pr-8 lg:pt-4">
+        <div className="mx-auto mt-24 max-w-7xl px-6 lg:px-8">
+          <div className="mx-auto grid max-w-2xl grid-cols-1 gap-x-8 gap-y-16 sm:gap-y-20 lg:mx-0 lg:max-w-none lg:grid-cols-2">
+            <div className="lg:pt-4 lg:pr-8">
               <div className="lg:max-w-lg">
-                <h2 className="text-base font-semibold leading-7 text-sky-600">
+                <h2 className="text-base leading-7 font-semibold text-sky-600">
                   Types
                 </h2>
-                <p className="mt-2 text-3xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-4xl">
+                <p className="mt-2 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl dark:text-white">
                   Understand{" "}
-                  <span className="italic underline underline-offset-1 font-mono px-1.5 text-sky-600">
+                  <span className="px-1.5 font-mono text-sky-600 italic underline underline-offset-1">
                     how
                   </span>{" "}
                   you&rsquo;ll learn
@@ -88,11 +88,11 @@ export default async function AboutPage() {
               {types.map((type) => (
                 <div
                   key={type.name.toLowerCase()}
-                  className="p-5 transition-colors border light:border-transparent dark:border-slate-500 rounded-md dark:bg-slate-800 bg-sky-50 hover:border-sky-600"
+                  className="light:border-transparent rounded-md border bg-sky-50 p-5 transition-colors hover:border-sky-600 dark:border-slate-500 dark:bg-slate-800"
                 >
                   <dt className="flex flex-row items-center gap-3">
                     <type.icon
-                      className="w-6 h-6 text-sky-600"
+                      className="h-6 w-6 text-sky-600"
                       aria-hidden="true"
                     />
                     <span className="text-lg font-semibold text-slate-900 dark:text-slate-300">
@@ -108,16 +108,16 @@ export default async function AboutPage() {
           </div>
         </div>
 
-        <div className="px-6 mx-auto mt-24 max-w-7xl lg:px-8">
-          <div className="grid max-w-2xl grid-cols-1 mx-auto gap-x-8 gap-y-16 sm:gap-y-20 lg:mx-0 lg:max-w-none lg:grid-cols-2">
-            <div className="lg:pr-8 lg:pt-4">
+        <div className="mx-auto mt-24 max-w-7xl px-6 lg:px-8">
+          <div className="mx-auto grid max-w-2xl grid-cols-1 gap-x-8 gap-y-16 sm:gap-y-20 lg:mx-0 lg:max-w-none lg:grid-cols-2">
+            <div className="lg:pt-4 lg:pr-8">
               <div className="lg:max-w-lg">
-                <h2 className="text-base font-semibold leading-7 text-sky-600">
+                <h2 className="text-base leading-7 font-semibold text-sky-600">
                   Focus Areas
                 </h2>
-                <p className="mt-2 text-3xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-4xl">
+                <p className="mt-2 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl dark:text-white">
                   Understand{" "}
-                  <span className="italic underline underline-offset-1 font-mono px-1.5 text-sky-600">
+                  <span className="px-1.5 font-mono text-sky-600 italic underline underline-offset-1">
                     what
                   </span>{" "}
                   you&rsquo;ll learn
@@ -133,11 +133,11 @@ export default async function AboutPage() {
               {focusAreas.map((type) => (
                 <div
                   key={type.name.toLowerCase()}
-                  className="p-5 transition-colors border light:border-transparent dark:border-slate-500 dark:bg-slate-800 rounded-md bg-sky-50 hover:border-sky-600"
+                  className="light:border-transparent rounded-md border bg-sky-50 p-5 transition-colors hover:border-sky-600 dark:border-slate-500 dark:bg-slate-800"
                 >
                   <dt className="flex flex-row items-center gap-3">
                     <type.icon
-                      className="w-6 h-6 text-sky-600"
+                      className="h-6 w-6 text-sky-600"
                       aria-hidden="true"
                     />
                     <span className="text-lg font-semibold text-slate-900 dark:text-slate-300">

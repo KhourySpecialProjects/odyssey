@@ -52,7 +52,7 @@ export default async function AuthorProfileSettings({
   ).length;
 
   return (
-    <div className="flex flex-col ">
+    <div className="flex flex-col">
       <FriendSearch
         authUsers={authorizedUsers}
         curUser={authorizedUser}

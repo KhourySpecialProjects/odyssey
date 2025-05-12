@@ -76,14 +76,14 @@ export default async function RootLayout({ params, children }: Props) {
       .includes(authorizedUser?.id);
 
   return (
-    <div className="flex flex-col xl:flex-row min-h-screen">
+    <div className="flex min-h-screen flex-col xl:flex-row">
       <Sidebar
         author={isAuthor || false}
         user={user}
         droplet={droplet}
         completedLessonIds={completedLessonIds}
       />
-      <main className="flex-1 w-full">{children}</main>
+      <main className="w-full flex-1">{children}</main>
     </div>
   );
 }

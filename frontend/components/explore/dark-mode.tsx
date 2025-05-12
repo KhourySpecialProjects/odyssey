@@ -20,14 +20,14 @@ export function DarkMode({ className }: { className?: string }) {
   return (
     <button
       onClick={() => setTheme(isDark ? "light" : "dark")}
-      className={`relative flex items-center w-8 h-8 bg-yellow-300 dark:bg-sky-600 rounded-full p-1 transition-colors ${className}`}
+      className={`relative flex h-8 w-8 items-center rounded-full bg-yellow-300 p-1 transition-colors dark:bg-sky-600 ${className}`}
     >
       <Moon
-        className={`absolute left-1 w-6 h-6 text-gray-900 transition-scale duration-500 ease-in-out ${isDark ? "" : "scale-0"}`}
+        className={`transition-scale absolute left-1 h-6 w-6 text-gray-900 duration-500 ease-in-out ${isDark ? "" : "scale-0"}`}
       />
 
       <Sun
-        className={`absolute right-1 w-6 h-6 text-gray-600 transition-scale duration-500 ease-in-out ${isDark ? "scale-0" : ""}`}
+        className={`transition-scale absolute right-1 h-6 w-6 text-gray-600 duration-500 ease-in-out ${isDark ? "scale-0" : ""}`}
       />
     </button>
   );

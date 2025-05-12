@@ -5,7 +5,7 @@ import Link from "next/link";
 
 export default function AccessDenied() {
   return (
-    <div className="w-full max-w-5xl p-8 mx-auto">
+    <div className="mx-auto w-full max-w-5xl p-8">
       <h1 className="font-bold">Access Denied</h1>
       <p>
         You must be{" "}

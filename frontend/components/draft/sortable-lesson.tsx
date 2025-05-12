@@ -52,7 +52,7 @@ export function SortableLesson({
       style={style}
       className={cn(
         "group relative rounded-lg transition-colors",
-        isDragging && "shadow-lg z-10",
+        isDragging && "z-10 shadow-lg",
       )}
     >
       <div className="flex items-center">
@@ -61,7 +61,7 @@ export function SortableLesson({
           {...listeners}
           className="cursor-grab active:cursor-grabbing"
         >
-          <GripVertical className="w-4 h-4 text-slate-400 mr-2 shrink-0" />
+          <GripVertical className="mr-2 h-4 w-4 shrink-0 text-slate-400" />
         </div>
 
         <Link
@@ -69,7 +69,7 @@ export function SortableLesson({
           onClick={handleLessonClick}
           className={cn(
             classes.link,
-            "flex-grow flex items-center",
+            "flex flex-grow items-center",
             pathname === `/draft/d/${droplet.slug}/${lesson.slug}` &&
               classes.activeLink,
           )}
@@ -78,11 +78,11 @@ export function SortableLesson({
           {lesson.type === "activity" ? (
             <Hammer className="shrink-0" />
           ) : lesson.type === "caseStudy" ? (
-            <FilePieChart className="w-5 h-5 mr-0.5 shrink-0" />
+            <FilePieChart className="mr-0.5 h-5 w-5 shrink-0" />
           ) : (
             <BookText className="shrink-0" />
           )}
-          <span className="leading-snug ml-3">{lesson.name}</span>
+          <span className="ml-3 leading-snug">{lesson.name}</span>
         </Link>
       </div>
     </li>

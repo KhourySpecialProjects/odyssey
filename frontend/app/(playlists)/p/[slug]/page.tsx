@@ -132,19 +132,19 @@ export default async function PlaylistPage({ params }: Props) {
 
   return (
     <div className="container py-8">
-      <div className="max-w-4xl mx-auto">
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold mb-4">{playlist.name}</h1>
-          <div className="flex justify-center gap-4 mb-6">
+      <div className="mx-auto max-w-4xl">
+        <div className="mb-8 text-center">
+          <h1 className="mb-4 text-4xl font-bold">{playlist.name}</h1>
+          <div className="mb-6 flex justify-center gap-4">
             <Badge
               variant="outline"
-              className="capitalize bg-slate-100 dark:text-black dark:bg-slate-300"
+              className="bg-slate-100 capitalize dark:bg-slate-300 dark:text-black"
             >
               {playlist.duration}
             </Badge>
             <Badge
               variant="outline"
-              className="bg-slate-100 dark:text-black dark:bg-slate-300"
+              className="bg-slate-100 dark:bg-slate-300 dark:text-black"
             >
               {totalLessons} {totalLessons === 1 ? "Lesson" : "Lessons"}
             </Badge>
@@ -175,15 +175,15 @@ export default async function PlaylistPage({ params }: Props) {
             </Link>
           </div>
           {user && (
-            <div className="max-w-md mx-auto mb-4">
-              <div className="flex justify-center text-sm text-slate-600 mb-2">
+            <div className="mx-auto mb-4 max-w-md">
+              <div className="mb-2 flex justify-center text-sm text-slate-600">
                 <span>{progressPercentage}% Complete</span>
               </div>
               <Progress value={progressPercentage} className="h-2" />
             </div>
           )}
           {playlist.description && (
-            <p className="text-lg text-slate-600 mb-4">
+            <p className="mb-4 text-lg text-slate-600">
               {playlist.description}
             </p>
           )}
@@ -193,7 +193,7 @@ export default async function PlaylistPage({ params }: Props) {
           <div className="space-y-8">
             {pickUpWhereYouLeftOffDroplet && (
               <section>
-                <h2 className="text-xl font-semibold mb-4">
+                <h2 className="mb-4 text-xl font-semibold">
                   Pick Up Where You Left Off
                 </h2>
                 <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
@@ -211,7 +211,7 @@ export default async function PlaylistPage({ params }: Props) {
 
             {startSomethingNewDroplets.length > 0 && (
               <section>
-                <h2 className="text-xl font-semibold mb-4">
+                <h2 className="mb-4 text-xl font-semibold">
                   Start Something New
                 </h2>
                 <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
@@ -229,7 +229,7 @@ export default async function PlaylistPage({ params }: Props) {
 
             {completedDroplets.length > 0 && (
               <section>
-                <h2 className="text-xl font-semibold mb-4">
+                <h2 className="mb-4 text-xl font-semibold">
                   Completed Droplets
                 </h2>
                 <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">

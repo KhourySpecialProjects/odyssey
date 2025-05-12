@@ -33,9 +33,9 @@ export async function Header() {
   }
 
   return (
-    <header className="sticky top-0 z-50 bg-white border-b border-slate-200 dark:border-slate-500 dark:bg-slate-900 xl:px-6">
-      <div className="flex items-center justify-between h-full max-w-screen-xl px-4 py-3 mx-auto">
-        <div className="flex flex-row justify-between xl:grid w-full xl:grid-cols-[1fr_auto_1fr]">
+    <header className="sticky top-0 z-50 border-b border-slate-200 bg-white xl:px-6 dark:border-slate-500 dark:bg-slate-900">
+      <div className="mx-auto flex h-full max-w-screen-xl items-center justify-between px-4 py-3">
+        <div className="flex w-full flex-row justify-between xl:grid xl:grid-cols-[1fr_auto_1fr]">
           <div className="flex flex-row gap-4">
             <Sheet>
               <SheetTrigger asChild role="banner">
@@ -44,7 +44,7 @@ export async function Header() {
                   size="icon"
                   className="shrink-0 xl:hidden"
                 >
-                  <Menu className="w-5 h-5" />
+                  <Menu className="h-5 w-5" />
                   <span className="sr-only">Toggle navigation menu</span>
                 </Button>
               </SheetTrigger>
@@ -63,11 +63,11 @@ export async function Header() {
                     className="flex-col space-y-2 text-2xl"
                   />
 
-                  <DarkMode className="scale-150 ml-2" />
+                  <DarkMode className="ml-2 scale-150" />
                 </nav>
               </SheetContent>
             </Sheet>
-            <Link href="/" className="w-max hidden sm:block">
+            <Link href="/" className="hidden w-max sm:block">
               <Logo width={165} height={45} />
               <span className="sr-only">
                 Odyssey, a Khoury College Learning Platform
@@ -82,10 +82,10 @@ export async function Header() {
             </span>
           </Link>
 
-          <nav className="flex-row items-center hidden xl:flex">
+          <nav className="hidden flex-row items-center xl:flex">
             <NavLinks
               items={getNavLinks()}
-              className="flex-row space-x-8 space-y-0"
+              className="flex-row space-y-0 space-x-8"
             />
           </nav>
 

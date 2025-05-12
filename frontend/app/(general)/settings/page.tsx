@@ -48,7 +48,7 @@ export default async function Settings() {
 
   return (
     <>
-      <Card className="border dark:border-slate-500 hover:border-slate-300 dark:bg-slate-800">
+      <Card className="border hover:border-slate-300 dark:border-slate-500 dark:bg-slate-800">
         <CardHeader>
           <CardTitle>Profile</CardTitle>
           <CardDescription>Your personal profile information.</CardDescription>
@@ -64,7 +64,7 @@ export default async function Settings() {
                 {user?.name ? (
                   getInitials(user.name)
                 ) : (
-                  <User2Icon className="w-4 h-4" />
+                  <User2Icon className="h-4 w-4" />
                 )}
               </AvatarFallback>
             </Avatar>
@@ -76,7 +76,7 @@ export default async function Settings() {
             </div>
           </div>
 
-          <div className="flex items-center w-full pt-4 space-x-8 border-t sm:pt-0 sm:pl-8 border-t-slate-200 sm:border-t-0 sm:border-l sm:border-l-slate-200">
+          <div className="flex w-full items-center space-x-8 border-t border-t-slate-200 pt-4 sm:border-t-0 sm:border-l sm:border-l-slate-200 sm:pt-0 sm:pl-8">
             <div
               className={`${
                 user?.nuid ? "visibility: visible" : "visibility: hidden"
@@ -106,7 +106,7 @@ export default async function Settings() {
             To make changes, update your{" "}
             <Link
               href="https://nam.delve.office.com/?v=editprofile"
-              className="underline text-sky-600"
+              className="text-sky-600 underline"
             >
               Northeastern profile
             </Link>
@@ -122,7 +122,7 @@ export default async function Settings() {
           <AuthorDroplets author={authorizedUser} />
         </Suspense>
       )}
-      <Card className="border dark:border-slate-500 hover:border-slate-300 dark:bg-slate-800">
+      <Card className="border hover:border-slate-300 dark:border-slate-500 dark:bg-slate-800">
         <CardHeader>
           <CardTitle>Completed Droplets</CardTitle>
           <CardDescription>
@@ -143,7 +143,7 @@ export default async function Settings() {
           </div>
         </CardContent>
       </Card>
-      <Card className="border dark:border-slate-500 hover:border-slate-300 dark:bg-slate-800">
+      <Card className="border hover:border-slate-300 dark:border-slate-500 dark:bg-slate-800">
         <CardHeader>
           <CardTitle>Statistics</CardTitle>
           <CardDescription>

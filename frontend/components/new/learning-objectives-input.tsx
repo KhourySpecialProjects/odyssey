@@ -36,22 +36,22 @@ export function LearningObjectivesInput({
   return (
     <div
       className={cn(
-        "select-none w-min flex flex-col items-start justify-center",
+        "flex w-min flex-col items-start justify-center select-none",
         className,
       )}
     >
-      <div className="w-full flex items-center justify-between mb-0">
+      <div className="mb-0 flex w-full items-center justify-between">
         <div>
-          <h2 className="font-semibold text-sm">
+          <h2 className="text-sm font-semibold">
             Learning Objectives{" "}
             {firstTime && <span className="text-red-500">*</span>}
           </h2>
-          <p className="text-slate-500 mb-4 text-sm dark:text-slate-300">
+          <p className="mb-4 text-sm text-slate-500 dark:text-slate-300">
             By completing this Droplet, you should:
           </p>
         </div>
       </div>
-      <div className="w-full space-y-1.5 h-40 overflow-y-scroll rounded p-2">
+      <div className="h-40 w-full space-y-1.5 overflow-y-scroll rounded p-2">
         <style jsx>{`
           div::-webkit-scrollbar {
             width: 10px;
@@ -78,8 +78,8 @@ export function LearningObjectivesInput({
               remove={() => removeLearningObjective(objective)}
             />
           ))}
-          <li className="px-4 py-3 ">
-            <div className="flex flex-row items-center justify-between flex-nowrap w-full space-x-1.5">
+          <li className="px-4 py-3">
+            <div className="flex w-full flex-row flex-nowrap items-center justify-between space-x-1.5">
               <Input
                 name="objective"
                 value={newObjective}

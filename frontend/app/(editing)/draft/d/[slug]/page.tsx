@@ -65,8 +65,8 @@ export default async function Droplet({ params }: Props) {
   return (
     <>
       <GradientBackground className="px-0">
-        <div className="max-w-2xl mx-auto px-5 md:px-0 ">
-          <div className="flex flex-row flex-0 flex-wrap gap-1.5">
+        <div className="mx-auto max-w-2xl px-5 md:px-0">
+          <div className="flex flex-0 flex-row flex-wrap gap-1.5">
             <Badge variant="outline">
               {uppercaseFirstChar(droplet.focusArea)}
             </Badge>
@@ -82,12 +82,12 @@ export default async function Droplet({ params }: Props) {
             dropletId={droplet.id}
             startingName={droplet.name}
           />
-          <div className="flex flex-row w-full items-center space-x-10 my-3">
+          <div className="my-3 flex w-full flex-row items-center space-x-10">
             <RegenerateSlugButton dropletId={droplet.id} name={droplet.name} />
           </div>
         </div>
 
-        <div className="w-full max-w-2xl mx-auto space-y-10 mt-10">
+        <div className="mx-auto mt-10 w-full max-w-2xl space-y-10">
           <Authors
             dropletId={droplet.id}
             selectedIds={droplet.authorized_users?.map((user) => user.id) || []}
@@ -116,10 +116,10 @@ export default async function Droplet({ params }: Props) {
             <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
               General Info
             </h1>
-            <p className="text-slate-500 mb-8 dark:text-slate-300">
+            <p className="mb-8 text-slate-500 dark:text-slate-300">
               Information that users will see when they view the droplet{" "}
             </p>
-            <div className="w-full flex flex-col space-y-4">
+            <div className="flex w-full flex-col space-y-4">
               <div className="flex items-center justify-center">
                 <div className="flex flex-row space-x-5">
                   <Filter

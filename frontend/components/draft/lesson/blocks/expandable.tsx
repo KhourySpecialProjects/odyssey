@@ -43,11 +43,11 @@ export function ExpandableEditor({
 
   return (
     <div className="flex flex-row items-center">
-      <div className="cursor-grab active:cursor-grabbing text-slate-400 hover:text-slate-600 z-10">
+      <div className="z-10 cursor-grab text-slate-400 hover:text-slate-600 active:cursor-grabbing">
         <GripVertical size={20} />
       </div>
-      <div className="w-full p-4 border rounded-md border-slate-200 dark:border-slate-500">
-        <div className="w-full flex flex-row  mb-4 justify-between items-center">
+      <div className="w-full rounded-md border border-slate-200 p-4 dark:border-slate-500">
+        <div className="mb-4 flex w-full flex-row items-center justify-between">
           <h2 className="text-lg">Expandable Block</h2>
           <Trash2Icon
             className="cursor-pointer text-red-600 hover:text-red-700"
@@ -55,13 +55,13 @@ export function ExpandableEditor({
             role="trash"
           />
         </div>
-        <div className="inline-flex mb-4 flex-row items-center gap-2 font-bold text-sky-600 w-full">
+        <div className="mb-4 inline-flex w-full flex-row items-center gap-2 font-bold text-sky-600">
           <Input
             value={title}
             onChange={updateTitle}
             placeholder={"Title"}
           ></Input>
-          <ArrowDownFromLineIcon className="w-4 h-4 text-sky-400" />
+          <ArrowDownFromLineIcon className="h-4 w-4 text-sky-400" />
         </div>
 
         <ExpandableBlockInput

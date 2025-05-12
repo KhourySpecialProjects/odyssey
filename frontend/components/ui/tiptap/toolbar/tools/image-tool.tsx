@@ -64,7 +64,7 @@ export default function ImageToolButton({ editor }: { editor: Editor | null }) {
           }}
           className={cn(
             disabled ? "" : "hover:border-slate-200",
-            "p-2.5 rounded-md border border-transparent",
+            "rounded-md border border-transparent p-2.5",
           )}
           title="Image"
         >
@@ -75,7 +75,7 @@ export default function ImageToolButton({ editor }: { editor: Editor | null }) {
         <form action={formAction} role="form">
           <FileUpload file={file} setFile={setFile} />
 
-          <div className="w-full flex justify-between items-center">
+          <div className="flex w-full items-center justify-between">
             <PopoverClose onClick={() => setOpen(false)} asChild>
               <Button before={<XIcon />} className="m-2">
                 Close
@@ -160,13 +160,12 @@ const FileUpload = ({
 
   return (
     <div
-      className={`flex flex-col items-center max-w-xs mx-auto p-4 border-2 rounded-lg cursor-pointer 
-          ${isDragging ? "border-blue-500 bg-blue-50" : "border-gray-300 border-dashed"}`}
+      className={`mx-auto flex max-w-xs cursor-pointer flex-col items-center rounded-lg border-2 p-4 ${isDragging ? "border-blue-500 bg-blue-50" : "border-dashed border-gray-300"}`}
       onDrop={handleDrop}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
     >
-      <label className="bg-blue-500 text-white py-2 px-4 rounded mb-4 cursor-pointer">
+      <label className="mb-4 cursor-pointer rounded bg-blue-500 px-4 py-2 text-white">
         {file ? "Change File" : "Upload or Drag File Here"}
         <input
           name="image"
@@ -177,10 +176,10 @@ const FileUpload = ({
       </label>
 
       {file && (
-        <div className="flex items-center justify-between w-full">
-          <span className="truncate flex-grow">{file.name}</span>
+        <div className="flex w-full items-center justify-between">
+          <span className="flex-grow truncate">{file.name}</span>
           <button
-            className="bg-red-500 text-white py-1 px-2 rounded ml-2"
+            className="ml-2 rounded bg-red-500 px-2 py-1 text-white"
             onClick={handleRemoveFile}
           >
             Remove

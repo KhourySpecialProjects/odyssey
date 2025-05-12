@@ -105,34 +105,34 @@ export function NoteBlock({
   return (
     <div
       className={cn(
-        "mx-3 pt-2 pl-1 pr-1 w-full note-block bg-slate-200  rounded-xl flex flex-row",
-        "dark:bg-slate-700 dark:border dark:border-slate-500",
+        "note-block mx-3 flex w-full flex-row rounded-xl bg-slate-200 pt-2 pr-1 pl-1",
+        "dark:border dark:border-slate-500 dark:bg-slate-700",
         focused
-          ? "dark:shadow-[0px_0px_16px_rgb(0,255,255)] shadow-[0px_0px_16px_rgb(29,58,138)]"
-          : "dark:shadow-[0px_0px_6px_rgb(0,255,255)] shadow-[0px_0px_8px_rgb(29,58,138)]",
+          ? "shadow-[0px_0px_16px_rgb(29,58,138)] dark:shadow-[0px_0px_16px_rgb(0,255,255)]"
+          : "shadow-[0px_0px_8px_rgb(29,58,138)] dark:shadow-[0px_0px_6px_rgb(0,255,255)]",
       )}
     >
-      <div className="flex-1 flex flex-col w-4/5 py-2 px-1">
-        <div className="pb-2 flex flex-row items-center">
+      <div className="flex w-4/5 flex-1 flex-col px-1 py-2">
+        <div className="flex flex-row items-center pb-2">
           <div className="grip-handle pr-2">
             <GripVertical />
           </div>
           {note.highlight?.text ? (
-            <div className="flex flex-row justify-between w-full">
+            <div className="flex w-full flex-row justify-between">
               <Badge
                 variant="secondary"
                 title={note.highlight.text}
-                className={`inline-block w-fit max-w-[50%] block overflow-hidden text-ellipsis whitespace-nowrap text-center text-slate-700 ${getHighlightColor(note.highlight.color)} hover:text-white dark:hover:bg-slate-800 border dark:hover:border-white`}
+                className={`block inline-block w-fit max-w-[50%] overflow-hidden text-center text-ellipsis whitespace-nowrap text-slate-700 ${getHighlightColor(note.highlight.color)} border hover:text-white dark:hover:border-white dark:hover:bg-slate-800`}
               >
                 {note.highlight.text.substring(0, 25)}{" "}
                 {note.highlight.text.length > 25 ? "..." : ""}
               </Badge>
             </div>
           ) : (
-            <div className="flex flex-row justify-start w-full">
+            <div className="flex w-full flex-row justify-start">
               <Badge
                 variant="secondary"
-                className={`text-center text-slate-700 bg-slate-200 border border-slate-400 hover:bg-slate-200 py-1 text-sm`}
+                className={`border border-slate-400 bg-slate-200 py-1 text-center text-sm text-slate-700 hover:bg-slate-200`}
               >
                 {noteExpanded ? (
                   "General Note"
@@ -147,25 +147,25 @@ export function NoteBlock({
           )}
 
           <button
-            className={`ml-auto ${noteExpanded ? "" : "flex flex-row justify-between w-full"} `}
+            className={`ml-auto ${noteExpanded ? "" : "flex w-full flex-row justify-between"} `}
             onClick={() => setNoteExpanded(!noteExpanded)}
           >
             <div className={`w-full ${noteExpanded ? "hidden" : ""}`}></div>
             {!noteExpanded ? (
               <ChevronDown
-                className="dark:bg-slate-700 rounded-tr-md"
+                className="rounded-tr-md dark:bg-slate-700"
                 data-testid="chevrondown"
               />
             ) : (
               <ChevronUp
-                className="dark:bg-slate-700 rounded-tr-md"
+                className="rounded-tr-md dark:bg-slate-700"
                 data-testid="chevronup"
               />
             )}
           </button>
 
           <Button
-            className="p-0 mb-1 ml-2 h-full bg-red-700 dark:bg-red-700 hover:bg-red-900 dark:hover:bg-red-900 trash-icon"
+            className="trash-icon mb-1 ml-2 h-full bg-red-700 p-0 hover:bg-red-900 dark:bg-red-700 dark:hover:bg-red-900"
             variant="default"
             size="sm"
             onClick={() => onDelete(note.id)}
@@ -189,7 +189,7 @@ export function NoteBlock({
               setFocused(true);
             }}
           >
-            <div className="bg-white dark:bg-slate-800 flex flex-row items-center w-full rounded-tl-md border dark:border-slate-500 rounded-tr-md">
+            <div className="flex w-full flex-row items-center rounded-tl-md rounded-tr-md border bg-white dark:border-slate-500 dark:bg-slate-800">
               <div className="flex-grow" data-testid="toolbar">
                 <DefaultToolbar editor={editor!} note={true} />
               </div>

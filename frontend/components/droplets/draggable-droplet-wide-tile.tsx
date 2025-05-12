@@ -51,14 +51,14 @@ export default function DraggableDropletWideTile({
         }
       }}
       className={cn(
-        "relative transition-colors border rounded-md border-slate-200 dark:border-slate-500 hover:border-slate-300 bg-slate-50 dark:bg-slate-800",
+        "relative rounded-md border border-slate-200 bg-slate-50 transition-colors hover:border-slate-300 dark:border-slate-500 dark:bg-slate-800",
         isDragging && "opacity-50",
       )}
     >
       <div className="p-4">
         <div className="flex flex-col justify-end gap-2">
-          <div className="flex flex-row flex-wrap flex-0 gap-1.5">
-            <div className="cursor-grab active:cursor-grabbing text-slate-400 hover:text-slate-600 z-10">
+          <div className="flex flex-0 flex-row flex-wrap gap-1.5">
+            <div className="z-10 cursor-grab text-slate-400 hover:text-slate-600 active:cursor-grabbing">
               <GripVertical size={20} />
             </div>
             {droplet.status === "draft" && (
@@ -80,7 +80,7 @@ export default function DraggableDropletWideTile({
             ))}
           </div>
 
-          <span className="block w-full text-xl font-black dark:text-slate-300 text-slate-950 place-self-end pt-2 pl-1">
+          <span className="block w-full place-self-end pt-2 pl-1 text-xl font-black text-slate-950 dark:text-slate-300">
             {droplet.name}
           </span>
         </div>

@@ -33,7 +33,7 @@ function CodeBlockComponent({
         contentEditable={false}
         defaultValue={defaultLanguage}
         onChange={(event) => updateAttributes({ language: event.target.value })}
-        className="text-sm rounded-md px-2 py-1 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:text-black"
+        className="rounded-md border border-gray-300 px-2 py-1 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none dark:text-black"
       >
         <option value="null">auto</option>
         <option disabled>—</option>
@@ -45,15 +45,15 @@ function CodeBlockComponent({
             </option>
           ))}
       </select>
-      <pre className="pl-12 pr-4 py-3 overflow-x-auto">
-        <div className="absolute left-0 top-0 bottom-0 min-w-[2.5rem] flex flex-col text-slate-500 text-sm select-none border-r border-slate-300 bg-slate-50">
+      <pre className="overflow-x-auto py-3 pr-4 pl-12">
+        <div className="absolute top-0 bottom-0 left-0 flex min-w-[2.5rem] flex-col border-r border-slate-300 bg-slate-50 text-sm text-slate-500 select-none">
           <div className="pt-3 pl-3">
             {Array.from({
               length: (node.textContent.match(/\n/g) || []).length + 1,
             }).map((_, i) => (
               <span
                 key={i}
-                className="text-right pr-2 leading-5 block"
+                className="block pr-2 text-right leading-5"
                 style={{ paddingTop: "0.15rem", paddingBottom: "0.15rem" }}
               >
                 {i + 1}
@@ -73,7 +73,7 @@ function CodeTool({ editor }: { editor: Editor }) {
       onClick={() => editor.chain().focus().toggleCodeBlock().run()}
       className={cn(
         editor?.isActive("codeBlock") ? "bg-slate-200 dark:bg-slate-700" : "",
-        "p-2.5 rounded-md border border-transparent hover:border-slate-200",
+        "rounded-md border border-transparent p-2.5 hover:border-slate-200",
       )}
       title="Code"
     >

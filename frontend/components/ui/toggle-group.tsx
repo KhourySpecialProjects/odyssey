@@ -12,7 +12,7 @@ const ToggleGroup = React.forwardRef<
   return (
     <ToggleGroupPrimitive.Root
       className={cn(
-        "rounded-3xl px-2 py-2 space-x-2 border border-slate-200 dark:border-slate-500 w-fit",
+        "w-fit space-x-2 rounded-3xl border border-slate-200 px-2 py-2 dark:border-slate-500",
         className,
       )}
       {...props}
@@ -31,7 +31,7 @@ const ToggleGroupItem = React.forwardRef<
     <ToggleGroupPrimitive.Item
       ref={ref}
       className={cn(
-        "rounded-3xl text-sm px-3 py-2   text-slate-900  focus:outline-none  disabled:cursor-not-allowed dark:border-slate-800  dark:text-slate-50 dark:ring-offset-slate-950 dark:focus-visible:ring-slate-300 data-[state=on]:bg-slate-200 dark:data-[state=on]:bg-slate-700 dark:hover:bg-slate-800 hover:bg-slate-100",
+        "rounded-3xl px-3 py-2 text-sm text-slate-900 hover:bg-slate-100 focus:outline-none disabled:cursor-not-allowed data-[state=on]:bg-slate-200 dark:border-slate-800 dark:text-slate-50 dark:ring-offset-slate-950 dark:hover:bg-slate-800 dark:focus-visible:ring-slate-300 dark:data-[state=on]:bg-slate-700",
         className,
       )}
       {...props}

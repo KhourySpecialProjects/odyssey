@@ -87,7 +87,7 @@ export async function PlaylistsGrid({
 
   if (!playlistsWithCompletion || playlistsWithCompletion.length === 0) {
     return (
-      <Message className="mb-8 border border-dashed rounded-md border-slate-200 dark:border-slate-500 dark:bg-slate-800">
+      <Message className="mb-8 rounded-md border border-dashed border-slate-200 dark:border-slate-500 dark:bg-slate-800">
         <MessageHeader subtitle="No Results" title="No Public Playlists" />
         <MessageDescription>
           There are no public playlists available at this time.

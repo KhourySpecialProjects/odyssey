@@ -63,7 +63,7 @@ export function AddDropletDialog({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm">
-          <PlusCircle className="h-4 w-4 mr-2" />
+          <PlusCircle className="mr-2 h-4 w-4" />
           Add Droplet
         </Button>
       </DialogTrigger>
@@ -78,9 +78,9 @@ export function AddDropletDialog({
             onChange={(e) => setSearch(e.target.value)}
             className="w-full"
           />
-          <div className="flex flex-col gap-6 max-h-[60vh] overflow-y-auto">
+          <div className="flex max-h-[60vh] flex-col gap-6 overflow-y-auto">
             {filteredDroplets.map((droplet) => (
-              <div key={droplet.id} className="relative group h-[120px]">
+              <div key={droplet.id} className="group relative h-[120px]">
                 <GroupDropletTile droplet={droplet} />
                 <Button
                   variant="ghost"
@@ -93,7 +93,7 @@ export function AddDropletDialog({
               </div>
             ))}
           </div>
-          <div className="flex justify-end pt-4 border-t">
+          <div className="flex justify-end border-t pt-4">
             <Button
               onClick={handleDone}
               disabled={selectedDroplets.length === 0}

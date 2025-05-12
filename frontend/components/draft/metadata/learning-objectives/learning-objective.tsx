@@ -23,15 +23,15 @@ export function LearningObjectiveDisplay({
     <li
       className={cn(
         "inline-flex items-center gap-2 px-4 py-3 leading-snug",
-        open ? "shadow-md" : "hover:shadow cursor-pointer",
+        open ? "shadow-md" : "cursor-pointer hover:shadow",
       )}
       onClick={() => (open ? null : setOpen(true))}
       ref={ref}
     >
-      <GoalIcon className="w-5 h-5 mr-0.5 shrink-0" />
+      <GoalIcon className="mr-0.5 h-5 w-5 shrink-0" />
 
       {open ? (
-        <div className="w-full inline-flex items-center justify-between space-x-1.5">
+        <div className="inline-flex w-full items-center justify-between space-x-1.5">
           <Input
             value={learningObjective}
             onChange={(e) => {
@@ -41,7 +41,7 @@ export function LearningObjectiveDisplay({
           />
           <Button
             size="sm"
-            className="bg-red-300 dark:bg-red-300 text-black dark:text-black"
+            className="bg-red-300 text-black dark:bg-red-300 dark:text-black"
             type="button"
             onClick={remove}
           >

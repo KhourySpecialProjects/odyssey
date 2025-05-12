@@ -59,14 +59,14 @@ export function CalloutEditor({
 
   return (
     <div className="flex flex-row items-center">
-      <div className="cursor-grab active:cursor-grabbing text-slate-400 hover:text-slate-600 z-10">
+      <div className="z-10 cursor-grab text-slate-400 hover:text-slate-600 active:cursor-grabbing">
         <GripVertical size={20} />
       </div>
       <div
-        className={`w-full rounded-md border border-slate-200 dark:border-slate-500 p-4 hover:shadow-md ${block.color || "bg-sky-50 dark:bg-sky-200"} `}
+        className={`w-full rounded-md border border-slate-200 p-4 hover:shadow-md dark:border-slate-500 ${block.color || "bg-sky-50 dark:bg-sky-200"} `}
       >
         <div
-          className={`w-full flex flex-row mb-4 justify-between items-center`}
+          className={`mb-4 flex w-full flex-row items-center justify-between`}
         >
           <div className="flex flex-row items-center">
             <h2 className="text-lg dark:text-black">Callout Block</h2>
@@ -81,7 +81,7 @@ export function CalloutEditor({
                     color={block.color || "bg-sky-300"}
                   ></CalloutIcon>
                   {!iconEnabled && (
-                    <Ban className="absolute top-0 left-0 w-full h-full text-red-500" />
+                    <Ban className="absolute top-0 left-0 h-full w-full text-red-500" />
                   )}
                 </Button>
               </div>

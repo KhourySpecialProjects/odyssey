@@ -15,8 +15,8 @@ interface DropletProps {
 
 export function DropletRenderer({ droplet }: DropletProps) {
   return (
-    <div className="w-full mx-auto max-w-prose">
-      <p className="p-4 -mx-4 rounded-md bg-slate-50 text-slate-700">
+    <div className="mx-auto w-full max-w-prose">
+      <p className="-mx-4 rounded-md bg-slate-50 p-4 text-slate-700">
         You are viewing the <strong>{droplet.name}</strong> {droplet.type}{" "}
         Droplet in the {droplet.focusArea} focus area.
       </p>
