@@ -10,6 +10,7 @@ import {
   UsersRound,
   Info,
 } from "lucide-react";
+import { Checkbox } from "../ui/checkbox";
 
 interface FeedFilterProps {
   onFilterChange: (selectedRoles: AnnouncementTypeTitle[]) => void;
@@ -95,15 +96,19 @@ export function FeedFilter({ onFilterChange }: FeedFilterProps) {
           key={role.value}
           className={`flex items-center space-x-2 rounded-md p-1 ${role.color} ml-2 scale-125`}
         >
-          <button
+          <Checkbox
             id={role.value}
-            onClick={() => toggleRole(role.value)}
-            className={`${selectedRoles.includes(role.value) ? "opacity-100" : "opacity-30"} w-[90px] cursor-pointer pl-1 focus-visible:ring-sky-500`}
+            checked={selectedRoles.includes(role.value)}
+            onCheckedChange={() => toggleRole(role.value)}
+            className="border-sky-500 bg-sky-200 focus-visible:ring-sky-500 data-[state=checked]:border-sky-500 data-[state=checked]:bg-sky-500 dark:data-[state=checked]:bg-sky-500"
+          />
+          <div
+            className={`${selectedRoles.includes(role.value) ? "opacity-100" : "opacity-50"} w-[90px] pl-1 focus-visible:ring-sky-500`}
           >
             <span className="flex w-full items-center justify-between gap-1 px-1 text-sm leading-none font-medium">
               {role.label}
             </span>
-          </button>
+          </div>
         </div>
       ))}
     </div>

@@ -38,7 +38,6 @@ export default async function ExplorePage({
   } = (await searchParams) as { [key: string]: string };
   const { sortKey } = sorting.find((item) => item.slug === sort) || defaultSort;
   const droplets = await getDroplets({
-    sort: sortKey,
     filters: {
       $and: [
         { status: { $eq: "published" } },
@@ -74,7 +73,6 @@ export default async function ExplorePage({
   });
 
   const playlists = await getPlaylists({
-    sort: sortKey,
     filters: {
       $and: [{ isPublic: true }],
     },

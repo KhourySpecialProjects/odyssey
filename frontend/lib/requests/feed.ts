@@ -80,7 +80,27 @@ export async function fetchAnnouncements(
         ],
       },
       populate: {
-        authorized_users: {
+        authorized_user: {
+          fields: [
+            "id",
+            "email",
+            "firstName",
+            "lastName",
+            "bio",
+            "github",
+            "linkedin",
+            "profilePhoto",
+          ],
+          populate: {
+            blocked: {
+              fields: ["id"],
+            },
+            was_blocked: {
+              fields: ["id"],
+            },
+          },
+        },
+        kudosGiven: {
           fields: [
             "id",
             "email",
@@ -154,7 +174,7 @@ export async function createFriendAnnouncement(
         body: JSON.stringify({
           data: {
             authorized_user: user.id,
-            content: `${user.firstName ? user.firstName + " " + user.lastName : user.email} has completed ${droplet.name}. Click to give kudos!`,
+            content: `${user.firstName ? user.firstName + " " + user.lastName : user.email} has completed ${droplet.name}.`,
             firstCreated: curDate,
             type: "friend",
           },
@@ -182,6 +202,7 @@ export async function createFriendAnnouncement(
 export async function createKudosAnnouncement(
   user: AuthorizedUser,
   announcementId: number,
+  droplet: string,
 ) {
   try {
     const response = await fetch(
@@ -219,7 +240,7 @@ export async function createKudosAnnouncement(
         body: JSON.stringify({
           data: {
             authorized_user: user.id,
-            content: `${user.firstName ? user.firstName + " " + user.lastName : user.email} has given you kudos`,
+            content: `${user.firstName ? user.firstName + " " + user.lastName : user.email} has given you kudos for ${droplet}`,
             firstCreated: curDate,
             type: "kudos",
           },

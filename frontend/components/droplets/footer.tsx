@@ -5,6 +5,7 @@ import { Droplet, DropletLesson } from "@/types";
 import { ArrowLeftIcon, ArrowRightIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 
 type PaginationProps = {
   link: string;
@@ -17,6 +18,43 @@ export default function DropletFooter({
   droplet: Pick<Droplet, "slug" | "droplet_lessons">;
 }) {
   const pathname = usePathname();
+  const [canProceed, setCanProceed] = useState(false);
+
+  useEffect(() => {
+    const checkQuizAnswers = () => {
+      const questions = document.querySelectorAll('[role="question"]');
+      if (!questions) {
+        setCanProceed(true);
+        return;
+      }
+      const completedQuizQuestions =
+        document.querySelectorAll('[role="status"]');
+      if (questions.length !== completedQuizQuestions.length) {
+        setCanProceed(false);
+        return;
+      }
+
+      const allAnsweredCorrectly = Array.from(completedQuizQuestions).every(
+        (question) => {
+          const resultBadge = question.textContent;
+          return resultBadge?.toLowerCase().includes("right");
+        },
+      );
+
+      setCanProceed(allAnsweredCorrectly);
+    };
+
+    checkQuizAnswers();
+    const observer = new MutationObserver(checkQuizAnswers);
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ["class", "id"],
+    });
+
+    return () => observer.disconnect();
+  }, []);
 
   if (!droplet.droplet_lessons || droplet.droplet_lessons.length === 0)
     return null;
@@ -89,7 +127,7 @@ export default function DropletFooter({
 
       <div className="mx-auto mt-8 flex max-w-2xl flex-col gap-2 pb-2 md:flex-row md:justify-between xl:w-full">
         {previous ? (
-          <PaginationLinkWrapper link={previous.link}>
+          <PaginationLinkWrapper link={previous.link} canProceed={true}>
             <div className="rounded-full bg-sky-100 p-2">
               <ArrowLeftIcon />
             </div>
@@ -106,6 +144,7 @@ export default function DropletFooter({
           <PaginationLinkWrapper
             link={next.link}
             className="float-right text-right"
+            canProceed={canProceed}
           >
             <div>
               <p className="font-bold">Next</p>
@@ -127,22 +166,29 @@ const PaginationLinkWrapper = ({
   link,
   className,
   children,
+  canProceed,
 }: {
   link: string;
   className?: string;
   children: React.ReactNode;
-}) => (
-  <Link
-    href={link}
-    className="flex-1 rounded-md border border-sky-200 bg-sky-50 p-4 leading-tight transition-colors hover:bg-sky-100"
-  >
-    <div
-      className={cn(
-        "inline-flex h-full items-center gap-3 text-sky-700",
-        className,
-      )}
+  canProceed: boolean;
+}) =>
+  canProceed ? (
+    <Link
+      href={link}
+      className="flex-1 rounded-md border border-sky-200 bg-sky-50 p-4 leading-tight transition-colors hover:bg-sky-100"
     >
-      {children}
+      <div
+        className={cn(
+          "inline-flex h-full items-center gap-3 text-sky-700",
+          className,
+        )}
+      >
+        {children}
+      </div>
+    </Link>
+  ) : (
+    <div className="flex items-center text-red-600 dark:text-red-300">
+      Answer all quiz questions correctly to move on
     </div>
-  </Link>
-);
+  );

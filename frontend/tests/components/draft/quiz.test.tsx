@@ -346,4 +346,69 @@ describe("QuizEditor", () => {
       });
     });
   });
+
+  describe("QuizEditor", () => {
+    const mockBlock = {
+      __component: "droplets.quiz",
+      questions: [
+        {
+          id: 1,
+          content: "Test Question",
+          answerOptions: [
+            { id: 1, content: "True", isCorrect: true },
+            { id: 2, content: "False", isCorrect: false },
+          ],
+        },
+      ],
+    };
+
+    const mockUpdateBlock = jest.fn();
+    const mockDeleteBlock = jest.fn();
+
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+
+    describe("Quiz Editor Functionality", () => {
+      it("renders delete block button with correct test ID", () => {
+        render(
+          <QuizEditor
+            block={mockBlock}
+            updateBlock={mockUpdateBlock}
+            deleteBlock={mockDeleteBlock}
+          />,
+        );
+
+        const deleteButton = screen.getByTestId("delete-block");
+        expect(deleteButton).toBeInTheDocument();
+      });
+
+      it("calls deleteBlock when delete button is clicked", () => {
+        render(
+          <QuizEditor
+            block={mockBlock}
+            updateBlock={mockUpdateBlock}
+            deleteBlock={mockDeleteBlock}
+          />,
+        );
+
+        const deleteButton = screen.getByTestId("delete-block");
+        fireEvent.click(deleteButton);
+
+        expect(mockDeleteBlock).toHaveBeenCalled();
+      });
+
+      it("renders correct quiz type title", () => {
+        render(
+          <QuizEditor
+            block={mockBlock}
+            updateBlock={mockUpdateBlock}
+            deleteBlock={mockDeleteBlock}
+          />,
+        );
+
+        expect(screen.getByText("True/False Quiz")).toBeInTheDocument();
+      });
+    });
+  });
 });

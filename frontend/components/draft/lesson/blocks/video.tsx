@@ -65,6 +65,7 @@ export function VideoEditor({
                 onClick={() => setOpen(true)}
                 role="button"
                 aria-label="edit"
+                name="edit"
               />
             )}
           </div>

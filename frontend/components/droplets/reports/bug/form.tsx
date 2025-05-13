@@ -52,7 +52,9 @@ export function ReportBugForm({ name, email, onSuccess }: Props) {
         } else {
           onSuccess();
           toast.success("Your report has been successfully submitted.");
-          redirect(values.path + "?ts=" + Date.now());
+          if (values.path === "/admin") {
+            redirect(values.path + "?ts=" + Date.now());
+          }
         }
       });
     });

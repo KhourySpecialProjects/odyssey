@@ -84,7 +84,7 @@ export function QuizQuestionEditor({
                 id={answer.id.toString()}
                 checked={answer.isCorrect}
                 onCheckedChange={() => setSelectedAnswer(answer.id.toString())}
-                className="mt-3"
+                className="mt-3 dark:bg-slate-50"
               />
               <div className="flex-1">
                 <TipTapEditor
@@ -103,17 +103,16 @@ export function QuizQuestionEditor({
           ))}
         </div>
 
-        {question.answerOptions.length < 4 &&
-          !(
-            question.answerOptions.length === 2 &&
-            question.answerOptions[0].content === "True" &&
-            question.answerOptions[1].content === "False"
-          ) && (
-            <Button variant="outline" size="sm" onClick={addAnswer}>
-              <PlusIcon className="mr-2 h-4 w-4" />
-              Add Answer Option
-            </Button>
-          )}
+        {!(
+          question.answerOptions.length === 2 &&
+          question.answerOptions[0].content === "True" &&
+          question.answerOptions[1].content === "False"
+        ) && (
+          <Button variant="outline" size="sm" onClick={addAnswer}>
+            <PlusIcon className="mr-2 h-4 w-4" />
+            Add Answer Option
+          </Button>
+        )}
       </div>
     </div>
   );
