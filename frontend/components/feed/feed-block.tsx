@@ -65,7 +65,6 @@ export function FeedBlock({
   };
 
   const content = announcement.content;
-  console.log("splitting", content.split(/has\s+/i));
   const [namePart] = content.split(/has\s+/i);
   const [, taskPart] = content.split(/finished\s+/i);
 
@@ -113,7 +112,7 @@ export function FeedBlock({
                   <div>
                     <ProfileBlock
                       user={authUser}
-                      otherUser={announcement.authorized_user}
+                      otherUser={announcement.authorized_user || authUser}
                       isOpen={open}
                       setIsOpen={setOpen}
                       isFeed={true}
@@ -144,7 +143,7 @@ export function FeedBlock({
                       <div>
                         <ProfileBlock
                           user={authUser}
-                          otherUser={announcement.authorized_user}
+                          otherUser={announcement.authorized_user || authUser}
                           isOpen={open}
                           setIsOpen={setOpen}
                           isFeed={true}
