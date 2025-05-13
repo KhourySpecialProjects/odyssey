@@ -1,5 +1,6 @@
 import { render, screen, fireEvent } from "@testing-library/react";
 import { QuizQuestionEditor } from "@/components/draft/lesson/blocks/quiz-question-editor";
+import { QuizQuestion } from "@/types";
 
 jest.mock("@/components/ui/tiptap/generic-block-input", () => ({
   GenericBlockInput: ({

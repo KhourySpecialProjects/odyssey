@@ -1,6 +1,8 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { GroupBlock } from "@/components/admin/groups/group-block";
 import { GroupSemester } from "@/types";
+import { updateGroup } from "@/lib/requests/groups";
+import { toast } from "sonner";
 
 jest.mock("next/link", () => {
   return ({ children, href }: { children: React.ReactNode; href: string }) => (

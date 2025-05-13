@@ -1,18 +1,29 @@
 "use client";
 
+import { Announcement, AuthorizedUser } from "@/types";
 import { Button } from "../ui/button";
 import { giveKudos } from "@/lib/kudos";
 import { ThumbsUp } from "lucide-react";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 
-export function KudosButton({ announcementId }: { announcementId: number }) {
+export function KudosButton({
+  announcement,
+  droplet,
+  authUser,
+}: {
+  announcement: Announcement;
+  droplet: string;
+  authUser: AuthorizedUser;
+}) {
   const [isPending, startTransition] = useTransition();
-  const [isVisible, setIsVisible] = useState(true);
+  const [isVisible, setIsVisible] = useState(
+    !announcement.kudosGiven?.some((user) => user.id === authUser.id),
+  );
 
   const handleClick = () => {
     startTransition(async () => {
-      const result = await giveKudos(announcementId);
+      const result = await giveKudos(announcement.id, droplet);
       if (result.success) {
         toast.success("Kudos given!");
         setIsVisible(false);
@@ -21,6 +32,10 @@ export function KudosButton({ announcementId }: { announcementId: number }) {
       }
     });
   };
+
+  if (!isVisible) {
+    return null;
+  }
 
   return (
     <Button

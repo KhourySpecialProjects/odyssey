@@ -1,10 +1,7 @@
 "use client";
 
-import { Button } from "../ui/button";
-import { Trash } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
-import { updateDroplet } from "@/lib/actions";
 import { LearningObjectiveDisplay } from "../draft/metadata/learning-objectives/learning-objective";
 import { Input } from "../ui/input";
 import { AddButton } from "../draft/metadata/form-buttons";

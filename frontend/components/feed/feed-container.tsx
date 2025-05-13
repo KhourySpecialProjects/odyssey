@@ -90,7 +90,7 @@ export function FeedContainer({ authUser }: { authUser: AuthorizedUser }) {
       </div>
 
       <div
-        className={`relative flex hidden w-1/4 flex-row justify-start text-center text-xl font-bold md:flex dark:text-slate-300`}
+        className={`relative hidden w-1/4 flex-row justify-start text-center text-xl font-bold md:flex dark:text-slate-300`}
       >
         <div className="absolute top-0 flex translate-y-[-20%] flex-col items-center">
           Filters

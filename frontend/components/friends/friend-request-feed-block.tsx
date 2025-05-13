@@ -47,7 +47,7 @@ export function FriendRequestFeedBlock({
 
   return (
     <div className="flex flex-col justify-center">
-      <div className="mt-2 flex flex-row items-center items-start gap-2">
+      <div className="mt-2 flex flex-row items-center gap-2">
         <Avatar
           variant="round"
           className="h-8 w-8 flex-shrink-0 border border-sky-800"
