@@ -1,6 +1,6 @@
 import { DropletClient } from "@/components/admin/droplets/droplet-client";
 import { DropletStatus, DropletType, FocusArea, Tag } from "@/types";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, act } from "@testing-library/react";
 
 jest.mock("@/components/admin/droplets/droplet-block", () => ({
   DropletBlock: ({ droplet }: { droplet: any }) => (
@@ -80,5 +80,52 @@ describe("DropletClient", () => {
     expect(
       screen.getByText("There are no created droplets."),
     ).toBeInTheDocument();
+  });
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  describe("Search functionality", () => {
+    it("filters droplets based on search input", async () => {
+      render(<DropletClient droplets={mockDroplets} />);
+
+      const searchInput = screen.getByPlaceholderText("Search...");
+
+      await act(async () => {
+        fireEvent.change(searchInput, { target: { value: "Test" } });
+      });
+
+      expect(screen.getByText("Droplet 1")).toBeInTheDocument();
+      expect(screen.getByText("Droplet 2")).toBeInTheDocument();
+      expect(screen.queryByText("Another Droplet")).not.toBeInTheDocument();
+    });
+
+    it("shows all droplets when search is empty", async () => {
+      render(<DropletClient droplets={mockDroplets} />);
+
+      const searchInput = screen.getByPlaceholderText("Search...");
+
+      await act(async () => {
+        fireEvent.change(searchInput, { target: { value: "" } });
+      });
+
+      mockDroplets.slice(0, 10).forEach((droplet) => {
+        expect(screen.getByText(droplet.name)).toBeInTheDocument();
+      });
+    });
+
+    it("handles case-insensitive search", async () => {
+      render(<DropletClient droplets={mockDroplets} />);
+
+      const searchInput = screen.getByPlaceholderText("Search...");
+
+      await act(async () => {
+        fireEvent.change(searchInput, { target: { value: "test" } });
+      });
+
+      expect(screen.getByText("Droplet 1")).toBeInTheDocument();
+      expect(screen.getByText("Droplet 2")).toBeInTheDocument();
+    });
   });
 });
