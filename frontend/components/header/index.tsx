@@ -63,7 +63,7 @@ export async function Header() {
                     className="flex-col space-y-2 text-2xl"
                   />
 
-                  <DarkMode className="ml-2 scale-150" />
+                  <DarkMode className="sm:hidden" />
                 </nav>
               </SheetContent>
             </Sheet>
@@ -97,7 +97,7 @@ export async function Header() {
             ) : (
               <LoginButton />
             )}
-            <div className="hidden sm:block">
+            <div className="hidden pl-4 sm:block">
               <DarkMode className="scale-[1.2]" />
             </div>
           </div>

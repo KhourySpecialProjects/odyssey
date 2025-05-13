@@ -3,7 +3,6 @@ import { GoalIcon, Trash2Icon } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { useOffClick } from "../hooks/useOffClick";
-import { DeleteButton } from "@/components/draft/metadata/form-buttons";
 import { Button } from "@lemonsqueezy/wedges";
 
 export function LearningObjectiveDisplay({
