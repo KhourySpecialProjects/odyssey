@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { Star } from "lucide-react";
 import { changeEnrollmentRating } from "@/lib/requests/enrollment";
 import { getEnrollByID } from "@/lib/requests/enrollment";
+import { toast } from "sonner";
 
 interface StarRatingProps {
   value: number;
@@ -52,6 +53,7 @@ const StarRating: React.FC<StarRatingProps> = ({
         await changeEnrollmentRating(newRating, enrollmentID);
         setRating(newRating);
         setHover(newRating);
+        toast.success("Rating submitted successfully");
       } catch (error) {
         console.error("Error updating rating:", error);
       }
@@ -121,9 +123,6 @@ const StarRating: React.FC<StarRatingProps> = ({
               <Star
                 onMouseEnter={() => setHover(ratingValue)}
                 onMouseLeave={() => setHover(0)}
-                onClick={() => {
-                  handleRatingClick(ratingValue);
-                }}
                 fill={ratingValue <= (hover || rating) ? "#ffc107" : "#e4e5e9"}
                 stroke={
                   ratingValue <= (hover || rating) ? "#ffc107" : "#e4e5e9"

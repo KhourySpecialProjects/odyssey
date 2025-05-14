@@ -27,8 +27,8 @@ export function ContentTypeSelector() {
           key={type.value}
           className={
             currentType === type.value
-              ? "bg-black dark:border dark:border-slate-500 dark:bg-black dark:text-slate-300 dark:hover:bg-black"
-              : "border bg-white text-black hover:text-white dark:bg-slate-300 dark:hover:bg-black dark:hover:text-white"
+              ? "h-10 w-20 bg-black dark:border dark:border-slate-900 dark:bg-white dark:text-black dark:hover:bg-slate-300"
+              : "h-10 w-20 border border-slate-500 bg-white text-black hover:bg-slate-100 dark:bg-black dark:text-white dark:hover:bg-slate-900"
           }
           onClick={() => {
             router.push(`${pathname}?${createQueryString(type.value)}`);

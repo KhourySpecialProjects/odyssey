@@ -45,4 +45,38 @@ describe("VideoEditor", () => {
 
     expect(mockDeleteBlock).toHaveBeenCalled();
   });
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  describe("Video Editor UI", () => {
+    it("renders delete button with correct role", () => {
+      render(
+        <VideoEditor
+          block={mockBlock}
+          updateBlock={mockUpdateBlock}
+          deleteBlock={mockDeleteBlock}
+        />,
+      );
+
+      const deleteButton = screen.getByRole("trash");
+      expect(deleteButton).toBeInTheDocument();
+    });
+
+    it("calls deleteBlock when delete button is clicked", () => {
+      render(
+        <VideoEditor
+          block={mockBlock}
+          updateBlock={mockUpdateBlock}
+          deleteBlock={mockDeleteBlock}
+        />,
+      );
+
+      const deleteButton = screen.getByRole("trash");
+      fireEvent.click(deleteButton);
+
+      expect(mockDeleteBlock).toHaveBeenCalled();
+    });
+  });
 });
