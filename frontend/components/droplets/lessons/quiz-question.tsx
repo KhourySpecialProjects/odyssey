@@ -59,6 +59,7 @@ export function QuizQuestionBlock({ question }: { question: QuizQuestion }) {
   return (
     <>
       <div
+        role="question"
         className="prose prose-sky prose-table:text-left prose-p:text-center prose-strong:text-inherit prose-code:text-inherit prose-headings:text-inherit dark:text-slate-300"
         dangerouslySetInnerHTML={{ __html: question.content }}
       ></div>
@@ -142,7 +143,10 @@ export function QuizQuestionBlock({ question }: { question: QuizQuestion }) {
                             className="flex items-center space-x-3"
                           >
                             <FormControl>
-                              <RadioGroupItem value={String(answer.id)} />
+                              <RadioGroupItem
+                                value={String(answer.id)}
+                                className="border dark:border-slate-50"
+                              />
                             </FormControl>
                             <FormLabel className="flex-1 cursor-pointer">
                               <span

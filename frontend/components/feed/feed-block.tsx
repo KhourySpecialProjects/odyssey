@@ -11,6 +11,8 @@ import {
   UsersRound,
   Info,
 } from "lucide-react";
+import { useState } from "react";
+import { ProfileBlock } from "../friends/profile-block";
 
 export function FeedBlock({
   announcement,
@@ -20,6 +22,7 @@ export function FeedBlock({
   authUser: AuthorizedUser;
 }) {
   const announcementType = announcement.type;
+  const [open, setOpen] = useState(false);
 
   function formatDate(dateInput: string | Date | undefined) {
     if (!dateInput) return "";
@@ -61,6 +64,10 @@ export function FeedBlock({
     system: <Info />,
   };
 
+  const content = announcement.content;
+  const [namePart] = content.split(/has\s+/i);
+  const [, taskPart] = content.split(/finished\s+/i);
+
   return (
     <li
       className={`${backgroundColor[announcementType]} relative flex flex-col items-start gap-2 rounded-lg p-4 pb-3 hover:scale-105`}
@@ -93,17 +100,69 @@ export function FeedBlock({
                   </p>
                 </Link>
               )}
+              {announcementType === "kudos" && (
+                <div className="-mt-1 text-left font-medium text-slate-900 dark:text-slate-300">
+                  <p
+                    onClick={() => setOpen(true)}
+                    className="inline cursor-pointer hover:underline"
+                  >
+                    {namePart.trim()}
+                  </p>
+                  {" has given you kudos "}
+                  <div>
+                    <ProfileBlock
+                      user={authUser}
+                      otherUser={announcement.authorized_user || authUser}
+                      isOpen={open}
+                      setIsOpen={setOpen}
+                      isFeed={true}
+                    />
+                  </div>
+                </div>
+              )}
               {announcementType != "group" &&
                 announcementType != "droplet" &&
+                announcementType != "kudos" &&
                 announcementType != "playlist" && (
                   <>
-                    <p className="-mt-1 text-left font-medium text-slate-900 dark:text-slate-300">
-                      {announcement.content}
-                    </p>
+                    <div className="-mt-1 text-left font-medium text-slate-900 dark:text-slate-300">
+                      {announcementType === "friend" ? (
+                        <>
+                          <p
+                            onClick={() => setOpen(true)}
+                            className="inline cursor-pointer hover:underline"
+                          >
+                            {namePart.trim()}
+                          </p>
+                          {" has just finished "}
+                          <span>{taskPart?.trim()}</span>
+                        </>
+                      ) : (
+                        announcement.content
+                      )}
+                      <div>
+                        <ProfileBlock
+                          user={authUser}
+                          otherUser={announcement.authorized_user || authUser}
+                          isOpen={open}
+                          setIsOpen={setOpen}
+                          isFeed={true}
+                        />
+                      </div>
+                    </div>
                     {announcementType === "friend" &&
-                      !announcement.kudosGiven?.includes(authUser) && (
+                      !announcement.kudosGiven?.some(
+                        (user) => user.id === authUser.id,
+                      ) && (
                         <div className="absolute bottom-0 left-[50%] translate-x-[-50%] translate-y-[40%]">
-                          <KudosButton announcementId={announcement.id} />
+                          <KudosButton
+                            authUser={authUser}
+                            announcement={announcement}
+                            droplet={
+                              announcement.content?.split(/finished\s+/i)[1] ||
+                              ""
+                            }
+                          />
                         </div>
                       )}
                   </>

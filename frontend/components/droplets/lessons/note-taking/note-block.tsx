@@ -13,6 +13,7 @@ import Link from "@tiptap/extension-link";
 import DefaultToolbar from "@/components/ui/tiptap/toolbar/general-toolbar";
 import { cn } from "@/lib/utils";
 import { EditorView } from "@tiptap/pm/view";
+import { useTheme } from "next-themes";
 
 export function NoteBlock({
   note,
@@ -101,6 +102,40 @@ export function NoteBlock({
     },
     immediatelyRender: false,
   });
+  const { theme } = useTheme();
+
+  const handleSelect = (range: Range) => {
+    const startContainer = range.startContainer;
+    const startOffset = range.startOffset;
+    const endOffset = range.endOffset;
+
+    const isDark = theme === "dark";
+
+    const span = document.createElement("span");
+    span.style.backgroundColor = isDark ? "white" : "black";
+    span.style.borderRadius = "8px";
+    span.style.color = isDark ? "black" : "white";
+
+    span.setAttribute("data-highlight-id", "highlight-id");
+
+    try {
+      const contents = range.extractContents();
+      while (contents.firstChild) {
+        span.appendChild(contents.firstChild);
+      }
+      range.insertNode(span);
+      const newRange = document.createRange();
+      newRange.selectNodeContents(span.firstChild || span);
+
+      return newRange;
+    } catch (error) {
+      console.error("Error applying highlight:", error);
+    }
+    const newRange = document.createRange();
+    newRange.setStart(startContainer, startOffset);
+    newRange.setEnd(startContainer, endOffset);
+    return newRange;
+  };
 
   return (
     <div
@@ -122,7 +157,65 @@ export function NoteBlock({
               <Badge
                 variant="secondary"
                 title={note.highlight.text}
-                className={`block inline-block w-fit max-w-[50%] overflow-hidden text-center text-ellipsis whitespace-nowrap text-slate-700 ${getHighlightColor(note.highlight.color)} border hover:text-white dark:hover:border-white dark:hover:bg-slate-800`}
+                onClick={async () => {
+                  const contentElement = document.querySelector(".prose");
+                  if (!contentElement) {
+                    return;
+                  }
+
+                  const walker = document.createTreeWalker(
+                    contentElement,
+                    NodeFilter.SHOW_TEXT,
+                  );
+
+                  let currentPosition = 0;
+
+                  let node = walker.nextNode();
+                  while (node) {
+                    const nodeLength = node.textContent?.length || 0;
+                    const nodeText = node.textContent || "";
+
+                    if (currentPosition === note.highlight?.position.start) {
+                      const startIndex = nodeText.indexOf(
+                        note.highlight?.text || "",
+                      );
+                      if (startIndex === -1) {
+                        console.warn(
+                          "Could not find highlight text in node:",
+                          nodeText,
+                        );
+                        return;
+                      }
+                      const range = document.createRange();
+                      range.setStart(node, startIndex);
+                      range.setEnd(
+                        node,
+                        startIndex + note.highlight.text.length,
+                      );
+                      handleSelect(range);
+
+                      setTimeout(() => {
+                        const span = document.querySelector(
+                          `span[data-highlight-id="highlight-id"]`,
+                        );
+                        if (!span || !span.parentNode) return;
+
+                        const parent = span.parentNode;
+
+                        const textNode = document.createTextNode(
+                          span.textContent || "",
+                        );
+                        parent.replaceChild(textNode, span);
+                        parent.normalize();
+                      }, 1000);
+                      break;
+                    }
+
+                    currentPosition += nodeLength;
+                    node = walker.nextNode();
+                  }
+                }}
+                className={`block w-fit max-w-[50%] overflow-hidden text-center text-ellipsis whitespace-nowrap text-slate-700 ${getHighlightColor(note.highlight.color)} border hover:text-white dark:hover:border-white dark:hover:bg-slate-800`}
               >
                 {note.highlight.text.substring(0, 25)}{" "}
                 {note.highlight.text.length > 25 ? "..." : ""}

@@ -1,6 +1,8 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { DropletBlock } from "@/components/admin/droplets/droplet-block";
 import { DropletStatus, DropletType, FocusArea } from "@/types";
+import { updateDroplet } from "@/lib/actions";
+import { toast } from "sonner";
 
 jest.mock("sonner", () => ({
   toast: {
