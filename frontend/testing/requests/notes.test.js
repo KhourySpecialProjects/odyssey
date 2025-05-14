@@ -82,7 +82,7 @@ describe("Notes Tests", () => {
           },
           populate: {
             highlight: {
-              fields: ["text", "color", "yLevel"],
+              fields: ["*"],
             },
           },
           fields: ["id", "content", "positionY"],
