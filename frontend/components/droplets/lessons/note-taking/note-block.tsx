@@ -110,14 +110,12 @@ export function NoteBlock({
     const endOffset = range.endOffset;
 
     const isDark = theme === "dark";
-  
-  
 
     const span = document.createElement("span");
     span.style.backgroundColor = isDark ? "white" : "black";
     span.style.borderRadius = "8px";
     span.style.color = isDark ? "black" : "white";
-    
+
     span.setAttribute("data-highlight-id", "highlight-id");
 
     try {
