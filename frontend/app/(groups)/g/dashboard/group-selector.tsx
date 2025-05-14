@@ -108,7 +108,7 @@ export function GroupsSelector() {
       </div>
 
       <nav
-        className="-mb-px flex hidden flex-row space-x-8 md:flex"
+        className="-mb-px hidden flex-row space-x-8 md:flex"
         aria-label="Tabs"
       >
         {tabs.map((tab) => (

@@ -13,6 +13,7 @@ import Link from "@tiptap/extension-link";
 import DefaultToolbar from "@/components/ui/tiptap/toolbar/general-toolbar";
 import { cn } from "@/lib/utils";
 import { EditorView } from "@tiptap/pm/view";
+import { useTheme } from "next-themes";
 
 export function NoteBlock({
   note,
@@ -101,20 +102,20 @@ export function NoteBlock({
     },
     immediatelyRender: false,
   });
+  const { theme } = useTheme();
 
-  const handleSelect = (range: Range, color: string) => {
+  const handleSelect = (range: Range) => {
     const startContainer = range.startContainer;
     const startOffset = range.startOffset;
     const endOffset = range.endOffset;
 
+    const isDark = theme === "dark";
+
     const span = document.createElement("span");
-    span.style.backgroundColor = color;
+    span.style.backgroundColor = isDark ? "white" : "black";
     span.style.borderRadius = "8px";
-    if (color === "black") {
-      span.style.color = "white";
-    } else {
-      span.style.color = "black";
-    }
+    span.style.color = isDark ? "black" : "white";
+
     span.setAttribute("data-highlight-id", "highlight-id");
 
     try {
@@ -191,7 +192,7 @@ export function NoteBlock({
                         node,
                         startIndex + note.highlight.text.length,
                       );
-                      handleSelect(range, "black");
+                      handleSelect(range);
 
                       setTimeout(() => {
                         const span = document.querySelector(

@@ -3,10 +3,10 @@ name: Redeploy to ECS
 on:
   push:
     branches:
-      - 'develop'
+      - 'production'
 
 jobs:
-  build-and-push-frontend-to-dev2:
+  build-and-push-frontend-to-prod:
     runs-on: ubuntu-latest
 
     steps:
@@ -43,7 +43,7 @@ jobs:
         id: get-td
         run: |
           aws ecs describe-task-definition \
-            --task-definition ${{ secrets.ECS_FRONTEND_TASK_DEF_NAME }} \
+            --task-definition ${{ secrets.ECS_PROD_FRONTEND_TASK_DEF_NAME }} \
             --query 'taskDefinition | {family: family, taskRoleArn: taskRoleArn, executionRoleArn: executionRoleArn, networkMode: networkMode, containerDefinitions: containerDefinitions, volumes: volumes, placementConstraints: placementConstraints, requiresCompatibilities: requiresCompatibilities, cpu: cpu, memory: memory}' \
             > task-def.json
           echo "Task definition content:"
@@ -69,10 +69,9 @@ jobs:
       - name: Update ECS service
         run: |
           aws ecs update-service \
-            --cluster ${{ secrets.ECS_CLUSTER_NAME }} \
-            --service ${{ secrets.ECS_FRONTEND_SERVICE_NAME }} \
+            --cluster ${{ secrets.ECS_PROD_CLUSTER_NAME }} \
+            --service ${{ secrets.ECS_PROD_FRONTEND_SERVICE_NAME }} \
             --task-definition ${{ env.TASK_DEF_ARN }} \
-            --force-new-deployment
 
 
   build-and-push-backend-to-dev2:
@@ -108,7 +107,7 @@ jobs:
         id: get-td
         run: |
           aws ecs describe-task-definition \
-            --task-definition ${{ secrets.ECS_BACKEND_TASK_DEF_NAME }} \
+            --task-definition ${{ secrets.ECS_PROD_BACKEND_TASK_DEF_NAME }} \
             --query 'taskDefinition | {family: family, taskRoleArn: taskRoleArn, executionRoleArn: executionRoleArn, networkMode: networkMode, containerDefinitions: containerDefinitions, volumes: volumes, placementConstraints: placementConstraints, requiresCompatibilities: requiresCompatibilities, cpu: cpu, memory: memory}' \
             > task-def.json
           echo "Task definition content:"
@@ -132,8 +131,8 @@ jobs:
       - name: Update ECS service
         run: |
           aws ecs update-service \
-            --cluster ${{ secrets.ECS_CLUSTER_NAME }} \
-            --service ${{ secrets.ECS_BACKEND_SERVICE_NAME }} \
+            --cluster ${{ secrets.ECS_PROD_CLUSTER_NAME }} \
+            --service ${{ secrets.ECS_PROD_BACKEND_SERVICE_NAME }} \
             --task-definition ${{ env.TASK_DEF_ARN }}
         
             
