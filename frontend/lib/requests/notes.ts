@@ -37,7 +37,7 @@ export async function getNotesByAuthorizedUserAndLesson(
     },
     populate: {
       highlight: {
-        fields: ["text", "color", "yLevel"],
+        fields: ["*"],
       },
     },
     fields,
