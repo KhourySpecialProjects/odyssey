@@ -102,6 +102,35 @@ export function NoteBlock({
     immediatelyRender: false,
   });
 
+  const handleSelect = (range: Range, color: string) => {
+    const span = document.createElement("span");
+    span.style.backgroundColor = color;
+    span.style.borderRadius = "8px";
+    span.style.color = "black";
+    span.style.display = "inline"; 
+    span.style.padding = "2px"; 
+
+    try {
+      const contents = range.extractContents();
+      while (contents.firstChild) {
+        span.appendChild(contents.firstChild);
+      }
+      range.insertNode(span);
+     
+      span.offsetHeight;
+      
+        setTimeout(() => {
+          const textNode = document.createTextNode(span.textContent || "");
+          span.parentNode?.replaceChild(textNode, span);
+          }, 1000);
+      
+      return
+      
+    } catch (error) {
+      console.error("Error applying highlight:", error);
+    }
+  }
+
   return (
     <div
       className={cn(
@@ -122,7 +151,44 @@ export function NoteBlock({
               <Badge
                 variant="secondary"
                 title={note.highlight.text}
-                className={`block inline-block w-fit max-w-[50%] overflow-hidden text-center text-ellipsis whitespace-nowrap text-slate-700 ${getHighlightColor(note.highlight.color)} border hover:text-white dark:hover:border-white dark:hover:bg-slate-800`}
+                onClick={async () => {
+                    const contentElement = document.querySelector('.prose');
+                    if (!contentElement) {
+                      return;
+                    }
+
+                    
+                    const walker = document.createTreeWalker(
+                      contentElement,
+                      NodeFilter.SHOW_TEXT
+                    );
+
+                    let currentPosition = 0;
+
+                    let node = walker.nextNode();
+                    while (node) {
+                      const nodeLength = node.textContent?.length || 0;
+                      const nodeText = node.textContent || "";
+
+                      if (currentPosition === note.highlight?.position.start) {
+                        const startIndex = nodeText.indexOf(note.highlight?.text || "");
+                        const range = document.createRange();
+          range.setStart(node, startIndex);
+          range.setEnd(node, startIndex + note.highlight.text.length);
+
+          handleSelect(range, "black")
+
+
+          
+                      }
+
+                      currentPosition += nodeLength;
+                      node = walker.nextNode();
+                    }
+
+                  }
+                }
+                className={`block w-fit max-w-[50%] overflow-hidden text-center text-ellipsis whitespace-nowrap text-slate-700 ${getHighlightColor(note.highlight.color)} border hover:text-white dark:hover:border-white dark:hover:bg-slate-800`}
               >
                 {note.highlight.text.substring(0, 25)}{" "}
                 {note.highlight.text.length > 25 ? "..." : ""}
