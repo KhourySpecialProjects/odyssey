@@ -1272,4 +1272,88 @@ describe("Friends tests", () => {
       );
     });
   });
+  
+  describe("Friends Functions", () => {
+    const mockUser = {
+      id: 1,
+      email: "test@example.com",
+      firstName: "Test",
+      lastName: "User",
+      bio: "",
+      github: "",
+      linkedin: "",
+      profilePhoto: null,
+      blocked: [],
+      was_blocked: [],
+    };
+  
+    beforeEach(() => {
+      global.fetch = jest.fn();
+    });
+  
+    describe("fetchFriends", () => {
+      it("fetches friends successfully", async () => {
+        const mockResponse = {
+          data: [{
+            attributes: {
+              authorized_users: [mockUser]
+            }
+          }]
+        };
+  
+        (global.fetch).mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve(mockResponse)
+        });
+  
+        const result = await fetchFriends(mockUser);
+        expect(result).toBeInstanceOf(Array);
+      });
+  
+      it("handles fetch error", async () => {
+        (global.fetch).mockRejectedValueOnce(new Error("Fetch failed"));
+  
+        await expect(fetchFriends(mockUser)).rejects.toThrow("Failed to fetch friends data");
+      });
+    });
+  
+    describe("getSentRequest", () => {
+      it("checks if request was sent", async () => {
+        const mockResponse = {
+          data: [{
+            id: 1,
+            attributes: {}
+          }]
+        };
+  
+        (global.fetch).mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve(mockResponse)
+        });
+  
+        const result = await getSentRequest(mockUser, mockUser);
+        expect(result).toBe(true);
+      });
+    });
+  
+    describe("acceptFriendRequest", () => {
+      it("accepts friend request successfully", async () => {
+        (global.fetch)
+          .mockResolvedValueOnce({ ok: true })
+          .mockResolvedValueOnce({ ok: true });
+  
+        const result = await acceptFriendRequest(1, 2);
+        expect(result.success).toBe(true);
+      });
+  
+      it("handles acceptance failure", async () => {
+        (global.fetch).mockRejectedValueOnce(new Error("Failed"));
+  
+        const result = await acceptFriendRequest(1, 2);
+        expect(result.success).toBe(false);
+      });
+    });
+  
+    
+  });
 });

@@ -66,6 +66,7 @@ export function SortedDropletsGrid({
   const { searchQuery } = useSearch();
 
   const filteredDroplets = useMemo(() => {
+    setCurrentPage(1)
     return sortedDroplets.filter((droplet) =>
       droplet.name.toLowerCase().includes(searchQuery.toLowerCase()),
     );

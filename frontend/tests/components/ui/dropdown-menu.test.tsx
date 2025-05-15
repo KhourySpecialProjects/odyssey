@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -142,4 +142,17 @@ describe("DropdownMenuShortcut", () => {
     expect(shortcut).toHaveClass("text-xs");
     expect(shortcut).toHaveTextContent("Ctrl+S");
   });
+
+
+describe("DropdownMenu Components", () => {
+  it("renders DropdownMenuTrigger with children", () => {
+    render(
+      <DropdownMenu>
+        <DropdownMenuTrigger>Click me</DropdownMenuTrigger>
+      </DropdownMenu>
+    );
+    expect(screen.getByText("Click me")).toBeInTheDocument();
+  });
+
+})
 });
