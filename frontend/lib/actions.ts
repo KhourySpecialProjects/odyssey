@@ -935,6 +935,7 @@ export async function updateDroplet(
   try {
     const dataToSend: any = {
       ...(data.name && { name: data.name }),
+      ...(data.slug && { slug: data.slug }),
       ...(data.focusArea && { focusArea: data.focusArea }),
       ...(data.type && { type: data.type }),
       ...(data.authorized_users && { authorized_users: data.authorized_users }),
@@ -1067,6 +1068,7 @@ export async function updateLesson(
     }
     const dataToSend: any = {
       ...(data.name && { name: data.name }),
+      ...(data.slug && { slug: data.slug }),
       ...(data.blocks && { blocks: data.blocks }),
     };
     dataToSend.regenerateSlug = options.regenerateSlug;
