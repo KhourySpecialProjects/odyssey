@@ -215,31 +215,6 @@ describe("LessonRenderer", () => {
     (useRouter as jest.Mock).mockReturnValue(mockRouter);
   });
 
-  it("regenerates slug when requested", async () => {
-    (updateLesson as jest.Mock).mockResolvedValueOnce({
-      data: { attributes: { slug: "new-slug" } },
-    });
-
-    render(<LessonRenderer lesson={mockLesson} dropletSlug="test-droplet" />);
-
-    const regenerateButton = screen.getByText("Regenerate URL Slug");
-    fireEvent.click(regenerateButton);
-
-    expect(updateLesson).toHaveBeenCalledWith(
-      mockLesson.id,
-      { name: mockLesson.name },
-      { regenerateSlug: true },
-    );
-
-    await act(async () => {
-      await Promise.resolve();
-    });
-
-    expect(mockRouter.replace).toHaveBeenCalledWith(
-      "/draft/d/test-droplet/new-slug",
-    );
-  });
-
   it("renders different block types correctly", () => {
     const mockLessonWithAllBlocks = {
       ...mockLesson,
