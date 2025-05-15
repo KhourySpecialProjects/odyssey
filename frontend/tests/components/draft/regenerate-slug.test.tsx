@@ -23,7 +23,4 @@ describe("RegenerateSlugButton", () => {
     render(<RegenerateSlugButton name="Test Droplet" dropletId={1} />);
     expect(screen.getByText("Change URL")).toBeInTheDocument();
   });
-
-  
-
-})
+});

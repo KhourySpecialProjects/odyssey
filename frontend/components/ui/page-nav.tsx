@@ -11,7 +11,6 @@ interface PageNavProps {
 }
 
 export function PageNav({ currentPage, updatePage, totalPages }: PageNavProps) {
-
   const handleNextPage = () => {
     if (currentPage < totalPages) {
       updatePage(currentPage + 1);
