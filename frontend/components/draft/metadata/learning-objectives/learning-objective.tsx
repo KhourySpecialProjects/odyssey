@@ -23,6 +23,7 @@ export function LearningObjectiveDisplay({
       className={cn(
         "inline-flex items-center gap-2 px-4 py-3 leading-snug",
         open ? "shadow-md" : "cursor-pointer hover:shadow",
+        objective === "" ? "visibility: hidden" : "visibility: visible",
       )}
       onClick={() => (open ? null : setOpen(true))}
       ref={ref}
