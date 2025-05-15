@@ -9,6 +9,7 @@ const types: [string, ...string[]] = [
 
 export const DropletSchema = z.object({
   name: z.string().min(2).max(100),
+  slug: z.string(),
   authorized_users: z.number().array(),
   focusArea: z.enum(focusAreas),
   type: z.enum(types),
