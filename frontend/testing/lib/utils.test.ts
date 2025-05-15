@@ -11,7 +11,12 @@ import {
   isContentCreator,
   isAuthorizedUserFaculty,
   condenseRoleTitles,
+  cn,
+  uppercaseFirstChar,
+  getInitials,
+  getDueDateBadgeColor,
 } from "@/lib/utils";
+
 
 describe("utils", () => {
   describe("fetchAPI", () => {
@@ -378,6 +383,101 @@ describe("utils", () => {
             ],
           });
         });
+      });
+    });
+  });
+
+
+  
+  describe("Utility Functions", () => {
+    describe("cn", () => {
+      it("merges class names correctly", () => {
+        expect(cn("base", "additional")).toBe("base additional");
+        expect(cn("base", { conditional: true })).toBe("base conditional");
+      });
+    });
+  
+    describe("getStrapiURL", () => {
+      it("returns correct URL with path", () => {
+        const url = getStrapiURL("/test");
+        expect(url).toBe("http://test.com/test");
+      });
+  
+      it("returns base URL without path", () => {
+        const url = getStrapiURL();
+        expect(url).toBe("http://test.com");
+      });
+    });
+  
+    describe("uppercaseFirstChar", () => {
+      it("capitalizes first character", () => {
+        expect(uppercaseFirstChar("test")).toBe("Test");
+        expect(uppercaseFirstChar("hello world")).toBe("Hello world");
+      });
+    });
+  
+    describe("getInitials", () => {
+      it("returns correct initials", () => {
+        expect(getInitials("John Doe")).toBe("JD");
+        expect(getInitials("Alice Bob Charlie")).toBe("ABC");
+      });
+    });
+  
+    describe("fetchAPI", () => {
+      beforeEach(() => {
+        global.fetch = jest.fn();
+      });
+  
+      it("handles successful API call", async () => {
+        const mockResponse = { data: { attributes: { name: "Test" } } };
+        (global.fetch as jest.Mock).mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve(mockResponse),
+        });
+  
+        const result = await fetchAPI("/test", {});
+        expect(result).toEqual({ name: "Test" });
+      });
+  
+      it("handles API error", async () => {
+        (global.fetch as jest.Mock).mockResolvedValueOnce({
+          ok: false,
+          status: 404,
+        });
+  
+        await expect(fetchAPI("/test", {})).rejects.toThrow();
+      });
+    });
+  
+    describe("flattenAttributes", () => {
+      it("flattens nested attributes", () => {
+        const input = {
+          attributes: {
+            name: "Test",
+            nested: {
+              data: {
+                attributes: {
+                  value: "Nested"
+                }
+              }
+            }
+          }
+        };
+  
+        const result = flattenAttributes(input);
+        expect(result).toEqual({
+          name: "Test",
+          nested: { value: "Nested" }
+        });
+      });
+    });
+  
+    describe("getDueDateBadgeColor", () => {
+      it("returns correct color for different time ranges", () => {
+        expect(getDueDateBadgeColor(15, true)).toContain("emerald");
+        expect(getDueDateBadgeColor(5, true)).toContain("amber");
+        expect(getDueDateBadgeColor(2, true)).toContain("red");
+        expect(getDueDateBadgeColor(-1, true)).toContain("red");
       });
     });
   });
