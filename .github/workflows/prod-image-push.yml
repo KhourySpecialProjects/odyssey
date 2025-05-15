@@ -74,7 +74,7 @@ jobs:
             --task-definition ${{ env.TASK_DEF_ARN }} \
 
 
-  build-and-push-backend-to-dev2:
+  build-and-push-backend-to-prod:
     runs-on: ubuntu-latest
       
     steps:

@@ -85,6 +85,12 @@ export default async function Droplet({ params }: Props) {
           <div className="my-3 flex w-full flex-row items-center space-x-10">
             <RegenerateSlugButton dropletId={droplet.id} name={droplet.name} />
           </div>
+          <div
+            className={`pt-4 ${droplet.status === "draft" ? "visibility: visible" : "visibility: hidden"} text-red-500 dark:text-red-300`}
+          >
+            This is currently a draft droplet. To publish this droplet, contact
+            a Website Creator.
+          </div>
         </div>
 
         <div className="mx-auto mt-10 w-full max-w-2xl space-y-10">

@@ -11,25 +11,20 @@ interface PageNavProps {
 }
 
 export function PageNav({ currentPage, updatePage, totalPages }: PageNavProps) {
-  const [curPage, setCurPage] = useState(currentPage);
-
   const handleNextPage = () => {
     if (currentPage < totalPages) {
-      updatePage(curPage + 1);
-      setCurPage(curPage + 1);
+      updatePage(currentPage + 1);
     }
   };
 
   const handlePrevPage = () => {
     if (currentPage > 1) {
-      updatePage(curPage - 1);
-      setCurPage(curPage - 1);
+      updatePage(currentPage - 1);
     }
   };
 
   const handlePageClick = (pageNum: number) => {
     updatePage(pageNum);
-    setCurPage(pageNum);
   };
 
   return (
@@ -47,14 +42,14 @@ export function PageNav({ currentPage, updatePage, totalPages }: PageNavProps) {
 
         {/* Page Numbers */}
         {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) =>
-          (pageNum >= curPage - 1 && pageNum <= curPage + 1) ||
+          (pageNum >= currentPage - 1 && pageNum <= currentPage + 1) ||
           pageNum == totalPages ||
           pageNum == 1 ? (
             <button
               key={`page-${pageNum}`}
               onClick={() => handlePageClick(pageNum)}
-              disabled={curPage == pageNum}
-              className={`p-2 ${pageNum === curPage ? "rounded-md border border-slate-300" : ""} font-bold`}
+              disabled={currentPage == pageNum}
+              className={`p-2 ${pageNum === currentPage ? "rounded-md border border-slate-300" : ""} font-bold`}
             >
               {pageNum}
             </button>
