@@ -16,6 +16,7 @@ import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import { getDropletBySlug } from "@/lib/requests/droplet";
 import { Block } from "./add-block";
+import { toast } from "sonner";
 
 export interface BaseBlock {
   __component: string;
@@ -127,6 +128,27 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
     [lesson.id, dropletSlug, router],
   );
 
+  const handleRegenerateSlug = async () => {
+    if (newSlugInput.trim() === "") {
+      console.error("New slug cannot be empty");
+      return;
+    }
+    const response = await updateLesson(
+      lesson.id,
+      { name, slug: newSlugInput.trim() },
+      { regenerateSlug: false },
+    );
+    if (response.ok && !response.error) {
+      router.replace(
+        `/draft/d/${dropletSlug}/${response.data.attributes.slug}`,
+      );
+      setIsPopupOpen(false);
+    } else {
+      toast.error("A lesson with that slug already exists");
+      setIsPopupOpen(false);
+    }
+  };
+
   const setBlock = useCallback((index: number) => {
     return (block: Partial<Block>) => {
       setBlocks((prevBlocks) =>
@@ -197,6 +219,9 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
     });
   };
 
+  const [isPopupOpen, setIsPopupOpen] = useState(false);
+  const [newSlugInput, setNewSlugInput] = useState("");
+
   return (
     <>
       <div className="mb-5 flex flex-col items-center justify-start rounded-md border border-slate-200 px-4 pt-4 pb-7 dark:border-slate-500">
@@ -210,9 +235,40 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
           }}
         />
         <div className="flex flex-row items-center justify-center space-x-10">
-          <Button variant="outline" onClick={() => regenerateSlug(name)}>
-            Regenerate URL Slug
+          <Button variant="outline" onClick={() => setIsPopupOpen(true)}>
+            Change URL
           </Button>
+          {isPopupOpen && (
+            <div className="bg-opacity-50 fixed inset-0 z-50 flex items-center justify-center bg-black">
+              <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl dark:bg-slate-900">
+                <h3 className="mb-4 text-lg font-medium text-slate-900 dark:text-slate-100">
+                  Enter New URL Slug
+                </h3>
+                <input
+                  type="text"
+                  value={newSlugInput}
+                  onChange={(e) => setNewSlugInput(e.target.value)}
+                  placeholder="e.g., my-new-url-slug"
+                  className="mb-4 w-full rounded-md border border-slate-300 p-2 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-50"
+                />
+                <div className="flex justify-end space-x-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => setIsPopupOpen(false)}
+                    className="dark:border-slate-600 dark:text-slate-50"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={handleRegenerateSlug}
+                    className="bg-sky-600 text-white hover:bg-sky-700"
+                  >
+                    Confirm
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
           <DeleteLessonButton
             deleteLesson={deleteLessonBackend}
             dropletSlug={dropletSlug}
