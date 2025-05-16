@@ -39,6 +39,7 @@ export type Highlight = {
   color: HighlightColor;
   lesson?: Lesson;
   yLevel?: number;
+  blockId: number;
 };
 
 export type User = {

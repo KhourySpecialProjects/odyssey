@@ -18,7 +18,6 @@ interface GenericBlockRendererProps {
   onHighlight: (highlight: Highlight, isWithNote?: boolean) => void;
   onDeleteHighlight: (highlightId: number) => void;
   onNote: (notePos: number, text: string) => void;
-  genericBlocks: number[];
   enrollmentId: string | undefined;
   expanded: boolean;
   setExpanded: (expanded: boolean) => void;
@@ -35,7 +34,6 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
   onHighlight,
   onDeleteHighlight,
   onNote,
-  genericBlocks,
   enrollmentId,
   expanded,
   setExpanded,
@@ -85,6 +83,28 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
 
     return content;
   };
+  const [activeBlock, setActiveBlock] = useState<number | null>(null);
+
+  useEffect(() => {
+    const handleMouseEnter = () => {
+      setActiveBlock(block.id);
+    };
+
+    const handleMouseLeave = () => {
+      //
+    };
+
+    if (contentRef.current) {
+      contentRef.current.addEventListener("mouseover", handleMouseEnter);
+      contentRef.current.addEventListener("mouseleave", handleMouseLeave);
+    }
+    return () => {
+      if (contentRef.current) {
+        contentRef.current.removeEventListener("mouseover", handleMouseEnter);
+        contentRef.current.removeEventListener("mouseleave", handleMouseLeave);
+      }
+    };
+  }, [block.id]);
 
   function highlightRange(
     startNode: Node,
@@ -212,7 +232,9 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
         pre.style.paddingTop = "0rem";
         pre.insertBefore(lineNumbers, pre.firstChild);
       });
-      const sortedHighlights = [...highlights].sort(
+      const blockHighlights = highlights.filter((h) => h.blockId === block.id);
+
+      const sortedHighlights = [...blockHighlights].sort(
         (a, b) => (a.position?.start || 0) - (b.position?.start || 0),
       );
 
@@ -381,6 +403,7 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
             end: highlightEnd,
           },
           color: selectedColor,
+          blockId: block.id,
         });
 
         const newRange = document.createRange();
@@ -412,7 +435,9 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
   const handlePopupDelete = () => {
     const savedRange = popupRef.current.savedRange;
 
-    if (!contentRef.current || !savedRange) return;
+    if (!contentRef.current || !savedRange) {
+      return;
+    }
 
     const spans = Array.from(
       contentRef.current.querySelectorAll('span[style*="background-color"]'),
@@ -429,8 +454,9 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
       if (rangeIntersects) {
         const highlightId = highlights.find(
           (h) =>
-            h.text === span.textContent ||
-            h.text.includes(span.textContent || ""),
+            (h.text === span.textContent ||
+              h.text.includes(span.textContent || "")) &&
+            h.blockId === block.id,
         )?.id;
 
         if (highlightId) {
@@ -451,7 +477,9 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
   };
 
   const handlePopupHighlight = (isWithNote?: boolean) => {
-    if (!contentRef.current || !popupRef.current.savedRange) return;
+    if (!contentRef.current || !popupRef.current.savedRange) {
+      return;
+    }
 
     const range = popupRef.current.savedRange;
     const text = range.toString();
@@ -495,6 +523,7 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
             end: globalEnd,
           },
           color: selectedColor,
+          blockId: block.id,
         },
         isWithNote,
       );
@@ -546,6 +575,7 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
           end: blockOffset + spanLength,
         },
         color: color,
+        blockId: block.id,
       });
     } else {
       setSelectedColor(color);
@@ -579,7 +609,7 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
 
   return (
     <div className="">
-      {block.id === genericBlocks[0] && enrollmentId && (
+      {enrollmentId && (
         <HighlightDropdown
           selectedColor={selectedColor}
           handleApplyColor={handleApplyColor}
@@ -590,8 +620,10 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
           handleCreateNote={handleCreateNote}
           setExpanded={setExpanded}
           expanded={expanded}
+          isActive={activeBlock === block.id}
         />
       )}
+      <div style={{ display: "none" }}></div>
 
       <div
         ref={contentRef}

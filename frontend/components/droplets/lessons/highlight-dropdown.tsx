@@ -22,6 +22,7 @@ interface HighlightDropdownProps {
   handleCreateNote: () => void;
   setExpanded: (expanded: boolean) => void;
   expanded: boolean;
+  isActive: boolean;
 }
 
 export function HighlightDropdown({
@@ -34,8 +35,10 @@ export function HighlightDropdown({
   handleCreateNote,
   setExpanded,
   expanded,
+  isActive,
 }: HighlightDropdownProps) {
   const [visible, setVisible] = useState(false);
+  if (!isActive) return null;
 
   return (
     <div
