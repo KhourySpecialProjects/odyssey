@@ -1174,6 +1174,7 @@ export interface ApiHighlightHighlight extends Schema.CollectionType {
       'manyToOne',
       'api::authorized-user.authorized-user'
     >;
+    blockId: Attribute.Integer;
     color: Attribute.String & Attribute.DefaultTo<'yellow'>;
     createdAt: Attribute.DateTime;
     createdBy: Attribute.Relation<

@@ -113,21 +113,6 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
     [lesson.id, dropletSlug, router],
   );
 
-  const regenerateSlug = useCallback(
-    async (name: string) => {
-      const response = await updateLesson(
-        lesson.id,
-        { name },
-        { regenerateSlug: true },
-      );
-      if (response && !response.error) {
-        const slug = response.data.attributes.slug;
-        router.replace(`/draft/d/${dropletSlug}/${slug}`);
-      }
-    },
-    [lesson.id, dropletSlug, router],
-  );
-
   const handleRegenerateSlug = async () => {
     if (newSlugInput.trim() === "") {
       console.error("New slug cannot be empty");

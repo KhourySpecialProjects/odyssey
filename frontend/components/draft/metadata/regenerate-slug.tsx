@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { updateDroplet } from "@/lib/actions";
-import { usePathname, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 
