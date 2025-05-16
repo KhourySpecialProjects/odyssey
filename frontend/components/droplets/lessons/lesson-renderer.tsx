@@ -100,6 +100,7 @@ export function LessonRenderer({
         color: highlight.color,
         lesson: lesson.id,
         authorized_user: authUser?.id,
+        blockId: highlight.blockId,
       },
     });
 
@@ -203,10 +204,6 @@ export function LessonRenderer({
       headings = headings.concat(extractHeadings((b as GenericBlock).content));
     });
 
-  const genericBlocks = lesson.blocks
-    .filter((b: Block) => b.__component === "droplets.generic")
-    .map((b) => b.id);
-
   return (
     <>
       <div className="mx-auto w-full max-w-prose min-w-[300px] py-8 md:min-w-[700px]">
@@ -240,7 +237,6 @@ export function LessonRenderer({
                 onHighlight={handleHighlight}
                 onDeleteHighlight={handleDeleteHighlight}
                 onNote={handleCreateNote}
-                genericBlocks={genericBlocks}
                 enrollmentId={enrollmentId}
                 expanded={expanded}
                 setExpanded={setExpanded}
@@ -276,7 +272,6 @@ function LessonBlockRenderer({
   onHighlight,
   onDeleteHighlight,
   onNote,
-  genericBlocks,
   enrollmentId,
   expanded,
   setExpanded,
@@ -286,7 +281,6 @@ function LessonBlockRenderer({
   onHighlight: (highlight: Highlight, isWithNote?: boolean) => void;
   onDeleteHighlight: (id: number) => void;
   onNote: (notePos: number, text: string) => void;
-  genericBlocks: number[];
   enrollmentId: string | undefined;
   expanded: boolean;
   setExpanded: (expanded: boolean) => void;
@@ -300,7 +294,6 @@ function LessonBlockRenderer({
           onHighlight={onHighlight}
           onDeleteHighlight={onDeleteHighlight}
           onNote={onNote}
-          genericBlocks={genericBlocks}
           enrollmentId={enrollmentId}
           expanded={expanded}
           setExpanded={setExpanded}

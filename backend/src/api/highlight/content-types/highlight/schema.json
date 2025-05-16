@@ -44,6 +44,9 @@
       "relation": "oneToOne",
       "target": "api::note.note",
       "mappedBy": "highlight"
+    },
+    "blockId": {
+      "type": "integer"
     }
   }
 }
