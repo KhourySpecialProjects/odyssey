@@ -14,6 +14,7 @@ describe("HighlightDropdown", () => {
     handleCreateNote: jest.fn(),
     setExpanded: jest.fn(),
     expanded: false,
+    isActive: true,
   };
 
   beforeEach(() => {
