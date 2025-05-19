@@ -83,7 +83,7 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
 
     return content;
   };
-  const [activeBlock, setActiveBlock] = useState<number | null>(null);
+  const [activeBlock, setActiveBlock] = useState<number | null>(block.id);
 
   useEffect(() => {
     const handleMouseEnter = () => {
