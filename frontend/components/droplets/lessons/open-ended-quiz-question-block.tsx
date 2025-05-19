@@ -38,7 +38,7 @@ export function OpenEndedQuizQuestionBlock({
         <div className="mt-4 rounded-md border border-slate-200 px-8 py-12 text-center">
           {isCorrect ? (
             <>
-              <Badge className="bg-green-100 text-lg text-green-700">
+              <Badge className="bg-green-100 text-lg text-green-700 hover:bg-green-200">
                 That&rsquo;s Right!
               </Badge>
               <p className="mt-4 font-medium">
@@ -47,7 +47,7 @@ export function OpenEndedQuizQuestionBlock({
             </>
           ) : (
             <>
-              <Badge className="bg-orange-100 text-lg text-orange-700">
+              <Badge className="bg-orange-100 text-lg text-orange-700 hover:bg-orange-200">
                 Not Quite
               </Badge>
               <div className="my-8">
