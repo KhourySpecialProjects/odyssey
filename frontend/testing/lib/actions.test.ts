@@ -49,6 +49,12 @@ import {
 } from "@/lib/actions";
 import { DropletStatus, DropletType, FocusArea, Tag } from "@/types";
 import { AuthorizedUserRoleTitle } from "@/lib/globals";
+import { getAuthorizedUserRoleIdByTitle } from "@/lib/requests/authorized-user-roles";
+import { getCurrentUser } from "@/lib/auth/session";
+import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
+import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
+
+global.fetch = jest.fn();
 
 jest.mock("@/lib/utils", () => ({
   fetchAPI: jest.fn(),
@@ -63,6 +69,22 @@ jest.mock("@aws-sdk/client-s3", () => ({
   S3Client: jest.fn(),
   PutObjectCommand: jest.fn(),
   DeleteObjectCommand: jest.fn(),
+}));
+
+jest.mock('@/lib/auth/session', () => ({
+  getCurrentUser: jest.fn()
+}));
+
+jest.mock('@/lib/requests/authorized-user', () => ({
+  getAuthorizedUserByEmail: jest.fn()
+}));
+
+jest.mock('@/lib/requests/enrollment', () => ({
+  getEnrollmentsByAuthorizedUser: jest.fn()
+}));
+
+jest.mock('@/lib/requests/authorized-user-roles', () => ({
+  getAuthorizedUserRoleIdByTitle: jest.fn()
 }));
 
 describe("actions", () => {
@@ -282,13 +304,11 @@ describe("actions", () => {
     });
   });
 
-  // Mock next/cache
   jest.mock("next/cache", () => ({
     revalidatePath: jest.fn(),
     revalidateTag: jest.fn(),
   }));
 
-  // Mock fetch
   global.fetch = jest.fn();
 
   describe("Actions", () => {
@@ -621,8 +641,6 @@ describe("actions", () => {
     });
   });
 
-  // Add these test suites inside the main "Actions" describe block
-
   describe("Profile Management Actions", () => {
     describe("updateAuthorBio", () => {
       it("successfully updates author bio", async () => {
@@ -687,6 +705,414 @@ describe("actions", () => {
         expect(result).toEqual({
           error: "Database Error: Failed to enroll.",
         });
+      });
+    });
+  });
+ 
+  
+  describe('Playlist Actions', () => {
+    it('should create a playlist', async () => {
+      const mockPlaylistData = {
+        name: 'Test Playlist',
+        isPublic: true,
+        droplets: [{ id: 1 }],
+        author: { id: 1 },
+        userId: 1
+      };
+      
+      const result = await createPlaylist(mockPlaylistData);
+      expect(result).toBeDefined();
+    });
+  
+    it('should update a playlist', async () => {
+      const mockUpdateData = {
+        name: 'Updated Playlist',
+        isPublic: false,
+        droplets: [{ id: 1 }],
+        authors: { id: 1 },
+        userId: 1
+      };
+      
+      const result = await updatePlaylist(1, mockUpdateData);
+      expect(result).toBeDefined();
+    });
+  
+    it('should delete a playlist', async () => {
+      const result = await deletePlaylist(1);
+      expect(result).toBeDefined();
+    });
+  });
+  
+  describe('User Settings Actions', () => {
+    it('should set timezone', async () => {
+      const result = await setTimeZone('America/New_York', 1);
+      expect(result).toBeDefined();
+    });
+  });
+  
+  jest.mock('@/lib/auth/session', () => ({
+    getCurrentUser: jest.fn()
+  }));
+  
+  jest.mock('@/lib/requests/authorized-user', () => ({
+    getAuthorizedUserByEmail: jest.fn()
+  }));
+  
+  jest.mock('@/lib/requests/enrollment', () => ({
+    getEnrollmentsByAuthorizedUser: jest.fn()
+  }));
+  
+  jest.mock('@/lib/requests/authorized-user-roles', () => ({
+    getAuthorizedUserRoleIdByTitle: jest.fn()
+  }));
+  
+  global.fetch = jest.fn();
+  
+  describe('Actions', () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+      (global.fetch as jest.Mock).mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({ data: {} })
+      });
+    });
+  
+    describe('Authorized User Actions', () => {
+      it('should create authorized user', async () => {
+        const formData = new FormData();
+        formData.append('email', 'test@northeastern.edu');
+        formData.append('isEnabled', 'true');
+  
+        (getAuthorizedUserRoleIdByTitle as jest.Mock).mockImplementation(() => Promise.resolve(1));
+  
+        const result = await createAuthorizedUser({}, formData);
+        expect(result.ok).toBe(true);
+      });
+    });
+  
+    describe('Access Request Actions', () => {
+      it('should create access request', async () => {
+        const formData = {
+          email: 'test@example.com',
+          reason: 'Testing',
+          givenName: 'person', 
+          affiliation: 'student',
+          familyName: 'lastName',
+          college: 'neu'
+        };
+  
+        (global.fetch as jest.Mock).mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve({ data: { id: 1 } })
+        });
+  
+        await expect(createAccessRequest(formData)).rejects.toThrow();
+      });
+  
+      
+    });
+  
+    describe('Bug Report Actions', () => {
+      it('should create bug report', async () => {
+        const formData = {
+          title: 'Test Bug',
+          description: 'Test Description',
+          email: 'email@example.com',
+          path: '/home',
+          type: 'bug' as 'bug',
+          fullName: 'fullName'
+        };
+  
+        (global.fetch as jest.Mock).mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve({ data: { id: 1 } })
+        });
+  
+        const result = await createBugReport(formData);
+        expect(result.ok).toBe(true);
+      });
+    });
+  
+    describe('User Profile Actions', () => {
+      it('should update author bio', async () => {
+        (global.fetch as jest.Mock).mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve({ data: { id: 1 } })
+        });
+  
+        const result = await updateAuthorBio('New bio', 1);
+        expect(result.success).toBe(true);
+      });
+  
+      it('should update linkedin', async () => {
+        (global.fetch as jest.Mock).mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve({ data: { id: 1 } })
+        });
+  
+        const result = await updateLinkedin('linkedin.com/test', 1);
+        expect(result.success).toBe(true);
+      });
+  
+      it('should update github', async () => {
+        (global.fetch as jest.Mock).mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve({ data: { id: 1 } })
+        });
+  
+        const result = await updateGithub('github.com/test', 1);
+        expect(result.success).toBe(true);
+      });
+  
+      it('should update photo', async () => {
+        (global.fetch as jest.Mock).mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve({ data: { id: 1 } })
+        });
+  
+        const result = await updatePhoto('https://example.com/photo.jpg', 1);
+        expect(result.success).toBe(true);
+      });
+  
+      it('should update onboarding info', async () => {
+        (global.fetch as jest.Mock).mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve({ data: { id: 1 } })
+        });
+  
+        const result = await updateOnboardingInfo('John', 'Doe', 'Bio', 1);
+        expect(result.success).toBe(true);
+      });
+  
+      it('should update user info', async () => {
+        (global.fetch as jest.Mock).mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve({ data: { id: 1 } })
+        });
+  
+        (getAuthorizedUserRoleIdByTitle as jest.Mock).mockImplementation(() => Promise.resolve(1));
+  
+        const result = await updateUserInfo(
+          'John',
+          'Doe',
+          'Bio',
+          ['User' as AuthorizedUserRoleTitle],
+          'photo.jpg',
+          1
+        );
+        expect(result.success).toBe(true);
+      });
+  
+      it('should update first time status', async () => {
+        (global.fetch as jest.Mock).mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve({ data: { id: 1 } })
+        });
+  
+        const result = await updateFirstTimeStatus(1);
+        expect(result.success).toBe(true);
+      });
+    });
+  
+    describe('Enrollment Actions', () => {
+      beforeEach(() => {
+        (getCurrentUser as jest.Mock).mockResolvedValue({ email: 'test@example.com' });
+        (getAuthorizedUserByEmail as jest.Mock).mockResolvedValue({ id: 1 });
+        (getEnrollmentsByAuthorizedUser as jest.Mock).mockResolvedValue([]);
+      });
+  
+      it('should create enrollment', async () => {
+        const droplet = {
+          id: 1,
+          name: "Test Droplet",
+          slug: "test-droplet",
+          isHidden: false,
+          focusArea: "personal" as FocusArea,
+          type: "knowledge" as DropletType,
+          tags: [{ id: 1, name: "React" }] as Tag[],
+          learningObjectives: [],
+          status: "published" as DropletStatus,
+          droplet_lessons: [],
+        };
+        const viewedLessons = [{
+          id: 1,
+          name: "Test Lesson",
+          slug: "test-lesson",
+          droplet_lessons: [],
+          droplets: [],
+          notes: [],
+          blocks: [
+            {
+              id: 1,
+              __component: "droplets.generic",
+              content: "Generic content",
+            },
+          ],
+        }];
+  
+        const result = await createEnrollment(droplet, viewedLessons);
+        expect(result.ok).toBe(true);
+      });
+  
+      
+    });
+  
+    describe('Droplet Actions', () => {
+      beforeEach(() => {
+        (getCurrentUser as jest.Mock).mockResolvedValue({ email: 'test@example.com' });
+        (getAuthorizedUserByEmail as jest.Mock).mockResolvedValue({ id: 1 });
+      });
+  
+      it('should create droplet', async () => {
+        const data = {
+          name: 'Test Droplet',
+          focusArea: 'Test Area',
+          type: 'test',
+          tagIds: [1],
+          learningObjectives: ['Objective 1']
+        };
+  
+        (global.fetch as jest.Mock).mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve({ data: { id: 1 } })
+        });
+  
+        const result = await createDroplet(data);
+        expect(result.ok).toBe(true);
+      });
+  
+      it('should add lesson', async () => {
+        const formData = {
+          name: 'Test Lesson',
+          dropletId: 1,
+          orderIndex: 1
+        };
+  
+        (global.fetch as jest.Mock).mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve({ data: { id: 1 } })
+        });
+  
+        const result = await addLesson(formData);
+        expect(result.ok).toBe(true);
+      });
+    });
+  
+    describe('Tag Actions', () => {
+      it('should create new tag', async () => {
+        (global.fetch as jest.Mock).mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve({ data: { id: 1 } })
+        });
+  
+        const result = await createNewTag('Test Tag');
+        expect(result.success).toBe(true);
+      });
+    });
+  
+    describe('Error Handling', () => {
+  
+      it('should handle invalid email format', async () => {
+        const formData = new FormData();
+        formData.append('email', 'invalid-email');
+        formData.append('isEnabled', 'true');
+  
+        (getAuthorizedUserRoleIdByTitle as jest.Mock).mockImplementation(() => Promise.resolve(1));
+  
+        const result = await createAuthorizedUser({}, formData);
+        expect(result.ok).toBe(false);
+      });
+    });
+  });
+  
+  jest.mock('@/lib/auth/session', () => ({
+    getCurrentUser: jest.fn()
+  }));
+  
+  jest.mock('@/lib/requests/authorized-user', () => ({
+    getAuthorizedUserByEmail: jest.fn()
+  }));
+  
+  global.fetch = jest.fn();
+  
+  describe('Highlight and Note Actions', () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+  
+    describe('Highlight Actions', () => {
+      it('should create highlight', async () => {
+        const highlightData = {
+          data: {
+            content: 'Test highlight',
+            lesson: 1,
+            user: 1
+          }
+        };
+  
+        (global.fetch as jest.Mock).mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve({ data: { id: 1 } })
+        });
+  
+        const result = await createHighlight(highlightData);
+        expect(result.data).toBeDefined();
+        expect(result.data.id).toBe(1);
+      });
+  
+      it('should handle highlight creation error', async () => {
+        const highlightData = {
+          data: {
+            content: 'Test highlight',
+            lesson: 1,
+            user: 1
+          }
+        };
+  
+        (global.fetch as jest.Mock).mockResolvedValueOnce({
+          ok: false,
+          json: () => Promise.resolve({ error: 'Failed to create highlight' })
+        });
+  
+        await expect(createHighlight(highlightData)).rejects.toThrow();
+      });
+  
+      it('should delete highlight', async () => {
+        (global.fetch as jest.Mock).mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve({ data: { id: 1 } })
+        });
+  
+        const result = await deleteHighlight(1);
+        expect(result).toBeDefined();
+        expect(result.data.id).toBe(1);
+      });
+
+      it('should handle get highlights error', async () => {
+        (getCurrentUser as jest.Mock).mockImplementation(() => Promise.resolve({ email: 'test@example.com' }));
+        (getAuthorizedUserByEmail as jest.Mock).mockImplementation(() => Promise.resolve({ id: 1 }));
+  
+        (global.fetch as jest.Mock).mockResolvedValueOnce({
+          ok: false,
+          json: () => Promise.resolve({ error: 'Failed to get highlights' })
+        });
+  
+        const result = await getHighlightsForLesson(1);
+        expect(result.error).toBeDefined();
+      });
+    });
+  
+    describe('Error Cases', () => {
+      it('should handle network errors', async () => {
+        (global.fetch as jest.Mock).mockRejectedValueOnce(new Error('Network error'));
+  
+        await expect(createHighlight({ data: { content: 'Test' } })).rejects.toThrow();
+      });
+  
+      it('should handle missing user email', async () => {
+        (getCurrentUser as jest.Mock).mockImplementation(() => Promise.resolve(null));
+  
+        await expect(getHighlightsForLesson(1)).rejects.toThrow('No email identified');
       });
     });
   });

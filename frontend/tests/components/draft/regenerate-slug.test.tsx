@@ -2,6 +2,7 @@ import { render, screen, fireEvent } from "@testing-library/react";
 import { RegenerateSlugButton } from "@/components/draft/metadata/regenerate-slug";
 import { updateDroplet } from "@/lib/actions";
 import { useRouter } from "next/navigation";
+import { DropletStatus, DropletType, FocusArea, Tag } from "@/types";
 
 jest.mock("@/lib/actions", () => ({
   updateDroplet: jest.fn(),
@@ -19,8 +20,21 @@ describe("RegenerateSlugButton", () => {
     jest.clearAllMocks();
   });
 
+  const mockDroplet = {
+    id: 1,
+    name: "Test Droplet",
+    slug: "test-droplet",
+    isHidden: false,
+    focusArea: "personal" as FocusArea,
+    type: "knowledge" as DropletType,
+    tags: [{ id: 1, name: "React" }] as Tag[],
+    learningObjectives: [],
+    status: "published" as DropletStatus,
+    droplet_lessons: [],
+  };
+
   it("renders button with correct text", () => {
-    render(<RegenerateSlugButton name="Test Droplet" dropletId={1} />);
+    render(<RegenerateSlugButton name="Test Droplet" droplet={mockDroplet} />);
     expect(screen.getByText("Change URL")).toBeInTheDocument();
   });
 });

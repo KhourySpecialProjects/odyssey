@@ -185,6 +185,8 @@ export type Droplet = {
   droplet_lessons: DropletLesson[];
   authorized_users?: AuthorizedUser[];
   isArchived?: boolean;
+  inReview?: boolean;
+  afterReview?: string;
 };
 
 export type QuizAnswerOption = {

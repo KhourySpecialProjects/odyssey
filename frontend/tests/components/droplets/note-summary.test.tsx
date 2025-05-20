@@ -38,6 +38,7 @@ describe("NoteSummary", () => {
         id: 1,
         text: "Highlighted text",
         color: "#fff300" as HighlightColor,
+        blockId: 1,
         lesson: {
           id: 1,
           name: "Test Lesson",
@@ -108,6 +109,7 @@ describe("NoteSummary", () => {
     notes: [
       {
         id: 1,
+        blockId: 1,
         content: "Test note content",
         lesson: {
           id: 1,
@@ -140,6 +142,7 @@ describe("NoteSummary", () => {
           text: "Highlighted text",
           color: "#fff300" as HighlightColor,
           position: { start: 0, end: 0 },
+          blockId: 1
         },
       },
     ],

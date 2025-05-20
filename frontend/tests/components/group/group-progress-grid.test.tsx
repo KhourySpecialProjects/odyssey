@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { GroupProgressGrid } from "@/components/group/group-progress-grid";
 import { DropletStatus, DropletType, FocusArea, GroupSemester } from "@/types";
 import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
@@ -21,7 +21,22 @@ describe("GroupProgressGrid", () => {
         isHidden: false,
         lessons: [],
         slug: "test-droplet",
-        type: "DROPPLET" as DropletType,
+        type: "DROPLET" as DropletType,
+        focusArea: "TEST" as FocusArea,
+        learningObjectives: [],
+        isArchived: false,
+        status: "ACTIVE" as DropletStatus,
+        droplet_lessons: [],
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+      {
+        id: 2,
+        name: "Test Droplet 2",
+        isHidden: false,
+        lessons: [],
+        slug: "test-droplet-2",
+        type: "DROPLET" as DropletType,
         focusArea: "TEST" as FocusArea,
         learningObjectives: [],
         isArchived: false,
@@ -82,4 +97,29 @@ describe("GroupProgressGrid", () => {
       screen.getByText(/No droplets have been added/i),
     ).toBeInTheDocument();
   });
+
+  const mockEnrollments = [
+    {
+      droplet: { id: 1, lessons: [{ id: 1 }, { id: 2 }] },
+      viewedLessons: [{ id: 1 }]
+    }
+  ];
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    (getEnrollmentsByAuthorizedUser as jest.Mock).mockResolvedValue(mockEnrollments);
+  });
+
+  it('should handle pagination correctly', () => {
+    render(<GroupProgressGrid group={mockGroup} />);
+    
+    const nextButton = screen.getByLabelText('Next page');
+    fireEvent.click(nextButton);
+    expect(screen.getByText('Test Droplet 2')).toBeInTheDocument();
+    
+    const prevButton = screen.getByRole('button', { name: '' });
+    fireEvent.click(prevButton);
+    expect(screen.getByText('Test Droplet')).toBeInTheDocument();
+  });
+
 });

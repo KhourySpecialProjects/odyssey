@@ -19,7 +19,7 @@ export async function getDroplets({
       fields: ["id", "name", "slug"],
     },
   },
-  fields = ["id", "name", "slug", "type", "focusArea", "status", "isHidden"],
+  fields = ["*"],
 }: StrapiRequestParams = {}): Promise<Droplet[]> {
   const path = `/droplets`;
   const urlParams = {
@@ -102,5 +102,11 @@ export async function getDropletById<T extends Partial<Droplet> = Droplet>(
 export async function getDraftDroplets(): Promise<Droplet[]> {
   return await getDroplets({
     filters: { status: "draft" },
+  });
+}
+
+export async function getInReviewDroplets(): Promise<Droplet[]> {
+  return await getDroplets({
+    filters: { inReview: true, status: "draft" },
   });
 }

@@ -110,4 +110,53 @@ describe("UserMultiSelect", () => {
       expect(mockOnChange).toHaveBeenCalledWith([1]);
     });
   });
+
+  const mockOnChange = jest.fn();
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('should add user to selection when clicked', async () => {
+    render(<UserMultiSelect selectedIds={[]} onChange={mockOnChange} />);
+    
+    const button = screen.getByRole('combobox');
+    fireEvent.click(button);
+
+    await waitFor(() => {
+      expect(screen.getByText('John Doe')).toBeInTheDocument();
+    });
+
+    const userItem = screen.getByText('John Doe');
+    fireEvent.click(userItem);
+    
+    expect(mockOnChange).toHaveBeenCalledWith([1]);
+  });
+
+  it('should remove user from selection when clicked again', async () => {
+    render(<UserMultiSelect selectedIds={[1]} onChange={mockOnChange} />);
+    
+    const button = screen.getByRole('combobox');
+    fireEvent.click(button);
+
+    await waitFor(() => {
+      expect(screen.getAllByText('John Doe')[0]).toBeInTheDocument();
+    });
+  });
+
+  it('should handle multiple selections', async () => {
+    render(<UserMultiSelect selectedIds={[1]} onChange={mockOnChange} />);
+    
+    const button = screen.getByRole('combobox');
+    fireEvent.click(button);
+
+    await waitFor(() => {
+      expect(screen.getByText('Jane Smith')).toBeInTheDocument();
+    });
+
+    const secondUser = screen.getByText('Jane Smith');
+    fireEvent.click(secondUser);
+    
+    expect(mockOnChange).toHaveBeenCalledWith([1, 2]);
+  });
 });
