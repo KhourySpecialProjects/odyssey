@@ -1,8 +1,6 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { DropletBlock } from "@/components/admin/droplets/droplet-block";
 import { DropletStatus, DropletType, FocusArea } from "@/types";
-import { updateDroplet } from "@/lib/actions";
-import { toast } from "sonner";
 
 jest.mock("sonner", () => ({
   toast: {
@@ -30,32 +28,6 @@ describe("DropletBlock", () => {
     focusArea: "frontend" as FocusArea,
     type: "lesson" as DropletType,
     status: "published" as DropletStatus,
-    learningObjectives: [],
-    droplet_lessons: [],
-  };
-
-  const mockDroplet2 = {
-    id: 1,
-    name: "Test Droplet",
-    slug: "test-droplet",
-    isHidden: true,
-    focusArea: "frontend" as FocusArea,
-    type: "lesson" as DropletType,
-    status: "published" as DropletStatus,
-    tags: [
-      {
-        id: 1,
-        slug: "test-tag",
-        name: "tag",
-        droplets: [mockDroplet],
-      },
-      {
-        id: 2,
-        slug: "test-tag2",
-        name: "tag2",
-        droplets: [mockDroplet],
-      },
-    ],
     learningObjectives: [],
     droplet_lessons: [],
   };
@@ -91,8 +63,7 @@ describe("DropletBlock", () => {
   });
 
   it("shows correct button text based on droplet visibility", () => {
-    const hiddenDroplet = { ...mockDroplet, isHidden: true };
-    const { rerender } = render(<DropletBlock droplet={mockDroplet} />);
+    render(<DropletBlock droplet={mockDroplet} />);
 
     expect(
       screen.getByRole("button", { name: "Hide Droplet" }),

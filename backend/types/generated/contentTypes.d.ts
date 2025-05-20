@@ -815,7 +815,6 @@ export interface ApiDropletDroplet extends Schema.CollectionType {
     draftAndPublish: true;
   };
   attributes: {
-    afterReview: Attribute.Text;
     announcements: Attribute.Relation<
       'api::droplet.droplet',
       'oneToMany',
@@ -861,7 +860,6 @@ export interface ApiDropletDroplet extends Schema.CollectionType {
       'manyToMany',
       'api::group.group'
     >;
-    inReview: Attribute.Boolean;
     isHidden: Attribute.Boolean &
       Attribute.Required &
       Attribute.DefaultTo<false>;

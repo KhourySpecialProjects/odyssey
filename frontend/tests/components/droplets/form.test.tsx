@@ -4,7 +4,6 @@ import userEvent from "@testing-library/user-event";
 import { createBugReport } from "@/lib/actions";
 import { toast } from "sonner";
 import { usePathname } from "next/navigation";
-import * as navigation from "next/navigation";
 
 jest.mock("@/lib/actions");
 jest.mock("sonner");

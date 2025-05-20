@@ -16,7 +16,6 @@ import { Authors } from "@/components/draft/metadata/authors";
 import { GradientBackground } from "@/components/gradient-bg";
 import { getCurrentUser } from "@/lib/auth/session";
 import { notFound } from "next/navigation";
-import { Button } from "@/components/ui/button";
 import { ReviewDroplet } from "@/components/draft/metadata/review-droplet";
 
 type Props = {
@@ -101,18 +100,21 @@ export default async function Droplet({ params }: Props) {
             This is currently a draft droplet. To publish this droplet, contact
             a Website Creator.
           </div>
-          {!droplet.inReview && droplet.afterReview !== null && droplet.status === "draft" && <div
-            className="rounded-md bg-white p-4 border border-slate-400 dark:bg-slate-800 dark:border-slate-500 dark:text-slate-200"
-          >
-            <p className="font-bold">Feedback for Revision:</p>
-            <div>{droplet.afterReview}</div>
-          </div>}
-          {droplet.inReview && isContentEditor(user.roles) && droplet.status === "draft" && <div
-            className="rounded-md dark:text-slate-200"
-          >
-            <ReviewDroplet name={droplet.name} droplet={droplet}/>
-            
-          </div>}
+          {!droplet.inReview &&
+            droplet.afterReview !== null &&
+            droplet.status === "draft" && (
+              <div className="rounded-md border border-slate-400 bg-white p-4 dark:border-slate-500 dark:bg-slate-800 dark:text-slate-200">
+                <p className="font-bold">Feedback for Revision:</p>
+                <div>{droplet.afterReview}</div>
+              </div>
+            )}
+          {droplet.inReview &&
+            isContentEditor(user.roles) &&
+            droplet.status === "draft" && (
+              <div className="rounded-md dark:text-slate-200">
+                <ReviewDroplet name={droplet.name} droplet={droplet} />
+              </div>
+            )}
         </div>
 
         <div className="mx-auto mt-10 w-full max-w-2xl space-y-10">

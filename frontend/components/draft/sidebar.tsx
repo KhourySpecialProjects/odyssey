@@ -195,7 +195,11 @@ export function Sidebar({
             <div className="flex flex-row justify-between pr-2">
               <Button
                 type="button"
-                onClick={() => droplet.status !== "draft" ? setIsOpen(true) : router.push(`/drafts`)}
+                onClick={() =>
+                  droplet.status !== "draft"
+                    ? setIsOpen(true)
+                    : router.push(`/drafts`)
+                }
                 className={cn(
                   "flex items-center justify-start gap-2 bg-slate-50 text-base text-black hover:bg-slate-100 dark:bg-slate-800 dark:text-white dark:hover:bg-slate-700",
                 )}

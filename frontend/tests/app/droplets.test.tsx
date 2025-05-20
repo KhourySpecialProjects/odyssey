@@ -44,13 +44,6 @@ describe("Droplet Lesson Pages", () => {
     });
   });
 
-  describe("Layout Component", () => {
-    const mockParams = {
-      slug: "test-droplet",
-      lessonSlug: "test-lesson",
-    };
-  });
-
   describe("Confetti Component", () => {
     it("renders nothing", () => {
       const { container } = render(<Confetti />);
