@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { FeedFilter } from "@/components/feed/feed-filter";
 import { AnnouncementTypeTitle } from "@/lib/globals";
 

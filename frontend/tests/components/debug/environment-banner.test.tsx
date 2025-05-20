@@ -7,7 +7,7 @@ jest.mock("@/lib/auth/session", () => ({
 }));
 
 jest.mock("@/components/debug/reportBugButton", () => ({
-  ReportBugButton: ({ user }: { user: any }) => (
+  ReportBugButton: () => (
     <button data-testid="report-bug-button">Report Bug</button>
   ),
 }));

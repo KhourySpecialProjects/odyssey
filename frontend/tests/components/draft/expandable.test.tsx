@@ -3,10 +3,8 @@ import { ExpandableEditor } from "@/components/draft/lesson/blocks/expandable";
 
 jest.mock("@/components/ui/tiptap/expandable-block-input", () => ({
   ExpandableBlockInput: ({
-    initialContent,
     updateContent,
   }: {
-    initialContent: string;
     updateContent: (content: string) => void;
   }) => (
     <div data-testid="expandable-block-input">
@@ -22,7 +20,7 @@ jest.mock("@/components/ui/tiptap/expandable-block-input", () => ({
 
 describe("ExpandableEditor", () => {
   const mockBlock = {
-    __component: "droplets.expandable",
+    __component: "droplets.expandable" as "droplets.expandable",
     content: "Test content",
     title: "Test title",
   };
