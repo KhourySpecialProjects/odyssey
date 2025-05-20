@@ -1,4 +1,4 @@
-import { isAuthorizedUserAdmin, isContentCreator } from "@/lib/utils";
+import { isAuthorizedUserAdmin, isContentCreator, isContentEditor } from "@/lib/utils";
 import { GeneralConfig, User } from "@/types";
 export const originalNav = [
   {
@@ -32,6 +32,12 @@ export const getMainNav = (user: User) => {
       label: "My Content",
       isHidden:
         !isContentCreator(user.roles) && !isAuthorizedUserAdmin(user.roles),
+    },
+    {
+      href: "/review",
+      label: "To Review",
+      isHidden:
+        !isContentEditor(user.roles) && !isAuthorizedUserAdmin(user.roles),
     },
     {
       href: "/admin",

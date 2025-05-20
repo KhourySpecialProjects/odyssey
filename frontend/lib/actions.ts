@@ -952,6 +952,9 @@ export async function updateDroplet(
       ...(data.description && { description: data.description }),
       ...(data.overview && { overview: data.overview }),
       ...(data.lessons && { lessons: data.lessons }),
+      ...(data.inReview !== undefined && { inReview: data.inReview }),
+      ...(data.status !== undefined && { status: data.status }),
+      ...(data.afterReview !== undefined && { afterReview: data.afterReview }),
     };
 
     dataToSend.regenerateSlug = options.regenerateSlug;
