@@ -59,6 +59,8 @@ export default function Sidebar({
 
   if (!user) return <UnauthorizedRoute />;
 
+  const curPath = pathname.split("d/")[1];
+
   return (
     <>
       <div
@@ -132,7 +134,7 @@ export default function Sidebar({
               <div className="w-full pb-4 text-center">
                 <Link
                   className="w-full rounded-full bg-green-600 px-6 py-2 text-white hover:bg-green-700"
-                  href={`/draft/d/${pathname.split("d/")[1]}`}
+                  href={`/draft/d/${curPath === `${droplet.slug}/recap` ? `${droplet.slug}` : `/${curPath}`}`}
                 >
                   Edit
                 </Link>
