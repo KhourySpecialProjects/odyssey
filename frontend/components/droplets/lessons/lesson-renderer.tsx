@@ -205,64 +205,60 @@ export function LessonRenderer({
     });
 
   return (
-    <>
-      <div className="mx-auto w-full max-w-prose min-w-[300px] py-8 md:min-w-[700px]">
-        <div className="relative mx-auto w-full max-w-prose xl:py-8">
-          <h1 className="text-4xl font-extrabold text-balance">
-            {lesson.name}
-          </h1>
+    <div className="mx-auto w-full min-w-[300px] py-8 md:min-w-[700px]">
+      <div className="relative mx-auto w-full max-w-prose xl:py-8">
+        <h1 className="text-4xl font-extrabold text-balance">{lesson.name}</h1>
 
-          {headings.length > 2 && (
-            <div className="mt-8 rounded-md border border-slate-200 bg-slate-50 p-6 dark:border-slate-500 dark:bg-slate-800">
-              <h2 className="text-xl font-bold">Contents</h2>
-              <ul className="mt-3 ml-4 list-inside list-disc">
-                {headings.map((heading, index) => (
-                  <li
-                    key={index}
-                    style={{ marginLeft: `${(heading.level - 2) * 25}px` }}
-                  >
-                    {heading.text}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
+        {headings.length > 2 && (
+          <div className="mt-8 rounded-md border border-slate-200 bg-slate-50 p-6 dark:border-slate-500 dark:bg-slate-800">
+            <h2 className="text-xl font-bold">Contents</h2>
+            <ul className="mt-3 ml-4 list-inside list-disc">
+              {headings.map((heading, index) => (
+                <li
+                  key={index}
+                  style={{ marginLeft: `${(heading.level - 2) * 25}px` }}
+                >
+                  {heading.text}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
 
-          <div className="mt-8 space-y-12">
-            {lesson.blocks.map((b: Block, i: number) => (
-              <LessonBlockRenderer
-                key={i}
-                block={b}
-                highlights={highlights}
-                onHighlight={handleHighlight}
-                onDeleteHighlight={handleDeleteHighlight}
-                onNote={handleCreateNote}
-                enrollmentId={enrollmentId}
-                expanded={expanded}
-                setExpanded={setExpanded}
-              />
-            ))}
-          </div>
-          <div className="mt-8 flex items-center justify-between">
-            <button
-              onClick={handleMarkAsComplete}
-              disabled={
-                isPending ||
-                !enrollmentId ||
-                completedLessonIds.includes(lesson.id)
-              }
-              className="rounded-lg bg-sky-600 px-4 py-2 text-white hover:bg-sky-700 disabled:opacity-50"
-            >
-              {isPending
-                ? "Marking as complete..."
-                : completedLessonIds.includes(lesson.id)
-                  ? "Completed"
-                  : "Mark as complete"}
-            </button>
-          </div>
+        <div className="mt-8 space-y-12">
+          {lesson.blocks.map((b: Block, i: number) => (
+            <LessonBlockRenderer
+              key={i}
+              block={b}
+              highlights={highlights}
+              onHighlight={handleHighlight}
+              onDeleteHighlight={handleDeleteHighlight}
+              onNote={handleCreateNote}
+              enrollmentId={enrollmentId}
+              expanded={expanded}
+              setExpanded={setExpanded}
+            />
+          ))}
+        </div>
+        <div className="mt-8 flex items-center justify-between">
+          <button
+            onClick={handleMarkAsComplete}
+            disabled={
+              isPending ||
+              !enrollmentId ||
+              completedLessonIds.includes(lesson.id)
+            }
+            className="rounded-lg bg-sky-600 px-4 py-2 text-white hover:bg-sky-700 disabled:opacity-50"
+          >
+            {isPending
+              ? "Marking as complete..."
+              : completedLessonIds.includes(lesson.id)
+                ? "Completed"
+                : "Mark as complete"}
+          </button>
         </div>
       </div>
-    </>
+    </div>
   );
 }
 

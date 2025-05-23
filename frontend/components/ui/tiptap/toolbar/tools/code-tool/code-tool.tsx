@@ -61,7 +61,10 @@ function CodeBlockComponent({
             ))}
           </div>
         </div>
-        <NodeViewContent as="code" className="block" />
+        <NodeViewContent
+          as="code"
+          className="block min-w-full overflow-x-auto whitespace-pre"
+        />
       </pre>
     </NodeViewWrapper>
   );
