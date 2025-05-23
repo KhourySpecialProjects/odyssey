@@ -608,7 +608,7 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
   };
 
   return (
-    <div className="">
+    <div>
       {enrollmentId && (
         <HighlightDropdown
           selectedColor={selectedColor}
