@@ -33,7 +33,7 @@ export function DailyActiveUsersChart({ data }: DailyActiveUsersChartProps) {
       {
         label: "Daily Active Users",
         data: data.map((item) => item.count),
-        borderColor: "rgb(75, 192, 192)",
+        borderColor: "rgb(41, 116, 150)",
         tension: 0.1,
       },
     ],
