@@ -99,7 +99,7 @@ export default async function Page() {
   );
 }
 
-export function GeneralStatistics({
+function GeneralStatistics({
   authorizedUsers,
   droplets,
   totalEnrollments,
