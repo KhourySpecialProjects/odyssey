@@ -3,12 +3,11 @@
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Button } from "../ui/button";
 
-const contentTypes = [
-  { label: "Droplets", value: "droplets" },
-  { label: "Playlists", value: "playlists" },
-];
-
 export function ContentTypeSelector() {
+  const contentTypes = [
+    { label: "Droplets", value: "droplets" },
+    { label: "Playlists", value: "playlists" },
+  ];
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();

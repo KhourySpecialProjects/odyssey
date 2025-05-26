@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Droplet, DueDate } from "@/types";
 import { DropletTile } from "../droplets/droplet-tile";
 import { PageNav } from "../ui/page-nav";
+import { useSearch } from "@/contexts/SearchContext";
 
 const ITEMS_PER_PAGE = 9;
 
@@ -12,16 +13,84 @@ export function EnrolledDropletsGridClient({
   completedLessonIds,
   isArchived,
   dueDates,
+  sortKey,
+  ratingsMap,
+  tags,
+  type,
+  focusArea,
 }: {
-  dropletsWithCompletion: Droplet[];
+  dropletsWithCompletion: Array<Droplet & { completionPercentage: number }>;
   completedLessonIds: number[];
   isArchived: boolean;
   dueDates?: DueDate[];
+  sortKey?: string;
+
+  ratingsMap: Map<number, number>;
+  tags?: string[] | string;
+  type?: string | string[];
+  focusArea?: string | string[];
 }) {
   const [currentPage, setCurrentPage] = useState(1);
-  const totalPages = Math.ceil(dropletsWithCompletion.length / ITEMS_PER_PAGE);
+  const sortedDroplets = useMemo(() => {
+    const sorted = [...dropletsWithCompletion];
+    if (sortKey) {
+      const [field, direction] = sortKey.split(":");
+      sorted.sort((a, b) => {
+        let ratingA = ratingsMap.get(a.id);
+        let ratingB = ratingsMap.get(b.id);
+        if (!ratingA) {
+          ratingA = 0;
+        }
+        if (!ratingB) {
+          ratingB = 0;
+        }
+        if (field === "name") {
+          return direction === "asc"
+            ? a.name.localeCompare(b.name)
+            : b.name.localeCompare(a.name);
+        } else if (field === "completion") {
+          return direction === "asc"
+            ? a.completionPercentage - b.completionPercentage
+            : b.completionPercentage - a.completionPercentage;
+        } else if (field === "rating") {
+          return direction === "asc" ? ratingA - ratingB : ratingB - ratingA;
+        }
+        return 0;
+      });
+    }
+    return sorted;
+  }, [dropletsWithCompletion, sortKey, ratingsMap]);
+  let newDrop = sortedDroplets;
+  if (type) {
+    newDrop = sortedDroplets.filter((drop) => drop.type === type);
+  }
+  if (focusArea) {
+    newDrop = sortedDroplets.filter((drop) => drop.focusArea === focusArea);
+  }
+  if (tags) {
+    const lowercaseTags = Array.isArray(tags)
+      ? tags.map((tag) => tag.toLowerCase())
+      : tags.split(",").map((tag) => tag.toLowerCase());
+    newDrop = sortedDroplets.filter((drop) => {
+      const hasMatchingTag = drop.tags?.some((tag) => {
+        const tagName = tag.name.toLowerCase();
+        const matches = lowercaseTags.includes(tagName);
+        return matches;
+      });
+      return hasMatchingTag;
+    });
+  }
+  const { searchQuery } = useSearch();
+  const filteredDroplets = useMemo(() => {
+    setCurrentPage(1);
+    return newDrop.filter((droplet) =>
+      droplet.name.toLowerCase().includes(searchQuery.toLowerCase()),
+    );
+  }, [newDrop, searchQuery]);
+
+  const totalPages = Math.ceil(filteredDroplets.length / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const paginatedCompletedDroplets = dropletsWithCompletion.slice(
+  const paginatedCompletedDroplets = filteredDroplets.slice(
     startIndex,
     startIndex + ITEMS_PER_PAGE,
   );
