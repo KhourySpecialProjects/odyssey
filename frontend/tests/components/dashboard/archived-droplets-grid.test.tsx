@@ -15,6 +15,7 @@ jest.mock("@/lib/requests/authorized-user", () => ({
 
 jest.mock("@/lib/requests/enrollment", () => ({
   getEnrollmentsByAuthorizedUser: jest.fn(),
+  getDropletAverageRating: jest.fn(),
 }));
 
 jest.mock("@/components/dashboard/enrolled-droplets-grid-client", () => ({
@@ -66,7 +67,7 @@ describe("ArchivedDropletsGrid", () => {
   it("displays a message when no archived droplets are found", async () => {
     (getEnrollmentsByAuthorizedUser as jest.Mock).mockResolvedValue([]);
 
-    render(await ArchivedDropletsGrid());
+    render(await ArchivedDropletsGrid({}));
 
     expect(screen.getByText("No Archived Droplets")).toBeInTheDocument();
     expect(
@@ -87,7 +88,7 @@ describe("ArchivedDropletsGrid", () => {
       mockEnrollments,
     );
 
-    render(await ArchivedDropletsGrid());
+    render(await ArchivedDropletsGrid({}));
 
     expect(screen.getByText("No Archived Droplets")).toBeInTheDocument();
     expect(
@@ -112,7 +113,7 @@ describe("ArchivedDropletsGrid", () => {
       mockEnrollments,
     );
 
-    render(await ArchivedDropletsGrid());
+    render(await ArchivedDropletsGrid({}));
 
     expect(screen.getByTestId("droplets-grid")).toBeInTheDocument();
   });
@@ -120,7 +121,7 @@ describe("ArchivedDropletsGrid", () => {
   it("returns null when user is not found", async () => {
     (getCurrentUser as jest.Mock).mockResolvedValue(null);
 
-    const result = await ArchivedDropletsGrid();
+    const result = await ArchivedDropletsGrid({});
     expect(result).toBeNull();
   });
 
@@ -172,7 +173,7 @@ describe("ArchivedDropletsGrid", () => {
 
     describe("ArchivedDropletsGrid", () => {
       it("should calculate correct completion percentage for archived droplets", async () => {
-        const { container } = await render(await ArchivedDropletsGrid());
+        const { container } = await render(await ArchivedDropletsGrid({}));
 
         expect(container).toHaveTextContent("Completion: 50%");
       });
@@ -206,7 +207,7 @@ describe("ArchivedDropletsGrid", () => {
           mockEnrollments,
         );
 
-        const { container } = await render(await ArchivedDropletsGrid());
+        const { container } = await render(await ArchivedDropletsGrid({}));
         expect(container).toHaveTextContent("Completion: 100%");
       });
 
@@ -226,7 +227,7 @@ describe("ArchivedDropletsGrid", () => {
           mockEnrollments,
         );
 
-        const { container } = await render(await ArchivedDropletsGrid());
+        const { container } = await render(await ArchivedDropletsGrid({}));
         expect(container).toHaveTextContent("Completion: 50%");
       });
 
@@ -246,7 +247,7 @@ describe("ArchivedDropletsGrid", () => {
           mockEnrollments,
         );
 
-        const { container } = await render(await ArchivedDropletsGrid());
+        const { container } = await render(await ArchivedDropletsGrid({}));
         expect(container).toHaveTextContent("Completion: 0%");
       });
 
@@ -266,7 +267,7 @@ describe("ArchivedDropletsGrid", () => {
           mockEnrollments,
         );
 
-        const { container } = await render(await ArchivedDropletsGrid());
+        const { container } = await render(await ArchivedDropletsGrid({}));
         expect(container).toHaveTextContent("Completion: 0%");
       });
 
@@ -285,7 +286,7 @@ describe("ArchivedDropletsGrid", () => {
           mockEnrollments,
         );
 
-        const { container } = await render(await ArchivedDropletsGrid());
+        const { container } = await render(await ArchivedDropletsGrid({}));
         expect(container).toHaveTextContent("Completion: 0%");
       });
 
@@ -304,14 +305,14 @@ describe("ArchivedDropletsGrid", () => {
           mockEnrollments,
         );
 
-        const { container } = await render(await ArchivedDropletsGrid());
+        const { container } = await render(await ArchivedDropletsGrid({}));
         expect(container).toHaveTextContent("Completion: 0%");
       });
 
       it("should show no archived droplets message when no archived enrollments", async () => {
         (getEnrollmentsByAuthorizedUser as jest.Mock).mockResolvedValue([]);
 
-        render(await ArchivedDropletsGrid());
+        render(await ArchivedDropletsGrid({}));
         expect(screen.getByText("No Archived Droplets")).toBeInTheDocument();
       });
 
@@ -339,7 +340,7 @@ describe("ArchivedDropletsGrid", () => {
           mockEnrollments,
         );
 
-        const { container } = await render(await ArchivedDropletsGrid());
+        const { container } = await render(await ArchivedDropletsGrid({}));
         expect(container).toHaveTextContent("Completion: 100%");
         expect(screen.queryByTestId("droplet-2")).not.toBeInTheDocument();
       });
@@ -347,14 +348,14 @@ describe("ArchivedDropletsGrid", () => {
       it("should return null when user is not found", async () => {
         (getCurrentUser as jest.Mock).mockResolvedValue(null);
 
-        const result = await ArchivedDropletsGrid();
+        const result = await ArchivedDropletsGrid({});
         expect(result).toBeNull();
       });
 
       it("should return null when user email is not found", async () => {
         (getCurrentUser as jest.Mock).mockResolvedValue({ id: 1 });
 
-        const result = await ArchivedDropletsGrid();
+        const result = await ArchivedDropletsGrid({});
         expect(result).toBeNull();
       });
     });

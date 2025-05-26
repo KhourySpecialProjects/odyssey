@@ -65,7 +65,7 @@ export function PlaylistForm({
           existingPlaylist.name,
           existingPlaylist?.id,
         );
-        router.push("/drafts");
+        router.push("/my-content");
       }
     } catch (error) {
       console.error("Failed to make playlist announcement: ", error);
@@ -232,7 +232,7 @@ export function PlaylistForm({
           <Button
             type="button"
             variant="outline"
-            onClick={() => router.push("/drafts")}
+            onClick={() => router.push("/my-content")}
             className="h-12 bg-white text-black dark:bg-slate-300 dark:hover:bg-slate-400 dark:hover:text-black"
           >
             <MoveLeftIcon size={16} />
@@ -264,7 +264,7 @@ export function PlaylistForm({
                   className="dark:bg-slate-300"
                   onClick={() => {
                     setIsOpen(false);
-                    router.push("/drafts");
+                    router.push("/my-content");
                   }}
                 >
                   Not Now

@@ -20,7 +20,7 @@ export function DeleteDropletButton({ dropletId }: { dropletId: number }) {
   const deleteDroplet = async () => {
     const response = await deepDeleteDroplet(dropletId);
     if (response.ok && !response.error) {
-      router.replace(`/drafts`);
+      router.replace(`/my-content`);
     }
   };
 
