@@ -5,7 +5,10 @@ import {
 } from "@/components/message";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
-import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
+import {
+  getDropletAverageRating,
+  getEnrollmentsByAuthorizedUser,
+} from "@/lib/requests/enrollment";
 import { EnrolledDropletsGridClient } from "./enrolled-droplets-grid-client";
 
 interface Lesson {
@@ -14,7 +17,7 @@ interface Lesson {
   slug: string;
 }
 
-export async function ArchivedDropletsGrid() {
+export async function ArchivedDropletsGrid({ sortKey }: { sortKey?: string }) {
   const user = await getCurrentUser();
   if (!user?.email) return null;
 
@@ -56,11 +59,21 @@ export async function ArchivedDropletsGrid() {
     );
   }
 
+  const ratingsMap = new Map();
+  await Promise.all(
+    dropletsWithCompletion.map(async (droplet) => {
+      const rating = await getDropletAverageRating(droplet);
+      ratingsMap.set(droplet.id, rating);
+    }),
+  );
+
   return (
     <EnrolledDropletsGridClient
       dropletsWithCompletion={dropletsWithCompletion}
       completedLessonIds={completedLessonIds}
       isArchived={true}
+      ratingsMap={ratingsMap}
+      sortKey={sortKey}
     />
   );
 }

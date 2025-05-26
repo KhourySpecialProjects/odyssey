@@ -1,37 +1,16 @@
 import { getCurrentUser } from "@/lib/auth/session";
 import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
 import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
-import { PlaylistCard } from "../playlists/playlist-card";
 import {
   Message,
   MessageDescription,
   MessageHeader,
 } from "@/components/message";
 import { getUserDueDates } from "@/lib/requests/groups";
+import { UserPlaylistsClient } from "./user-playlists-client";
+import { Lesson, Playlist } from "@/types";
 
-interface Lesson {
-  id: number;
-  name: string;
-  slug: string;
-}
-
-interface Droplet {
-  id: number;
-  name: string;
-  slug: string;
-  lessons?: Lesson[];
-}
-
-interface Playlist {
-  id: number;
-  name: string;
-  slug: string;
-  droplets?: Droplet[];
-  duration: "short" | "medium" | "long";
-  isPublic: boolean;
-}
-
-export async function UserPlaylistsGrid() {
+export async function UserPlaylistsGrid({ sortKey }: { sortKey?: string }) {
   const user = await getCurrentUser();
   if (!user?.email) return null;
 
@@ -102,46 +81,27 @@ export async function UserPlaylistsGrid() {
   }
 
   const dueDates = await getUserDueDates(authorizedUser.id);
+  if (sortKey) {
+    const [field, direction] = sortKey.split(":");
+    if (field === "name") {
+      customPlaylists?.sort((a, b) => {
+        return direction === "asc"
+          ? a.name.localeCompare(b.name)
+          : b.name.localeCompare(a.name);
+      });
+      publicPlaylists?.sort((a, b) => {
+        return direction === "asc"
+          ? a.name.localeCompare(b.name)
+          : b.name.localeCompare(a.name);
+      });
+    }
+  }
 
   return (
-    <div className="space-y-8">
-      {customPlaylists.length > 0 && (
-        <section>
-          <h2 className="mb-4 text-xl font-semibold dark:text-slate-300">
-            Private Playlists
-          </h2>
-          <div className="grid grid-flow-row auto-rows-fr grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {customPlaylists.map((playlist: Playlist, index) => (
-              <PlaylistCard
-                key={playlist.id}
-                playlist={playlist}
-                data-testid={`playlist-card-${index}`}
-              />
-            ))}
-          </div>
-        </section>
-      )}
-
-      {publicPlaylists.length > 0 && (
-        <section>
-          <h2 className="mb-4 text-xl font-semibold">Public Playlists</h2>
-          <div className="grid grid-flow-row auto-rows-fr grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {publicPlaylists.map((playlist: Playlist) => (
-              <div key={`group-${playlist.id}`} className="h-full">
-                <PlaylistCard
-                  key={playlist.id}
-                  playlist={playlist}
-                  dueDate={
-                    dueDates?.find(
-                      (dueDate) => dueDate.playlist?.id === playlist.id,
-                    )?.dueDate || ""
-                  }
-                />
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
-    </div>
+    <UserPlaylistsClient
+      customPlaylists={customPlaylists}
+      publicPlaylists={publicPlaylists}
+      dueDates={dueDates}
+    />
   );
 }

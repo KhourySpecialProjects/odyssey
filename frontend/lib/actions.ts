@@ -441,7 +441,7 @@ export async function createDroplet(data: z.infer<typeof CreateDropletSchema>) {
     }
     revalidateTag("authors");
     revalidateTag("droplets");
-    revalidatePath("(general)/drafts", "page");
+    revalidatePath("(general)/my-content", "page");
     return { ok: true, error: null, data: responseData.data };
   } catch (err) {
     console.error(err);
@@ -1016,7 +1016,7 @@ export async function updateDroplet(
     }
 
     revalidateTag("authors");
-    revalidatePath("(general)/drafts", "page");
+    revalidatePath("(general)/my-content", "page");
     return { ok: true, error: null, data: responseData.data };
   } catch (err) {
     console.error(err);
@@ -1279,7 +1279,7 @@ export async function deepDeleteDroplet(id: number) {
 
     revalidateTag("authors");
     revalidateTag("droplets");
-    revalidatePath("(general)/drafts", "page");
+    revalidatePath("(general)/my-content", "page");
     return { ok: true, error: null, data: data.data };
   } catch (err) {
     console.error(err);
@@ -1307,7 +1307,7 @@ export async function deleteGroup(id: number) {
 
     revalidateTag("authors");
     revalidateTag("groups");
-    revalidatePath("(general)/drafts", "page");
+    revalidatePath("(general)/my-content", "page");
     return { ok: true, error: null, data: data.data };
   } catch (err) {
     console.error(err);
@@ -1335,7 +1335,7 @@ export async function deletePlaylist(id: number) {
 
     revalidateTag("authors");
     revalidateTag("groups");
-    revalidatePath("(general)/drafts", "page");
+    revalidatePath("(general)/my-content", "page");
     return { ok: true, error: null, data: data.data };
   } catch (err) {
     console.error(err);
