@@ -82,7 +82,7 @@ export default async function GroupsPage({ searchParams }: Props) {
   };
 
   return (
-    <div className="mx-auto my-4 w-full max-w-7xl space-y-12 p-8">
+    <div className="mx-auto my-4 w-full max-w-7xl space-y-6 pt-8">
       <div className="text-center">
         <h1 className="light:text-slate-900 text-3xl font-bold tracking-tight sm:text-4xl">
           Groups
@@ -94,7 +94,7 @@ export default async function GroupsPage({ searchParams }: Props) {
 
       <GroupsSelector />
 
-      <div className="mt-6">
+      <div>
         {tab === "favorites" ? (
           <Message className="mb-8 rounded-md border border-dashed border-slate-200 dark:border-slate-500 dark:bg-slate-800">
             <MessageHeader
@@ -130,6 +130,7 @@ export default async function GroupsPage({ searchParams }: Props) {
                         role={role}
                         roleColors={roleColors}
                         isArchived={false}
+                        dashboardPage={false}
                       />
                     </div>
                   ),

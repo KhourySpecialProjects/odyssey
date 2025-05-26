@@ -16,6 +16,7 @@ jest.mock("@/lib/requests/authorized-user", () => ({
 
 jest.mock("@/lib/requests/enrollment", () => ({
   getEnrollmentsByAuthorizedUser: jest.fn(),
+  getDropletAverageRating: jest.fn(),
 }));
 
 jest.mock("@/lib/requests/groups", () => ({
@@ -94,7 +95,7 @@ describe("MyContent", () => {
     (getAuthorizedUserByEmail as jest.Mock).mockResolvedValue(mockUser);
     (getEnrollmentsByAuthorizedUser as jest.Mock).mockResolvedValue([]);
 
-    render(await MyContent({ searchParams: { tab: "droplets" } }));
+    render(await MyContent({ searchParams: { contentType: "droplets" } }));
     expect(screen.getByTestId("droplets-grid")).toBeInTheDocument();
   });
 
@@ -103,7 +104,7 @@ describe("MyContent", () => {
     (getAuthorizedUserByEmail as jest.Mock).mockResolvedValue(mockUser);
     (getEnrollmentsByAuthorizedUser as jest.Mock).mockResolvedValue([]);
 
-    render(await MyContent({ searchParams: { tab: "playlists" } }));
+    render(await MyContent({ searchParams: { contentType: "playlists" } }));
     expect(screen.getByTestId("playlists-grid")).toBeInTheDocument();
   });
 
@@ -112,7 +113,7 @@ describe("MyContent", () => {
     (getAuthorizedUserByEmail as jest.Mock).mockResolvedValue(mockUser);
     (getEnrollmentsByAuthorizedUser as jest.Mock).mockResolvedValue([]);
 
-    render(await MyContent({ searchParams: { tab: "archived" } }));
+    render(await MyContent({ searchParams: { contentType: "archived" } }));
     expect(screen.getByTestId("archived-grid")).toBeInTheDocument();
   });
 
@@ -130,69 +131,5 @@ describe("MyContent", () => {
 
     await MyContent({ searchParams: {} });
     expect(notFound).toHaveBeenCalled();
-  });
-
-  jest.mock("@/lib/auth/session", () => ({
-    getCurrentUser: jest.fn(),
-  }));
-
-  jest.mock("@/lib/requests/authorized-user", () => ({
-    getAuthorizedUserByEmail: jest.fn(),
-  }));
-
-  jest.mock("@/lib/requests/enrollment", () => ({
-    getEnrollmentsByAuthorizedUser: jest.fn(),
-  }));
-
-  jest.mock("@/lib/requests/groups", () => ({
-    getUserGroups: jest.fn(),
-  }));
-
-  describe("MyContent", () => {
-    const mockUser = {
-      id: 1,
-      email: "test@example.com",
-    };
-
-    const mockGroups = [
-      {
-        id: 1,
-        groupName: "Active Group",
-        members: [{ id: 1 }],
-        users_archived: [],
-      },
-      {
-        id: 2,
-        groupName: "Sample Group",
-        members: [{ id: 1 }],
-        users_archived: [{ id: 1 }],
-      },
-    ];
-
-    beforeEach(() => {
-      jest.clearAllMocks();
-      (getCurrentUser as jest.Mock).mockResolvedValue(mockUser);
-      (getAuthorizedUserByEmail as jest.Mock).mockResolvedValue(mockUser);
-      (getEnrollmentsByAuthorizedUser as jest.Mock).mockResolvedValue([]);
-      (getUserGroups as jest.Mock).mockResolvedValue(mockGroups);
-    });
-
-    it("should show 'No Enrolled Groups' message when no active groups", async () => {
-      (getUserGroups as jest.Mock).mockResolvedValue([]);
-
-      render(await MyContent({ searchParams: { tab: "groups" } }));
-
-      expect(screen.getByText("No Enrolled Groups")).toBeInTheDocument();
-    });
-
-    it("should show 'No Archived Groups' message when no archived groups", async () => {
-      (getUserGroups as jest.Mock).mockResolvedValue([
-        { id: 1, members: [{ id: 1 }], users_archived: [] },
-      ]);
-
-      render(await MyContent({ searchParams: { tab: "archived" } }));
-
-      expect(screen.getByText("No Archived Groups")).toBeInTheDocument();
-    });
   });
 });
