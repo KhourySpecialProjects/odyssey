@@ -5,7 +5,10 @@ import {
 } from "@/components/message";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
-import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
+import {
+  getDropletAverageRating,
+  getEnrollmentsByAuthorizedUser,
+} from "@/lib/requests/enrollment";
 import { EnrolledDropletsGridClient } from "./enrolled-droplets-grid-client";
 import { getUserDueDates } from "@/lib/requests/groups";
 
@@ -15,7 +18,17 @@ interface Lesson {
   slug: string;
 }
 
-export async function EnrolledDropletsGrid() {
+export async function EnrolledDropletsGrid({
+  sortKey,
+  tags,
+  type,
+  focusArea,
+}: {
+  sortKey?: string;
+  tags?: string[] | string;
+  type?: string | string[];
+  focusArea?: string | string[];
+}) {
   const user = await getCurrentUser();
   if (!user?.email) return null;
 
@@ -46,6 +59,14 @@ export async function EnrolledDropletsGrid() {
     };
   });
 
+  const ratingsMap = new Map();
+  await Promise.all(
+    dropletsWithCompletion.map(async (droplet) => {
+      const rating = await getDropletAverageRating(droplet);
+      ratingsMap.set(droplet.id, rating);
+    }),
+  );
+
   if (!dropletsWithCompletion || dropletsWithCompletion.length === 0) {
     return (
       <Message className="mb-8 rounded-md border border-dashed border-slate-200 dark:border-slate-500 dark:bg-slate-800">
@@ -65,6 +86,11 @@ export async function EnrolledDropletsGrid() {
       completedLessonIds={completedLessonIds}
       isArchived={false}
       dueDates={dueDates}
+      sortKey={sortKey}
+      ratingsMap={ratingsMap}
+      tags={tags}
+      type={type}
+      focusArea={focusArea}
     />
   );
 }

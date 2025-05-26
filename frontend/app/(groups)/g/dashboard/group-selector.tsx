@@ -97,7 +97,7 @@ export function GroupsSelector() {
                 tab.value === currentTab
                   ? "border-primary-500 light:text-primary-600 dark:text-primary-300"
                   : "light:text-gray-500 border-transparent hover:border-gray-300 hover:text-gray-700 dark:text-slate-300 dark:hover:text-gray-400",
-                "flex items-center gap-2 border-b-2 px-1 py-4 text-base font-medium whitespace-nowrap",
+                "border-b-2 px-1 py-4 text-sm font-medium whitespace-nowrap",
               )}
             >
               <tab.icon className="h-4 w-4" />
@@ -122,7 +122,7 @@ export function GroupsSelector() {
               tab.value === currentTab
                 ? "border-primary-500 light:text-primary-600 dark:text-primary-300"
                 : "light:text-gray-500 border-transparent hover:border-gray-300 hover:text-gray-700 dark:text-slate-300 dark:hover:text-gray-400",
-              "flex items-center gap-2 border-b-2 px-1 py-4 text-base font-medium whitespace-nowrap",
+              "flex items-center gap-2 border-b-2 px-1 py-4 text-sm font-medium whitespace-nowrap",
             )}
           >
             <tab.icon className="h-4 w-4" />
