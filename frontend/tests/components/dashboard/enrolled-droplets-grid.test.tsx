@@ -2,7 +2,10 @@ import { render, screen } from "@testing-library/react";
 import { EnrolledDropletsGrid } from "@/components/dashboard/enrolled-droplets-grid";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
-import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
+import {
+  getDropletAverageRating,
+  getEnrollmentsByAuthorizedUser,
+} from "@/lib/requests/enrollment";
 import { getUserDueDates } from "@/lib/requests/groups";
 import { Enrollment } from "@/types";
 
@@ -16,6 +19,7 @@ jest.mock("@/lib/requests/authorized-user", () => ({
 
 jest.mock("@/lib/requests/enrollment", () => ({
   getEnrollmentsByAuthorizedUser: jest.fn(),
+  getDropletAverageRating: jest.fn(),
 }));
 
 jest.mock("@/lib/requests/groups", () => ({
@@ -68,7 +72,7 @@ describe("EnrolledDropletsGrid", () => {
   it("displays a message when no enrolled droplets are found", async () => {
     (getEnrollmentsByAuthorizedUser as jest.Mock).mockResolvedValue([]);
 
-    render(await EnrolledDropletsGrid());
+    render(await EnrolledDropletsGrid({}));
 
     expect(screen.getByText("No Enrolled Droplets")).toBeInTheDocument();
     expect(
@@ -89,7 +93,7 @@ describe("EnrolledDropletsGrid", () => {
       mockEnrollments,
     );
 
-    render(await EnrolledDropletsGrid());
+    render(await EnrolledDropletsGrid({}));
 
     expect(screen.getByText("No Enrolled Droplets")).toBeInTheDocument();
     expect(
@@ -114,7 +118,7 @@ describe("EnrolledDropletsGrid", () => {
       mockEnrollments,
     );
 
-    render(await EnrolledDropletsGrid());
+    render(await EnrolledDropletsGrid({}));
 
     expect(screen.getByTestId("droplets-grid")).toBeInTheDocument();
     expect(screen.getByText("Showing 1 enrolled droplets")).toBeInTheDocument();
@@ -123,7 +127,7 @@ describe("EnrolledDropletsGrid", () => {
   it("returns null when user is not found", async () => {
     (getCurrentUser as jest.Mock).mockResolvedValue(null);
 
-    const result = await EnrolledDropletsGrid();
+    const result = await EnrolledDropletsGrid({});
     expect(result).toBeNull();
   });
 
@@ -144,14 +148,14 @@ describe("EnrolledDropletsGrid", () => {
       mockEnrollments,
     );
 
-    await EnrolledDropletsGrid();
+    await EnrolledDropletsGrid({});
 
     expect(getUserDueDates).toHaveBeenCalledWith(1);
   });
 
   describe("EnrolledDropletsGrid", () => {
     it("should calculate correct completion percentage for enrolled droplets", async () => {
-      const { container } = await render(await EnrolledDropletsGrid());
+      const { container } = await render(await EnrolledDropletsGrid({}));
 
       expect(container).toHaveTextContent("Showing 1 enrolled droplets");
     });

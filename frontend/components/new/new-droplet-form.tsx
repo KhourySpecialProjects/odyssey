@@ -226,7 +226,7 @@ export function CreateDropletForm({
       <div className="flex items-center justify-center space-x-4 self-end">
         <Button
           before={<MoveLeftIcon />}
-          onClick={() => router.push("/drafts")}
+          onClick={() => router.push("/my-content")}
           className="bg-black text-white dark:bg-slate-50 dark:text-black"
         >
           <div className="flex w-30 items-center justify-center">Cancel</div>
