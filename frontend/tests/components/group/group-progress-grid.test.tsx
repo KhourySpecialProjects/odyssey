@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { GroupProgressGrid } from "@/components/group/group-progress-grid";
 import { DropletStatus, DropletType, FocusArea, GroupSemester } from "@/types";
 import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
@@ -101,25 +101,26 @@ describe("GroupProgressGrid", () => {
   const mockEnrollments = [
     {
       droplet: { id: 1, lessons: [{ id: 1 }, { id: 2 }] },
-      viewedLessons: [{ id: 1 }]
-    }
+      viewedLessons: [{ id: 1 }],
+    },
   ];
 
   beforeEach(() => {
     jest.clearAllMocks();
-    (getEnrollmentsByAuthorizedUser as jest.Mock).mockResolvedValue(mockEnrollments);
+    (getEnrollmentsByAuthorizedUser as jest.Mock).mockResolvedValue(
+      mockEnrollments,
+    );
   });
 
-  it('should handle pagination correctly', () => {
+  it("should handle pagination correctly", () => {
     render(<GroupProgressGrid group={mockGroup} />);
-    
-    const nextButton = screen.getByLabelText('Next page');
-    fireEvent.click(nextButton);
-    expect(screen.getByText('Test Droplet 2')).toBeInTheDocument();
-    
-    const prevButton = screen.getByRole('button', { name: '' });
-    fireEvent.click(prevButton);
-    expect(screen.getByText('Test Droplet')).toBeInTheDocument();
-  });
 
+    const nextButton = screen.getByLabelText("Next page");
+    fireEvent.click(nextButton);
+    expect(screen.getByText("Test Droplet 2")).toBeInTheDocument();
+
+    const prevButton = screen.getByRole("button", { name: "" });
+    fireEvent.click(prevButton);
+    expect(screen.getByText("Test Droplet")).toBeInTheDocument();
+  });
 });

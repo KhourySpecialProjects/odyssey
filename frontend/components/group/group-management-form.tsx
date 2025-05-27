@@ -255,20 +255,6 @@ export function GroupManagementForm({
         initialMembers: {
           admins: data.admins,
           managers: data.managers,
-          // admins: data.admins
-          //   .map(
-          //     (id) =>
-          //       existingGroup?.admins?.find((admin) => admin.id === id)
-          //         ?.email ?? "",
-          //   )
-          //   .filter(Boolean),
-          // managers: data.managers
-          //   .map(
-          //     (id) =>
-          //       existingGroup?.managers?.find((manager) => manager.id === id)
-          //         ?.email ?? "",
-          //   )
-          //   .filter(Boolean),
           members: data.members?.map((m) => m.email ?? "").filter(Boolean),
         },
         droplets: data.droplets?.map((d) => d.id),

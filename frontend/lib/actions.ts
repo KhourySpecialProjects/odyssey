@@ -1379,23 +1379,6 @@ export async function markLessonAsComplete(
   lessonId: number,
 ) {
   try {
-    // First get the current enrollment to ensure we have the latest data
-    // const enrollmentResponse = await fetch(
-    //   `${process.env.NEXT_PUBLIC_STRAPI_API_URL}/api/enrollments/${enrollmentId}?populate=viewedLessons`,
-    //   {
-    //     headers: {
-    //       Authorization: `Bearer ${process.env.STRAPI_ACCESS_TOKEN}`,
-    //     },
-    //   },
-    // );
-
-    // if (!enrollmentResponse.ok) {
-    //   throw new Error("Failed to fetch enrollment");
-    // }
-
-    // const enrollment = await enrollmentResponse.json();
-
-    // Update the enrollment with the new lesson
     const response = await fetch(
       `${process.env.NEXT_PUBLIC_STRAPI_API_URL}/api/enrollments/${enrollmentId}`,
       {

@@ -1,6 +1,5 @@
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { RegenerateSlugButton } from "@/components/draft/metadata/regenerate-slug";
-import { updateDroplet } from "@/lib/actions";
 import { useRouter } from "next/navigation";
 import { DropletStatus, DropletType, FocusArea, Tag } from "@/types";
 

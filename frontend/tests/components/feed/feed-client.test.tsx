@@ -1,10 +1,4 @@
-import {
-  render,
-  screen,
-  waitFor,
-  act,
-  fireEvent,
-} from "@testing-library/react";
+import { render, screen, waitFor, act } from "@testing-library/react";
 import { FeedClient } from "@/components/feed/feed-client";
 import { AnnouncementType, Announcement, AuthorizedUser } from "@/types";
 import { fetchAnnouncements } from "@/lib/requests/feed";
