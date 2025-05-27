@@ -241,3 +241,31 @@ export async function getDropletAverageRating(
     return Promise.reject(new Error("Error getting droplet average rating"));
   }
 }
+
+
+
+
+export async function fetchEnrollments(
+  {
+    sort,
+    filters,
+    pagination = { pageSize: 250, page: 1 },
+    populate,
+    fields = ["id"],
+  }: StrapiRequestParams = {},
+): Promise<Enrollment[]> {
+  const path = `/enrollments`;
+  const urlParams = {
+    sort,
+    filters,
+    populate,
+    fields,
+    pagination,
+  };
+
+  return await fetchAPI<Enrollment[]>(path, {
+    urlParams,
+    next: { tags: ["enrollments"], revalidate: 0 },
+    cache: "no-store",
+  });
+}
