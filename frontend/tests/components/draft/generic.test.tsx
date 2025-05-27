@@ -7,10 +7,8 @@ jest.mock("@/lib/actions", () => ({
 
 jest.mock("@/components/ui/tiptap/generic-block-input", () => ({
   GenericBlockInput: ({
-    initialContent,
     updateContent,
   }: {
-    initialContent: string;
     updateContent: (content: string) => void;
     revalidate: any;
   }) => (
@@ -28,7 +26,7 @@ jest.mock("@/components/ui/tiptap/generic-block-input", () => ({
 describe("GenericEditor", () => {
   const mockBlock = {
     id: 1,
-    __component: "droplets.generic",
+    __component: "droplets.generic" as "droplets.generic",
     content: "Test content",
   };
 

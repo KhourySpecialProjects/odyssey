@@ -1,8 +1,6 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { GroupBlock } from "@/components/admin/groups/group-block";
 import { GroupSemester } from "@/types";
-import { updateGroup } from "@/lib/requests/groups";
-import { toast } from "sonner";
 
 jest.mock("next/link", () => {
   return ({ children, href }: { children: React.ReactNode; href: string }) => (
@@ -27,14 +25,6 @@ describe("GroupBlock", () => {
     groupName: "Test Group",
     slug: "test-group",
     isArchived: false,
-    semester: "Spring 2025" as GroupSemester,
-  };
-
-  const mockGroup2 = {
-    id: 1,
-    groupName: "Test Group",
-    slug: "test-group",
-    isArchived: true,
     semester: "Spring 2025" as GroupSemester,
   };
 
@@ -64,8 +54,7 @@ describe("GroupBlock", () => {
   });
 
   it("shows correct button text based on group archive status", () => {
-    const archivedGroup = { ...mockGroup, isArchived: true };
-    const { rerender } = render(<GroupBlock group={mockGroup} />);
+    render(<GroupBlock group={mockGroup} />);
 
     expect(screen.getByText("Archive Group")).toBeInTheDocument();
   });

@@ -30,6 +30,7 @@ describe("NoteBlock", () => {
   const mockNote = {
     id: 1,
     content: "Test note content",
+    blockId: 2,
     lesson: {
       id: 1,
       name: "Test Lesson",
@@ -55,6 +56,7 @@ describe("NoteBlock", () => {
       text: "Highlighted text",
       color: "#fff300" as HighlightColor,
       position: { start: 0, end: 0 },
+      blockId: 2,
     },
   };
 
