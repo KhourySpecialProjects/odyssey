@@ -181,7 +181,7 @@ describe("Sidebar", () => {
       mockDroplet.name,
       mockDroplet.id,
     );
-    expect(mockRouter.push).toHaveBeenCalledWith("/drafts");
+    expect(mockRouter.push).toHaveBeenCalledWith("/my-content");
   });
 
   it("handles lesson reordering", () => {

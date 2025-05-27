@@ -40,7 +40,7 @@ describe("DeleteDropletButton", () => {
 
     await waitFor(() => {
       expect(deepDeleteDroplet).toHaveBeenCalledWith(1);
-      expect(mockRouter.replace).toHaveBeenCalledWith("/drafts");
+      expect(mockRouter.replace).toHaveBeenCalledWith("/my-content");
     });
   });
 });

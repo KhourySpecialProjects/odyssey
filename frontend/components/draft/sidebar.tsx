@@ -81,7 +81,7 @@ export function Sidebar({
   const handleDropletPost = async () => {
     try {
       await createDropletAnnouncement(droplet.name, droplet.id);
-      router.push(`/drafts`);
+      router.push(`/my-content`);
     } catch (error) {
       console.error("Failed to make playlist announcement: ", error);
     }
@@ -235,7 +235,7 @@ export function Sidebar({
 
                     <div className="mt-4 flex flex-col gap-4">
                       <Button onClick={handleDropletPost}>Share</Button>
-                      <Button onClick={() => router.push(`/drafts`)}>
+                      <Button onClick={() => router.push(`/my-content`)}>
                         Not Now
                       </Button>
                     </div>
