@@ -17,7 +17,7 @@ jest.mock("@/components/ui/tiptap/lesson-name-input", () => ({
 
 jest.mock("@/components/draft/lesson/draggable_block_list", () => ({
   __esModule: true,
-  default: ({ blocks, setBlock, deleteBlock }: any) => (
+  default: ({ blocks, deleteBlock }: any) => (
     <div data-testid="draggable-block-list">
       {blocks.map((block: any, index: number) => (
         <div key={block.id}>

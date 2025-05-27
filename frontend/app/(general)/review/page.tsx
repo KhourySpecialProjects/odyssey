@@ -44,14 +44,14 @@ export default async function CreateRoute() {
         <Separator orientation="horizontal" className="mt-2 mb-4" />
         {!drafts || drafts.length === 0 ? (
           <Message className="mb-8 rounded-md border border-dashed border-slate-200 dark:border-slate-500 dark:bg-slate-800">
-          <MessageHeader
-            subtitle="No Results"
-            title="No Droplets In Review"
-          />
-          <MessageDescription>
-            No draft droplets are currently submitted for review.
-          </MessageDescription>
-        </Message>
+            <MessageHeader
+              subtitle="No Results"
+              title="No Droplets In Review"
+            />
+            <MessageDescription>
+              No draft droplets are currently submitted for review.
+            </MessageDescription>
+          </Message>
         ) : (
           <Suspense fallback={<DropletsSkeleton />}>
             <ul className="grid grid-flow-row grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">

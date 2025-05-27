@@ -3,7 +3,7 @@ import { Sidebar } from "@/components/draft/sidebar";
 import { useRouter, usePathname } from "next/navigation";
 import { createDropletAnnouncement } from "@/lib/requests/feed";
 import { AuthorizedUserRoleTitle } from "@/lib/globals";
-import { TimeZone } from "@/types";
+import { DropletStatus, TimeZone } from "@/types";
 
 jest.mock("next/navigation", () => ({
   useRouter: jest.fn(),
@@ -100,6 +100,7 @@ describe("Sidebar", () => {
         lesson: mockLesson,
       },
     ],
+    status: "published" as DropletStatus,
   };
 
   const mockAuthorizedUser = {

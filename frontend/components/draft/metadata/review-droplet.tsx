@@ -27,7 +27,7 @@ export function ReviewDroplet({
     );
     if (response.ok && !response.error) {
       toast.success("Droplet published successfully!");
-      router.push('/review')
+      router.push("/review");
     } else {
       toast.error("Error publishing droplet");
       setIsPopupOpen(false);
@@ -42,17 +42,17 @@ export function ReviewDroplet({
     );
     if (response.ok && !response.error) {
       setIsPopupOpen(false);
-      toast.success("Request for review submitted successfully")
-      router.push('/review')
+      toast.success("Request for review submitted successfully");
+      router.push("/review");
     } else {
       toast.error("Error requesting changes");
       setIsPopupOpen(false);
     }
-  }
+  };
 
   return (
     <>
-      <div className="flex flex-row space-x-2 ">
+      <div className="flex flex-row space-x-2">
         <Button
           variant="outline"
           className="dark:bg-slate-800 dark:outline dark:outline-slate-500"
@@ -71,8 +71,10 @@ export function ReviewDroplet({
 
       {isPopupOpen && (
         <div className="bg-opacity-50 fixed inset-0 z-50 flex items-center justify-center bg-black">
-          <div className="w-full max-w-md rounded-lg bg-white shadow-xl dark:bg-slate-900 p-4">
-            <p className="pb-2">Enter what changes you want for this droplet:</p>
+          <div className="w-full max-w-md rounded-lg bg-white p-4 shadow-xl dark:bg-slate-900">
+            <p className="pb-2">
+              Enter what changes you want for this droplet:
+            </p>
             <Textarea
               value={changes}
               onChange={(e) => setChanges(e.target.value)}
