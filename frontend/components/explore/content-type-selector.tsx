@@ -3,7 +3,13 @@
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Button } from "../ui/button";
 
-export function ContentTypeSelector({droplets, playlists}: {droplets: number, playlists: number}) {
+export function ContentTypeSelector({
+  droplets,
+  playlists,
+}: {
+  droplets: number;
+  playlists: number;
+}) {
   const contentTypes = [
     { name: `Droplets (${droplets})`, value: "droplets" },
     { name: `Playlists (${playlists})`, value: "playlists" },
