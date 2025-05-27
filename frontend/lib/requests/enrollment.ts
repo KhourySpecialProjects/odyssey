@@ -287,7 +287,6 @@ export async function fetchEnrollmentMetadata({
     });
 
     return response;
-
   } catch (error) {
     console.error("Error fetching enrollment metadata:", error);
     return Promise.reject(new Error("Error getting enrollment metadata"));
