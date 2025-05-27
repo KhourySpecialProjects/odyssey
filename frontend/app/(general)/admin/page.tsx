@@ -8,7 +8,10 @@ import { isAuthorizedUserAdmin } from "@/lib/utils";
 import { Separator } from "@/components/ui/separator";
 import { fetchAuthorizedUsers } from "@/lib/requests/authorized-user";
 import { fetchDroplets } from "@/lib/requests/data";
-import { fetchEnrollmentMetadata, getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
+import {
+  fetchEnrollmentMetadata,
+  getEnrollmentsByAuthorizedUser,
+} from "@/lib/requests/enrollment";
 import { Droplets } from "@/components/admin/droplets/droplets";
 import { Groups } from "@/components/admin/groups/groups";
 import { Playlists } from "@/components/admin/playlists/playlists";
@@ -49,7 +52,6 @@ export default async function Page() {
   ]);
 
   totalEnrollments = enrollments.meta.pagination.total || 0;
-
 
   if (!user || !isAuthorizedUserAdmin(user.roles)) return notFound();
 
