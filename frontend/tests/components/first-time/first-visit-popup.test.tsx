@@ -8,7 +8,6 @@ import {
 import { FirstVisitPopup } from "@/components/first-time/first-visit-popup";
 import { updateFirstTimeStatus, updateOnboardingInfo } from "@/lib/actions";
 import { toast } from "sonner";
-import { useRouter } from "next/navigation";
 import userEvent from "@testing-library/user-event";
 import { TimeZone } from "@/types";
 
@@ -36,10 +35,6 @@ jest.mock("next/image", () => ({
 }));
 
 describe("FirstVisitPopup", () => {
-  const mockRouter = {
-    push: jest.fn(),
-  };
-
   const mockUser = {
     id: 1,
     email: `user@example.com`,

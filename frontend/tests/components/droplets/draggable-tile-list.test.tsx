@@ -1,7 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import DraggableTileList from "@/components/droplets/draggable_tile_list";
-import { DndProvider, useDrop } from "react-dnd";
-import { HTML5Backend } from "react-dnd-html5-backend";
+import { useDrop } from "react-dnd";
 
 jest.mock("react-dnd", () => ({
   useDrop: jest.fn().mockImplementation(() => [{ isOver: false }, jest.fn()]),

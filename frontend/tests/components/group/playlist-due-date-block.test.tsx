@@ -56,4 +56,24 @@ describe("PlaylistDueDateBlock", () => {
       expect(getGroupDueDate).toHaveBeenCalledWith(mockPlaylist, mockGroup);
     });
   });
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    (getGroupDueDate as jest.Mock).mockResolvedValue({
+      dueDate: "2024-03-20T00:00:00.000Z",
+    });
+  });
+
+  it("should load existing due date", async () => {
+    render(
+      <PlaylistDueDateBlock
+        existingGroup={mockGroup}
+        currentPlaylist={mockPlaylist}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("picker")).toBeInTheDocument();
+    });
+  });
 });

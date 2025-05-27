@@ -9,11 +9,14 @@ import { NextSteps } from "@/components/draft/metadata/next-steps/next-steps";
 import { Overview } from "@/components/draft/metadata/overview";
 import { Filter } from "@/components/draft/metadata/filter";
 import { Description } from "@/components/draft/metadata/description";
-import { uppercaseFirstChar } from "@/lib/utils";
+import { isContentEditor, uppercaseFirstChar } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { RegenerateSlugButton } from "@/components/draft/metadata/regenerate-slug";
 import { Authors } from "@/components/draft/metadata/authors";
 import { GradientBackground } from "@/components/gradient-bg";
+import { getCurrentUser } from "@/lib/auth/session";
+import { notFound } from "next/navigation";
+import { ReviewDroplet } from "@/components/draft/metadata/review-droplet";
 
 type Props = {
   params: Promise<Params>;
@@ -62,6 +65,12 @@ export default async function Droplet({ params }: Props) {
     return <div data-testid={`not-found-message`}>Droplet not found</div>;
   }
 
+  const user = await getCurrentUser();
+
+  if (!user) {
+    return notFound();
+  }
+
   return (
     <>
       <GradientBackground className="px-0">
@@ -83,14 +92,29 @@ export default async function Droplet({ params }: Props) {
             startingName={droplet.name}
           />
           <div className="my-3 flex w-full flex-row items-center space-x-10">
-            <RegenerateSlugButton dropletId={droplet.id} name={droplet.name} />
+            <RegenerateSlugButton droplet={droplet} name={droplet.name} />
           </div>
           <div
-            className={`pt-4 ${droplet.status === "draft" ? "visibility: visible" : "visibility: hidden"} text-red-500 dark:text-red-300`}
+            className={`pt-4 pb-4 ${droplet.status === "draft" ? "visibility: visible" : "visibility: hidden"} text-red-500 dark:text-red-300`}
           >
             This is currently a draft droplet. To publish this droplet, contact
             a Website Creator.
           </div>
+          {!droplet.inReview &&
+            droplet.afterReview !== null &&
+            droplet.status === "draft" && (
+              <div className="rounded-md border border-slate-400 bg-white p-4 dark:border-slate-500 dark:bg-slate-800 dark:text-slate-200">
+                <p className="font-bold">Feedback for Revision:</p>
+                <div>{droplet.afterReview}</div>
+              </div>
+            )}
+          {droplet.inReview &&
+            isContentEditor(user.roles) &&
+            droplet.status === "draft" && (
+              <div className="rounded-md dark:text-slate-200">
+                <ReviewDroplet name={droplet.name} droplet={droplet} />
+              </div>
+            )}
         </div>
 
         <div className="mx-auto mt-10 w-full max-w-2xl space-y-10">

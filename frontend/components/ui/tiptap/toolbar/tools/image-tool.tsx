@@ -165,7 +165,10 @@ const FileUpload = ({
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
     >
-      <label className="mb-4 cursor-pointer rounded bg-blue-500 px-4 py-2 text-white">
+      <label
+        className="mb-4 cursor-pointer rounded bg-blue-500 px-4 py-2 text-white"
+        role="textbox"
+      >
         {file ? "Change File" : "Upload or Drag File Here"}
         <input
           name="image"

@@ -191,6 +191,19 @@ export function isContentCreator(
   return false;
 }
 
+export function isContentEditor(
+  roles?: AuthorizedUserRoleTitle[] | null,
+): boolean {
+  if (!roles) return false;
+
+  for (const role of roles) {
+    if (role === AuthorizedUserRoleTitle.ContentEditor) {
+      return true;
+    }
+  }
+  return false;
+}
+
 export function condenseRoleTitles(
   roles?: AuthorizedUserRoleTitle[] | null,
 ): string {

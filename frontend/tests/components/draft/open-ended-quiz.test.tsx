@@ -3,10 +3,8 @@ import { OpenEndedQuizEditor } from "@/components/draft/lesson/blocks/open-ended
 
 jest.mock("@/components/ui/tiptap/generic-block-input", () => ({
   GenericBlockInput: ({
-    initialContent,
     updateContent,
   }: {
-    initialContent: string;
     updateContent: (content: string) => void;
     revalidate: any;
   }) => (

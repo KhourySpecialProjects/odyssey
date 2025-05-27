@@ -39,4 +39,7 @@ export const DropletSchema = z.object({
       }),
     )
     .optional(),
+  inReview: z.boolean(),
+  status: z.string(),
+  afterReview: z.string(),
 });

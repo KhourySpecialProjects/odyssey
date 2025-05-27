@@ -8,7 +8,7 @@ jest.mock("@/lib/actions", () => ({
 
 jest.mock("react", () => ({
   ...jest.requireActual("react"),
-  useActionState: jest.fn().mockImplementation((action, initialState) => {
+  useActionState: jest.fn().mockImplementation((action) => {
     return [null, action, false];
   }),
 }));

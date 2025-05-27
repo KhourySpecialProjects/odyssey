@@ -51,7 +51,7 @@ describe("NotesPdfButton", () => {
   it("handles download click correctly", () => {
     const mockUrl = "blob:test";
 
-    const { container } = render(<NotesPdfButton {...mockProps} />);
+    render(<NotesPdfButton {...mockProps} />);
     fireEvent.click(screen.getByRole("button"));
 
     expect(URL.createObjectURL).toHaveBeenCalled();
