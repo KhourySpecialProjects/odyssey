@@ -243,17 +243,23 @@ export async function getDropletAverageRating(
 }
 
 
+type PaginationMeta = {
+    page: number;
+    pageCount: number;
+    pageSize: number;
+    total: number;
+};
 
 
-export async function fetchEnrollments(
+export async function fetchEnrollmentMetadata(
   {
     sort,
     filters,
-    pagination = { pageSize: 250, page: 1 },
+    pagination = { pageSize: 1, page: 1},
     populate,
     fields = ["id"],
   }: StrapiRequestParams = {},
-): Promise<Enrollment[]> {
+): Promise<{ data: Enrollment[]; meta: { pagination: PaginationMeta } }> {
   const path = `/enrollments`;
   const urlParams = {
     sort,
@@ -263,9 +269,10 @@ export async function fetchEnrollments(
     pagination,
   };
 
-  return await fetchAPI<Enrollment[]>(path, {
+  return await fetchAPI(path, {
     urlParams,
     next: { tags: ["enrollments"], revalidate: 0 },
     cache: "no-store",
+    flattenResponse: false,
   });
 }

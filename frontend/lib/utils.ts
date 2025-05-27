@@ -89,8 +89,6 @@ export async function fetchAPI<T>(
 
     const data = await response.json();
 
-    console.log("data is ", data)
-
     if (
       config.flattenResponse ||
       typeof config.flattenResponse === "undefined"
