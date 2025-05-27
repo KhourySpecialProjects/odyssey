@@ -15,7 +15,13 @@ import {
   uppercaseFirstChar,
   getInitials,
   getDueDateBadgeColor,
+  extractHeadings,
+  youtubeUrlToEmbeddedUrl,
+  embeddedUrlToYoutubeUrl,
+  isContentEditor,
 } from "@/lib/utils";
+
+global.fetch = jest.fn();
 
 describe("utils", () => {
   describe("fetchAPI", () => {
@@ -475,6 +481,356 @@ describe("utils", () => {
         expect(getDueDateBadgeColor(5, true)).toContain("amber");
         expect(getDueDateBadgeColor(2, true)).toContain("red");
         expect(getDueDateBadgeColor(-1, true)).toContain("red");
+      });
+    });
+  });
+
+  describe("Utils Functions", () => {
+    describe("fetchAPI", () => {
+      it("should handle successful API calls", async () => {
+        const mockResponse = {
+          ok: true,
+          json: () => Promise.resolve({ data: { id: 1 } }),
+        };
+        (global.fetch as jest.Mock).mockResolvedValue(mockResponse);
+
+        const result = await fetchAPI("/test", {});
+        expect(result).toEqual({ id: 1 });
+      });
+
+      it("should handle API errors", async () => {
+        const mockResponse = {
+          ok: false,
+          status: 404,
+          statusText: "Not Found",
+        };
+        (global.fetch as jest.Mock).mockResolvedValue(mockResponse);
+
+        await expect(fetchAPI("/error", {})).rejects.toThrow();
+      });
+    });
+
+    describe("flattenAttributes", () => {
+      it("should flatten nested attributes", () => {
+        const input = {
+          attributes: {
+            name: "Test",
+            nested: {
+              data: {
+                attributes: {
+                  value: "Nested",
+                },
+              },
+            },
+          },
+        };
+
+        const result = flattenAttributes(input);
+        expect(result).toEqual({
+          name: "Test",
+          nested: {
+            value: "Nested",
+          },
+        });
+      });
+    });
+
+    describe("extractHeadings", () => {
+      it("should extract headings from HTML", () => {
+        const html = "<h1>Title</h1><h2>Subtitle</h2>";
+        const result = extractHeadings(html);
+        expect(result).toEqual([
+          { level: 1, text: "Title" },
+          { level: 2, text: "Subtitle" },
+        ]);
+      });
+    });
+
+    describe("getPath", () => {
+      it("should return correct path for droplet", () => {
+        expect(getPath("droplet", "test-slug")).toBe("/d/test-slug");
+      });
+    });
+
+    describe("htmlToText", () => {
+      it("should convert HTML to plain text", () => {
+        const html = "<p>Test <b>bold</b> text</p>";
+        expect(htmlToText(html)).toBe("Test bold text");
+      });
+    });
+
+    describe("strapiJSONToTiptapJSON", () => {
+      it("should convert Strapi JSON to Tiptap JSON", () => {
+        const input = [
+          {
+            type: "text" as "text",
+            text: "Test",
+            bold: true,
+          },
+        ];
+
+        const result = strapiJSONToTiptapJSON(input);
+        expect(result).toEqual([
+          {
+            type: "text",
+            text: "Test",
+            marks: [{ type: "bold" }],
+          },
+        ]);
+      });
+    });
+
+    describe("tiptapJSONToStrapiJSON", () => {
+      it("should convert Tiptap JSON to Strapi JSON", () => {
+        const input = [
+          {
+            type: "text",
+            text: "Test",
+            marks: [{ type: "bold" }],
+          },
+        ];
+
+        const result = tiptapJSONToStrapiJSON(input);
+        expect(result).toEqual([
+          {
+            type: "text",
+            text: "Test",
+            bold: true,
+            italic: false,
+            underline: false,
+            strikethrough: false,
+            code: false,
+          },
+        ]);
+      });
+    });
+
+    describe("YouTube URL conversion", () => {
+      it("should convert YouTube URL to embedded URL", () => {
+        const url = "https://www.youtube.com/watch?v=dQw4w9WgXcQ";
+        expect(youtubeUrlToEmbeddedUrl(url)).toBe(
+          "https://www.youtube.com/embed/dQw4w9WgXcQ",
+        );
+      });
+
+      it("should convert embedded URL to YouTube URL", () => {
+        const url = "https://www.youtube.com/embed/dQw4w9WgXcQ";
+        expect(embeddedUrlToYoutubeUrl(url)).toBe(
+          "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        );
+      });
+    });
+  });
+
+  global.fetch = jest.fn();
+
+  describe("Utils", () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+
+    describe("getInitials", () => {
+      it("should return initials from a name", () => {
+        expect(getInitials("John Doe")).toBe("JD");
+        expect(getInitials("Mary Jane Smith")).toBe("MJS");
+      });
+
+      it("should handle single name", () => {
+        expect(getInitials("John")).toBe("J");
+      });
+
+      it("should handle empty string", () => {
+        expect(getInitials("")).toBe("");
+      });
+    });
+
+    describe("fetchAPI", () => {
+      it("should fetch data successfully", async () => {
+        const mockResponse = {
+          data: {
+            attributes: {
+              name: "Test",
+              description: "Test description",
+            },
+          },
+        };
+
+        (global.fetch as jest.Mock).mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve(mockResponse),
+        });
+
+        const result = await fetchAPI("/test", {});
+        expect(result).toEqual({
+          name: "Test",
+          description: "Test description",
+        });
+      });
+
+      it("should handle fetch errors", async () => {
+        (global.fetch as jest.Mock).mockResolvedValueOnce({
+          ok: false,
+          status: 404,
+          statusText: "Not Found",
+        });
+
+        await expect(fetchAPI("/test", {})).rejects.toThrow(
+          "Failed to fetch data: response.text is not a function",
+        );
+      });
+
+      it("should handle network errors", async () => {
+        (global.fetch as jest.Mock).mockRejectedValueOnce(
+          new Error("Network error"),
+        );
+
+        await expect(fetchAPI("/test", {})).rejects.toThrow(
+          "Failed to fetch data: Network error",
+        );
+      });
+    });
+
+    describe("flattenAttributes", () => {
+      it("should flatten nested attributes", () => {
+        const input = {
+          attributes: {
+            name: "Test",
+            description: "Test description",
+            nested: {
+              data: {
+                attributes: {
+                  value: "nested value",
+                },
+              },
+            },
+          },
+        };
+
+        const expected = {
+          name: "Test",
+          description: "Test description",
+          nested: { value: "nested value" },
+        };
+
+        expect(flattenAttributes(input)).toEqual(expected);
+      });
+
+      it("should handle arrays", () => {
+        const input = [
+          {
+            attributes: {
+              name: "Test",
+            },
+          },
+        ];
+
+        const expected = [
+          {
+            name: "Test",
+          },
+        ];
+
+        expect(flattenAttributes(input)).toEqual(expected);
+      });
+
+      it("should handle null input", () => {
+        expect(flattenAttributes(null)).toBeNull();
+      });
+    });
+
+    describe("extractHeadings", () => {
+      it("should extract headings from HTML", () => {
+        const html = `
+          <h1>Main Title</h1>
+          <h2>Subtitle</h2>
+          <h3>Section</h3>
+        `;
+
+        const expected = [
+          { level: 1, text: "Main Title" },
+          { level: 2, text: "Subtitle" },
+          { level: 3, text: "Section" },
+        ];
+
+        expect(extractHeadings(html)).toEqual(expected);
+      });
+
+      it("should handle empty HTML", () => {
+        expect(extractHeadings("")).toEqual([]);
+      });
+
+      it("should handle HTML without headings", () => {
+        const html = "<p>Some text</p>";
+        expect(extractHeadings(html)).toEqual([]);
+      });
+    });
+
+    describe("getPath", () => {
+      it("should return correct path for droplet", () => {
+        expect(getPath("droplet", "test-slug")).toBe("/d/test-slug");
+      });
+    });
+
+    describe("Role Functions", () => {
+      it("should check if user is admin", () => {
+        expect(isAuthorizedUserAdmin([AuthorizedUserRoleTitle.SysAdmin])).toBe(
+          true,
+        );
+        expect(isAuthorizedUserAdmin([AuthorizedUserRoleTitle.User])).toBe(
+          false,
+        );
+        expect(isAuthorizedUserAdmin(null)).toBe(false);
+      });
+
+      it("should check if user is content creator", () => {
+        expect(isContentCreator([AuthorizedUserRoleTitle.ContentCreator])).toBe(
+          true,
+        );
+        expect(isContentCreator([AuthorizedUserRoleTitle.User])).toBe(false);
+        expect(isContentCreator(null)).toBe(false);
+      });
+
+      it("should check if user is content editor", () => {
+        expect(isContentEditor([AuthorizedUserRoleTitle.ContentEditor])).toBe(
+          true,
+        );
+        expect(isContentEditor([AuthorizedUserRoleTitle.User])).toBe(false);
+        expect(isContentEditor(null)).toBe(false);
+      });
+
+      it("should check if user is faculty", () => {
+        expect(isAuthorizedUserFaculty([AuthorizedUserRoleTitle.Faculty])).toBe(
+          true,
+        );
+        expect(isAuthorizedUserFaculty([AuthorizedUserRoleTitle.User])).toBe(
+          false,
+        );
+        expect(isAuthorizedUserFaculty(null)).toBe(false);
+      });
+
+      it("should condense role titles", () => {
+        const roles = [
+          AuthorizedUserRoleTitle.SysAdmin,
+          AuthorizedUserRoleTitle.ContentCreator,
+        ];
+        expect(condenseRoleTitles(roles)).toBe("System Admin, Content Creator");
+        expect(condenseRoleTitles(null)).toBe("");
+      });
+    });
+
+    describe("htmlToText", () => {
+      it("should convert HTML to plain text", () => {
+        const html = "<p>This is <b>bold</b> and <i>italic</i> text</p>";
+        expect(htmlToText(html)).toBe("This is bold and italic text");
+      });
+
+      it("should handle HTML with nbsp", () => {
+        const html = "<p>Text&nbsp;with&nbsp;spaces</p>";
+        expect(htmlToText(html)).toBe("Text with&nbsp;spaces");
+      });
+
+      it("should handle empty HTML", () => {
+        expect(htmlToText("")).toBe("");
       });
     });
   });

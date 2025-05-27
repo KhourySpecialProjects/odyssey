@@ -138,6 +138,12 @@
       "relation": "manyToMany",
       "target": "api::authorized-user.authorized-user",
       "mappedBy": "droplets"
+    },
+    "inReview": {
+      "type": "boolean"
+    },
+    "afterReview": {
+      "type": "text"
     }
   }
 }
