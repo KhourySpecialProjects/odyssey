@@ -186,7 +186,7 @@ export default async function DropletRecapRoute({ params }: Props) {
                 A collection of notes and highlights that you created throughout
                 this droplet:
               </p>
-              <section>
+              {(allNotes.highlights.length > 0 || allNotes.notes.length > 0) && <section>
                 <NotesPdfButton
                   pdfBytes={pdfBytes}
                   name={`${droplet.name.replace(/\s/g, "")}-notes`}
@@ -197,7 +197,7 @@ export default async function DropletRecapRoute({ params }: Props) {
                     )
                   }
                 />
-              </section>
+              </section>}
               <NotesContainer
                 allNotes={allNotes}
                 dropletHighlights={filteredHighlights}
