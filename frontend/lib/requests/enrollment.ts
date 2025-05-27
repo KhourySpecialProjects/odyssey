@@ -268,10 +268,28 @@ export async function fetchEnrollmentMetadata({
     pagination,
   };
 
-  return await fetchAPI(path, {
-    urlParams,
-    next: { tags: ["enrollments"], revalidate: 0 },
-    cache: "no-store",
-    flattenResponse: false,
-  });
+  try {
+    const response = await fetchAPI<{
+      data: Enrollment[];
+      meta: {
+        pagination: {
+          page: number;
+          pageCount: number;
+          pageSize: number;
+          total: number;
+        };
+      };
+    }>(path, {
+      urlParams,
+      next: { tags: ["enrollments"], revalidate: 0 },
+      cache: "no-store",
+      flattenResponse: false,
+    });
+
+    return response;
+
+  } catch (error) {
+    console.error("Error fetching enrollment metadata:", error);
+    return Promise.reject(new Error("Error getting enrollment metadata"));
+  }
 }

@@ -51,7 +51,7 @@ export default async function Page() {
     fetchEnrollmentMetadata(),
   ]);
 
-  totalEnrollments = enrollments.meta.pagination.total || 0;
+  totalEnrollments = enrollments?.meta.pagination.total || 0;
 
   if (!user || !isAuthorizedUserAdmin(user.roles)) return notFound();
 
