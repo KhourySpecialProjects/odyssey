@@ -28,13 +28,23 @@ import { NewUsersChart } from "@/components/admin/new-users";
 
 export default async function Page() {
   const user = await getCurrentUser();
-  const authorizedUsers = await fetchAuthorizedUsers();
-  const droplets = await fetchDroplets();
-  const dailyActiveUsers = await fetchDailyActiveUsers();
-  const weeklyActiveUsers = await fetchWeeklyActiveUsers();
-  const pageviewCount = await fetchUniquePageview();
-  const newUsers = await fetchWeeklyNewUsers();
   let totalEnrollments = 0;
+
+  const [
+    authorizedUsers,
+    droplets,
+    dailyActiveUsers,
+    weeklyActiveUsers,
+    pageviewCount,
+    newUsers
+  ] = await Promise.all([
+    fetchAuthorizedUsers(),
+    fetchDroplets(),
+    fetchDailyActiveUsers(),
+    fetchWeeklyActiveUsers(),
+    fetchUniquePageview(),
+    fetchWeeklyNewUsers()
+  ]);
 
   for (const user of authorizedUsers) {
     const enrollments = await getEnrollmentsByAuthorizedUser(user.id);
