@@ -241,3 +241,55 @@ export async function getDropletAverageRating(
     return Promise.reject(new Error("Error getting droplet average rating"));
   }
 }
+
+//Gets just one enrollment but also returns the response metadata to get pagination data
+export async function fetchEnrollmentMetadata({
+  sort,
+  filters,
+  pagination = { pageSize: 1, page: 1 },
+  populate,
+  fields = ["id"],
+}: StrapiRequestParams = {}): Promise<{
+  data: Enrollment[];
+  meta: {
+    pagination: {
+      page: number;
+      pageCount: number;
+      pageSize: number;
+      total: number;
+    };
+  };
+}> {
+  const path = `/enrollments`;
+  const urlParams = {
+    sort,
+    filters,
+    populate,
+    fields,
+    pagination,
+  };
+
+  try {
+    const response = await fetchAPI<{
+      data: Enrollment[];
+      meta: {
+        pagination: {
+          page: number;
+          pageCount: number;
+          pageSize: number;
+          total: number;
+        };
+      };
+    }>(path, {
+      urlParams,
+      next: { tags: ["enrollments"], revalidate: 0 },
+      cache: "no-store",
+      flattenResponse: false,
+    });
+
+    return response;
+  } catch (error) {
+    console.error("Error fetching enrollment metadata:", error);
+    return Promise.reject(new Error("Error getting enrollment metadata"));
+  }
+}
