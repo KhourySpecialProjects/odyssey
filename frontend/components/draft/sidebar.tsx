@@ -54,7 +54,7 @@ export function Sidebar({
   authorizedUser,
 }: {
   user: User;
-  droplet: Pick<Droplet, "id" | "name" | "slug" | "droplet_lessons">;
+  droplet: Pick<Droplet, "id" | "name" | "slug" | "droplet_lessons" | "status">;
   authorizedUser: AuthorizedUser | null;
 }) {
   const [expanded, setExpanded] = useState(false);
@@ -195,7 +195,11 @@ export function Sidebar({
             <div className="flex flex-row justify-between pr-2">
               <Button
                 type="button"
-                onClick={() => setIsOpen(true)}
+                onClick={() =>
+                  droplet.status !== "draft"
+                    ? setIsOpen(true)
+                    : router.push(`/drafts`)
+                }
                 className={cn(
                   "flex items-center justify-start gap-2 bg-slate-50 text-base text-black hover:bg-slate-100 dark:bg-slate-800 dark:text-white dark:hover:bg-slate-700",
                 )}

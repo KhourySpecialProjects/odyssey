@@ -44,7 +44,7 @@ describe("BlockedUsers", () => {
     const mockAuthUser = { blocked: [] };
     (getAuthorizedUserByEmail as jest.Mock).mockResolvedValue(mockAuthUser);
 
-    const { container } = await render(await BlockedUsers());
+    await render(await BlockedUsers());
     expect(screen.getByText("You have no blocked users")).toBeInTheDocument();
   });
 

@@ -9,13 +9,6 @@ jest.mock("next/navigation", () => ({
 }));
 
 describe("ContentSelector", () => {
-  const mockUser = {
-    id: 1,
-    email: "test@example.com",
-    roles: [],
-    isActive: true,
-  };
-
   const mockRouter = {
     push: jest.fn(),
   };

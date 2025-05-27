@@ -1,7 +1,5 @@
-import { act, render, screen } from "@testing-library/react";
-import HomeRoute from "@/app/(general)/page";
+import { render, screen } from "@testing-library/react";
 import NotFoundRoute from "@/app/(general)/not-found";
-import { getCurrentUser } from "@/lib/auth/session";
 import UnauthorizedRoute from "@/app/(general)/unauthorized/page";
 
 jest.mock("@/lib/auth/session", () => ({
