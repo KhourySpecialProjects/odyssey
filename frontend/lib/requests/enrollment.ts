@@ -242,6 +242,7 @@ export async function getDropletAverageRating(
   }
 }
 
+//Gets just one enrollment but also returns the response metadata to get pagination data
 export async function fetchEnrollmentMetadata({
   sort,
   filters,
