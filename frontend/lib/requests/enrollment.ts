@@ -256,7 +256,7 @@ export async function fetchEnrollmentMetadata({
       pageCount: number;
       pageSize: number;
       total: number;
-    }
+    };
   };
 }> {
   const path = `/enrollments`;
