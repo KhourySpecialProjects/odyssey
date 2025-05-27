@@ -95,7 +95,10 @@ export default async function ExplorePage({
 
       <div className="mx-auto mt-4 mb-8 w-full max-w-7xl px-4 xl:p-0">
         <div className="flex flex-col gap-4 rounded-md border border-slate-200 bg-slate-50 p-4 dark:border-slate-500 dark:bg-slate-800">
-          <ContentTypeSelector droplets={droplets.length} playlists={playlists.length}/>
+          <ContentTypeSelector
+            droplets={droplets.length}
+            playlists={playlists.length}
+          />
 
           <div className="flex flex-col gap-2 md:flex-row md:items-center">
             <div className="flex flex-1 flex-row flex-wrap items-center gap-2">
