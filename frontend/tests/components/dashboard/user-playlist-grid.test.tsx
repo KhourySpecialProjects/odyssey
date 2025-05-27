@@ -62,7 +62,7 @@ describe("UserPlaylistsGrid", () => {
   });
 
   it("displays a message when no playlists are found", async () => {
-    render(await UserPlaylistsGrid());
+    render(await UserPlaylistsGrid({}));
 
     expect(screen.getByText("No Saved Playlists")).toBeInTheDocument();
     expect(
@@ -93,7 +93,7 @@ describe("UserPlaylistsGrid", () => {
       mockUserWithPlaylists,
     );
 
-    render(await UserPlaylistsGrid());
+    render(await UserPlaylistsGrid({}));
 
     expect(screen.getByText("Private Playlists")).toBeInTheDocument();
     expect(screen.getByTestId("playlist-1")).toBeInTheDocument();
@@ -120,7 +120,7 @@ describe("UserPlaylistsGrid", () => {
       mockUserWithPlaylists,
     );
 
-    render(await UserPlaylistsGrid());
+    render(await UserPlaylistsGrid({}));
 
     expect(screen.getByText("Public Playlists")).toBeInTheDocument();
     expect(screen.getByTestId("playlist-2")).toBeInTheDocument();
@@ -161,7 +161,7 @@ describe("UserPlaylistsGrid", () => {
       mockEnrollments,
     );
 
-    render(await UserPlaylistsGrid());
+    render(await UserPlaylistsGrid({}));
 
     expect(screen.getByTestId("playlist-1")).toBeInTheDocument();
   });
@@ -169,7 +169,7 @@ describe("UserPlaylistsGrid", () => {
   it("returns null when user is not found", async () => {
     (getCurrentUser as jest.Mock).mockResolvedValue(null);
 
-    const result = await UserPlaylistsGrid();
+    const result = await UserPlaylistsGrid({});
     expect(result).toBeNull();
   });
 
@@ -222,7 +222,7 @@ describe("UserPlaylistsGrid", () => {
     });
 
     it("should render public and private playlists correctly", async () => {
-      render(await UserPlaylistsGrid());
+      render(await UserPlaylistsGrid({}));
 
       expect(screen.getByText("Public Playlist")).toBeInTheDocument();
       expect(screen.getByText("Private Playlist")).toBeInTheDocument();

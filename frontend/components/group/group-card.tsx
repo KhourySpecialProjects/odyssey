@@ -13,6 +13,7 @@ type GroupCardProps = {
   role: "creator" | "admin" | "manager" | "member";
   roleColors?: Record<string, string>;
   isArchived: boolean;
+  dashboardPage: boolean;
 };
 
 export function GroupCard({
@@ -20,6 +21,7 @@ export function GroupCard({
   role,
   roleColors,
   isArchived,
+  dashboardPage,
 }: GroupCardProps) {
   async function changeVisibility() {
     try {
@@ -45,26 +47,28 @@ export function GroupCard({
       className="inline-block h-full w-full rounded-md border border-slate-200 bg-slate-50 hover:border-slate-300 dark:border-slate-500 dark:bg-slate-800"
     >
       <div className="p-2 transition-colors">
-        <Button
-          size="sm"
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            changeVisibility();
-          }}
-          className={`${isArchived === true || isArchived === false ? "visibility: visible" : "visibility: hidden"} bg-white hover:bg-slate-300 dark:bg-slate-300`}
-        >
-          <div className="group relative">
-            {isArchived ? (
-              <ArchiveRestore className="text-purple-800" />
-            ) : (
-              <Archive className="text-purple-800" />
-            )}
-            <span className="absolute top-full left-1/2 mt-1 w-max -translate-x-1/2 transform rounded bg-gray-800 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100">
-              {isArchived ? "Unarchive" : "Archive"}
-            </span>
-          </div>
-        </Button>
+        {dashboardPage && (
+          <Button
+            size="sm"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              changeVisibility();
+            }}
+            className={`${isArchived === true || isArchived === false ? "visibility: visible" : "visibility: hidden"} bg-white hover:bg-slate-300 dark:bg-slate-300`}
+          >
+            <div className="group relative">
+              {isArchived ? (
+                <ArchiveRestore className="text-purple-800" />
+              ) : (
+                <Archive className="text-purple-800" />
+              )}
+              <span className="absolute top-full left-1/2 mt-1 w-max -translate-x-1/2 transform rounded bg-gray-800 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100">
+                {isArchived ? "Unarchive" : "Archive"}
+              </span>
+            </div>
+          </Button>
+        )}
 
         <div className="flex h-full flex-col rounded-md bg-slate-50 p-6 dark:bg-slate-800">
           <div className="flex-grow">
