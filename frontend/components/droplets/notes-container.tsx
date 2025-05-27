@@ -38,10 +38,10 @@ export function NotesContainer({
           allNotes={allNotes}
         />
       </div>
-      <div className="flex w-1/3 flex-col items-center justify-center pt-2 text-center text-xl font-bold dark:text-slate-300">
+      {(allNotes.highlights.length > 0 || allNotes.notes.length > 0) && <div className="flex w-1/3 flex-col items-center justify-center pt-2 text-center text-xl font-bold dark:text-slate-300">
         Filters
         <NotesFilter onFilterChange={setSelectedColors} />
-      </div>
+      </div>}
     </div>
   );
 }
