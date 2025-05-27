@@ -242,24 +242,23 @@ export async function getDropletAverageRating(
   }
 }
 
-
 type PaginationMeta = {
-    page: number;
-    pageCount: number;
-    pageSize: number;
-    total: number;
+  page: number;
+  pageCount: number;
+  pageSize: number;
+  total: number;
 };
 
-
-export async function fetchEnrollmentMetadata(
-  {
-    sort,
-    filters,
-    pagination = { pageSize: 1, page: 1},
-    populate,
-    fields = ["id"],
-  }: StrapiRequestParams = {},
-): Promise<{ data: Enrollment[]; meta: { pagination: PaginationMeta } }> {
+export async function fetchEnrollmentMetadata({
+  sort,
+  filters,
+  pagination = { pageSize: 1, page: 1 },
+  populate,
+  fields = ["id"],
+}: StrapiRequestParams = {}): Promise<{
+  data: Enrollment[];
+  meta: { pagination: PaginationMeta };
+}> {
   const path = `/enrollments`;
   const urlParams = {
     sort,
