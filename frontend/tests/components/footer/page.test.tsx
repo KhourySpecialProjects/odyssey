@@ -1,6 +1,13 @@
 import { render, screen } from "@testing-library/react";
 import Footer from "@/components/footer/page";
 
+jest.mock("next-auth", () => ({
+  getServerSession: () => Promise.resolve(null),
+}));
+
+jest.mock("@/lib/auth/session", () => ({
+  getCurrentUser: () => Promise.resolve(null),
+}));
 
 jest.mock("@/components/debug/reportBugButton", () => ({
   ReportBugButton: () => (
@@ -8,9 +15,15 @@ jest.mock("@/components/debug/reportBugButton", () => ({
   ),
 }));
 
+jest.mock("next/headers", () => ({
+  headers: () => new Map(),
+  cookies: () => new Map(),
+}));
+
 describe("Footer", () => {
-  it("renders all navigation links", () => {
-    render(<Footer />);
+  it("renders all navigation links", async () => {
+    const FooterComponent = await Footer();
+    render(FooterComponent);
 
     expect(screen.getByText("About Odyssey")).toHaveAttribute("href", "/about");
     expect(screen.getByText("Website Creators")).toHaveAttribute(
