@@ -59,5 +59,4 @@ describe("EnvironmentBanner", () => {
     const banner = screen.getByText("< test ENVIRONMENT >").parentElement;
     expect(banner).toHaveClass("test-class");
   });
-
 });
