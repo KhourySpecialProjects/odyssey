@@ -1,9 +1,12 @@
 import Link from "next/link";
+import { ReportBugButton } from "../debug/reportBugButton";
+import { getCurrentUser } from "@/lib/auth/session";
 
-export default function Footer() {
+export default async function Footer() {
+  const user = await getCurrentUser();
   return (
-    <footer className="z-60 flex h-20 w-full grid-cols-2 items-center justify-center border-t border-t-[#919191] px-4">
-      <div className="flex scale-75 gap-x-10 md:scale-100">
+    <footer className="z-60 flex h-20 w-full items-center justify-between border-t border-t-[#919191] px-4">
+      <div className="flex flex-1 items-center justify-center gap-x-10">
         <Link className="text-xl font-semibold" href="/about">
           About Odyssey
         </Link>
@@ -13,11 +16,12 @@ export default function Footer() {
         <Link className="text-xl font-semibold" href="/content-creators">
           Content Creators
         </Link>
-        <div className="flex items-center">
-          <Link className="text-xl font-semibold" href="/faq">
-            FAQ
-          </Link>
-        </div>
+        <Link className="text-xl font-semibold" href="/faq">
+          FAQ
+        </Link>
+      </div>
+      <div className="xs:pl-8 flex items-center md:pl-0">
+        <ReportBugButton user={user} />
       </div>
     </footer>
   );

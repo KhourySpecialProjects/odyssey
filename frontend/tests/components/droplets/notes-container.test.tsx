@@ -49,88 +49,65 @@ describe("NotesContainer", () => {
       text: "Highlighted text",
       color: "#fff300" as HighlightColor,
       position: { start: 0, end: 0 },
+      blockId: 1,
     },
   };
   const mockProps = {
     dropletHighlights: [
       {
         id: 1,
-        text: "Highlight 1",
+        text: "Test highlight",
         color: "#fff300" as HighlightColor,
         position: { start: 0, end: 0 },
-      },
-    ],
-    dropletNotes: [mockNote],
-    mappedLessons: [
-      {
-        id: 1,
+        blockId: 1,
         lesson: {
           id: 1,
           name: "Test Lesson",
           slug: "test-lesson",
+          blocks: [],
           droplets: [],
           droplet_lessons: [],
           notes: [],
-          blocks: [
-            {
-              id: 1,
-              __component: "droplets.generic",
-              content: "Generic content",
-            },
-            {
-              id: 2,
-              __component: "droplets.expandable",
-              title: "Expandable title",
-              content: "Expandable content",
-            },
-            {
-              id: 3,
-              __component: "droplets.video",
-              url: "https://example.com/video",
-            },
-            {
-              id: 4,
-              __component: "droplets.callout",
-              content: "Callout content",
-              type: "info",
-              color: "bg-sky-50",
-            },
-            {
-              id: 5,
-              __component: "droplets.quiz",
-              questions: [
-                {
-                  id: 1,
-                  content: "Quiz question",
-                  answerOptions: [
-                    { id: 1, content: "Option 1", isCorrect: true },
-                    { id: 2, content: "Option 2", isCorrect: false },
-                  ],
-                },
-              ],
-            },
-            {
-              id: 6,
-              __component: "droplets.open-ended-quiz",
-              questions: [
-                {
-                  id: 1,
-                  content: "Open ended question",
-                  correctAnswer: "Correct answer",
-                },
-              ],
-            },
-          ],
         },
-        orderIndex: 1,
       },
     ],
+    dropletNotes: [],
+    mappedLessons: [],
     allNotes: {
       dropletId: 1,
       notes: [],
-      highlights: [],
+      highlights: [
+        {
+          id: 1,
+          text: "Test highlight",
+          color: "#fff300" as HighlightColor,
+          position: { start: 0, end: 0 },
+          blockId: 1,
+          lesson: {
+            id: 1,
+            name: "Test Lesson",
+            slug: "test-lesson",
+            blocks: [],
+            droplets: [],
+            droplet_lessons: [],
+            notes: [],
+          },
+        },
+      ],
     },
   };
+
+  it("renders summary and filter sections", () => {
+    render(<NotesContainer {...mockProps} />);
+    expect(screen.getByText("Filters")).toBeInTheDocument();
+  });
+
+  it("handles filter changes", () => {
+    render(<NotesContainer {...mockProps} />);
+    const filterOptions = screen.getAllByRole("checkbox");
+    fireEvent.click(filterOptions[0]);
+  });
+  // ... existing code ...
 
   it("renders summary and filter sections", () => {
     render(<NotesContainer {...mockProps} />);

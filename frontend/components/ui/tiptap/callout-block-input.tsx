@@ -29,10 +29,30 @@ export function CalloutBlockInput({
   updateContent: (content: JSONContent) => void;
   revalidate: () => void;
 }) {
+  const CustomLink = Link.extend({
+    addOptions() {
+      return {
+        ...this.parent?.(),
+        autolink: true,
+        linkOnPaste: true,
+        openOnClick: false,
+        HTMLAttributes: {
+          rel: "noopener noreferrer",
+          target: "_blank",
+        },
+        validate: (href) => {
+          return /^(https?:\/\/)(localhost|127\.0\.0\.1|\d{1,3}(?:\.\d{1,3}){3}|[\w.-]+\.[a-zA-Z]{2,})(:\d+)?(\/\S*)?$/.test(
+            href,
+          );
+        },
+      };
+    },
+  });
+
   const editor = useEditor({
     extensions: [
       StartingKit,
-      Link.configure({
+      CustomLink.configure({
         HTMLAttributes: {
           target: "_blank",
           rel: "noopener noreferrer",
