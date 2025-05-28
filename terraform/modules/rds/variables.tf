@@ -46,7 +46,7 @@ variable "engine_version" {
 variable "instance_class" {
  description = "The instance type of the RDS instance"
  type        = string
- default     = "db.t3.large"
+ default     = "db.t3.medium"
 }
 
 

@@ -19,14 +19,14 @@ describe("ContentTypeSelector", () => {
   });
 
   it("renders both content type buttons", () => {
-    render(<ContentTypeSelector />);
-    expect(screen.getByText("Droplets")).toBeInTheDocument();
-    expect(screen.getByText("Playlists")).toBeInTheDocument();
+    render(<ContentTypeSelector droplets={0} playlists={0} />);
+    expect(screen.getByText("Droplets (0)")).toBeInTheDocument();
+    expect(screen.getByText("Playlists (0)")).toBeInTheDocument();
   });
 
   it("updates URL when clicking content type", () => {
-    render(<ContentTypeSelector />);
-    fireEvent.click(screen.getByText("Playlists"));
+    render(<ContentTypeSelector droplets={0} playlists={0} />);
+    fireEvent.click(screen.getByText("Playlists (0)"));
     expect(mockRouter.push).toHaveBeenCalledWith(
       "/explore?contentType=playlists",
     );
