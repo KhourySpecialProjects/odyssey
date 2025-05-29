@@ -8,9 +8,6 @@ const {
 } = require("../../lib/requests/authorized-user");
 const { fetchAPI } = require("../../lib/utils");
 
-const { flattenAttributes } = require("../../lib/utils");
-
-const data = require("../mocks/strapiMock");
 const mockUsers = require("../mocks/authorizedUsersMock");
 
 jest.mock("../../lib/utils", () => ({

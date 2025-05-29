@@ -20,22 +20,17 @@ const {
   enrollInPlaylist,
 } = require("../../lib/requests/playlist-enrollment");
 const {
-  getPlaylistsByAuthor,
   getPlaylistById,
   getPlaylistBySlug,
   getPlaylists,
 } = require("../../lib/requests/playlist");
 const { getTags, getTagBySlug } = require("../../lib/requests/tag");
-const { flattenAttributes } = require("../../lib/utils");
 const { getCurrentUser } = require("../../lib/auth/session");
 const {
   getAuthorizedUserByEmail,
 } = require("../../lib/requests/authorized-user");
 
-const data = require("../mocks/strapiMock");
-const mockUsers = require("../mocks/authorizedUsersMock");
 const mockGroups = require("../mocks/groupsMock");
-const mockNotes = require("../mocks/notesMock");
 
 jest.mock("../../lib/utils", () => ({
   fetchAPI: jest.fn(),
@@ -350,17 +345,6 @@ describe("Droplet tests", () => {
           isHidden: false,
         },
       ];
-
-      const mockResponse = {
-        data: mockDroplets.map((droplet) => ({
-          id: droplet.id,
-          attributes: {
-            name: droplet.name,
-            type: droplet.type,
-            slug: droplet.slug,
-          },
-        })),
-      };
 
       fetchAPI.mockResolvedValue(mockDroplets);
 

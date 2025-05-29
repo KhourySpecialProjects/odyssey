@@ -139,7 +139,7 @@ export function GroupDashboard({
             group.droplets.length > 0 &&
             group.members &&
             group.members.length > 0 ? (
-              <div className="flex flex-row items-start">
+              <div className="flex flex-row items-start overflow-x-auto bg-purple-400">
                 <div className="" key={group.id}>
                   <GroupProgressGrid group={group} />
                 </div>
