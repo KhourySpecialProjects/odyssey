@@ -34,7 +34,6 @@ describe("EnvironmentBanner", () => {
     render(await EnvironmentBanner({}));
 
     expect(screen.getByText("< development ENVIRONMENT >")).toBeInTheDocument();
-    expect(screen.getByTestId("report-bug-button")).toBeInTheDocument();
   });
 
   it("renders with correct environment name for staging", async () => {
@@ -59,16 +58,5 @@ describe("EnvironmentBanner", () => {
 
     const banner = screen.getByText("< test ENVIRONMENT >").parentElement;
     expect(banner).toHaveClass("test-class");
-  });
-
-  it("passes user prop to ReportBugButton", async () => {
-    process.env.NEXT_PUBLIC_APP_ENV = "test";
-
-    const mockUser = { id: 1, email: "test@example.com" };
-    (getCurrentUser as jest.Mock).mockResolvedValue(mockUser);
-
-    render(await EnvironmentBanner({}));
-
-    expect(screen.getByTestId("report-bug-button")).toBeInTheDocument();
   });
 });

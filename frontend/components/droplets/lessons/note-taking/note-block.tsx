@@ -9,11 +9,11 @@ import { useEditor, EditorContent } from "@tiptap/react";
 import Placeholder from "@tiptap/extension-placeholder";
 import StartingKit from "@tiptap/starter-kit";
 import Underline from "@tiptap/extension-underline";
-import Link from "@tiptap/extension-link";
 import DefaultToolbar from "@/components/ui/tiptap/toolbar/general-toolbar";
 import { cn } from "@/lib/utils";
 import { EditorView } from "@tiptap/pm/view";
 import { useTheme } from "next-themes";
+import Link from "@tiptap/extension-link";
 
 export function NoteBlock({
   note,
@@ -66,9 +66,29 @@ export function NoteBlock({
     }
   };
 
+  const CustomLink = Link.extend({
+    addOptions() {
+      return {
+        ...this.parent?.(),
+        autolink: true,
+        linkOnPaste: true,
+        openOnClick: false,
+        HTMLAttributes: {
+          rel: "noopener noreferrer",
+          target: "_blank",
+        },
+        validate: (href) => {
+          return /^(https?:\/\/)(localhost|127\.0\.0\.1|\d{1,3}(?:\.\d{1,3}){3}|[\w.-]+\.[a-zA-Z]{2,})(:\d+)?(\/\S*)?$/.test(
+            href,
+          );
+        },
+      };
+    },
+  });
+
   const editor = useEditor({
     extensions: [
-      Link,
+      CustomLink,
       Underline,
       StartingKit,
       Placeholder.configure({
