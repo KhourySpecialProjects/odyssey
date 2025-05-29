@@ -495,19 +495,6 @@ export function GroupManagementForm({
                 <MemberTile
                   key={member.email}
                   member={member}
-                  role={
-                    member.email === existingGroup?.creator.email
-                      ? "admin"
-                      : existingGroup?.admins?.find(
-                            (a) => a.email === member.email,
-                          )
-                        ? "admin"
-                        : existingGroup?.managers?.find(
-                              (m) => m.email === member.email,
-                            )
-                          ? "manager"
-                          : "member"
-                  }
                   onRemove={
                     member.email !== existingGroup?.creator.email
                       ? handleMemberRemove

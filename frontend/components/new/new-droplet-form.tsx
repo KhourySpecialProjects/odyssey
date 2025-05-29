@@ -110,7 +110,7 @@ export function CreateDropletForm({
 
   return (
     <form
-      className="flex h-min w-4/5 flex-col items-center justify-center space-y-4 p-5"
+      className="flex h-min flex-col items-center justify-center space-y-4 p-5 md:w-4/5"
       action={addDroplet}
       autoComplete="off"
     >

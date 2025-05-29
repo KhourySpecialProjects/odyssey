@@ -9,17 +9,16 @@ import {
   LearningObjective,
   Tag,
 } from "@/types";
+import { SearchProvider } from "@/contexts/SearchContext";
 
 jest.mock("@/components/droplets/droplet-tile", () => ({
   DropletTile: ({ droplet }: { droplet: any }) => (
-    <div data-testid={`droplet-${droplet.id}`}>
-      {droplet.name} - {droplet.completionPercentage.toFixed(0)}%
-    </div>
+    <div data-testid={`droplet-${droplet.id}`}>{droplet.name}</div>
   ),
 }));
 
 describe("EnrolledDropletsGridClient", () => {
-  const mockDroplets = Array.from({ length: 12 }, (_, i) => ({
+  const mockDroplets = Array.from({ length: 11 }, (_, i) => ({
     id: i + 1,
     name: `Droplet ${i + 1}`,
     slug: `droplet-${i + 1}`,
@@ -36,12 +35,18 @@ describe("EnrolledDropletsGridClient", () => {
 
   const mockCompletedLessonIds = [1, 2, 3];
 
+  const mockRatingsMap = new Map([
+    [1, 4],
+    [2, 5],
+  ]);
+
   it("renders a grid of droplet tiles", () => {
     render(
       <EnrolledDropletsGridClient
         dropletsWithCompletion={mockDroplets.slice(0, 3)}
         completedLessonIds={mockCompletedLessonIds}
         isArchived={false}
+        ratingsMap={mockRatingsMap}
       />,
     );
 
@@ -56,6 +61,7 @@ describe("EnrolledDropletsGridClient", () => {
         dropletsWithCompletion={mockDroplets}
         completedLessonIds={mockCompletedLessonIds}
         isArchived={false}
+        ratingsMap={mockRatingsMap}
       />,
     );
 
@@ -74,6 +80,7 @@ describe("EnrolledDropletsGridClient", () => {
         dropletsWithCompletion={mockDroplets}
         completedLessonIds={mockCompletedLessonIds}
         isArchived={false}
+        ratingsMap={mockRatingsMap}
       />,
     );
 
@@ -82,7 +89,7 @@ describe("EnrolledDropletsGridClient", () => {
 
     expect(screen.queryByTestId("droplet-1")).not.toBeInTheDocument();
     expect(screen.getByTestId("droplet-10")).toBeInTheDocument();
-    expect(screen.getByTestId("droplet-12")).toBeInTheDocument();
+    expect(screen.getByTestId("droplet-11")).toBeInTheDocument();
   });
 
   it("navigates to previous page when Previous button is clicked", () => {
@@ -91,6 +98,7 @@ describe("EnrolledDropletsGridClient", () => {
         dropletsWithCompletion={mockDroplets}
         completedLessonIds={mockCompletedLessonIds}
         isArchived={false}
+        ratingsMap={mockRatingsMap}
       />,
     );
 
@@ -130,9 +138,89 @@ describe("EnrolledDropletsGridClient", () => {
         completedLessonIds={mockCompletedLessonIds}
         isArchived={false}
         dueDates={mockDueDates}
+        ratingsMap={mockRatingsMap}
       />,
     );
 
     expect(screen.getByTestId("droplet-1")).toBeInTheDocument();
+  });
+
+  describe("EnrolledDropletsGridClient", () => {
+    const mockDroplets2 = [
+      {
+        id: 1,
+        name: "Droplet 1",
+        slug: "droplet-1",
+        focusArea: "programming" as FocusArea,
+        tags: [{ name: "javascript" }] as Tag[],
+        completionPercentage: 50,
+        lessons: [],
+        type: "knowledge" as DropletType,
+        learningObjectives: [] as LearningObjective[],
+        status: "published" as DropletStatus,
+        droplet_lessons: [] as DropletLesson[],
+        isHidden: false,
+      },
+      {
+        id: 2,
+        name: " Droplet 2",
+        slug: "droplet-2",
+        focusArea: "design" as FocusArea,
+        tags: [{ name: "css" }] as Tag[],
+        completionPercentage: 75,
+        lessons: [],
+        type: "knowledge" as DropletType,
+        learningObjectives: [] as LearningObjective[],
+        status: "published" as DropletStatus,
+        droplet_lessons: [] as DropletLesson[],
+        isHidden: false,
+      },
+    ];
+
+    const defaultProps = {
+      dropletsWithCompletion: mockDroplets2,
+      completedLessonIds: [],
+      isArchived: false,
+      ratingsMap: mockRatingsMap,
+    };
+
+    it("sorts droplets by name in ascending order", () => {
+      render(
+        <SearchProvider>
+          <EnrolledDropletsGridClient {...defaultProps} sortKey="name:asc" />
+        </SearchProvider>,
+      );
+
+      const droplets = screen.getAllByText(/Droplet/);
+      expect(droplets[0]).toHaveTextContent("Droplet 2");
+      expect(droplets[1]).toHaveTextContent("Droplet 1");
+    });
+
+    it("sorts droplets by completion percentage", () => {
+      render(
+        <SearchProvider>
+          <EnrolledDropletsGridClient
+            {...defaultProps}
+            sortKey="completion:desc"
+          />
+        </SearchProvider>,
+      );
+
+      const droplets = screen.getAllByText(/Droplet/);
+      expect(droplets[0]).toHaveTextContent("Droplet 2");
+      expect(droplets[1]).toHaveTextContent("Droplet 1");
+    });
+
+    it("sorts droplets by rating", () => {
+      render(
+        <SearchProvider>
+          <EnrolledDropletsGridClient {...defaultProps} sortKey="rating:desc" />
+        </SearchProvider>,
+      );
+
+      const droplets = screen.getAllByText(/Droplet/);
+      expect(droplets[0]).toHaveTextContent("Droplet 2");
+      expect(droplets[1]).toHaveTextContent("Droplet 1");
+    });
   });
 });

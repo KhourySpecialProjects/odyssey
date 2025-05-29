@@ -22,7 +22,6 @@ const {
   getUserDueDates,
 } = require("../../lib/requests/groups");
 
-const { flattenAttributes } = require("../../lib/utils");
 const { fetchAPI } = require("../../lib/utils");
 const {
   getAuthorizedUserByEmail,
@@ -504,7 +503,7 @@ describe("Groups Tests", () => {
 
       fetchAPI.mockResolvedValueOnce(mockUpdatedGroup);
 
-      const result = await updateGroupMembers(groupId, updates);
+      await updateGroupMembers(groupId, updates);
 
       expect(fetchAPI).toHaveBeenCalledWith(`/groups/${groupId}`, {
         options: {
@@ -1218,7 +1217,6 @@ describe("Groups Tests", () => {
     it("should successfully create an authorized user", async () => {
       const email = "test@northeastern.edu";
       const isEnabled = true;
-      const roleID = 1;
 
       global.fetch.mockResolvedValueOnce({
         ok: true,
@@ -1349,7 +1347,7 @@ describe("Groups Tests", () => {
       createEnrollmentFromEmail.mockResolvedValue({ id: 1, success: true });
       enrollInPlaylist.mockResolvedValue({ success: true });
 
-      const result = await enrollUsers(mockGroup);
+      await enrollUsers(mockGroup);
 
       // Verify createEnrollmentFromEmail was called for each member-droplet pair
       // - 2 members × 2 direct droplets = 4 calls
@@ -1431,7 +1429,7 @@ describe("Groups Tests", () => {
         .mockRejectedValueOnce(new Error("Enrollment failed"))
         .mockResolvedValueOnce({ id: 1, success: true });
 
-      const result = await enrollUsers(mockGroup);
+      await enrollUsers(mockGroup);
 
       expect(createEnrollmentFromEmail).toHaveBeenCalledTimes(2);
       expect(createEnrollmentFromEmail).toHaveBeenCalledWith(
