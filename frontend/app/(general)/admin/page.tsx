@@ -8,7 +8,7 @@ import { isAuthorizedUserAdmin } from "@/lib/utils";
 import { Separator } from "@/components/ui/separator";
 import { fetchAuthorizedUsers } from "@/lib/requests/authorized-user";
 import { fetchDroplets } from "@/lib/requests/data";
-import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
+import { fetchEnrollmentMetadata } from "@/lib/requests/enrollment";
 import { Droplets } from "@/components/admin/droplets/droplets";
 import { Groups } from "@/components/admin/groups/groups";
 import { Playlists } from "@/components/admin/playlists/playlists";
@@ -28,18 +28,28 @@ import { NewUsersChart } from "@/components/admin/new-users";
 
 export default async function Page() {
   const user = await getCurrentUser();
-  const authorizedUsers = await fetchAuthorizedUsers();
-  const droplets = await fetchDroplets();
-  const dailyActiveUsers = await fetchDailyActiveUsers();
-  const weeklyActiveUsers = await fetchWeeklyActiveUsers();
-  const pageviewCount = await fetchUniquePageview();
-  const newUsers = await fetchWeeklyNewUsers();
   let totalEnrollments = 0;
 
-  for (const user of authorizedUsers) {
-    const enrollments = await getEnrollmentsByAuthorizedUser(user.id);
-    totalEnrollments += enrollments.length;
-  }
+  const [
+    authorizedUsers,
+    droplets,
+    dailyActiveUsers,
+    weeklyActiveUsers,
+    pageviewCount,
+    newUsers,
+    enrollments,
+  ] = await Promise.all([
+    fetchAuthorizedUsers(),
+    fetchDroplets(),
+    fetchDailyActiveUsers(),
+    fetchWeeklyActiveUsers(),
+    fetchUniquePageview(),
+    fetchWeeklyNewUsers(),
+    fetchEnrollmentMetadata(),
+  ]);
+
+  totalEnrollments = enrollments?.meta.pagination.total || 0;
+
   if (!user || !isAuthorizedUserAdmin(user.roles)) return notFound();
 
   const pageContent = {
