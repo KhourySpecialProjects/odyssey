@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { AuthorizedUserClient } from "@/components/admin/users/authorized-user-client";
 import { TimeZone } from "@/types";
 
@@ -88,5 +88,69 @@ describe("AuthorizedUserClient", () => {
     expect(
       screen.getByText("There are no authorized users."),
     ).toBeInTheDocument();
+  });
+
+  describe("AuthorizedUserClient", () => {
+    it("renders all users initially", () => {
+      render(<AuthorizedUserClient authorizedUsers={mockUsers} />);
+
+      expect(screen.getByText("user1@example.com")).toBeInTheDocument();
+      expect(screen.getByText("user3@example.com")).toBeInTheDocument();
+    });
+
+    it("filters users by search term", async () => {
+      render(<AuthorizedUserClient authorizedUsers={mockUsers} />);
+
+      const searchInput = screen.getByPlaceholderText("Search...");
+      fireEvent.change(searchInput, { target: { value: "user1@example.com" } });
+
+      await waitFor(() => {
+        expect(screen.getByText("user1@example.com")).toBeInTheDocument();
+        expect(screen.queryByText("user2@example.com")).not.toBeInTheDocument();
+      });
+    });
+
+    it("filters users by email", async () => {
+      render(<AuthorizedUserClient authorizedUsers={mockUsers} />);
+
+      const searchInput = screen.getByPlaceholderText("Search...");
+      fireEvent.change(searchInput, { target: { value: "user9@example.com" } });
+
+      await waitFor(() => {
+        expect(screen.getByText("user9@example.com")).toBeInTheDocument();
+        expect(screen.getByText("user10@example.com")).toBeInTheDocument();
+      });
+    });
+
+    it("shows no results message when no users match search", async () => {
+      render(<AuthorizedUserClient authorizedUsers={mockUsers} />);
+
+      const searchInput = screen.getByPlaceholderText("Search...");
+      fireEvent.change(searchInput, { target: { value: "nonexistent" } });
+
+      await waitFor(() => {
+        expect(
+          screen.getByText("There are no authorized users."),
+        ).toBeInTheDocument();
+      });
+    });
+
+    it("resets search results when search term is cleared", async () => {
+      render(<AuthorizedUserClient authorizedUsers={mockUsers} />);
+
+      const searchInput = screen.getByPlaceholderText("Search...");
+      fireEvent.change(searchInput, { target: { value: "John" } });
+
+      await waitFor(() => {
+        expect(screen.queryByText("Jane Smith")).not.toBeInTheDocument();
+      });
+
+      fireEvent.change(searchInput, { target: { value: "" } });
+
+      await waitFor(() => {
+        expect(screen.getByText("user9@example.com")).toBeInTheDocument();
+        expect(screen.getByText("user10@example.com")).toBeInTheDocument();
+      });
+    });
   });
 });

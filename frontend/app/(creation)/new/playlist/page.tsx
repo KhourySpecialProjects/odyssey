@@ -29,7 +29,7 @@ export default async function NewPlaylist() {
   });
 
   return (
-    <div className="light:bg-slate-100 flex min-h-screen w-full flex-col items-center px-24 pt-12">
+    <div className="light:bg-slate-100 flex min-h-screen w-full flex-col items-center px-4 pt-12 md:px-24">
       <h1 className="mb-7 text-2xl font-bold tracking-tight text-slate-900 sm:text-4xl dark:text-white">
         Create New Playlist
       </h1>

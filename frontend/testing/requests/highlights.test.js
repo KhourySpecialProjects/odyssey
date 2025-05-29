@@ -2,20 +2,10 @@ const {
   getHighlights,
   getHighlightsByDroplet,
 } = require("../../lib/requests/highlights");
-const { flattenAttributes } = require("../../lib/utils");
 const { fetchAPI } = require("../../lib/utils");
 
 jest.mock("../../lib/utils", () => ({
   fetchAPI: jest.fn(),
-  flattenAttributes: jest.fn((data) => {
-    if (Array.isArray(data)) {
-      return data.map((item) => ({
-        id: item.id,
-        ...item.attributes,
-      }));
-    }
-    return data;
-  }),
 }));
 
 global.fetch = jest.fn();

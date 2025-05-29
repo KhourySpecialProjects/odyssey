@@ -174,14 +174,6 @@ export function PlaylistForm({
       console.error("Error saving playlist:", error);
       setError("An unexpected error occurred");
     }
-
-    // const response = await createPlaylist(playlistData);
-
-    // if (response.ok) {
-    //   router.push(`/p/${response.data.attributes.slug}`);
-    // } else {
-    //   setError(response.error || "Failed to create Playlist!");
-    // }
   };
   const filteredDroplets = sourceDroplets.filter((droplet) =>
     droplet.name.toLowerCase().includes(tempQuery.toLowerCase()),
@@ -305,9 +297,9 @@ export function PlaylistForm({
         </div>
 
         <DndProvider backend={HTML5Backend}>
-          <div className="grid grid-cols-2 gap-8 pt-4">
+          <div className="grid grid-cols-2 gap-2 pt-4 md:gap-8">
             <div className="space-y-4">
-              <h3 className="font-semibold dark:text-slate-300">
+              <h3 className="text-center font-semibold dark:text-slate-300">
                 Available Droplets
               </h3>
               <DraggableTileList
@@ -318,7 +310,7 @@ export function PlaylistForm({
               />
             </div>
             <div className="space-y-4">
-              <h3 className="font-semibold dark:text-slate-300">
+              <h3 className="text-center font-semibold dark:text-slate-300">
                 Selected Droplets
               </h3>
               <DraggableTileList
