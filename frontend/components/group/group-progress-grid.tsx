@@ -118,7 +118,6 @@ export function GroupProgressGrid({ group }: GroupProgressGridProps) {
           <MoveRight />
         </button>
       </div>
-
       <ContentSection title="">
         {group.droplets && group.droplets.length > 0 ? (
           <div className="flex flex-row justify-start">

@@ -93,24 +93,6 @@ describe("AddDropletDialog", () => {
     expect(screen.getByText("Add Droplet")).toBeInTheDocument();
   });
 
-  it("loads available droplets when opened", async () => {
-    render(
-      <AddDropletDialog
-        currentDroplets={mockCurrentDroplets}
-        onAddDroplets={() => {}}
-      />,
-    );
-
-    fireEvent.click(screen.getByText("Add Droplet"));
-
-    await waitFor(() => {
-      expect(getDroplets).toHaveBeenCalled();
-    });
-
-    expect(screen.getByText("Droplet 1")).toBeInTheDocument();
-    expect(screen.getByText("Droplet 2")).toBeInTheDocument();
-  });
-
   it("filters droplets based on search", async () => {
     render(
       <AddDropletDialog

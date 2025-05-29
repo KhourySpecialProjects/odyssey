@@ -28,7 +28,7 @@ export default function MUIDateTimePicker({
         sx={{
           backgroundColor: "#CBD5E1",
           borderRadius: "6px",
-          width: "240px",
+          width: { xs: "80px", md: "240px" },
           "& .MuiOutlinedInput-root": {
             backgroundColor: "#CBD5E1",
             borderRadius: "6px",
