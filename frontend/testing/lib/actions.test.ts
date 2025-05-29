@@ -1,6 +1,4 @@
-import { fetchAPI } from "@/lib/utils";
 import {
-  updateDroplet,
   completeLesson,
   markLessonAsComplete,
   uploadImage,
@@ -22,9 +20,7 @@ import {
 import {
   createAuthorizedUser,
   updateAuthorizedUser,
-  deleteAuthorizedUser,
   createAccessRequest,
-  deleteAccessRequest,
   createBugReport,
   updateAuthorBio,
   createEnrollment,
@@ -41,11 +37,7 @@ import {
   updateFirstTimeStatus,
   createHighlight,
   deleteHighlight,
-  deleteReport,
   getHighlightsForLesson,
-  archiveDroplet,
-  archiveGroup,
-  createBatchAuthorizedUsers,
 } from "@/lib/actions";
 import { DropletStatus, DropletType, FocusArea, Tag } from "@/types";
 import { AuthorizedUserRoleTitle } from "@/lib/globals";

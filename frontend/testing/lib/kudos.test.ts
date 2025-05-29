@@ -45,7 +45,7 @@ describe("kudos", () => {
       const mockResponse = { data: { id: 1 }, ok: true };
       (fetchAPI as jest.Mock).mockResolvedValue(mockResponse);
 
-      const result = await giveKudos(1);
+      await giveKudos(1, "droplet");
 
       expect(getCurrentUser).toHaveBeenCalled();
       expect(getAuthorizedUserByEmail).toHaveBeenCalledWith("test@test.com");
@@ -54,7 +54,7 @@ describe("kudos", () => {
     it("calls notFound when user is not found", async () => {
       (getCurrentUser as jest.Mock).mockResolvedValue(null);
 
-      await giveKudos(1);
+      await giveKudos(1, "droplet");
 
       expect(notFound).toHaveBeenCalled();
     });

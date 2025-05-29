@@ -14,7 +14,7 @@ export async function CreateDroplet() {
   const tags = await getTags({ fields: ["name", "slug"] });
 
   return (
-    <div className="light:bg-slate-100 flex w-full flex-col items-center justify-center px-24">
+    <div className="light:bg-slate-100 flex w-full flex-col items-center justify-center md:px-24">
       <h1 className="mb-7 text-2xl font-bold tracking-tight text-slate-900 sm:text-4xl dark:text-white">
         Create a Droplet
       </h1>
