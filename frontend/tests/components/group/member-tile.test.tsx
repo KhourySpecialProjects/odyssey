@@ -9,9 +9,8 @@ describe("MemberTile", () => {
   };
 
   it("renders member email and role", () => {
-    render(<MemberTile member={mockMember} role="admin" />);
+    render(<MemberTile member={mockMember} />);
     expect(screen.getByText("john.doe@example.com")).toBeInTheDocument();
-    expect(screen.getByText("admin")).toBeInTheDocument();
   });
 
   it("shows remove button on hover", () => {

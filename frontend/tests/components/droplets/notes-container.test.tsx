@@ -21,37 +21,6 @@ describe("NotesContainer", () => {
     status: "published" as DropletStatus,
     droplet_lessons: [],
   };
-  const mockNote = {
-    id: 1,
-    content: "Test note content",
-    lesson: {
-      id: 1,
-      name: "Test Lesson",
-      slug: "test-lesson",
-      blocks: [],
-      droplets: [],
-      droplet_lessons: [],
-      notes: [],
-    },
-    enrollment: {
-      id: "1",
-      authorizedUser: { id: 1 },
-      droplet: mockDroplet,
-      viewedLessons: [],
-      isComplete: false,
-      rating: 5,
-      notes: [],
-      isFirstTime: false,
-      isArchived: false,
-    },
-    positionY: 0,
-    highlight: {
-      text: "Highlighted text",
-      color: "#fff300" as HighlightColor,
-      position: { start: 0, end: 0 },
-      blockId: 1,
-    },
-  };
   const mockProps = {
     dropletHighlights: [
       {

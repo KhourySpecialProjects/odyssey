@@ -1,6 +1,5 @@
 import { authOptions } from "@/lib/auth/options";
 import { fetchIsAuthorizedUser } from "@/lib/requests/authorized-user";
-import { fetchAPI } from "@/lib/utils";
 
 jest.mock("@/lib/utils", () => ({
   fetchAPI: jest.fn(),
