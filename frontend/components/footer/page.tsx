@@ -6,7 +6,7 @@ export default async function Footer() {
   const user = await getCurrentUser();
   return (
     <footer className="z-60 flex h-20 w-full items-center justify-between border-t border-t-[#919191] px-4">
-      <div className="flex flex-1 items-center justify-center gap-x-10">
+      <div className="flex flex-1 items-center justify-center gap-x-4 md:gap-x-10">
         <Link className="text-xl font-semibold" href="/about">
           About Odyssey
         </Link>
@@ -20,7 +20,7 @@ export default async function Footer() {
           FAQ
         </Link>
       </div>
-      <div className="xs:pl-8 flex items-center md:pl-0">
+      <div className="flex items-center pl-4 md:pl-0">
         <ReportBugButton user={user} />
       </div>
     </footer>
