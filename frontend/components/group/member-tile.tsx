@@ -37,7 +37,7 @@ export function MemberTile({ member, onRemove }: MemberTileProps) {
             </div>
 
             <div
-              className={`absolute top-1/2 left-full ml-2 -translate-y-1/2 rounded bg-black px-2 py-1 text-sm whitespace-nowrap text-white transition-opacity duration-200 ${showEmail ? "opacity-100" : "pointer-events-none opacity-0"} md:pointer-events-auto md:static md:ml-0 md:translate-y-0 md:bg-transparent md:p-0 md:text-slate-900 md:opacity-100 md:dark:text-white`}
+              className={`absolute top-1/2 left-0 z-50 -translate-y-1/2 rounded bg-black px-2 py-1 text-sm whitespace-nowrap text-white transition-opacity duration-200 ${showEmail ? "opacity-100" : "pointer-events-none opacity-0"} md:pointer-events-auto md:static md:ml-0 md:translate-y-0 md:bg-transparent md:p-0 md:text-slate-900 md:opacity-100 md:dark:text-white`}
             >
               {member.email}
             </div>
