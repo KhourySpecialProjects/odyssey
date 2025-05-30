@@ -32,7 +32,7 @@ export function FilterSelector({
   };
 
   return (
-    <div className="flex gap-2">
+    <div className="flex flex-wrap gap-2">
       {contentTypes.map((type) => (
         <Button
           key={type.value}
