@@ -150,7 +150,7 @@ export default function DropletFooter({
               <p className="font-bold">Next</p>
               <p className="text-sm">{next.name}</p>
             </div>
-            <div className="rounded-full bg-sky-100 p-2">
+            <div className="rounded-full bg-sky-100 dark:bg-sky-700 p-2">
               <ArrowRightIcon />
             </div>
           </PaginationLinkWrapper>
