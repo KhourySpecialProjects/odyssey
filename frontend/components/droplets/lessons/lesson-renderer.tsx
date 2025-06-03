@@ -204,6 +204,45 @@ export function LessonRenderer({
       headings = headings.concat(extractHeadings((b as GenericBlock).content));
     });
 
+
+  const [canProceed, setCanProceed] = useState(false);
+
+  useEffect(() => {
+    const checkQuizAnswers = () => {
+      const questions = document.querySelectorAll('[role="question"]');
+      if (!questions) {
+        setCanProceed(true);
+        return;
+      }
+      const completedQuizQuestions =
+        document.querySelectorAll('[role="status"]');
+      if (questions.length !== completedQuizQuestions.length) {
+        setCanProceed(false);
+        return;
+      }
+
+      const allAnsweredCorrectly = Array.from(completedQuizQuestions).every(
+        (question) => {
+          const resultBadge = question.textContent;
+          return resultBadge?.toLowerCase().includes("right");
+        },
+      );
+
+      setCanProceed(allAnsweredCorrectly);
+    };
+
+    checkQuizAnswers();
+    const observer = new MutationObserver(checkQuizAnswers);
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ["class", "id"],
+    });
+
+    return () => observer.disconnect();
+  }, []);
+
   return (
     <div className="mx-auto w-full min-w-[300px] py-8 md:min-w-[700px]">
       <div className="relative mx-auto w-full max-w-2xl xl:py-8">
@@ -246,7 +285,8 @@ export function LessonRenderer({
             disabled={
               isPending ||
               !enrollmentId ||
-              completedLessonIds.includes(lesson.id)
+              completedLessonIds.includes(lesson.id) ||
+              !canProceed
             }
             className="rounded-lg bg-sky-600 px-4 py-2 text-white hover:bg-sky-700 disabled:opacity-50"
           >
