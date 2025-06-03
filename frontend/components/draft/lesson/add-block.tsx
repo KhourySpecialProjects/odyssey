@@ -248,12 +248,12 @@ export function AddBlock({ add }: { add: (block: Block) => void }) {
                             children: [{ type: "text", text: "" }],
                           },
                         ],
-                        color: "bg-sky-50",
+                        color: "bg-sky-50 dark:bg-sky-200",
                         type: "info",
                       });
                     }}
                     variant={dropdownVariants}
-                    className="w-full justify-between border border-slate-200 bg-sky-50 dark:bg-sky-50 dark:text-black"
+                    className="w-full justify-between border border-slate-200 bg-sky-50 dark:bg-sky-200 dark:text-black"
                   >
                     Default
                     {<CalloutIcon color={"bg-sky-50"}></CalloutIcon>}

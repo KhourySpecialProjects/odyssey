@@ -204,9 +204,47 @@ export function LessonRenderer({
       headings = headings.concat(extractHeadings((b as GenericBlock).content));
     });
 
+  const [canProceed, setCanProceed] = useState(false);
+
+  useEffect(() => {
+    const checkQuizAnswers = () => {
+      const questions = document.querySelectorAll('[role="question"]');
+      if (!questions) {
+        setCanProceed(true);
+        return;
+      }
+      const completedQuizQuestions =
+        document.querySelectorAll('[role="status"]');
+      if (questions.length !== completedQuizQuestions.length) {
+        setCanProceed(false);
+        return;
+      }
+
+      const allAnsweredCorrectly = Array.from(completedQuizQuestions).every(
+        (question) => {
+          const resultBadge = question.textContent;
+          return resultBadge?.toLowerCase().includes("right");
+        },
+      );
+
+      setCanProceed(allAnsweredCorrectly);
+    };
+
+    checkQuizAnswers();
+    const observer = new MutationObserver(checkQuizAnswers);
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ["class", "id"],
+    });
+
+    return () => observer.disconnect();
+  }, []);
+
   return (
     <div className="mx-auto w-full min-w-[300px] py-8 md:min-w-[700px]">
-      <div className="relative mx-auto w-full max-w-prose xl:py-8">
+      <div className="relative mx-auto w-full max-w-2xl xl:py-8">
         <h1 className="text-4xl font-extrabold text-balance">{lesson.name}</h1>
 
         {headings.length > 2 && (
@@ -246,7 +284,8 @@ export function LessonRenderer({
             disabled={
               isPending ||
               !enrollmentId ||
-              completedLessonIds.includes(lesson.id)
+              completedLessonIds.includes(lesson.id) ||
+              !canProceed
             }
             className="rounded-lg bg-sky-600 px-4 py-2 text-white hover:bg-sky-700 disabled:opacity-50"
           >
@@ -320,7 +359,7 @@ function LessonBlockRenderer({
     case "droplets.callout":
       return (
         <div
-          className={`flex flex-col items-center space-y-4 rounded-md border px-6 py-6 md:-mx-8 dark:border-slate-500 ${block.color || "bg-sky-50 dark:bg-sky-200"}`}
+          className={`flex flex-col items-center space-y-4 rounded-md border px-6 py-6 dark:border-slate-500 ${block.color || "bg-sky-50 dark:bg-sky-200"}`}
         >
           {block?.iconEnabled && (
             <div className="">
