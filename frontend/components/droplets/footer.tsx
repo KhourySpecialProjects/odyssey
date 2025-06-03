@@ -2,7 +2,7 @@
 
 import { cn } from "@/lib/utils";
 import { Droplet, DropletLesson } from "@/types";
-import { ArrowLeftIcon, ArrowRightIcon } from "lucide-react";
+import { ArrowLeftIcon, ArrowRightIcon, LockIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -187,8 +187,17 @@ const PaginationLinkWrapper = ({
         {children}
       </div>
     </Link>
-  ) : (
-    <div className="flex items-center text-red-600 dark:text-red-300">
-      Answer all quiz questions correctly to move on
+    ) : (
+    <div
+      className="flex-1 rounded-md border border-red-200 bg-red-50 p-4 leading-tight transition-colors hover:bg-red-100"
+    >
+      <div
+        className="flex h-full items-center justify-center gap-3 text-red-700"
+      >
+        Answer all quiz questions correctly to move on
+        <div className="rounded-full bg-red-100 p-2">
+          <LockIcon />
+        </div>
+      </div>
     </div>
   );
