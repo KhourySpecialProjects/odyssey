@@ -42,6 +42,8 @@ export default async function GroupDetailPage({ params }: Props) {
 
   const filteredDueDates = dueDates.reduce(
     (acc, curr) => {
+      if (!curr.dueDate) return acc;
+
       const itemId = curr.droplet?.id || curr.playlist?.id;
       const itemType = curr.droplet ? "droplet" : "playlist";
       const key = `${itemType}-${itemId}`;
@@ -111,7 +113,7 @@ export default async function GroupDetailPage({ params }: Props) {
               group.description || "No Description Provided.",
             )}
           />
-          {dueDates && dueDates.length > 0 && (
+          {dueDates && uniqueDueDates.length > 0 && (
             <>
               <Separator />
               <DueDateAnnouncements

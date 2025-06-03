@@ -2,7 +2,7 @@
 
 import { cn } from "@/lib/utils";
 import { Droplet, DropletLesson } from "@/types";
-import { ArrowLeftIcon, ArrowRightIcon } from "lucide-react";
+import { ArrowLeftIcon, ArrowRightIcon, LockIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -128,7 +128,7 @@ export default function DropletFooter({
       <div className="mx-auto mt-8 flex max-w-2xl flex-col gap-2 pb-2 md:flex-row md:justify-between xl:w-full">
         {previous ? (
           <PaginationLinkWrapper link={previous.link} canProceed={true}>
-            <div className="rounded-full bg-sky-100 p-2">
+            <div className="rounded-full bg-sky-100 p-2 dark:bg-sky-700">
               <ArrowLeftIcon />
             </div>
             <div>
@@ -150,7 +150,7 @@ export default function DropletFooter({
               <p className="font-bold">Next</p>
               <p className="text-sm">{next.name}</p>
             </div>
-            <div className="rounded-full bg-sky-100 p-2">
+            <div className="rounded-full bg-sky-100 p-2 dark:bg-sky-700">
               <ArrowRightIcon />
             </div>
           </PaginationLinkWrapper>
@@ -176,11 +176,11 @@ const PaginationLinkWrapper = ({
   canProceed ? (
     <Link
       href={link}
-      className="flex-1 rounded-md border border-sky-200 bg-sky-50 p-4 leading-tight transition-colors hover:bg-sky-100"
+      className="flex-1 rounded-md border border-sky-200 bg-sky-50 p-4 leading-tight transition-colors hover:bg-sky-100 dark:bg-sky-800 dark:hover:bg-sky-700"
     >
       <div
         className={cn(
-          "inline-flex h-full items-center gap-3 text-sky-700",
+          "inline-flex h-full items-center gap-3 text-sky-700 dark:text-sky-100",
           className,
         )}
       >
@@ -188,7 +188,12 @@ const PaginationLinkWrapper = ({
       </div>
     </Link>
   ) : (
-    <div className="flex items-center text-red-600 dark:text-red-300">
-      Answer all quiz questions correctly to move on
+    <div className="flex-1 rounded-md border border-red-200 bg-red-50 p-4 leading-tight transition-colors dark:bg-red-800">
+      <div className="flex h-full items-center justify-center gap-3 text-red-700 dark:text-red-50">
+        Answer all quiz questions correctly to move on
+        <div className="rounded-full bg-red-100 p-2 dark:bg-red-700 dark:text-white">
+          <LockIcon />
+        </div>
+      </div>
     </div>
   );
