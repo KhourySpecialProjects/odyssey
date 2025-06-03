@@ -43,7 +43,7 @@ export default async function GroupDetailPage({ params }: Props) {
   const filteredDueDates = dueDates.reduce(
     (acc, curr) => {
       if (!curr.dueDate) return acc;
-      
+
       const itemId = curr.droplet?.id || curr.playlist?.id;
       const itemType = curr.droplet ? "droplet" : "playlist";
       const key = `${itemType}-${itemId}`;
@@ -57,7 +57,6 @@ export default async function GroupDetailPage({ params }: Props) {
   );
 
   const uniqueDueDates = Object.values(filteredDueDates);
-
 
   return (
     <div className="mx-auto w-full max-w-7xl space-y-12 p-8">

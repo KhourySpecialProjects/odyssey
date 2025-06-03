@@ -204,7 +204,6 @@ export function LessonRenderer({
       headings = headings.concat(extractHeadings((b as GenericBlock).content));
     });
 
-
   const [canProceed, setCanProceed] = useState(false);
 
   useEffect(() => {
