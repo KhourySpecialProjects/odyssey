@@ -206,7 +206,7 @@ export function LessonRenderer({
 
   return (
     <div className="mx-auto w-full min-w-[300px] py-8 md:min-w-[700px]">
-      <div className="relative mx-auto w-full max-w-prose xl:py-8">
+      <div className="relative mx-auto w-full max-w-2xl xl:py-8">
         <h1 className="text-4xl font-extrabold text-balance">{lesson.name}</h1>
 
         {headings.length > 2 && (
@@ -320,7 +320,7 @@ function LessonBlockRenderer({
     case "droplets.callout":
       return (
         <div
-          className={`flex flex-col items-center space-y-4 rounded-md border px-6 py-6 md:-mx-8 dark:border-slate-500 ${block.color || "bg-sky-50 dark:bg-sky-200"}`}
+          className={`flex flex-col items-center space-y-4 rounded-md border px-6 py-6 dark:border-slate-500 ${block.color || "bg-sky-50 dark:bg-sky-200"}`}
         >
           {block?.iconEnabled && (
             <div className="">
