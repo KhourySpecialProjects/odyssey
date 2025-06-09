@@ -86,7 +86,7 @@ export function FeedClient({
   );
 
   return (
-    <section className="content py-6 md:bg-slate-50 md:border md:border-slate-200 md:rounded-md">
+    <section className="content py-6 md:bg-slate-50 md:border md:border-slate-200 md:rounded-md md:dark:border-slate-500 md:dark:bg-slate-800">
       <div className="rounded-md">
         {isLoadingInitial ? (
           <div className="flex items-center justify-center py-8">
