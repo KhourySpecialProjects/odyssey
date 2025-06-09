@@ -17,9 +17,9 @@ export function FeedContainer({ authUser }: { authUser: AuthorizedUser }) {
   const [requestsExpanded, setRequestsExpanded] = useState(false);
 
   return (
-    <div className="flex flex-row">
+    <div className="flex flex-row gap-4">
       <div className="relative flex h-full justify-end text-center md:w-1/4">
-        <div className="absolute top-[-12px] hidden min-w-[200px] rounded-md border border-slate-200 bg-slate-50 p-2 transition-colors hover:border-slate-300 md:block lg:p-4 dark:border-slate-500 dark:bg-slate-800">
+        <div className="absolute top-[0px] hidden min-w-[200px] rounded-md border border-slate-200 bg-slate-50 p-2 transition-colors hover:border-slate-300 md:block lg:p-4 dark:border-slate-500 dark:bg-slate-800">
           <div className="relative">
             <FriendRequests
               noProfile={true}
@@ -92,7 +92,7 @@ export function FeedContainer({ authUser }: { authUser: AuthorizedUser }) {
       <div
         className={`relative hidden w-1/4 flex-row justify-start text-center text-xl font-bold md:flex dark:text-slate-300`}
       >
-        <div className="absolute top-0 flex translate-y-[-20%] flex-col items-center">
+        <div className="absolute top-0 flex translate-y-[-15%] flex-col items-center gap-4">
           Filters
           <FeedFilter onFilterChange={setSelectedRoles} />
         </div>
