@@ -11,8 +11,12 @@ export default function GlobalLoading() {
           <div className="absolute inset-0 h-16 w-16 animate-ping rounded-full border-2 border-sky-600/20 opacity-75"></div>
         </div>
         <div className="text-center">
-          <p className="text-lg font-medium text-slate-900 dark:text-white">Loading</p>
-          <p className="text-sm text-slate-600 dark:text-slate-400">Please wait...</p>
+          <p className="text-lg font-medium text-slate-900 dark:text-white">
+            Loading
+          </p>
+          <p className="text-sm text-slate-600 dark:text-slate-400">
+            Please wait...
+          </p>
         </div>
       </div>
     </div>

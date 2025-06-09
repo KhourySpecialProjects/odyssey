@@ -28,7 +28,8 @@
     "types/**/*.ts",
     "**/*.ts",
     "**/*.tsx",
-    ".next/types/**/*.ts"
-, "testing/requests/requests.test.js"  ],
+    ".next/types/**/*.ts",
+    "testing/requests/requests.test.js"
+  ],
   "exclude": ["node_modules"]
 }
