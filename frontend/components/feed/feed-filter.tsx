@@ -90,7 +90,7 @@ export function FeedFilter({ onFilterChange }: FeedFilterProps) {
   };
 
   return (
-    <div className="space-y-3 py-4 md:bg-slate-50 md:border md:border-slate-200 md:rounded-md">
+    <div className="space-y-3 py-4 md:bg-slate-50 md:border md:border-slate-200 md:rounded-md md:dark:border-slate-500 md:dark:bg-slate-800">
       {roleOptions.map((role) => (
         <div
           key={role.value}
