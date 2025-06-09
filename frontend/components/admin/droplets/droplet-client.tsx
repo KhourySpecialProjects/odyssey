@@ -38,6 +38,7 @@ export function DropletClient({ droplets }: { droplets: Droplet[] }) {
   );
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setCurrentPage(1);
     setSearchItem(e.target.value);
     debouncedSearch(e.target.value);
   };
