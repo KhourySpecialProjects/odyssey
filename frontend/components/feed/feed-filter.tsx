@@ -16,6 +16,15 @@ interface FeedFilterProps {
   onFilterChange: (selectedRoles: AnnouncementTypeTitle[]) => void;
 }
 
+const backgroundColor = {
+    playlist: "bg-green-200 dark:bg-[#29703B]",
+    droplet: "bg-sky-200 dark:bg-[#266697]",
+    group: "bg-purple-200 dark:bg-[#754ABA]",
+    friend: "bg-yellow-200 dark:bg-[#977020]",
+    kudos: "bg-orange-200 dark:bg-[#B55E0C]",
+    system: "bg-red-200 dark:bg-[#B83028]",
+  };
+
 export function FeedFilter({ onFilterChange }: FeedFilterProps) {
   const roleOptions = [
     {
@@ -26,7 +35,7 @@ export function FeedFilter({ onFilterChange }: FeedFilterProps) {
           <Droplet size={20} />
         </>
       ),
-      color: "bg-blue-200 dark:bg-blue-800 dark:text-slate-300",
+      color: "bg-blue-200 dark:bg-[#266697] dark:text-slate-300",
     },
     {
       value: AnnouncementTypeTitle.Playlist,
@@ -36,7 +45,7 @@ export function FeedFilter({ onFilterChange }: FeedFilterProps) {
           <ListVideo size={20} />
         </>
       ),
-      color: "bg-green-200 dark:bg-green-800 dark:text-slate-300",
+      color: "bg-green-200 dark:bg-[#29703B] dark:text-slate-300",
     },
     {
       value: AnnouncementTypeTitle.Group,
@@ -45,7 +54,7 @@ export function FeedFilter({ onFilterChange }: FeedFilterProps) {
           <span role="group">Group</span> <UsersRound size={20} />
         </>
       ),
-      color: "bg-purple-200 dark:bg-purple-800 dark:text-slate-300",
+      color: "bg-purple-200 dark:bg-[#754ABA] dark:text-slate-300",
     },
     {
       value: AnnouncementTypeTitle.System,
@@ -54,7 +63,7 @@ export function FeedFilter({ onFilterChange }: FeedFilterProps) {
           <span role="system">System</span> <Info size={20} />
         </>
       ),
-      color: "bg-red-200 dark:bg-red-800 dark:text-slate-300",
+      color: "bg-red-200 dark:bg-[#B83028] dark:text-slate-300",
     },
     {
       value: AnnouncementTypeTitle.Friend,
@@ -63,7 +72,7 @@ export function FeedFilter({ onFilterChange }: FeedFilterProps) {
           <span role="friend">Friend</span> <Handshake size={20} />
         </>
       ),
-      color: "bg-yellow-200 dark:bg-yellow-800 dark:text-slate-300",
+      color: "bg-yellow-200 dark:bg-[#977020] dark:text-slate-300",
     },
     {
       value: AnnouncementTypeTitle.Kudos,
@@ -72,7 +81,7 @@ export function FeedFilter({ onFilterChange }: FeedFilterProps) {
           <span role="kudos">Kudos</span> <PartyPopper size={20} />
         </>
       ),
-      color: "bg-orange-200 dark:bg-orange-800 dark:text-slate-300",
+      color: "bg-orange-200 dark:bg-[#B55E0C] dark:text-slate-300",
     },
   ] as const;
 

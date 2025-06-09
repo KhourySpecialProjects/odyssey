@@ -86,7 +86,7 @@ export function FeedClient({
   );
 
   return (
-    <section className="content py-6 md:bg-slate-50 md:border md:border-slate-200 md:rounded-md md:dark:border-slate-500 md:dark:bg-slate-800">
+    <section className="content mb-12 pb-8 pt-4 md:bg-slate-50 md:border md:border-slate-200 md:rounded-md md:dark:border-slate-500 md:dark:bg-slate-800">
       <div className="rounded-md">
         {isLoadingInitial ? (
           <div className="flex items-center justify-center py-8">
@@ -98,7 +98,7 @@ export function FeedClient({
           </div>
         ) : filteredAnnouncements.length > 0 ? (
           <>
-            <ul className="grid grid-cols-1 gap-4 md:mx-auto md:w-[90%]">
+            <ul className="grid grid-cols-1 gap-4 md:mx-auto md:w-[95%]">
               {filteredAnnouncements.map((post) => (
                 <FeedBlock
                   key={post.id}
