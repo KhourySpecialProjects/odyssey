@@ -90,11 +90,11 @@ export function FeedFilter({ onFilterChange }: FeedFilterProps) {
   };
 
   return (
-    <div className="space-y-3 pt-4">
+    <div className="space-y-3 py-4 md:bg-slate-50 md:border md:border-slate-200 md:rounded-md">
       {roleOptions.map((role) => (
         <div
           key={role.value}
-          className={`flex items-center space-x-2 rounded-md p-1 ${role.color} ml-2 scale-125`}
+          className={`flex items-center space-x-2 rounded-md p-1 ${role.color} mx-4 scale-110`}
         >
           <Checkbox
             id={role.value}
