@@ -25,11 +25,11 @@ describe("FeedFilter", () => {
 
     // Get checkboxes and find their parent containers
     const checkboxes = screen.getAllByRole("checkbox");
-    
+
     checkboxes.forEach((checkbox, index) => {
       const container = checkbox.closest("div.flex.items-center");
       expect(container).not.toBeNull();
-      
+
       const type = Object.values(AnnouncementTypeTitle)[index];
       switch (type) {
         case AnnouncementTypeTitle.Droplet:
