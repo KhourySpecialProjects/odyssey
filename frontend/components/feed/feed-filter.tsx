@@ -99,11 +99,11 @@ export function FeedFilter({ onFilterChange }: FeedFilterProps) {
   };
 
   return (
-    <div className="space-y-3 py-4 md:bg-slate-50 md:border md:border-slate-200 md:rounded-md md:dark:border-slate-500 md:dark:bg-slate-800">
+    <div className="sm:grid sm:grid-cols-1 md:grid-cols-2 gap-2 gap-x-0 py-4 md:bg-slate-50 md:border md:border-slate-200 md:rounded-md md:dark:border-slate-500 md:dark:bg-slate-800">
       {roleOptions.map((role) => (
         <div
           key={role.value}
-          className={`flex items-center space-x-2 rounded-md p-1 ${role.color} mx-4 scale-110`}
+          className={`flex items-center space-x-1 lg:space-x-2 rounded-md p-1 pr-8 ${role.color} mx-4 scale-110`}
         >
           <Checkbox
             id={role.value}
@@ -112,7 +112,7 @@ export function FeedFilter({ onFilterChange }: FeedFilterProps) {
             className="border-sky-500 bg-sky-200 focus-visible:ring-sky-500 data-[state=checked]:border-sky-500 data-[state=checked]:bg-sky-500 dark:data-[state=checked]:bg-sky-500"
           />
           <div
-            className={`${selectedRoles.includes(role.value) ? "opacity-100" : "opacity-50"} w-[90px] pl-1 focus-visible:ring-sky-500`}
+            className={`${selectedRoles.includes(role.value) ? "opacity-100" : "opacity-50"} w-[90px] lg:pl-1 focus-visible:ring-sky-500`}
           >
             <span className="flex w-full items-center justify-between gap-1 px-1 text-sm leading-none font-medium">
               {role.label}
