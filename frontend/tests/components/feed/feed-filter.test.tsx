@@ -27,7 +27,7 @@ describe("FeedFilter", () => {
       .getAllByRole("checkbox")
       .map((checkbox) =>
         checkbox.closest(
-          "div[class*='flex items-center space-x-2 rounded-md p-1']",
+          "div[class*='flex items-center space-x-1 lg:space-x-2 rounded-md p-1']",
         ),
       );
 

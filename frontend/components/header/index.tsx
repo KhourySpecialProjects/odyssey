@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import { getCurrentUser } from "@/lib/auth/session";
 import Link from "next/link";
@@ -24,10 +24,10 @@ import { useState } from "react";
 
 export function Header({
   user,
-  authorizedUser
+  authorizedUser,
 }: {
-  user: any,
-  authorizedUser: AuthorizedUser | null
+  user: any;
+  authorizedUser: AuthorizedUser | null;
 }) {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -71,9 +71,7 @@ export function Header({
                     onLinkClick={handleCloseSheet}
                   />
 
-
                   <DarkMode className="sm:hidden" />
-
                 </nav>
               </SheetContent>
             </Sheet>

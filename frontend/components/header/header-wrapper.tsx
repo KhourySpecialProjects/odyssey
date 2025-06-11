@@ -5,7 +5,7 @@ import { Header } from "./index";
 
 export async function HeaderWrapper() {
   const user = await getCurrentUser();
-  
+
   let authorizedUser: AuthorizedUser | null = null;
   if (user?.email) {
     authorizedUser = (await getAuthorizedUserByEmail(
