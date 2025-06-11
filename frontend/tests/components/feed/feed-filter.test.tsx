@@ -23,15 +23,13 @@ describe("FeedFilter", () => {
   it("applies correct styling based on filter state", () => {
     render(<FeedFilter onFilterChange={mockOnFilterChange} />);
 
-    const filterContainers = screen
-      .getAllByRole("checkbox")
-      .map((checkbox) =>
-        checkbox.closest(
-          "div[class*='flex items-center space-x-1 lg:space-x-2 rounded-md p-1']",
-        ),
-      );
-
-    filterContainers.forEach((container, index) => {
+    // Get checkboxes and find their parent containers
+    const checkboxes = screen.getAllByRole("checkbox");
+    
+    checkboxes.forEach((checkbox, index) => {
+      const container = checkbox.closest("div.flex.items-center");
+      expect(container).not.toBeNull();
+      
       const type = Object.values(AnnouncementTypeTitle)[index];
       switch (type) {
         case AnnouncementTypeTitle.Droplet:
