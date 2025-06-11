@@ -65,7 +65,7 @@ describe("FeedBlock", () => {
   it("renders correct background color based on type", () => {
     render(<FeedBlock announcement={mockAnnouncement} authUser={mockUser} />);
     const container = screen.getByRole("listitem");
-    expect(container).toHaveClass("bg-sky-200");
+    expect(container).toHaveClass("bg-blue-200");
   });
 
   let consoleErrorSpy: jest.SpyInstance;
