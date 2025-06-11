@@ -15,6 +15,7 @@ import { EnvironmentBanner } from "@/components/debug/environmentBanner";
 import Footer from "@/components/footer/page";
 import { Header } from "@/components/header";
 import { Suspense } from "react";
+import { HeaderWrapper } from "@/components/header/header-wrapper";
 
 const lato = Lato({
   subsets: ["latin-ext"],
@@ -59,7 +60,7 @@ export default async function RootLayout({
                     <div className="sticky top-0 z-50">
                       <EnvironmentBanner />
                       <Suspense>
-                        <Header />
+                        <HeaderWrapper />
                       </Suspense>
 
                       <Suspense>
