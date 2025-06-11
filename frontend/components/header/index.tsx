@@ -1,15 +1,18 @@
+"use client"
+
 import { getCurrentUser } from "@/lib/auth/session";
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
+  SheetClose,
   SheetContent,
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { getGeneralConfig } from "@/config/general";
-import { Menu } from "lucide-react";
+import { Menu, Pencil } from "lucide-react";
 import { LoginButton } from "./login-button";
 import { NavLinks } from "./nav-links";
 import { UserDropdown } from "./user-dropdown";
@@ -17,27 +20,32 @@ import { AuthorizedUser } from "@/types";
 import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
 import { DarkMode } from "../explore/dark-mode";
 import { Logo } from "./logo";
+import { useState } from "react";
 
-export async function Header() {
-  const user = await getCurrentUser();
+export function Header({
+  user,
+  authorizedUser
+}: {
+  user: any,
+  authorizedUser: AuthorizedUser | null
+}) {
+  const [isOpen, setIsOpen] = useState(false);
 
   const getNavLinks = () => {
     return generalConfig.mainNav;
   };
   const generalConfig = getGeneralConfig(user);
-  let authorizedUser: AuthorizedUser | null = null;
-  if (user?.email) {
-    authorizedUser = (await getAuthorizedUserByEmail(
-      user.email,
-    )) as AuthorizedUser;
-  }
+
+  const handleCloseSheet = () => {
+    setIsOpen(false);
+  };
 
   return (
     <header className="sticky top-0 z-50 border-b border-slate-200 bg-white xl:px-6 dark:border-slate-500 dark:bg-slate-900">
       <div className="mx-auto flex h-full max-w-screen-xl items-center justify-between px-4 py-3">
         <div className="flex w-full flex-row justify-between xl:grid xl:grid-cols-[1fr_auto_1fr]">
           <div className="flex flex-row gap-4">
-            <Sheet>
+            <Sheet open={isOpen} onOpenChange={setIsOpen}>
               <SheetTrigger asChild role="banner">
                 <Button
                   variant="outline"
@@ -57,13 +65,15 @@ export async function Header() {
                       Odyssey, a Khoury College Learning Platform
                     </span>
                   </Link>
-
                   <NavLinks
                     items={getNavLinks()}
                     className="flex-col space-y-2 text-2xl"
+                    onLinkClick={handleCloseSheet}
                   />
 
+
                   <DarkMode className="sm:hidden" />
+
                 </nav>
               </SheetContent>
             </Sheet>
