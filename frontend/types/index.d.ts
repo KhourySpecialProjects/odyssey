@@ -187,6 +187,7 @@ export type Droplet = {
   isArchived?: boolean;
   inReview?: boolean;
   afterReview?: string;
+  funFact?: string;
 };
 
 export type QuizAnswerOption = {

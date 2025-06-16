@@ -20,6 +20,7 @@ import { ReviewDroplet } from "@/components/draft/metadata/review-droplet";
 import { FunFact } from "@/components/draft/metadata/fun-fact";
 import { Button } from "@/components/ui/button";
 import Anthropic from "@anthropic-ai/sdk";
+import { updateDropletFunFact } from "@/lib/actions";
 
 
 type Props = {
@@ -91,7 +92,12 @@ export default async function Droplet({ params }: Props) {
       }],
     });
     //console.log(msg);
-    return msg.content[0].type === 'text' ? msg.content[0].text : '';
+    if (msg.content[0].type === 'text') {
+      await updateDropletFunFact(msg.content[0].text, droplet.id)
+      return msg.content[0].text;
+    } else {
+      return '';
+    }
   }
 
 
@@ -161,7 +167,7 @@ export default async function Droplet({ params }: Props) {
           />
 
           <FunFact
-            funFact={droplet.overview ?? ""}
+            funFact={droplet.funFact ?? ""}
             generateFact={generateFunFact}
           />
 
