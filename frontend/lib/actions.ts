@@ -1646,3 +1646,32 @@ export async function setTimeZone(zone: string, userId: number) {
     return { success: false, error };
   }
 }
+
+
+export async function updateDropletFunFact(fact: string, dropletId: number) {
+  try {
+    const response = await fetch(
+      `${STRAPI_API_URL}/api/droplets/${dropletId}`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+        },
+        body: JSON.stringify({
+          data: {
+            funFact: fact,
+          },
+        }),
+      },
+    );
+
+    if (!response.ok) {
+      throw new Error("Failed to update fun fact");
+    }
+    return { success: true };
+  } catch (error) {
+    console.error("Error updating fun fact:", error);
+    return { success: false, error };
+  }
+}
