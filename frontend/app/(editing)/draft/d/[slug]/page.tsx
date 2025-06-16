@@ -18,9 +18,8 @@ import { getCurrentUser } from "@/lib/auth/session";
 import { notFound } from "next/navigation";
 import { ReviewDroplet } from "@/components/draft/metadata/review-droplet";
 import { FunFact } from "@/components/draft/metadata/fun-fact";
-import { Anthropic } from '@anthropic-ai/sdk';
-import { Droplet } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import Anthropic from "@anthropic-ai/sdk";
 
 
 type Props = {
@@ -76,17 +75,24 @@ export default async function Droplet({ params }: Props) {
     return notFound();
   }
 
-  const anthropic = new Anthropic({
-    apiKey: process.env.ANTHROPIC_API_KEY, // defaults to process.env["ANTHROPIC_API_KEY"]
-  });
+  const generateFunFact = async () => {
+    'use server';
+    
+    const anthropic = new Anthropic({
+      apiKey: process.env.ANTHROPIC_API_KEY,
+    });
 
-  const msg = await anthropic.messages.create({
-    model: "claude-3-haiku-20240307",
-    max_tokens: 1024,
-    messages: [{ role: "user", content: `I want you to generate a one-sentence fun-fact about this overview. The fact should be interesting and easily understandable. "${droplet.overview || "If you're reading this, simply output No Overview"}"` }],
-  });
-  console.log(msg);
-  console.log(msg.content[0].text)
+    const msg = await anthropic.messages.create({
+      model: "claude-3-haiku-20240307",
+      max_tokens: 1024,
+      messages: [{ 
+        role: "user", 
+        content: `I want you to generate a short, one-sentence fun-fact about this overview. The fact should be interesting and easily understandable. "${droplet.overview || "If you're reading this, simply output No Overview"}"` 
+      }],
+    });
+    //console.log(msg);
+    return msg.content[0].type === 'text' ? msg.content[0].text : '';
+  }
 
 
 
@@ -155,7 +161,9 @@ export default async function Droplet({ params }: Props) {
           />
 
           <FunFact
-            factText={droplet.overview ?? ""} />
+            funFact={droplet.overview ?? ""}
+            generateFact={generateFunFact}
+          />
 
 
           <LearningObjectives

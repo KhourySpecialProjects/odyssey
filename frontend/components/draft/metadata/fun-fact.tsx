@@ -1,14 +1,29 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { useDropletUpdate } from "./hooks/useDropletUpdate";
-import { DropletOverviewInput } from "@/components/ui/tiptap/droplet-overview-input";
+import { useState } from "react";
 
 export function FunFact({
-    factText,
+    funFact,
+    generateFact,
 }: {
-    factText: string;
+    funFact: string;
+    generateFact: () => Promise<string>;
 }) {
+    const [currentFact, setCurrentFact] = useState(funFact);
+    const [isLoading, setIsLoading] = useState(false);
+
+    const handleGenerateFact = async () => {
+        setIsLoading(true);
+        try {
+            const newFact = await generateFact();
+            setCurrentFact(newFact);
+        } catch (error) {
+            console.error('Failed to generate fun fact:', error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     return (
         <section className="w-full max-w-2xl">
@@ -20,13 +35,17 @@ export function FunFact({
             </p>
 
             <div className="mt-4 w-full rounded-md border border-slate-200 bg-slate-50 p-8 dark:border-slate-500 dark:bg-slate-800">
-                <div
-                    className="prose prose-sky prose-code:text-inherit prose-strong:text-inherit prose-headings:text-inherit mx-auto dark:text-slate-300"
-                >{factText}</div>
+                <div className="prose prose-sky prose-code:text-inherit prose-strong:text-inherit prose-headings:text-inherit mx-auto dark:text-slate-300">
+                    {currentFact}
+                </div>
             </div>
 
-            
-
+            <Button 
+                onClick={handleGenerateFact}
+                disabled={isLoading}
+            >
+                {isLoading ? 'Generating...' : 'Regenerate Fact'}
+            </Button>
         </section>
     );
 }
