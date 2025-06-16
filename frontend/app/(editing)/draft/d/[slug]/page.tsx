@@ -17,6 +17,11 @@ import { GradientBackground } from "@/components/gradient-bg";
 import { getCurrentUser } from "@/lib/auth/session";
 import { notFound } from "next/navigation";
 import { ReviewDroplet } from "@/components/draft/metadata/review-droplet";
+import { FunFact } from "@/components/draft/metadata/fun-fact";
+import { Anthropic } from '@anthropic-ai/sdk';
+import { Droplet } from "lucide-react";
+import { Button } from "@/components/ui/button";
+
 
 type Props = {
   params: Promise<Params>;
@@ -70,6 +75,23 @@ export default async function Droplet({ params }: Props) {
   if (!user) {
     return notFound();
   }
+
+  const anthropic = new Anthropic({
+    apiKey: process.env.ANTHROPIC_API_KEY, // defaults to process.env["ANTHROPIC_API_KEY"]
+  });
+
+  const msg = await anthropic.messages.create({
+    model: "claude-3-haiku-20240307",
+    max_tokens: 1024,
+    messages: [{ role: "user", content: `I want you to generate a one-sentence fun-fact about this overview. The fact should be interesting and easily understandable. "${droplet.overview || "If you're reading this, simply output No Overview"}"` }],
+  });
+  console.log(msg);
+  console.log(msg.content[0].text)
+
+
+
+
+
 
   return (
     <>
@@ -131,6 +153,10 @@ export default async function Droplet({ params }: Props) {
             dropletId={droplet.id}
             initialContent={droplet.overview ?? ""}
           />
+
+          <FunFact
+            factText={droplet.overview ?? ""} />
+
 
           <LearningObjectives
             dropletId={droplet.id}
