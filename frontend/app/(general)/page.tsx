@@ -4,9 +4,14 @@ import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth/session";
 import { GradientBackground } from "@/components/gradient-bg";
 import { FunFact } from "@/components/droplets/fun-fact";
+import { getRandomFunFactDroplet } from "@/lib/requests/droplet";
 
 export default async function HomeRoute() {
   const user = await getCurrentUser();
+
+  const droplets = await getRandomFunFactDroplet();
+  const droplet = droplets[Math.floor(Math.random() * droplets.length)];
+
   return (
     <GradientBackground className="flex-grow">
       <div className="isolate px-6 lg:px-8">
@@ -33,7 +38,7 @@ export default async function HomeRoute() {
             </h1>
             <p className="mt-6 text-lg leading-8 text-slate-600 dark:text-slate-300">
               Odyssey is a new platform designed to provide on-demand access to
-              modern knowledge and skills pertinent to {"today’s"} undergraduate
+              modern knowledge and skills pertinent to {"today's"} undergraduate
               Khoury students.
             </p>
             <div className="mt-10 flex flex-col items-center justify-center gap-x-6 gap-y-3 md:flex-row">
@@ -59,7 +64,7 @@ export default async function HomeRoute() {
 
             </div>
             {user && (
-              <FunFact fact={"Cryptography, a practice dating back to Julius Caesar, is the foundation of modern web traffic security, a market estimated to be worth a staggering $2 trillion, highlighting its critical importance in the digital age."} />
+              <FunFact droplet={droplet} />
             )}
           </div>
         </div>
