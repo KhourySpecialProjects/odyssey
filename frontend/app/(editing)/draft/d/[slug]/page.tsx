@@ -17,10 +17,10 @@ import { GradientBackground } from "@/components/gradient-bg";
 import { getCurrentUser } from "@/lib/auth/session";
 import { notFound } from "next/navigation";
 import { ReviewDroplet } from "@/components/draft/metadata/review-droplet";
-import { FunFact } from "@/components/draft/metadata/fun-fact";
 import { Button } from "@/components/ui/button";
 import Anthropic from "@anthropic-ai/sdk";
 import { updateDropletFunFact } from "@/lib/actions";
+import { FunFactEditor } from "@/components/draft/metadata/fun-fact-editor";
 
 
 type Props = {
@@ -166,7 +166,7 @@ export default async function Droplet({ params }: Props) {
             initialContent={droplet.overview ?? ""}
           />
 
-          <FunFact
+          <FunFactEditor
             funFact={droplet.funFact ?? ""}
             generateFact={generateFunFact}
           />

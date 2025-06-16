@@ -3,6 +3,7 @@ import { ArrowRightIcon } from "lucide-react";
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth/session";
 import { GradientBackground } from "@/components/gradient-bg";
+import { FunFact } from "@/components/droplets/fun-fact";
 
 export default async function HomeRoute() {
   const user = await getCurrentUser();
@@ -22,7 +23,7 @@ export default async function HomeRoute() {
           ></div>
         </div>
 
-        <div className="mx-auto max-w-2xl py-20 sm:py-36 lg:py-44">
+        <div className="mx-auto max-w-2xl py-0 sm:py-8 lg:py-12">
           <div className="text-center">
             <h1
               className="text-4xl font-black tracking-tight text-balance text-slate-900 sm:text-6xl dark:text-white"
@@ -54,7 +55,12 @@ export default async function HomeRoute() {
                   <Link href="/request-access">Request Access</Link>
                 </Button>
               )}
+
+
             </div>
+            {user && (
+              <FunFact fact={"Cryptography, a practice dating back to Julius Caesar, is the foundation of modern web traffic security, a market estimated to be worth a staggering $2 trillion, highlighting its critical importance in the digital age."} />
+            )}
           </div>
         </div>
 
