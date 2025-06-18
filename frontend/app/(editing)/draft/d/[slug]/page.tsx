@@ -22,7 +22,6 @@ import Anthropic from "@anthropic-ai/sdk";
 import { updateDropletFunFact } from "@/lib/actions";
 import { FunFactEditor } from "@/components/draft/metadata/fun-fact-editor";
 
-
 type Props = {
   params: Promise<Params>;
 };
@@ -77,8 +76,8 @@ export default async function Droplet({ params }: Props) {
   }
 
   const generateFunFact = async () => {
-    'use server';
-    
+    "use server";
+
     const anthropic = new Anthropic({
       apiKey: process.env.ANTHROPIC_API_KEY,
     });
@@ -86,30 +85,27 @@ export default async function Droplet({ params }: Props) {
     const msg = await anthropic.messages.create({
       model: "claude-3-haiku-20240307",
       max_tokens: 1024,
-      messages: [{ 
-        role: "user", 
-        content: `I want you to generate a short, one-sentence fun-fact about this overview. The fact should be interesting and easily understandable. "${droplet.overview || "If you're reading this, simply output No Overview"}"` 
-      }],
+      messages: [
+        {
+          role: "user",
+          content: `I want you to generate a short, one-sentence fun-fact about this overview. The fact should be interesting and easily understandable. "${droplet.overview || "If you're reading this, simply output No Overview"}"`,
+        },
+      ],
     });
     //console.log(msg);
-    if (msg.content[0].type === 'text') {
-      await updateDropletFunFact(msg.content[0].text, droplet.id)
+    if (msg.content[0].type === "text") {
+      await updateDropletFunFact(msg.content[0].text, droplet.id);
       return msg.content[0].text;
     } else {
-      return '';
+      return "";
     }
-  }
+  };
 
   const deleteFunFact = async () => {
-    "use server"
+    "use server";
 
     await updateDropletFunFact("", droplet.id);
-  }
-
-
-
-
-
+  };
 
   return (
     <>
@@ -177,7 +173,6 @@ export default async function Droplet({ params }: Props) {
             generateFact={generateFunFact}
             deleteFact={deleteFunFact}
           />
-
 
           <LearningObjectives
             dropletId={droplet.id}

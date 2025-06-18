@@ -28,7 +28,7 @@ export default async function HomeRoute() {
           ></div>
         </div>
 
-        <div className="mx-auto max-w-2xl py-0 sm:py-8 lg:py-12">
+        <div className="mx-auto max-w-2xl py-0 lg:py-4">
           <div className="text-center">
             <h1
               className="text-4xl font-black tracking-tight text-balance text-slate-900 sm:text-6xl dark:text-white"
@@ -60,12 +60,8 @@ export default async function HomeRoute() {
                   <Link href="/request-access">Request Access</Link>
                 </Button>
               )}
-
-
             </div>
-            {user && (
-              <FunFact droplet={droplet} />
-            )}
+            {user && <FunFact droplet={droplet} />}
           </div>
         </div>
 

@@ -117,7 +117,6 @@ export default async function DropletRoute({ params }: Props) {
 
         <div className="mx-auto w-full max-w-2xl space-y-8 px-5 py-4 md:space-y-12 md:px-0 lg:py-8">
           {droplet.overview ? (
-
             <section>
               <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
                 Overview
@@ -130,7 +129,6 @@ export default async function DropletRoute({ params }: Props) {
                 ></div>
               </div>
             </section>
-
           ) : null}
 
           {droplet.prerequisites && droplet.prerequisites.length > 0 ? (
