@@ -50,7 +50,7 @@ export function FunFactEditor({
         Fun Fact
       </h2>
       <p className="text-slate-500 dark:text-slate-300">
-        This Anthropic's Claude-generated fact will be displayed to users on Odyssey's
+        Generated from your overview by Anthropic's Claude AI, this fact will be displayed to users on Odyssey's
         homepage
       </p>
 
@@ -63,7 +63,8 @@ export function FunFactEditor({
       </div>
 
       <div className="flex flex-row items-center gap-2">
-        <Button onClick={handleGenerateFact} disabled={isGenerateLoading}>
+        <Button onClick={handleGenerateFact} disabled={isGenerateLoading}
+        className="dark:bg-slate-800 dark:text-white dark:border dark:border-slate-500 dark:hover:bg-slate-700">
           {isGenerateLoading
             ? "Generating..."
             : currentFact
