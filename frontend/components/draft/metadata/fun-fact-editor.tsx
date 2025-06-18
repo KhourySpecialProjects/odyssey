@@ -26,7 +26,9 @@ export function FunFactEditor({
       setCurrentFact(newFact);
     } catch (error) {
       console.error("Failed to generate fun fact:", error);
-      setError(error instanceof Error ? error.message : "Failed to generate fun fact");
+      setError(
+        error instanceof Error ? error.message : "Failed to generate fun fact",
+      );
     } finally {
       setIsGenerateLoading(false);
     }
@@ -50,8 +52,8 @@ export function FunFactEditor({
         Fun Fact
       </h2>
       <p className="text-slate-500 dark:text-slate-300">
-        Generated from your overview by Anthropic's Claude AI, this fact will be displayed to users on Odyssey's
-        homepage
+        Generated from your overview by Anthropic's Claude AI, this fact will be
+        displayed to users on Odyssey's homepage
       </p>
 
       <div className="my-4 w-full rounded-md border border-slate-200 bg-slate-50 p-8 dark:border-slate-500 dark:bg-slate-800">
@@ -63,8 +65,11 @@ export function FunFactEditor({
       </div>
 
       <div className="flex flex-row items-center gap-2">
-        <Button onClick={handleGenerateFact} disabled={isGenerateLoading}
-        className="dark:bg-slate-800 dark:text-white dark:border dark:border-slate-500 dark:hover:bg-slate-700">
+        <Button
+          onClick={handleGenerateFact}
+          disabled={isGenerateLoading}
+          className="dark:border dark:border-slate-500 dark:bg-slate-800 dark:text-white dark:hover:bg-slate-700"
+        >
           {isGenerateLoading
             ? "Generating..."
             : currentFact
@@ -77,9 +82,7 @@ export function FunFactEditor({
       </div>
 
       {error && (
-        <p className="mt-2 text-sm text-red-600 dark:text-red-400">
-          {error}
-        </p>
+        <p className="mt-2 text-sm text-red-600 dark:text-red-400">{error}</p>
       )}
     </section>
   );

@@ -103,12 +103,16 @@ export default async function Droplet({ params }: Props) {
       }
     } catch (error: any) {
       console.error("Error generating fun fact:", error);
-      
+
       // Handle specific error cases
       if (error.status === 529) {
-        throw new Error("Anthropic API is currently overloaded. Please try again in a few moments.");
+        throw new Error(
+          "Anthropic API is currently overloaded. Please try again in a few moments.",
+        );
       } else if (error.status === 429) {
-        throw new Error("Rate limit exceeded. Please wait before trying again.");
+        throw new Error(
+          "Rate limit exceeded. Please wait before trying again.",
+        );
       } else {
         throw new Error("Failed to generate fun fact. Please try again.");
       }
