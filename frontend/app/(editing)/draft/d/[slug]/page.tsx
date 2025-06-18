@@ -78,26 +78,44 @@ export default async function Droplet({ params }: Props) {
   const generateFunFact = async () => {
     "use server";
 
-    const anthropic = new Anthropic({
-      apiKey: process.env.ANTHROPIC_API_KEY,
-    });
+    try {
+      const anthropic = new Anthropic({
+        apiKey: process.env.ANTHROPIC_API_KEY,
+      });
 
-    const msg = await anthropic.messages.create({
-      model: "claude-3-haiku-20240307",
-      max_tokens: 1024,
-      messages: [
-        {
-          role: "user",
-          content: `I want you to generate a short, one-sentence fun-fact about this overview. The fact should be interesting and easily understandable. "${droplet.overview || "If you're reading this, simply output No Overview"}"`,
-        },
-      ],
-    });
-    //console.log(msg);
-    if (msg.content[0].type === "text") {
-      await updateDropletFunFact(msg.content[0].text, droplet.id);
-      return msg.content[0].text;
-    } else {
-      return "";
+      const msg = await anthropic.messages.create({
+        model: "claude-3-haiku-20240307",
+        max_tokens: 1024,
+        messages: [
+          {
+            role: "user",
+            content: `Generate a short, one-sentence fun fact about the following overview. Do not include any introductions, explanations, or phrases like "Here's a fun fact." Just output the fact itself. Here is the overview:
+ "${droplet.overview || "If you're reading this, simply output No Overview"}"`,
+          },
+        ],
+      });
+
+      if (msg.content[0].type === "text") {
+        await updateDropletFunFact(msg.content[0].text, droplet.id);
+        return msg.content[0].text;
+      } else {
+        return "";
+      }
+    } catch (error: any) {
+      console.error("Error generating fun fact:", error);
+
+      // Handle specific error cases
+      if (error.status === 529) {
+        throw new Error(
+          "Anthropic API is currently overloaded. Please try again in a few moments.",
+        );
+      } else if (error.status === 429) {
+        throw new Error(
+          "Rate limit exceeded. Please wait before trying again.",
+        );
+      } else {
+        throw new Error("Failed to generate fun fact. Please try again.");
+      }
     }
   };
 
