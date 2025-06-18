@@ -100,6 +100,12 @@ export default async function Droplet({ params }: Props) {
     }
   }
 
+  const deleteFunFact = async () => {
+    "use server"
+
+    await updateDropletFunFact("", droplet.id);
+  }
+
 
 
 
@@ -169,6 +175,7 @@ export default async function Droplet({ params }: Props) {
           <FunFactEditor
             funFact={droplet.funFact ?? ""}
             generateFact={generateFunFact}
+            deleteFact={deleteFunFact}
           />
 
 
