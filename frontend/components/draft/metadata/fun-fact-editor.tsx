@@ -1,14 +1,17 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { X } from "lucide-react";
 import { useState } from "react";
 
 export function FunFactEditor({
     funFact,
     generateFact,
+    deleteFact,
 }: {
     funFact: string;
     generateFact: () => Promise<string>;
+    deleteFact: () => void;
 }) {
     const [currentFact, setCurrentFact] = useState(funFact);
     const [isLoading, setIsLoading] = useState(false);
@@ -25,6 +28,19 @@ export function FunFactEditor({
         }
     };
 
+    const handleDeleteFact = async () => {
+        setIsLoading(true);
+        try {
+            await deleteFact();
+        } catch (error) {
+            console.error('Failed to delete fun fact:', error);
+        } finally {
+            setCurrentFact("");
+            setIsLoading(false);
+        }
+    };
+
+
     return (
         <section className="w-full max-w-2xl">
             <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
@@ -40,12 +56,18 @@ export function FunFactEditor({
                 </div>
             </div>
 
-            <Button 
-                onClick={handleGenerateFact}
-                disabled={isLoading}
-            >
-                {isLoading ? 'Generating...' : 'Regenerate Fact'}
-            </Button>
+            <div className="flex flex-row items-center gap-2">
+                <Button
+                    onClick={handleGenerateFact}
+                    disabled={isLoading}
+                >
+                    {isLoading ? 'Generating...' : 'Regenerate Fact'}
+                </Button>
+                <Button variant="destructive"
+                onClick={handleDeleteFact}>
+                    {isLoading ? 'Deleting...' : <X />}
+                </Button>
+            </div>
         </section>
     );
 }
