@@ -16,14 +16,17 @@ export function FunFactEditor({
   const [currentFact, setCurrentFact] = useState(funFact);
   const [isGenerateLoading, setIsGenerateLoading] = useState(false);
   const [isDeleteLoading, setIsDeleteLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleGenerateFact = async () => {
     setIsGenerateLoading(true);
+    setError(null);
     try {
       const newFact = await generateFact();
       setCurrentFact(newFact);
     } catch (error) {
       console.error("Failed to generate fun fact:", error);
+      setError(error instanceof Error ? error.message : "Failed to generate fun fact");
     } finally {
       setIsGenerateLoading(false);
     }
@@ -71,6 +74,12 @@ export function FunFactEditor({
           {isDeleteLoading ? "Deleting..." : <X />}
         </Button>
       </div>
+
+      {error && (
+        <p className="mt-2 text-sm text-red-600 dark:text-red-400">
+          {error}
+        </p>
+      )}
     </section>
   );
 }
