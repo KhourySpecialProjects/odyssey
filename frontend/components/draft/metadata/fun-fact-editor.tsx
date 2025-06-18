@@ -47,7 +47,7 @@ export function FunFactEditor({
         Fun Fact
       </h2>
       <p className="text-slate-500 dark:text-slate-300">
-        This Anthropic AI-generated fact will be displayed to users on Odyssey's
+        This Anthropic's Claude-generated fact will be displayed to users on Odyssey's
         homepage
       </p>
 
