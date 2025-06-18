@@ -88,7 +88,8 @@ export default async function Droplet({ params }: Props) {
       messages: [
         {
           role: "user",
-          content: `I want you to generate a short, one-sentence fun-fact about this overview. The fact should be interesting and easily understandable. "${droplet.overview || "If you're reading this, simply output No Overview"}"`,
+          content: `Generate a short, one-sentence fun fact about the following overview. Do not include any introductions, explanations, or phrases like "Here's a fun fact." Just output the fact itself. Here is the overview:
+ "${droplet.overview || "If you're reading this, simply output No Overview"}"`,
         },
       ],
     });
