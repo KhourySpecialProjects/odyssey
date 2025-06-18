@@ -1647,7 +1647,6 @@ export async function setTimeZone(zone: string, userId: number) {
   }
 }
 
-
 export async function updateDropletFunFact(fact: string, dropletId: number) {
   try {
     const response = await fetch(
