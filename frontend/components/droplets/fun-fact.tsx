@@ -17,7 +17,7 @@ export function FunFact({
                 href={`/d/${droplet.slug}`}
             >
                 <Button 
-                    className="w-1/2 h-auto text-lg bg-sky-200 hover:scale-105 hover:bg-sky-200 dark:bg-sky-200 dark:hover:bg-sky-200 text-slate-900"
+                    className="w-1/2 h-auto text-lg bg-sky-200 hover:scale-105 hover:bg-sky-200 dark:bg-blue-400 dark:hover:bg-blue-400 text-slate-900"
                 >
                     <p className="whitespace-normal text-wrap">Dive deeper in <strong className="">{droplet.name}</strong></p>
                     <ArrowRightIcon />

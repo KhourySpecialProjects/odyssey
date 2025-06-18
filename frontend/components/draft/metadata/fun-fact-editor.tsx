@@ -14,29 +14,30 @@ export function FunFactEditor({
     deleteFact: () => void;
 }) {
     const [currentFact, setCurrentFact] = useState(funFact);
-    const [isLoading, setIsLoading] = useState(false);
+    const [isGenerateLoading, setIsGenerateLoading] = useState(false);
+    const [isDeleteLoading, setIsDeleteLoading] = useState(false);
 
     const handleGenerateFact = async () => {
-        setIsLoading(true);
+        setIsGenerateLoading(true);
         try {
             const newFact = await generateFact();
             setCurrentFact(newFact);
         } catch (error) {
             console.error('Failed to generate fun fact:', error);
         } finally {
-            setIsLoading(false);
+            setIsGenerateLoading(false);
         }
     };
 
     const handleDeleteFact = async () => {
-        setIsLoading(true);
+        setIsDeleteLoading(true);
         try {
             await deleteFact();
         } catch (error) {
             console.error('Failed to delete fun fact:', error);
         } finally {
             setCurrentFact("");
-            setIsLoading(false);
+            setIsDeleteLoading(false);
         }
     };
 
@@ -51,21 +52,21 @@ export function FunFactEditor({
             </p>
 
             <div className="my-4 w-full rounded-md border border-slate-200 bg-slate-50 p-8 dark:border-slate-500 dark:bg-slate-800">
-                <div className="prose prose-sky prose-code:text-inherit prose-strong:text-inherit prose-headings:text-inherit mx-auto dark:text-slate-300">
-                    {currentFact}
+                <div className={`prose prose-sky prose-code:text-inherit prose-strong:text-inherit prose-headings:text-inherit mx-auto dark:text-slate-300 ${currentFact ? "": "text-slate-500 dark:text-slate-500"}`}>
+                    {currentFact ? currentFact : "Nothing here yet..."}
                 </div>
             </div>
 
             <div className="flex flex-row items-center gap-2">
                 <Button
                     onClick={handleGenerateFact}
-                    disabled={isLoading}
+                    disabled={isGenerateLoading}
                 >
-                    {isLoading ? 'Generating...' : 'Regenerate Fact'}
+                    {isGenerateLoading ? 'Generating...' : (currentFact ? 'Regenerate Fact' : 'Generate Fact')}
                 </Button>
                 <Button variant="destructive"
                 onClick={handleDeleteFact}>
-                    {isLoading ? 'Deleting...' : <X />}
+                    {isDeleteLoading ? 'Deleting...' : <X />}
                 </Button>
             </div>
         </section>
