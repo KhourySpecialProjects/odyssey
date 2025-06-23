@@ -173,13 +173,12 @@ export function FeedBlock({
         </div>
 
         {formattedDate && (
-          <div className="flex items-center justify-center pt-2 items-center w-full text-right text-sm text-slate-500 dark:text-slate-200">
-            <div className="flex-1"></div>
+          <div className="flex flex-row items-center justify-end pt-2 items-center w-full text-right text-sm text-slate-500 dark:text-slate-200">
             {announcementType === "friend" &&
               !announcement.kudosGiven?.some(
                 (user) => user.id === authUser.id,
               ) && (
-                <div className="flex justify-center">
+                <div className="">
                   <KudosButton
                     authUser={authUser}
                     announcement={announcement}
@@ -190,9 +189,7 @@ export function FeedBlock({
                   />
                 </div>
               )}
-            <div className="flex flex-1 justify-end">
               {formattedDate}
-            </div>
           </div>
         )}
       </div>
