@@ -47,18 +47,12 @@ export function FeedBlock({
   const formattedDate = formatDate(announcement.firstCreated);
 
   const backgroundColor = {
-    playlist:
-      "bg-green-200 dark:bg-[#29703B]",
-    droplet:
-      "bg-blue-200 dark:bg-[#266697]",
-    group:
-      "bg-purple-200 dark:bg-[#754ABA]",
-    friend:
-      "bg-yellow-200 dark:bg-[#BD8C28]",
-    kudos:
-      "bg-orange-200 dark:bg-[#B55E0C]",
-    system:
-      "bg-red-200 dark:bg-[#B83028]",
+    playlist: "bg-green-200 dark:bg-[#29703B]",
+    droplet: "bg-blue-200 dark:bg-[#266697]",
+    group: "bg-purple-200 dark:bg-[#754ABA]",
+    friend: "bg-yellow-200 dark:bg-[#BD8C28]",
+    kudos: "bg-orange-200 dark:bg-[#B55E0C]",
+    system: "bg-red-200 dark:bg-[#B83028]",
   };
 
   const announcementIcon = {
