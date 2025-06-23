@@ -65,7 +65,7 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
 
   const updateBlocksBackendReload = useCallback(
     async (blocks: any[]) => {
-      await updateLesson(lesson.id, { blocks }, { reload: true });
+      const result = await updateLesson(lesson.id, { blocks }, { reload: true });
     },
     [lesson.id],
   );
