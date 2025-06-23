@@ -11,6 +11,7 @@ import { useOffClick } from "../metadata/hooks/useOffClick";
 import { CalloutIcon } from "@/components/ui/callout-icons";
 import { useState } from "react";
 import { OpenEndedQuizBlock, QuizBlock } from "./lesson-renderer";
+import { Separator } from "@/components/ui/separator";
 
 export type Block =
   | { __component: "droplets.generic"; content: string }
@@ -56,9 +57,22 @@ export function AddBlock({ add }: { add: (block: Block) => void }) {
               setOpen(true);
             }}
           >
-            <Button className="rounded-md bg-slate-600 px-3 py-2 text-white hover:bg-slate-700">
-              Add Block
-            </Button>
+            <div className="flex flex-row items-center justify-center">
+              <Separator
+                className="h-[2px] w-full bg-slate-400 dark:bg-slate-300"
+                orientation="horizontal"
+              />
+              <Button
+                className="mx-2 text-lg text-slate-600 hover:bg-transparent hover:text-slate-900 dark:text-slate-300 dark:hover:bg-transparent dark:hover:text-slate-50"
+                variant="ghost"
+              >
+                Add Block
+              </Button>
+              <Separator
+                className="h-[2px] w-full bg-slate-400 dark:bg-slate-300"
+                orientation="horizontal"
+              />
+            </div>
           </PopoverTrigger>
 
           <PopoverContent
