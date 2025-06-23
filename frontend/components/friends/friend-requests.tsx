@@ -84,7 +84,7 @@ export function FriendRequests({
           )}
         </div>
         {totalPages > 1 && (
-          <div className="mt-4 flex justify-center">
+          <div className="flex justify-center">
             <button
               onClick={handlePrevPage}
               disabled={currentPage === 0}
