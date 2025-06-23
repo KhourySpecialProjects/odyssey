@@ -72,89 +72,91 @@ export function FeedBlock({
     <li
       className={`${backgroundColor[announcementType]} relative flex flex-col items-start gap-2 rounded-lg p-4 pb-3 hover:scale-105`}
     >
-      <div className="flex h-full w-full flex-row gap-3">
-        <div className="dark:text-slate-200">
-          {announcementIcon[announcementType]}
-        </div>
-        <div className="flex w-full flex-col justify-between gap-1">
-          <div className="flex items-center space-x-4">
-            <div className="min-w-0 flex-1">
-              {announcementType === "playlist" && (
-                <Link href={`/p/${announcement.playlist?.slug}`}>
-                  <p className="-mt-1 text-left font-medium text-slate-900 dark:text-slate-200">
-                    {announcement.content}
-                  </p>
-                </Link>
-              )}
-              {announcementType === "droplet" && (
-                <Link href={`/d/${announcement.droplet?.slug}`}>
-                  <p className="-mt-1 text-left font-medium text-slate-900 dark:text-slate-200">
-                    {announcement.content}
-                  </p>
-                </Link>
-              )}
-              {announcementType === "group" && (
-                <Link href={`/g/${announcement.group?.slug}`}>
-                  <p className="-mt-1 text-left font-medium text-slate-900 dark:text-slate-200">
-                    {announcement.content}
-                  </p>
-                </Link>
-              )}
-              {announcementType === "kudos" && (
-                <div className="-mt-1 text-left font-medium text-slate-900 dark:text-slate-200">
-                  <p
-                    onClick={() => setOpen(true)}
-                    className="inline cursor-pointer hover:underline"
-                  >
-                    {namePart.trim()}
-                  </p>
-                  {" has given you kudos "}
-                  <div>
-                    <ProfileBlock
-                      user={authUser}
-                      otherUser={announcement.authorized_user || authUser}
-                      isOpen={open}
-                      setIsOpen={setOpen}
-                      isFeed={true}
-                    />
-                  </div>
+
+
+      <div className="flex w-full flex-col justify-between gap-1">
+
+        <div className="flex items-center space-x-4">
+          <div className="dark:text-slate-200">
+            {announcementIcon[announcementType]}
+          </div>
+          <div className="min-w-0 flex-1">
+            {announcementType === "playlist" && (
+              <Link href={`/p/${announcement.playlist?.slug}`}>
+                <p className="-mt-1 text-left font-medium text-slate-900 dark:text-slate-200">
+                  {announcement.content}
+                </p>
+              </Link>
+            )}
+            {announcementType === "droplet" && (
+              <Link href={`/d/${announcement.droplet?.slug}`}>
+                <p className="-mt-1 text-left font-medium text-slate-900 dark:text-slate-200">
+                  {announcement.content}
+                </p>
+              </Link>
+            )}
+            {announcementType === "group" && (
+              <Link href={`/g/${announcement.group?.slug}`}>
+                <p className="-mt-1 text-left font-medium text-slate-900 dark:text-slate-200">
+                  {announcement.content}
+                </p>
+              </Link>
+            )}
+            {announcementType === "kudos" && (
+              <div className="-mt-1 text-left font-medium text-slate-900 dark:text-slate-200">
+                <p
+                  onClick={() => setOpen(true)}
+                  className="inline cursor-pointer hover:underline"
+                >
+                  {namePart.trim()}
+                </p>
+                {" has given you kudos "}
+                <div>
+                  <ProfileBlock
+                    user={authUser}
+                    otherUser={announcement.authorized_user || authUser}
+                    isOpen={open}
+                    setIsOpen={setOpen}
+                    isFeed={true}
+                  />
                 </div>
-              )}
-              {announcementType != "group" &&
-                announcementType != "droplet" &&
-                announcementType != "kudos" &&
-                announcementType != "playlist" && (
-                  <>
-                    <div className="-mt-1 text-left font-medium text-slate-900 dark:text-slate-200">
-                      {announcementType === "friend" ? (
-                        <>
-                          <p
-                            onClick={() => setOpen(true)}
-                            className="inline cursor-pointer hover:underline"
-                          >
-                            {namePart.trim()}
-                          </p>
-                          {" has just finished "}
-                          <span>{taskPart?.trim()}</span>
-                        </>
-                      ) : (
-                        announcement.content
-                      )}
-                      <div>
-                        <ProfileBlock
-                          user={authUser}
-                          otherUser={announcement.authorized_user || authUser}
-                          isOpen={open}
-                          setIsOpen={setOpen}
-                          isFeed={true}
-                        />
-                      </div>
+              </div>
+            )}
+            {announcementType != "group" &&
+              announcementType != "droplet" &&
+              announcementType != "kudos" &&
+              announcementType != "playlist" && (
+                <>
+                  <div className="-mt-1 text-left font-medium text-slate-900 dark:text-slate-200">
+                    {announcementType === "friend" ? (
+                      <>
+                        <p
+                          onClick={() => setOpen(true)}
+                          className="inline cursor-pointer hover:underline"
+                        >
+                          {namePart.trim()}
+                        </p>
+                        {" has just finished "}
+                        <span>{taskPart?.trim()}</span>
+                      </>
+                    ) : (
+                      announcement.content
+                    )}
+                    <div>
+                      <ProfileBlock
+                        user={authUser}
+                        otherUser={announcement.authorized_user || authUser}
+                        isOpen={open}
+                        setIsOpen={setOpen}
+                        isFeed={true}
+                      />
                     </div>
-                    {announcementType === "friend" &&
+                  </div>
+                  {/*announcementType === "friend" &&
                       !announcement.kudosGiven?.some(
                         (user) => user.id === authUser.id,
                       ) && (
-                        <div className="absolute bottom-0 left-[50%] translate-x-[-50%] translate-y-[40%]">
+                        <div className="">
                           <KudosButton
                             authUser={authUser}
                             announcement={announcement}
@@ -164,18 +166,35 @@ export function FeedBlock({
                             }
                           />
                         </div>
-                      )}
-                  </>
-                )}
-            </div>
+                      )*/}
+                </>
+              )}
           </div>
+        </div>
 
-          {formattedDate && (
-            <div className="w-full text-right text-sm text-slate-500 dark:text-slate-200">
+        {formattedDate && (
+          <div className="flex items-center justify-center pt-2 items-center w-full text-right text-sm text-slate-500 dark:text-slate-200">
+            <div className="flex-1"></div>
+            {announcementType === "friend" &&
+              !announcement.kudosGiven?.some(
+                (user) => user.id === authUser.id,
+              ) && (
+                <div className="flex justify-center">
+                  <KudosButton
+                    authUser={authUser}
+                    announcement={announcement}
+                    droplet={
+                      announcement.content?.split(/finished\s+/i)[1] ||
+                      ""
+                    }
+                  />
+                </div>
+              )}
+            <div className="flex flex-1 justify-end">
               {formattedDate}
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </li>
   );
