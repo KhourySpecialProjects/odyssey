@@ -47,7 +47,7 @@ export function FriendRequests({
     <div className={`flex flex-col`}>
       <section className={`${noProfile ? "" : "md:mt-4"}`}>
         {noProfile ? (
-          <div className="absolute -top-[60px] left-1/2 w-full -translate-x-1/2 transform">
+          <div className="absolute -top-[40px] left-1/2 w-full -translate-x-1/2 transform">
             <h1 className="text-center text-xl font-bold">Friend Requests</h1>
           </div>
         ) : (
