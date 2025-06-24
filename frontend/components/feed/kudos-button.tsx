@@ -52,10 +52,11 @@ export function KudosButton({
           </p>
         )}
         <ThumbsUp
-          className={`h-6 w-6 ${kudosGiven
+          className={`h-6 w-6 ${
+            kudosGiven
               ? "fill-slate-900 stroke-slate-900 dark:fill-slate-200 dark:stroke-slate-200"
-              : "fill-none stroke-slate-900 dark:stroke-slate-200 hover:fill-slate-900 dark:hover:fill-slate-200"
-            }`}
+              : "fill-none stroke-slate-900 hover:fill-slate-900 dark:stroke-slate-200 dark:hover:fill-slate-200"
+          }`}
         />
       </div>
     </Button>
