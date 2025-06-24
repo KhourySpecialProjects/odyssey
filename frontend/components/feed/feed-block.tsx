@@ -54,10 +54,7 @@ export function FeedBlock({
     kudos: "bg-orange-200 dark:bg-[#B55E0C]",
     system: "bg-red-200 dark:bg-[#B83028]",
   };
-
-  //C38508
-  //BD8C28
-
+  
   const announcementIcon = {
     playlist: <ListVideo />,
     droplet: <Droplet />,
@@ -129,16 +126,29 @@ export function FeedBlock({
                 <>
                   <div className="-mt-1 text-left font-medium text-slate-900 dark:text-slate-200">
                     {announcementType === "friend" ? (
-                      <>
+                      <div className="flex flex-row">
                         <p
                           onClick={() => setOpen(true)}
                           className="inline cursor-pointer hover:underline"
                         >
                           {namePart.trim()}
                         </p>
-                        {" has just finished "}
+                        <>{'\u00A0'}has just finished{'\u00A0'}</>
                         <span>{taskPart?.trim()}</span>
-                      </>
+
+                        {announcementType === "friend" && (
+                          <div className="flex flex-1 justify-end">
+                            <KudosButton
+                              authUser={authUser}
+                              announcement={announcement}
+                              droplet={
+                                announcement.content?.split(/finished\s+/i)[1] ||
+                                ""
+                              }
+                            />
+                          </div>
+                        )}
+                      </div>
                     ) : (
                       announcement.content
                     )}
@@ -152,38 +162,13 @@ export function FeedBlock({
                       />
                     </div>
                   </div>
-                  {/*announcementType === "friend" &&
-                      !announcement.kudosGiven?.some(
-                        (user) => user.id === authUser.id,
-                      ) && (
-                        <div className="">
-                          <KudosButton
-                            authUser={authUser}
-                            announcement={announcement}
-                            droplet={
-                              announcement.content?.split(/finished\s+/i)[1] ||
-                              ""
-                            }
-                          />
-                        </div>
-                      )*/}
                 </>
               )}
           </div>
         </div>
-
-        {formattedDate && (
-          <div className="flex w-full flex-row items-center justify-end pt-2 text-right text-sm text-slate-900 dark:text-slate-200">
-            {announcementType === "friend" && (
-              <KudosButton
-                authUser={authUser}
-                announcement={announcement}
-                droplet={announcement.content?.split(/finished\s+/i)[1] || ""}
-              />
-            )}
-            {formattedDate}
-          </div>
-        )}
+        <div className="flex w-full flex-row items-center justify-end pt-2 text-right text-sm text-slate-900 dark:text-slate-200">
+          {formattedDate}
+        </div>
       </div>
     </li>
   );
