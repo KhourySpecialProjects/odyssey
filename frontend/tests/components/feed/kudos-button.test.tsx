@@ -70,8 +70,10 @@ describe("KudosButton", () => {
       />,
     );
     // Check for the button with proper aria-label
-    expect(screen.getByRole("button", { name: "Give kudos" })).toBeInTheDocument();
-    
+    expect(
+      screen.getByRole("button", { name: "Give kudos" }),
+    ).toBeInTheDocument();
+
     // Check that the thumbs up icon is present
     expect(screen.getByRole("button")).toBeInTheDocument();
   });
@@ -109,7 +111,9 @@ describe("KudosButton", () => {
     );
 
     // Check for the button with "already given" aria-label
-    expect(screen.getByRole("button", { name: "Kudos already given" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Kudos already given" }),
+    ).toBeInTheDocument();
   });
 
   it("handles failed kudos submission", async () => {
@@ -122,7 +126,7 @@ describe("KudosButton", () => {
         authUser={mockAuthUser}
       />,
     );
-    
+
     fireEvent.click(screen.getByRole("button", { name: "Give kudos" }));
 
     await waitFor(() => {
@@ -140,7 +144,7 @@ describe("KudosButton", () => {
         authUser={mockAuthUser}
       />,
     );
-    
+
     fireEvent.click(screen.getByRole("button", { name: "Give kudos" }));
 
     await waitFor(() => {
