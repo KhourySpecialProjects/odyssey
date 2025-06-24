@@ -43,6 +43,7 @@ export function KudosButton({
       size="xs"
       onClick={handleClick}
       disabled={isPending || kudosGiven}
+      aria-label={kudosGiven ? "Kudos already given" : "Give kudos"}
       className={`mr-1 rounded-3xl bg-transparent text-slate-500 hover:bg-transparent dark:bg-transparent dark:text-slate-200 dark:hover:bg-transparent`}
     >
       <div className="flex flex-row items-center gap-1">
