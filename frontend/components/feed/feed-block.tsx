@@ -50,10 +50,13 @@ export function FeedBlock({
     playlist: "bg-green-200 dark:bg-[#29703B]",
     droplet: "bg-blue-200 dark:bg-[#266697]",
     group: "bg-purple-200 dark:bg-[#754ABA]",
-    friend: "bg-yellow-200 dark:bg-[#BD8C28]",
+    friend: "bg-yellow-200 dark:bg-[#C38508]",
     kudos: "bg-orange-200 dark:bg-[#B55E0C]",
     system: "bg-red-200 dark:bg-[#B83028]",
   };
+
+  //C38508
+  //BD8C28
 
   const announcementIcon = {
     playlist: <ListVideo />,
@@ -70,7 +73,7 @@ export function FeedBlock({
 
   return (
     <li
-      className={`${backgroundColor[announcementType]} relative flex flex-col items-start gap-2 rounded-lg p-4 pb-3 hover:scale-105`}
+      className={`${backgroundColor[announcementType]} relative flex flex-col items-start gap-2 rounded-lg p-4 pb-3`}
     >
       <div className="flex w-full flex-col justify-between gap-1">
         <div className="flex items-center space-x-4">
