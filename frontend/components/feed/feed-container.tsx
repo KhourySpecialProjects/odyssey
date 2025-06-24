@@ -20,7 +20,7 @@ export function FeedContainer({ authUser }: { authUser: AuthorizedUser }) {
     <div className="flex flex-row gap-4">
       <div className="flex flex-col items-end gap-4">
         <div className="sticky top-[165px] hidden space-y-4 md:block">
-          <div className="min-w-[200px] rounded-md border border-slate-200 bg-slate-50 p-2 transition-colors hover:border-slate-300 lg:p-4 dark:border-slate-500 dark:bg-slate-800">
+          <div className="min-w-[275px] rounded-md border border-slate-200 bg-slate-50 p-2 transition-colors hover:border-slate-300 lg:p-4 dark:border-slate-500 dark:bg-slate-800">
             <FriendRequests
               noProfile={true}
               friendsPerPage={3}

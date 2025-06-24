@@ -79,7 +79,7 @@ export function FeedFilter({ onFilterChange }: FeedFilterProps) {
   };
 
   return (
-    <div className="p-4 grid sm:grid-cols-1 md:grid-cols-2 gap-3 md:rounded-md md:border md:border-slate-200 md:bg-slate-50 md:dark:border-slate-500 md:dark:bg-slate-800">
+    <div className="p-4 min-w-[275px] grid sm:grid-cols-1 md:grid-cols-2 gap-3 md:rounded-md md:border md:border-slate-200 md:bg-slate-50 md:dark:border-slate-500 md:dark:bg-slate-800">
       {roleOptions.map((role) => (
         <div
           key={role.value}
