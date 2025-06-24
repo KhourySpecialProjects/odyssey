@@ -72,10 +72,7 @@ export function FeedBlock({
     <li
       className={`${backgroundColor[announcementType]} relative flex flex-col items-start gap-2 rounded-lg p-4 pb-3 hover:scale-105`}
     >
-
-
       <div className="flex w-full flex-col justify-between gap-1">
-
         <div className="flex items-center space-x-4">
           <div className="dark:text-slate-200">
             {announcementIcon[announcementType]}
@@ -173,23 +170,15 @@ export function FeedBlock({
         </div>
 
         {formattedDate && (
-          <div className="flex flex-row items-center justify-end pt-2 items-center w-full text-right text-sm text-slate-500 dark:text-slate-200">
-            {announcementType === "friend" &&
-              !announcement.kudosGiven?.some(
-                (user) => user.id === authUser.id,
-              ) && (
-                <div className="">
-                  <KudosButton
-                    authUser={authUser}
-                    announcement={announcement}
-                    droplet={
-                      announcement.content?.split(/finished\s+/i)[1] ||
-                      ""
-                    }
-                  />
-                </div>
-              )}
-              {formattedDate}
+          <div className="flex w-full flex-row items-center justify-end pt-2 text-right text-sm text-slate-900 dark:text-slate-200">
+            {announcementType === "friend" && (
+              <KudosButton
+                authUser={authUser}
+                announcement={announcement}
+                droplet={announcement.content?.split(/finished\s+/i)[1] || ""}
+              />
+            )}
+            {formattedDate}
           </div>
         )}
       </div>
