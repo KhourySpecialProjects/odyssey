@@ -47,7 +47,7 @@ export function FriendRequests({
     <div className={`flex flex-col`}>
       <section className={`${noProfile ? "" : "md:mt-4"}`}>
         {noProfile ? (
-          <div className="absolute -top-[60px] left-1/2 w-full -translate-x-1/2 transform">
+          <div className="absolute -top-[40px] left-1/2 w-full -translate-x-1/2 transform">
             <h1 className="text-center text-xl font-bold">Friend Requests</h1>
           </div>
         ) : (
@@ -84,20 +84,26 @@ export function FriendRequests({
           )}
         </div>
         {totalPages > 1 && (
-          <div className="mt-4 flex justify-center">
+          <div className="flex justify-center">
             <button
               onClick={handlePrevPage}
               disabled={currentPage === 0}
               className={`mr-4 w-22 px-4 py-2`}
             >
-              <MoveLeft role="left" />
+              <MoveLeft
+                role="left"
+                className={`${currentPage === 0 ? "stroke-slate-300" : ""}`}
+              />
             </button>
             <button
               onClick={handleNextPage}
               disabled={currentPage === totalPages - 1}
               className={`px-4 py-2`}
             >
-              <MoveRight role="right" />
+              <MoveRight
+                role="right"
+                className={`${currentPage === totalPages - 1 ? "stroke-slate-300" : ""}`}
+              />
             </button>
           </div>
         )}
