@@ -90,14 +90,14 @@ export function FriendRequests({
               disabled={currentPage === 0}
               className={`mr-4 w-22 px-4 py-2`}
             >
-              <MoveLeft role="left" />
+              <MoveLeft role="left" className={`${currentPage === 0 ? "stroke-slate-300" : ""}`}/>
             </button>
             <button
               onClick={handleNextPage}
               disabled={currentPage === totalPages - 1}
-              className={`px-4 py-2`}
+              className={`px-4 py-2 `}
             >
-              <MoveRight role="right" />
+              <MoveRight role="right" className={`${currentPage === totalPages - 1 ? "stroke-slate-300" : ""}`}/>
             </button>
           </div>
         )}
