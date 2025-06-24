@@ -29,37 +29,37 @@ export function FeedFilter({ onFilterChange }: FeedFilterProps) {
   const roleOptions = [
     {
       value: AnnouncementTypeTitle.Droplet,
-      label: "Droplet",
+      label: ( <span role="droplet">Droplet</span>),
       icon: <Droplet size={20} />,
       color: "bg-blue-200 dark:bg-[#266697] dark:text-slate-200",
     },
     {
       value: AnnouncementTypeTitle.Playlist,
-      label: "Playlist",
+      label: ( <span role="playlist">Playlist</span>),
       icon: <ListVideo size={20} />,
       color: "bg-green-200 dark:bg-[#29703B] dark:text-slate-200",
     },
     {
       value: AnnouncementTypeTitle.Group,
-      label: "Group",
+      label: ( <span role="group">Group</span>),
       icon: <UsersRound size={20} />,
       color: "bg-purple-200 dark:bg-[#754ABA] dark:text-slate-200",
     },
     {
       value: AnnouncementTypeTitle.System,
-      label: "System",
+      label: ( <span role="system">System</span>),
       icon: <Info size={20} />,
       color: "bg-red-200 dark:bg-[#B83028] dark:text-slate-200",
     },
     {
       value: AnnouncementTypeTitle.Friend,
-      label: "Friend",
+      label: ( <span role="friend">Friend</span>),
       icon: <Handshake size={20} />,
       color: "bg-yellow-200 dark:bg-[#C38508] dark:text-slate-200",
     },
     {
       value: AnnouncementTypeTitle.Kudos,
-      label: "Kudos",
+      label: ( <span role="kudos">Kudos</span>),
       icon: <PartyPopper size={20} />,
       color: "bg-orange-200 dark:bg-[#B55E0C] dark:text-slate-200",
     },

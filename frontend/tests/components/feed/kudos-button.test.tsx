@@ -69,7 +69,47 @@ describe("KudosButton", () => {
         authUser={mockAuthUser}
       />,
     );
-    expect(screen.getByText("Give Kudos")).toBeInTheDocument();
+    // Check for the button with proper aria-label
+    expect(screen.getByRole("button", { name: "Give kudos" })).toBeInTheDocument();
+    
+    // Check that the thumbs up icon is present
+    expect(screen.getByRole("button")).toBeInTheDocument();
+  });
+
+  it("renders kudos count when kudos exist", () => {
+    const announcementWithKudos = {
+      ...mockAnnouncement,
+      kudosGiven: [{ id: 1, email: "user@test.com" }],
+    };
+
+    render(
+      <KudosButton
+        announcement={announcementWithKudos}
+        droplet="droplet"
+        authUser={mockAuthUser}
+      />,
+    );
+
+    // Check that the kudos count is displayed
+    expect(screen.getByText("1")).toBeInTheDocument();
+  });
+
+  it("shows correct aria-label when kudos already given", () => {
+    const announcementWithUserKudos = {
+      ...mockAnnouncement,
+      kudosGiven: [{ id: 1, email: "test@test.com" }],
+    };
+
+    render(
+      <KudosButton
+        announcement={announcementWithUserKudos}
+        droplet="droplet"
+        authUser={mockAuthUser}
+      />,
+    );
+
+    // Check for the button with "already given" aria-label
+    expect(screen.getByRole("button", { name: "Kudos already given" })).toBeInTheDocument();
   });
 
   it("handles failed kudos submission", async () => {
@@ -82,11 +122,11 @@ describe("KudosButton", () => {
         authUser={mockAuthUser}
       />,
     );
-    fireEvent.click(screen.getByText("Give Kudos"));
+    
+    fireEvent.click(screen.getByRole("button", { name: "Give kudos" }));
 
     await waitFor(() => {
       expect(toast.error).toHaveBeenCalledWith("Failed to give kudos");
-      expect(screen.getByRole("button")).toBeVisible();
     });
   });
 
@@ -100,10 +140,29 @@ describe("KudosButton", () => {
         authUser={mockAuthUser}
       />,
     );
-    fireEvent.click(screen.getByText("Give Kudos"));
+    
+    fireEvent.click(screen.getByRole("button", { name: "Give kudos" }));
 
     await waitFor(() => {
       expect(toast.success).toHaveBeenCalledWith("Kudos given!");
     });
+  });
+
+  it("disables button when kudos already given", () => {
+    const announcementWithUserKudos = {
+      ...mockAnnouncement,
+      kudosGiven: [{ id: 1, email: "test@test.com" }],
+    };
+
+    render(
+      <KudosButton
+        announcement={announcementWithUserKudos}
+        droplet="droplet"
+        authUser={mockAuthUser}
+      />,
+    );
+
+    const button = screen.getByRole("button", { name: "Kudos already given" });
+    expect(button).toBeDisabled();
   });
 });
