@@ -99,6 +99,30 @@ export function GroupProgressGrid({ group }: GroupProgressGridProps) {
     }
   };
 
+  const exportGridToExcel = () => {
+    if (paginatedLessons && group.members) {
+      const headers = paginatedLessons.map((droplet) => `Droplet ${droplet.id}`);
+      const rows = group.members.map((member) => {
+        const row = paginatedLessons?.map((droplet) =>
+          getCompletionStatus(member.id, droplet.id)
+        );
+        return [(member.firstName && member.lastName) ?? `Member ${member.id}`, ...row];
+      });
+
+      const data = [
+        ["Member", ...headers],
+        ...rows,
+      ];
+
+      const worksheet = XLSX.utils.aoa_to_sheet(data);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Progress");
+
+      XLSX.writeFile(workbook, "progress_report.xlsx");
+    }
+  };
+
+
   return (
     <div className="flex flex-col items-end">
       <div className="">
@@ -214,3 +238,6 @@ export function GroupProgressGrid({ group }: GroupProgressGridProps) {
     </div>
   );
 }
+
+
+
