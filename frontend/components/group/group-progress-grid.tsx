@@ -7,9 +7,12 @@ import { Playlist } from "@/types";
 import { AuthorizedUser } from "@/types";
 import React, { useTransition } from "react";
 import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
-import { MoveLeft, MoveRight } from "lucide-react";
+import { FileSpreadsheet, MoveLeft, MoveRight } from "lucide-react";
 import { useEffect } from "react";
 import { useState } from "react";
+import { Button } from "../ui/button";
+import * as XLSX from "xlsx-js-style";
+
 
 interface GroupProgressGridProps {
   group: {
@@ -100,13 +103,16 @@ export function GroupProgressGrid({ group }: GroupProgressGridProps) {
   };
 
   const exportGridToExcel = () => {
-    if (paginatedLessons && group.members) {
-      const headers = paginatedLessons.map((droplet) => `Droplet ${droplet.id}`);
+    if (group.droplets && group.members) {
+      const headers = group.droplets.map((droplet) => `${droplet.name} (${droplet.id})`);
       const rows = group.members.map((member) => {
-        const row = paginatedLessons?.map((droplet) =>
+        const row = group.droplets!.map((droplet) =>
           getCompletionStatus(member.id, droplet.id)
         );
-        return [(member.firstName && member.lastName) ?? `Member ${member.id}`, ...row];
+        const memberName = (member.firstName && member.lastName)
+          ? `${member.firstName} ${member.lastName}`
+          : member.email;
+        return [memberName, ...row];
       });
 
       const data = [
@@ -115,6 +121,47 @@ export function GroupProgressGrid({ group }: GroupProgressGridProps) {
       ];
 
       const worksheet = XLSX.utils.aoa_to_sheet(data);
+
+      // Highlight specific values
+      const range = XLSX.utils.decode_range(worksheet['!ref']!);
+      for (let R = 1; R <= range.e.r; ++R) { // skip header row
+        for (let C = 1; C <= range.e.c; ++C) { // skip "Member" column
+          const cellAddress = XLSX.utils.encode_cell({ r: R, c: C });
+          const cell = worksheet[cellAddress];
+          if (!cell || typeof cell.v !== 'number') continue;
+
+          const value = cell.v;
+          if (value === 100) {
+            cell.s = {
+              fill: {
+                fgColor: { rgb: "90EE90" }, // light green background
+              },
+              font: {
+                bold: true,
+              },
+            };
+          } else if (value >= 0 && value <= 33) {
+            cell.s = {
+              fill: {
+                fgColor: { rgb: "FFCCCC" }, // light red background
+              },
+              font: {
+                bold: true,
+              },
+            };
+          } else if (value > 33 && value < 100) {
+            cell.s = {
+              fill: {
+                fgColor: { rgb: "FFFFCC" }, // light yellow background
+              },
+              font: {
+                bold: true,
+              },
+            };
+          }
+        }
+      }
+
       const workbook = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(workbook, worksheet, "Progress");
 
@@ -125,22 +172,29 @@ export function GroupProgressGrid({ group }: GroupProgressGridProps) {
 
   return (
     <div className="flex flex-col items-end">
-      <div className="">
-        <button
-          onClick={handlePrevPage}
-          disabled={currentPage === 0}
-          className={`mr-4 w-22 px-4 py-2 ${currentPage === 0 ? "visibility: hidden" : "visibility: visible"}`}
-        >
-          <MoveLeft />
-        </button>
-        <button
-          onClick={handleNextPage}
-          disabled={currentPage === totalPages - 1}
-          aria-label="Next page"
-          className={`px-4 py-2 ${currentPage >= totalPages - 1 ? "visibility: hidden" : "visibility: visible"}`}
-        >
-          <MoveRight />
-        </button>
+      <div className="flex flex-row justify-between w-full">
+        <Button className="border dark:border-slate-500 dark:bg-slate-800 dark:text-white dark:hover:text-slate-800"
+          onClick={exportGridToExcel}>
+          <FileSpreadsheet />
+          Download as Excel
+        </Button>
+        <div className="">
+          <button
+            onClick={handlePrevPage}
+            disabled={currentPage === 0}
+            className={`mr-4 w-22 px-4 py-2 ${currentPage === 0 ? "visibility: hidden" : "visibility: visible"}`}
+          >
+            <MoveLeft />
+          </button>
+          <button
+            onClick={handleNextPage}
+            disabled={currentPage === totalPages - 1}
+            aria-label="Next page"
+            className={`px-4 py-2 ${currentPage >= totalPages - 1 ? "visibility: hidden" : "visibility: visible"}`}
+          >
+            <MoveRight />
+          </button>
+        </div>
       </div>
       <ContentSection title="">
         {group.droplets && group.droplets.length > 0 ? (
