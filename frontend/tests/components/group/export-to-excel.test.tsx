@@ -13,7 +13,6 @@ import {
   Enrollment,
 } from "@/types";
 
-
 // Mock the XLSX library
 jest.mock("xlsx-js-style", () => ({
   utils: {
@@ -185,16 +184,18 @@ const mockGroup: Group = {
 describe("GroupProgressGrid Excel Export", () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     // Mock the enrollment data
-    (getEnrollmentsByAuthorizedUser as jest.Mock).mockImplementation((userId: number) => {
-      if (userId === 1) {
-        return Promise.resolve([mockEnrollment1, mockEnrollment2]);
-      } else if (userId === 2) {
-        return Promise.resolve([mockEnrollment3, mockEnrollment4]);
-      }
-      return Promise.resolve([]);
-    });
+    (getEnrollmentsByAuthorizedUser as jest.Mock).mockImplementation(
+      (userId: number) => {
+        if (userId === 1) {
+          return Promise.resolve([mockEnrollment1, mockEnrollment2]);
+        } else if (userId === 2) {
+          return Promise.resolve([mockEnrollment3, mockEnrollment4]);
+        }
+        return Promise.resolve([]);
+      },
+    );
 
     // Mock XLSX functions
     (XLSX.utils.aoa_to_sheet as jest.Mock).mockReturnValue({
@@ -215,33 +216,39 @@ describe("GroupProgressGrid Excel Export", () => {
 
   it("renders the export button", async () => {
     render(<GroupProgressGrid group={mockGroup} />);
-    
+
     // Wait for the component to load and render
     await screen.findByText("Download as Excel");
-    
+
     expect(screen.getByText("Download as Excel")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /download as excel/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /download as excel/i }),
+    ).toBeInTheDocument();
   });
 
   it("calls XLSX functions when export button is clicked", async () => {
     render(<GroupProgressGrid group={mockGroup} />);
-    
+
     // Wait for the component to load
     await screen.findByText("Download as Excel");
-    
+
     // Click the export button
     fireEvent.click(screen.getByText("Download as Excel"));
 
     // Verify XLSX functions were called
     expect(XLSX.utils.aoa_to_sheet).toHaveBeenCalled();
     expect(XLSX.utils.book_new).toHaveBeenCalled();
-    expect(XLSX.utils.book_append_sheet).toHaveBeenCalledWith({}, expect.any(Object), "Progress");
+    expect(XLSX.utils.book_append_sheet).toHaveBeenCalledWith(
+      {},
+      expect.any(Object),
+      "Progress",
+    );
     expect(XLSX.writeFile).toHaveBeenCalledWith({}, "progress_report.xlsx");
   });
 
   it("creates correct data structure for Excel export", async () => {
     render(<GroupProgressGrid group={mockGroup} />);
-    
+
     await screen.findByText("Download as Excel");
     fireEvent.click(screen.getByText("Download as Excel"));
 
@@ -260,7 +267,7 @@ describe("GroupProgressGrid Excel Export", () => {
     };
 
     render(<GroupProgressGrid group={groupWithNoMembers} />);
-    
+
     await screen.findByText("Download as Excel");
     fireEvent.click(screen.getByText("Download as Excel"));
 
@@ -277,7 +284,7 @@ describe("GroupProgressGrid Excel Export", () => {
     };
 
     render(<GroupProgressGrid group={groupWithNoDroplets} />);
-    
+
     await screen.findByText("Download as Excel");
     fireEvent.click(screen.getByText("Download as Excel"));
 
@@ -302,7 +309,7 @@ describe("GroupProgressGrid Excel Export", () => {
     };
 
     render(<GroupProgressGrid group={groupWithNoNameUser} />);
-    
+
     await screen.findByText("Download as Excel");
     fireEvent.click(screen.getByText("Download as Excel"));
 
@@ -317,21 +324,21 @@ describe("GroupProgressGrid Excel Export", () => {
     // Mock the worksheet with cells
     const mockWorksheet = {
       "!ref": "A1:C3",
-      "A1": { v: "Member" },
-      "B1": { v: "Test Droplet 1 (1)" },
-      "C1": { v: "Test Droplet 2 (2)" },
-      "A2": { v: "John Doe" },
-      "B2": { v: 50 }, // 50% completion
-      "C2": { v: 100 }, // 100% completion
-      "A3": { v: "Jane Smith" },
-      "B3": { v: 0 }, // 0% completion
-      "C3": { v: 100 }, // 100% completion
+      A1: { v: "Member" },
+      B1: { v: "Test Droplet 1 (1)" },
+      C1: { v: "Test Droplet 2 (2)" },
+      A2: { v: "John Doe" },
+      B2: { v: 50 }, // 50% completion
+      C2: { v: 100 }, // 100% completion
+      A3: { v: "Jane Smith" },
+      B3: { v: 0 }, // 0% completion
+      C3: { v: 100 }, // 100% completion
     };
 
     (XLSX.utils.aoa_to_sheet as jest.Mock).mockReturnValue(mockWorksheet);
 
     render(<GroupProgressGrid group={mockGroup} />);
-    
+
     await screen.findByText("Download as Excel");
     fireEvent.click(screen.getByText("Download as Excel"));
 
@@ -342,14 +349,14 @@ describe("GroupProgressGrid Excel Export", () => {
 
   it("handles completion status calculation correctly", async () => {
     render(<GroupProgressGrid group={mockGroup} />);
-    
+
     await screen.findByText("Download as Excel");
     fireEvent.click(screen.getByText("Download as Excel"));
 
     // The completion status should be calculated based on the mock enrollment data
     // User 1: Droplet 1 = 50% (1/2 lessons), Droplet 2 = 100% (1/1 lesson)
     // User 2: Droplet 1 = 0% (0/2 lessons), Droplet 2 = 100% (1/1 lesson)
-    
+
     expect(XLSX.utils.aoa_to_sheet).toHaveBeenCalledWith([
       ["Member", "Test Droplet 1 (1)", "Test Droplet 2 (2)"],
       ["John Doe", 50, 100],
@@ -365,45 +372,48 @@ describe("GroupProgressGrid Excel Export", () => {
     };
 
     render(<GroupProgressGrid group={emptyGroup} />);
-    
+
     await screen.findByText("Download as Excel");
     fireEvent.click(screen.getByText("Download as Excel"));
 
     // Should call XLSX functions with minimal data
-    expect(XLSX.utils.aoa_to_sheet).toHaveBeenCalledWith([
-      ["Member"],
-    ]);
+    expect(XLSX.utils.aoa_to_sheet).toHaveBeenCalledWith([["Member"]]);
   });
 
   it("handles errors gracefully during export", async () => {
     // Mock console.error to capture the error message
-    const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
-    
+    const consoleSpy = jest
+      .spyOn(console, "error")
+      .mockImplementation(() => {});
+
     // Mock XLSX to throw an error
     (XLSX.utils.aoa_to_sheet as jest.Mock).mockImplementation(() => {
       throw new Error("XLSX error");
     });
 
     render(<GroupProgressGrid group={mockGroup} />);
-    
+
     await screen.findByText("Download as Excel");
-    
+
     // Click the export button - this should not crash the component
     fireEvent.click(screen.getByText("Download as Excel"));
-    
+
     // Verify the error was logged
-    expect(consoleSpy).toHaveBeenCalledWith("Error exporting to Excel:", expect.any(Error));
-    
+    expect(consoleSpy).toHaveBeenCalledWith(
+      "Error exporting to Excel:",
+      expect.any(Error),
+    );
+
     // Verify the component is still functional after the error
     expect(screen.getByText("Download as Excel")).toBeInTheDocument();
-    
+
     // Clean up
     consoleSpy.mockRestore();
   });
 
   it("exports with correct filename", async () => {
     render(<GroupProgressGrid group={mockGroup} />);
-    
+
     await screen.findByText("Download as Excel");
     fireEvent.click(screen.getByText("Download as Excel"));
 
@@ -412,10 +422,14 @@ describe("GroupProgressGrid Excel Export", () => {
 
   it("creates workbook with correct sheet name", async () => {
     render(<GroupProgressGrid group={mockGroup} />);
-    
+
     await screen.findByText("Download as Excel");
     fireEvent.click(screen.getByText("Download as Excel"));
 
-    expect(XLSX.utils.book_append_sheet).toHaveBeenCalledWith({}, expect.any(Object), "Progress");
+    expect(XLSX.utils.book_append_sheet).toHaveBeenCalledWith(
+      {},
+      expect.any(Object),
+      "Progress",
+    );
   });
 });

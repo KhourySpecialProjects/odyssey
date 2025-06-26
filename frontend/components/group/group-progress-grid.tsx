@@ -14,7 +14,6 @@ import { Button } from "../ui/button";
 import * as XLSX from "xlsx-js-style";
 import { toast } from "sonner";
 
-
 interface GroupProgressGridProps {
   group: {
     id: number;
@@ -106,31 +105,33 @@ export function GroupProgressGrid({ group }: GroupProgressGridProps) {
   const exportGridToExcel = () => {
     try {
       if (group.droplets && group.members) {
-        const headers = group.droplets.map((droplet) => `${droplet.name} (${droplet.id})`);
+        const headers = group.droplets.map(
+          (droplet) => `${droplet.name} (${droplet.id})`,
+        );
         const rows = group.members.map((member) => {
           const row = group.droplets!.map((droplet) =>
-            getCompletionStatus(member.id, droplet.id)
+            getCompletionStatus(member.id, droplet.id),
           );
-          const memberName = (member.firstName && member.lastName)
-            ? `${member.firstName} ${member.lastName}`
-            : member.email;
+          const memberName =
+            member.firstName && member.lastName
+              ? `${member.firstName} ${member.lastName}`
+              : member.email;
           return [memberName, ...row];
         });
 
-        const data = [
-          ["Member", ...headers],
-          ...rows,
-        ];
+        const data = [["Member", ...headers], ...rows];
 
         const worksheet = XLSX.utils.aoa_to_sheet(data);
 
         // Highlight specific values
-        const range = XLSX.utils.decode_range(worksheet['!ref']!);
-        for (let R = 1; R <= range.e.r; ++R) { // skip header row
-          for (let C = 1; C <= range.e.c; ++C) { // skip "Member" column
+        const range = XLSX.utils.decode_range(worksheet["!ref"]!);
+        for (let R = 1; R <= range.e.r; ++R) {
+          // skip header row
+          for (let C = 1; C <= range.e.c; ++C) {
+            // skip "Member" column
             const cellAddress = XLSX.utils.encode_cell({ r: R, c: C });
             const cell = worksheet[cellAddress];
-            if (!cell || typeof cell.v !== 'number') continue;
+            if (!cell || typeof cell.v !== "number") continue;
 
             const value = cell.v;
             if (value === 100) {
@@ -175,12 +176,13 @@ export function GroupProgressGrid({ group }: GroupProgressGridProps) {
     }
   };
 
-
   return (
     <div className="flex flex-col items-end">
-      <div className="flex flex-row justify-between w-full">
-        <Button className="border dark:border-slate-500 dark:bg-slate-800 dark:text-white dark:hover:text-slate-800"
-          onClick={exportGridToExcel}>
+      <div className="flex w-full flex-row justify-between">
+        <Button
+          className="border dark:border-slate-500 dark:bg-slate-800 dark:text-white dark:hover:text-slate-800"
+          onClick={exportGridToExcel}
+        >
           <FileSpreadsheet />
           Download as Excel
         </Button>
@@ -257,7 +259,7 @@ export function GroupProgressGrid({ group }: GroupProgressGridProps) {
                     {group.members?.map((member) => (
                       <div
                         key={member.id * droplet.id * 100}
-                        className="bg-white-50 dark:bg-slate-800 flex h-24 w-36 items-center justify-center border border-slate-200 p-4 transition-colors hover:border-slate-300 dark:border-slate-600"
+                        className="bg-white-50 flex h-24 w-36 items-center justify-center border border-slate-200 p-4 transition-colors hover:border-slate-300 dark:border-slate-600 dark:bg-slate-800"
                       >
                         <div
                           title={
@@ -266,7 +268,7 @@ export function GroupProgressGrid({ group }: GroupProgressGridProps) {
                           style={{
                             width: "100%",
                             height: "30px",
-                            
+
                             borderRadius: "5px",
                             overflow: "hidden",
                           }}
@@ -299,6 +301,3 @@ export function GroupProgressGrid({ group }: GroupProgressGridProps) {
     </div>
   );
 }
-
-
-
