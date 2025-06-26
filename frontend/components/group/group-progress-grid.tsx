@@ -12,6 +12,7 @@ import { useEffect } from "react";
 import { useState } from "react";
 import { Button } from "../ui/button";
 import * as XLSX from "xlsx-js-style";
+import { toast } from "sonner";
 
 
 interface GroupProgressGridProps {
@@ -103,69 +104,74 @@ export function GroupProgressGrid({ group }: GroupProgressGridProps) {
   };
 
   const exportGridToExcel = () => {
-    if (group.droplets && group.members) {
-      const headers = group.droplets.map((droplet) => `${droplet.name} (${droplet.id})`);
-      const rows = group.members.map((member) => {
-        const row = group.droplets!.map((droplet) =>
-          getCompletionStatus(member.id, droplet.id)
-        );
-        const memberName = (member.firstName && member.lastName)
-          ? `${member.firstName} ${member.lastName}`
-          : member.email;
-        return [memberName, ...row];
-      });
+    try {
+      if (group.droplets && group.members) {
+        const headers = group.droplets.map((droplet) => `${droplet.name} (${droplet.id})`);
+        const rows = group.members.map((member) => {
+          const row = group.droplets!.map((droplet) =>
+            getCompletionStatus(member.id, droplet.id)
+          );
+          const memberName = (member.firstName && member.lastName)
+            ? `${member.firstName} ${member.lastName}`
+            : member.email;
+          return [memberName, ...row];
+        });
 
-      const data = [
-        ["Member", ...headers],
-        ...rows,
-      ];
+        const data = [
+          ["Member", ...headers],
+          ...rows,
+        ];
 
-      const worksheet = XLSX.utils.aoa_to_sheet(data);
+        const worksheet = XLSX.utils.aoa_to_sheet(data);
 
-      // Highlight specific values
-      const range = XLSX.utils.decode_range(worksheet['!ref']!);
-      for (let R = 1; R <= range.e.r; ++R) { // skip header row
-        for (let C = 1; C <= range.e.c; ++C) { // skip "Member" column
-          const cellAddress = XLSX.utils.encode_cell({ r: R, c: C });
-          const cell = worksheet[cellAddress];
-          if (!cell || typeof cell.v !== 'number') continue;
+        // Highlight specific values
+        const range = XLSX.utils.decode_range(worksheet['!ref']!);
+        for (let R = 1; R <= range.e.r; ++R) { // skip header row
+          for (let C = 1; C <= range.e.c; ++C) { // skip "Member" column
+            const cellAddress = XLSX.utils.encode_cell({ r: R, c: C });
+            const cell = worksheet[cellAddress];
+            if (!cell || typeof cell.v !== 'number') continue;
 
-          const value = cell.v;
-          if (value === 100) {
-            cell.s = {
-              fill: {
-                fgColor: { rgb: "90EE90" }, // light green background
-              },
-              font: {
-                bold: true,
-              },
-            };
-          } else if (value >= 0 && value <= 33) {
-            cell.s = {
-              fill: {
-                fgColor: { rgb: "FFCCCC" }, // light red background
-              },
-              font: {
-                bold: true,
-              },
-            };
-          } else if (value > 33 && value < 100) {
-            cell.s = {
-              fill: {
-                fgColor: { rgb: "FFFFCC" }, // light yellow background
-              },
-              font: {
-                bold: true,
-              },
-            };
+            const value = cell.v;
+            if (value === 100) {
+              cell.s = {
+                fill: {
+                  fgColor: { rgb: "90EE90" }, // light green background
+                },
+                font: {
+                  bold: true,
+                },
+              };
+            } else if (value >= 0 && value <= 33) {
+              cell.s = {
+                fill: {
+                  fgColor: { rgb: "FFCCCC" }, // light red background
+                },
+                font: {
+                  bold: true,
+                },
+              };
+            } else if (value > 33 && value < 100) {
+              cell.s = {
+                fill: {
+                  fgColor: { rgb: "FFFFCC" }, // light yellow background
+                },
+                font: {
+                  bold: true,
+                },
+              };
+            }
           }
         }
+
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Progress");
+
+        XLSX.writeFile(workbook, "progress_report.xlsx");
       }
-
-      const workbook = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(workbook, worksheet, "Progress");
-
-      XLSX.writeFile(workbook, "progress_report.xlsx");
+    } catch (error) {
+      console.error("Error exporting to Excel:", error);
+      toast.error("Failed to export group progress");
     }
   };
 
