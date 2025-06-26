@@ -251,7 +251,7 @@ export function GroupProgressGrid({ group }: GroupProgressGridProps) {
                     {group.members?.map((member) => (
                       <div
                         key={member.id * droplet.id * 100}
-                        className="bg-white-50 flex h-24 w-36 items-center justify-center border border-slate-200 p-4 transition-colors hover:border-slate-300"
+                        className="bg-white-50 dark:bg-slate-800 flex h-24 w-36 items-center justify-center border border-slate-200 p-4 transition-colors hover:border-slate-300 dark:border-slate-600"
                       >
                         <div
                           title={
@@ -260,10 +260,11 @@ export function GroupProgressGrid({ group }: GroupProgressGridProps) {
                           style={{
                             width: "100%",
                             height: "30px",
-                            backgroundColor: "#e4e5e9",
+                            
                             borderRadius: "5px",
                             overflow: "hidden",
                           }}
+                          className="bg-[#e4e5e9] dark:bg-slate-500"
                         >
                           <div
                             style={{
