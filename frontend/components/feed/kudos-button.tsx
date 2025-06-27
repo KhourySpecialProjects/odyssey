@@ -33,10 +33,6 @@ export function KudosButton({
     });
   };
 
-  // if (!kudosGiven) {
-  //   return null;
-  // }
-
   return (
     <Button
       type="button"
@@ -44,7 +40,7 @@ export function KudosButton({
       onClick={handleClick}
       disabled={isPending || kudosGiven}
       aria-label={kudosGiven ? "Kudos already given" : "Give kudos"}
-      className={`mr-1 rounded-3xl bg-transparent text-slate-500 hover:bg-transparent dark:bg-transparent dark:text-slate-200 dark:hover:bg-transparent`}
+      className={`rounded-3xl bg-transparent text-slate-500 hover:bg-transparent dark:bg-transparent dark:text-slate-200 dark:hover:bg-transparent`}
     >
       <div className="flex flex-row items-center gap-1">
         {announcement.kudosGiven && announcement.kudosGiven?.length > 0 && (
@@ -63,6 +59,3 @@ export function KudosButton({
     </Button>
   );
 }
-
-//fill-none stroke-slate-900 dark:stroke-slate-200
-//fill-slate-900 dark:fill-slate-200 stroke-slate-900 dark:stroke-slate-200
