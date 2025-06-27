@@ -54,7 +54,7 @@ export function FeedBlock({
     kudos: "bg-orange-200 dark:bg-[#B55E0C]",
     system: "bg-red-200 dark:bg-[#B83028]",
   };
-  
+
   const announcementIcon = {
     playlist: <ListVideo />,
     droplet: <Droplet />,
@@ -133,7 +133,9 @@ export function FeedBlock({
                         >
                           {namePart.trim()}
                         </p>
-                        <>{'\u00A0'}has just finished{'\u00A0'}</>
+                        <>
+                          {"\u00A0"}has just finished{"\u00A0"}
+                        </>
                         <span>{taskPart?.trim()}</span>
 
                         {announcementType === "friend" && (
@@ -142,8 +144,9 @@ export function FeedBlock({
                               authUser={authUser}
                               announcement={announcement}
                               droplet={
-                                announcement.content?.split(/finished\s+/i)[1] ||
-                                ""
+                                announcement.content?.split(
+                                  /finished\s+/i,
+                                )[1] || ""
                               }
                             />
                           </div>
