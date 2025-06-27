@@ -66,7 +66,7 @@ export function FeedBlock({
 
   const content = announcement.content;
   const [namePart] = content.split(/has\s+/i);
-  const [, taskPart] = content.split(/finished\s+/i);
+  const [, taskPart] = content.split(/completed\s+/i);
 
   return (
     <li
