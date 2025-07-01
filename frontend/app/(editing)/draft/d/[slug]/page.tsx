@@ -17,6 +17,10 @@ import { GradientBackground } from "@/components/gradient-bg";
 import { getCurrentUser } from "@/lib/auth/session";
 import { notFound } from "next/navigation";
 import { ReviewDroplet } from "@/components/draft/metadata/review-droplet";
+import { Button } from "@/components/ui/button";
+import Anthropic from "@anthropic-ai/sdk";
+import { updateDropletFunFact } from "@/lib/actions";
+import { FunFactEditor } from "@/components/draft/metadata/fun-fact-editor";
 
 type Props = {
   params: Promise<Params>;
@@ -70,6 +74,56 @@ export default async function Droplet({ params }: Props) {
   if (!user) {
     return notFound();
   }
+
+  const generateFunFact = async () => {
+    "use server";
+
+    try {
+      const anthropic = new Anthropic({
+        apiKey: process.env.ANTHROPIC_API_KEY,
+      });
+
+      const msg = await anthropic.messages.create({
+        model: "claude-3-haiku-20240307",
+        max_tokens: 1024,
+        messages: [
+          {
+            role: "user",
+            content: `Generate a short, one-sentence fun fact about the following overview. Do not include any introductions, explanations, or phrases like "Here's a fun fact." Just output the fact itself. Here is the overview:
+ "${droplet.overview || "If you're reading this, simply output No Overview"}"`,
+          },
+        ],
+      });
+
+      if (msg.content[0].type === "text") {
+        await updateDropletFunFact(msg.content[0].text, droplet.id);
+        return msg.content[0].text;
+      } else {
+        return "";
+      }
+    } catch (error: any) {
+      console.error("Error generating fun fact:", error);
+
+      // Handle specific error cases
+      if (error.status === 529) {
+        throw new Error(
+          "Anthropic API is currently overloaded. Please try again in a few moments.",
+        );
+      } else if (error.status === 429) {
+        throw new Error(
+          "Rate limit exceeded. Please wait before trying again.",
+        );
+      } else {
+        throw new Error("Failed to generate fun fact. Please try again.");
+      }
+    }
+  };
+
+  const deleteFunFact = async () => {
+    "use server";
+
+    await updateDropletFunFact("", droplet.id);
+  };
 
   return (
     <>
@@ -130,6 +184,12 @@ export default async function Droplet({ params }: Props) {
           <Overview
             dropletId={droplet.id}
             initialContent={droplet.overview ?? ""}
+          />
+
+          <FunFactEditor
+            funFact={droplet.funFact ?? ""}
+            generateFact={generateFunFact}
+            deleteFact={deleteFunFact}
           />
 
           <LearningObjectives

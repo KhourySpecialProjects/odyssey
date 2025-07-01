@@ -4,15 +4,24 @@ import { cn } from "@/lib/utils";
 import { NavItem } from "@/types";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { SheetClose } from "../ui/sheet";
 
 export function NavLinks({
   items,
   className,
+  onLinkClick,
 }: {
   items: NavItem[];
   className?: string;
+  onLinkClick?: () => void;
 }) {
   const pathname = usePathname();
+
+  const handleLinkClick = () => {
+    if (onLinkClick) {
+      onLinkClick();
+    }
+  };
 
   return (
     <ul className={cn("flex", className)}>
@@ -23,6 +32,7 @@ export function NavLinks({
         >
           <Link
             href={item.href}
+            onClick={handleLinkClick}
             className={cn(
               "block px-3 py-2",
               pathname.startsWith(item.href.split("?")[0])

@@ -47,12 +47,12 @@ export function FeedBlock({
   const formattedDate = formatDate(announcement.firstCreated);
 
   const backgroundColor = {
-    playlist: "bg-green-200 dark:bg-green-800",
-    droplet: "bg-sky-200 dark:bg-sky-800",
-    group: "bg-purple-200 dark:bg-purple-800",
-    friend: "bg-yellow-200 dark:bg-yellow-800",
-    kudos: "bg-orange-200 dark:bg-orange-800",
-    system: "bg-red-200 dark:bg-red-800",
+    playlist: "bg-green-200 dark:bg-[#29703B]",
+    droplet: "bg-blue-200 dark:bg-[#266697]",
+    group: "bg-purple-200 dark:bg-[#754ABA]",
+    friend: "bg-yellow-200 dark:bg-[#C38508]",
+    kudos: "bg-orange-200 dark:bg-[#B55E0C]",
+    system: "bg-red-200 dark:bg-[#B83028]",
   };
 
   const announcementIcon = {
@@ -66,115 +66,111 @@ export function FeedBlock({
 
   const content = announcement.content;
   const [namePart] = content.split(/has\s+/i);
-  const [, taskPart] = content.split(/finished\s+/i);
+  const [, taskPart] = content.split(/completed\s+/i);
 
   return (
     <li
-      className={`${backgroundColor[announcementType]} relative flex flex-col items-start gap-2 rounded-lg p-4 pb-3 hover:scale-105`}
+      className={`${backgroundColor[announcementType]} relative flex flex-col items-start gap-2 rounded-lg p-4 pb-3`}
     >
-      <div className="flex h-full w-full flex-row gap-3">
-        <div className="dark:text-slate-300">
-          {announcementIcon[announcementType]}
-        </div>
-        <div className="flex w-full flex-col justify-between gap-1">
-          <div className="flex items-center space-x-4">
-            <div className="min-w-0 flex-1">
-              {announcementType === "playlist" && (
-                <Link href={`/p/${announcement.playlist?.slug}`}>
-                  <p className="-mt-1 text-left font-medium text-slate-900 dark:text-slate-300">
-                    {announcement.content}
-                  </p>
-                </Link>
-              )}
-              {announcementType === "droplet" && (
-                <Link href={`/d/${announcement.droplet?.slug}`}>
-                  <p className="-mt-1 text-left font-medium text-slate-900 dark:text-slate-300">
-                    {announcement.content}
-                  </p>
-                </Link>
-              )}
-              {announcementType === "group" && (
-                <Link href={`/g/${announcement.group?.slug}`}>
-                  <p className="-mt-1 text-left font-medium text-slate-900 dark:text-slate-300">
-                    {announcement.content}
-                  </p>
-                </Link>
-              )}
-              {announcementType === "kudos" && (
-                <div className="-mt-1 text-left font-medium text-slate-900 dark:text-slate-300">
-                  <p
-                    onClick={() => setOpen(true)}
-                    className="inline cursor-pointer hover:underline"
-                  >
-                    {namePart.trim()}
-                  </p>
-                  {" has given you kudos "}
-                  <div>
-                    <ProfileBlock
-                      user={authUser}
-                      otherUser={announcement.authorized_user || authUser}
-                      isOpen={open}
-                      setIsOpen={setOpen}
-                      isFeed={true}
-                    />
-                  </div>
-                </div>
-              )}
-              {announcementType != "group" &&
-                announcementType != "droplet" &&
-                announcementType != "kudos" &&
-                announcementType != "playlist" && (
-                  <>
-                    <div className="-mt-1 text-left font-medium text-slate-900 dark:text-slate-300">
-                      {announcementType === "friend" ? (
-                        <>
-                          <p
-                            onClick={() => setOpen(true)}
-                            className="inline cursor-pointer hover:underline"
-                          >
-                            {namePart.trim()}
-                          </p>
-                          {" has just finished "}
-                          <span>{taskPart?.trim()}</span>
-                        </>
-                      ) : (
-                        announcement.content
-                      )}
-                      <div>
-                        <ProfileBlock
-                          user={authUser}
-                          otherUser={announcement.authorized_user || authUser}
-                          isOpen={open}
-                          setIsOpen={setOpen}
-                          isFeed={true}
-                        />
-                      </div>
-                    </div>
-                    {announcementType === "friend" &&
-                      !announcement.kudosGiven?.some(
-                        (user) => user.id === authUser.id,
-                      ) && (
-                        <div className="absolute bottom-0 left-[50%] translate-x-[-50%] translate-y-[40%]">
-                          <KudosButton
-                            authUser={authUser}
-                            announcement={announcement}
-                            droplet={
-                              announcement.content?.split(/finished\s+/i)[1] ||
-                              ""
-                            }
-                          />
-                        </div>
-                      )}
-                  </>
-                )}
-            </div>
+      <div className="flex w-full flex-col justify-between gap-1">
+        <div className="flex items-center space-x-4">
+          <div className="dark:text-slate-200">
+            {announcementIcon[announcementType]}
           </div>
+          <div className="min-w-0 flex-1">
+            {announcementType === "playlist" && (
+              <Link href={`/p/${announcement.playlist?.slug}`}>
+                <p className="-mt-1 text-left font-medium text-slate-900 dark:text-slate-200">
+                  {announcement.content}
+                </p>
+              </Link>
+            )}
+            {announcementType === "droplet" && (
+              <Link href={`/d/${announcement.droplet?.slug}`}>
+                <p className="-mt-1 text-left font-medium text-slate-900 dark:text-slate-200">
+                  {announcement.content}
+                </p>
+              </Link>
+            )}
+            {announcementType === "group" && (
+              <Link href={`/g/${announcement.group?.slug}`}>
+                <p className="-mt-1 text-left font-medium text-slate-900 dark:text-slate-200">
+                  {announcement.content}
+                </p>
+              </Link>
+            )}
+            {announcementType === "kudos" && (
+              <div className="-mt-1 text-left font-medium text-slate-900 dark:text-slate-200">
+                <p
+                  onClick={() => setOpen(true)}
+                  className="inline cursor-pointer hover:underline"
+                >
+                  {namePart.trim()}
+                </p>
+                {" has given you kudos "}
+                <div>
+                  <ProfileBlock
+                    user={authUser}
+                    otherUser={announcement.authorized_user || authUser}
+                    isOpen={open}
+                    setIsOpen={setOpen}
+                    isFeed={true}
+                  />
+                </div>
+              </div>
+            )}
+            {announcementType != "group" &&
+              announcementType != "droplet" &&
+              announcementType != "kudos" &&
+              announcementType != "playlist" && (
+                <>
+                  <div className="-mt-1 text-left font-medium text-slate-900 dark:text-slate-200">
+                    {announcementType === "friend" ? (
+                      <div className="flex flex-row">
+                        <p
+                          onClick={() => setOpen(true)}
+                          className="inline cursor-pointer hover:underline"
+                        >
+                          {namePart.trim()}
+                        </p>
+                        <>
+                          {"\u00A0"}has just finished{"\u00A0"}
+                        </>
+                        <span>{taskPart?.trim()}</span>
 
-          {formattedDate && (
-            <div className="w-full text-right text-sm text-slate-500 dark:text-slate-300">
-              {formattedDate}
-            </div>
-          )}
+                        {announcementType === "friend" && (
+                          <div className="flex flex-1 justify-end">
+                            <KudosButton
+                              authUser={authUser}
+                              announcement={announcement}
+                              droplet={
+                                announcement.content?.split(
+                                  /finished\s+/i,
+                                )[1] || ""
+                              }
+                            />
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      announcement.content
+                    )}
+                    <div>
+                      <ProfileBlock
+                        user={authUser}
+                        otherUser={announcement.authorized_user || authUser}
+                        isOpen={open}
+                        setIsOpen={setOpen}
+                        isFeed={true}
+                      />
+                    </div>
+                  </div>
+                </>
+              )}
+          </div>
+        </div>
+        <div className="flex w-full flex-row items-center justify-end pt-2 text-right text-sm text-slate-900 dark:text-slate-200">
+          {formattedDate}
         </div>
       </div>
     </li>
