@@ -856,6 +856,7 @@ export interface ApiDropletDroplet extends Schema.CollectionType {
       ['personal', 'professional', 'technical']
     > &
       Attribute.Required;
+    funFact: Attribute.Text;
     groups: Attribute.Relation<
       'api::droplet.droplet',
       'manyToMany',

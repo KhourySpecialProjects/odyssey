@@ -144,6 +144,9 @@
     },
     "afterReview": {
       "type": "text"
+    },
+    "funFact": {
+      "type": "text"
     }
   }
 }

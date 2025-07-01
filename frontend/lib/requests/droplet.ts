@@ -110,3 +110,32 @@ export async function getInReviewDroplets(): Promise<Droplet[]> {
     filters: { inReview: true, status: "draft" },
   });
 }
+
+/**
+ * Gets all published droplets with fun facts.
+ * @param options Strapi query modifiers.
+ * @returns The matching Droplets.
+ */
+export async function getRandomFunFactDroplet({
+  sort,
+  filters = {
+    isHidden: false,
+    funFact: { $ne: null },
+  },
+  pagination = { pageSize: 1000, page: 1 },
+  populate,
+  fields = ["*"],
+}: StrapiRequestParams = {}): Promise<Droplet[]> {
+  const path = `/droplets`;
+  const urlParams = {
+    sort,
+    filters,
+    populate,
+    fields,
+    pagination,
+  };
+  const retVal = await fetchAPI<Droplet[]>(path, {
+    urlParams,
+  });
+  return retVal;
+}

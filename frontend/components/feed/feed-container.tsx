@@ -17,20 +17,21 @@ export function FeedContainer({ authUser }: { authUser: AuthorizedUser }) {
   const [requestsExpanded, setRequestsExpanded] = useState(false);
 
   return (
-    <div className="flex flex-row">
-      <div className="relative flex h-full justify-end text-center md:w-1/4">
-        <div className="absolute top-[-12px] hidden min-w-[200px] rounded-md border border-slate-200 bg-slate-50 p-2 transition-colors hover:border-slate-300 md:block lg:p-4 dark:border-slate-500 dark:bg-slate-800">
-          <div className="relative">
+    <div className="flex flex-row gap-4">
+      <div className="flex flex-col items-end gap-4">
+        <div className="sticky top-[165px] hidden space-y-4 md:block">
+          <div className="min-w-[275px] rounded-md border border-slate-200 bg-slate-50 p-2 transition-colors hover:border-slate-300 lg:p-4 dark:border-slate-500 dark:bg-slate-800">
             <FriendRequests
               noProfile={true}
-              friendsPerPage={5}
+              friendsPerPage={3}
               authUser={authUser}
             ></FriendRequests>
           </div>
+          <FeedFilter onFilterChange={setSelectedRoles} />
         </div>
       </div>
 
-      <div className="relative w-full items-center justify-center text-center text-xl font-bold md:w-1/2">
+      <div className="relative w-full items-center justify-center text-center text-xl font-bold md:w-[65%]">
         <FeedClient
           selectedRoles={selectedRoles.map(
             (role) => role.toLowerCase() as AnnouncementType,
@@ -86,15 +87,6 @@ export function FeedContainer({ authUser }: { authUser: AuthorizedUser }) {
               ></FriendRequests>
             </div>
           </div>
-        </div>
-      </div>
-
-      <div
-        className={`relative hidden w-1/4 flex-row justify-start text-center text-xl font-bold md:flex dark:text-slate-300`}
-      >
-        <div className="absolute top-0 flex translate-y-[-20%] flex-col items-center">
-          Filters
-          <FeedFilter onFilterChange={setSelectedRoles} />
         </div>
       </div>
     </div>
