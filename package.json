@@ -48,6 +48,7 @@
     "react-intersection-observer": "^9.16.0",
     "react-router-dom": "^7.1.5",
     "react-tabs": "^6.1.0",
+    "react-wavify": "^1.11.1",
     "reactjs-popup": "^2.0.6",
     "styled-components": "^6.1.17",
     "xlsx": "^0.18.5",
