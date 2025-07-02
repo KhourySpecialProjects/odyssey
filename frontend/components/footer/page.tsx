@@ -8,6 +8,7 @@ import { DarkMode } from "../explore/dark-mode";
 
 export default async function Footer() {
   const user = await getCurrentUser();
+  const linkStyles = "text-sm font-semibold md:text-xl text-white";
   return (
     <footer className="z-60 flex flex-col w-full items-center bg-[#83C1E1] dark:bg-[#3A6B85]">
       <Wave fill='#2F5569'
@@ -24,42 +25,42 @@ export default async function Footer() {
       />
 
 
-      <div className="w-full min-h-[250px] bg-[#2F5569] flex flex-row justify-between px-8 pt-4 pb-24 -my-6">
-        <div className="flex flex-row justify-between gap-4">
-          <Separator orientation={"vertical"} className="bg-slate-200 dark:bg-slate-200 h-full w-[4px]" />
-          <div className="flex flex-col items-center justify-center gap-8">
-            <Link className="text-sm font-semibold md:text-xl text-white" href="/about">
+      <div className="w-full min-h-[250px] bg-[#2F5569] flex flex-row justify-between px-6 md:px-16 pt-4 pb-24 -my-10">
+        <div className="flex flex-row justify-start gap-4 w-1/2 md:w-1/4">
+          <Separator orientation={"vertical"} className="bg-slate-200 dark:bg-slate-200 h-full w-[3px]" />
+          <div className="flex flex-col items-center justify-center gap-10 py-4">
+            <Link className={linkStyles} href="/about">
               About Odyssey
             </Link>
             <Link
-              className="text-sm font-semibold md:text-xl text-white"
+              className={linkStyles}
               href="/website-creators"
             >
               Website Creators
             </Link>
             <Link
-              className="text-sm font-semibold md:text-xl text-white"
+              className={linkStyles}
               href="/content-creators"
             >
               Content Creators
             </Link>
-            <Link className="text-sm font-semibold md:text-xl text-white" href="/faq">
+            <Link className={linkStyles} href="/faq">
               FAQ
             </Link>
           </div>
         </div>
-        <div className="flex items-center justify-center">
+        <div className="hidden md:flex items-center justify-center w-1/2">
           <Link href="/">
             <Image
               src={'/circular_logo.svg'}
               alt="Khoury Odyssey Logo"
-              width={100}
-              height={100}
+              width={150}
+              height={150}
               priority
             />
           </Link>
         </div>
-        <div className="flex flex-col justify-between items-end">
+        <div className="flex flex-col justify-between items-end w-1/2 md:w-1/4">
           <Link href="https://github.com/KhourySpecialProjects/odyssey" legacyBehavior role="link">
             <a target="_blank" rel="noopener noreferrer">
               <Image
