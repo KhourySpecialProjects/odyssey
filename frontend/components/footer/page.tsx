@@ -8,7 +8,7 @@ import { DarkMode } from "../explore/dark-mode";
 
 export default async function Footer() {
   const user = await getCurrentUser();
-  const linkStyles = "text-sm font-semibold md:text-xl text-white";
+  const linkStyles = "text-sm font-semibold md:text-xl text-white hover:scale-105";
   return (
     <footer className="z-60 flex flex-col w-full items-center bg-[#83C1E1] dark:bg-[#3A6B85]">
       <Wave fill='#2F5569'
@@ -69,6 +69,7 @@ export default async function Footer() {
                 width={50}
                 height={50}
                 priority
+                className="hover:scale-105"
               />
             </a>
           </Link>
