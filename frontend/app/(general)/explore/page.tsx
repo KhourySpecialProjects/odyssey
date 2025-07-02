@@ -88,10 +88,13 @@ export default async function ExplorePage({
   });
 
   return (
+    
     <SearchProvider>
       <div className="mx-auto my-4 w-full max-w-7xl p-8 text-center">
         <h1 className="text-5xl font-bold">Explore</h1>
       </div>
+
+      
 
       <div className="mx-auto mt-4 mb-8 w-full max-w-7xl px-4 xl:p-0">
         <div className="flex flex-col gap-4 rounded-md border border-slate-200 bg-slate-50 p-4 dark:border-slate-500 dark:bg-slate-800">

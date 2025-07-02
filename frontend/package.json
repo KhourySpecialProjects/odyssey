@@ -94,6 +94,7 @@
     "react-intersection-observer": "^9.16.0",
     "react-katex": "^3.0.1",
     "react-tabs": "^6.1.0",
+    "react-wavify": "^1.11.1",
     "sonner": "^1.7.4",
     "tailwind-merge": "^2.2.1",
     "tailwindcss-animate": "^1.0.7",
