@@ -165,10 +165,6 @@ export async function fetchContentCreators(): Promise<AuthorizedUser[]> {
             $eq: "Content Creator",
           },
         },
-        droplets: {
-          $null: false,
-          $gt: [],
-        },
       },
       fields: [
         "id",
@@ -303,6 +299,11 @@ export async function getAllAuthorizedUsers(): Promise<AuthorizedUser[]> {
     const query = qs.stringify({
       sort: ["lastName:asc"],
       fields: ["email", "firstName", "lastName"],
+      populate: {
+        roles: {
+          fields: ["id", "title"],
+        }
+      },
       pagination: {
         pageSize: 1000,
         page: 1,

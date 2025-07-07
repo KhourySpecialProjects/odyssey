@@ -121,7 +121,7 @@ export default async function Droplet({ params }: Props) {
 
   const deleteFunFact = async () => {
     "use server";
-
+    
     await updateDropletFunFact("", droplet.id);
   };
 
