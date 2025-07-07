@@ -195,7 +195,7 @@ export function GroupProgressGrid({ group, statuses }: GroupProgressGridProps) {
                 </span>
               </div>
 
-              {group.members?.map((member) => (
+              {sortedMembers.map((member) => (
                 <div
                   key={member.id}
                   className="bg-white-50 flex h-24 w-55 items-center justify-center border-slate-200 p-4 transition-colors hover:border-slate-300"
@@ -237,7 +237,7 @@ export function GroupProgressGrid({ group, statuses }: GroupProgressGridProps) {
               >
                 {paginatedLessons?.map((droplet) => (
                   <div className="" key={droplet.id * group.id}>
-                    {group.members?.map((member) => (
+                    {sortedMembers.map((member) => (
                       <div
                         key={member.id * droplet.id * 100}
                         className="bg-white-50 flex h-24 w-36 items-center justify-center border border-slate-200 p-4 transition-colors hover:border-slate-300 dark:border-slate-600 dark:bg-slate-800"

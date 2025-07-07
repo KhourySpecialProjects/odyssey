@@ -87,6 +87,7 @@ export default async function GroupDetailPage({ params }: Props) {
               completionStatuses[`${member.id}-${enrollment.droplet.id}`] = percentCompleted;
             });
           });
+          console.log("progress fetched!!!");
         } catch (error) {
           console.error("Error fetching completion statuses:", error);
         }
