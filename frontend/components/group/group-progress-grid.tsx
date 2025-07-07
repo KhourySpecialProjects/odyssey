@@ -112,11 +112,7 @@ export function GroupProgressGrid({ group }: GroupProgressGridProps) {
           const row = group.droplets!.map((droplet) =>
             getCompletionStatus(member.id, droplet.id),
           );
-          const memberName =
-            member.firstName && member.lastName
-              ? `${member.firstName} ${member.lastName}`
-              : member.email;
-          return [memberName, ...row];
+          return [member.email, ...row];
         });
 
         const data = [["Member", ...headers], ...rows];
