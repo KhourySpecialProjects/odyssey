@@ -25,9 +25,10 @@ interface GroupProgressGridProps {
     droplets?: Droplet[];
     playlists?: Playlist[];
   };
+  statuses: Record<string, number>;
 }
 
-export function GroupProgressGrid({ group }: GroupProgressGridProps) {
+export function GroupProgressGrid({ group, statuses }: GroupProgressGridProps) {
   const [completionStatus, setCompletionStatus] = useState<
     Record<string, number>
   >({});
@@ -60,42 +61,11 @@ export function GroupProgressGrid({ group }: GroupProgressGridProps) {
     });
   }
 
-  useEffect(() => {
-    const fetchCompletionStatuses = async () => {
-      try {
-        await Promise.all(
-          (group.members || []).map(async (member) => {
-            startTransition(async () => {
-              const enrollments = await getEnrollmentsByAuthorizedUser(
-                member.id,
-              );
-
-              enrollments.map(async (enrollment) => {
-                const completedLessons =
-                  enrollment.viewedLessons?.map((lesson) => lesson.id) || [];
-                const dropletLessons = enrollment.droplet.lessons?.length || 1;
-                const percentCompleted =
-                  (completedLessons?.length / dropletLessons) * 100 || 0;
-
-                setCompletionStatus((prev) => ({
-                  ...prev,
-                  [`${member.id}-${enrollment.droplet.id}`]: percentCompleted,
-                }));
-              });
-            });
-          }),
-        );
-      } catch (error) {
-        console.error("Error fetching completion statuses:", error);
-      }
-    };
-
-    fetchCompletionStatuses();
-  }, [group]);
+  
 
   const getCompletionStatus = (memberId: number, dropletId: number) => {
     return (
-      Math.floor(completionStatus[`${memberId}-${dropletId}`] * 100) / 100 || 0
+      Math.floor(statuses[`${memberId}-${dropletId}`] * 100) / 100 || 0
     );
   };
 

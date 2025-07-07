@@ -11,6 +11,8 @@ import { GroupDashboard } from "@/components/group/group-management-dashboard";
 import { isAuthorizedUserAdmin } from "@/lib/utils";
 import DueDateAnnouncements from "@/components/group/due-date-announcements";
 import { getGroupDueDates } from "@/lib/requests/groups";
+import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
+import { AuthorizedUser } from "@/types";
 
 export const fetchCache = "force-no-store";
 export const revalidate = 0;
@@ -57,6 +59,38 @@ export default async function GroupDetailPage({ params }: Props) {
   );
 
   const uniqueDueDates = Object.values(filteredDueDates);
+
+  let sortedMembers: AuthorizedUser[] = [];
+  const completionStatuses: Record<string, number> = {};
+  
+    if (group.members && group.droplets) {
+      sortedMembers = [...group.members].sort((a, b) => {
+        const aValue = a.lastName || a.email;
+        const bValue = b.lastName || b.email;
+        return aValue.localeCompare(bValue);
+      });
+
+      try {
+          const memberEnrollmentsPromises = sortedMembers.map(async (member, index) => {
+            const enrollments = await getEnrollmentsByAuthorizedUser(member.id);
+            return { member, enrollments };
+          });
+  
+          const memberEnrollments = await Promise.all(memberEnrollmentsPromises);
+  
+          memberEnrollments.forEach(({ member, enrollments }) => {
+            enrollments?.forEach((enrollment) => {
+              const completedLessons = enrollment.viewedLessons?.map((lesson) => lesson.id) || [];
+              const dropletLessons = enrollment.droplet.lessons?.length || 1;
+              const percentCompleted = (completedLessons?.length / dropletLessons) * 100 || 0;
+  
+              completionStatuses[`${member.id}-${enrollment.droplet.id}`] = percentCompleted;
+            });
+          });
+        } catch (error) {
+          console.error("Error fetching completion statuses:", error);
+        }
+    }
 
   return (
     <div className="mx-auto w-full max-w-7xl space-y-12 p-8">
@@ -131,6 +165,7 @@ export default async function GroupDetailPage({ params }: Props) {
               canEdit={canEdit}
               authUser={authorizedUser}
               dueDates={dueDates}
+              statuses={completionStatuses}
               data-testid="group-edit-controls"
             />
           </ContentSection>
