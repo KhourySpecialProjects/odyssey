@@ -16,6 +16,7 @@ interface RenderGroupDashboardProps {
   canEdit: boolean | undefined;
   authUser: AuthorizedUser;
   dueDates: DueDate[];
+  statuses: Record<string, number>;
 }
 
 const tabStyle =
@@ -26,6 +27,7 @@ export function GroupDashboard({
   canEdit,
   authUser,
   dueDates,
+  statuses,
 }: RenderGroupDashboardProps) {
   const [currentPage, setCurrentPage] = useState(0);
   const lessonsPerPage = 6;
@@ -141,7 +143,7 @@ export function GroupDashboard({
             group.members.length > 0 ? (
               <div className="flex flex-row items-start overflow-x-auto">
                 <div className="" key={group.id}>
-                  <GroupProgressGrid group={group} />
+                  <GroupProgressGrid group={group} statuses={statuses}/>
                 </div>
               </div>
             ) : (
