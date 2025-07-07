@@ -50,6 +50,16 @@ export function GroupProgressGrid({ group }: GroupProgressGridProps) {
     if (currentPage > 0) setCurrentPage(currentPage - 1);
   };
 
+  let sortedMembers: AuthorizedUser[] = [];
+
+  if (group.members) {
+    sortedMembers = [...group.members].sort((a, b) => {
+      const aValue = a.lastName || a.email;
+      const bValue = b.lastName || b.email;
+      return aValue.localeCompare(bValue);
+    });
+  }
+
   useEffect(() => {
     const fetchCompletionStatuses = async () => {
       try {
@@ -104,18 +114,23 @@ export function GroupProgressGrid({ group }: GroupProgressGridProps) {
 
   const exportGridToExcel = () => {
     try {
-      if (group.droplets && group.members) {
+      if (group.droplets && sortedMembers) {
         const headers = group.droplets.map(
           (droplet) => `${droplet.name} (${droplet.id})`,
         );
-        const rows = group.members.map((member) => {
+        const rows = sortedMembers.map((member) => {
           const row = group.droplets!.map((droplet) =>
             getCompletionStatus(member.id, droplet.id),
           );
-          return [member.email, ...row];
+          const memberName =
+            member.firstName && member.lastName
+              ? `${member.firstName} ${member.lastName}`
+              : 'N/A';
+          return [member.email, memberName , ...row];
         });
 
-        const data = [["Member", ...headers], ...rows];
+        const curDate = new Date();
+        const data = [[`Recorded on: ${curDate.getMonth() + 1}/${curDate.getDate()}/${curDate.getFullYear()} ${curDate.getHours()}:${curDate.getMinutes()}`,'', ...headers], ...rows];
 
         const worksheet = XLSX.utils.aoa_to_sheet(data);
 
@@ -123,7 +138,7 @@ export function GroupProgressGrid({ group }: GroupProgressGridProps) {
         const range = XLSX.utils.decode_range(worksheet["!ref"]!);
         for (let R = 1; R <= range.e.r; ++R) {
           // skip header row
-          for (let C = 1; C <= range.e.c; ++C) {
+          for (let C = 2; C <= range.e.c; ++C) {
             // skip "Member" column
             const cellAddress = XLSX.utils.encode_cell({ r: R, c: C });
             const cell = worksheet[cellAddress];
@@ -163,9 +178,9 @@ export function GroupProgressGrid({ group }: GroupProgressGridProps) {
 
         const workbook = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(workbook, worksheet, "Progress");
-
-        XLSX.writeFile(workbook, "progress_report.xlsx");
+        XLSX.writeFile(workbook, `${group.groupName.replace(/ /g, "_")}_progress_report_${curDate.getMonth() + 1}_${curDate.getDate()}_${curDate.getFullYear()}.xlsx`);
       }
+
     } catch (error) {
       console.error("Error exporting to Excel:", error);
       toast.error("Failed to export group progress");
