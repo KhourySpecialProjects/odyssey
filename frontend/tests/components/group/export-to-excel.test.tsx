@@ -1,6 +1,5 @@
 import { render, screen, fireEvent } from "@testing-library/react";
 import { GroupProgressGrid } from "@/components/group/group-progress-grid";
-import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
 import {
   AuthorizedUser,
   DropletStatus,
@@ -10,7 +9,6 @@ import {
   Group,
   Droplet,
   Lesson,
-  Enrollment,
 } from "@/types";
 
 // Mock the XLSX library
@@ -23,11 +21,6 @@ jest.mock("xlsx-js-style", () => ({
     book_append_sheet: jest.fn(),
   },
   writeFile: jest.fn(),
-}));
-
-// Mock the enrollment request
-jest.mock("@/lib/requests/enrollment", () => ({
-  getEnrollmentsByAuthorizedUser: jest.fn(),
 }));
 
 // Import the mocked modules
@@ -63,6 +56,26 @@ const mockAuthUser2: AuthorizedUser = {
   firstTime: false,
   firstName: "Jane",
   lastName: "Smith",
+  bio: "",
+  friendships: [],
+  sent_requests: [],
+  received_requests: [],
+  profilePhoto: "",
+  blocked: [],
+  was_blocked: [],
+  timeZone: "America/New_York",
+};
+
+const mockAuthUser3: AuthorizedUser = {
+  id: 3,
+  email: "user3@test.com",
+  roles: [],
+  isEnabled: true,
+  linkedin: "",
+  github: "",
+  firstTime: false,
+  firstName: "",
+  lastName: "",
   bio: "",
   friendships: [],
   sent_requests: [],
@@ -121,54 +134,6 @@ const mockDroplet2: Droplet = {
   lessons: [mockLesson1],
 };
 
-const mockEnrollment1: Enrollment = {
-  id: "1",
-  authorizedUser: mockAuthUser1,
-  droplet: mockDroplet1,
-  viewedLessons: [mockLesson1], // 50% completion (1 of 2 lessons)
-  isComplete: false,
-  rating: 0,
-  isFirstTime: false,
-  isArchived: false,
-  notes: [],
-};
-
-const mockEnrollment2: Enrollment = {
-  id: "2",
-  authorizedUser: mockAuthUser1,
-  droplet: mockDroplet2,
-  viewedLessons: [mockLesson1], // 100% completion (1 of 1 lesson)
-  isComplete: true,
-  rating: 0,
-  isFirstTime: false,
-  isArchived: false,
-  notes: [],
-};
-
-const mockEnrollment3: Enrollment = {
-  id: "3",
-  authorizedUser: mockAuthUser2,
-  droplet: mockDroplet1,
-  viewedLessons: [], // 0% completion
-  isComplete: false,
-  rating: 0,
-  isFirstTime: false,
-  isArchived: false,
-  notes: [],
-};
-
-const mockEnrollment4: Enrollment = {
-  id: "4",
-  authorizedUser: mockAuthUser2,
-  droplet: mockDroplet2,
-  viewedLessons: [mockLesson1], // 100% completion (1 of 1 lesson)
-  isComplete: true,
-  rating: 0,
-  isFirstTime: false,
-  isArchived: false,
-  notes: [],
-};
-
 const mockGroup: Group = {
   id: 1,
   groupName: "Test Group",
@@ -176,34 +141,32 @@ const mockGroup: Group = {
   description: "A test group",
   semester: "Spring 2025",
   isArchived: false,
-  members: [mockAuthUser1, mockAuthUser2],
+  members: [mockAuthUser1, mockAuthUser2, mockAuthUser3],
   droplets: [mockDroplet1, mockDroplet2],
   playlists: [],
+};
+
+// Mock statuses data
+const mockStatuses: Record<string, number> = {
+  "1-1": 50, // User 1, Droplet 1: 50%
+  "1-2": 100, // User 1, Droplet 2: 100%
+  "2-1": 0, // User 2, Droplet 1: 0%
+  "2-2": 100, // User 2, Droplet 2: 100%
+  "3-1": 25, // User 3, Droplet 1: 25%
+  "3-2": 75, // User 3, Droplet 2: 75%
 };
 
 describe("GroupProgressGrid Excel Export", () => {
   beforeEach(() => {
     jest.clearAllMocks();
 
-    // Mock the enrollment data
-    (getEnrollmentsByAuthorizedUser as jest.Mock).mockImplementation(
-      (userId: number) => {
-        if (userId === 1) {
-          return Promise.resolve([mockEnrollment1, mockEnrollment2]);
-        } else if (userId === 2) {
-          return Promise.resolve([mockEnrollment3, mockEnrollment4]);
-        }
-        return Promise.resolve([]);
-      },
-    );
-
     // Mock XLSX functions
     (XLSX.utils.aoa_to_sheet as jest.Mock).mockReturnValue({
-      "!ref": "A1:C3",
+      "!ref": "A1:D4",
     });
     (XLSX.utils.decode_range as jest.Mock).mockReturnValue({
       s: { r: 0, c: 0 },
-      e: { r: 2, c: 2 },
+      e: { r: 3, c: 3 },
     });
     (XLSX.utils.encode_cell as jest.Mock).mockImplementation(({ r, c }) => {
       const col = String.fromCharCode(65 + c);
@@ -212,10 +175,18 @@ describe("GroupProgressGrid Excel Export", () => {
     (XLSX.utils.book_new as jest.Mock).mockReturnValue({});
     (XLSX.utils.book_append_sheet as jest.Mock).mockReturnValue({});
     (XLSX.writeFile as jest.Mock).mockImplementation(() => {});
+
+    // Mock Date to return a consistent timestamp
+    jest.useFakeTimers();
+    jest.setSystemTime(new Date('2025-01-15T15:30:00.000Z'));
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
   });
 
   it("renders the export button", async () => {
-    render(<GroupProgressGrid group={mockGroup} />);
+    render(<GroupProgressGrid group={mockGroup} statuses={mockStatuses} />);
 
     // Wait for the component to load and render
     await screen.findByText("Download as Excel");
@@ -227,7 +198,7 @@ describe("GroupProgressGrid Excel Export", () => {
   });
 
   it("calls XLSX functions when export button is clicked", async () => {
-    render(<GroupProgressGrid group={mockGroup} />);
+    render(<GroupProgressGrid group={mockGroup} statuses={mockStatuses} />);
 
     // Wait for the component to load
     await screen.findByText("Download as Excel");
@@ -243,20 +214,21 @@ describe("GroupProgressGrid Excel Export", () => {
       expect.any(Object),
       "Progress",
     );
-    expect(XLSX.writeFile).toHaveBeenCalledWith({}, "progress_report.xlsx");
+    expect(XLSX.writeFile).toHaveBeenCalledWith({}, "Test_Group_progress_report_1_15_2025.xlsx");
   });
 
-  it("creates correct data structure for Excel export", async () => {
-    render(<GroupProgressGrid group={mockGroup} />);
+  it("creates correct data structure for Excel export with timestamp and member columns", async () => {
+    render(<GroupProgressGrid group={mockGroup} statuses={mockStatuses} />);
 
     await screen.findByText("Download as Excel");
     fireEvent.click(screen.getByText("Download as Excel"));
 
     // Check that aoa_to_sheet was called with the correct data structure
     expect(XLSX.utils.aoa_to_sheet).toHaveBeenCalledWith([
-      ["Member", "Test Droplet 1 (1)", "Test Droplet 2 (2)"],
-      ["John Doe", expect.any(Number), expect.any(Number)],
-      ["Jane Smith", expect.any(Number), expect.any(Number)],
+      ["Recorded on: 1/15/2025 9:30", "", "Test Droplet 1 (1)", "Test Droplet 2 (2)"],
+      ["user1@test.com", "John Doe", 50, 100],
+      ["user2@test.com", "Jane Smith", 0, 100],
+      ["user3@test.com", "N/A", 25, 75],
     ]);
   });
 
@@ -266,14 +238,14 @@ describe("GroupProgressGrid Excel Export", () => {
       members: [],
     };
 
-    render(<GroupProgressGrid group={groupWithNoMembers} />);
+    render(<GroupProgressGrid group={groupWithNoMembers} statuses={{}} />);
 
     await screen.findByText("Download as Excel");
     fireEvent.click(screen.getByText("Download as Excel"));
 
-    // Should still call XLSX functions but with empty data
+    // Should still call XLSX functions but with only header row
     expect(XLSX.utils.aoa_to_sheet).toHaveBeenCalledWith([
-      ["Member", "Test Droplet 1 (1)", "Test Droplet 2 (2)"],
+      ["Recorded on: 1/15/2025 9:30", "", "Test Droplet 1 (1)", "Test Droplet 2 (2)"],
     ]);
   });
 
@@ -283,84 +255,80 @@ describe("GroupProgressGrid Excel Export", () => {
       droplets: [],
     };
 
-    render(<GroupProgressGrid group={groupWithNoDroplets} />);
+    render(<GroupProgressGrid group={groupWithNoDroplets} statuses={{}} />);
 
     await screen.findByText("Download as Excel");
     fireEvent.click(screen.getByText("Download as Excel"));
 
-    // Should still call XLSX functions but with only member column
+    // Should still call XLSX functions but with only member columns
     expect(XLSX.utils.aoa_to_sheet).toHaveBeenCalledWith([
-      ["Member"],
-      ["John Doe"],
-      ["Jane Smith"],
+      ["Recorded on: 1/15/2025 9:30", ""],
+      ["user1@test.com", "John Doe"],
+      ["user2@test.com", "Jane Smith"],
+      ["user3@test.com", "N/A"],
     ]);
   });
 
-  it("uses email when user has no first or last name", async () => {
-    const userWithNoName = {
-      ...mockAuthUser1,
-      firstName: "",
-      lastName: "",
-    };
-
-    const groupWithNoNameUser = {
-      ...mockGroup,
-      members: [userWithNoName, mockAuthUser2],
-    };
-
-    render(<GroupProgressGrid group={groupWithNoNameUser} />);
+  it("uses N/A when user has no first or last name", async () => {
+    render(<GroupProgressGrid group={mockGroup} statuses={mockStatuses} />);
 
     await screen.findByText("Download as Excel");
     fireEvent.click(screen.getByText("Download as Excel"));
 
     expect(XLSX.utils.aoa_to_sheet).toHaveBeenCalledWith([
-      ["Member", "Test Droplet 1 (1)", "Test Droplet 2 (2)"],
-      ["user1@test.com", expect.any(Number), expect.any(Number)],
-      ["Jane Smith", expect.any(Number), expect.any(Number)],
+      ["Recorded on: 1/15/2025 9:30", "", "Test Droplet 1 (1)", "Test Droplet 2 (2)"],
+      ["user1@test.com", "John Doe", 50, 100],
+      ["user2@test.com", "Jane Smith", 0, 100],
+      ["user3@test.com", "N/A", 25, 75],
     ]);
   });
 
   it("applies correct styling to cells based on completion percentage", async () => {
     // Mock the worksheet with cells
     const mockWorksheet = {
-      "!ref": "A1:C3",
-      A1: { v: "Member" },
-      B1: { v: "Test Droplet 1 (1)" },
-      C1: { v: "Test Droplet 2 (2)" },
-      A2: { v: "John Doe" },
-      B2: { v: 50 }, // 50% completion
-      C2: { v: 100 }, // 100% completion
-      A3: { v: "Jane Smith" },
-      B3: { v: 0 }, // 0% completion
-      C3: { v: 100 }, // 100% completion
+      "!ref": "A1:D4",
+      A1: { v: "Recorded on: 1/15/2025 9:30" },
+      B1: { v: "" },
+      C1: { v: "Test Droplet 1 (1)" },
+      D1: { v: "Test Droplet 2 (2)" },
+      A2: { v: "user1@test.com" },
+      B2: { v: "John Doe" },
+      C2: { v: 50 }, // 50% completion
+      D2: { v: 100 }, // 100% completion
+      A3: { v: "user2@test.com" },
+      B3: { v: "Jane Smith" },
+      C3: { v: 0 }, // 0% completion
+      D3: { v: 100 }, // 100% completion
+      A4: { v: "user3@test.com" },
+      B4: { v: "N/A" },
+      C4: { v: 25 }, // 25% completion
+      D4: { v: 75 }, // 75% completion
     };
 
     (XLSX.utils.aoa_to_sheet as jest.Mock).mockReturnValue(mockWorksheet);
 
-    render(<GroupProgressGrid group={mockGroup} />);
+    render(<GroupProgressGrid group={mockGroup} statuses={mockStatuses} />);
 
     await screen.findByText("Download as Excel");
     fireEvent.click(screen.getByText("Download as Excel"));
 
     // Verify that styling was applied to the worksheet
-    expect(XLSX.utils.decode_range).toHaveBeenCalledWith("A1:C3");
+    expect(XLSX.utils.decode_range).toHaveBeenCalledWith("A1:D4");
     expect(XLSX.utils.encode_cell).toHaveBeenCalled();
   });
 
-  it("handles completion status calculation correctly", async () => {
-    render(<GroupProgressGrid group={mockGroup} />);
+  it("handles completion status from statuses prop correctly", async () => {
+    render(<GroupProgressGrid group={mockGroup} statuses={mockStatuses} />);
 
     await screen.findByText("Download as Excel");
     fireEvent.click(screen.getByText("Download as Excel"));
 
-    // The completion status should be calculated based on the mock enrollment data
-    // User 1: Droplet 1 = 50% (1/2 lessons), Droplet 2 = 100% (1/1 lesson)
-    // User 2: Droplet 1 = 0% (0/2 lessons), Droplet 2 = 100% (1/1 lesson)
-
+    // The completion status should come from the statuses prop
     expect(XLSX.utils.aoa_to_sheet).toHaveBeenCalledWith([
-      ["Member", "Test Droplet 1 (1)", "Test Droplet 2 (2)"],
-      ["John Doe", 50, 100],
-      ["Jane Smith", 0, 100],
+      ["Recorded on: 1/15/2025 9:30", "", "Test Droplet 1 (1)", "Test Droplet 2 (2)"],
+      ["user1@test.com", "John Doe", 50, 100],
+      ["user2@test.com", "Jane Smith", 0, 100],
+      ["user3@test.com", "N/A", 25, 75],
     ]);
   });
 
@@ -371,13 +339,15 @@ describe("GroupProgressGrid Excel Export", () => {
       droplets: [],
     };
 
-    render(<GroupProgressGrid group={emptyGroup} />);
+    render(<GroupProgressGrid group={emptyGroup} statuses={{}} />);
 
     await screen.findByText("Download as Excel");
     fireEvent.click(screen.getByText("Download as Excel"));
 
     // Should call XLSX functions with minimal data
-    expect(XLSX.utils.aoa_to_sheet).toHaveBeenCalledWith([["Member"]]);
+    expect(XLSX.utils.aoa_to_sheet).toHaveBeenCalledWith([
+      ["Recorded on: 1/15/2025 9:30", ""]
+    ]);
   });
 
   it("handles errors gracefully during export", async () => {
@@ -391,7 +361,7 @@ describe("GroupProgressGrid Excel Export", () => {
       throw new Error("XLSX error");
     });
 
-    render(<GroupProgressGrid group={mockGroup} />);
+    render(<GroupProgressGrid group={mockGroup} statuses={mockStatuses} />);
 
     await screen.findByText("Download as Excel");
 
@@ -411,17 +381,17 @@ describe("GroupProgressGrid Excel Export", () => {
     consoleSpy.mockRestore();
   });
 
-  it("exports with correct filename", async () => {
-    render(<GroupProgressGrid group={mockGroup} />);
+  it("exports with correct filename including group name and date", async () => {
+    render(<GroupProgressGrid group={mockGroup} statuses={mockStatuses} />);
 
     await screen.findByText("Download as Excel");
     fireEvent.click(screen.getByText("Download as Excel"));
 
-    expect(XLSX.writeFile).toHaveBeenCalledWith({}, "progress_report.xlsx");
+    expect(XLSX.writeFile).toHaveBeenCalledWith({}, "Test_Group_progress_report_1_15_2025.xlsx");
   });
 
   it("creates workbook with correct sheet name", async () => {
-    render(<GroupProgressGrid group={mockGroup} />);
+    render(<GroupProgressGrid group={mockGroup} statuses={mockStatuses} />);
 
     await screen.findByText("Download as Excel");
     fireEvent.click(screen.getByText("Download as Excel"));
@@ -431,5 +401,40 @@ describe("GroupProgressGrid Excel Export", () => {
       expect.any(Object),
       "Progress",
     );
+  });
+
+  it("handles missing statuses for some user-droplet combinations", async () => {
+    const partialStatuses: Record<string, number> = {
+      "1-1": 50,
+      "2-2": 100,
+      // Missing "1-2", "2-1", "3-1", "3-2"
+    };
+
+    render(<GroupProgressGrid group={mockGroup} statuses={partialStatuses} />);
+
+    await screen.findByText("Download as Excel");
+    fireEvent.click(screen.getByText("Download as Excel"));
+
+    // Missing statuses should default to 0
+    expect(XLSX.utils.aoa_to_sheet).toHaveBeenCalledWith([
+      ["Recorded on: 1/15/2025 9:30", "", "Test Droplet 1 (1)", "Test Droplet 2 (2)"],
+      ["user1@test.com", "John Doe", 50, 0],
+      ["user2@test.com", "Jane Smith", 0, 100],
+      ["user3@test.com", "N/A", 0, 0],
+    ]);
+  });
+
+  it("handles group name with spaces in filename", async () => {
+    const groupWithSpaces = {
+      ...mockGroup,
+      groupName: "Test Group With Spaces",
+    };
+
+    render(<GroupProgressGrid group={groupWithSpaces} statuses={mockStatuses} />);
+
+    await screen.findByText("Download as Excel");
+    fireEvent.click(screen.getByText("Download as Excel"));
+
+    expect(XLSX.writeFile).toHaveBeenCalledWith({}, "Test_Group_With_Spaces_progress_report_1_15_2025.xlsx");
   });
 });
