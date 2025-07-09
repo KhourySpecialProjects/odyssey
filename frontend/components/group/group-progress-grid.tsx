@@ -61,12 +61,8 @@ export function GroupProgressGrid({ group, statuses }: GroupProgressGridProps) {
     });
   }
 
-  
-
   const getCompletionStatus = (memberId: number, dropletId: number) => {
-    return (
-      Math.floor(statuses[`${memberId}-${dropletId}`] * 100) / 100 || 0
-    );
+    return Math.floor(statuses[`${memberId}-${dropletId}`] * 100) / 100 || 0;
   };
 
   const getCompletedDropletColor = (completionStatus: number) => {
@@ -95,12 +91,19 @@ export function GroupProgressGrid({ group, statuses }: GroupProgressGridProps) {
           const memberName =
             member.firstName && member.lastName
               ? `${member.firstName} ${member.lastName}`
-              : 'N/A';
-          return [member.email, memberName , ...row];
+              : "N/A";
+          return [member.email, memberName, ...row];
         });
 
         const curDate = new Date();
-        const data = [[`Recorded on: ${curDate.getMonth() + 1}/${curDate.getDate()}/${curDate.getFullYear()} ${curDate.getHours()}:${curDate.getMinutes()}`,'', ...headers], ...rows];
+        const data = [
+          [
+            `Recorded on: ${curDate.getMonth() + 1}/${curDate.getDate()}/${curDate.getFullYear()} ${curDate.getHours()}:${curDate.getMinutes()}`,
+            "",
+            ...headers,
+          ],
+          ...rows,
+        ];
 
         const worksheet = XLSX.utils.aoa_to_sheet(data);
 
@@ -148,9 +151,11 @@ export function GroupProgressGrid({ group, statuses }: GroupProgressGridProps) {
 
         const workbook = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(workbook, worksheet, "Progress");
-        XLSX.writeFile(workbook, `${group.groupName.replace(/ /g, "_")}_progress_report_${curDate.getMonth() + 1}_${curDate.getDate()}_${curDate.getFullYear()}.xlsx`);
+        XLSX.writeFile(
+          workbook,
+          `${group.groupName.replace(/ /g, "_")}_progress_report_${curDate.getMonth() + 1}_${curDate.getDate()}_${curDate.getFullYear()}.xlsx`,
+        );
       }
-
     } catch (error) {
       console.error("Error exporting to Excel:", error);
       toast.error("Failed to export group progress");
