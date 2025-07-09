@@ -178,7 +178,7 @@ describe("GroupProgressGrid Excel Export", () => {
 
     // Mock Date to return a consistent timestamp
     jest.useFakeTimers();
-    jest.setSystemTime(new Date('2025-01-15T15:30:00.000Z'));
+    jest.setSystemTime(new Date("2025-01-15T15:30:00.000Z"));
   });
 
   afterEach(() => {
@@ -214,7 +214,10 @@ describe("GroupProgressGrid Excel Export", () => {
       expect.any(Object),
       "Progress",
     );
-    expect(XLSX.writeFile).toHaveBeenCalledWith({}, "Test_Group_progress_report_1_15_2025.xlsx");
+    expect(XLSX.writeFile).toHaveBeenCalledWith(
+      {},
+      "Test_Group_progress_report_1_15_2025.xlsx",
+    );
   });
 
   it("creates correct data structure for Excel export with timestamp and member columns", async () => {
@@ -225,7 +228,12 @@ describe("GroupProgressGrid Excel Export", () => {
 
     // Check that aoa_to_sheet was called with the correct data structure
     expect(XLSX.utils.aoa_to_sheet).toHaveBeenCalledWith([
-      ["Recorded on: 1/15/2025 9:30", "", "Test Droplet 1 (1)", "Test Droplet 2 (2)"],
+      [
+        "Recorded on: 1/15/2025 9:30",
+        "",
+        "Test Droplet 1 (1)",
+        "Test Droplet 2 (2)",
+      ],
       ["user1@test.com", "John Doe", 50, 100],
       ["user2@test.com", "Jane Smith", 0, 100],
       ["user3@test.com", "N/A", 25, 75],
@@ -245,7 +253,12 @@ describe("GroupProgressGrid Excel Export", () => {
 
     // Should still call XLSX functions but with only header row
     expect(XLSX.utils.aoa_to_sheet).toHaveBeenCalledWith([
-      ["Recorded on: 1/15/2025 9:30", "", "Test Droplet 1 (1)", "Test Droplet 2 (2)"],
+      [
+        "Recorded on: 1/15/2025 9:30",
+        "",
+        "Test Droplet 1 (1)",
+        "Test Droplet 2 (2)",
+      ],
     ]);
   });
 
@@ -276,7 +289,12 @@ describe("GroupProgressGrid Excel Export", () => {
     fireEvent.click(screen.getByText("Download as Excel"));
 
     expect(XLSX.utils.aoa_to_sheet).toHaveBeenCalledWith([
-      ["Recorded on: 1/15/2025 9:30", "", "Test Droplet 1 (1)", "Test Droplet 2 (2)"],
+      [
+        "Recorded on: 1/15/2025 9:30",
+        "",
+        "Test Droplet 1 (1)",
+        "Test Droplet 2 (2)",
+      ],
       ["user1@test.com", "John Doe", 50, 100],
       ["user2@test.com", "Jane Smith", 0, 100],
       ["user3@test.com", "N/A", 25, 75],
@@ -325,7 +343,12 @@ describe("GroupProgressGrid Excel Export", () => {
 
     // The completion status should come from the statuses prop
     expect(XLSX.utils.aoa_to_sheet).toHaveBeenCalledWith([
-      ["Recorded on: 1/15/2025 9:30", "", "Test Droplet 1 (1)", "Test Droplet 2 (2)"],
+      [
+        "Recorded on: 1/15/2025 9:30",
+        "",
+        "Test Droplet 1 (1)",
+        "Test Droplet 2 (2)",
+      ],
       ["user1@test.com", "John Doe", 50, 100],
       ["user2@test.com", "Jane Smith", 0, 100],
       ["user3@test.com", "N/A", 25, 75],
@@ -346,7 +369,7 @@ describe("GroupProgressGrid Excel Export", () => {
 
     // Should call XLSX functions with minimal data
     expect(XLSX.utils.aoa_to_sheet).toHaveBeenCalledWith([
-      ["Recorded on: 1/15/2025 9:30", ""]
+      ["Recorded on: 1/15/2025 9:30", ""],
     ]);
   });
 
@@ -387,7 +410,10 @@ describe("GroupProgressGrid Excel Export", () => {
     await screen.findByText("Download as Excel");
     fireEvent.click(screen.getByText("Download as Excel"));
 
-    expect(XLSX.writeFile).toHaveBeenCalledWith({}, "Test_Group_progress_report_1_15_2025.xlsx");
+    expect(XLSX.writeFile).toHaveBeenCalledWith(
+      {},
+      "Test_Group_progress_report_1_15_2025.xlsx",
+    );
   });
 
   it("creates workbook with correct sheet name", async () => {
@@ -417,7 +443,12 @@ describe("GroupProgressGrid Excel Export", () => {
 
     // Missing statuses should default to 0
     expect(XLSX.utils.aoa_to_sheet).toHaveBeenCalledWith([
-      ["Recorded on: 1/15/2025 9:30", "", "Test Droplet 1 (1)", "Test Droplet 2 (2)"],
+      [
+        "Recorded on: 1/15/2025 9:30",
+        "",
+        "Test Droplet 1 (1)",
+        "Test Droplet 2 (2)",
+      ],
       ["user1@test.com", "John Doe", 50, 0],
       ["user2@test.com", "Jane Smith", 0, 100],
       ["user3@test.com", "N/A", 0, 0],
@@ -430,11 +461,16 @@ describe("GroupProgressGrid Excel Export", () => {
       groupName: "Test Group With Spaces",
     };
 
-    render(<GroupProgressGrid group={groupWithSpaces} statuses={mockStatuses} />);
+    render(
+      <GroupProgressGrid group={groupWithSpaces} statuses={mockStatuses} />,
+    );
 
     await screen.findByText("Download as Excel");
     fireEvent.click(screen.getByText("Download as Excel"));
 
-    expect(XLSX.writeFile).toHaveBeenCalledWith({}, "Test_Group_With_Spaces_progress_report_1_15_2025.xlsx");
+    expect(XLSX.writeFile).toHaveBeenCalledWith(
+      {},
+      "Test_Group_With_Spaces_progress_report_1_15_2025.xlsx",
+    );
   });
 });

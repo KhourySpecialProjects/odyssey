@@ -62,36 +62,41 @@ export default async function GroupDetailPage({ params }: Props) {
 
   let sortedMembers: AuthorizedUser[] = [];
   const completionStatuses: Record<string, number> = {};
-  
-    if (group.members && group.droplets) {
-      sortedMembers = [...group.members].sort((a, b) => {
-        const aValue = a.lastName || a.email;
-        const bValue = b.lastName || b.email;
-        return aValue.localeCompare(bValue);
-      });
 
-      try {
-          const memberEnrollmentsPromises = sortedMembers.map(async (member, index) => {
-            const enrollments = await getEnrollmentsByAuthorizedUser(member.id);
-            return { member, enrollments };
-          });
-  
-          const memberEnrollments = await Promise.all(memberEnrollmentsPromises);
-  
-          memberEnrollments.forEach(({ member, enrollments }) => {
-            enrollments?.forEach((enrollment) => {
-              const completedLessons = enrollment.viewedLessons?.map((lesson) => lesson.id) || [];
-              const dropletLessons = enrollment.droplet.lessons?.length || 1;
-              const percentCompleted = (completedLessons?.length / dropletLessons) * 100 || 0;
-  
-              completionStatuses[`${member.id}-${enrollment.droplet.id}`] = percentCompleted;
-            });
-          });
-          console.log("progress fetched!!!");
-        } catch (error) {
-          console.error("Error fetching completion statuses:", error);
-        }
+  if (group.members && group.droplets) {
+    sortedMembers = [...group.members].sort((a, b) => {
+      const aValue = a.lastName || a.email;
+      const bValue = b.lastName || b.email;
+      return aValue.localeCompare(bValue);
+    });
+
+    try {
+      const memberEnrollmentsPromises = sortedMembers.map(
+        async (member, index) => {
+          const enrollments = await getEnrollmentsByAuthorizedUser(member.id);
+          return { member, enrollments };
+        },
+      );
+
+      const memberEnrollments = await Promise.all(memberEnrollmentsPromises);
+
+      memberEnrollments.forEach(({ member, enrollments }) => {
+        enrollments?.forEach((enrollment) => {
+          const completedLessons =
+            enrollment.viewedLessons?.map((lesson) => lesson.id) || [];
+          const dropletLessons = enrollment.droplet.lessons?.length || 1;
+          const percentCompleted =
+            (completedLessons?.length / dropletLessons) * 100 || 0;
+
+          completionStatuses[`${member.id}-${enrollment.droplet.id}`] =
+            percentCompleted;
+        });
+      });
+      console.log("progress fetched!!!");
+    } catch (error) {
+      console.error("Error fetching completion statuses:", error);
     }
+  }
 
   return (
     <div className="mx-auto w-full max-w-7xl space-y-12 p-8">

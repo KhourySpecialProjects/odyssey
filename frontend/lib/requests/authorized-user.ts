@@ -306,7 +306,7 @@ export async function getAllAuthorizedUsers(): Promise<AuthorizedUser[]> {
       populate: {
         roles: {
           fields: ["id", "title"],
-        }
+        },
       },
       pagination: {
         pageSize: 1000,

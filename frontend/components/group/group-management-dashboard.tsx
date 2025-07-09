@@ -143,7 +143,7 @@ export function GroupDashboard({
             group.members.length > 0 ? (
               <div className="flex flex-row items-start overflow-x-auto">
                 <div className="" key={group.id}>
-                  <GroupProgressGrid group={group} statuses={statuses}/>
+                  <GroupProgressGrid group={group} statuses={statuses} />
                 </div>
               </div>
             ) : (

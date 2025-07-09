@@ -62,13 +62,13 @@ export function UserMultiSelect({
         >
           {selectedIds.length > 0
             ? users
-              .filter((user) => selectedIds.includes(user.id))
-              .map((user) =>
-                user.firstName && user.lastName
-                  ? user.firstName + " " + user.lastName
-                  : user.email,
-              )
-              .join(", ")
+                .filter((user) => selectedIds.includes(user.id))
+                .map((user) =>
+                  user.firstName && user.lastName
+                    ? user.firstName + " " + user.lastName
+                    : user.email,
+                )
+                .join(", ")
             : "Select users..."}
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
