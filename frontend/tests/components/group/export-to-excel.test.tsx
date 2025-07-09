@@ -229,7 +229,7 @@ describe("GroupProgressGrid Excel Export", () => {
     // Check that aoa_to_sheet was called with the correct data structure
     expect(XLSX.utils.aoa_to_sheet).toHaveBeenCalledWith([
       [
-        "Recorded on: 1/15/2025 9:30",
+        "Recorded on: 1/15/2025 09:30",
         "",
         "Test Droplet 1 (1)",
         "Test Droplet 2 (2)",
@@ -254,7 +254,7 @@ describe("GroupProgressGrid Excel Export", () => {
     // Should still call XLSX functions but with only header row
     expect(XLSX.utils.aoa_to_sheet).toHaveBeenCalledWith([
       [
-        "Recorded on: 1/15/2025 9:30",
+        "Recorded on: 1/15/2025 09:30",
         "",
         "Test Droplet 1 (1)",
         "Test Droplet 2 (2)",
@@ -275,7 +275,7 @@ describe("GroupProgressGrid Excel Export", () => {
 
     // Should still call XLSX functions but with only member columns
     expect(XLSX.utils.aoa_to_sheet).toHaveBeenCalledWith([
-      ["Recorded on: 1/15/2025 9:30", ""],
+      ["Recorded on: 1/15/2025 09:30", ""],
       ["user1@test.com", "John Doe"],
       ["user2@test.com", "Jane Smith"],
       ["user3@test.com", "N/A"],
@@ -290,7 +290,7 @@ describe("GroupProgressGrid Excel Export", () => {
 
     expect(XLSX.utils.aoa_to_sheet).toHaveBeenCalledWith([
       [
-        "Recorded on: 1/15/2025 9:30",
+        "Recorded on: 1/15/2025 09:30",
         "",
         "Test Droplet 1 (1)",
         "Test Droplet 2 (2)",
@@ -305,7 +305,7 @@ describe("GroupProgressGrid Excel Export", () => {
     // Mock the worksheet with cells
     const mockWorksheet = {
       "!ref": "A1:D4",
-      A1: { v: "Recorded on: 1/15/2025 9:30" },
+      A1: { v: "Recorded on: 1/15/2025 09:30" },
       B1: { v: "" },
       C1: { v: "Test Droplet 1 (1)" },
       D1: { v: "Test Droplet 2 (2)" },
@@ -344,7 +344,7 @@ describe("GroupProgressGrid Excel Export", () => {
     // The completion status should come from the statuses prop
     expect(XLSX.utils.aoa_to_sheet).toHaveBeenCalledWith([
       [
-        "Recorded on: 1/15/2025 9:30",
+        "Recorded on: 1/15/2025 09:30",
         "",
         "Test Droplet 1 (1)",
         "Test Droplet 2 (2)",
@@ -369,7 +369,7 @@ describe("GroupProgressGrid Excel Export", () => {
 
     // Should call XLSX functions with minimal data
     expect(XLSX.utils.aoa_to_sheet).toHaveBeenCalledWith([
-      ["Recorded on: 1/15/2025 9:30", ""],
+      ["Recorded on: 1/15/2025 09:30", ""],
     ]);
   });
 
@@ -444,7 +444,7 @@ describe("GroupProgressGrid Excel Export", () => {
     // Missing statuses should default to 0
     expect(XLSX.utils.aoa_to_sheet).toHaveBeenCalledWith([
       [
-        "Recorded on: 1/15/2025 9:30",
+        "Recorded on: 1/15/2025 09:30",
         "",
         "Test Droplet 1 (1)",
         "Test Droplet 2 (2)",
