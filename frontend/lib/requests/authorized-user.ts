@@ -298,6 +298,11 @@ export async function fetchIsAuthorizedUser(email: string) {
   }
 }
 
+/**
+ * Retrieves all authorized users with their email, first name, last name, and associated role details.
+ *
+ * @returns An array of authorized users, each including their roles with ID and title.
+ */
 export async function getAllAuthorizedUsers(): Promise<AuthorizedUser[]> {
   try {
     const query = qs.stringify({

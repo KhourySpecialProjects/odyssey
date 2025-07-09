@@ -24,6 +24,14 @@ interface UserMultiSelectProps {
   onChange: (value: number[]) => void;
 }
 
+/**
+ * Renders a multi-select dropdown for choosing users, supporting search and selection by name or email.
+ *
+ * Displays a searchable list of users fetched from the content creators API. Selected users are shown in the trigger button, and changes are communicated via the `onChange` callback.
+ *
+ * @param selectedIds - Array of user IDs currently selected
+ * @param onChange - Callback invoked with the updated array of selected user IDs when the selection changes
+ */
 export function UserMultiSelect({
   selectedIds,
   onChange,

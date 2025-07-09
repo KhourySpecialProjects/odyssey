@@ -23,6 +23,14 @@ type Props = {
   }>;
 };
 
+/**
+ * Renders a detailed page for a group, displaying leadership, group details, description, due dates, and a management dashboard.
+ *
+ * Fetches and processes group data, user permissions, due dates, and lesson completion percentages for each member. Returns a comprehensive group detail view with conditional rendering based on user authorization and data availability.
+ *
+ * @param params - A promise resolving to an object containing the group slug.
+ * @returns The group detail page as a React element, or `null` if the user is unauthorized or the group is not found.
+ */
 export default async function GroupDetailPage({ params }: Props) {
   const user = await getCurrentUser();
   if (!user?.email) return null;

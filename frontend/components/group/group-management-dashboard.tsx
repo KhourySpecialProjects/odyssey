@@ -22,6 +22,11 @@ interface RenderGroupDashboardProps {
 const tabStyle =
   "px-4 py-2 cursor-pointer border-b-2 border-transparent focus:outline-none hover:border-gray-300";
 
+/**
+ * Renders a tabbed dashboard interface for a group, displaying droplets, playlists, and optionally progress.
+ *
+ * Shows paginated droplets and all playlists in separate tabs, with empty state messages when no items are present. If editing is allowed, displays a progress tab summarizing group member progress using provided status counts.
+ */
 export function GroupDashboard({
   group,
   canEdit,

@@ -28,6 +28,11 @@ interface GroupProgressGridProps {
   statuses: Record<string, number>;
 }
 
+/**
+ * Displays a paginated grid showing each group member's completion status for lessons, with visual progress indicators and an option to export the data as an Excel file.
+ *
+ * Renders a sortable, paginated table where each row represents a group member and each column represents a lesson ("droplet"), displaying completion percentages with color-coded progress bars. Includes controls for pagination and exporting the current group's progress data to a styled Excel spreadsheet.
+ */
 export function GroupProgressGrid({ group, statuses }: GroupProgressGridProps) {
   const [completionStatus, setCompletionStatus] = useState<
     Record<string, number>
