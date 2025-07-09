@@ -96,9 +96,13 @@ export function GroupProgressGrid({ group, statuses }: GroupProgressGridProps) {
         });
 
         const curDate = new Date();
+        // Format hours and minutes with leading zeros
+        const hours = curDate.getHours().toString().padStart(2, '0');
+        const minutes = curDate.getMinutes().toString().padStart(2, '0');
+        
         const data = [
           [
-            `Recorded on: ${curDate.getMonth() + 1}/${curDate.getDate()}/${curDate.getFullYear()} ${curDate.getHours()}:${curDate.getMinutes()}`,
+            `Recorded on: ${curDate.getMonth() + 1}/${curDate.getDate()}/${curDate.getFullYear()} ${hours}:${minutes}`,
             "",
             ...headers,
           ],
