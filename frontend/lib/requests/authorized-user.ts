@@ -165,10 +165,6 @@ export async function fetchContentCreators(): Promise<AuthorizedUser[]> {
             $eq: "Content Creator",
           },
         },
-        droplets: {
-          $null: false,
-          $gt: [],
-        },
       },
       fields: [
         "id",
