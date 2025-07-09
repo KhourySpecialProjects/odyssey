@@ -303,6 +303,11 @@ export async function getAllAuthorizedUsers(): Promise<AuthorizedUser[]> {
     const query = qs.stringify({
       sort: ["lastName:asc"],
       fields: ["email", "firstName", "lastName"],
+      populate: {
+        roles: {
+          fields: ["id", "title"],
+        },
+      },
       pagination: {
         pageSize: 1000,
         page: 1,
