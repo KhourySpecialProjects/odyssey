@@ -82,6 +82,10 @@ export default async function GroupDetailPage({ params }: Props) {
 
       memberEnrollments.forEach(({ member, enrollments }) => {
         enrollments?.forEach((enrollment) => {
+          if (!enrollment.droplet) {
+            return;
+          }
+
           const completedLessons =
             enrollment.viewedLessons?.map((lesson) => lesson.id) || [];
           const dropletLessons = enrollment.droplet?.lessons?.length || 1;
