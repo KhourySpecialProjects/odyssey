@@ -84,7 +84,7 @@ export default async function GroupDetailPage({ params }: Props) {
         enrollments?.forEach((enrollment) => {
           const completedLessons =
             enrollment.viewedLessons?.map((lesson) => lesson.id) || [];
-          const dropletLessons = enrollment.droplet.lessons?.length || 1;
+          const dropletLessons = enrollment.droplet?.lessons?.length || 1;
           const percentCompleted =
             (completedLessons?.length / dropletLessons) * 100 || 0;
 

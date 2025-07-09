@@ -24,7 +24,7 @@ export async function getEnrollmentsByAuthorizedUser(
       droplet: {
         populate: {
           lessons: {
-            fields: ["id", "name", "slug", "rating"],
+            fields: ["id", "name", "slug"],
           },
           tags: {
             fields: ["*"],
