@@ -245,7 +245,10 @@ export function GroupProgressGrid({ group, statuses }: GroupProgressGridProps) {
                 }}
               >
                 {paginatedLessons?.map((droplet) => (
-                  <div className="" key={`group-${group.id}-droplet-${droplet.id}`}>
+                  <div
+                    className=""
+                    key={`group-${group.id}-droplet-${droplet.id}`}
+                  >
                     {sortedMembers.map((member) => (
                       <div
                         key={`member-${group.id}-droplet-${droplet.id}`}
