@@ -742,7 +742,6 @@ export async function updateUserInfo(
         }),
       },
     );
-    console.log("response is: ", response);
     revalidatePath("/admin");
     return { success: true };
   } catch (error) {
