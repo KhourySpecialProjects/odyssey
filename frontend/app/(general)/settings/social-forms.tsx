@@ -154,7 +154,6 @@ export function SocialForms({
             const newFormData: FormData = new FormData();
             newFormData.append("image", profileFile as Blob);
 
-
             const response = await uploadImage(newFormData);
 
             if (response.ok && response.url) {

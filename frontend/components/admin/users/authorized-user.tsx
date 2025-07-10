@@ -84,11 +84,9 @@ export function AuthorizedUserBlock({
         const newFormData: FormData = new FormData();
         newFormData.append("image", compressedFile as Blob);
 
-
         const response = await uploadImage(newFormData);
 
         if (response.ok && response.url) {
-
           setProfilePhoto(response.url);
           const updateResult = await updateUserInfo(
             firstName,
