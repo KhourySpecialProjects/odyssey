@@ -105,9 +105,6 @@ export function Header({
             ) : (
               <LoginButton />
             )}
-            <div className="hidden pl-4 sm:block">
-              <DarkMode className="scale-[1.2]" />
-            </div>
           </div>
         </div>
       </div>
