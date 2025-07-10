@@ -5,7 +5,6 @@ import { getCurrentUser } from "@/lib/auth/session";
 import { GradientBackground } from "@/components/gradient-bg";
 import { FunFact } from "@/components/droplets/fun-fact";
 import { getRandomFunFactDroplet } from "@/lib/requests/droplet";
-import Wave from "react-wavify";
 
 export default async function HomeRoute() {
   const user = await getCurrentUser();
