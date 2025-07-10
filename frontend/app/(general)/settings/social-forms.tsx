@@ -155,6 +155,7 @@ export function SocialForms({
             newFormData.append("image", profileFile as Blob);
 
             const response = await uploadImage(newFormData);
+
             if (response.ok && response.url) {
               setProfileImage(response.url);
               const updateResult = await updatePhoto(
