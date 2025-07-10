@@ -5,6 +5,7 @@ import { useDropzone } from "react-dropzone";
 import { Button } from "@/components/ui/button";
 import {
   updateAuthorizedUser,
+  updatePhoto,
   updateUserInfo,
   uploadImage,
 } from "@/lib/actions";
@@ -26,6 +27,7 @@ import { AuthorizedUserRoleTitle } from "@/lib/globals";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Textarea } from "@/components/ui/textarea";
+import imageCompression from "browser-image-compression";
 
 export function AuthorizedUserBlock({
   user: initialUser,
@@ -59,15 +61,34 @@ export function AuthorizedUserBlock({
     );
   };
 
+  const compressImage = async (imageFile: File) => {
+    const options = {
+      maxSizeMB: 1,
+      maxWidthOrHeight: 1024,
+      useWebWorker: true,
+    };
+    try {
+      return await imageCompression(imageFile, options);
+    } catch (error) {
+      console.error("Error compressing image:", error);
+      return imageFile;
+    }
+  };
+
   const onDrop = useCallback(
     async (acceptedFiles: File[]) => {
       const file = acceptedFiles[0];
-      if (file) {
+      if (file && file.type.startsWith("image/")) {
+        const compressedFile = await compressImage(file);
+
         const newFormData: FormData = new FormData();
-        newFormData.append("image", file as Blob);
+        newFormData.append("image", compressedFile as Blob);
+
 
         const response = await uploadImage(newFormData);
+
         if (response.ok && response.url) {
+
           setProfilePhoto(response.url);
           const updateResult = await updateUserInfo(
             firstName,
@@ -110,9 +131,11 @@ export function AuthorizedUserBlock({
       formData.get("lastName") as string,
       formData.get("bio") as string,
       selectedRoles,
-      formData.get("profilePhoto") as string,
+      //formData.get("profilePhoto") as string,
+      profilePhoto || "",
       user.id,
     );
+
     if (result.success) {
       toast.success("Information updated successfully");
     } else {
