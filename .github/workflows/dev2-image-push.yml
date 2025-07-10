@@ -30,6 +30,7 @@ jobs:
           docker build \
             --build-arg NEXT_PUBLIC_POSTHOG_KEY=${{ secrets.NEXT_PUBLIC_POSTHOG_KEY }} \
             --build-arg NEXT_PUBLIC_POSTHOG_HOST=${{ secrets.NEXT_PUBLIC_POSTHOG_HOST }} \
+            --build-arg NODE_ENV=development \
             -t ${{ secrets.ECR_DEV2_FRONTEND_REPOSITORY }}:latest \
             -f ecs.dev.Dockerfile .
 
