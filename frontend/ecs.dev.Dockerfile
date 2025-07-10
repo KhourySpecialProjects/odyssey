@@ -9,8 +9,6 @@ RUN apk update && apk add jq
 
 ENV AWS_CDN_URL=https://odyssey-dev-bucket.s3.us-east-2.amazonaws.com
 
-ARG NODE_ENV=development
-ENV NODE_ENV=${NODE_ENV}
 
 # Accept build arguments from GitHub Actions
 ARG NEXT_PUBLIC_POSTHOG_KEY
@@ -30,7 +28,7 @@ RUN npm install
 COPY . .
 
 # Build the Next.js app
-RUN npm run dev
+RUN npm run build
 
 # Expose the port that the app will be running on
 EXPOSE 3000
