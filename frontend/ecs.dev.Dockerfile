@@ -8,7 +8,9 @@ WORKDIR /app
 RUN apk update && apk add jq
 
 ENV AWS_CDN_URL=https://odyssey-dev-bucket.s3.us-east-2.amazonaws.com
-ENV NODE_ENV=development
+
+ARG NODE_ENV=development
+ENV NODE_ENV=${NODE_ENV}
 
 # Accept build arguments from GitHub Actions
 ARG NEXT_PUBLIC_POSTHOG_KEY
