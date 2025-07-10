@@ -1,5 +1,5 @@
-# Use the official Node.js 14 image as the base image
-FROM --platform=linux/amd64  node:18-alpine
+# Use the official Node.js 22 image as the base image
+FROM --platform=linux/amd64  node:22-alpine
 
 # Set the working directory inside the container
 WORKDIR /app
@@ -7,13 +7,8 @@ WORKDIR /app
 # Install jq for JSON parsing
 RUN apk update && apk add jq
 
-# Copy the entrypoint script into the container
-# COPY set_env.sh /usr/local/bin/set_env.sh
-
-# Make the script executable
-# RUN chmod +x /usr/local/bin/set_env.sh
-
-ENV AWS_CDN_URL=https://odyssey-dev-bucket.s3.us-east-2.amazonaws.com
+ENV AWS_CDN_URL=https://odyssey-prod-bucket.s3.us-east-2.amazonaws.com
+ENV NODE_ENV=production
 
 # Accept build arguments from GitHub Actions
 ARG NEXT_PUBLIC_POSTHOG_KEY
@@ -37,8 +32,6 @@ RUN npm run build
 
 # Expose the port that the app will be running on
 EXPOSE 3000
-
-# ENTRYPOINT ["/usr/local/bin/set_env.sh"]
 
 # Set the command to start the app
 CMD ["npm", "start"]
