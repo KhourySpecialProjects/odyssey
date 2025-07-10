@@ -1,9 +1,9 @@
 import { render, fireEvent, waitFor, screen } from "@testing-library/react";
 import { UserMultiSelect } from "@/components/ui/user-multi-select";
-import { fetchAllUsers } from "@/lib/requests/users";
+import { fetchAllContentCreators } from "@/lib/requests/users";
 
 jest.mock("@/lib/requests/users", () => ({
-  fetchAllUsers: jest.fn(),
+  fetchAllContentCreators: jest.fn(),
 }));
 
 describe("UserMultiSelect", () => {
@@ -23,7 +23,7 @@ describe("UserMultiSelect", () => {
   ];
 
   beforeEach(() => {
-    (fetchAllUsers as jest.Mock).mockResolvedValue(mockUsers);
+    (fetchAllContentCreators as jest.Mock).mockResolvedValue(mockUsers);
   });
 
   it("renders select button with placeholder", () => {
@@ -74,7 +74,7 @@ describe("UserMultiSelect", () => {
   });
 
   jest.mock("@/lib/requests/users", () => ({
-    fetchAllUsers: jest.fn(),
+    fetchAllContentCreators: jest.fn(),
   }));
 
   describe("UserMultiSelect", () => {
@@ -94,7 +94,7 @@ describe("UserMultiSelect", () => {
     ];
 
     beforeEach(() => {
-      (fetchAllUsers as jest.Mock).mockResolvedValue(mockUsers);
+      (fetchAllContentCreators as jest.Mock).mockResolvedValue(mockUsers);
     });
 
     it("handles user selection and deselection", async () => {

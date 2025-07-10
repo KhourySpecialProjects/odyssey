@@ -25,9 +25,10 @@ interface GroupProgressGridProps {
     droplets?: Droplet[];
     playlists?: Playlist[];
   };
+  statuses: Record<string, number>;
 }
 
-export function GroupProgressGrid({ group }: GroupProgressGridProps) {
+export function GroupProgressGrid({ group, statuses }: GroupProgressGridProps) {
   const [completionStatus, setCompletionStatus] = useState<
     Record<string, number>
   >({});
@@ -50,43 +51,18 @@ export function GroupProgressGrid({ group }: GroupProgressGridProps) {
     if (currentPage > 0) setCurrentPage(currentPage - 1);
   };
 
-  useEffect(() => {
-    const fetchCompletionStatuses = async () => {
-      try {
-        await Promise.all(
-          (group.members || []).map(async (member) => {
-            startTransition(async () => {
-              const enrollments = await getEnrollmentsByAuthorizedUser(
-                member.id,
-              );
+  let sortedMembers: AuthorizedUser[] = [];
 
-              enrollments.map(async (enrollment) => {
-                const completedLessons =
-                  enrollment.viewedLessons?.map((lesson) => lesson.id) || [];
-                const dropletLessons = enrollment.droplet.lessons?.length || 1;
-                const percentCompleted =
-                  (completedLessons?.length / dropletLessons) * 100 || 0;
-
-                setCompletionStatus((prev) => ({
-                  ...prev,
-                  [`${member.id}-${enrollment.droplet.id}`]: percentCompleted,
-                }));
-              });
-            });
-          }),
-        );
-      } catch (error) {
-        console.error("Error fetching completion statuses:", error);
-      }
-    };
-
-    fetchCompletionStatuses();
-  }, [group]);
+  if (group.members) {
+    sortedMembers = [...group.members].sort((a, b) => {
+      const aValue = a.lastName || a.email;
+      const bValue = b.lastName || b.email;
+      return aValue.localeCompare(bValue);
+    });
+  }
 
   const getCompletionStatus = (memberId: number, dropletId: number) => {
-    return (
-      Math.floor(completionStatus[`${memberId}-${dropletId}`] * 100) / 100 || 0
-    );
+    return Math.floor(statuses[`${memberId}-${dropletId}`] * 100) / 100 || 0;
   };
 
   const getCompletedDropletColor = (completionStatus: number) => {
@@ -104,22 +80,34 @@ export function GroupProgressGrid({ group }: GroupProgressGridProps) {
 
   const exportGridToExcel = () => {
     try {
-      if (group.droplets && group.members) {
+      if (group.droplets && sortedMembers) {
         const headers = group.droplets.map(
           (droplet) => `${droplet.name} (${droplet.id})`,
         );
-        const rows = group.members.map((member) => {
+        const rows = sortedMembers.map((member) => {
           const row = group.droplets!.map((droplet) =>
             getCompletionStatus(member.id, droplet.id),
           );
           const memberName =
             member.firstName && member.lastName
               ? `${member.firstName} ${member.lastName}`
-              : member.email;
-          return [memberName, ...row];
+              : "N/A";
+          return [member.email, memberName, ...row];
         });
 
-        const data = [["Member", ...headers], ...rows];
+        const curDate = new Date();
+        // Format hours and minutes with leading zeros
+        const hours = curDate.getHours().toString().padStart(2, "0");
+        const minutes = curDate.getMinutes().toString().padStart(2, "0");
+
+        const data = [
+          [
+            `Recorded on: ${curDate.getMonth() + 1}/${curDate.getDate()}/${curDate.getFullYear()} ${hours}:${minutes}`,
+            "",
+            ...headers,
+          ],
+          ...rows,
+        ];
 
         const worksheet = XLSX.utils.aoa_to_sheet(data);
 
@@ -127,7 +115,7 @@ export function GroupProgressGrid({ group }: GroupProgressGridProps) {
         const range = XLSX.utils.decode_range(worksheet["!ref"]!);
         for (let R = 1; R <= range.e.r; ++R) {
           // skip header row
-          for (let C = 1; C <= range.e.c; ++C) {
+          for (let C = 2; C <= range.e.c; ++C) {
             // skip "Member" column
             const cellAddress = XLSX.utils.encode_cell({ r: R, c: C });
             const cell = worksheet[cellAddress];
@@ -167,8 +155,10 @@ export function GroupProgressGrid({ group }: GroupProgressGridProps) {
 
         const workbook = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(workbook, worksheet, "Progress");
-
-        XLSX.writeFile(workbook, "progress_report.xlsx");
+        XLSX.writeFile(
+          workbook,
+          `${group.groupName.replace(/ /g, "_")}_progress_report_${curDate.getMonth() + 1}_${curDate.getDate()}_${curDate.getFullYear()}.xlsx`,
+        );
       }
     } catch (error) {
       console.error("Error exporting to Excel:", error);
@@ -214,7 +204,7 @@ export function GroupProgressGrid({ group }: GroupProgressGridProps) {
                 </span>
               </div>
 
-              {group.members?.map((member) => (
+              {sortedMembers.map((member) => (
                 <div
                   key={member.id}
                   className="bg-white-50 flex h-24 w-55 items-center justify-center border-slate-200 p-4 transition-colors hover:border-slate-300"
@@ -255,10 +245,13 @@ export function GroupProgressGrid({ group }: GroupProgressGridProps) {
                 }}
               >
                 {paginatedLessons?.map((droplet) => (
-                  <div className="" key={droplet.id * group.id}>
-                    {group.members?.map((member) => (
+                  <div
+                    className=""
+                    key={`group-${group.id}-droplet-${droplet.id}`}
+                  >
+                    {sortedMembers.map((member) => (
                       <div
-                        key={member.id * droplet.id * 100}
+                        key={`member-${group.id}-droplet-${droplet.id}`}
                         className="bg-white-50 flex h-24 w-36 items-center justify-center border border-slate-200 p-4 transition-colors hover:border-slate-300 dark:border-slate-600 dark:bg-slate-800"
                       >
                         <div

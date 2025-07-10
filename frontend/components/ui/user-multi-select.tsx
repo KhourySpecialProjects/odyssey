@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
 import { AuthorizedUser } from "@/types";
-import { fetchAllUsers } from "@/lib/requests/users";
+import { fetchAllContentCreators } from "@/lib/requests/users";
 
 interface UserMultiSelectProps {
   selectedIds: number[];
@@ -34,7 +34,7 @@ export function UserMultiSelect({
 
   useEffect(() => {
     const fetchUsers = async () => {
-      const fetchedUsers = await fetchAllUsers();
+      const fetchedUsers = await fetchAllContentCreators();
       setUsers(fetchedUsers);
     };
     fetchUsers();

@@ -31,7 +31,7 @@ jobs:
             --build-arg NEXT_PUBLIC_POSTHOG_KEY=${{ secrets.NEXT_PUBLIC_POSTHOG_KEY }} \
             --build-arg NEXT_PUBLIC_POSTHOG_HOST=${{ secrets.NEXT_PUBLIC_POSTHOG_HOST }} \
             -t ${{ secrets.ECR_PROD_FRONTEND_REPOSITORY }}:latest \
-            -f ecs.Dockerfile .
+            -f ecs.prod.Dockerfile .
 
 
       - name: Push Docker image to ECR 
@@ -95,7 +95,7 @@ jobs:
       - name: Build and tag Docker image
         run: |
           cd ./backend
-          docker build -t ${{ secrets.ECR_PROD_BACKEND_REPOSITORY }}:latest -f ecs.Dockerfile .
+          docker build -t ${{ secrets.ECR_PROD_BACKEND_REPOSITORY }}:latest -f ecs.prod.Dockerfile .
         
         
       - name: Push Docker image to ECR
