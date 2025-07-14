@@ -1,5 +1,8 @@
 # Use the official Node.js 22 image as the base image
-FROM --platform=linux/amd64  node:22-alpine
+FROM node:22-alpine
+
+ARG NODE_ENV=production
+ENV NODE_ENV=${NODE_ENV}
 
 # Set the working directory inside the container
 WORKDIR /app
