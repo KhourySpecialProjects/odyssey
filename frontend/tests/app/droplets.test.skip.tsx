@@ -1,7 +1,7 @@
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
-import Error from "@/app/(droplets)/d/[slug]/[lessonSlug]/error";
+//import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+//import Error from "@/app/(droplets)/d/[slug]/[lessonSlug]/error";
 //import { Confetti } from "@/app/(droplets)/d/[slug]/recap/confetti";
-import NotFound from "@/app/(droplets)/d/[slug]/not-found";
+//import NotFound from "@/app/(droplets)/d/[slug]/not-found";
 //import confetti from "canvas-confetti";
 
 //This test file is commented out because canvas-confetti was disabled in the
