@@ -18,13 +18,16 @@ function Slideshow({ images }: { images: string[] }) {
 
       <ul className="">
         {images.map((image, index) => {
+
           return (
             <div key={`${index}`} className="z-10">
               <img
                 src={image}
                 alt="Profile"
-                className={`transition-scale absolute z-10 h-full w-full ${index === slideshowPosition ? "right-0" : "right-full opacity-0"} text-gray-900 duration-500 ease-in-out`}
-              />
+                className="absolute z-10 h-full w-full transition-transform duration-500 ease-in-out"
+                style={{
+                  transform: `translateX(${((index - slideshowPosition) * 100) - 50}%)`,
+                }} />
             </div>
           );
         })}
