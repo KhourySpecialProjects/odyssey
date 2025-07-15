@@ -4,10 +4,9 @@ import Error from "@/app/(droplets)/d/[slug]/[lessonSlug]/error";
 import NotFound from "@/app/(droplets)/d/[slug]/not-found";
 //import confetti from "canvas-confetti";
 
-//This test file is commented out because canvas-confetti was disabled in the 
+//This test file is commented out because canvas-confetti was disabled in the
 //codebase to help set up a production build
 //Affected files: confetti.tsx, app/(droplets)/d/[slug]/recap/page.tsx, droplets.test.skip.tsx
-
 
 /*
 jest.mock("@/components/droplets/lessons/droplet-lesson-wrapper", () => ({
