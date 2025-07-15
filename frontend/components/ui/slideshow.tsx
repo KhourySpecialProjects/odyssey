@@ -3,17 +3,24 @@
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useState } from "react";
 
-function Slideshow({ images }: { images: string[] }) {
+function Slideshow({ images, size }: { images: string[]; size: number; }) {
   const [slideshowPosition, setSlideshowPosition] = useState(0);
 
+  const arrowSize = 64;
+  const arrowColor = "#262626ff";
+
   return (
-    <div className="relative mx-auto flex h-[300px] w-[300px] justify-between border border-slate-200 bg-slate-50 text-center overflow-hidden">
+    <div className={`relative mx-auto flex justify-between border border-slate-200 bg-slate-50 text-center overflow-hidden`}
+    style={{
+      height: size,
+      width: size,
+    }}>
       <button
         onClick={() => setSlideshowPosition((prev) => prev - 1)}
-        className={`z-50`}
+        className={`z-50 p-0 ${slideshowPosition <= 0 ? "opacity-0": ""}`}
         disabled={slideshowPosition <= 0}
       >
-        <ChevronLeft size={64} color="#8d8b8bff" />
+        <ChevronLeft size={arrowSize} color={arrowColor} />
       </button>
 
       <ul className="">
@@ -35,10 +42,10 @@ function Slideshow({ images }: { images: string[] }) {
 
       <button
         onClick={() => setSlideshowPosition((prev) => prev + 1)}
-        className={`z-50`}
+        className={`z-50 ${slideshowPosition >= images.length - 1 ? "opacity-0": ""}`}
         disabled={slideshowPosition >= images.length - 1}
       >
-        <ChevronRight size={64} color="#8d8b8bff" />
+        <ChevronRight size={arrowSize} color={arrowColor} />
       </button>
     </div>
   );
