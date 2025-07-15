@@ -7,6 +7,7 @@ import {
   UserIcon,
 } from "lucide-react";
 import { Metadata } from "next";
+import { StaggeredGallery } from "@/components/ui/staggered-gallery";
 
 export const metadata: Metadata = {
   title: "About",
@@ -153,6 +154,18 @@ export default async function AboutPage() {
           </div>
         </div>
       </>
+      <StaggeredGallery
+        title={"Features"}
+        descriptions={[]}
+        images={
+          [
+            ["https://odyssey-dev-bucket.s3.us-east-2.amazonaws.com/uploads/6ff74620-28c1-4920-bd6b-5083c60a59ca-blob", 
+              "https://odyssey-dev-bucket.s3.us-east-2.amazonaws.com/uploads/7b49a516-c88d-433c-9057-67e91e323130-blob",
+              "https://www.pokemon.com/static-assets/content-assets/cms2/img/pokedex/detail/012.png",
+            ],
+            []
+          ]
+        } />
     </GradientBackground>
   );
 }
