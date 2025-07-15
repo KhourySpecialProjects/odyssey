@@ -1,34 +1,29 @@
 import { Slideshow } from "./slideshow";
 
-
-
-
 function StaggeredGallery({
-    title,
-    descriptions,
-    images,
+  title,
+  descriptions,
+  images,
 }: {
-    title: string;
-    descriptions: string[];
-    images: string[][];
+  title: string;
+  descriptions: string[];
+  images: string[][];
 }) {
-
-    /*
+  /*
     Admin: you can edit both the description and images
 
     User: all you can do is view
     */
 
+  return (
+    <div className="mx-auto h-screen w-full border border-slate-400 text-center">
+      <h1 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl dark:text-white">
+        {title}
+      </h1>
 
-    return (
-        <div className="w-full h-screen border border-slate-400 mx-auto text-center">
-            <h1 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl dark:text-white">
-                {title}
-            </h1>
+      <Slideshow images={images[0]} />
 
-            <Slideshow images={images[0]}/>
-
-            {/*<ul className="p-4 md:space-y-4">
+      {/*<ul className="p-4 md:space-y-4">
                 {images.map((image, index) => {
                     return (<img
                         src={imagePreview}
@@ -37,11 +32,8 @@ function StaggeredGallery({
                     />)
                 })}
             </ul>*/}
-        </div>
-
-    )
-
-
+    </div>
+  );
 }
 
-export { StaggeredGallery }
+export { StaggeredGallery };
