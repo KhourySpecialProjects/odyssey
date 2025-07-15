@@ -10,7 +10,7 @@ WORKDIR /app
 # Install jq for JSON parsing
 RUN apk update && apk add jq
 
-ENV AWS_CDN_URL=https://odyssey-prod-bucket.s3.us-east-2.amazonaws.com
+ENV AWS_CDN_URL=https://odyssey-dev-bucket.s3.us-east-2.amazonaws.com
 
 # Accept build arguments from GitHub Actions
 ARG NEXT_PUBLIC_POSTHOG_KEY
