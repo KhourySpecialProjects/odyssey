@@ -1,8 +1,7 @@
 # Use the official Node.js 22 image as the base image
 FROM node:22-alpine
 
-# ARG NODE_ENV=production
-# ENV NODE_ENV=${NODE_ENV}
+ARG NODE_ENV=production
 
 # Set the working directory inside the container
 WORKDIR /app
@@ -28,6 +27,8 @@ RUN npm install
 
 # Copy the rest of the application code to the working directory
 COPY . .
+
+ENV NODE_ENV=production
 
 # Build the Next.js app
 RUN npm run build
