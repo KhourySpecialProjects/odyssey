@@ -49,6 +49,7 @@ export function HighlightDropdown({
       >
         <div className="group relative">
           <CircleHelp className="cursor-pointer" />
+
           <div className="pointer-events-none absolute top-full left-0 mt-2 flex w-max -translate-x-[100%] transform flex-col items-center gap-2 rounded bg-white p-4 text-black opacity-0 shadow-lg transition-opacity group-hover:opacity-100">
             <p>Highlighting Instructions:</p>
             <ul className="list-disc pl-4">
