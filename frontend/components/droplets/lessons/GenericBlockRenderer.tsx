@@ -215,7 +215,7 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
 
         const lineNumbers = document.createElement("div");
         lineNumbers.className =
-          "absolute left-0 top-0 bottom-0 min-w-[2.5rem] flex flex-col text-slate-500 text-sm border-r border-slate-300 bg-slate-50";
+          "absolute left-0 top-0 bottom-0 min-w-[2.5rem] flex flex-col text-slate-500 text-sm border-r border-slate-300 bg-slate-50 select-none";
 
         const lineContainer = document.createElement("div");
         lineContainer.className = "pt-3 pl-3";
