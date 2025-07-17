@@ -88,6 +88,7 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
   useEffect(() => {
     const handleMouseEnter = () => {
       setActiveBlock(block.id);
+      console.log("active block id is: ", block.id)
     };
 
     const handleMouseLeave = () => {
@@ -212,7 +213,7 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
 
         const lineNumbers = document.createElement("div");
         lineNumbers.className =
-          "absolute left-0 top-0 bottom-0 min-w-[2.5rem] flex flex-col text-slate-500 text-sm select-none border-r border-slate-300 bg-slate-50";
+          "absolute left-0 top-0 bottom-0 min-w-[2.5rem] flex flex-col text-slate-500 text-sm border-r border-slate-300 bg-slate-50";
 
         const lineContainer = document.createElement("div");
         lineContainer.className = "pt-3 pl-3";
