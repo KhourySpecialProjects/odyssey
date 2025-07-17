@@ -339,7 +339,6 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
       return;
     }
 
-
     const range = selection.getRangeAt(0);
     savedSelectionRef.current = range.cloneRange();
 

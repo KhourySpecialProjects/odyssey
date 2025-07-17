@@ -205,7 +205,7 @@ export function LessonRenderer({
     });
 
   const [canProceed, setCanProceed] = useState(false);
-  const [activeBlock, setActiveBlock] = useState(lesson.blocks[0].id)
+  const [activeBlock, setActiveBlock] = useState(lesson.blocks[0].id);
 
   useEffect(() => {
     const checkQuizAnswers = () => {
@@ -327,7 +327,6 @@ function LessonBlockRenderer({
   activeBlock: number;
   setActiveBlock: (id: number) => void;
 }) {
-
   switch (block.__component) {
     case "droplets.generic":
       return (
