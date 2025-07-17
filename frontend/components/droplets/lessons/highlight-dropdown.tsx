@@ -23,6 +23,7 @@ interface HighlightDropdownProps {
   setExpanded: (expanded: boolean) => void;
   expanded: boolean;
   isActive: boolean;
+  blockID: number;
 }
 
 export function HighlightDropdown({
@@ -36,6 +37,7 @@ export function HighlightDropdown({
   setExpanded,
   expanded,
   isActive,
+  blockID
 }: HighlightDropdownProps) {
   const [visible, setVisible] = useState(false);
   if (!isActive) return null;
@@ -47,8 +49,10 @@ export function HighlightDropdown({
       <div
         className={`z-30 rounded border border-black bg-blue-100 p-2 shadow-lg dark:border-white dark:bg-slate-700 dark:text-white`}
       >
+        {blockID}
         <div className="group relative">
           <CircleHelp className="cursor-pointer" />
+          
           <div className="pointer-events-none absolute top-full left-0 mt-2 flex w-max -translate-x-[100%] transform flex-col items-center gap-2 rounded bg-white p-4 text-black opacity-0 shadow-lg transition-opacity group-hover:opacity-100">
             <p>Highlighting Instructions:</p>
             <ul className="list-disc pl-4">
