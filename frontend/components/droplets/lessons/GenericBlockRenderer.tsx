@@ -488,9 +488,6 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
     const range = popupRef.current.savedRange;
     const text = range.toString();
 
-    console.log("range is: ", range);
-    console.log("text is: ", text);
-
     const walker = document.createTreeWalker(
       contentRef.current,
       NodeFilter.SHOW_TEXT,
@@ -628,7 +625,6 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
           setExpanded={setExpanded}
           expanded={expanded}
           isActive={activeBlock === block.id}
-          blockID={block.id}
         />
       )}
       <div style={{ display: "none" }}></div>
