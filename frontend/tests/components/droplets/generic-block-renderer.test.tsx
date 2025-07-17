@@ -42,6 +42,8 @@ describe("GenericBlockRenderer", () => {
     enrollmentId: "123",
     expanded: false,
     setExpanded: jest.fn(),
+    activeBlock: 1,
+    setActiveBlock: jest.fn(),
   };
 
   beforeEach(() => {
@@ -206,6 +208,8 @@ describe("GenericBlockRenderer", () => {
       enrollmentId: "123",
       expanded: false,
       setExpanded: jest.fn(),
+      activeBlock: 1,
+      setActiveBlock: jest.fn(),
     };
 
     beforeEach(() => {
