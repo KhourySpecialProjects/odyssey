@@ -21,6 +21,8 @@ interface GenericBlockRendererProps {
   enrollmentId: string | undefined;
   expanded: boolean;
   setExpanded: (expanded: boolean) => void;
+  activeBlock: number;
+  setActiveBlock: (id: number) => void;
 }
 
 interface EnlargedImage {
@@ -37,6 +39,8 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
   enrollmentId,
   expanded,
   setExpanded,
+  activeBlock,
+  setActiveBlock,
 }) => {
   const contentRef = useRef<HTMLDivElement>(null);
   const popupRef = useRef<{
@@ -83,12 +87,10 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
 
     return content;
   };
-  const [activeBlock, setActiveBlock] = useState<number | null>(block.id);
 
   useEffect(() => {
     const handleMouseEnter = () => {
       setActiveBlock(block.id);
-      console.log("active block id is: ", block.id)
     };
 
     const handleMouseLeave = () => {
@@ -337,6 +339,7 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
       return;
     }
 
+
     const range = selection.getRangeAt(0);
     savedSelectionRef.current = range.cloneRange();
 
@@ -485,6 +488,9 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
     const range = popupRef.current.savedRange;
     const text = range.toString();
 
+    console.log("range is: ", range);
+    console.log("text is: ", text);
+
     const walker = document.createTreeWalker(
       contentRef.current,
       NodeFilter.SHOW_TEXT,
@@ -622,6 +628,7 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
           setExpanded={setExpanded}
           expanded={expanded}
           isActive={activeBlock === block.id}
+          blockID={block.id}
         />
       )}
       <div style={{ display: "none" }}></div>

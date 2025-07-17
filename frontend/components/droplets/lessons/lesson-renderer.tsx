@@ -205,6 +205,7 @@ export function LessonRenderer({
     });
 
   const [canProceed, setCanProceed] = useState(false);
+  const [activeBlock, setActiveBlock] = useState(lesson.blocks[0].id)
 
   useEffect(() => {
     const checkQuizAnswers = () => {
@@ -246,6 +247,7 @@ export function LessonRenderer({
     <div className="mx-auto w-full min-w-[300px] py-8 md:min-w-[700px]">
       <div className="relative mx-auto w-full max-w-2xl xl:py-8">
         <h1 className="text-4xl font-extrabold text-balance">{lesson.name}</h1>
+        <p>Active Block ID is: {activeBlock}</p>
 
         {headings.length > 2 && (
           <div className="mt-8 rounded-md border border-slate-200 bg-slate-50 p-6 dark:border-slate-500 dark:bg-slate-800">
@@ -275,6 +277,8 @@ export function LessonRenderer({
               enrollmentId={enrollmentId}
               expanded={expanded}
               setExpanded={setExpanded}
+              activeBlock={activeBlock}
+              setActiveBlock={(id: number) => setActiveBlock(id)}
             />
           ))}
         </div>
@@ -310,6 +314,8 @@ function LessonBlockRenderer({
   enrollmentId,
   expanded,
   setExpanded,
+  activeBlock,
+  setActiveBlock,
 }: {
   block: any;
   highlights: Highlight[];
@@ -319,7 +325,10 @@ function LessonBlockRenderer({
   enrollmentId: string | undefined;
   expanded: boolean;
   setExpanded: (expanded: boolean) => void;
+  activeBlock: number;
+  setActiveBlock: (id: number) => void;
 }) {
+
   switch (block.__component) {
     case "droplets.generic":
       return (
@@ -332,6 +341,8 @@ function LessonBlockRenderer({
           enrollmentId={enrollmentId}
           expanded={expanded}
           setExpanded={setExpanded}
+          activeBlock={activeBlock}
+          setActiveBlock={setActiveBlock}
         />
       );
 
