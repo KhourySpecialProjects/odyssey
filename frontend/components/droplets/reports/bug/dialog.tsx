@@ -26,7 +26,7 @@ export function ReportBugDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>
         <Button
-          className="group h-10 bg-white p-2 text-slate-700 hover:bg-white hover:scale-105 dark:hover:bg-white md:p-4 dark:text-slate-700"
+          className="group h-10 bg-white p-2 text-slate-700 hover:scale-105 hover:bg-white md:p-4 dark:text-slate-700 dark:hover:bg-white"
           before={<Bug />}
         >
           <span className="inline-block">Report Bug</span>

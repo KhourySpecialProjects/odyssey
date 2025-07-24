@@ -58,25 +58,25 @@ export default async function Footer() {
             />
           </Link>
         </div>
-        <div className="flex w-1/2 flex-col items-end justify-center md:w-1/4 gap-3">
-        <div className="flex flex-row gap-2 items-center">
-          <Link
-            href="https://github.com/KhourySpecialProjects/odyssey"
-            legacyBehavior
-            role="link"
-          >
-            <a target="_blank" rel="noopener noreferrer">
-              <Image
-                src={"/github.svg"}
-                alt="Odyssey Github Repo"
-                width={40}
-                height={40}
-                priority
-                className="hover:scale-105"
-              />
-            </a>
-          </Link>
-          <DarkMode className="" />
+        <div className="flex w-1/2 flex-col items-end justify-center gap-3 md:w-1/4">
+          <div className="flex flex-row items-center gap-2">
+            <Link
+              href="https://github.com/KhourySpecialProjects/odyssey"
+              legacyBehavior
+              role="link"
+            >
+              <a target="_blank" rel="noopener noreferrer">
+                <Image
+                  src={"/github.svg"}
+                  alt="Odyssey Github Repo"
+                  width={40}
+                  height={40}
+                  priority
+                  className="hover:scale-105"
+                />
+              </a>
+            </Link>
+            <DarkMode className="" />
           </div>
           <ReportBugButton user={user} />
         </div>
