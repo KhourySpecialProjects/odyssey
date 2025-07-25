@@ -6,7 +6,7 @@ import { getCurrentUser } from "@/lib/auth/session";
 import { notFound } from "next/navigation";
 import { isAuthorizedUserAdmin } from "@/lib/utils";
 import { Separator } from "@/components/ui/separator";
-import { fetchAuthorizedUsers } from "@/lib/requests/authorized-user";
+import { fetchAuthorizedUsersMetadata } from "@/lib/requests/authorized-user";
 import { fetchDroplets } from "@/lib/requests/data";
 import { fetchEnrollmentMetadata } from "@/lib/requests/enrollment";
 import { Droplets } from "@/components/admin/droplets/droplets";
@@ -20,7 +20,7 @@ import {
   fetchWeeklyNewUsers,
 } from "@/lib/requests/posthog";
 import { DailyActiveUsersChart } from "@/components/admin/daily-active-users-chart";
-import { AuthorizedUser, Droplet } from "@/types";
+import { Droplet } from "@/types";
 import { StatisticsSelector } from "@/components/admin/statistics-selector";
 import { WeeklyActiveUsersChart } from "@/components/admin/weekly-active-users-chart";
 import { UniquePageviewChart } from "@/components/admin/unique-pageview";
@@ -39,7 +39,7 @@ export default async function Page() {
     newUsers,
     enrollments,
   ] = await Promise.all([
-    fetchAuthorizedUsers(),
+    fetchAuthorizedUsersMetadata(),
     fetchDroplets(),
     fetchDailyActiveUsers(),
     fetchWeeklyActiveUsers(),
@@ -65,7 +65,7 @@ export default async function Page() {
     "General Statistics": (
       <GeneralStatistics
         droplets={droplets}
-        authorizedUsers={authorizedUsers}
+        authorizedUsersLength={authorizedUsers.meta.pagination.pageCount}
         totalEnrollments={totalEnrollments}
       />
     ),
@@ -110,11 +110,11 @@ export default async function Page() {
 }
 
 function GeneralStatistics({
-  authorizedUsers,
+  authorizedUsersLength,
   droplets,
   totalEnrollments,
 }: {
-  authorizedUsers: AuthorizedUser[];
+  authorizedUsersLength: number;
   droplets: Droplet[];
   totalEnrollments: number;
 }) {
@@ -127,7 +127,7 @@ function GeneralStatistics({
               Total Number of Users
             </div>
             <div className="text-sm text-slate-500 dark:text-slate-400">
-              {authorizedUsers.length}
+              {authorizedUsersLength}
             </div>
           </div>
         </div>
