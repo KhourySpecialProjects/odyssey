@@ -155,6 +155,58 @@ export async function fetchAuthorizedUsers(): Promise<AuthorizedUser[]> {
   }
 }
 
+//Gets just one enrollment but also returns the response metadata to get pagination data
+export async function fetchAuthorizedUsersMetadata({
+  sort,
+  filters,
+  pagination = { pageSize: 1, page: 1 },
+  populate,
+  fields = ["id"],
+}: StrapiRequestParams = {}): Promise<{
+  data: AuthorizedUser[];
+  meta: {
+    pagination: {
+      page: number;
+      pageCount: number;
+      pageSize: number;
+      total: number;
+    };
+  };
+}> {
+  const path = `/authorized-users`;
+  const urlParams = {
+    sort,
+    filters,
+    populate,
+    fields,
+    pagination,
+  };
+
+  try {
+    const response = await fetchAPI<{
+      data: AuthorizedUser[];
+      meta: {
+        pagination: {
+          page: number;
+          pageCount: number;
+          pageSize: number;
+          total: number;
+        };
+      };
+    }>(path, {
+      urlParams,
+      next: { tags: ["authorized-users"], revalidate: 0 },
+      cache: "no-store",
+      flattenResponse: false,
+    });
+
+    return response;
+  } catch (error) {
+    console.error("Error fetching authorized users metadata:", error);
+    return Promise.reject(new Error("Error getting authorized users metadata"));
+  }
+}
+
 export async function fetchContentCreators(): Promise<AuthorizedUser[]> {
   try {
     const query = qs.stringify({
