@@ -125,8 +125,6 @@ export default async function Droplet({ params }: Props) {
     await updateDropletFunFact("", droplet.id);
   };
 
-
-
   return (
     <>
       <GradientBackground className="px-0">
