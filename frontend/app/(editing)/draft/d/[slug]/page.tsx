@@ -63,7 +63,7 @@ export default async function Droplet({ params }: Props) {
     },
   });
 
-  const tags = (await getTags()).sort((a, b) => a.name.localeCompare(b.name));
+  const tags = await getTags();
 
   if (!droplet) {
     return <div data-testid={`not-found-message`}>Droplet not found</div>;
