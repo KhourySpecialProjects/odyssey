@@ -24,7 +24,7 @@ export async function getTags({
     },
   };
 
-  return await fetchAPI<Tag[]>(path, { urlParams });
+  return (await fetchAPI<Tag[]>(path, { urlParams })).sort((a, b) => a.name.localeCompare(b.name));
 }
 
 export async function getTagBySlug(
