@@ -63,7 +63,7 @@ export default async function Droplet({ params }: Props) {
     },
   });
 
-  const tags = await getTags();
+  const tags = (await getTags()).sort((a, b) => a.name.localeCompare(b.name));
 
   if (!droplet) {
     return <div data-testid={`not-found-message`}>Droplet not found</div>;
@@ -124,6 +124,8 @@ export default async function Droplet({ params }: Props) {
 
     await updateDropletFunFact("", droplet.id);
   };
+
+
 
   return (
     <>
