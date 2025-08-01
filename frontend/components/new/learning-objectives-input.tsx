@@ -4,7 +4,8 @@ import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { LearningObjectiveDisplay } from "../draft/metadata/learning-objectives/learning-objective";
 import { Input } from "../ui/input";
-import { AddButton } from "../draft/metadata/form-buttons";
+import { Button } from "../ui/button";
+import { CornerDownLeft } from "lucide-react";
 
 export function LearningObjectivesInput({
   learningObjectives,
@@ -94,7 +95,17 @@ export function LearningObjectivesInput({
                 placeholder="New Learning Objective..."
                 autoComplete="off"
               />
-              <AddButton />
+              <Button
+                size="sm"
+                type="button"
+                onClick={() => {
+                  if (newObjective.trim() !== "") {
+                    addLearningObjective(newObjective);
+                  }
+                }}
+              >
+                <CornerDownLeft />
+              </Button>
             </div>
           </li>
         </ul>
