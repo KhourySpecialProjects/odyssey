@@ -65,7 +65,7 @@ export default async function Page() {
     "General Statistics": (
       <GeneralStatistics
         droplets={droplets}
-        authorizedUsersLength={authorizedUsers.meta.pagination.pageCount}
+        authorizedUsersLength={authorizedUsers.meta.pagination.total}
         totalEnrollments={totalEnrollments}
       />
     ),
