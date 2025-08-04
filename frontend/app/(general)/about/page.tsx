@@ -8,6 +8,8 @@ import {
 } from "lucide-react";
 import { Metadata } from "next";
 import { StaggeredGallery } from "@/components/ui/staggered-gallery";
+import { getGalleryBySlug } from "@/lib/requests/galleries";
+import { Gallery } from "@/types";
 
 export const metadata: Metadata = {
   title: "About",
@@ -50,6 +52,9 @@ const focusAreas = [
 ];
 
 export default async function AboutPage() {
+
+  const gallery: Gallery | void = await getGalleryBySlug("features");
+
   return (
     <GradientBackground>
       <>
@@ -155,35 +160,7 @@ export default async function AboutPage() {
         </div>
       </>
       <StaggeredGallery
-        title={"Features"}
-        descriptions={[
-          "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse suscipit dictum nisi sed convallis. Duis imperdiet augue eget felis finibus, venenatis dictum orci molestie. Cras porta odio eu metus pretium pharetra. Cras velit mauris, volutpat non tristique sed, posuere id nisi. Cras urna nulla, interdum ac accumsan volutpat, feugiat ut ex. Donec quis tincidunt ex. Integer nisl magna, rhoncus id consequat eget, convallis id risus. Mauris sodales, odio non ultricies pretium, diam eros tempor nunc, non euismod urna felis sed erat. Etiam pharetra nunc a nisi molestie vestibulum.",
-          "In molestie lectus a libero iaculis aliquam. Aliquam erat volutpat. Aliquam suscipit fermentum nisi, auctor lobortis massa condimentum quis. Aliquam quis dui purus. Suspendisse nec lorem eu risus facilisis commodo ultrices ac magna. Curabitur sagittis ex ut ligula dapibus tempor. Integer hendrerit, neque eu vulputate commodo, mauris nibh commodo sapien, eu mattis felis libero in tellus.",
-          "Aliquam non tortor elit. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia curae; Sed enim tortor, tristique et pellentesque quis, malesuada semper urna. Aenean tortor nibh, consectetur in condimentum ac, varius eu sem. Sed at fringilla orci, eget eleifend ligula. Donec vitae sollicitudin nisl, elementum sagittis urna. Etiam in semper justo. Nam quis justo diam. Ut metus nisi, viverra at aliquet non, euismod accumsan mauris. Vivamus eros risus, aliquet in molestie et, efficitur sed risus. Phasellus finibus erat sit amet condimentum aliquet. Maecenas pretium non urna ac laoreet.",
-          "Ut eu mauris lacus. Nulla vel augue molestie, viverra eros vitae, bibendum sem. Duis in gravida ex, a convallis quam. Quisque et gravida diam. Praesent condimentum tristique dui, elementum malesuada sapien vehicula vel. Donec turpis neque, rhoncus sit amet ante eget, egestas tristique erat. Duis augue purus, semper vitae urna volutpat, bibendum luctus lectus. In sit amet urna a libero varius pharetra. Ut eu consequat purus. Morbi a risus volutpat, fermentum lectus ac, tempus diam. Proin fermentum rutrum sagittis. Sed dignissim libero et sem bibendum pellentesque. Donec massa ligula, bibendum eget elit ac, ultricies posuere libero. Ut sagittis purus sit amet volutpat elementum."
-        ]}
-        images={[
-          [
-            "https://odyssey-dev-bucket.s3.us-east-2.amazonaws.com/uploads/6ff74620-28c1-4920-bd6b-5083c60a59ca-blob",
-            "https://odyssey-dev-bucket.s3.us-east-2.amazonaws.com/uploads/7b49a516-c88d-433c-9057-67e91e323130-blob",
-            "https://www.pokemon.com/static-assets/content-assets/cms2/img/pokedex/detail/012.png"
-          ],
-          [
-            "https://images.unsplash.com/photo-1503023345310-bd7c1de61c7d",
-            "https://images.unsplash.com/photo-1498050108023-c5249f4df085",
-            "https://images.unsplash.com/photo-1603791440384-56cd371ee9a7"
-          ],
-          [
-            "https://www.pokemon.com/static-assets/content-assets/cms2/img/pokedex/detail/025.png",
-            "https://www.pokemon.com/static-assets/content-assets/cms2/img/pokedex/detail/443.png",
-            "https://www.pokemon.com/static-assets/content-assets/cms2/img/pokedex/detail/104.png" 
-          ],
-          [
-            "https://www.pokemon.com/static-assets/content-assets/cms2/img/pokedex/detail/466.png",
-            "https://images.unsplash.com/photo-1518770660439-4636190af475", 
-            "https://images.unsplash.com/photo-1593642634367-d91a135587b5"
-          ]
-        ]}
+        gallery={gallery}
       />
 
     </GradientBackground>
