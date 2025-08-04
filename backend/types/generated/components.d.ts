@@ -114,6 +114,19 @@ export interface DropletsVideo extends Schema.Component {
   };
 }
 
+export interface GalleriesGalleryItem extends Schema.Component {
+  collectionName: 'components_galleries_gallery_items';
+  info: {
+    displayName: 'GalleryItem';
+    icon: 'layer';
+  };
+  attributes: {
+    description: Attribute.Text;
+    images: Attribute.Media<'images' | 'files' | 'videos' | 'audios', true>;
+    title: Attribute.String;
+  };
+}
+
 export interface QuizzesAnswerOption extends Schema.Component {
   collectionName: 'components_quiz_answer_option';
   info: {
@@ -179,6 +192,7 @@ declare module '@strapi/types' {
       'droplets.quiz': DropletsQuiz;
       'droplets.resource': DropletsResource;
       'droplets.video': DropletsVideo;
+      'galleries.gallery-item': GalleriesGalleryItem;
       'quizzes.answer-option': QuizzesAnswerOption;
       'quizzes.open-ended-question': QuizzesOpenEndedQuestion;
       'quizzes.question': QuizzesQuestion;
