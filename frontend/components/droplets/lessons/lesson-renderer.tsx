@@ -205,6 +205,7 @@ export function LessonRenderer({
     });
 
   const [canProceed, setCanProceed] = useState(false);
+  const [activeBlock, setActiveBlock] = useState(lesson.blocks[0].id);
 
   useEffect(() => {
     const checkQuizAnswers = () => {
@@ -275,6 +276,8 @@ export function LessonRenderer({
               enrollmentId={enrollmentId}
               expanded={expanded}
               setExpanded={setExpanded}
+              activeBlock={activeBlock}
+              setActiveBlock={(id: number) => setActiveBlock(id)}
             />
           ))}
         </div>
@@ -310,6 +313,8 @@ function LessonBlockRenderer({
   enrollmentId,
   expanded,
   setExpanded,
+  activeBlock,
+  setActiveBlock,
 }: {
   block: any;
   highlights: Highlight[];
@@ -319,6 +324,8 @@ function LessonBlockRenderer({
   enrollmentId: string | undefined;
   expanded: boolean;
   setExpanded: (expanded: boolean) => void;
+  activeBlock: number;
+  setActiveBlock: (id: number) => void;
 }) {
   switch (block.__component) {
     case "droplets.generic":
@@ -332,6 +339,8 @@ function LessonBlockRenderer({
           enrollmentId={enrollmentId}
           expanded={expanded}
           setExpanded={setExpanded}
+          activeBlock={activeBlock}
+          setActiveBlock={setActiveBlock}
         />
       );
 

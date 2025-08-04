@@ -21,6 +21,8 @@ interface GenericBlockRendererProps {
   enrollmentId: string | undefined;
   expanded: boolean;
   setExpanded: (expanded: boolean) => void;
+  activeBlock: number;
+  setActiveBlock: (id: number) => void;
 }
 
 interface EnlargedImage {
@@ -37,6 +39,8 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
   enrollmentId,
   expanded,
   setExpanded,
+  activeBlock,
+  setActiveBlock,
 }) => {
   const contentRef = useRef<HTMLDivElement>(null);
   const popupRef = useRef<{
@@ -83,7 +87,6 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
 
     return content;
   };
-  const [activeBlock, setActiveBlock] = useState<number | null>(block.id);
 
   useEffect(() => {
     const handleMouseEnter = () => {
@@ -212,7 +215,7 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
 
         const lineNumbers = document.createElement("div");
         lineNumbers.className =
-          "absolute left-0 top-0 bottom-0 min-w-[2.5rem] flex flex-col text-slate-500 text-sm select-none border-r border-slate-300 bg-slate-50";
+          "absolute left-0 top-0 bottom-0 min-w-[2.5rem] flex flex-col text-slate-500 text-sm border-r border-slate-300 bg-slate-50 select-none";
 
         const lineContainer = document.createElement("div");
         lineContainer.className = "pt-3 pl-3";

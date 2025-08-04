@@ -32,7 +32,7 @@ export function DraggableBlockListClient({
       <div className="grid grid-cols-1 space-y-8">
         {blocks.map((block, index) => (
           <div
-            key={`${block.__component}-${index}`}
+            key={`${block.__component}-${index}-${blocks.length}`}
             className="flex w-full flex-col items-center justify-center"
           >
             <AddBlock add={addBlock(index)} />

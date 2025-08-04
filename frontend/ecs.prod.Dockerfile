@@ -2,7 +2,6 @@
 FROM node:22-alpine
 
 ARG NODE_ENV=production
-ENV NODE_ENV=${NODE_ENV}
 
 # Set the working directory inside the container
 WORKDIR /app
@@ -10,7 +9,7 @@ WORKDIR /app
 # Install jq for JSON parsing
 RUN apk update && apk add jq
 
-ENV AWS_CDN_URL=https://odyssey-prod-bucket.s3.us-east-2.amazonaws.com
+ENV AWS_CDN_URL=https://odyssey-dev-bucket.s3.us-east-2.amazonaws.com
 
 # Accept build arguments from GitHub Actions
 ARG NEXT_PUBLIC_POSTHOG_KEY
@@ -24,10 +23,12 @@ ENV NEXT_PUBLIC_POSTHOG_HOST=$NEXT_PUBLIC_POSTHOG_HOST
 COPY package*.json ./
 
 # Install dependencies
-RUN npm install
+RUN npm install --include=dev
 
 # Copy the rest of the application code to the working directory
 COPY . .
+
+ENV NODE_ENV=production
 
 # Build the Next.js app
 RUN npm run build
