@@ -1064,6 +1064,37 @@ export interface ApiFriendshipFriendship extends Schema.CollectionType {
   };
 }
 
+export interface ApiGalleryGallery extends Schema.CollectionType {
+  collectionName: 'galleries';
+  info: {
+    displayName: 'Gallery';
+    pluralName: 'galleries';
+    singularName: 'gallery';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    createdAt: Attribute.DateTime;
+    createdBy: Attribute.Relation<
+      'api::gallery.gallery',
+      'oneToOne',
+      'admin::user'
+    > &
+      Attribute.Private;
+    items: Attribute.Component<'galleries.gallery-item', true>;
+    slug: Attribute.UID;
+    title: Attribute.String;
+    updatedAt: Attribute.DateTime;
+    updatedBy: Attribute.Relation<
+      'api::gallery.gallery',
+      'oneToOne',
+      'admin::user'
+    > &
+      Attribute.Private;
+  };
+}
+
 export interface ApiGroupGroup extends Schema.CollectionType {
   collectionName: 'groups';
   info: {
@@ -1903,6 +1934,7 @@ declare module '@strapi/types' {
       'api::due-date.due-date': ApiDueDateDueDate;
       'api::enrollment.enrollment': ApiEnrollmentEnrollment;
       'api::friendship.friendship': ApiFriendshipFriendship;
+      'api::gallery.gallery': ApiGalleryGallery;
       'api::group.group': ApiGroupGroup;
       'api::highlight.highlight': ApiHighlightHighlight;
       'api::lesson.lesson': ApiLessonLesson;
