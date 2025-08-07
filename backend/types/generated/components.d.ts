@@ -117,12 +117,13 @@ export interface DropletsVideo extends Schema.Component {
 export interface GalleriesGalleryItem extends Schema.Component {
   collectionName: 'components_galleries_gallery_items';
   info: {
+    description: '';
     displayName: 'GalleryItem';
     icon: 'layer';
   };
   attributes: {
     description: Attribute.Text;
-    images: Attribute.Media<'images' | 'files' | 'videos' | 'audios', true>;
+    image_urls: Attribute.JSON;
     title: Attribute.String;
   };
 }
