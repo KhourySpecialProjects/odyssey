@@ -11,11 +11,7 @@ function Slideshow({ images, size }: { images: string[]; size: number }) {
 
   return (
     <div
-      className={`relative mx-auto flex justify-between overflow-hidden border border-slate-200 bg-slate-50 text-center`}
-      style={{
-        height: size,
-        width: size,
-      }}
+      className={`scale-100 relative w-full h-full mx-auto flex justify-between overflow-hidden border border-slate-200 bg-slate-50 text-center`}
     >
       <button
         onClick={() => setSlideshowPosition((prev) => prev - 1)}

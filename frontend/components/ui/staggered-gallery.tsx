@@ -13,25 +13,27 @@ function StaggeredGallery({ gallery }: { gallery: Gallery }) {
         </p>
       </div>
 
-      <ul className="p-4 md:space-y-8">
+      <ul className="p-4 space-y-8">
         {gallery.items.map((galleryItem, index) => {
           const isEven = index % 2 === 0;
           return (
             <li key={`row-${index}`}>
-              <div className="flex flex-col justify-center px-8 lg:flex-row lg:space-x-8">
+              <div className="flex flex-col justify-center md:px-8 md:gap-8 lg:flex-row">
                 <div
-                  className={`order-1 lg:order-${isEven ? 1 : 2} mb-4 space-y-2 text-left lg:mb-0`}
+                  className={`order-1 ${isEven ? "lg:order-1" : "lg:order-2"} mb-4 space-y-2 text-left lg:mb-0 lg:w-1/2 `}
                 >
-                  <h1 className="text-3xl font-bold">
+                  <h1 className="text-2xl sm:text-3xl font-bold">
                     {galleryItem.title || "Title"}
                   </h1>
-                  <p className="text-2xl leading-relaxed">
+                  <p className="text-xl sm:text-2xl leading-relaxed">
                     {galleryItem.description}
                   </p>
                 </div>
 
-                <div className={`order-2 lg:order-${isEven ? 2 : 1} `}>
-                  <Slideshow images={galleryItem.image_urls || []} size={500} />
+                <div className={`order-2 ${isEven ? "lg:order-2" : "lg:order-1"} lg:w-1/2`}>
+                  <div className="aspect-square w-full max-w-[500px] mx-auto">
+                    <Slideshow images={galleryItem.image_urls || []} size={500} />
+                  </div>
                 </div>
               </div>
             </li>
