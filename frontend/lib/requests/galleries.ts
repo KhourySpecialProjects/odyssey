@@ -15,31 +15,33 @@ import { Droplet } from "@/types";
  * @returns The matching Droplets.
  */
 export async function getGalleryBySlug(
-    slug: string,
-    {
-        sort,
-        filters,
-        pagination = { pageSize: 250, page: 1 },
-        populate = {
-            items: { populate: "*" }
-        },
-        fields = ["id", "slug", "title"],
-    }: StrapiRequestParams = {},
+  slug: string,
+  {
+    sort,
+    filters,
+    pagination = { pageSize: 250, page: 1 },
+    populate = {
+      items: { populate: "*" },
+    },
+    fields = ["id", "slug", "title"],
+  }: StrapiRequestParams = {},
 ): Promise<Gallery> {
-    const path = `/galleries`;
-    const urlParams = {
-        sort,
-        filters: {
-            slug: { $eq: slug },
-        },
-        populate,
-        fields,
-        pagination,
-    };
+  const path = `/galleries`;
+  const urlParams = {
+    sort,
+    filters: {
+      slug: { $eq: slug },
+    },
+    populate,
+    fields,
+    pagination,
+  };
 
-    return (await fetchAPI<Gallery[]>(path, {
-        urlParams,
-        next: { tags: ["galleries"] },
-        cache: "no-store",
-    }))[0];
+  return (
+    await fetchAPI<Gallery[]>(path, {
+      urlParams,
+      next: { tags: ["galleries"] },
+      cache: "no-store",
+    })
+  )[0];
 }
