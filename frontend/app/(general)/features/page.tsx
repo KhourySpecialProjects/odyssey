@@ -14,7 +14,7 @@ export default async function FeaturesPage() {
   if (!gallery) {
     return (
       <GradientBackground className="flex-grow">
-        <div className="flex items-center justify-center h-64">
+        <div className="flex h-64 items-center justify-center">
           <p>Gallery not found</p>
         </div>
       </GradientBackground>

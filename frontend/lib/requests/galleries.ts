@@ -31,12 +31,11 @@ export async function getGalleryBySlug(
     pagination,
   };
 
-  const galleries =
-    await fetchAPI<Gallery[]>(path, {
-      urlParams,
-      next: { tags: ["galleries"] },
-      cache: "no-store",
-    });
-    
+  const galleries = await fetchAPI<Gallery[]>(path, {
+    urlParams,
+    next: { tags: ["galleries"] },
+    cache: "no-store",
+  });
+
   return galleries.length > 0 ? galleries[0] : undefined;
 }

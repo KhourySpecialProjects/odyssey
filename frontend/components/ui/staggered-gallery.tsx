@@ -34,9 +34,7 @@ function StaggeredGallery({ gallery }: { gallery: Gallery }) {
                   className={`order-2 ${isEven ? "lg:order-2" : "lg:order-1"} lg:w-1/2`}
                 >
                   <div className="mx-auto aspect-square w-full max-w-[500px]">
-                    <Slideshow
-                      images={galleryItem.image_urls || []}
-                    />
+                    <Slideshow images={galleryItem.image_urls || []} />
                   </div>
                 </div>
               </div>
