@@ -49,7 +49,6 @@ const focusAreas = [
 ];
 
 export default async function AboutPage() {
-
   return (
     <GradientBackground>
       <>

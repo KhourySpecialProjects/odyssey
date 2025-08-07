@@ -5,15 +5,15 @@ import { Gallery } from "@/types";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-    title: "Features",
+  title: "Features",
 };
 
 export default async function FeaturesPage() {
-    const gallery: Gallery | void = await getGalleryBySlug("features");
+  const gallery: Gallery | void = await getGalleryBySlug("features");
 
-    return (
-        <GradientBackground className="flex-grow">
-            <StaggeredGallery gallery={gallery} />
-        </GradientBackground>
-    );
+  return (
+    <GradientBackground className="flex-grow">
+      <StaggeredGallery gallery={gallery} />
+    </GradientBackground>
+  );
 }

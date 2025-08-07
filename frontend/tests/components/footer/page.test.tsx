@@ -30,10 +30,7 @@ describe("Footer", () => {
       "href",
       "/contributors",
     );
-    expect(screen.getByText("Features")).toHaveAttribute(
-      "href",
-      "/features",
-    );
+    expect(screen.getByText("Features")).toHaveAttribute("href", "/features");
     expect(screen.getByText("FAQ")).toHaveAttribute("href", "/faq");
   });
 });
