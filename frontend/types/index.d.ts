@@ -89,7 +89,7 @@ export type Media = {
 export type GalleryItem = {
   title?: string;
   description?: string;
-  images?: Media[];
+  image_urls?: string[];
 };
 
 export type Gallery = {

@@ -28,21 +28,21 @@ function StaggeredGallery({
               {index % 2 == 0 ? (
                 <div className="flex flex-row justify-center space-x-8 px-8">
                   <div className="">
-                    <Slideshow images={galleryItem.images?.map((image) => image.url) || []} size={500} />
+                    <Slideshow images={galleryItem.image_urls || []} size={500} />
                   </div>
                   <div className="text-left space-y-2">
-                    <h1 className="text-3xl font-bold">Title</h1>
+                    <h1 className="text-3xl font-bold">{galleryItem.title || "Title"}</h1>
                     <p className="text-2xl leading-relaxed">{galleryItem.description}</p>
                   </div>
                 </div>
               ) : (
                 <div className="flex flex-row justify-center space-x-8 px-8">
                   <div className="text-left space-y-2">
-                    <h1 className="text-3xl font-bold">Title</h1>
+                    <h1 className="text-3xl font-bold">{galleryItem.title || "Title"}</h1>
                     <p className="text-2xl leading-relaxed">{galleryItem.description}</p>
                   </div>
                   <div className="">
-                    <Slideshow images={galleryItem.images?.map((image) => image.url) || []} size={500} />
+                    <Slideshow images={galleryItem.image_urls || []} size={500} />
                   </div>
                 </div>
               )
