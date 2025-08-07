@@ -7,9 +7,6 @@ import {
   UserIcon,
 } from "lucide-react";
 import { Metadata } from "next";
-import { StaggeredGallery } from "@/components/ui/staggered-gallery";
-import { getGalleryBySlug } from "@/lib/requests/galleries";
-import { Gallery } from "@/types";
 
 export const metadata: Metadata = {
   title: "About",
@@ -52,7 +49,6 @@ const focusAreas = [
 ];
 
 export default async function AboutPage() {
-  const gallery: Gallery | void = await getGalleryBySlug("features");
 
   return (
     <GradientBackground>
@@ -158,7 +154,6 @@ export default async function AboutPage() {
           </div>
         </div>
       </>
-      <StaggeredGallery gallery={gallery} />
     </GradientBackground>
   );
 }

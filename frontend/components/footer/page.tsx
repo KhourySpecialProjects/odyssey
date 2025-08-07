@@ -35,6 +35,9 @@ export default async function Footer() {
             <Link className={linkStyles} href="/about">
               About Odyssey
             </Link>
+            <Link className={linkStyles} href="/features">
+              Features
+            </Link>
             <Link className={linkStyles} href="/website-creators">
               Website Creators
             </Link>

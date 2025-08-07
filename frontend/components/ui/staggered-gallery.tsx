@@ -3,7 +3,7 @@ import { Slideshow } from "./slideshow";
 
 function StaggeredGallery({ gallery }: { gallery: Gallery }) {
   return (
-    <div className="mx-auto h-full w-full space-y-8 pt-16 pb-8 text-center">
+    <div className="mx-auto h-full w-full space-y-8 pb-8 text-center">
       <div className="mx-auto max-w-2xl text-center">
         <h1 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl dark:text-white">
           {gallery.title}
