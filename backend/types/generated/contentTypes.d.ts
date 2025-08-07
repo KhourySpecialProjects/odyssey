@@ -1067,6 +1067,7 @@ export interface ApiFriendshipFriendship extends Schema.CollectionType {
 export interface ApiGalleryGallery extends Schema.CollectionType {
   collectionName: 'galleries';
   info: {
+    description: '';
     displayName: 'Gallery';
     pluralName: 'galleries';
     singularName: 'gallery';
@@ -1083,8 +1084,8 @@ export interface ApiGalleryGallery extends Schema.CollectionType {
     > &
       Attribute.Private;
     items: Attribute.Component<'galleries.gallery-item', true>;
-    slug: Attribute.UID;
-    title: Attribute.String;
+    slug: Attribute.UID & Attribute.Required;
+    title: Attribute.String & Attribute.Required;
     updatedAt: Attribute.DateTime;
     updatedBy: Attribute.Relation<
       'api::gallery.gallery',

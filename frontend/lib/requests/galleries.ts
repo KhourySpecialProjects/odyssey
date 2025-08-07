@@ -1,31 +1,25 @@
 "use server";
 
-import { Enrollment, Gallery } from "@/types";
+import { Gallery } from "@/types";
 import { StrapiRequestParams } from "@/types/strapi";
 import { fetchAPI } from "../utils";
 
-import { getCurrentUser } from "@/lib/auth/session";
-import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
-import { revalidatePath } from "next/cache";
-import { Droplet } from "@/types";
-
 /**
- * Gets the first 25 enrollments matching the specified criteria, unless overridden by `options`.
- * @param options Strapi query modifiers.
- * @returns The matching Droplets.
+ * Returns the Gallery object with the given slug
+ * @param slug the slug of the Gallery
+ * @returns Gallery object
  */
 export async function getGalleryBySlug(
   slug: string,
   {
     sort,
-    filters,
     pagination = { pageSize: 250, page: 1 },
     populate = {
       items: { populate: "*" },
     },
     fields = ["id", "slug", "title"],
   }: StrapiRequestParams = {},
-): Promise<Gallery> {
+): Promise<Gallery | undefined> {
   const path = `/galleries`;
   const urlParams = {
     sort,
@@ -37,11 +31,12 @@ export async function getGalleryBySlug(
     pagination,
   };
 
-  return (
+  const galleries =
     await fetchAPI<Gallery[]>(path, {
       urlParams,
       next: { tags: ["galleries"] },
       cache: "no-store",
-    })
-  )[0];
+    });
+    
+  return galleries.length > 0 ? galleries[0] : undefined;
 }

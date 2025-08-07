@@ -36,7 +36,6 @@ function StaggeredGallery({ gallery }: { gallery: Gallery }) {
                   <div className="mx-auto aspect-square w-full max-w-[500px]">
                     <Slideshow
                       images={galleryItem.image_urls || []}
-                      size={500}
                     />
                   </div>
                 </div>

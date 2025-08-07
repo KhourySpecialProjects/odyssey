@@ -3,7 +3,7 @@
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useState } from "react";
 
-function Slideshow({ images, size }: { images: string[]; size: number }) {
+function Slideshow({ images }: { images: string[] }) {
   const [slideshowPosition, setSlideshowPosition] = useState(0);
 
   const arrowSize = 64;
@@ -23,11 +23,18 @@ function Slideshow({ images, size }: { images: string[]; size: number }) {
 
       <ul className="">
         {images.map((image, index) => {
+          if (images.length === 0) {
+            return (
+              <div className="flex h-full w-full items-center justify-center border border-slate-200 bg-slate-50">
+                <p className="text-slate-500">No images available</p>
+              </div>
+            );
+          }
           return (
             <div key={`${index}`} className="z-10">
               <img
                 src={image}
-                alt="Profile"
+                alt="Gallery Image"
                 className="absolute z-10 h-full w-full transition-transform duration-500 ease-in-out"
                 style={{
                   transform: `translateX(${(index - slideshowPosition) * 100 - 50}%)`,

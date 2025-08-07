@@ -11,6 +11,16 @@ export const metadata: Metadata = {
 export default async function FeaturesPage() {
   const gallery: Gallery | void = await getGalleryBySlug("features");
 
+  if (!gallery) {
+    return (
+      <GradientBackground className="flex-grow">
+        <div className="flex items-center justify-center h-64">
+          <p>Gallery not found</p>
+        </div>
+      </GradientBackground>
+    );
+  }
+
   return (
     <GradientBackground className="flex-grow">
       <StaggeredGallery gallery={gallery} />
