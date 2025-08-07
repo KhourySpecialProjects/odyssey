@@ -26,13 +26,13 @@ describe("Footer", () => {
     render(FooterComponent);
 
     expect(screen.getByText("About Odyssey")).toHaveAttribute("href", "/about");
-    expect(screen.getByText("Website Creators")).toHaveAttribute(
+    expect(screen.getByText("Contributors")).toHaveAttribute(
       "href",
-      "/website-creators",
+      "/contributors",
     );
-    expect(screen.getByText("Content Creators")).toHaveAttribute(
+    expect(screen.getByText("Features")).toHaveAttribute(
       "href",
-      "/content-creators",
+      "/features",
     );
     expect(screen.getByText("FAQ")).toHaveAttribute("href", "/faq");
   });

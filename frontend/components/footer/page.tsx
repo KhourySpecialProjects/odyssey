@@ -38,11 +38,8 @@ export default async function Footer() {
             <Link className={linkStyles} href="/features">
               Features
             </Link>
-            <Link className={linkStyles} href="/website-creators">
-              Website Creators
-            </Link>
-            <Link className={linkStyles} href="/content-creators">
-              Content Creators
+            <Link className={linkStyles} href="/contributors">
+              Contributors
             </Link>
             <Link className={linkStyles} href="/faq">
               FAQ
