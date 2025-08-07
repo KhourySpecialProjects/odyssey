@@ -52,7 +52,6 @@ const focusAreas = [
 ];
 
 export default async function AboutPage() {
-
   const gallery: Gallery | void = await getGalleryBySlug("features");
 
   return (
@@ -159,10 +158,7 @@ export default async function AboutPage() {
           </div>
         </div>
       </>
-      <StaggeredGallery
-        gallery={gallery}
-      />
-
+      <StaggeredGallery gallery={gallery} />
     </GradientBackground>
   );
 }
