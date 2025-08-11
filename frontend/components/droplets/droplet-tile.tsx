@@ -227,7 +227,7 @@ export function DropletTile({
                             e.preventDefault();
                             setDescriptionExpanded(false);
                           }}
-                          className="text-sm text-sky-700 dark:text-slate-300"
+                          className="text-sm text-sky-700 dark:text-sky-500"
                         >
                           See Less
                         </button>
@@ -237,7 +237,7 @@ export function DropletTile({
                             e.preventDefault();
                             setDescriptionExpanded(true);
                           }}
-                          className="text-sm text-sky-700 dark:text-slate-300"
+                          className="text-sm text-sky-700 dark:text-sky-500"
                         >
                           See More
                         </button>
