@@ -37,6 +37,11 @@ export function DropletTile({
   const [averageRating, setAverageRating] = useState<number>(0);
   const [descriptionExpanded, setDescriptionExpanded] = useState(false);
 
+const strippedDescription = droplet.description?.replace(/<\/p>\s*<p>/gi, "\n")
+  .replace(/<br\s*\/?>/gi, "\n")
+  .replace(/<\/?p>/gi, "")
+  .replace(/<[^>]+>/g, "")
+  .trim();
   const dropletLessonIds = droplet.lessons?.map((l) => l.id) || [];
   const completedLessonsInDroplet = completedLessonIds.filter((id) =>
     dropletLessonIds.includes(id),
@@ -44,8 +49,8 @@ export function DropletTile({
   const completionPercentage =
     dropletLessonIds.length > 0
       ? Math.round(
-          (completedLessonsInDroplet.length / dropletLessonIds.length) * 100,
-        )
+        (completedLessonsInDroplet.length / dropletLessonIds.length) * 100,
+      )
       : 0;
 
   let daysUntil = 0;
@@ -132,28 +137,30 @@ export function DropletTile({
       href={(droplet.status == "draft" ? `/draft` : "") + `/d/${droplet.slug}`}
     >
       <li className="h-full rounded-md border border-slate-200 bg-slate-50 p-2 transition-colors hover:border-slate-300 dark:border-slate-500 dark:bg-slate-800">
-        <Button
-          size="sm"
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            changeVisibility();
-          }}
-          className={`${isArchived === true || isArchived === false ? "visibility: visible" : "visibility: hidden"} bg-white hover:bg-slate-300 dark:bg-slate-300`}
-        >
-          <div className="group relative">
-            {isArchived ? (
-              <ArchiveRestore className="text-purple-800" />
-            ) : (
-              <Archive className="text-purple-800" />
-            )}
-            <span className="absolute top-full left-1/2 mt-1 w-max -translate-x-1/2 transform rounded bg-gray-800 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100">
-              {isArchived ? "Unarchive" : "Archive"}
-            </span>
-          </div>
-        </Button>
+
+
         <div className="flex h-full flex-col justify-between gap-3 p-4">
           <div className="space-y-3">
+            <Button
+              size="sm"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                changeVisibility();
+              }}
+              className={`${isArchived === true || isArchived === false ? "visibility: visible" : "visibility: hidden"} bg-white hover:bg-slate-300 dark:bg-slate-300 mx-auto`}
+            >
+              <div className="group relative">
+                {isArchived ? (
+                  <ArchiveRestore className="text-purple-800" />
+                ) : (
+                  <Archive className="text-purple-800" />
+                )}
+                <span className="absolute top-full left-1/2 mt-1 w-max -translate-x-1/2 transform rounded bg-gray-800 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100">
+                  {isArchived ? "Unarchive" : "Archive"}
+                </span>
+              </div>
+            </Button>
             <div className="flex flex-0 flex-row flex-wrap gap-1.5">
               {droplet.status == "draft" ? (
                 <Badge variant="destructive">Draft</Badge>
@@ -209,16 +216,15 @@ export function DropletTile({
                 {droplet.name}
               </span>
 
-              {droplet.description &&
-                droplet.description.trim() !== "<p></p>" &&
-                droplet.description.trim() !== "" && (
+              {strippedDescription &&
+                strippedDescription.trim() !== "<p></p>" &&
+                strippedDescription.trim() !== "" && (
                   <>
                     <p
-                      className={`${
-                        descriptionExpanded ? "line-clamp-none" : "line-clamp-2"
-                      } text-md font-black text-slate-700 dark:text-slate-300`}
+                      className={`${descriptionExpanded ? "line-clamp-none" : "line-clamp-2"
+                        } text-md font-black text-slate-700 dark:text-slate-300`}
                     >
-                      {droplet.description}
+                      {strippedDescription}
                     </p>
                     <p>
                       {descriptionExpanded ? (
