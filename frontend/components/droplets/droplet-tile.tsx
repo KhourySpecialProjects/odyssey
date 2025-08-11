@@ -44,8 +44,8 @@ export function DropletTile({
   const completionPercentage =
     dropletLessonIds.length > 0
       ? Math.round(
-        (completedLessonsInDroplet.length / dropletLessonIds.length) * 100,
-      )
+          (completedLessonsInDroplet.length / dropletLessonIds.length) * 100,
+        )
       : 0;
 
   let daysUntil = 0;
@@ -152,7 +152,7 @@ export function DropletTile({
             </span>
           </div>
         </Button>
-        <div className="flex flex-col justify-between gap-3 p-4 h-full">
+        <div className="flex h-full flex-col justify-between gap-3 p-4">
           <div className="space-y-3">
             <div className="flex flex-0 flex-row flex-wrap gap-1.5">
               {droplet.status == "draft" ? (
@@ -214,8 +214,9 @@ export function DropletTile({
                 droplet.description.trim() !== "" && (
                   <>
                     <p
-                      className={`${descriptionExpanded ? "line-clamp-none" : "line-clamp-2"
-                        } text-md font-black text-slate-700 dark:text-slate-300`}
+                      className={`${
+                        descriptionExpanded ? "line-clamp-none" : "line-clamp-2"
+                      } text-md font-black text-slate-700 dark:text-slate-300`}
                     >
                       {droplet.description}
                     </p>
@@ -244,8 +245,6 @@ export function DropletTile({
                     </p>
                   </>
                 )}
-
-
             </div>
           </div>
 
