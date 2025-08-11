@@ -35,6 +35,7 @@ export function DropletTile({
   dueDate,
 }: DropletTileProps) {
   const [averageRating, setAverageRating] = useState<number>(0);
+  const [descriptionExpanded, setDescriptionExpanded] = useState(false);
 
   const dropletLessonIds = droplet.lessons?.map((l) => l.id) || [];
   const completedLessonsInDroplet = completedLessonIds.filter((id) =>
@@ -43,8 +44,8 @@ export function DropletTile({
   const completionPercentage =
     dropletLessonIds.length > 0
       ? Math.round(
-          (completedLessonsInDroplet.length / dropletLessonIds.length) * 100,
-        )
+        (completedLessonsInDroplet.length / dropletLessonIds.length) * 100,
+      )
       : 0;
 
   let daysUntil = 0;
@@ -202,10 +203,49 @@ export function DropletTile({
               </Badge>
             ))}
           </div>
+          <div className="flex flex-col justify-center gap-1">
+            <span className="block w-full place-self-end text-3xl font-black text-slate-950 dark:text-slate-300">
+              {droplet.name}
+            </span>
 
-          <span className="block w-full place-self-end text-3xl font-black text-slate-950 dark:text-slate-300">
-            {droplet.name}
-          </span>
+            {droplet.description &&
+              droplet.description.trim() !== "<p></p>" &&
+              droplet.description.trim() !== "" && (
+                <>
+                  <p
+                    className={`${descriptionExpanded ? "line-clamp-none" : "line-clamp-2"
+                      } text-md font-black text-slate-700 dark:text-slate-300`}
+                  >
+                    {droplet.description}
+                  </p>
+                  <p>
+                    {descriptionExpanded ? (
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setDescriptionExpanded(false);
+                        }}
+                        className="text-sm text-sky-700 dark:text-slate-300"
+                      >
+                        See Less
+                      </button>
+                    ) : (
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setDescriptionExpanded(true);
+                        }}
+                        className="text-sm text-sky-700 dark:text-slate-300"
+                      >
+                        See More
+                      </button>
+                    )}
+                  </p>
+                </>
+              )}
+
+
+          </div>
 
           {averageRating != 0 ? (
             <div className="flex w-full origin-left scale-[0.55] items-start">
