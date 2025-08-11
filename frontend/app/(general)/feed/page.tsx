@@ -23,7 +23,7 @@ export default async function FeedPage() {
           Check out what&apos;s happening right now
         </p>
       </div>
-      <div className="w-full px-4 sm:px-16 max-w-7xl mx-auto">
+      <div className="mx-auto w-full max-w-7xl px-4 sm:px-16">
         <FeedContainer authUser={authUser} />
       </div>
     </>
