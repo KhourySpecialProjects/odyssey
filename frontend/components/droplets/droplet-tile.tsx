@@ -37,11 +37,12 @@ export function DropletTile({
   const [averageRating, setAverageRating] = useState<number>(0);
   const [descriptionExpanded, setDescriptionExpanded] = useState(false);
 
-const strippedDescription = droplet.description?.replace(/<\/p>\s*<p>/gi, "\n")
-  .replace(/<br\s*\/?>/gi, "\n")
-  .replace(/<\/?p>/gi, "")
-  .replace(/<[^>]+>/g, "")
-  .trim();
+  const strippedDescription = droplet.description
+    ?.replace(/<\/p>\s*<p>/gi, "\n")
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<\/?p>/gi, "")
+    .replace(/<[^>]+>/g, "")
+    .trim();
   const dropletLessonIds = droplet.lessons?.map((l) => l.id) || [];
   const completedLessonsInDroplet = completedLessonIds.filter((id) =>
     dropletLessonIds.includes(id),
@@ -49,8 +50,8 @@ const strippedDescription = droplet.description?.replace(/<\/p>\s*<p>/gi, "\n")
   const completionPercentage =
     dropletLessonIds.length > 0
       ? Math.round(
-        (completedLessonsInDroplet.length / dropletLessonIds.length) * 100,
-      )
+          (completedLessonsInDroplet.length / dropletLessonIds.length) * 100,
+        )
       : 0;
 
   let daysUntil = 0;
@@ -137,8 +138,6 @@ const strippedDescription = droplet.description?.replace(/<\/p>\s*<p>/gi, "\n")
       href={(droplet.status == "draft" ? `/draft` : "") + `/d/${droplet.slug}`}
     >
       <li className="h-full rounded-md border border-slate-200 bg-slate-50 p-2 transition-colors hover:border-slate-300 dark:border-slate-500 dark:bg-slate-800">
-
-
         <div className="flex h-full flex-col justify-between gap-3 p-4">
           <div className="space-y-3">
             <Button
@@ -148,7 +147,7 @@ const strippedDescription = droplet.description?.replace(/<\/p>\s*<p>/gi, "\n")
                 e.stopPropagation();
                 changeVisibility();
               }}
-              className={`${isArchived === true || isArchived === false ? "visibility: visible" : "visibility: hidden"} bg-white hover:bg-slate-300 dark:bg-slate-300 mx-auto`}
+              className={`${isArchived === true || isArchived === false ? "visibility: visible" : "visibility: hidden"} mx-auto bg-white hover:bg-slate-300 dark:bg-slate-300`}
             >
               <div className="group relative">
                 {isArchived ? (
@@ -221,8 +220,9 @@ const strippedDescription = droplet.description?.replace(/<\/p>\s*<p>/gi, "\n")
                 strippedDescription.trim() !== "" && (
                   <>
                     <p
-                      className={`${descriptionExpanded ? "line-clamp-none" : "line-clamp-2"
-                        } text-md font-black text-slate-700 dark:text-slate-300`}
+                      className={`${
+                        descriptionExpanded ? "line-clamp-none" : "line-clamp-2"
+                      } text-md font-black text-slate-700 dark:text-slate-300`}
                     >
                       {strippedDescription}
                     </p>
