@@ -35,6 +35,7 @@ export function DropletTile({
   dueDate,
 }: DropletTileProps) {
   const [averageRating, setAverageRating] = useState<number>(0);
+  const [descriptionExpanded, setDescriptionExpanded] = useState(false);
 
   const dropletLessonIds = droplet.lessons?.map((l) => l.id) || [];
   const completedLessonsInDroplet = completedLessonIds.filter((id) =>
@@ -151,61 +152,101 @@ export function DropletTile({
             </span>
           </div>
         </Button>
-        <div className="flex flex-col justify-end gap-3 p-4">
-          <div className="flex flex-0 flex-row flex-wrap gap-1.5">
-            {droplet.status == "draft" ? (
-              <Badge variant="destructive">Draft</Badge>
-            ) : null}
+        <div className="flex h-full flex-col justify-between gap-3 p-4">
+          <div className="space-y-3">
+            <div className="flex flex-0 flex-row flex-wrap gap-1.5">
+              {droplet.status == "draft" ? (
+                <Badge variant="destructive">Draft</Badge>
+              ) : null}
 
-            {dueDate && dueDate !== "" && daysUntil > -2 && (
-              <Badge
-                className={getDueDateBadgeColor(daysUntil, true)}
-                variant="outline"
-              >
-                <Clock size={15} className="mr-1" />
+              {dueDate && dueDate !== "" && daysUntil > -2 && (
+                <Badge
+                  className={getDueDateBadgeColor(daysUntil, true)}
+                  variant="outline"
+                >
+                  <Clock size={15} className="mr-1" />
 
-                {(() => {
-                  if (
-                    DateTime.fromISO(dueDate).toISODate() ==
-                    DateTime.local().toISODate()
-                  ) {
-                    return "Due today!";
-                  } else if (daysUntil === 1) {
-                    return `Due in 1 day`;
-                  } else if (daysUntil > 0) {
-                    return `Due in ${daysUntil} days`;
-                  } else {
-                    return "Late!";
-                  }
-                })()}
+                  {(() => {
+                    if (
+                      DateTime.fromISO(dueDate).toISODate() ==
+                      DateTime.local().toISODate()
+                    ) {
+                      return "Due today!";
+                    } else if (daysUntil === 1) {
+                      return `Due in 1 day`;
+                    } else if (daysUntil > 0) {
+                      return `Due in ${daysUntil} days`;
+                    } else {
+                      return "Late!";
+                    }
+                  })()}
+                </Badge>
+              )}
+
+              {isEnrolled && dropletLessonIds.length > 0 && (
+                <Badge className={getCompletionBadgeColor()} variant="outline">
+                  {completionPercentage}% Complete
+                </Badge>
+              )}
+
+              <Badge className="pointer-events-none border-black bg-white text-black dark:bg-slate-300">
+                {uppercaseFirstChar(droplet.focusArea)}
               </Badge>
-            )}
-
-            {isEnrolled && dropletLessonIds.length > 0 && (
-              <Badge className={getCompletionBadgeColor()} variant="outline">
-                {completionPercentage}% Complete
+              <Badge className="pointer-events-none border-black bg-white text-black dark:bg-slate-300">
+                {uppercaseFirstChar(droplet.type)}
               </Badge>
-            )}
+              {droplet.tags?.map((tag) => (
+                <Badge
+                  key={tag.id}
+                  className="pointer-events-none border-black bg-white text-black dark:bg-slate-300"
+                >
+                  {tag.name}
+                </Badge>
+              ))}
+            </div>
+            <div className="flex flex-col justify-center gap-1">
+              <span className="block w-full place-self-end text-3xl font-black text-slate-950 dark:text-slate-300">
+                {droplet.name}
+              </span>
 
-            <Badge className="pointer-events-none border-black bg-white text-black dark:bg-slate-300">
-              {uppercaseFirstChar(droplet.focusArea)}
-            </Badge>
-            <Badge className="pointer-events-none border-black bg-white text-black dark:bg-slate-300">
-              {uppercaseFirstChar(droplet.type)}
-            </Badge>
-            {droplet.tags?.map((tag) => (
-              <Badge
-                key={tag.id}
-                className="pointer-events-none border-black bg-white text-black dark:bg-slate-300"
-              >
-                {tag.name}
-              </Badge>
-            ))}
+              {droplet.description &&
+                droplet.description.trim() !== "<p></p>" &&
+                droplet.description.trim() !== "" && (
+                  <>
+                    <p
+                      className={`${
+                        descriptionExpanded ? "line-clamp-none" : "line-clamp-2"
+                      } text-md font-black text-slate-700 dark:text-slate-300`}
+                    >
+                      {droplet.description}
+                    </p>
+                    <p>
+                      {descriptionExpanded ? (
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault();
+                            setDescriptionExpanded(false);
+                          }}
+                          className="text-sm text-sky-700 dark:text-sky-500"
+                        >
+                          See Less
+                        </button>
+                      ) : (
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault();
+                            setDescriptionExpanded(true);
+                          }}
+                          className="text-sm text-sky-700 dark:text-sky-500"
+                        >
+                          See More
+                        </button>
+                      )}
+                    </p>
+                  </>
+                )}
+            </div>
           </div>
-
-          <span className="block w-full place-self-end text-3xl font-black text-slate-950 dark:text-slate-300">
-            {droplet.name}
-          </span>
 
           {averageRating != 0 ? (
             <div className="flex w-full origin-left scale-[0.55] items-start">

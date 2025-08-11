@@ -23,7 +23,9 @@ export default async function FeaturesPage() {
 
   return (
     <GradientBackground className="flex-grow">
-      <StaggeredGallery gallery={gallery} />
+      <div className="mx-auto max-w-7xl">
+        <StaggeredGallery gallery={gallery} />
+      </div>
     </GradientBackground>
   );
 }
