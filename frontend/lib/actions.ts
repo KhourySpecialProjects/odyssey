@@ -1674,3 +1674,31 @@ export async function updateDropletFunFact(fact: string, dropletId: number) {
     return { success: false, error };
   }
 }
+
+export async function updateDropletAverageRating(rating: number, dropletId: number) {
+  try {
+    const response = await fetch(
+      `${STRAPI_API_URL}/api/droplets/${dropletId}`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+        },
+        body: JSON.stringify({
+          data: {
+            averageRating: rating,
+          },
+        }),
+      },
+    );
+
+    if (!response.ok) {
+      throw new Error("Failed to update average rating");
+    }
+    return { success: true };
+  } catch (error) {
+    console.error("Error updating average rating:", error);
+    return { success: false, error };
+  }
+}

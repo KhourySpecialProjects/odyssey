@@ -19,7 +19,7 @@ import { getCurrentUser } from "@/lib/auth/session";
 import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
 import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
 import { StarRating } from "@/components/ui/rating-stars";
-import { getDropletAverageRating } from "@/lib/requests/enrollment";
+import { calculateDropletAverageRating } from "@/lib/requests/enrollment";
 
 type Props = {
   params: Promise<params>;
@@ -97,9 +97,9 @@ export default async function DropletRoute({ params }: Props) {
               </Badge>
             ))}
 
-            {(await getDropletAverageRating(droplet)) != 0 ? (
+            {(await calculateDropletAverageRating(droplet)) != 0 ? (
               <StarRating
-                value={await getDropletAverageRating(droplet)}
+                value={await calculateDropletAverageRating(droplet)}
                 enrollmentID={""}
                 average={true}
               ></StarRating>
