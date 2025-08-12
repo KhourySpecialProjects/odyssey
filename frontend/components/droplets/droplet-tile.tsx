@@ -6,8 +6,7 @@ import { Droplet } from "@/types";
 import Link from "next/link";
 
 import { StarRating } from "@/components/ui/rating-stars";
-import { getDropletAverageRating } from "@/lib/requests/enrollment";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Button } from "../ui/button";
 import { toast } from "sonner";
 import { archiveDroplet } from "@/lib/actions";
@@ -62,14 +61,14 @@ export function DropletTile({
     daysUntil = Math.ceil(diffDays);
   }
 
-  useEffect(() => {
-    const fetchRating = async () => {
-      const rating = await getDropletAverageRating(droplet);
-      setAverageRating(rating);
-    };
+  // useEffect(() => {
+  //   const fetchRating = async () => {
+  //     const rating = await calculateDropletAverageRating(droplet);
+  //     setAverageRating(rating);
+  //   };
 
-    fetchRating();
-  }, [droplet]);
+  //   fetchRating();
+  // }, [droplet]);
 
   const getCompletionBadgeColor = () => {
     if (completionPercentage === 0)
@@ -254,10 +253,10 @@ export function DropletTile({
             </div>
           </div>
 
-          {averageRating != 0 ? (
+          {droplet.averageRating && droplet.averageRating != 0.0 ? (
             <div className="flex w-full origin-left scale-[0.55] items-start">
               <StarRating
-                value={averageRating}
+                value={droplet.averageRating || 0}
                 enrollmentID={""}
                 average={true}
                 uniqueId={droplet.id.toString()}

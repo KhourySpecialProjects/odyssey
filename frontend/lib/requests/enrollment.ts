@@ -206,7 +206,7 @@ export async function getEnrollByID<T extends Partial<Enrollment> = Enrollment>(
  * @param droplet The Droplet to calculate the average rating for
  * @returns The average rating or 0 if no ratings exist
  */
-export async function getDropletAverageRating(
+export async function calculateDropletAverageRating(
   droplet: Droplet,
 ): Promise<number> {
   const path = `/enrollments`;

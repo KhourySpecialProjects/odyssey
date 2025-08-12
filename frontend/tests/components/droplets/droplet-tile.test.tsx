@@ -1,6 +1,6 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { DropletTile } from "@/components/droplets/droplet-tile";
-import { getDropletAverageRating } from "@/lib/requests/enrollment";
+import { calculateDropletAverageRating } from "@/lib/requests/enrollment";
 import { archiveDroplet } from "@/lib/actions";
 import { toast } from "sonner";
 import { DateTime } from "luxon";
@@ -28,7 +28,7 @@ describe("DropletTile", () => {
   };
 
   beforeEach(() => {
-    (getDropletAverageRating as jest.Mock).mockResolvedValue(4.5);
+    (calculateDropletAverageRating as jest.Mock).mockResolvedValue(4.5);
   });
 
   it("renders droplet information", () => {

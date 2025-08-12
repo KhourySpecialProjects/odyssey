@@ -6,7 +6,7 @@ import {
 import { getCurrentUser } from "@/lib/auth/session";
 import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
 import {
-  getDropletAverageRating,
+  calculateDropletAverageRating,
   getEnrollmentsByAuthorizedUser,
 } from "@/lib/requests/enrollment";
 import { DropletTile } from "../droplets/droplet-tile";
@@ -77,7 +77,7 @@ export async function DropletsGrid({
   const ratingsMap = new Map();
   await Promise.all(
     dropletsWithCompletion.map(async (droplet) => {
-      const rating = await getDropletAverageRating(droplet);
+      const rating = await calculateDropletAverageRating(droplet);
       ratingsMap.set(droplet.id, rating);
     }),
   );

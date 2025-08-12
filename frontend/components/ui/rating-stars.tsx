@@ -2,9 +2,10 @@
 
 import React, { useState, useEffect } from "react";
 import { Star } from "lucide-react";
-import { changeEnrollmentRating } from "@/lib/requests/enrollment";
+import { changeEnrollmentRating, calculateDropletAverageRating } from "@/lib/requests/enrollment";
 import { getEnrollByID } from "@/lib/requests/enrollment";
 import { toast } from "sonner";
+import { updateDropletAverageRating } from "@/lib/actions";
 
 interface StarRatingProps {
   value: number;
@@ -51,8 +52,11 @@ const StarRating: React.FC<StarRatingProps> = ({
     if (!average && enrollmentID) {
       try {
         await changeEnrollmentRating(newRating, enrollmentID);
+        const droplet = (await getEnrollByID(enrollmentID)).droplet;
         setRating(newRating);
         setHover(newRating);
+        const averageRating = await calculateDropletAverageRating(droplet);
+        await updateDropletAverageRating(averageRating, droplet.id);
         toast.success("Rating submitted successfully");
       } catch (error) {
         console.error("Error updating rating:", error);
