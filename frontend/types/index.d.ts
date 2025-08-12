@@ -201,6 +201,7 @@ export type Droplet = {
   inReview?: boolean;
   afterReview?: string;
   funFact?: string;
+  averageRating?: number;
 };
 
 export type QuizAnswerOption = {

@@ -147,6 +147,10 @@
     },
     "funFact": {
       "type": "text"
+    },
+    "averageRating": {
+      "type": "decimal",
+      "max": 5
     }
   }
 }

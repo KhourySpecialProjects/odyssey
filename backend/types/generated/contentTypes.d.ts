@@ -831,6 +831,13 @@ export interface ApiDropletDroplet extends Schema.CollectionType {
       'manyToMany',
       'api::author.author'
     >;
+    averageRating: Attribute.Decimal &
+      Attribute.SetMinMax<
+        {
+          max: 5;
+        },
+        number
+      >;
     createdAt: Attribute.DateTime;
     createdBy: Attribute.Relation<
       'api::droplet.droplet',
