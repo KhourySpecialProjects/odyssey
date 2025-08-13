@@ -78,14 +78,14 @@ export function AddDropletDialog({
             onChange={(e) => setSearch(e.target.value)}
             className="w-full"
           />
-          <div className="grid grid-cols-1 gap-6 max-h-[60vh] overflow-y-auto">
+          <div className="grid max-h-[60vh] grid-cols-1 gap-6 overflow-y-auto">
             {filteredDroplets.map((droplet) => (
               <div key={droplet.id} className="group relative">
                 <GroupDropletTile droplet={droplet} />
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="absolute top-1/2 right-4 -translate-y-1/2 z-10"
+                  className="absolute top-1/2 right-4 z-10 -translate-y-1/2"
                   onClick={() => handleAddDroplet(droplet)}
                 >
                   <PlusCircle className="h-6 w-6 text-green-700" />
