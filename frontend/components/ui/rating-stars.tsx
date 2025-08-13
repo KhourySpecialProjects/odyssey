@@ -2,7 +2,10 @@
 
 import React, { useState, useEffect } from "react";
 import { Star } from "lucide-react";
-import { changeEnrollmentRating, calculateDropletAverageRating } from "@/lib/requests/enrollment";
+import {
+  changeEnrollmentRating,
+  calculateDropletAverageRating,
+} from "@/lib/requests/enrollment";
 import { getEnrollByID } from "@/lib/requests/enrollment";
 import { toast } from "sonner";
 import { updateDropletAverageRating } from "@/lib/actions";

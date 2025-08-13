@@ -9,7 +9,7 @@ jest.mock("@/lib/requests/data", () => ({
 }));
 
 jest.mock("@/lib/requests/enrollment", () => ({
-  getDropletAverageRating: jest.fn(),
+  calculateDropletAverageRating: jest.fn(),
 }));
 
 describe("AuthorDroplets", () => {
