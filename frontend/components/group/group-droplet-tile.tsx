@@ -1,8 +1,14 @@
-"use client"
+"use client";
 
 import { AuthorizedUser, Droplet } from "@/types";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import Link from "next/link";
 import { getDueDateBadgeColor, uppercaseFirstChar } from "@/lib/utils";
 import { Clock } from "lucide-react";
@@ -83,7 +89,7 @@ export function GroupDropletTile({
             )}
           </div>
           <CardTitle className="dark:text-slate-300">{droplet.name}</CardTitle>
-          <p className="text-muted-foreground text-sm dark:text-slate-400 pt-1">
+          <p className="text-muted-foreground pt-1 text-sm dark:text-slate-400">
             {droplet.lessons?.length || 0} lessons
           </p>
         </CardHeader>
@@ -93,8 +99,9 @@ export function GroupDropletTile({
             strippedDescription.trim() !== "" && (
               <>
                 <p
-                  className={`${descriptionExpanded ? "line-clamp-none" : "line-clamp-2"
-                    } text-md text-slate-700 dark:text-slate-300 pr-8`}
+                  className={`${
+                    descriptionExpanded ? "line-clamp-none" : "line-clamp-2"
+                  } text-md pr-8 text-slate-700 dark:text-slate-300`}
                 >
                   {strippedDescription}
                 </p>

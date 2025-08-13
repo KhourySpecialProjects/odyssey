@@ -64,13 +64,13 @@ const DropletItem = ({
   const combinedRef = useCombinedRefs<HTMLDivElement>(drag, drop);
 
   const [descriptionExpanded, setDescriptionExpanded] = useState(false);
-  
-    const strippedDescription = droplet.description
-      ?.replace(/<\/p>\s*<p>/gi, "\n")
-      .replace(/<br\s*\/?>/gi, "\n")
-      .replace(/<\/?p>/gi, "")
-      .replace(/<[^>]+>/g, "")
-      .trim();
+
+  const strippedDescription = droplet.description
+    ?.replace(/<\/p>\s*<p>/gi, "\n")
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<\/?p>/gi, "")
+    .replace(/<[^>]+>/g, "")
+    .trim();
 
   return (
     <div
@@ -108,8 +108,9 @@ const DropletItem = ({
             strippedDescription.trim() !== "" && (
               <>
                 <p
-                  className={`${descriptionExpanded ? "line-clamp-none" : "line-clamp-2"
-                    } text-md text-slate-700 dark:text-slate-300 pr-8 pt-1`}
+                  className={`${
+                    descriptionExpanded ? "line-clamp-none" : "line-clamp-2"
+                  } text-md pt-1 pr-8 text-slate-700 dark:text-slate-300`}
                 >
                   {strippedDescription}
                 </p>

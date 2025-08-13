@@ -18,14 +18,14 @@ function StaggeredGallery({ gallery }: { gallery: Gallery }) {
           const isEven = index % 2 === 0;
           return (
             <li key={`row-${index}`}>
-              <div className="flex flex-col justify-center items-center md:gap-8 md:px-8 lg:flex-row">
+              <div className="flex flex-col items-center justify-center md:gap-8 md:px-8 lg:flex-row">
                 <div
                   className={`order-1 ${isEven ? "lg:order-1" : "lg:order-2"} mb-4 space-y-2 text-left lg:mb-0 lg:w-1/2`}
                 >
                   <h1 className="text-2xl font-bold sm:text-3xl">
                     {galleryItem.title || "Title"}
                   </h1>
-                  <p className="text-xl leading-relaxed sm:text-2xl text-slate-700 dark:text-white">
+                  <p className="text-xl leading-relaxed text-slate-700 sm:text-2xl dark:text-white">
                     {galleryItem.description}
                   </p>
                 </div>
