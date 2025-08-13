@@ -3,7 +3,6 @@ import { EnrolledDropletsGrid } from "@/components/dashboard/enrolled-droplets-g
 import { getCurrentUser } from "@/lib/auth/session";
 import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
 import {
-  calculateDropletAverageRating,
   getEnrollmentsByAuthorizedUser,
 } from "@/lib/requests/enrollment";
 import { getUserDueDates } from "@/lib/requests/groups";
