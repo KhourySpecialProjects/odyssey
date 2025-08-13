@@ -1674,3 +1674,43 @@ export async function updateDropletFunFact(fact: string, dropletId: number) {
     return { success: false, error };
   }
 }
+
+export async function updateDropletAverageRating(
+  rating: number,
+  dropletId: number,
+) {
+  try {
+    const clamped = Math.min(
+      5,
+      Math.max(0, Number.isFinite(rating) ? rating : 0),
+    );
+    const rounded = Math.round(clamped * 10) / 10;
+    const response = await fetch(
+      `${STRAPI_API_URL}/api/droplets/${dropletId}`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+        },
+        body: JSON.stringify({
+          data: {
+            averageRating: rounded,
+          },
+        }),
+      },
+    );
+
+    if (!response.ok) {
+      throw new Error("Failed to update average rating");
+    }
+    revalidateTag("droplets");
+    revalidatePath("/(droplets)/d/[slug]", "page");
+    revalidatePath("/(general)/dashboard", "page");
+    revalidatePath("/(playlists)/p/[slug]", "page");
+    return { success: true };
+  } catch (error) {
+    console.error("Error updating average rating:", error);
+    return { success: false, error };
+  }
+}

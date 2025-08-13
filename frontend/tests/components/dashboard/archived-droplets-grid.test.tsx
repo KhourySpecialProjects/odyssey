@@ -15,7 +15,7 @@ jest.mock("@/lib/requests/authorized-user", () => ({
 
 jest.mock("@/lib/requests/enrollment", () => ({
   getEnrollmentsByAuthorizedUser: jest.fn(),
-  getDropletAverageRating: jest.fn(),
+  calculateDropletAverageRating: jest.fn(),
 }));
 
 jest.mock("@/components/dashboard/enrolled-droplets-grid-client", () => ({
