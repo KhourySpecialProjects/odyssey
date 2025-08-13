@@ -59,12 +59,8 @@ export async function EnrolledDropletsGrid({
     };
   });
 
-  const ratingsMap = new Map();
-  await Promise.all(
-    dropletsWithCompletion.map(async (droplet) => {
-      const rating = await calculateDropletAverageRating(droplet);
-      ratingsMap.set(droplet.id, rating);
-    }),
+  const ratingsMap = new Map<number, number>(
+    dropletsWithCompletion.map((d) => [d.id, d.averageRating ?? 0])
   );
 
   if (!dropletsWithCompletion || dropletsWithCompletion.length === 0) {
