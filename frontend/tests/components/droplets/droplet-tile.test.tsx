@@ -1,13 +1,8 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { DropletTile } from "@/components/droplets/droplet-tile";
-import { calculateDropletAverageRating } from "@/lib/requests/enrollment";
 import { archiveDroplet } from "@/lib/actions";
 import { toast } from "sonner";
 import { DateTime } from "luxon";
-
-jest.mock("@/lib/requests/enrollment", () => ({
-  calculateDropletAverageRating: jest.fn(),
-}));
 
 jest.mock("@/lib/actions", () => ({
   archiveDroplet: jest.fn(),
@@ -26,10 +21,6 @@ describe("DropletTile", () => {
     type: "tutorial",
     tags: [{ id: 1, name: "Tag 1" }],
   };
-
-  beforeEach(() => {
-    (calculateDropletAverageRating as jest.Mock).mockResolvedValue(4.5);
-  });
 
   it("renders droplet information", () => {
     render(<DropletTile droplet={mockDroplet as any} />);
