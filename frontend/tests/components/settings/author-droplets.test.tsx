@@ -2,14 +2,14 @@ import { render, screen } from "@testing-library/react";
 import { AuthorDroplets } from "@/components/settings/author-droplets";
 import { AuthorizedUserRoleTitle } from "@/lib/globals";
 import { DropletStatus, DropletType, FocusArea, TimeZone } from "@/types";
-import { getDropletAverageRating } from "@/lib/requests/enrollment";
+import { calculateDropletAverageRating } from "@/lib/requests/enrollment";
 
 jest.mock("@/lib/requests/data", () => ({
   fetchDropletsByAuthor: jest.fn(),
 }));
 
 jest.mock("@/lib/requests/enrollment", () => ({
-  getDropletAverageRating: jest.fn(),
+  calculateDropletAverageRating: jest.fn(),
 }));
 
 describe("AuthorDroplets", () => {
@@ -48,7 +48,7 @@ describe("AuthorDroplets", () => {
   beforeEach(() => {
     jest.clearAllMocks();
 
-    (getDropletAverageRating as jest.Mock).mockResolvedValue({
+    (calculateDropletAverageRating as jest.Mock).mockResolvedValue({
       rating: 4.5,
       count: 10,
     });

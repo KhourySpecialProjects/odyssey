@@ -4,7 +4,7 @@ const {
   getIsEnrollComplete,
   changeEnrollmentRating,
   getEnrollByID,
-  getDropletAverageRating,
+  calculateDropletAverageRating,
 } = require("../../lib/requests/enrollment");
 
 const { getCurrentUser } = require("../../lib/auth/session");
@@ -360,11 +360,11 @@ describe("Enrollment tests", () => {
     });
   });
 
-  describe("getDropletAverageRating", () => {
+  describe("calculateDropletAverageRating", () => {
     it("should fetch and return the average rating of a Droplet", async () => {
       fetchAPI.mockResolvedValueOnce(flattenAttributes(mockEnrollments));
 
-      const result = await getDropletAverageRating({ id: 456 });
+      const result = await calculateDropletAverageRating({ id: 456 });
 
       expect(fetchAPI).toHaveBeenCalledWith(
         "/enrollments",
@@ -398,7 +398,7 @@ describe("Enrollment tests", () => {
         },
       ]);
 
-      const result = await getDropletAverageRating({ id: 456 });
+      const result = await calculateDropletAverageRating({ id: 456 });
 
       expect(result).toEqual(0);
     });
@@ -406,7 +406,7 @@ describe("Enrollment tests", () => {
     it("should return 0 when there are no enrollments", async () => {
       fetchAPI.mockResolvedValueOnce([]);
 
-      const result = await getDropletAverageRating({ id: 456 });
+      const result = await calculateDropletAverageRating({ id: 456 });
 
       expect(result).toEqual(0);
     });
@@ -414,7 +414,7 @@ describe("Enrollment tests", () => {
     it("should handle errors correctly", async () => {
       fetchAPI.mockRejectedValueOnce(new Error("API Error"));
 
-      await expect(getDropletAverageRating({ id: 456 })).rejects.toThrow(
+      await expect(calculateDropletAverageRating({ id: 456 })).rejects.toThrow(
         "Error getting droplet average rating",
       );
     });

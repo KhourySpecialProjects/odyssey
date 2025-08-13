@@ -2,10 +2,7 @@ import { render, screen } from "@testing-library/react";
 import { EnrolledDropletsGrid } from "@/components/dashboard/enrolled-droplets-grid";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
-import {
-  getDropletAverageRating,
-  getEnrollmentsByAuthorizedUser,
-} from "@/lib/requests/enrollment";
+import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
 import { getUserDueDates } from "@/lib/requests/groups";
 import { Enrollment } from "@/types";
 
@@ -19,7 +16,7 @@ jest.mock("@/lib/requests/authorized-user", () => ({
 
 jest.mock("@/lib/requests/enrollment", () => ({
   getEnrollmentsByAuthorizedUser: jest.fn(),
-  getDropletAverageRating: jest.fn(),
+  calculateDropletAverageRating: jest.fn(),
 }));
 
 jest.mock("@/lib/requests/groups", () => ({
