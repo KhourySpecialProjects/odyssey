@@ -86,6 +86,19 @@ export type Media = {
   };
 };
 
+export type GalleryItem = {
+  title?: string;
+  description?: string;
+  image_urls?: string[];
+};
+
+export type Gallery = {
+  id: number;
+  title?: string;
+  slug: string;
+  items: GalleryItem[];
+};
+
 export type NavItem = {
   href: string;
   label: string;
@@ -188,6 +201,7 @@ export type Droplet = {
   inReview?: boolean;
   afterReview?: string;
   funFact?: string;
+  averageRating?: number;
 };
 
 export type QuizAnswerOption = {

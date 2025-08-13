@@ -20,7 +20,7 @@ export function LessonNameInput({
       Heading.configure({
         levels: [1],
         HTMLAttributes: {
-          class: "text-4xl font-extrabold text-balance",
+          class: "text-6xl font-extrabold text-balance",
         },
       }),
       Text,

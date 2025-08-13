@@ -1,0 +1,20 @@
+{
+  "collectionName": "components_galleries_gallery_items",
+  "info": {
+    "displayName": "GalleryItem",
+    "icon": "layer",
+    "description": ""
+  },
+  "options": {},
+  "attributes": {
+    "title": {
+      "type": "string"
+    },
+    "description": {
+      "type": "text"
+    },
+    "image_urls": {
+      "type": "json"
+    }
+  }
+}
