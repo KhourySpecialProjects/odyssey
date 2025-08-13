@@ -6,7 +6,6 @@ import {
 import { getCurrentUser } from "@/lib/auth/session";
 import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
 import {
-  calculateDropletAverageRating,
   getEnrollmentsByAuthorizedUser,
 } from "@/lib/requests/enrollment";
 import { EnrolledDropletsGridClient } from "./enrolled-droplets-grid-client";
@@ -59,12 +58,8 @@ export async function ArchivedDropletsGrid({ sortKey }: { sortKey?: string }) {
     );
   }
 
-  const ratingsMap = new Map();
-  await Promise.all(
-    dropletsWithCompletion.map(async (droplet) => {
-      const rating = await calculateDropletAverageRating(droplet);
-      ratingsMap.set(droplet.id, rating);
-    }),
+  const ratingsMap = new Map<number, number>(
+    dropletsWithCompletion.map((d) => [d.id, d.averageRating ?? 0])
   );
 
   return (
