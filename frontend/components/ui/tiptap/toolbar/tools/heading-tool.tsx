@@ -17,7 +17,7 @@ export default function HeadingTool({
         editor
           .chain()
           .focus()
-          .toggleHeading({ level: number as 2 | 3 | 4 })
+          .toggleHeading({ level: number as 1 | 2 | 3 })
           .run()
       }
       className={cn(
