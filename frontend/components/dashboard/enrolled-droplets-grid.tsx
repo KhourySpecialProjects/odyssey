@@ -5,9 +5,7 @@ import {
 } from "@/components/message";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
-import {
-  getEnrollmentsByAuthorizedUser,
-} from "@/lib/requests/enrollment";
+import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
 import { EnrolledDropletsGridClient } from "./enrolled-droplets-grid-client";
 import { getUserDueDates } from "@/lib/requests/groups";
 
@@ -59,7 +57,7 @@ export async function EnrolledDropletsGrid({
   });
 
   const ratingsMap = new Map<number, number>(
-    dropletsWithCompletion.map((d) => [d.id, d.averageRating ?? 0])
+    dropletsWithCompletion.map((d) => [d.id, d.averageRating ?? 0]),
   );
 
   if (!dropletsWithCompletion || dropletsWithCompletion.length === 0) {

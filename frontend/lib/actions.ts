@@ -1680,7 +1680,10 @@ export async function updateDropletAverageRating(
   dropletId: number,
 ) {
   try {
-    const clamped = Math.min(5, Math.max(0, Number.isFinite(rating) ? rating : 0));
+    const clamped = Math.min(
+      5,
+      Math.max(0, Number.isFinite(rating) ? rating : 0),
+    );
     const rounded = Math.round(clamped * 10) / 10;
     const response = await fetch(
       `${STRAPI_API_URL}/api/droplets/${dropletId}`,
