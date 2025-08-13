@@ -1675,7 +1675,10 @@ export async function updateDropletFunFact(fact: string, dropletId: number) {
   }
 }
 
-export async function updateDropletAverageRating(rating: number, dropletId: number) {
+export async function updateDropletAverageRating(
+  rating: number,
+  dropletId: number,
+) {
   try {
     const response = await fetch(
       `${STRAPI_API_URL}/api/droplets/${dropletId}`,

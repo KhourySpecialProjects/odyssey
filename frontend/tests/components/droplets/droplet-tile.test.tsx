@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { DateTime } from "luxon";
 
 jest.mock("@/lib/requests/enrollment", () => ({
-  getDropletAverageRating: jest.fn(),
+  calculateDropletAverageRating: jest.fn(),
 }));
 
 jest.mock("@/lib/actions", () => ({

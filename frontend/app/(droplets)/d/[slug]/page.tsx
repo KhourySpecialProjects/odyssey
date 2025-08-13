@@ -97,9 +97,9 @@ export default async function DropletRoute({ params }: Props) {
               </Badge>
             ))}
 
-            {(await calculateDropletAverageRating(droplet)) != 0 ? (
+            {droplet.averageRating && droplet.averageRating != 0.0 ? (
               <StarRating
-                value={await calculateDropletAverageRating(droplet)}
+                value={droplet.averageRating}
                 enrollmentID={""}
                 average={true}
               ></StarRating>

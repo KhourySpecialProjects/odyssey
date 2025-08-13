@@ -33,7 +33,6 @@ export function DropletTile({
   isArchived,
   dueDate,
 }: DropletTileProps) {
-  const [averageRating, setAverageRating] = useState<number>(0);
   const [descriptionExpanded, setDescriptionExpanded] = useState(false);
 
   const strippedDescription = droplet.description
@@ -60,15 +59,6 @@ export function DropletTile({
     const diffDays = dueDateObject.startOf("day").diff(today, "days").days;
     daysUntil = Math.ceil(diffDays);
   }
-
-  // useEffect(() => {
-  //   const fetchRating = async () => {
-  //     const rating = await calculateDropletAverageRating(droplet);
-  //     setAverageRating(rating);
-  //   };
-
-  //   fetchRating();
-  // }, [droplet]);
 
   const getCompletionBadgeColor = () => {
     if (completionPercentage === 0)
