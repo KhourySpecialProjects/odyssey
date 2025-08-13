@@ -835,9 +835,11 @@ export interface ApiDropletDroplet extends Schema.CollectionType {
       Attribute.SetMinMax<
         {
           max: 5;
+          min: 0;
         },
         number
-      >;
+      > &
+      Attribute.DefaultTo<0>;
     createdAt: Attribute.DateTime;
     createdBy: Attribute.Relation<
       'api::droplet.droplet',

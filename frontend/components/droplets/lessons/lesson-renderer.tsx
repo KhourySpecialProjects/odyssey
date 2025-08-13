@@ -246,7 +246,7 @@ export function LessonRenderer({
   return (
     <div className="mx-auto w-full min-w-[300px] py-8 md:min-w-[700px]">
       <div className="relative mx-auto w-full max-w-2xl xl:py-8">
-        <h1 className="text-4xl font-extrabold text-balance">{lesson.name}</h1>
+        <h1 className="text-6xl font-extrabold text-balance">{lesson.name}</h1>
 
         {headings.length > 2 && (
           <div className="mt-8 rounded-md border border-slate-200 bg-slate-50 p-6 dark:border-slate-500 dark:bg-slate-800">
