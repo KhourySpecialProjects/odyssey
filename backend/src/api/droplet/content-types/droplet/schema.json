@@ -150,7 +150,11 @@
     },
     "averageRating": {
       "type": "decimal",
-      "max": 5
+      "max": 5,
+      "min": 0,
+      "default": 0
     }
   }
 }
+
+
