@@ -1680,6 +1680,8 @@ export async function updateDropletAverageRating(
   dropletId: number,
 ) {
   try {
+    const clamped = Math.min(5, Math.max(0, Number.isFinite(rating) ? rating : 0));
+    const rounded = Math.round(clamped * 10) / 10;
     const response = await fetch(
       `${STRAPI_API_URL}/api/droplets/${dropletId}`,
       {
@@ -1690,7 +1692,7 @@ export async function updateDropletAverageRating(
         },
         body: JSON.stringify({
           data: {
-            averageRating: rating,
+            averageRating: rounded,
           },
         }),
       },
@@ -1699,6 +1701,10 @@ export async function updateDropletAverageRating(
     if (!response.ok) {
       throw new Error("Failed to update average rating");
     }
+    revalidateTag("droplets");
+    revalidatePath("/(droplets)/d/[slug]", "page");
+    revalidatePath("/(general)/dashboard", "page");
+    revalidatePath("/(playlists)/p/[slug]", "page");
     return { success: true };
   } catch (error) {
     console.error("Error updating average rating:", error);

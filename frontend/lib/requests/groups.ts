@@ -410,6 +410,7 @@ export async function getGroupBySlugV2(
           "status",
           "focusArea",
           "type",
+          "averageRating",
           "description",
         ],
         populate: {
