@@ -6,7 +6,6 @@ import {
 import { getCurrentUser } from "@/lib/auth/session";
 import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
 import {
-  calculateDropletAverageRating,
   getEnrollmentsByAuthorizedUser,
 } from "@/lib/requests/enrollment";
 import { EnrolledDropletsGridClient } from "./enrolled-droplets-grid-client";
