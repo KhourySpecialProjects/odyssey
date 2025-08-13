@@ -6,8 +6,7 @@ import { Droplet } from "@/types";
 import Link from "next/link";
 
 import { StarRating } from "@/components/ui/rating-stars";
-import { getDropletAverageRating } from "@/lib/requests/enrollment";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Button } from "../ui/button";
 import { toast } from "sonner";
 import { archiveDroplet } from "@/lib/actions";
@@ -34,7 +33,6 @@ export function DropletTile({
   isArchived,
   dueDate,
 }: DropletTileProps) {
-  const [averageRating, setAverageRating] = useState<number>(0);
   const [descriptionExpanded, setDescriptionExpanded] = useState(false);
 
   const strippedDescription = droplet.description
@@ -61,15 +59,6 @@ export function DropletTile({
     const diffDays = dueDateObject.startOf("day").diff(today, "days").days;
     daysUntil = Math.ceil(diffDays);
   }
-
-  useEffect(() => {
-    const fetchRating = async () => {
-      const rating = await getDropletAverageRating(droplet);
-      setAverageRating(rating);
-    };
-
-    fetchRating();
-  }, [droplet]);
 
   const getCompletionBadgeColor = () => {
     if (completionPercentage === 0)
@@ -222,7 +211,7 @@ export function DropletTile({
                     <p
                       className={`${
                         descriptionExpanded ? "line-clamp-none" : "line-clamp-2"
-                      } text-md font-black text-slate-700 dark:text-slate-300`}
+                      } text-md text-slate-700 dark:text-slate-300`}
                     >
                       {strippedDescription}
                     </p>
@@ -254,10 +243,10 @@ export function DropletTile({
             </div>
           </div>
 
-          {averageRating != 0 ? (
+          {droplet.averageRating && droplet.averageRating != 0.0 ? (
             <div className="flex w-full origin-left scale-[0.55] items-start">
               <StarRating
-                value={averageRating}
+                value={droplet.averageRating || 0}
                 enrollmentID={""}
                 average={true}
                 uniqueId={droplet.id.toString()}

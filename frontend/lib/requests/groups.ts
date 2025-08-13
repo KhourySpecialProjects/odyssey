@@ -403,7 +403,16 @@ export async function getGroupBySlugV2(
         fields: ["id", "email", "firstName", "lastName", "profilePhoto"],
       },
       droplets: {
-        fields: ["id", "name", "slug", "status", "focusArea", "type"],
+        fields: [
+          "id",
+          "name",
+          "slug",
+          "status",
+          "focusArea",
+          "type",
+          "averageRating",
+          "description",
+        ],
         populate: {
           lessons: {
             fields: ["id", "name", "slug", "type"],
