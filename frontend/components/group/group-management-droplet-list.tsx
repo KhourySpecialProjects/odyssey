@@ -5,7 +5,7 @@ import { DndProvider, useDrag, useDrop } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import { XCircleIcon, GripVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import React from "react";
 import { Badge } from "@/components/ui/badge";
 import { uppercaseFirstChar } from "@/lib/utils";
@@ -63,6 +63,15 @@ const DropletItem = ({
 
   const combinedRef = useCombinedRefs<HTMLDivElement>(drag, drop);
 
+  const [descriptionExpanded, setDescriptionExpanded] = useState(false);
+  
+    const strippedDescription = droplet.description
+      ?.replace(/<\/p>\s*<p>/gi, "\n")
+      .replace(/<br\s*\/?>/gi, "\n")
+      .replace(/<\/?p>/gi, "")
+      .replace(/<[^>]+>/g, "")
+      .trim();
+
   return (
     <div
       ref={combinedRef}
@@ -94,6 +103,41 @@ const DropletItem = ({
               {droplet.lessons.length} lessons
             </p>
           )}
+          {strippedDescription &&
+            strippedDescription.trim() !== "<p></p>" &&
+            strippedDescription.trim() !== "" && (
+              <>
+                <p
+                  className={`${descriptionExpanded ? "line-clamp-none" : "line-clamp-2"
+                    } text-md text-slate-700 dark:text-slate-300 pr-8 pt-1`}
+                >
+                  {strippedDescription}
+                </p>
+                <p>
+                  {descriptionExpanded ? (
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setDescriptionExpanded(false);
+                      }}
+                      className="text-sm text-sky-700 dark:text-sky-500"
+                    >
+                      See Less
+                    </button>
+                  ) : (
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setDescriptionExpanded(true);
+                      }}
+                      className="text-sm text-sky-700 dark:text-sky-500"
+                    >
+                      See More
+                    </button>
+                  )}
+                </p>
+              </>
+            )}
         </div>
 
         <Button
