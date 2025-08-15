@@ -993,6 +993,7 @@ export interface ApiEnrollmentEnrollment extends Schema.CollectionType {
       'manyToOne',
       'api::authorized-user.authorized-user'
     >;
+    completionDate: Attribute.DateTime;
     createdAt: Attribute.DateTime;
     createdBy: Attribute.Relation<
       'api::enrollment.enrollment',

@@ -1041,6 +1041,7 @@ export async function updateEnrollmentFirstTime(enrollmentId: string) {
         body: JSON.stringify({
           data: {
             isFirstTime: false,
+            completionDate: new Date(),
           },
         }),
       },
