@@ -262,13 +262,15 @@ describe("GroupProgressGrid Excel Export", () => {
     await screen.findByText("Download as Excel");
     fireEvent.click(screen.getByText("Download as Excel"));
 
-    // Should still call XLSX functions but with only header row
+    // Should still call XLSX functions but with only header row (including completion date columns)
     expect(XLSX.utils.aoa_to_sheet).toHaveBeenCalledWith([
       [
         "Recorded on: 1/15/2025 10:30",
         "",
         "Test Droplet 1 (1)",
+        "Completion Date",
         "Test Droplet 2 (2)",
+        "Completion Date",
       ],
     ]);
   });
