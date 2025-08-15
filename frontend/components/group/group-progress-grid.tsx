@@ -25,11 +25,13 @@ interface GroupProgressGridProps {
     droplets?: Droplet[];
     playlists?: Playlist[];
   };
-  statuses: Record<string, { completionPercentage: number, completionDate: Date | undefined }>;
+  statuses: Record<
+    string,
+    { completionPercentage: number; completionDate: Date | undefined }
+  >;
 }
 
 export function GroupProgressGrid({ group, statuses }: GroupProgressGridProps) {
-
   const [, startTransition] = useTransition();
   const [currentPage, setCurrentPage] = useState(0);
   const lessonsPerPage = 4;
@@ -113,13 +115,27 @@ export function GroupProgressGrid({ group, statuses }: GroupProgressGridProps) {
               row.push(status.completionPercentage);
 
               // Add completion date if 100% complete and date exists
-              if (status.completionPercentage === 100 && status.completionDate) {
+              if (
+                status.completionPercentage === 100 &&
+                status.completionDate
+              ) {
                 const completionDate = new Date(status.completionDate);
-                const month = (completionDate.getMonth() + 1).toString().padStart(2, "0");
-                const day = completionDate.getDate().toString().padStart(2, "0");
+                const month = (completionDate.getMonth() + 1)
+                  .toString()
+                  .padStart(2, "0");
+                const day = completionDate
+                  .getDate()
+                  .toString()
+                  .padStart(2, "0");
                 const year = completionDate.getFullYear();
-                const hours = completionDate.getHours().toString().padStart(2, "0");
-                const minutes = completionDate.getMinutes().toString().padStart(2, "0");
+                const hours = completionDate
+                  .getHours()
+                  .toString()
+                  .padStart(2, "0");
+                const minutes = completionDate
+                  .getMinutes()
+                  .toString()
+                  .padStart(2, "0");
                 row.push(`${month}/${day}/${year} ${hours}:${minutes}`);
               } else {
                 // Empty cell for non-100% completion or missing date
@@ -207,7 +223,6 @@ export function GroupProgressGrid({ group, statuses }: GroupProgressGridProps) {
 
   console.log("Sorted Members: ", sortedMembers);
   console.log("Droplets: ", paginatedLessons);
-
 
   return (
     <div className="flex flex-col items-end">

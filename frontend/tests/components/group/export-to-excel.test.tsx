@@ -147,11 +147,20 @@ const mockGroup: Group = {
 };
 
 // Update the mock statuses to include completion dates
-const mockStatuses: Record<string, { completionPercentage: number, completionDate: Date | undefined }> = {
+const mockStatuses: Record<
+  string,
+  { completionPercentage: number; completionDate: Date | undefined }
+> = {
   "1-1": { completionPercentage: 50, completionDate: undefined }, // User 1, Droplet 1: 50%
-  "1-2": { completionPercentage: 100, completionDate: new Date("2025-01-10T14:30:00.000Z") }, // User 1, Droplet 2: 100%
+  "1-2": {
+    completionPercentage: 100,
+    completionDate: new Date("2025-01-10T14:30:00.000Z"),
+  }, // User 1, Droplet 2: 100%
   "2-1": { completionPercentage: 0, completionDate: undefined }, // User 2, Droplet 1: 0%
-  "2-2": { completionPercentage: 100, completionDate: new Date("2025-01-12T09:15:00.000Z") }, // User 2, Droplet 2: 100%
+  "2-2": {
+    completionPercentage: 100,
+    completionDate: new Date("2025-01-12T09:15:00.000Z"),
+  }, // User 2, Droplet 2: 100%
   "3-1": { completionPercentage: 25, completionDate: undefined }, // User 3, Droplet 1: 25%
   "3-2": { completionPercentage: 75, completionDate: undefined }, // User 3, Droplet 2: 75%
 };
@@ -444,9 +453,15 @@ describe("GroupProgressGrid Excel Export", () => {
   });
 
   it("handles missing statuses for some user-droplet combinations", async () => {
-    const partialStatuses: Record<string, { completionPercentage: number, completionDate: Date | undefined }> = {
+    const partialStatuses: Record<
+      string,
+      { completionPercentage: number; completionDate: Date | undefined }
+    > = {
       "1-1": { completionPercentage: 50, completionDate: undefined },
-      "2-2": { completionPercentage: 100, completionDate: new Date("2025-01-12T09:15:00.000Z") },
+      "2-2": {
+        completionPercentage: 100,
+        completionDate: new Date("2025-01-12T09:15:00.000Z"),
+      },
       // Missing "1-2", "2-1", "3-1", "3-2"
     };
 
@@ -473,15 +488,29 @@ describe("GroupProgressGrid Excel Export", () => {
 
   it("handles completion dates correctly when 100% complete", async () => {
     const statusesWithDates = {
-      "1-1": { completionPercentage: 100, completionDate: new Date("2025-01-08T16:45:00.000Z") },
-      "1-2": { completionPercentage: 100, completionDate: new Date("2025-01-10T14:30:00.000Z") },
-      "2-1": { completionPercentage: 100, completionDate: new Date("2025-01-09T11:20:00.000Z") },
+      "1-1": {
+        completionPercentage: 100,
+        completionDate: new Date("2025-01-08T16:45:00.000Z"),
+      },
+      "1-2": {
+        completionPercentage: 100,
+        completionDate: new Date("2025-01-10T14:30:00.000Z"),
+      },
+      "2-1": {
+        completionPercentage: 100,
+        completionDate: new Date("2025-01-09T11:20:00.000Z"),
+      },
       "2-2": { completionPercentage: 75, completionDate: undefined },
       "3-1": { completionPercentage: 0, completionDate: undefined },
-      "3-2": { completionPercentage: 100, completionDate: new Date("2025-01-11T13:15:00.000Z") },
+      "3-2": {
+        completionPercentage: 100,
+        completionDate: new Date("2025-01-11T13:15:00.000Z"),
+      },
     };
 
-    render(<GroupProgressGrid group={mockGroup} statuses={statusesWithDates} />);
+    render(
+      <GroupProgressGrid group={mockGroup} statuses={statusesWithDates} />,
+    );
 
     await screen.findByText("Download as Excel");
     fireEvent.click(screen.getByText("Download as Excel"));
@@ -496,7 +525,14 @@ describe("GroupProgressGrid Excel Export", () => {
         "Test Droplet 2 (2)",
         "Completion Date",
       ],
-      ["user1@test.com", "John Doe", 100, "01/08/2025 11:45", 100, "01/10/2025 09:30"],
+      [
+        "user1@test.com",
+        "John Doe",
+        100,
+        "01/08/2025 11:45",
+        100,
+        "01/10/2025 09:30",
+      ],
       ["user2@test.com", "Jane Smith", 100, "01/09/2025 06:20", 75, ""],
       ["user3@test.com", "N/A", 0, "", 100, "01/11/2025 08:15"],
     ]);
@@ -506,13 +542,21 @@ describe("GroupProgressGrid Excel Export", () => {
     const statusesWithUndefinedDates = {
       "1-1": { completionPercentage: 100, completionDate: undefined }, // 100% but no date
       "1-2": { completionPercentage: 50, completionDate: undefined },
-      "2-1": { completionPercentage: 100, completionDate: new Date("2025-01-12T09:15:00.000Z") },
+      "2-1": {
+        completionPercentage: 100,
+        completionDate: new Date("2025-01-12T09:15:00.000Z"),
+      },
       "2-2": { completionPercentage: 0, completionDate: undefined },
       "3-1": { completionPercentage: 25, completionDate: undefined },
       "3-2": { completionPercentage: 100, completionDate: undefined }, // 100% but no date
     };
 
-    render(<GroupProgressGrid group={mockGroup} statuses={statusesWithUndefinedDates} />);
+    render(
+      <GroupProgressGrid
+        group={mockGroup}
+        statuses={statusesWithUndefinedDates}
+      />,
+    );
 
     await screen.findByText("Download as Excel");
     fireEvent.click(screen.getByText("Download as Excel"));
