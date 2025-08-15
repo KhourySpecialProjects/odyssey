@@ -146,14 +146,14 @@ const mockGroup: Group = {
   playlists: [],
 };
 
-// Mock statuses data
-const mockStatuses: Record<string, number> = {
-  "1-1": 50, // User 1, Droplet 1: 50%
-  "1-2": 100, // User 1, Droplet 2: 100%
-  "2-1": 0, // User 2, Droplet 1: 0%
-  "2-2": 100, // User 2, Droplet 2: 100%
-  "3-1": 25, // User 3, Droplet 1: 25%
-  "3-2": 75, // User 3, Droplet 2: 75%
+// Update the mock statuses to include completion dates
+const mockStatuses: Record<string, { completionPercentage: number, completionDate: Date | undefined }> = {
+  "1-1": { completionPercentage: 50, completionDate: undefined }, // User 1, Droplet 1: 50%
+  "1-2": { completionPercentage: 100, completionDate: new Date("2025-01-10T14:30:00.000Z") }, // User 1, Droplet 2: 100%
+  "2-1": { completionPercentage: 0, completionDate: undefined }, // User 2, Droplet 1: 0%
+  "2-2": { completionPercentage: 100, completionDate: new Date("2025-01-12T09:15:00.000Z") }, // User 2, Droplet 2: 100%
+  "3-1": { completionPercentage: 25, completionDate: undefined }, // User 3, Droplet 1: 25%
+  "3-2": { completionPercentage: 75, completionDate: undefined }, // User 3, Droplet 2: 75%
 };
 
 describe("GroupProgressGrid Excel Export", () => {
@@ -220,23 +220,25 @@ describe("GroupProgressGrid Excel Export", () => {
     );
   });
 
-  it("creates correct data structure for Excel export with timestamp and member columns", async () => {
+  it("creates correct data structure for Excel export with completion date columns", async () => {
     render(<GroupProgressGrid group={mockGroup} statuses={mockStatuses} />);
 
     await screen.findByText("Download as Excel");
     fireEvent.click(screen.getByText("Download as Excel"));
 
-    // Check that aoa_to_sheet was called with the correct data structure
+    // Check that aoa_to_sheet was called with the correct data structure including completion dates
     expect(XLSX.utils.aoa_to_sheet).toHaveBeenCalledWith([
       [
         "Recorded on: 1/15/2025 10:30",
         "",
         "Test Droplet 1 (1)",
+        "Completion Date",
         "Test Droplet 2 (2)",
+        "Completion Date",
       ],
-      ["user1@test.com", "John Doe", 50, 100],
-      ["user2@test.com", "Jane Smith", 0, 100],
-      ["user3@test.com", "N/A", 25, 75],
+      ["user1@test.com", "John Doe", 50, "", 100, "01/10/2025 09:30"],
+      ["user2@test.com", "Jane Smith", 0, "", 100, "01/12/2025 04:15"],
+      ["user3@test.com", "N/A", 25, "", 75, ""],
     ]);
   });
 
@@ -293,34 +295,44 @@ describe("GroupProgressGrid Excel Export", () => {
         "Recorded on: 1/15/2025 10:30",
         "",
         "Test Droplet 1 (1)",
+        "Completion Date",
         "Test Droplet 2 (2)",
+        "Completion Date",
       ],
-      ["user1@test.com", "John Doe", 50, 100],
-      ["user2@test.com", "Jane Smith", 0, 100],
-      ["user3@test.com", "N/A", 25, 75],
+      ["user1@test.com", "John Doe", 50, "", 100, "01/10/2025 09:30"],
+      ["user2@test.com", "Jane Smith", 0, "", 100, "01/12/2025 04:15"],
+      ["user3@test.com", "N/A", 25, "", 75, ""],
     ]);
   });
 
   it("applies correct styling to cells based on completion percentage", async () => {
-    // Mock the worksheet with cells
+    // Mock the worksheet with cells (updated for new structure)
     const mockWorksheet = {
-      "!ref": "A1:D4",
+      "!ref": "A1:F4", // Updated to include completion date columns
       A1: { v: "Recorded on: 1/15/2025 10:30" },
       B1: { v: "" },
       C1: { v: "Test Droplet 1 (1)" },
-      D1: { v: "Test Droplet 2 (2)" },
+      D1: { v: "Completion Date" },
+      E1: { v: "Test Droplet 2 (2)" },
+      F1: { v: "Completion Date" },
       A2: { v: "user1@test.com" },
       B2: { v: "John Doe" },
       C2: { v: 50 }, // 50% completion
-      D2: { v: 100 }, // 100% completion
+      D2: { v: "" }, // completion date column
+      E2: { v: 100 }, // 100% completion
+      F2: { v: "01/10/2025 09:30" }, // completion date
       A3: { v: "user2@test.com" },
       B3: { v: "Jane Smith" },
       C3: { v: 0 }, // 0% completion
-      D3: { v: 100 }, // 100% completion
+      D3: { v: "" }, // completion date column
+      E3: { v: 100 }, // 100% completion
+      F3: { v: "01/12/2025 04:15" }, // completion date
       A4: { v: "user3@test.com" },
       B4: { v: "N/A" },
       C4: { v: 25 }, // 25% completion
-      D4: { v: 75 }, // 75% completion
+      D4: { v: "" }, // completion date column
+      E4: { v: 75 }, // 75% completion
+      F4: { v: "" }, // completion date column
     };
 
     (XLSX.utils.aoa_to_sheet as jest.Mock).mockReturnValue(mockWorksheet);
@@ -331,7 +343,7 @@ describe("GroupProgressGrid Excel Export", () => {
     fireEvent.click(screen.getByText("Download as Excel"));
 
     // Verify that styling was applied to the worksheet
-    expect(XLSX.utils.decode_range).toHaveBeenCalledWith("A1:D4");
+    expect(XLSX.utils.decode_range).toHaveBeenCalledWith("A1:F4");
     expect(XLSX.utils.encode_cell).toHaveBeenCalled();
   });
 
@@ -341,17 +353,19 @@ describe("GroupProgressGrid Excel Export", () => {
     await screen.findByText("Download as Excel");
     fireEvent.click(screen.getByText("Download as Excel"));
 
-    // The completion status should come from the statuses prop
+    // The completion status should come from the statuses prop with completion dates
     expect(XLSX.utils.aoa_to_sheet).toHaveBeenCalledWith([
       [
         "Recorded on: 1/15/2025 10:30",
         "",
         "Test Droplet 1 (1)",
+        "Completion Date",
         "Test Droplet 2 (2)",
+        "Completion Date",
       ],
-      ["user1@test.com", "John Doe", 50, 100],
-      ["user2@test.com", "Jane Smith", 0, 100],
-      ["user3@test.com", "N/A", 25, 75],
+      ["user1@test.com", "John Doe", 50, "", 100, "01/10/2025 09:30"],
+      ["user2@test.com", "Jane Smith", 0, "", 100, "01/12/2025 04:15"],
+      ["user3@test.com", "N/A", 25, "", 75, ""],
     ]);
   });
 
@@ -430,9 +444,9 @@ describe("GroupProgressGrid Excel Export", () => {
   });
 
   it("handles missing statuses for some user-droplet combinations", async () => {
-    const partialStatuses: Record<string, number> = {
-      "1-1": 50,
-      "2-2": 100,
+    const partialStatuses: Record<string, { completionPercentage: number, completionDate: Date | undefined }> = {
+      "1-1": { completionPercentage: 50, completionDate: undefined },
+      "2-2": { completionPercentage: 100, completionDate: new Date("2025-01-12T09:15:00.000Z") },
       // Missing "1-2", "2-1", "3-1", "3-2"
     };
 
@@ -441,17 +455,81 @@ describe("GroupProgressGrid Excel Export", () => {
     await screen.findByText("Download as Excel");
     fireEvent.click(screen.getByText("Download as Excel"));
 
-    // Missing statuses should default to 0
+    // Missing statuses should default to 0 with empty completion dates
     expect(XLSX.utils.aoa_to_sheet).toHaveBeenCalledWith([
       [
         "Recorded on: 1/15/2025 10:30",
         "",
         "Test Droplet 1 (1)",
+        "Completion Date",
         "Test Droplet 2 (2)",
+        "Completion Date",
       ],
-      ["user1@test.com", "John Doe", 50, 0],
-      ["user2@test.com", "Jane Smith", 0, 100],
-      ["user3@test.com", "N/A", 0, 0],
+      ["user1@test.com", "John Doe", 50, "", 0, ""],
+      ["user2@test.com", "Jane Smith", 0, "", 100, "01/12/2025 04:15"],
+      ["user3@test.com", "N/A", 0, "", 0, ""],
+    ]);
+  });
+
+  it("handles completion dates correctly when 100% complete", async () => {
+    const statusesWithDates = {
+      "1-1": { completionPercentage: 100, completionDate: new Date("2025-01-08T16:45:00.000Z") },
+      "1-2": { completionPercentage: 100, completionDate: new Date("2025-01-10T14:30:00.000Z") },
+      "2-1": { completionPercentage: 100, completionDate: new Date("2025-01-09T11:20:00.000Z") },
+      "2-2": { completionPercentage: 75, completionDate: undefined },
+      "3-1": { completionPercentage: 0, completionDate: undefined },
+      "3-2": { completionPercentage: 100, completionDate: new Date("2025-01-11T13:15:00.000Z") },
+    };
+
+    render(<GroupProgressGrid group={mockGroup} statuses={statusesWithDates} />);
+
+    await screen.findByText("Download as Excel");
+    fireEvent.click(screen.getByText("Download as Excel"));
+
+    // Should show completion dates only for 100% completion
+    expect(XLSX.utils.aoa_to_sheet).toHaveBeenCalledWith([
+      [
+        "Recorded on: 1/15/2025 10:30",
+        "",
+        "Test Droplet 1 (1)",
+        "Completion Date",
+        "Test Droplet 2 (2)",
+        "Completion Date",
+      ],
+      ["user1@test.com", "John Doe", 100, "01/08/2025 11:45", 100, "01/10/2025 09:30"],
+      ["user2@test.com", "Jane Smith", 100, "01/09/2025 06:20", 75, ""],
+      ["user3@test.com", "N/A", 0, "", 100, "01/11/2025 08:15"],
+    ]);
+  });
+
+  it("handles undefined completion dates gracefully", async () => {
+    const statusesWithUndefinedDates = {
+      "1-1": { completionPercentage: 100, completionDate: undefined }, // 100% but no date
+      "1-2": { completionPercentage: 50, completionDate: undefined },
+      "2-1": { completionPercentage: 100, completionDate: new Date("2025-01-12T09:15:00.000Z") },
+      "2-2": { completionPercentage: 0, completionDate: undefined },
+      "3-1": { completionPercentage: 25, completionDate: undefined },
+      "3-2": { completionPercentage: 100, completionDate: undefined }, // 100% but no date
+    };
+
+    render(<GroupProgressGrid group={mockGroup} statuses={statusesWithUndefinedDates} />);
+
+    await screen.findByText("Download as Excel");
+    fireEvent.click(screen.getByText("Download as Excel"));
+
+    // Should show empty completion dates for 100% completion without dates
+    expect(XLSX.utils.aoa_to_sheet).toHaveBeenCalledWith([
+      [
+        "Recorded on: 1/15/2025 10:30",
+        "",
+        "Test Droplet 1 (1)",
+        "Completion Date",
+        "Test Droplet 2 (2)",
+        "Completion Date",
+      ],
+      ["user1@test.com", "John Doe", 100, "", 50, ""],
+      ["user2@test.com", "Jane Smith", 100, "01/12/2025 04:15", 0, ""],
+      ["user3@test.com", "N/A", 25, "", 100, ""],
     ]);
   });
 

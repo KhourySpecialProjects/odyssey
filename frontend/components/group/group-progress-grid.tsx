@@ -25,7 +25,7 @@ interface GroupProgressGridProps {
     droplets?: Droplet[];
     playlists?: Playlist[];
   };
-  statuses: Record<string, {completionPercentage: number, completionDate: Date | undefined}>;
+  statuses: Record<string, { completionPercentage: number, completionDate: Date | undefined }>;
 }
 
 export function GroupProgressGrid({ group, statuses }: GroupProgressGridProps) {
@@ -61,11 +61,11 @@ export function GroupProgressGrid({ group, statuses }: GroupProgressGridProps) {
   const getCompletionStatus = (memberId: number, dropletId: number) => {
     const key = `${memberId}-${dropletId}`;
     const status = statuses[key];
-    
+
     if (!status) {
       return 0;
     }
-    
+
     return Math.floor(status.completionPercentage * 100) / 100 || 0;
   };
 
@@ -95,23 +95,23 @@ export function GroupProgressGrid({ group, statuses }: GroupProgressGridProps) {
         // Create rows with completion date data
         const rows = sortedMembers.map((member) => {
           const row: (string | number)[] = [];
-          
+
           // Add member info
           const memberName =
             member.firstName && member.lastName
               ? `${member.firstName} ${member.lastName}`
               : "N/A";
           row.push(member.email, memberName);
-          
+
           // Add completion percentage and completion date for each droplet
           group.droplets!.forEach((droplet) => {
             const key = `${member.id}-${droplet.id}`;
             const status = statuses[key];
-            
+
             if (status) {
               // Add completion percentage
               row.push(status.completionPercentage);
-              
+
               // Add completion date if 100% complete and date exists
               if (status.completionPercentage === 100 && status.completionDate) {
                 const completionDate = new Date(status.completionDate);
