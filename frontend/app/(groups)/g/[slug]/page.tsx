@@ -61,7 +61,10 @@ export default async function GroupDetailPage({ params }: Props) {
   const uniqueDueDates = Object.values(filteredDueDates);
 
   let sortedMembers: AuthorizedUser[] = [];
-  const completionStatuses: Record<string, { completionPercentage: number, completionDate: Date | undefined }> = {};
+  const completionStatuses: Record<
+    string,
+    { completionPercentage: number; completionDate: Date | undefined }
+  > = {};
 
   if (group.members && group.droplets) {
     sortedMembers = [...group.members].sort((a, b) => {
@@ -94,7 +97,10 @@ export default async function GroupDetailPage({ params }: Props) {
 
           const key = `${member.id}-${enrollment.droplet.id}`;
           if (!completionStatuses[key]) {
-            completionStatuses[key] = { completionPercentage: 0, completionDate: undefined };
+            completionStatuses[key] = {
+              completionPercentage: 0,
+              completionDate: undefined,
+            };
           }
 
           completionStatuses[key].completionPercentage = percentCompleted;
@@ -104,7 +110,7 @@ export default async function GroupDetailPage({ params }: Props) {
         });
       });
       console.log("progress fetched!!!");
-      console.log("Statuses are: ", completionStatuses)
+      console.log("Statuses are: ", completionStatuses);
     } catch (error) {
       console.error("Error fetching completion statuses:", error);
     }

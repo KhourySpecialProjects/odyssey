@@ -36,7 +36,14 @@ export async function getEnrollmentsByAuthorizedUser(
         fields: ["id", "name", "slug"],
       },
     },
-    fields = ["id", "rating", "isComplete", "isFirstTime", "isArchived", "completionDate"],
+    fields = [
+      "id",
+      "rating",
+      "isComplete",
+      "isFirstTime",
+      "isArchived",
+      "completionDate",
+    ],
   }: StrapiRequestParams = {},
 ): Promise<Enrollment[]> {
   const path = `/enrollments`;
