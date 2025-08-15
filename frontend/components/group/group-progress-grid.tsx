@@ -25,13 +25,10 @@ interface GroupProgressGridProps {
     droplets?: Droplet[];
     playlists?: Playlist[];
   };
-  statuses: Record<string, number>;
+  statuses: Record<string, {completionPercentage: number, completionDate: Date | undefined}>;
 }
 
 export function GroupProgressGrid({ group, statuses }: GroupProgressGridProps) {
-  const [completionStatus, setCompletionStatus] = useState<
-    Record<string, number>
-  >({});
 
   const [, startTransition] = useTransition();
   const [currentPage, setCurrentPage] = useState(0);
@@ -62,7 +59,14 @@ export function GroupProgressGrid({ group, statuses }: GroupProgressGridProps) {
   }
 
   const getCompletionStatus = (memberId: number, dropletId: number) => {
-    return Math.floor(statuses[`${memberId}-${dropletId}`] * 100) / 100 || 0;
+    const key = `${memberId}-${dropletId}`;
+    const status = statuses[key];
+    
+    if (!status) {
+      return 0;
+    }
+    
+    return Math.floor(status.completionPercentage * 100) / 100 || 0;
   };
 
   const getCompletedDropletColor = (completionStatus: number) => {
@@ -81,18 +85,53 @@ export function GroupProgressGrid({ group, statuses }: GroupProgressGridProps) {
   const exportGridToExcel = () => {
     try {
       if (group.droplets && sortedMembers) {
-        const headers = group.droplets.map(
-          (droplet) => `${droplet.name} (${droplet.id})`,
-        );
+        // Create headers with completion date columns
+        const headers: string[] = [];
+        group.droplets.forEach((droplet) => {
+          headers.push(`${droplet.name} (${droplet.id})`);
+          headers.push("Completion Date");
+        });
+
+        // Create rows with completion date data
         const rows = sortedMembers.map((member) => {
-          const row = group.droplets!.map((droplet) =>
-            getCompletionStatus(member.id, droplet.id),
-          );
+          const row: (string | number)[] = [];
+          
+          // Add member info
           const memberName =
             member.firstName && member.lastName
               ? `${member.firstName} ${member.lastName}`
               : "N/A";
-          return [member.email, memberName, ...row];
+          row.push(member.email, memberName);
+          
+          // Add completion percentage and completion date for each droplet
+          group.droplets!.forEach((droplet) => {
+            const key = `${member.id}-${droplet.id}`;
+            const status = statuses[key];
+            
+            if (status) {
+              // Add completion percentage
+              row.push(status.completionPercentage);
+              
+              // Add completion date if 100% complete and date exists
+              if (status.completionPercentage === 100 && status.completionDate) {
+                const completionDate = new Date(status.completionDate);
+                const month = (completionDate.getMonth() + 1).toString().padStart(2, "0");
+                const day = completionDate.getDate().toString().padStart(2, "0");
+                const year = completionDate.getFullYear();
+                const hours = completionDate.getHours().toString().padStart(2, "0");
+                const minutes = completionDate.getMinutes().toString().padStart(2, "0");
+                row.push(`${month}/${day}/${year} ${hours}:${minutes}`);
+              } else {
+                // Empty cell for non-100% completion or missing date
+                row.push("");
+              }
+            } else {
+              // No status data available
+              row.push(0, "");
+            }
+          });
+
+          return row;
         });
 
         const curDate = new Date();
@@ -111,12 +150,12 @@ export function GroupProgressGrid({ group, statuses }: GroupProgressGridProps) {
 
         const worksheet = XLSX.utils.aoa_to_sheet(data);
 
-        // Highlight specific values
+        // Highlight specific values (adjust column indexing for new structure)
         const range = XLSX.utils.decode_range(worksheet["!ref"]!);
         for (let R = 1; R <= range.e.r; ++R) {
           // skip header row
-          for (let C = 2; C <= range.e.c; ++C) {
-            // skip "Member" column
+          for (let C = 2; C <= range.e.c; C += 2) {
+            // Only process completion percentage columns (skip completion date columns)
             const cellAddress = XLSX.utils.encode_cell({ r: R, c: C });
             const cell = worksheet[cellAddress];
             if (!cell || typeof cell.v !== "number") continue;
@@ -165,6 +204,10 @@ export function GroupProgressGrid({ group, statuses }: GroupProgressGridProps) {
       toast.error("Failed to export group progress");
     }
   };
+
+  console.log("Sorted Members: ", sortedMembers);
+  console.log("Droplets: ", paginatedLessons);
+
 
   return (
     <div className="flex flex-col items-end">
@@ -251,7 +294,7 @@ export function GroupProgressGrid({ group, statuses }: GroupProgressGridProps) {
                   >
                     {sortedMembers.map((member) => (
                       <div
-                        key={`member-${group.id}-droplet-${droplet.id}`}
+                        key={`member-${member.id}-droplet-${droplet.id}`}
                         className="bg-white-50 flex h-24 w-36 items-center justify-center border border-slate-200 p-4 transition-colors hover:border-slate-300 dark:border-slate-600 dark:bg-slate-800"
                       >
                         <div
