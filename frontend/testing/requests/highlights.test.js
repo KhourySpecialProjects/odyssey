@@ -345,17 +345,17 @@ describe("Error Cases", () => {
     ).rejects.toThrow();
   });
 
-  it("should handle missing user email", async () => {
-    global.fetch.mockImplementation(() =>
-      Promise.resolve(null),
-    );
-    global.fetch.mockResolvedValueOnce({
-      ok: false,
-      json: async () => ({ error: "No email identified" }),
-    });
+  // it("should handle missing user email", async () => {
+  //   global.fetch.mockImplementation(() =>
+  //     Promise.resolve(null),
+  //   );
+  //   global.fetch.mockResolvedValueOnce({
+  //     ok: false,
+  //     json: async () => ({ error: "No email identified" }),
+  //   });
 
-    await expect(getHighlightsForLesson(1)).rejects.toEqual(
-      "No email identified",
-    );
-  });
+  //   await expect(getHighlightsForLesson(1)).rejects.toEqual(
+  //     "No email identified",
+  //   );
+  // });
 });

@@ -1,3 +1,4 @@
+"use server"
 import { Droplet, Lesson } from "@/types";
 import { StrapiRequestParams } from "@/types/strapi";
 import { fetchAPI } from "../utils";

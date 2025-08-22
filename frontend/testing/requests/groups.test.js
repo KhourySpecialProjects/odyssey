@@ -27,7 +27,7 @@ const { fetchAPI } = require("../../lib/utils");
 const {
   getAuthorizedUserByEmail,
 } = require("../../lib/requests/authorized-user");
-const { createEnrollmentFromEmail } = require("../../lib/actions");
+const { createEnrollmentFromEmail } = require("../../lib/requests/enrollment");
 const { enrollInPlaylist } = require("../../lib/requests/playlist-enrollment");
 const { revalidatePath } = require("next/cache");
 
@@ -52,7 +52,7 @@ jest.mock("../../lib/requests/authorized-user", () => ({
   getAuthorizedUserByEmail: jest.fn(),
 }));
 
-jest.mock("../../lib/actions", () => ({
+jest.mock("../../lib/requests/enrollment", () => ({
   createEnrollmentFromEmail: jest.fn(),
 }));
 
@@ -1577,137 +1577,6 @@ describe("Groups Tests", () => {
       process.env.STRAPI_ACCESS_TOKEN = "test-token";
     });
 
-    /*
-               it("should assign a due date to a playlist for all group members", async () => {
-                   // Setup test data
-                   const date = "2025-03-20T05:25:50Z";
-                   const mockGroup = {
-                       id: 1,
-                       members: [
-                           { id: 10, email: "member1@northeastern.edu" },
-                           { id: 11, email: "member2@northeastern.edu" }
-                       ]
-                   };
-                   const mockPlaylist = { id: 201, name: "Test Playlist" };
-        
-                   // Mock no existing due dates, creating new ones
-                   global.fetch
-                       // First fetch: check for existing due dates for member 1
-                       .mockResolvedValueOnce({
-                           json: async () => ({ data: [] })
-                       })
-                       // Second fetch: create due date for member 1
-                       .mockResolvedValueOnce({
-                           ok: true
-                       })
-                       // Third fetch: check for existing due dates for member 2
-                       .mockResolvedValueOnce({
-                           json: async () => ({ data: [] })
-                       })
-                       // Fourth fetch: create due date for member 2
-                       .mockResolvedValueOnce({
-                           ok: true
-                       });
-        
-                   // Execute the function
-                   const result = await assignPlaylistDueDate(date, mockGroup, mockPlaylist);
-        
-                   // Verify the result
-                   expect(result).toEqual({ success: true });
-        
-                   // Verify API calls for checking existing due dates
-                   expect(global.fetch).toHaveBeenNthCalledWith(
-                       1,
-                       "http://test-api-url/api/due-dates?filters[authorized_user][id][$eq]=10&filters[playlist][id][$eq]=201&filters[group][id][$eq]=1",
-                       {
-                           headers: {
-                               Authorization: "Bearer test-token",
-                           },
-                       }
-                   );
-        
-                   // Verify API calls for creating due dates
-                   expect(global.fetch).toHaveBeenNthCalledWith(
-                       2,
-                       "http://test-api-url/api/due-dates",
-                       {
-                           method: "POST",
-                           headers: {
-                               "Content-Type": "application/json",
-                               Authorization: "Bearer test-token",
-                           },
-                           body: JSON.stringify({
-                               data: {
-                                   dueDate: date,
-                                   authorized_user: 10,
-                                   playlist: 201,
-                                   group: 1
-                               }
-                           })
-                       }
-                   );
-        
-                   // Verify revalidatePath was called for all necessary paths
-                   expect(revalidatePath).toHaveBeenCalledWith("/explore");
-                   expect(revalidatePath).toHaveBeenCalledWith("/dashboard");
-                   expect(revalidatePath).toHaveBeenCalledWith("/groups/g/[slug]", "page");
-                   expect(revalidatePath).toHaveBeenCalledWith("/");
-               });
-        
-               
-           
-               it("should update existing due dates if they already exist", async () => {
-                 // Setup test data
-                 const date = "2023-12-31";
-                 const mockGroup = {
-                   id: 1,
-                   members: [{ id: 10, email: "member@northeastern.edu" }]
-                 };
-                 const mockPlaylist = { id: 201, name: "Test Playlist" };
-           
-                 // Mock existing due date found, updating it
-                 global.fetch
-                   // First fetch: check for existing due dates
-                   .mockResolvedValueOnce({
-                     json: async () => ({ 
-                       data: [{ 
-                         id: 301,
-                         attributes: {
-                           dueDate: "2023-10-15" // Old date
-                         }
-                       }] 
-                     })
-                   })
-                   // Second fetch: update existing due date
-                   .mockResolvedValueOnce({
-                     ok: true
-                   });
-           
-                 // Execute the function
-                 const result = await assignPlaylistDueDate(date, mockGroup, mockPlaylist);
-           
-                 // Verify the result
-                 expect(result).toEqual({ success: true });
-           
-                 // Verify API call for updating the due date
-                 expect(global.fetch).toHaveBeenNthCalledWith(
-                   2,
-                   "http://test-api-url/api/due-dates/301",
-                   {
-                     method: "PUT",
-                     headers: {
-                       "Content-Type": "application/json",
-                       Authorization: "Bearer test-token",
-                     },
-                     body: JSON.stringify({
-                       data: {
-                         dueDate: date
-                       }
-                     })
-                   }
-                 );
-               });
-           */
     it("should handle empty group members array", async () => {
       const date = "2023-12-31";
       const mockGroup = {

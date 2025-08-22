@@ -516,14 +516,19 @@ describe("Notes Tests", () => {
 });
 
 describe("deleteNote", () => {
+  beforeEach(() => {
+    global.fetch.mockReset();
+    revalidatePath.mockReset();
+    revalidateTag.mockReset();
+  });
   it("successfully deletes a note", async () => {
-    fetchAPI.mockResolvedValueOnce({
+    const mockResponse = {
       ok: true,
-      json: () => Promise.resolve({ data: { id: 1 } }),
+      json: async () => ({ data: { id: 1 } }),
       status: 200,
-    });
-    fetchAPI.mockImplementation(() => {});
-    fetchAPI.mockImplementation(() => {});
+    };
+
+    global.fetch.mockResolvedValueOnce(mockResponse);
 
     const result = await deleteNote(1);
 
@@ -531,23 +536,34 @@ describe("deleteNote", () => {
       expect.stringMatching("/api/notes/1"),
       expect.objectContaining({
         method: "DELETE",
+        headers: expect.objectContaining({
+          "Content-Type": "application/json",
+          Authorization: expect.stringContaining("Bearer"),
+        }),
       }),
     );
+
     expect(result).toEqual({
       ok: true,
       error: null,
       data: { id: 1 },
     });
-    expect(revalidatePath).toHaveBeenCalled();
-    expect(revalidateTag).toHaveBeenCalled();
+
+    expect(revalidatePath).toHaveBeenCalledWith(
+      "/d/[slug]/[lessonSlug]",
+      "page",
+    );
+    expect(revalidateTag).toHaveBeenCalledWith("notes");
   });
 
   it("handles deletion failure", async () => {
-    fetchAPI.mockResolvedValueOnce({
+    const mockResponse = {
       ok: false,
-      json: () =>
-        Promise.resolve({ error: { message: "Failed to delete" } }),
-    });
+      json: async () => ({ error: { message: "Failed to delete" } }),
+      status: 400,
+    };
+
+    global.fetch.mockResolvedValueOnce(mockResponse);
 
     const result = await deleteNote(1);
 
@@ -556,5 +572,8 @@ describe("deleteNote", () => {
       error: "Failed to delete",
       data: null,
     });
+
+    expect(revalidatePath).not.toHaveBeenCalled();
+    expect(revalidateTag).not.toHaveBeenCalled();
   });
 });
