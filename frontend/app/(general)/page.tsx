@@ -10,6 +10,7 @@ export default async function HomeRoute() {
   const user = await getCurrentUser();
 
   const droplets = await getRandomFunFactDroplet();
+  console.log("droplets ", droplets)
   const droplet = droplets[Math.floor(Math.random() * droplets.length)];
 
   return (

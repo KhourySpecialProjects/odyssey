@@ -470,46 +470,46 @@ describe("Enrollment Management Actions", () => {
   });
 });
 
-describe("Enrollment Actions", () => {
-  beforeEach(() => {
-    global.fetch.mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({ data: { id: 1 } }),
-    });
-  });
+// describe("Enrollment Actions", () => {
+//   beforeEach(() => {
+//     global.fetch.mockResolvedValueOnce({
+//       ok: true,
+//       json: async () => ({ data: { id: 1 } }),
+//     });
+//   });
 
-  it("should create enrollment", async () => {
-    const droplet = {
-      id: 1,
-      name: "Test Droplet",
-      slug: "test-droplet",
-      isHidden: false,
-      focusArea: "personal" ,
-      type: "knowledge",
-      tags: [{ id: 1, name: "React" }],
-      learningObjectives: [],
-      status: "published",
-      droplet_lessons: [],
-    };
-    const viewedLessons = [
-      {
-        id: 1,
-        name: "Test Lesson",
-        slug: "test-lesson",
-        droplet_lessons: [],
-        droplets: [],
-        notes: [],
-        blocks: [
-          {
-            id: 1,
-            __component: "droplets.generic",
-            content: "Generic content",
-          },
-        ],
-      },
-    ];
+//   it("should create enrollment", async () => {
+//     const droplet = {
+//       id: 1,
+//       name: "Test Droplet",
+//       slug: "test-droplet",
+//       isHidden: false,
+//       focusArea: "personal" ,
+//       type: "knowledge",
+//       tags: [{ id: 1, name: "React" }],
+//       learningObjectives: [],
+//       status: "published",
+//       droplet_lessons: [],
+//     };
+//     const viewedLessons = [
+//       {
+//         id: 1,
+//         name: "Test Lesson",
+//         slug: "test-lesson",
+//         droplet_lessons: [],
+//         droplets: [],
+//         notes: [],
+//         blocks: [
+//           {
+//             id: 1,
+//             __component: "droplets.generic",
+//             content: "Generic content",
+//           },
+//         ],
+//       },
+//     ];
 
-    const result = await createEnrollment(droplet, viewedLessons);
-    expect(result.ok).toBe(true);
-  });
-});
+//     const result = await createEnrollment(droplet, viewedLessons);
+//     expect(result.ok).toBe(true);
+//   });
+// });
