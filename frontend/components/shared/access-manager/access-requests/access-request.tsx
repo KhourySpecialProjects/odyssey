@@ -1,10 +1,11 @@
 "use client";
 
-import { createAuthorizedUser, deleteAccessRequest } from "@/lib/actions";
+import { deleteAccessRequest } from "@/lib/actions";
 import { Button } from "@/components/ui/button";
 import type { AccessRequest } from "./access-requests";
 import { useTransition } from "react";
 import { Check, X } from "lucide-react";
+import { createAuthorizedUser } from "@/lib/requests/authorized-user";
 
 export function AccessRequestBlock({ request }: { request: AccessRequest }) {
   const [isPending, startTransition] = useTransition();

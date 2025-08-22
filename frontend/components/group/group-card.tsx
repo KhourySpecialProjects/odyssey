@@ -6,7 +6,7 @@ import { Archive, ArchiveRestore, UsersIcon } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
 import { Button } from "../ui/button";
-import { archiveGroup } from "@/lib/actions";
+import { archiveGroup } from "@/lib/requests/groups";
 
 type GroupCardProps = {
   group: Group;

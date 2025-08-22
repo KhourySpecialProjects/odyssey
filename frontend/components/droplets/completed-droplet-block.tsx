@@ -5,8 +5,8 @@ import { Button } from "../ui/button";
 import { useState } from "react";
 import { AuthorizedUser, Droplet, Enrollment } from "@/types";
 import { GradientBackground } from "../gradient-bg";
-import { updateEnrollmentFirstTime } from "@/lib/actions";
 import { createFriendAnnouncement } from "@/lib/requests/feed";
+import { updateEnrollmentFirstTime } from "@/lib/requests/enrollment";
 
 export function CompletedDropletBlock({
   droplet,

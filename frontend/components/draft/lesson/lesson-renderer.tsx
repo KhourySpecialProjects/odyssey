@@ -3,7 +3,6 @@
 import { Lesson, OpenEndedQuizQuestion } from "@/types";
 import { useState, useCallback, useEffect, useRef } from "react";
 import { debounce } from "lodash";
-import { updateLesson, deleteLesson } from "@/lib/actions";
 import { useRouter } from "next/navigation";
 import { htmlToText } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -17,6 +16,7 @@ import { HTML5Backend } from "react-dnd-html5-backend";
 import { getDropletBySlug } from "@/lib/requests/droplet";
 import { Block } from "./add-block";
 import { toast } from "sonner";
+import { deleteLesson, updateLesson } from "@/lib/requests/lesson";
 
 export interface BaseBlock {
   __component: string;

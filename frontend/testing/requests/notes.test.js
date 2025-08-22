@@ -1,9 +1,13 @@
+
+import { revalidatePath, revalidateTag } from "next/cache";
+
 const {
   getNotesByAuthorizedUserAndLesson,
   getNotesByDroplet,
   updateNoteContent,
   updateNotePosition,
   createNote,
+  deleteNote
 } = require("../../lib/requests/notes");
 const { fetchAPI } = require("../../lib/utils");
 
@@ -507,6 +511,50 @@ describe("Notes Tests", () => {
       expect(revalidateTag).not.toHaveBeenCalled();
 
       consoleSpy.mockRestore();
+    });
+  });
+});
+
+describe("deleteNote", () => {
+  it("successfully deletes a note", async () => {
+    fetchAPI.mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve({ data: { id: 1 } }),
+      status: 200,
+    });
+    fetchAPI.mockImplementation(() => {});
+    fetchAPI.mockImplementation(() => {});
+
+    const result = await deleteNote(1);
+
+    expect(global.fetch).toHaveBeenCalledWith(
+      expect.stringMatching("/api/notes/1"),
+      expect.objectContaining({
+        method: "DELETE",
+      }),
+    );
+    expect(result).toEqual({
+      ok: true,
+      error: null,
+      data: { id: 1 },
+    });
+    expect(revalidatePath).toHaveBeenCalled();
+    expect(revalidateTag).toHaveBeenCalled();
+  });
+
+  it("handles deletion failure", async () => {
+    fetchAPI.mockResolvedValueOnce({
+      ok: false,
+      json: () =>
+        Promise.resolve({ error: { message: "Failed to delete" } }),
+    });
+
+    const result = await deleteNote(1);
+
+    expect(result).toEqual({
+      ok: false,
+      error: "Failed to delete",
+      data: null,
     });
   });
 });

@@ -6,12 +6,12 @@ import {
   screen,
 } from "@testing-library/react";
 import { FirstVisitPopup } from "@/components/first-time/first-visit-popup";
-import { updateFirstTimeStatus, updateOnboardingInfo } from "@/lib/actions";
 import { toast } from "sonner";
 import userEvent from "@testing-library/user-event";
 import { TimeZone } from "@/types";
+import { updateFirstTimeStatus, updateOnboardingInfo } from "@/lib/requests/authorized-user";
 
-jest.mock("@/lib/actions", () => ({
+jest.mock("@/lib/requests/authorized-user", () => ({
   updateFirstTimeStatus: jest.fn(),
   updateOnboardingInfo: jest.fn(),
 }));

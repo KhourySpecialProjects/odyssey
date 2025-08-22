@@ -1,7 +1,7 @@
 import { render, screen, fireEvent } from "@testing-library/react";
 import { CalloutEditor } from "@/components/draft/lesson/blocks/callout";
 
-jest.mock("@/lib/actions", () => ({
+jest.mock("@/lib/requests/lesson", () => ({
   revalidateLesson: jest.fn(),
 }));
 
@@ -52,9 +52,9 @@ jest.mock("@lemonsqueezy/wedges", () => ({
 
 describe("CalloutEditor", () => {
   const mockBlock = {
-    __component: "droplets.callout",
+    __component: "droplets.callout" as 'droplets.callout',
     content: [],
-    type: "info",
+    type: "info" as 'info',
     color: "bg-sky-50",
     iconEnabled: true,
   };
@@ -135,19 +135,16 @@ describe("CalloutEditor", () => {
     });
   });
 
-  jest.mock("@/lib/actions", () => ({
+  jest.mock("@/lib/requests/lesson", () => ({
     revalidateLesson: jest.fn(),
   }));
 
   describe("CalloutEditor", () => {
     const mockBlock = {
-      __component: "droplets.callout",
-      content: {
-        type: "paragraph",
-        children: [{ type: "text", text: "Test content" }],
-      },
+      __component: "droplets.callout" as 'droplets.callout',
+      content: [],
       color: "bg-red-300",
-      type: "info",
+      type: "info" as 'info',
       iconEnabled: true,
     };
 

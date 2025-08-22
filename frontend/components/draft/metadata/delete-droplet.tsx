@@ -11,8 +11,8 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { ArrowLeftIcon, Trash2Icon } from "lucide-react";
-import { deepDeleteDroplet } from "@/lib/actions";
 import { useRouter } from "next/navigation";
+import { deepDeleteDroplet } from "@/lib/requests/droplet";
 
 export function DeleteDropletButton({ dropletId }: { dropletId: number }) {
   const router = useRouter();
