@@ -1,9 +1,9 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { DeleteDropletButton } from "@/components/draft/metadata/delete-droplet";
-import { deepDeleteDroplet } from "@/lib/actions";
 import { useRouter } from "next/navigation";
+import { deepDeleteDroplet } from "@/lib/requests/droplet";
 
-jest.mock("@/lib/actions", () => ({
+jest.mock("@/lib/requests/droplet", () => ({
   deepDeleteDroplet: jest.fn(),
 }));
 

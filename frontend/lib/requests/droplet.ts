@@ -3,6 +3,16 @@
 import { Droplet } from "@/types";
 import { StrapiRequestParams } from "@/types/strapi";
 import { fetchAPI } from "../utils";
+import { revalidatePath, revalidateTag } from "next/cache";
+import { deleteLesson } from "./lesson";
+import { DropletSchema } from "../validations/droplet";
+import { z } from "zod";
+import { getCurrentUser } from "../auth/session";
+import { getAuthorizedUserByEmail } from "./authorized-user";
+import { getEnrollmentsByAuthorizedUser } from "./enrollment";
+
+const STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
+const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
 
 /**
  * Gets the first 25 Droplets matching the specified criteria, unless overridden by `options`.
@@ -138,4 +148,355 @@ export async function getRandomFunFactDroplet({
     urlParams,
   });
   return retVal;
+}
+
+export async function updateDropletAverageRating(
+  rating: number,
+  dropletId: number,
+) {
+  try {
+    const clamped = Math.min(
+      5,
+      Math.max(0, Number.isFinite(rating) ? rating : 0),
+    );
+    const rounded = Math.round(clamped * 10) / 10;
+    const response = await fetch(
+      `${STRAPI_API_URL}/api/droplets/${dropletId}`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+        },
+        body: JSON.stringify({
+          data: {
+            averageRating: rounded,
+          },
+        }),
+      },
+    );
+
+    if (!response.ok) {
+      throw new Error("Failed to update average rating");
+    }
+    revalidateTag("droplets");
+    revalidatePath("/(droplets)/d/[slug]", "page");
+    revalidatePath("/(general)/dashboard", "page");
+    revalidatePath("/(playlists)/p/[slug]", "page");
+    return { success: true };
+  } catch (error) {
+    console.error("Error updating average rating:", error);
+    return { success: false, error };
+  }
+}
+
+export async function updateDropletFunFact(fact: string, dropletId: number) {
+  try {
+    const response = await fetch(
+      `${STRAPI_API_URL}/api/droplets/${dropletId}`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+        },
+        body: JSON.stringify({
+          data: {
+            funFact: fact,
+          },
+        }),
+      },
+    );
+
+    if (!response.ok) {
+      throw new Error("Failed to update fun fact");
+    }
+    return { success: true };
+  } catch (error) {
+    console.error("Error updating fun fact:", error);
+    return { success: false, error };
+  }
+}
+
+export async function deepDeleteDroplet(id: number) {
+  try {
+    const droplet = await getDropletById<Droplet>(id, {
+      fields: ["*"],
+      populate: {
+        authorized_users: { populate: "*" },
+        learningObjectives: { populate: "*" },
+        lessons: { populate: "*" },
+        tags: { populate: "*" },
+        prerequisites: { populate: ["id", "name", "slug"] },
+        postrequisites: { populate: ["id", "name", "slug"] },
+        nextSteps: { fields: ["label", "url"] },
+      },
+    });
+
+    if (droplet.lessons) {
+      droplet.lessons.forEach((lesson) => {
+        deleteLesson(lesson.id, false);
+      });
+    }
+
+    const response = await fetch(STRAPI_API_URL + "/api/droplets/" + id, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+      },
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      return { ok: false, error: "Failed to delete droplet.", data: null };
+    }
+
+    revalidateTag("authors");
+    revalidateTag("droplets");
+    revalidatePath("(general)/my-content", "page");
+    return { ok: true, error: null, data: data.data };
+  } catch (err) {
+    console.error(err);
+    return { error: "Database Error: Failed to Delete Droplet." };
+  }
+}
+
+export async function updateDroplet(
+  id: number,
+  data: Partial<z.infer<typeof DropletSchema>>,
+  options: { regenerateSlug?: boolean; revalidate?: boolean } = {
+    regenerateSlug: false,
+    revalidate: false,
+  },
+) {
+  try {
+    const dataToSend: any = {
+      ...(data.name && { name: data.name }),
+      ...(data.slug && { slug: data.slug }),
+      ...(data.focusArea && { focusArea: data.focusArea }),
+      ...(data.type && { type: data.type }),
+      ...(data.authorized_users && { authorized_users: data.authorized_users }),
+      ...(data.tagIds && { tags: data.tagIds }),
+      ...(data.isHidden !== undefined && { isHidden: data.isHidden }),
+      ...(data.learningObjectives && {
+        learningObjectives: data.learningObjectives.map((obj) => ({
+          objective: obj,
+        })),
+      }),
+      ...(data.prerequisiteIds && { prerequisites: data.prerequisiteIds }),
+      ...(data.postrequisiteIds && { postrequisites: data.postrequisiteIds }),
+      ...(data.nextSteps && { nextSteps: data.nextSteps }),
+      ...(data.description && { description: data.description }),
+      ...(data.overview && { overview: data.overview }),
+      ...(data.lessons && { lessons: data.lessons }),
+      ...(data.inReview !== undefined && { inReview: data.inReview }),
+      ...(data.status !== undefined && { status: data.status }),
+      ...(data.afterReview !== undefined && { afterReview: data.afterReview }),
+    };
+
+    dataToSend.regenerateSlug = options.regenerateSlug;
+
+    // Handle updating droplet_lessons collection updates separately if they exist
+    if (data.droplet_lessons) {
+      const dropletLessonsResponse = await Promise.all(
+        data.droplet_lessons.map(async (dl) => {
+          const response = await fetch(
+            STRAPI_API_URL + "/api/droplet-lessons/" + dl.id,
+            {
+              method: "PUT",
+              body: JSON.stringify({
+                data: {
+                  orderIndex: dl.orderIndex,
+                },
+              }),
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+              },
+            },
+          );
+          return response.ok;
+        }),
+      );
+
+      if (!dropletLessonsResponse.every(Boolean)) {
+        return {
+          ok: false,
+          error: "Failed to update droplet lessons order",
+          data: null,
+        };
+      }
+    }
+    const response = await fetch(STRAPI_API_URL + "/api/droplets/" + id, {
+      method: "PUT",
+      body: JSON.stringify({ data: dataToSend }),
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+      },
+    });
+    const responseData = await response.json();
+
+    if (!response.ok || (response.ok && responseData.error)) {
+      const errorPath = responseData.error.details.errors[0].path[0];
+      const errorMessage = `${responseData.error.message} (${errorPath})`;
+      return { ok: false, error: errorMessage, data: null };
+    }
+
+    if (
+      dataToSend.isHidden !== undefined ||
+      dataToSend.name ||
+      options.revalidate
+    ) {
+      revalidateTag("droplets");
+      revalidatePath("/admin");
+    }
+
+    revalidateTag("authors");
+    revalidatePath("(general)/my-content", "page");
+    return { ok: true, error: null, data: responseData.data };
+  } catch (err) {
+    console.error(err);
+    return {
+      ok: false,
+      error: "Database Error: Failed to update droplet.",
+      data: null,
+    };
+  }
+}
+
+export async function archiveDroplet(droplet: Droplet, archiveState: boolean) {
+  try {
+    const user = await getCurrentUser();
+    if (!user?.email) throw new Error("No email identified");
+    const authorizedUser = await getAuthorizedUserByEmail(user.email);
+    const enrollments = await getEnrollmentsByAuthorizedUser(authorizedUser.id);
+
+    const toArchive = enrollments.filter((e) => e.droplet.id === droplet.id);
+    const response = await fetch(
+      `${STRAPI_API_URL}/api/enrollments/${toArchive[0].id}`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+        },
+        body: JSON.stringify({
+          data: {
+            isArchived: archiveState,
+          },
+        }),
+      },
+    );
+
+    if (!response.ok) {
+      throw new Error("Failed to archive droplet");
+    }
+    revalidateTag("dashboard");
+    revalidatePath("/");
+    revalidatePath("/draft");
+    revalidatePath(`/d/${droplet.slug}`);
+    revalidatePath("/dashboard");
+    revalidatePath("/dashboard/archived");
+    return { success: true };
+  } catch (error) {
+    console.error("Error archiving droplet:", error);
+    return { success: false, error };
+  }
+}
+
+export async function createNewTag(tag: string) {
+  try {
+    const response = await fetch(`${STRAPI_API_URL}/api/tags`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+      },
+      body: JSON.stringify({
+        data: {
+          name: tag,
+          slug: tag.replace(/\s/g, ""),
+        },
+      }),
+    });
+
+    if (!response.ok) {
+      console.error("adding tag failed:", await response.text());
+      return { success: false, error: "Failed to add new tag" };
+    }
+
+    revalidatePath("/new/droplet");
+    revalidatePath("/draft/d/[slug]/[lessonSlug]", "page");
+    return { success: true };
+  } catch (error) {
+    console.error("Error adding tag:", error);
+    return { success: false, error: "Failed to process request" };
+  }
+}
+
+const CreateDropletSchema = DropletSchema.pick({
+  name: true,
+  focusArea: true,
+  type: true,
+  tagIds: true,
+  learningObjectives: true,
+});
+
+export async function createDroplet(data: z.infer<typeof CreateDropletSchema>) {
+  try {
+    const user = await getCurrentUser();
+    if (!user?.email) throw new Error("No email identified");
+    const author = await getAuthorizedUserByEmail(user.email, {
+      populate: {},
+    });
+    if (!author) throw new Error("No author identified");
+
+    const dataToSend = {
+      name: data.name,
+      slug: "random", // this gets overwritten when created, but just has to be defined as something
+      focusArea: data.focusArea,
+      type: data.type,
+      tags: {
+        connect: data.tagIds,
+      },
+      authorized_users: {
+        connect: [author.id],
+      },
+
+      learningObjectives: data.learningObjectives.map((obj) => ({
+        objective: obj,
+      })),
+    };
+
+    const response = await fetch(STRAPI_API_URL + "/api/droplets", {
+      method: "POST",
+      body: JSON.stringify({ data: dataToSend }),
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+      },
+    });
+
+    const responseData = await response.json();
+
+    if (!response.ok || (response.ok && responseData.error)) {
+      const errorPath = responseData.error.details.errors[0].path[0];
+      const errorMessage = `${responseData.error.message} (${errorPath})`;
+      return { ok: false, error: errorMessage, data: null };
+    }
+    revalidateTag("authors");
+    revalidateTag("droplets");
+    revalidatePath("(general)/my-content", "page");
+    return { ok: true, error: null, data: responseData.data };
+  } catch (err) {
+    console.error(err);
+    return {
+      ok: false,
+      error: "Database Error: Failed to create droplet.",
+      data: null,
+    };
+  }
 }

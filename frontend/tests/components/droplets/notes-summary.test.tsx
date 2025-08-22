@@ -43,6 +43,7 @@ describe("NotesSummary", () => {
         text: "Highlight 1",
         color: "#fff300" as HighlightColor,
         position: { start: 0, end: 0 },
+        blockId: 1
       },
     ],
     dropletNotes: [
@@ -80,6 +81,7 @@ describe("NotesSummary", () => {
           text: "Highlighted text",
           color: "#fff300" as HighlightColor,
           position: { start: 0, end: 0 },
+          blockId: 1
         },
       },
     ],
@@ -191,6 +193,7 @@ describe("NotesSummary", () => {
             text: "Highlighted text",
             color: "#fff300" as HighlightColor,
             position: { start: 0, end: 0 },
+            blockId: 1
           },
         },
       ],
@@ -200,6 +203,7 @@ describe("NotesSummary", () => {
           text: "Highlight 1",
           color: "#fff300" as HighlightColor,
           position: { start: 0, end: 0 },
+          blockId: 1
         },
       ],
       dropletNotes: [
@@ -237,6 +241,7 @@ describe("NotesSummary", () => {
             text: "Highlighted text",
             color: "#fff300" as HighlightColor,
             position: { start: 0, end: 0 },
+            blockId: 1,
           },
         },
       ],
@@ -268,6 +273,7 @@ describe("NotesSummary", () => {
           text: "Highlight 1",
           color: "#fff300" as HighlightColor,
           position: { start: 0, end: 0 },
+          blockId: 1
         },
       ],
     };

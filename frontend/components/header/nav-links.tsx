@@ -4,7 +4,6 @@ import { cn } from "@/lib/utils";
 import { NavItem } from "@/types";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { SheetClose } from "../ui/sheet";
 
 export function NavLinks({
   items,

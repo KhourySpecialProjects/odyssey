@@ -1,11 +1,14 @@
 import { renderHook, act } from "@testing-library/react";
-import { updateDroplet } from "@/lib/actions";
 import { useRouter } from "next/navigation";
 import { useDropletUpdate } from "@/components/draft/metadata/hooks/useDropletUpdate";
+import { updateDroplet } from "@/lib/requests/droplet";
 
-jest.mock("@/lib/actions");
 jest.mock("next/navigation", () => ({
   useRouter: jest.fn(),
+}));
+
+jest.mock("@/lib/requests/droplet", () => ({
+  updateDroplet: jest.fn(),
 }));
 
 describe("useDropletUpdate", () => {

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { addLesson } from "@/lib/actions";
 import { Droplet, Lesson } from "@/types";
+import { addLesson } from "@/lib/requests/lesson";
 
 export function useLessons(droplet: Pick<Droplet, "id" | "lessons">) {
   const [lessons, setLessons] = useState<Lesson[]>(droplet.lessons || []);

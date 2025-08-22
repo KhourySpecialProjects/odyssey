@@ -1,13 +1,13 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { updateDroplet } from "@/lib/actions";
 import { Droplet } from "@/types";
 import { Pencil } from "lucide-react";
 import { useFormStatus } from "react-dom";
 import { toast } from "sonner";
 import Link from "next/link";
 import { useState } from "react";
+import { updateDroplet } from "@/lib/requests/droplet";
 
 export function DropletBlock({
   droplet: initialDroplet,

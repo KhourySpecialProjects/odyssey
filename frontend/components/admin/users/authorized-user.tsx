@@ -4,9 +4,7 @@ import { useState, useCallback } from "react";
 import { useDropzone } from "react-dropzone";
 import { Button } from "@/components/ui/button";
 import {
-  updateAuthorizedUser,
-  updatePhoto,
-  updateUserInfo,
+
   uploadImage,
 } from "@/lib/actions";
 import { AuthorizedUser } from "@/types";
@@ -28,6 +26,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Textarea } from "@/components/ui/textarea";
 import imageCompression from "browser-image-compression";
+import { updateAuthorizedUser, updateUserInfo } from "@/lib/requests/authorized-user";
 
 export function AuthorizedUserBlock({
   user: initialUser,

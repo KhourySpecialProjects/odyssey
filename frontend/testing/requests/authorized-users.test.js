@@ -5,6 +5,15 @@ const {
   fetchContentCreators,
   fetchWebsiteCreators,
   getAllAuthorizedUsers,
+  createAuthorizedUser,
+  updateAuthorBio,
+  updateAuthorizedUser,
+  updateFirstTimeStatus,
+  updateGithub,
+  updateLinkedin,
+  updateOnboardingInfo,
+  updatePhoto,
+  updateUserInfo
 } = require("../../lib/requests/authorized-user");
 const { fetchAPI } = require("../../lib/utils");
 
@@ -404,5 +413,149 @@ describe("Authorized User Tests", () => {
         "Failed to fetch authorized users:",
       );
     });
+  });
+});
+
+describe("updateAuthorizedUser", () => {
+  it("successfully updates an authorized user", async () => {
+    const formData = new FormData();
+    formData.append("id", "123");
+    formData.append("isEnabled", "true");
+
+    const mockResponse = {
+      ok: true,
+      json: () => Promise.resolve({ data: {} }),
+    };
+    global.fetch.mockResolvedValueOnce(mockResponse);
+
+    await updateAuthorizedUser(formData);
+
+    expect(global.fetch).toHaveBeenCalledWith(
+      expect.stringContaining("/api/authorized-users/123"),
+      expect.objectContaining({
+        method: "PUT",
+        body: expect.stringContaining("isEnabled"),
+      }),
+    );
+  });
+});
+
+describe("Profile Management Actions", () => {
+  describe("updateAuthorBio", () => {
+    it("successfully updates author bio", async () => {
+      const mockResponse = { ok: true };
+      fetchAPI.mockResolvedValueOnce(mockResponse);
+
+      const result = await updateAuthorBio("New bio", 123);
+
+      expect(global.fetch).toHaveBeenCalledWith(
+        expect.stringContaining("/api/authorized-users/123"),
+        expect.objectContaining({
+          method: "PUT",
+          body: JSON.stringify({
+            data: { bio: "New bio" },
+          }),
+        }),
+      );
+      expect(result).toEqual({ success: true });
+    });
+  });
+});
+
+describe("User Profile Actions", () => {
+  it("should update author bio", async () => {
+    global.fetch.mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve({ data: { id: 1 } }),
+    });
+
+    const result = await updateAuthorBio("New bio", 1);
+    expect(result.success).toBe(true);
+  });
+
+  it("should update linkedin", async () => {
+    global.fetch.mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve({ data: { id: 1 } }),
+    });
+
+    const result = await updateLinkedin("linkedin.com/test", 1);
+    expect(result.success).toBe(true);
+  });
+
+  it("should update github", async () => {
+    global.fetch.mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve({ data: { id: 1 } }),
+    });
+
+    const result = await updateGithub("github.com/test", 1);
+    expect(result.success).toBe(true);
+  });
+
+  it("should update photo", async () => {
+    global.fetch.mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve({ data: { id: 1 } }),
+    });
+
+    const result = await updatePhoto("https://example.com/photo.jpg", 1);
+    expect(result.success).toBe(true);
+  });
+
+  it("should update onboarding info", async () => {
+    global.fetch.mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve({ data: { id: 1 } }),
+    });
+
+    const result = await updateOnboardingInfo("John", "Doe", "Bio", 1);
+    expect(result.success).toBe(true);
+  });
+
+  it("should update user info", async () => {
+    global.fetch.mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve({ data: { id: 1 } }),
+    });
+
+    global.fetch.mockImplementation(() =>
+      Promise.resolve(1),
+    );
+
+    const result = await updateUserInfo(
+      "John",
+      "Doe",
+      "Bio",
+      ["User"],
+      "photo.jpg",
+      1,
+    );
+    expect(result.success).toBe(true);
+  });
+
+  it("should update first time status", async () => {
+    global.fetch.mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve({ data: { id: 1 } }),
+    });
+
+    const result = await updateFirstTimeStatus(1);
+    expect(result.success).toBe(true);
+  });
+});
+
+describe("Error Handling", () => {
+  it("should handle invalid email format", async () => {
+    const formData = new FormData();
+    formData.append("email", "invalid-email");
+    formData.append("isEnabled", "true");
+
+    global.fetch.mockImplementation(() =>
+      Promise.resolve(1),
+    );
+
+    const result = await createAuthorizedUser({}, formData);
+    expect(result.ok).toBe(false);
   });
 });

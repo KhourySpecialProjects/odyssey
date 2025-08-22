@@ -1,10 +1,14 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { AccessRequestBlock } from "@/components/shared/access-manager/access-requests/access-request";
-import { createAuthorizedUser, deleteAccessRequest } from "@/lib/actions";
+import { deleteAccessRequest } from "@/lib/actions";
+import { createAuthorizedUser } from "@/lib/requests/authorized-user";
 
 jest.mock("@/lib/actions", () => ({
-  createAuthorizedUser: jest.fn(),
   deleteAccessRequest: jest.fn(),
+}));
+
+jest.mock("@/lib/requests/authorized-user", () => ({
+  createAuthorizedUser: jest.fn(),
 }));
 
 describe("AccessRequestBlock", () => {

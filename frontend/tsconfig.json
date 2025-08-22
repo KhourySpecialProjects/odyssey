@@ -30,6 +30,6 @@
     "**/*.tsx",
     ".next/types/**/*.ts",
     "testing/requests/requests.test.js"
-  ],
+, "testing/requests/notes.test.js", "testing/requests/authorized-users.test.js"  ],
   "exclude": ["node_modules"]
 }

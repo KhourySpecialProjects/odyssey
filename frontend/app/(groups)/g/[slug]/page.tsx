@@ -72,7 +72,7 @@ export default async function GroupDetailPage({ params }: Props) {
 
     try {
       const memberEnrollmentsPromises = sortedMembers.map(
-        async (member, index) => {
+        async (member) => {
           const enrollments = await getEnrollmentsByAuthorizedUser(member.id);
           return { member, enrollments };
         },

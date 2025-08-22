@@ -7,6 +7,7 @@ const {
   addGroupMembers,
   removeGroupMembers,
   changeGroupMemberRole,
+  deleteGroup,
 } = require("../../lib/requests/groups");
 
 const {
@@ -1453,115 +1454,7 @@ describe("Groups Tests", () => {
       process.env.NEXT_PUBLIC_STRAPI_API_URL = "http://test-api-url";
       process.env.STRAPI_ACCESS_TOKEN = "test-token";
     });
-    /*
-                it("should assign a due date to a droplet for all group members", async () => {
-                    // Setup test data
-                    const date = "2023-12-31";
-                    const mockGroup = {
-                        id: 1,
-                        members: [
-                            { id: 10, email: "member1@northeastern.edu" },
-                            { id: 11, email: "member2@northeastern.edu" }
-                        ]
-                    };
-                    const mockDroplet = { id: 101, name: "Test Droplet" };
-        
-                    // Mock no existing due dates, creating new ones
-                    global.fetch
-                        // First fetch: check for existing due dates for member 1
-                        .mockResolvedValueOnce({
-                            json: async () => ({ data: [] })
-                        })
-                        // Second fetch: create due date for member 1
-                        .mockResolvedValueOnce({
-                            ok: true
-                        })
-                        // Third fetch: check for existing due dates for member 2
-                        .mockResolvedValueOnce({
-                            json: async () => ({ data: [] })
-                        })
-                        // Fourth fetch: create due date for member 2
-                        .mockResolvedValueOnce({
-                            ok: true
-                        });
-        
-                    // Execute the function
-                    const result = await assignDropletDueDate(date, mockGroup, mockDroplet);
-        
-                    // Verify the result
-                    expect(result).toEqual({ success: true });
-        
-                    // // Verify API calls for checking existing due dates
-                    // expect(global.fetch).toHaveBeenNthCalledWith(
-                    //     1,
-                    //     "http://test-api-url/api/due-dates?filters[authorized_user][id][$eq]=10&filters[droplet][id][$eq]=101&filters[group][id][$eq]=1",
-                    //     {
-                    //         headers: {
-                    //             Authorization: "Bearer test-token",
-                    //         },
-                    //     }
-                    // );
-        
-                    // Check if fetch was called with correct parameters
-                    expect(global.fetch).toHaveBeenNthCalledWith(
-                        1,
-                        expect.stringContaining("/api/due-dates?"),
-                        expect.objectContaining({
-                            headers: expect.objectContaining({
-                                Authorization: expect.stringContaining("Bearer"),
-                            }),
-                        }),
-                    );
-        
-                    // Check if fetch was called with correct parameters
-                    expect(global.fetch).toHaveBeenNthCalledWith(
-                        2,
-                        expect.stringContaining("/api/due-dates"),
-                        expect.objectContaining({
-                            method: "POST",
-                            headers: expect.objectContaining({
-                                "Content-Type": "application/json",
-                                Authorization: expect.stringContaining("Bearer"),
-                            }),
-                            body: JSON.stringify({
-                                data: {
-                                    dueDate: date,
-                                    authorized_user: 10,
-                                    droplet: 101,
-                                    group: 1
-                                }
-                            })
-                        }),
-                    );
-        
-                    // // Verify API calls for creating due dates
-                    // expect(global.fetch).toHaveBeenNthCalledWith(
-                    //     2,
-                    //     "http://test-api-url/api/due-dates",
-                    //     {
-                    //         method: "POST",
-                    //         headers: {
-                    //             "Content-Type": "application/json",
-                    //             Authorization: "Bearer test-token",
-                    //         },
-                    //         body: JSON.stringify({
-                    //             data: {
-                    //                 dueDate: date,
-                    //                 authorized_user: 10,
-                    //                 droplet: 101,
-                    //                 group: 1
-                    //             }
-                    //         })
-                    //     }
-                    // );
-        
-                    // Verify revalidatePath was called for all necessary paths
-                    expect(revalidatePath).toHaveBeenCalledWith("/explore");
-                    expect(revalidatePath).toHaveBeenCalledWith("/dashboard");
-                    expect(revalidatePath).toHaveBeenCalledWith("/groups/g/[slug]", "page");
-                    expect(revalidatePath).toHaveBeenCalledWith("/");
-                });
-        */
+   
     it("should update existing due dates if they already exist", async () => {
       const date = "2023-12-31";
       const mockGroup = {
@@ -2299,3 +2192,17 @@ describe("Groups Tests", () => {
     });
   });
 });
+
+describe("deleteGroup", () => {
+  it("handles group deletion failure", async () => {
+    const mockResponse = { ok: false };
+    fetchAPI.mockResolvedValueOnce(mockResponse);
+
+    const result = await deleteGroup(123);
+
+    expect(result).toEqual({
+      error: "Database Error: Failed to Delete Group.",
+    });
+  });
+});
+
