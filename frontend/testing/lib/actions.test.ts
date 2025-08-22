@@ -29,7 +29,7 @@ jest.mock("@/lib/auth/session", () => ({
 }));
 
 jest.mock("next/navigation", () => ({
-  redirect: jest.fn(), 
+  redirect: jest.fn(),
 }));
 
 describe("actions", () => {
@@ -162,9 +162,7 @@ describe("actions", () => {
         );
       });
     });
-
-    
-  })
+  });
 
   describe("User Settings Actions", () => {
     it("should set timezone", async () => {
@@ -220,6 +218,5 @@ describe("actions", () => {
         expect(result.ok).toBe(true);
       });
     });
-    
   });
 });

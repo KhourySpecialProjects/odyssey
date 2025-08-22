@@ -214,14 +214,17 @@ export async function createPlaylist(data: {
       },
     };
 
-    const response = await fetch(`${NEXT_PUBLIC_STRAPI_API_URL}/api/playlists`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${process.env.STRAPI_ACCESS_TOKEN}`,
+    const response = await fetch(
+      `${NEXT_PUBLIC_STRAPI_API_URL}/api/playlists`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${process.env.STRAPI_ACCESS_TOKEN}`,
+        },
+        body: JSON.stringify({ data: dataToSend }),
       },
-      body: JSON.stringify({ data: dataToSend }),
-    });
+    );
 
     const responseData = await response.json();
 
@@ -249,13 +252,16 @@ export async function deletePlaylist(id: number) {
   try {
     const group = await getPlaylistById(id);
 
-    const response = await fetch(NEXT_PUBLIC_STRAPI_API_URL + "/api/playlists/" + id, {
-      method: "DELETE",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+    const response = await fetch(
+      NEXT_PUBLIC_STRAPI_API_URL + "/api/playlists/" + id,
+      {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+        },
       },
-    });
+    );
 
     const data = await response.json();
 

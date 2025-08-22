@@ -3,7 +3,7 @@ const {
   getHighlightsByDroplet,
   getHighlightsForLesson,
   createHighlight,
-  deleteHighlight
+  deleteHighlight,
 } = require("../../lib/requests/highlights");
 const { fetchAPI } = require("../../lib/utils");
 
@@ -320,9 +320,7 @@ describe("Highlight Actions", () => {
     global.fetch.mockImplementation(() =>
       Promise.resolve({ email: "test@example.com" }),
     );
-    global.fetch.mockImplementation(() =>
-      Promise.resolve({ id: 1 }),
-    );
+    global.fetch.mockImplementation(() => Promise.resolve({ id: 1 }));
 
     global.fetch.mockResolvedValueOnce({
       ok: false,
@@ -336,9 +334,7 @@ describe("Highlight Actions", () => {
 
 describe("Error Cases", () => {
   it("should handle network errors", async () => {
-    global.fetch.mockRejectedValueOnce(
-      new Error("Network error"),
-    );
+    global.fetch.mockRejectedValueOnce(new Error("Network error"));
 
     await expect(
       createHighlight({ data: { content: "Test" } }),

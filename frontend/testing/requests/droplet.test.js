@@ -1,6 +1,10 @@
 import { getCurrentUser } from "@/lib/auth/session";
 import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
-import { createDroplet, createNewTag, deepDeleteDroplet } from "@/lib/requests/droplet";
+import {
+  createDroplet,
+  createNewTag,
+  deepDeleteDroplet,
+} from "@/lib/requests/droplet";
 import { addLesson } from "@/lib/requests/lesson";
 
 jest.mock("@/lib/requests/lesson", () => ({
@@ -49,15 +53,15 @@ describe("Droplet Actions", () => {
 
   //   global.fetch.mockResolvedValueOnce({
   //     ok: true,
-  //     json: () => Promise.resolve({ 
-  //       data: { 
+  //     json: () => Promise.resolve({
+  //       data: {
   //         id: 1,
   //         attributes: {
   //           name: "Test Droplet",
   //           focusArea: "Test Area",
   //           type: "test"
   //         }
-  //       } 
+  //       }
   //     }),
   //   });
 
@@ -82,14 +86,14 @@ describe("Droplet Actions", () => {
 // describe("Tag Actions", () => {
 //   it("should create new tag", async () => {
 //     global.fetch.mockResolvedValueOnce({
-//       ok: true, 
-//       json: () => Promise.resolve({ 
-//         data: { 
+//       ok: true,
+//       json: () => Promise.resolve({
+//         data: {
 //           id: 1,
 //           attributes: {
 //             name: "Test Tag"
 //           }
-//         } 
+//         }
 //       }),
 //     });
 

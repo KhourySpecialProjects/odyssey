@@ -1,4 +1,9 @@
-import { addLesson, completeLesson, deleteLesson, markLessonAsComplete } from "@/lib/requests/lesson";
+import {
+  addLesson,
+  completeLesson,
+  deleteLesson,
+  markLessonAsComplete,
+} from "@/lib/requests/lesson";
 import { revalidatePath } from "next/cache";
 
 global.fetch = jest.fn();
@@ -23,14 +28,13 @@ jest.mock("@/lib/auth/session", () => ({
 }));
 
 jest.mock("next/navigation", () => ({
-  redirect: jest.fn(), 
+  redirect: jest.fn(),
 }));
 
 describe("markLessonAsComplete", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     global.fetch = jest.fn();
-    
   });
 
   it("successfully marks a lesson as complete", async () => {
@@ -73,7 +77,6 @@ describe("completeLesson", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     global.fetch = jest.fn();
-    
   });
   it("successfully completes a lesson", async () => {
     global.fetch.mockResolvedValueOnce({
@@ -99,9 +102,7 @@ describe("completeLesson", () => {
   });
 
   it("handles errors when completing a lesson", async () => {
-    global.fetch.mockRejectedValueOnce(
-      new Error("Network error"),
-    );
+    global.fetch.mockRejectedValueOnce(new Error("Network error"));
 
     const result = await completeLesson(1, [1, 2, 3]);
 
@@ -116,13 +117,11 @@ describe("deleteLesson", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     global.fetch = jest.fn();
-    
   });
   it("handles lesson deletion failure", async () => {
     const mockResponse = {
       ok: false,
-      json: () =>
-        Promise.resolve({ error: { message: "Failed to delete" } }),
+      json: () => Promise.resolve({ error: { message: "Failed to delete" } }),
     };
     global.fetch.mockResolvedValueOnce(mockResponse);
 
@@ -140,30 +139,30 @@ describe("deleteLesson", () => {
 //   beforeEach(() => {
 //     jest.clearAllMocks();
 //     global.fetch = jest.fn();
-    
+
 //   });
-  // it("successfully adds a lesson", async () => {
-  //   const mockData = {
-  //     name: "Test Lesson",
-  //     dropletId: 1,
-  //     orderIndex: 1,
-  //   };
+// it("successfully adds a lesson", async () => {
+//   const mockData = {
+//     name: "Test Lesson",
+//     dropletId: 1,
+//     orderIndex: 1,
+//   };
 
-  //   const mockResponse = {
-  //     ok: true,
-  //     json: () => Promise.resolve({ data: {} }),
-  //   };
-  //   global.fetch.mockResolvedValueOnce(mockResponse);
+//   const mockResponse = {
+//     ok: true,
+//     json: () => Promise.resolve({ data: {} }),
+//   };
+//   global.fetch.mockResolvedValueOnce(mockResponse);
 
-  //   const result = await addLesson(mockData);
+//   const result = await addLesson(mockData);
 
-  //   expect(global.fetch).toHaveBeenCalledWith(
-  //     expect.stringContaining("/api/lessons"),
-  //     expect.objectContaining({
-  //       method: "POST",
-  //       body: expect.stringContaining("Test Lesson"),
-  //     }),
-  //   );
-  //   expect(result).toEqual({ ok: true, error: null, data: {} });
-  // });
+//   expect(global.fetch).toHaveBeenCalledWith(
+//     expect.stringContaining("/api/lessons"),
+//     expect.objectContaining({
+//       method: "POST",
+//       body: expect.stringContaining("Test Lesson"),
+//     }),
+//   );
+//   expect(result).toEqual({ ok: true, error: null, data: {} });
+// });
 //});

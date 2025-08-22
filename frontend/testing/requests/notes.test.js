@@ -1,4 +1,3 @@
-
 import { revalidatePath, revalidateTag } from "next/cache";
 
 const {
@@ -7,7 +6,7 @@ const {
   updateNoteContent,
   updateNotePosition,
   createNote,
-  deleteNote
+  deleteNote,
 } = require("../../lib/requests/notes");
 const { fetchAPI } = require("../../lib/utils");
 

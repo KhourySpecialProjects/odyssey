@@ -20,7 +20,12 @@ import { toast } from "sonner";
 import { Highlight } from "@/types";
 import { getEnrollByID } from "@/lib/requests/enrollment";
 import { createNote } from "@/lib/requests/notes";
-import { createHighlight, deleteHighlight, getHighlights, getHighlightsForLesson } from "@/lib/requests/highlights";
+import {
+  createHighlight,
+  deleteHighlight,
+  getHighlights,
+  getHighlightsForLesson,
+} from "@/lib/requests/highlights";
 import { Block } from "@/components/draft/lesson/add-block";
 import { GenericBlock } from "@/components/draft/lesson/blocks/generic";
 import { markLessonAsComplete } from "@/lib/requests/lesson";

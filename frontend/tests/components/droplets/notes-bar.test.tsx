@@ -14,7 +14,6 @@ jest.mock("@/lib/requests/notes", () => ({
   updateNotePosition: jest.fn(),
 }));
 
-
 describe("NotesBar", () => {
   const mockLesson = {
     id: 1,

@@ -71,12 +71,10 @@ export default async function GroupDetailPage({ params }: Props) {
     });
 
     try {
-      const memberEnrollmentsPromises = sortedMembers.map(
-        async (member) => {
-          const enrollments = await getEnrollmentsByAuthorizedUser(member.id);
-          return { member, enrollments };
-        },
-      );
+      const memberEnrollmentsPromises = sortedMembers.map(async (member) => {
+        const enrollments = await getEnrollmentsByAuthorizedUser(member.id);
+        return { member, enrollments };
+      });
 
       const memberEnrollments = await Promise.all(memberEnrollmentsPromises);
 

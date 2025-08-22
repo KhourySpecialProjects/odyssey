@@ -202,13 +202,16 @@ export async function createNote(
 
 export async function deleteNote(id: number) {
   try {
-    const response = await fetch(NEXT_PUBLIC_STRAPI_API_URL + "/api/notes/" + id, {
-      method: "DELETE",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+    const response = await fetch(
+      NEXT_PUBLIC_STRAPI_API_URL + "/api/notes/" + id,
+      {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+        },
       },
-    });
+    );
     const data = await response.json();
     if (!response.ok || (response.ok && data.error))
       return { ok: false, error: data.error.message, data: null };

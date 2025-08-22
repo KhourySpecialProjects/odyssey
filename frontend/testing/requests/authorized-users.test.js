@@ -13,7 +13,7 @@ const {
   updateLinkedin,
   updateOnboardingInfo,
   updatePhoto,
-  updateUserInfo
+  updateUserInfo,
 } = require("../../lib/requests/authorized-user");
 const { fetchAPI } = require("../../lib/utils");
 
@@ -450,14 +450,12 @@ describe("Profile Management Actions", () => {
 
       const result = await updateAuthorBio("New bio", 123);
 
-      
       expect(result.success).toBe(true);
     });
   });
 });
 
 describe("User Profile Actions", () => {
-
   it("should update linkedin", async () => {
     global.fetch.mockResolvedValueOnce({
       ok: true,
@@ -481,13 +479,13 @@ describe("User Profile Actions", () => {
   // it("should update photo", async () => {
   //   global.fetch.mockResolvedValueOnce({
   //     ok: true,
-  //     json: () => Promise.resolve({ 
-  //       data: { 
+  //     json: () => Promise.resolve({
+  //       data: {
   //         id: 1,
   //         attributes: {
   //           photo: "https://example.com/photo.jpg"
   //         }
-  //       } 
+  //       }
   //     }),
   //   });
 
@@ -543,9 +541,7 @@ describe("Error Handling", () => {
     formData.append("email", "invalid-email");
     formData.append("isEnabled", "true");
 
-    global.fetch.mockImplementation(() =>
-      Promise.resolve(1),
-    );
+    global.fetch.mockImplementation(() => Promise.resolve(1));
 
     const result = await createAuthorizedUser({}, formData);
     expect(result.ok).toBe(false);

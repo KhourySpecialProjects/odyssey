@@ -16,7 +16,10 @@ import { Input } from "../ui/input";
 import { useRouter } from "next/navigation";
 import { Logo } from "../header/logo";
 import { createSystemAnnouncement } from "@/lib/requests/feed";
-import { updateFirstTimeStatus, updateOnboardingInfo } from "@/lib/requests/authorized-user";
+import {
+  updateFirstTimeStatus,
+  updateOnboardingInfo,
+} from "@/lib/requests/authorized-user";
 
 export function FirstVisitPopup({ user }: { user: AuthorizedUser | null }) {
   const [isOpen, setIsOpen] = useState(false);
