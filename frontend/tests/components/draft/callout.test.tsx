@@ -52,9 +52,9 @@ jest.mock("@lemonsqueezy/wedges", () => ({
 
 describe("CalloutEditor", () => {
   const mockBlock = {
-    __component: "droplets.callout" as 'droplets.callout',
+    __component: "droplets.callout" as "droplets.callout",
     content: [],
-    type: "info" as 'info',
+    type: "info" as "info",
     color: "bg-sky-50",
     iconEnabled: true,
   };
@@ -141,10 +141,10 @@ describe("CalloutEditor", () => {
 
   describe("CalloutEditor", () => {
     const mockBlock = {
-      __component: "droplets.callout" as 'droplets.callout',
+      __component: "droplets.callout" as "droplets.callout",
       content: [],
       color: "bg-red-300",
-      type: "info" as 'info',
+      type: "info" as "info",
       iconEnabled: true,
     };
 

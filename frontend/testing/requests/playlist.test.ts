@@ -1,4 +1,8 @@
-import { createPlaylist, deletePlaylist, updatePlaylist } from "@/lib/requests/playlist";
+import {
+  createPlaylist,
+  deletePlaylist,
+  updatePlaylist,
+} from "@/lib/requests/playlist";
 import { revalidateTag } from "next/cache";
 
 jest.mock("next/cache", () => ({
@@ -35,8 +39,7 @@ describe("createPlaylist", () => {
   it("handles playlist creation failure", async () => {
     const mockResponse = {
       ok: false,
-      json: () =>
-        Promise.resolve({ error: { message: "Creation failed" } }),
+      json: () => Promise.resolve({ error: { message: "Creation failed" } }),
     };
     (global.fetch as jest.Mock).mockResolvedValueOnce(mockResponse);
 

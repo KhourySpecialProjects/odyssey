@@ -3,17 +3,19 @@
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import {
-
-  uploadImage,
-} from "@/lib/actions";
+import { uploadImage } from "@/lib/actions";
 import { AuthorizedUser } from "@/types";
 import { useState } from "react";
 import imageCompression from "browser-image-compression";
 import { Textarea } from "@/components/ui/textarea";
 import { Check } from "lucide-react";
 import { ProfileBlock } from "@/components/friends/profile-block";
-import { updateAuthorBio, updateGithub, updateLinkedin, updatePhoto } from "@/lib/requests/authorized-user";
+import {
+  updateAuthorBio,
+  updateGithub,
+  updateLinkedin,
+  updatePhoto,
+} from "@/lib/requests/authorized-user";
 
 export function SocialForms({
   authorizedUser,

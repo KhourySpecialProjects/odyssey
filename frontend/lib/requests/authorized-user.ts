@@ -1,4 +1,4 @@
-"use server"
+"use server";
 import { fetchAPI, flattenAttributes } from "@/lib/utils";
 import { AuthorizedUser } from "@/types";
 import { StrapiRequestParams } from "@/types/strapi";
@@ -414,14 +414,17 @@ export async function createAuthorizedUser(prevState: any, formData: FormData) {
   };
 
   try {
-    const response = await fetch(NEXT_PUBLIC_STRAPI_API_URL + "/api/authorized-users", {
-      method: "POST",
-      body: JSON.stringify(dataToSend),
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+    const response = await fetch(
+      NEXT_PUBLIC_STRAPI_API_URL + "/api/authorized-users",
+      {
+        method: "POST",
+        body: JSON.stringify(dataToSend),
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+        },
       },
-    });
+    );
     const data = await response.json();
     if (!response.ok || (response.ok && data.error))
       return { ok: false, error: data.error.message, data: null };
@@ -457,14 +460,17 @@ export async function createBatchAuthorizedUsers(emails: string[]) {
           },
         };
 
-        const response = await fetch(NEXT_PUBLIC_STRAPI_API_URL + "/api/authorized-users", {
-          method: "POST",
-          body: JSON.stringify(dataToSend),
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+        const response = await fetch(
+          NEXT_PUBLIC_STRAPI_API_URL + "/api/authorized-users",
+          {
+            method: "POST",
+            body: JSON.stringify(dataToSend),
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+            },
           },
-        });
+        );
         const data = await response.json();
 
         if (!response.ok || (response.ok && data.error)) {

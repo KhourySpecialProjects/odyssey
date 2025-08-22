@@ -1454,7 +1454,7 @@ describe("Groups Tests", () => {
       process.env.NEXT_PUBLIC_STRAPI_API_URL = "http://test-api-url";
       process.env.STRAPI_ACCESS_TOKEN = "test-token";
     });
-   
+
     it("should update existing due dates if they already exist", async () => {
       const date = "2023-12-31";
       const mockGroup = {
@@ -2074,4 +2074,3 @@ describe("deleteGroup", () => {
     });
   });
 });
-

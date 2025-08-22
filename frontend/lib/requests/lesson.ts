@@ -1,4 +1,4 @@
-"use server"
+"use server";
 import { Droplet, Lesson } from "@/types";
 import { StrapiRequestParams } from "@/types/strapi";
 import { fetchAPI } from "../utils";
@@ -92,7 +92,8 @@ export async function markLessonAsComplete(
 export async function completeLesson(activityId: number, lessonIds: number[]) {
   try {
     const response = await fetch(
-      NEXT_PUBLIC_STRAPI_API_URL + `/api/authorized-user-activities/${activityId}`,
+      NEXT_PUBLIC_STRAPI_API_URL +
+        `/api/authorized-user-activities/${activityId}`,
       {
         method: "PUT",
         headers: {
@@ -140,7 +141,9 @@ export async function deleteLesson(
 
       if (dropletLesson) {
         const deleteDropletLessonResponse = await fetch(
-          NEXT_PUBLIC_STRAPI_API_URL + "/api/droplet-lessons/" + dropletLesson.id,
+          NEXT_PUBLIC_STRAPI_API_URL +
+            "/api/droplet-lessons/" +
+            dropletLesson.id,
           {
             method: "DELETE",
             headers: {
@@ -156,13 +159,16 @@ export async function deleteLesson(
       }
     }
 
-    const response = await fetch(NEXT_PUBLIC_STRAPI_API_URL + "/api/lessons/" + id, {
-      method: "DELETE",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+    const response = await fetch(
+      NEXT_PUBLIC_STRAPI_API_URL + "/api/lessons/" + id,
+      {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+        },
       },
-    });
+    );
     const data = await response.json();
     if (!response.ok || (response.ok && data.error))
       return { ok: false, error: data.error.message, data: null };
@@ -197,14 +203,17 @@ export async function updateLesson(
     };
     dataToSend.regenerateSlug = options.regenerateSlug;
 
-    const response = await fetch(NEXT_PUBLIC_STRAPI_API_URL + "/api/lessons/" + id, {
-      method: "PUT",
-      body: JSON.stringify({ data: dataToSend }),
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+    const response = await fetch(
+      NEXT_PUBLIC_STRAPI_API_URL + "/api/lessons/" + id,
+      {
+        method: "PUT",
+        body: JSON.stringify({ data: dataToSend }),
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+        },
       },
-    });
+    );
     const responseData = await response.json();
 
     if (!response.ok || (response.ok && responseData.error)) {
@@ -253,14 +262,17 @@ export async function addLesson(formData: z.infer<typeof CreateLessonSchema>) {
       },
     };
 
-    const lessonResponse = await fetch(NEXT_PUBLIC_STRAPI_API_URL + "/api/lessons", {
-      method: "POST",
-      body: JSON.stringify({ data: lessonData }),
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+    const lessonResponse = await fetch(
+      NEXT_PUBLIC_STRAPI_API_URL + "/api/lessons",
+      {
+        method: "POST",
+        body: JSON.stringify({ data: lessonData }),
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+        },
       },
-    });
+    );
 
     const lessonResult = await lessonResponse.json();
 
