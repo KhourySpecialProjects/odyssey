@@ -10,7 +10,6 @@ export default async function HomeRoute() {
   const user = await getCurrentUser();
 
   const droplets = await getRandomFunFactDroplet();
-  console.log("droplets ", droplets);
   const droplet = droplets[Math.floor(Math.random() * droplets.length)];
 
   return (
@@ -62,7 +61,7 @@ export default async function HomeRoute() {
                 </Button>
               )}
             </div>
-            {user && <FunFact droplet={droplet} />}
+            {user && droplet && <FunFact droplet={droplet} />}
           </div>
         </div>
 

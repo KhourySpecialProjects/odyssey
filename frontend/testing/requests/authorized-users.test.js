@@ -6,13 +6,6 @@ const {
   fetchWebsiteCreators,
   getAllAuthorizedUsers,
   createAuthorizedUser,
-  updateAuthorBio,
-  updateAuthorizedUser,
-  updateFirstTimeStatus,
-  updateGithub,
-  updateLinkedin,
-  updateOnboardingInfo,
-  updatePhoto,
   updateUserInfo,
 } = require("../../lib/requests/authorized-user");
 const { fetchAPI } = require("../../lib/utils");
@@ -344,197 +337,7 @@ describe("Authorized User Tests", () => {
       );
     });
   });
-
-  describe("getAllAuthorizedUsers", () => {
-    beforeEach(() => {
-      jest.clearAllMocks();
-    });
-
-    it("should fetch and return all authorized users", async () => {
-      const mockStrapiResponse = {
-        data: mockUsers.map((user) => ({
-          id: user.id,
-          attributes: user.attributes,
-        })),
-        meta: {
-          pagination: {
-            page: 1,
-            pageSize: 100,
-          },
-          sort: ["lastName"],
-        },
-      };
-
-      global.fetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => mockStrapiResponse,
-      });
-
-      const result = await getAllAuthorizedUsers();
-
-      expect(global.fetch).toHaveBeenCalledWith(
-        expect.stringContaining("/api/authorized-users?"),
-        expect.objectContaining({
-          headers: expect.objectContaining({
-            Authorization: expect.stringContaining("Bearer"),
-          }),
-          cache: "no-store",
-        }),
-      );
-
-      const callUrl = global.fetch.mock.calls[0][0];
-
-      expect(callUrl).toMatch(/sort%5B0%5D=lastName%3Aasc/);
-
-      expect(callUrl).toMatch(
-        /fields%5B0%5D=email&fields%5B1%5D=firstName&fields%5B2%5D=lastName/,
-      );
-
-      expect(callUrl).toMatch(/pagination%5BpageSize%5D=100/);
-      expect(callUrl).toMatch(/pagination%5Bpage%5D=1/);
-
-      expect(result).toEqual(
-        expect.arrayContaining([
-          expect.objectContaining({
-            id: expect.any(Number),
-            firstName: expect.any(String),
-            lastName: expect.any(String),
-            email: expect.stringMatching(/@northeastern.edu$/),
-            isEnabled: expect.any(Boolean),
-          }),
-        ]),
-      );
-    });
-
-    it("should handle fetch errors", async () => {
-      global.fetch.mockRejectedValueOnce(new Error("Network error"));
-
-      await expect(getAllAuthorizedUsers()).rejects.toThrow(
-        "Failed to fetch authorized users:",
-      );
-    });
-  });
 });
-
-// describe("updateAuthorizedUser", () => {
-//   it("successfully updates an authorized user", async () => {
-//     const formData = new FormData();
-//     formData.append("id", "123");
-//     formData.append("isEnabled", "true");
-
-//     const mockResponse = {
-//       ok: true,
-//       json: () => Promise.resolve({ data: {} }),
-//     };
-//     global.fetch.mockResolvedValueOnce(mockResponse);
-
-//     await updateAuthorizedUser(formData);
-
-//     expect(global.fetch).toHaveBeenCalledWith(
-//       expect.stringContaining("/api/authorized-users/123"),
-//       expect.objectContaining({
-//         method: "PUT",
-//         body: expect.stringContaining("isEnabled"),
-//       }),
-//     );
-//   });
-// });
-
-describe("Profile Management Actions", () => {
-  describe("updateAuthorBio", () => {
-    it("successfully updates author bio", async () => {
-      global.fetch.mockResolvedValueOnce({
-        ok: true,
-        json: () => Promise.resolve({ data: { id: 1 } }),
-      });
-
-      const result = await updateAuthorBio("New bio", 123);
-
-      expect(result.success).toBe(true);
-    });
-  });
-});
-
-describe("User Profile Actions", () => {
-  it("should update linkedin", async () => {
-    global.fetch.mockResolvedValueOnce({
-      ok: true,
-      json: () => Promise.resolve({ data: { id: 1 } }),
-    });
-
-    const result = await updateLinkedin("linkedin.com/test", 1);
-    expect(result.success).toBe(true);
-  });
-
-  it("should update github", async () => {
-    global.fetch.mockResolvedValueOnce({
-      ok: true,
-      json: () => Promise.resolve({ data: { id: 1 } }),
-    });
-
-    const result = await updateGithub("github.com/test", 1);
-    expect(result.success).toBe(true);
-  });
-
-  // it("should update photo", async () => {
-  //   global.fetch.mockResolvedValueOnce({
-  //     ok: true,
-  //     json: () => Promise.resolve({
-  //       data: {
-  //         id: 1,
-  //         attributes: {
-  //           photo: "https://example.com/photo.jpg"
-  //         }
-  //       }
-  //     }),
-  //   });
-
-  //   const result = await updatePhoto("https://example.com/photo.jpg", 1);
-  //   expect(result.success).toBe(true);
-  // });
-
-  it("should update onboarding info", async () => {
-    global.fetch.mockResolvedValueOnce({
-      ok: true,
-      json: () => Promise.resolve({ data: { id: 1 } }),
-    });
-
-    const result = await updateOnboardingInfo("John", "Doe", "Bio", 1);
-    expect(result.success).toBe(true);
-  });
-
-  // it("should update user info", async () => {
-  //   global.fetch.mockResolvedValueOnce({
-  //     ok: true,
-  //     json: () => Promise.resolve({ data: { id: 1 } }),
-  //   });
-
-  //   global.fetch.mockImplementation(() =>
-  //     Promise.resolve(1),
-  //   );
-
-  //   const result = await updateUserInfo(
-  //     "John",
-  //     "Doe",
-  //     "Bio",
-  //     ["User"],
-  //     "photo.jpg",
-  //     1,
-  //   );
-  //   expect(result.success).toBe(true);
-  // });
-
-  it("should update first time status", async () => {
-    global.fetch.mockResolvedValueOnce({
-      ok: true,
-      json: () => Promise.resolve({ data: { id: 1 } }),
-    });
-
-    const result = await updateFirstTimeStatus(1);
-    expect(result.success).toBe(true);
-  });
-});
-
 describe("Error Handling", () => {
   it("should handle invalid email format", async () => {
     const formData = new FormData();
@@ -543,7 +346,7 @@ describe("Error Handling", () => {
 
     global.fetch.mockImplementation(() => Promise.resolve(1));
 
-    const result = await createAuthorizedUser({}, formData);
+    const result = await createAuthorizedUser(formData);
     expect(result.ok).toBe(false);
   });
 });

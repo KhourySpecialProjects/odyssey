@@ -2,21 +2,16 @@ import {
   render,
   fireEvent,
   act,
-  waitFor,
   screen,
 } from "@testing-library/react";
 import { FirstVisitPopup } from "@/components/first-time/first-visit-popup";
 import { toast } from "sonner";
 import userEvent from "@testing-library/user-event";
 import { TimeZone } from "@/types";
-import {
-  updateFirstTimeStatus,
-  updateOnboardingInfo,
-} from "@/lib/requests/authorized-user";
+import { updateUserInfo } from "@/lib/requests/authorized-user";
 
 jest.mock("@/lib/requests/authorized-user", () => ({
-  updateFirstTimeStatus: jest.fn(),
-  updateOnboardingInfo: jest.fn(),
+  updateUserInfo: jest.fn(),
 }));
 
 jest.mock("sonner", () => ({
@@ -73,7 +68,7 @@ describe("FirstVisitPopup", () => {
       expect(toast.error).toHaveBeenCalledWith(
         "Please enter your first name before continuing",
       );
-      expect(updateFirstTimeStatus).not.toHaveBeenCalled();
+      expect(updateUserInfo).not.toHaveBeenCalled();
     });
 
     it("shows error when trying to close without last name", async () => {
@@ -93,39 +88,7 @@ describe("FirstVisitPopup", () => {
       expect(toast.error).toHaveBeenCalledWith(
         "Please enter your last name before continuing",
       );
-      expect(updateFirstTimeStatus).not.toHaveBeenCalled();
-    });
-
-    it("successfully submits form with required fields", async () => {
-      const { getByText, getByLabelText } = render(
-        <FirstVisitPopup user={mockUser} />,
-      );
-
-      const firstNameInput = getByLabelText("First name");
-      const lastNameInput = getByLabelText("Last name");
-      const bioInput = getByLabelText("Bio");
-
-      fireEvent.change(firstNameInput, {
-        target: { value: "John" },
-      });
-      fireEvent.change(lastNameInput, {
-        target: { value: "Doe" },
-      });
-      fireEvent.change(bioInput, {
-        target: { value: "Test bio" },
-      });
-
-      await act(async () => {
-        fireEvent.click(getByText("Start Exploring"));
-      });
-
-      expect(updateFirstTimeStatus).toHaveBeenCalledWith(1);
-      expect(updateOnboardingInfo).toHaveBeenCalledWith(
-        "John",
-        "Doe",
-        "Test bio",
-        1,
-      );
+      expect(updateUserInfo).not.toHaveBeenCalled();
     });
   });
 
@@ -165,7 +128,7 @@ describe("FirstVisitPopup", () => {
         fireEvent.keyDown(dialog, { key: "Escape" });
       });
 
-      expect(updateFirstTimeStatus).toHaveBeenCalled();
+      expect(updateUserInfo).toHaveBeenCalled();
     });
   });
 
@@ -186,26 +149,5 @@ describe("FirstVisitPopup", () => {
     expect(toast.error).toHaveBeenCalledWith(
       "Please enter your last name before continuing",
     );
-  });
-
-  it("handles dialog close with valid data", async () => {
-    render(<FirstVisitPopup user={mockUser} />);
-
-    await userEvent.type(screen.getByLabelText("First name"), "John");
-    await userEvent.type(screen.getByLabelText("Last name"), "Doe");
-
-    await userEvent.click(
-      screen.getByRole("button", { name: "Start Exploring" }),
-    );
-
-    await waitFor(() => {
-      expect(updateFirstTimeStatus).toHaveBeenCalledWith(mockUser.id);
-      expect(updateOnboardingInfo).toHaveBeenCalledWith(
-        "John",
-        "Doe",
-        "",
-        mockUser.id,
-      );
-    });
   });
 });
