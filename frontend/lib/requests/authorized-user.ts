@@ -351,41 +351,10 @@ export async function fetchIsAuthorizedUser(email: string) {
   }
 }
 
-export async function getAllAuthorizedUsers(): Promise<AuthorizedUser[]> {
-  try {
-    const query = qs.stringify({
-      sort: ["lastName:asc"],
-      fields: ["email", "firstName", "lastName"],
-      populate: {
-        roles: {
-          fields: ["id", "title"],
-        },
-      },
-      pagination: {
-        pageSize: 1000,
-        page: 1,
-      },
-    });
-
-    const response = await fetch(
-      NEXT_PUBLIC_STRAPI_API_URL + "/api/authorized-users?" + query,
-      {
-        headers: { Authorization: "Bearer " + STRAPI_ACCESS_TOKEN },
-        cache: "no-store",
-      },
-    );
-    const data = await response.json();
-    const authorizedUsers = flattenAttributes(data.data);
-    return authorizedUsers;
-  } catch (error) {
-    throw new Error("Failed to fetch authorized users:");
-  }
-}
-
 const CreateAuthorizedUser = AuthorizedUserSchema.omit({
   id: true,
 });
-export async function createAuthorizedUser(prevState: any, formData: FormData) {
+export async function createAuthorizedUser(formData: FormData) {
   const roleID = await getAuthorizedUserRoleIdByTitle(
     AuthorizedUserRoleTitle.User,
   );
@@ -507,53 +476,56 @@ export async function createBatchAuthorizedUsers(emails: string[]) {
   }
 }
 
-export async function updateOnboardingInfo(
-  first: string | null,
-  last: string | null,
-  bio: string | null,
-  userId: number,
-) {
-  try {
-    const response = await fetch(
-      `${NEXT_PUBLIC_STRAPI_API_URL}/api/authorized-users/${userId}`,
-      {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
-        },
-        body: JSON.stringify({
-          data: {
-            firstName: first,
-            lastName: last,
-            bio: bio,
-          },
-        }),
-      },
-    );
-
-    if (!response.ok) {
-      throw new Error("Failed to update first time status");
-    }
-    return { success: true };
-  } catch (error) {
-    console.error("Error updating first time status:", error);
-    return { success: false, error };
-  }
-}
-
 export async function updateUserInfo(
-  first: string | null,
-  last: string | null,
-  bio: string | null,
-  roles: AuthorizedUserRoleTitle[],
-  profilePhoto: string | null,
   userId: number,
+  updates: {
+    first?: string | null;
+    last?: string | null;
+    bio?: string | null;
+    roles?: AuthorizedUserRoleTitle[];
+    profilePhoto?: string | null;
+    isEnabled?: boolean;
+    firstTime?: boolean;
+    linkedin?: string | null;
+    github?: string | null;
+    photo?: string | null;
+  },
 ) {
   try {
-    const roleIds = await Promise.all(
-      roles.map((role) => getAuthorizedUserRoleIdByTitle(role)),
-    );
+    const {
+      first,
+      last,
+      bio,
+      roles,
+      profilePhoto,
+      isEnabled,
+      firstTime,
+      linkedin,
+      github,
+      photo,
+    } = updates;
+    const roleIds = roles
+      ? await Promise.all(
+          roles.map((role) => getAuthorizedUserRoleIdByTitle(role)),
+        )
+      : [];
+
+    const data: any = {};
+
+    if (first !== undefined) data.firstName = first;
+    if (last !== undefined) data.lastName = last;
+    if (bio !== undefined) data.bio = bio;
+    if (profilePhoto !== undefined) data.profilePhoto = profilePhoto;
+    if (isEnabled !== undefined) data.isEnabled = isEnabled;
+    if (firstTime !== undefined) data.firstTime = updates.firstTime;
+    if (linkedin !== undefined) data.linkedin = linkedin;
+    if (github !== undefined) data.github = github;
+    if (photo !== undefined) data.profilePhoto = photo;
+    if (roles && roles.length > 0) {
+      data.roles = {
+        set: roleIds.map((id) => ({ id })),
+      };
+    }
 
     const response = await fetch(
       `${NEXT_PUBLIC_STRAPI_API_URL}/api/authorized-users/${userId}`,
@@ -563,166 +535,13 @@ export async function updateUserInfo(
           "Content-Type": "application/json",
           Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
         },
-        body: JSON.stringify({
-          data: {
-            firstName: first,
-            lastName: last,
-            bio: bio,
-            profilePhoto: profilePhoto,
-            roles: {
-              set: roleIds.map((id) => ({ id })),
-            },
-          },
-        }),
+        body: JSON.stringify({ data }),
       },
     );
     revalidatePath("/admin");
     return { success: true };
   } catch (error) {
     console.error("Error updating user info:", error);
-    return { success: false, error };
-  }
-}
-
-export async function updateFirstTimeStatus(userId: number) {
-  try {
-    const response = await fetch(
-      `${NEXT_PUBLIC_STRAPI_API_URL}/api/authorized-users/${userId}`,
-      {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
-        },
-        body: JSON.stringify({
-          data: {
-            firstTime: false,
-          },
-        }),
-      },
-    );
-
-    if (!response.ok) {
-      throw new Error("Failed to update first time status");
-    }
-    return { success: true };
-  } catch (error) {
-    console.error("Error updating first time status:", error);
-    return { success: false, error };
-  }
-}
-
-export async function updateLinkedin(data: string, userId: number) {
-  try {
-    const response = await fetch(
-      `${NEXT_PUBLIC_STRAPI_API_URL}/api/authorized-users/${userId}`,
-      {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
-        },
-        body: JSON.stringify({
-          data: {
-            linkedin: data,
-          },
-        }),
-      },
-    );
-
-    if (!response.ok) {
-      throw new Error("Failed to update linkedin");
-    }
-    return { success: true };
-  } catch (error) {
-    console.error("Error updating linkedin:", error);
-    return { success: false, error };
-  }
-}
-
-export async function updateGithub(data: string, userId: number) {
-  try {
-    const response = await fetch(
-      `${NEXT_PUBLIC_STRAPI_API_URL}/api/authorized-users/${userId}`,
-      {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
-        },
-        body: JSON.stringify({
-          data: {
-            github: data,
-          },
-        }),
-      },
-    );
-
-    if (!response.ok) {
-      throw new Error("Failed to update github");
-    }
-    return { success: true };
-  } catch (error) {
-    console.error("Error updating github:", error);
-    return { success: false, error };
-  }
-}
-
-export async function updatePhoto(imageUrl: string, userId: number) {
-  try {
-    const response = await fetch(
-      `${NEXT_PUBLIC_STRAPI_API_URL}/api/authorized-users/${userId}`,
-      {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
-        },
-        body: JSON.stringify({
-          data: {
-            profilePhoto: imageUrl,
-          },
-        }),
-      },
-    );
-
-    if (!response.ok) {
-      console.error("Profile update failed:", await response.text());
-      return { success: false, error: "Failed to update profile photo" };
-    }
-
-    revalidatePath("/settings/profile");
-    return { success: true };
-  } catch (error) {
-    console.error("Error updating photo:", error);
-    return { success: false, error: "Failed to process request" };
-  }
-}
-
-export async function updateAuthorBio(bio: string, userId: number) {
-  try {
-    const response = await fetch(
-      `${NEXT_PUBLIC_STRAPI_API_URL}/api/authorized-users/${userId}`,
-      {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
-        },
-        body: JSON.stringify({
-          data: {
-            bio: bio,
-          },
-        }),
-      },
-    );
-
-    if (!response.ok) {
-      throw new Error("Failed to update bio");
-    }
-    return { success: true };
-  } catch (error) {
-    console.error("Error updating bio:", error);
     return { success: false, error };
   }
 }
@@ -755,40 +574,5 @@ export async function deleteAuthorizedUser(formData: FormData) {
     return { error: "Database Error: Failed to Delete Authorized User." };
   }
 
-  revalidatePath("/admin");
-}
-
-const UpdateAuthorizedUser = AuthorizedUserSchema.omit({ email: true });
-export async function updateAuthorizedUser(formData: FormData) {
-  const { id, isEnabled } = UpdateAuthorizedUser.parse({
-    id: formData.get("id"),
-    isEnabled: formData.get("isEnabled") === "true",
-  });
-
-  const dataToSend = {
-    data: {
-      isEnabled,
-    },
-  };
-
-  try {
-    const response = await fetch(
-      NEXT_PUBLIC_STRAPI_API_URL + "/api/authorized-users/" + id,
-      {
-        method: "PUT",
-        body: JSON.stringify(dataToSend),
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
-        },
-      },
-    );
-    const data = await response.json();
-    if (!response.ok || (response.ok && data.error))
-      return { ok: false, error: data.error.message, data: null };
-  } catch (err) {
-    console.error(err);
-    return { error: "Database Error: Failed to Update Authorized User." };
-  }
   revalidatePath("/admin");
 }

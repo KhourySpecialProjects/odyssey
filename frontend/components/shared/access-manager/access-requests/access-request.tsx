@@ -16,7 +16,7 @@ export function AccessRequestBlock({ request }: { request: AccessRequest }) {
       formData.append("email", request.email);
       formData.append("isEnabled", "true");
 
-      const result = await createAuthorizedUser(null, formData);
+      const result = await createAuthorizedUser(formData);
 
       if (result.ok) {
         const deleteFormData = new FormData();

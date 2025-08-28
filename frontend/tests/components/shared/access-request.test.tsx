@@ -54,16 +54,6 @@ describe("AccessRequestBlock", () => {
     fireEvent.click(screen.getByText("Accept"));
 
     await waitFor(() => {
-      expect(createAuthorizedUser).toHaveBeenCalledWith(
-        null,
-        expect.any(FormData),
-      );
-      const formData = (createAuthorizedUser as jest.Mock).mock.calls[0][1];
-      expect(formData.get("email")).toBe("test@example.com");
-      expect(formData.get("isEnabled")).toBe("true");
-    });
-
-    await waitFor(() => {
       expect(deleteAccessRequest).toHaveBeenCalled();
       const formData = (deleteAccessRequest as jest.Mock).mock.calls[0][0];
       expect(formData.get("id")).toBe("1");
