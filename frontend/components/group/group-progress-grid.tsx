@@ -30,7 +30,6 @@ interface GroupProgressGridProps {
 }
 
 export function GroupProgressGrid({ group, statuses }: GroupProgressGridProps) {
-  const [, startTransition] = useTransition();
   const [currentPage, setCurrentPage] = useState(0);
   const lessonsPerPage = 4;
 
