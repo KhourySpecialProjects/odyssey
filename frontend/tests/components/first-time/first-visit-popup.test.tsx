@@ -1,9 +1,4 @@
-import {
-  render,
-  fireEvent,
-  act,
-  screen,
-} from "@testing-library/react";
+import { render, fireEvent, act, screen } from "@testing-library/react";
 import { FirstVisitPopup } from "@/components/first-time/first-visit-popup";
 import { toast } from "sonner";
 import userEvent from "@testing-library/user-event";
