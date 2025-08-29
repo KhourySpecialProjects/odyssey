@@ -16,7 +16,10 @@ interface RenderGroupDashboardProps {
   canEdit: boolean | undefined;
   authUser: AuthorizedUser;
   dueDates: DueDate[];
-  statuses: Record<string, number>;
+  statuses: Record<
+    string,
+    { completionPercentage: number; completionDate: Date | undefined }
+  >;
 }
 
 const tabStyle =
