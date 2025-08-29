@@ -26,8 +26,8 @@ import { CheckIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { Input } from "../ui/input";
-import { createNewTag } from "@/lib/actions";
 import { toast } from "sonner";
+import { createNewTag } from "@/lib/requests/droplet";
 
 export function MultiSelect({
   label,

@@ -15,7 +15,6 @@ import { LearningObjectivesInput } from "@/components/new/learning-objectives-in
 import { DROPLET_FILTERS } from "@/lib/globals";
 import { Tag, User } from "@/types";
 import { useState, useEffect } from "react";
-import { createDroplet } from "@/lib/actions";
 import {
   LoaderIcon,
   MoveRightIcon,
@@ -29,6 +28,7 @@ import { FocusArea, DropletType } from "@/types";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { getInitials } from "@/lib/utils";
 import { RadioSelect } from "./radio-select";
+import { createDroplet } from "@/lib/requests/droplet";
 
 type SubmissionState = {
   error: string | null;

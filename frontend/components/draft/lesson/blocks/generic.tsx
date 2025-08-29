@@ -1,7 +1,7 @@
 "use client";
-import { revalidateLesson } from "@/lib/actions";
 import { GripVertical, Trash2Icon } from "lucide-react";
 import { GenericBlockInput } from "@/components/ui/tiptap/generic-block-input";
+import { revalidateLesson } from "@/lib/requests/lesson";
 
 export type GenericBlock = {
   __component: "droplets.generic";

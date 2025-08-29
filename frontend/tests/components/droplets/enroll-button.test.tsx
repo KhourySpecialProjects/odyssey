@@ -1,10 +1,10 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { EnrollButton } from "@/components/droplets/enroll-button";
-import { createEnrollment, deleteEnrollment } from "@/lib/actions";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { createEnrollment, deleteEnrollment } from "@/lib/requests/enrollment";
 
-jest.mock("@/lib/actions", () => ({
+jest.mock("@/lib/requests/enrollment", () => ({
   createEnrollment: jest.fn(),
   deleteEnrollment: jest.fn(),
 }));

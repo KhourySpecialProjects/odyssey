@@ -19,7 +19,6 @@ import { getCurrentUser } from "@/lib/auth/session";
 import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
 import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
 import { StarRating } from "@/components/ui/rating-stars";
-import { calculateDropletAverageRating } from "@/lib/requests/enrollment";
 
 type Props = {
   params: Promise<params>;

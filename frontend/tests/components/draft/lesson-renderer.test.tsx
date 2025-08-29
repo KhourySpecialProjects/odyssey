@@ -1,7 +1,7 @@
 import { render, screen, fireEvent, act } from "@testing-library/react";
 import { LessonRenderer } from "@/components/draft/lesson/lesson-renderer";
-import { updateLesson } from "@/lib/actions";
 import { useRouter } from "next/navigation";
+import { updateLesson } from "@/lib/requests/lesson";
 
 jest.mock("@/components/ui/tiptap/lesson-name-input", () => ({
   LessonNameInput: ({ initialContent, updateContent }: any) => (
@@ -133,7 +133,7 @@ jest.mock("@/components/draft/lesson/blocks/generic", () => ({
   ),
 }));
 
-jest.mock("@/lib/actions", () => ({
+jest.mock("@/lib/requests/lesson", () => ({
   updateLesson: jest.fn(),
   deleteLesson: jest.fn(),
 }));

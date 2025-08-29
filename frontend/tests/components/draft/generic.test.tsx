@@ -1,7 +1,7 @@
 import { render, screen, fireEvent } from "@testing-library/react";
 import { GenericEditor } from "@/components/draft/lesson/blocks/generic";
 
-jest.mock("@/lib/actions", () => ({
+jest.mock("@/lib/requests/lesson", () => ({
   revalidateLesson: jest.fn(),
 }));
 

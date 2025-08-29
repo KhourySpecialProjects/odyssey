@@ -65,6 +65,7 @@ describe("NotesManager", () => {
             text: "test",
             position: { start: 0, end: 4 },
             color: "#fff300" as HighlightColor,
+            blockId: 1,
           },
         ],
       },

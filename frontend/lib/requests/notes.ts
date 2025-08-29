@@ -199,3 +199,29 @@ export async function createNote(
     return { success: false, error: "Failed to process request" };
   }
 }
+
+export async function deleteNote(id: number) {
+  try {
+    const response = await fetch(
+      NEXT_PUBLIC_STRAPI_API_URL + "/api/notes/" + id,
+      {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+        },
+      },
+    );
+    const data = await response.json();
+    if (!response.ok || (response.ok && data.error))
+      return { ok: false, error: data.error.message, data: null };
+
+    revalidatePath("/d/[slug]/[lessonSlug]", "page");
+    revalidateTag("notes");
+
+    return { ok: true, error: null, data: data.data };
+  } catch (err) {
+    console.error(err);
+    return { error: "Database Error: Failed to Delete Note." };
+  }
+}

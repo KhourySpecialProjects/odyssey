@@ -1,9 +1,11 @@
 import { renderHook, act } from "@testing-library/react";
-import { updateDroplet } from "@/lib/actions";
 import { useLessonOrder } from "@/components/draft/metadata/hooks/useLessonOrder";
 import { DropletLesson } from "@/types";
+import { updateDroplet } from "@/lib/requests/droplet";
 
-jest.mock("@/lib/actions");
+jest.mock("@/lib/requests/droplet", () => ({
+  updateDroplet: jest.fn(),
+}));
 
 describe("useLessonOrder", () => {
   const mockLesson = {
@@ -144,7 +146,7 @@ describe("useLessonOrder", () => {
     expect(updateDroplet).toHaveBeenCalled();
   });
 
-  jest.mock("@/lib/actions", () => ({
+  jest.mock("@/lib/requests/droplet", () => ({
     updateDroplet: jest.fn(),
   }));
 

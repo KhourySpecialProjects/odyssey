@@ -8,8 +8,10 @@ import { DropletStatus, DropletType, FocusArea, Tag } from "@/types";
 
 jest.mock("@/lib/requests/notes");
 jest.mock("@/lib/requests/enrollment");
-jest.mock("@/lib/actions", () => ({
+jest.mock("@/lib/requests/notes", () => ({
   deleteNote: jest.fn(),
+  getNotesByAuthorizedUserAndLesson: jest.fn(),
+  updateNotePosition: jest.fn(),
 }));
 
 describe("NotesBar", () => {

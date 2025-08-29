@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { updateDroplet } from "@/lib/actions";
+import { updateDroplet } from "@/lib/requests/droplet";
 import { Droplet } from "@/types";
 import { useRouter } from "next/navigation";
 import { useState } from "react";

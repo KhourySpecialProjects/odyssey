@@ -3,19 +3,14 @@
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import {
-  updateAuthorBio,
-  updateGithub,
-  updateLinkedin,
-  updatePhoto,
-  uploadImage,
-} from "@/lib/actions";
+import { uploadImage } from "@/lib/actions";
 import { AuthorizedUser } from "@/types";
 import { useState } from "react";
 import imageCompression from "browser-image-compression";
 import { Textarea } from "@/components/ui/textarea";
 import { Check } from "lucide-react";
 import { ProfileBlock } from "@/components/friends/profile-block";
+import { updateUserInfo } from "@/lib/requests/authorized-user";
 
 export function SocialForms({
   authorizedUser,
@@ -158,10 +153,9 @@ export function SocialForms({
 
             if (response.ok && response.url) {
               setProfileImage(response.url);
-              const updateResult = await updatePhoto(
-                response.url,
-                authorizedUser.id,
-              );
+              const updateResult = await updateUserInfo(authorizedUser.id, {
+                profilePhoto: response.url,
+              });
               if (updateResult.success) {
                 toast.success("Profile photo updated successfully");
               } else {
@@ -200,7 +194,7 @@ export function SocialForms({
             onClick={async () => {
               setProfileImage("");
               if (authorizedUser) {
-                await updatePhoto("", authorizedUser?.id);
+                await updateUserInfo(authorizedUser?.id, { profilePhoto: "" });
               }
             }}
             className="min-w-[50px] bg-red-500 whitespace-normal hover:bg-red-400 dark:bg-red-400 dark:hover:bg-red-300"
@@ -214,7 +208,9 @@ export function SocialForms({
         action={async (formData: FormData) => {
           const bio = formData.get("bio") as string;
           if (bio && authorizedUser?.id) {
-            const result = await updateAuthorBio(bio, authorizedUser.id);
+            const result = await updateUserInfo(authorizedUser.id, {
+              bio: bio,
+            });
             if (result.success) {
               setBioValue(bio);
               toast.success("Bio updated successfully");
@@ -254,7 +250,9 @@ export function SocialForms({
             return;
           }
           if (authorizedUser?.id) {
-            const result = await updateLinkedin(linkedin, authorizedUser.id);
+            const result = await updateUserInfo(authorizedUser.id, {
+              linkedin: linkedin,
+            });
             if (result.success) {
               setLinkedinValue(linkedin);
               toast.success("LinkedIn URL updated successfully");
@@ -295,7 +293,9 @@ export function SocialForms({
             return;
           }
           if (authorizedUser?.id) {
-            const result = await updateGithub(github, authorizedUser.id);
+            const result = await updateUserInfo(authorizedUser.id, {
+              github: github,
+            });
             if (result.success) {
               setGithubValue(github);
               toast.success("GitHub URL updated successfully");

@@ -1,9 +1,12 @@
+import { revalidatePath, revalidateTag } from "next/cache";
+
 const {
   getNotesByAuthorizedUserAndLesson,
   getNotesByDroplet,
   updateNoteContent,
   updateNotePosition,
   createNote,
+  deleteNote,
 } = require("../../lib/requests/notes");
 const { fetchAPI } = require("../../lib/utils");
 
@@ -508,5 +511,68 @@ describe("Notes Tests", () => {
 
       consoleSpy.mockRestore();
     });
+  });
+});
+
+describe("deleteNote", () => {
+  beforeEach(() => {
+    global.fetch.mockReset();
+    revalidatePath.mockReset();
+    revalidateTag.mockReset();
+  });
+  it("successfully deletes a note", async () => {
+    const mockResponse = {
+      ok: true,
+      json: async () => ({ data: { id: 1 } }),
+      status: 200,
+    };
+
+    global.fetch.mockResolvedValueOnce(mockResponse);
+
+    const result = await deleteNote(1);
+
+    expect(global.fetch).toHaveBeenCalledWith(
+      expect.stringMatching("/api/notes/1"),
+      expect.objectContaining({
+        method: "DELETE",
+        headers: expect.objectContaining({
+          "Content-Type": "application/json",
+          Authorization: expect.stringContaining("Bearer"),
+        }),
+      }),
+    );
+
+    expect(result).toEqual({
+      ok: true,
+      error: null,
+      data: { id: 1 },
+    });
+
+    expect(revalidatePath).toHaveBeenCalledWith(
+      "/d/[slug]/[lessonSlug]",
+      "page",
+    );
+    expect(revalidateTag).toHaveBeenCalledWith("notes");
+  });
+
+  it("handles deletion failure", async () => {
+    const mockResponse = {
+      ok: false,
+      json: async () => ({ error: { message: "Failed to delete" } }),
+      status: 400,
+    };
+
+    global.fetch.mockResolvedValueOnce(mockResponse);
+
+    const result = await deleteNote(1);
+
+    expect(result).toEqual({
+      ok: false,
+      error: "Failed to delete",
+      data: null,
+    });
+
+    expect(revalidatePath).not.toHaveBeenCalled();
+    expect(revalidateTag).not.toHaveBeenCalled();
   });
 });

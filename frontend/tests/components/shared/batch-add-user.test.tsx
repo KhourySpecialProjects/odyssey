@@ -1,8 +1,8 @@
 import { render, screen, fireEvent, act } from "@testing-library/react";
 import { BatchAddUser } from "@/components/shared/access-manager/add-user/batch-add-user";
-import { createBatchAuthorizedUsers } from "@/lib/actions";
+import { createBatchAuthorizedUsers } from "@/lib/requests/authorized-user";
 
-jest.mock("@/lib/actions", () => ({
+jest.mock("@/lib/requests/authorized-user", () => ({
   createBatchAuthorizedUsers: jest.fn(),
 }));
 

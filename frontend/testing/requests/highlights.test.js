@@ -1,11 +1,26 @@
 const {
   getHighlights,
   getHighlightsByDroplet,
+  getHighlightsForLesson,
+  createHighlight,
+  deleteHighlight,
 } = require("../../lib/requests/highlights");
 const { fetchAPI } = require("../../lib/utils");
 
 jest.mock("../../lib/utils", () => ({
   fetchAPI: jest.fn(),
+}));
+
+jest.mock("@/lib/auth/session", () => ({
+  getCurrentUser: jest.fn().mockResolvedValue({
+    email: "test@example.com",
+  }),
+}));
+
+jest.mock("@/lib/requests/authorized-user", () => ({
+  getAuthorizedUserByEmail: jest.fn().mockResolvedValue({
+    id: 1,
+  }),
 }));
 
 global.fetch = jest.fn();
@@ -251,4 +266,92 @@ describe("Highlights Tests", () => {
       );
     });
   });
+});
+
+describe("Highlight Actions", () => {
+  it("should create highlight", async () => {
+    const highlightData = {
+      data: {
+        content: "Test highlight",
+        lesson: 1,
+        user: 1,
+      },
+    };
+
+    global.fetch.mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve({ data: { id: 1 } }),
+    });
+
+    const result = await createHighlight(highlightData);
+    expect(result.data).toBeDefined();
+    expect(result.data.id).toBe(1);
+  });
+
+  it("should handle highlight creation error", async () => {
+    const highlightData = {
+      data: {
+        content: "Test highlight",
+        lesson: 1,
+        user: 1,
+      },
+    };
+
+    global.fetch.mockResolvedValueOnce({
+      ok: false,
+      json: () => Promise.resolve({ error: "Failed to create highlight" }),
+    });
+
+    await expect(createHighlight(highlightData)).rejects.toThrow();
+  });
+
+  it("should delete highlight", async () => {
+    global.fetch.mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve({ data: { id: 1 } }),
+    });
+
+    const result = await deleteHighlight(1);
+    expect(result).toBeDefined();
+    expect(result.data.id).toBe(1);
+  });
+
+  it("should handle get highlights error", async () => {
+    global.fetch.mockImplementation(() =>
+      Promise.resolve({ email: "test@example.com" }),
+    );
+    global.fetch.mockImplementation(() => Promise.resolve({ id: 1 }));
+
+    global.fetch.mockResolvedValueOnce({
+      ok: false,
+      json: () => Promise.resolve({ error: "Failed to get highlights" }),
+    });
+
+    const result = await getHighlightsForLesson(1);
+    expect(result.error).toBeDefined();
+  });
+});
+
+describe("Error Cases", () => {
+  it("should handle network errors", async () => {
+    global.fetch.mockRejectedValueOnce(new Error("Network error"));
+
+    await expect(
+      createHighlight({ data: { content: "Test" } }),
+    ).rejects.toThrow();
+  });
+
+  // it("should handle missing user email", async () => {
+  //   global.fetch.mockImplementation(() =>
+  //     Promise.resolve(null),
+  //   );
+  //   global.fetch.mockResolvedValueOnce({
+  //     ok: false,
+  //     json: async () => ({ error: "No email identified" }),
+  //   });
+
+  //   await expect(getHighlightsForLesson(1)).rejects.toEqual(
+  //     "No email identified",
+  //   );
+  // });
 });
