@@ -56,6 +56,9 @@
     },
     "dueDate": {
       "type": "datetime"
+    },
+    "completionDate": {
+      "type": "datetime"
     }
   }
 }

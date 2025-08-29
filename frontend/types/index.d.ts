@@ -242,6 +242,7 @@ export type Enrollment = {
   isFirstTime: boolean;
   isArchived: boolean;
   notes: Note[];
+  completionDate: Date;
 };
 
 export interface Playlist {
