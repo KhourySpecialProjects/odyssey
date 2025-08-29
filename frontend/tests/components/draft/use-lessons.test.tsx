@@ -1,8 +1,10 @@
 import { renderHook, act } from "@testing-library/react";
-import { addLesson } from "@/lib/actions";
 import { useLessons } from "@/components/draft/metadata/hooks/useLessons";
+import { addLesson } from "@/lib/requests/lesson";
 
-jest.mock("@/lib/actions");
+jest.mock("@/lib/requests/lesson", () => ({
+  addLesson: jest.fn(),
+}));
 
 describe("useLessons", () => {
   const mockLesson = {

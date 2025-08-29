@@ -1,13 +1,9 @@
 "use server";
 
-import {
-  createKudosAnnouncement,
-  fetchAnnouncementById,
-} from "@/lib/requests/feed";
+import { createKudosAnnouncement } from "@/lib/requests/feed";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
 import { notFound } from "next/navigation";
-import { Droplet } from "@/types";
 
 export async function giveKudos(announcementId: number, droplet: string) {
   const user = await getCurrentUser();

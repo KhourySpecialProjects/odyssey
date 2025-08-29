@@ -3,11 +3,11 @@
 import { useState } from "react";
 import { useDropletUpdate } from "../hooks/useDropletUpdate";
 import { Resource } from "@/types";
-import { updateDroplet } from "@/lib/actions";
 import { NextStepDisplay } from "@/components/draft/metadata/next-steps/next-step";
 import { Input } from "@/components/ui/input";
 import { AddButton } from "../form-buttons";
 import { toast } from "sonner";
+import { updateDroplet } from "@/lib/requests/droplet";
 
 export function NextSteps({
   dropletId,

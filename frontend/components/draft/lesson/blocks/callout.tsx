@@ -1,7 +1,6 @@
 "use client";
 
 import { JSONContent } from "@tiptap/react";
-import { revalidateLesson } from "@/lib/actions";
 import { strapiJSONToTiptapJSON, tiptapJSONToStrapiJSON } from "@/lib/utils";
 import { useCallback } from "react";
 import { debounce } from "lodash";
@@ -12,6 +11,7 @@ import CalloutTypeTool from "@/components/ui/tiptap/toolbar/tools/callout-type-t
 import { Button } from "@lemonsqueezy/wedges";
 import { CalloutIcon } from "@/components/ui/callout-icons";
 import { BlockNode } from "@/types/strapi";
+import { revalidateLesson } from "@/lib/requests/lesson";
 
 export type CalloutBlock = {
   __component: "droplets.callout";

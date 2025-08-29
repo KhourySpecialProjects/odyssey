@@ -11,11 +11,10 @@ import { Separator } from "@/components/ui/separator";
 import DraggableTileList from "@/components/droplets/draggable_tile_list";
 import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
-import { createPlaylist } from "@/lib/actions";
-import { updatePlaylist } from "@/lib/actions";
 import { createPlaylistAnnouncement } from "@/lib/requests/feed";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
 import { AuthorizedUser, Droplet } from "@/types";
+import { createPlaylist, updatePlaylist } from "@/lib/requests/playlist";
 
 interface PlaylistFormProps {
   droplets: Droplet[];

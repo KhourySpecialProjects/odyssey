@@ -1,7 +1,6 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { PlaylistForm } from "@/components/playlists/playlist-form";
 import { useRouter } from "next/navigation";
-import { updatePlaylist } from "@/lib/actions";
 import {
   AuthorizedUser,
   DropletStatus,
@@ -10,6 +9,7 @@ import {
   Tag,
 } from "@/types";
 import { createPlaylistAnnouncement } from "@/lib/requests/feed";
+import { updatePlaylist } from "@/lib/requests/playlist";
 
 jest.mock("react", () => {
   const actualReact = jest.requireActual("react");
@@ -31,7 +31,7 @@ jest.mock("flat", () => ({
   unflatten: jest.fn((obj) => obj),
 }));
 
-jest.mock("@/lib/actions", () => ({
+jest.mock("@/lib/requests/playlist", () => ({
   createPlaylist: jest.fn(),
   updatePlaylist: jest.fn(),
   deletePlaylist: jest.fn(),
@@ -57,7 +57,7 @@ jest.mock("react-dnd-html5-backend", () => ({
   HTML5Backend: {},
 }));
 
-jest.mock("@/lib/actions", () => ({
+jest.mock("@/lib/requests/playlist", () => ({
   createPlaylist: jest.fn(),
   updatePlaylist: jest.fn(),
   deletePlaylist: jest.fn(),

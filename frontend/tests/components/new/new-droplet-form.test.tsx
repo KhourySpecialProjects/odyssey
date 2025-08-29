@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { CreateDropletForm } from "@/components/new/new-droplet-form";
 
-jest.mock("@/lib/actions", () => ({
+jest.mock("@/lib/requests/droplet", () => ({
   createDroplet: jest.fn(),
 }));
 

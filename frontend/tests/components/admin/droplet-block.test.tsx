@@ -9,7 +9,7 @@ jest.mock("sonner", () => ({
   },
 }));
 
-jest.mock("@/lib/actions", () => ({
+jest.mock("@/lib/requests/droplet", () => ({
   updateDroplet: jest.fn(),
 }));
 

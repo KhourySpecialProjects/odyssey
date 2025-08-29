@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { updateDroplet } from "@/lib/actions";
+import { updateDroplet } from "@/lib/requests/droplet";
 import { Droplet } from "@/types";
 import { CircleHelp } from "lucide-react";
 import { useRouter } from "next/navigation";

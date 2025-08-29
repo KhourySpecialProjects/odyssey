@@ -1,7 +1,12 @@
+"use server";
 import { fetchAPI, flattenAttributes } from "@/lib/utils";
 import { AuthorizedUser } from "@/types";
 import { StrapiRequestParams } from "@/types/strapi";
+import { revalidatePath } from "next/cache";
 import qs from "qs";
+import { AuthorizedUserSchema } from "../validations/authorized-user";
+import { getAuthorizedUserRoleIdByTitle } from "./authorized-user-roles";
+import { AuthorizedUserRoleTitle } from "../globals";
 
 const NEXT_PUBLIC_STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
@@ -346,33 +351,228 @@ export async function fetchIsAuthorizedUser(email: string) {
   }
 }
 
-export async function getAllAuthorizedUsers(): Promise<AuthorizedUser[]> {
-  try {
-    const query = qs.stringify({
-      sort: ["lastName:asc"],
-      fields: ["email", "firstName", "lastName"],
-      populate: {
-        roles: {
-          fields: ["id", "title"],
-        },
-      },
-      pagination: {
-        pageSize: 1000,
-        page: 1,
-      },
-    });
+const CreateAuthorizedUser = AuthorizedUserSchema.omit({
+  id: true,
+});
+export async function createAuthorizedUser(formData: FormData) {
+  const roleID = await getAuthorizedUserRoleIdByTitle(
+    AuthorizedUserRoleTitle.User,
+  );
 
+  const emailRegex = /^[^\s@]+@northeastern\.edu$/;
+  if (!formData.get("email")) {
+    return { ok: false, error: "No email provided", data: null };
+  }
+  if (!emailRegex.test(formData.get("email") as string)) {
+    return { ok: false, error: "Not a valid email", data: null };
+  }
+
+  const { email, isEnabled } = CreateAuthorizedUser.parse({
+    email: formData.get("email"),
+    isEnabled: formData.get("isEnabled"),
+  });
+
+  const dataToSend = {
+    data: {
+      email,
+      isEnabled,
+      roles: {
+        set: [{ id: roleID }],
+      },
+    },
+  };
+
+  try {
     const response = await fetch(
-      NEXT_PUBLIC_STRAPI_API_URL + "/api/authorized-users?" + query,
+      NEXT_PUBLIC_STRAPI_API_URL + "/api/authorized-users",
       {
-        headers: { Authorization: "Bearer " + STRAPI_ACCESS_TOKEN },
-        cache: "no-store",
+        method: "POST",
+        body: JSON.stringify(dataToSend),
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+        },
       },
     );
     const data = await response.json();
-    const authorizedUsers = flattenAttributes(data.data);
-    return authorizedUsers;
-  } catch (error) {
-    throw new Error("Failed to fetch authorized users:");
+    if (!response.ok || (response.ok && data.error))
+      return { ok: false, error: data.error.message, data: null };
+  } catch (err) {
+    console.error(err);
+    return { error: "Database Error: Failed to Create Authorized User." };
   }
+
+  revalidatePath("/admin");
+  return { message: `User ${email} created!`, ok: true };
+}
+
+export async function createBatchAuthorizedUsers(emails: string[]) {
+  try {
+    const roleID = await getAuthorizedUserRoleIdByTitle(
+      AuthorizedUserRoleTitle.User,
+    );
+
+    const results = {
+      successful: [] as string[],
+      failed: [] as { email: string; reason: string }[],
+    };
+
+    const createUserPromises = emails.map(async (email) => {
+      try {
+        const dataToSend = {
+          data: {
+            email,
+            isEnabled: true,
+            roles: {
+              set: [{ id: roleID }],
+            },
+          },
+        };
+
+        const response = await fetch(
+          NEXT_PUBLIC_STRAPI_API_URL + "/api/authorized-users",
+          {
+            method: "POST",
+            body: JSON.stringify(dataToSend),
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+            },
+          },
+        );
+        const data = await response.json();
+
+        if (!response.ok || (response.ok && data.error)) {
+          results.failed.push({
+            email,
+            reason: data.error?.message || `HTTP ${response.status}`,
+          });
+        } else {
+          results.successful.push(email);
+        }
+      } catch (error) {
+        results.failed.push({
+          email,
+          reason: error instanceof Error ? error.message : "Unknown error",
+        });
+      }
+    });
+
+    await Promise.all(createUserPromises);
+
+    revalidatePath("/admin");
+    return {
+      ok: true,
+      data: results,
+      message: `Successfully created ${results.successful.length} users, ${results.failed.length} failed`,
+    };
+  } catch (err) {
+    console.error(err);
+    return {
+      ok: false,
+      error: "Database Error: Failed to create batch authorized users.",
+      data: null,
+    };
+  }
+}
+
+export async function updateUserInfo(
+  userId: number,
+  updates: {
+    first?: string | null;
+    last?: string | null;
+    bio?: string | null;
+    roles?: AuthorizedUserRoleTitle[];
+    profilePhoto?: string | null;
+    isEnabled?: boolean;
+    firstTime?: boolean;
+    linkedin?: string | null;
+    github?: string | null;
+    photo?: string | null;
+  },
+) {
+  try {
+    const {
+      first,
+      last,
+      bio,
+      roles,
+      profilePhoto,
+      isEnabled,
+      firstTime,
+      linkedin,
+      github,
+      photo,
+    } = updates;
+    const roleIds = roles
+      ? await Promise.all(
+          roles.map((role) => getAuthorizedUserRoleIdByTitle(role)),
+        )
+      : [];
+
+    const data: any = {};
+
+    if (first !== undefined) data.firstName = first;
+    if (last !== undefined) data.lastName = last;
+    if (bio !== undefined) data.bio = bio;
+    if (profilePhoto !== undefined) data.profilePhoto = profilePhoto;
+    if (isEnabled !== undefined) data.isEnabled = isEnabled;
+    if (firstTime !== undefined) data.firstTime = updates.firstTime;
+    if (linkedin !== undefined) data.linkedin = linkedin;
+    if (github !== undefined) data.github = github;
+    if (photo !== undefined) data.profilePhoto = photo;
+    if (roles && roles.length > 0) {
+      data.roles = {
+        set: roleIds.map((id) => ({ id })),
+      };
+    }
+
+    const response = await fetch(
+      `${NEXT_PUBLIC_STRAPI_API_URL}/api/authorized-users/${userId}`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+        },
+        body: JSON.stringify({ data }),
+      },
+    );
+    revalidatePath("/admin");
+    return { success: true };
+  } catch (error) {
+    console.error("Error updating user info:", error);
+    return { success: false, error };
+  }
+}
+
+const DeleteAuthorizedUser = AuthorizedUserSchema.omit({
+  email: true,
+  isEnabled: true,
+});
+export async function deleteAuthorizedUser(formData: FormData) {
+  const { id } = DeleteAuthorizedUser.parse({
+    id: formData.get("id"),
+  });
+
+  try {
+    const response = await fetch(
+      NEXT_PUBLIC_STRAPI_API_URL + "/api/authorized-users/" + id,
+      {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+        },
+      },
+    );
+    const data = await response.json();
+    if (!response.ok || (response.ok && data.error))
+      return { ok: false, error: data.error.message, data: null };
+  } catch (err) {
+    console.error(err);
+    return { error: "Database Error: Failed to Delete Authorized User." };
+  }
+
+  revalidatePath("/admin");
 }

@@ -4,8 +4,8 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useFormStatus } from "react-dom";
-import { createBatchAuthorizedUsers } from "@/lib/actions";
 import { toast } from "sonner";
+import { createBatchAuthorizedUsers } from "@/lib/requests/authorized-user";
 
 export function AddUser() {
   const [email, setEmail] = useState("");

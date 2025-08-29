@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { createEnrollment, deleteEnrollment } from "@/lib/actions";
+import { createEnrollment, deleteEnrollment } from "@/lib/requests/enrollment";
 import { DropletEnrollmentSchema } from "@/lib/validations/enrollment";
 import { Droplet } from "@/types";
 import { ArrowRightIcon } from "lucide-react";

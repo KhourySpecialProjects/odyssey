@@ -2,7 +2,7 @@ import { render, screen, fireEvent, act } from "@testing-library/react";
 import { AddLesson } from "@/components/draft/add-lesson";
 import { useRouter } from "next/navigation";
 
-jest.mock("@/lib/actions", () => ({
+jest.mock("@/lib/requests/lesson", () => ({
   addLesson: jest.fn(),
 }));
 
@@ -46,7 +46,7 @@ describe("AddLesson", () => {
     expect(screen.getByPlaceholderText("Lesson Name")).toBeInTheDocument();
   });
 
-  jest.mock("@/lib/actions", () => ({
+  jest.mock("@/lib/requests/lesson", () => ({
     addLesson: jest.fn(),
   }));
 

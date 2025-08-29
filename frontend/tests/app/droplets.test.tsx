@@ -1,14 +1,13 @@
-//import { render, screen, fireEvent, waitFor } from "@testing-library/react";
-//import Error from "@/app/(droplets)/d/[slug]/[lessonSlug]/error";
-//import { Confetti } from "@/app/(droplets)/d/[slug]/recap/confetti";
-//import NotFound from "@/app/(droplets)/d/[slug]/not-found";
-//import confetti from "canvas-confetti";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import Error from "@/app/(droplets)/d/[slug]/[lessonSlug]/error";
+import { Confetti } from "@/app/(droplets)/d/[slug]/recap/confetti";
+import NotFound from "@/app/(droplets)/d/[slug]/not-found";
+import confetti from "canvas-confetti";
 
 //This test file is commented out because canvas-confetti was disabled in the
 //codebase to help set up a production build
 //Affected files: confetti.tsx, app/(droplets)/d/[slug]/recap/page.tsx, droplets.test.skip.tsx
 
-/*
 jest.mock("@/components/droplets/lessons/droplet-lesson-wrapper", () => ({
   DropletLessonWrapper: jest.fn(() => (
     <div>Mock DropletLessonWrapper Component</div>
@@ -251,4 +250,3 @@ describe("Confetti Component", () => {
     });
   });
 });
-*/
