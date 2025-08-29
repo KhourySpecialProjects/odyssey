@@ -9,18 +9,6 @@ import {
 import { render, screen, fireEvent } from "@testing-library/react";
 
 describe("NotesContainer", () => {
-  const mockDroplet = {
-    id: 1,
-    name: "Test Droplet",
-    slug: "test-droplet",
-    isHidden: false,
-    focusArea: "personal" as FocusArea,
-    type: "knowledge" as DropletType,
-    tags: [{ id: 1, name: "React" }] as Tag[],
-    learningObjectives: [],
-    status: "published" as DropletStatus,
-    droplet_lessons: [],
-  };
   const mockProps = {
     dropletHighlights: [
       {

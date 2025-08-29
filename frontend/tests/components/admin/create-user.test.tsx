@@ -2,7 +2,7 @@ import { render, screen, fireEvent } from "@testing-library/react";
 import { CreateUser } from "@/components/admin/users/create-user";
 import { useActionState } from "react";
 
-jest.mock("@/lib/actions", () => ({
+jest.mock("@/lib/requests/authorized-user", () => ({
   createAuthorizedUser: jest.fn(),
 }));
 

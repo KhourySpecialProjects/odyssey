@@ -1,10 +1,10 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { CompletedDropletBlock } from "@/components/droplets/completed-droplet-block";
-import { updateEnrollmentFirstTime } from "@/lib/actions";
 import { createFriendAnnouncement } from "@/lib/requests/feed";
 import userEvent from "@testing-library/user-event";
+import { updateEnrollmentFirstTime } from "@/lib/requests/enrollment";
 
-jest.mock("@/lib/actions", () => ({
+jest.mock("@/lib/requests/enrollment", () => ({
   updateEnrollmentFirstTime: jest.fn(),
 }));
 

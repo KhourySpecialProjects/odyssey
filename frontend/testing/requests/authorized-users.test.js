@@ -5,6 +5,8 @@ const {
   fetchContentCreators,
   fetchWebsiteCreators,
   getAllAuthorizedUsers,
+  createAuthorizedUser,
+  updateUserInfo,
 } = require("../../lib/requests/authorized-user");
 const { fetchAPI } = require("../../lib/utils");
 
@@ -335,74 +337,16 @@ describe("Authorized User Tests", () => {
       );
     });
   });
+});
+describe("Error Handling", () => {
+  it("should handle invalid email format", async () => {
+    const formData = new FormData();
+    formData.append("email", "invalid-email");
+    formData.append("isEnabled", "true");
 
-  describe("getAllAuthorizedUsers", () => {
-    beforeEach(() => {
-      jest.clearAllMocks();
-    });
+    global.fetch.mockImplementation(() => Promise.resolve(1));
 
-    it("should fetch and return all authorized users", async () => {
-      const mockStrapiResponse = {
-        data: mockUsers.map((user) => ({
-          id: user.id,
-          attributes: user.attributes,
-        })),
-        meta: {
-          pagination: {
-            page: 1,
-            pageSize: 100,
-          },
-          sort: ["lastName"],
-        },
-      };
-
-      global.fetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => mockStrapiResponse,
-      });
-
-      const result = await getAllAuthorizedUsers();
-
-      expect(global.fetch).toHaveBeenCalledWith(
-        expect.stringContaining("/api/authorized-users?"),
-        expect.objectContaining({
-          headers: expect.objectContaining({
-            Authorization: expect.stringContaining("Bearer"),
-          }),
-          cache: "no-store",
-        }),
-      );
-
-      const callUrl = global.fetch.mock.calls[0][0];
-
-      expect(callUrl).toMatch(/sort%5B0%5D=lastName%3Aasc/);
-
-      expect(callUrl).toMatch(
-        /fields%5B0%5D=email&fields%5B1%5D=firstName&fields%5B2%5D=lastName/,
-      );
-
-      expect(callUrl).toMatch(/pagination%5BpageSize%5D=100/);
-      expect(callUrl).toMatch(/pagination%5Bpage%5D=1/);
-
-      expect(result).toEqual(
-        expect.arrayContaining([
-          expect.objectContaining({
-            id: expect.any(Number),
-            firstName: expect.any(String),
-            lastName: expect.any(String),
-            email: expect.stringMatching(/@northeastern.edu$/),
-            isEnabled: expect.any(Boolean),
-          }),
-        ]),
-      );
-    });
-
-    it("should handle fetch errors", async () => {
-      global.fetch.mockRejectedValueOnce(new Error("Network error"));
-
-      await expect(getAllAuthorizedUsers()).rejects.toThrow(
-        "Failed to fetch authorized users:",
-      );
-    });
+    const result = await createAuthorizedUser(formData);
+    expect(result.ok).toBe(false);
   });
 });

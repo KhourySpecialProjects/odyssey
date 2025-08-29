@@ -61,7 +61,7 @@ export default async function HomeRoute() {
                 </Button>
               )}
             </div>
-            {user && <FunFact droplet={droplet} />}
+            {user && droplet && <FunFact droplet={droplet} />}
           </div>
         </div>
 

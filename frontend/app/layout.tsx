@@ -13,7 +13,6 @@ import { ThemeClientProvider } from "@/components/theme.client.provider";
 import AccessRequestBanner from "@/components/access-request-banner";
 import { EnvironmentBanner } from "@/components/debug/environmentBanner";
 import Footer from "@/components/footer/page";
-import { Header } from "@/components/header";
 import { Suspense } from "react";
 import { HeaderWrapper } from "@/components/header/header-wrapper";
 

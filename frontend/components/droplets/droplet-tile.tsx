@@ -9,10 +9,10 @@ import { StarRating } from "@/components/ui/rating-stars";
 import { useState } from "react";
 import { Button } from "../ui/button";
 import { toast } from "sonner";
-import { archiveDroplet } from "@/lib/actions";
 import { Archive, ArchiveRestore, Clock } from "lucide-react";
 import { getDueDateBadgeColor } from "@/lib/utils";
 import { DateTime } from "luxon";
+import { archiveDroplet } from "@/lib/requests/droplet";
 
 interface DropletTileProps {
   droplet: Droplet;

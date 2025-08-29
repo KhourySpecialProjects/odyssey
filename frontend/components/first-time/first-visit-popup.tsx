@@ -11,12 +11,12 @@ import {
 import { Button } from "../ui/button";
 import { Textarea } from "../ui/textarea";
 import { toast } from "sonner";
-import { updateFirstTimeStatus, updateOnboardingInfo } from "@/lib/actions";
 import { AuthorizedUser } from "@/types";
 import { Input } from "../ui/input";
 import { useRouter } from "next/navigation";
 import { Logo } from "../header/logo";
 import { createSystemAnnouncement } from "@/lib/requests/feed";
+import { updateUserInfo } from "@/lib/requests/authorized-user";
 
 export function FirstVisitPopup({ user }: { user: AuthorizedUser | null }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -42,8 +42,12 @@ export function FirstVisitPopup({ user }: { user: AuthorizedUser | null }) {
     }
     try {
       if (user) {
-        await updateFirstTimeStatus(user.id);
-        await updateOnboardingInfo(firstName, lastName, bio, user.id);
+        await updateUserInfo(user.id, { firstTime: false });
+        await updateUserInfo(user.id, {
+          first: firstName,
+          last: lastName,
+          bio: bio,
+        });
         await createSystemAnnouncement(
           "Want to see what your friends are up to? Their activity will appear here on your feed — just head to your profile to follow them!",
           user,

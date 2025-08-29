@@ -1,23 +1,20 @@
 "use client";
 
-import { getCurrentUser } from "@/lib/auth/session";
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
-  SheetClose,
   SheetContent,
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { getGeneralConfig } from "@/config/general";
-import { Menu, Pencil } from "lucide-react";
+import { Menu } from "lucide-react";
 import { LoginButton } from "./login-button";
 import { NavLinks } from "./nav-links";
 import { UserDropdown } from "./user-dropdown";
-import { AuthorizedUser } from "@/types";
-import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
+import { AuthorizedUser, User } from "@/types";
 import { DarkMode } from "../explore/dark-mode";
 import { Logo } from "./logo";
 import { useState } from "react";
@@ -26,7 +23,7 @@ export function Header({
   user,
   authorizedUser,
 }: {
-  user: any;
+  user: User | undefined;
   authorizedUser: AuthorizedUser | null;
 }) {
   const [isOpen, setIsOpen] = useState(false);

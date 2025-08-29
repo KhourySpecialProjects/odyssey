@@ -3,12 +3,7 @@
 import { useState, useCallback } from "react";
 import { useDropzone } from "react-dropzone";
 import { Button } from "@/components/ui/button";
-import {
-  updateAuthorizedUser,
-  updatePhoto,
-  updateUserInfo,
-  uploadImage,
-} from "@/lib/actions";
+import { uploadImage } from "@/lib/actions";
 import { AuthorizedUser } from "@/types";
 import { Pencil, User2Icon } from "lucide-react";
 import { useFormStatus } from "react-dom";
@@ -28,6 +23,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Textarea } from "@/components/ui/textarea";
 import imageCompression from "browser-image-compression";
+import { updateUserInfo } from "@/lib/requests/authorized-user";
 
 export function AuthorizedUserBlock({
   user: initialUser,
@@ -88,14 +84,13 @@ export function AuthorizedUserBlock({
 
         if (response.ok && response.url) {
           setProfilePhoto(response.url);
-          const updateResult = await updateUserInfo(
-            firstName,
-            lastName,
-            bio,
-            selectedRoles,
-            response.url,
-            user.id,
-          );
+          const updateResult = await updateUserInfo(user.id, {
+            first: firstName,
+            last: lastName,
+            bio: bio,
+            roles: selectedRoles,
+            profilePhoto: response.url,
+          });
           if (updateResult.success) {
             toast.success("Profile photo updated successfully");
           } else {
@@ -120,21 +115,29 @@ export function AuthorizedUserBlock({
   const handleUpdateUser = async (formData: FormData) => {
     setUser((prev) => ({ ...prev, isEnabled: !prev.isEnabled }));
 
-    await updateAuthorizedUser(formData);
+    await updateUserInfo(user.id, {
+      isEnabled: formData.get("isEnabled") === "true" ? true : false,
+    });
   };
 
   const handleEditUser = async (formData: FormData) => {
-    const result = await updateUserInfo(
-      formData.get("firstName") as string,
-      formData.get("lastName") as string,
-      formData.get("bio") as string,
-      selectedRoles,
-      //formData.get("profilePhoto") as string,
-      profilePhoto || "",
-      user.id,
-    );
+    const result = await updateUserInfo(user.id, {
+      first: formData.get("firstName") as string,
+      last: formData.get("lastName") as string,
+      bio: formData.get("bio") as string,
+      roles: selectedRoles,
+      profilePhoto: profilePhoto || "",
+    });
 
     if (result.success) {
+      setUser((prevUser) => ({
+        ...prevUser,
+        firstName: formData.get("firstName") as string,
+        lastName: formData.get("lastName") as string,
+        bio: formData.get("bio") as string,
+        roles: selectedRoles.map((roleTitle) => ({ id: 0, title: roleTitle })),
+        profilePhoto: profilePhoto || "",
+      }));
       toast.success("Information updated successfully");
     } else {
       toast.error("Failed to update information");
@@ -217,14 +220,13 @@ export function AuthorizedUserBlock({
                           size="sm"
                           onClick={async (e) => {
                             e.stopPropagation();
-                            const result = await updateUserInfo(
-                              firstName,
-                              lastName,
-                              bio,
-                              selectedRoles,
-                              "",
-                              user.id,
-                            );
+                            const result = await updateUserInfo(user.id, {
+                              first: firstName,
+                              last: lastName,
+                              bio: bio,
+                              roles: selectedRoles,
+                              profilePhoto: "",
+                            });
                             if (result.success) {
                               setProfilePhoto("");
                               toast.success(

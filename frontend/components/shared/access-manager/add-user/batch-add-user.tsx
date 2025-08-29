@@ -3,9 +3,9 @@
 import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { createBatchAuthorizedUsers } from "@/lib/actions";
 import { useFormStatus } from "react-dom";
 import { toast } from "sonner";
+import { createBatchAuthorizedUsers } from "@/lib/requests/authorized-user";
 
 export function BatchAddUser() {
   const [emails, setEmails] = useState("");

@@ -4,9 +4,9 @@ import { useState } from "react";
 import { useDropletUpdate } from "../hooks/useDropletUpdate";
 import { Input } from "@/components/ui/input";
 import { LearningObjectiveDisplay } from "@/components/draft/metadata/learning-objectives/learning-objective";
-import { updateDroplet } from "@/lib/actions";
 import { LearningObjective } from "@/types";
 import { AddButton } from "../form-buttons";
+import { updateDroplet } from "@/lib/requests/droplet";
 
 export function LearningObjectives({
   dropletId,
