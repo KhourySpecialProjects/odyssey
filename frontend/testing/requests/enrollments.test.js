@@ -5,6 +5,9 @@ const {
   changeEnrollmentRating,
   getEnrollByID,
   calculateDropletAverageRating,
+  createEnrollment,
+  createEnrollmentFromEmail,
+  deleteEnrollment,
 } = require("../../lib/requests/enrollment");
 
 const { getCurrentUser } = require("../../lib/auth/session");
@@ -420,3 +423,93 @@ describe("Enrollment tests", () => {
     });
   });
 });
+
+describe("Enrollment Management Actions", () => {
+  describe("deleteEnrollment", () => {
+    it("handles enrollment deletion failure", async () => {
+      const mockResponse = {
+        ok: false,
+        json: () =>
+          Promise.resolve({
+            error: { message: "Failed to delete" },
+          }),
+      };
+      fetchAPI.mockResolvedValueOnce(mockResponse);
+
+      const result = await deleteEnrollment({
+        droplet: 123,
+        viewedLessons: [],
+      });
+
+      expect(result).toEqual({
+        error: "Database Error: Failed to unenroll.",
+      });
+    });
+  });
+
+  describe("createEnrollmentFromEmail", () => {
+    it("handles enrollment creation failure", async () => {
+      const mockResponse = {
+        ok: false,
+        json: () =>
+          Promise.resolve({
+            error: { message: "Failed to create" },
+          }),
+      };
+      fetchAPI.mockResolvedValueOnce(mockResponse);
+
+      const result = await createEnrollmentFromEmail(
+        { droplet: 123, viewedLessons: [] },
+        "test@example.com",
+      );
+
+      expect(result).toEqual({
+        error: "Database Error: Failed to enroll.",
+      });
+    });
+  });
+});
+
+// describe("Enrollment Actions", () => {
+//   beforeEach(() => {
+//     global.fetch.mockResolvedValueOnce({
+//       ok: true,
+//       json: async () => ({ data: { id: 1 } }),
+//     });
+//   });
+
+//   it("should create enrollment", async () => {
+//     const droplet = {
+//       id: 1,
+//       name: "Test Droplet",
+//       slug: "test-droplet",
+//       isHidden: false,
+//       focusArea: "personal" ,
+//       type: "knowledge",
+//       tags: [{ id: 1, name: "React" }],
+//       learningObjectives: [],
+//       status: "published",
+//       droplet_lessons: [],
+//     };
+//     const viewedLessons = [
+//       {
+//         id: 1,
+//         name: "Test Lesson",
+//         slug: "test-lesson",
+//         droplet_lessons: [],
+//         droplets: [],
+//         notes: [],
+//         blocks: [
+//           {
+//             id: 1,
+//             __component: "droplets.generic",
+//             content: "Generic content",
+//           },
+//         ],
+//       },
+//     ];
+
+//     const result = await createEnrollment(droplet, viewedLessons);
+//     expect(result.ok).toBe(true);
+//   });
+// });

@@ -13,12 +13,6 @@ import { QuizBlock } from "./quiz";
 import GenericBlockRenderer from "./GenericBlockRenderer";
 import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import {
-  createHighlight,
-  deleteHighlight,
-  getHighlightsForLesson,
-  markLessonAsComplete,
-} from "@/lib/actions";
 import { LockIcon } from "lucide-react";
 import { CalloutIcon } from "@/components/ui/callout-icons";
 import { OpenEndedQuizBlock } from "./open-ended-quiz";
@@ -26,9 +20,15 @@ import { toast } from "sonner";
 import { Highlight } from "@/types";
 import { getEnrollByID } from "@/lib/requests/enrollment";
 import { createNote } from "@/lib/requests/notes";
-import { getHighlights } from "@/lib/requests/highlights";
+import {
+  createHighlight,
+  deleteHighlight,
+  getHighlights,
+  getHighlightsForLesson,
+} from "@/lib/requests/highlights";
 import { Block } from "@/components/draft/lesson/add-block";
 import { GenericBlock } from "@/components/draft/lesson/blocks/generic";
+import { markLessonAsComplete } from "@/lib/requests/lesson";
 
 interface LessonRendererProps {
   lesson: Lesson;

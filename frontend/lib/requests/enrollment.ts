@@ -1,13 +1,18 @@
 "use server";
 
-import { Enrollment } from "@/types";
+import { Enrollment, Lesson } from "@/types";
 import { StrapiRequestParams } from "@/types/strapi";
 import { fetchAPI } from "../utils";
 
 import { getCurrentUser } from "@/lib/auth/session";
 import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { Droplet } from "@/types";
+import { DropletEnrollmentSchema } from "../validations/enrollment";
+import { z } from "zod";
+
+const STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
+const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
 
 /**
  * Gets the first 25 enrollments matching the specified criteria, unless overridden by `options`.
@@ -298,5 +303,169 @@ export async function fetchEnrollmentMetadata({
   } catch (error) {
     console.error("Error fetching enrollment metadata:", error);
     return Promise.reject(new Error("Error getting enrollment metadata"));
+  }
+}
+
+export async function updateEnrollmentFirstTime(enrollmentId: string) {
+  try {
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_STRAPI_API_URL}/api/enrollments/${enrollmentId}`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${process.env.STRAPI_ACCESS_TOKEN}`,
+        },
+        body: JSON.stringify({
+          data: {
+            isFirstTime: false,
+          },
+        }),
+      },
+    );
+
+    if (!response.ok) {
+      throw new Error("Failed to update enrollment");
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Error updating enrollment:", error);
+    throw error;
+  }
+}
+
+export async function createEnrollmentFromEmail(
+  formData: z.infer<typeof DropletEnrollmentSchema>,
+  email: string,
+) {
+  try {
+    const authorizedUser = await getAuthorizedUserByEmail(email);
+    const enrollments = await getEnrollmentsByAuthorizedUser(authorizedUser.id);
+
+    if (
+      !enrollments
+        .map((enrollment) => enrollment.droplet.id)
+        .includes(formData.droplet)
+    ) {
+      const response = await fetch(STRAPI_API_URL + "/api/enrollments", {
+        method: "POST",
+        body: JSON.stringify({
+          data: { ...formData, authorizedUser: authorizedUser.id },
+        }),
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+        },
+      });
+      const data = await response.json();
+
+      if (!response.ok || (response.ok && data.error)) {
+        const errorPath = data.error.details.errors[0].path[0];
+        const errorMessage = `${data.error.message} (${errorPath})`;
+        return { ok: false, error: errorMessage, data: null };
+      }
+    }
+  } catch (err) {
+    console.error(err);
+    return { error: "Database Error: Failed to enroll." };
+  }
+}
+
+export async function deleteEnrollment(
+  formData: z.infer<typeof DropletEnrollmentSchema>,
+) {
+  try {
+    const user = await getCurrentUser();
+    if (!user?.email) throw new Error("No email identified");
+    const authorizedUser = await getAuthorizedUserByEmail(user.email);
+    const enrollments = await getEnrollmentsByAuthorizedUser(authorizedUser.id);
+
+    const toRemove = enrollments.filter(
+      (e) => e.droplet.id === formData.droplet,
+    );
+
+    if (toRemove.length > 0) {
+      const response = await fetch(
+        STRAPI_API_URL + "/api/enrollments/" + toRemove[0].id,
+        {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+          },
+        },
+      );
+      const data = await response.json();
+
+      if (!response.ok || (response.ok && data.error)) {
+        const errorPath = data.error.details.errors[0].path[0];
+        const errorMessage = `${data.error.message} (${errorPath})`;
+        return { ok: false, error: errorMessage, data: null };
+      }
+
+      revalidateTag("enrollments");
+      revalidatePath("/(droplets)/d/[slug]", "page");
+      revalidatePath("/(general)/dashboard", "page");
+    }
+  } catch (err) {
+    console.error(err);
+    return { error: "Database Error: Failed to unenroll." };
+  }
+}
+
+export async function createEnrollment(
+  droplet: Droplet,
+  viewedLessons: Lesson[],
+) {
+  try {
+    const user = await getCurrentUser();
+    if (!user?.email) throw new Error("No email identified");
+    const authorizedUser = await getAuthorizedUserByEmail(user.email);
+    const enrollments = await getEnrollmentsByAuthorizedUser(authorizedUser.id);
+
+    if (
+      !enrollments
+        .map((enrollment) => enrollment.droplet.id)
+        .includes(droplet.id)
+    ) {
+      const response = await fetch(STRAPI_API_URL + "/api/enrollments", {
+        method: "POST",
+        body: JSON.stringify({
+          data: {
+            authorizedUser: authorizedUser.id,
+            droplet: droplet.id,
+            viewedLessons: viewedLessons,
+          },
+        }),
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+        },
+      });
+      const data = await response.json();
+
+      if (!response.ok || (response.ok && data.error)) {
+        const errorPath = data.error.details.errors[0].path[0];
+        const errorMessage = `${data.error.message} (${errorPath})`;
+        return { ok: false, error: errorMessage, data: null };
+      }
+      revalidateTag("enrollments");
+      revalidatePath("/(droplets)/d/[slug]", "page");
+      revalidatePath("/(droplets)/d/[slug]/[lessonSlug]", "page");
+      revalidatePath("/(general)/dashboard", "page");
+      revalidatePath(`/(droplets)/d/${droplet.slug}`, "page");
+      if (droplet.lessons) {
+        revalidatePath(
+          `/(droplets)/d/${droplet.slug}/${droplet.lessons[0].slug}`,
+          "page",
+        );
+      }
+      return { ok: true, error: null, data: data.data };
+    }
+    return { ok: true };
+  } catch (err) {
+    console.error(err);
+    return { error: "Database Error: Failed to enroll." };
   }
 }

@@ -5,7 +5,7 @@ import { z } from "zod";
 import { DropletSchema } from "@/lib/validations/droplet";
 import { debounce } from "lodash";
 import { useRouter } from "next/navigation";
-import { updateDroplet } from "@/lib/actions";
+import { updateDroplet } from "@/lib/requests/droplet";
 
 export function useDropletUpdate(dropletId: number) {
   const [error, setError] = useState("");

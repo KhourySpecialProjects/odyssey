@@ -1,9 +1,9 @@
 import { render, screen, fireEvent, renderHook } from "@testing-library/react";
 import { NextSteps } from "@/components/draft/metadata/next-steps/next-steps";
-import { updateDroplet } from "@/lib/actions";
 import { act, useState } from "react";
+import { updateDroplet } from "@/lib/requests/droplet";
 
-jest.mock("@/lib/actions", () => ({
+jest.mock("@/lib/requests/droplet", () => ({
   updateDroplet: jest.fn(() => Promise.resolve({ data: true, error: null })),
 }));
 
@@ -59,7 +59,7 @@ describe("NextSteps", () => {
     expect(screen.getByText("Step 2")).toBeInTheDocument();
   });
 
-  jest.mock("@/lib/actions", () => ({
+  jest.mock("@/lib/requests/droplet", () => ({
     updateDroplet: jest.fn(),
   }));
 

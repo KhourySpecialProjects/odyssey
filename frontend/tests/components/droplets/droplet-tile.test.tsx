@@ -1,10 +1,10 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { DropletTile } from "@/components/droplets/droplet-tile";
-import { archiveDroplet } from "@/lib/actions";
 import { toast } from "sonner";
 import { DateTime } from "luxon";
+import { archiveDroplet } from "@/lib/requests/droplet";
 
-jest.mock("@/lib/actions", () => ({
+jest.mock("@/lib/requests/droplet", () => ({
   archiveDroplet: jest.fn(),
 }));
 

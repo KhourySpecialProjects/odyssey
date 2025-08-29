@@ -3,7 +3,10 @@
 import { Enrollment, Lesson, Note } from "@/types";
 import { useState, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { getNotesByAuthorizedUserAndLesson } from "@/lib/requests/notes";
+import {
+  deleteNote,
+  getNotesByAuthorizedUserAndLesson,
+} from "@/lib/requests/notes";
 import { NoteBlock } from "./note-block";
 import { getEnrollByID } from "@/lib/requests/enrollment";
 import { createNote } from "@/lib/requests/notes";
@@ -12,7 +15,6 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { deleteNote } from "@/lib/actions";
 import { updateNotePosition } from "@/lib/requests/notes";
 import { Badge } from "@/components/ui/badge";
 

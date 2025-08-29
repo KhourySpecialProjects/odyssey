@@ -6,7 +6,6 @@ import { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { StarRating } from "@/components/ui/rating-stars";
-//import { Confetti } from "./confetti";
 import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
 import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
 import { getServerSession } from "next-auth";
@@ -16,6 +15,7 @@ import { getHighlightsByDroplet } from "@/lib/requests/highlights";
 import { NotesContainer } from "@/components/droplets/notes-container";
 import { NotesPdfButton } from "@/components/droplets/notes-pdf-button";
 import { NoteSummary } from "@/components/droplets/lessons/note-taking/note-summary";
+import { Confetti } from "./confetti";
 
 type Props = {
   params: Promise<Params>;
@@ -144,7 +144,7 @@ export default async function DropletRecapRoute({ params }: Props) {
                 enrollment={enrollment}
                 authUser={authUser}
               />
-              {/*<Confetti />*/}
+              <Confetti />
             </>
           )}
 

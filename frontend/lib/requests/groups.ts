@@ -7,9 +7,10 @@ import { getAuthorizedUserByEmail } from "./authorized-user";
 import type { ActionResponse, Droplet, DueDate, Playlist } from "@/types";
 import { AuthorizedUserRoleTitle } from "../globals";
 import { getAuthorizedUserRoleIdByTitle } from "./authorized-user-roles";
-import { createEnrollmentFromEmail } from "@/lib/actions";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { enrollInPlaylist } from "./playlist-enrollment";
+import { getCurrentUser } from "../auth/session";
+import { createEnrollmentFromEmail } from "./enrollment";
 
 const STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
@@ -975,4 +976,75 @@ export async function getUserDueDates(
     urlParams,
     next: { tags: ["due-dates"], revalidate: 0 },
   });
+}
+
+export async function deleteGroup(id: number) {
+  try {
+    const group = await getGroupByID(id);
+
+    const response = await fetch(STRAPI_API_URL + "/api/groups/" + id, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+      },
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      return { ok: false, error: "Failed to delete group.", data: null };
+    }
+
+    revalidateTag("authors");
+    revalidateTag("groups");
+    revalidatePath("(general)/my-content", "page");
+    return { ok: true, error: null, data: data.data };
+  } catch (err) {
+    console.error(err);
+    return { error: "Database Error: Failed to Delete Group." };
+  }
+}
+
+export async function archiveGroup(group: Group, archiveState: boolean) {
+  try {
+    const user = await getCurrentUser();
+    if (!user?.email) throw new Error("No email identified");
+    const authorizedUser = await getAuthorizedUserByEmail(user.email);
+
+    const requestBody = {
+      data: {
+        users_archived: archiveState
+          ? { connect: [{ id: authorizedUser.id }] }
+          : { disconnect: [{ id: authorizedUser.id }] },
+      },
+    };
+
+    const response = await fetch(`${STRAPI_API_URL}/api/groups/${group.id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+      },
+      body: JSON.stringify(requestBody),
+    });
+
+    const responseText = await response.text();
+
+    if (!response.ok) {
+      console.error("Archive group error response:", responseText);
+      console.error("Response status:", response.status);
+      throw new Error("Failed to archive group");
+    }
+
+    revalidateTag("dashboard");
+    revalidatePath("/");
+    revalidatePath("/draft");
+    revalidatePath("/dashboard");
+    revalidatePath("/dashboard/archived");
+    return { success: true };
+  } catch (error) {
+    console.error("Error archiving group:", error);
+    return { success: false, error };
+  }
 }

@@ -5,10 +5,8 @@ import { ContentSection } from "@/components/group/content-section";
 import { Droplet } from "@/types";
 import { Playlist } from "@/types";
 import { AuthorizedUser } from "@/types";
-import React, { useTransition } from "react";
-import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
+import React from "react";
 import { FileSpreadsheet, MoveLeft, MoveRight } from "lucide-react";
-import { useEffect } from "react";
 import { useState } from "react";
 import { Button } from "../ui/button";
 import * as XLSX from "xlsx-js-style";
@@ -32,7 +30,6 @@ interface GroupProgressGridProps {
 }
 
 export function GroupProgressGrid({ group, statuses }: GroupProgressGridProps) {
-  const [, startTransition] = useTransition();
   const [currentPage, setCurrentPage] = useState(0);
   const lessonsPerPage = 4;
 

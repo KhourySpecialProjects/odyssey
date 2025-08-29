@@ -10,7 +10,7 @@ export function FunFact({ droplet }: { droplet: Droplet }) {
         <strong className="mr-2 text-2xl text-black dark:text-slate-300">
           Did you know?
         </strong>
-        {droplet.funFact}
+        {droplet?.funFact}
       </p>
       <Link className="w-full" href={`/d/${droplet.slug}`}>
         <Button className="h-auto w-full bg-sky-200 text-lg text-slate-900 hover:scale-105 hover:bg-sky-200 md:w-1/2 dark:bg-blue-400 dark:hover:bg-blue-400">

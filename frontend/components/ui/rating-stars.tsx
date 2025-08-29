@@ -8,7 +8,7 @@ import {
 } from "@/lib/requests/enrollment";
 import { getEnrollByID } from "@/lib/requests/enrollment";
 import { toast } from "sonner";
-import { updateDropletAverageRating } from "@/lib/actions";
+import { updateDropletAverageRating } from "@/lib/requests/droplet";
 
 interface StarRatingProps {
   value: number;

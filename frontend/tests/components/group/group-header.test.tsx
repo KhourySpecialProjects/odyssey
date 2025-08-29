@@ -3,7 +3,7 @@ import { GroupHeader } from "@/components/group/group-header";
 import { useRouter } from "next/navigation";
 import { GroupSemester } from "@/types";
 
-jest.mock("@/lib/actions", () => ({
+jest.mock("@/lib/requests/groups", () => ({
   deleteGroup: jest.fn(),
 }));
 

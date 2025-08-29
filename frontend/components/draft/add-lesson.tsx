@@ -3,9 +3,9 @@
 import { useState, useRef, useEffect } from "react";
 import { useFormStatus } from "react-dom";
 import { PlusIcon, CornerDownLeftIcon, LoaderIcon } from "lucide-react";
-import { addLesson } from "@/lib/actions";
 import { Droplet, Lesson } from "@/types";
 import { useRouter } from "next/navigation";
+import { addLesson } from "@/lib/requests/lesson";
 
 export function AddLesson({
   droplet,

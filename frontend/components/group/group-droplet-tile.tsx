@@ -2,13 +2,7 @@
 
 import { AuthorizedUser, Droplet } from "@/types";
 import { Badge } from "@/components/ui/badge";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Link from "next/link";
 import { getDueDateBadgeColor, uppercaseFirstChar } from "@/lib/utils";
 import { Clock } from "lucide-react";

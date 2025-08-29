@@ -29,6 +29,7 @@ describe("NotesSummaryClient", () => {
         text: "Test highlight",
         color: "#fff300" as HighlightColor,
         position: { start: 0, end: 0 },
+        blockId: 1,
       },
     ],
     dropletNotes: [],

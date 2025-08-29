@@ -3,7 +3,7 @@ import { RegenerateSlugButton } from "@/components/draft/metadata/regenerate-slu
 import { useRouter } from "next/navigation";
 import { DropletStatus, DropletType, FocusArea, Tag } from "@/types";
 
-jest.mock("@/lib/actions", () => ({
+jest.mock("@/lib/requests/droplet", () => ({
   updateDroplet: jest.fn(),
 }));
 
