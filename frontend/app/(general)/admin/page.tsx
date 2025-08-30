@@ -72,8 +72,11 @@ export default async function Page() {
     "Daily Active Users": <DailyActiveUsersChart data={dailyActiveUsers} />,
     "Weekly Active Users": <WeeklyActiveUsersChart data={weeklyActiveUsers} />,
     "Daily Unique Pageviews": <UniquePageviewChart data={pageviewCount} />,
-    "Weekly New Users": <NewUsersChart data={newUsers} />,
+    // "Weekly New Users": <NewUsersChart data={newUsers} />,
   };
+
+  console.log("pageview ", pageviewCount);
+  console.log("new users ", newUsers);
 
   return (
     <div className="mx-auto w-full max-w-5xl">
