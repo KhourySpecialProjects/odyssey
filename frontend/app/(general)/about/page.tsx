@@ -71,7 +71,7 @@ export default async function AboutPage() {
                 </h2>
                 <p className="mt-2 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl dark:text-white">
                   Understand{" "}
-                  <span className="px-1.5 font-mono text-sky-600 italic underline underline-offset-1">
+                  <span className="px-1.5 font-mono text-sky-600 italic">
                     how
                   </span>{" "}
                   you&rsquo;ll learn
@@ -117,7 +117,7 @@ export default async function AboutPage() {
                 </h2>
                 <p className="mt-2 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl dark:text-white">
                   Understand{" "}
-                  <span className="px-1.5 font-mono text-sky-600 italic underline underline-offset-1">
+                  <span className="px-1.5 font-mono text-sky-600 italic">
                     what
                   </span>{" "}
                   you&rsquo;ll learn
