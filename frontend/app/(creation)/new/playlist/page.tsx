@@ -15,8 +15,6 @@ export default async function NewPlaylist() {
     return notFound();
   const authUser = await getAuthorizedUserByEmail(user.email);
 
-  //TODO: Fix logic here to get all droplets and get droplets in "current" playlist
-  // so that this page can be used for creating a new playlist or editing a playlist.
   const droplets = await getDroplets({
     filters: {
       $and: [{ status: { $eq: "published" } }, { isHidden: false }],

@@ -115,10 +115,6 @@ interface GroupManagementFormProps {
   currentUser: AuthorizedUser;
   existingGroup?: Group | null;
 }
-// TODO: Technical debt abounds.  There are some minor differences between
-// several different user types that have caused some headaches.
-// Currently, just trying to get the functionality done.  Will refactor
-// later.
 export function GroupManagementForm({
   currentUser,
   existingGroup,
