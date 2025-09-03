@@ -54,8 +54,6 @@ export function GroupsSelector() {
     [canCreateGroup],
   );
 
-  // TODO: Break this tabbed UI setup into its own reusable component. We are using it in a few different
-  // places and it would be nice to abstract it out.
   return (
     <div className="relative flex items-center justify-between border-b border-gray-200 pb-1">
       <button

@@ -7,7 +7,10 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { StarRating } from "@/components/ui/rating-stars";
 import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
-import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
+import {
+  getEnrollmentsByAuthorizedUser,
+  updateCompletionDate,
+} from "@/lib/requests/enrollment";
 import { getServerSession } from "next-auth";
 import { CompletedDropletBlock } from "@/components/droplets/completed-droplet-block";
 import { getNotesByDroplet } from "@/lib/requests/notes";
@@ -131,6 +134,14 @@ export default async function DropletRecapRoute({ params }: Props) {
     };
 
     const pdfBytes = await NoteSummary({ filteredHighlights, notes, droplet });
+
+    if (
+      enrollment &&
+      enrollment.viewedLessons.length === enrollment.droplet.lessons?.length &&
+      !enrollment.completionDate
+    ) {
+      await updateCompletionDate(enrollment.id);
+    }
 
     return (
       <>

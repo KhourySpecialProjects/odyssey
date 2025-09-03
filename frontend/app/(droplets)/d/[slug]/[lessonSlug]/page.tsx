@@ -44,10 +44,6 @@ export default async function Page({ params }: Props) {
   });
 
   const lesson = await getLessonBySlug(lessonSlug);
-
-  //TODO: Clean up this section - there are too many accesses to
-  // user functions
-
   const session = await getServerSession();
   let completedLessonIds: number[] = [];
   let enrollmentId: string | undefined;
