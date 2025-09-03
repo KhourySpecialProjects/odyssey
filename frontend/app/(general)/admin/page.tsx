@@ -75,9 +75,6 @@ export default async function Page() {
     // "Weekly New Users": <NewUsersChart data={newUsers} />,
   };
 
-  console.log("pageview ", pageviewCount);
-  console.log("new users ", newUsers);
-
   return (
     <div className="mx-auto w-full max-w-5xl">
       <div className="mx-auto my-4 w-full max-w-7xl p-8 text-center">

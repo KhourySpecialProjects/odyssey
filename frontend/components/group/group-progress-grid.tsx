@@ -87,7 +87,8 @@ export function GroupProgressGrid({ group, statuses }: GroupProgressGridProps) {
         // Create headers with completion date columns
         const headers: string[] = [];
         group.droplets.forEach((droplet) => {
-          headers.push(`${droplet.name} (${droplet.id})`);
+          // headers.push(`${droplet.name} (${droplet.id})`);
+          headers.push(`${droplet.name}`);
           headers.push("Completion Date");
         });
 
@@ -217,9 +218,6 @@ export function GroupProgressGrid({ group, statuses }: GroupProgressGridProps) {
       toast.error("Failed to export group progress");
     }
   };
-
-  console.log("Sorted Members: ", sortedMembers);
-  console.log("Droplets: ", paginatedLessons);
 
   return (
     <div className="flex flex-col items-end">

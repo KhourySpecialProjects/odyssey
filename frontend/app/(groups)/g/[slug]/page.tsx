@@ -107,8 +107,6 @@ export default async function GroupDetailPage({ params }: Props) {
           }
         });
       });
-      console.log("progress fetched!!!");
-      console.log("Statuses are: ", completionStatuses);
     } catch (error) {
       console.error("Error fetching completion statuses:", error);
     }
