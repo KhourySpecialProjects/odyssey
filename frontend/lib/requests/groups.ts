@@ -575,9 +575,6 @@ async function ensureAuthorizedUsers(
   return results;
 }
 
-//TODO This function and CreateAuthorizedUser function in actions.ts
-// should be merged into one function. But currently, the actions.ts version
-// requires a form object.
 export async function createAuthorizedUserInGroup(
   email: string,
   isEnabled: boolean = true,

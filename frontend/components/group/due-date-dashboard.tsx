@@ -12,10 +12,6 @@ interface GroupDueDateDashboardProps {
   existingGroup: Group;
   searchParams?: { [key: string]: string | string[] | undefined };
 }
-// TODO: Technical debt abounds.  There are some minor differences between
-// several different user types that have caused some headaches.
-// Currently, just trying to get the functionality done.  Will refactor
-// later.
 export function GroupDueDateDashboard({
   existingGroup,
   searchParams,

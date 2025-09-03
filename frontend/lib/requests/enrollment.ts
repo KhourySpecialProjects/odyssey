@@ -469,3 +469,37 @@ export async function createEnrollment(
     return { error: "Database Error: Failed to enroll." };
   }
 }
+
+export async function updateCompletionDate(enrollmentID: string) {
+  try {
+    const user = await getCurrentUser();
+    if (!user?.email) {
+      throw new Error("User not authenticated");
+    }
+
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_STRAPI_API_URL}/api/enrollments/${enrollmentID}`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${process.env.STRAPI_ACCESS_TOKEN}`,
+        },
+        body: JSON.stringify({
+          data: {
+            completionDate: new Date(),
+          },
+        }),
+      },
+    );
+
+    if (!response.ok) {
+      throw new Error("Failed to update completion date");
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error("Error in adding completion date: ", error);
+    return { success: false, error: "Failed to add completion date" };
+  }
+}
