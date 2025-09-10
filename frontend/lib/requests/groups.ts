@@ -550,7 +550,6 @@ export async function updateGroup(
   });
 }
 
-//TODO this should probably be moved to lib/actions.ts
 async function ensureAuthorizedUsers(
   emails: string[],
 ): Promise<Array<{ id: number; email: string }>> {
