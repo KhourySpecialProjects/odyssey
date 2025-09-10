@@ -11,6 +11,10 @@ export default ({ env }) => ({
         rejectUnauthorized: env.bool("DATABASE_SSL_SELF", false),
       },
     },
+    pool: {
+      min: 2,   
+      max: 20,  
+    },
     debug: false,
   },
 });
