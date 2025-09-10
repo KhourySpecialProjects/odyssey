@@ -52,12 +52,6 @@
         "other"
       ],
       "required": true
-    },
-    "archived_groups": {
-      "type": "relation",
-      "relation": "manyToMany",
-      "target": "api::group.group",
-      "mappedBy": "users_archived"
     }
   }
 }

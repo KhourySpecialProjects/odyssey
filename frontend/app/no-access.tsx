@@ -10,7 +10,6 @@ import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
 
-//TODO Update routing to take advantage of a more robust not-found page.
 export default async function CantAccessRoute() {
   const user = await getCurrentUser();
   const authorizedUser = user?.email
