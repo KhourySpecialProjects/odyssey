@@ -378,11 +378,6 @@ export interface ApiAccessRequestAccessRequest extends Schema.CollectionType {
       ['undergraduateStudent', 'graduateStudent', 'faculty', 'staff', 'other']
     > &
       Attribute.Required;
-    archived_groups: Attribute.Relation<
-      'api::access-request.access-request',
-      'manyToMany',
-      'api::group.group'
-    >;
     college: Attribute.Enumeration<
       [
         'BV',
@@ -1194,11 +1189,6 @@ export interface ApiGroupGroup extends Schema.CollectionType {
       'admin::user'
     > &
       Attribute.Private;
-    users_archived: Attribute.Relation<
-      'api::group.group',
-      'manyToMany',
-      'api::authorized-user.authorized-user'
-    >;
   };
 }
 
