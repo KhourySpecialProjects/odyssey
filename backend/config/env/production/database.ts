@@ -12,5 +12,16 @@ export default ({ env }) => ({
       },
     },
     debug: false,
+    pool: {
+      min: 2,
+      max: 20, // Increase if needed
+      acquireTimeoutMillis: 60000, // 60 seconds
+      createTimeoutMillis: 30000,
+      destroyTimeoutMillis: 5000,
+      idleTimeoutMillis: 30000,
+      reapIntervalMillis: 1000,
+      createRetryIntervalMillis: 200,
+    },
+    acquireConnectionTimeout: 60000,
   },
 });
