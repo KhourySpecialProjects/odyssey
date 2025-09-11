@@ -97,12 +97,6 @@
     },
     "playlistDueDates": {
       "type": "json"
-    },
-    "users_archived": {
-      "type": "relation",
-      "relation": "manyToMany",
-      "target": "api::authorized-user.authorized-user",
-      "inversedBy": "archived_groups"
     }
   }
 }
