@@ -61,7 +61,7 @@
       "type": "relation",
       "relation": "manyToMany",
       "target": "api::authorized-user.authorized-user",
-      "inversedBy": "gaveKudos"
+      "mappedBy": "gaveKudos"
     }
   }
 }
