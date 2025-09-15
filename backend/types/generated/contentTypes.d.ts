@@ -490,7 +490,7 @@ export interface ApiAuthorAuthor extends Schema.CollectionType {
     draftAndPublish: false;
   };
   attributes: {
-    authorizedUser: Attribute.Relation<
+    authorized_user: Attribute.Relation<
       'api::author.author',
       'oneToOne',
       'api::authorized-user.authorized-user'
@@ -1189,6 +1189,11 @@ export interface ApiGroupGroup extends Schema.CollectionType {
       'admin::user'
     > &
       Attribute.Private;
+    users_archived: Attribute.Relation<
+      'api::group.group',
+      'manyToMany',
+      'api::authorized-user.authorized-user'
+    >;
   };
 }
 
