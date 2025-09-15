@@ -22,12 +22,6 @@
       "default": true,
       "required": true
     },
-    "author": {
-      "type": "relation",
-      "relation": "oneToOne",
-      "target": "api::author.author",
-      "mappedBy": "authorizedUser"
-    },
     "enrollments": {
       "type": "relation",
       "relation": "oneToMany",
@@ -100,7 +94,7 @@
       "type": "relation",
       "relation": "manyToMany",
       "target": "api::authorized-user.authorized-user",
-      "inversedBy": "sent_requests"
+      "mappedBy": "sent_requests"
     },
     "friendships": {
       "type": "relation",
@@ -115,7 +109,7 @@
       "type": "relation",
       "relation": "manyToMany",
       "target": "api::authorized-user.authorized-user",
-      "inversedBy": "blocked"
+      "mappedBy": "blocked"
     },
     "blocked": {
       "type": "relation",
@@ -209,6 +203,12 @@
       "relation": "manyToMany",
       "target": "api::group.group",
       "mappedBy": "users_archived"
+    },
+    "author": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::author.author",
+      "mappedBy": "authorized_user"
     }
   }
 }
