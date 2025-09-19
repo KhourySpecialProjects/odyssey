@@ -37,8 +37,7 @@ export default async function GroupDetailPage({ params }: Props) {
   }
 
   const isCreator = group.creator?.id === authorizedUser.id;
-  const isAdmin = group.admins?.some((admin) => admin.id === authorizedUser.id);
-  const canEdit = isCreator || isAdmin || isAuthorizedUserAdmin(user.roles);
+  const canEdit = isCreator || isAuthorizedUserAdmin(user.roles);
 
   const dueDates = await getGroupDueDates(group);
 
