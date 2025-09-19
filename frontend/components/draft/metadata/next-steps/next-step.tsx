@@ -20,6 +20,7 @@ export function NextStepDisplay({
   const ref = useRef<HTMLLIElement>(null);
   const { open, setOpen } = useOffClick(ref);
   const [nextStep, setNextStep] = useState(initial);
+  const [finalVal, setFinalVal] = useState(nextStep.label ?? nextStep.url);
 
   return (
     <li
@@ -42,6 +43,7 @@ export function NextStepDisplay({
                 url: nextStep.url,
                 label: e.target.value,
               });
+              setFinalVal(nextStep.label ?? nextStep.url);
               update({
                 id: nextStep.id,
                 url: nextStep.url,
@@ -57,6 +59,7 @@ export function NextStepDisplay({
                 url: e.target.value,
                 label: nextStep.label,
               });
+              setFinalVal(nextStep.label ?? nextStep.url);
               update({
                 id: nextStep.id,
                 url: e.target.value,
@@ -70,7 +73,7 @@ export function NextStepDisplay({
           </form>
         </div>
       ) : (
-        (nextStep.label ?? nextStep.url)
+        finalVal
       )}
     </li>
   );
