@@ -70,7 +70,7 @@ export function NextStepDisplay({
           </form>
         </div>
       ) : (
-        nextStep.label ?? nextStep.url
+        (nextStep.label ?? nextStep.url)
       )}
     </li>
   );

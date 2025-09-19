@@ -62,19 +62,18 @@ export default async function Footer() {
           <div className="flex flex-row items-center gap-2">
             <Link
               href="https://github.com/KhourySpecialProjects/odyssey"
-              legacyBehavior
               role="link"
+              target="_blank"
+              rel="noopener noreferrer"
             >
-              <a target="_blank" rel="noopener noreferrer">
-                <Image
-                  src={"/github.svg"}
-                  alt="Odyssey Github Repo"
-                  width={40}
-                  height={40}
-                  priority
-                  className="hover:scale-105"
-                />
-              </a>
+              <Image
+                src={"/github.svg"}
+                alt="Odyssey Github Repo"
+                width={40}
+                height={40}
+                priority
+                className="hover:scale-105"
+              />
             </Link>
             <DarkMode className="" />
           </div>
