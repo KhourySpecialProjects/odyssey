@@ -40,6 +40,7 @@ export function GroupDashboard({
   const paginatedDroplets = group.droplets?.slice(startIndex, endIndex);
 
   const totalPages = Math.ceil((group.droplets?.length || 0) / lessonsPerPage);
+  const isAdmin = group.admins?.some((admin) => admin.id === authUser.id);
 
   const handleNextPage = () => {
     if (currentPage < totalPages - 1) setCurrentPage(currentPage + 1);
@@ -54,7 +55,7 @@ export function GroupDashboard({
       <TabList className="flex border-b">
         <Tab className={tabStyle}>Droplets</Tab>
         <Tab className={tabStyle}>Playlists</Tab>
-        {canEdit && <Tab className={tabStyle}>Progress</Tab>}
+        {canEdit || (isAdmin && <Tab className={tabStyle}>Progress</Tab>)}
       </TabList>
       <TabPanel>
         <ContentSection
@@ -134,29 +135,30 @@ export function GroupDashboard({
           )}
         </ContentSection>
       </TabPanel>
-      {canEdit && (
-        <TabPanel>
-          <ContentSection
-            title=""
-            emptyMessage="No students are enrolled in any droplets or playlists."
-          >
-            {group.droplets &&
-            group.droplets.length > 0 &&
-            group.members &&
-            group.members.length > 0 ? (
-              <div className="flex flex-row items-start overflow-x-auto">
-                <div className="" key={group.id}>
-                  <GroupProgressGrid group={group} statuses={statuses} />
+      {canEdit ||
+        (isAdmin && (
+          <TabPanel>
+            <ContentSection
+              title=""
+              emptyMessage="No students are enrolled in any droplets or playlists."
+            >
+              {group.droplets &&
+              group.droplets.length > 0 &&
+              group.members &&
+              group.members.length > 0 ? (
+                <div className="flex flex-row items-start overflow-x-auto">
+                  <div className="" key={group.id}>
+                    <GroupProgressGrid group={group} statuses={statuses} />
+                  </div>
                 </div>
-              </div>
-            ) : (
-              <div className="rounded-lg border border-dashed p-8 text-center text-slate-500 dark:border-slate-500 dark:text-slate-300">
-                No droplets or members have been added to this group yet.
-              </div>
-            )}
-          </ContentSection>
-        </TabPanel>
-      )}
+              ) : (
+                <div className="rounded-lg border border-dashed p-8 text-center text-slate-500 dark:border-slate-500 dark:text-slate-300">
+                  No droplets or members have been added to this group yet.
+                </div>
+              )}
+            </ContentSection>
+          </TabPanel>
+        ))}
     </Tabs>
   );
 }

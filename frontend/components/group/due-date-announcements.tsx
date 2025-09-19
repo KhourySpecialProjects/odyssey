@@ -16,7 +16,6 @@ export default function DueDateAnnouncements({
   dueDates,
 }: DueDateAnnouncementsProps) {
   const [visibleDates, setVisibleDates] = useState<number | undefined>(5);
-
   const handleSeeMore = () => {
     if (visibleDates) {
       setVisibleDates(undefined);
@@ -71,7 +70,7 @@ export default function DueDateAnnouncements({
         ))}
       </div>
 
-      {dueDates.length > 5 && (
+      {processedDueDates.length > 5 && (
         <Button
           variant="link"
           size="xs"
