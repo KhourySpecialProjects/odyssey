@@ -12,7 +12,8 @@ import { isAuthorizedUserAdmin } from "@/lib/utils";
 import DueDateAnnouncements from "@/components/group/due-date-announcements";
 import { getGroupDueDates } from "@/lib/requests/groups";
 import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
-import { AuthorizedUser } from "@/types";
+import { AuthorizedUser, DueDate } from "@/types";
+import { DateTime } from "luxon";
 
 export const fetchCache = "force-no-store";
 export const revalidate = 0;
@@ -58,6 +59,20 @@ export default async function GroupDetailPage({ params }: Props) {
   );
 
   const uniqueDueDates = Object.values(filteredDueDates);
+  const getDaysUntil = (dueDate: DueDate) => {
+    let daysUntil = "0";
+    if (dueDate && dueDate.dueDate !== "") {
+      const dueDateObject = DateTime.fromISO(dueDate.dueDate);
+      const today = DateTime.local().startOf("day");
+      const diffDays = dueDateObject.startOf("day").diff(today, "days").days;
+      daysUntil = String(Math.ceil(diffDays));
+    }
+    return daysUntil;
+  };
+
+  const processedDueDates = uniqueDueDates.filter((dueDate) => {
+    return Number(getDaysUntil(dueDate)) >= 0;
+  });
 
   let sortedMembers: AuthorizedUser[] = [];
   const completionStatuses: Record<
@@ -113,7 +128,7 @@ export default async function GroupDetailPage({ params }: Props) {
 
   return (
     <div className="mx-auto w-full max-w-7xl space-y-12 p-8">
-      <GroupHeader group={group} canEdit={canEdit} />
+      {canEdit && <GroupHeader group={group} canEdit={canEdit} />}
 
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
         <div className="space-y-8">
@@ -166,11 +181,11 @@ export default async function GroupDetailPage({ params }: Props) {
               group.description || "No Description Provided.",
             )}
           />
-          {dueDates && uniqueDueDates.length > 0 && (
+          {dueDates && processedDueDates.length > 0 && (
             <>
               <Separator />
               <DueDateAnnouncements
-                dueDates={uniqueDueDates}
+                dueDates={processedDueDates}
                 data-testid="due-date-announcements"
               />
             </>
