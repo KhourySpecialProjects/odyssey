@@ -35,15 +35,11 @@ export default function DueDateAnnouncements({
     return daysUntil;
   };
 
-  const processedDueDates = dueDates.filter((dueDate) => {
-    return Number(getDaysUntil(dueDate)) >= 0;
-  });
-
   return (
     <div className="w-2/3 space-y-3">
       <h2 className="text-2xl font-semibold">Upcoming Due Dates</h2>
       <div className="space-y-5">
-        {processedDueDates.slice(0, visibleDates).map((dueDate, index) => (
+        {dueDates.slice(0, visibleDates).map((dueDate, index) => (
           <Link
             key={index}
             href={`/${dueDate.droplet ? "d" : "p"}/${dueDate.droplet ? dueDate.droplet?.slug : dueDate.playlist?.slug}`}
@@ -70,7 +66,7 @@ export default function DueDateAnnouncements({
         ))}
       </div>
 
-      {processedDueDates.length > 5 && (
+      {dueDates.length > 5 && (
         <Button
           variant="link"
           size="xs"
