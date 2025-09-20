@@ -10,7 +10,6 @@ import {
 } from "@/components/message";
 import { redirect } from "next/navigation";
 import { GroupCard } from "@/components/group/group-card";
-import { isAuthorizedUserAdmin, isContentCreator } from "@/lib/utils";
 
 type GroupWithRole = {
   group: Group;
@@ -30,11 +29,7 @@ export default async function GroupsPage({ searchParams }: Props) {
   const tab = params.tab || "member";
 
   const user = await getCurrentUser();
-  if (
-    !user ||
-    !user.email ||
-    (!isAuthorizedUserAdmin(user.roles) && !isContentCreator(user.roles))
-  ) {
+  if (!user || !user.email) {
     redirect("/unauthorized");
   }
 
