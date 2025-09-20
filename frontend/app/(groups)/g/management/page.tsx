@@ -16,14 +16,7 @@ type Props = {
 
 export default async function GroupManagementPage({ searchParams }: Props) {
   const user = await getCurrentUser();
-  if (
-    !user?.email ||
-    !(
-      isContentCreator(user.roles) ||
-      isAuthorizedUserAdmin(user.roles) ||
-      isAuthorizedUserFaculty(user.roles)
-    )
-  ) {
+  if (!user?.email) {
     return notFound();
   }
 
@@ -39,7 +32,13 @@ export default async function GroupManagementPage({ searchParams }: Props) {
     const isAdmin = group.admins?.some(
       (admin) => admin.id === authorizedUser.id,
     );
-    if (!isCreator && !isAdmin && !isAuthorizedUserAdmin(user.roles)) {
+    if (
+      !isCreator &&
+      !isAdmin &&
+      !isAuthorizedUserAdmin(user.roles) &&
+      !isAuthorizedUserFaculty(user.roles) &&
+      !isContentCreator(user.roles)
+    ) {
       notFound();
     }
   }
