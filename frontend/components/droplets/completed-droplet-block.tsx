@@ -7,6 +7,8 @@ import { AuthorizedUser, Droplet, Enrollment } from "@/types";
 import { GradientBackground } from "../gradient-bg";
 import { createFriendAnnouncement } from "@/lib/requests/feed";
 import { updateEnrollmentFirstTime } from "@/lib/requests/enrollment";
+import { text } from "stream/consumers";
+import { X } from 'lucide-react';
 
 export function CompletedDropletBlock({
   droplet,
@@ -43,6 +45,7 @@ export function CompletedDropletBlock({
         <DialogTitle></DialogTitle>
         <DialogHeader>
           <GradientBackground className="h-60 min-h-0 px-0">
+            <Button className = "text-slate-500 bg-transparent hover:bg-transparent absolute top-0 right-0" onClick={handleClose}><X /></Button>
             <div className="mx-auto max-w-2xl">
               <p className="text-pretty text-slate-500 md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed dark:text-slate-400">
                 <strong>You did it!</strong> Congratulations on completing this
