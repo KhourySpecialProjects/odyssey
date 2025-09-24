@@ -1,7 +1,15 @@
 import { render, fireEvent, waitFor, screen } from "@testing-library/react";
 import { UserMultiSelect } from "@/components/ui/user-multi-select";
+import { fetchAuthorizedUsers } from "@/lib/requests/authorized-user";
+
+jest.mock("@/lib/requests/authorized-user", () => ({
+  fetchAuthorizedUsers: jest.fn(),
+}));
 
 describe("UserMultiSelect", () => {
+  beforeEach(() => {
+    (fetchAuthorizedUsers as jest.Mock).mockResolvedValue(mockUsers);
+  });
   const mockUsers = [
     {
       id: 1,
