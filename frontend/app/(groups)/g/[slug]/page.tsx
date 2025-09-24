@@ -145,11 +145,11 @@ export default async function GroupDetailPage({ params }: Props) {
                 members={group.admins || []}
                 variant="admin"
               />
-              <MemberList
+              {/* <MemberList
                 title="Managers"
                 members={group.managers || []}
                 variant="manager"
-              />
+              /> */}
             </div>
           </div>
 
