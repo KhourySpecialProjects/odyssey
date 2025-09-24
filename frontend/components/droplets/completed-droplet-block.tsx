@@ -7,7 +7,6 @@ import { AuthorizedUser, Droplet, Enrollment } from "@/types";
 import { GradientBackground } from "../gradient-bg";
 import { createFriendAnnouncement } from "@/lib/requests/feed";
 import { updateEnrollmentFirstTime } from "@/lib/requests/enrollment";
-import { text } from "stream/consumers";
 import { X } from 'lucide-react';
 
 export function CompletedDropletBlock({
