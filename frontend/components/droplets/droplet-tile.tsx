@@ -34,11 +34,9 @@ export function DropletTile({
   dueDate,
 }: DropletTileProps) {
   const [descriptionExpanded, setDescriptionExpanded] = useState(false);
-  const [isTextClamped, setIsTextClamped] = useState(false);  
-  const textRef = useRef(null);  
+  const [isTextClamped, setIsTextClamped] = useState(false);
+  const textRef = useRef(null);
 
-
-   
   const strippedDescription = droplet.description
     ?.replace(/<\/p>\s*<p>/gi, "\n")
     .replace(/<br\s*\/?>/gi, "\n")
@@ -46,14 +44,13 @@ export function DropletTile({
     .replace(/<[^>]+>/g, "")
     .trim();
 
-    useEffect(() => {
-  if (textRef.current && strippedDescription) {
-     const element = textRef.current as HTMLParagraphElement;
+  useEffect(() => {
+    if (textRef.current && strippedDescription) {
+      const element = textRef.current as HTMLParagraphElement;
       const isClamped = element.scrollHeight > element.clientHeight;
       setIsTextClamped(isClamped);
-      }
-    }, [strippedDescription, descriptionExpanded]);
-  
+    }
+  }, [strippedDescription, descriptionExpanded]);
 
   const dropletLessonIds = droplet.lessons?.map((l) => l.id) || [];
   const completedLessonsInDroplet = completedLessonIds.filter((id) =>
@@ -218,46 +215,44 @@ export function DropletTile({
                 {droplet.name}
               </span>
 
-
-
-              {strippedDescription && 
-              strippedDescription.trim() !== "<p></p>" &&
-              strippedDescription.trim() !== "" && (
-                <>
-                  <p
-                    ref={textRef}
-                    className={`${
-                      descriptionExpanded ? "line-clamp-none" : "line-clamp-2"
-                    } text-md text-slate-700 dark:text-slate-300`}
-                  >
-                    {strippedDescription}
-                  </p>
-                  
-                  {isTextClamped && !descriptionExpanded && (
-                    <button
-                      onClick={(e) => {
-                        e.preventDefault();
-                        setDescriptionExpanded(true);
-                      }}
-                      className="text-sm text-sky-700 dark:text-sky-500 text-left"
+              {strippedDescription &&
+                strippedDescription.trim() !== "<p></p>" &&
+                strippedDescription.trim() !== "" && (
+                  <>
+                    <p
+                      ref={textRef}
+                      className={`${
+                        descriptionExpanded ? "line-clamp-none" : "line-clamp-2"
+                      } text-md text-slate-700 dark:text-slate-300`}
                     >
-                      See More
-                    </button>
-                  )}
-                  
-                  {descriptionExpanded && (
-                    <button
-                      onClick={(e) => {
-                        e.preventDefault();
-                        setDescriptionExpanded(false);
-                      }}
-                      className="text-sm text-sky-700 dark:text-sky-500 text-left"
-                    >
-                      See Less
-                    </button>
-                  )}
-                </>
-            )}       
+                      {strippedDescription}
+                    </p>
+
+                    {isTextClamped && !descriptionExpanded && (
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setDescriptionExpanded(true);
+                        }}
+                        className="text-left text-sm text-sky-700 dark:text-sky-500"
+                      >
+                        See More
+                      </button>
+                    )}
+
+                    {descriptionExpanded && (
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setDescriptionExpanded(false);
+                        }}
+                        className="text-left text-sm text-sky-700 dark:text-sky-500"
+                      >
+                        See Less
+                      </button>
+                    )}
+                  </>
+                )}
             </div>
           </div>
 
