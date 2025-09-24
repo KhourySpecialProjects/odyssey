@@ -1,12 +1,15 @@
 import { render, fireEvent, waitFor, screen } from "@testing-library/react";
 import { UserMultiSelect } from "@/components/ui/user-multi-select";
-import { fetchAllContentCreators } from "@/lib/requests/users";
+import { fetchAuthorizedUsers } from "@/lib/requests/authorized-user";
 
-jest.mock("@/lib/requests/users", () => ({
-  fetchAllContentCreators: jest.fn(),
+jest.mock("@/lib/requests/authorized-user", () => ({
+  fetchAuthorizedUsers: jest.fn(),
 }));
 
 describe("UserMultiSelect", () => {
+  beforeEach(() => {
+    (fetchAuthorizedUsers as jest.Mock).mockResolvedValue(mockUsers);
+  });
   const mockUsers = [
     {
       id: 1,
@@ -21,10 +24,6 @@ describe("UserMultiSelect", () => {
       email: "jane.smith@example.com",
     },
   ];
-
-  beforeEach(() => {
-    (fetchAllContentCreators as jest.Mock).mockResolvedValue(mockUsers);
-  });
 
   it("renders select button with placeholder", () => {
     const { getByRole } = render(
@@ -73,10 +72,6 @@ describe("UserMultiSelect", () => {
     });
   });
 
-  jest.mock("@/lib/requests/users", () => ({
-    fetchAllContentCreators: jest.fn(),
-  }));
-
   describe("UserMultiSelect", () => {
     const mockUsers = [
       {
@@ -92,10 +87,6 @@ describe("UserMultiSelect", () => {
         email: "jane.smith@example.com",
       },
     ];
-
-    beforeEach(() => {
-      (fetchAllContentCreators as jest.Mock).mockResolvedValue(mockUsers);
-    });
 
     it("handles user selection and deselection", async () => {
       const mockOnChange = jest.fn();

@@ -440,7 +440,7 @@ export function GroupManagementForm({
               )}
             />
 
-            <FormField
+            {/* <FormField
               control={form.control}
               name="managers"
               render={({ field }) => (
@@ -455,7 +455,7 @@ export function GroupManagementForm({
                   <FormMessage />
                 </FormItem>
               )}
-            />
+            /> */}
           </div>
         </ContentSection>
 
