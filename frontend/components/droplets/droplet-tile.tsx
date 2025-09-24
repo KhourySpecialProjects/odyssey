@@ -6,7 +6,7 @@ import { Droplet } from "@/types";
 import Link from "next/link";
 
 import { StarRating } from "@/components/ui/rating-stars";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "../ui/button";
 import { toast } from "sonner";
 import { Archive, ArchiveRestore, Clock } from "lucide-react";
@@ -34,13 +34,27 @@ export function DropletTile({
   dueDate,
 }: DropletTileProps) {
   const [descriptionExpanded, setDescriptionExpanded] = useState(false);
+  const [isTextClamped, setIsTextClamped] = useState(false);  
+  const textRef = useRef(null);  
 
+
+   
   const strippedDescription = droplet.description
     ?.replace(/<\/p>\s*<p>/gi, "\n")
     .replace(/<br\s*\/?>/gi, "\n")
     .replace(/<\/?p>/gi, "")
     .replace(/<[^>]+>/g, "")
     .trim();
+
+    useEffect(() => {
+  if (textRef.current && strippedDescription) {
+     const element = textRef.current as HTMLParagraphElement;
+      const isClamped = element.scrollHeight > element.clientHeight;
+      setIsTextClamped(isClamped);
+      }
+    }, [strippedDescription, descriptionExpanded]);
+  
+
   const dropletLessonIds = droplet.lessons?.map((l) => l.id) || [];
   const completedLessonsInDroplet = completedLessonIds.filter((id) =>
     dropletLessonIds.includes(id),
@@ -204,42 +218,46 @@ export function DropletTile({
                 {droplet.name}
               </span>
 
-              {strippedDescription &&
-                strippedDescription.trim() !== "<p></p>" &&
-                strippedDescription.trim() !== "" && (
-                  <>
-                    <p
-                      className={`${
-                        descriptionExpanded ? "line-clamp-none" : "line-clamp-2"
-                      } text-md text-slate-700 dark:text-slate-300`}
+
+
+              {strippedDescription && 
+              strippedDescription.trim() !== "<p></p>" &&
+              strippedDescription.trim() !== "" && (
+                <>
+                  <p
+                    ref={textRef}
+                    className={`${
+                      descriptionExpanded ? "line-clamp-none" : "line-clamp-2"
+                    } text-md text-slate-700 dark:text-slate-300`}
+                  >
+                    {strippedDescription}
+                  </p>
+                  
+                  {isTextClamped && !descriptionExpanded && (
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setDescriptionExpanded(true);
+                      }}
+                      className="text-sm text-sky-700 dark:text-sky-500 text-left"
                     >
-                      {strippedDescription}
-                    </p>
-                    <p>
-                      {descriptionExpanded ? (
-                        <button
-                          onClick={(e) => {
-                            e.preventDefault();
-                            setDescriptionExpanded(false);
-                          }}
-                          className="text-sm text-sky-700 dark:text-sky-500"
-                        >
-                          See Less
-                        </button>
-                      ) : (
-                        <button
-                          onClick={(e) => {
-                            e.preventDefault();
-                            setDescriptionExpanded(true);
-                          }}
-                          className="text-sm text-sky-700 dark:text-sky-500"
-                        >
-                          See More
-                        </button>
-                      )}
-                    </p>
-                  </>
-                )}
+                      See More
+                    </button>
+                  )}
+                  
+                  {descriptionExpanded && (
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setDescriptionExpanded(false);
+                      }}
+                      className="text-sm text-sky-700 dark:text-sky-500 text-left"
+                    >
+                      See Less
+                    </button>
+                  )}
+                </>
+            )}       
             </div>
           </div>
 
