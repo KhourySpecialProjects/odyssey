@@ -1,5 +1,7 @@
 import { fetchAccessRequests } from "@/lib/requests/data";
 import { AccessRequestBlock } from "./access-request";
+import { fetchAuthorizedUsers } from "@/lib/requests/authorized-user";
+import { AuthorizedUser } from "@/types";
 
 export type AccessRequest = {
   id: string;
@@ -10,9 +12,23 @@ export type AccessRequest = {
   college: string;
 };
 
+export function accessFilter(requests: AccessRequest[], users: AuthorizedUser[]) {
+  return (
+    requests.filter( (request: AccessRequest) => {
+              return users.filter((user: AuthorizedUser) => {
+                return (user.firstName.toLowerCase() === request.givenName.toLowerCase()
+                    && user.lastName.toLowerCase() === request.familyName.toLowerCase()
+                    && user.email.toLowerCase() === request.email.toLowerCase()
+                    )
+              }).length === 0;
+            })
+  )
+}
+
 export async function AccessRequests() {
   const accessRequests = await fetchAccessRequests();
-
+  const authorizedUsers = await fetchAuthorizedUsers();
+  
   return (
     <section>
       <h1 className="font-bold dark:text-slate-300">Access Requests</h1>
@@ -23,9 +39,10 @@ export async function AccessRequests() {
       <div className="mt-4 rounded-md bg-slate-100 p-4 dark:bg-slate-800">
         {accessRequests.length > 0 ? (
           <ul className="divide-y divide-slate-200 md:space-y-4 dark:divide-slate-700">
-            {accessRequests.map((request: AccessRequest) => (
-              <AccessRequestBlock request={request} key={request.id} />
-            ))}
+            {accessFilter(accessRequests, authorizedUsers).map(
+              (request: AccessRequest) => {
+              return <AccessRequestBlock request={request} key={request.id} />
+            })}
           </ul>
         ) : (
           <p>There are no access requests at this time.</p>
