@@ -86,6 +86,7 @@ describe("GroupDashboard", () => {
         canEdit={true}
         authUser={mockAuthUser}
         dueDates={mockDueDates}
+        statuses={{}}
       />,
     );
 
@@ -97,6 +98,7 @@ describe("GroupDashboard", () => {
         canEdit={false}
         authUser={mockAuthUser}
         dueDates={mockDueDates}
+        statuses={{}}
       />,
     );
 
@@ -117,6 +119,7 @@ describe("GroupDashboard", () => {
         canEdit={true}
         authUser={mockAuthUser}
         dueDates={[]}
+        statuses={{}}
       />,
     );
 
@@ -137,6 +140,7 @@ describe("GroupDashboard", () => {
         canEdit={true}
         authUser={mockAuthUser}
         dueDates={[]}
+        statuses={{}}
       />,
     );
 
@@ -158,6 +162,7 @@ describe("GroupDashboard", () => {
         canEdit={true}
         authUser={mockAuthUser}
         dueDates={[]}
+        statuses={{}}
       />,
     );
 
@@ -171,6 +176,7 @@ describe("GroupDashboard", () => {
     canEdit: true,
     authUser: { id: "1", timeZone: "UTC" } as any,
     dueDates: [],
+    statuses: {},
   };
 
   test("empty state renders correctly", () => {
