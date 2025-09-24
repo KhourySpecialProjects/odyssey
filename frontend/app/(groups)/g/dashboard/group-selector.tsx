@@ -7,6 +7,7 @@ import {
   PlusCircle,
   PlusCircleIcon,
   ShieldIcon,
+  UserIcon,
   UsersRound,
 } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
@@ -17,7 +18,7 @@ import { useMemo, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 
 const baseTabs = [
-  // { name: "Member", value: "member", icon: UserIcon },
+  { name: "Member", value: "member", icon: UserIcon },
   { name: "Admin", value: "admin", icon: ShieldIcon },
   { name: "Manager", value: "manager", icon: CircleUserIcon },
   // { name: "Favs", value: "favorites", icon: StarIcon },
@@ -35,7 +36,7 @@ export function GroupsSelector() {
       isAuthorizedUserAdmin(session.user.roles) ||
       isAuthorizedUserFaculty(session.user.roles));
 
-  const currentTab = searchParams.get("tab") || "creator";
+  const currentTab = searchParams.get("tab") || "member";
 
   const createQueryString = (name: string, value: string) => {
     const params = new URLSearchParams(searchParams);

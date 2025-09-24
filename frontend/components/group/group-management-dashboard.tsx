@@ -40,6 +40,7 @@ export function GroupDashboard({
   const paginatedDroplets = group.droplets?.slice(startIndex, endIndex);
 
   const totalPages = Math.ceil((group.droplets?.length || 0) / lessonsPerPage);
+  const isAdmin = group.admins?.some((admin) => admin.id === authUser.id);
 
   const handleNextPage = () => {
     if (currentPage < totalPages - 1) setCurrentPage(currentPage + 1);
@@ -54,7 +55,7 @@ export function GroupDashboard({
       <TabList className="flex border-b">
         <Tab className={tabStyle}>Droplets</Tab>
         <Tab className={tabStyle}>Playlists</Tab>
-        {canEdit && <Tab className={tabStyle}>Progress</Tab>}
+        {(canEdit || isAdmin) && <Tab className={tabStyle}>Progress</Tab>}
       </TabList>
       <TabPanel>
         <ContentSection
@@ -134,7 +135,7 @@ export function GroupDashboard({
           )}
         </ContentSection>
       </TabPanel>
-      {canEdit && (
+      {(canEdit || isAdmin) && (
         <TabPanel>
           <ContentSection
             title=""
