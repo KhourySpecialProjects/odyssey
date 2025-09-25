@@ -47,3 +47,17 @@
 .callout-bullet-list li::marker {
   color: #334155; /* Replace with your desired color (red in this example) */
 }
+
+/* Ensure dark mode compatibility for prose and bg-sky-50 elements */
+.dark .prose,
+.dark .prose *,
+.dark .bg-sky-50,
+.dark .bg-sky-50 * {
+  color: white !important;
+}
+
+/* Dark background for sky-50 elements */
+.dark .bg-sky-50,
+.dark [class*="bg-sky-50"] {
+  background-color: rgb(15 23 42) !important;
+}
