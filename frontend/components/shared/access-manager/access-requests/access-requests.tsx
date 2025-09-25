@@ -14,14 +14,13 @@ export type AccessRequest = {
 
 export function accessFilter(requests: AccessRequest[], users: AuthorizedUser[]) {
   return (
-    requests.filter( (request: AccessRequest) => {
-              return users.filter((user: AuthorizedUser) => {
-                return (user.firstName?.toLowerCase() === request.givenName?.toLowerCase()
-                    && user.lastName?.toLowerCase() === request.familyName?.toLowerCase()
-                    && user.email?.toLowerCase() === request.email?.toLowerCase()
-                    )
-              }).length === 0;
-            })
+    requests.filter((req) => 
+      !users.some((user) => 
+        (user.firstName?.toLowerCase() === req.givenName?.toLowerCase() &&
+        user.lastName?.toLowerCase() === req.familyName?.toLowerCase() &&
+        user.email?.toLowerCase() === req.email)
+      )
+    )
   )
 }
 
