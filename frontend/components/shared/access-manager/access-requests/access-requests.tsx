@@ -16,9 +16,9 @@ export function accessFilter(requests: AccessRequest[], users: AuthorizedUser[])
   return (
     requests.filter( (request: AccessRequest) => {
               return users.filter((user: AuthorizedUser) => {
-                return (user.firstName.toLowerCase() === request.givenName.toLowerCase()
-                    && user.lastName.toLowerCase() === request.familyName.toLowerCase()
-                    && user.email.toLowerCase() === request.email.toLowerCase()
+                return (user.firstName?.toLowerCase() === request.givenName?.toLowerCase()
+                    && user.lastName?.toLowerCase() === request.familyName?.toLowerCase()
+                    && user.email?.toLowerCase() === request.email?.toLowerCase()
                     )
               }).length === 0;
             })
