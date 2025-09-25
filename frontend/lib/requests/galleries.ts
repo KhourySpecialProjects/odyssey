@@ -17,7 +17,7 @@ export async function getGalleryBySlug(
     populate = {
       items: { populate: "*" },
     },
-    fields = ["id", "slug", "title"],
+    fields = ["id", "slug", "title", "subtitle"],
   }: StrapiRequestParams = {},
 ): Promise<Gallery | undefined> {
   const path = `/galleries`;
