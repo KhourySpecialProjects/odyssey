@@ -10,7 +10,6 @@ const DebugToggle = React.forwardRef<
   React.ComponentPropsWithoutRef<typeof Button>
 >(({ className, ...props }, ref) => {
   const toggleDebug = useDebugStore((state) => state.toggle);
-  console.log("Env: " + process.env.NODE_ENV);
   if (process.env.NODE_ENV !== "development") return null;
 
   return (
@@ -18,7 +17,6 @@ const DebugToggle = React.forwardRef<
       ref={ref}
       onClick={toggleDebug}
       className={`fixed -right-1 -bottom-1 z-50 ${className}`}
-      title="Debug"
       size="icon"
       aria-label="Debug"
       {...props}
