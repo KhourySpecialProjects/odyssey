@@ -6,7 +6,7 @@ import { Droplet } from "@/types";
 import Link from "next/link";
 
 import { StarRating } from "@/components/ui/rating-stars";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, use } from "react";
 import { Button } from "../ui/button";
 import { toast } from "sonner";
 import { Archive, ArchiveRestore, Clock } from "lucide-react";
@@ -35,6 +35,7 @@ export function DropletTile({
 }: DropletTileProps) {
   const [descriptionExpanded, setDescriptionExpanded] = useState(false);
   const [isTextClamped, setIsTextClamped] = useState(false);
+  const [isScreenChanged, setIsScreenChanged] = useState(false); // New state variable to track screen size changes
   const textRef = useRef(null);
 
   const strippedDescription = droplet.description
@@ -51,6 +52,30 @@ export function DropletTile({
       setIsTextClamped(isClamped);
     }
   }, [strippedDescription, descriptionExpanded]);
+
+  // Effect to handle screen size changes and re-evaluate clamping
+  useEffect(() => {
+    const handleResize = () => {
+      setIsScreenChanged(true);
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (isScreenChanged) {
+      // Re-evaluate clamping only if the screen size has changed
+      if (textRef.current && strippedDescription) {
+        const element = textRef.current as HTMLParagraphElement;
+        const isClamped = element.scrollHeight > element.clientHeight;
+        setIsTextClamped(isClamped);
+      }
+      setIsScreenChanged(false); // Reset the flag after handling
+    }
+  }, [isScreenChanged, strippedDescription, descriptionExpanded]);
 
   const dropletLessonIds = droplet.lessons?.map((l) => l.id) || [];
   const completedLessonsInDroplet = completedLessonIds.filter((id) =>
