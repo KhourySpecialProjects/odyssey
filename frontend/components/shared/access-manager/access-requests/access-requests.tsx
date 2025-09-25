@@ -27,7 +27,9 @@ export function accessFilter(requests: AccessRequest[], users: AuthorizedUser[])
 export async function AccessRequests() {
   const accessRequests = await fetchAccessRequests();
   const authorizedUsers = await fetchAuthorizedUsers();
-  
+
+  const filteredRequests = accessFilter(accessRequests, authorizedUsers); 
+
   return (
     <section>
       <h1 className="font-bold dark:text-slate-300">Access Requests</h1>
@@ -36,9 +38,9 @@ export async function AccessRequests() {
       </p>
 
       <div className="mt-4 rounded-md bg-slate-100 p-4 dark:bg-slate-800">
-        {accessRequests.length > 0 ? (
+        {filteredRequests.length > 0 ? (
           <ul className="divide-y divide-slate-200 md:space-y-4 dark:divide-slate-700">
-            {accessFilter(accessRequests, authorizedUsers).map(
+            {filteredRequests.map(
               (request: AccessRequest) => {
               return <AccessRequestBlock request={request} key={request.id} />
             })}
