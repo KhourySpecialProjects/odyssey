@@ -1,6 +1,12 @@
 FROM node:20-alpine
 # Installing libvips-dev for sharp Compatibility
-RUN apk update && apk add --no-cache build-base gcc autoconf automake zlib-dev libpng-dev nasm bash vips-dev git
+# Minimal, reliable native-build toolchain for Node on Alpine 3.20/3.21
+# RUN apk add --no-cache \
+#     bash \
+#     build-base \
+#     autoconf automake libtool pkgconf \
+#     zlib-dev libpng-dev nasm \
+#     python3
 ARG NODE_ENV=development
 ENV NODE_ENV=${NODE_ENV}
 
