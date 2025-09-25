@@ -1090,6 +1090,7 @@ export interface ApiGalleryGallery extends Schema.CollectionType {
       Attribute.Private;
     items: Attribute.Component<'galleries.gallery-item', true>;
     slug: Attribute.UID & Attribute.Required;
+    subtitle: Attribute.String & Attribute.Required;
     title: Attribute.String & Attribute.Required;
     updatedAt: Attribute.DateTime;
     updatedBy: Attribute.Relation<
