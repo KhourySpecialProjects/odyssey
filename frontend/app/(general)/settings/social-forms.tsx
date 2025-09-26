@@ -329,7 +329,10 @@ export function SocialForms({
           <Check className="h-5 w-5" />
         </Button>
       </form>
-      <TimeZoneSelector currentZone={authorizedUser.timeZone.trim()} userId={authorizedUser.id}></TimeZoneSelector>
+      <TimeZoneSelector
+        currentZone={authorizedUser.timeZone.trim()}
+        userId={authorizedUser.id}
+      ></TimeZoneSelector>
       <div className="p-4">
         <ProfileBlock
           user={authorizedUser}
