@@ -19,6 +19,6 @@ describe("TimeZoneSelector", () => {
       target: { value: "Europe/London" },
     });
 
-    expect(setTimeZone).toHaveBeenCalledWith("Europe/London", 1);
+    expect(setTimeZone).toHaveBeenCalledWith("Europe/London  ", 1);
   });
 });
