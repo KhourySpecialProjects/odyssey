@@ -1,5 +1,4 @@
 "use client";
-
 import { Announcement, AuthorizedUser } from "@/types";
 import Link from "next/link";
 import { KudosButton } from "./kudos-button";
@@ -13,7 +12,6 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { ProfileBlock } from "../friends/profile-block";
-
 export function FeedBlock({
   announcement,
   authUser,
@@ -23,14 +21,11 @@ export function FeedBlock({
 }) {
   const announcementType = announcement.type;
   const [open, setOpen] = useState(false);
-
   function formatDate(dateInput: string | Date | undefined) {
     if (!dateInput) return "";
-
     try {
       const date = dateInput instanceof Date ? dateInput : new Date(dateInput);
       if (isNaN(date.getTime())) return "";
-
       return new Intl.DateTimeFormat("en-US", {
         year: "numeric",
         month: "numeric",
@@ -45,7 +40,6 @@ export function FeedBlock({
     }
   }
   const formattedDate = formatDate(announcement.firstCreated);
-
   const backgroundColor = {
     playlist: "bg-green-200 dark:bg-[#29703B]",
     droplet: "bg-blue-200 dark:bg-[#266697]",
@@ -54,7 +48,6 @@ export function FeedBlock({
     kudos: "bg-orange-200 dark:bg-[#B55E0C]",
     system: "bg-red-200 dark:bg-[#B83028]",
   };
-
   const announcementIcon = {
     playlist: <ListVideo />,
     droplet: <Droplet />,
@@ -63,14 +56,10 @@ export function FeedBlock({
     kudos: <PartyPopper />,
     system: <Info />,
   };
-
   const content = announcement.content;
   const [namePart] = content.split(/has\s+/i);
-  //const [, taskPart] = content.split(/finished\s+/i);
-const dropletName = announcement.droplet || 
-  announcement.content.split(/finished\s+/i)[1] || "";
-
-
+  const [, taskPart] = content.split(/(?:completed|finished)\s+/i); // non-capturing group for "completed" or "finished"
+  const [, kudosTaskPart] = content.split(/for\s+/i);
   return (
     <li
       className={`${backgroundColor[announcementType]} relative flex flex-col items-start gap-2 rounded-lg p-4 pb-3`}
@@ -110,7 +99,10 @@ const dropletName = announcement.droplet ||
                 >
                   {namePart.trim()}
                 </p>
-                {" has given you kudos "}
+                <>
+                  {"\u00A0"}has given you kudos for{"\u00A0"}
+                </>
+                <span>{kudosTaskPart?.trim()}</span>
                 <div>
                   <ProfileBlock
                     user={authUser}
@@ -139,21 +131,17 @@ const dropletName = announcement.droplet ||
                         <>
                           {"\u00A0"}has just finished{"\u00A0"}
                         </>
-                        
-                        <span>{droplet.trim()}</span>
-                        {/*<span>{taskPart?.trim()}</span> */}
-
+                        <span>{taskPart?.trim()}</span>
                         {announcementType === "friend" && (
                           <div className="flex flex-1 justify-end">
                             <KudosButton
                               authUser={authUser}
                               announcement={announcement}
-                              droplet={dropletName.trim()}
-                              /* droplet={
+                              droplet={
                                 announcement.content?.split(
                                   /finished\s+/i,
                                 )[1] || ""
-                              } */ 
+                              }
                             />
                           </div>
                         )}
