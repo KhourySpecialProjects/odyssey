@@ -66,7 +66,10 @@ export function FeedBlock({
 
   const content = announcement.content;
   const [namePart] = content.split(/has\s+/i);
-  const [, taskPart] = content.split(/completed\s+/i);
+  //const [, taskPart] = content.split(/finished\s+/i);
+const dropletName = announcement.droplet || 
+  announcement.content.split(/finished\s+/i)[1] || "";
+
 
   return (
     <li
@@ -136,18 +139,21 @@ export function FeedBlock({
                         <>
                           {"\u00A0"}has just finished{"\u00A0"}
                         </>
-                        <span>{taskPart?.trim()}</span>
+                        
+                        <span>{droplet.trim()}</span>
+                        {/*<span>{taskPart?.trim()}</span> */}
 
                         {announcementType === "friend" && (
                           <div className="flex flex-1 justify-end">
                             <KudosButton
                               authUser={authUser}
                               announcement={announcement}
-                              droplet={
+                              droplet={dropletName.trim()}
+                              /* droplet={
                                 announcement.content?.split(
                                   /finished\s+/i,
                                 )[1] || ""
-                              }
+                              } */ 
                             />
                           </div>
                         )}
