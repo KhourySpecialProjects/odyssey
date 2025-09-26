@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Report } from "./reports";
 import { toast } from "sonner";
 import { deleteReport } from "@/lib/actions";
+import { useState, useEffect, useRef } from "react";
 
 export function ReportBlock({ report }: { report: Report }) {
   const handleDeleteReport = async (reportId: string) => {
@@ -17,6 +18,52 @@ export function ReportBlock({ report }: { report: Report }) {
     }
   };
 
+  // State variables for description expansion and clamping
+  const [descriptionExpanded, setDescriptionExpanded] = useState(false);
+  const [isTextClamped, setIsTextClamped] = useState(false);
+  const [isScreenChanged, setIsScreenChanged] = useState(false); // New state variable to track screen size changes
+  const textRef = useRef(null);
+
+  // Stripping HTML tags and converting <p> and <br> to new lines
+  const strippedDescription = report.description
+    ?.replace(/<\/p>\s*<p>/gi, "\n")
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<\/?p>/gi, "")
+    .replace(/<[^>]+>/g, "")
+    .trim();
+
+  useEffect(() => {
+    if (textRef.current && strippedDescription) {
+      const element = textRef.current as HTMLParagraphElement;
+      const isClamped = element.scrollHeight > element.clientHeight;
+      setIsTextClamped(isClamped);
+    }
+  }, [strippedDescription, descriptionExpanded]);
+
+  // Effect to handle screen size changes and re-evaluate clamping
+  useEffect(() => {
+    const handleResize = () => {
+      setIsScreenChanged(true);
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (isScreenChanged) {
+      // Re-evaluate clamping only if the screen size has changed
+      if (textRef.current && strippedDescription) {
+        const element = textRef.current as HTMLParagraphElement;
+        const isClamped = element.scrollHeight > element.clientHeight;
+        setIsTextClamped(isClamped);
+      }
+      setIsScreenChanged(false); // Reset the flag after handling
+    }
+  }, [isScreenChanged, strippedDescription, descriptionExpanded]);
+
   return (
     <li className="py-0 [&:not(:first-child)]:pt-3">
       <div className="flex items-center space-x-4">
@@ -27,15 +74,51 @@ export function ReportBlock({ report }: { report: Report }) {
             </span>
           </p>
 
-          <p className="mt-2 truncate font-medium text-slate-900 dark:text-slate-300">
-            {report.description}
-          </p>
+          {strippedDescription &&
+            strippedDescription.trim() !== "<p></p>" &&
+            strippedDescription.trim() !== "" && (
+              <div className="mt-2">
+                <p
+                  ref={textRef}
+                  className={`${
+                    descriptionExpanded ? "line-clamp-none" : "line-clamp-2"
+                  } text-md text-slate-700 dark:text-slate-300`}
+                >
+                  {strippedDescription}
+                </p>
+
+                {isTextClamped && !descriptionExpanded && (
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setDescriptionExpanded(true);
+                    }}
+                    className="mt-1 text-left text-sm text-sky-700 dark:text-sky-500"
+                  >
+                    See More
+                  </button>
+                )}
+
+                {descriptionExpanded && (
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setDescriptionExpanded(false);
+                    }}
+                    className="mt-1 text-left text-sm text-sky-700 dark:text-sky-500"
+                  >
+                    See Less
+                  </button>
+                )}
+              </div>
+            )}
+
           <p className="mt-2 truncate font-medium text-slate-900 dark:text-slate-300">
             Path: {report.path}
           </p>
         </div>
 
-        <div className="inline-flex items-center gap-2">
+        <div className="flex flex-shrink-0 items-center gap-2">
           <Button
             after={<ArrowRightIcon />}
             className="dark:bg-slate-300"
