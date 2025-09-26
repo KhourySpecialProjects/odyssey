@@ -20,7 +20,7 @@ import { Badge } from "@/components/ui/badge";
 const baseTabs = [
   { name: "Member", value: "member", icon: UserIcon },
   { name: "Admin", value: "admin", icon: ShieldIcon },
-  { name: "Manager", value: "manager", icon: CircleUserIcon },
+  // { name: "Manager", value: "manager", icon: CircleUserIcon },
   // { name: "Favs", value: "favorites", icon: StarIcon },
 ];
 

@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Check } from "lucide-react";
 import { ProfileBlock } from "@/components/friends/profile-block";
 import { updateUserInfo } from "@/lib/requests/authorized-user";
+import TimeZoneSelector from "@/components/settings/time-zone-selector";
 
 export function SocialForms({
   authorizedUser,
@@ -328,6 +329,10 @@ export function SocialForms({
           <Check className="h-5 w-5" />
         </Button>
       </form>
+      <TimeZoneSelector
+        currentZone={authorizedUser.timeZone.trim()}
+        userId={authorizedUser.id}
+      ></TimeZoneSelector>
       <div className="p-4">
         <ProfileBlock
           user={authorizedUser}
