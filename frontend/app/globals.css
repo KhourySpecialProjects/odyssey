@@ -44,16 +44,28 @@
   animation: slideInFromRight 300ms ease-out; /* ease-out for smooth animation */
 }
 
+/* Ensure dark mode compatibility for prose and bg-sky-50 elements */
 .callout-bullet-list li::marker {
-  color: #334155; /* Replace with your desired color (red in this example) */
+  color: #334155;
 }
 
-/* Ensure dark mode compatibility for prose and bg-sky-50 elements */
+/* Fix for invisible text in dark mode */
 .dark .prose,
 .dark .prose *,
 .dark .bg-sky-50,
-.dark .bg-sky-50 * {
+.dark .bg-sky-50 *,
+.dark pre,
+.dark pre *,
+.dark code,
+.dark code *,
+.dark .hljs,
+.dark .hljs * {
   color: white !important;
+}
+
+/* Specific fix for callout bullet list items in dark mode */
+.dark .pt-3.pl-3 * {
+  color: #334155 !important;
 }
 
 /* Dark background for sky-50 elements */
