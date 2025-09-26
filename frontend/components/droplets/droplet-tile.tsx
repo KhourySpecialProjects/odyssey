@@ -190,7 +190,7 @@ export function DropletTile({
                 <Badge variant="destructive">Draft</Badge>
               ) : null}
 
-              {completionPercentage != 100 && dueDate && dueDate !== "" && daysUntil > -2 && (
+              {completionPercentage != 100 && dueDate && dueDate !== "" /*&& daysUntil > -2*/ && (
                 <Badge
                   className={getDueDateBadgeColor(daysUntil, true)}
                   variant="outline"
