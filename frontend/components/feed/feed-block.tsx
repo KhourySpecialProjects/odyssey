@@ -56,6 +56,7 @@ export function FeedBlock({
     kudos: <PartyPopper />,
     system: <Info />,
   };
+  
   const content = announcement.content;
   const [namePart] = content.split(/has\s+/i);
   const [, taskPart] = content.split(/(?:completed|finished)\s+/i); // non-capturing group for "completed" or "finished"
