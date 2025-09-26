@@ -9,7 +9,7 @@ function StaggeredGallery({ gallery }: { gallery: Gallery }) {
           {gallery.title}
         </h1>
         <p className="mt-4 text-lg leading-normal text-balance text-slate-600 dark:text-slate-300">
-          Check out Odyssey's many features!
+          {gallery.subtitle}
         </p>
       </div>
 
