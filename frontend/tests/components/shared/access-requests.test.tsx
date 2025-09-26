@@ -95,7 +95,7 @@ describe("AccessRequests", () => {
     (fetchAuthorizedUsers as jest.Mock).mockResolvedValue(mockAuthorizedUsers);
 
     render(await AccessRequests());
-    
+
     // John should be visible, Jane should be filtered out
     expect(screen.getByText("John Doe")).toBeInTheDocument();
     expect(screen.queryByText("Jane Smith")).not.toBeInTheDocument();
