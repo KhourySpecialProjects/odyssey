@@ -15,7 +15,6 @@ export function FeedContainer({ authUser }: { authUser: AuthorizedUser }) {
   );
   const [filtersExpanded, setFiltersExpanded] = useState(false);
   const [requestsExpanded, setRequestsExpanded] = useState(false);
-
   return (
     <div className="flex flex-row gap-4">
       <div className="flex flex-col items-end gap-4">
