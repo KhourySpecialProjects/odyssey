@@ -37,7 +37,7 @@ export const authOptions: NextAuthOptions = {
       if (isAllowedToSignIn) {
         return true;
       } else {
-        return "/unauthorized";
+        return `/unauthorized?email=${encodeURIComponent(user.email)}`;
       }
     },
     async jwt({ token, user, account, profile }) {

@@ -1,6 +1,7 @@
 "use client";
 
-import UnauthorizedRoute from "@/app/(general)/unauthorized/page";
+import UnauthorizedRoute from "@/app/(general)/unauthorized/UnauthorizedRoute";
+
 import { cn, getInitials, getPath, condenseRoleTitles } from "@/lib/utils";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
 import { AuthorizedUser, Droplet, Lesson, User } from "@/types";
@@ -149,7 +150,7 @@ export function Sidebar({
 
   if (!mounted) return null;
 
-  if (!user) return <UnauthorizedRoute />;
+  if (!user) return <UnauthorizedRoute email={""} />;
 
   return (
     <>
