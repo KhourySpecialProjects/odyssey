@@ -17,24 +17,18 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
-
+} from "@/components/ui/select";
 
 interface Option {
   value: string;
   label: string;
 }
 
-
-
-
-
 const options: Option[] = [
-  { value: 'option1', label: 'Option 1' },
-  { value: 'option2', label: 'Option 2' },
-  { value: 'option3', label: 'Option 3' },
-  ];
-
+  { value: "option1", label: "Option 1" },
+  { value: "option2", label: "Option 2" },
+  { value: "option3", label: "Option 3" },
+];
 
 interface GroupProgressGridProps {
   group: {
@@ -54,7 +48,7 @@ interface GroupProgressGridProps {
 }
 
 export function GroupProgressGrid({ group, statuses }: GroupProgressGridProps) {
-  const [selectedValue, setSelectedValue] = useState<string>('');
+  const [selectedValue, setSelectedValue] = useState<string>("");
   const [currentPage, setCurrentPage] = useState(0);
   const lessonsPerPage = 4;
 
@@ -75,7 +69,7 @@ export function GroupProgressGrid({ group, statuses }: GroupProgressGridProps) {
     if (currentPage > 0) setCurrentPage(currentPage - 1);
   };
 
-      const handleChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+  const handleChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     setSelectedValue(event.target.value);
   };
 
@@ -115,11 +109,13 @@ export function GroupProgressGrid({ group, statuses }: GroupProgressGridProps) {
   const getDisplayedDroplets = () => {
     if (selectedValue === "all") {
       return group.droplets || [];
+    } else {
+      return (
+        group.playlists?.find((playlist) => playlist.name === selectedValue)
+          ?.droplets || []
+      );
     }
-    else {
-      return group.playlists?.find((playlist) => playlist.name === selectedValue)?.droplets || [];
-    }
-  }
+  };
 
   const exportGridToExcel = () => {
     try {
@@ -270,7 +266,7 @@ export function GroupProgressGrid({ group, statuses }: GroupProgressGridProps) {
             <FileSpreadsheet />
             Download as Excel
           </Button>
-            {/* <select className="ml-2 border px-4 py-2 border-gray-300 rounded !h-[40px]" value={selectedValue} onChange={handleChange}>
+          {/* <select className="ml-2 border px-4 py-2 border-gray-300 rounded !h-[40px]" value={selectedValue} onChange={handleChange}>
               <option value="">All Droplets</option>
               {group.playlists?.map((option) => (
                 <option key={option.name} value={option.name}>
@@ -278,23 +274,26 @@ export function GroupProgressGrid({ group, statuses }: GroupProgressGridProps) {
                 </option>
               ))}
             </select> */}
-            <Select value={selectedValue} onValueChange={(value) => {
-                setSelectedValue(value);
-                setCurrentPage(0);
-              }}>
-              <SelectTrigger className="ml-2 w-auto focus:ring-0 focus:ring-offset-0 focus-visible:ring-0 focus-visible:ring-offset-0">
-                <SelectValue placeholder="All Droplets" />
-              </SelectTrigger>
-              <SelectContent className="border-none">
-                <SelectItem value="all">All Droplets</SelectItem>
-                {group.playlists?.map((option) => (
-                  <SelectItem key={option.name} value={option.name}>
-                    {option.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          <Select
+            value={selectedValue}
+            onValueChange={(value) => {
+              setSelectedValue(value);
+              setCurrentPage(0);
+            }}
+          >
+            <SelectTrigger className="ml-2 w-auto focus:ring-0 focus:ring-offset-0 focus-visible:ring-0 focus-visible:ring-offset-0">
+              <SelectValue placeholder="All Droplets" />
+            </SelectTrigger>
+            <SelectContent className="border-none">
+              <SelectItem value="all">All Droplets</SelectItem>
+              {group.playlists?.map((option) => (
+                <SelectItem key={option.name} value={option.name}>
+                  {option.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
         <div className="">
           <button
             onClick={handlePrevPage}
@@ -305,9 +304,12 @@ export function GroupProgressGrid({ group, statuses }: GroupProgressGridProps) {
           </button>
           <button
             onClick={handleNextPage}
-            disabled={currentPage === totalPages - 1 || getDisplayedDroplets().length <= lessonsPerPage}
+            disabled={
+              currentPage === totalPages - 1 ||
+              getDisplayedDroplets().length <= lessonsPerPage
+            }
             aria-label="Next page"
-            className={`px-4 py-2 ${(currentPage >= totalPages - 1 || getDisplayedDroplets().length <= lessonsPerPage) ? "visibility: hidden" : "visibility: visible"}`}
+            className={`px-4 py-2 ${currentPage >= totalPages - 1 || getDisplayedDroplets().length <= lessonsPerPage ? "visibility: hidden" : "visibility: visible"}`}
           >
             <MoveRight />
           </button>
