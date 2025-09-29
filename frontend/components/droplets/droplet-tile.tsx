@@ -208,7 +208,7 @@ export function DropletTile({
                     } else if (daysUntil > 0) {
                       return `Due in ${daysUntil} days`;
                     } else {
-                      return "Late!";
+                      return `${Math.abs(daysUntil)} Days Late!`;
                     }
                   })()}
                 </Badge>
