@@ -190,7 +190,7 @@ export function DropletTile({
                 <Badge variant="destructive">Draft</Badge>
               ) : null}
 
-              {dueDate && dueDate !== "" && daysUntil > -2 && (
+              {completionPercentage != 100 && dueDate && dueDate !== "" && (
                 <Badge
                   className={getDueDateBadgeColor(daysUntil, true)}
                   variant="outline"
@@ -208,7 +208,9 @@ export function DropletTile({
                     } else if (daysUntil > 0) {
                       return `Due in ${daysUntil} days`;
                     } else {
-                      return "Late!";
+                      return daysUntil === -1
+                        ? `One Day Late!`
+                        : `${Math.abs(daysUntil)} Days Late!`;
                     }
                   })()}
                 </Badge>
