@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import NotFoundRoute from "@/app/(general)/not-found";
-import UnauthorizedRoute from "@/app/(general)/unauthorized/page";
+import UnauthorizedRoute from "@/app/(general)/unauthorized/UnauthorizedRoute";
 
 jest.mock("@/lib/auth/session", () => ({
   getCurrentUser: jest.fn(),
@@ -9,7 +9,7 @@ jest.mock("@/lib/auth/session", () => ({
 describe("General Pages", () => {
   describe("UnauthorizedRoute", () => {
     it("renders no access message", () => {
-      render(<UnauthorizedRoute />);
+      render(<UnauthorizedRoute email={""} />);
       expect(
         screen.getByText(
           "You do not have permission to access this application.",

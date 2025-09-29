@@ -1,28 +1,14 @@
-import {
-  Message,
-  MessageActions,
-  MessageDescription,
-  MessageHeader,
-} from "@/components/message";
-import { Button } from "@/components/ui/button";
-import { ArrowRightIcon } from "lucide-react";
-import Link from "next/link";
+import UnauthorizedRoute from "./UnauthorizedRoute";
 
-export default function UnauthorizedRoute() {
-  return (
-    <Message>
-      <MessageHeader subtitle="Error" title="Unauthorized" />
-      <MessageDescription>
-        You do not have permission to access this application.
-      </MessageDescription>
-      <MessageActions>
-        <Button size="lg" after={<ArrowRightIcon />} asChild>
-          <Link href="/request-access">Request Access</Link>
-        </Button>
-        <Button size="lg" variant="link" after={<ArrowRightIcon />} asChild>
-          <Link href="/explore">Explore the Odyssey</Link>
-        </Button>
-      </MessageActions>
-    </Message>
-  );
+// SearchParams is passed automatically by Next.js to page components
+export default async function UnauthorizedPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ email?: string }>;
+}) {
+  // In Next.js 15+, searchParams is a Promise, so await it
+  const params = await searchParams;
+  const email = params.email || "";
+
+  return <UnauthorizedRoute email={email} />;
 }
