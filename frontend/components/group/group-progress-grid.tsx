@@ -309,7 +309,7 @@ export function GroupProgressGrid({ group, statuses }: GroupProgressGridProps) {
               getDisplayedDroplets().length <= lessonsPerPage
             }
             aria-label="Next page"
-            className={`px-4 py-2 ${currentPage >= totalPages - 1 || getDisplayedDroplets().length <= lessonsPerPage ? "visibility: hidden" : "visibility: visible"}`}
+            className={`px-4 py-2 ${(currentPage + 1) * lessonsPerPage >= getDisplayedDroplets().length || getDisplayedDroplets().length <= lessonsPerPage ? "visibility: hidden" : "visibility: visible"}`}
           >
             <MoveRight />
           </button>
