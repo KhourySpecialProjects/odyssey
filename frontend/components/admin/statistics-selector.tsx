@@ -1,7 +1,6 @@
 "use client";
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Button } from "../ui/button";
 
 export function StatisticsSelector({
   content,
