@@ -48,7 +48,7 @@ interface GroupProgressGridProps {
 }
 
 export function GroupProgressGrid({ group, statuses }: GroupProgressGridProps) {
-  const [selectedValue, setSelectedValue] = useState<string>("");
+  const [selectedValue, setSelectedValue] = useState<string>("all");
   const [currentPage, setCurrentPage] = useState(0);
   const lessonsPerPage = 4;
 
