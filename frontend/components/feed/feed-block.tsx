@@ -122,17 +122,19 @@ export function FeedBlock({
                 <>
                   <div className="-mt-1 text-left font-medium text-slate-900 dark:text-slate-200">
                     {announcementType === "friend" ? (
-                      <div className="flex flex-row">
-                        <p
-                          onClick={() => setOpen(true)}
-                          className="inline cursor-pointer hover:underline"
-                        >
-                          {namePart.trim()}
-                        </p>
-                        <>
-                          {"\u00A0"}has just finished{"\u00A0"}
-                        </>
-                        <span>{taskPart?.trim()}</span>
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:gap-1">
+                        <div className="flex flex-wrap items-center">
+                          <p
+                            onClick={() => setOpen(true)}
+                            className="inline cursor-pointer hover:underline"
+                          >
+                            {namePart.trim()}
+                          </p>
+                          <span>
+                            {"\u00A0"}has just finished{"\u00A0"}
+                          </span>
+                          <span>{taskPart?.trim()}</span>
+                        </div>
                         {announcementType === "friend" && (
                           <div className="flex flex-1 justify-end">
                             <KudosButton
