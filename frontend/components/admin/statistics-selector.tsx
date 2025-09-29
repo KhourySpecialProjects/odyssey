@@ -1,29 +1,40 @@
 "use client";
 
-import React from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { Button } from "../ui/button";
 
-export interface AdminContent {
-  [name: string]: React.ReactNode;
-}
+export function StatisticsSelector({
+  content,
+}: {
+  content: Record<string, React.ReactNode>;
+}) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const currentTab = searchParams.get("statsTab") || "General Statistics";
 
-export function StatisticsSelector({ content }: { content: AdminContent }) {
-  const keys = Object.keys(content!);
-  const [selected, setSelected] = React.useState(keys[0]);
+  const createQueryString = (value: string) => {
+    const params = new URLSearchParams(searchParams);
+    params.set("statsTab", value);
+    return params.toString();
+  };
 
   return (
-    <>
-      <div className={`align-center flex justify-center pb-4 select-none`}>
+    <div>
+      <div className="align-center flex justify-center pb-4 select-none">
         <div className="flex w-max flex-row flex-nowrap space-x-2 rounded-lg px-2 py-2 shadow">
-          {keys.map((key) => (
+          {Object.keys(content).map((key) => (
             <div
               key={key}
               className={
                 "cursor-pointer rounded-lg px-2 py-1 " +
-                (selected == key
+                (currentTab === key
                   ? "bg-slate-200 dark:text-black"
                   : "hover:bg-slate-100 dark:hover:text-black")
               }
-              onClick={() => setSelected(key)}
+              onClick={() => {
+                router.push(`${pathname}?${createQueryString(key)}`);
+              }}
             >
               {key}
             </div>
@@ -31,7 +42,7 @@ export function StatisticsSelector({ content }: { content: AdminContent }) {
         </div>
       </div>
 
-      {content[selected]}
-    </>
+      <div className="mt-4">{content[currentTab]}</div>
+    </div>
   );
 }
