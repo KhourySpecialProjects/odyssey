@@ -49,7 +49,6 @@ export default async function Page() {
     getRetentionData(),
   ]);
 
-  
   const { retentionRate, totalEnrollments, completedEnrollments } =
     await getRetentionData();
 
