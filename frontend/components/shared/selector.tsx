@@ -2,6 +2,10 @@
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
+// A component that displays a tab selector for different admin views.
+// It takes a `content` prop, which is an object where keys are tab names and values are React nodes to display for each tab.
+// The selected tab is determined by the `adminTab` query parameter in the URL.
+// When a tab is clicked, it updates the URL with the corresponding `adminTab` value.
 export function AdminSelector({
   content,
 }: {
@@ -12,6 +16,7 @@ export function AdminSelector({
   const searchParams = useSearchParams();
   const currentTab = searchParams.get("adminTab") || Object.keys(content)[0];
 
+  // Function to create a new query string with the updated adminTab parameter
   const createQueryString = (value: string) => {
     const params = new URLSearchParams(searchParams);
     params.set("adminTab", value);

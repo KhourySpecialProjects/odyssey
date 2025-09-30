@@ -25,12 +25,14 @@ jest.mock("next/navigation", () => ({
   })),
 }));
 
+// Tests for the AdminSelector component
 describe("AdminSelector", () => {
   const mockContent = {
     "Tab 1": <div>Content 1</div>,
     "Tab 2": <div>Content 2</div>,
   };
 
+  // Reset currentTab before each test
   beforeEach(() => {
     currentTab = "Tab 1";
   });
