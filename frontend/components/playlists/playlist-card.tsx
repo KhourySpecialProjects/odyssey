@@ -4,6 +4,7 @@ import { getDueDateBadgeColor } from "@/lib/utils";
 import { Clock } from "lucide-react";
 import { Badge } from "../ui/badge";
 import { DateTime } from "luxon";
+import { getDropletById } from "@/lib/requests/droplet";
 
 interface PlaylistCardProps {
   playlist: {
@@ -37,7 +38,6 @@ export function PlaylistCard({
   timeZone,
 }: PlaylistCardProps) {
   const linkTo = toDraft ? `/draft/p/${playlist.slug}` : `/p/${playlist.slug}`;
-
   let daysUntil = 0;
   if (dueDate && dueDate !== "") {
     const dueDateObject = DateTime.fromISO(dueDate);
@@ -88,6 +88,18 @@ export function PlaylistCard({
             {playlist.droplets?.length === 1
               ? "1 droplet"
               : `${playlist.droplets?.length || 0} droplets`}
+          </p>
+          <p className="text-muted-foreground text-sm">
+            {playlist.droplets?.reduce(
+              (total, droplet) => total + (droplet.lessons?.length ?? 0),
+              0,
+            ) ?? 0}{" "}
+            lessons
+          </p>
+          <p className="text-muted-foreground text-sm">
+            {playlist.description
+              ? playlist.description
+              : "No description provided."}
           </p>
         </CardHeader>
       </Card>
