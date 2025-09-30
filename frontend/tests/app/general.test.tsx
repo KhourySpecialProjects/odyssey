@@ -7,7 +7,7 @@ jest.mock("@/lib/auth/session", () => ({
   getCurrentUser: jest.fn(),
 }));
 
-jest.mock("@lib/requests/data", () => ({
+jest.mock("@/lib/requests/data", () => ({
   fetchAccessRequests: jest.fn(),
 }));
 
