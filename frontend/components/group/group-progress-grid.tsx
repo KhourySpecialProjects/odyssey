@@ -1,6 +1,5 @@
 "use client";
 
-//import "react-tabs/style/react-tabs.css";
 import { ContentSection } from "@/components/group/content-section";
 import { Droplet } from "@/types";
 import { Playlist } from "@/types";
@@ -54,7 +53,6 @@ export function GroupProgressGrid({ group, statuses }: GroupProgressGridProps) {
 
   const startIndex = currentPage * lessonsPerPage;
   const endIndex = startIndex + lessonsPerPage;
-  const paginatedLessons = group.droplets?.slice(startIndex, endIndex);
 
   const paginate = (lessons: Droplet[]) => {
     return lessons.slice(startIndex, endIndex);
@@ -123,7 +121,6 @@ export function GroupProgressGrid({ group, statuses }: GroupProgressGridProps) {
         // Create headers with completion date columns
         const headers: string[] = [];
         getDisplayedDroplets().forEach((droplet) => {
-          // headers.push(`${droplet.name} (${droplet.id})`);
           headers.push(`${droplet.name}`);
           headers.push("Completion Date");
         });
@@ -266,14 +263,6 @@ export function GroupProgressGrid({ group, statuses }: GroupProgressGridProps) {
             <FileSpreadsheet />
             Download as Excel
           </Button>
-          {/* <select className="ml-2 border px-4 py-2 border-gray-300 rounded !h-[40px]" value={selectedValue} onChange={handleChange}>
-              <option value="">All Droplets</option>
-              {group.playlists?.map((option) => (
-                <option key={option.name} value={option.name}>
-                  {option.name}
-                </option>
-              ))}
-            </select> */}
           <Select
             value={selectedValue}
             onValueChange={(value) => {
