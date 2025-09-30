@@ -28,6 +28,19 @@ import { UniquePageviewChart } from "@/components/admin/unique-pageview";
 import { NewUsersChart } from "@/components/admin/new-users";
 import { get } from "lodash";
 
+/**
+ * Render the admin dashboard page, selecting the active admin and statistics tabs from optional search parameters.
+ *
+ * Fetches required admin data (authorized users, droplets, various analytics, and retention data), constructs
+ * content maps for admin sections and statistics panels, and returns the assembled React element tree for the page.
+ *
+ * If there is no current user or the current user is not an admin, the function responds with a Not Found result.
+ *
+ * @param searchParams - Optional promise resolving to a key/value map of URL-like search parameters. Recognized keys:
+ *   - `adminTab`: the active admin section (defaults to `"Users"`).
+ *   - `statsTab`: the active statistics panel (defaults to `"General Statistics"`).
+ * @returns The React element for the admin dashboard page.
+ */
 export default async function Page({
   searchParams,
 }: {
@@ -120,6 +133,15 @@ export default async function Page({
   );
 }
 
+/**
+ * Render a centered row of four admin metrics: users, droplets, enrollments, and retention.
+ *
+ * @param authorizedUsersLength - Count of authorized users to display
+ * @param droplets - Array of droplets; the component displays its length
+ * @param totalEnrollments - Total number of enrollments to display
+ * @param retentionRate - Retention rate as a percentage (rendered with a `%` suffix)
+ * @returns A JSX element containing four metric blocks for the admin statistics header
+ */
 function GeneralStatistics({
   authorizedUsersLength,
   droplets,

@@ -2,6 +2,16 @@
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
+/**
+ * Renders a tabbed selector whose active tab is driven by the `adminTab` URL query parameter.
+ *
+ * The component displays a horizontal list of tabs derived from `content` keys and shows the
+ * corresponding React node for the active tab. Clicking a tab updates the `adminTab` query
+ * parameter and navigates to the same pathname with the updated query string.
+ *
+ * @param content - A mapping from tab label (displayed as the tab) to the content node shown when that tab is active. The first key is used as the default active tab when `adminTab` is not present.
+ * @returns A React element containing the tab bar and the currently selected content.
+ */
 export function AdminSelector({
   content,
 }: {

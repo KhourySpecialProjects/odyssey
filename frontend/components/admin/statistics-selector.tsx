@@ -2,6 +2,15 @@
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
+/**
+ * Render a tab-like selector controlled by the URL query parameter `statsTab` and display the matching content.
+ *
+ * The active tab is determined from the current URL's `statsTab` parameter (defaults to "General Statistics").
+ * Clicking a tab updates the `statsTab` query parameter and navigates to the updated URL.
+ *
+ * @param content - A record mapping tab labels (displayed as tab buttons) to the corresponding React node shown when that tab is selected.
+ * @returns The JSX element containing the tab bar and the content for the currently selected tab.
+ */
 export function StatisticsSelector({
   content,
 }: {
