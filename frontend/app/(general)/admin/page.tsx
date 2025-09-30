@@ -28,6 +28,7 @@ import { UniquePageviewChart } from "@/components/admin/unique-pageview";
 import { NewUsersChart } from "@/components/admin/new-users";
 import { get } from "lodash";
 
+// General Admin Page Component
 export default async function Page() {
   const user = await getCurrentUser();
 
@@ -49,11 +50,13 @@ export default async function Page() {
     getRetentionData(),
   ]);
 
+  // Destructure retention data
   const { retentionRate, totalEnrollments, completedEnrollments } =
     retentionData;
 
   if (!user || !isAuthorizedUserAdmin(user.roles)) return notFound();
 
+  // Content for admin section
   const pageContent = {
     Users: <AuthorizedUsers />,
     Droplets: <Droplets />,
@@ -63,6 +66,7 @@ export default async function Page() {
     Reports: <Reports />,
   };
 
+  // Content for statistics section
   const statisticsContent = {
     "General Statistics": (
       <GeneralStatistics
@@ -78,6 +82,7 @@ export default async function Page() {
     // "Weekly New Users": <NewUsersChart data={newUsers} />,
   };
 
+  // Main render
   return (
     <div className="mx-auto w-full max-w-5xl">
       <div className="mx-auto my-4 w-full max-w-7xl p-8 text-center">
@@ -112,6 +117,7 @@ export default async function Page() {
   );
 }
 
+// General Statistics Component
 function GeneralStatistics({
   authorizedUsersLength,
   droplets,

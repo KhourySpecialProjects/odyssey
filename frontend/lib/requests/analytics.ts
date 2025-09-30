@@ -16,6 +16,7 @@ async function getCompletedEnrollmentsCount(): Promise<number> {
   return response?.meta?.pagination?.total || 0;
 }
 
+// Function to get retention data
 export async function getRetentionData() {
   const [enrollmentMetadata, completedCount] = await Promise.all([
     fetchEnrollmentMetadata(),
@@ -25,9 +26,7 @@ export async function getRetentionData() {
   const totalEnrollments = enrollmentMetadata?.meta?.pagination?.total || 0;
   const completedEnrollments = completedCount;
 
-  console.log("Debug - Total enrollments:", totalEnrollments);
-  console.log("Debug - Completed enrollments:", completedEnrollments);
-
+  // Calculate retention rate
   const retentionRate =
     totalEnrollments === 0
       ? 0
