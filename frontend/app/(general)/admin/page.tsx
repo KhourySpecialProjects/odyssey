@@ -50,7 +50,7 @@ export default async function Page() {
   ]);
 
   const { retentionRate, totalEnrollments, completedEnrollments } =
-    await getRetentionData();
+    retentionData;
 
   if (!user || !isAuthorizedUserAdmin(user.roles)) return notFound();
 
