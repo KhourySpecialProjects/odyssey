@@ -1,6 +1,5 @@
 "use client";
 
-import "react-tabs/style/react-tabs.css";
 import { ContentSection } from "@/components/group/content-section";
 import { Droplet } from "@/types";
 import { Playlist } from "@/types";
@@ -11,6 +10,24 @@ import { useState } from "react";
 import { Button } from "../ui/button";
 import * as XLSX from "xlsx-js-style";
 import { toast } from "sonner";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+interface Option {
+  value: string;
+  label: string;
+}
+
+const options: Option[] = [
+  { value: "option1", label: "Option 1" },
+  { value: "option2", label: "Option 2" },
+  { value: "option3", label: "Option 3" },
+];
 
 interface GroupProgressGridProps {
   group: {
@@ -30,13 +47,16 @@ interface GroupProgressGridProps {
 }
 
 export function GroupProgressGrid({ group, statuses }: GroupProgressGridProps) {
+  const [selectedValue, setSelectedValue] = useState<string>("all");
   const [currentPage, setCurrentPage] = useState(0);
   const lessonsPerPage = 4;
 
   const startIndex = currentPage * lessonsPerPage;
   const endIndex = startIndex + lessonsPerPage;
-  const paginatedLessons = group.droplets?.slice(startIndex, endIndex);
 
+  const paginate = (lessons: Droplet[]) => {
+    return lessons.slice(startIndex, endIndex);
+  };
   const totalPages = Math.ceil((group.droplets?.length || 0) / lessonsPerPage);
 
   const handleNextPage = () => {
@@ -45,6 +65,10 @@ export function GroupProgressGrid({ group, statuses }: GroupProgressGridProps) {
 
   const handlePrevPage = () => {
     if (currentPage > 0) setCurrentPage(currentPage - 1);
+  };
+
+  const handleChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    setSelectedValue(event.target.value);
   };
 
   let sortedMembers: AuthorizedUser[] = [];
@@ -80,14 +104,23 @@ export function GroupProgressGrid({ group, statuses }: GroupProgressGridProps) {
       return "#e4e5e9";
     }
   };
+  const getDisplayedDroplets = () => {
+    if (selectedValue === "all") {
+      return group.droplets || [];
+    } else {
+      return (
+        group.playlists?.find((playlist) => playlist.name === selectedValue)
+          ?.droplets || []
+      );
+    }
+  };
 
   const exportGridToExcel = () => {
     try {
-      if (group.droplets && sortedMembers) {
+      if (getDisplayedDroplets() && sortedMembers) {
         // Create headers with completion date columns
         const headers: string[] = [];
-        group.droplets.forEach((droplet) => {
-          // headers.push(`${droplet.name} (${droplet.id})`);
+        getDisplayedDroplets().forEach((droplet) => {
           headers.push(`${droplet.name}`);
           headers.push("Completion Date");
         });
@@ -104,7 +137,7 @@ export function GroupProgressGrid({ group, statuses }: GroupProgressGridProps) {
           row.push(member.email, memberName);
 
           // Add completion percentage and completion date for each droplet
-          group.droplets!.forEach((droplet) => {
+          getDisplayedDroplets()!.forEach((droplet) => {
             const key = `${member.id}-${droplet.id}`;
             const status = statuses[key];
 
@@ -222,13 +255,34 @@ export function GroupProgressGrid({ group, statuses }: GroupProgressGridProps) {
   return (
     <div className="flex flex-col items-end">
       <div className="flex w-full flex-row justify-between">
-        <Button
-          className="border dark:border-slate-500 dark:bg-slate-800 dark:text-white dark:hover:text-slate-800"
-          onClick={exportGridToExcel}
-        >
-          <FileSpreadsheet />
-          Download as Excel
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            className="border dark:border-slate-500 dark:bg-slate-800 dark:text-white dark:hover:text-slate-800"
+            onClick={exportGridToExcel}
+          >
+            <FileSpreadsheet />
+            Download as Excel
+          </Button>
+          <Select
+            value={selectedValue}
+            onValueChange={(value) => {
+              setSelectedValue(value);
+              setCurrentPage(0);
+            }}
+          >
+            <SelectTrigger className="ml-2 w-auto focus:ring-0 focus:ring-offset-0 focus-visible:ring-0 focus-visible:ring-offset-0">
+              <SelectValue placeholder="All Droplets" />
+            </SelectTrigger>
+            <SelectContent className="border-none">
+              <SelectItem value="all">All Droplets</SelectItem>
+              {group.playlists?.map((option) => (
+                <SelectItem key={option.name} value={option.name}>
+                  {option.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
         <div className="">
           <button
             onClick={handlePrevPage}
@@ -239,16 +293,19 @@ export function GroupProgressGrid({ group, statuses }: GroupProgressGridProps) {
           </button>
           <button
             onClick={handleNextPage}
-            disabled={currentPage === totalPages - 1}
+            disabled={
+              currentPage === totalPages - 1 ||
+              getDisplayedDroplets().length <= lessonsPerPage
+            }
             aria-label="Next page"
-            className={`px-4 py-2 ${currentPage >= totalPages - 1 ? "visibility: hidden" : "visibility: visible"}`}
+            className={`px-4 py-2 ${(currentPage + 1) * lessonsPerPage >= getDisplayedDroplets().length || getDisplayedDroplets().length <= lessonsPerPage ? "visibility: hidden" : "visibility: visible"}`}
           >
             <MoveRight />
           </button>
         </div>
       </div>
       <ContentSection title="">
-        {group.droplets && group.droplets.length > 0 ? (
+        {getDisplayedDroplets() && getDisplayedDroplets().length > 0 ? (
           <div className="flex flex-row justify-start">
             <div className="flex flex-col justify-self-start">
               <div className="bg-white-50 flex h-24 w-55 items-center justify-center border-slate-200 p-4 transition-colors hover:border-slate-300">
@@ -276,7 +333,7 @@ export function GroupProgressGrid({ group, statuses }: GroupProgressGridProps) {
 
             <div>
               <div className="flex flex-row">
-                {paginatedLessons?.map((droplet) => (
+                {paginate(getDisplayedDroplets())?.map((droplet) => (
                   <div
                     key={droplet.id}
                     className="bg-white-50 flex h-24 w-36 items-center justify-center border-slate-200 p-4 transition-colors hover:border-slate-300"
@@ -294,10 +351,10 @@ export function GroupProgressGrid({ group, statuses }: GroupProgressGridProps) {
               <div
                 className="grid grid-flow-row gap-0"
                 style={{
-                  gridTemplateColumns: `repeat(${paginatedLessons?.length || 1}, minmax(0, 1fr))`,
+                  gridTemplateColumns: `repeat(${paginate(getDisplayedDroplets())?.length || 1}, minmax(0, 1fr))`,
                 }}
               >
-                {paginatedLessons?.map((droplet) => (
+                {paginate(getDisplayedDroplets())?.map((droplet) => (
                   <div
                     className=""
                     key={`group-${group.id}-droplet-${droplet.id}`}
