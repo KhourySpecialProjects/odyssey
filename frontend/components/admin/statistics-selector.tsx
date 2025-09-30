@@ -2,6 +2,10 @@
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
+// A component that displays a tab selector for different statistics views.
+// It takes a `content` prop, which is an object where keys are tab names and values are React nodes to display for each tab.
+// The selected tab is determined by the `statsTab` query parameter in the URL.
+// When a tab is clicked, it updates the URL with the corresponding `statsTab` value.
 export function StatisticsSelector({
   content,
 }: {
@@ -12,6 +16,7 @@ export function StatisticsSelector({
   const searchParams = useSearchParams();
   const currentTab = searchParams.get("statsTab") || "General Statistics";
 
+  // Function to create a new query string with the updated statsTab parameter
   const createQueryString = (value: string) => {
     const params = new URLSearchParams(searchParams);
     params.set("statsTab", value);

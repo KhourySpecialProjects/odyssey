@@ -1,8 +1,10 @@
 import { render, screen } from "@testing-library/react";
 import { StatisticsSelector } from "@/components/admin/statistics-selector";
 
+// Create a variable to track the current statsTab
 let currentStatsTab = "General Statistics";
 
+// Mock Next.js navigation hooks
 jest.mock("next/navigation", () => ({
   useRouter: jest.fn(() => ({
     push: jest.fn((url) => {
@@ -23,6 +25,7 @@ jest.mock("next/navigation", () => ({
   })),
 }));
 
+// Tests for the StatisticsSelector component
 describe("StatisticsSelector", () => {
   const mockContent = {
     "General Statistics": <div>Stats Content</div>,
