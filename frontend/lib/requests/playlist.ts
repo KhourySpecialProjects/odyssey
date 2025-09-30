@@ -135,6 +135,7 @@ export async function updatePlaylist(
   id: number,
   data: {
     name: string;
+    description: string;
     isPublic: boolean;
     droplets?: { id: number }[];
     authors?: { id: number };
@@ -145,6 +146,7 @@ export async function updatePlaylist(
   try {
     const dataToSend = {
       name: data.name,
+      description: data.description,
       isPublic: data.isPublic,
       droplets: {
         set: data.droplets, // 'set' replaces all existing relationships
@@ -193,6 +195,7 @@ export async function updatePlaylist(
 export async function createPlaylist(data: {
   name: string;
   isPublic: boolean;
+  description: string;
   droplets: { id: number }[];
   author: { id: number };
   userId: number;
@@ -201,6 +204,7 @@ export async function createPlaylist(data: {
   try {
     const dataToSend = {
       name: data.name,
+      description: data.description,
       authors: {
         set: [data.author.id],
       },
