@@ -330,7 +330,7 @@ export function SocialForms({
         </Button>
       </form>
       <TimeZoneSelector
-        currentZone={authorizedUser.timeZone?.trim()}
+        currentZone={authorizedUser.timeZone?}
         userId={authorizedUser.id}
       ></TimeZoneSelector>
       <div className="p-4">
