@@ -97,6 +97,7 @@ export type Gallery = {
   title?: string;
   slug: string;
   items: GalleryItem[];
+  subtitle: string;
 };
 
 export type NavItem = {
