@@ -54,6 +54,24 @@ export function EnrolledDropletsGridClient({
             : b.completionPercentage - a.completionPercentage;
         } else if (field === "rating") {
           return direction === "asc" ? ratingA - ratingB : ratingB - ratingA;
+        } else if (field === "duedate") {
+          const dueDateA = dueDates?.find(
+            (dueDate) => dueDate.droplet?.id === a.id,
+          )?.dueDate;
+          const dueDateB = dueDates?.find(
+            (dueDate) => dueDate.droplet?.id === b.id,
+          )?.dueDate;
+          if (dueDateA && dueDateB) {
+            return direction === "asc"
+              ? new Date(dueDateA).getTime() - new Date(dueDateB).getTime()
+              : new Date(dueDateB).getTime() - new Date(dueDateA).getTime();
+          } else if (dueDateA) {
+            return -1; // a comes first
+          } else if (dueDateB) {
+            return 1; // b comes first
+          } else {
+            return 0; // no change in order
+          }
         }
         return 0;
       });

@@ -24,6 +24,10 @@
       "type": "component",
       "repeatable": true,
       "component": "galleries.gallery-item"
+    },
+    "subtitle": {
+      "type": "string",
+      "required": true
     }
   }
 }
