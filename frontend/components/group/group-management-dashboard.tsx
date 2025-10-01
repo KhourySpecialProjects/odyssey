@@ -1,7 +1,6 @@
 "use client";
 
 import { Tab, Tabs, TabList, TabPanel } from "react-tabs";
-import "react-tabs/style/react-tabs.css";
 
 import { ContentSection } from "@/components/group/content-section";
 import { GroupDropletTile } from "@/components/group/group-droplet-tile";
@@ -124,7 +123,7 @@ export function GroupDashboard({
                       (dueDate) => dueDate.playlist?.id === playlist.id,
                     )?.dueDate || ""
                   }
-                  timeZone={authUser.timeZone}
+                  timeZone={authUser.timeZone?.trim()}
                 />
               ))}
             </div>
