@@ -38,7 +38,7 @@ export function GroupDropletTile({
     daysUntil = Math.ceil(diffDays);
 
     finalDate = DateTime.fromISO(dueDate)
-      .setZone(authUser?.timeZone.trim() || "America/New_York")
+      .setZone(authUser?.timeZone || "America/New_York")
       .toFormat("MM/dd hh:mm a");
   }
 

@@ -99,7 +99,9 @@ export type SortFilterItem = {
     | "completion:asc"
     | "completion:desc"
     | "rating:asc"
-    | "rating:desc";
+    | "rating:desc"
+    | "duedate:asc"
+    | "duedate:desc";
 };
 
 export const sorting: SortFilterItem[] = [
@@ -124,6 +126,16 @@ export const sorting: SortFilterItem[] = [
     label: "Worst Rating",
     slug: "rating:asc",
     sortKey: "rating:asc",
+  },
+  {
+    label: "Due Date (Soonest)",
+    slug: "duedate:asc",
+    sortKey: "duedate:asc",
+  },
+  {
+    label: "Due Date (Latest)",
+    slug: "duedate:desc",
+    sortKey: "duedate:desc",
   },
 ];
 
