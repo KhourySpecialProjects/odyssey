@@ -63,17 +63,44 @@ export function SortedDropletsGrid({
           const dueDateB = dueDates?.find(
             (dueDate) => dueDate.droplet?.id === b.id,
           )?.dueDate;
+
+          // Determine completion status (100% = complete)
+          const isCompleteA = a.completionPercentage === 100;
+          const isCompleteB = b.completionPercentage === 100;
+
+          // Group 1: Incomplete with due dates
+          // Group 2: Complete (with or without due dates)
+          // Group 3: Incomplete without due dates
+
+          const getGroup = (
+            isComplete: boolean,
+            hasDueDate: boolean,
+          ): number => {
+            if (!isComplete && hasDueDate) return 1; // Incomplete with due date
+            if (isComplete) return 2; // Complete
+            return 3; // Incomplete without due date
+          };
+
+          const groupA = getGroup(isCompleteA, !!dueDateA);
+          const groupB = getGroup(isCompleteB, !!dueDateB);
+
+          // First, sort by group
+          if (groupA !== groupB) {
+            return groupA - groupB;
+          }
+
+          // Within the same group, sort by due date if both have one
           if (dueDateA && dueDateB) {
             return direction === "asc"
               ? new Date(dueDateA).getTime() - new Date(dueDateB).getTime()
               : new Date(dueDateB).getTime() - new Date(dueDateA).getTime();
-          } else if (dueDateA) {
-            return -1; // a comes first
-          } else if (dueDateB) {
-            return 1; // b comes first
-          } else {
-            return 0; // no change in order
           }
+
+          // If only one has a due date (within the same group)
+          if (dueDateA) return -1;
+          if (dueDateB) return 1;
+
+          return 0; // no change in order
         }
         return 0;
       });
