@@ -50,9 +50,12 @@ export default async function Page() {
     getRetentionData(),
   ]);
 
-  // Destructure retention data
-  const { retentionRate, totalEnrollments, completedEnrollments } =
-    retentionData;
+  const {
+    retentionRate,
+    totalEnrollments,
+    completedEnrollments,
+    incompleteEnrollments,
+  } = retentionData;
 
   if (!user || !isAuthorizedUserAdmin(user.roles)) return notFound();
 
@@ -74,6 +77,7 @@ export default async function Page() {
         authorizedUsersLength={authorizedUsers.meta.pagination.total}
         totalEnrollments={totalEnrollments}
         retentionRate={retentionRate}
+        incompleteEnrollments={incompleteEnrollments}
       />
     ),
     "Daily Active Users": <DailyActiveUsersChart data={dailyActiveUsers} />,
@@ -123,11 +127,13 @@ function GeneralStatistics({
   droplets,
   totalEnrollments,
   retentionRate,
+  incompleteEnrollments,
 }: {
   authorizedUsersLength: number;
   droplets: Droplet[];
   totalEnrollments: number;
   retentionRate: number;
+  incompleteEnrollments: number;
 }) {
   return (
     <div className="flex items-center justify-center gap-x-8 gap-y-6 text-center sm:flex-row">
