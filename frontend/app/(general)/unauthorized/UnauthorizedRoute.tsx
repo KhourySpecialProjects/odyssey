@@ -18,6 +18,7 @@ export default async function UnauthorizedRoute({
   email,
 }: UnauthorizedRouteProps) {
   const requests = await fetchAccessRequests();
+  console.log(requests);
 
   return (
     <Message>
@@ -36,7 +37,8 @@ export default async function UnauthorizedRoute({
       ) : (
         <>
           <MessageDescription>
-            You do not have permission to access this application.
+            You do not have permission to access this application. Please
+            request access so that we can process your request!
           </MessageDescription>
           <MessageActions>
             <Button size="lg" after={<ArrowRightIcon />} asChild>
