@@ -134,7 +134,6 @@ function GeneralStatistics({
   droplets,
   totalEnrollments,
   retentionRate,
-  incompleteEnrollments,
 }: {
   authorizedUsersLength: number;
   droplets: Droplet[];
