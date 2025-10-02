@@ -11,6 +11,7 @@ import { revalidatePath, revalidateTag } from "next/cache";
 import { enrollInPlaylist } from "./playlist-enrollment";
 import { getCurrentUser } from "../auth/session";
 import { createEnrollmentFromEmail } from "./enrollment";
+import { createAuthorizedUser } from "./authorized-user";
 
 const STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
@@ -561,10 +562,19 @@ async function ensureAuthorizedUsers(
       if (existingUser) {
         results.push({ id: existingUser.id, email });
       } else {
-        const newUser = await createAuthorizedUserInGroup(email);
-        if (newUser.ok && newUser.data) {
-          results.push({ id: newUser.data.id, email });
+        const formData = new FormData();
+        formData.append("email", email);
+        console.log("Creating user with email:", email);
+        formData.append("isEnabled", "true");
+        const newUser = await createAuthorizedUser(formData);
+        const newUserData = await getAuthorizedUserByEmail(email);
+        if (newUser.ok && newUserData) {
+          results.push({ id: newUserData.id, email });
         }
+        // const newUser = await createAuthorizedUserInGroup(email);
+        // if (newUser.ok && newUser.data) {
+        //   results.push({ id: newUser.data.id, email });
+        // }
       }
     } catch (error) {
       console.error(`Failed to process email: ${email}`, error);
