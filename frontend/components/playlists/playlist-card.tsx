@@ -1,9 +1,13 @@
+"use client";
+
 import Link from "next/link";
-import { Card, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { getDueDateBadgeColor } from "@/lib/utils";
 import { Clock } from "lucide-react";
 import { Badge } from "../ui/badge";
 import { DateTime } from "luxon";
+import { getDropletById } from "@/lib/requests/droplet";
+import { useState, useEffect, useRef } from "react";
 
 interface PlaylistCardProps {
   playlist: {
@@ -36,8 +40,32 @@ export function PlaylistCard({
   dueDate,
   timeZone,
 }: PlaylistCardProps) {
-  const linkTo = toDraft ? `/draft/p/${playlist.slug}` : `/p/${playlist.slug}`;
+  const [descriptionExpanded, setDescriptionExpanded] = useState(false);
+  const [isTextClamped, setIsTextClamped] = useState(false);
+  const [isScreenChanged, setIsScreenChanged] = useState(false); // New state variable to track screen size changes
+  const textRef = useRef(null);
+  const dropletCount = playlist.droplets ? playlist.droplets.length : 0;
+  const lessonCount =
+    playlist.droplets?.reduce(
+      (total, droplet) => total + (droplet.lessons?.length ?? 0),
+      0,
+    ) ?? 0;
+  const strippedDescription = playlist.description
+    ?.replace(/<\/p>\s*<p>/gi, "\n")
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<\/?p>/gi, "")
+    .replace(/<[^>]+>/g, "")
+    .trim();
 
+  useEffect(() => {
+    if (textRef.current && strippedDescription) {
+      const element = textRef.current as HTMLParagraphElement;
+      const isClamped = element.scrollHeight > element.clientHeight;
+      setIsTextClamped(isClamped);
+    }
+  }, [strippedDescription, descriptionExpanded]);
+
+  const linkTo = toDraft ? `/draft/p/${playlist.slug}` : `/p/${playlist.slug}`;
   let daysUntil = 0;
   if (dueDate && dueDate !== "") {
     const dueDateObject = DateTime.fromISO(dueDate);
@@ -84,11 +112,51 @@ export function PlaylistCard({
           <CardTitle className="block w-full place-self-end text-3xl font-black text-slate-950 dark:text-slate-300">
             {playlist.name}
           </CardTitle>
-          <p className="text-muted-foreground text-sm">
-            {playlist.droplets?.length === 1
-              ? "1 droplet"
-              : `${playlist.droplets?.length || 0} droplets`}
+
+          <p className="light:text-slate-600 pt-2 text-sm dark:text-slate-300">
+            Droplets: {dropletCount} &nbsp;&nbsp;&nbsp;&nbsp; Lessons:{" "}
+            {lessonCount}
           </p>
+          <div>
+            {strippedDescription &&
+              strippedDescription.trim() !== "<p></p>" &&
+              strippedDescription.trim() !== "" && (
+                <>
+                  <p
+                    ref={textRef}
+                    className={`${
+                      descriptionExpanded ? "line-clamp-none" : "line-clamp-2"
+                    } text-md text-slate-700 dark:text-slate-300`}
+                  >
+                    {strippedDescription}
+                  </p>
+
+                  {isTextClamped && !descriptionExpanded && (
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setDescriptionExpanded(true);
+                      }}
+                      className="text-left text-sm text-sky-700 dark:text-sky-500"
+                    >
+                      See More
+                    </button>
+                  )}
+
+                  {descriptionExpanded && (
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setDescriptionExpanded(false);
+                      }}
+                      className="text-left text-sm text-sky-700 dark:text-sky-500"
+                    >
+                      See Less
+                    </button>
+                  )}
+                </>
+              )}
+          </div>
         </CardHeader>
       </Card>
     </Link>

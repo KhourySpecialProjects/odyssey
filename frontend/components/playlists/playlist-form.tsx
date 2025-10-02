@@ -23,6 +23,7 @@ interface PlaylistFormProps {
   existingPlaylist?: {
     id: number;
     name: string;
+    description?: string;
     slug: string;
     isPublic: boolean;
     droplets?: Droplet[];
@@ -37,6 +38,9 @@ export function PlaylistForm({
 }: PlaylistFormProps) {
   const router = useRouter();
   const [name, setName] = useState(existingPlaylist?.name || "");
+  const [description, setDescription] = useState(
+    existingPlaylist?.description || "",
+  );
   const [isPublic, setIsPublic] = useState(existingPlaylist?.isPublic || false);
   const [selectedDroplets, setSelectedDroplets] = useState(
     existingPlaylist?.droplets || [],
@@ -138,6 +142,7 @@ export function PlaylistForm({
 
     const updatePlaylistData = {
       name,
+      description,
       isPublic,
       droplets: selectedDroplets.map((droplet) => ({ id: droplet.id })),
       author: { id: author.id },
@@ -146,6 +151,7 @@ export function PlaylistForm({
     };
     const playlistData = {
       name,
+      description,
       isPublic,
       droplets: selectedDroplets.map((droplet) => ({ id: droplet.id })),
       author: { id: author.id },
@@ -205,6 +211,17 @@ export function PlaylistForm({
             onCheckedChange={setIsPublic}
           />
           <Label htmlFor="public">Make this playlist public</Label>
+        </div>
+
+        <div>
+          <Label htmlFor="description">Playlist Description</Label>
+          <Input
+            id="description"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="Enter playlist description"
+            className="max-w-xl"
+          />
         </div>
       </div>
 

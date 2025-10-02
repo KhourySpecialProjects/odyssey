@@ -109,12 +109,16 @@ describe("FirstVisitPopup", () => {
 
       const firstNameInput = getByLabelText("First name");
       const lastNameInput = getByLabelText("Last name");
+      const timeZoneInput = getByLabelText("Choose a time zone...");
 
       fireEvent.change(firstNameInput, {
         target: { value: "John" },
       });
       fireEvent.change(lastNameInput, {
         target: { value: "Doe" },
+      });
+      fireEvent.change(timeZoneInput, {
+        target: { value: "America/New_York" },
       });
 
       const dialog = await getByRole("dialog", { hidden: true });
