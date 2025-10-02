@@ -1,7 +1,5 @@
 "use client";
 
-import UnauthorizedRoute from "@/app/(general)/unauthorized/UnauthorizedRoute";
-
 import { cn, getPath, isAuthorizedUserAdmin } from "@/lib/utils";
 import { Droplet, User } from "@/types";
 import {
@@ -18,7 +16,7 @@ import {
   PanelRightOpen,
 } from "lucide-react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { redirect, usePathname } from "next/navigation";
 import { useLayoutEffect, useState } from "react";
 import { Label } from "../ui/label";
 import { Progress } from "../ui/progress";
@@ -58,7 +56,7 @@ export default function Sidebar({
     return () => window.removeEventListener("resize", () => setExpanded(false));
   }, []);
 
-  if (!user) return <UnauthorizedRoute email={""} />;
+  if (!user) redirect("/unauthoried");
 
   const curPath = pathname.split("d/")[1];
 
