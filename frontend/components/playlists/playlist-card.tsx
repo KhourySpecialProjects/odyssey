@@ -44,7 +44,12 @@ export function PlaylistCard({
   const [isTextClamped, setIsTextClamped] = useState(false);
   const [isScreenChanged, setIsScreenChanged] = useState(false); // New state variable to track screen size changes
   const textRef = useRef(null);
-
+  const dropletCount = playlist.droplets ? playlist.droplets.length : 0;
+  const lessonCount =
+    playlist.droplets?.reduce(
+      (total, droplet) => total + (droplet.lessons?.length ?? 0),
+      0,
+    ) ?? 0;
   const strippedDescription = playlist.description
     ?.replace(/<\/p>\s*<p>/gi, "\n")
     .replace(/<br\s*\/?>/gi, "\n")
@@ -109,12 +114,8 @@ export function PlaylistCard({
           </CardTitle>
 
           <p className="light:text-slate-600 pt-2 text-sm dark:text-slate-300">
-            Droplets: {playlist.droplets ? playlist.droplets.length : ""}{" "}
-            Lessons:{" "}
-            {playlist.droplets?.reduce(
-              (total, droplet) => total + (droplet.lessons?.length ?? 0),
-              0,
-            ) ?? 0}{" "}
+            Droplets: {dropletCount} &nbsp;&nbsp;&nbsp;&nbsp; Lessons:{" "}
+            {lessonCount}
           </p>
           <div>
             {strippedDescription &&
