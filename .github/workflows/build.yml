@@ -13,6 +13,8 @@ on:
       - develop
       - production 
       - 'feature/**'
+      - 'bug/**'
+      - 'improvement/**'
 
 jobs:
   frontend-build:
