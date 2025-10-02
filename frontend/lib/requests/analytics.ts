@@ -1,32 +1,50 @@
 "use server";
 
-import { fetchDroplets } from "./data";
 import { fetchEnrollmentMetadata } from "./enrollment";
-import { fetchAPI } from "../utils";
-import { Droplet, Enrollment } from "@/types";
-import { StrapiRequestParams } from "@/types/strapi";
 
-// Function to get all enrollments
+/**
+ * Gets the count of completed enrollments using the isComplete field
+ */
 async function getCompletedEnrollmentsCount(): Promise<number> {
   const response = await fetchEnrollmentMetadata({
-    filters: { isComplete: { $eq: true } },
+    filters: {
+      isComplete: { $eq: true },
+    },
     pagination: { pageSize: 1, page: 1 },
   });
 
   return response?.meta?.pagination?.total || 0;
 }
 
-// Function to get retention data
+/**
+ * Gets the count of incomplete enrollments
+ */
+async function getIncompleteEnrollmentsCount(): Promise<number> {
+  const response = await fetchEnrollmentMetadata({
+    filters: {
+      isComplete: { $eq: false },
+    },
+    pagination: { pageSize: 1, page: 1 },
+  });
+
+  return response?.meta?.pagination?.total || 0;
+}
+
+/**
+ * Retrieves retention data including completion and retention rates
+ */
 export async function getRetentionData() {
-  const [enrollmentMetadata, completedCount] = await Promise.all([
-    fetchEnrollmentMetadata(),
-    getCompletedEnrollmentsCount(),
-  ]);
+  const [enrollmentMetadata, completedCount, incompleteCount] =
+    await Promise.all([
+      fetchEnrollmentMetadata(),
+      getCompletedEnrollmentsCount(),
+      getIncompleteEnrollmentsCount(),
+    ]);
 
   const totalEnrollments = enrollmentMetadata?.meta?.pagination?.total || 0;
   const completedEnrollments = completedCount;
+  const incompleteEnrollments = incompleteCount;
 
-  // Calculate retention rate
   const retentionRate =
     totalEnrollments === 0
       ? 0
@@ -36,5 +54,6 @@ export async function getRetentionData() {
     retentionRate,
     totalEnrollments,
     completedEnrollments,
+    incompleteEnrollments,
   };
 }
