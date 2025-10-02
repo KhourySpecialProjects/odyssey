@@ -1,7 +1,4 @@
 "use client";
-
-import UnauthorizedRoute from "@/app/(general)/unauthorized/UnauthorizedRoute";
-
 import { cn, getInitials, getPath, condenseRoleTitles } from "@/lib/utils";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
 import { AuthorizedUser, Droplet, Lesson, User } from "@/types";
@@ -18,7 +15,7 @@ import {
 } from "lucide-react";
 import { signOut } from "next-auth/react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { redirect, usePathname, useRouter } from "next/navigation";
 import React, { useLayoutEffect, useState, useEffect } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import {
@@ -150,7 +147,7 @@ export function Sidebar({
 
   if (!mounted) return null;
 
-  if (!user) return <UnauthorizedRoute email={""} />;
+  if (!user) redirect("/unauthorized");
 
   return (
     <>

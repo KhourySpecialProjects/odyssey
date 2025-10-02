@@ -18,12 +18,11 @@ export default async function UnauthorizedRoute({
   email,
 }: UnauthorizedRouteProps) {
   const requests = await fetchAccessRequests();
-  console.log(requests);
 
   return (
     <Message>
       <MessageHeader subtitle="Error" title="Unauthorized" />
-      {requests.some((req: AccessRequest) => req.email === email) ? (
+      {requests?.some((req: AccessRequest) => req.email === email) ? (
         <>
           <MessageDescription>
             {`We are currently processing a request for ${email}`}

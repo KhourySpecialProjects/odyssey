@@ -28,7 +28,7 @@ describe("General Pages", () => {
 
       expect(
         screen.getByText(
-          "You do not have permission to access this application.",
+          "You do not have permission to access this application. Please request access so that we can process your request!",
         ),
       ).toBeInTheDocument();
     });
@@ -43,7 +43,7 @@ describe("General Pages", () => {
 
       expect(
         screen.getByText(
-          "You do not have permission to access this application.",
+          "You do not have permission to access this application. Please request access so that we can process your request!",
         ),
       ).toBeInTheDocument();
     });
