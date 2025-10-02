@@ -2,6 +2,7 @@
 
 import { setTimeZone } from "@/lib/actions";
 import { useState } from "react";
+import { toast } from "sonner";
 
 const timeZones = [
   "America/New_York",
@@ -58,6 +59,7 @@ export default function TimeZoneSelector({
   const handleChange = async (zone: string) => {
     await setTimeZone(zone + "  ", userId);
     setSelectedTimeZone(zone);
+    toast.success("Time zone updated successfully!");
   };
 
   return (
