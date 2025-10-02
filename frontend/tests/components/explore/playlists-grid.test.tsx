@@ -81,7 +81,9 @@ describe("PlaylistsGrid", () => {
         await PlaylistsGrid({ playlists: mockPlaylists }),
       );
 
-      expect(container).toHaveTextContent("Test Playlist0 droplets");
+      expect(container).toHaveTextContent(
+        "Test PlaylistDroplets: 0 Lessons: 0",
+      );
     });
 
     it("sorts playlists by name correctly", async () => {
