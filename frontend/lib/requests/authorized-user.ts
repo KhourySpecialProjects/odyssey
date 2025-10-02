@@ -45,6 +45,11 @@ export async function getAuthorizedUserByEmail<
         populate: {
           droplets: {
             fields: "*",
+            populate: {
+              lessons: {
+                fields: ["*"], // or just ["id"] if you only need the count
+              },
+            },
           },
         },
       },
@@ -53,6 +58,11 @@ export async function getAuthorizedUserByEmail<
         populate: {
           droplets: {
             fields: "*",
+            populate: {
+              lessons: {
+                fields: ["*"], // or just ["id"] if you only need the count
+              },
+            },
           },
         },
       },
