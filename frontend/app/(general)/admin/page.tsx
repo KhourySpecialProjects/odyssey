@@ -28,9 +28,16 @@ import { UniquePageviewChart } from "@/components/admin/unique-pageview";
 import { NewUsersChart } from "@/components/admin/new-users";
 import { get } from "lodash";
 
-// General Admin Page Component
-export default async function Page() {
+export default async function Page({
+  searchParams,
+}: {
+  searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
   const user = await getCurrentUser();
+
+  const params = await searchParams;
+  const adminTab = (params?.adminTab as string) || "Users";
+  const statsTab = (params?.statsTab as string) || "General Statistics";
 
   const [
     authorizedUsers,
@@ -50,12 +57,8 @@ export default async function Page() {
     getRetentionData(),
   ]);
 
-  const {
-    retentionRate,
-    totalEnrollments,
-    completedEnrollments,
-    incompleteEnrollments,
-  } = retentionData;
+  const { retentionRate, totalEnrollments, completedEnrollments } =
+    retentionData;
 
   if (!user || !isAuthorizedUserAdmin(user.roles)) return notFound();
 

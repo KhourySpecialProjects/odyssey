@@ -2,7 +2,6 @@
 
 import { cn, isAuthorizedUserAdmin } from "@/lib/utils";
 import {
-  CircleUserIcon,
   Plus,
   PlusCircle,
   PlusCircleIcon,
