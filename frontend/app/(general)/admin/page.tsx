@@ -57,8 +57,12 @@ export default async function Page({
     getRetentionData(),
   ]);
 
-  const { retentionRate, totalEnrollments, completedEnrollments } =
-    retentionData;
+  const {
+    retentionRate,
+    totalEnrollments,
+    completedEnrollments,
+    incompleteEnrollments,
+  } = retentionData;
 
   if (!user || !isAuthorizedUserAdmin(user.roles)) return notFound();
 
