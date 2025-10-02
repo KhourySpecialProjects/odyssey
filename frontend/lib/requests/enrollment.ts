@@ -542,8 +542,8 @@ export async function updateViewedLessons(
         },
       );
     }
-
-    return { success: true, alreadyViewed: true };
+    const alreadyViewed = currentViewedIds.includes(lessonId);
+    return { success: true, alreadyViewed };
   } catch (error) {
     console.error("Error updating viewed lessons:", error);
     return { success: false, error: "Failed to update viewed lessons" };
