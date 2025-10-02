@@ -13,6 +13,7 @@ import { Droplets } from "@/components/admin/droplets/droplets";
 import { Groups } from "@/components/admin/groups/groups";
 import { Playlists } from "@/components/admin/playlists/playlists";
 import { ComponentDropdown } from "@/components/shared/component-dropdown";
+import { getRetentionData } from "@/lib/requests/analytics";
 import {
   fetchDailyActiveUsers,
   fetchUniquePageview,
@@ -25,10 +26,18 @@ import { StatisticsSelector } from "@/components/admin/statistics-selector";
 import { WeeklyActiveUsersChart } from "@/components/admin/weekly-active-users-chart";
 import { UniquePageviewChart } from "@/components/admin/unique-pageview";
 import { NewUsersChart } from "@/components/admin/new-users";
+import { get } from "lodash";
 
-export default async function Page() {
+export default async function Page({
+  searchParams,
+}: {
+  searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
   const user = await getCurrentUser();
-  let totalEnrollments = 0;
+
+  const params = await searchParams;
+  const adminTab = (params?.adminTab as string) || "Users";
+  const statsTab = (params?.statsTab as string) || "General Statistics";
 
   const [
     authorizedUsers,
@@ -37,7 +46,7 @@ export default async function Page() {
     weeklyActiveUsers,
     pageviewCount,
     newUsers,
-    enrollments,
+    retentionData,
   ] = await Promise.all([
     fetchAuthorizedUsersMetadata(),
     fetchDroplets(),
@@ -45,10 +54,11 @@ export default async function Page() {
     fetchWeeklyActiveUsers(),
     fetchUniquePageview(),
     fetchWeeklyNewUsers(),
-    fetchEnrollmentMetadata(),
+    getRetentionData(),
   ]);
 
-  totalEnrollments = enrollments?.meta.pagination.total || 0;
+  const { retentionRate, totalEnrollments, completedEnrollments } =
+    retentionData;
 
   if (!user || !isAuthorizedUserAdmin(user.roles)) return notFound();
 
@@ -67,6 +77,7 @@ export default async function Page() {
         droplets={droplets}
         authorizedUsersLength={authorizedUsers.meta.pagination.total}
         totalEnrollments={totalEnrollments}
+        retentionRate={retentionRate}
       />
     ),
     "Daily Active Users": <DailyActiveUsersChart data={dailyActiveUsers} />,
@@ -113,10 +124,12 @@ function GeneralStatistics({
   authorizedUsersLength,
   droplets,
   totalEnrollments,
+  retentionRate,
 }: {
   authorizedUsersLength: number;
   droplets: Droplet[];
   totalEnrollments: number;
+  retentionRate: number;
 }) {
   return (
     <div className="flex items-center justify-center gap-x-8 gap-y-6 text-center sm:flex-row">
@@ -148,6 +161,16 @@ function GeneralStatistics({
             </div>
             <div className="text-sm text-slate-500 dark:text-slate-400">
               {totalEnrollments}
+            </div>
+          </div>
+        </div>
+        <div className="flex items-center space-x-3">
+          <div>
+            <div className="font-medium dark:text-slate-300">
+              Retention Rate
+            </div>
+            <div className="text-sm text-slate-500 dark:text-slate-400">
+              {retentionRate}%
             </div>
           </div>
         </div>
