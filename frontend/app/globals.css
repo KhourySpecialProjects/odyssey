@@ -60,7 +60,7 @@
 .dark code *,
 .dark .hljs,
 .dark .hljs * {
-  color: white !important;
+  color: white;
 }
 
 /* Specific fix for callout bullet list items in dark mode */
