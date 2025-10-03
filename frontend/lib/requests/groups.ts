@@ -564,7 +564,6 @@ async function ensureAuthorizedUsers(
       } else {
         const formData = new FormData();
         formData.append("email", email);
-        console.log("Creating user with email:", email);
         formData.append("isEnabled", "true");
         const newUser = await createAuthorizedUser(formData);
         const newUserData = await getAuthorizedUserByEmail(email);
