@@ -56,7 +56,7 @@ export default function Sidebar({
     return () => window.removeEventListener("resize", () => setExpanded(false));
   }, []);
 
-  if (!user) redirect("/unauthoried");
+  if (!user) redirect("/unauthorized");
 
   const curPath = pathname.split("d/")[1];
 
