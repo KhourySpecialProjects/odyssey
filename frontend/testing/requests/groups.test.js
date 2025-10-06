@@ -892,7 +892,7 @@ describe("Groups Tests", () => {
       );
 
       const requestBody = JSON.parse(fetchAPI.mock.calls[0][1].options.body);
-      //expect(requestBody.data.members.set).toEqual([{ id: 30 }, { id: 31 }]);
+      expect(requestBody.data.members.set).toEqual([{ id: 30 }, { id: 31 }]);
     });
 
     it("should handle errors during group creation", async () => {
