@@ -30,18 +30,18 @@ jobs:
       - name: Get merge commit details
         id: merge_info
         run: |
-          # Get the commit message of the latest commit
-          COMMIT_MSG=$(git log -1 --pretty=%B)
-          echo "Commit message: $COMMIT_MSG"
-          
-          # Extract branch name from merge commit message
-          # Looks for patterns like "Merge pull request #123 from user/branch-name"
-          # or "Merge branch 'branch-name' into main"
-          BRANCH_NAME=$(echo "$COMMIT_MSG" | grep -oP "(from [^/]+/\K[^\s]+|Merge branch '\K[^']+)" | head -1 || echo "")
-          
-          if [ -z "$BRANCH_NAME" ]; then
-            # If not a merge commit, get the current branch that was pushed
-            BRANCH_NAME=$(git rev-parse --abbrev-ref HEAD)
+          # Use GitHub event data for reliable branch detection
+          if [ "${{ github.event_name }}" == "pull_request" ]; then
+            BRANCH_NAME="${{ github.head_ref }}"
+          else
+            # For push events, try to extract from commit message
+            COMMIT_MSG=$(git log -1 --pretty=%B)
+            BRANCH_NAME=$(echo "$COMMIT_MSG" | grep -oP "(from [^/]+/\K[^\s]+|Merge branch '\K[^']+)" | head -1 || echo "")
+            
+            if [ -z "$BRANCH_NAME" ]; then
+              # Fallback to current branch
+              BRANCH_NAME=$(git rev-parse --abbrev-ref HEAD)
+            fi
           fi
           
           echo "branch_name=$BRANCH_NAME" >> $GITHUB_OUTPUT
@@ -122,29 +122,37 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           
           # Create annotated tag with details
-          git tag -a "$NEW_VERSION" -m "Release $NEW_VERSION
-
-Bump type: $BUMP_TYPE
-Source branch: $BRANCH
-Target branch: ${{ github.ref_name }}
-Commit: ${{ github.sha }}"
+          TAG_MESSAGE=$(cat <<EOF
+          Release $NEW_VERSION
+          
+          Bump type: $BUMP_TYPE
+          Source branch: $BRANCH
+          Target branch: ${{ github.ref_name }}
+          Commit: ${{ github.sha }}
+          EOF
+          )
+          git tag -a "$NEW_VERSION" -m "$TAG_MESSAGE"
           
           git push origin "$NEW_VERSION"
           echo "Created and pushed tag: $NEW_VERSION"
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v1
-        with:
-          tag_name: ${{ steps.new_version.outputs.new_version }}
-          name: Release ${{ steps.new_version.outputs.new_version }}
-          body: |
-            ## Release ${{ steps.new_version.outputs.new_version }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          PRERELEASE_FLAG=""
+          if [[ "${{ github.ref_name }}" == "develop" ]]; then
+            PRERELEASE_FLAG="--prerelease"
+          fi
+          
+          gh release create "${{ steps.new_version.outputs.new_version }}" \
+            --title "Release ${{ steps.new_version.outputs.new_version }}" \
+            --notes "## Release ${{ steps.new_version.outputs.new_version }}
             
             **Type:** ${{ steps.bump_type.outputs.bump_type }} release
             **Branch:** ${{ steps.merge_info.outputs.branch_name }}
             **Target:** ${{ github.ref_name }}
             
             ### Changes
-            See commit history for details.
-          draft: false
-          prerelease: ${{ github.ref_name == 'develop' }}
+            See commit history for details." \
+            $PRERELEASE_FLAG
