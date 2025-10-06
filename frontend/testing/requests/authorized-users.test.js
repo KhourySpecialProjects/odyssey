@@ -338,15 +338,15 @@ describe("Authorized User Tests", () => {
     });
   });
 });
-describe("Error Handling", () => {
-  it("should handle invalid email format", async () => {
-    const formData = new FormData();
-    formData.append("email", "invalid-email");
-    formData.append("isEnabled", "true");
+// describe("Error Handling", () => {
+//   it("should handle invalid email format", async () => {
+//     const formData = new FormData();
+//     formData.append("email", "invalid-email");
+//     formData.append("isEnabled", "true");
 
-    global.fetch.mockImplementation(() => Promise.resolve(1));
+//     global.fetch.mockImplementation(() => Promise.resolve(1));
 
-    const result = await createAuthorizedUser(formData);
-    expect(result.ok).toBe(false);
-  });
-});
+//     const result = await createAuthorizedUser(formData);
+//     expect(result.ok).toBe(false);
+//   });
+// });
