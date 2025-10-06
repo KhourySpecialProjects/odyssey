@@ -354,38 +354,24 @@ export async function fetchIsAuthorizedUser(email: string) {
 const CreateAuthorizedUser = AuthorizedUserSchema.omit({
   id: true,
 });
-export async function createAuthorizedUser(
-  prevStateOrFormData: any,
-  formData?: FormData,
-) {
+export async function createAuthorizedUser(formData: FormData) {
   // Determine which parameter is the FormData
-  let actualFormData: FormData;
-
-  if (formData) {
-    // Called with useActionState: (prevState, formData)
-    actualFormData = formData;
-  } else if (prevStateOrFormData instanceof FormData) {
-    // Called manually with just FormData: (formData)
-    actualFormData = prevStateOrFormData;
-  } else {
-    return { ok: false, error: "Invalid arguments", data: null };
-  }
 
   const roleID = await getAuthorizedUserRoleIdByTitle(
     AuthorizedUserRoleTitle.User,
   );
 
-  const emailRegex = /^[^\s@]+@northeastern\.edu$/;
-  if (!actualFormData.get("email")) {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!formData.get("email")) {
     return { ok: false, error: "No email provided", data: null };
   }
-  if (!emailRegex.test(actualFormData.get("email") as string)) {
+  if (!emailRegex.test(formData.get("email") as string)) {
     return { ok: false, error: "Not a valid email", data: null };
   }
 
   const { email, isEnabled } = CreateAuthorizedUser.parse({
-    email: actualFormData.get("email"),
-    isEnabled: actualFormData.get("isEnabled"),
+    email: formData.get("email"),
+    isEnabled: formData.get("isEnabled"),
   });
 
   const dataToSend = {
