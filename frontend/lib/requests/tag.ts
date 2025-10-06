@@ -2,8 +2,9 @@ import { Tag } from "@/types";
 import { StrapiRequestParams } from "@/types/strapi";
 import { fetchAPI, PopulateValue } from "../utils";
 
+// sort server side by name ascending
 export async function getTags({
-  sort,
+  sort = ["name:asc"],
   filters,
   fields = ["id", "name", "slug"],
   populate,
@@ -24,9 +25,7 @@ export async function getTags({
     },
   };
 
-  return (await fetchAPI<Tag[]>(path, { urlParams })).sort((a, b) =>
-    a.name.localeCompare(b.name),
-  );
+  return await fetchAPI<Tag[]>(path, { urlParams });
 }
 
 export async function getTagBySlug(
