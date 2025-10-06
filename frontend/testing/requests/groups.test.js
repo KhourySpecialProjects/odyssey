@@ -14,6 +14,7 @@ const {
   createGroup,
   getGroupBySlugV2,
   updateGroup,
+  createAuthorizedUserInGroup,
   enrollUsers,
   assignDropletDueDate,
   assignPlaylistDueDate,
@@ -891,6 +892,7 @@ describe("Groups Tests", () => {
       );
 
       const requestBody = JSON.parse(fetchAPI.mock.calls[0][1].options.body);
+      //expect(requestBody.data.members.set).toEqual([{ id: 30 }, { id: 31 }]);
     });
 
     it("should handle errors during group creation", async () => {
@@ -1209,6 +1211,112 @@ describe("Groups Tests", () => {
         "Failed to update group",
       );
       expect(revalidatePath).toHaveBeenCalledWith("/admin");
+    });
+  });
+
+  describe("createAuthorizedUserInGroup", () => {
+    it("should successfully create an authorized user", async () => {
+      const email = "test@northeastern.edu";
+      const isEnabled = true;
+
+      global.fetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          data: {
+            id: 123,
+            attributes: {
+              email: "test@northeastern.edu",
+              isEnabled: true,
+            },
+          },
+        }),
+      });
+
+      const result = await createAuthorizedUserInGroup(email, isEnabled);
+
+      expect(result).toEqual({
+        ok: true,
+        message: `User ${email} created!`,
+        data: { id: 123 },
+      });
+
+      expect(global.fetch).toHaveBeenCalledWith(
+        expect.stringContaining("/api/authorized-users"),
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: expect.stringContaining("Bearer"),
+          },
+          body: JSON.stringify({
+            data: {
+              email,
+              isEnabled,
+              roles: {
+                set: [{ id: 1 }],
+              },
+            },
+          }),
+        },
+      );
+    });
+
+    it("should handle API error responses", async () => {
+      const email = "error@northeastern.edu";
+
+      global.fetch.mockResolvedValueOnce({
+        ok: false,
+        json: async () => ({
+          error: {
+            message: "Email already exists",
+          },
+        }),
+      });
+
+      const result = await createAuthorizedUserInGroup(email);
+
+      expect(result).toEqual({
+        ok: false,
+        error: "Email already exists",
+        data: null,
+      });
+    });
+
+    it("should handle successful response with error property", async () => {
+      const email = "edge-case@northeastern.edu";
+
+      global.fetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          error: {
+            message: "Validation error",
+          },
+        }),
+      });
+
+      const result = await createAuthorizedUserInGroup(email);
+
+      expect(result).toEqual({
+        ok: false,
+        error: "Validation error",
+        data: null,
+      });
+    });
+
+    it("should handle network errors", async () => {
+      const email = "network-error@northeastern.edu";
+
+      global.fetch.mockRejectedValueOnce(new Error("Network failure"));
+
+      const result = await createAuthorizedUserInGroup(email);
+
+      expect(result).toEqual({
+        ok: false,
+        error: "Database Error: Failed to Create Authorized User.",
+        data: null,
+      });
+
+      expect(console.error).toHaveBeenCalled();
     });
   });
 
