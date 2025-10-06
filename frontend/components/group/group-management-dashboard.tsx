@@ -141,8 +141,8 @@ export function GroupDashboard({
             title=""
             emptyMessage="No students are enrolled in any droplets or playlists."
           >
-            {group.droplets &&
-            group.droplets.length > 0 &&
+            {((group.droplets && group.droplets.length > 0) ||
+              (group.playlists && group.playlists.length > 0)) &&
             group.members &&
             group.members.length > 0 ? (
               <div className="flex flex-row items-start overflow-x-auto">
