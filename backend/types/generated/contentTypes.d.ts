@@ -856,6 +856,11 @@ export interface ApiDropletDroplet extends Schema.CollectionType {
       'oneToMany',
       'api::enrollment.enrollment'
     >;
+    favorites: Attribute.Relation<
+      'api::droplet.droplet',
+      'oneToMany',
+      'api::favorite.favorite'
+    >;
     focusArea: Attribute.Enumeration<
       ['personal', 'professional', 'technical']
     > &
@@ -1031,6 +1036,45 @@ export interface ApiEnrollmentEnrollment extends Schema.CollectionType {
       'api::enrollment.enrollment',
       'manyToMany',
       'api::lesson.lesson'
+    >;
+  };
+}
+
+export interface ApiFavoriteFavorite extends Schema.CollectionType {
+  collectionName: 'favorites';
+  info: {
+    displayName: 'Favorite';
+    pluralName: 'favorites';
+    singularName: 'favorite';
+  };
+  options: {
+    draftAndPublish: true;
+  };
+  attributes: {
+    createdAt: Attribute.DateTime;
+    createdBy: Attribute.Relation<
+      'api::favorite.favorite',
+      'oneToOne',
+      'admin::user'
+    > &
+      Attribute.Private;
+    droplet: Attribute.Relation<
+      'api::favorite.favorite',
+      'manyToOne',
+      'api::droplet.droplet'
+    >;
+    publishedAt: Attribute.DateTime;
+    updatedAt: Attribute.DateTime;
+    updatedBy: Attribute.Relation<
+      'api::favorite.favorite',
+      'oneToOne',
+      'admin::user'
+    > &
+      Attribute.Private;
+    user: Attribute.Relation<
+      'api::favorite.favorite',
+      'manyToOne',
+      'plugin::users-permissions.user'
     >;
   };
 }
@@ -1893,6 +1937,11 @@ export interface PluginUsersPermissionsUser extends Schema.CollectionType {
       Attribute.SetMinMaxLength<{
         minLength: 6;
       }>;
+    favorites: Attribute.Relation<
+      'plugin::users-permissions.user',
+      'oneToMany',
+      'api::favorite.favorite'
+    >;
     password: Attribute.Password &
       Attribute.Private &
       Attribute.SetMinMaxLength<{
@@ -1940,6 +1989,7 @@ declare module '@strapi/types' {
       'api::droplet.droplet': ApiDropletDroplet;
       'api::due-date.due-date': ApiDueDateDueDate;
       'api::enrollment.enrollment': ApiEnrollmentEnrollment;
+      'api::favorite.favorite': ApiFavoriteFavorite;
       'api::friendship.friendship': ApiFriendshipFriendship;
       'api::gallery.gallery': ApiGalleryGallery;
       'api::group.group': ApiGroupGroup;

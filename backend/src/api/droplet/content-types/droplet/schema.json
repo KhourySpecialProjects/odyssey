@@ -153,6 +153,12 @@
       "max": 5,
       "min": 0,
       "default": 0
+    },
+    "favorites": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::favorite.favorite",
+      "mappedBy": "droplet"
     }
   }
 }
