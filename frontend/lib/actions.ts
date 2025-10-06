@@ -13,6 +13,7 @@ import {
 } from "@aws-sdk/client-s3";
 import { v4 as uuidv4 } from "uuid";
 import { Buffer } from "node:buffer";
+import { createAuthorizedUser } from "./requests/authorized-user";
 
 const STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
@@ -60,6 +61,13 @@ export async function uploadImage(formData: FormData) {
       url: null,
     };
   }
+}
+
+export async function createAuthorizedUserWithState(
+  _prevState: any,
+  formData: FormData,
+) {
+  return createAuthorizedUser(formData);
 }
 
 export async function deleteImage(fileName: string) {

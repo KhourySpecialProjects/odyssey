@@ -15,7 +15,7 @@ describe("PlaylistCard", () => {
   it("renders playlist name and droplet count", () => {
     render(<PlaylistCard playlist={mockPlaylist} />);
     expect(screen.getByText("Test Playlist")).toBeInTheDocument();
-    expect(screen.getByText("0 droplets")).toBeInTheDocument();
+    expect(screen.getByText("Droplets: 0 Lessons: 0")).toBeInTheDocument();
   });
 
   it("shows due date badge when date is provided", () => {
