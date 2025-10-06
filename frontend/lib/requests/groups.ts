@@ -570,6 +570,10 @@ async function ensureAuthorizedUsers(
         if (newUser.ok && newUserData) {
           results.push({ id: newUserData.id, email });
         }
+        // const newUser = await createAuthorizedUserInGroup(email);
+        // if (newUser.ok && newUser.data) {
+        //   results.push({ id: newUser.data.id, email });
+        // }
       }
     } catch (error) {
       console.error(`Failed to process email: ${email}`, error);
@@ -577,6 +581,58 @@ async function ensureAuthorizedUsers(
   }
 
   return results;
+}
+
+export async function createAuthorizedUserInGroup(
+  email: string,
+  isEnabled: boolean = true,
+): Promise<ActionResponse<{ id: number }>> {
+  const roleID = await getAuthorizedUserRoleIdByTitle(
+    AuthorizedUserRoleTitle.User,
+  );
+  const dataToSend = {
+    data: {
+      email,
+      isEnabled,
+      roles: {
+        set: [{ id: roleID }],
+      },
+    },
+  };
+
+  try {
+    const response = await fetch(`${STRAPI_API_URL}/api/authorized-users`, {
+      method: "POST",
+      body: JSON.stringify(dataToSend),
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+      },
+    });
+
+    const data = await response.json();
+
+    if (!response.ok || (response.ok && data.error)) {
+      return {
+        ok: false,
+        error: data.error?.message || "Failed to create authorized user",
+        data: null,
+      };
+    }
+
+    return {
+      ok: true,
+      message: `User ${email} created!`,
+      data: { id: data.data.id },
+    };
+  } catch (err) {
+    console.error(err);
+    return {
+      ok: false,
+      error: "Database Error: Failed to Create Authorized User.",
+      data: null,
+    };
+  }
 }
 
 export async function enrollUsers(group: Group) {
