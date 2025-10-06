@@ -6,7 +6,7 @@ import { Button } from "./ui/button";
 
 export default async function AccessRequestBanner() {
   const session = await getServerSession(authOptions);
-  if (session) return null;
+  if (session && session.isAuthorized) return null;
 
   return (
     <>

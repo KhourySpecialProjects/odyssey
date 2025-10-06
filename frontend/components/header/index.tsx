@@ -18,6 +18,7 @@ import { AuthorizedUser, User } from "@/types";
 import { DarkMode } from "../explore/dark-mode";
 import { Logo } from "./logo";
 import { useState } from "react";
+import { useSession } from "next-auth/react";
 
 export function Header({
   user,
@@ -31,7 +32,8 @@ export function Header({
   const getNavLinks = () => {
     return generalConfig.mainNav;
   };
-  const generalConfig = getGeneralConfig(user);
+  const session = useSession();
+  const generalConfig = getGeneralConfig(session.data?.isAuthorized, user);
 
   const handleCloseSheet = () => {
     setIsOpen(false);

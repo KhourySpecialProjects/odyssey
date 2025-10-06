@@ -66,9 +66,7 @@ describe("options", () => {
           credentials: undefined,
         });
 
-        expect(result).toBe(
-          `/unauthorized?email=${encodeURIComponent(testEmail)}`,
-        );
+        expect(result).toBe(`/unauthorized`);
       });
 
       it("rejects users without email", async () => {
@@ -109,6 +107,7 @@ describe("options", () => {
         });
 
         expect(result).toEqual({
+          attemptedEmail: "test@test.com",
           user: {
             name: "Test User",
             email: "test@test.com",

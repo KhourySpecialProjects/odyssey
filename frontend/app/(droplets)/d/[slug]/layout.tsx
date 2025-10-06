@@ -6,7 +6,8 @@ import { getServerSession } from "next-auth";
 import { Metadata } from "next/types";
 import { AuthorizedUser, Droplet } from "@/types";
 import { getCurrentUser } from "@/lib/auth/session";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation"; // ← Add redirect import
+import { authOptions } from "@/lib/auth/options"; // ← Add authOptions import
 
 type Props = {
   params: Promise<Params>;
@@ -25,7 +26,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     populate: undefined,
   });
   if (!droplet) return {};
-
   return {
     title: {
       absolute: `Overview | ${droplet.name}`,
@@ -36,10 +36,17 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function RootLayout({ params, children }: Props) {
   const { slug } = await params;
-  const session = await getServerSession();
+  const session = await getServerSession(authOptions); // ← Pass authOptions here
+
+  // ← ADD THIS: Redirect unauthorized users before doing anything else
+  if (session && session.isAuthorized === false) {
+    redirect("/unauthorized");
+  }
+
   const user = await getCurrentUser();
   let completedLessonIds: number[] = [];
   let authorizedUser: AuthorizedUser | null = null;
+
   if (user?.email) {
     authorizedUser = (await getAuthorizedUserByEmail(
       user.email,

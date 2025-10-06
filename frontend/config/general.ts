@@ -4,6 +4,7 @@ import {
   isContentEditor,
 } from "@/lib/utils";
 import { GeneralConfig, User } from "@/types";
+
 export const originalNav = [
   {
     href: "/explore",
@@ -52,8 +53,19 @@ export const getMainNav = (user: User) => {
   return mainNav;
 };
 
-export const getGeneralConfig = (user?: User): GeneralConfig => ({
-  mainNav: user
-    ? getMainNav(user).filter((item) => !item.isHidden)
-    : originalNav,
-});
+export const getGeneralConfig = (
+  isAuthorized: boolean | undefined,
+  user?: User,
+): GeneralConfig => {
+  let mainNav;
+
+  if (user && isAuthorized) {
+    // User is logged in - get personalized nav and remove hidden items
+    mainNav = getMainNav(user).filter((item) => !item.isHidden);
+  } else {
+    // No user - use default public navigation
+    mainNav = originalNav;
+  }
+
+  return { mainNav };
+};

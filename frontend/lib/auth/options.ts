@@ -32,44 +32,64 @@ export const authOptions: NextAuthOptions = {
     async signIn({ user }) {
       if (!user.email) return false;
 
-      const isAllowedToSignIn = await fetchIsAuthorized(user.email);
+      // const isAllowedToSignIn = await fetchIsAuthorized(user.email);
 
-      if (isAllowedToSignIn) {
-        return true;
-      } else {
-        return `/unauthorized?email=${encodeURIComponent(user.email)}`;
-      }
+      // if (isAllowedToSignIn) {
+      //   return true;
+      // } else {
+      //   return `/unauthorized`;
+      // }
+      return true;
     },
-    async jwt({ token, user, account, profile }) {
+    async jwt({ token, user, account }) {
       // Add extra properties to the JWT token
       if (user) {
-        // Fetch additional user data from Microsoft Graph
-        const graphProfile = await getUserProfile(
-          account?.access_token as string,
-        );
+        // ALWAYS store the attempted email first
+        if (user.email) {
+          token.attemptedEmail = user.email;
+        }
 
-        const authorizedUser = await getAuthorizedUserByEmail(
-          user.email as string,
-          { populate: { roles: { fields: ["title"] } } },
-        );
+        // Check if they're authorized before fetching additional data
+        const isAuthorized = await fetchIsAuthorized(user.email as string);
+        token.isAuthorized = isAuthorized;
 
-        // Enrich token with user details
-        token.user = {
-          name: user.name,
-          email: user.email,
-          image: user.image,
-          nuid: graphProfile.nuid,
-          isActive: true,
-          roles: authorizedUser.roles.map((elem) => elem.title),
-        };
+        if (isAuthorized) {
+          // Only fetch additional data for authorized users
+          const graphProfile = await getUserProfile(
+            account?.access_token as string,
+          );
+
+          const authorizedUser = await getAuthorizedUserByEmail(
+            user.email as string,
+            { populate: { roles: { fields: ["title"] } } },
+          );
+
+          // Enrich token with user details
+          token.user = {
+            name: user.name,
+            email: user.email,
+            image: user.image,
+            nuid: graphProfile.nuid,
+            isActive: true,
+            roles: authorizedUser.roles.map((elem) => elem.title),
+          };
+        }
+        // If not authorized, we just have attemptedEmail in the token
       }
-
       return token;
     },
     session: async ({ session, token }) => {
-      if (!token.user) throw new Error("No user data");
+      // Only set user if they're authorized
+      if (token.user) {
+        session.user = token.user as User;
+      }
 
-      session.user = token.user as User;
+      // Pass attempted email for unauthorized users
+      if (token.attemptedEmail) {
+        session.attemptedEmail = token.attemptedEmail as string;
+      }
+
+      session.isAuthorized = token.isAuthorized;
 
       return session;
     },

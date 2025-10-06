@@ -13,7 +13,7 @@ export const metadata: Metadata = {
 
 export default async function RequestAccessPage() {
   const session = await getServerSession(authOptions);
-  if (session) return redirect("/explore");
+  if (session && session.isAuthorized) return redirect("/explore");
 
   return (
     <GradientBackground>

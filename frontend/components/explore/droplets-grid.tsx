@@ -10,6 +10,8 @@ import { DropletTile } from "../droplets/droplet-tile";
 import { SortedDropletsGrid } from "./sorted-droplets-grid";
 import { Droplet, DueDate, Enrollment } from "@/types";
 import { getUserDueDates } from "@/lib/requests/groups";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth/options";
 
 interface Lesson {
   id: number;
@@ -27,13 +29,16 @@ export async function DropletsGrid({
   droplets: Droplet[];
 }) {
   const user = await getCurrentUser();
+  // need to ensure user is valid
+  const session = await getServerSession(authOptions);
+
   let enrolledDropletIds: number[] = [];
   let completedLessonIds: number[] = [];
 
   let enrollments: Enrollment[] = [];
   let dueDates: DueDate[] = [];
 
-  if (user?.email) {
+  if (session?.isAuthorized && user?.email) {
     const authorizedUser = await getAuthorizedUserByEmail(user.email);
     enrollments = await getEnrollmentsByAuthorizedUser(authorizedUser.id);
 
