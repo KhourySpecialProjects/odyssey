@@ -97,7 +97,7 @@ export function Header({
           </nav>
 
           <div className="flex items-center gap-4 md:ml-auto md:gap-2 xl:gap-2">
-            {user ? (
+            {user && session.data?.isAuthorized ? (
               <div className="flex items-center justify-center">
                 <UserDropdown user={user} authorizedUser={authorizedUser} />
               </div>
