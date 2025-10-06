@@ -45,6 +45,11 @@ export async function getAuthorizedUserByEmail<
         populate: {
           droplets: {
             fields: "*",
+            populate: {
+              lessons: {
+                fields: ["*"], // or just ["id"] if you only need the count
+              },
+            },
           },
         },
       },
@@ -53,6 +58,11 @@ export async function getAuthorizedUserByEmail<
         populate: {
           droplets: {
             fields: "*",
+            populate: {
+              lessons: {
+                fields: ["*"], // or just ["id"] if you only need the count
+              },
+            },
           },
         },
       },
@@ -355,11 +365,13 @@ const CreateAuthorizedUser = AuthorizedUserSchema.omit({
   id: true,
 });
 export async function createAuthorizedUser(formData: FormData) {
+  // Determine which parameter is the FormData
+
   const roleID = await getAuthorizedUserRoleIdByTitle(
     AuthorizedUserRoleTitle.User,
   );
 
-  const emailRegex = /^[^\s@]+@northeastern\.edu$/;
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!formData.get("email")) {
     return { ok: false, error: "No email provided", data: null };
   }
