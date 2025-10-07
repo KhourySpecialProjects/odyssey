@@ -1,7 +1,6 @@
 "use client";
 
-import UnauthorizedRoute from "@/app/(general)/unauthorized/UnauthorizedRoute";
-
+import UnauthorizedRoute from "@/app/(general)/unauthorized/page";
 import { cn, getPath, isAuthorizedUserAdmin } from "@/lib/utils";
 import { Droplet, User } from "@/types";
 import {
@@ -58,7 +57,7 @@ export default function Sidebar({
     return () => window.removeEventListener("resize", () => setExpanded(false));
   }, []);
 
-  if (!user) return <UnauthorizedRoute email={""} />;
+  if (!user) return <UnauthorizedRoute />;
 
   const curPath = pathname.split("d/")[1];
 
