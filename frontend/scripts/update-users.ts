@@ -64,9 +64,7 @@ async function main() {
     page += 1;
   }
 
-  console.log(
-    `Completed. Users updated: ${totalUpdated}`,
-  );
+  console.log(`Completed. Users updated: ${totalUpdated}`);
 }
 
 main().catch((err) => {
