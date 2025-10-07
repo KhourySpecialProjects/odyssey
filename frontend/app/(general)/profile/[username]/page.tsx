@@ -79,20 +79,20 @@ export default function PublicProfilePage() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50">
-        <div className="text-gray-600">Loading...</div>
+      <div className="flex min-h-screen items-center justify-center bg-gray-50 dark:bg-gray-900">
+        <div className="text-gray-600 dark:text-gray-400">Loading...</div>
       </div>
     );
   }
 
   if (error || !userData) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50">
+      <div className="flex min-h-screen items-center justify-center bg-gray-50 dark:bg-gray-900">
         <div className="text-center">
-          <h1 className="mb-2 text-2xl font-bold text-gray-800">
+          <h1 className="mb-2 text-2xl font-bold text-gray-800 dark:text-gray-200">
             Profile Not Found
           </h1>
-          <p className="text-gray-600">
+          <p className="text-gray-600 dark:text-gray-400">
             This profile is either private or does not exist.
           </p>
         </div>
@@ -118,16 +118,16 @@ export default function PublicProfilePage() {
     .filter((droplet) => droplet.id); // Filter out any null/undefined droplets
 
   return (
-    <div className="min-h-screen bg-gray-50 px-4 py-12">
+    <div className="min-h-screen bg-gray-50 px-4 py-12 dark:bg-gray-900">
       <div className="mx-auto max-w-7xl">
         {/* ===== LAYOUT CHANGE: Two-column grid layout ===== */}
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
           {/* ===== LEFT SIDEBAR START - Profile Info ===== */}
           <div className="lg:col-span-3">
-            <div className="sticky top-8 rounded-lg bg-white p-6 shadow-sm">
+            <div className="sticky top-8 rounded-lg bg-white p-6 shadow-sm dark:bg-gray-800">
               <div className="flex flex-col items-center">
                 {/* Profile Photo */}
-                <div className="mb-4 flex h-32 w-32 items-center justify-center overflow-hidden rounded-full border-4 border-gray-300 bg-gray-100">
+                <div className="mb-4 flex h-32 w-32 items-center justify-center overflow-hidden rounded-full border-4 border-gray-300 bg-gray-100 dark:border-gray-600 dark:bg-gray-700">
                   {userData.profilePhoto ? (
                     <img
                       src={userData.profilePhoto}
@@ -142,14 +142,14 @@ export default function PublicProfilePage() {
                 </div>
 
                 {/* Name */}
-                <h1 className="mb-2 text-center text-xl font-bold text-gray-900">
+                <h1 className="mb-2 text-center text-xl font-bold text-gray-900 dark:text-white">
                   {userData.firstName} {userData.lastName}
                 </h1>
 
                 {/* Bio */}
                 {userData.bio && (
                   <div
-                    className="mb-6 text-center text-sm text-gray-600"
+                    className="mb-6 text-center text-sm text-gray-600 dark:text-gray-300"
                     dangerouslySetInnerHTML={{
                       __html: DOMPurify.sanitize(userData.bio),
                     }}
@@ -167,10 +167,10 @@ export default function PublicProfilePage() {
                       }
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex h-12 w-12 items-center justify-center rounded border-2 border-gray-300 transition-colors hover:bg-gray-50"
+                      className="flex h-12 w-12 items-center justify-center rounded border-2 border-gray-300 transition-colors hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700"
                       aria-label="LinkedIn"
                     >
-                      <span className="text-sm font-semibold text-gray-700">
+                      <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
                         <LinkedInIcon />
                       </span>
                     </a>
@@ -184,10 +184,10 @@ export default function PublicProfilePage() {
                       }
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex h-12 w-12 items-center justify-center rounded border-2 border-gray-300 transition-colors hover:bg-gray-50"
+                      className="flex h-12 w-12 items-center justify-center rounded border-2 border-gray-300 transition-colors hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700"
                       aria-label="GitHub"
                     >
-                      <span className="text-sm font-semibold text-gray-700">
+                      <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
                         <GitHubIcon />
                       </span>
                     </a>
@@ -202,8 +202,8 @@ export default function PublicProfilePage() {
           <div className="space-y-8 lg:col-span-9">
             {/* Droplets Completed */}
             {completedDroplets.length > 0 && (
-              <div className="rounded-lg bg-white p-8 shadow-sm">
-                <h2 className="mb-6 text-2xl font-bold text-gray-900">
+              <div className="rounded-lg bg-white p-8 shadow-sm dark:bg-gray-800">
+                <h2 className="mb-6 text-2xl font-bold text-gray-900 dark:text-white">
                   Droplets completed
                 </h2>
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -212,10 +212,10 @@ export default function PublicProfilePage() {
                     <div
                       key={droplet.id}
                       onClick={() => setSelectedId(droplet.id)}
-                      className="flex min-h-32 cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-gray-300 p-6 transition-colors hover:border-gray-400"
+                      className="flex min-h-32 cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-gray-300 p-6 transition-colors hover:border-gray-400 dark:border-gray-600 dark:hover:border-gray-500"
                     >
                       <div className="text-center">
-                        <h3 className="font-semibold text-gray-900">
+                        <h3 className="font-semibold text-gray-900 dark:text-white">
                           {droplet.name}
                         </h3>
                       </div>
@@ -227,8 +227,8 @@ export default function PublicProfilePage() {
 
             {/* Droplets Created */}
             {createdDroplets.length > 0 && (
-              <div className="rounded-lg bg-white p-8 shadow-sm">
-                <h2 className="mb-6 text-2xl font-bold text-gray-900">
+              <div className="rounded-lg bg-white p-8 shadow-sm dark:bg-gray-800">
+                <h2 className="mb-6 text-2xl font-bold text-gray-900 dark:text-white">
                   Droplets Created
                 </h2>
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -236,10 +236,10 @@ export default function PublicProfilePage() {
                     <div
                       key={droplet.uniqueKey}
                       onClick={() => setSelectedId(droplet.id)}
-                      className="flex min-h-32 cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-gray-300 p-6 transition-colors hover:border-gray-400"
+                      className="flex min-h-32 cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-gray-300 p-6 transition-colors hover:border-gray-400 dark:border-gray-600 dark:hover:border-gray-500"
                     >
                       <div className="text-center">
-                        <h3 className="font-semibold text-gray-900">
+                        <h3 className="font-semibold text-gray-900 dark:text-white">
                           {droplet.name}
                         </h3>
                       </div>
@@ -251,8 +251,10 @@ export default function PublicProfilePage() {
 
             {/* Show message if no droplets */}
             {completedDroplets.length === 0 && createdDroplets.length === 0 && (
-              <div className="rounded-lg bg-white p-8 text-center shadow-sm">
-                <p className="text-gray-600">No droplets to display yet.</p>
+              <div className="rounded-lg bg-white p-8 text-center shadow-sm dark:bg-gray-800">
+                <p className="text-gray-600 dark:text-gray-400">
+                  No droplets to display yet.
+                </p>
               </div>
             )}
           </div>
@@ -264,21 +266,21 @@ export default function PublicProfilePage() {
       {/* Displaying droplet description */}
       {selectedId && (
         <div
-          className="bg-opacity-20 fixed inset-0 z-50 flex items-center justify-center bg-gray-900 p-4"
+          className="bg-opacity-20 dark:bg-opacity-40 fixed inset-0 z-50 flex items-center justify-center bg-gray-900 p-4"
           onClick={() => setSelectedId(null)}
         >
           <div
-            className="w-96 rounded-lg border-2 border-gray-300 bg-white p-6 shadow-xl"
+            className="w-96 rounded-lg border-2 border-gray-300 bg-white p-6 shadow-xl dark:border-gray-600 dark:bg-gray-800"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="mb-4 flex items-start justify-between">
-              <h2 className="text-xl font-bold text-gray-900">
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white">
                 {completedDroplets.find((d) => d.id === selectedId)?.name ||
                   createdDroplets.find((d) => d.id === selectedId)?.name}
               </h2>
               <button
                 onClick={() => setSelectedId(null)}
-                className="text-gray-400 hover:text-gray-600"
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
               >
                 <svg
                   className="h-5 w-5"
@@ -295,7 +297,7 @@ export default function PublicProfilePage() {
                 </svg>
               </button>
             </div>
-            <div className="text-sm text-gray-700">
+            <div className="text-sm text-gray-700 dark:text-gray-300">
               {completedDroplets.find((d) => d.id === selectedId)
                 ?.description ||
                 createdDroplets.find((d) => d.id === selectedId)?.description}
