@@ -4,12 +4,14 @@ import React, { useState, useEffect } from 'react';
 import { User, Linkedin, Github } from 'lucide-react';
 import { getAuthorizedUserByEmail } from '@/lib/requests/authorized-user';
 
-import { AuthorizedUser, Droplet } from '@/types';
+import { AuthorizedUser, Droplet, Enrollment } from '@/types';
+import { getEnrollmentsByAuthorizedUser } from '@/lib/requests/enrollment';
 
 
 
 export default function PublicProfilePage() {
   const [userData, setUserData] = useState<AuthorizedUser | null>(null);
+  const [enrollments, setEnrollments] = useState<Enrollment[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -19,7 +21,7 @@ export default function PublicProfilePage() {
         // Extract email from URL path or query parameter
         // Example: /profile/user@example.com or /profile?email=user@example.com
         const pathParts = window.location.pathname.split('/');
-        const emailFromPath = pathParts[pathParts.length - 1];
+        const emailFromPath = pathParts[pathParts.length - 1] + "@northeastern.edu";
         
         const urlParams = new URLSearchParams(window.location.search);
         const emailFromQuery = urlParams.get('email');
@@ -34,16 +36,29 @@ export default function PublicProfilePage() {
 
 
         const user: AuthorizedUser = await getAuthorizedUserByEmail(userEmail) as AuthorizedUser;
-        
         // Check if user profile is public (you'll need to add isPublic field to AuthorizedUser)
         // For now, assuming all enabled users are public
-        if (!user.isEnabled) {
+        if (!user.isPublic) {
           setError('Profile not available');
           setLoading(false);
           return;
         }
 
         setUserData(user);
+        setEnrollments( await getEnrollmentsByAuthorizedUser(user.id, {
+      populate: {
+        viewedLessons: {
+          fields: ["id", "name", "slug"],
+        },
+        droplet: {
+          populate: {
+            lessons: {
+              fields: ["id", "name", "slug"],
+            },
+          },
+        },
+      },
+    }) || ['check']);
         setLoading(false);
       } catch (err) {
         setError('Profile not found');
@@ -73,16 +88,22 @@ export default function PublicProfilePage() {
     );
   }
 
-  // Separate droplets into completed (from enrollments/playlists) and created
-  const completedDroplets = userData.droplets || [];
+  // Separate droplets into completed and created
+  // Created droplets are in userData.droplets
+  const createdDroplets = (userData.droplets || []).map((droplet, index) => ({
+    ...droplet,
+    uniqueKey: `created-${droplet.id}-${index}`
+  }));
   
-  // Flatten playlists and add unique keys to handle duplicate droplet IDs
-  const createdDroplets = userData.created_playlists?.flatMap((playlist, playlistIndex) => 
-    (playlist.droplets || []).map((droplet, dropletIndex) => ({
-      ...droplet,
-      uniqueKey: `${playlist.id}-${droplet.id}-${playlistIndex}-${dropletIndex}`
+  // Completed droplets are from enrollments with 100% completion
+  
+  const completedDroplets = (enrollments || [])
+    .filter(enrollment => enrollment.isComplete)
+    .map((enrollment, index) => ({
+      ...enrollment.droplet,
+      uniqueKey: `completed-${enrollment.droplet?.id}-${index}`
     }))
-  ) || [];
+    .filter(droplet => droplet.id); // Filter out any null/undefined droplets
 
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4">
@@ -166,9 +187,7 @@ export default function PublicProfilePage() {
                     >
                       <div className="text-center">
                         <h3 className="font-semibold text-gray-900">{droplet.name}</h3>
-                        {droplet.name && (
-                          <p className="text-sm text-gray-600 mt-2">{droplet.description}</p>
-                        )}
+                        
                       </div>
                     </div>
                   ))}
@@ -190,9 +209,7 @@ export default function PublicProfilePage() {
                     >
                       <div className="text-center">
                         <h3 className="font-semibold text-gray-900">{droplet.name}</h3>
-                        {droplet.name && (
-                          <p className="text-sm text-gray-600 mt-2">{droplet.description}</p>
-                        )}
+                        
                       </div>
                     </div>
                   ))}
