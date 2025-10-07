@@ -57,8 +57,6 @@ describe("options", () => {
       it("redirects unauthorized users", async () => {
         (fetchIsAuthorizedUser as jest.Mock).mockResolvedValue(false);
 
-        const testEmail = "test@test.com";
-
         const result = await authOptions.callbacks!.signIn!({
           user: { email: "test@test.com", id: "1", emailVerified: new Date() },
           account: null,
@@ -66,9 +64,7 @@ describe("options", () => {
           credentials: undefined,
         });
 
-        expect(result).toBe(
-          `/unauthorized?email=${encodeURIComponent(testEmail)}`,
-        );
+        expect(result).toBe(`/unauthorized`);
       });
 
       it("rejects users without email", async () => {
