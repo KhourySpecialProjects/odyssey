@@ -1,5 +1,5 @@
 // frontend/scripts/update-users.ts
-// To run: npx tsx --env-file=.env.local scripts/update-users.ts
+// To run: npx tsx --env-file=.env.local scripts/update-users.ts from within frontend
 import dotenv from "dotenv";
 import fetch from "node-fetch";
 import qs from "qs";
