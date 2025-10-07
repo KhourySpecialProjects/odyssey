@@ -16,6 +16,9 @@ export default async function SignIn() {
   if (session && session.isAuthorized) {
     return redirect("/explore");
   }
+  if (!session?.isAuthorized) {
+    return redirect("/unauthorized");
+  }
 
   const providers = await getProviders();
 
