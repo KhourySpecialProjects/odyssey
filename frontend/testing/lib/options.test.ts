@@ -1,5 +1,7 @@
 import { authOptions } from "@/lib/auth/options";
+import { AuthorizedUserRoleTitle } from "@/lib/globals";
 import { fetchIsAuthorizedUser } from "@/lib/requests/authorized-user";
+import { Session } from "next-auth";
 
 jest.mock("@/lib/utils", () => ({
   fetchAPI: jest.fn(),
@@ -66,7 +68,8 @@ describe("options", () => {
           credentials: undefined,
         });
 
-        expect(result).toBe(`/unauthorized`);
+        // expect(result).toBe(`/unauthorized`);
+        expect(result).toBe(true);
       });
 
       it("rejects users without email", async () => {
@@ -82,6 +85,9 @@ describe("options", () => {
     });
 
     describe("jwt callback", () => {
+      beforeEach(() => {
+        jest.clearAllMocks();
+      });
       it("enriches token with user details", async () => {
         const token = {};
         const user = {
@@ -116,26 +122,105 @@ describe("options", () => {
             isActive: true,
             roles: ["User"],
           },
+          isAuthorized: true,
         });
       });
     });
 
-    it("throws error when token has no user data", async () => {
-      const token = {};
-      const session = {
-        user: { roles: [], isActive: true },
-        expires: new Date().toISOString(),
-      };
+    describe("session callback", () => {
+      it("sets session.user when token has user data", async () => {
+        const token = {
+          user: {
+            email: "test@test.com",
+            name: "Test User",
+            roles: ["User" as AuthorizedUserRoleTitle],
+            isActive: true,
+          },
+          isAuthorized: true,
+        };
 
-      await expect(
-        authOptions.callbacks!.session!({
-          session,
+        const session = {
+          expires: new Date().toISOString(),
+        };
+
+        const result = await authOptions.callbacks!.session!({
+          session: session as Session,
           token,
-          user: { id: "1", email: "test@test.com", emailVerified: new Date() },
+          user: undefined as any,
           trigger: "update",
           newSession: undefined,
-        }),
-      ).rejects.toThrow("No user data");
+        });
+
+        expect(result.user).toEqual(token.user);
+        expect(result.isAuthorized).toBe(true);
+      });
+
+      it("handles unauthorized users without user data", async () => {
+        const token = {
+          attemptedEmail: "test@test.com",
+          isAuthorized: false,
+          // No user field
+        };
+
+        const session = {
+          expires: new Date().toISOString(),
+        };
+
+        const result = await authOptions.callbacks!.session!({
+          session: session as any,
+          token,
+          user: undefined as any,
+          trigger: "update",
+          newSession: undefined,
+        });
+
+        expect(result.user).toBeUndefined();
+        expect(result.isAuthorized).toBe(false);
+        expect(result.attemptedEmail).toBe("test@test.com");
+      });
+
+      it("sets isAuthorized from token", async () => {
+        const token = {
+          isAuthorized: true,
+        };
+
+        const session = {
+          expires: new Date().toISOString(),
+        };
+
+        const result = await authOptions.callbacks!.session!({
+          session: session as any,
+          token,
+          user: undefined as any,
+          trigger: "update",
+          newSession: undefined,
+        });
+
+        expect(result.isAuthorized).toBe(true);
+      });
     });
+    // describe("session callback", () => {
+    //   it("throws error when token has no user data", async () => {
+    //     const token = {};
+    //     const session = {
+    //       user: { roles: [], isActive: true },
+    //       expires: new Date().toISOString(),
+    //     };
+
+    //     expect(
+    //       authOptions.callbacks!.session!({
+    //         session,
+    //         token,
+    //         user: {
+    //           id: "1",
+    //           email: "test@test.com",
+    //           emailVerified: new Date(),
+    //         },
+    //         trigger: "update",
+    //         newSession: undefined,
+    //       }),
+    //     ).toBe(false);
+    //   });
+    // });
   });
 });
