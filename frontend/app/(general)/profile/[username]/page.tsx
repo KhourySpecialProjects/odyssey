@@ -1,11 +1,16 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { User, Linkedin, Github } from "lucide-react";
+
+import LinkedInIcon from "@mui/icons-material/LinkedIn";
+import GitHubIcon from "@mui/icons-material/GitHub";
+import AccountCircleIcon from "@mui/icons-material/AccountCircle";
+
 import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
 
 import { AuthorizedUser, Droplet, Enrollment } from "@/types";
 import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
+import DOMPurify from "dompurify";
 
 export default function PublicProfilePage() {
   const [userData, setUserData] = useState<AuthorizedUser | null>(null);
@@ -60,7 +65,7 @@ export default function PublicProfilePage() {
                 },
               },
             },
-          })) || ["check"],
+          })) || [],
         );
         setLoading(false);
       } catch (err) {
@@ -130,7 +135,9 @@ export default function PublicProfilePage() {
                       className="h-full w-full object-cover"
                     />
                   ) : (
-                    <User className="h-16 w-16 text-gray-400" />
+                    <AccountCircleIcon
+                      sx={{ fontSize: 64, color: "#9ca3af" }}
+                    />
                   )}
                 </div>
 
@@ -143,7 +150,9 @@ export default function PublicProfilePage() {
                 {userData.bio && (
                   <div
                     className="mb-6 text-center text-sm text-gray-600"
-                    dangerouslySetInnerHTML={{ __html: userData.bio }}
+                    dangerouslySetInnerHTML={{
+                      __html: DOMPurify.sanitize(userData.bio),
+                    }}
                   />
                 )}
 
@@ -162,7 +171,7 @@ export default function PublicProfilePage() {
                       aria-label="LinkedIn"
                     >
                       <span className="text-sm font-semibold text-gray-700">
-                        <Linkedin></Linkedin>
+                        <LinkedInIcon />
                       </span>
                     </a>
                   )}
@@ -179,7 +188,7 @@ export default function PublicProfilePage() {
                       aria-label="GitHub"
                     >
                       <span className="text-sm font-semibold text-gray-700">
-                        git
+                        <GitHubIcon />
                       </span>
                     </a>
                   )}
