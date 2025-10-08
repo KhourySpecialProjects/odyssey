@@ -26,6 +26,7 @@ const config = {
       tsconfig: "./tsconfig.json",
     },
   },
+  testPathIgnorePatterns: ["/e2e/", "/playwright-report/", "/test-results/"],
 };
 
 module.exports = createJestConfig(config);
