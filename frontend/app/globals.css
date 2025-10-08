@@ -50,7 +50,6 @@
 }
 
 /* Fix for invisible text in dark mode */
-
 .dark .prose blockquote,
 .dark .prose blockquote *,
 .dark .bg-sky-50,
