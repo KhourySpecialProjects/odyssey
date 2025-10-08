@@ -377,7 +377,10 @@ function LessonBlockRenderer({
           )}
 
           <div className="">
-            <div className="prose prose-sky prose-headings:text-inherit prose-code:text-inherit prose-strong:text-inherit justify-left prose-li:marker:text-slate-700 mx-auto">
+            <div
+              className="prose prose-sky prose-headings:text-inherit prose-code:text-inherit prose-strong:text-inherit justify-left prose-li:marker:text-slate-700 mx-auto"
+              style={{ color: "black" }}
+            >
               <BlocksRenderer content={block.content} />
             </div>
           </div>
