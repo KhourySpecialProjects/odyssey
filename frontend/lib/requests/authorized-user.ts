@@ -365,11 +365,13 @@ const CreateAuthorizedUser = AuthorizedUserSchema.omit({
   id: true,
 });
 export async function createAuthorizedUser(formData: FormData) {
+  // Determine which parameter is the FormData
+
   const roleID = await getAuthorizedUserRoleIdByTitle(
     AuthorizedUserRoleTitle.User,
   );
 
-  const emailRegex = /^[^\s@]+@northeastern\.edu$/;
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!formData.get("email")) {
     return { ok: false, error: "No email provided", data: null };
   }
