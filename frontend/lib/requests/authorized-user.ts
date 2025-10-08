@@ -497,6 +497,7 @@ export async function updateUserInfo(
     roles?: AuthorizedUserRoleTitle[];
     profilePhoto?: string | null;
     isEnabled?: boolean;
+    isPublic?: boolean;
     firstTime?: boolean;
     linkedin?: string | null;
     github?: string | null;
@@ -511,6 +512,7 @@ export async function updateUserInfo(
       roles,
       profilePhoto,
       isEnabled,
+      isPublic,
       firstTime,
       linkedin,
       github,
@@ -529,6 +531,7 @@ export async function updateUserInfo(
     if (bio !== undefined) data.bio = bio;
     if (profilePhoto !== undefined) data.profilePhoto = profilePhoto;
     if (isEnabled !== undefined) data.isEnabled = isEnabled;
+    if (isPublic !== undefined) data.isPublic = isPublic;
     if (firstTime !== undefined) data.firstTime = updates.firstTime;
     if (linkedin !== undefined) data.linkedin = linkedin;
     if (github !== undefined) data.github = github;
