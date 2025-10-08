@@ -50,8 +50,9 @@
 }
 
 /* Fix for invisible text in dark mode */
-.dark .prose,
-.dark .prose *,
+
+.dark .prose blockquote,
+.dark .prose blockquote *,
 .dark .bg-sky-50,
 .dark .bg-sky-50 *,
 .dark pre,
