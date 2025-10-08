@@ -297,11 +297,18 @@ export default function PublicProfilePage() {
                 </svg>
               </button>
             </div>
-            <div className="text-sm text-gray-700 dark:text-gray-300">
-              {completedDroplets.find((d) => d.id === selectedId)
-                ?.description ||
-                createdDroplets.find((d) => d.id === selectedId)?.description}
-            </div>
+            <div
+              className="text-sm text-gray-700 dark:text-gray-300"
+              dangerouslySetInnerHTML={{
+                __html: DOMPurify.sanitize(
+                  completedDroplets.find((d) => d.id === selectedId)
+                    ?.description ||
+                    createdDroplets.find((d) => d.id === selectedId)
+                      ?.description ||
+                    "",
+                ),
+              }}
+            />
           </div>
         </div>
       )}
