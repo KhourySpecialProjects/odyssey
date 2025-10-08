@@ -418,8 +418,6 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
         span.style.backgroundColor = selectedColor;
         span.style.color = "black";
 
-        console.log(span.style.cssText);
-
         const textNode = document.createTextNode(text);
         span.appendChild(textNode);
 
