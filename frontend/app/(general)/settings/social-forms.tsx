@@ -2,6 +2,7 @@
 
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { uploadImage } from "@/lib/actions";
 import { AuthorizedUser } from "@/types";
@@ -29,6 +30,18 @@ export function SocialForms({
   );
   const [profileFile, setProfileFile] = useState<File | null>(null);
 
+  const [isPublicProfile, setIsPublicProfile] = useState(
+    authorizedUser?.isPublic || false,
+  );
+  const updatePublicProfile = async (isPublic: boolean) => {
+    setIsPublicProfile(isPublic);
+    console.log(isPublic);
+    if (authorizedUser?.id) {
+      const result = await updateUserInfo(authorizedUser.id, {
+        isPublic: isPublic,
+      });
+    }
+  };
   function isValidGithubUrl(url: string) {
     return /^https:\/\/(www\.)?github\.com\/[A-Za-z0-9_-]+\/?$/.test(url);
   }
@@ -333,6 +346,31 @@ export function SocialForms({
         currentZone={authorizedUser.timeZone?.trim()}
         userId={authorizedUser.id}
       ></TimeZoneSelector>
+      <div className="mx-6 mt-6 mb-4">
+        <div className="flex items-center gap-4">
+          <div>
+            <label className="mb-1 block">Show my profile publicly</label>
+          </div>
+          <Switch
+            checked={isPublicProfile}
+            onCheckedChange={updatePublicProfile}
+          />
+        </div>
+
+        {isPublicProfile && (
+          <div className="mt-3 text-sm text-gray-600">
+            Your profile is now visible to the public. Others can view your
+            information at{" "}
+            <span className="color:blue">
+              khouryodyssey.com/profile/
+              {authorizedUser.email.substring(
+                0,
+                authorizedUser.email.indexOf("@"),
+              )}
+            </span>
+          </div>
+        )}
+      </div>
       <div className="p-4">
         <ProfileBlock
           user={authorizedUser}
