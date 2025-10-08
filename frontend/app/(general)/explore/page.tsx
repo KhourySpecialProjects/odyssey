@@ -87,6 +87,11 @@ export default async function ExplorePage({
     },
   });
 
+  // testing the suspense stuff
+  const SuspendForeva = () => {
+    throw new Promise(() => {});
+  };
+
   return (
     <SearchProvider>
       <div className="mx-auto my-4 w-full max-w-7xl p-8 text-center">
@@ -126,9 +131,13 @@ export default async function ExplorePage({
       <div className="mx-auto mb-8 w-full max-w-7xl px-4 xl:p-0">
         {contentType === "droplets" ? (
           <Suspense fallback={<DropletsSkeleton />}>
-            <DropletsGrid droplets={droplets} sortKey={sortKey} />
+            <SuspendForeva />
+            <h1>Hello there!</h1>
           </Suspense>
         ) : (
+          // <Suspense fallback={<DropletsSkeleton />}>
+          //   <DropletsGrid droplets={droplets} sortKey={sortKey} />
+          // </Suspense>
           <Suspense fallback={<DropletsSkeleton />}>
             <PlaylistsGrid playlists={playlists} sortKey={sortKey} />
           </Suspense>
