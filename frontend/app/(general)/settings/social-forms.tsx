@@ -37,7 +37,7 @@ export function SocialForms({
     setIsPublicProfile(isPublic);
     console.log(isPublic);
     if (authorizedUser?.id) {
-      const result = await updateUserInfo(authorizedUser.id, {
+      await updateUserInfo(authorizedUser.id, {
         isPublic: isPublic,
       });
     }
