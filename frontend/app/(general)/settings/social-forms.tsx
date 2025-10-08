@@ -213,7 +213,7 @@ export function SocialForms({
                 await updateUserInfo(authorizedUser?.id, { profilePhoto: "" });
               }
             }}
-            className="min-w-[50px] whitespace-normal bg-red-500 hover:bg-red-400 dark:bg-red-400 dark:hover:bg-red-300"
+            className="min-w-[50px] bg-red-500 whitespace-normal hover:bg-red-400 dark:bg-red-400 dark:hover:bg-red-300"
             disabled={!profileImage}
           >
             Remove Photo
@@ -348,7 +348,7 @@ export function SocialForms({
         currentZone={authorizedUser.timeZone?.trim()}
         userId={authorizedUser.id}
       ></TimeZoneSelector>
-      <div className="mx-6 mb-4 mt-6">
+      <div className="mx-6 mt-6 mb-4">
         <div className="flex items-center gap-4">
           <div>
             <label className="mb-1 block">Show my profile publicly</label>
