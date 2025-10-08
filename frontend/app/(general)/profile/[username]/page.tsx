@@ -19,11 +19,13 @@ import { ProfileContent } from "./profile-content";
 export default async function PublicProfilePage({
   params,
 }: {
-  params: { username: string };
+  params: Promise<{ username: string }>;
 }) {
+  const { username } = await params;
+
   try {
     // Extract email from URL parameter
-    const userEmail = params.username + "@northeastern.edu";
+    const userEmail = username + "@northeastern.edu";
 
     // Fetch the profile user's data
     const userData: AuthorizedUser = await getAuthorizedUserByEmail(userEmail);
