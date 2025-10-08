@@ -86,6 +86,8 @@ export default function PublicProfilePage() {
   }
 
   if (error || !userData) {
+    console.log(error);
+    console.log(userData);
     return (
       <div className="flex min-h-screen items-center justify-center bg-gray-50 dark:bg-gray-900">
         <div className="text-center">
@@ -266,7 +268,7 @@ export default function PublicProfilePage() {
       {/* Displaying droplet description */}
       {selectedId && (
         <div
-          className="bg-opacity-20 dark:bg-opacity-40 fixed inset-0 z-50 flex items-center justify-center bg-gray-900 p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900 bg-opacity-20 p-4 dark:bg-opacity-40"
           onClick={() => setSelectedId(null)}
         >
           <div
