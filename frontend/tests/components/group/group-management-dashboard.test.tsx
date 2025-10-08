@@ -10,6 +10,18 @@ import {
   TimeZone,
 } from "@/types";
 import { GroupDashboard } from "@/components/group/group-management-dashboard";
+jest.mock("next/navigation", () => ({
+  useRouter: () => ({
+    push: jest.fn(),
+    replace: jest.fn(),
+    prefetch: jest.fn(),
+    pathname: "/",
+  }),
+  useSearchParams: () => ({
+    get: (key: string) => (key === "tab" ? "droplets" : null),
+  }),
+  usePathname: () => "/group/test-group",
+}));
 
 describe("GroupDashboard", () => {
   const mockGroup = {
@@ -43,6 +55,7 @@ describe("GroupDashboard", () => {
     blocked: [],
     was_blocked: [],
     timeZone: "America/New_York" as TimeZone,
+    isPublic: false,
   };
 
   const mockGroups = [
