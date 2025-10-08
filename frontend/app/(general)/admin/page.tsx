@@ -57,11 +57,16 @@ export default async function Page({
     getRetentionData(),
   ]);
 
-  const { retentionRate, totalEnrollments, completedEnrollments } =
-    retentionData;
+  const {
+    retentionRate,
+    totalEnrollments,
+    completedEnrollments,
+    incompleteEnrollments,
+  } = retentionData;
 
   if (!user || !isAuthorizedUserAdmin(user.roles)) return notFound();
 
+  // Content for admin section
   const pageContent = {
     Users: <AuthorizedUsers />,
     Droplets: <Droplets />,
@@ -71,6 +76,7 @@ export default async function Page({
     Reports: <Reports />,
   };
 
+  // Content for statistics section
   const statisticsContent = {
     "General Statistics": (
       <GeneralStatistics
@@ -78,6 +84,7 @@ export default async function Page({
         authorizedUsersLength={authorizedUsers.meta.pagination.total}
         totalEnrollments={totalEnrollments}
         retentionRate={retentionRate}
+        incompleteEnrollments={incompleteEnrollments}
       />
     ),
     "Daily Active Users": <DailyActiveUsersChart data={dailyActiveUsers} />,
@@ -86,6 +93,7 @@ export default async function Page({
     // "Weekly New Users": <NewUsersChart data={newUsers} />,
   };
 
+  // Main render
   return (
     <div className="mx-auto w-full max-w-5xl">
       <div className="mx-auto my-4 w-full max-w-7xl p-8 text-center">
@@ -120,6 +128,7 @@ export default async function Page({
   );
 }
 
+// General Statistics Component
 function GeneralStatistics({
   authorizedUsersLength,
   droplets,
@@ -130,6 +139,7 @@ function GeneralStatistics({
   droplets: Droplet[];
   totalEnrollments: number;
   retentionRate: number;
+  incompleteEnrollments: number;
 }) {
   return (
     <div className="flex items-center justify-center gap-x-8 gap-y-6 text-center sm:flex-row">
