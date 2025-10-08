@@ -3,6 +3,7 @@
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
+import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import { toast } from "sonner";
 import { uploadImage } from "@/lib/actions";
 import { AuthorizedUser } from "@/types";
@@ -13,6 +14,7 @@ import { Check } from "lucide-react";
 import { ProfileBlock } from "@/components/friends/profile-block";
 import { updateUserInfo } from "@/lib/requests/authorized-user";
 import TimeZoneSelector from "@/components/settings/time-zone-selector";
+import Link from "next/link";
 
 export function SocialForms({
   authorizedUser,
@@ -211,7 +213,7 @@ export function SocialForms({
                 await updateUserInfo(authorizedUser?.id, { profilePhoto: "" });
               }
             }}
-            className="min-w-[50px] bg-red-500 whitespace-normal hover:bg-red-400 dark:bg-red-400 dark:hover:bg-red-300"
+            className="min-w-[50px] whitespace-normal bg-red-500 hover:bg-red-400 dark:bg-red-400 dark:hover:bg-red-300"
             disabled={!profileImage}
           >
             Remove Photo
@@ -346,7 +348,7 @@ export function SocialForms({
         currentZone={authorizedUser.timeZone?.trim()}
         userId={authorizedUser.id}
       ></TimeZoneSelector>
-      <div className="mx-6 mt-6 mb-4">
+      <div className="mx-6 mb-4 mt-6">
         <div className="flex items-center gap-4">
           <div>
             <label className="mb-1 block">Show my profile publicly</label>
@@ -361,13 +363,30 @@ export function SocialForms({
           <div className="mt-3 text-sm text-gray-600">
             Your profile is now visible to the public. Others can view your
             information at{" "}
-            <span className="color:blue">
-              khouryodyssey.com/profile/
+            <Link
+              href={`/${authorizedUser.email.substring(
+                0,
+                authorizedUser.email.indexOf("@"),
+              )}`}
+              className="text-blue-600 hover:text-blue-800"
+            >
+              khouryodyssey.com/
               {authorizedUser.email.substring(
                 0,
                 authorizedUser.email.indexOf("@"),
               )}
-            </span>
+            </Link>
+            <ContentCopyIcon
+              onClick={() => {
+                const profileLink = `khouryodyssey.com/${authorizedUser.email.substring(
+                  0,
+                  authorizedUser.email.indexOf("@"),
+                )}`;
+                navigator.clipboard.writeText(profileLink);
+              }}
+              className="cursor-pointer text-gray-600 hover:text-gray-800"
+              fontSize="small"
+            />
           </div>
         )}
       </div>
