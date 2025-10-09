@@ -69,7 +69,7 @@ export default function PublicProfilePage() {
         );
         setLoading(false);
       } catch (err) {
-        console.log(err);
+        console.error(err);
         setError("Profile not found");
         setLoading(false);
       }

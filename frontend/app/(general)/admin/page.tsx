@@ -17,7 +17,6 @@ import {
   fetchDailyActiveUsers,
   fetchUniquePageview,
   fetchWeeklyActiveUsers,
-  // fetchWeeklyNewUsers,
 } from "@/lib/requests/posthog";
 import { DailyActiveUsersChart } from "@/components/admin/daily-active-users-chart";
 import { Droplet } from "@/types";
@@ -40,7 +39,6 @@ export default async function Page({
     dailyActiveUsers,
     weeklyActiveUsers,
     pageviewCount,
-    // newUsers,
     retentionData,
   ] = await Promise.all([
     fetchAuthorizedUsersMetadata(),
@@ -48,7 +46,6 @@ export default async function Page({
     fetchDailyActiveUsers(),
     fetchWeeklyActiveUsers(),
     fetchUniquePageview(),
-    // fetchWeeklyNewUsers(),
     getRetentionData(),
   ]);
 
@@ -81,7 +78,6 @@ export default async function Page({
     "Daily Active Users": <DailyActiveUsersChart data={dailyActiveUsers} />,
     "Weekly Active Users": <WeeklyActiveUsersChart data={weeklyActiveUsers} />,
     "Daily Unique Pageviews": <UniquePageviewChart data={pageviewCount} />,
-    // "Weekly New Users": <NewUsersChart data={newUsers} />,
   };
 
   // Main render
