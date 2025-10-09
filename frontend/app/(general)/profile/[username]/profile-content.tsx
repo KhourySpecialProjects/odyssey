@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { use, useState } from "react";
 import { Tabs, Tab, Box, Avatar } from "@mui/material";
 import LinkedInIcon from "@mui/icons-material/LinkedIn";
 import GitHubIcon from "@mui/icons-material/GitHub";
@@ -16,6 +16,7 @@ import {
   Check,
 } from "lucide-react";
 import Link from "next/link";
+import { useSearchParams, useRouter } from "next/navigation";
 
 interface ProfileContentProps {
   userData: AuthorizedUser;
@@ -44,7 +45,14 @@ export function ProfileContent({
   isViewingOwnProfile,
 }: ProfileContentProps) {
   const [selectedId, setSelectedId] = useState<number | null>(null);
-  const [activeTab, setActiveTab] = useState(0);
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
+  // initiate an activeTab from URL param, default to 0
+  const [activeTab, setActiveTab] = useState(() => {
+    const tabParam = searchParams.get("tab");
+    return tabParam ? parseInt(tabParam) : 0;
+  });
 
   // Process droplets data
   const createdDroplets = (userData.droplets || []).map((droplet, index) => ({
@@ -69,6 +77,10 @@ export function ProfileContent({
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setActiveTab(newValue);
+    // Update the URL with the new tab parameter without refreshing the page
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("tab", newValue.toString());
+    router.push(`?${params.toString()}`, { scroll: false });
   };
 
   function formatDate(dateInput: string | Date | undefined) {
@@ -212,7 +224,7 @@ export function ProfileContent({
         </div>
 
         {/* ===== TABS SECTION ===== */}
-        <Box className="mb-6 rounded-lg bg-white shadow-sm dark:bg-gray-800">
+        <Box className="mb-6 rounded-lg bg-white shadow-sm dark:bg-gray-800 dark:text-gray-300">
           <Tabs
             value={activeTab}
             onChange={handleTabChange}
@@ -224,9 +236,18 @@ export function ProfileContent({
                 fontFamily: "inherit",
                 fontSize: "1rem",
                 fontWeight: 500,
-                color: "#6b7280",
+                color: "#6b7280", // Gray in light mode
                 "&.Mui-selected": {
-                  color: "#2563eb",
+                  color: "#2563eb", // Blue when selected (light mode)
+                },
+              },
+              // Dark mode overrides
+              ".dark &": {
+                "& .MuiTab-root": {
+                  color: "#d1d5db", // Light gray (unselected) in dark mode
+                  "&.Mui-selected": {
+                    color: "#ffffff", // White when selected in dark mode
+                  },
                 },
               },
             }}
@@ -390,7 +411,10 @@ export function ProfileContent({
                           </p>
                         </div>
                       </div>
-                      <div className="flex w-full flex-row items-center justify-end text-xs text-slate-700 dark:text-slate-300">
+                      <div
+                        className="flex w-full flex-row items-center justify-end text-xs text-slate-700 dark:text-slate-300"
+                        suppressHydrationWarning
+                      >
                         {formatDate(announcement.firstCreated)}
                       </div>
                     </div>
@@ -495,6 +519,9 @@ export function ProfileContent({
                 completedDroplets.find((d) => d.id === selectedId)?.slug ||
                 createdDroplets.find((d) => d.id === selectedId)?.slug
               }`}
+              // open in new
+              target="_blank"
+              rel="noopener noreferrer"
               className="flex w-full items-center justify-center rounded-lg bg-blue-600 px-4 py-2 font-medium text-white transition-colors hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
             >
               View Droplet
