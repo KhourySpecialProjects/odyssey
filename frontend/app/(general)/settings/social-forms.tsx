@@ -2,6 +2,8 @@
 
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
+import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import { toast } from "sonner";
 import { uploadImage } from "@/lib/actions";
 import { AuthorizedUser } from "@/types";
@@ -12,6 +14,7 @@ import { Check } from "lucide-react";
 import { ProfileBlock } from "@/components/friends/profile-block";
 import { updateUserInfo } from "@/lib/requests/authorized-user";
 import TimeZoneSelector from "@/components/settings/time-zone-selector";
+import Link from "next/link";
 
 export function SocialForms({
   authorizedUser,
@@ -29,6 +32,18 @@ export function SocialForms({
   );
   const [profileFile, setProfileFile] = useState<File | null>(null);
 
+  const [isPublicProfile, setIsPublicProfile] = useState(
+    authorizedUser?.isPublic || false,
+  );
+  const updatePublicProfile = async (isPublic: boolean) => {
+    setIsPublicProfile(isPublic);
+    console.log(isPublic);
+    if (authorizedUser?.id) {
+      await updateUserInfo(authorizedUser.id, {
+        isPublic: isPublic,
+      });
+    }
+  };
   function isValidGithubUrl(url: string) {
     return /^https:\/\/(www\.)?github\.com\/[A-Za-z0-9_-]+\/?$/.test(url);
   }
@@ -333,6 +348,50 @@ export function SocialForms({
         currentZone={authorizedUser.timeZone?.trim()}
         userId={authorizedUser.id}
       ></TimeZoneSelector>
+      <div className="mx-6 mt-6 mb-4">
+        <div className="flex items-center gap-4">
+          <div>
+            <label className="mb-1 block">Show my profile publicly</label>
+          </div>
+          <Switch
+            checked={isPublicProfile}
+            onCheckedChange={updatePublicProfile}
+          />
+        </div>
+
+        {isPublicProfile && (
+          <div className="mt-3 text-sm text-gray-600">
+            Your profile is now visible to the public. Others can view your
+            information at{" "}
+            <Link
+              href={`/${authorizedUser.email.substring(
+                0,
+                authorizedUser.email.indexOf("@"),
+              )}`}
+              className="text-blue-600 hover:text-blue-800"
+            >
+              khouryodyssey.com/
+              {authorizedUser.email.substring(
+                0,
+                authorizedUser.email.indexOf("@"),
+              )}
+            </Link>
+            .{" "}
+            <ContentCopyIcon
+              onClick={() => {
+                const profileLink = `khouryodyssey.com/${authorizedUser.email.substring(
+                  0,
+                  authorizedUser.email.indexOf("@"),
+                )}`;
+                toast.success("Profile link copied to clipboard");
+                navigator.clipboard.writeText(profileLink);
+              }}
+              className="cursor-pointer text-gray-600 hover:text-gray-800"
+              fontSize="small"
+            />
+          </div>
+        )}
+      </div>
       <div className="p-4">
         <ProfileBlock
           user={authorizedUser}

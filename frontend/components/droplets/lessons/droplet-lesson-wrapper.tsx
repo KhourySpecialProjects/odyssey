@@ -77,7 +77,11 @@ export function DropletLessonWrapper({
             expanded={expanded}
             setExpanded={setExpanded}
           />
-          <DropletFooter droplet={droplet} />
+          <DropletFooter
+            droplet={droplet}
+            enrollmentId={enrollmentId}
+            currentLessonId={lesson.id}
+          />
         </div>
         {enrollmentId && (
           <>

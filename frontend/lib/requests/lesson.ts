@@ -63,9 +63,7 @@ export async function markLessonAsComplete(
         cache: "no-store",
         body: JSON.stringify({
           data: {
-            viewedLessons: {
-              connect: [lessonId],
-            },
+            viewedLessons: [...completedLessonIds, lessonId],
           },
         }),
       },
