@@ -67,18 +67,29 @@ export function FeedBlock({
 
   const content = announcement.content;
   const [namePart] = content.split(/has\s+/i);
-  const [, taskPart] = content.split(/(?:completed|finished)\s+/i);
+
+  // Remove '. Click to give kudos!' from the end if it exists
+  const cleanedContent = content.replace(
+    /\.\s+Click\s+to\s+give\s+kudos!$/i,
+    "",
+  );
+  const [, taskPart] = cleanedContent.split(/(?:completed|finished)\s+/i);
+
   const [, kudosTaskPart] = content.split(/for\s+/i);
 
   // Parse playlist content - handles both "created" and "updated" announcements
   const parsePlaylistContent = (content: string) => {
     // Try "has been updated" format first
-    let match = content.match(/(.+?)\s+has\s+been\s+updated\.\s+Click\s+to\s+view\s+this\s+playlist/i);
+    let match = content.match(
+      /(.+?)\s+has\s+been\s+updated\.\s+Click\s+to\s+view\s+this\s+playlist/i,
+    );
     if (match) {
       return { userName: null, playlistName: match[1] };
     }
     // Try "has created a new playlist" format
-    match = content.match(/(.+?)\s+has\s+created\s+a\s+new\s+playlist:\s+(.+)/i);
+    match = content.match(
+      /(.+?)\s+has\s+created\s+a\s+new\s+playlist:\s+(.+)/i,
+    );
     if (match) {
       return { userName: match[1], playlistName: match[2] };
     }
@@ -88,7 +99,9 @@ export function FeedBlock({
   // Parse droplet content - handles both "created" and other formats
   const parseDropletContent = (content: string) => {
     // Try "has been updated" or similar format
-    let match = content.match(/(.+?)\s+has\s+been\s+(?:updated|created)\.\s+Click\s+to\s+view\s+this\s+droplet/i);
+    let match = content.match(
+      /(.+?)\s+has\s+been\s+(?:updated|created)\.\s+Click\s+to\s+view\s+this\s+droplet/i,
+    );
     if (match) {
       return { userName: null, dropletName: match[1] };
     }
@@ -103,7 +116,9 @@ export function FeedBlock({
   // Parse group content - handles both "created" and "updated" formats
   const parseGroupContent = (content: string) => {
     // Try "has been updated" format
-    let match = content.match(/(.+?)\s+has\s+been\s+updated\.\s+Click\s+to\s+view\s+this\s+group/i);
+    let match = content.match(
+      /(.+?)\s+has\s+been\s+updated\.\s+Click\s+to\s+view\s+this\s+group/i,
+    );
     if (match) {
       return { userName: null, groupName: match[1] };
     }
@@ -140,7 +155,9 @@ export function FeedBlock({
                       >
                         {playlistData.userName}
                       </p>
-                      <span>{"\u00A0"}has created a new playlist:{"\u00A0"}</span>
+                      <span>
+                        {"\u00A0"}has created a new playlist:{"\u00A0"}
+                      </span>
                     </>
                   ) : null}
                   <span
@@ -180,7 +197,9 @@ export function FeedBlock({
                       >
                         {dropletData.userName}
                       </p>
-                      <span>{"\u00A0"}has created a new droplet:{"\u00A0"}</span>
+                      <span>
+                        {"\u00A0"}has created a new droplet:{"\u00A0"}
+                      </span>
                     </>
                   ) : null}
                   <span
@@ -216,7 +235,9 @@ export function FeedBlock({
                       >
                         {groupData.userName}
                       </p>
-                      <span>{"\u00A0"}has created a new group:{"\u00A0"}</span>
+                      <span>
+                        {"\u00A0"}has created a new group:{"\u00A0"}
+                      </span>
                     </>
                   ) : null}
                   <span
@@ -331,7 +352,7 @@ export function FeedBlock({
       {/* Playlist Popup */}
       {playlistPopupOpen && announcement.playlist && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900 bg-opacity-20 p-4 dark:bg-opacity-40"
+          className="bg-opacity-20 dark:bg-opacity-40 fixed inset-0 z-50 flex items-center justify-center bg-gray-900 p-4"
           onClick={() => setPlaylistPopupOpen(false)}
         >
           <div
@@ -362,7 +383,7 @@ export function FeedBlock({
               </button>
             </div>
             <div className="mb-4 text-sm text-gray-700 dark:text-gray-300">
-              {announcement.playlist.description}
+              {announcement.playlist.description || "No description available"}
             </div>
             <Link
               href={`/p/${announcement.playlist.slug}`}
@@ -380,7 +401,7 @@ export function FeedBlock({
       {/* Droplet Popup */}
       {dropletPopupOpen && announcement.droplet && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900 bg-opacity-20 p-4 dark:bg-opacity-40"
+          className="bg-opacity-20 dark:bg-opacity-40 fixed inset-0 z-50 flex items-center justify-center bg-gray-900 p-4"
           onClick={() => setDropletPopupOpen(false)}
         >
           <div
@@ -411,7 +432,7 @@ export function FeedBlock({
               </button>
             </div>
             <div className="mb-4 text-sm text-gray-700 dark:text-gray-300">
-              {announcement.droplet.description}
+              {announcement.droplet.description || "No description available"}
             </div>
             <Link
               href={`/d/${announcement.droplet.slug}`}
@@ -429,7 +450,7 @@ export function FeedBlock({
       {/* Group Popup */}
       {groupPopupOpen && announcement.group && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900 bg-opacity-20 p-4 dark:bg-opacity-40"
+          className="bg-opacity-20 dark:bg-opacity-40 fixed inset-0 z-50 flex items-center justify-center bg-gray-900 p-4"
           onClick={() => setGroupPopupOpen(false)}
         >
           <div
@@ -460,7 +481,7 @@ export function FeedBlock({
               </button>
             </div>
             <div className="mb-4 text-sm text-gray-700 dark:text-gray-300">
-              {announcement.group.description}
+              {announcement.group.description || "No description available"}
             </div>
             <Link
               href={`/g/${announcement.group.slug}`}

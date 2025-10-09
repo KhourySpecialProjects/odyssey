@@ -134,10 +134,10 @@ export async function fetchAnnouncements(
           },
         },
         droplet: {
-          fields: ["id", "name", "slug"],
+          fields: ["id", "name", "description", "slug"],
         },
         group: {
-          fields: ["id", "name", "slug"],
+          fields: ["id", "name", "description", "slug"],
         },
       },
       pagination: {
