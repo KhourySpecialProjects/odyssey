@@ -530,7 +530,7 @@ describe("ProfileContent", () => {
 
       fireEvent.click(screen.getByText("Friends"));
 
-      const friendLink = container.querySelector('a[href="/profile/friend"]');
+      const friendLink = container.querySelector('a[href="/friend"]');
       expect(friendLink).toBeInTheDocument();
     });
   });
