@@ -480,3 +480,54 @@ export async function fetchAnnouncementById(id: number) {
     throw new Error("Failed to fetch announcement data.");
   }
 }
+
+export async function fetchUserAnnouncements(
+  userId: number,
+  page?: number,
+): Promise<Announcement[]> {
+  try {
+    const query = qs.stringify({
+      sort: ["firstCreated:desc"],
+      filters: {
+        authorized_user: {
+          id: { $eq: userId },
+        },
+        type: {
+          $in: ["friend", "kudos", "droplet"],
+        },
+      },
+      populate: {
+        authorized_user: {
+          fields: ["id", "email", "firstName", "lastName", "profilePhoto"],
+          populate: {
+            blocked: { fields: ["id"] },
+            was_blocked: { fields: ["id"] },
+          },
+        },
+        kudosGiven: {
+          fields: ["id", "email", "firstName", "lastName", "profilePhoto"],
+        },
+        droplet: {
+          fields: ["id", "name", "slug"],
+        },
+      },
+      pagination: {
+        pageSize: 10,
+        page: page || 1,
+      },
+    });
+
+    const response = await fetch(
+      NEXT_PUBLIC_STRAPI_API_URL + "/api/announcements?" + query,
+      {
+        headers: { Authorization: "Bearer " + STRAPI_ACCESS_TOKEN },
+        cache: "no-store",
+      },
+    );
+    const data = await response.json();
+    return flattenAttributes(data.data);
+  } catch (error) {
+    console.error("Database Error:", error);
+    throw new Error("Failed to fetch user announcements.");
+  }
+}

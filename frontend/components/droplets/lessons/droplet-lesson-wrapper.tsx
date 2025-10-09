@@ -8,7 +8,6 @@ import { getNotesByAuthorizedUserAndLesson } from "@/lib/requests/notes";
 import { cn } from "@/lib/utils";
 import { X } from "lucide-react";
 import DropletFooter from "../footer";
-import { updateViewedLessons } from "@/lib/requests/enrollment";
 
 interface DropletLessonWrapperProps {
   lesson: Lesson;
