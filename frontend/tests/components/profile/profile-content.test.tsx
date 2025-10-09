@@ -1,5 +1,5 @@
 import { render, screen, fireEvent } from "@testing-library/react";
-import { ProfileContent } from "@/app/(general)/profile/[username]/profile-content";
+import { ProfileContent } from "@/app/(general)/[username]/profile-content";
 import { AuthorizedUser, Enrollment, Announcement } from "@/types";
 
 // Mock Next.js navigation hooks

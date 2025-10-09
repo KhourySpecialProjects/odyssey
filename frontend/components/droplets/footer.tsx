@@ -2,7 +2,6 @@
 import { cn } from "@/lib/utils";
 import { Droplet, DropletLesson } from "@/types";
 import { ArrowLeftIcon, ArrowRightIcon, LockIcon } from "lucide-react";
-import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { updateViewedLessons } from "@/lib/requests/enrollment";
@@ -23,7 +22,6 @@ export default function DropletFooter({
 }) {
   const pathname = usePathname();
   const [canProceed, setCanProceed] = useState(false);
-  const router = useRouter();
 
   const handleNextClick = async () => {
     if (enrollmentId && currentLessonId && droplet.droplet_lessons) {
