@@ -102,7 +102,7 @@ export function ProfileContent({
   }
 
   /**
-   * Check if the current viewer has completed a specific droplet
+   * Check if the current viewer has completed a specific user droplet
    * Only relevant when viewing someone else's created droplets
    */
   const isCompletedByViewer = (dropletId: number) => {
