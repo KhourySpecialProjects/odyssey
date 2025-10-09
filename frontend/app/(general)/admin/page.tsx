@@ -8,7 +8,6 @@ import { isAuthorizedUserAdmin } from "@/lib/utils";
 import { Separator } from "@/components/ui/separator";
 import { fetchAuthorizedUsersMetadata } from "@/lib/requests/authorized-user";
 import { fetchDroplets } from "@/lib/requests/data";
-import { fetchEnrollmentMetadata } from "@/lib/requests/enrollment";
 import { Droplets } from "@/components/admin/droplets/droplets";
 import { Groups } from "@/components/admin/groups/groups";
 import { Playlists } from "@/components/admin/playlists/playlists";
@@ -18,15 +17,12 @@ import {
   fetchDailyActiveUsers,
   fetchUniquePageview,
   fetchWeeklyActiveUsers,
-  fetchWeeklyNewUsers,
 } from "@/lib/requests/posthog";
 import { DailyActiveUsersChart } from "@/components/admin/daily-active-users-chart";
 import { Droplet } from "@/types";
 import { StatisticsSelector } from "@/components/admin/statistics-selector";
 import { WeeklyActiveUsersChart } from "@/components/admin/weekly-active-users-chart";
 import { UniquePageviewChart } from "@/components/admin/unique-pageview";
-import { NewUsersChart } from "@/components/admin/new-users";
-import { get } from "lodash";
 
 export default async function Page({
   searchParams,
@@ -36,8 +32,6 @@ export default async function Page({
   const user = await getCurrentUser();
 
   const params = await searchParams;
-  const adminTab = (params?.adminTab as string) || "Users";
-  const statsTab = (params?.statsTab as string) || "General Statistics";
 
   const [
     authorizedUsers,
@@ -45,7 +39,6 @@ export default async function Page({
     dailyActiveUsers,
     weeklyActiveUsers,
     pageviewCount,
-    newUsers,
     retentionData,
   ] = await Promise.all([
     fetchAuthorizedUsersMetadata(),
@@ -53,16 +46,11 @@ export default async function Page({
     fetchDailyActiveUsers(),
     fetchWeeklyActiveUsers(),
     fetchUniquePageview(),
-    fetchWeeklyNewUsers(),
     getRetentionData(),
   ]);
 
-  const {
-    retentionRate,
-    totalEnrollments,
-    completedEnrollments,
-    incompleteEnrollments,
-  } = retentionData;
+  const { retentionRate, totalEnrollments, incompleteEnrollments } =
+    retentionData;
 
   if (!user || !isAuthorizedUserAdmin(user.roles)) return notFound();
 
@@ -90,7 +78,6 @@ export default async function Page({
     "Daily Active Users": <DailyActiveUsersChart data={dailyActiveUsers} />,
     "Weekly Active Users": <WeeklyActiveUsersChart data={weeklyActiveUsers} />,
     "Daily Unique Pageviews": <UniquePageviewChart data={pageviewCount} />,
-    // "Weekly New Users": <NewUsersChart data={newUsers} />,
   };
 
   // Main render

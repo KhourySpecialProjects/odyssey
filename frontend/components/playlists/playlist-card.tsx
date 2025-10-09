@@ -1,12 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { getDueDateBadgeColor } from "@/lib/utils";
 import { Clock } from "lucide-react";
 import { Badge } from "../ui/badge";
 import { DateTime } from "luxon";
-import { getDropletById } from "@/lib/requests/droplet";
 import { useState, useEffect, useRef } from "react";
 
 interface PlaylistCardProps {
@@ -42,7 +41,6 @@ export function PlaylistCard({
 }: PlaylistCardProps) {
   const [descriptionExpanded, setDescriptionExpanded] = useState(false);
   const [isTextClamped, setIsTextClamped] = useState(false);
-  const [isScreenChanged, setIsScreenChanged] = useState(false); // New state variable to track screen size changes
   const textRef = useRef(null);
   const dropletCount = playlist.droplets ? playlist.droplets.length : 0;
   const lessonCount =

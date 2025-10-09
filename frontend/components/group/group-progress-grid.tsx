@@ -55,10 +55,6 @@ export function GroupProgressGrid({ group, statuses }: GroupProgressGridProps) {
     if (currentPage > 0) setCurrentPage(currentPage - 1);
   };
 
-  const handleChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    setSelectedValue(event.target.value);
-  };
-
   let sortedMembers: AuthorizedUser[] = [];
 
   if (group.members) {

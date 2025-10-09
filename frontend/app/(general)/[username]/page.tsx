@@ -8,7 +8,7 @@ import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 
 import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
 
-import { AuthorizedUser, Droplet, Enrollment } from "@/types";
+import { AuthorizedUser, Enrollment } from "@/types";
 import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
 import DOMPurify from "dompurify";
 
@@ -69,6 +69,7 @@ export default function PublicProfilePage() {
         );
         setLoading(false);
       } catch (err) {
+        console.error(err);
         setError("Profile not found");
         setLoading(false);
       }
