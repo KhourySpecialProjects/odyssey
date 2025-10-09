@@ -50,8 +50,8 @@
 }
 
 /* Fix for invisible text in dark mode */
-.dark .prose,
-.dark .prose *,
+.dark .prose blockquote,
+.dark .prose blockquote *,
 .dark .bg-sky-50,
 .dark .bg-sky-50 *,
 .dark pre,
@@ -60,7 +60,7 @@
 .dark code *,
 .dark .hljs,
 .dark .hljs * {
-  color: white !important;
+  color: white;
 }
 
 /* Specific fix for callout bullet list items in dark mode */
