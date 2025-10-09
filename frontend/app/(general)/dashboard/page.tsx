@@ -16,6 +16,7 @@ import {
 import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
 import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
 import { getUserGroups } from "@/lib/requests/groups";
+import { SuspendForeva } from "@/lib/utils";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 
