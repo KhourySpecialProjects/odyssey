@@ -27,11 +27,17 @@ export default async function PublicProfilePage({
     // Extract email from URL parameter
     const userEmail = username + "@northeastern.edu";
 
+    // Get current logged-in user FIRST
+    const currentUser = await getCurrentUser();
+
     // Fetch the profile user's data
     const userData: AuthorizedUser = await getAuthorizedUserByEmail(userEmail);
 
-    // Check if profile is public
-    if (!userData.isPublic) {
+    // Check if viewing own profile
+    const isViewingOwnProfile = currentUser?.email === userEmail;
+
+    // Check if profile is public (but allow owner to view their own private profile)
+    if (!userData.isPublic && !isViewingOwnProfile) {
       return (
         <div className="flex min-h-screen items-center justify-center bg-gray-50 dark:bg-gray-900">
           <div className="text-center">
@@ -69,40 +75,32 @@ export default async function PublicProfilePage({
       fetchUserAnnouncements(userData.id),
     ]);
 
-    // Get current logged-in user to check completion status
-    const currentUser = await getCurrentUser();
+    // Get current user's completed droplets for completion badges
     let currentUserCompletedIds: number[] = [];
-    let isViewingOwnProfile = false;
 
-    if (currentUser?.email) {
-      // Check if viewing own profile
-      isViewingOwnProfile = currentUser.email === userEmail;
-
-      // If viewing someone else's profile, get current user's completed droplets
-      if (!isViewingOwnProfile) {
-        try {
-          const currentUserData = await getAuthorizedUserByEmail(
-            currentUser.email,
-          );
-          const currentUserEnrollments = await getEnrollmentsByAuthorizedUser(
-            currentUserData.id,
-            {
-              populate: {
-                droplet: {
-                  fields: ["id"],
-                },
+    if (currentUser?.email && !isViewingOwnProfile) {
+      try {
+        const currentUserData = await getAuthorizedUserByEmail(
+          currentUser.email,
+        );
+        const currentUserEnrollments = await getEnrollmentsByAuthorizedUser(
+          currentUserData.id,
+          {
+            populate: {
+              droplet: {
+                fields: ["id"],
               },
             },
-          );
+          },
+        );
 
-          // Extract IDs of droplets the current user has completed
-          currentUserCompletedIds = (currentUserEnrollments || [])
-            .filter((enrollment: Enrollment) => enrollment.isComplete)
-            .map((enrollment: Enrollment) => enrollment.droplet.id);
-        } catch (error) {
-          console.error("Error fetching current user data:", error);
-          // Continue without completion badges if there's an error
-        }
+        // Extract IDs of droplets the current user has completed
+        currentUserCompletedIds = (currentUserEnrollments || [])
+          .filter((enrollment: Enrollment) => enrollment.isComplete)
+          .map((enrollment: Enrollment) => enrollment.droplet.id);
+      } catch (error) {
+        console.error("Error fetching current user data:", error);
+        // Continue without completion badges if there's an error
       }
     }
 

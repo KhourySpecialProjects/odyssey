@@ -2,6 +2,19 @@ import { render, screen, fireEvent } from "@testing-library/react";
 import { ProfileContent } from "@/app/(general)/profile/[username]/profile-content";
 import { AuthorizedUser, Enrollment, Announcement } from "@/types";
 
+// Mock Next.js navigation hooks
+jest.mock("next/navigation", () => ({
+  useRouter: jest.fn(() => ({
+    push: jest.fn(),
+    replace: jest.fn(),
+    prefetch: jest.fn(),
+  })),
+  useSearchParams: jest.fn(() => ({
+    get: jest.fn(() => null),
+    toString: jest.fn(() => ""),
+  })),
+}));
+
 // Mock Next.js Link component
 jest.mock("next/link", () => {
   return ({ children, href }: { children: React.ReactNode; href: string }) => {
@@ -13,7 +26,6 @@ jest.mock("next/link", () => {
 jest.mock("dompurify", () => ({
   sanitize: (html: string) => html,
 }));
-
 describe("ProfileContent", () => {
   const mockUserData: AuthorizedUser = {
     id: 1,
