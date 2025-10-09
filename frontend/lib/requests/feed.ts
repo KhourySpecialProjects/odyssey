@@ -176,6 +176,7 @@ export async function createFriendAnnouncement(
             authorized_user: user.id,
             content: `${user.firstName ? user.firstName + " " + user.lastName : user.email} has completed ${droplet.name}.`,
             firstCreated: curDate,
+            droplet: droplet.id,
             type: "friend",
           },
         }),
