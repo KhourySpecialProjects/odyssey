@@ -526,8 +526,3 @@ export const getDueDateBadgeColor = (
     return "bg-red-400 text-red-900 border border-red-700";
   }
 };
-
-// testing the suspense stuff
-export const SuspendForeva = () => {
-  throw new Promise(() => {});
-};
