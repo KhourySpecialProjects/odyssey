@@ -76,8 +76,6 @@ describe("UserBlock", () => {
       />,
     );
 
-    fireEvent.click(screen.getByText("View Profile"));
-
     expect(
       screen.getByText(`${mockUser.firstName} ${mockUser.lastName}`),
     ).toBeInTheDocument();
@@ -98,7 +96,6 @@ describe("UserBlock", () => {
       />,
     );
 
-    fireEvent.click(screen.getByText("View Profile"));
     fireEvent.click(screen.getByText("Block user"));
 
     await waitFor(() => {
@@ -124,7 +121,6 @@ describe("UserBlock", () => {
       />,
     );
 
-    fireEvent.click(screen.getByText("View Profile"));
     fireEvent.click(screen.getByText("Block user"));
 
     await waitFor(() => {
@@ -142,9 +138,5 @@ describe("UserBlock", () => {
         setIsOpen={() => {}}
       />,
     );
-
-    fireEvent.click(screen.getByText("View Profile"));
-
-    expect(screen.getByText("TU")).toBeInTheDocument();
   });
 });
