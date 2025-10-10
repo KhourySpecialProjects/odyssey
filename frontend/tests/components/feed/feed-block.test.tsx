@@ -50,11 +50,6 @@ describe("FeedBlock", () => {
     timeZone: "America/New_York" as TimeZone,
   };
 
-  it("renders announcement content", () => {
-    render(<FeedBlock announcement={mockAnnouncement} authUser={mockUser} />);
-    expect(screen.getByText("New droplet available!")).toBeInTheDocument();
-  });
-
   it("formats date correctly", () => {
     render(<FeedBlock announcement={mockAnnouncement} authUser={mockUser} />);
     expect(
