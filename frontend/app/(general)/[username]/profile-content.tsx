@@ -345,25 +345,25 @@ export function ProfileContent({
 
           {/* FRIENDS TAB */}
           {activeTab === (createdDroplets.length > 0 ? 2 : 1) && (
-            <div className="space-y-2">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {friends.map((friend) => (
                 <a
                   key={friend.id}
                   href={`/${friend.email.replace("@northeastern.edu", "")}`}
-                  className="flex cursor-pointer items-center gap-4 rounded-lg border border-gray-200 bg-white p-4 shadow-sm transition-shadow hover:shadow-md dark:border-gray-700 dark:bg-gray-800"
+                  className="flex cursor-pointer items-center gap-3 rounded-lg border border-gray-200 bg-white p-3 shadow-sm transition-shadow hover:shadow-md dark:border-gray-700 dark:bg-gray-800"
                 >
                   <Avatar
                     src={friend.profilePhoto || undefined}
                     alt={`${friend.firstName} ${friend.lastName}`}
-                    sx={{ width: 48, height: 48 }}
+                    sx={{ width: 40, height: 40 }}
                   />
-                  <p className="font-medium text-gray-900 dark:text-white">
+                  <p className="text-sm font-medium text-gray-900 dark:text-white">
                     {friend.firstName} {friend.lastName}
                   </p>
                 </a>
               ))}
               {friends.length === 0 && (
-                <div className="py-12 text-center">
+                <div className="col-span-full py-12 text-center">
                   <p className="text-gray-600 dark:text-gray-400">
                     No friends yet.
                   </p>

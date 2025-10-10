@@ -5,6 +5,7 @@ import { fetchFriends } from "@/lib/requests/friends";
 import { fetchUserAnnouncements } from "@/lib/requests/feed";
 import { getCurrentUser } from "@/lib/auth/session";
 import { ProfileContent } from "./profile-content";
+import { PrivateProfileError } from "./private-profile-error";
 
 /**
  * PublicProfilePage - Server Component
@@ -24,34 +25,15 @@ export default async function PublicProfilePage({
   const { username } = await params;
 
   try {
-    // Extract email from URL parameter
     const userEmail = username + "@northeastern.edu";
-
-    // Get current logged-in user FIRST
     const currentUser = await getCurrentUser();
-
-    // Fetch the profile user's data
     const userData: AuthorizedUser = await getAuthorizedUserByEmail(userEmail);
-
-    // Check if viewing own profile
     const isViewingOwnProfile = currentUser?.email === userEmail;
 
-    // Check if profile is public (but allow owner to view their own private profile)
+    // Replace the entire if block with this:
     if (!userData.isPublic && !isViewingOwnProfile) {
-      return (
-        <div className="flex min-h-screen items-center justify-center bg-gray-50 dark:bg-gray-900">
-          <div className="text-center">
-            <h1 className="mb-2 text-2xl font-bold text-gray-800 dark:text-gray-200">
-              Profile Not Found
-            </h1>
-            <p className="text-gray-600 dark:text-gray-400">
-              This profile is either private or does not exist.
-            </p>
-          </div>
-        </div>
-      );
+      return <PrivateProfileError />;
     }
-
     // Fetch all profile data in parallel for better performance
     const [enrollments, friends, announcements] = await Promise.all([
       // Fetch profile user's enrollments
