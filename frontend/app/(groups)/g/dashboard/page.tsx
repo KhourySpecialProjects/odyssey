@@ -12,7 +12,6 @@ import { redirect } from "next/navigation";
 import { GroupCard } from "@/components/group/group-card";
 import { Suspense } from "react";
 import { DropletsSkeleton } from "@/components/explore/droplets-skeleton";
-import { SuspendForeva } from "@/lib/utils";
 
 type GroupWithRole = {
   group: Group;
