@@ -14,7 +14,8 @@ import { getDueDateBadgeColor } from "@/lib/utils";
 import { DateTime } from "luxon";
 import { archiveDroplet } from "@/lib/requests/droplet";
 import FavoriteIcon from "@mui/icons-material/Favorite";
-import { purple } from "@mui/material/colors";
+import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
+import { grey, purple } from "@mui/material/colors";
 
 interface DropletTileProps {
   droplet: Droplet;
@@ -39,6 +40,7 @@ export function DropletTile({
   const [isTextClamped, setIsTextClamped] = useState(false);
   const [isScreenChanged, setIsScreenChanged] = useState(false); // New state variable to track screen size changes
   const textRef = useRef(null);
+  const [isHovering, setIsHovering] = useState(false);
 
   const strippedDescription = droplet.description
     ?.replace(/<\/p>\s*<p>/gi, "\n")
@@ -175,7 +177,7 @@ export function DropletTile({
                   e.stopPropagation();
                   changeVisibility();
                 }}
-                className={`${isArchived === true || isArchived === false ? "visibility: visible" : "visibility: hidden"} bg-black hover:bg-slate-300 dark:bg-slate-300`}
+                className={`${isArchived === true || isArchived === false ? "visibility: visible" : "visibility: hidden"} bg-slate-50 hover:bg-slate-300 dark:bg-slate-300`}
               >
                 <div className="group relative">
                   {isArchived ? (
@@ -191,9 +193,15 @@ export function DropletTile({
 
               <Button
                 size="sm"
-                className={`group ${isArchived === true || isArchived === false ? "visibility: visible" : "visibility: hidden"} bg-black hover:bg-slate-300 dark:bg-slate-300`}
+                onMouseEnter={() => setIsHovering(true)}
+                onMouseLeave={() => setIsHovering(false)}
+                className={`group ${isArchived === true || isArchived === false ? "visibility: visible" : "visibility: hidden"} bg-slate-50 hover:bg-slate-300 dark:bg-slate-300`}
               >
-                <FavoriteIcon className="group-hover:text-pink-500" />
+                {isHovering ? (
+                  <FavoriteIcon className="text-pink-500" />
+                ) : (
+                  <FavoriteBorderIcon sx={{ color: grey[900] }} />
+                )}
               </Button>
             </div>
 
