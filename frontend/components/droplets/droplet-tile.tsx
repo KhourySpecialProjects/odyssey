@@ -13,6 +13,8 @@ import { Archive, ArchiveRestore, Clock } from "lucide-react";
 import { getDueDateBadgeColor } from "@/lib/utils";
 import { DateTime } from "luxon";
 import { archiveDroplet } from "@/lib/requests/droplet";
+import FavoriteIcon from "@mui/icons-material/Favorite";
+import { purple } from "@mui/material/colors";
 
 interface DropletTileProps {
   droplet: Droplet;
@@ -165,26 +167,36 @@ export function DropletTile({
       <li className="h-full rounded-md border border-slate-200 bg-slate-50 p-2 transition-colors hover:border-slate-300 dark:border-slate-500 dark:bg-slate-800">
         <div className="flex h-full flex-col justify-between gap-3 p-4">
           <div className="space-y-3">
-            <Button
-              size="sm"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                changeVisibility();
-              }}
-              className={`${isArchived === true || isArchived === false ? "visibility: visible" : "visibility: hidden"} mx-auto bg-white hover:bg-slate-300 dark:bg-slate-300`}
-            >
-              <div className="group relative">
-                {isArchived ? (
-                  <ArchiveRestore className="text-purple-800" />
-                ) : (
-                  <Archive className="text-purple-800" />
-                )}
-                <span className="absolute top-full left-1/2 mt-1 w-max -translate-x-1/2 transform rounded bg-gray-800 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100">
-                  {isArchived ? "Unarchive" : "Archive"}
-                </span>
-              </div>
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                size="sm"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  changeVisibility();
+                }}
+                className={`${isArchived === true || isArchived === false ? "visibility: visible" : "visibility: hidden"} bg-black hover:bg-slate-300 dark:bg-slate-300`}
+              >
+                <div className="group relative">
+                  {isArchived ? (
+                    <ArchiveRestore className="text-purple-500" />
+                  ) : (
+                    <Archive className="text-purple-500" />
+                  )}
+                  <span className="absolute top-full left-1/2 mt-1 w-max -translate-x-1/2 transform rounded bg-gray-800 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100">
+                    {isArchived ? "Unarchive" : "Archive"}
+                  </span>
+                </div>
+              </Button>
+
+              <Button
+                size="sm"
+                className={`group ${isArchived === true || isArchived === false ? "visibility: visible" : "visibility: hidden"} bg-black hover:bg-slate-300 dark:bg-slate-300`}
+              >
+                <FavoriteIcon className="group-hover:text-pink-500" />
+              </Button>
+            </div>
+
             <div className="flex flex-0 flex-row flex-wrap gap-1.5">
               {droplet.status == "draft" ? (
                 <Badge variant="destructive">Draft</Badge>
