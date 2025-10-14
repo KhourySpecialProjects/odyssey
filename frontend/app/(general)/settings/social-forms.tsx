@@ -379,7 +379,7 @@ export function SocialForms({
             .{" "}
             <ContentCopyIcon
               onClick={() => {
-                const profileLink = `khouryodyssey.com/${authorizedUser.email.substring(
+                const profileLink = `khouryodyssey.com/prof/${authorizedUser.email.substring(
                   0,
                   authorizedUser.email.indexOf("@"),
                 )}`;
