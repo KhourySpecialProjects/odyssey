@@ -48,26 +48,6 @@ export function ProfileBlock({
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>
-        {!isFeed && (
-          <div>
-            <Button
-              size="sm"
-              className="hidden bg-sky-300 text-black hover:bg-sky-400 md:block dark:bg-sky-300 dark:hover:bg-sky-400"
-            >
-              {isProfile ? "Preview Profile" : "View Profile"}
-            </Button>
-
-            <Button
-              size="sm"
-              className="block scale-75 bg-sky-300 text-black hover:bg-sky-400 md:hidden dark:bg-sky-300 dark:hover:bg-sky-400"
-            >
-              <UserRound />
-            </Button>
-          </div>
-        )}
-      </DialogTrigger>
-
       <DialogContent className="dark:bg-slate-700">
         <DialogHeader>
           <div className="flex items-center justify-center">
