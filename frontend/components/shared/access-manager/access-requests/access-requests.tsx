@@ -20,11 +20,12 @@ export function accessFilter(
     (req) =>
       !users.some(
         (user) =>
-          user.firstName?.toLowerCase().trim() ===
-            req.givenName?.toLowerCase().trim() &&
-          user.lastName?.toLowerCase().trim() ===
-            req.familyName?.toLowerCase().trim() &&
-          user.email?.toLowerCase().trim() === req.email?.toLowerCase().trim(),
+          user.firstName?.toLowerCase()?.trim() ===
+            req.givenName?.toLowerCase()?.trim() &&
+          user.lastName?.toLowerCase()?.trim() ===
+            req.familyName?.toLowerCase()?.trim() &&
+          user.email?.toLowerCase()?.trim() ===
+            req.email?.toLowerCase()?.trim(),
       ),
   );
 }
