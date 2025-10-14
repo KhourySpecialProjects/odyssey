@@ -106,7 +106,7 @@ export default async function Settings() {
             To make changes, update your{" "}
             <Link
               href="https://nam.delve.office.com/?v=editprofile"
-              className="text-sky-600 underline"
+              className="text-sky-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-600"
             >
               Northeastern profile
             </Link>
