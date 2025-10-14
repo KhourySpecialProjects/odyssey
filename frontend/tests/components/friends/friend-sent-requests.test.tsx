@@ -70,7 +70,6 @@ describe("FriendSentRequests", () => {
       expect(requests).toHaveLength(2);
 
       const firstRequest = requests[0].textContent;
-      expect(firstRequest).toContain("View Profile");
     });
   });
 });

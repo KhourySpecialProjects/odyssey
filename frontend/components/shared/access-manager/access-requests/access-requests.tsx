@@ -24,7 +24,7 @@ export function accessFilter(
             req.givenName?.toLowerCase().trim() &&
           user.lastName?.toLowerCase().trim() ===
             req.familyName?.toLowerCase().trim() &&
-          user.email?.toLowerCase().trim() === req.email.toLowerCase().trim(),
+          user.email?.toLowerCase().trim() === req.email?.toLowerCase().trim(),
       ),
   );
 }

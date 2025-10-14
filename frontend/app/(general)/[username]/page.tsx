@@ -1,92 +1,124 @@
-"use client";
-
-import React, { useState, useEffect } from "react";
-
-import LinkedInIcon from "@mui/icons-material/LinkedIn";
-import GitHubIcon from "@mui/icons-material/GitHub";
-import AccountCircleIcon from "@mui/icons-material/AccountCircle";
-
 import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
-
 import { AuthorizedUser, Enrollment } from "@/types";
 import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
-import DOMPurify from "dompurify";
+import { fetchFriends } from "@/lib/requests/friends";
+import { fetchUserAnnouncements } from "@/lib/requests/feed";
+import { getCurrentUser } from "@/lib/auth/session";
+import { ProfileContent } from "./profile-content";
 
-export default function PublicProfilePage() {
-  const [userData, setUserData] = useState<AuthorizedUser | null>(null);
-  const [enrollments, setEnrollments] = useState<Enrollment[] | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [selectedId, setSelectedId] = useState<number | null>(null);
+/**
+ * PublicProfilePage - Server Component
+ *
+ * Fetches all necessary data on the server side:
+ * - Profile user data (from URL parameter)
+ * - Current logged-in user (to check completion status)
+ * - Enrollments, friends, and announcements
+ *
+ * Then passes all data as props to the ProfileContent client component
+ */
+export default async function PublicProfilePage({
+  params,
+}: {
+  params: Promise<{ username: string }>;
+}) {
+  const { username } = await params;
 
-  useEffect(() => {
-    const fetchUserProfile = async () => {
-      try {
-        // Extract email from URL path or query parameter
-        // Example: /profile/user@example.com or /profile?email=user@example.com
-        const pathParts = window.location.pathname.split("/");
-        const emailFromPath =
-          pathParts[pathParts.length - 1] + "@northeastern.edu";
+  try {
+    // Extract email from URL parameter
+    const userEmail = username + "@northeastern.edu";
 
-        const urlParams = new URLSearchParams(window.location.search);
-        const emailFromQuery = urlParams.get("email");
+    // Get current logged-in user FIRST
+    const currentUser = await getCurrentUser();
 
-        const userEmail = emailFromQuery || decodeURIComponent(emailFromPath);
+    // Fetch the profile user's data
+    const userData: AuthorizedUser = await getAuthorizedUserByEmail(userEmail);
 
-        if (!userEmail) {
-          setError("No user specified");
-          setLoading(false);
-          return;
-        }
+    // Check if viewing own profile
+    const isViewingOwnProfile = currentUser?.email === userEmail;
 
-        const user: AuthorizedUser = (await getAuthorizedUserByEmail(
-          userEmail,
-        )) as AuthorizedUser;
-        // Check if user profile is public (you'll need to add isPublic field to AuthorizedUser)
-        // For now, assuming all enabled users are public
-        if (!user.isPublic) {
-          setError("Profile not available");
-          setLoading(false);
-          return;
-        }
+    // Check if profile is public (but allow owner to view their own private profile)
+    if (!userData.isPublic && !isViewingOwnProfile) {
+      return (
+        <div className="flex min-h-screen items-center justify-center bg-gray-50 dark:bg-gray-900">
+          <div className="text-center">
+            <h1 className="mb-2 text-2xl font-bold text-gray-800 dark:text-gray-200">
+              Profile Not Found
+            </h1>
+            <p className="text-gray-600 dark:text-gray-400">
+              This profile is either private or does not exist.
+            </p>
+          </div>
+        </div>
+      );
+    }
 
-        setUserData(user);
-        setEnrollments(
-          (await getEnrollmentsByAuthorizedUser(user.id, {
+    // Fetch all profile data in parallel for better performance
+    const [enrollments, friends, announcements] = await Promise.all([
+      // Fetch profile user's enrollments
+      getEnrollmentsByAuthorizedUser(userData.id, {
+        populate: {
+          viewedLessons: {
+            fields: ["id", "name", "slug"],
+          },
+          droplet: {
             populate: {
-              viewedLessons: {
+              lessons: {
                 fields: ["id", "name", "slug"],
               },
+            },
+          },
+        },
+      }),
+      // Fetch profile user's friends
+      fetchFriends(userData),
+      // Fetch profile user's recent announcements
+      fetchUserAnnouncements(userData.id),
+    ]);
+
+    // Get current user's completed droplets for completion badges
+    let currentUserCompletedIds: number[] = [];
+
+    if (currentUser?.email && !isViewingOwnProfile) {
+      try {
+        const currentUserData = await getAuthorizedUserByEmail(
+          currentUser.email,
+        );
+        const currentUserEnrollments = await getEnrollmentsByAuthorizedUser(
+          currentUserData.id,
+          {
+            populate: {
               droplet: {
-                populate: {
-                  lessons: {
-                    fields: ["id", "name", "slug"],
-                  },
-                },
+                fields: ["id"],
               },
             },
-          })) || [],
+          },
         );
-        setLoading(false);
-      } catch (err) {
-        console.error(err);
-        setError("Profile not found");
-        setLoading(false);
+
+        // Extract IDs of droplets the current user has completed
+        currentUserCompletedIds = (currentUserEnrollments || [])
+          .filter((enrollment: Enrollment) => enrollment.isComplete)
+          .map((enrollment: Enrollment) => enrollment.droplet.id);
+      } catch (error) {
+        console.error("Error fetching current user data:", error);
+        // Continue without completion badges if there's an error
       }
-    };
+    }
 
-    fetchUserProfile();
-  }, []);
-
-  if (loading) {
+    // Render the client component with all fetched data
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50 dark:bg-gray-900">
-        <div className="text-gray-600 dark:text-gray-400">Loading...</div>
-      </div>
+      <ProfileContent
+        userData={userData}
+        enrollments={enrollments || []}
+        friends={friends || []}
+        announcements={announcements || []}
+        currentUserCompletedIds={currentUserCompletedIds}
+        isViewingOwnProfile={isViewingOwnProfile}
+      />
     );
-  }
+  } catch (error) {
+    console.error("Error loading profile:", error);
 
-  if (error || !userData) {
+    // Error state
     return (
       <div className="flex min-h-screen items-center justify-center bg-gray-50 dark:bg-gray-900">
         <div className="text-center">
@@ -100,212 +132,4 @@ export default function PublicProfilePage() {
       </div>
     );
   }
-
-  // Separate droplets into completed and created
-  // Created droplets are in userData.droplets
-  const createdDroplets = (userData.droplets || []).map((droplet, index) => ({
-    ...droplet,
-    uniqueKey: `created-${droplet.id}-${index}`,
-  }));
-
-  // Completed droplets are from enrollments with 100% completion
-
-  const completedDroplets = (enrollments || [])
-    .filter((enrollment) => enrollment.isComplete)
-    .map((enrollment, index) => ({
-      ...enrollment.droplet,
-      uniqueKey: `completed-${enrollment.droplet?.id}-${index}`,
-    }))
-    .filter((droplet) => droplet.id); // Filter out any null/undefined droplets
-
-  return (
-    <div className="min-h-screen bg-gray-50 px-4 py-12 dark:bg-gray-900">
-      <div className="mx-auto max-w-7xl">
-        {/* ===== LAYOUT CHANGE: Two-column grid layout ===== */}
-        <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
-          {/* ===== LEFT SIDEBAR START - Profile Info ===== */}
-          <div className="lg:col-span-3">
-            <div className="sticky top-8 rounded-lg bg-white p-6 shadow-sm dark:bg-gray-800">
-              <div className="flex flex-col items-center">
-                {/* Profile Photo */}
-                <div className="mb-4 flex h-32 w-32 items-center justify-center overflow-hidden rounded-full border-4 border-gray-300 bg-gray-100 dark:border-gray-600 dark:bg-gray-700">
-                  {userData.profilePhoto ? (
-                    <img
-                      src={userData.profilePhoto}
-                      alt={`${userData.firstName} ${userData.lastName}`}
-                      className="h-full w-full object-cover"
-                    />
-                  ) : (
-                    <AccountCircleIcon
-                      sx={{ fontSize: 64, color: "#9ca3af" }}
-                    />
-                  )}
-                </div>
-
-                {/* Name */}
-                <h1 className="mb-2 text-center text-xl font-bold text-gray-900 dark:text-white">
-                  {userData.firstName} {userData.lastName}
-                </h1>
-
-                {/* Bio */}
-                {userData.bio && (
-                  <div
-                    className="mb-6 text-center text-sm text-gray-600 dark:text-gray-300"
-                    dangerouslySetInnerHTML={{
-                      __html: DOMPurify.sanitize(userData.bio),
-                    }}
-                  />
-                )}
-
-                {/* Social Links */}
-                <div className="flex gap-3">
-                  {userData.linkedin && (
-                    <a
-                      href={
-                        userData.linkedin.startsWith("http")
-                          ? userData.linkedin
-                          : `https://${userData.linkedin}`
-                      }
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex h-12 w-12 items-center justify-center rounded border-2 border-gray-300 transition-colors hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700"
-                      aria-label="LinkedIn"
-                    >
-                      <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-                        <LinkedInIcon />
-                      </span>
-                    </a>
-                  )}
-                  {userData.github && (
-                    <a
-                      href={
-                        userData.github.startsWith("http")
-                          ? userData.github
-                          : `https://${userData.github}`
-                      }
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex h-12 w-12 items-center justify-center rounded border-2 border-gray-300 transition-colors hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700"
-                      aria-label="GitHub"
-                    >
-                      <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-                        <GitHubIcon />
-                      </span>
-                    </a>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-          {/* ===== LEFT SIDEBAR END ===== */}
-
-          {/* ===== RIGHT SIDE START - Droplets ===== */}
-          <div className="space-y-8 lg:col-span-9">
-            {/* Droplets Completed */}
-            {completedDroplets.length > 0 && (
-              <div className="rounded-lg bg-white p-8 shadow-sm dark:bg-gray-800">
-                <h2 className="mb-6 text-2xl font-bold text-gray-900 dark:text-white">
-                  Droplets completed
-                </h2>
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                  {/* Map over completed droplets, create clickable cards */}
-                  {completedDroplets.map((droplet) => (
-                    <div
-                      key={droplet.id}
-                      onClick={() => setSelectedId(droplet.id)}
-                      className="flex min-h-32 cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-gray-300 p-6 transition-colors hover:border-gray-400 dark:border-gray-600 dark:hover:border-gray-500"
-                    >
-                      <div className="text-center">
-                        <h3 className="font-semibold text-gray-900 dark:text-white">
-                          {droplet.name}
-                        </h3>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Droplets Created */}
-            {createdDroplets.length > 0 && (
-              <div className="rounded-lg bg-white p-8 shadow-sm dark:bg-gray-800">
-                <h2 className="mb-6 text-2xl font-bold text-gray-900 dark:text-white">
-                  Droplets Created
-                </h2>
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                  {createdDroplets.map((droplet) => (
-                    <div
-                      key={droplet.uniqueKey}
-                      onClick={() => setSelectedId(droplet.id)}
-                      className="flex min-h-32 cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-gray-300 p-6 transition-colors hover:border-gray-400 dark:border-gray-600 dark:hover:border-gray-500"
-                    >
-                      <div className="text-center">
-                        <h3 className="font-semibold text-gray-900 dark:text-white">
-                          {droplet.name}
-                        </h3>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Show message if no droplets */}
-            {completedDroplets.length === 0 && createdDroplets.length === 0 && (
-              <div className="rounded-lg bg-white p-8 text-center shadow-sm dark:bg-gray-800">
-                <p className="text-gray-600 dark:text-gray-400">
-                  No droplets to display yet.
-                </p>
-              </div>
-            )}
-          </div>
-          {/* ===== RIGHT SIDE END ===== */}
-        </div>
-        {/* ===== LAYOUT CHANGE END ===== */}
-      </div>
-
-      {/* Displaying droplet description */}
-      {selectedId && (
-        <div
-          className="bg-opacity-20 dark:bg-opacity-40 fixed inset-0 z-50 flex items-center justify-center bg-gray-900 p-4"
-          onClick={() => setSelectedId(null)}
-        >
-          <div
-            className="w-96 rounded-lg border-2 border-gray-300 bg-white p-6 shadow-xl dark:border-gray-600 dark:bg-gray-800"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="mb-4 flex items-start justify-between">
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-                {completedDroplets.find((d) => d.id === selectedId)?.name ||
-                  createdDroplets.find((d) => d.id === selectedId)?.name}
-              </h2>
-              <button
-                onClick={() => setSelectedId(null)}
-                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-              >
-                <svg
-                  className="h-5 w-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              </button>
-            </div>
-            <div className="text-sm text-gray-700 dark:text-gray-300">
-              {completedDroplets.find((d) => d.id === selectedId)
-                ?.description ||
-                createdDroplets.find((d) => d.id === selectedId)?.description}
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
 }
