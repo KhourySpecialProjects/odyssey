@@ -119,7 +119,7 @@ export function ReportBlock({ report }: { report: Report }) {
           </p>
           {report.time && (
             <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-              Reported on: {report.time.toLocaleString(DateTime.DATETIME_FULL)}
+              Reported on: {DateTime.fromISO(report.time).toFormat('MM-dd-yyyy h:mm a')}
             </p>
           )}
         </div>
