@@ -6,6 +6,7 @@ import type { AccessRequest } from "./access-requests";
 import { useTransition } from "react";
 import { Check, X } from "lucide-react";
 import { createAuthorizedUser } from "@/lib/requests/authorized-user";
+import { toast } from "sonner";
 
 export function AccessRequestBlock({ request }: { request: AccessRequest }) {
   const [isPending, startTransition] = useTransition();
@@ -19,15 +20,19 @@ export function AccessRequestBlock({ request }: { request: AccessRequest }) {
       const result = await createAuthorizedUser(formData);
 
       if (result.ok) {
+        toast.success("User is now authorized!");
         const deleteFormData = new FormData();
         deleteFormData.append("id", request.id);
         await deleteAccessRequest(deleteFormData);
+      } else if (result["error"] === "This attribute must be unique") {
+        toast.error("This user is already authorized!");
       }
     });
   };
 
   const handleDeleteRequest = async (formData: FormData) => {
     await deleteAccessRequest(formData);
+    toast.success("User rejected!");
   };
 
   return (
