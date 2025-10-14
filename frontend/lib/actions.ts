@@ -131,7 +131,7 @@ export async function deleteReport(id: string) {
   if (!response.ok) {
     throw new Error("Failed to delete report");
   }
-  redirect("/admin?ts=" + Date.now());
+  redirect("/admin?ts=" + Date.now() + "&adminTab=Reports");
   return response.json();
 }
 

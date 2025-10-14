@@ -9,7 +9,7 @@ export type Report = {
   email: string;
   path: string;
   description: string;
-  time: DateTime;
+  time: string;
 };
 
 export async function Reports() {
