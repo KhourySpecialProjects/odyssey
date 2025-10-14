@@ -360,7 +360,7 @@ export function SocialForms({
         </div>
 
         {isPublicProfile && (
-          <div className="mt-3 text-sm text-gray-600">
+          <div className="mt-3 text-sm text-gray-600 dark:text-slate-300">
             Your profile is now visible to the public. Others can view your
             information at{" "}
             <Link
@@ -368,7 +368,7 @@ export function SocialForms({
                 0,
                 authorizedUser.email.indexOf("@"),
               )}`}
-              className="text-blue-600 hover:text-blue-800"
+              className="text-sky-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-600"
             >
               khouryodyssey.com/prof/
               {authorizedUser.email.substring(
@@ -386,7 +386,7 @@ export function SocialForms({
                 toast.success("Profile link copied to clipboard");
                 navigator.clipboard.writeText(profileLink);
               }}
-              className="cursor-pointer text-gray-600 hover:text-gray-800"
+              className="cursor-pointer text-gray-600 hover:text-gray-800 dark:text-slate-300"
               fontSize="small"
             />
           </div>
