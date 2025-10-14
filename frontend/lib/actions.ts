@@ -139,7 +139,7 @@ export async function createBugReport(formData: z.infer<typeof reportSchema>) {
   try {
     const response = await fetch(STRAPI_API_URL + "/api/reports", {
       method: "POST",
-      body: JSON.stringify({ data: { ...formData, type: "bug" } }),
+      body: JSON.stringify({ data: { ...formData, type: "bug", time: new Date().toISOString() } }),
       headers: {
         "Content-Type": "application/json",
         Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,

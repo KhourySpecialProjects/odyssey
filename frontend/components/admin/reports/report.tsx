@@ -7,6 +7,7 @@ import { Report } from "./reports";
 import { toast } from "sonner";
 import { deleteReport } from "@/lib/actions";
 import { useState, useEffect, useRef } from "react";
+import { DateTime } from "luxon";
 
 export function ReportBlock({ report }: { report: Report }) {
   const handleDeleteReport = async (reportId: string) => {
@@ -116,6 +117,11 @@ export function ReportBlock({ report }: { report: Report }) {
           <p className="mt-2 truncate font-medium text-slate-900 dark:text-slate-300">
             Path: {report.path}
           </p>
+          {report.time && (
+            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+              Reported on: {report.time.toLocaleString(DateTime.DATETIME_FULL)}
+            </p>
+          )}
         </div>
 
         <div className="flex flex-shrink-0 items-center gap-2">
