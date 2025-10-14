@@ -347,9 +347,9 @@ export function ProfileContent({
           {activeTab === (createdDroplets.length > 0 ? 2 : 1) && (
             <div className="space-y-2">
               {friends.map((friend) => (
-                <a
+                <Link
                   key={friend.id}
-                  href={`/${friend.email.replace("@northeastern.edu", "")}`}
+                  href={`/prof/${friend.email.replace("@northeastern.edu", "")}`}
                   className="flex cursor-pointer items-center gap-4 rounded-lg border border-gray-200 bg-white p-4 shadow-sm transition-shadow hover:shadow-md dark:border-gray-700 dark:bg-gray-800"
                 >
                   <Avatar
@@ -360,7 +360,7 @@ export function ProfileContent({
                   <p className="font-medium text-gray-900 dark:text-white">
                     {friend.firstName} {friend.lastName}
                   </p>
-                </a>
+                </Link>
               ))}
               {friends.length === 0 && (
                 <div className="py-12 text-center">

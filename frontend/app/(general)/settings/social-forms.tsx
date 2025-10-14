@@ -364,13 +364,13 @@ export function SocialForms({
             Your profile is now visible to the public. Others can view your
             information at{" "}
             <Link
-              href={`/${authorizedUser.email.substring(
+              href={`/prof/${authorizedUser.email.substring(
                 0,
                 authorizedUser.email.indexOf("@"),
               )}`}
               className="text-blue-600 hover:text-blue-800"
             >
-              khouryodyssey.com/
+              khouryodyssey.com/prof/
               {authorizedUser.email.substring(
                 0,
                 authorizedUser.email.indexOf("@"),
