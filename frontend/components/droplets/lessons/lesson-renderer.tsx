@@ -73,6 +73,25 @@ export function LessonRenderer({
   const router = useRouter();
   const [highlights, setHighlights] = useState<Highlight[]>([]);
 
+  const isAdmin = user && isAuthorizedUserAdmin(user.roles);
+  const isNotEnrolled = !enrollmentId && !author && !isAdmin;
+
+  if (isNotEnrolled) {
+    return (
+      <div className="mx-auto w-full max-w-prose xl:py-8">
+        <div className="rounded-md border border-slate-200 bg-slate-50 p-6 text-center dark:border-slate-700 dark:bg-slate-800">
+          <LockIcon className="mx-auto mb-4 h-12 w-12 text-slate-400" />
+          <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">
+            Enrollment Required
+          </h2>
+          <p className="mt-2 text-slate-600 dark:text-slate-400">
+            You must enroll in this droplet to access lessons.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   useEffect(() => {
     const fetchHighlights = async () => {
       const response = await getHighlightsForLesson(lesson.id);
