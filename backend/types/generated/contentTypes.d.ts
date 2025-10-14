@@ -1459,6 +1459,7 @@ export interface ApiReportReport extends Schema.CollectionType {
     email: Attribute.Email & Attribute.Required;
     fullName: Attribute.String & Attribute.Required;
     path: Attribute.String & Attribute.Required;
+    time: Attribute.DateTime;
     type: Attribute.Enumeration<['bug']> & Attribute.Required;
     updatedAt: Attribute.DateTime;
     updatedBy: Attribute.Relation<

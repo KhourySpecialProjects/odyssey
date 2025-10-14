@@ -131,7 +131,7 @@ export async function deleteReport(id: string) {
   if (!response.ok) {
     throw new Error("Failed to delete report");
   }
-  redirect("/admin?ts=" + Date.now());
+  redirect("/admin?ts=" + Date.now() + "&adminTab=Reports");
   return response.json();
 }
 
@@ -139,7 +139,9 @@ export async function createBugReport(formData: z.infer<typeof reportSchema>) {
   try {
     const response = await fetch(STRAPI_API_URL + "/api/reports", {
       method: "POST",
-      body: JSON.stringify({ data: { ...formData, type: "bug" } }),
+      body: JSON.stringify({
+        data: { ...formData, type: "bug", time: new Date().toISOString() },
+      }),
       headers: {
         "Content-Type": "application/json",
         Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
