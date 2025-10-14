@@ -1,5 +1,6 @@
 import { fetchReports } from "@/lib/requests/data";
 import { ReportBlock } from "./report";
+import { DateTime } from "luxon";
 
 export type Report = {
   id: string;
@@ -8,6 +9,7 @@ export type Report = {
   email: string;
   path: string;
   description: string;
+  time: string;
 };
 
 export async function Reports() {
