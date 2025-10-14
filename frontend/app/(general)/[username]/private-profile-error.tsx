@@ -28,13 +28,6 @@ export function PrivateProfileError() {
         <p className="mb-8 text-lg text-gray-600 dark:text-gray-400">
           This profile is either private or does not exist.
         </p>
-
-        <button
-          onClick={() => router.push("/feed")}
-          className="w-full rounded-lg bg-blue-600 px-6 py-3 font-semibold text-white transition-colors hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
-        >
-          Return to Feed
-        </button>
       </div>
     </div>
   );
