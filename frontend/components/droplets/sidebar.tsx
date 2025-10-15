@@ -27,15 +27,19 @@ export default function Sidebar({
   author = false,
   droplet,
   completedLessonIds = [],
+  enrollmentId,
 }: {
   user?: User | null;
   author: boolean;
   droplet: Pick<Droplet, "name" | "slug" | "droplet_lessons">;
   completedLessonIds: number[];
+  enrollmentId?: string | undefined;
 }) {
   const [expanded, setExpanded] = useState(false);
   const pathname = usePathname();
   const isAdmin = user && isAuthorizedUserAdmin(user.roles);
+
+  const isEnrolled = !!enrollmentId || author || isAdmin;
 
   const activeLinkClasses =
     "w-full flex font-bold items-center p-2 bg-slate-200 dark:bg-slate-700 [&>svg]:text-sky-700 rounded-lg dark:text-white dark:hover:bg-slate-700 group text-sky-700 transition-colors";
@@ -165,11 +169,15 @@ export default function Sidebar({
                     index > 0
                       ? droplet.droplet_lessons[index - 1].lesson
                       : null;
-                  const isLocked =
+
+                  // Check sequential unlock separately from enrollment
+                  const isPreviousLessonIncomplete =
                     previousLesson &&
                     !completedLessonIds.includes(previousLesson.id) &&
                     !author &&
                     !isAdmin;
+
+                  const isLocked = !isEnrolled || isPreviousLessonIncomplete;
 
                   return (
                     <li key={lesson.id} className="w-full">
@@ -179,9 +187,17 @@ export default function Sidebar({
                           pathname == `/d/${droplet.slug}/${lesson.slug}`
                             ? activeLinkClasses
                             : inactiveLinkClasses,
-                          isLocked && "opacity-50",
+                          isLocked &&
+                            "pointer-events-none cursor-not-allowed opacity-50",
                         )}
-                        onClick={() => setExpanded(false)}
+                        onClick={(e) => {
+                          if (isLocked) {
+                            e.preventDefault();
+                            return;
+                          }
+                          setExpanded(false);
+                        }}
+                        aria-disabled={!!isLocked}
                       >
                         {lesson.type === "activity" ? (
                           <HammerIcon className="shrink-0" />
@@ -197,12 +213,13 @@ export default function Sidebar({
                             data-testid="lock-icon"
                           />
                         )}
-                        {completedLessonIds.includes(lesson.id) && (
-                          <CheckCircle2
-                            className="ml-auto h-4 w-4 shrink-0 text-green-500"
-                            data-testid="check-circle-icon"
-                          />
-                        )}
+                        {completedLessonIds.includes(lesson.id) &&
+                          !isLocked && (
+                            <CheckCircle2
+                              className="ml-auto h-4 w-4 shrink-0 text-green-500"
+                              data-testid="check-circle-icon"
+                            />
+                          )}
                       </Link>
                     </li>
                   );
