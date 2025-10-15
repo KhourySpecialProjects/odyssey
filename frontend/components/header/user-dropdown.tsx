@@ -1,5 +1,4 @@
 "use client";
-
 import { getInitials, condenseRoleTitles } from "@/lib/utils";
 import { AuthorizedUser, User } from "@/types";
 import {
@@ -7,6 +6,7 @@ import {
   LogOutIcon,
   PersonStanding,
   User2Icon,
+  Settings,
 } from "lucide-react";
 import { signOut } from "next-auth/react";
 import Link from "next/link";
@@ -44,16 +44,13 @@ export function UserDropdown({
                 )}
               </AvatarFallback>
             </Avatar>
-
             <span className="ms-2 hidden font-medium sm:block">
               Hi, <b>{authorizedUser?.firstName ?? user.name ?? user.email}</b>!
             </span>
           </div>
-
           <ChevronDownIcon className="trigger-icon h-5 w-5 text-slate-400" />
         </div>
       </DropdownMenuTrigger>
-
       <DropdownMenuContent className="mb-3 min-w-[220px]">
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
@@ -68,16 +65,22 @@ export function UserDropdown({
             </p>
           </div>
         </DropdownMenuLabel>
-
         <DropdownMenuSeparator />
-
         <DropdownMenuItem asChild data-testid="profile-link">
-          <Link href="/settings">
-            <PersonStanding className="mr-2 h-4 w-4" />
+          <Link
+            href={`/prof/${user.email?.replace("@northeastern.edu", "") || ""}`}
+          >
+            <User2Icon className="mr-2 h-4 w-4" />
             <span>Profile</span>
           </Link>
         </DropdownMenuItem>
-
+        <DropdownMenuItem asChild data-testid="settings-link">
+          <Link href="/settings">
+            <Settings className="mr-2 h-4 w-4" />
+            <span>Settings</span>
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
         <DropdownMenuItem
           role="menuitem"
           onSelect={(e) => {
