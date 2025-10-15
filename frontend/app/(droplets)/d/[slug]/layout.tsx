@@ -38,23 +38,20 @@ export default async function RootLayout({ params, children }: Props) {
   const { slug } = await params;
   const session = await getServerSession();
   const user = await getCurrentUser();
+
+  if (!user) return notFound();
+
   let completedLessonIds: number[] = [];
   let authorizedUser: AuthorizedUser | null = null;
+  let enrollmentId: string | undefined;
+
   if (user?.email) {
     authorizedUser = (await getAuthorizedUserByEmail(
       user.email,
     )) as AuthorizedUser;
   }
 
-  if (session?.user?.email) {
-    const user = await getAuthorizedUserByEmail(session.user.email);
-    const enrollments = await getEnrollmentsByAuthorizedUser(user.id);
-    completedLessonIds = enrollments.flatMap(
-      (enrollment) =>
-        enrollment.viewedLessons?.map((lesson) => lesson.id) || [],
-    );
-  }
-
+  // Fetch droplet first
   const droplet = await getDropletBySlug<Droplet>(slug, {
     fields: ["*"],
     populate: {
@@ -67,7 +64,21 @@ export default async function RootLayout({ params, children }: Props) {
     },
   });
 
-  if (!droplet || !user) return notFound();
+  if (!droplet) return notFound();
+
+  if (session?.user?.email) {
+    const sessionUser = await getAuthorizedUserByEmail(session.user.email);
+    const enrollments = await getEnrollmentsByAuthorizedUser(sessionUser.id);
+
+    const currentEnrollment = enrollments.find(
+      (enrollment) => enrollment.droplet?.id === droplet.id,
+    );
+
+    enrollmentId = currentEnrollment?.id.toString();
+
+    completedLessonIds =
+      currentEnrollment?.viewedLessons?.map((lesson) => lesson.id) || [];
+  }
 
   const isAuthor =
     droplet.authorized_users &&
@@ -82,6 +93,7 @@ export default async function RootLayout({ params, children }: Props) {
         user={user}
         droplet={droplet}
         completedLessonIds={completedLessonIds}
+        enrollmentId={enrollmentId}
       />
       <main className="w-full flex-1">{children}</main>
     </div>
