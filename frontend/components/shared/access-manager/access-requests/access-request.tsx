@@ -31,8 +31,12 @@ export function AccessRequestBlock({ request }: { request: AccessRequest }) {
   };
 
   const handleDeleteRequest = async (formData: FormData) => {
-    await deleteAccessRequest(formData);
-    toast.success("User rejected!");
+    const result = await deleteAccessRequest(formData);
+    if (result?.error) {
+      toast.error("User could not be deleted!");
+    } else {
+      toast.success("User rejected!");
+    }
   };
 
   return (
