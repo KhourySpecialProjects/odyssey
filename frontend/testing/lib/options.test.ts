@@ -64,7 +64,7 @@ describe("options", () => {
           credentials: undefined,
         });
 
-        expect(result).toBe("/unauthorized");
+        expect(result).toBe(`/unauthorized`);
       });
 
       it("rejects users without email", async () => {

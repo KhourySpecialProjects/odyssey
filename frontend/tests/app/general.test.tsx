@@ -10,6 +10,7 @@ describe("General Pages", () => {
   describe("UnauthorizedRoute", () => {
     it("renders no access message", () => {
       render(<UnauthorizedRoute />);
+
       expect(
         screen.getByText(
           "You do not have permission to access this application.",

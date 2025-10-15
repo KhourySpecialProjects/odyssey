@@ -9,7 +9,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { createAuthorizedUser } from "@/lib/requests/authorized-user";
+import { createAuthorizedUserWithState } from "@/lib/actions";
 import { Input, Switch } from "@lemonsqueezy/wedges";
 import { DialogClose } from "@radix-ui/react-dialog";
 import { ArrowRightIcon, PlusIcon, XIcon } from "lucide-react";
@@ -23,7 +23,7 @@ const initialState: any = {
 
 export function CreateUser() {
   const [state, formAction, isPending] = useActionState(
-    createAuthorizedUser,
+    createAuthorizedUserWithState,
     initialState,
   );
 

@@ -59,9 +59,7 @@ describe("markLessonAsComplete", () => {
         method: "PUT",
         body: JSON.stringify({
           data: {
-            viewedLessons: {
-              connect: [3],
-            },
+            viewedLessons: [1, 2, 3],
           },
         }),
       }),
@@ -211,9 +209,7 @@ describe("Lesson API Functions", () => {
           cache: "no-store",
           body: JSON.stringify({
             data: {
-              viewedLessons: {
-                connect: [3],
-              },
+              viewedLessons: [1, 2, 3],
             },
           }),
         }),

@@ -87,7 +87,6 @@ export function CalloutEditor({
               </div>
             )}
           </div>
-
           <div className="flex flex-row items-center gap-2">
             <CalloutTypeTool block={block} updateBlock={updateBlock} />
 
