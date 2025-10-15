@@ -1,5 +1,5 @@
 import { render, screen, fireEvent } from "@testing-library/react";
-import { ProfileContent } from "@/app/(general)/[username]/profile-content";
+import { ProfileContent } from "@/app/(general)/prof/[username]/profile-content";
 import { AuthorizedUser, Enrollment, Announcement } from "@/types";
 
 // Mock Next.js navigation hooks
@@ -530,7 +530,7 @@ describe("ProfileContent", () => {
 
       fireEvent.click(screen.getByText("Friends"));
 
-      const friendLink = container.querySelector('a[href="/friend"]');
+      const friendLink = container.querySelector('a[href="/prof/friend"]');
       expect(friendLink).toBeInTheDocument();
     });
   });

@@ -67,7 +67,9 @@ export function UserDropdown({
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild data-testid="profile-link">
-          <Link href={`/${user.email?.replace("@northeastern.edu", "") || ""}`}>
+          <Link
+            href={`/prof/${user.email?.replace("@northeastern.edu", "") || ""}`}
+          >
             <User2Icon className="mr-2 h-4 w-4" />
             <span>Profile</span>
           </Link>

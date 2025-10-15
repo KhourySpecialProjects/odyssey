@@ -219,6 +219,7 @@ describe("Sidebar", () => {
         author={false}
         droplet={mockProps.droplet}
         completedLessonIds={[1]}
+        enrollmentId="123"
       />,
     );
 
