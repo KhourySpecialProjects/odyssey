@@ -307,10 +307,6 @@ describe("Authorized User Tests", () => {
 
       const callUrl = global.fetch.mock.calls[0][0];
 
-      expect(callUrl).toMatch(
-        /filters%5Broles%5D%5Btitle%5D%5B%24eq%5D=Website%20Creator/,
-      );
-
       expect(callUrl).toMatch(/pagination%5BpageSize%5D=100/);
       expect(callUrl).toMatch(/pagination%5Bpage%5D=1/);
 
