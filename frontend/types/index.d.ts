@@ -57,6 +57,7 @@ export type AuthorizedUser = {
   email: string;
   roles: AuthorizedUserRole[];
   isEnabled: boolean;
+  isPublic: boolean;
   enrollments?: Enrollment[];
   playlists?: Playlist[];
   linkedin: string;

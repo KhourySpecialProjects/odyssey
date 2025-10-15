@@ -45,6 +45,11 @@ export async function getAuthorizedUserByEmail<
         populate: {
           droplets: {
             fields: "*",
+            populate: {
+              lessons: {
+                fields: ["*"], // or just ["id"] if you only need the count
+              },
+            },
           },
         },
       },
@@ -53,6 +58,11 @@ export async function getAuthorizedUserByEmail<
         populate: {
           droplets: {
             fields: "*",
+            populate: {
+              lessons: {
+                fields: ["*"], // or just ["id"] if you only need the count
+              },
+            },
           },
         },
       },
@@ -355,11 +365,13 @@ const CreateAuthorizedUser = AuthorizedUserSchema.omit({
   id: true,
 });
 export async function createAuthorizedUser(formData: FormData) {
+  // Determine which parameter is the FormData
+
   const roleID = await getAuthorizedUserRoleIdByTitle(
     AuthorizedUserRoleTitle.User,
   );
 
-  const emailRegex = /^[^\s@]+@northeastern\.edu$/;
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!formData.get("email")) {
     return { ok: false, error: "No email provided", data: null };
   }
@@ -485,6 +497,7 @@ export async function updateUserInfo(
     roles?: AuthorizedUserRoleTitle[];
     profilePhoto?: string | null;
     isEnabled?: boolean;
+    isPublic?: boolean;
     firstTime?: boolean;
     linkedin?: string | null;
     github?: string | null;
@@ -499,6 +512,7 @@ export async function updateUserInfo(
       roles,
       profilePhoto,
       isEnabled,
+      isPublic,
       firstTime,
       linkedin,
       github,
@@ -517,6 +531,7 @@ export async function updateUserInfo(
     if (bio !== undefined) data.bio = bio;
     if (profilePhoto !== undefined) data.profilePhoto = profilePhoto;
     if (isEnabled !== undefined) data.isEnabled = isEnabled;
+    if (isPublic !== undefined) data.isPublic = isPublic;
     if (firstTime !== undefined) data.firstTime = updates.firstTime;
     if (linkedin !== undefined) data.linkedin = linkedin;
     if (github !== undefined) data.github = github;

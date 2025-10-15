@@ -18,17 +18,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-interface Option {
-  value: string;
-  label: string;
-}
-
-const options: Option[] = [
-  { value: "option1", label: "Option 1" },
-  { value: "option2", label: "Option 2" },
-  { value: "option3", label: "Option 3" },
-];
-
 interface GroupProgressGridProps {
   group: {
     id: number;
@@ -57,18 +46,13 @@ export function GroupProgressGrid({ group, statuses }: GroupProgressGridProps) {
   const paginate = (lessons: Droplet[]) => {
     return lessons.slice(startIndex, endIndex);
   };
-  const totalPages = Math.ceil((group.droplets?.length || 0) / lessonsPerPage);
 
   const handleNextPage = () => {
-    if (currentPage < totalPages - 1) setCurrentPage(currentPage + 1);
+    setCurrentPage(currentPage + 1);
   };
 
   const handlePrevPage = () => {
     if (currentPage > 0) setCurrentPage(currentPage - 1);
-  };
-
-  const handleChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    setSelectedValue(event.target.value);
   };
 
   let sortedMembers: AuthorizedUser[] = [];
@@ -294,7 +278,8 @@ export function GroupProgressGrid({ group, statuses }: GroupProgressGridProps) {
           <button
             onClick={handleNextPage}
             disabled={
-              currentPage === totalPages - 1 ||
+              (currentPage + 1) * lessonsPerPage >=
+                getDisplayedDroplets().length ||
               getDisplayedDroplets().length <= lessonsPerPage
             }
             aria-label="Next page"

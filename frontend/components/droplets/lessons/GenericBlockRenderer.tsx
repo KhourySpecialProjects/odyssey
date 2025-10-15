@@ -147,9 +147,9 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
       nodeRange.setEnd(node, nodeEnd || 0);
 
       const span = document.createElement("span");
+
       span.style.backgroundColor = color;
       span.style.borderRadius = "8px";
-      span.style.color = "black";
 
       const contents = nodeRange.extractContents();
       span.appendChild(contents);
@@ -416,6 +416,7 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
         const span = document.createElement("span");
         span.style.borderRadius = "8px";
         span.style.backgroundColor = selectedColor;
+        span.style.color = "black";
 
         const textNode = document.createTextNode(text);
         span.appendChild(textNode);

@@ -1,0 +1,9 @@
+services:
+  playwright:
+    image: mcr.microsoft.com/playwright:v1.55.1-jammy
+    working_dir: /app/frontend
+    volumes:
+      - ./frontend:/app/frontend
+    network_mode: "host"
+    environment:
+      - CI=true

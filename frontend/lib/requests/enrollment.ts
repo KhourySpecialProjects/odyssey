@@ -470,6 +470,87 @@ export async function createEnrollment(
   }
 }
 
+// create function to updatge viewed lessons and mark as isComplete if all lessons are viewed
+export async function updateViewedLessons(
+  enrollmentId: string,
+  lessonId: number,
+  allDropletLessonIds: number[],
+) {
+  try {
+    const user = await getCurrentUser();
+    if (!user?.email) {
+      throw new Error("User not authenticated");
+    }
+
+    // Get current enrollment to check current viewedLessons
+    const enrollment = await getEnrollByID(enrollmentId, {
+      populate: { viewedLessons: { fields: ["id"] } },
+      fields: ["id", "isComplete"],
+    });
+
+    const currentViewedIds =
+      enrollment.viewedLessons?.map((l: Lesson) => l.id) || [];
+
+    // Only update if lesson not already viewed
+    if (!currentViewedIds.includes(lessonId)) {
+      const newViewedLessonIds = [...currentViewedIds, lessonId];
+
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_STRAPI_API_URL}/api/enrollments/${enrollmentId}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${process.env.STRAPI_ACCESS_TOKEN}`,
+          },
+          body: JSON.stringify({
+            data: {
+              viewedLessons: newViewedLessonIds,
+            },
+          }),
+        },
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to update viewed lessons");
+      }
+    }
+
+    // Check completion status AFTER the if block
+    const finalViewedIds = !currentViewedIds.includes(lessonId)
+      ? [...currentViewedIds, lessonId]
+      : currentViewedIds;
+
+    const isNowComplete = allDropletLessonIds.every((id) =>
+      finalViewedIds.includes(id),
+    );
+
+    if (isNowComplete && !enrollment.isComplete) {
+      await fetch(
+        `${process.env.NEXT_PUBLIC_STRAPI_API_URL}/api/enrollments/${enrollmentId}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${process.env.STRAPI_ACCESS_TOKEN}`,
+          },
+          body: JSON.stringify({
+            data: {
+              isComplete: true,
+            },
+          }),
+        },
+      );
+    }
+    const alreadyViewed = currentViewedIds.includes(lessonId);
+    return { success: true, alreadyViewed };
+  } catch (error) {
+    console.error("Error updating viewed lessons:", error);
+    return { success: false, error: "Failed to update viewed lessons" };
+  }
+}
+
+// Function to update completion date of enrollment
 export async function updateCompletionDate(enrollmentID: string) {
   try {
     const user = await getCurrentUser();
