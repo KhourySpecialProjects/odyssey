@@ -291,10 +291,8 @@ export async function fetchWebsiteCreators(): Promise<AuthorizedUser[]> {
   try {
     const query = qs.stringify({
       filters: {
-        roles: {
-          title: {
-            $eq: "Website Creator",
-          },
+        email: {
+          $in: WEBSITE_CREATOR_ORDER,
         },
       },
       fields: [
