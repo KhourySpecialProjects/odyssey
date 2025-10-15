@@ -256,7 +256,7 @@ export function FeedBlock({
               <KudosButton
                 authUser={authUser}
                 announcement={announcement}
-                droplet={announcement.droplet.name}
+                droplet={announcement.droplet}
               />
             </div>
           </div>
@@ -274,7 +274,16 @@ export function FeedBlock({
               {parsedContent.userName}
             </span>
             <span>{"\u00A0"}has given you kudos for{"\u00A0"}</span>
-            <span>{parsedContent.taskName}</span>
+            {announcement.droplet ? (
+              <Link
+                href={`/d/${announcement.droplet.slug}`}
+                className={linkClasses}
+              >
+                {announcement.droplet.name}
+              </Link>
+            ) : (
+              <span>{parsedContent.taskName}</span>
+            )}
           </div>
         );
       }

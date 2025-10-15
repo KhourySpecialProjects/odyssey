@@ -4,8 +4,9 @@ import { createKudosAnnouncement } from "@/lib/requests/feed";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
 import { notFound } from "next/navigation";
+import { Droplet } from "@/types";
 
-export async function giveKudos(announcementId: number, droplet: string) {
+export async function giveKudos(announcementId: number, droplet: Droplet) {
   const user = await getCurrentUser();
   if (!user || !user?.email) return notFound();
   const authUser = await getAuthorizedUserByEmail(user.email);

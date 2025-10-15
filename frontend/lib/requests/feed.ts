@@ -203,7 +203,7 @@ export async function createFriendAnnouncement(
 export async function createKudosAnnouncement(
   user: AuthorizedUser,
   announcementId: number,
-  droplet: string,
+  droplet: Droplet,
 ) {
   try {
     const response = await fetch(
@@ -231,7 +231,7 @@ export async function createKudosAnnouncement(
     console.error("Error updating kudos:", error);
     throw error;
   }
-
+  console.log("Droplet in createKudosAnnouncement:", droplet.id);
   try {
     const curDate = new Date();
     const response = await fetch(
@@ -241,7 +241,8 @@ export async function createKudosAnnouncement(
         body: JSON.stringify({
           data: {
             authorized_user: user.id,
-            content: `${user.firstName ? user.firstName + " " + user.lastName : user.email} has given you kudos for ${droplet}`,
+            content: `${user.firstName ? user.firstName + " " + user.lastName : user.email} has given you kudos for ${droplet.name}`,
+            droplet: droplet.id,
             firstCreated: curDate,
             type: "kudos",
           },
