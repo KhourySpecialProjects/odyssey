@@ -277,11 +277,19 @@ export async function fetchContentCreators(): Promise<AuthorizedUser[]> {
     throw new Error("Failed to fetch content creators.");
   }
 }
+const WEBSITE_CREATOR_ORDER = [
+  "sella.j@northeastern.edu",
+  "palazzi.r@northeastern.edu",
+  "palmer.gi@northeastern.edu",
+  "houser.ch@northeastern.edu",
+  "saadat.d@northeastern.edu",
+  "almanzar.j@northeastern.edu",
+  "chapman.w@northeastern.edu",
+];
 
 export async function fetchWebsiteCreators(): Promise<AuthorizedUser[]> {
   try {
     const query = qs.stringify({
-      sort: ["workTerm"],
       filters: {
         roles: {
           title: {
@@ -299,7 +307,6 @@ export async function fetchWebsiteCreators(): Promise<AuthorizedUser[]> {
         "profilePhoto",
         "linkedin",
         "github",
-        "workTerm",
       ],
       populate: {
         roles: {
@@ -317,6 +324,7 @@ export async function fetchWebsiteCreators(): Promise<AuthorizedUser[]> {
         page: 1,
       },
     });
+
     const response = await fetch(
       NEXT_PUBLIC_STRAPI_API_URL + "/api/authorized-users?" + query,
       {
@@ -324,8 +332,22 @@ export async function fetchWebsiteCreators(): Promise<AuthorizedUser[]> {
         cache: "no-store",
       },
     );
+
     const data = await response.json();
-    return flattenAttributes(data.data);
+    let creators: AuthorizedUser[] = flattenAttributes(data.data);
+
+    // Sort by the custom order array
+    creators.sort((a, b) => {
+      const indexA = WEBSITE_CREATOR_ORDER.indexOf(a.email);
+      const indexB = WEBSITE_CREATOR_ORDER.indexOf(b.email);
+
+      if (indexA === -1 && indexB === -1) return 0;
+      if (indexA === -1) return 1;
+      if (indexB === -1) return -1;
+      return indexA - indexB;
+    });
+
+    return creators;
   } catch (error) {
     console.error("Database Error:", error);
     throw new Error("Failed to fetch website creators.");

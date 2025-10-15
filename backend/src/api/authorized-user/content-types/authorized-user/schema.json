@@ -214,9 +214,6 @@
       "type": "boolean",
       "default": false,
       "required": true
-    },
-    "workTerm": {
-      "type": "date"
     }
   }
 }
