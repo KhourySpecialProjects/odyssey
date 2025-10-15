@@ -281,7 +281,7 @@ export async function fetchContentCreators(): Promise<AuthorizedUser[]> {
 export async function fetchWebsiteCreators(): Promise<AuthorizedUser[]> {
   try {
     const query = qs.stringify({
-      sort: ["lastName"],
+      sort: ["workTerm"],
       filters: {
         roles: {
           title: {
@@ -299,6 +299,7 @@ export async function fetchWebsiteCreators(): Promise<AuthorizedUser[]> {
         "profilePhoto",
         "linkedin",
         "github",
+        "workTerm",
       ],
       populate: {
         roles: {
