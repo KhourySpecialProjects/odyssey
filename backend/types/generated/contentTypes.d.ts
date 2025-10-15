@@ -751,7 +751,6 @@ export interface ApiAuthorizedUserAuthorizedUser extends Schema.CollectionType {
       'manyToMany',
       'api::authorized-user.authorized-user'
     >;
-    workTerm: Attribute.Date;
   };
 }
 
