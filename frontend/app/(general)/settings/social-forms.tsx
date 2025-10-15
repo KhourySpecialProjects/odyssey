@@ -370,7 +370,7 @@ export function SocialForms({
               )}`}
               className="text-sky-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-600"
             >
-              khouryodyssey.com/prof/
+              khouryodyssey.org/prof/
               {authorizedUser.email.substring(
                 0,
                 authorizedUser.email.indexOf("@"),
@@ -379,7 +379,7 @@ export function SocialForms({
             .{" "}
             <ContentCopyIcon
               onClick={() => {
-                const profileLink = `khouryodyssey.com/prof/${authorizedUser.email.substring(
+                const profileLink = `khouryodyssey.org/prof/${authorizedUser.email.substring(
                   0,
                   authorizedUser.email.indexOf("@"),
                 )}`;
