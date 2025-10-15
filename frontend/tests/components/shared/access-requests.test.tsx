@@ -56,7 +56,7 @@ describe("AccessRequests", () => {
       },
       {
         id: "2",
-        givenName: "Jane",
+        givenName: "Jane ",
         familyName: "Smith",
         email: "jane@example.com",
         affiliation: "Faculty",
