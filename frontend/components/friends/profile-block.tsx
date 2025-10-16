@@ -13,7 +13,13 @@ import {
   DialogTrigger,
 } from "../ui/dialog";
 import { Button } from "../ui/button";
-import { Github, Linkedin, User2Icon, UserRound, ExternalLink } from "lucide-react";
+import {
+  Github,
+  Linkedin,
+  User2Icon,
+  UserRound,
+  ExternalLink,
+} from "lucide-react";
 import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { getInitials } from "@/lib/utils";
@@ -47,7 +53,8 @@ export function ProfileBlock({
   };
 
   // Extract username from email (part before @)
-  const username = otherUser.email.split('@')[0];
+  const username = otherUser.email?.split("@")[0] || "user";
+  // const username = otherUser.email.split('@')[0];
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
