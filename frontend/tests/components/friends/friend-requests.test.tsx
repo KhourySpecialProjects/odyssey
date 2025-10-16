@@ -4,6 +4,7 @@ import { FriendRequests } from "@/components/friends/friend-requests";
 describe("FriendRequests", () => {
   const mockAuthUser = {
     id: "1",
+    email: "test@email.com",
     received_requests: [
       { id: "2", lastName: "Doe", firstName: "John" },
       { id: "3", lastName: "Smith", firstName: "Jane" },

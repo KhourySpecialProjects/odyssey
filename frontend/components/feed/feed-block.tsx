@@ -78,7 +78,10 @@ export function FeedBlock({
   }
 
   function parseContent(content: string, type: string): ParsedContent {
-    const cleanContent = content.replace(/\.\s+Click\s+to\s+give\s+kudos!$/i, "");
+    const cleanContent = content.replace(
+      /\.\s+Click\s+to\s+give\s+kudos!$/i,
+      "",
+    );
 
     switch (type) {
       case "playlist":
@@ -88,40 +91,50 @@ export function FeedBlock({
         if (match) {
           return { entityName: match[1], action: "updated" };
         }
-        match = cleanContent.match(/(.+?)\s+has\s+created\s+a\s+new\s+(?:playlist|droplet|group):\s+(.+)/i);
+        match = cleanContent.match(
+          /(.+?)\s+has\s+created\s+a\s+new\s+(?:playlist|droplet|group):\s+(.+)/i,
+        );
         if (match) {
-          return { userName: match[1], entityName: match[2], action: "created" };
+          return {
+            userName: match[1],
+            entityName: match[2],
+            action: "created",
+          };
         }
         return {};
       }
-      
+
       case "friend": {
-        const match = cleanContent.match(/(.+?)\s+has\s+(?:just\s+)?(?:finished|completed)\s+(.+)/i);
+        const match = cleanContent.match(
+          /(.+?)\s+has\s+(?:just\s+)?(?:finished|completed)\s+(.+)/i,
+        );
         if (match) {
           return { userName: match[1], taskName: match[2] };
         }
         return {};
       }
-      
+
       case "kudos": {
-        const match = content.match(/(.+?)\s+has\s+given\s+you\s+kudos\s+for\s+(.+)/i);
+        const match = content.match(
+          /(.+?)\s+has\s+given\s+you\s+kudos\s+for\s+(.+)/i,
+        );
         if (match) {
           return { userName: match[1], taskName: match[2] };
         }
         return {};
       }
-      
+
       default:
         return {};
     }
   }
 
   const parsedContent = parseContent(announcement.content, announcement.type);
-  
+
   // Check if announcement has structured data with the required entities
   const hasStructuredData = () => {
     if (announcement.type === "system") return false;
-    
+
     switch (announcement.type) {
       case "playlist":
         return !!announcement.playlist;
@@ -148,17 +161,20 @@ export function FeedBlock({
         if (!announcement.playlist) return null;
         return (
           <div className={`-mt-1 text-left font-medium ${textClasses}`}>
-            {announcement.authorized_user && parsedContent.action === "created" && (
-              <>
-                <span
-                  onClick={() => setProfileOpen(true)}
-                  className={`inline ${linkClasses}`}
-                >
-                  {parsedContent.userName}
-                </span>
-                <span>{"\u00A0"}has created a new playlist:{"\u00A0"}</span>
-              </>
-            )}
+            {announcement.authorized_user &&
+              parsedContent.action === "created" && (
+                <>
+                  <span
+                    onClick={() => setProfileOpen(true)}
+                    className={`inline ${linkClasses}`}
+                  >
+                    {parsedContent.userName}
+                  </span>
+                  <span>
+                    {"\u00A0"}has created a new playlist:{"\u00A0"}
+                  </span>
+                </>
+              )}
             <Link
               href={`/p/${announcement.playlist.slug}`}
               className={linkClasses}
@@ -176,17 +192,20 @@ export function FeedBlock({
         if (!announcement.droplet) return null;
         return (
           <div className={`-mt-1 text-left font-medium ${textClasses}`}>
-            {announcement.authorized_user && parsedContent.action === "created" && (
-              <>
-                <span
-                  onClick={() => setProfileOpen(true)}
-                  className={`inline ${linkClasses}`}
-                >
-                  {parsedContent.userName}
-                </span>
-                <span>{"\u00A0"}has created a new droplet:{"\u00A0"}</span>
-              </>
-            )}
+            {announcement.authorized_user &&
+              parsedContent.action === "created" && (
+                <>
+                  <span
+                    onClick={() => setProfileOpen(true)}
+                    className={`inline ${linkClasses}`}
+                  >
+                    {parsedContent.userName}
+                  </span>
+                  <span>
+                    {"\u00A0"}has created a new droplet:{"\u00A0"}
+                  </span>
+                </>
+              )}
             <Link
               href={`/d/${announcement.droplet.slug}`}
               className={linkClasses}
@@ -202,30 +221,35 @@ export function FeedBlock({
 
       case "group": {
         if (!announcement.group) return null;
-        
+
         // Use the group entity's name directly, not parsed content
-        const groupName = announcement.group.groupName || announcement.group.groupName;
-        
+        const groupName =
+          announcement.group.groupName || announcement.group.groupName;
+
         return (
           <div className={`-mt-1 text-left font-medium ${textClasses}`}>
-            {announcement.authorized_user && parsedContent.action === "created" && (
-              <>
-                <span
-                  onClick={() => setProfileOpen(true)}
-                  className={`inline ${linkClasses}`}
-                >
-                  {parsedContent.userName}
-                </span>
-                <span>{"\u00A0"}has created a new group:{"\u00A0"}</span>
-              </>
-            )}
+            {announcement.authorized_user &&
+              parsedContent.action === "created" && (
+                <>
+                  <span
+                    onClick={() => setProfileOpen(true)}
+                    className={`inline ${linkClasses}`}
+                  >
+                    {parsedContent.userName}
+                  </span>
+                  <span>
+                    {"\u00A0"}has created a new group:{"\u00A0"}
+                  </span>
+                </>
+              )}
             <Link
               href={`/g/${announcement.group.slug}`}
               className={linkClasses}
             >
               {groupName}
             </Link>
-            {(!announcement.authorized_user || parsedContent.action === "updated") && (
+            {(!announcement.authorized_user ||
+              parsedContent.action === "updated") && (
               <span>{"\u00A0"}has been updated</span>
             )}
           </div>
@@ -237,14 +261,18 @@ export function FeedBlock({
         if (!announcement.authorized_user || !announcement.droplet) return null;
         return (
           <div className="flex flex-col sm:flex-row sm:items-center sm:gap-1">
-            <div className={`flex flex-wrap items-center font-medium ${textClasses}`}>
+            <div
+              className={`flex flex-wrap items-center font-medium ${textClasses}`}
+            >
               <span
                 onClick={() => setProfileOpen(true)}
                 className={`inline ${linkClasses}`}
               >
                 {parsedContent.userName}
               </span>
-              <span>{"\u00A0"}has just finished{"\u00A0"}</span>
+              <span>
+                {"\u00A0"}has just finished{"\u00A0"}
+              </span>
               <Link
                 href={`/d/${announcement.droplet.slug}`}
                 className={linkClasses}
@@ -273,7 +301,9 @@ export function FeedBlock({
             >
               {parsedContent.userName}
             </span>
-            <span>{"\u00A0"}has given you kudos for{"\u00A0"}</span>
+            <span>
+              {"\u00A0"}has given you kudos for{"\u00A0"}
+            </span>
             {announcement.droplet ? (
               <Link
                 href={`/d/${announcement.droplet.slug}`}
@@ -310,17 +340,20 @@ export function FeedBlock({
           <div className="flex items-center space-x-4">
             <div className="dark:text-slate-200">{config.icon}</div>
             <div className="min-w-0 flex-1">
-              {hasStructuredData() ? renderStructuredContent() : renderPlainContent()}
-              
-              {announcement.authorized_user && announcement.type !== "system" && (
-                <ProfileBlock
-                  user={authUser}
-                  otherUser={announcement.authorized_user}
-                  isOpen={profileOpen}
-                  setIsOpen={setProfileOpen}
-                  isFeed={true}
-                />
-              )}
+              {hasStructuredData()
+                ? renderStructuredContent()
+                : renderPlainContent()}
+
+              {announcement.authorized_user &&
+                announcement.type !== "system" && (
+                  <ProfileBlock
+                    user={authUser}
+                    otherUser={announcement.authorized_user}
+                    isOpen={profileOpen}
+                    setIsOpen={setProfileOpen}
+                    isFeed={true}
+                  />
+                )}
             </div>
           </div>
           <div className="flex w-full flex-row items-center justify-end pt-2 text-right text-sm text-slate-900 dark:text-slate-200">
