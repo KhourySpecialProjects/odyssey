@@ -28,6 +28,9 @@ export function FeedBlock({
   authUser: AuthorizedUser;
 }) {
   const [profileOpen, setProfileOpen] = useState(false);
+  const [playlistPopupOpen, setPlaylistPopupOpen] = useState(false);
+  const [dropletPopupOpen, setDropletPopupOpen] = useState(false);
+  const [groupPopupOpen, setGroupPopupOpen] = useState(false);
 
   const announcementConfig = {
     playlist: {
@@ -175,12 +178,12 @@ export function FeedBlock({
                   </span>
                 </>
               )}
-            <Link
-              href={`/p/${announcement.playlist.slug}`}
+            <span
+              onClick={() => setPlaylistPopupOpen(true)}
               className={linkClasses}
             >
               {announcement.playlist.name}
-            </Link>
+            </span>
             {parsedContent.action === "updated" && (
               <span>{"\u00A0"}has been updated</span>
             )}
@@ -206,12 +209,12 @@ export function FeedBlock({
                   </span>
                 </>
               )}
-            <Link
-              href={`/d/${announcement.droplet.slug}`}
+            <span
+              onClick={() => setDropletPopupOpen(true)}
               className={linkClasses}
             >
               {announcement.droplet.name}
-            </Link>
+            </span>
             {parsedContent.action === "updated" && (
               <span>{"\u00A0"}has been updated</span>
             )}
@@ -242,12 +245,12 @@ export function FeedBlock({
                   </span>
                 </>
               )}
-            <Link
-              href={`/g/${announcement.group.slug}`}
+            <span
+              onClick={() => setGroupPopupOpen(true)}
               className={linkClasses}
             >
               {groupName}
-            </Link>
+            </span>
             {(!announcement.authorized_user ||
               parsedContent.action === "updated") && (
               <span>{"\u00A0"}has been updated</span>
@@ -273,12 +276,12 @@ export function FeedBlock({
               <span>
                 {"\u00A0"}has just finished{"\u00A0"}
               </span>
-              <Link
-                href={`/d/${announcement.droplet.slug}`}
+              <span
+                onClick={() => setDropletPopupOpen(true)}
                 className={linkClasses}
               >
                 {announcement.droplet.name}
-              </Link>
+              </span>
             </div>
             <div className="flex flex-1 justify-end">
               <KudosButton
@@ -305,12 +308,12 @@ export function FeedBlock({
               {"\u00A0"}has given you kudos for{"\u00A0"}
             </span>
             {announcement.droplet ? (
-              <Link
-                href={`/d/${announcement.droplet.slug}`}
+              <span
+                onClick={() => setDropletPopupOpen(true)}
                 className={linkClasses}
               >
                 {announcement.droplet.name}
-              </Link>
+              </span>
             ) : (
               <span>{parsedContent.taskName}</span>
             )}
@@ -361,6 +364,153 @@ export function FeedBlock({
           </div>
         </div>
       </li>
+
+      {/* Playlist Popup */}
+      {playlistPopupOpen && announcement.playlist && (
+        <div
+          className="bg-opacity-20 dark:bg-opacity-40 fixed inset-0 z-50 flex items-center justify-center bg-gray-900 p-4"
+          onClick={() => setPlaylistPopupOpen(false)}
+        >
+          <div
+            className="w-96 rounded-lg border-2 border-gray-300 bg-white p-6 shadow-xl dark:border-gray-600 dark:bg-gray-800"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mb-4 flex items-start justify-between">
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                {announcement.playlist.name}
+              </h2>
+              <button
+                onClick={() => setPlaylistPopupOpen(false)}
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+              >
+                <svg
+                  className="h-5 w-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+            <div className="mb-4 text-sm text-gray-700 dark:text-gray-300">
+              {announcement.playlist.description || "No description available"}
+            </div>
+            <Link
+              href={`/p/${announcement.playlist.slug}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block w-full rounded-md bg-green-600 px-4 py-2 text-center text-sm font-medium text-white hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-800"
+              onClick={() => setPlaylistPopupOpen(false)}
+            >
+              View Playlist
+            </Link>
+          </div>
+        </div>
+      )}
+
+      {/* Droplet Popup */}
+      {dropletPopupOpen && announcement.droplet && (
+        <div
+          className="bg-opacity-20 dark:bg-opacity-40 fixed inset-0 z-50 flex items-center justify-center bg-gray-900 p-4"
+          onClick={() => setDropletPopupOpen(false)}
+        >
+          <div
+            className="w-96 rounded-lg border-2 border-gray-300 bg-white p-6 shadow-xl dark:border-gray-600 dark:bg-gray-800"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mb-4 flex items-start justify-between">
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                {announcement.droplet.name}
+              </h2>
+              <button
+                onClick={() => setDropletPopupOpen(false)}
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+              >
+                <svg
+                  className="h-5 w-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+            <div className="mb-4 text-sm text-gray-700 dark:text-gray-300">
+              {announcement.droplet.description || "No description available"}
+            </div>
+            <Link
+              href={`/d/${announcement.droplet.slug}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block w-full rounded-md bg-blue-600 px-4 py-2 text-center text-sm font-medium text-white hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800"
+              onClick={() => setDropletPopupOpen(false)}
+            >
+              View Droplet
+            </Link>
+          </div>
+        </div>
+      )}
+
+      {/* Group Popup */}
+      {groupPopupOpen && announcement.group && (
+        <div
+          className="bg-opacity-20 dark:bg-opacity-40 fixed inset-0 z-50 flex items-center justify-center bg-gray-900 p-4"
+          onClick={() => setGroupPopupOpen(false)}
+        >
+          <div
+            className="w-96 rounded-lg border-2 border-gray-300 bg-white p-6 shadow-xl dark:border-gray-600 dark:bg-gray-800"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mb-4 flex items-start justify-between">
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                {announcement.group.groupName}
+              </h2>
+              <button
+                onClick={() => setGroupPopupOpen(false)}
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+              >
+                <svg
+                  className="h-5 w-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+            <div className="mb-4 text-sm text-gray-700 dark:text-gray-300">
+              {announcement.group.description || "No description available"}
+            </div>
+            <Link
+              href={`/g/${announcement.group.slug}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block w-full rounded-md bg-purple-600 px-4 py-2 text-center text-sm font-medium text-white hover:bg-purple-700 dark:bg-purple-700 dark:hover:bg-purple-800"
+              onClick={() => setGroupPopupOpen(false)}
+            >
+              View Group
+            </Link>
+          </div>
+        </div>
+      )}
     </>
   );
 }
