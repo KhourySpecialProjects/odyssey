@@ -90,6 +90,7 @@ export async function fetchAnnouncements(
             "github",
             "linkedin",
             "profilePhoto",
+            "isPublic",
           ],
           populate: {
             blocked: {
