@@ -119,15 +119,17 @@ export function ProfileBlock({
                 Block user
               </Button>
             </div>
-            <Link href={`/prof/${username}`}>
-              <Button
-                size="sm"
-                className="bg-sky-300 text-black hover:bg-sky-400 dark:bg-sky-300 dark:hover:bg-sky-400"
-              >
-                View Full Profile
-                <ExternalLink className="ml-2 h-4 w-4" />
-              </Button>
-            </Link>
+            {otherUser.isPublic && (
+              <Link href={`/prof/${username}`}>
+                <Button
+                  size="sm"
+                  className="bg-sky-300 text-black hover:bg-sky-400 dark:bg-sky-300 dark:hover:bg-sky-400"
+                >
+                  View Full Profile
+                  <ExternalLink className="ml-2 h-4 w-4" />
+                </Button>
+              </Link>
+            )}
           </div>
         </DialogHeader>
       </DialogContent>
