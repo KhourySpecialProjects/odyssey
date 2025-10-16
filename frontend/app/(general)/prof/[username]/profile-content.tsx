@@ -1,6 +1,6 @@
 "use client";
 
-import React, { use, useState } from "react";
+import React, { useState } from "react";
 import { Tabs, Tab, Box, Avatar } from "@mui/material";
 import LinkedInIcon from "@mui/icons-material/LinkedIn";
 import GitHubIcon from "@mui/icons-material/GitHub";
@@ -14,6 +14,7 @@ import {
   PlusCircle,
   Star,
   Check,
+  UserPlus,
 } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
@@ -23,19 +24,12 @@ interface ProfileContentProps {
   enrollments: Enrollment[];
   friends: AuthorizedUser[];
   announcements: Announcement[];
-  currentUserCompletedIds: number[]; // Droplet IDs the current viewer has completed
-  isViewingOwnProfile: boolean; // True if viewing your own profile
+  currentUserCompletedIds: number[];
+  isViewingOwnProfile: boolean;
+  currentUser: AuthorizedUser | null; // The logged-in user
+  onAddFriend?: (requestee: AuthorizedUser) => Promise<void>;
 }
 
-/**
- * ProfileContent - Client Component
- *
- * Handles all interactive UI for the public profile page including:
- * - Tabbed interface with state management
- * - Droplet modals with ratings and navigation
- * - Completion badges on created droplets (when viewing others' profiles)
- * - Hover effects and animations
- */
 export function ProfileContent({
   userData,
   enrollments,
@@ -43,31 +37,31 @@ export function ProfileContent({
   announcements,
   currentUserCompletedIds,
   isViewingOwnProfile,
+  currentUser,
+  onAddFriend,
 }: ProfileContentProps) {
   const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [addingFriendId, setAddingFriendId] = useState<number | null>(null);
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  // initiate an activeTab from URL param, default to 0
   const [activeTab, setActiveTab] = useState(() => {
     const tabParam = searchParams.get("tab");
     return tabParam ? parseInt(tabParam) : 0;
   });
 
-  // Process droplets data
   const createdDroplets = (userData.droplets || []).map((droplet, index) => ({
     ...droplet,
     uniqueKey: `created-${droplet.id}-${index}`,
   }));
 
   const completedDroplets = (enrollments || [])
-    .filter((e) => e.isComplete && e.droplet) // Check droplet exists
+    .filter((e) => e.isComplete && e.droplet)
     .map((e, index) => ({
       ...e.droplet!,
       uniqueKey: `completed-${e.droplet!.id}-${index}`,
     }));
 
-  // Calculate statistics
   const totalEnrollments = enrollments?.length || 0;
   const completedCount = completedDroplets.length;
   const completionRate =
@@ -77,7 +71,6 @@ export function ProfileContent({
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setActiveTab(newValue);
-    // Update the URL with the new tab parameter without refreshing the page
     const params = new URLSearchParams(searchParams.toString());
     params.set("tab", newValue.toString());
     router.push(`?${params.toString()}`, { scroll: false });
@@ -101,21 +94,44 @@ export function ProfileContent({
     }
   }
 
-  /**
-   * Check if the current viewer has completed a specific user droplet
-   * Only relevant when viewing someone else's created droplets
-   */
   const isCompletedByViewer = (dropletId: number) => {
     return currentUserCompletedIds.includes(dropletId);
+  };
+
+  /**
+   * Check if current user is already friends with a specific user
+   */
+  const isAlreadyFriends = (userId: number): boolean => {
+    if (!currentUser?.friendships) return false;
+
+    return currentUser.friendships.some((friendship) => {
+      const userIds = friendship.authorized_users.map((user) => user.id);
+      return userIds.includes(userId);
+    });
+  };
+
+  /**
+   * Handle adding a friend
+   */
+  const handleAddFriend = async (friend: AuthorizedUser) => {
+    if (!onAddFriend || !currentUser) return;
+
+    setAddingFriendId(friend.id);
+    try {
+      await onAddFriend(friend);
+    } catch (error) {
+      console.error("Error adding friend:", error);
+    } finally {
+      setAddingFriendId(null);
+    }
   };
 
   return (
     <div className="min-h-screen bg-gray-50 px-4 py-12 dark:bg-gray-900">
       <div className="mx-auto max-w-5xl">
-        {/* ===== PROFILE HEADER SECTION ===== */}
+        {/* PROFILE HEADER */}
         <div className="mb-6 rounded-lg bg-white p-6 shadow-sm dark:bg-gray-800">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-            {/* Left side: Profile Picture and Name */}
             <div className="flex items-center justify-center gap-6 lg:justify-start">
               <Avatar
                 src={userData.profilePhoto || undefined}
@@ -133,7 +149,6 @@ export function ProfileContent({
               </div>
             </div>
 
-            {/* Right side: Statistics Panel with Hover Tooltips */}
             <div className="flex flex-row gap-6 rounded-lg border-2 border-gray-200 bg-gray-50 px-8 py-4 lg:min-w-[280px] dark:border-gray-700 dark:bg-gray-900">
               <div className="group relative text-center">
                 <p className="text-2xl font-bold text-gray-900 dark:text-white">
@@ -154,7 +169,7 @@ export function ProfileContent({
                 <p className="text-xs text-gray-600 dark:text-gray-400">
                   Completion
                 </p>
-                <div className="pointer-events-none absolute -top-16 left-1/2 -translate-x-1/2 rounded-lg bg-gray-900 px-3 py-2 text-xs whitespace-nowrap text-white opacity-0 transition-opacity group-hover:opacity-100 dark:bg-gray-700">
+                <div className="pointer-events-none absolute -top-16 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-lg bg-gray-900 px-3 py-2 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100 dark:bg-gray-700">
                   Percentage of droplets completed
                   <div className="absolute -bottom-1 left-1/2 h-2 w-2 -translate-x-1/2 rotate-45 bg-gray-900 dark:bg-gray-700"></div>
                 </div>
@@ -166,7 +181,7 @@ export function ProfileContent({
                 <p className="text-xs text-gray-600 dark:text-gray-400">
                   Created
                 </p>
-                <div className="pointer-events-none absolute -top-16 left-1/2 -translate-x-1/2 rounded-lg bg-gray-900 px-3 py-2 text-xs whitespace-nowrap text-white opacity-0 transition-opacity group-hover:opacity-100 dark:bg-gray-700">
+                <div className="pointer-events-none absolute -top-16 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-lg bg-gray-900 px-3 py-2 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100 dark:bg-gray-700">
                   Droplets authored by this user
                   <div className="absolute -bottom-1 left-1/2 h-2 w-2 -translate-x-1/2 rotate-45 bg-gray-900 dark:bg-gray-700"></div>
                 </div>
@@ -174,7 +189,6 @@ export function ProfileContent({
             </div>
           </div>
 
-          {/* Bio and Social Links */}
           <div className="mt-4 flex flex-col items-center">
             {userData.bio && (
               <div
@@ -223,7 +237,7 @@ export function ProfileContent({
           </div>
         </div>
 
-        {/* ===== TABS SECTION ===== */}
+        {/* TABS */}
         <Box className="mb-6 rounded-lg bg-white shadow-sm dark:bg-gray-800 dark:text-gray-300">
           <Tabs
             value={activeTab}
@@ -236,17 +250,16 @@ export function ProfileContent({
                 fontFamily: "inherit",
                 fontSize: "1rem",
                 fontWeight: 500,
-                color: "#6b7280", // Gray in light mode
+                color: "#6b7280",
                 "&.Mui-selected": {
-                  color: "#2563eb", // Blue when selected (light mode)
+                  color: "#2563eb",
                 },
               },
-              // Dark mode overrides
               ".dark &": {
                 "& .MuiTab-root": {
-                  color: "#d1d5db", // Light gray (unselected) in dark mode
+                  color: "#d1d5db",
                   "&.Mui-selected": {
-                    color: "#ffffff", // White when selected in dark mode
+                    color: "#ffffff",
                   },
                 },
               },
@@ -258,9 +271,9 @@ export function ProfileContent({
           </Tabs>
         </Box>
 
-        {/* ===== TAB CONTENT ===== */}
+        {/* TAB CONTENT */}
         <div>
-          {/* DROPLETS COMPLETED TAB */}
+          {/* DROPLETS COMPLETED */}
           {activeTab === 0 && (
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {completedDroplets.map((droplet) => (
@@ -300,7 +313,7 @@ export function ProfileContent({
             </div>
           )}
 
-          {/* DROPLETS CREATED TAB */}
+          {/* DROPLETS CREATED */}
           {createdDroplets.length > 0 &&
             activeTab === (createdDroplets.length > 0 ? 1 : 0) && (
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -317,10 +330,9 @@ export function ProfileContent({
                       e.currentTarget.style.transform = "translateY(0)";
                     }}
                   >
-                    {/* Completion Badge - Only show if viewer completed this droplet and not viewing own profile */}
                     {!isViewingOwnProfile &&
                       isCompletedByViewer(droplet.id) && (
-                        <div className="absolute top-2 right-2 flex items-center gap-1 rounded-full bg-green-500 px-2 py-1 text-xs font-medium text-white">
+                        <div className="absolute right-2 top-2 flex items-center gap-1 rounded-full bg-green-500 px-2 py-1 text-xs font-medium text-white">
                           <Check className="h-3 w-3" />
                           Completed
                         </div>
@@ -346,22 +358,56 @@ export function ProfileContent({
           {/* FRIENDS TAB */}
           {activeTab === (createdDroplets.length > 0 ? 2 : 1) && (
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {friends.map((friend) => (
-                <Link
-                  key={friend.id}
-                  href={`/prof/${friend.email.replace("@northeastern.edu", "")}`}
-                  className="flex cursor-pointer items-center gap-4 rounded-lg border border-gray-200 bg-white p-4 shadow-sm transition-shadow hover:shadow-md dark:border-gray-700 dark:bg-gray-800"
-                >
-                  <Avatar
-                    src={friend.profilePhoto || undefined}
-                    alt={`${friend.firstName} ${friend.lastName}`}
-                    sx={{ width: 40, height: 40 }}
-                  />
-                  <p className="text-sm font-medium text-gray-900 dark:text-white">
-                    {friend.firstName} {friend.lastName}
-                  </p>
-                </Link>
-              ))}
+              {friends.map((friend) => {
+                const alreadyFriends = isAlreadyFriends(friend.id);
+                const showAddButton =
+                  !isViewingOwnProfile &&
+                  currentUser &&
+                  !alreadyFriends &&
+                  friend.id !== currentUser.id &&
+                  onAddFriend;
+
+                return (
+                  <div
+                    key={friend.id}
+                    className="flex items-center justify-between gap-4 rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800"
+                  >
+                    <Link
+                      href={`/prof/${friend.email.replace("@northeastern.edu", "")}`}
+                      className="flex flex-1 cursor-pointer items-center gap-4 transition-opacity hover:opacity-80"
+                    >
+                      <Avatar
+                        src={friend.profilePhoto || undefined}
+                        alt={`${friend.firstName} ${friend.lastName}`}
+                        sx={{ width: 40, height: 40 }}
+                      />
+                      <p className="text-sm font-medium text-gray-900 dark:text-white">
+                        {friend.firstName} {friend.lastName}
+                      </p>
+                    </Link>
+
+                    {showAddButton && (
+                      <button
+                        onClick={() => handleAddFriend(friend)}
+                        disabled={addingFriendId === friend.id}
+                        className="flex items-center gap-1 rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-blue-400 dark:bg-blue-500 dark:hover:bg-blue-600"
+                      >
+                        {addingFriendId === friend.id ? (
+                          <>
+                            <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
+                            <span>Adding...</span>
+                          </>
+                        ) : (
+                          <>
+                            <UserPlus className="h-4 w-4" />
+                            <span>Add</span>
+                          </>
+                        )}
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
               {friends.length === 0 && (
                 <div className="col-span-full py-12 text-center">
                   <p className="text-gray-600 dark:text-gray-400">
@@ -373,7 +419,7 @@ export function ProfileContent({
           )}
         </div>
 
-        {/* ===== RECENT ACTIVITY SECTION ===== */}
+        {/* RECENT ACTIVITY */}
         <div className="mt-6 rounded-lg bg-white p-6 shadow-sm dark:bg-gray-800">
           <h2 className="mb-4 text-xl font-bold text-gray-900 dark:text-white">
             Recent Activity
@@ -430,10 +476,10 @@ export function ProfileContent({
         </div>
       </div>
 
-      {/* ===== DROPLET DESCRIPTION MODAL ===== */}
+      {/* DROPLET MODAL */}
       {selectedId && (
         <div
-          className="bg-opacity-20 dark:bg-opacity-40 fixed inset-0 z-50 flex items-center justify-center bg-gray-900 p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900 bg-opacity-20 p-4 dark:bg-opacity-40"
           onClick={() => setSelectedId(null)}
         >
           <div
@@ -465,7 +511,6 @@ export function ProfileContent({
               </button>
             </div>
 
-            {/* 5-Star Rating Display */}
             {(() => {
               const droplet =
                 completedDroplets.find((d) => d.id === selectedId) ||
@@ -499,7 +544,6 @@ export function ProfileContent({
               ) : null;
             })()}
 
-            {/* Droplet Description */}
             <div
               className="mb-4 text-sm text-gray-700 dark:text-gray-300"
               dangerouslySetInnerHTML={{
@@ -513,13 +557,11 @@ export function ProfileContent({
               }}
             />
 
-            {/* View Droplet Button */}
             <Link
               href={`/d/${
                 completedDroplets.find((d) => d.id === selectedId)?.slug ||
                 createdDroplets.find((d) => d.id === selectedId)?.slug
               }`}
-              // open in new
               target="_blank"
               rel="noopener noreferrer"
               className="flex w-full items-center justify-center rounded-lg bg-blue-600 px-4 py-2 font-medium text-white transition-colors hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
