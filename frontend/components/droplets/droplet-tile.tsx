@@ -126,6 +126,10 @@ export function DropletTile({
     }
   }
 
+  async function addToFavorites() {
+    toast.success("Droplet added to favorites!");
+  }
+
   if (compact) {
     return (
       <li className="rounded-md border border-slate-200 bg-slate-50 transition-colors hover:border-slate-300 dark:bg-slate-800">
@@ -195,6 +199,11 @@ export function DropletTile({
                 size="sm"
                 onMouseEnter={() => setIsHovering(true)}
                 onMouseLeave={() => setIsHovering(false)}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  addToFavorites();
+                }}
                 className={`group ${isArchived === true || isArchived === false ? "visibility: visible" : "visibility: hidden"} bg-slate-50 hover:bg-slate-300 dark:bg-slate-300`}
               >
                 {isHovering ? (
