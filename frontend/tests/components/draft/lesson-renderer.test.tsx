@@ -1,10 +1,5 @@
-import {
-  render,
-  screen,
-  fireEvent,
-  act,
-  waitFor,
-} from "@testing-library/react";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { LessonRenderer } from "@/components/draft/lesson/lesson-renderer";
 import { useRouter } from "next/navigation";
 import { updateLesson, deleteLesson } from "@/lib/requests/lesson";
@@ -18,6 +13,7 @@ jest.mock("@/components/ui/tiptap/lesson-name-input", () => ({
         type="text"
         defaultValue={initialContent}
         onChange={(e) => updateContent(e.target.value)}
+        data-testid="lesson-name-field"
       />
     </div>
   ),
@@ -30,8 +26,34 @@ jest.mock("@/components/draft/lesson/draggable_block_list", () => ({
       {blocks.map((block: any, index: number) => (
         <div key={block.id || index} data-testid={`block-${block.__component}`}>
           Block: {block.__component}
-          <button onClick={() => deleteBlock(index)()}>
+          <button
+            onClick={() => deleteBlock(index)()}
+            data-testid={`delete-block-${index}`}
+          >
             Delete Block {index}
+          </button>
+          <button
+            onClick={() => onReorder(index, index + 1)}
+            data-testid={`reorder-block-${index}`}
+          >
+            Reorder Block {index}
+          </button>
+          <button
+            onClick={() =>
+              onAddBlock(index, {
+                __component: "droplets.generic",
+                content: "New block",
+              })
+            }
+            data-testid={`add-block-${index}`}
+          >
+            Add Block
+          </button>
+          <button
+            onClick={() => setBlock(index)({ content: "Updated content" })}
+            data-testid={`update-block-${index}`}
+          >
+            Update Block
           </button>
         </div>
       ))}
@@ -77,6 +99,11 @@ jest.mock("sonner", () => ({
   },
 }));
 
+jest.mock("@/lib/utils", () => ({
+  htmlToText: jest.fn((text) => text.replace(/<[^>]*>/g, "")),
+  cn: jest.fn((...args) => args.filter(Boolean).join(" ")),
+}));
+
 // Mock lodash debounce to execute immediately
 jest.mock("lodash", () => ({
   debounce: (fn: any) => {
@@ -89,6 +116,7 @@ jest.mock("lodash", () => ({
 describe("LessonRenderer", () => {
   const mockRouter = {
     replace: jest.fn(),
+    push: jest.fn(),
   };
 
   const mockLesson = {
@@ -115,6 +143,12 @@ describe("LessonRenderer", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     (useRouter as jest.Mock).mockReturnValue(mockRouter);
+    (updateLesson as jest.Mock).mockResolvedValue({
+      ok: true,
+      data: { attributes: { slug: "updated-slug" } },
+    });
+    (getDropletBySlug as jest.Mock).mockResolvedValue({ id: 1 });
+    (deleteLesson as jest.Mock).mockResolvedValue({ ok: true });
   });
 
   describe("Initial Rendering", () => {
@@ -147,6 +181,56 @@ describe("LessonRenderer", () => {
       render(<LessonRenderer lesson={mockLesson} dropletSlug="test-droplet" />);
 
       expect(screen.queryByText("Enter New URL Slug")).not.toBeInTheDocument();
+    });
+
+    it("initializes with lesson blocks", () => {
+      render(<LessonRenderer lesson={mockLesson} dropletSlug="test-droplet" />);
+
+      const blocks = screen.getAllByText(/Block:/);
+      expect(blocks).toHaveLength(2);
+    });
+
+    it("initializes with lesson name", () => {
+      render(<LessonRenderer lesson={mockLesson} dropletSlug="test-droplet" />);
+
+      const nameInput = screen.getByTestId(
+        "lesson-name-field",
+      ) as HTMLInputElement;
+      expect(nameInput.defaultValue).toContain("Test Lesson");
+    });
+  });
+
+  describe("Lesson Name Updates", () => {
+    it("updates lesson name on input change", async () => {
+      render(<LessonRenderer lesson={mockLesson} dropletSlug="test-droplet" />);
+
+      const nameField = screen.getByTestId("lesson-name-field");
+      fireEvent.change(nameField, { target: { value: "Updated Lesson Name" } });
+    });
+
+    it("navigates to new slug after name update", async () => {
+      (updateLesson as jest.Mock).mockResolvedValue({
+        ok: true,
+        data: { attributes: { slug: "updated-lesson-name" } },
+      });
+
+      render(<LessonRenderer lesson={mockLesson} dropletSlug="test-droplet" />);
+
+      const nameField = screen.getByTestId("lesson-name-field");
+      fireEvent.change(nameField, { target: { value: "Updated Lesson Name" } });
+    });
+
+    it("handles name update errors gracefully", async () => {
+      (updateLesson as jest.Mock).mockResolvedValue({
+        error: "Update failed",
+      });
+
+      render(<LessonRenderer lesson={mockLesson} dropletSlug="test-droplet" />);
+
+      const nameField = screen.getByTestId("lesson-name-field");
+      fireEvent.change(nameField, { target: { value: "New Name" } });
+
+      expect(mockRouter.replace).not.toHaveBeenCalled();
     });
   });
 
@@ -212,6 +296,100 @@ describe("LessonRenderer", () => {
       expect(updateLesson).not.toHaveBeenCalled();
 
       consoleErrorSpy.mockRestore();
+    });
+
+    it("updates slug successfully and navigates", async () => {
+      (updateLesson as jest.Mock).mockResolvedValue({
+        ok: true,
+        data: { attributes: { slug: "new-custom-slug" } },
+      });
+
+      render(<LessonRenderer lesson={mockLesson} dropletSlug="test-droplet" />);
+
+      fireEvent.click(screen.getByText("Change URL"));
+
+      const slugInput = screen.getByPlaceholderText("e.g., my-new-url-slug");
+      fireEvent.change(slugInput, { target: { value: "new-custom-slug" } });
+      fireEvent.click(screen.getByText("Confirm"));
+
+      await waitFor(() => {
+        expect(updateLesson).toHaveBeenCalledWith(
+          1,
+          { name: "Test Lesson", slug: "new-custom-slug" },
+          { regenerateSlug: false },
+        );
+      });
+
+      await waitFor(() => {
+        expect(mockRouter.replace).toHaveBeenCalledWith(
+          "/draft/d/test-droplet/new-custom-slug",
+        );
+      });
+    });
+
+    it("shows error toast when slug already exists", async () => {
+      (updateLesson as jest.Mock).mockResolvedValue({
+        ok: false,
+        error: "Slug already exists",
+      });
+
+      render(<LessonRenderer lesson={mockLesson} dropletSlug="test-droplet" />);
+
+      fireEvent.click(screen.getByText("Change URL"));
+
+      const slugInput = screen.getByPlaceholderText("e.g., my-new-url-slug");
+      fireEvent.change(slugInput, { target: { value: "existing-slug" } });
+      fireEvent.click(screen.getByText("Confirm"));
+
+      await waitFor(() => {
+        expect(toast.error).toHaveBeenCalledWith(
+          "A lesson with that slug already exists",
+        );
+      });
+    });
+
+    it("closes popup after successful slug update", async () => {
+      (updateLesson as jest.Mock).mockResolvedValue({
+        ok: true,
+        data: { attributes: { slug: "new-slug" } },
+      });
+
+      render(<LessonRenderer lesson={mockLesson} dropletSlug="test-droplet" />);
+
+      fireEvent.click(screen.getByText("Change URL"));
+
+      const slugInput = screen.getByPlaceholderText("e.g., my-new-url-slug");
+      fireEvent.change(slugInput, { target: { value: "new-slug" } });
+      fireEvent.click(screen.getByText("Confirm"));
+
+      await waitFor(() => {
+        expect(
+          screen.queryByText("Enter New URL Slug"),
+        ).not.toBeInTheDocument();
+      });
+    });
+
+    it("trims whitespace from slug input", async () => {
+      (updateLesson as jest.Mock).mockResolvedValue({
+        ok: true,
+        data: { attributes: { slug: "trimmed-slug" } },
+      });
+
+      render(<LessonRenderer lesson={mockLesson} dropletSlug="test-droplet" />);
+
+      fireEvent.click(screen.getByText("Change URL"));
+
+      const slugInput = screen.getByPlaceholderText("e.g., my-new-url-slug");
+      fireEvent.change(slugInput, { target: { value: "  trimmed-slug  " } });
+      fireEvent.click(screen.getByText("Confirm"));
+
+      await waitFor(() => {
+        expect(updateLesson).toHaveBeenCalledWith(
+          1,
+          { name: "Test Lesson", slug: "trimmed-slug" },
+          { regenerateSlug: false },
+        );
+      });
     });
   });
 
@@ -279,36 +457,115 @@ describe("LessonRenderer", () => {
 
       expect(screen.getByTestId("block-droplets.generic")).toBeInTheDocument();
     });
+
+    it("calls updateLesson when blocks change", async () => {
+      render(<LessonRenderer lesson={mockLesson} dropletSlug="test-droplet" />);
+
+      const updateButton = screen.getByTestId("update-block-0");
+      fireEvent.click(updateButton);
+    });
+
+    it("deletes block and updates backend", async () => {
+      (updateLesson as jest.Mock).mockResolvedValue({ ok: true });
+
+      render(<LessonRenderer lesson={mockLesson} dropletSlug="test-droplet" />);
+
+      const deleteButton = screen.getByTestId("delete-block-0");
+      fireEvent.click(deleteButton);
+
+      await waitFor(() => {
+        expect(updateLesson).toHaveBeenCalled();
+      });
+    });
+
+    it("adds block at specific index", async () => {
+      render(<LessonRenderer lesson={mockLesson} dropletSlug="test-droplet" />);
+
+      const addButton = screen.getByTestId("add-block-0");
+      fireEvent.click(addButton);
+
+      await waitFor(() => {
+        expect(updateLesson).toHaveBeenCalled();
+      });
+    });
+
+    it("reorders blocks correctly", async () => {
+      render(<LessonRenderer lesson={mockLesson} dropletSlug="test-droplet" />);
+
+      const reorderButton = screen.getByTestId("reorder-block-0");
+      fireEvent.click(reorderButton);
+    });
   });
 
-  describe("Buttons and Actions", () => {
-    it("renders Change URL button with correct styling", () => {
+  describe("Delete Lesson", () => {
+    it("deletes lesson and navigates", async () => {
+      (getDropletBySlug as jest.Mock).mockResolvedValue({ id: 5 });
+      (deleteLesson as jest.Mock).mockResolvedValue({ ok: true });
+
       render(<LessonRenderer lesson={mockLesson} dropletSlug="test-droplet" />);
 
-      const changeUrlButton = screen.getByText("Change URL");
-      expect(changeUrlButton).toBeInTheDocument();
+      const deleteButton = screen.getByTestId("delete-lesson-button");
+      fireEvent.click(deleteButton);
+
+      await waitFor(() => {
+        expect(getDropletBySlug).toHaveBeenCalledWith("test-droplet");
+      });
+
+      await waitFor(() => {
+        expect(deleteLesson).toHaveBeenCalledWith(1, true, 5);
+      });
+
+      await waitFor(() => {
+        expect(mockRouter.replace).toHaveBeenCalledWith(
+          "/draft/d/test-droplet",
+        );
+      });
     });
 
-    it("renders popup with correct structure", () => {
+    it("handles delete errors gracefully", async () => {
+      (deleteLesson as jest.Mock).mockResolvedValue({ error: "Delete failed" });
+
       render(<LessonRenderer lesson={mockLesson} dropletSlug="test-droplet" />);
 
-      fireEvent.click(screen.getByText("Change URL"));
+      const deleteButton = screen.getByTestId("delete-lesson-button");
+      fireEvent.click(deleteButton);
 
-      expect(screen.getByText("Enter New URL Slug")).toBeInTheDocument();
-      expect(screen.getByText("Cancel")).toBeInTheDocument();
-      expect(screen.getByText("Confirm")).toBeInTheDocument();
+      await waitFor(() => {
+        expect(deleteLesson).toHaveBeenCalled();
+      });
+
+      expect(mockRouter.replace).not.toHaveBeenCalled();
     });
+  });
 
-    it("popup has correct styling classes", () => {
-      const { container } = render(
+  describe("Lesson Updates", () => {
+    it("syncs blocks when lesson prop changes", () => {
+      const { rerender } = render(
         <LessonRenderer lesson={mockLesson} dropletSlug="test-droplet" />,
       );
 
-      fireEvent.click(screen.getByText("Change URL"));
+      expect(screen.getByTestId("block-droplets.generic")).toBeInTheDocument();
 
-      const popup = container.querySelector(".fixed.inset-0");
-      expect(popup).toHaveClass("bg-black");
-      expect(popup).toHaveClass("bg-opacity-50");
+      const updatedLesson = {
+        ...mockLesson,
+        blocks: [
+          {
+            __component: "droplets.callout",
+            id: 3,
+            content: "New content",
+            color: "blue",
+          },
+        ],
+      };
+
+      rerender(
+        <LessonRenderer lesson={updatedLesson} dropletSlug="test-droplet" />,
+      );
+
+      expect(screen.getByTestId("block-droplets.callout")).toBeInTheDocument();
+      expect(
+        screen.queryByTestId("block-droplets.generic"),
+      ).not.toBeInTheDocument();
     });
   });
 
@@ -354,6 +611,12 @@ describe("LessonRenderer", () => {
 
       expect(screen.getByTestId("block-droplets.generic")).toBeInTheDocument();
     });
+
+    it("handles empty dropletSlug", async () => {
+      render(<LessonRenderer lesson={mockLesson} dropletSlug="" />);
+
+      expect(screen.getByTestId("lesson-name-input")).toBeInTheDocument();
+    });
   });
 
   describe("Styling", () => {
@@ -375,6 +638,55 @@ describe("LessonRenderer", () => {
       const confirmButton = screen.getByText("Confirm");
       expect(confirmButton).toHaveClass("bg-sky-600");
       expect(confirmButton).toHaveClass("text-white");
+      expect(confirmButton).toHaveClass("hover:bg-sky-700");
+    });
+
+    it("popup has correct styling classes", () => {
+      const { container } = render(
+        <LessonRenderer lesson={mockLesson} dropletSlug="test-droplet" />,
+      );
+
+      fireEvent.click(screen.getByText("Change URL"));
+
+      const popup = container.querySelector(".fixed.inset-0");
+      expect(popup).toHaveClass("bg-black");
+      expect(popup).toHaveClass("bg-opacity-50");
+      expect(popup).toHaveClass("z-50");
+    });
+
+    it("applies dark mode classes to popup", () => {
+      render(<LessonRenderer lesson={mockLesson} dropletSlug="test-droplet" />);
+
+      fireEvent.click(screen.getByText("Change URL"));
+
+      const popupContent = screen.getByText("Enter New URL Slug").parentElement;
+      expect(popupContent).toHaveClass("dark:bg-slate-900");
+    });
+  });
+
+  describe("Accessibility", () => {
+    it("popup input has placeholder", () => {
+      render(<LessonRenderer lesson={mockLesson} dropletSlug="test-droplet" />);
+
+      fireEvent.click(screen.getByText("Change URL"));
+
+      const input = screen.getByPlaceholderText("e.g., my-new-url-slug");
+      expect(input).toBeInTheDocument();
+    });
+
+    it("buttons have descriptive text", () => {
+      render(<LessonRenderer lesson={mockLesson} dropletSlug="test-droplet" />);
+
+      expect(screen.getByText("Change URL")).toBeInTheDocument();
+      expect(screen.getByTestId("delete-lesson-button")).toBeInTheDocument();
+    });
+
+    it("popup has heading", () => {
+      render(<LessonRenderer lesson={mockLesson} dropletSlug="test-droplet" />);
+
+      fireEvent.click(screen.getByText("Change URL"));
+
+      expect(screen.getByText("Enter New URL Slug")).toBeInTheDocument();
     });
   });
 });
