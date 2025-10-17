@@ -57,7 +57,7 @@ export default async function PublicProfilePage({
           throw new Error("Current user data is missing a valid id");
         }
         currentUserData = maybeUserData;
-        
+
         if (!isViewingOwnProfile) {
           const currentUserEnrollments = await getEnrollmentsByAuthorizedUser(
             currentUserData.id,
@@ -82,16 +82,21 @@ export default async function PublicProfilePage({
     // Server action to handle friend requests
     async function handleAddFriend(requestee: AuthorizedUser) {
       "use server";
-      
+
       if (!currentUserData) {
         throw new Error("Must be logged in to send friend request");
       }
 
       // TypeScript now knows currentUserData is not null after the check above
-      const result = await sendFriendRequest(currentUserData as AuthorizedUser, requestee);
-      
+      const result = await sendFriendRequest(
+        currentUserData as AuthorizedUser,
+        requestee,
+      );
+
       if (!result.success) {
-        throw new Error(result.error ? String(result.error) : "Failed to send friend request");
+        throw new Error(
+          result.error ? String(result.error) : "Failed to send friend request",
+        );
       }
 
       // Revalidate the page to show updated friendship status
@@ -107,7 +112,6 @@ export default async function PublicProfilePage({
         currentUserCompletedIds={currentUserCompletedIds}
         isViewingOwnProfile={isViewingOwnProfile}
         currentUser={currentUserData}
-        onAddFriend={handleAddFriend}
       />
     );
   } catch (error) {
