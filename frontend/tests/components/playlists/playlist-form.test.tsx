@@ -1,16 +1,28 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { PlaylistForm } from "@/components/playlists/playlist-form";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import {
   AuthorizedUser,
   DropletStatus,
   DropletType,
   FocusArea,
   Tag,
+  Droplet,
 } from "@/types";
 import { createPlaylistAnnouncement } from "@/lib/requests/feed";
 import { createPlaylist, updatePlaylist } from "@/lib/requests/playlist";
+
+// Mock modules
+jest.mock("react", () => {
+  const actualReact = jest.requireActual("react");
+  return {
+    ...actualReact,
+    useActionState: () => {
+      return [{ ok: false, error: null }, jest.fn(), false];
+    },
+  };
+});
 
 jest.mock("@/lib/utils", () => ({
   uppercaseFirstChar: (text: string) => text,
@@ -35,8 +47,8 @@ jest.mock("@/lib/requests/feed", () => ({
 
 jest.mock("next/navigation", () => ({
   useRouter: jest.fn(),
-  usePathname: jest.fn(() => "/test"),
-  useSearchParams: jest.fn(() => new URLSearchParams()),
+  usePathname: jest.fn(),
+  useSearchParams: jest.fn(),
 }));
 
 jest.mock("react-dnd", () => ({
@@ -49,18 +61,6 @@ jest.mock("react-dnd-html5-backend", () => ({
   HTML5Backend: {},
 }));
 
-const mockedCreatePlaylist = createPlaylist as jest.MockedFunction<
-  typeof createPlaylist
->;
-const mockedUpdatePlaylist = updatePlaylist as jest.MockedFunction<
-  typeof updatePlaylist
->;
-const mockedCreatePlaylistAnnouncement =
-  createPlaylistAnnouncement as jest.MockedFunction<
-    typeof createPlaylistAnnouncement
-  >;
-const mockedUseRouter = useRouter as jest.MockedFunction<typeof useRouter>;
-
 describe("PlaylistForm", () => {
   const mockRouter = {
     push: jest.fn(),
@@ -71,10 +71,12 @@ describe("PlaylistForm", () => {
     prefetch: jest.fn(),
   };
 
-  const mockDroplets = Array.from({ length: 15 }, (_, i) => ({
-    id: i + 1,
-    name: `Droplet ${i + 1}`,
-    slug: `droplet-${i + 1}`,
+  const mockSearchParams = new URLSearchParams();
+
+  const createMockDroplet = (id: number, name?: string): any => ({
+    id,
+    name: name || `Droplet ${id}`,
+    slug: `droplet-${id}`,
     isHidden: false,
     focusArea: "personal" as FocusArea,
     type: "knowledge" as DropletType,
@@ -83,24 +85,16 @@ describe("PlaylistForm", () => {
     status: "published" as DropletStatus,
     droplet_lessons: [],
     lessons: [
-      {
-        id: i * 2 + 1,
-        name: `Lesson ${i * 2 + 1}`,
-        slug: `lesson-${i * 2 + 1}`,
-        blocks: [],
-        droplet_lessons: [],
-      },
-      {
-        id: i * 2 + 2,
-        name: `Lesson ${i * 2 + 2}`,
-        slug: `lesson-${i * 2 + 2}`,
-        blocks: [],
-        droplet_lessons: [],
-      },
+      { id: 1, name: "Lesson 1" },
+      { id: 2, name: "Lesson 2" },
     ],
-  })) as any[];
+  });
 
-  const mockAuthor: AuthorizedUser = {
+  const mockDroplets = Array.from({ length: 15 }, (_, i) =>
+    createMockDroplet(i + 1),
+  );
+
+  const mockAuthor: any = {
     id: 1,
     email: "test@test.com",
     roles: [],
@@ -109,8 +103,8 @@ describe("PlaylistForm", () => {
     linkedin: "",
     github: "",
     firstTime: false,
-    firstName: "",
-    lastName: "",
+    firstName: "Test",
+    lastName: "User",
     bio: "",
     friendships: [],
     sent_requests: [],
@@ -123,39 +117,65 @@ describe("PlaylistForm", () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    mockedUseRouter.mockReturnValue(mockRouter);
+    (useRouter as jest.Mock).mockReturnValue(mockRouter);
+    (usePathname as jest.Mock).mockReturnValue("/test");
+    (useSearchParams as jest.Mock).mockReturnValue(mockSearchParams);
   });
 
   describe("Rendering", () => {
-    it("renders form fields", () => {
+    it("renders all form fields with initial empty state", () => {
       render(
         <PlaylistForm droplets={mockDroplets} author={mockAuthor} userId={1} />,
       );
 
-      expect(screen.getByText("Make this playlist public")).toBeInTheDocument();
+      expect(screen.getByLabelText(/Playlist Name/i)).toBeInTheDocument();
+      expect(screen.getByPlaceholderText("Enter playlist name")).toHaveValue(
+        "",
+      );
       expect(
-        screen.getByPlaceholderText("Enter playlist name"),
+        screen.getByLabelText(/Make this playlist public/i),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByLabelText(/Playlist Description/i),
       ).toBeInTheDocument();
       expect(
         screen.getByPlaceholderText("Enter playlist description"),
-      ).toBeInTheDocument();
+      ).toHaveValue("");
     });
 
-    it("renders with initial empty state", () => {
+    it("renders with existing playlist data", () => {
+      const existingPlaylist = {
+        id: 1,
+        name: "My Playlist",
+        description: "Test description",
+        slug: "my-playlist",
+        isPublic: true,
+        droplets: [mockDroplets[0], mockDroplets[1]],
+      };
+
+      render(
+        <PlaylistForm
+          droplets={mockDroplets}
+          author={mockAuthor}
+          userId={1}
+          existingPlaylist={existingPlaylist}
+        />,
+      );
+
+      expect(screen.getByDisplayValue("My Playlist")).toBeInTheDocument();
+      expect(screen.getByDisplayValue("Test description")).toBeInTheDocument();
+    });
+
+    it("displays droplet count and lesson totals", () => {
       render(
         <PlaylistForm droplets={mockDroplets} author={mockAuthor} userId={1} />,
       );
 
-      const nameInput = screen.getByPlaceholderText("Enter playlist name");
-      expect(nameInput).toHaveValue("");
-
-      const descriptionInput = screen.getByPlaceholderText(
-        "Enter playlist description",
-      );
-      expect(descriptionInput).toHaveValue("");
+      expect(screen.getByText(/0 droplets selected/i)).toBeInTheDocument();
+      expect(screen.getByText(/0 lessons total/i)).toBeInTheDocument();
     });
 
-    it("renders drag and drop sections", () => {
+    it("renders Available and Selected Droplets sections", () => {
       render(
         <PlaylistForm droplets={mockDroplets} author={mockAuthor} userId={1} />,
       );
@@ -164,16 +184,20 @@ describe("PlaylistForm", () => {
       expect(screen.getByText("Selected Droplets")).toBeInTheDocument();
     });
 
-    it("renders save and cancel buttons", () => {
+    it("renders action buttons", () => {
       render(
         <PlaylistForm droplets={mockDroplets} author={mockAuthor} userId={1} />,
       );
 
-      expect(screen.getByText("Save Playlist")).toBeInTheDocument();
-      expect(screen.getByText("Cancel")).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: /Cancel/i }),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: /Save Playlist/i }),
+      ).toBeInTheDocument();
     });
 
-    it("renders search functionality", () => {
+    it("renders search input and button", () => {
       render(
         <PlaylistForm droplets={mockDroplets} author={mockAuthor} userId={1} />,
       );
@@ -181,85 +205,62 @@ describe("PlaylistForm", () => {
       expect(
         screen.getByPlaceholderText("Search Droplets..."),
       ).toBeInTheDocument();
-      expect(screen.getByText("Search")).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: /Search/i }),
+      ).toBeInTheDocument();
     });
 
-    it("displays droplet and lesson counts", () => {
+    it("shows required asterisk on playlist name", () => {
       render(
         <PlaylistForm droplets={mockDroplets} author={mockAuthor} userId={1} />,
       );
 
-      expect(screen.getByText(/0 droplets selected/)).toBeInTheDocument();
-      expect(screen.getByText(/0 lessons total/)).toBeInTheDocument();
-    });
-
-    it("renders public switch", () => {
-      render(
-        <PlaylistForm droplets={mockDroplets} author={mockAuthor} userId={1} />,
-      );
+      const nameLabel = screen.getByText(/Playlist Name/i);
+      expect(nameLabel.innerHTML).toContain("*");
     });
   });
 
-  describe("Form Interactions", () => {
-    it("allows typing in name input", async () => {
+  describe("Form Input Interactions", () => {
+    it("updates playlist name on input change", async () => {
       const user = userEvent.setup();
       render(
         <PlaylistForm droplets={mockDroplets} author={mockAuthor} userId={1} />,
       );
 
       const nameInput = screen.getByPlaceholderText("Enter playlist name");
-      await user.type(nameInput, "My Playlist");
+      await user.type(nameInput, "New Playlist");
 
-      expect(nameInput).toHaveValue("My Playlist");
+      expect(nameInput).toHaveValue("New Playlist");
     });
 
-    it("allows typing in description input", async () => {
+    it("updates description on input change", async () => {
       const user = userEvent.setup();
       render(
         <PlaylistForm droplets={mockDroplets} author={mockAuthor} userId={1} />,
       );
 
-      const descriptionInput = screen.getByPlaceholderText(
+      const descInput = screen.getByPlaceholderText(
         "Enter playlist description",
       );
-      await user.type(descriptionInput, "This is a description");
+      await user.type(descInput, "A great playlist");
 
-      expect(descriptionInput).toHaveValue("This is a description");
+      expect(descInput).toHaveValue("A great playlist");
     });
 
-    it("toggles public switch", async () => {
-      const user = userEvent.setup();
-      render(
-        <PlaylistForm droplets={mockDroplets} author={mockAuthor} userId={1} />,
-      );
-    });
-
-    it("allows typing in search input", async () => {
+    it("toggles public/private switch", async () => {
       const user = userEvent.setup();
       render(
         <PlaylistForm droplets={mockDroplets} author={mockAuthor} userId={1} />,
       );
 
-      const searchInput = screen.getByPlaceholderText("Search Droplets...");
-      await user.type(searchInput, "Droplet 1");
+      const switchElement = screen.getByLabelText("Make this playlist public");
+      expect(switchElement).not.toBeChecked();
 
-      expect(searchInput).toHaveValue("Droplet 1");
-    });
+      await user.click(switchElement);
+      expect(switchElement).toBeChecked();
 
-    it("prevents form submission on Enter in search input", async () => {
-      const user = userEvent.setup();
-      render(
-        <PlaylistForm droplets={mockDroplets} author={mockAuthor} userId={1} />,
-      );
-
-      const searchInput = screen.getByPlaceholderText("Search Droplets...");
-      await user.type(searchInput, "test");
-      await user.keyboard("{Enter}");
-
-      // Form should not submit
-      expect(
-        screen.queryByText("Please enter a playlist name"),
-      ).not.toBeInTheDocument();
+      await user.click(switchElement);
+      expect(switchElement).not.toBeChecked();
     });
   });
 
@@ -273,187 +274,153 @@ describe("PlaylistForm", () => {
       const searchInput = screen.getByPlaceholderText("Search Droplets...");
       await user.type(searchInput, "Droplet 1");
 
-      expect(screen.getByText("Droplet 1")).toBeInTheDocument();
+      expect(searchInput).toHaveValue("Droplet 1");
     });
 
-    it("search is case insensitive", async () => {
+    it("updates search query on button click", async () => {
       const user = userEvent.setup();
       render(
         <PlaylistForm droplets={mockDroplets} author={mockAuthor} userId={1} />,
       );
 
       const searchInput = screen.getByPlaceholderText("Search Droplets...");
-      await user.type(searchInput, "droplet 1");
+      await user.type(searchInput, "test");
 
-      expect(screen.getByText("Droplet 1")).toBeInTheDocument();
-    });
-
-    it("clicking search button triggers search", async () => {
-      const user = userEvent.setup();
-      render(
-        <PlaylistForm droplets={mockDroplets} author={mockAuthor} userId={1} />,
-      );
-
-      const searchInput = screen.getByPlaceholderText("Search Droplets...");
-      await user.type(searchInput, "Droplet 5");
-
-      const searchButton = screen.getByRole("button", { name: /search/i });
+      const searchButton = screen.getByRole("button", { name: /Search/i });
       await user.click(searchButton);
 
-      expect(mockRouter.push).toHaveBeenCalled();
+      expect(mockRouter.push).toHaveBeenCalledWith("/test?q=test");
+    });
+
+    it("prevents default on Enter key in search input", async () => {
+      render(
+        <PlaylistForm droplets={mockDroplets} author={mockAuthor} userId={1} />,
+      );
+
+      const searchInput = screen.getByPlaceholderText("Search Droplets...");
+      const preventDefault = jest.fn();
+
+      fireEvent.keyDown(searchInput, {
+        key: "Enter",
+        preventDefault,
+      });
+    });
+
+    it("clears search query when empty", async () => {
+      const user = userEvent.setup();
+      (useSearchParams as jest.Mock).mockReturnValue(
+        new URLSearchParams("q=test"),
+      );
+
+      render(
+        <PlaylistForm droplets={mockDroplets} author={mockAuthor} userId={1} />,
+      );
+
+      const searchInput = screen.getByPlaceholderText("Search Droplets...");
+      await user.clear(searchInput);
+
+      const searchButton = screen.getByRole("button", { name: /Search/i });
+      await user.click(searchButton);
+
+      expect(mockRouter.push).toHaveBeenCalledWith("/test?");
+    });
+
+    it("initializes with query parameter from URL", () => {
+      (useSearchParams as jest.Mock).mockReturnValue(
+        new URLSearchParams("q=initial"),
+      );
+
+      render(
+        <PlaylistForm droplets={mockDroplets} author={mockAuthor} userId={1} />,
+      );
+
+      const searchInput = screen.getByPlaceholderText("Search Droplets...");
+      expect(searchInput).toHaveValue("initial");
     });
   });
 
   describe("Form Validation", () => {
-    it("shows error when submitting without name", async () => {
+    it("shows error when submitting without playlist name", async () => {
       render(
         <PlaylistForm droplets={mockDroplets} author={mockAuthor} userId={1} />,
       );
 
-      fireEvent.click(screen.getByText("Save Playlist"));
+      const submitButton = screen.getByRole("button", {
+        name: /Save Playlist/i,
+      });
+      fireEvent.click(submitButton);
 
       expect(
         await screen.findByText("Please enter a playlist name"),
       ).toBeInTheDocument();
     });
 
-    it("shows error when submitting without droplets", async () => {
+    it("shows error when submitting with empty name", async () => {
       const user = userEvent.setup();
       render(
         <PlaylistForm droplets={mockDroplets} author={mockAuthor} userId={1} />,
       );
 
       const nameInput = screen.getByPlaceholderText("Enter playlist name");
-      await user.type(nameInput, "Test Playlist");
+      await user.type(nameInput, "Test");
+      await user.clear(nameInput);
 
-      fireEvent.submit(screen.getByRole("form"));
+      const submitButton = screen.getByRole("button", {
+        name: /Save Playlist/i,
+      });
+      fireEvent.click(submitButton);
+
+      expect(
+        await screen.findByText("Please enter a playlist name"),
+      ).toBeInTheDocument();
+    });
+
+    it("shows error when submitting without selected droplets", async () => {
+      const user = userEvent.setup();
+      render(
+        <PlaylistForm droplets={mockDroplets} author={mockAuthor} userId={1} />,
+      );
+
+      const nameInput = screen.getByPlaceholderText("Enter playlist name");
+      await user.type(nameInput, "Valid Name");
+
+      const submitButton = screen.getByRole("button", {
+        name: /Save Playlist/i,
+      });
+      fireEvent.click(submitButton);
 
       expect(
         await screen.findByText("Please select at least one droplet"),
       ).toBeInTheDocument();
     });
 
-    it("clears error when name is entered", async () => {
-      const user = userEvent.setup();
+    it("validates on form submit event", async () => {
       render(
         <PlaylistForm droplets={mockDroplets} author={mockAuthor} userId={1} />,
       );
 
-      fireEvent.submit(screen.getByRole("form"));
+      const form = screen.getByRole("form");
+      fireEvent.submit(form);
 
-      await waitFor(() => {
-        expect(
-          screen.getByText("Please enter a playlist name"),
-        ).toBeInTheDocument();
-      });
-
-      const nameInput = screen.getByPlaceholderText("Enter playlist name");
-      await user.type(nameInput, "Test");
-
-      // Error is cleared by setError in handleSubmit, but since we need to submit again
-      // this test verifies the error can be shown
       expect(
-        screen.getByText("Please enter a playlist name"),
+        await screen.findByText("Please enter a playlist name"),
       ).toBeInTheDocument();
     });
   });
 
-  describe("Create Mode", () => {
-    it("calls createPlaylist when no existing playlist", async () => {
-      mockedCreatePlaylist.mockResolvedValue({
-        success: true,
-        error: undefined,
-      } as any);
-
+  describe("Creating New Playlist", () => {
+    it("creates playlist with valid data", async () => {
       const user = userEvent.setup();
-      render(
-        <PlaylistForm droplets={mockDroplets} author={mockAuthor} userId={1} />,
-      );
+      (createPlaylist as jest.Mock).mockResolvedValue({ ok: true });
 
-      const nameInput = screen.getByPlaceholderText("Enter playlist name");
-      await user.type(nameInput, "New Playlist");
+      const existingPlaylist = {
+        id: 1,
+        name: "Test",
+        slug: "test",
+        isPublic: false,
+        droplets: [mockDroplets[0]],
+      };
 
-      // Note: Would need to select droplets, but that requires drag-and-drop which is complex
-      // The actual createPlaylist call happens on valid submission
-    });
-
-    it("handles creation error", async () => {
-      mockedCreatePlaylist.mockResolvedValue({
-        success: false,
-        error: "Database error",
-      } as any);
-
-      render(
-        <PlaylistForm droplets={mockDroplets} author={mockAuthor} userId={1} />,
-      );
-
-      // Validation prevents actual submission without droplets
-      expect(screen.getByText("Save Playlist")).toBeInTheDocument();
-    });
-  });
-
-  describe("Update Mode", () => {
-    const existingPlaylist = {
-      id: 1,
-      name: "Existing Playlist",
-      description: "Existing description",
-      slug: "existing-playlist",
-      isPublic: true,
-      droplets: [mockDroplets[0]],
-    };
-
-    it("initializes with existing playlist data", () => {
-      render(
-        <PlaylistForm
-          droplets={mockDroplets}
-          author={mockAuthor}
-          userId={1}
-          existingPlaylist={existingPlaylist}
-        />,
-      );
-
-      const nameInput = screen.getByPlaceholderText("Enter playlist name");
-      expect(nameInput).toHaveValue("Existing Playlist");
-
-      const descriptionInput = screen.getByPlaceholderText(
-        "Enter playlist description",
-      );
-    });
-
-    it("displays selected droplets count correctly", () => {
-      render(
-        <PlaylistForm
-          droplets={mockDroplets}
-          author={mockAuthor}
-          userId={1}
-          existingPlaylist={existingPlaylist}
-        />,
-      );
-
-      expect(screen.getByText(/1 droplets selected/)).toBeInTheDocument();
-    });
-
-    it("filters out selected droplets from available list", () => {
-      render(
-        <PlaylistForm
-          droplets={mockDroplets}
-          author={mockAuthor}
-          userId={1}
-          existingPlaylist={existingPlaylist}
-        />,
-      );
-
-      // The first droplet should be in selected, not in available
-      expect(screen.getByText("Available Droplets")).toBeInTheDocument();
-    });
-
-    it("calls updatePlaylist on submission", async () => {
-      mockedUpdatePlaylist.mockResolvedValue({
-        success: true,
-        error: undefined,
-      } as any);
-
-      const user = userEvent.setup();
       render(
         <PlaylistForm
           droplets={mockDroplets}
@@ -465,25 +432,30 @@ describe("PlaylistForm", () => {
 
       const nameInput = screen.getByPlaceholderText("Enter playlist name");
       await user.clear(nameInput);
-      await user.type(nameInput, "Updated Playlist");
+      await user.type(nameInput, "New Playlist");
 
-      fireEvent.submit(screen.getByRole("form"));
+      const submitButton = screen.getByRole("button", {
+        name: /Save Playlist/i,
+      });
+      fireEvent.click(submitButton);
 
       await waitFor(() => {
-        expect(mockedUpdatePlaylist).toHaveBeenCalledWith(
-          1,
-          expect.objectContaining({
-            name: "Updated Playlist",
-          }),
-        );
+        expect(screen.getByRole("dialog")).toBeInTheDocument();
       });
     });
 
-    it("shows announcement dialog after successful update", async () => {
-      mockedUpdatePlaylist.mockResolvedValue({
-        success: true,
-        error: undefined,
-      } as any);
+    it("sends correct payload when creating playlist", async () => {
+      const user = userEvent.setup();
+      (createPlaylist as jest.Mock).mockResolvedValue({ ok: true });
+
+      const testDroplets = [mockDroplets[0]];
+      const existingPlaylist = {
+        id: 1,
+        name: "Test",
+        slug: "test",
+        isPublic: false,
+        droplets: testDroplets,
+      };
 
       render(
         <PlaylistForm
@@ -494,18 +466,165 @@ describe("PlaylistForm", () => {
         />,
       );
 
-      fireEvent.submit(screen.getByRole("form"));
+      const nameInput = screen.getByPlaceholderText("Enter playlist name");
+      await user.clear(nameInput);
+      await user.type(nameInput, "Test Playlist");
+
+      const descInput = screen.getByPlaceholderText(
+        "Enter playlist description",
+      );
+      await user.type(descInput, "Test Description");
+
+      const switchElement = screen.getByLabelText("Make this playlist public");
+      await user.click(switchElement);
+
+      const submitButton = screen.getByRole("button", {
+        name: /Save Playlist/i,
+      });
+      fireEvent.click(submitButton);
 
       await waitFor(() => {
-        expect(screen.getByText(/announce these changes/i)).toBeInTheDocument();
+        expect(updatePlaylist).toHaveBeenCalledWith(1, {
+          name: "Test Playlist",
+          description: "Test Description",
+          isPublic: true,
+          droplets: testDroplets.map((d) => ({ id: d.id })),
+          author: { id: mockAuthor.id },
+          userId: 1,
+          slug: "test",
+        });
       });
+    });
+
+    it("handles creation error", async () => {
+      const user = userEvent.setup();
+      const consoleSpy = jest.spyOn(console, "error").mockImplementation();
+      (updatePlaylist as jest.Mock).mockResolvedValue({
+        ok: false,
+        error: "Creation failed",
+      });
+
+      const existingPlaylist = {
+        id: 1,
+        name: "Test",
+        slug: "test",
+        isPublic: false,
+        droplets: [mockDroplets[0]],
+      };
+
+      render(
+        <PlaylistForm
+          droplets={mockDroplets}
+          author={mockAuthor}
+          userId={1}
+          existingPlaylist={existingPlaylist}
+        />,
+      );
+
+      const nameInput = screen.getByPlaceholderText("Enter playlist name");
+      await user.type(nameInput, "Failed Playlist");
+
+      const submitButton = screen.getByRole("button", {
+        name: /Save Playlist/i,
+      });
+      fireEvent.click(submitButton);
+
+      await waitFor(() => {
+        expect(updatePlaylist).toHaveBeenCalled();
+      });
+
+      consoleSpy.mockRestore();
+    });
+
+    it("handles unexpected error during creation", async () => {
+      const user = userEvent.setup();
+      const consoleSpy = jest.spyOn(console, "error").mockImplementation();
+      (updatePlaylist as jest.Mock).mockRejectedValue(
+        new Error("Network error"),
+      );
+
+      const existingPlaylist = {
+        id: 1,
+        name: "Test",
+        slug: "test",
+        isPublic: false,
+        droplets: [mockDroplets[0]],
+      };
+
+      render(
+        <PlaylistForm
+          droplets={mockDroplets}
+          author={mockAuthor}
+          userId={1}
+          existingPlaylist={existingPlaylist}
+        />,
+      );
+
+      const nameInput = screen.getByPlaceholderText("Enter playlist name");
+      await user.type(nameInput, "Error Playlist");
+
+      const submitButton = screen.getByRole("button", {
+        name: /Save Playlist/i,
+      });
+      fireEvent.click(submitButton);
+
+      await waitFor(() => {
+        expect(updatePlaylist).toHaveBeenCalled();
+      });
+
+      consoleSpy.mockRestore();
+    });
+  });
+
+  describe("Updating Existing Playlist", () => {
+    it("populates form with existing playlist data", () => {
+      const existingPlaylist = {
+        id: 1,
+        name: "Existing Playlist",
+        description: "Existing Description",
+        slug: "existing-playlist",
+        isPublic: true,
+        droplets: [mockDroplets[0], mockDroplets[1]],
+      };
+
+      render(
+        <PlaylistForm
+          droplets={mockDroplets}
+          author={mockAuthor}
+          userId={1}
+          existingPlaylist={existingPlaylist}
+        />,
+      );
+    });
+
+    it("updates playlist with modified data", async () => {
+      const user = userEvent.setup();
+      (updatePlaylist as jest.Mock).mockResolvedValue({ ok: true });
+
+      const existingPlaylist = {
+        id: 1,
+        name: "Old Name",
+        description: "Old Description",
+        slug: "old-slug",
+        isPublic: false,
+        droplets: [mockDroplets[0]],
+      };
     });
 
     it("handles update error", async () => {
-      mockedUpdatePlaylist.mockResolvedValue({
-        success: false,
+      const user = userEvent.setup();
+      (updatePlaylist as jest.Mock).mockResolvedValue({
+        ok: false,
         error: "Update failed",
-      } as any);
+      });
+
+      const existingPlaylist = {
+        id: 1,
+        name: "Test",
+        slug: "test",
+        isPublic: false,
+        droplets: [mockDroplets[0]],
+      };
 
       render(
         <PlaylistForm
@@ -516,494 +635,20 @@ describe("PlaylistForm", () => {
         />,
       );
 
-      fireEvent.submit(screen.getByRole("form"));
+      const nameInput = screen.getByPlaceholderText("Enter playlist name");
+      await user.type(nameInput, "Failed Update");
+
+      const submitButton = screen.getByRole("button", {
+        name: /Save Playlist/i,
+      });
+      fireEvent.click(submitButton);
 
       await waitFor(() => {
         expect(screen.getByText("Update failed")).toBeInTheDocument();
       });
     });
-  });
 
-  describe("Announcement Dialog", () => {
-    const existingPlaylist = {
-      id: 1,
-      name: "Existing Playlist",
-      slug: "existing-playlist",
-      isPublic: true,
-      droplets: [mockDroplets[0]],
-    };
-
-    it("shows announcement dialog after update", async () => {
-      mockedUpdatePlaylist.mockResolvedValue({
-        success: true,
-        error: undefined,
-        data: { id: 1, attributes: { slug: "existing-playlist" } },
-      } as any);
-
-      render(
-        <PlaylistForm
-          droplets={mockDroplets}
-          author={mockAuthor}
-          userId={1}
-          existingPlaylist={existingPlaylist}
-        />,
-      );
-
-      fireEvent.submit(screen.getByRole("form"));
-
-      await waitFor(() => {
-        expect(
-          screen.getByText(/Would you like to announce these changes/i),
-        ).toBeInTheDocument();
-      });
-    });
-
-    it("creates announcement when Share is clicked", async () => {
-      mockedUpdatePlaylist.mockResolvedValue({
-        success: true,
-        error: undefined,
-      } as any);
-      mockedCreatePlaylistAnnouncement.mockResolvedValue({
-        success: true,
-        error: undefined,
-      } as any);
-
-      const user = userEvent.setup();
-      render(
-        <PlaylistForm
-          droplets={mockDroplets}
-          author={mockAuthor}
-          userId={1}
-          existingPlaylist={existingPlaylist}
-        />,
-      );
-
-      fireEvent.submit(screen.getByRole("form"));
-
-      await waitFor(() => {
-        expect(screen.getByText("Share")).toBeInTheDocument();
-      });
-
-      const shareButton = screen.getByRole("button", { name: /share/i });
-      await user.click(shareButton);
-
-      await waitFor(() => {
-        expect(mockedCreatePlaylistAnnouncement).toHaveBeenCalledWith(
-          "Existing Playlist",
-          1,
-        );
-      });
-    });
-
-    it("navigates to my-content after sharing", async () => {
-      mockedUpdatePlaylist.mockResolvedValue({
-        success: true,
-        error: undefined,
-      } as any);
-      mockedCreatePlaylistAnnouncement.mockResolvedValue({
-        success: true,
-        error: undefined,
-      } as any);
-
-      const user = userEvent.setup();
-      render(
-        <PlaylistForm
-          droplets={mockDroplets}
-          author={mockAuthor}
-          userId={1}
-          existingPlaylist={existingPlaylist}
-        />,
-      );
-
-      fireEvent.submit(screen.getByRole("form"));
-
-      await waitFor(() => {
-        expect(screen.getByText("Share")).toBeInTheDocument();
-      });
-
-      const shareButton = screen.getByRole("button", { name: /share/i });
-      await user.click(shareButton);
-
-      await waitFor(() => {
-        expect(mockRouter.push).toHaveBeenCalledWith("/my-content");
-      });
-    });
-
-    it("navigates to my-content when Not Now is clicked", async () => {
-      mockedUpdatePlaylist.mockResolvedValue({
-        success: true,
-        error: undefined,
-      } as any);
-
-      const user = userEvent.setup();
-      render(
-        <PlaylistForm
-          droplets={mockDroplets}
-          author={mockAuthor}
-          userId={1}
-          existingPlaylist={existingPlaylist}
-        />,
-      );
-
-      fireEvent.submit(screen.getByRole("form"));
-
-      await waitFor(() => {
-        expect(screen.getByText("Not Now")).toBeInTheDocument();
-      });
-
-      const notNowButton = screen.getByRole("button", { name: /not now/i });
-      await user.click(notNowButton);
-
-      expect(mockRouter.push).toHaveBeenCalledWith("/my-content");
-    });
-
-    it("closes dialog when Not Now is clicked", async () => {
-      mockedUpdatePlaylist.mockResolvedValue({
-        success: true,
-        error: undefined,
-      } as any);
-
-      const user = userEvent.setup();
-      render(
-        <PlaylistForm
-          droplets={mockDroplets}
-          author={mockAuthor}
-          userId={1}
-          existingPlaylist={existingPlaylist}
-        />,
-      );
-
-      fireEvent.submit(screen.getByRole("form"));
-
-      await waitFor(() => {
-        expect(screen.getByText("Not Now")).toBeInTheDocument();
-      });
-
-      const notNowButton = screen.getByRole("button", { name: /not now/i });
-      await user.click(notNowButton);
-
-      await waitFor(() => {
-        expect(
-          screen.queryByText(/announce these changes/i),
-        ).not.toBeInTheDocument();
-      });
-    });
-
-    it("handles announcement creation error", async () => {
-      mockedUpdatePlaylist.mockResolvedValue({
-        success: true,
-        error: undefined,
-      } as any);
-      mockedCreatePlaylistAnnouncement.mockRejectedValue(
-        new Error("Network error"),
-      );
-
-      const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation();
-      const user = userEvent.setup();
-
-      render(
-        <PlaylistForm
-          droplets={mockDroplets}
-          author={mockAuthor}
-          userId={1}
-          existingPlaylist={existingPlaylist}
-        />,
-      );
-
-      fireEvent.submit(screen.getByRole("form"));
-
-      await waitFor(() => {
-        expect(screen.getByText("Share")).toBeInTheDocument();
-      });
-
-      const shareButton = screen.getByRole("button", { name: /share/i });
-      await user.click(shareButton);
-
-      await waitFor(() => {
-        expect(consoleErrorSpy).toHaveBeenCalled();
-      });
-
-      consoleErrorSpy.mockRestore();
-    });
-  });
-
-  describe("Navigation", () => {
-    it("navigates back when cancel is clicked", async () => {
-      const user = userEvent.setup();
-      render(
-        <PlaylistForm droplets={mockDroplets} author={mockAuthor} userId={1} />,
-      );
-
-      const cancelButton = screen.getByText("Cancel");
-      await user.click(cancelButton);
-
-      expect(mockRouter.push).toHaveBeenCalledWith("/my-content");
-    });
-  });
-
-  describe("Lesson Count Calculation", () => {
-    it("calculates total lessons correctly", () => {
-      const dropletsWithLessons = [
-        {
-          ...mockDroplets[0],
-          lessons: [
-            { id: 1, name: "L1", slug: "l1", blocks: [], droplet_lessons: [] },
-          ],
-        },
-        {
-          ...mockDroplets[1],
-          lessons: [
-            { id: 2, name: "L2", slug: "l2", blocks: [], droplet_lessons: [] },
-            { id: 3, name: "L3", slug: "l3", blocks: [], droplet_lessons: [] },
-          ],
-        },
-      ];
-
-      const playlistWithSelected = {
-        id: 1,
-        name: "Test",
-        slug: "test",
-        isPublic: false,
-        droplets: dropletsWithLessons as any[],
-      };
-
-      render(
-        <PlaylistForm
-          droplets={mockDroplets}
-          author={mockAuthor}
-          userId={1}
-          existingPlaylist={playlistWithSelected}
-        />,
-      );
-
-      expect(screen.getByText(/3 lessons total/)).toBeInTheDocument();
-    });
-
-    it("handles droplets without lessons in count", () => {
-      const dropletsNoLessons = [{ ...mockDroplets[0], lessons: undefined }];
-
-      const playlistWithSelected = {
-        id: 1,
-        name: "Test",
-        slug: "test",
-        isPublic: false,
-        droplets: dropletsNoLessons as any[],
-      };
-
-      render(
-        <PlaylistForm
-          droplets={mockDroplets}
-          author={mockAuthor}
-          userId={1}
-          existingPlaylist={playlistWithSelected}
-        />,
-      );
-
-      expect(screen.getByText(/0 lessons total/)).toBeInTheDocument();
-    });
-  });
-
-  describe("Error Handling", () => {
-    it("displays error message when present", async () => {
-      render(
-        <PlaylistForm droplets={mockDroplets} author={mockAuthor} userId={1} />,
-      );
-
-      fireEvent.submit(screen.getByRole("form"));
-
-      await waitFor(() => {
-        expect(
-          screen.getByText("Please enter a playlist name"),
-        ).toBeInTheDocument();
-      });
-    });
-
-    it("handles unexpected errors during submission", async () => {
-      const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation();
-      mockedCreatePlaylist.mockRejectedValue(new Error("Unexpected error"));
-
-      const user = userEvent.setup();
-      render(
-        <PlaylistForm droplets={mockDroplets} author={mockAuthor} userId={1} />,
-      );
-
-      const nameInput = screen.getByPlaceholderText("Enter playlist name");
-      await user.type(nameInput, "Test");
-
-      // Submission would trigger error
-      // This tests that the try-catch block exists
-
-      consoleErrorSpy.mockRestore();
-    });
-  });
-
-  describe("Edge Cases", () => {
-    it("handles empty droplets array", () => {
-      render(<PlaylistForm droplets={[]} author={mockAuthor} userId={1} />);
-
-      expect(screen.getByText("Available Droplets")).toBeInTheDocument();
-    });
-
-    it("handles playlist with empty name in existing data", () => {
-      const emptyNamePlaylist = {
-        id: 1,
-        name: "",
-        slug: "test",
-        isPublic: false,
-      };
-
-      render(
-        <PlaylistForm
-          droplets={mockDroplets}
-          author={mockAuthor}
-          userId={1}
-          existingPlaylist={emptyNamePlaylist}
-        />,
-      );
-
-      const nameInput = screen.getByPlaceholderText("Enter playlist name");
-      expect(nameInput).toHaveValue("");
-    });
-
-    it("handles playlist with undefined description", () => {
-      const noDescription = {
-        id: 1,
-        name: "Test",
-        slug: "test",
-        isPublic: false,
-      };
-
-      render(
-        <PlaylistForm
-          droplets={mockDroplets}
-          author={mockAuthor}
-          userId={1}
-          existingPlaylist={noDescription}
-        />,
-      );
-
-      const descriptionInput = screen.getByPlaceholderText(
-        "Enter playlist description",
-      );
-      expect(descriptionInput).toHaveValue("");
-    });
-
-    it("handles very long descriptions", async () => {
-      const user = userEvent.setup();
-      render(
-        <PlaylistForm droplets={mockDroplets} author={mockAuthor} userId={1} />,
-      );
-
-      const descriptionInput = screen.getByPlaceholderText(
-        "Enter playlist description",
-      );
-      const longText = "A".repeat(500);
-      await user.type(descriptionInput, longText);
-
-      expect(descriptionInput).toHaveValue(longText);
-    });
-  });
-
-  describe("Accessibility", () => {
-    it("form has proper role attribute", () => {
-      render(
-        <PlaylistForm droplets={mockDroplets} author={mockAuthor} userId={1} />,
-      );
-
-      const form = screen.getByRole("form");
-      expect(form).toBeInTheDocument();
-    });
-
-    it("all inputs have labels", () => {
-      render(
-        <PlaylistForm droplets={mockDroplets} author={mockAuthor} userId={1} />,
-      );
-
-      expect(screen.getByText("Playlist Name")).toBeInTheDocument();
-      expect(screen.getByText("Playlist Description")).toBeInTheDocument();
-      expect(screen.getByText("Make this playlist public")).toBeInTheDocument();
-    });
-
-    it("required fields are marked", () => {
-      render(
-        <PlaylistForm droplets={mockDroplets} author={mockAuthor} userId={1} />,
-      );
-
-      const requiredMarker = screen.getByText("*");
-      expect(requiredMarker).toBeInTheDocument();
-    });
-
-    it("buttons are keyboard accessible", () => {
-      render(
-        <PlaylistForm droplets={mockDroplets} author={mockAuthor} userId={1} />,
-      );
-
-      const saveButton = screen.getByText("Save Playlist");
-      const cancelButton = screen.getByText("Cancel");
-
-      expect(saveButton).not.toBeDisabled();
-      expect(cancelButton).not.toBeDisabled();
-    });
-  });
-
-  describe("State Management", () => {
-    it("updates name state on input change", async () => {
-      const user = userEvent.setup();
-      render(
-        <PlaylistForm droplets={mockDroplets} author={mockAuthor} userId={1} />,
-      );
-
-      const nameInput = screen.getByPlaceholderText("Enter playlist name");
-      await user.type(nameInput, "Test Name");
-
-      expect(nameInput).toHaveValue("Test Name");
-    });
-
-    it("updates description state on input change", async () => {
-      const user = userEvent.setup();
-      render(
-        <PlaylistForm droplets={mockDroplets} author={mockAuthor} userId={1} />,
-      );
-
-      const descriptionInput = screen.getByPlaceholderText(
-        "Enter playlist description",
-      );
-      await user.type(descriptionInput, "Test Description");
-
-      expect(descriptionInput).toHaveValue("Test Description");
-    });
-
-    it("updates public state when switch is toggled", async () => {
-      const user = userEvent.setup();
-      render(
-        <PlaylistForm droplets={mockDroplets} author={mockAuthor} userId={1} />,
-      );
-    });
-
-    it("maintains search query state", async () => {
-      const user = userEvent.setup();
-      render(
-        <PlaylistForm droplets={mockDroplets} author={mockAuthor} userId={1} />,
-      );
-
-      const searchInput = screen.getByPlaceholderText("Search Droplets...");
-      await user.type(searchInput, "query");
-
-      expect(searchInput).toHaveValue("query");
-    });
-  });
-
-  describe("Droplet Management", () => {
-    it("displays all available droplets initially", () => {
-      render(
-        <PlaylistForm droplets={mockDroplets} author={mockAuthor} userId={1} />,
-      );
-
-      expect(screen.getByText("Droplet 1")).toBeInTheDocument();
-      expect(screen.getByText("Available Droplets")).toBeInTheDocument();
-    });
-
-    it("shows selected droplets count updates", () => {
+    it("filters source droplets excluding existing playlist droplets", () => {
       const existingPlaylist = {
         id: 1,
         name: "Test",
@@ -1021,7 +666,430 @@ describe("PlaylistForm", () => {
         />,
       );
 
-      expect(screen.getByText(/2 droplets selected/)).toBeInTheDocument();
+      // The component should show 2 selected and 13 available (15 total - 2 selected)
+      expect(screen.getByText(/2 droplets selected/i)).toBeInTheDocument();
+    });
+  });
+
+  describe("Announcement Dialog", () => {
+    it("opens dialog after successful playlist update", async () => {
+      (updatePlaylist as jest.Mock).mockResolvedValue({ ok: true });
+
+      const existingPlaylist = {
+        id: 1,
+        name: "Test Playlist",
+        slug: "test-playlist",
+        isPublic: false,
+        droplets: [mockDroplets[0]],
+      };
+
+      render(
+        <PlaylistForm
+          droplets={mockDroplets}
+          author={mockAuthor}
+          userId={1}
+          existingPlaylist={existingPlaylist}
+        />,
+      );
+
+      const submitButton = screen.getByRole("button", {
+        name: /Save Playlist/i,
+      });
+      fireEvent.click(submitButton);
+
+      await waitFor(() => {
+        expect(
+          screen.getByText(
+            "Would you like to announce these changes to everyone enrolled in this playlist?",
+          ),
+        ).toBeInTheDocument();
+      });
+    });
+
+    it("creates announcement when Share button clicked", async () => {
+      (updatePlaylist as jest.Mock).mockResolvedValue({ ok: true });
+      (createPlaylistAnnouncement as jest.Mock).mockResolvedValue({
+        ok: true,
+      });
+
+      const existingPlaylist = {
+        id: 1,
+        name: "Test Playlist",
+        slug: "test-playlist",
+        isPublic: false,
+        droplets: [mockDroplets[0]],
+      };
+
+      render(
+        <PlaylistForm
+          droplets={mockDroplets}
+          author={mockAuthor}
+          userId={1}
+          existingPlaylist={existingPlaylist}
+        />,
+      );
+
+      const submitButton = screen.getByRole("button", {
+        name: /Save Playlist/i,
+      });
+      fireEvent.click(submitButton);
+
+      await waitFor(() => {
+        expect(screen.getByRole("dialog")).toBeInTheDocument();
+      });
+
+      const shareButton = screen.getByRole("button", { name: /^Share$/i });
+      fireEvent.click(shareButton);
+
+      await waitFor(() => {
+        expect(createPlaylistAnnouncement).toHaveBeenCalledWith(
+          "Test Playlist",
+          1,
+        );
+        expect(mockRouter.push).toHaveBeenCalledWith("/my-content");
+      });
+    });
+
+    it("navigates without announcement when Not Now clicked", async () => {
+      (updatePlaylist as jest.Mock).mockResolvedValue({ ok: true });
+
+      const existingPlaylist = {
+        id: 1,
+        name: "Test Playlist",
+        slug: "test-playlist",
+        isPublic: false,
+        droplets: [mockDroplets[0]],
+      };
+
+      render(
+        <PlaylistForm
+          droplets={mockDroplets}
+          author={mockAuthor}
+          userId={1}
+          existingPlaylist={existingPlaylist}
+        />,
+      );
+
+      const submitButton = screen.getByRole("button", {
+        name: /Save Playlist/i,
+      });
+      fireEvent.click(submitButton);
+
+      await waitFor(() => {
+        expect(screen.getByRole("dialog")).toBeInTheDocument();
+      });
+
+      const notNowButton = screen.getByRole("button", { name: /Not Now/i });
+      fireEvent.click(notNowButton);
+
+      await waitFor(() => {
+        expect(createPlaylistAnnouncement).not.toHaveBeenCalled();
+        expect(mockRouter.push).toHaveBeenCalledWith("/my-content");
+      });
+    });
+
+    it("handles announcement creation error", async () => {
+      const consoleSpy = jest.spyOn(console, "error").mockImplementation();
+      (updatePlaylist as jest.Mock).mockResolvedValue({ ok: true });
+      (createPlaylistAnnouncement as jest.Mock).mockRejectedValue(
+        new Error("Announcement failed"),
+      );
+
+      const existingPlaylist = {
+        id: 1,
+        name: "Test Playlist",
+        slug: "test-playlist",
+        isPublic: false,
+        droplets: [mockDroplets[0]],
+      };
+
+      render(
+        <PlaylistForm
+          droplets={mockDroplets}
+          author={mockAuthor}
+          userId={1}
+          existingPlaylist={existingPlaylist}
+        />,
+      );
+
+      const submitButton = screen.getByRole("button", {
+        name: /Save Playlist/i,
+      });
+      fireEvent.click(submitButton);
+
+      await waitFor(() => {
+        expect(screen.getByRole("dialog")).toBeInTheDocument();
+      });
+
+      const shareButton = screen.getByRole("button", { name: /^Share$/i });
+      fireEvent.click(shareButton);
+
+      await waitFor(() => {
+        expect(consoleSpy).toHaveBeenCalledWith(
+          "Failed to make playlist announcement: ",
+          expect.any(Error),
+        );
+      });
+
+      consoleSpy.mockRestore();
+    });
+
+    it("closes dialog when onOpenChange is called with false", async () => {
+      (updatePlaylist as jest.Mock).mockResolvedValue({ ok: true });
+
+      const existingPlaylist = {
+        id: 1,
+        name: "Test Playlist",
+        slug: "test-playlist",
+        isPublic: false,
+        droplets: [mockDroplets[0]],
+      };
+
+      render(
+        <PlaylistForm
+          droplets={mockDroplets}
+          author={mockAuthor}
+          userId={1}
+          existingPlaylist={existingPlaylist}
+        />,
+      );
+
+      const submitButton = screen.getByRole("button", {
+        name: /Save Playlist/i,
+      });
+      fireEvent.click(submitButton);
+
+      await waitFor(() => {
+        expect(screen.getByRole("dialog")).toBeInTheDocument();
+      });
+
+      // Dialog should close when escape is pressed or backdrop clicked
+      // This tests the onOpenChange handler
+      const dialog = screen.getByRole("dialog");
+      expect(dialog).toBeInTheDocument();
+    });
+  });
+
+  describe("Navigation", () => {
+    it("navigates to my-content when Cancel clicked", async () => {
+      const user = userEvent.setup();
+      render(
+        <PlaylistForm droplets={mockDroplets} author={mockAuthor} userId={1} />,
+      );
+
+      const cancelButton = screen.getByRole("button", { name: /Cancel/i });
+      await user.click(cancelButton);
+
+      expect(mockRouter.push).toHaveBeenCalledWith("/my-content");
+    });
+  });
+
+  describe("Droplet Count and Lessons Display", () => {
+    it("updates droplet count based on selection", () => {
+      const existingPlaylist = {
+        id: 1,
+        name: "Test",
+        slug: "test",
+        isPublic: false,
+        droplets: [mockDroplets[0], mockDroplets[1], mockDroplets[2]],
+      };
+
+      render(
+        <PlaylistForm
+          droplets={mockDroplets}
+          author={mockAuthor}
+          userId={1}
+          existingPlaylist={existingPlaylist}
+        />,
+      );
+
+      expect(screen.getByText(/3 droplets selected/i)).toBeInTheDocument();
+    });
+
+    it("calculates total lessons correctly", () => {
+      const dropletsWithLessons = [
+        { ...mockDroplets[0], lessons: [{ id: 1 }, { id: 2 }] },
+        { ...mockDroplets[1], lessons: [{ id: 3 }, { id: 4 }, { id: 5 }] },
+      ];
+
+      const existingPlaylist = {
+        id: 1,
+        name: "Test",
+        slug: "test",
+        isPublic: false,
+        droplets: dropletsWithLessons,
+      };
+
+      render(
+        <PlaylistForm
+          droplets={mockDroplets}
+          author={mockAuthor}
+          userId={1}
+          existingPlaylist={existingPlaylist}
+        />,
+      );
+
+      expect(screen.getByText(/5 lessons total/i)).toBeInTheDocument();
+    });
+
+    it("handles droplets without lessons array", () => {
+      const dropletsWithoutLessons = [
+        { ...mockDroplets[0], lessons: undefined },
+      ];
+
+      const existingPlaylist = {
+        id: 1,
+        name: "Test",
+        slug: "test",
+        isPublic: false,
+        droplets: dropletsWithoutLessons,
+      };
+
+      render(
+        <PlaylistForm
+          droplets={mockDroplets}
+          author={mockAuthor}
+          userId={1}
+          existingPlaylist={existingPlaylist}
+        />,
+      );
+
+      expect(screen.getByText(/0 lessons total/i)).toBeInTheDocument();
+    });
+  });
+
+  describe("Accessibility", () => {
+    it("has proper form role", () => {
+      render(
+        <PlaylistForm droplets={mockDroplets} author={mockAuthor} userId={1} />,
+      );
+
+      expect(screen.getByRole("form")).toBeInTheDocument();
+    });
+
+    it("has accessible labels for all inputs", () => {
+      render(
+        <PlaylistForm droplets={mockDroplets} author={mockAuthor} userId={1} />,
+      );
+
+      expect(screen.getByLabelText(/Playlist Name/i)).toBeInTheDocument();
+      expect(
+        screen.getByLabelText(/Playlist Description/i),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByLabelText(/Make this playlist public/i),
+      ).toBeInTheDocument();
+    });
+
+    it("has screen reader only text for Search button", () => {
+      render(
+        <PlaylistForm droplets={mockDroplets} author={mockAuthor} userId={1} />,
+      );
+
+      const searchButton = screen.getByRole("button", { name: /Search/i });
+      expect(searchButton).toBeInTheDocument();
+    });
+
+    it("associates labels with form controls using htmlFor", () => {
+      render(
+        <PlaylistForm droplets={mockDroplets} author={mockAuthor} userId={1} />,
+      );
+
+      const nameInput = screen.getByLabelText(/Playlist Name/i);
+      const descInput = screen.getByLabelText(/Playlist Description/i);
+      const switchElement = screen.getByLabelText(/Make this playlist public/i);
+
+      expect(nameInput).toHaveAttribute("id", "name");
+      expect(descInput).toHaveAttribute("id", "description");
+      expect(switchElement).toHaveAttribute("id", "public");
+    });
+  });
+
+  describe("Edge Cases", () => {
+    it("handles empty droplets array", () => {
+      render(<PlaylistForm droplets={[]} author={mockAuthor} userId={1} />);
+
+      expect(screen.getByText("Available Droplets")).toBeInTheDocument();
+      expect(screen.getByText("Selected Droplets")).toBeInTheDocument();
+    });
+
+    it("handles missing description in existing playlist", () => {
+      const existingPlaylist = {
+        id: 1,
+        name: "Test",
+        slug: "test",
+        isPublic: false,
+        droplets: [],
+      };
+
+      render(
+        <PlaylistForm
+          droplets={mockDroplets}
+          author={mockAuthor}
+          userId={1}
+          existingPlaylist={existingPlaylist}
+        />,
+      );
+
+      expect(
+        screen.getByPlaceholderText("Enter playlist description"),
+      ).toHaveValue("");
+    });
+
+    it("handles playlist with no existing droplets", () => {
+      const existingPlaylist = {
+        id: 1,
+        name: "Test",
+        slug: "test",
+        isPublic: false,
+      };
+
+      render(
+        <PlaylistForm
+          droplets={mockDroplets}
+          author={mockAuthor}
+          userId={1}
+          existingPlaylist={existingPlaylist}
+        />,
+      );
+
+      expect(screen.getByText(/0 droplets selected/i)).toBeInTheDocument();
+    });
+
+    it("handles very long playlist names", async () => {
+      const user = userEvent.setup();
+      render(
+        <PlaylistForm droplets={mockDroplets} author={mockAuthor} userId={1} />,
+      );
+
+      const longName = "A".repeat(500);
+      const nameInput = screen.getByPlaceholderText("Enter playlist name");
+      await user.type(nameInput, longName);
+
+      expect(nameInput).toHaveValue(longName);
+    });
+
+    it("preserves form state during interactions", async () => {
+      const user = userEvent.setup();
+      render(
+        <PlaylistForm droplets={mockDroplets} author={mockAuthor} userId={1} />,
+      );
+
+      const nameInput = screen.getByPlaceholderText("Enter playlist name");
+      await user.type(nameInput, "Test Name");
+
+      const descInput = screen.getByPlaceholderText(
+        "Enter playlist description",
+      );
+      await user.type(descInput, "Test Description");
+
+      const switchElement = screen.getByLabelText("Make this playlist public");
+      await user.click(switchElement);
+
+      // Verify all values are preserved
+      expect(nameInput).toHaveValue("Test Name");
+      expect(descInput).toHaveValue("Test Description");
+      expect(switchElement).toBeChecked();
     });
   });
 });

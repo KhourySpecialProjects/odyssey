@@ -1,4 +1,3 @@
-import "./CodeEditorComponent.css";
 import { cn } from "@/lib/utils";
 import { Editor, NodeViewContent, NodeViewWrapper } from "@tiptap/react";
 import { CodeIcon } from "lucide-react";

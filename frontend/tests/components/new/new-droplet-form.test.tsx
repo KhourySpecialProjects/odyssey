@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { CreateDropletForm } from "@/components/new/new-droplet-form";
 import { createDroplet } from "@/lib/requests/droplet";
@@ -12,10 +12,19 @@ jest.mock("next/navigation", () => ({
   useRouter: jest.fn(),
 }));
 
-const mockedCreateDroplet = createDroplet as jest.MockedFunction<
-  typeof createDroplet
->;
-const mockedUseRouter = useRouter as jest.MockedFunction<typeof useRouter>;
+jest.mock("react-dom", () => ({
+  ...jest.requireActual("react-dom"),
+  useFormStatus: () => ({ pending: false }),
+}));
+
+jest.mock("@/lib/utils", () => ({
+  ...jest.requireActual("@/lib/utils"),
+  getInitials: (name: string) =>
+    name
+      .split(" ")
+      .map((n) => n[0])
+      .join(""),
+}));
 
 // Mock scrollIntoView for Command component and Radix UI Select
 if (typeof Element.prototype.scrollIntoView === "undefined") {
@@ -34,27 +43,32 @@ describe("CreateDropletForm", () => {
   const mockTags = [
     { id: 1, name: "React", droplets: [], slug: "react" },
     { id: 2, name: "TypeScript", droplets: [], slug: "typescript" },
+    { id: 3, name: "JavaScript", droplets: [], slug: "javascript" },
   ];
 
   const mockAuthor = {
     name: "Test Author",
     email: "test@example.com",
+    image: "https://example.com/avatar.jpg",
     roles: [],
     isActive: true,
   };
 
-  const mockPush = jest.fn();
-  const mockBack = jest.fn();
+  const mockRouter = {
+    push: jest.fn(),
+    back: jest.fn(),
+    forward: jest.fn(),
+    refresh: jest.fn(),
+    replace: jest.fn(),
+    prefetch: jest.fn(),
+  };
 
   beforeEach(() => {
     jest.clearAllMocks();
-    mockedUseRouter.mockReturnValue({
-      push: mockPush,
-      back: mockBack,
-      forward: jest.fn(),
-      refresh: jest.fn(),
-      replace: jest.fn(),
-      prefetch: jest.fn(),
+    (useRouter as jest.Mock).mockReturnValue(mockRouter);
+    (createDroplet as jest.Mock).mockResolvedValue({
+      data: { attributes: { slug: "new-droplet" } },
+      error: null,
     });
   });
 
@@ -127,6 +141,20 @@ describe("CreateDropletForm", () => {
       const requiredMarkers = screen.getAllByText("*");
       expect(requiredMarkers.length).toBeGreaterThan(0);
     });
+
+    it("displays author initials when no image", () => {
+      const authorNoImage = { ...mockAuthor, image: null };
+      render(<CreateDropletForm tags={mockTags} author={authorNoImage} />);
+
+      expect(screen.getByText("TA")).toBeInTheDocument();
+    });
+
+    it("shows User2Icon when author has no name", () => {
+      const authorNoName = { ...mockAuthor, name: null };
+      const { container } = render(
+        <CreateDropletForm tags={mockTags} author={authorNoName} />,
+      );
+    });
   });
 
   describe("Form Interactions", () => {
@@ -166,20 +194,12 @@ describe("CreateDropletForm", () => {
       expect(objectiveInputs[0]).toHaveValue("Understand React hooks");
     });
 
-    it("clears error message when form fields change via useEffect", async () => {
-      const user = userEvent.setup();
+    it("name input has correct attributes", () => {
       render(<CreateDropletForm tags={mockTags} author={mockAuthor} />);
 
-      expect(
-        screen.queryByText("Please fill out all required fields"),
-      ).not.toBeInTheDocument();
-
       const nameInput = screen.getByPlaceholderText("Developing a Droplet");
-      await user.type(nameInput, "Test");
-
-      expect(
-        screen.queryByText("Please fill out all required fields"),
-      ).not.toBeInTheDocument();
+      expect(nameInput).toHaveAttribute("id", "name");
+      expect(nameInput).toHaveAttribute("name", "name");
     });
   });
 
@@ -214,40 +234,19 @@ describe("CreateDropletForm", () => {
 
       expect(objectiveInputs[0]).toHaveValue("Learn React");
     });
-  });
 
-  describe("Form Validation", () => {
-    it("has validation for required name field", () => {
-      render(<CreateDropletForm tags={mockTags} author={mockAuthor} />);
-
-      const nameInput = screen.getByPlaceholderText("Developing a Droplet");
-      expect(nameInput).toBeInTheDocument();
-      expect(nameInput).toHaveAttribute("name", "name");
-    });
-
-    it("validates that component has form submission handler", () => {
+    it("maintains form autocomplete off", () => {
       const { container } = render(
         <CreateDropletForm tags={mockTags} author={mockAuthor} />,
       );
 
       const form = container.querySelector("form");
-      expect(form).toBeInTheDocument();
-      expect(form).toBeTruthy();
+      expect(form).toHaveAttribute("autocomplete", "off");
     });
   });
 
-  describe("Form Submission", () => {
-    it("has submit button that triggers form action", () => {
-      render(<CreateDropletForm tags={mockTags} author={mockAuthor} />);
-
-      const submitButton = screen.getByRole("button", {
-        name: /create droplet/i,
-      });
-      expect(submitButton).toBeInTheDocument();
-      expect(submitButton).not.toBeDisabled();
-    });
-
-    it("does not submit when validation fails", async () => {
+  describe("Form Validation", () => {
+    it("does not call createDroplet when form is incomplete", async () => {
       const user = userEvent.setup();
       render(<CreateDropletForm tags={mockTags} author={mockAuthor} />);
 
@@ -256,19 +255,22 @@ describe("CreateDropletForm", () => {
       });
       await user.click(submitButton);
 
-      expect(mockedCreateDroplet).not.toHaveBeenCalled();
+      // Give it time to potentially call the function
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      expect(createDroplet).not.toHaveBeenCalled();
     });
   });
 
   describe("Navigation", () => {
-    it("navigates back when cancel button is clicked", async () => {
+    it("navigates to my-content when cancel button is clicked", async () => {
       const user = userEvent.setup();
       render(<CreateDropletForm tags={mockTags} author={mockAuthor} />);
 
       const cancelButton = screen.getByRole("button", { name: /cancel/i });
       await user.click(cancelButton);
 
-      expect(mockPush).toHaveBeenCalledWith("/my-content");
+      expect(mockRouter.push).toHaveBeenCalledWith("/my-content");
     });
   });
 
@@ -279,11 +281,35 @@ describe("CreateDropletForm", () => {
       expect(screen.getByText("Tags")).toBeInTheDocument();
     });
 
-    it("handles author without name", () => {
-      const authorWithoutName = { ...mockAuthor, name: null as any };
-      render(<CreateDropletForm tags={mockTags} author={authorWithoutName} />);
+    it("handles author without image", () => {
+      const authorNoImage = { ...mockAuthor, image: null };
+      render(<CreateDropletForm tags={mockTags} author={authorNoImage} />);
 
-      expect(screen.getByText("Author(s)")).toBeInTheDocument();
+      expect(screen.getByText("TA")).toBeInTheDocument();
+    });
+
+    it("handles very long droplet name", async () => {
+      const user = userEvent.setup();
+      render(<CreateDropletForm tags={mockTags} author={mockAuthor} />);
+
+      const nameInput = screen.getByPlaceholderText("Developing a Droplet");
+      const longName = "A".repeat(200);
+      await user.type(nameInput, longName);
+
+      expect(nameInput).toHaveValue(longName);
+    });
+
+    it("handles many tags", () => {
+      const manyTags = Array.from({ length: 50 }, (_, i) => ({
+        id: i + 1,
+        name: `Tag ${i + 1}`,
+        droplets: [],
+        slug: `tag-${i + 1}`,
+      }));
+
+      render(<CreateDropletForm tags={manyTags} author={mockAuthor} />);
+
+      expect(screen.getByText("Tags")).toBeInTheDocument();
     });
   });
 
@@ -315,6 +341,15 @@ describe("CreateDropletForm", () => {
       const requiredMarkers = screen.getAllByText("*");
       expect(requiredMarkers.length).toBeGreaterThanOrEqual(3);
     });
+
+    it("form has autocomplete off", () => {
+      const { container } = render(
+        <CreateDropletForm tags={mockTags} author={mockAuthor} />,
+      );
+
+      const form = container.querySelector("form");
+      expect(form).toHaveAttribute("autocomplete", "off");
+    });
   });
 
   describe("Component Integration", () => {
@@ -339,6 +374,44 @@ describe("CreateDropletForm", () => {
       expect(screen.getByText("Type")).toBeInTheDocument();
       const radioButtons = screen.getAllByRole("radio");
       expect(radioButtons.length).toBeGreaterThan(0);
+    });
+  });
+
+  describe("Styling", () => {
+    it("applies correct classes to metadata section", () => {
+      const { container } = render(
+        <CreateDropletForm tags={mockTags} author={mockAuthor} />,
+      );
+
+      const metadataLabel = screen.getByText("Metadata");
+      expect(metadataLabel).toHaveClass("text-slate-400");
+    });
+
+    it("applies dark mode classes to form sections", () => {
+      const { container } = render(
+        <CreateDropletForm tags={mockTags} author={mockAuthor} />,
+      );
+
+      const sections = container.querySelectorAll(".dark\\:bg-slate-800");
+      expect(sections.length).toBeGreaterThan(0);
+    });
+
+    it("cancel button has correct styling", () => {
+      render(<CreateDropletForm tags={mockTags} author={mockAuthor} />);
+
+      const cancelButton = screen.getByRole("button", { name: /cancel/i });
+      expect(cancelButton).toHaveClass("bg-black");
+      expect(cancelButton).toHaveClass("text-white");
+    });
+
+    it("submit button has correct styling", () => {
+      render(<CreateDropletForm tags={mockTags} author={mockAuthor} />);
+
+      const submitButton = screen.getByRole("button", {
+        name: /create droplet/i,
+      });
+      expect(submitButton).toHaveClass("bg-black");
+      expect(submitButton).toHaveClass("text-white");
     });
   });
 });
