@@ -16,10 +16,11 @@ import {
   Check,
   UserPlus,
   Clock,
+  X,
 } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
-import { sendFriendRequest } from "@/lib/requests/friends";
+import { sendFriendRequest, cancelFriendRequest } from "@/lib/requests/friends";
 
 interface ProfileContentProps {
   userData: AuthorizedUser;
@@ -28,7 +29,7 @@ interface ProfileContentProps {
   announcements: Announcement[];
   currentUserCompletedIds: number[];
   isViewingOwnProfile: boolean;
-  currentUser: AuthorizedUser | null; // The logged-in user
+  currentUser: AuthorizedUser | null;
 }
 
 export function ProfileContent({
@@ -42,6 +43,9 @@ export function ProfileContent({
 }: ProfileContentProps) {
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [addingFriendId, setAddingFriendId] = useState<number | null>(null);
+  const [cancellingFriendId, setCancellingFriendId] = useState<number | null>(
+    null,
+  );
   const [pendingRequests, setPendingRequests] = useState<Set<number>>(
     new Set(),
   );
@@ -101,9 +105,6 @@ export function ProfileContent({
     return currentUserCompletedIds.includes(dropletId);
   };
 
-  /**
-   * Check if current user is already friends with a specific user
-   */
   const isAlreadyFriends = (userId: number): boolean => {
     if (!currentUser?.friendships) return false;
 
@@ -113,33 +114,47 @@ export function ProfileContent({
     });
   };
 
-  /**
-   * Check if there is a pending friend request with a specific user
-   */
   const hasPendingRequest = (userId: number): boolean => {
     if (!currentUser?.sent_requests) return false;
 
     return currentUser.sent_requests.some((request) => {
-      // Check if request is pending and involves this user
       return request.id === userId;
     });
   };
 
-  /**
-   * Handle adding a friend
-   */
   const handleAddFriend = async (friend: AuthorizedUser) => {
     if (!currentUser) return;
 
     setAddingFriendId(friend.id);
     try {
       await sendFriendRequest(currentUser, friend);
-      // Add to pending requests set after successful request
       setPendingRequests((prev) => new Set(prev).add(friend.id));
     } catch (error) {
       console.error("Error adding friend:", error);
     } finally {
       setAddingFriendId(null);
+    }
+  };
+
+  /**
+   * Handle cancelling a friend request
+   */
+  const handleCancelFriendRequest = async (friend: AuthorizedUser) => {
+    if (!currentUser) return;
+
+    setCancellingFriendId(friend.id);
+    try {
+      await cancelFriendRequest(currentUser.id, friend.id);
+      // Remove from pending requests set after successful cancellation
+      setPendingRequests((prev) => {
+        const newSet = new Set(prev);
+        newSet.delete(friend.id);
+        return newSet;
+      });
+    } catch (error) {
+      console.error("Error cancelling friend request:", error);
+    } finally {
+      setCancellingFriendId(null);
     }
   };
 
@@ -430,10 +445,24 @@ export function ProfileContent({
                       !isViewingOwnProfile &&
                       currentUser &&
                       friend.id !== currentUser.id && (
-                        <div className="flex items-center gap-1 rounded-lg bg-gray-400 px-3 py-1.5 text-sm font-medium text-white dark:bg-gray-600">
-                          <Clock className="h-4 w-4" />
-                          <span>Pending</span>
-                        </div>
+                        <button
+                          onClick={() => handleCancelFriendRequest(friend)}
+                          disabled={cancellingFriendId === friend.id}
+                          className="group/cancel flex items-center gap-1 rounded-lg bg-gray-400 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-gray-500 disabled:cursor-not-allowed disabled:bg-gray-300 dark:bg-gray-600 dark:hover:bg-gray-700"
+                        >
+                          {cancellingFriendId === friend.id ? (
+                            <>
+                              <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
+                              <span>Cancelling...</span>
+                            </>
+                          ) : (
+                            <>
+                              <Clock className="h-4 w-4 group-hover/cancel:hidden" />
+                              <X className="hidden h-4 w-4 group-hover/cancel:block" />
+                              <span>Pending</span>
+                            </>
+                          )}
+                        </button>
                       )}
                   </div>
                 );
