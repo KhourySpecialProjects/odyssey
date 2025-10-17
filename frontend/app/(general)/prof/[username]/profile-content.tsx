@@ -15,9 +15,11 @@ import {
   Star,
   Check,
   UserPlus,
+  Clock,
 } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
+import { sendFriendRequest } from "@/lib/requests/friends";
 
 interface ProfileContentProps {
   userData: AuthorizedUser;
@@ -27,7 +29,6 @@ interface ProfileContentProps {
   currentUserCompletedIds: number[];
   isViewingOwnProfile: boolean;
   currentUser: AuthorizedUser | null; // The logged-in user
-  onAddFriend?: (requestee: AuthorizedUser) => Promise<void>;
 }
 
 export function ProfileContent({
@@ -38,10 +39,12 @@ export function ProfileContent({
   currentUserCompletedIds,
   isViewingOwnProfile,
   currentUser,
-  onAddFriend,
 }: ProfileContentProps) {
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [addingFriendId, setAddingFriendId] = useState<number | null>(null);
+  const [pendingRequests, setPendingRequests] = useState<Set<number>>(
+    new Set(),
+  );
   const searchParams = useSearchParams();
   const router = useRouter();
 
@@ -111,14 +114,28 @@ export function ProfileContent({
   };
 
   /**
+   * Check if there is a pending friend request with a specific user
+   */
+  const hasPendingRequest = (userId: number): boolean => {
+    if (!currentUser?.sent_requests) return false;
+
+    return currentUser.sent_requests.some((request) => {
+      // Check if request is pending and involves this user
+      return request.id === userId;
+    });
+  };
+
+  /**
    * Handle adding a friend
    */
   const handleAddFriend = async (friend: AuthorizedUser) => {
-    if (!onAddFriend || !currentUser) return;
+    if (!currentUser) return;
 
     setAddingFriendId(friend.id);
     try {
-      await onAddFriend(friend);
+      await sendFriendRequest(currentUser, friend);
+      // Add to pending requests set after successful request
+      setPendingRequests((prev) => new Set(prev).add(friend.id));
     } catch (error) {
       console.error("Error adding friend:", error);
     } finally {
@@ -169,7 +186,7 @@ export function ProfileContent({
                 <p className="text-xs text-gray-600 dark:text-gray-400">
                   Completion
                 </p>
-                <div className="pointer-events-none absolute -top-16 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-lg bg-gray-900 px-3 py-2 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100 dark:bg-gray-700">
+                <div className="pointer-events-none absolute -top-16 left-1/2 -translate-x-1/2 rounded-lg bg-gray-900 px-3 py-2 text-xs whitespace-nowrap text-white opacity-0 transition-opacity group-hover:opacity-100 dark:bg-gray-700">
                   Percentage of droplets completed
                   <div className="absolute -bottom-1 left-1/2 h-2 w-2 -translate-x-1/2 rotate-45 bg-gray-900 dark:bg-gray-700"></div>
                 </div>
@@ -181,7 +198,7 @@ export function ProfileContent({
                 <p className="text-xs text-gray-600 dark:text-gray-400">
                   Created
                 </p>
-                <div className="pointer-events-none absolute -top-16 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-lg bg-gray-900 px-3 py-2 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100 dark:bg-gray-700">
+                <div className="pointer-events-none absolute -top-16 left-1/2 -translate-x-1/2 rounded-lg bg-gray-900 px-3 py-2 text-xs whitespace-nowrap text-white opacity-0 transition-opacity group-hover:opacity-100 dark:bg-gray-700">
                   Droplets authored by this user
                   <div className="absolute -bottom-1 left-1/2 h-2 w-2 -translate-x-1/2 rotate-45 bg-gray-900 dark:bg-gray-700"></div>
                 </div>
@@ -332,7 +349,7 @@ export function ProfileContent({
                   >
                     {!isViewingOwnProfile &&
                       isCompletedByViewer(droplet.id) && (
-                        <div className="absolute right-2 top-2 flex items-center gap-1 rounded-full bg-green-500 px-2 py-1 text-xs font-medium text-white">
+                        <div className="absolute top-2 right-2 flex items-center gap-1 rounded-full bg-green-500 px-2 py-1 text-xs font-medium text-white">
                           <Check className="h-3 w-3" />
                           Completed
                         </div>
@@ -360,12 +377,15 @@ export function ProfileContent({
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {friends.map((friend) => {
                 const alreadyFriends = isAlreadyFriends(friend.id);
+                const isPending =
+                  hasPendingRequest(friend.id) ||
+                  pendingRequests.has(friend.id);
                 const showAddButton =
                   !isViewingOwnProfile &&
                   currentUser &&
                   !alreadyFriends &&
-                  friend.id !== currentUser.id &&
-                  onAddFriend;
+                  !isPending &&
+                  friend.id !== currentUser.id;
 
                 return (
                   <div
@@ -405,6 +425,16 @@ export function ProfileContent({
                         )}
                       </button>
                     )}
+
+                    {isPending &&
+                      !isViewingOwnProfile &&
+                      currentUser &&
+                      friend.id !== currentUser.id && (
+                        <div className="flex items-center gap-1 rounded-lg bg-gray-400 px-3 py-1.5 text-sm font-medium text-white dark:bg-gray-600">
+                          <Clock className="h-4 w-4" />
+                          <span>Pending</span>
+                        </div>
+                      )}
                   </div>
                 );
               })}
@@ -479,7 +509,7 @@ export function ProfileContent({
       {/* DROPLET MODAL */}
       {selectedId && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900 bg-opacity-20 p-4 dark:bg-opacity-40"
+          className="bg-opacity-20 dark:bg-opacity-40 fixed inset-0 z-50 flex items-center justify-center bg-gray-900 p-4"
           onClick={() => setSelectedId(null)}
         >
           <div
