@@ -46,5 +46,5 @@ node_modules/
 
 ./e2e/test-results.json
 
-./auth.json
+auth.json
 
