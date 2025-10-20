@@ -44,8 +44,9 @@ node_modules/
 /playwright/.cache/
 /playwright/.auth/
 
+/test-results/.last-run.json
 /e2e/test-results.json
 /playwright-report/index.html
 
-auth.json
+/e2e/authorizedUser/auth.json
 
