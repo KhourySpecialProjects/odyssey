@@ -151,9 +151,29 @@ describe("ProfileContent - Additional Coverage", () => {
         />,
       );
 
-      // When tab parameter is "1" and user has created droplets, should show created droplets tab
-      // Just verify the component renders without crashing
-      expect(screen.getByText("Droplets Completed")).toBeInTheDocument();
+      expect(screen.getByText("<p>Test bio</p>")).toBeInTheDocument();
+    });
+
+    it("displays social links when provided", () => {
+      const { container } = render(
+        <ProfileContent
+          userData={mockUserData}
+          enrollments={mockEnrollments}
+          friends={mockFriends}
+          announcements={mockAnnouncements}
+          currentUserCompletedIds={[]}
+          isViewingOwnProfile={false}
+        />,
+      );
+
+      const linkedInLink = container.querySelector('a[aria-label="LinkedIn"]');
+      const githubLink = container.querySelector('a[aria-label="GitHub"]');
+
+      expect(linkedInLink).toHaveAttribute(
+        "href",
+        "https://linkedin.com/in/johndoe",
+      );
+      expect(githubLink).toHaveAttribute("href", "https://github.com/johndoe");
     });
 
     it("updates URL when tab is changed", () => {
