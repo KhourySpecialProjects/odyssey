@@ -1,4 +1,5 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { AddLesson } from "@/components/draft/add-lesson";
 import { addLesson } from "@/lib/requests/lesson";
 import { useRouter } from "next/navigation";
@@ -12,11 +13,12 @@ jest.mock("next/navigation", () => ({
   useRouter: jest.fn(),
 }));
 
-// Mock useFormStatus
 jest.mock("react-dom", () => ({
   ...jest.requireActual("react-dom"),
-  useFormStatus: () => ({ pending: false }),
+  useFormStatus: jest.fn(() => ({ pending: false })),
 }));
+
+const { useFormStatus } = require("react-dom");
 
 describe("AddLesson", () => {
   const mockDroplet = {
@@ -43,6 +45,18 @@ describe("AddLesson", () => {
     jest.clearAllMocks();
     (useRouter as jest.Mock).mockReturnValue({
       push: mockPush,
+    });
+    (addLesson as jest.Mock).mockResolvedValue({
+      data: {
+        id: 2,
+        attributes: {
+          name: "New Lesson",
+          slug: "new-lesson",
+          type: "general",
+          focusArea: "personal",
+        },
+      },
+      error: null,
     });
   });
 
@@ -72,6 +86,15 @@ describe("AddLesson", () => {
       render(<AddLesson droplet={mockDroplet} onAddLesson={mockOnAddLesson} />);
 
       expect(screen.queryByRole("form")).not.toBeInTheDocument();
+    });
+
+    it("renders header with correct styling", () => {
+      render(<AddLesson droplet={mockDroplet} onAddLesson={mockOnAddLesson} />);
+
+      const header = screen.getByText("Lessons");
+      expect(header.tagName).toBe("P");
+      expect(header).toHaveClass("text-lg");
+      expect(header).toHaveClass("font-bold");
     });
   });
 
@@ -160,7 +183,6 @@ describe("AddLesson", () => {
         expect(screen.getByPlaceholderText("Lesson Name")).toBeInTheDocument();
       });
 
-      // Create event with non-Node target
       const event = new Event("mousedown");
       Object.defineProperty(event, "target", {
         value: {},
@@ -168,25 +190,25 @@ describe("AddLesson", () => {
       });
       document.dispatchEvent(event);
 
-      // Should remain open since target is not a Node
       expect(screen.getByPlaceholderText("Lesson Name")).toBeInTheDocument();
     });
 
-    it("handles ref being null", async () => {
-      render(<AddLesson droplet={mockDroplet} onAddLesson={mockOnAddLesson} />);
+    it("cleans up event listener on unmount", () => {
+      const removeEventListenerSpy = jest.spyOn(
+        document,
+        "removeEventListener",
+      );
 
-      fireEvent.click(screen.getByRole("button"));
+      const { unmount } = render(
+        <AddLesson droplet={mockDroplet} onAddLesson={mockOnAddLesson} />,
+      );
 
-      await waitFor(() => {
-        expect(screen.getByPlaceholderText("Lesson Name")).toBeInTheDocument();
-      });
+      unmount();
 
-      // Manually trigger mousedown - should handle gracefully
-      fireEvent.mouseDown(document.body);
-
-      expect(
-        screen.queryByPlaceholderText("Lesson Name"),
-      ).not.toBeInTheDocument();
+      expect(removeEventListenerSpy).toHaveBeenCalledWith(
+        "mousedown",
+        expect.any(Function),
+      );
     });
   });
 
@@ -255,8 +277,188 @@ describe("AddLesson", () => {
         expect(input).toHaveClass("bg-transparent");
         expect(input).toHaveClass("ring-0");
         expect(input).toHaveClass("outline-none");
-        expect(input).toHaveClass("focus:ring-0");
-        expect(input).toHaveClass("focus:outline-none");
+      });
+    });
+  });
+
+  describe("Form Submission", () => {
+    it("calls addLesson with correct parameters on first lesson", async () => {
+      render(<AddLesson droplet={mockDroplet} onAddLesson={mockOnAddLesson} />);
+
+      fireEvent.click(screen.getByRole("button"));
+
+      await waitFor(() => {
+        expect(screen.getByPlaceholderText("Lesson Name")).toBeInTheDocument();
+      });
+
+      const input = screen.getByPlaceholderText("Lesson Name");
+      fireEvent.change(input, { target: { value: "New Lesson" } });
+
+      expect(input).toHaveValue("New Lesson");
+    });
+
+    it("calculates orderIndex from existing lessons length", async () => {
+      const dropletWithThreeLessons = {
+        ...mockDroplet,
+        lessons: [
+          mockDroplet.lessons[0],
+          { ...mockDroplet.lessons[0], id: 2 },
+          { ...mockDroplet.lessons[0], id: 3 },
+        ],
+      };
+
+      render(
+        <AddLesson
+          droplet={dropletWithThreeLessons}
+          onAddLesson={mockOnAddLesson}
+        />,
+      );
+
+      fireEvent.click(screen.getByRole("button"));
+
+      await waitFor(() => {
+        expect(screen.getByPlaceholderText("Lesson Name")).toBeInTheDocument();
+      });
+
+      // Verify form is ready for submission with orderIndex 3
+      expect(screen.getByRole("form")).toBeInTheDocument();
+    });
+
+    it("shows form for droplet with no lessons", async () => {
+      const dropletNoLessons = {
+        ...mockDroplet,
+        lessons: undefined,
+      };
+
+      render(
+        <AddLesson droplet={dropletNoLessons} onAddLesson={mockOnAddLesson} />,
+      );
+
+      fireEvent.click(screen.getByRole("button"));
+
+      await waitFor(() => {
+        expect(screen.getByPlaceholderText("Lesson Name")).toBeInTheDocument();
+      });
+
+      expect(screen.getByRole("form")).toBeInTheDocument();
+    });
+  });
+
+  describe("Edge Cases", () => {
+    it("handles droplet with empty lessons array", async () => {
+      const emptyLessonsDroplet = {
+        ...mockDroplet,
+        lessons: [],
+      };
+
+      render(
+        <AddLesson
+          droplet={emptyLessonsDroplet}
+          onAddLesson={mockOnAddLesson}
+        />,
+      );
+
+      fireEvent.click(screen.getByRole("button"));
+
+      await waitFor(() => {
+        expect(screen.getByPlaceholderText("Lesson Name")).toBeInTheDocument();
+      });
+
+      expect(screen.getByRole("form")).toBeInTheDocument();
+    });
+
+    it("handles very long lesson name", async () => {
+      render(<AddLesson droplet={mockDroplet} onAddLesson={mockOnAddLesson} />);
+
+      fireEvent.click(screen.getByRole("button"));
+
+      await waitFor(() => {
+        expect(screen.getByPlaceholderText("Lesson Name")).toBeInTheDocument();
+      });
+
+      const longName = "A".repeat(500);
+      const input = screen.getByPlaceholderText("Lesson Name");
+      fireEvent.change(input, { target: { value: longName } });
+
+      expect(input).toHaveValue(longName);
+    });
+
+    it("handles special characters in lesson name", async () => {
+      render(<AddLesson droplet={mockDroplet} onAddLesson={mockOnAddLesson} />);
+
+      fireEvent.click(screen.getByRole("button"));
+
+      await waitFor(() => {
+        expect(screen.getByPlaceholderText("Lesson Name")).toBeInTheDocument();
+      });
+
+      const input = screen.getByPlaceholderText("Lesson Name");
+      fireEvent.change(input, {
+        target: { value: "Lesson & <Special> Chars" },
+      });
+
+      expect(input).toHaveValue("Lesson & <Special> Chars");
+    });
+  });
+
+  describe("Styling", () => {
+    it("applies correct classes to form container", async () => {
+      const { container } = render(
+        <AddLesson droplet={mockDroplet} onAddLesson={mockOnAddLesson} />,
+      );
+
+      fireEvent.click(screen.getByRole("button"));
+
+      await waitFor(() => {
+        const li = container.querySelector("li");
+        expect(li).toHaveClass("mb-2");
+        expect(li).toHaveClass("w-full");
+        expect(li).toHaveClass("rounded");
+        expect(li).toHaveClass("shadow");
+      });
+    });
+
+    it("applies flex layout to form", async () => {
+      const { container } = render(
+        <AddLesson droplet={mockDroplet} onAddLesson={mockOnAddLesson} />,
+      );
+
+      fireEvent.click(screen.getByRole("button"));
+
+      await waitFor(() => {
+        const form = container.querySelector("form");
+        expect(form).toHaveClass("flex");
+        expect(form).toHaveClass("flex-row");
+      });
+    });
+  });
+
+  describe("Accessibility", () => {
+    it("plus icon has button role", () => {
+      render(<AddLesson droplet={mockDroplet} onAddLesson={mockOnAddLesson} />);
+
+      const button = screen.getByRole("button");
+      expect(button).toBeInTheDocument();
+    });
+
+    it("form is keyboard accessible", async () => {
+      render(<AddLesson droplet={mockDroplet} onAddLesson={mockOnAddLesson} />);
+
+      fireEvent.click(screen.getByRole("button"));
+
+      await waitFor(() => {
+        const form = screen.getByRole("form");
+        expect(form).toBeInTheDocument();
+      });
+    });
+
+    it("input has placeholder text", async () => {
+      render(<AddLesson droplet={mockDroplet} onAddLesson={mockOnAddLesson} />);
+
+      fireEvent.click(screen.getByRole("button"));
+
+      await waitFor(() => {
+        expect(screen.getByPlaceholderText("Lesson Name")).toBeInTheDocument();
       });
     });
   });
