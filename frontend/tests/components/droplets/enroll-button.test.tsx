@@ -3,6 +3,7 @@ import { EnrollButton } from "@/components/droplets/enroll-button";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { createEnrollment, deleteEnrollment } from "@/lib/requests/enrollment";
+import { drop } from "lodash";
 
 jest.mock("@/lib/requests/enrollment", () => ({
   createEnrollment: jest.fn(),
@@ -23,6 +24,7 @@ describe("EnrollButton", () => {
     name: "Test Droplet",
     slug: "test-droplet",
     lessons: [{ slug: "lesson-1" }],
+    droplet_lessons: [{ lesson: { slug: "lesson-1" } }],
   };
 
   const mockRouter = { push: jest.fn() };
