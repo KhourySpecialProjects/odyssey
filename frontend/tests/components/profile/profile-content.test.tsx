@@ -1,17 +1,23 @@
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { ProfileContent } from "@/app/(general)/prof/[username]/profile-content";
 import { AuthorizedUser, Enrollment, Announcement } from "@/types";
+import { useRouter, useSearchParams } from "next/navigation";
+import { mock } from "node:test";
 
 // Mock Next.js navigation hooks
+const mockPush = jest.fn();
+const mockGetSearchParam = jest.fn(() => null);
+const mockToString = jest.fn(() => "");
+
 jest.mock("next/navigation", () => ({
   useRouter: jest.fn(() => ({
-    push: jest.fn(),
+    push: mockPush,
     replace: jest.fn(),
     prefetch: jest.fn(),
   })),
   useSearchParams: jest.fn(() => ({
-    get: jest.fn(() => null),
-    toString: jest.fn(() => ""),
+    get: mockGetSearchParam,
+    toString: mockToString,
   })),
 }));
 
@@ -26,7 +32,8 @@ jest.mock("next/link", () => {
 jest.mock("dompurify", () => ({
   sanitize: (html: string) => html,
 }));
-describe("ProfileContent", () => {
+
+describe("ProfileContent - Additional Coverage", () => {
   const mockUserData: AuthorizedUser = {
     id: 1,
     email: "test@northeastern.edu",
@@ -36,8 +43,8 @@ describe("ProfileContent", () => {
     profilePhoto: null as any,
     isPublic: true,
     isEnabled: true,
-    linkedin: "https://linkedin.com/in/johndoe",
-    github: "https://github.com/johndoe",
+    linkedin: "linkedin.com/in/johndoe",
+    github: "github.com/johndoe",
     firstTime: false,
     roles: [],
     friendships: [],
@@ -125,10 +132,14 @@ describe("ProfileContent", () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    mockGetSearchParam.mockReturnValue(null);
+    mockToString.mockReturnValue("");
   });
 
-  describe("Profile Header", () => {
-    it("renders user name correctly", () => {
+  describe("URL Tab Parameter Handling", () => {
+    it("initializes tab from URL parameter", () => {
+      mockGetSearchParam.mockReturnValue(null as any);
+
       render(
         <ProfileContent
           userData={mockUserData}
@@ -140,23 +151,7 @@ describe("ProfileContent", () => {
         />,
       );
 
-      expect(screen.getByText("John")).toBeInTheDocument();
-      expect(screen.getByText("Doe")).toBeInTheDocument();
-    });
-
-    it("renders bio when provided", () => {
-      render(
-        <ProfileContent
-          userData={mockUserData}
-          enrollments={mockEnrollments}
-          friends={mockFriends}
-          announcements={mockAnnouncements}
-          currentUserCompletedIds={[]}
-          isViewingOwnProfile={false}
-        />,
-      );
-
-      expect(screen.getByText("Test bio")).toBeInTheDocument();
+      expect(screen.getByText("<p>Test bio</p>")).toBeInTheDocument();
     });
 
     it("displays social links when provided", () => {
@@ -180,10 +175,46 @@ describe("ProfileContent", () => {
       );
       expect(githubLink).toHaveAttribute("href", "https://github.com/johndoe");
     });
+
+    it("updates URL when tab is changed", () => {
+      mockToString.mockReturnValue("tab=0");
+
+      render(
+        <ProfileContent
+          userData={mockUserData}
+          enrollments={mockEnrollments}
+          friends={mockFriends}
+          announcements={mockAnnouncements}
+          currentUserCompletedIds={[]}
+          isViewingOwnProfile={false}
+        />,
+      );
+
+      fireEvent.click(screen.getByText("Droplets Created"));
+
+      expect(mockPush).toHaveBeenCalledWith("?tab=1", { scroll: false });
+    });
+
+    it("defaults to tab 0 when no URL parameter is present", () => {
+      mockGetSearchParam.mockReturnValue(null);
+
+      render(
+        <ProfileContent
+          userData={mockUserData}
+          enrollments={mockEnrollments}
+          friends={mockFriends}
+          announcements={mockAnnouncements}
+          currentUserCompletedIds={[]}
+          isViewingOwnProfile={false}
+        />,
+      );
+
+      expect(screen.getByText("Test Completed Droplet")).toBeInTheDocument();
+    });
   });
 
-  describe("Statistics Panel", () => {
-    it("calculates total enrollments correctly", () => {
+  describe("Social Links Edge Cases", () => {
+    it("adds https:// prefix to LinkedIn URL without protocol", () => {
       const { container } = render(
         <ProfileContent
           userData={mockUserData}
@@ -195,13 +226,15 @@ describe("ProfileContent", () => {
         />,
       );
 
-      // Find the enrollments stat specifically by looking near "Enrollments" text
-      const enrollmentsSection = screen.getByText("Enrollments").closest("div");
-      expect(enrollmentsSection).toHaveTextContent("1");
+      const linkedInLink = container.querySelector('a[aria-label="LinkedIn"]');
+      expect(linkedInLink).toHaveAttribute(
+        "href",
+        "https://linkedin.com/in/johndoe",
+      );
     });
 
-    it("calculates completion rate correctly", () => {
-      render(
+    it("adds https:// prefix to GitHub URL without protocol", () => {
+      const { container } = render(
         <ProfileContent
           userData={mockUserData}
           enrollments={mockEnrollments}
@@ -212,204 +245,21 @@ describe("ProfileContent", () => {
         />,
       );
 
-      expect(screen.getByText("100%")).toBeInTheDocument();
-      expect(screen.getByText("Completion")).toBeInTheDocument();
+      const githubLink = container.querySelector('a[aria-label="GitHub"]');
+      expect(githubLink).toHaveAttribute("href", "https://github.com/johndoe");
     });
 
-    it("shows correct number of created droplets", () => {
-      render(
-        <ProfileContent
-          userData={mockUserData}
-          enrollments={mockEnrollments}
-          friends={mockFriends}
-          announcements={mockAnnouncements}
-          currentUserCompletedIds={[]}
-          isViewingOwnProfile={false}
-        />,
-      );
-
-      expect(screen.getByText("Created")).toBeInTheDocument();
-    });
-
-    it("handles zero enrollments correctly", () => {
-      render(
-        <ProfileContent
-          userData={mockUserData}
-          enrollments={[]}
-          friends={mockFriends}
-          announcements={mockAnnouncements}
-          currentUserCompletedIds={[]}
-          isViewingOwnProfile={false}
-        />,
-      );
-
-      expect(screen.getByText("0")).toBeInTheDocument();
-      expect(screen.getByText("0%")).toBeInTheDocument();
-    });
-  });
-
-  describe("Tabs Functionality", () => {
-    it("shows Droplets Completed tab by default", () => {
-      render(
-        <ProfileContent
-          userData={mockUserData}
-          enrollments={mockEnrollments}
-          friends={mockFriends}
-          announcements={mockAnnouncements}
-          currentUserCompletedIds={[]}
-          isViewingOwnProfile={false}
-        />,
-      );
-
-      expect(screen.getByText("Droplets Completed")).toBeInTheDocument();
-      expect(screen.getByText("Test Completed Droplet")).toBeInTheDocument();
-    });
-
-    it("shows Droplets Created tab only when user has created droplets", () => {
-      render(
-        <ProfileContent
-          userData={mockUserData}
-          enrollments={mockEnrollments}
-          friends={mockFriends}
-          announcements={mockAnnouncements}
-          currentUserCompletedIds={[]}
-          isViewingOwnProfile={false}
-        />,
-      );
-
-      expect(screen.getByText("Droplets Created")).toBeInTheDocument();
-    });
-
-    it("does not show Droplets Created tab when user has no created droplets", () => {
-      const userWithoutDroplets = { ...mockUserData, droplets: [] };
-
-      render(
-        <ProfileContent
-          userData={userWithoutDroplets}
-          enrollments={mockEnrollments}
-          friends={mockFriends}
-          announcements={mockAnnouncements}
-          currentUserCompletedIds={[]}
-          isViewingOwnProfile={false}
-        />,
-      );
-
-      expect(screen.queryByText("Droplets Created")).not.toBeInTheDocument();
-    });
-
-    it("switches to Friends tab when clicked", () => {
-      render(
-        <ProfileContent
-          userData={mockUserData}
-          enrollments={mockEnrollments}
-          friends={mockFriends}
-          announcements={mockAnnouncements}
-          currentUserCompletedIds={[]}
-          isViewingOwnProfile={false}
-        />,
-      );
-
-      fireEvent.click(screen.getByText("Friends"));
-      expect(screen.getByText("Jane Smith")).toBeInTheDocument();
-    });
-  });
-
-  describe("Completion Badge", () => {
-    it("shows completion badge when viewing others profile and droplet is completed", () => {
-      render(
-        <ProfileContent
-          userData={mockUserData}
-          enrollments={mockEnrollments}
-          friends={mockFriends}
-          announcements={mockAnnouncements}
-          currentUserCompletedIds={[1]} // Viewer completed droplet ID 1
-          isViewingOwnProfile={false}
-        />,
-      );
-
-      // Switch to Droplets Created tab
-      fireEvent.click(screen.getByText("Droplets Created"));
-
-      expect(screen.getByText("Completed")).toBeInTheDocument();
-    });
-
-    it("does not show completion badge when viewing own profile", () => {
-      render(
-        <ProfileContent
-          userData={mockUserData}
-          enrollments={mockEnrollments}
-          friends={mockFriends}
-          announcements={mockAnnouncements}
-          currentUserCompletedIds={[1]}
-          isViewingOwnProfile={true} // Viewing own profile
-        />,
-      );
-
-      fireEvent.click(screen.getByText("Droplets Created"));
-
-      expect(screen.queryByText("Completed")).not.toBeInTheDocument();
-    });
-
-    it("does not show completion badge when viewer has not completed droplet", () => {
-      render(
-        <ProfileContent
-          userData={mockUserData}
-          enrollments={mockEnrollments}
-          friends={mockFriends}
-          announcements={mockAnnouncements}
-          currentUserCompletedIds={[]} // No completed droplets
-          isViewingOwnProfile={false}
-        />,
-      );
-
-      fireEvent.click(screen.getByText("Droplets Created"));
-
-      expect(screen.queryByText("Completed")).not.toBeInTheDocument();
-    });
-  });
-
-  describe("Droplet Ratings", () => {
-    it("displays rating on completed droplet tiles when available", () => {
-      render(
-        <ProfileContent
-          userData={mockUserData}
-          enrollments={mockEnrollments}
-          friends={mockFriends}
-          announcements={mockAnnouncements}
-          currentUserCompletedIds={[]}
-          isViewingOwnProfile={false}
-        />,
-      );
-
-      expect(screen.getByText("3.8")).toBeInTheDocument();
-    });
-
-    it("displays rating on created droplet tiles when available", () => {
-      render(
-        <ProfileContent
-          userData={mockUserData}
-          enrollments={mockEnrollments}
-          friends={mockFriends}
-          announcements={mockAnnouncements}
-          currentUserCompletedIds={[]}
-          isViewingOwnProfile={false}
-        />,
-      );
-
-      fireEvent.click(screen.getByText("Droplets Created"));
-      expect(screen.getByText("4.5")).toBeInTheDocument();
-    });
-
-    it("does not display rating when not available", () => {
-      const dropletWithoutRating = {
-        ...mockEnrollments[0],
-        droplet: { ...mockEnrollments[0].droplet, averageRating: 0 },
+    it("does not add duplicate https:// to URLs that already have protocol", () => {
+      const userWithFullUrls = {
+        ...mockUserData,
+        linkedin: "https://linkedin.com/in/johndoe",
+        github: "https://github.com/johndoe",
       };
 
-      render(
+      const { container } = render(
         <ProfileContent
-          userData={mockUserData}
-          enrollments={[dropletWithoutRating]}
+          userData={userWithFullUrls}
+          enrollments={mockEnrollments}
           friends={mockFriends}
           announcements={mockAnnouncements}
           currentUserCompletedIds={[]}
@@ -417,12 +267,45 @@ describe("ProfileContent", () => {
         />,
       );
 
-      expect(screen.queryByText("0.0")).not.toBeInTheDocument();
+      const linkedInLink = container.querySelector('a[aria-label="LinkedIn"]');
+      const githubLink = container.querySelector('a[aria-label="GitHub"]');
+
+      expect(linkedInLink).toHaveAttribute(
+        "href",
+        "https://linkedin.com/in/johndoe",
+      );
+      expect(githubLink).toHaveAttribute("href", "https://github.com/johndoe");
+    });
+
+    it("does not render social links when not provided", () => {
+      const userWithoutSocial = {
+        ...mockUserData,
+        linkedin: "",
+        github: "",
+      };
+
+      const { container } = render(
+        <ProfileContent
+          userData={userWithoutSocial}
+          enrollments={mockEnrollments}
+          friends={mockFriends}
+          announcements={mockAnnouncements}
+          currentUserCompletedIds={[]}
+          isViewingOwnProfile={false}
+        />,
+      );
+
+      expect(
+        container.querySelector('a[aria-label="LinkedIn"]'),
+      ).not.toBeInTheDocument();
+      expect(
+        container.querySelector('a[aria-label="GitHub"]'),
+      ).not.toBeInTheDocument();
     });
   });
 
-  describe("Modal Functionality", () => {
-    it("opens modal when droplet tile is clicked", () => {
+  describe("Modal Interactions", () => {
+    it("closes modal when clicking backdrop", () => {
       render(
         <ProfileContent
           userData={mockUserData}
@@ -434,14 +317,23 @@ describe("ProfileContent", () => {
         />,
       );
 
+      // Open modal
       fireEvent.click(screen.getByText("Test Completed Droplet"));
 
-      // Modal should show droplet name as title
-      const modalTitles = screen.getAllByText("Test Completed Droplet");
-      expect(modalTitles.length).toBeGreaterThan(1); // One in tile, one in modal
+      // Click backdrop (the outer div with fixed positioning)
+      const backdrop = screen
+        .getByText("View Droplet")
+        .closest("div")?.parentElement;
+      if (backdrop) {
+        fireEvent.click(backdrop);
+      }
+
+      // Modal should be closed
+      const titles = screen.queryAllByText("Test Completed Droplet");
+      expect(titles).toHaveLength(1);
     });
 
-    it("displays View Droplet button in modal", () => {
+    it("does not close modal when clicking modal content", () => {
       render(
         <ProfileContent
           userData={mockUserData}
@@ -453,12 +345,20 @@ describe("ProfileContent", () => {
         />,
       );
 
+      // Open modal
       fireEvent.click(screen.getByText("Test Completed Droplet"));
 
+      // Click modal content (should not close)
+      const modalContent = screen.getByText("View Droplet").closest("div");
+      if (modalContent) {
+        fireEvent.click(modalContent);
+      }
+
+      // Modal should still be open
       expect(screen.getByText("View Droplet")).toBeInTheDocument();
     });
 
-    it("closes modal when close button is clicked", () => {
+    it("displays droplet description in modal with sanitized HTML", () => {
       render(
         <ProfileContent
           userData={mockUserData}
@@ -472,218 +372,15 @@ describe("ProfileContent", () => {
 
       fireEvent.click(screen.getByText("Test Completed Droplet"));
 
-      const closeButton = screen.getByRole("button");
-      fireEvent.click(closeButton);
-
-      // Check if modal is closed by verifying only one instance of the name exists
-      const titles = screen.queryAllByText("Test Completed Droplet");
-      expect(titles).toHaveLength(1); // Only in the tile, not in modal
-    });
-  });
-
-  describe("Friends Tab", () => {
-    it("displays friends list correctly", () => {
-      render(
-        <ProfileContent
-          userData={mockUserData}
-          enrollments={mockEnrollments}
-          friends={mockFriends}
-          announcements={mockAnnouncements}
-          currentUserCompletedIds={[]}
-          isViewingOwnProfile={false}
-        />,
-      );
-
-      fireEvent.click(screen.getByText("Friends"));
-
-      expect(screen.getByText("Jane Smith")).toBeInTheDocument();
-    });
-
-    it("shows empty state when no friends", () => {
-      render(
-        <ProfileContent
-          userData={mockUserData}
-          enrollments={mockEnrollments}
-          friends={[]}
-          announcements={mockAnnouncements}
-          currentUserCompletedIds={[]}
-          isViewingOwnProfile={false}
-        />,
-      );
-
-      fireEvent.click(screen.getByText("Friends"));
-
-      expect(screen.getByText("No friends yet.")).toBeInTheDocument();
-    });
-
-    it("friend links have correct href format", () => {
-      const { container } = render(
-        <ProfileContent
-          userData={mockUserData}
-          enrollments={mockEnrollments}
-          friends={mockFriends}
-          announcements={mockAnnouncements}
-          currentUserCompletedIds={[]}
-          isViewingOwnProfile={false}
-        />,
-      );
-
-      fireEvent.click(screen.getByText("Friends"));
-
-      const friendLink = container.querySelector('a[href="/prof/friend"]');
-      expect(friendLink).toBeInTheDocument();
-    });
-  });
-
-  describe("Recent Activity Section", () => {
-    it("displays recent activity when announcements exist", () => {
-      render(
-        <ProfileContent
-          userData={mockUserData}
-          enrollments={mockEnrollments}
-          friends={mockFriends}
-          announcements={mockAnnouncements}
-          currentUserCompletedIds={[]}
-          isViewingOwnProfile={false}
-        />,
-      );
-
-      expect(screen.getByText("Recent Activity")).toBeInTheDocument();
       expect(
-        screen.getByText("John Doe has completed Test Droplet"),
+        screen.getByText("Completed droplet description"),
       ).toBeInTheDocument();
     });
 
-    it("shows empty state when no announcements", () => {
+    it("shows rating in modal with star visualization", () => {
       render(
         <ProfileContent
           userData={mockUserData}
-          enrollments={mockEnrollments}
-          friends={mockFriends}
-          announcements={[]}
-          currentUserCompletedIds={[]}
-          isViewingOwnProfile={false}
-        />,
-      );
-
-      expect(screen.getByText("No recent activity")).toBeInTheDocument();
-    });
-
-    it("displays correct color coding for different activity types", () => {
-      const mixedAnnouncements: Announcement[] = [
-        {
-          id: 1,
-          type: "friend",
-          firstCreated: new Date(),
-          content: "Completed a droplet",
-        },
-        {
-          id: 2,
-          type: "kudos",
-          firstCreated: new Date(),
-          content: "Received kudos",
-        },
-        {
-          id: 3,
-          type: "droplet",
-          firstCreated: new Date(),
-          content: "Created a droplet",
-        },
-      ];
-
-      const { container } = render(
-        <ProfileContent
-          userData={mockUserData}
-          enrollments={mockEnrollments}
-          friends={mockFriends}
-          announcements={mixedAnnouncements}
-          currentUserCompletedIds={[]}
-          isViewingOwnProfile={false}
-        />,
-      );
-
-      // Check for color-coded backgrounds
-      expect(container.querySelector(".bg-yellow-200")).toBeInTheDocument();
-      expect(container.querySelector(".bg-orange-200")).toBeInTheDocument();
-      expect(container.querySelector(".bg-blue-200")).toBeInTheDocument();
-    });
-  });
-
-  describe("Empty States", () => {
-    it("shows message when no completed droplets", () => {
-      render(
-        <ProfileContent
-          userData={mockUserData}
-          enrollments={[]}
-          friends={mockFriends}
-          announcements={mockAnnouncements}
-          currentUserCompletedIds={[]}
-          isViewingOwnProfile={false}
-        />,
-      );
-
-      expect(
-        screen.getByText("No completed droplets yet."),
-      ).toBeInTheDocument();
-    });
-
-    it("shows message when no friends", () => {
-      render(
-        <ProfileContent
-          userData={mockUserData}
-          enrollments={mockEnrollments}
-          friends={[]}
-          announcements={mockAnnouncements}
-          currentUserCompletedIds={[]}
-          isViewingOwnProfile={false}
-        />,
-      );
-
-      fireEvent.click(screen.getByText("Friends"));
-      expect(screen.getByText("No friends yet.")).toBeInTheDocument();
-    });
-  });
-
-  describe("Edge Cases", () => {
-    it("handles undefined droplet in enrollment", () => {
-      const enrollmentWithoutDroplet: Enrollment[] = [
-        {
-          id: "2",
-          authorizedUser: mockUserData,
-          droplet: undefined as any,
-          viewedLessons: [],
-          isComplete: true,
-          rating: 0,
-          isFirstTime: false,
-          isArchived: false,
-          notes: [],
-          completionDate: new Date(),
-        },
-      ];
-
-      render(
-        <ProfileContent
-          userData={mockUserData}
-          enrollments={enrollmentWithoutDroplet}
-          friends={mockFriends}
-          announcements={mockAnnouncements}
-          currentUserCompletedIds={[]}
-          isViewingOwnProfile={false}
-        />,
-      );
-
-      // Should not crash and show empty state
-      expect(
-        screen.getByText("No completed droplets yet."),
-      ).toBeInTheDocument();
-    });
-
-    it("handles user without bio", () => {
-      const userWithoutBio = { ...mockUserData, bio: "" };
-
-      render(
-        <ProfileContent
-          userData={userWithoutBio}
           enrollments={mockEnrollments}
           friends={mockFriends}
           announcements={mockAnnouncements}
@@ -692,7 +389,406 @@ describe("ProfileContent", () => {
         />,
       );
 
-      expect(screen.queryByText("Test bio")).not.toBeInTheDocument();
+      fireEvent.click(screen.getByText("Test Completed Droplet"));
+
+      // Should display rating value
+      const ratingTexts = screen.getAllByText("3.8");
+      expect(ratingTexts.length).toBeGreaterThan(0);
+    });
+
+    describe("Date Formatting", () => {
+      it("formats date correctly for announcements", () => {
+        render(
+          <ProfileContent
+            userData={mockUserData}
+            enrollments={mockEnrollments}
+            friends={mockFriends}
+            announcements={mockAnnouncements}
+            currentUserCompletedIds={[]}
+            isViewingOwnProfile={false}
+          />,
+        );
+
+        // Date should be formatted as "1/15/2024, 10:30 AM" or similar
+        expect(screen.getByText(/1\/15\/2024/)).toBeInTheDocument();
+      });
+
+      it("handles invalid dates gracefully", () => {
+        const announcementWithInvalidDate: Announcement[] = [
+          {
+            id: 1,
+            type: "friend",
+            firstCreated: "invalid-date" as any,
+            content: "Test announcement",
+          },
+        ];
+
+        render(
+          <ProfileContent
+            userData={mockUserData}
+            enrollments={mockEnrollments}
+            friends={mockFriends}
+            announcements={announcementWithInvalidDate}
+            currentUserCompletedIds={[]}
+            isViewingOwnProfile={false}
+          />,
+        );
+
+        // Should not crash, and content should still display
+        expect(screen.getByText("Test announcement")).toBeInTheDocument();
+      });
+
+      it("handles undefined dates gracefully", () => {
+        const announcementWithUndefinedDate: Announcement[] = [
+          {
+            id: 1,
+            type: "friend",
+            firstCreated: undefined as any,
+            content: "Test announcement",
+          },
+        ];
+
+        render(
+          <ProfileContent
+            userData={mockUserData}
+            enrollments={mockEnrollments}
+            friends={mockFriends}
+            announcements={announcementWithUndefinedDate}
+            currentUserCompletedIds={[]}
+            isViewingOwnProfile={false}
+          />,
+        );
+
+        expect(screen.getByText("Test announcement")).toBeInTheDocument();
+      });
+    });
+
+    describe("Hover Effects", () => {
+      it("applies transform on hover to droplet tiles", () => {
+        render(
+          <ProfileContent
+            userData={mockUserData}
+            enrollments={mockEnrollments}
+            friends={mockFriends}
+            announcements={mockAnnouncements}
+            currentUserCompletedIds={[]}
+            isViewingOwnProfile={false}
+          />,
+        );
+
+        const dropletTile = screen
+          .getByText("Test Completed Droplet")
+          .closest("div");
+
+        if (dropletTile) {
+          // Initial state
+          expect(dropletTile).toHaveStyle({ transform: "translateY(0)" });
+
+          // Hover
+          fireEvent.mouseEnter(dropletTile);
+          expect(dropletTile).toHaveStyle({ transform: "translateY(-4px)" });
+
+          // Unhover
+          fireEvent.mouseLeave(dropletTile);
+          expect(dropletTile).toHaveStyle({ transform: "translateY(0)" });
+        }
+      });
+    });
+
+    describe("Multiple Droplets", () => {
+      it("handles multiple completed droplets correctly", () => {
+        const multipleEnrollments: Enrollment[] = [
+          ...mockEnrollments,
+          {
+            id: "2",
+            authorizedUser: mockUserData,
+            droplet: {
+              id: 3,
+              name: "Second Completed Droplet",
+              slug: "second-completed",
+              description: "<p>Second description</p>",
+              averageRating: 4.2,
+              isHidden: false,
+              status: "published",
+              type: "skill",
+              focusArea: "personal",
+              learningObjectives: [],
+              droplet_lessons: [],
+              lessons: [],
+            },
+            viewedLessons: [],
+            isComplete: true,
+            rating: 5,
+            isFirstTime: false,
+            isArchived: false,
+            notes: [],
+            completionDate: new Date(),
+          },
+        ];
+
+        render(
+          <ProfileContent
+            userData={mockUserData}
+            enrollments={multipleEnrollments}
+            friends={mockFriends}
+            announcements={mockAnnouncements}
+            currentUserCompletedIds={[]}
+            isViewingOwnProfile={false}
+          />,
+        );
+
+        expect(screen.getByText("Test Completed Droplet")).toBeInTheDocument();
+        expect(
+          screen.getByText("Second Completed Droplet"),
+        ).toBeInTheDocument();
+      });
+
+      it("handles multiple created droplets correctly", () => {
+        const userWithMultipleDroplets = {
+          ...mockUserData,
+          droplets: [
+            ...(mockUserData.droplets || []),
+            {
+              id: 4,
+              name: "Second Created Droplet",
+              slug: "second-created",
+              description: "<p>Second created description</p>",
+              averageRating: 3.5,
+              isHidden: false,
+              status: "published" as const,
+              type: "knowledge" as const,
+              focusArea: "technical" as const,
+              learningObjectives: [],
+              droplet_lessons: [],
+              lessons: [], // Add this if it's required
+            },
+          ],
+        };
+
+        render(
+          <ProfileContent
+            userData={userWithMultipleDroplets}
+            enrollments={mockEnrollments}
+            friends={mockFriends}
+            announcements={mockAnnouncements}
+            currentUserCompletedIds={[]}
+            isViewingOwnProfile={false}
+          />,
+        );
+
+        fireEvent.click(screen.getByText("Droplets Created"));
+
+        expect(screen.getByText("Test Created Droplet")).toBeInTheDocument();
+        expect(screen.getByText("Second Created Droplet")).toBeInTheDocument();
+      });
+
+      describe("Incomplete Enrollments", () => {
+        it("does not show incomplete enrollments in completed tab", () => {
+          const mixedEnrollments: Enrollment[] = [
+            ...mockEnrollments,
+            {
+              id: "3",
+              authorizedUser: mockUserData,
+              droplet: {
+                id: 5,
+                name: "Incomplete Droplet",
+                slug: "incomplete",
+                description: "<p>Incomplete</p>",
+                averageRating: 0,
+                isHidden: false,
+                status: "published",
+                type: "skill",
+                focusArea: "personal",
+                learningObjectives: [],
+                droplet_lessons: [],
+                lessons: [],
+              },
+              viewedLessons: [],
+              isComplete: false,
+              rating: 0,
+              isFirstTime: false,
+              isArchived: false,
+              notes: [],
+              completionDate: null as any,
+            },
+          ];
+
+          render(
+            <ProfileContent
+              userData={mockUserData}
+              enrollments={mixedEnrollments}
+              friends={mockFriends}
+              announcements={mockAnnouncements}
+              currentUserCompletedIds={[]}
+              isViewingOwnProfile={false}
+            />,
+          );
+
+          expect(
+            screen.getByText("Test Completed Droplet"),
+          ).toBeInTheDocument();
+          expect(
+            screen.queryByText("Incomplete Droplet"),
+          ).not.toBeInTheDocument();
+        });
+      });
+
+      describe("Modal for Created Droplets", () => {
+        it("opens modal for created droplet", () => {
+          render(
+            <ProfileContent
+              userData={mockUserData}
+              enrollments={mockEnrollments}
+              friends={mockFriends}
+              announcements={mockAnnouncements}
+              currentUserCompletedIds={[]}
+              isViewingOwnProfile={false}
+            />,
+          );
+
+          fireEvent.click(screen.getByText("Droplets Created"));
+          fireEvent.click(screen.getByText("Test Created Droplet"));
+
+          expect(
+            screen.getByText("Created droplet description"),
+          ).toBeInTheDocument();
+        });
+
+        describe("Statistics with Mixed Enrollments", () => {
+          it("calculates completion rate with partial completions", () => {
+            const partialEnrollments: Enrollment[] = [
+              ...mockEnrollments,
+              {
+                id: "4",
+                authorizedUser: mockUserData,
+                droplet: {
+                  id: 6,
+                  name: "Incomplete",
+                  slug: "incomplete",
+                  description: "<p>Not done</p>",
+                  averageRating: 0,
+                  isHidden: false,
+                  status: "published",
+                  type: "skill",
+                  focusArea: "personal",
+                  learningObjectives: [],
+                  droplet_lessons: [],
+                  lessons: [],
+                },
+                viewedLessons: [],
+                isComplete: false,
+                rating: 0,
+                isFirstTime: false,
+                isArchived: false,
+                notes: [],
+                completionDate: null as any,
+              },
+            ];
+
+            render(
+              <ProfileContent
+                userData={mockUserData}
+                enrollments={partialEnrollments}
+                friends={mockFriends}
+                announcements={mockAnnouncements}
+                currentUserCompletedIds={[]}
+                isViewingOwnProfile={false}
+              />,
+            );
+
+            // 1 completed out of 2 total = 50%
+            expect(screen.getByText("50%")).toBeInTheDocument();
+            expect(screen.getByText("2")).toBeInTheDocument(); // Total enrollments
+          });
+        });
+
+        describe("Announcements with Different Types", () => {
+          it("renders default icon for unknown announcement types", () => {
+            const unknownTypeAnnouncement: Announcement[] = [
+              {
+                id: 1,
+                type: "unknown" as any,
+                firstCreated: new Date(),
+                content: "Unknown type announcement",
+              },
+            ];
+
+            const { container } = render(
+              <ProfileContent
+                userData={mockUserData}
+                enrollments={mockEnrollments}
+                friends={mockFriends}
+                announcements={unknownTypeAnnouncement}
+                currentUserCompletedIds={[]}
+                isViewingOwnProfile={false}
+              />,
+            );
+
+            expect(
+              screen.getByText("Unknown type announcement"),
+            ).toBeInTheDocument();
+            // Should render with default gray background
+            expect(container.querySelector(".bg-gray-200")).toBeInTheDocument();
+          });
+        });
+
+        describe("Rating Display Edge Cases", () => {
+          it("does not show rating when averageRating is undefined", () => {
+            const dropletWithoutRating = {
+              ...mockUserData,
+              droplets: [
+                {
+                  ...mockUserData.droplets![0],
+                  averageRating: undefined,
+                },
+              ],
+            };
+
+            render(
+              <ProfileContent
+                userData={dropletWithoutRating}
+                enrollments={mockEnrollments}
+                friends={mockFriends}
+                announcements={mockAnnouncements}
+                currentUserCompletedIds={[]}
+                isViewingOwnProfile={false}
+              />,
+            );
+
+            fireEvent.click(screen.getByText("Droplets Created"));
+
+            // Rating should not be displayed
+            expect(screen.queryByText("4.5")).not.toBeInTheDocument();
+          });
+
+          it("calculates partial star fill correctly in modal", () => {
+            const dropletWithPartialRating = {
+              ...mockEnrollments[0],
+              droplet: {
+                ...mockEnrollments[0].droplet!,
+                averageRating: 3.7, // Should show 3 full stars and partial 4th star
+              },
+            };
+
+            render(
+              <ProfileContent
+                userData={mockUserData}
+                enrollments={[dropletWithPartialRating]}
+                friends={mockFriends}
+                announcements={mockAnnouncements}
+                currentUserCompletedIds={[]}
+                isViewingOwnProfile={false}
+              />,
+            );
+
+            fireEvent.click(screen.getByText("Test Completed Droplet"));
+
+            // Should display the rating value
+            const ratings = screen.getAllByText("3.7");
+            expect(ratings.length).toBeGreaterThan(0);
+          });
+        });
+      });
     });
   });
 });

@@ -4,7 +4,7 @@ import React, { useEffect, useRef, useState } from "react";
 import hljs from "highlight.js";
 import { Highlight, HighlightColor } from "@/types";
 import { HighlightDropdown } from "./highlight-dropdown";
-import "katex/dist/katex.min.css";
+//import "katex/dist/katex.min.css";
 import katex from "katex";
 
 interface Block {
