@@ -18,7 +18,10 @@ import { Logo } from "../header/logo";
 import { createSystemAnnouncement } from "@/lib/requests/feed";
 import { updateUserInfo } from "@/lib/requests/authorized-user";
 import { setTimeZone } from "@/lib/actions";
-import { createEnrollment, getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
+import {
+  createEnrollment,
+  getEnrollmentsByAuthorizedUser,
+} from "@/lib/requests/enrollment";
 import { getDropletById } from "@/lib/requests/droplet";
 import { Droplet } from "@/types";
 
@@ -109,17 +112,18 @@ export function FirstVisitPopup({ user }: { user: AuthorizedUser | null }) {
           user,
         );
         const introDroplet = await getDropletById<Droplet>(43, {
-                populate: {
-                  droplet_lessons: {
-                    populate: ["lesson"],
-                  },
-                },
-              })
+          populate: {
+            droplet_lessons: {
+              populate: ["lesson"],
+            },
+          },
+        });
         const enrollData = await getEnrollmentsByAuthorizedUser(user.id);
-        if (enrollData && !enrollData.some(enroll => enroll.droplet.id === 43)) {
-          await createEnrollment(introDroplet,
-            [],
-          );
+        if (
+          enrollData &&
+          !enrollData.some((enroll) => enroll.droplet.id === 43)
+        ) {
+          await createEnrollment(introDroplet, []);
         }
         setIsOpen(false);
         router.push("/d/introduction-to-odyssey");
