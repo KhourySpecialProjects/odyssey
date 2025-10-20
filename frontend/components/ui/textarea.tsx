@@ -4,22 +4,7 @@ import { cn } from "@/lib/utils";
 const Textarea = React.forwardRef<
   HTMLTextAreaElement,
   React.TextareaHTMLAttributes<HTMLTextAreaElement>
->(({ className, onChange, ...props }, ref) => {
-  const [error, setError] = React.useState<string | null>(null);
-  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const value = e.target.value;
-
-    // Detect any <tag> pattern
-    if (/<[^>]*>/.test(value)) {
-      setError("HTML tags are not allowed");
-      // Remove the offending tag(s)
-      e.target.value = value.replace(/<[^>]*>/g, "");
-    } else {
-      setError(null);
-    }
-
-    onChange?.(e);
-  };
+>(({ className, ...props }, ref) => {
   return (
     <textarea
       className={cn(
@@ -27,7 +12,6 @@ const Textarea = React.forwardRef<
         className,
       )}
       ref={ref}
-      onChange={handleChange}
       {...props}
     />
   );
