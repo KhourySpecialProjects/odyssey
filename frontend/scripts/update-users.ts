@@ -63,8 +63,6 @@ async function main() {
     if (page >= (meta?.pagination?.pageCount ?? page)) break;
     page += 1;
   }
-
-  console.log(`Completed. Users updated: ${totalUpdated}`);
 }
 
 main().catch((err) => {

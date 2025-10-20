@@ -223,12 +223,9 @@ export function ProfileContent({
 
           <div className="mt-4 flex flex-col items-center">
             {userData.bio && (
-              <div
-                className="mb-3 max-w-2xl text-center text-lg text-gray-600 dark:text-gray-300"
-                dangerouslySetInnerHTML={{
-                  __html: DOMPurify.sanitize(userData.bio),
-                }}
-              />
+              <div className="mb-3 max-w-2xl text-center text-lg text-gray-600 dark:text-gray-300">
+                {userData.bio}
+              </div>
             )}
 
             <div className="flex gap-3">
