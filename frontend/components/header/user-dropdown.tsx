@@ -28,7 +28,7 @@ export function UserDropdown({
   authorizedUser: AuthorizedUser | null;
 }) {
   return (
-    <DropdownMenu>
+    <DropdownMenu modal={false}>
       <DropdownMenuTrigger asChild>
         <div className="group light:text-slate-600 wg-antialiased flex w-full shrink cursor-pointer items-center justify-between gap-1 rounded-lg p-1.5 px-1 text-sm transition-colors duration-100 select-none hover:bg-slate-100 dark:hover:bg-white/5">
           <div className="inline-flex flex-row items-center justify-between">
