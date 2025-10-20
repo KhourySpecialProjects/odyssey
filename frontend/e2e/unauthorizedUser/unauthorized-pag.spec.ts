@@ -1,14 +1,14 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from "@playwright/test";
 
 test.use({
-  storageState: 'auth.json'
+  storageState: "auth.json",
 });
 
-test('test', async ({ page }) => {
-  await page.goto('http://localhost:3000/');
-  await page.getByRole('button', { name: 'Log in' }).click();
-  await page.getByRole('button', { name: 'Log in with GitHub' }).click();
-  await expect(page.getByRole('main')).toMatchAriaSnapshot(`
+test("test", async ({ page }) => {
+  await page.goto("http://localhost:3000/");
+  await page.getByRole("button", { name: "Log in" }).click();
+  await page.getByRole("button", { name: "Log in with GitHub" }).click();
+  await expect(page.getByRole("main")).toMatchAriaSnapshot(`
     - paragraph: Error
     - heading "Unauthorized" [level=1]
     - paragraph: You do not have permission to access this application.
