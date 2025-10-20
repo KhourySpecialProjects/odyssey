@@ -156,7 +156,7 @@ describe("ProfileContent", () => {
         />,
       );
 
-      expect(screen.getByText("Test bio")).toBeInTheDocument();
+      expect(screen.getByText("<p>Test bio</p>")).toBeInTheDocument();
     });
 
     it("displays social links when provided", () => {
