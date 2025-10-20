@@ -14,8 +14,10 @@ jest.mock("next/navigation", () => ({
 
 jest.mock("react-dom", () => ({
   ...jest.requireActual("react-dom"),
-  useFormStatus: () => ({ pending: false }),
+  useFormStatus: jest.fn(() => ({ pending: false })),
 }));
+
+const { useFormStatus } = require("react-dom");
 
 jest.mock("@/lib/utils", () => ({
   ...jest.requireActual("@/lib/utils"),
@@ -24,6 +26,28 @@ jest.mock("@/lib/utils", () => ({
       .split(" ")
       .map((n) => n[0])
       .join(""),
+}));
+
+jest.mock("@/lib/globals", () => ({
+  DROPLET_FILTERS: [
+    {
+      name: "focusArea",
+      label: "Focus Area",
+      options: [
+        { value: "personal", label: "Personal" },
+        { value: "professional", label: "Professional" },
+        { value: "technical", label: "Technical" },
+      ],
+    },
+    {
+      name: "type",
+      label: "Type",
+      options: [
+        { value: "knowledge", label: "Knowledge" },
+        { value: "skill", label: "Skill" },
+      ],
+    },
+  ],
 }));
 
 // Mock scrollIntoView for Command component and Radix UI Select
