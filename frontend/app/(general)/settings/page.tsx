@@ -10,7 +10,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { getCurrentUser } from "@/lib/auth/session";
-import { getInitials, condenseRoleTitles, isContentCreator } from "@/lib/utils";
+import { getInitials, condenseRoleTitles } from "@/lib/utils";
 import { User2Icon } from "lucide-react";
 import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
 import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
