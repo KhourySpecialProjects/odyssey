@@ -1,13 +1,13 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from "@playwright/test";
 
 test.use({
-  storageState: 'e2e/authorizedUser/auth.json'
+  storageState: "e2e/authorizedUser/auth.json",
 });
 
-test('test', async ({ page }) => {
-  await page.goto('http://localhost:3000/');
-  await page.getByRole('list').getByRole('link', { name: 'Explore' }).click();
-  await expect(page.getByRole('main')).toMatchAriaSnapshot(`
+test("test", async ({ page }) => {
+  await page.goto("http://localhost:3000/");
+  await page.getByRole("list").getByRole("link", { name: "Explore" }).click();
+  await expect(page.getByRole("main")).toMatchAriaSnapshot(`
     - main:
       - heading "Explore" [level=1]
       - button /Droplets \\(\\d+\\)/
