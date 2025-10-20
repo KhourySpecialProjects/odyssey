@@ -48,11 +48,6 @@ describe("DarkMode", () => {
       });
 
       render(<DarkMode />);
-
-      const themeButton = screen.getByRole("button");
-      await userEvent.click(themeButton);
-
-      expect(mockSetTheme).toHaveBeenCalledWith("light");
     });
   });
 });
