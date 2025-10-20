@@ -49,4 +49,5 @@ node_modules/
 /playwright-report/index.html
 
 /e2e/authorizedUser/auth.json
+/e2e/unauthorizedUser/auth.json
 
