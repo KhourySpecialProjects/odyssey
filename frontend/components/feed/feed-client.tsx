@@ -47,7 +47,7 @@ export function FeedClient({
       try {
         const firstPage = await fetchAnnouncements(authUser, 1);
         setAnnouncements(firstPage);
-        setHasMore(firstPage.length === ITEMS_PER_PAGE);
+        setHasMore(firstPage.length >= ITEMS_PER_PAGE);
       } catch (error) {
         console.error("Error loading initial announcements:", error);
       }
