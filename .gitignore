@@ -20,3 +20,6 @@ yarn-error.log*
 # terraform
 .terraform/
 terraform/terraform.tfvars
+
+# playwright 
+docker-compose.playwright.yml
