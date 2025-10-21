@@ -23,7 +23,8 @@ export function FriendSuggestionsBlock({
 }) {
   const [open, setOpen] = useState(false);
 
-  const handleRequest = () => {
+  const handleRequest = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent the profile navigation
     startTransition(async () => {
       const result = await sendFriendRequest(curUser, suggUser);
       if (result.success) {
@@ -32,6 +33,10 @@ export function FriendSuggestionsBlock({
         toast.error("Failed to send request.");
       }
     });
+  };
+  const fid = suggUser.email?.slice(0, suggUser.email.indexOf("@")) || "";
+  const handleProfileClick = () => {
+    window.open(`/prof/${fid}`, "_self");
   };
 
   return (
@@ -44,7 +49,10 @@ export function FriendSuggestionsBlock({
       role="mainBox"
     >
       <li className="py-0 [&:not(:first-child)]:pt-3">
-        <div className="flex items-center md:space-x-4">
+        <div
+          className="flex cursor-pointer items-center md:space-x-4"
+          onClick={handleProfileClick}
+        >
           <Avatar
             variant="round"
             className="h-12 w-12 scale-75 border border-sky-800 md:scale-100"

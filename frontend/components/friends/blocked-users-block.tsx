@@ -19,7 +19,8 @@ export function BlockedUsersBlock({
 }) {
   const [open, setOpen] = useState(false);
 
-  const handleUnblock = () => {
+  const handleUnblock = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent the profile navigation
     startTransition(async () => {
       const result = await unblockUser(user.id, blocked.id);
       if (result.success) {
@@ -29,10 +30,17 @@ export function BlockedUsersBlock({
       }
     });
   };
+  const fid = blocked.email?.slice(0, blocked.email.indexOf("@")) || "";
+  const handleProfileClick = () => {
+    window.open(`/prof/${fid}`, "_self");
+  };
 
   return (
     <li className="py-0 [&:not(:first-child)]:pt-3">
-      <div className="flex items-center md:space-x-4">
+      <div
+        className="flex cursor-pointer items-center md:space-x-4"
+        onClick={handleProfileClick}
+      >
         <Avatar
           variant="round"
           className="h-12 w-12 scale-75 border border-sky-800 md:scale-100"

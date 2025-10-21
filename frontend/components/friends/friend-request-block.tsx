@@ -22,7 +22,8 @@ export function FriendRequestBlock({
 }) {
   const [open, setOpen] = useState(false);
 
-  const handleApprove = () => {
+  const handleApprove = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent the profile navigation
     const friendshipExists = user.friendships.some((friendship) =>
       friendship.authorized_users.includes(request.id),
     );
@@ -44,7 +45,8 @@ export function FriendRequestBlock({
     }
   };
 
-  const handleReject = () => {
+  const handleReject = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent the profile navigation
     startTransition(async () => {
       const result = await rejectFriendRequest(user.id, request.id);
       if (result.success) {
@@ -55,9 +57,17 @@ export function FriendRequestBlock({
     });
   };
 
+  const fid = request.email?.slice(0, request.email.indexOf("@")) || "";
+  const handleProfileClick = () => {
+    window.open(`/prof/${fid}`, "_self");
+  };
+
   return (
     <li className="py-0 [&:not(:first-child)]:pt-3">
-      <div className="flex items-center md:space-x-4">
+      <div
+        className="flex cursor-pointer items-center md:space-x-4"
+        onClick={handleProfileClick}
+      >
         <Avatar
           variant="round"
           className="h-12 w-12 scale-75 border border-sky-800 md:scale-100"
