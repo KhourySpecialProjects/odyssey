@@ -64,10 +64,14 @@ export default async function GroupsPage({ searchParams }: Props) {
   });
 
   const roleColors = {
-    creator: "bg-purple-100 text-purple-800 dark:hover:bg-purple-100",
-    admin: "bg-yellow-100 text-yellow-800 dark:hover:bg-yellow-100",
-    manager: "bg-blue-100 text-blue-800 dark:hover:bg-blue-100",
-    member: "bg-green-100 text-green-800 dark:hover:bg-green-100",
+    creator:
+      "bg-purple-100 text-purple-800 dark:hover:bg-purple-100 hover:bg-purple-100",
+    admin:
+      "bg-yellow-100 text-yellow-800 dark:hover:bg-yellow-100 hover:bg-yellow-100",
+    manager:
+      "bg-blue-100 text-blue-800 dark:hover:bg-blue-100 hover:bg-blue-100",
+    member:
+      "bg-green-100 text-green-800 dark:hover:bg-green-100 hover:bg-green-100",
   };
 
   const roleMessages = {
