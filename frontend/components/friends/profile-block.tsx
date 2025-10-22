@@ -119,7 +119,11 @@ export function ProfileBlock({
               </Button>
             </div>
             {otherUser.isPublic && (
-              <Link href={`/prof/${username}`}>
+              <Link
+                href={`/prof/${username}`}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
                 <Button
                   size="sm"
                   className="bg-sky-300 text-black hover:bg-sky-400 dark:bg-sky-300 dark:hover:bg-sky-400"
