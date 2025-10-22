@@ -223,7 +223,7 @@ export function SocialForms({
       <form
         action={async (formData: FormData) => {
           const bio = formData.get("bio") as string;
-          if (bio && authorizedUser?.id) {
+          if (authorizedUser?.id) {
             const result = await updateUserInfo(authorizedUser.id, {
               bio: bio,
             });
