@@ -30,9 +30,14 @@ export function FriendBlock({
       }
     });
   };
-  const fid = friend.email?.slice(0, friend.email.indexOf("@")) || "";
+  const fid = friend.email?.split("@")[0] || "";
   const handleProfileClick = () => {
-    window.open(`/prof/${fid}`, "_self");
+    if (fid) {
+      window.location.href = `/prof/${fid}`;
+    } else {
+      toast.error("Invalid user profile");
+      return;
+    }
   };
 
   return (

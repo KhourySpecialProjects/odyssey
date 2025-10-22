@@ -34,9 +34,14 @@ export function FriendSuggestionsBlock({
       }
     });
   };
-  const fid = suggUser.email?.slice(0, suggUser.email.indexOf("@")) || "";
+  const fid = suggUser.email?.split("@")[0] || "";
   const handleProfileClick = () => {
-    window.open(`/prof/${fid}`, "_self");
+    if (fid) {
+      window.location.href = `/prof/${fid}`;
+    } else {
+      toast.error("Invalid user profile");
+      return;
+    }
   };
 
   return (

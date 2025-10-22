@@ -31,9 +31,14 @@ export function FriendSentRequestsBlock({
     });
   };
 
-  const fid = request.email?.slice(0, request.email.indexOf("@")) || "";
+  const fid = request.email?.split("@")[0] || "";
   const handleProfileClick = () => {
-    window.open(`/prof/${fid}`, "_self");
+    if (fid) {
+      window.location.href = `/prof/${fid}`;
+    } else {
+      toast.error("Invalid user profile");
+      return;
+    }
   };
 
   return (

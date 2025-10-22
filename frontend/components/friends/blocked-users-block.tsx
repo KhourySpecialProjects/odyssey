@@ -30,9 +30,14 @@ export function BlockedUsersBlock({
       }
     });
   };
-  const fid = blocked.email?.slice(0, blocked.email.indexOf("@")) || "";
+  const fid = blocked.email?.split("@")[0] || "";
   const handleProfileClick = () => {
-    window.open(`/prof/${fid}`, "_self");
+    if (fid) {
+      window.location.href = `/prof/${fid}`;
+    } else {
+      toast.error("Invalid user profile");
+      return;
+    }
   };
 
   return (
