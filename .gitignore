@@ -23,3 +23,5 @@ terraform/terraform.tfvars
 
 # playwright 
 docker-compose.playwright.yml
+
+*/auth.json

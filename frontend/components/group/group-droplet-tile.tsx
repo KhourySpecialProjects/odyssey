@@ -7,7 +7,7 @@ import Link from "next/link";
 import { getDueDateBadgeColor, uppercaseFirstChar } from "@/lib/utils";
 import { Clock } from "lucide-react";
 import { DateTime } from "luxon";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 
 interface GroupDropletTileProps {
   droplet: Droplet;
@@ -21,6 +21,8 @@ export function GroupDropletTile({
   authUser,
 }: GroupDropletTileProps) {
   const [descriptionExpanded, setDescriptionExpanded] = useState(false);
+  const [isTextClamped, setIsTextClamped] = useState(false);
+  const textRef = useRef(null);
 
   const strippedDescription = droplet.description
     ?.replace(/<\/p>\s*<p>/gi, "\n")
@@ -28,6 +30,20 @@ export function GroupDropletTile({
     .replace(/<\/?p>/gi, "")
     .replace(/<[^>]+>/g, "")
     .trim();
+
+  useEffect(() => {
+    const checkClamping = () => {
+      if (textRef.current && strippedDescription) {
+        const element = textRef.current as HTMLParagraphElement;
+        setIsTextClamped(element.scrollHeight > element.clientHeight);
+      }
+    };
+
+    checkClamping();
+    window.addEventListener("resize", checkClamping);
+
+    return () => window.removeEventListener("resize", checkClamping);
+  }, [strippedDescription, descriptionExpanded]);
 
   let daysUntil = 0;
   let finalDate = "";
@@ -93,35 +109,39 @@ export function GroupDropletTile({
             strippedDescription.trim() !== "" && (
               <>
                 <p
+                  ref={textRef}
                   className={`${
                     descriptionExpanded ? "line-clamp-none" : "line-clamp-2"
-                  } text-md pr-8 text-slate-700 dark:text-slate-300`}
+                  } text-md text-slate-700 dark:text-slate-300`}
                 >
                   {strippedDescription}
                 </p>
-                <p>
-                  {descriptionExpanded ? (
-                    <button
-                      onClick={(e) => {
-                        e.preventDefault();
-                        setDescriptionExpanded(false);
-                      }}
-                      className="text-sm text-sky-700 dark:text-sky-500"
-                    >
-                      See Less
-                    </button>
-                  ) : (
-                    <button
-                      onClick={(e) => {
-                        e.preventDefault();
-                        setDescriptionExpanded(true);
-                      }}
-                      className="text-sm text-sky-700 dark:text-sky-500"
-                    >
-                      See More
-                    </button>
-                  )}
-                </p>
+
+                {isTextClamped && !descriptionExpanded && (
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setDescriptionExpanded(true);
+                    }}
+                    className="text-left text-sm text-sky-700 dark:text-sky-500"
+                  >
+                    See More
+                  </button>
+                )}
+
+                {descriptionExpanded && (
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setDescriptionExpanded(false);
+                    }}
+                    className="text-left text-sm text-sky-700 dark:text-sky-500"
+                  >
+                    See Less
+                  </button>
+                )}
               </>
             )}
         </CardContent>
