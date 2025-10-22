@@ -14,15 +14,22 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { QuizQuestion } from "@/types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowLeftIcon, ArrowRightIcon } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+import { saveQuizAnswer, getQuizAnswer } from "@/lib/quiz-storage";
 
 const formSchema = z.object({
   answerIds: z.array(z.string()),
 });
 
-export function QuizQuestionBlock({ question }: { question: QuizQuestion }) {
+export function QuizQuestionBlock({
+  question,
+  lessonId,
+}: {
+  question: QuizQuestion;
+  lessonId: number;
+}) {
   const [showResult, setShowResult] = useState(false);
   const correctAnswers = useMemo(
     () => question.answerOptions.filter((option) => option.isCorrect),
@@ -35,6 +42,38 @@ export function QuizQuestionBlock({ question }: { question: QuizQuestion }) {
       answerIds: [],
     },
   });
+
+  // Load saved answer on mount
+  useEffect(() => {
+    const saved = getQuizAnswer(lessonId, question.id);
+    if (saved) {
+      form.setValue("answerIds", saved.answerIds);
+      setShowResult(saved.showResult);
+    }
+  }, [lessonId, question.id, form]);
+
+  // Save answers whenever they change
+  useEffect(() => {
+    const subscription = form.watch((value) => {
+      if (value.answerIds && value.answerIds.length > 0) {
+        const answerIds = value.answerIds.filter(
+          (id): id is string => id !== undefined,
+        );
+        if (answerIds.length > 0) {
+          saveQuizAnswer(lessonId, question.id, answerIds, showResult);
+        }
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, [lessonId, question.id, showResult, form]);
+
+  // Save showResult state changes
+  useEffect(() => {
+    const answerIds = form.getValues("answerIds");
+    if (answerIds.length > 0) {
+      saveQuizAnswer(lessonId, question.id, answerIds, showResult);
+    }
+  }, [showResult, lessonId, question.id, form]);
 
   function onSubmit(values: z.infer<typeof formSchema>) {
     if (values.answerIds.length > 0) {
