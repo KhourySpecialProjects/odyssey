@@ -254,8 +254,7 @@ export async function createKudosAnnouncement(
         body: JSON.stringify({
           data: {
             authorized_user: user.id,
-            content:
-              '${user.firstName ? user.firstName + " " + user.lastName : user.email} has given you kudos for completing ${droplet}',
+            content: `${user.firstName ? user.firstName + " " + user.lastName : user.email} has given you kudos for completing ${droplet.name}`,
             droplet: droplet.id,
             firstCreated: curDate,
             type: "kudos",
