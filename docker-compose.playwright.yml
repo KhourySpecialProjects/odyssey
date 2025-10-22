@@ -1,6 +1,6 @@
 services:
   playwright:
-    image: mcr.microsoft.com/playwright:v1.55.1-jammy
+    image: mcr.microsoft.com/playwright:v1.55.1-noble
     working_dir: /app/frontend
     volumes:
       - ./frontend:/app/frontend

@@ -19,7 +19,8 @@ export function FriendBlock({
 }) {
   const [open, setOpen] = useState(false);
 
-  const handleRemove = () => {
+  const handleRemove = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent the profile navigation
     startTransition(async () => {
       const result = await removeFriend(user.id, friend.id);
       if (result.success) {
@@ -29,9 +30,22 @@ export function FriendBlock({
       }
     });
   };
+  const fid = friend.email?.split("@")[0] || "";
+  const handleProfileClick = () => {
+    if (fid) {
+      window.location.href = `/prof/${fid}`;
+    } else {
+      toast.error("Invalid user profile");
+      return;
+    }
+  };
+
   return (
     <li className="py-0 [&:not(:first-child)]:pt-3">
-      <div className="flex items-center md:space-x-4">
+      <div
+        className="flex cursor-pointer items-center md:space-x-4"
+        onClick={handleProfileClick}
+      >
         <Avatar
           variant="round"
           className="h-12 w-12 scale-75 border border-sky-800 md:scale-100"
