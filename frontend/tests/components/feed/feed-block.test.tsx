@@ -330,7 +330,24 @@ describe("FeedBlock", () => {
 
       expect(screen.getByText("Jane Smith")).toBeInTheDocument();
       expect(screen.getByText(/has given you kudos for/)).toBeInTheDocument();
-      expect(screen.getByText("completing React Basics")).toBeInTheDocument();
+      expect(screen.getByText("React Basics")).toBeInTheDocument();
+    });
+
+    it("handles old format kudos content without 'completing' keyword", () => {
+      const kudosAnnouncement = {
+        ...mockDropletAnnouncement,
+        type: "kudos" as const,
+        content: "Jane Smith has given you kudos for React Basics", // Old format
+      };
+      render(
+        <FeedBlock announcement={kudosAnnouncement} authUser={mockUser} />,
+      );
+
+      expect(screen.getByText("Jane Smith")).toBeInTheDocument();
+      expect(
+        screen.getByText(/has given you kudos for completing/),
+      ).toBeInTheDocument();
+      expect(screen.getByText("React Basics")).toBeInTheDocument();
     });
 
     it("opens profile dialog when clicking on name in kudos", async () => {
@@ -637,7 +654,7 @@ describe("FeedBlock", () => {
         <FeedBlock announcement={kudosAnnouncement} authUser={mockUser} />,
       );
 
-      expect(screen.getByText("completing Advanced React")).toBeInTheDocument();
+      expect(screen.getByText("Advanced React")).toBeInTheDocument();
     });
 
     it("handles kudos content with multiple 'has' words", () => {

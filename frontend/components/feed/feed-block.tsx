@@ -60,7 +60,8 @@ export function FeedBlock({
   const content = announcement.content;
   const [namePart] = content.split(/has\s+/i);
   const [, taskPart] = content.split(/(?:completed|finished)\s+/i); // non-capturing group for "completed" or "finished"
-  const [, kudosTaskPart] = content.split(/for\s+/i);
+  const [, kudosTaskPart] = content.split(/for\s+(?:completing\s+)?/i); // non-capturing group for "completing"
+
   return (
     <li
       className={`${backgroundColor[announcementType]} relative flex flex-col items-start gap-2 rounded-lg p-4 pb-3`}
@@ -101,7 +102,7 @@ export function FeedBlock({
                   {namePart.trim()}
                 </p>
                 <>
-                  {"\u00A0"}has given you kudos for{"\u00A0"}
+                  {"\u00A0"}has given you kudos for completing{"\u00A0"}
                 </>
                 <span>{kudosTaskPart?.trim()}</span>
                 <div>
