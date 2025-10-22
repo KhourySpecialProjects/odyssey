@@ -12,7 +12,13 @@ import {
   DialogTitle,
 } from "../ui/dialog";
 import { Button } from "../ui/button";
-import { Github, Linkedin, User2Icon } from "lucide-react";
+import {
+  Github,
+  Linkedin,
+  User2Icon,
+  UserRound,
+  ExternalLink,
+} from "lucide-react";
 import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { getInitials } from "@/lib/utils";
@@ -44,6 +50,10 @@ export function ProfileBlock({
       }
     });
   };
+
+  // Extract username from email (part before @)
+  const username = otherUser.email?.split("@")[0] || "user";
+  // const username = otherUser.email.split('@')[0];
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -95,17 +105,34 @@ export function ProfileBlock({
             Completed Droplets:{" "}
           </DialogDescription>
           <FriendCompletedDroplets friend={otherUser} />
-          <div
-            className={`inline-flex items-center gap-2 ${otherUser.id === user.id || user.blocked.includes(otherUser) ? "visibility: hidden" : "visibility: visible"}`}
-            onClick={handleBlock}
-            data-testid="block-button-container"
-          >
-            <Button
-              size="sm"
-              className="bg-red-600 text-white hover:bg-red-700 dark:bg-red-400"
+          <div className="flex items-center justify-between gap-2">
+            <div
+              className={`inline-flex items-center gap-2 ${otherUser.id === user.id || user.blocked.includes(otherUser) ? "visibility: hidden" : "visibility: visible"}`}
+              onClick={handleBlock}
+              data-testid="block-button-container"
             >
-              Block user
-            </Button>
+              <Button
+                size="sm"
+                className="bg-red-600 text-white hover:bg-red-700 dark:bg-red-400"
+              >
+                Block user
+              </Button>
+            </div>
+            {otherUser.isPublic && (
+              <Link
+                href={`/prof/${username}`}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <Button
+                  size="sm"
+                  className="bg-sky-300 text-black hover:bg-sky-400 dark:bg-sky-300 dark:hover:bg-sky-400"
+                >
+                  View Full Profile
+                  <ExternalLink className="ml-2 h-4 w-4" />
+                </Button>
+              </Link>
+            )}
           </div>
         </DialogHeader>
       </DialogContent>
