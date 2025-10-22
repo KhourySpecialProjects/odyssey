@@ -28,7 +28,12 @@ export function FeedContainer({ authUser }: { authUser: AuthorizedUser }) {
               friendsPerPage={3}
               authUser={authUser}
             ></FriendRequests>
-            <Link href="/settings/friends" className="mt-3 block">
+            <Link
+              href="/settings/friends"
+              className="mt-3 block"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
               <Button
                 size="sm"
                 className="w-full bg-sky-300 text-black hover:bg-sky-400 dark:bg-sky-300 dark:hover:bg-sky-400"
