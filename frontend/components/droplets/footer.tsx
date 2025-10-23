@@ -5,6 +5,10 @@ import { ArrowLeftIcon, ArrowRightIcon, LockIcon } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { updateViewedLessons } from "@/lib/requests/enrollment";
+import {
+  isLessonQuizCompleted,
+  markLessonQuizCompleted,
+} from "@/lib/quiz-storage";
 
 type PaginationProps = {
   link: string;
@@ -38,9 +42,14 @@ export default function DropletFooter({
   };
 
   useEffect(() => {
+    if (currentLessonId && isLessonQuizCompleted(currentLessonId)) {
+      setCanProceed(true);
+      return;
+    }
+
     const checkQuizAnswers = () => {
       const questions = document.querySelectorAll('[role="question"]');
-      if (!questions) {
+      if (!questions || questions.length === 0) {
         setCanProceed(true);
         return;
       }
@@ -50,13 +59,16 @@ export default function DropletFooter({
         setCanProceed(false);
         return;
       }
-
       const allAnsweredCorrectly = Array.from(completedQuizQuestions).every(
         (question) => {
           const resultBadge = question.textContent;
           return resultBadge?.toLowerCase().includes("right");
         },
       );
+
+      if (allAnsweredCorrectly && currentLessonId) {
+        markLessonQuizCompleted(currentLessonId);
+      }
 
       setCanProceed(allAnsweredCorrectly);
     };
@@ -71,7 +83,7 @@ export default function DropletFooter({
     });
 
     return () => observer.disconnect();
-  }, []);
+  }, [currentLessonId]);
 
   if (!droplet.droplet_lessons || droplet.droplet_lessons.length === 0)
     return null;
