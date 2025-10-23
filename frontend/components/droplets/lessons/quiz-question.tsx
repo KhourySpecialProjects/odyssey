@@ -123,12 +123,13 @@ export function QuizQuestionBlock({
               </Badge>
 
               <Button
+                before={<ArrowLeftIcon />}
                 variant="outline"
                 size="sm"
                 onClick={() => setShowResult(false)}
                 className="mt-2"
               >
-                <ArrowLeftIcon className="h-4 w-4" />
+                View Answer
               </Button>
             </div>
           ) : (
