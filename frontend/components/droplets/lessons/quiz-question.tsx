@@ -13,7 +13,7 @@ import {
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { QuizQuestion } from "@/types";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ArrowLeftIcon, ArrowRightIcon, RotateCcwIcon } from "lucide-react";
+import { ArrowLeftIcon, ArrowRightIcon } from "lucide-react";
 import { useMemo, useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -128,7 +128,7 @@ export function QuizQuestionBlock({
                 onClick={() => setShowResult(false)}
                 className="mt-2"
               >
-                <RotateCcwIcon className="h-4 w-4" />
+                <ArrowLeftIcon className="h-4 w-4" />
               </Button>
             </div>
           ) : (
