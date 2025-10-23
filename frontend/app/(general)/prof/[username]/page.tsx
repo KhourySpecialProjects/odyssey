@@ -4,18 +4,11 @@ import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
 import { fetchFriends } from "@/lib/requests/friends";
 import { fetchUserAnnouncements } from "@/lib/requests/feed";
 import { getCurrentUser } from "@/lib/auth/session";
+import { sendFriendRequest } from "@/lib/requests/friends";
 import { ProfileContent } from "./profile-content";
+import { PrivateProfileError } from "./private-profile-error";
+import { revalidatePath } from "next/cache";
 
-/**
- * PublicProfilePage - Server Component
- *
- * Fetches all necessary data on the server side:
- * - Profile user data (from URL parameter)
- * - Current logged-in user (to check completion status)
- * - Enrollments, friends, and announcements
- *
- * Then passes all data as props to the ProfileContent client component
- */
 export default async function PublicProfilePage({
   params,
 }: {
@@ -24,37 +17,17 @@ export default async function PublicProfilePage({
   const { username } = await params;
 
   try {
-    // Extract email from URL parameter
     const userEmail = username + "@northeastern.edu";
-
-    // Get current logged-in user FIRST
     const currentUser = await getCurrentUser();
-
-    // Fetch the profile user's data
     const userData: AuthorizedUser = await getAuthorizedUserByEmail(userEmail);
-
-    // Check if viewing own profile
     const isViewingOwnProfile = currentUser?.email === userEmail;
 
-    // Check if profile is public (but allow owner to view their own private profile)
     if (!userData.isPublic && !isViewingOwnProfile) {
-      return (
-        <div className="flex min-h-screen items-center justify-center bg-gray-50 dark:bg-gray-900">
-          <div className="text-center">
-            <h1 className="mb-2 text-2xl font-bold text-gray-800 dark:text-gray-200">
-              Profile Not Found
-            </h1>
-            <p className="text-gray-600 dark:text-gray-400">
-              This profile is either private or does not exist.
-            </p>
-          </div>
-        </div>
-      );
+      return <PrivateProfileError />;
     }
 
-    // Fetch all profile data in parallel for better performance
+    // Fetch profile data
     const [enrollments, friends, announcements] = await Promise.all([
-      // Fetch profile user's enrollments
       getEnrollmentsByAuthorizedUser(userData.id, {
         populate: {
           viewedLessons: {
@@ -69,42 +42,67 @@ export default async function PublicProfilePage({
           },
         },
       }),
-      // Fetch profile user's friends
       fetchFriends(userData),
-      // Fetch profile user's recent announcements
       fetchUserAnnouncements(userData.id),
     ]);
 
-    // Get current user's completed droplets for completion badges
+    // Get current user data if logged in and not viewing own profile
     let currentUserCompletedIds: number[] = [];
+    let currentUserData: AuthorizedUser | null = null;
 
-    if (currentUser?.email && !isViewingOwnProfile) {
+    if (currentUser?.email) {
       try {
-        const currentUserData = await getAuthorizedUserByEmail(
-          currentUser.email,
-        );
-        const currentUserEnrollments = await getEnrollmentsByAuthorizedUser(
-          currentUserData.id,
-          {
-            populate: {
-              droplet: {
-                fields: ["id"],
+        const maybeUserData = await getAuthorizedUserByEmail(currentUser.email);
+        if (!maybeUserData || typeof maybeUserData.id !== "number") {
+          throw new Error("Current user data is missing a valid id");
+        }
+        currentUserData = maybeUserData;
+
+        if (!isViewingOwnProfile) {
+          const currentUserEnrollments = await getEnrollmentsByAuthorizedUser(
+            currentUserData.id,
+            {
+              populate: {
+                droplet: {
+                  fields: ["id"],
+                },
               },
             },
-          },
-        );
+          );
 
-        // Extract IDs of droplets the current user has completed
-        currentUserCompletedIds = (currentUserEnrollments || [])
-          .filter((enrollment: Enrollment) => enrollment.isComplete)
-          .map((enrollment: Enrollment) => enrollment.droplet.id);
+          currentUserCompletedIds = (currentUserEnrollments || [])
+            .filter((enrollment: Enrollment) => enrollment.isComplete)
+            .map((enrollment: Enrollment) => enrollment.droplet.id);
+        }
       } catch (error) {
         console.error("Error fetching current user data:", error);
-        // Continue without completion badges if there's an error
       }
     }
 
-    // Render the client component with all fetched data
+    // Server action to handle friend requests
+    async function handleAddFriend(requestee: AuthorizedUser) {
+      "use server";
+
+      if (!currentUserData) {
+        throw new Error("Must be logged in to send friend request");
+      }
+
+      // TypeScript now knows currentUserData is not null after the check above
+      const result = await sendFriendRequest(
+        currentUserData as AuthorizedUser,
+        requestee,
+      );
+
+      if (!result.success) {
+        throw new Error(
+          result.error ? String(result.error) : "Failed to send friend request",
+        );
+      }
+
+      // Revalidate the page to show updated friendship status
+      revalidatePath(`/prof/${username}`);
+    }
+
     return (
       <ProfileContent
         userData={userData}
@@ -113,12 +111,12 @@ export default async function PublicProfilePage({
         announcements={announcements || []}
         currentUserCompletedIds={currentUserCompletedIds}
         isViewingOwnProfile={isViewingOwnProfile}
+        currentUser={currentUserData}
       />
     );
   } catch (error) {
     console.error("Error loading profile:", error);
 
-    // Error state
     return (
       <div className="flex min-h-screen items-center justify-center bg-gray-50 dark:bg-gray-900">
         <div className="text-center">

@@ -10,6 +10,8 @@ import {
 } from "@/components/message";
 import { redirect } from "next/navigation";
 import { GroupCard } from "@/components/group/group-card";
+import { Suspense } from "react";
+import { DropletsSkeleton } from "@/components/explore/droplets-skeleton";
 
 type GroupWithRole = {
   group: Group;
@@ -62,10 +64,14 @@ export default async function GroupsPage({ searchParams }: Props) {
   });
 
   const roleColors = {
-    creator: "bg-purple-100 text-purple-800 dark:hover:bg-purple-100",
-    admin: "bg-yellow-100 text-yellow-800 dark:hover:bg-yellow-100",
-    manager: "bg-blue-100 text-blue-800 dark:hover:bg-blue-100",
-    member: "bg-green-100 text-green-800 dark:hover:bg-green-100",
+    creator:
+      "bg-purple-100 text-purple-800 dark:hover:bg-purple-100 hover:bg-purple-100",
+    admin:
+      "bg-yellow-100 text-yellow-800 dark:hover:bg-yellow-100 hover:bg-yellow-100",
+    manager:
+      "bg-blue-100 text-blue-800 dark:hover:bg-blue-100 hover:bg-blue-100",
+    member:
+      "bg-green-100 text-green-800 dark:hover:bg-green-100 hover:bg-green-100",
   };
 
   const roleMessages = {
@@ -115,22 +121,24 @@ export default async function GroupsPage({ searchParams }: Props) {
         ) : (
           <div>
             {groupsByRole[tab as keyof typeof groupsByRole].length > 0 ? (
-              <div className="grid grid-flow-row auto-rows-fr grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {groupsByRole[tab as keyof typeof groupsByRole].map(
-                  ({ group, role }) => (
-                    <div key={`group-${group.id}`} className="h-full">
-                      <GroupCard
-                        key={group.id}
-                        group={group}
-                        role={role}
-                        roleColors={roleColors}
-                        isArchived={false}
-                        dashboardPage={false}
-                      />
-                    </div>
-                  ),
-                )}
-              </div>
+              <Suspense fallback={<DropletsSkeleton />}>
+                <div className="grid grid-flow-row auto-rows-fr grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+                  {groupsByRole[tab as keyof typeof groupsByRole].map(
+                    ({ group, role }) => (
+                      <div key={`group-${group.id}`} className="h-full">
+                        <GroupCard
+                          key={group.id}
+                          group={group}
+                          role={role}
+                          roleColors={roleColors}
+                          isArchived={false}
+                          dashboardPage={false}
+                        />
+                      </div>
+                    ),
+                  )}
+                </div>
+              </Suspense>
             ) : (
               <div className="light:text-slate-500 rounded-lg border border-dashed p-8 text-center dark:border-slate-500">
                 <p className="text-lg dark:text-slate-300">

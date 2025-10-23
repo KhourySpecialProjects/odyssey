@@ -14,15 +14,22 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { QuizQuestion } from "@/types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowLeftIcon, ArrowRightIcon } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+import { saveQuizAnswer, getQuizAnswer } from "@/lib/quiz-storage";
 
 const formSchema = z.object({
   answerIds: z.array(z.string()),
 });
 
-export function QuizQuestionBlock({ question }: { question: QuizQuestion }) {
+export function QuizQuestionBlock({
+  question,
+  lessonId,
+}: {
+  question: QuizQuestion;
+  lessonId: number;
+}) {
   const [showResult, setShowResult] = useState(false);
   const correctAnswers = useMemo(
     () => question.answerOptions.filter((option) => option.isCorrect),
@@ -35,6 +42,46 @@ export function QuizQuestionBlock({ question }: { question: QuizQuestion }) {
       answerIds: [],
     },
   });
+
+  // Load saved answer on mount
+  useEffect(() => {
+    const saved = getQuizAnswer(lessonId, question.id);
+    if (saved && saved.answerIds.length > 0) {
+      // Set form values
+      form.reset({ answerIds: saved.answerIds });
+
+      // Set showResult after ensuring form is populated
+      if (saved.showResult) {
+        // Use a microtask to ensure React has processed the form reset
+        Promise.resolve().then(() => {
+          setShowResult(true);
+        });
+      }
+    }
+  }, [lessonId, question.id]);
+
+  // Save answers whenever they change
+  useEffect(() => {
+    const subscription = form.watch((value) => {
+      if (value.answerIds && value.answerIds.length > 0) {
+        const answerIds = value.answerIds.filter(
+          (id): id is string => id !== undefined,
+        );
+        if (answerIds.length > 0) {
+          saveQuizAnswer(lessonId, question.id, answerIds, showResult);
+        }
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, [lessonId, question.id, showResult, form]);
+
+  // Save showResult state changes
+  useEffect(() => {
+    const answerIds = form.getValues("answerIds");
+    if (answerIds.length > 0) {
+      saveQuizAnswer(lessonId, question.id, answerIds, showResult);
+    }
+  }, [showResult, lessonId, question.id, form]);
 
   function onSubmit(values: z.infer<typeof formSchema>) {
     if (values.answerIds.length > 0) {
@@ -67,14 +114,24 @@ export function QuizQuestionBlock({ question }: { question: QuizQuestion }) {
       {showResult ? (
         <div className="mt-4 rounded-md border border-slate-200 px-8 py-12 text-center">
           {areAnswersCorrect(form.getValues("answerIds")) ? (
-            <>
+            <div className="flex flex-col items-center">
               <Badge
                 className="bg-green-100 text-lg text-green-700 hover:bg-green-200"
                 role="status"
               >
                 That&rsquo;s Right!
               </Badge>
-            </>
+
+              <Button
+                before={<ArrowLeftIcon />}
+                variant="outline"
+                size="sm"
+                onClick={() => setShowResult(false)}
+                className="mt-2"
+              >
+                View Answer
+              </Button>
+            </div>
           ) : (
             <>
               <Badge

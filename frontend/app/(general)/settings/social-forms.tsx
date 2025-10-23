@@ -37,7 +37,6 @@ export function SocialForms({
   );
   const updatePublicProfile = async (isPublic: boolean) => {
     setIsPublicProfile(isPublic);
-    console.log(isPublic);
     if (authorizedUser?.id) {
       await updateUserInfo(authorizedUser.id, {
         isPublic: isPublic,
@@ -223,7 +222,7 @@ export function SocialForms({
       <form
         action={async (formData: FormData) => {
           const bio = formData.get("bio") as string;
-          if (bio && authorizedUser?.id) {
+          if (authorizedUser?.id) {
             const result = await updateUserInfo(authorizedUser.id, {
               bio: bio,
             });
@@ -360,17 +359,17 @@ export function SocialForms({
         </div>
 
         {isPublicProfile && (
-          <div className="mt-3 text-sm text-gray-600">
+          <div className="mt-3 text-sm text-gray-600 dark:text-slate-300">
             Your profile is now visible to the public. Others can view your
             information at{" "}
             <Link
-              href={`/${authorizedUser.email.substring(
+              href={`/prof/${authorizedUser.email.substring(
                 0,
                 authorizedUser.email.indexOf("@"),
               )}`}
-              className="text-blue-600 hover:text-blue-800"
+              className="text-sky-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-600"
             >
-              khouryodyssey.com/
+              khouryodyssey.com/prof/
               {authorizedUser.email.substring(
                 0,
                 authorizedUser.email.indexOf("@"),
@@ -379,14 +378,14 @@ export function SocialForms({
             .{" "}
             <ContentCopyIcon
               onClick={() => {
-                const profileLink = `khouryodyssey.com/${authorizedUser.email.substring(
+                const profileLink = `khouryodyssey.com/prof/${authorizedUser.email.substring(
                   0,
                   authorizedUser.email.indexOf("@"),
                 )}`;
                 toast.success("Profile link copied to clipboard");
                 navigator.clipboard.writeText(profileLink);
               }}
-              className="cursor-pointer text-gray-600 hover:text-gray-800"
+              className="cursor-pointer text-gray-600 hover:text-gray-800 dark:text-slate-300"
               fontSize="small"
             />
           </div>
