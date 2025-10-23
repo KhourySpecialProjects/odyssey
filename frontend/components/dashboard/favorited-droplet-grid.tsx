@@ -20,8 +20,11 @@ export async function FavoriteDropletsGrid({ sortKey }: { sortKey?: string }) {
 
   const authorizedUser = await getAuthorizedUserByEmail(user.email);
   const enrollments = await getEnrollmentsByAuthorizedUser(authorizedUser.id);
-
-  const filteredEnrollments = enrollments.filter((e) => e.droplet.usersFavorited?.some((user) => {user === authorizedUser}));
+  
+  // Fixed: Added return and compare IDs instead of objects
+  const filteredEnrollments = enrollments.filter((e) => 
+    e.droplet.usersFavorited?.some((user) => user.id === authorizedUser.id)
+  );
 
   const completedLessonIds = filteredEnrollments.flatMap(
     (enrollment) =>
@@ -44,6 +47,9 @@ export async function FavoriteDropletsGrid({ sortKey }: { sortKey?: string }) {
       completionPercentage,
     };
   });
+
+  // Fixed: proper template literal
+  console.log(`with completion: ${dropletsWithCompletion.length} items`);
 
   if (!dropletsWithCompletion || dropletsWithCompletion.length === 0) {
     return (
