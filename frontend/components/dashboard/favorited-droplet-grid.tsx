@@ -70,6 +70,7 @@ export async function FavoriteDropletsGrid({ sortKey }: { sortKey?: string }) {
     <EnrolledDropletsGridClient
       dropletsWithCompletion={dropletsWithCompletion}
       completedLessonIds={completedLessonIds}
+      isArchived={false}
       isFavorited={true}
       ratingsMap={ratingsMap}
       sortKey={sortKey}

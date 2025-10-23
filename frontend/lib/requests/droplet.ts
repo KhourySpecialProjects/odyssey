@@ -500,3 +500,62 @@ export async function createDroplet(data: z.infer<typeof CreateDropletSchema>) {
     };
   }
 }
+
+export async function favoriteDroplet(droplet: Droplet, favoriteState: boolean) {
+  try {
+    const user = await getCurrentUser();
+    if (!user?.email) throw new Error("No email identified");
+    
+    const authorizedUser = await getAuthorizedUserByEmail(user.email);
+    
+    // Get current favorites list
+    const currentFavorites = droplet.usersFavorited || [];
+    
+    let updatedFavorites;
+    if (favoriteState) {
+      // Add user to favorites if not already there
+      if (!currentFavorites.some((u) => u.id === authorizedUser.id)) {
+        updatedFavorites = [...currentFavorites.map(u => u.id), authorizedUser.id];
+      } else {
+        updatedFavorites = currentFavorites.map(u => u.id);
+      }
+    } else {
+      // Remove user from favorites
+      updatedFavorites = currentFavorites
+        .filter((u) => u.id !== authorizedUser.id)
+        .map(u => u.id);
+    }
+    
+    const response = await fetch(
+      `${STRAPI_API_URL}/api/droplets/${droplet.id}`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+        },
+        body: JSON.stringify({
+          data: {
+            usersFavorited: updatedFavorites,
+          },
+        }),
+      },
+    );
+    
+    if (!response.ok) {
+      throw new Error("Failed to update favorite status");
+    }
+    
+    revalidateTag("dashboard");
+    revalidateTag("droplets");
+    revalidatePath("/");
+    revalidatePath("/dashboard");
+    revalidatePath("/dashboard/favorited");
+    revalidatePath(`/d/${droplet.slug}`);
+    
+    return { success: true };
+  } catch (error) {
+    console.error("Error updating favorite status:", error);
+    return { success: false, error };
+  }
+}

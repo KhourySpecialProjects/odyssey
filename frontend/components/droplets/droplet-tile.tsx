@@ -12,7 +12,9 @@ import { toast } from "sonner";
 import { Archive, ArchiveRestore, Clock } from "lucide-react";
 import { getDueDateBadgeColor } from "@/lib/utils";
 import { DateTime } from "luxon";
-import { archiveDroplet } from "@/lib/requests/droplet";
+import { archiveDroplet, favoriteDroplet, updateDroplet } from "@/lib/requests/droplet";
+import { getCurrentUser } from "@/lib/auth/session";
+import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
 import FavoriteIcon from "@mui/icons-material/Favorite";
 import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
 import { grey, purple } from "@mui/material/colors";
@@ -35,14 +37,15 @@ export function DropletTile({
   profilePage,
   compact,
   isArchived,
-  isFavorited,
+  isFavorited: initialIsFavorited,
   dueDate,
 }: DropletTileProps) {
   const [descriptionExpanded, setDescriptionExpanded] = useState(false);
   const [isTextClamped, setIsTextClamped] = useState(false);
-  const [isScreenChanged, setIsScreenChanged] = useState(false); // New state variable to track screen size changes
+  const [isScreenChanged, setIsScreenChanged] = useState(false);
   const textRef = useRef(null);
   const [isHovering, setIsHovering] = useState(false);
+  const [isFavorited, setIsFavorited] = useState(initialIsFavorited || false);
 
   const strippedDescription = droplet.description
     ?.replace(/<\/p>\s*<p>/gi, "\n")
@@ -59,7 +62,6 @@ export function DropletTile({
     }
   }, [strippedDescription, descriptionExpanded]);
 
-  // Effect to handle screen size changes and re-evaluate clamping
   useEffect(() => {
     const handleResize = () => {
       setIsScreenChanged(true);
@@ -73,13 +75,12 @@ export function DropletTile({
 
   useEffect(() => {
     if (isScreenChanged) {
-      // Re-evaluate clamping only if the screen size has changed
       if (textRef.current && strippedDescription) {
         const element = textRef.current as HTMLParagraphElement;
         const isClamped = element.scrollHeight > element.clientHeight;
         setIsTextClamped(isClamped);
       }
-      setIsScreenChanged(false); // Reset the flag after handling
+      setIsScreenChanged(false);
     }
   }, [isScreenChanged, strippedDescription, descriptionExpanded]);
 
@@ -128,9 +129,25 @@ export function DropletTile({
     }
   }
 
-  async function addToFavorites() {
-    toast.success("Droplet added to favorites!");
+  async function toggleFavorite() {
+  try {
+    const result = await favoriteDroplet(droplet, !isFavorited);
+    
+    if (result.success) {
+      setIsFavorited(!isFavorited);
+      toast.success(
+        !isFavorited
+          ? `${droplet.name} added to favorites!`
+          : `${droplet.name} removed from favorites!`
+      );
+    } else {
+      toast.error("Failed to update favorite status");
+    }
+  } catch (error) {
+    toast.error("An error occurred while updating favorites");
+    console.error(error);
   }
+}
 
   if (compact) {
     return (
@@ -204,14 +221,14 @@ export function DropletTile({
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
-                  addToFavorites();
+                  toggleFavorite();
                 }}
                 className={`group ${isArchived === true || isArchived === false ? "visibility: visible" : "visibility: hidden"} bg-slate-50 hover:bg-slate-300 dark:bg-slate-300`}
               >
-                {isHovering || isFavorited ? (
+                {isFavorited || isHovering ? (
                   <FavoriteIcon className="text-pink-500" />
                 ) : (
-                  <FavoriteBorderIcon sx={{ color: grey[900] }} />
+                  <FavoriteBorderIcon className="text-purple-500" />
                 )}
               </Button>
             </div>
