@@ -59,6 +59,9 @@
     },
     "completionDate": {
       "type": "datetime"
+    },
+    "isFavorited": {
+      "type": "boolean"
     }
   }
 }

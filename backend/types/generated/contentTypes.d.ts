@@ -628,6 +628,11 @@ export interface ApiAuthorizedUserAuthorizedUser extends Schema.CollectionType {
       'oneToMany',
       'api::enrollment.enrollment'
     >;
+    favorites: Attribute.Relation<
+      'api::authorized-user.authorized-user',
+      'oneToMany',
+      'api::favorite.favorite'
+    >;
     firstName: Attribute.String;
     firstTime: Attribute.Boolean & Attribute.DefaultTo<true>;
     friendships: Attribute.Relation<
@@ -1014,6 +1019,7 @@ export interface ApiEnrollmentEnrollment extends Schema.CollectionType {
     isComplete: Attribute.Boolean &
       Attribute.Required &
       Attribute.DefaultTo<false>;
+    isFavorited: Attribute.Boolean;
     isFirstTime: Attribute.Boolean & Attribute.DefaultTo<true>;
     notes: Attribute.Relation<
       'api::enrollment.enrollment',
@@ -1046,6 +1052,7 @@ export interface ApiEnrollmentEnrollment extends Schema.CollectionType {
 export interface ApiFavoriteFavorite extends Schema.CollectionType {
   collectionName: 'favorites';
   info: {
+    description: '';
     displayName: 'Favorite';
     pluralName: 'favorites';
     singularName: 'favorite';
@@ -1077,7 +1084,7 @@ export interface ApiFavoriteFavorite extends Schema.CollectionType {
     user: Attribute.Relation<
       'api::favorite.favorite',
       'manyToOne',
-      'plugin::users-permissions.user'
+      'api::authorized-user.authorized-user'
     >;
   };
 }
@@ -1940,11 +1947,6 @@ export interface PluginUsersPermissionsUser extends Schema.CollectionType {
       Attribute.SetMinMaxLength<{
         minLength: 6;
       }>;
-    favorites: Attribute.Relation<
-      'plugin::users-permissions.user',
-      'oneToMany',
-      'api::favorite.favorite'
-    >;
     password: Attribute.Password &
       Attribute.Private &
       Attribute.SetMinMaxLength<{

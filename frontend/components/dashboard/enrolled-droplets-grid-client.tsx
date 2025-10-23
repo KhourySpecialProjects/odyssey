@@ -8,6 +8,19 @@ import { useSearch } from "@/contexts/SearchContext";
 
 const ITEMS_PER_PAGE = 9;
 
+interface EnrolledDropletsGridClientProps {
+  dropletsWithCompletion: Array<Droplet & { completionPercentage: number }>;
+  completedLessonIds: number[];
+  isArchived?: boolean;
+  isFavorited?: boolean;
+  dueDates?: DueDate[];
+  sortKey?: string;
+  ratingsMap: Map<number, number>;
+  tags?: string[] | string;
+  type?: string | string[];
+  focusArea?: string | string[];
+}
+
 export function EnrolledDropletsGridClient({
   dropletsWithCompletion,
   completedLessonIds,
@@ -18,18 +31,7 @@ export function EnrolledDropletsGridClient({
   tags,
   type,
   focusArea,
-}: {
-  dropletsWithCompletion: Array<Droplet & { completionPercentage: number }>;
-  completedLessonIds: number[];
-  isArchived: boolean;
-  dueDates?: DueDate[];
-  sortKey?: string;
-
-  ratingsMap: Map<number, number>;
-  tags?: string[] | string;
-  type?: string | string[];
-  focusArea?: string | string[];
-}) {
+}: EnrolledDropletsGridClientProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const sortedDroplets = useMemo(() => {
     const sorted = [...dropletsWithCompletion];

@@ -4,7 +4,8 @@
   "info": {
     "singularName": "favorite",
     "pluralName": "favorites",
-    "displayName": "Favorite"
+    "displayName": "Favorite",
+    "description": ""
   },
   "options": {
     "draftAndPublish": true
@@ -14,7 +15,7 @@
     "user": {
       "type": "relation",
       "relation": "manyToOne",
-      "target": "plugin::users-permissions.user",
+      "target": "api::authorized-user.authorized-user",
       "inversedBy": "favorites"
     },
     "droplet": {
