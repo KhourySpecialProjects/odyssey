@@ -154,11 +154,11 @@
       "min": 0,
       "default": 0
     },
-    "favorites": {
+    "users_favorited": {
       "type": "relation",
-      "relation": "oneToMany",
-      "target": "api::favorite.favorite",
-      "mappedBy": "droplet"
+      "relation": "manyToMany",
+      "target": "api::authorized-user.authorized-user",
+      "mappedBy": "droplets_favorited"
     }
   }
 }

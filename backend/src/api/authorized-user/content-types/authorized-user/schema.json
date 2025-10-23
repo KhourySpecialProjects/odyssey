@@ -215,11 +215,11 @@
       "default": false,
       "required": true
     },
-    "favorites": {
+    "droplets_favorited": {
       "type": "relation",
-      "relation": "oneToMany",
-      "target": "api::favorite.favorite",
-      "mappedBy": "user"
+      "relation": "manyToMany",
+      "target": "api::droplet.droplet",
+      "inversedBy": "users_favorited"
     }
   }
 }

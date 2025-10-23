@@ -76,7 +76,7 @@ export type AuthorizedUser = {
   groups?: Group[];
   droplets?: Droplet[];
   created_playlists?: Playlist[];
-  favorites?: Favorite;
+  dropletsFavorited?: Droplet[];
 };
 
 export type Media = {
@@ -204,7 +204,7 @@ export type Droplet = {
   afterReview?: string;
   funFact?: string;
   averageRating?: number;
-  favorites?: Favorite;
+  usersFavorited?: AuthorizedUser[];
 };
 
 export type QuizAnswerOption = {
@@ -401,8 +401,3 @@ export type DueDate = {
   playlist?: Playlist;
   group: Group;
 };
-
-export type Favorite = {
-  user?: AuthorizedUser;
-  droplet?: Droplet;
-}
