@@ -11,6 +11,7 @@ import {
   MessageHeader,
 } from "@/components/message";
 import { UserGroups } from "./user-groups";
+import { FavoriteDropletsGrid } from "./favorited-droplet-grid";
 
 export async function MyContent({
   searchParams,
@@ -73,7 +74,7 @@ export async function MyContent({
               sortKey={sortKey}
             />
           </>
-        ) : (
+        ) : contentType === "archived" ? (
           <>
             <div className="pb-2 text-xl font-bold">Droplets</div>
             <ArchivedDropletsGrid sortKey={sortKey} />
@@ -96,6 +97,8 @@ export async function MyContent({
               sortKey={sortKey}
             />
           </>
+        ) : (
+          <FavoriteDropletsGrid sortKey={sortKey}/>
         )}
       </div>
     </div>

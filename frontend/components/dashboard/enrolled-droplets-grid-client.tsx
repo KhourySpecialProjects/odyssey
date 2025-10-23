@@ -25,6 +25,7 @@ export function EnrolledDropletsGridClient({
   dropletsWithCompletion,
   completedLessonIds,
   isArchived,
+  isFavorited,
   dueDates,
   sortKey,
   ratingsMap,

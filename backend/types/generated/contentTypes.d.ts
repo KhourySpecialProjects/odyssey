@@ -617,7 +617,7 @@ export interface ApiAuthorizedUserAuthorizedUser extends Schema.CollectionType {
       'manyToMany',
       'api::droplet.droplet'
     >;
-    droplets_favorited: Attribute.Relation<
+    dropletsFavorited: Attribute.Relation<
       'api::authorized-user.authorized-user',
       'manyToMany',
       'api::droplet.droplet'
@@ -926,7 +926,7 @@ export interface ApiDropletDroplet extends Schema.CollectionType {
       'admin::user'
     > &
       Attribute.Private;
-    users_favorited: Attribute.Relation<
+    usersFavorited: Attribute.Relation<
       'api::droplet.droplet',
       'manyToMany',
       'api::authorized-user.authorized-user'

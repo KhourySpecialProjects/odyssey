@@ -35,7 +35,7 @@ export default async function DashboardRoute({ searchParams }: Props) {
   }
   const { sortKey } = sorting.find((item) => item.slug === sort) || defaultSort;
   const authorizedUser = await getAuthorizedUserByEmail(user.email);
-  const allDroplets = await getEnrollmentsByAuthorizedUser(authorizedUser.id);
+  const allEnrollments= await getEnrollmentsByAuthorizedUser(authorizedUser.id);
   const allPlaylists = authorizedUser.playlists?.length || 0;
   const allGroups = (await getUserGroups(authorizedUser.id)).filter((group) =>
     group.members?.some((member) => member.id === authorizedUser.id),
@@ -48,8 +48,16 @@ export default async function DashboardRoute({ searchParams }: Props) {
   const archivedGroups = allGroups.filter((group) =>
     group.users_archived?.some((user) => user.id === authorizedUser.id),
   );
-  const activeDroplets = allDroplets.filter((drop) => !drop.isArchived).length;
-  const archivedDroplets = allDroplets.length - activeDroplets;
+  const activeDroplets = allEnrollments.filter((drop) => !drop.isArchived).length;
+  const archivedDroplets = allEnrollments.length - activeDroplets;
+
+  const favoritedDroplets = allEnrollments.filter((enrollment) =>
+  enrollment.droplet.usersFavorited?.some((user) => 
+    user.id === authorizedUser.id
+  )
+).length;
+
+
   return (
     <SearchProvider>
       <div className="mx-auto my-4 w-full max-w-7xl p-8 text-center">
@@ -68,6 +76,7 @@ export default async function DashboardRoute({ searchParams }: Props) {
             playlists={allPlaylists}
             groups={activeGroups.length}
             archived={archivedDroplets + archivedGroups.length}
+            favorited={favoritedDroplets}
           />
 
           <div className="flex flex-col gap-2 md:flex-row md:items-center">

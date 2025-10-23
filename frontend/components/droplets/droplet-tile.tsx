@@ -24,6 +24,7 @@ interface DropletTileProps {
   profilePage?: boolean;
   compact?: boolean;
   isArchived?: boolean;
+  isFavorited?: boolean;
   dueDate?: string;
 }
 
@@ -34,6 +35,7 @@ export function DropletTile({
   profilePage,
   compact,
   isArchived,
+  isFavorited,
   dueDate,
 }: DropletTileProps) {
   const [descriptionExpanded, setDescriptionExpanded] = useState(false);
@@ -206,7 +208,7 @@ export function DropletTile({
                 }}
                 className={`group ${isArchived === true || isArchived === false ? "visibility: visible" : "visibility: hidden"} bg-slate-50 hover:bg-slate-300 dark:bg-slate-300`}
               >
-                {isHovering ? (
+                {isHovering || isFavorited ? (
                   <FavoriteIcon className="text-pink-500" />
                 ) : (
                   <FavoriteBorderIcon sx={{ color: grey[900] }} />

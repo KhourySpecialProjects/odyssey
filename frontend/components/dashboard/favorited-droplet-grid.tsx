@@ -48,7 +48,7 @@ export async function FavoriteDropletsGrid({ sortKey }: { sortKey?: string }) {
   if (!dropletsWithCompletion || dropletsWithCompletion.length === 0) {
     return (
       <Message className="mb-8 rounded-md border border-dashed border-slate-200 dark:border-slate-500 dark:bg-slate-800">
-        <MessageHeader subtitle="No Results" title="No Archived Droplets" />
+        <MessageHeader subtitle="No Results" title="No Favorited Droplets" />
         <MessageDescription>
           You haven&apos;t favorited any Droplets yet.
         </MessageDescription>
