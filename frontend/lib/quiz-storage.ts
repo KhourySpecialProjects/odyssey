@@ -35,3 +35,17 @@ export const clearQuizAnswers = (lessonId: number) => {
     }
   });
 };
+
+export const markLessonQuizCompleted = (lessonId: number) => {
+  const key = `quiz-completed-${lessonId}`;
+  sessionStorage.setItem(
+    key,
+    JSON.stringify({ completed: true, timestamp: Date.now() }),
+  );
+};
+
+export const isLessonQuizCompleted = (lessonId: number): boolean => {
+  const key = `quiz-completed-${lessonId}`;
+  const stored = sessionStorage.getItem(key);
+  return stored ? JSON.parse(stored).completed : false;
+};

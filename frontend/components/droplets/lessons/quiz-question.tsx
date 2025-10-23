@@ -13,7 +13,7 @@ import {
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { QuizQuestion } from "@/types";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ArrowLeftIcon, ArrowRightIcon } from "lucide-react";
+import { ArrowLeftIcon, ArrowRightIcon, RotateCcwIcon } from "lucide-react";
 import { useMemo, useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -46,11 +46,19 @@ export function QuizQuestionBlock({
   // Load saved answer on mount
   useEffect(() => {
     const saved = getQuizAnswer(lessonId, question.id);
-    if (saved) {
-      form.setValue("answerIds", saved.answerIds);
-      setShowResult(saved.showResult);
+    if (saved && saved.answerIds.length > 0) {
+      // Set form values
+      form.reset({ answerIds: saved.answerIds });
+
+      // Set showResult after ensuring form is populated
+      if (saved.showResult) {
+        // Use a microtask to ensure React has processed the form reset
+        Promise.resolve().then(() => {
+          setShowResult(true);
+        });
+      }
     }
-  }, [lessonId, question.id, form]);
+  }, [lessonId, question.id]);
 
   // Save answers whenever they change
   useEffect(() => {
@@ -106,14 +114,23 @@ export function QuizQuestionBlock({
       {showResult ? (
         <div className="mt-4 rounded-md border border-slate-200 px-8 py-12 text-center">
           {areAnswersCorrect(form.getValues("answerIds")) ? (
-            <>
+            <div className="flex flex-col items-center">
               <Badge
                 className="bg-green-100 text-lg text-green-700 hover:bg-green-200"
                 role="status"
               >
                 That&rsquo;s Right!
               </Badge>
-            </>
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowResult(false)}
+                className="mt-2"
+              >
+                <RotateCcwIcon className="h-4 w-4" />
+              </Button>
+            </div>
           ) : (
             <>
               <Badge
