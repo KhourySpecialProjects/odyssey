@@ -1,6 +1,6 @@
 "use client";
 
-import { Announcement, AuthorizedUser } from "@/types";
+import { Announcement, AuthorizedUser, Droplet } from "@/types";
 import { Button } from "../ui/button";
 import { giveKudos } from "@/lib/kudos";
 import { ThumbsUp } from "lucide-react";
@@ -13,7 +13,7 @@ export function KudosButton({
   authUser,
 }: {
   announcement: Announcement;
-  droplet: string;
+  droplet: Droplet;
   authUser: AuthorizedUser;
 }) {
   const [isPending, startTransition] = useTransition();

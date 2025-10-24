@@ -1,7 +1,13 @@
 import { Quiz } from "@/types";
 import { QuizQuestionBlock } from "./quiz-question";
 
-export function QuizBlock({ data }: { data: Quiz }) {
+export function QuizBlock({
+  data,
+  lessonId,
+}: {
+  data: Quiz;
+  lessonId: number;
+}) {
   return (
     <div className="-mx-6 my-12 rounded-md border border-slate-200 bg-slate-50 px-6 py-12 dark:border-slate-500 dark:bg-slate-800">
       <div className="text-center">
@@ -10,7 +16,6 @@ export function QuizBlock({ data }: { data: Quiz }) {
           Test your knowledge and see what you just learned.
         </p>
       </div>
-
       <div>
         {data.questions.map((question) => {
           return (
@@ -19,7 +24,7 @@ export function QuizBlock({ data }: { data: Quiz }) {
               id="quiz-question"
               className="mx-auto mt-8 w-full max-w-lg divide-slate-200 rounded-md border border-slate-200 bg-white p-6 dark:border-slate-500 dark:bg-slate-900"
             >
-              <QuizQuestionBlock question={question} />
+              <QuizQuestionBlock question={question} lessonId={lessonId} />
             </div>
           );
         })}

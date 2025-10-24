@@ -8,6 +8,9 @@ import { AnnouncementType, AuthorizedUser } from "@/types";
 import { BellRing, SlidersHorizontal } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { FriendRequests } from "../friends/friend-requests";
+import { Button } from "../ui/button";
+import Link from "next/link";
+import { Users } from "lucide-react";
 
 export function FeedContainer({ authUser }: { authUser: AuthorizedUser }) {
   const [selectedRoles, setSelectedRoles] = useState<AnnouncementTypeTitle[]>(
@@ -25,6 +28,20 @@ export function FeedContainer({ authUser }: { authUser: AuthorizedUser }) {
               friendsPerPage={3}
               authUser={authUser}
             ></FriendRequests>
+            <Link
+              href="/settings/friends"
+              className="mt-3 block"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <Button
+                size="sm"
+                className="w-full bg-sky-300 text-black hover:bg-sky-400 dark:bg-sky-300 dark:hover:bg-sky-400"
+              >
+                <Users className="mr-2 h-4 w-4" />
+                Manage Friends
+              </Button>
+            </Link>
           </div>
           <FeedFilter onFilterChange={setSelectedRoles} />
         </div>

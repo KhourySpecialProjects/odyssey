@@ -37,7 +37,6 @@ export function SocialForms({
   );
   const updatePublicProfile = async (isPublic: boolean) => {
     setIsPublicProfile(isPublic);
-    console.log(isPublic);
     if (authorizedUser?.id) {
       await updateUserInfo(authorizedUser.id, {
         isPublic: isPublic,

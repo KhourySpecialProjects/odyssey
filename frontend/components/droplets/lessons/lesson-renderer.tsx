@@ -288,6 +288,7 @@ export function LessonRenderer({
             <LessonBlockRenderer
               key={i}
               block={b}
+              lessonId={lesson.id}
               highlights={highlights}
               onHighlight={handleHighlight}
               onDeleteHighlight={handleDeleteHighlight}
@@ -325,6 +326,7 @@ export function LessonRenderer({
 
 function LessonBlockRenderer({
   block,
+  lessonId,
   highlights,
   onHighlight,
   onDeleteHighlight,
@@ -336,6 +338,7 @@ function LessonBlockRenderer({
   setActiveBlock,
 }: {
   block: any;
+  lessonId: number;
   highlights: Highlight[];
   onHighlight: (highlight: Highlight, isWithNote?: boolean) => void;
   onDeleteHighlight: (id: number) => void;
@@ -379,7 +382,7 @@ function LessonBlockRenderer({
       );
 
     case "droplets.quiz":
-      return <QuizBlock data={block} />;
+      return <QuizBlock data={block} lessonId={lessonId} />;
 
     case "droplets.open-ended-quiz":
       return <OpenEndedQuizBlock data={block} />;
