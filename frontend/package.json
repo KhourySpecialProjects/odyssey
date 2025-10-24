@@ -12,9 +12,10 @@
     "test:failures": "jest --onlyFailures",
     "test:e2e": "cd .. && docker compose -f docker-compose.playwright.yml run --rm playwright npx playwright test",
     "save": "cd e2e/authorizedUser && npx playwright codegen localhost:3000 --save-storage=auth.json",
+    "save:user": "cd e2e/authorizedUser && mkdir user && cd user && npx playwright codegen localhost:3000 --save-storage=auth.json",
     "load": "cd e2e/authorizedUser && npx playwright codegen localhost:3000 --load-storage=auth.json",
-    "save unauth": "cd e2e/unauthorizedUser && npx playwright codegen localhost:3000 --save-storage=auth.json",
-    "load unauth": "cd e2e/unauthorizedUser && npx playwright codegen localhost:3000 --load-storage=auth.json"
+    "save-unauth": "cd e2e/unauthorizedUser && npx playwright codegen localhost:3000 --save-storage=auth.json",
+    "load-unauth": "cd e2e/unauthorizedUser && npx playwright codegen localhost:3000 --load-storage=auth.json"
   },
   "dependencies": {
     "@aarkue/tiptap-math-extension": "^1.3.4",

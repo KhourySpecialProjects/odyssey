@@ -51,3 +51,4 @@ node_modules/
 /e2e/authorizedUser/auth.json
 /e2e/unauthorizedUser/auth.json
 */auth.json
+/e2e/authorizedUser/user/auth.json
