@@ -198,47 +198,6 @@ export function DropletTile({
       <li className="h-full rounded-md border border-slate-200 bg-slate-50 p-2 transition-colors hover:border-slate-300 dark:border-slate-500 dark:bg-slate-800">
         <div className="flex h-full flex-col justify-between gap-3 p-4">
           <div className="space-y-3">
-            <div className="flex gap-2">
-              <Button
-                size="sm"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  changeVisibility();
-                }}
-                className={`${typeof isArchived === "boolean" ? "visible" : "invisible"} bg-slate-50 hover:bg-slate-300 dark:bg-slate-300`}
-              >
-                <div className="group relative">
-                  {isArchived ? (
-                    <ArchiveRestore className="text-purple-500" />
-                  ) : (
-                    <Archive className="text-purple-500" />
-                  )}
-                  <span className="absolute top-full left-1/2 mt-1 w-max -translate-x-1/2 transform rounded bg-gray-800 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100">
-                    {isArchived ? "Unarchive" : "Archive"}
-                  </span>
-                </div>
-              </Button>
-
-              <Button
-                size="sm"
-                disabled={isFavoritePending}
-                onMouseEnter={() => setIsHovering(true)}
-                onMouseLeave={() => setIsHovering(false)}
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  toggleFavorite();
-                }}
-                className={`group ${typeof isArchived === "boolean" ? "visible" : "invisible"} bg-slate-50 hover:bg-slate-300 disabled:opacity-50 dark:bg-slate-300`}
-              >
-                {isFavorited || isHovering ? (
-                  <FavoriteIcon className="text-pink-500" />
-                ) : (
-                  <FavoriteBorderIcon className="text-purple-500" />
-                )}
-              </Button>
-            </div>
 
             <div className="flex flex-0 flex-row flex-wrap gap-1.5">
               {droplet.status == "draft" ? (
@@ -336,6 +295,7 @@ export function DropletTile({
                   </>
                 )}
             </div>
+            
           </div>
 
           {droplet.averageRating && droplet.averageRating != 0.0 ? (
@@ -348,6 +308,47 @@ export function DropletTile({
               />
             </div>
           ) : null}
+          <div className="flex gap-2">
+              <Button
+                size="sm"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  changeVisibility();
+                }}
+                className={`${typeof isArchived === "boolean" ? "visible" : "invisible"} bg-slate-50 hover:bg-slate-300 dark:bg-slate-300`}
+              >
+                <div className="group relative">
+                  {isArchived ? (
+                    <ArchiveRestore className="text-purple-500" />
+                  ) : (
+                    <Archive className="text-purple-500" />
+                  )}
+                  <span className="absolute top-full left-1/2 mt-1 w-max -translate-x-1/2 transform rounded bg-gray-800 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100">
+                    {isArchived ? "Unarchive" : "Archive"}
+                  </span>
+                </div>
+              </Button>
+
+              <Button
+                size="sm"
+                disabled={isFavoritePending}
+                onMouseEnter={() => setIsHovering(true)}
+                onMouseLeave={() => setIsHovering(false)}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  toggleFavorite();
+                }}
+                className={`group ${typeof isArchived === "boolean" ? "visible" : "invisible"} bg-slate-50 hover:bg-slate-300 disabled:opacity-50 dark:bg-slate-300`}
+              >
+                {isFavorited || isHovering ? (
+                  <FavoriteIcon className="text-pink-500" />
+                ) : (
+                  <FavoriteBorderIcon className="text-purple-500" />
+                )}
+              </Button>
+            </div>
         </div>
       </li>
     </Link>
