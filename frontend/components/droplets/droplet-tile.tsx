@@ -201,6 +201,7 @@ export function DropletTile({
             <div className="flex gap-2">
               <Button
                 size="sm"
+                aria-label={isArchived ? "Unarchive" : "Archive"}
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
@@ -222,6 +223,7 @@ export function DropletTile({
 
               <Button
                 size="sm"
+                aria-label="Favorite"
                 disabled={isFavoritePending}
                 onMouseEnter={() => setIsHovering(true)}
                 onMouseLeave={() => setIsHovering(false)}
