@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { Droplet, DueDate } from "@/types";
 import { DropletTile } from "../droplets/droplet-tile";
 import { PageNav } from "../ui/page-nav";
@@ -24,26 +24,23 @@ export function EnrolledDropletsGridClient({
   isArchived: boolean;
   dueDates?: DueDate[];
   sortKey?: string;
-
   ratingsMap: Map<number, number>;
   tags?: string[] | string;
   type?: string | string[];
   focusArea?: string | string[];
 }) {
   const [currentPage, setCurrentPage] = useState(1);
+  const { searchQuery } = useSearch();
+
+  // Step 1: Sort droplets
   const sortedDroplets = useMemo(() => {
     const sorted = [...dropletsWithCompletion];
     if (sortKey) {
       const [field, direction] = sortKey.split(":");
       sorted.sort((a, b) => {
-        let ratingA = ratingsMap.get(a.id);
-        let ratingB = ratingsMap.get(b.id);
-        if (!ratingA) {
-          ratingA = 0;
-        }
-        if (!ratingB) {
-          ratingB = 0;
-        }
+        let ratingA = ratingsMap.get(a.id) || 0;
+        let ratingB = ratingsMap.get(b.id) || 0;
+
         if (field === "name") {
           return direction === "asc"
             ? a.name.localeCompare(b.name)
@@ -62,80 +59,87 @@ export function EnrolledDropletsGridClient({
             (dueDate) => dueDate.droplet?.id === b.id,
           )?.dueDate;
 
-          // Determine completion status (100% = complete)
           const isCompleteA = a.completionPercentage === 100;
           const isCompleteB = b.completionPercentage === 100;
-
-          // Group 1: Incomplete with due dates
-          // Group 2: Complete (with or without due dates)
-          // Group 3: Incomplete without due dates
 
           const getGroup = (
             isComplete: boolean,
             hasDueDate: boolean,
           ): number => {
-            if (!isComplete && hasDueDate) return 1; // Incomplete with due date
-            if (isComplete) return 2; // Complete
-            return 3; // Incomplete without due date
+            if (!isComplete && hasDueDate) return 1;
+            if (isComplete) return 2;
+            return 3;
           };
 
           const groupA = getGroup(isCompleteA, !!dueDateA);
           const groupB = getGroup(isCompleteB, !!dueDateB);
 
-          // First, sort by group
           if (groupA !== groupB) {
             return groupA - groupB;
           }
 
-          // Within the same group, sort by due date if both have one
           if (dueDateA && dueDateB) {
             return direction === "asc"
               ? new Date(dueDateA).getTime() - new Date(dueDateB).getTime()
               : new Date(dueDateB).getTime() - new Date(dueDateA).getTime();
           }
 
-          // If only one has a due date (within the same group)
           if (dueDateA) return -1;
           if (dueDateB) return 1;
 
-          return 0; // no change in order
+          return 0;
         }
         return 0;
       });
     }
     return sorted;
-  }, [dropletsWithCompletion, sortKey, ratingsMap]);
-  let newDrop = sortedDroplets;
-  if (type) {
-    newDrop = sortedDroplets.filter((drop) => drop.type === type);
-  }
-  if (focusArea) {
-    newDrop = sortedDroplets.filter((drop) => drop.focusArea === focusArea);
-  }
-  if (tags) {
-    const lowercaseTags = Array.isArray(tags)
-      ? tags.map((tag) => tag.toLowerCase())
-      : tags.split(",").map((tag) => tag.toLowerCase());
-    newDrop = sortedDroplets.filter((drop) => {
-      const hasMatchingTag = drop.tags?.some((tag) => {
-        const tagName = tag.name.toLowerCase();
-        const matches = lowercaseTags.includes(tagName);
-        return matches;
-      });
-      return hasMatchingTag;
-    });
-  }
-  const { searchQuery } = useSearch();
-  const filteredDroplets = useMemo(() => {
-    setCurrentPage(1);
-    return newDrop.filter((droplet) =>
-      droplet.name.toLowerCase().includes(searchQuery.toLowerCase()),
-    );
-  }, [newDrop, searchQuery]);
+  }, [dropletsWithCompletion, sortKey, ratingsMap, dueDates]);
 
+  // Step 2: Apply filters (type, focusArea, tags, search)
+  const filteredDroplets = useMemo(() => {
+    let filtered = sortedDroplets;
+
+    // Filter by type
+    if (type) {
+      filtered = filtered.filter((drop) => drop.type === type);
+    }
+
+    // Filter by focus area
+    if (focusArea) {
+      filtered = filtered.filter((drop) => drop.focusArea === focusArea);
+    }
+
+    // Filter by tags
+    if (tags) {
+      const lowercaseTags = Array.isArray(tags)
+        ? tags.map((tag) => tag.toLowerCase())
+        : tags.split(",").map((tag) => tag.toLowerCase());
+      filtered = filtered.filter((drop) => {
+        return drop.tags?.some((tag) =>
+          lowercaseTags.includes(tag.name.toLowerCase()),
+        );
+      });
+    }
+
+    // Filter by search query
+    if (searchQuery) {
+      filtered = filtered.filter((droplet) =>
+        droplet.name.toLowerCase().includes(searchQuery.toLowerCase()),
+      );
+    }
+
+    return filtered;
+  }, [sortedDroplets, type, focusArea, tags, searchQuery]);
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [type, focusArea, tags, searchQuery]);
+
+  // Step 3: Paginate
   const totalPages = Math.ceil(filteredDroplets.length / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const paginatedCompletedDroplets = filteredDroplets.slice(
+  const paginatedDroplets = filteredDroplets.slice(
     startIndex,
     startIndex + ITEMS_PER_PAGE,
   );
@@ -143,7 +147,7 @@ export function EnrolledDropletsGridClient({
   return (
     <>
       <ul className="grid grid-flow-row auto-rows-fr grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {paginatedCompletedDroplets.map((droplet) => (
+        {paginatedDroplets.map((droplet) => (
           <DropletTile
             key={droplet.id}
             droplet={droplet}
