@@ -1019,7 +1019,6 @@ export interface ApiEnrollmentEnrollment extends Schema.CollectionType {
     isComplete: Attribute.Boolean &
       Attribute.Required &
       Attribute.DefaultTo<false>;
-    isFavorited: Attribute.Boolean;
     isFirstTime: Attribute.Boolean & Attribute.DefaultTo<true>;
     notes: Attribute.Relation<
       'api::enrollment.enrollment',
