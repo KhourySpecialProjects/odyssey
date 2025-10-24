@@ -150,6 +150,7 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
 
       span.style.backgroundColor = color;
       span.style.borderRadius = "8px";
+      span.style.setProperty("color", "black", "important");
 
       const contents = nodeRange.extractContents();
       span.appendChild(contents);
@@ -289,7 +290,7 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
           const span = document.createElement("span");
           span.style.borderRadius = "8px";
           span.style.backgroundColor = highlight.color;
-          span.style.color = "black";
+          span.style.setProperty("color", "black", "important");
           range.surroundContents(span);
         } catch {
           highlightRange(
@@ -416,7 +417,7 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
         const span = document.createElement("span");
         span.style.borderRadius = "8px";
         span.style.backgroundColor = selectedColor;
-        span.style.color = "black";
+        span.style.setProperty("color", "black", "important");
 
         const textNode = document.createTextNode(text);
         span.appendChild(textNode);
@@ -541,6 +542,7 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
       const span = document.createElement("span");
       span.style.borderRadius = "8px";
       span.style.backgroundColor = selectedColor;
+      span.style.setProperty("color", "black", "important");
 
       const textNode = document.createTextNode(text);
       span.appendChild(textNode);
