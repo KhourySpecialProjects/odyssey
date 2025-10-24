@@ -617,6 +617,11 @@ export interface ApiAuthorizedUserAuthorizedUser extends Schema.CollectionType {
       'manyToMany',
       'api::droplet.droplet'
     >;
+    dropletsFavorited: Attribute.Relation<
+      'api::authorized-user.authorized-user',
+      'manyToMany',
+      'api::droplet.droplet'
+    >;
     due_dates: Attribute.Relation<
       'api::authorized-user.authorized-user',
       'oneToMany',
@@ -669,6 +674,9 @@ export interface ApiAuthorizedUserAuthorizedUser extends Schema.CollectionType {
     isEnabled: Attribute.Boolean &
       Attribute.Required &
       Attribute.DefaultTo<true>;
+    isPublic: Attribute.Boolean &
+      Attribute.Required &
+      Attribute.DefaultTo<false>;
     lastName: Attribute.String;
     linkedin: Attribute.String;
     playlists: Attribute.Relation<
@@ -923,6 +931,11 @@ export interface ApiDropletDroplet extends Schema.CollectionType {
       'admin::user'
     > &
       Attribute.Private;
+    usersFavorited: Attribute.Relation<
+      'api::droplet.droplet',
+      'manyToMany',
+      'api::authorized-user.authorized-user'
+    >;
   };
 }
 
@@ -1500,6 +1513,7 @@ export interface ApiReportReport extends Schema.CollectionType {
     email: Attribute.Email & Attribute.Required;
     fullName: Attribute.String & Attribute.Required;
     path: Attribute.String & Attribute.Required;
+    time: Attribute.DateTime;
     type: Attribute.Enumeration<['bug']> & Attribute.Required;
     updatedAt: Attribute.DateTime;
     updatedBy: Attribute.Relation<

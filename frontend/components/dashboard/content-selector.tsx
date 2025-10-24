@@ -8,11 +8,13 @@ export function ContentSelector({
   playlists,
   groups,
   archived,
+  favorited,
 }: {
   droplets: number;
   playlists: number;
   groups: number;
   archived: number;
+  favorited: number;
 }) {
   const searchParams = useSearchParams();
   const pathname = usePathname();
@@ -24,6 +26,7 @@ export function ContentSelector({
     { name: `Playlists (${playlists})`, value: "playlists" },
     { name: `Groups (${groups})`, value: "groups" },
     { name: `Archived (${archived})`, value: "archived" },
+    { name: `Favorited (${favorited})`, value: "favorited"}
   ];
 
   const createQueryString = (name: string, value: string) => {

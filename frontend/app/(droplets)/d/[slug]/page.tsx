@@ -19,6 +19,7 @@ import { getCurrentUser } from "@/lib/auth/session";
 import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
 import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
 import { StarRating } from "@/components/ui/rating-stars";
+import { AuthorCard } from "@/components/droplets/author-block";
 
 type Props = {
   params: Promise<params>;
@@ -221,35 +222,7 @@ export default async function DropletRoute({ params }: Props) {
 
             <ul className="mt-4 flex flex-col divide-y divide-slate-200 rounded-md border border-slate-200 bg-slate-50 dark:divide-slate-500 dark:border-slate-500 dark:bg-slate-800">
               {droplet.authorized_users?.map((author) => (
-                <li
-                  key={`author-${author.id}`}
-                  className="inline-flex gap-4 p-4"
-                >
-                  <Avatar variant="round" className="border border-sky-800">
-                    <AvatarImage src={author?.profilePhoto || undefined} />
-                    <AvatarFallback>
-                      {author?.firstName && author?.lastName ? (
-                        author.firstName[0] + author.lastName[0]
-                      ) : (
-                        <User2Icon className="h-4 w-4" />
-                      )}
-                    </AvatarFallback>
-                  </Avatar>
-
-                  <div
-                    className={!author.bio ? "flex flex-row items-center" : ""}
-                  >
-                    <span className="leading-relaxed font-bold">
-                      {author.firstName + " " + author.lastName}
-                    </span>
-
-                    {author.bio ? (
-                      <p className="text-sm text-slate-600 dark:text-slate-300">
-                        {author.bio}
-                      </p>
-                    ) : null}
-                  </div>
-                </li>
+                <AuthorCard key={author.id} {...author} />
               ))}
             </ul>
           </section>

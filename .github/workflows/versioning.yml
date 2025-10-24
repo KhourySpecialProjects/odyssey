@@ -1,0 +1,216 @@
+name: Automatic Semantic Versioning
+
+on:
+  push:
+    branches:
+      - production
+      - develop
+
+jobs:
+  version-and-release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Get latest tag
+        id: get_tag
+        run: |
+          git fetch --tags
+          LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+          echo "latest_tag=$LATEST_TAG" >> $GITHUB_OUTPUT
+          echo "Latest tag: $LATEST_TAG"
+
+      - name: Get commits since last tag
+        id: get_commits
+        run: |
+          LATEST_TAG="${{ steps.get_tag.outputs.latest_tag }}"
+          
+          # Get all commit messages since last tag
+          if git rev-parse "$LATEST_TAG" >/dev/null 2>&1; then
+            COMMITS=$(git log ${LATEST_TAG}..HEAD --pretty=format:"%s" || echo "")
+          else
+            COMMITS=$(git log --pretty=format:"%s" || echo "")
+          fi
+          
+          echo "commits<<EOF" >> $GITHUB_OUTPUT
+          echo "$COMMITS" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+          
+          echo "Commits since $LATEST_TAG:"
+          echo "$COMMITS"
+
+      - name: Extract branch names from commits
+        id: extract_branches
+        run: |
+          COMMITS="${{ steps.get_commits.outputs.commits }}"
+          
+          # Extract branch names from merge commit messages
+          # Patterns: "Merge pull request #123 from org/branch-name"
+          #           "Merge branch 'branch-name'"
+          BRANCHES=$(echo "$COMMITS" | grep -oP "(from [^/]+/\K[^\s]+|Merge branch '\K[^']+)" || echo "")
+          
+          echo "branches<<EOF" >> $GITHUB_OUTPUT
+          echo "$BRANCHES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+          
+          echo "Extracted branches:"
+          echo "$BRANCHES"
+
+      - name: Determine version bump type
+        id: bump_type
+        run: |
+          TARGET_BRANCH="${{ github.ref_name }}"
+          BRANCHES="${{ steps.extract_branches.outputs.branches }}"
+          
+          echo "Target branch: $TARGET_BRANCH"
+          echo "Analyzing branches: $BRANCHES"
+          
+          # For production branch, analyze all branches merged to develop
+          if [[ "$TARGET_BRANCH" == "production" ]]; then
+            HAS_FEATURE=false
+            HAS_PATCH=false
+            
+            # Check each branch name
+            while IFS= read -r branch; do
+              if [[ -n "$branch" ]]; then
+                echo "Checking branch: $branch"
+                
+                if [[ "$branch" == feature/* ]] || [[ "$branch" == feat/* ]]; then
+                  HAS_FEATURE=true
+                  echo "  → Feature detected"
+                elif [[ "$branch" == bug/* ]] || [[ "$branch" == fix/* ]] || [[ "$branch" == improvement/* ]] || [[ "$branch" == patch/* ]]; then
+                  HAS_PATCH=true
+                  echo "  → Patch change detected"
+                fi
+              fi
+            done <<< "$BRANCHES"
+            
+            # Determine bump type based on what we found
+            if [[ "$HAS_FEATURE" == true ]]; then
+              BUMP_TYPE="minor"
+              echo "✓ Feature branch(es) found - MINOR version bump"
+            elif [[ "$HAS_PATCH" == true ]]; then
+              BUMP_TYPE="patch"
+              echo "✓ Bug/Improvement branch(es) found - PATCH version bump"
+            else
+              BUMP_TYPE="none"
+              echo "⚠ No version-triggering branches found (feature/, bug/, improvement/)"
+            fi
+          
+          # For develop branch, check the current merge
+          elif [[ "$TARGET_BRANCH" == "develop" ]]; then
+            # Get the most recent branch name from the last commit
+            LAST_COMMIT=$(git log -1 --pretty=%B)
+            BRANCH=$(echo "$LAST_COMMIT" | grep -oP "(from [^/]+/\K[^\s]+|Merge branch '\K[^']+)" | head -1 || echo "")
+            
+            echo "Most recent branch: $BRANCH"
+            
+            if [[ "$BRANCH" == feature/* ]] || [[ "$BRANCH" == feat/* ]]; then
+              BUMP_TYPE="minor"
+              echo "✓ Feature branch - MINOR version bump"
+            elif [[ "$BRANCH" == bug/* ]] || [[ "$BRANCH" == fix/* ]] || [[ "$BRANCH" == improvement/* ]] || [[ "$BRANCH" == patch/* ]]; then
+              BUMP_TYPE="patch"
+              echo "✓ Bug/Improvement branch - PATCH version bump"
+            else
+              BUMP_TYPE="none"
+              echo "⚠ Unknown branch type - no version bump"
+            fi
+          else
+            BUMP_TYPE="none"
+            echo "⚠ Unknown target branch - no version bump"
+          fi
+          
+          echo "bump_type=$BUMP_TYPE" >> $GITHUB_OUTPUT
+          echo "Final bump type: $BUMP_TYPE"
+
+      - name: Calculate new version
+        id: new_version
+        if: steps.bump_type.outputs.bump_type != 'none'
+        run: |
+          LATEST_TAG="${{ steps.get_tag.outputs.latest_tag }}"
+          BUMP_TYPE="${{ steps.bump_type.outputs.bump_type }}"
+          
+          # Remove 'v' prefix if present
+          VERSION=${LATEST_TAG#v}
+          
+          # Split version into components
+          IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION"
+          
+          # Bump the appropriate version component
+          case $BUMP_TYPE in
+            major)
+              MAJOR=$((MAJOR + 1))
+              MINOR=0
+              PATCH=0
+              ;;
+            minor)
+              MINOR=$((MINOR + 1))
+              PATCH=0
+              ;;
+            patch)
+              PATCH=$((PATCH + 1))
+              ;;
+          esac
+          
+          NEW_VERSION="v${MAJOR}.${MINOR}.${PATCH}"
+          echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "Version bump: $LATEST_TAG → $NEW_VERSION"
+
+      - name: Create and push tag
+        if: steps.bump_type.outputs.bump_type != 'none'
+        run: |
+          NEW_VERSION="${{ steps.new_version.outputs.new_version }}"
+          BUMP_TYPE="${{ steps.bump_type.outputs.bump_type }}"
+          
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          
+          # Create annotated tag with details
+          TAG_MESSAGE=$(cat <<EOF
+          Release $NEW_VERSION
+          
+          Bump type: $BUMP_TYPE
+          Target branch: ${{ github.ref_name }}
+          Commit: ${{ github.sha }}
+          EOF
+          )
+          git tag -a "$NEW_VERSION" -m "$TAG_MESSAGE"
+          
+          git push origin "$NEW_VERSION"
+          echo "✅ Created and pushed tag: $NEW_VERSION"
+
+      - name: Create GitHub Release
+        if: steps.bump_type.outputs.bump_type != 'none'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          PRERELEASE_FLAG=""
+          if [[ "${{ github.ref_name }}" == "develop" ]]; then
+            PRERELEASE_FLAG="--prerelease"
+          fi
+          
+          gh release create "${{ steps.new_version.outputs.new_version }}" \
+            --title "Release ${{ steps.new_version.outputs.new_version }}" \
+            --notes "## Release ${{ steps.new_version.outputs.new_version }}
+            
+            **Type:** ${{ steps.bump_type.outputs.bump_type }} release
+            **Target:** ${{ github.ref_name }}
+            
+            ### Changes
+            See commit history for details." \
+            $PRERELEASE_FLAG
+          
+          echo "✅ Created GitHub release"
+
+      - name: No version bump needed
+        if: steps.bump_type.outputs.bump_type == 'none'
+        run: |
+          echo "ℹ️ No version bump triggered"
+          echo "ℹ️ Use branch prefixes: feature/, bug/, fix/, improvement/, patch/"

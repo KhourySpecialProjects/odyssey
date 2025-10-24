@@ -1,7 +1,7 @@
 "use client";
 
 import { Tab, Tabs, TabList, TabPanel } from "react-tabs";
-import "react-tabs/style/react-tabs.css";
+//import "react-tabs/style/react-tabs.css";
 
 import { ContentSection } from "@/components/group/content-section";
 import { GroupDropletTile } from "@/components/group/group-droplet-tile";
@@ -10,6 +10,7 @@ import { PlaylistCard } from "@/components/playlists/playlist-card";
 import { GroupProgressGrid } from "@/components/group/group-progress-grid";
 import { Button } from "../ui/button";
 import { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 
 interface RenderGroupDashboardProps {
   group: Group;
@@ -50,8 +51,33 @@ export function GroupDashboard({
     if (currentPage > 0) setCurrentPage(currentPage - 1);
   };
 
+  const tabNames = ["droplets", "playlists", "progress"];
+
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
+  const tabParam = searchParams.get("tab");
+  const defaultIndex = tabNames.indexOf(tabParam || "droplets");
+  const [selectedIndex, setSelectedIndex] = useState(
+    defaultIndex >= 0 ? defaultIndex : 0,
+  );
+
+  const handleTabSelect = (index: number) => {
+    setSelectedIndex(index);
+    const tabName = tabNames[index];
+
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("tab", tabName);
+    router.replace(`?${params.toString()}`);
+  };
+
   return (
-    <Tabs title="" forceRenderTabPanel>
+    <Tabs
+      title=""
+      forceRenderTabPanel
+      onSelect={handleTabSelect}
+      selectedIndex={selectedIndex}
+    >
       <TabList className="flex border-b">
         <Tab className={tabStyle}>Droplets</Tab>
         <Tab className={tabStyle}>Playlists</Tab>
@@ -141,8 +167,8 @@ export function GroupDashboard({
             title=""
             emptyMessage="No students are enrolled in any droplets or playlists."
           >
-            {group.droplets &&
-            group.droplets.length > 0 &&
+            {((group.droplets && group.droplets.length > 0) ||
+              (group.playlists && group.playlists.length > 0)) &&
             group.members &&
             group.members.length > 0 ? (
               <div className="flex flex-row items-start overflow-x-auto">

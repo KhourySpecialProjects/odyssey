@@ -15,12 +15,14 @@ import { isContentCreator, isAuthorizedUserFaculty } from "@/lib/utils";
 import { useSession } from "next-auth/react";
 import { useMemo, useState } from "react";
 import { Badge } from "@/components/ui/badge";
+import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
+
 
 const baseTabs = [
   { name: "Member", value: "member", icon: UserIcon },
   { name: "Admin", value: "admin", icon: ShieldIcon },
   // { name: "Manager", value: "manager", icon: CircleUserIcon },
-  // { name: "Favs", value: "favorites", icon: StarIcon },
+  // { name: "Favorites", value: "favorites", icon: FavoriteBorderIcon },
 ];
 
 export function GroupsSelector() {

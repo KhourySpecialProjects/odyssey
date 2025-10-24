@@ -209,6 +209,17 @@
       "relation": "oneToOne",
       "target": "api::author.author",
       "mappedBy": "authorized_user"
+    },
+    "isPublic": {
+      "type": "boolean",
+      "default": false,
+      "required": true
+    },
+    "dropletsFavorited": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::droplet.droplet",
+      "mappedBy": "usersFavorited"
     }
   }
 }

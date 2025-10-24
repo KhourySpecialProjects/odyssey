@@ -50,7 +50,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   });
 
   if (!droplet) {
-    console.error("not found");
     return notFound();
   }
 
@@ -70,7 +69,6 @@ export default async function DropletRecapRoute({ params }: Props) {
     },
   });
   if (!droplet) {
-    console.error("not found");
     return notFound();
   }
 
@@ -95,17 +93,23 @@ export default async function DropletRecapRoute({ params }: Props) {
   });
 
   const session = await getServerSession();
+
   if (session?.user?.email) {
     const user = await getAuthorizedUserByEmail(session.user.email);
+
     const enrollments = await getEnrollmentsByAuthorizedUser(user.id, {
       populate: {
         viewedLessons: {
           fields: ["id", "name", "slug"],
         },
+
         droplet: {
           populate: {
             lessons: {
               fields: ["id", "name", "slug"],
+            },
+            droplet_lessons: {
+              fields: ["id"],
             },
           },
         },
@@ -137,7 +141,7 @@ export default async function DropletRecapRoute({ params }: Props) {
 
     if (
       enrollment &&
-      enrollment.viewedLessons.length === enrollment.droplet.lessons?.length &&
+      enrollment.isComplete === true &&
       !enrollment.completionDate
     ) {
       await updateCompletionDate(enrollment.id);

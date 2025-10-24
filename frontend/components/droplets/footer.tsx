@@ -1,11 +1,14 @@
 "use client";
-
 import { cn } from "@/lib/utils";
 import { Droplet, DropletLesson } from "@/types";
 import { ArrowLeftIcon, ArrowRightIcon, LockIcon } from "lucide-react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { updateViewedLessons } from "@/lib/requests/enrollment";
+import {
+  isLessonQuizCompleted,
+  markLessonQuizCompleted,
+} from "@/lib/quiz-storage";
 
 type PaginationProps = {
   link: string;
@@ -14,16 +17,39 @@ type PaginationProps = {
 
 export default function DropletFooter({
   droplet,
+  enrollmentId,
+  currentLessonId,
 }: {
   droplet: Pick<Droplet, "slug" | "droplet_lessons">;
+  enrollmentId?: string;
+  currentLessonId?: number;
 }) {
   const pathname = usePathname();
   const [canProceed, setCanProceed] = useState(false);
 
+  const handleNextClick = async () => {
+    if (enrollmentId && currentLessonId && droplet.droplet_lessons) {
+      const allDropletLessonIds = droplet.droplet_lessons.map(
+        (l) => l.lesson.id,
+      );
+
+      await updateViewedLessons(
+        enrollmentId,
+        currentLessonId,
+        allDropletLessonIds,
+      );
+    }
+  };
+
   useEffect(() => {
+    if (currentLessonId && isLessonQuizCompleted(currentLessonId)) {
+      setCanProceed(true);
+      return;
+    }
+
     const checkQuizAnswers = () => {
       const questions = document.querySelectorAll('[role="question"]');
-      if (!questions) {
+      if (!questions || questions.length === 0) {
         setCanProceed(true);
         return;
       }
@@ -33,13 +59,16 @@ export default function DropletFooter({
         setCanProceed(false);
         return;
       }
-
       const allAnsweredCorrectly = Array.from(completedQuizQuestions).every(
         (question) => {
           const resultBadge = question.textContent;
           return resultBadge?.toLowerCase().includes("right");
         },
       );
+
+      if (allAnsweredCorrectly && currentLessonId) {
+        markLessonQuizCompleted(currentLessonId);
+      }
 
       setCanProceed(allAnsweredCorrectly);
     };
@@ -54,7 +83,7 @@ export default function DropletFooter({
     });
 
     return () => observer.disconnect();
-  }, []);
+  }, [currentLessonId]);
 
   if (!droplet.droplet_lessons || droplet.droplet_lessons.length === 0)
     return null;
@@ -107,24 +136,6 @@ export default function DropletFooter({
 
   return (
     <div className="justify-left flex w-full flex-col">
-      {/* {pathSegments.length > 3 &&
-        pathSegments.at(-1)?.toLowerCase() !== "introduction" &&
-        !pathSegments.at(-1)?.toLowerCase().includes("recap") && (
-          <div className="flex flex-col items-center w-full gap-4 p-8 mx-auto mt-8 border rounded-md max-w-prose border-slate-200">
-            <h2 className="text-lg font-bold text-slate-800">
-              Was this lesson informative?
-            </h2>
-            <div className="flex gap-2">
-              <Button size="lg" variant="outline" before={<ThumbsUpIcon />}>
-                Yes
-              </Button>
-              <Button size="lg" variant="outline" after={<ThumbsDownIcon />}>
-                No
-              </Button>
-            </div>
-          </div>
-        )} */}
-
       <div className="mx-auto mt-8 flex max-w-2xl flex-col gap-2 pb-2 md:flex-row md:justify-between xl:w-full">
         {previous ? (
           <PaginationLinkWrapper link={previous.link} canProceed={true}>
@@ -145,6 +156,7 @@ export default function DropletFooter({
             link={next.link}
             className="float-right text-right"
             canProceed={canProceed}
+            onClick={handleNextClick}
           >
             <div>
               <p className="font-bold">Next</p>
@@ -167,16 +179,27 @@ const PaginationLinkWrapper = ({
   className,
   children,
   canProceed,
+  onClick,
 }: {
   link: string;
   className?: string;
   children: React.ReactNode;
   canProceed: boolean;
-}) =>
-  canProceed ? (
-    <Link
-      href={link}
-      className="flex-1 rounded-md border border-sky-200 bg-sky-50 p-4 leading-tight transition-colors hover:bg-sky-100 dark:bg-sky-800 dark:hover:bg-sky-700"
+  onClick?: () => Promise<void>;
+}) => {
+  const router = useRouter();
+
+  const handleClick = async () => {
+    if (onClick) {
+      await onClick();
+    }
+    router.push(link);
+  };
+
+  return canProceed ? (
+    <button
+      onClick={handleClick}
+      className="w-full flex-1 rounded-md border border-sky-200 bg-sky-50 p-4 text-left leading-tight transition-colors hover:bg-sky-100 dark:bg-sky-800 dark:hover:bg-sky-700"
     >
       <div
         className={cn(
@@ -186,7 +209,7 @@ const PaginationLinkWrapper = ({
       >
         {children}
       </div>
-    </Link>
+    </button>
   ) : (
     <div className="flex-1 rounded-md border border-red-200 bg-red-50 p-4 leading-tight transition-colors dark:bg-red-800">
       <div className="flex h-full items-center justify-center gap-3 text-red-700 dark:text-red-50">
@@ -197,3 +220,4 @@ const PaginationLinkWrapper = ({
       </div>
     </div>
   );
+};

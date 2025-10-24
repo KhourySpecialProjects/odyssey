@@ -277,16 +277,22 @@ export async function fetchContentCreators(): Promise<AuthorizedUser[]> {
     throw new Error("Failed to fetch content creators.");
   }
 }
+const WEBSITE_CREATOR_ORDER = [
+  "sella.j@northeastern.edu",
+  "palazzi.r@northeastern.edu",
+  "palmer.gi@northeastern.edu",
+  "houser.ch@northeastern.edu",
+  "saadat.d@northeastern.edu",
+  "almanzar.j@northeastern.edu",
+  "chapman.w@northeastern.edu",
+];
 
 export async function fetchWebsiteCreators(): Promise<AuthorizedUser[]> {
   try {
     const query = qs.stringify({
-      sort: ["lastName"],
       filters: {
-        roles: {
-          title: {
-            $eq: "Website Creator",
-          },
+        email: {
+          $in: WEBSITE_CREATOR_ORDER,
         },
       },
       fields: [
@@ -316,6 +322,7 @@ export async function fetchWebsiteCreators(): Promise<AuthorizedUser[]> {
         page: 1,
       },
     });
+
     const response = await fetch(
       NEXT_PUBLIC_STRAPI_API_URL + "/api/authorized-users?" + query,
       {
@@ -323,8 +330,22 @@ export async function fetchWebsiteCreators(): Promise<AuthorizedUser[]> {
         cache: "no-store",
       },
     );
+
     const data = await response.json();
-    return flattenAttributes(data.data);
+    let creators: AuthorizedUser[] = flattenAttributes(data.data);
+
+    // Sort by the custom order array
+    creators.sort((a, b) => {
+      const indexA = WEBSITE_CREATOR_ORDER.indexOf(a.email);
+      const indexB = WEBSITE_CREATOR_ORDER.indexOf(b.email);
+
+      if (indexA === -1 && indexB === -1) return 0;
+      if (indexA === -1) return 1;
+      if (indexB === -1) return -1;
+      return indexA - indexB;
+    });
+
+    return creators;
   } catch (error) {
     console.error("Database Error:", error);
     throw new Error("Failed to fetch website creators.");
@@ -365,11 +386,13 @@ const CreateAuthorizedUser = AuthorizedUserSchema.omit({
   id: true,
 });
 export async function createAuthorizedUser(formData: FormData) {
+  // Determine which parameter is the FormData
+
   const roleID = await getAuthorizedUserRoleIdByTitle(
     AuthorizedUserRoleTitle.User,
   );
 
-  const emailRegex = /^[^\s@]+@northeastern\.edu$/;
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!formData.get("email")) {
     return { ok: false, error: "No email provided", data: null };
   }
@@ -495,6 +518,7 @@ export async function updateUserInfo(
     roles?: AuthorizedUserRoleTitle[];
     profilePhoto?: string | null;
     isEnabled?: boolean;
+    isPublic?: boolean;
     firstTime?: boolean;
     linkedin?: string | null;
     github?: string | null;
@@ -509,6 +533,7 @@ export async function updateUserInfo(
       roles,
       profilePhoto,
       isEnabled,
+      isPublic,
       firstTime,
       linkedin,
       github,
@@ -527,6 +552,7 @@ export async function updateUserInfo(
     if (bio !== undefined) data.bio = bio;
     if (profilePhoto !== undefined) data.profilePhoto = profilePhoto;
     if (isEnabled !== undefined) data.isEnabled = isEnabled;
+    if (isPublic !== undefined) data.isPublic = isPublic;
     if (firstTime !== undefined) data.firstTime = updates.firstTime;
     if (linkedin !== undefined) data.linkedin = linkedin;
     if (github !== undefined) data.github = github;

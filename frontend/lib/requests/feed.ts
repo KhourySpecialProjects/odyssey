@@ -4,6 +4,7 @@ import { Announcement, AuthorizedUser, Droplet } from "@/types";
 import qs from "qs";
 import { flattenAttributes } from "../utils";
 import { revalidatePath } from "next/cache";
+import { AnnouncementType } from "@/types";
 
 const NEXT_PUBLIC_STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
@@ -15,6 +16,7 @@ export async function fetchAnnouncements(
   try {
     const query = qs.stringify({
       sort: ["firstCreated:desc"],
+      fields: ["id", "type", "content", "firstCreated"],
       filters: {
         $or: [
           {
@@ -90,6 +92,7 @@ export async function fetchAnnouncements(
             "github",
             "linkedin",
             "profilePhoto",
+            "isPublic",
           ],
           populate: {
             blocked: {
@@ -134,14 +137,14 @@ export async function fetchAnnouncements(
           },
         },
         droplet: {
-          fields: ["id", "name", "slug"],
+          fields: ["id", "name", "description", "slug"],
         },
         group: {
-          fields: ["id", "name", "slug"],
+          fields: ["id", "groupName", "description", "slug"],
         },
       },
       pagination: {
-        pageSize: 20,
+        pageSize: 25,
         page: page || 1,
       },
     });
@@ -154,7 +157,17 @@ export async function fetchAnnouncements(
       },
     );
     const data = await response.json();
-    return flattenAttributes(data.data);
+    const announcements = flattenAttributes(data.data);
+
+    return announcements.filter((a: Announcement) => {
+      if (
+        (a.type === "friend" || a.type === "kudos") &&
+        a.authorized_user?.id === user.id
+      ) {
+        return false;
+      }
+      return true;
+    });
   } catch (error) {
     console.error("Database Error:", error);
     throw new Error("Failed to fetch announcement data.");
@@ -176,6 +189,7 @@ export async function createFriendAnnouncement(
             authorized_user: user.id,
             content: `${user.firstName ? user.firstName + " " + user.lastName : user.email} has completed ${droplet.name}.`,
             firstCreated: curDate,
+            droplet: droplet.id,
             type: "friend",
           },
         }),
@@ -202,7 +216,7 @@ export async function createFriendAnnouncement(
 export async function createKudosAnnouncement(
   user: AuthorizedUser,
   announcementId: number,
-  droplet: string,
+  droplet: Droplet,
 ) {
   try {
     const response = await fetch(
@@ -230,7 +244,7 @@ export async function createKudosAnnouncement(
     console.error("Error updating kudos:", error);
     throw error;
   }
-
+  console.log("Droplet in createKudosAnnouncement:", droplet.id);
   try {
     const curDate = new Date();
     const response = await fetch(
@@ -240,7 +254,8 @@ export async function createKudosAnnouncement(
         body: JSON.stringify({
           data: {
             authorized_user: user.id,
-            content: `${user.firstName ? user.firstName + " " + user.lastName : user.email} has given you kudos for ${droplet}`,
+            content: `${user.firstName ? user.firstName + " " + user.lastName : user.email} has given you kudos for completing ${droplet.name}`,
+            droplet: droplet.id,
             firstCreated: curDate,
             type: "kudos",
           },
@@ -477,5 +492,56 @@ export async function fetchAnnouncementById(id: number) {
   } catch (error) {
     console.error("Database Error:", error);
     throw new Error("Failed to fetch announcement data.");
+  }
+}
+
+export async function fetchUserAnnouncements(
+  userId: number,
+  page?: number,
+): Promise<Announcement[]> {
+  try {
+    const query = qs.stringify({
+      sort: ["firstCreated:desc"],
+      filters: {
+        authorized_user: {
+          id: { $eq: userId },
+        },
+        type: {
+          $in: ["friend", "kudos", "droplet"],
+        },
+      },
+      populate: {
+        authorized_user: {
+          fields: ["id", "email", "firstName", "lastName", "profilePhoto"],
+          populate: {
+            blocked: { fields: ["id"] },
+            was_blocked: { fields: ["id"] },
+          },
+        },
+        kudosGiven: {
+          fields: ["id", "email", "firstName", "lastName", "profilePhoto"],
+        },
+        droplet: {
+          fields: ["id", "name", "slug"],
+        },
+      },
+      pagination: {
+        pageSize: 10,
+        page: page || 1,
+      },
+    });
+
+    const response = await fetch(
+      NEXT_PUBLIC_STRAPI_API_URL + "/api/announcements?" + query,
+      {
+        headers: { Authorization: "Bearer " + STRAPI_ACCESS_TOKEN },
+        cache: "no-store",
+      },
+    );
+    const data = await response.json();
+    return flattenAttributes(data.data);
+  } catch (error) {
+    console.error("Database Error:", error);
+    throw new Error("Failed to fetch user announcements.");
   }
 }

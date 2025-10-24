@@ -306,4 +306,4 @@ To contribute to Odyssey's source code:
 
 Sponsor: [@MarkFontenot](https://github.com/MarkFontenot)
 
-This platform was built by Jay Sella ([@jaysella](https://github.com/jaysella)), Bobby Palazzi ([@bpalazzi512](https://github.com/bpalazzi512)), Chase Houser ([@chouser63](https://github.com/chouser63)), Gillian Palmer ([@gpalmer27](https://github.com/gpalmer27)), William Gadala ([@wjgadala](https://github.com/wjgadala)), and Martin Hema ([@martin0he](https://github.com/martin0he)).
+This platform was built by Jay Sella ([@jaysella](https://github.com/jaysella)), Bobby Palazzi ([@bpalazzi512](https://github.com/bpalazzi512)), Chase Houser ([@chouser63](https://github.com/chouser63)), Gillian Palmer ([@gpalmer27](https://github.com/gpalmer27)), Johan Almanzar ([@JAlazer](https://github.com/JAlazer)), Wesley Chapman ([@chapman-w](https://github.com/chapman-w)), Darius Saadat ([@DSCoder555](https://github.com/DSCoder555)), William Gadala ([@wjgadala](https://github.com/wjgadala)), and Martin Hema ([@martin0he](https://github.com/martin0he)).

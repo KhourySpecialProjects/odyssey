@@ -67,6 +67,7 @@ export async function ArchivedDropletsGrid({ sortKey }: { sortKey?: string }) {
       isArchived={true}
       ratingsMap={ratingsMap}
       sortKey={sortKey}
+      currentUser={authorizedUser}
     />
   );
 }
