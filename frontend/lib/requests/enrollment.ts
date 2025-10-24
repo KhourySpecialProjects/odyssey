@@ -34,7 +34,7 @@ export async function getEnrollmentsByAuthorizedUser(
           tags: {
             fields: ["*"],
           },
-          usersFavorited: { 
+          usersFavorited: {
             fields: "*",
           },
         },

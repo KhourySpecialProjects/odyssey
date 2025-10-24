@@ -3,7 +3,7 @@
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Button } from "../ui/button";
 
-interface FilterSelectorProps  {
+interface FilterSelectorProps {
   droplets: number;
   playlists: number;
   groups: number;
@@ -16,8 +16,8 @@ export function FilterSelector({
   playlists,
   groups,
   archived,
-  favorited
-}:FilterSelectorProps) {
+  favorited,
+}: FilterSelectorProps) {
   const contentTypes = [
     { name: `Droplets (${droplets})`, value: "droplets" },
     { name: `Playlists (${playlists})`, value: "playlists" },

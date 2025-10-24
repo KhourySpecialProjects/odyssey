@@ -26,7 +26,7 @@ export function ContentSelector({
     { name: `Playlists (${playlists})`, value: "playlists" },
     { name: `Groups (${groups})`, value: "groups" },
     { name: `Archived (${archived})`, value: "archived" },
-    { name: `Favorited (${favorited})`, value: "favorited"}
+    { name: `Favorited (${favorited})`, value: "favorited" },
   ];
 
   const createQueryString = (name: string, value: string) => {

@@ -130,19 +130,19 @@ export function DropletTile({
 
   async function toggleFavorite() {
     if (isFavoritePending) return;
-    
+
     setIsFavoritePending(true);
     const newFavoriteState = !isFavorited;
-    
+
     try {
       const result = await favoriteDroplet(droplet, newFavoriteState);
-      
+
       if (result.success) {
         setIsFavorited((prev) => !prev);
         toast.success(
           newFavoriteState
             ? `${droplet.name} added to favorites!`
-            : `${droplet.name} removed from favorites!`
+            : `${droplet.name} removed from favorites!`,
         );
       } else {
         toast.error("Failed to update favorite status");
@@ -230,7 +230,7 @@ export function DropletTile({
                   e.stopPropagation();
                   toggleFavorite();
                 }}
-                className={`group ${typeof isArchived === "boolean" ? "visible" : "invisible"} bg-slate-50 hover:bg-slate-300 dark:bg-slate-300 disabled:opacity-50`}
+                className={`group ${typeof isArchived === "boolean" ? "visible" : "invisible"} bg-slate-50 hover:bg-slate-300 disabled:opacity-50 dark:bg-slate-300`}
               >
                 {isFavorited || isHovering ? (
                   <FavoriteIcon className="text-pink-500" />

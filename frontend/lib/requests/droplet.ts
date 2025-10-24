@@ -501,13 +501,16 @@ export async function createDroplet(data: z.infer<typeof CreateDropletSchema>) {
   }
 }
 
-export async function favoriteDroplet(droplet: Droplet, favoriteState: boolean) {
+export async function favoriteDroplet(
+  droplet: Droplet,
+  favoriteState: boolean,
+) {
   try {
     const user = await getCurrentUser();
     if (!user?.email) throw new Error("No email identified");
-    
+
     const authorizedUser = await getAuthorizedUserByEmail(user.email);
-    
+
     // Fetch the latest droplet state to minimize race conditions
     const latestDropletResponse = await fetch(
       `${STRAPI_API_URL}/api/droplets/${droplet.id}?populate=usersFavorited`,
@@ -517,19 +520,23 @@ export async function favoriteDroplet(droplet: Droplet, favoriteState: boolean) 
         },
       },
     );
-    
+
     if (!latestDropletResponse.ok) {
       throw new Error("Failed to fetch latest droplet state");
     }
-    
+
     const latestDroplet = await latestDropletResponse.json();
-    const currentFavorites = latestDroplet.data.attributes.usersFavorited?.data || [];
-    
+    const currentFavorites =
+      latestDroplet.data.attributes.usersFavorited?.data || [];
+
     let updatedFavorites;
     if (favoriteState) {
       // Add user to favorites if not already there
       if (!currentFavorites.some((u: any) => u.id === authorizedUser.id)) {
-        updatedFavorites = [...currentFavorites.map((u: any) => u.id), authorizedUser.id];
+        updatedFavorites = [
+          ...currentFavorites.map((u: any) => u.id),
+          authorizedUser.id,
+        ];
       } else {
         updatedFavorites = currentFavorites.map((u: any) => u.id);
       }
@@ -539,7 +546,7 @@ export async function favoriteDroplet(droplet: Droplet, favoriteState: boolean) 
         .filter((u: any) => u.id !== authorizedUser.id)
         .map((u: any) => u.id);
     }
-    
+
     const response = await fetch(
       `${STRAPI_API_URL}/api/droplets/${droplet.id}`,
       {
@@ -555,11 +562,11 @@ export async function favoriteDroplet(droplet: Droplet, favoriteState: boolean) 
         }),
       },
     );
-    
+
     if (!response.ok) {
       throw new Error("Failed to update favorite status");
     }
-    
+
     revalidateTag("dashboard");
     revalidateTag("droplets");
     revalidatePath("/");
@@ -568,7 +575,7 @@ export async function favoriteDroplet(droplet: Droplet, favoriteState: boolean) 
     revalidatePath(`/d/${droplet.slug}`);
     revalidatePath("/dashboard", "page");
     revalidatePath("/", "page");
-    revalidateTag("enrollments"); 
+    revalidateTag("enrollments");
     revalidateTag("dashboard");
     revalidateTag("droplets");
     return { success: true };

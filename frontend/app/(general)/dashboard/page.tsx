@@ -35,7 +35,9 @@ export default async function DashboardRoute({ searchParams }: Props) {
   }
   const { sortKey } = sorting.find((item) => item.slug === sort) || defaultSort;
   const authorizedUser = await getAuthorizedUserByEmail(user.email);
-  const allEnrollments= await getEnrollmentsByAuthorizedUser(authorizedUser.id);
+  const allEnrollments = await getEnrollmentsByAuthorizedUser(
+    authorizedUser.id,
+  );
   const allPlaylists = authorizedUser.playlists?.length || 0;
   const allGroups = (await getUserGroups(authorizedUser.id)).filter((group) =>
     group.members?.some((member) => member.id === authorizedUser.id),
@@ -48,15 +50,16 @@ export default async function DashboardRoute({ searchParams }: Props) {
   const archivedGroups = allGroups.filter((group) =>
     group.users_archived?.some((user) => user.id === authorizedUser.id),
   );
-  const activeDroplets = allEnrollments.filter((drop) => !drop.isArchived).length;
+  const activeDroplets = allEnrollments.filter(
+    (drop) => !drop.isArchived,
+  ).length;
   const archivedDroplets = allEnrollments.length - activeDroplets;
 
   const favoritedDroplets = allEnrollments.filter((enrollment) =>
-  enrollment.droplet.usersFavorited?.some((user) => 
-    user.id === authorizedUser.id
-  )
-).length;
-
+    enrollment.droplet.usersFavorited?.some(
+      (user) => user.id === authorizedUser.id,
+    ),
+  ).length;
 
   return (
     <SearchProvider>

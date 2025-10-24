@@ -33,7 +33,7 @@ export function EnrolledDropletsGridClient({
   tags,
   type,
   focusArea,
-  currentUser
+  currentUser,
 }: EnrolledDropletsGridClientProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const sortedDroplets = useMemo(() => {
@@ -155,9 +155,13 @@ export function EnrolledDropletsGridClient({
             isEnrolled={true}
             completedLessonIds={completedLessonIds}
             isArchived={isArchived}
-            isFavorited={isFavorited !== undefined ? isFavorited : droplet.usersFavorited?.some(
-              (user) => user.id === currentUser?.id
-            )}
+            isFavorited={
+              isFavorited !== undefined
+                ? isFavorited
+                : droplet.usersFavorited?.some(
+                    (user) => user.id === currentUser?.id,
+                  )
+            }
             dueDate={
               dueDates?.find((dueDate) => dueDate.droplet?.id === droplet.id)
                 ?.dueDate || ""
