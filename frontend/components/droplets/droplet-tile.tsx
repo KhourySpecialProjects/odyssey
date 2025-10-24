@@ -12,9 +12,7 @@ import { toast } from "sonner";
 import { Archive, ArchiveRestore, Clock } from "lucide-react";
 import { getDueDateBadgeColor } from "@/lib/utils";
 import { DateTime } from "luxon";
-import { archiveDroplet, favoriteDroplet, updateDroplet } from "@/lib/requests/droplet";
-import { getCurrentUser } from "@/lib/auth/session";
-import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
+import { archiveDroplet, favoriteDroplet } from "@/lib/requests/droplet";
 import FavoriteIcon from "@mui/icons-material/Favorite";
 import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
 import { grey, purple } from "@mui/material/colors";
@@ -46,6 +44,7 @@ export function DropletTile({
   const textRef = useRef(null);
   const [isHovering, setIsHovering] = useState(false);
   const [isFavorited, setIsFavorited] = useState(initialIsFavorited || false);
+  const [isFavoritePending, setIsFavoritePending] = useState(false);
 
   const strippedDescription = droplet.description
     ?.replace(/<\/p>\s*<p>/gi, "\n")
@@ -130,24 +129,31 @@ export function DropletTile({
   }
 
   async function toggleFavorite() {
-  try {
-    const result = await favoriteDroplet(droplet, !isFavorited);
+    if (isFavoritePending) return;
     
-    if (result.success) {
-      setIsFavorited(!isFavorited);
-      toast.success(
-        !isFavorited
-          ? `${droplet.name} added to favorites!`
-          : `${droplet.name} removed from favorites!`
-      );
-    } else {
-      toast.error("Failed to update favorite status");
+    setIsFavoritePending(true);
+    const newFavoriteState = !isFavorited;
+    
+    try {
+      const result = await favoriteDroplet(droplet, newFavoriteState);
+      
+      if (result.success) {
+        setIsFavorited((prev) => !prev);
+        toast.success(
+          newFavoriteState
+            ? `${droplet.name} added to favorites!`
+            : `${droplet.name} removed from favorites!`
+        );
+      } else {
+        toast.error("Failed to update favorite status");
+      }
+    } catch (error) {
+      toast.error("An error occurred while updating favorites");
+      console.error(error);
+    } finally {
+      setIsFavoritePending(false);
     }
-  } catch (error) {
-    toast.error("An error occurred while updating favorites");
-    console.error(error);
   }
-}
 
   if (compact) {
     return (
@@ -200,7 +206,7 @@ export function DropletTile({
                   e.stopPropagation();
                   changeVisibility();
                 }}
-                className={`${isArchived === true || isArchived === false ? "visibility: visible" : "visibility: hidden"} bg-slate-50 hover:bg-slate-300 dark:bg-slate-300`}
+                className={`${typeof isArchived === "boolean" ? "visible" : "invisible"} bg-slate-50 hover:bg-slate-300 dark:bg-slate-300`}
               >
                 <div className="group relative">
                   {isArchived ? (
@@ -216,6 +222,7 @@ export function DropletTile({
 
               <Button
                 size="sm"
+                disabled={isFavoritePending}
                 onMouseEnter={() => setIsHovering(true)}
                 onMouseLeave={() => setIsHovering(false)}
                 onClick={(e) => {
@@ -223,7 +230,7 @@ export function DropletTile({
                   e.stopPropagation();
                   toggleFavorite();
                 }}
-                className={`group ${isArchived === true || isArchived === false ? "visibility: visible" : "visibility: hidden"} bg-slate-50 hover:bg-slate-300 dark:bg-slate-300`}
+                className={`group ${typeof isArchived === "boolean" ? "visible" : "invisible"} bg-slate-50 hover:bg-slate-300 dark:bg-slate-300 disabled:opacity-50`}
               >
                 {isFavorited || isHovering ? (
                   <FavoriteIcon className="text-pink-500" />

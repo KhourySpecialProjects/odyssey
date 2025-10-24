@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Droplet, DueDate } from "@/types";
+import { AuthorizedUser, Droplet, DueDate } from "@/types";
 import { DropletTile } from "../droplets/droplet-tile";
 import { PageNav } from "../ui/page-nav";
 import { useSearch } from "@/contexts/SearchContext";
@@ -19,6 +19,7 @@ interface EnrolledDropletsGridClientProps {
   tags?: string[] | string;
   type?: string | string[];
   focusArea?: string | string[];
+  currentUser?: AuthorizedUser;
 }
 
 export function EnrolledDropletsGridClient({
@@ -32,6 +33,7 @@ export function EnrolledDropletsGridClient({
   tags,
   type,
   focusArea,
+  currentUser
 }: EnrolledDropletsGridClientProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const sortedDroplets = useMemo(() => {
@@ -153,6 +155,9 @@ export function EnrolledDropletsGridClient({
             isEnrolled={true}
             completedLessonIds={completedLessonIds}
             isArchived={isArchived}
+            isFavorited={isFavorited !== undefined ? isFavorited : droplet.usersFavorited?.some(
+              (user) => user.id === currentUser?.id
+            )}
             dueDate={
               dueDates?.find((dueDate) => dueDate.droplet?.id === droplet.id)
                 ?.dueDate || ""

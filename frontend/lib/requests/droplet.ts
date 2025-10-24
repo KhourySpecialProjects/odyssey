@@ -508,22 +508,36 @@ export async function favoriteDroplet(droplet: Droplet, favoriteState: boolean) 
     
     const authorizedUser = await getAuthorizedUserByEmail(user.email);
     
-    // Get current favorites list
-    const currentFavorites = droplet.usersFavorited || [];
+    // Fetch the latest droplet state to minimize race conditions
+    const latestDropletResponse = await fetch(
+      `${STRAPI_API_URL}/api/droplets/${droplet.id}?populate=usersFavorited`,
+      {
+        headers: {
+          Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+        },
+      },
+    );
+    
+    if (!latestDropletResponse.ok) {
+      throw new Error("Failed to fetch latest droplet state");
+    }
+    
+    const latestDroplet = await latestDropletResponse.json();
+    const currentFavorites = latestDroplet.data.attributes.usersFavorited?.data || [];
     
     let updatedFavorites;
     if (favoriteState) {
       // Add user to favorites if not already there
-      if (!currentFavorites.some((u) => u.id === authorizedUser.id)) {
-        updatedFavorites = [...currentFavorites.map(u => u.id), authorizedUser.id];
+      if (!currentFavorites.some((u: any) => u.id === authorizedUser.id)) {
+        updatedFavorites = [...currentFavorites.map((u: any) => u.id), authorizedUser.id];
       } else {
-        updatedFavorites = currentFavorites.map(u => u.id);
+        updatedFavorites = currentFavorites.map((u: any) => u.id);
       }
     } else {
       // Remove user from favorites
       updatedFavorites = currentFavorites
-        .filter((u) => u.id !== authorizedUser.id)
-        .map(u => u.id);
+        .filter((u: any) => u.id !== authorizedUser.id)
+        .map((u: any) => u.id);
     }
     
     const response = await fetch(
@@ -552,7 +566,11 @@ export async function favoriteDroplet(droplet: Droplet, favoriteState: boolean) 
     revalidatePath("/dashboard");
     revalidatePath("/dashboard/favorited");
     revalidatePath(`/d/${droplet.slug}`);
-    
+    revalidatePath("/dashboard", "page");
+    revalidatePath("/", "page");
+    revalidateTag("enrollments"); 
+    revalidateTag("dashboard");
+    revalidateTag("droplets");
     return { success: true };
   } catch (error) {
     console.error("Error updating favorite status:", error);

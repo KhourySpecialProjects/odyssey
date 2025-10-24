@@ -48,9 +48,6 @@ export async function FavoriteDropletsGrid({ sortKey }: { sortKey?: string }) {
     };
   });
 
-  // Fixed: proper template literal
-  console.log(`with completion: ${dropletsWithCompletion.length} items`);
-
   if (!dropletsWithCompletion || dropletsWithCompletion.length === 0) {
     return (
       <Message className="mb-8 rounded-md border border-dashed border-slate-200 dark:border-slate-500 dark:bg-slate-800">
@@ -74,6 +71,7 @@ export async function FavoriteDropletsGrid({ sortKey }: { sortKey?: string }) {
       isFavorited={true}
       ratingsMap={ratingsMap}
       sortKey={sortKey}
+      currentUser={authorizedUser}
     />
   );
 }

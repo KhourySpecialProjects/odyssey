@@ -6,7 +6,6 @@ import {
   PlusCircle,
   PlusCircleIcon,
   ShieldIcon,
-  StarIcon,
   UserIcon,
   UsersRound,
 } from "lucide-react";
@@ -23,7 +22,7 @@ const baseTabs = [
   { name: "Member", value: "member", icon: UserIcon },
   { name: "Admin", value: "admin", icon: ShieldIcon },
   // { name: "Manager", value: "manager", icon: CircleUserIcon },
-  { name: "Favs", value: "favorites", icon: FavoriteBorderIcon },
+  // { name: "Favorites", value: "favorites", icon: FavoriteBorderIcon },
 ];
 
 export function GroupsSelector() {

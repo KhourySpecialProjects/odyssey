@@ -21,7 +21,6 @@ export async function MyContent({
   sortKey?: string;
 }) {
   const contentType = (await searchParams)?.contentType || "droplets";
-  console.log(contentType);
   const type = (await searchParams)?.type;
   const focusArea = (await searchParams)?.focusArea;
   const tags = (await searchParams)?.tags;
