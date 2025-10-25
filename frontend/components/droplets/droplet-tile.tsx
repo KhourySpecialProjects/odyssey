@@ -198,7 +198,6 @@ export function DropletTile({
       <li className="h-full rounded-md border border-slate-200 bg-slate-50 p-2 transition-colors hover:border-slate-300 dark:border-slate-500 dark:bg-slate-800">
         <div className="flex h-full flex-col justify-between gap-3 p-4">
           <div className="space-y-3">
-
             <div className="flex flex-0 flex-row flex-wrap gap-1.5">
               {droplet.status == "draft" ? (
                 <Badge variant="destructive">Draft</Badge>
@@ -311,10 +310,12 @@ export function DropletTile({
           <div className="flex gap-2">
               <Button
                 size="sm"
+                aria-label={isArchived ? "Unarchive" : "Archive"}
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
                   changeVisibility();
+                  
                 }}
                 className={`${typeof isArchived === "boolean" ? "visible" : "invisible"} bg-slate-50 hover:bg-slate-300 dark:bg-slate-300`}
               >
@@ -332,6 +333,7 @@ export function DropletTile({
 
               <Button
                 size="sm"
+                aria-label="Favorite"
                 disabled={isFavoritePending}
                 onMouseEnter={() => setIsHovering(true)}
                 onMouseLeave={() => setIsHovering(false)}
