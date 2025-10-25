@@ -314,27 +314,7 @@ export function DropletTile({
 
           {/* Right side - favorite and archive buttons */}
           <div className="flex items-center gap-2">
-            <Button
-              size="sm"
-              aria-label="Favorite"
-              disabled={isFavoritePending}
-              onMouseEnter={() => setIsHovering(true)}
-              onMouseLeave={() => setIsHovering(false)}
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                toggleFavorite();
-              }}
-              className={`${typeof isArchived === "boolean" ? "visible" : "invisible"} bg-slate-50 hover:bg-slate-300 disabled:opacity-50 dark:bg-slate-300`}
-            >
-              {isFavorited || isHovering ? (
-                <FavoriteIcon className="text-pink-500" />
-              ) : (
-                <FavoriteBorderIcon className="text-purple-500" />
-              )}
-            </Button>
-
-            <Button
+             <Button
               size="sm"
               aria-label={isArchived ? "Unarchive" : "Archive"}
               onClick={(e) => {
@@ -354,6 +334,25 @@ export function DropletTile({
                   {isArchived ? "Unarchive" : "Archive"}
                 </span>
               </div>
+            </Button>
+            <Button
+              size="sm"
+              aria-label="Favorite"
+              disabled={isFavoritePending}
+              onMouseEnter={() => setIsHovering(true)}
+              onMouseLeave={() => setIsHovering(false)}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                toggleFavorite();
+              }}
+              className={`${typeof isArchived === "boolean" ? "visible" : "invisible"} bg-slate-50 hover:bg-slate-300 disabled:opacity-50 dark:bg-slate-300`}
+            >
+              {isFavorited || isHovering ? (
+                <FavoriteIcon className="text-pink-500" />
+              ) : (
+                <FavoriteBorderIcon className="text-purple-500" />
+              )}
             </Button>
           </div>
         </div>
