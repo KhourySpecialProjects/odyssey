@@ -192,167 +192,173 @@ export function DropletTile({
   }
 
   return (
-    <Link
-      href={(droplet.status == "draft" ? `/draft` : "") + `/d/${droplet.slug}`}
-    >
-      <li className="h-full rounded-md border border-slate-200 bg-slate-50 p-2 transition-colors hover:border-slate-300 dark:border-slate-500 dark:bg-slate-800">
-        <div className="flex h-full flex-col justify-between gap-3 p-4">
-          <div className="space-y-3">
-            <div className="flex flex-0 flex-row flex-wrap gap-1.5">
-              {droplet.status == "draft" ? (
-                <Badge variant="destructive">Draft</Badge>
-              ) : null}
+  <Link
+    href={(droplet.status == "draft" ? `/draft` : "") + `/d/${droplet.slug}`}
+  >
+    <li className="h-full rounded-md border border-slate-200 bg-slate-50 p-2 transition-colors hover:border-slate-300 dark:border-slate-500 dark:bg-slate-800">
+      <div className="flex h-full flex-col justify-between gap-3 p-4">
+        <div className="space-y-3">
+          <div className="flex flex-0 flex-row flex-wrap gap-1.5">
+            {droplet.status == "draft" ? (
+              <Badge variant="destructive">Draft</Badge>
+            ) : null}
 
-              {completionPercentage != 100 && dueDate && dueDate !== "" && (
-                <Badge
-                  className={getDueDateBadgeColor(daysUntil, true)}
-                  variant="outline"
-                >
-                  <Clock size={15} className="mr-1" />
+            {completionPercentage != 100 && dueDate && dueDate !== "" && (
+              <Badge
+                className={getDueDateBadgeColor(daysUntil, true)}
+                variant="outline"
+              >
+                <Clock size={15} className="mr-1" />
 
-                  {(() => {
-                    if (
-                      DateTime.fromISO(dueDate).toISODate() ==
-                      DateTime.local().toISODate()
-                    ) {
-                      return "Due today!";
-                    } else if (daysUntil === 1) {
-                      return `Due in 1 day`;
-                    } else if (daysUntil > 0) {
-                      return `Due in ${daysUntil} days`;
-                    } else {
-                      return daysUntil === -1
-                        ? `One Day Late!`
-                        : `${Math.abs(daysUntil)} Days Late!`;
-                    }
-                  })()}
-                </Badge>
-              )}
-
-              {isEnrolled && dropletLessonIds.length > 0 && (
-                <Badge className={getCompletionBadgeColor()} variant="outline">
-                  {completionPercentage}% Complete
-                </Badge>
-              )}
-
-              <Badge className="pointer-events-none border-black bg-white text-black dark:bg-slate-300">
-                {uppercaseFirstChar(droplet.focusArea)}
+                {(() => {
+                  if (
+                    DateTime.fromISO(dueDate).toISODate() ==
+                    DateTime.local().toISODate()
+                  ) {
+                    return "Due today!";
+                  } else if (daysUntil === 1) {
+                    return `Due in 1 day`;
+                  } else if (daysUntil > 0) {
+                    return `Due in ${daysUntil} days`;
+                  } else {
+                    return daysUntil === -1
+                      ? `One Day Late!`
+                      : `${Math.abs(daysUntil)} Days Late!`;
+                  }
+                })()}
               </Badge>
-              <Badge className="pointer-events-none border-black bg-white text-black dark:bg-slate-300">
-                {uppercaseFirstChar(droplet.type)}
-              </Badge>
-              {droplet.tags?.map((tag) => (
-                <Badge
-                  key={tag.id}
-                  className="pointer-events-none border-black bg-white text-black dark:bg-slate-300"
-                >
-                  {tag.name}
-                </Badge>
-              ))}
-            </div>
-            <div className="flex flex-col justify-center gap-1">
-              <span className="block w-full place-self-end text-3xl font-black text-slate-950 dark:text-slate-300">
-                {droplet.name}
-              </span>
+            )}
 
-              {strippedDescription &&
-                strippedDescription.trim() !== "<p></p>" &&
-                strippedDescription.trim() !== "" && (
-                  <>
-                    <p
-                      ref={textRef}
-                      className={`${
-                        descriptionExpanded ? "line-clamp-none" : "line-clamp-2"
-                      } text-md text-slate-700 dark:text-slate-300`}
+            {isEnrolled && dropletLessonIds.length > 0 && (
+              <Badge className={getCompletionBadgeColor()} variant="outline">
+                {completionPercentage}% Complete
+              </Badge>
+            )}
+
+            <Badge className="pointer-events-none border-black bg-white text-black dark:bg-slate-300">
+              {uppercaseFirstChar(droplet.focusArea)}
+            </Badge>
+            <Badge className="pointer-events-none border-black bg-white text-black dark:bg-slate-300">
+              {uppercaseFirstChar(droplet.type)}
+            </Badge>
+            {droplet.tags?.map((tag) => (
+              <Badge
+                key={tag.id}
+                className="pointer-events-none border-black bg-white text-black dark:bg-slate-300"
+              >
+                {tag.name}
+              </Badge>
+            ))}
+          </div>
+          <div className="flex flex-col justify-center gap-1">
+            <span className="block w-full place-self-end text-3xl font-black text-slate-950 dark:text-slate-300">
+              {droplet.name}
+            </span>
+
+            {strippedDescription &&
+              strippedDescription.trim() !== "<p></p>" &&
+              strippedDescription.trim() !== "" && (
+                <>
+                  <p
+                    ref={textRef}
+                    className={`${
+                      descriptionExpanded ? "line-clamp-none" : "line-clamp-2"
+                    } text-md text-slate-700 dark:text-slate-300`}
+                  >
+                    {strippedDescription}
+                  </p>
+
+                  {isTextClamped && !descriptionExpanded && (
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setDescriptionExpanded(true);
+                      }}
+                      className="text-left text-sm text-sky-700 dark:text-sky-500"
                     >
-                      {strippedDescription}
-                    </p>
+                      See More
+                    </button>
+                  )}
 
-                    {isTextClamped && !descriptionExpanded && (
-                      <button
-                        onClick={(e) => {
-                          e.preventDefault();
-                          setDescriptionExpanded(true);
-                        }}
-                        className="text-left text-sm text-sky-700 dark:text-sky-500"
-                      >
-                        See More
-                      </button>
-                    )}
+                  {descriptionExpanded && (
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setDescriptionExpanded(false);
+                      }}
+                      className="text-left text-sm text-sky-700 dark:text-sky-500"
+                    >
+                      See Less
+                    </button>
+                  )}
+                </>
+              )}
+          </div>
+        </div>
 
-                    {descriptionExpanded && (
-                      <button
-                        onClick={(e) => {
-                          e.preventDefault();
-                          setDescriptionExpanded(false);
-                        }}
-                        className="text-left text-sm text-sky-700 dark:text-sky-500"
-                      >
-                        See Less
-                      </button>
-                    )}
-                  </>
-                )}
-            </div>
-            
+        {/* Bottom section with ratings, favorite button, and archive button */}
+        <div className="flex items-center justify-between gap-2">
+          {/* Left side - ratings */}
+          <div className="flex items-center">
+            {droplet.averageRating && droplet.averageRating != 0.0 ? (
+              <div className="origin-left scale-[0.55]">
+                <StarRating
+                  value={droplet.averageRating || 0}
+                  enrollmentID={""}
+                  average={true}
+                  uniqueId={droplet.id.toString()}
+                />
+              </div>
+            ) : null}
           </div>
 
-          {droplet.averageRating && droplet.averageRating != 0.0 ? (
-            <div className="flex w-full origin-left scale-[0.55] items-start">
-              <StarRating
-                value={droplet.averageRating || 0}
-                enrollmentID={""}
-                average={true}
-                uniqueId={droplet.id.toString()}
-              />
-            </div>
-          ) : null}
-          <div className="flex gap-2">
-              <Button
-                size="sm"
-                aria-label={isArchived ? "Unarchive" : "Archive"}
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  changeVisibility();
-                  
-                }}
-                className={`${typeof isArchived === "boolean" ? "visible" : "invisible"} bg-slate-50 hover:bg-slate-300 dark:bg-slate-300`}
-              >
-                <div className="group relative">
-                  {isArchived ? (
-                    <ArchiveRestore className="text-purple-500" />
-                  ) : (
-                    <Archive className="text-purple-500" />
-                  )}
-                  <span className="absolute top-full left-1/2 mt-1 w-max -translate-x-1/2 transform rounded bg-gray-800 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100">
-                    {isArchived ? "Unarchive" : "Archive"}
-                  </span>
-                </div>
-              </Button>
+          {/* Right side - favorite and archive buttons */}
+          <div className="flex items-center gap-2">
+            <Button
+              size="sm"
+              aria-label="Favorite"
+              disabled={isFavoritePending}
+              onMouseEnter={() => setIsHovering(true)}
+              onMouseLeave={() => setIsHovering(false)}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                toggleFavorite();
+              }}
+              className={`${typeof isArchived === "boolean" ? "visible" : "invisible"} bg-slate-50 hover:bg-slate-300 disabled:opacity-50 dark:bg-slate-300`}
+            >
+              {isFavorited || isHovering ? (
+                <FavoriteIcon className="text-pink-500" />
+              ) : (
+                <FavoriteBorderIcon className="text-purple-500" />
+              )}
+            </Button>
 
-              <Button
-                size="sm"
-                aria-label="Favorite"
-                disabled={isFavoritePending}
-                onMouseEnter={() => setIsHovering(true)}
-                onMouseLeave={() => setIsHovering(false)}
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  toggleFavorite();
-                }}
-                className={`group ${typeof isArchived === "boolean" ? "visible" : "invisible"} bg-slate-50 hover:bg-slate-300 disabled:opacity-50 dark:bg-slate-300`}
-              >
-                {isFavorited || isHovering ? (
-                  <FavoriteIcon className="text-pink-500" />
+            <Button
+              size="sm"
+              aria-label={isArchived ? "Unarchive" : "Archive"}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                changeVisibility();
+              }}
+              className={`${typeof isArchived === "boolean" ? "visible" : "invisible"} bg-slate-50 hover:bg-slate-300 dark:bg-slate-300`}
+            >
+              <div className="group relative">
+                {isArchived ? (
+                  <ArchiveRestore className="text-purple-500" />
                 ) : (
-                  <FavoriteBorderIcon className="text-purple-500" />
+                  <Archive className="text-purple-500" />
                 )}
-              </Button>
-            </div>
+                <span className="absolute top-full left-1/2 mt-1 w-max -translate-x-1/2 transform rounded bg-gray-800 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100">
+                  {isArchived ? "Unarchive" : "Archive"}
+                </span>
+              </div>
+            </Button>
+          </div>
         </div>
-      </li>
-    </Link>
-  );
+      </div>
+    </li>
+  </Link>
+);
 }
