@@ -322,7 +322,7 @@ export function DropletTile({
                 e.stopPropagation();
                 changeVisibility();
               }}
-              className={`${typeof isArchived === "boolean" ? "visible" : "invisible"} bg-slate-50 hover:bg-slate-300 dark:bg-slate-300`}
+              className={`${typeof isArchived === "boolean" ? "visible" : "invisible"} bg-slate-50 hover:bg-slate-300 dark:bg-slate-800`}
             >
               <div className="group relative">
                 {isArchived ? (
@@ -346,7 +346,7 @@ export function DropletTile({
                 e.stopPropagation();
                 toggleFavorite();
               }}
-              className={`${typeof isArchived === "boolean" ? "visible" : "invisible"} bg-slate-50 hover:bg-slate-300 disabled:opacity-50 dark:bg-slate-300`}
+              className={`${typeof isArchived === "boolean" ? "visible" : "invisible"} bg-slate-50 hover:bg-slate-300 disabled:opacity-50 dark:bg-slate-800`}
             >
               {isFavorited || isHovering ? (
                 <FavoriteIcon className="text-pink-500" />
