@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AuthorizedUser, Droplet, DueDate } from "@/types";
 import { DropletTile } from "../droplets/droplet-tile";
 import { PageNav } from "../ui/page-nav";
