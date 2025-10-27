@@ -153,6 +153,12 @@
       "max": 5,
       "min": 0,
       "default": 0
+    },
+    "usersFavorited": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::authorized-user.authorized-user",
+      "inversedBy": "dropletsFavorited"
     }
   }
 }

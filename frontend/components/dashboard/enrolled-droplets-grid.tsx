@@ -84,6 +84,7 @@ export async function EnrolledDropletsGrid({
       tags={tags}
       type={type}
       focusArea={focusArea}
+      currentUser={authorizedUser}
     />
   );
 }
