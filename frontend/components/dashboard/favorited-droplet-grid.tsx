@@ -9,7 +9,6 @@ import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
 import { EnrolledDropletsGridClient } from "./enrolled-droplets-grid-client";
 import { Lesson } from "@/types";
 
-
 export async function FavoriteDropletsGrid({ sortKey }: { sortKey?: string }) {
   const user = await getCurrentUser();
   if (!user?.email) return null;
