@@ -61,7 +61,7 @@ export function NotesFilter({ onFilterChange }: NotesFilterProps) {
             id={color.value}
             checked={selectedColors.includes(color.value)}
             onCheckedChange={() => toggleRole(color.value)}
-            className="border-slate-700 dark:border-slate-800 focus-visible:ring-slate-700 data-[state=checked]:border-slate-900 data-[state=checked]:bg-slate-900"
+            className="border-slate-700 focus-visible:ring-slate-700 data-[state=checked]:border-slate-900 data-[state=checked]:bg-slate-900 dark:border-slate-800"
           />
           <label
             htmlFor={color.value}
