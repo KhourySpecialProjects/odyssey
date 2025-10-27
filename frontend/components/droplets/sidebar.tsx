@@ -86,7 +86,7 @@ export default function Sidebar({
       ></div>
 
       {/* Mobile header - always visible on small screens */}
-      <div className="z-20 inline-flex w-full items-center gap-2 border-b border-b-slate-200 bg-white/80 px-3 py-2 text-sm backdrop-blur-sm xl:hidden dark:border-b-slate-700 dark:bg-slate-800/80">
+      <div className="fixed top-[107px] right-0 left-0 z-40 inline-flex w-full items-center gap-2 border-b border-b-slate-200 bg-white/80 px-3 py-2 text-sm backdrop-blur-sm xl:hidden dark:border-b-slate-700 dark:bg-slate-800/80">
         {" "}
         <button
           aria-controls="sidebar"
@@ -112,7 +112,7 @@ export default function Sidebar({
 
       {/* Desktop header - only when sidebar closed */}
       {!expanded && (
-        <div className="z-20 hidden w-full items-center gap-2 border-b border-b-slate-200 bg-white/80 px-3 py-2 text-sm backdrop-blur-sm xl:flex dark:border-b-slate-700 dark:bg-slate-800/80">
+        <div className="fixed top-[107px] right-0 left-0 z-40 hidden w-full items-center gap-2 border-b border-b-slate-200 bg-white/80 px-3 py-2 text-sm backdrop-blur-sm xl:flex dark:border-b-slate-700 dark:bg-slate-800/80">
           {" "}
           <button
             aria-controls="sidebar"
