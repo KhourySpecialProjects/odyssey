@@ -348,11 +348,16 @@ export function DropletTile({
               }}
               className={`${typeof isArchived === "boolean" ? "visible" : "invisible"} bg-slate-50 hover:bg-slate-300 disabled:opacity-50 dark:bg-slate-800`}
             >
-              {isFavorited || isHovering ? (
-                <FavoriteIcon className="text-pink-500" />
-              ) : (
-                <FavoriteBorderIcon className="text-purple-500" />
-              )}
+              <div className="group relative">
+                {isFavorited || isHovering ? (
+                  <FavoriteIcon className="text-pink-500" />
+                ) : (
+                  <FavoriteBorderIcon className="text-purple-500" />
+                )}
+                <span className="absolute top-full left-1/2 mt-1 w-max -translate-x-1/2 transform rounded bg-gray-800 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100">
+                  {isFavorited ? "Unfavorite" : "Favorite"}
+                </span>
+              </div>
             </Button>
           </div>
         </div>
