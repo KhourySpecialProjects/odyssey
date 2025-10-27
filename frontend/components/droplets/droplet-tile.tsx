@@ -15,7 +15,6 @@ import { DateTime } from "luxon";
 import { archiveDroplet, favoriteDroplet } from "@/lib/requests/droplet";
 import FavoriteIcon from "@mui/icons-material/Favorite";
 import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
-import { grey, purple } from "@mui/material/colors";
 
 interface DropletTileProps {
   droplet: Droplet;

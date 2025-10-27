@@ -7,12 +7,8 @@ import { getCurrentUser } from "@/lib/auth/session";
 import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
 import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
 import { EnrolledDropletsGridClient } from "./enrolled-droplets-grid-client";
+import { Lesson } from "@/types";
 
-interface Lesson {
-  id: number;
-  name: string;
-  slug: string;
-}
 
 export async function FavoriteDropletsGrid({ sortKey }: { sortKey?: string }) {
   const user = await getCurrentUser();

@@ -576,7 +576,6 @@ export async function favoriteDroplet(
     revalidatePath("/dashboard", "page");
     revalidatePath("/", "page");
     revalidateTag("enrollments");
-    revalidateTag("dashboard");
     revalidateTag("droplets");
     return { success: true };
   } catch (error) {
