@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-test.describe("Allowed footer navigation tests", () => {
+test.describe("Allowed Footer Navigation Tests", () => {
   test('Navigate To Landing Page', async ({ page }) => {
     await page.goto('http://localhost:3000/');
     await page.getByRole('link', { name: 'About Odyssey' }).click();
