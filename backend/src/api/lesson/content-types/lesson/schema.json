@@ -73,6 +73,9 @@
       "relation": "oneToMany",
       "target": "api::highlight.highlight",
       "mappedBy": "lesson"
+    },
+    "orderIndex": {
+      "type": "integer"
     }
   }
 }
