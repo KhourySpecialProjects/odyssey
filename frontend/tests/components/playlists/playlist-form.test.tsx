@@ -1070,26 +1070,28 @@ describe("PlaylistForm", () => {
     });
 
     it("preserves form state during interactions", async () => {
-      const user = userEvent.setup();
-      render(
-        <PlaylistForm droplets={mockDroplets} author={mockAuthor} userId={1} />,
-      );
+  const user = userEvent.setup();
+  render(
+    <PlaylistForm droplets={mockDroplets} author={mockAuthor} userId={1} />,
+  );
 
-      const nameInput = screen.getByPlaceholderText("Enter playlist name");
-      await user.type(nameInput, "Test Name");
+  const nameInput = screen.getByPlaceholderText("Enter playlist name");
+  await user.click(nameInput);
+  await user.paste("Test Name");
 
-      const descInput = screen.getByPlaceholderText(
-        "Enter playlist description",
-      );
-      await user.type(descInput, "Test Description");
+  const descInput = screen.getByPlaceholderText(
+    "Enter playlist description",
+  );
+  await user.click(descInput);
+  await user.paste("Test Description");
 
-      const switchElement = screen.getByLabelText("Make this playlist public");
-      await user.click(switchElement);
+  const switchElement = screen.getByLabelText("Make this playlist public");
+  await user.click(switchElement);
 
-      // Verify all values are preserved
-      expect(nameInput).toHaveValue("Test Name");
-      expect(descInput).toHaveValue("Test Description");
-      expect(switchElement).toBeChecked();
-    });
+  // Verify all values are preserved
+  expect(nameInput).toHaveValue("Test Name");
+  expect(descInput).toHaveValue("Test Description");
+  expect(switchElement).toBeChecked();
+});
   });
 });
