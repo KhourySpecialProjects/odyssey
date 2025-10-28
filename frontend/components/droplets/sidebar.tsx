@@ -58,9 +58,8 @@ export default function Sidebar({
 
   useLayoutEffect(() => {
     const handleResize = () => {
-      if (window.innerWidth >= 1280) {
-        setExpanded(true);
-      } else {
+      // Auto-collapse sidebar on mobile screens
+      if (window.innerWidth < 1280) {
         setExpanded(false);
       }
     };
@@ -85,17 +84,20 @@ export default function Sidebar({
         onClick={() => setExpanded(false)}
       ></div>
 
-      {/* Mobile header - always visible on small screens */}
-      <div className="fixed top-[107px] right-0 left-0 z-40 inline-flex w-full items-center gap-2 border-b border-b-slate-200 bg-white/80 px-3 py-2 text-sm backdrop-blur-sm xl:hidden dark:border-b-slate-700 dark:bg-slate-800/80">
+      {/* Mobile header - visible on small screens, hidden when sidebar is open */}
+      <div
+        className={cn(
+          "fixed top-[107px] right-0 left-0 z-40 w-full items-center gap-2 border-b border-b-slate-200 bg-white/80 px-3 py-2 text-sm backdrop-blur-sm xl:hidden dark:border-b-slate-700 dark:bg-slate-800/80",
+          expanded ? "hidden" : "inline-flex",
+        )}
+      >
         <button
           aria-controls="sidebar"
           type="button"
           className="inline-flex items-center rounded-lg p-2 text-sm text-slate-500 hover:bg-slate-100 focus:ring-2 focus:ring-slate-200 focus:outline-none dark:text-slate-400 dark:hover:bg-slate-700 dark:focus:ring-slate-600"
-          onClick={() => setExpanded(!expanded)}
+          onClick={() => setExpanded(true)}
         >
-          <span className="sr-only">
-            {expanded ? "Close sidebar" : "Open sidebar"}
-          </span>
+          <span className="sr-only">Open sidebar</span>
           <PanelRightClose
             className="dark:text-white"
             data-testid="sidebar-overlay"
@@ -114,7 +116,7 @@ export default function Sidebar({
         <button
           aria-controls="sidebar"
           type="button"
-          className="fixed top-[120px] left-3 z-40 hidden items-center rounded-lg bg-white p-3 text-slate-800 shadow-md transition-all hover:scale-110 hover:bg-slate-100 focus:ring-2 focus:ring-slate-200 focus:outline-none xl:inline-flex dark:bg-slate-800 dark:hover:bg-slate-700 dark:focus:ring-slate-600"
+          className="fixed top-[120px] left-3 z-40 hidden items-center rounded-lg bg-white p-3 text-slate-800 shadow-md transition-all hover:scale-110 hover:bg-slate-100 focus:ring-2 focus:ring-slate-200 focus:outline-none xl:inline-flex dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700 dark:focus:ring-slate-600"
           onClick={() => setExpanded(true)}
         >
           <PanelRightClose className="h-6 w-6 dark:text-white" />
