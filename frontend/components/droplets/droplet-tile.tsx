@@ -12,7 +12,9 @@ import { toast } from "sonner";
 import { Archive, ArchiveRestore, Clock } from "lucide-react";
 import { getDueDateBadgeColor } from "@/lib/utils";
 import { DateTime } from "luxon";
-import { archiveDroplet } from "@/lib/requests/droplet";
+import { archiveDroplet, favoriteDroplet } from "@/lib/requests/droplet";
+import FavoriteIcon from "@mui/icons-material/Favorite";
+import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
 
 interface DropletTileProps {
   droplet: Droplet;
@@ -21,6 +23,7 @@ interface DropletTileProps {
   profilePage?: boolean;
   compact?: boolean;
   isArchived?: boolean;
+  isFavorited?: boolean;
   dueDate?: string;
 }
 
@@ -31,12 +34,16 @@ export function DropletTile({
   profilePage,
   compact,
   isArchived,
+  isFavorited: initialIsFavorited,
   dueDate,
 }: DropletTileProps) {
   const [descriptionExpanded, setDescriptionExpanded] = useState(false);
   const [isTextClamped, setIsTextClamped] = useState(false);
-  const [isScreenChanged, setIsScreenChanged] = useState(false); // New state variable to track screen size changes
+  const [isScreenChanged, setIsScreenChanged] = useState(false);
   const textRef = useRef(null);
+  const [isHovering, setIsHovering] = useState(false);
+  const [isFavorited, setIsFavorited] = useState(initialIsFavorited || false);
+  const [isFavoritePending, setIsFavoritePending] = useState(false);
 
   const strippedDescription = droplet.description
     ?.replace(/<\/p>\s*<p>/gi, "\n")
@@ -53,7 +60,6 @@ export function DropletTile({
     }
   }, [strippedDescription, descriptionExpanded]);
 
-  // Effect to handle screen size changes and re-evaluate clamping
   useEffect(() => {
     const handleResize = () => {
       setIsScreenChanged(true);
@@ -67,13 +73,12 @@ export function DropletTile({
 
   useEffect(() => {
     if (isScreenChanged) {
-      // Re-evaluate clamping only if the screen size has changed
       if (textRef.current && strippedDescription) {
         const element = textRef.current as HTMLParagraphElement;
         const isClamped = element.scrollHeight > element.clientHeight;
         setIsTextClamped(isClamped);
       }
-      setIsScreenChanged(false); // Reset the flag after handling
+      setIsScreenChanged(false);
     }
   }, [isScreenChanged, strippedDescription, descriptionExpanded]);
 
@@ -122,6 +127,33 @@ export function DropletTile({
     }
   }
 
+  async function toggleFavorite() {
+    if (isFavoritePending) return;
+
+    setIsFavoritePending(true);
+    const newFavoriteState = !isFavorited;
+
+    try {
+      const result = await favoriteDroplet(droplet, newFavoriteState);
+
+      if (result.success) {
+        setIsFavorited((prev) => !prev);
+        toast.success(
+          newFavoriteState
+            ? `${droplet.name} added to favorites!`
+            : `${droplet.name} removed from favorites!`,
+        );
+      } else {
+        toast.error("Failed to update favorite status");
+      }
+    } catch (error) {
+      toast.error("An error occurred while updating favorites");
+      console.error(error);
+    } finally {
+      setIsFavoritePending(false);
+    }
+  }
+
   if (compact) {
     return (
       <li className="rounded-md border border-slate-200 bg-slate-50 transition-colors hover:border-slate-300 dark:bg-slate-800">
@@ -165,26 +197,6 @@ export function DropletTile({
       <li className="h-full rounded-md border border-slate-200 bg-slate-50 p-2 transition-colors hover:border-slate-300 dark:border-slate-500 dark:bg-slate-800">
         <div className="flex h-full flex-col justify-between gap-3 p-4">
           <div className="space-y-3">
-            <Button
-              size="sm"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                changeVisibility();
-              }}
-              className={`${isArchived === true || isArchived === false ? "visibility: visible" : "visibility: hidden"} mx-auto bg-white hover:bg-slate-300 dark:bg-slate-300`}
-            >
-              <div className="group relative">
-                {isArchived ? (
-                  <ArchiveRestore className="text-purple-800" />
-                ) : (
-                  <Archive className="text-purple-800" />
-                )}
-                <span className="absolute top-full left-1/2 mt-1 w-max -translate-x-1/2 transform rounded bg-gray-800 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100">
-                  {isArchived ? "Unarchive" : "Archive"}
-                </span>
-              </div>
-            </Button>
             <div className="flex flex-0 flex-row flex-wrap gap-1.5">
               {droplet.status == "draft" ? (
                 <Badge variant="destructive">Draft</Badge>
@@ -283,16 +295,71 @@ export function DropletTile({
             </div>
           </div>
 
-          {droplet.averageRating && droplet.averageRating != 0.0 ? (
-            <div className="flex w-full origin-left scale-[0.55] items-start">
-              <StarRating
-                value={droplet.averageRating || 0}
-                enrollmentID={""}
-                average={true}
-                uniqueId={droplet.id.toString()}
-              />
+          {/* Bottom section with ratings, favorite button, and archive button */}
+          <div className="flex items-center justify-between gap-2">
+            {/* Left side - ratings */}
+            <div className="flex items-center">
+              {droplet.averageRating && droplet.averageRating != 0.0 ? (
+                <div className="origin-left scale-[0.55]">
+                  <StarRating
+                    value={droplet.averageRating || 0}
+                    enrollmentID={""}
+                    average={true}
+                    uniqueId={droplet.id.toString()}
+                  />
+                </div>
+              ) : null}
             </div>
-          ) : null}
+
+            {/* Right side - favorite and archive buttons */}
+            <div className="flex items-center gap-2">
+              <Button
+                size="sm"
+                aria-label={isArchived ? "Unarchive" : "Archive"}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  changeVisibility();
+                }}
+                className={`${typeof isArchived === "boolean" ? "visible" : "invisible"} bg-slate-50 hover:bg-slate-300 dark:bg-slate-800`}
+              >
+                <div className="group relative">
+                  {isArchived ? (
+                    <ArchiveRestore className="text-purple-500" />
+                  ) : (
+                    <Archive className="text-purple-500" />
+                  )}
+                  <span className="absolute top-full left-1/2 mt-1 w-max -translate-x-1/2 transform rounded bg-gray-800 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100">
+                    {isArchived ? "Unarchive" : "Archive"}
+                  </span>
+                </div>
+              </Button>
+              <Button
+                size="sm"
+                aria-label="Favorite"
+                disabled={isFavoritePending}
+                onMouseEnter={() => setIsHovering(true)}
+                onMouseLeave={() => setIsHovering(false)}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  toggleFavorite();
+                }}
+                className={`${typeof isArchived === "boolean" ? "visible" : "invisible"} bg-slate-50 hover:bg-slate-300 disabled:opacity-50 dark:bg-slate-800`}
+              >
+                <div className="group relative">
+                  {isFavorited || isHovering ? (
+                    <FavoriteIcon className="text-pink-500" />
+                  ) : (
+                    <FavoriteBorderIcon className="text-purple-500" />
+                  )}
+                  <span className="absolute top-full left-1/2 mt-1 w-max -translate-x-1/2 transform rounded bg-gray-800 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100">
+                    {isFavorited ? "Unfavorite" : "Favorite"}
+                  </span>
+                </div>
+              </Button>
+            </div>
+          </div>
         </div>
       </li>
     </Link>

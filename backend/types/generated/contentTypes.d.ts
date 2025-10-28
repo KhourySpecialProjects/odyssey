@@ -617,6 +617,11 @@ export interface ApiAuthorizedUserAuthorizedUser extends Schema.CollectionType {
       'manyToMany',
       'api::droplet.droplet'
     >;
+    dropletsFavorited: Attribute.Relation<
+      'api::authorized-user.authorized-user',
+      'manyToMany',
+      'api::droplet.droplet'
+    >;
     due_dates: Attribute.Relation<
       'api::authorized-user.authorized-user',
       'oneToMany',
@@ -921,6 +926,11 @@ export interface ApiDropletDroplet extends Schema.CollectionType {
       'admin::user'
     > &
       Attribute.Private;
+    usersFavorited: Attribute.Relation<
+      'api::droplet.droplet',
+      'manyToMany',
+      'api::authorized-user.authorized-user'
+    >;
   };
 }
 

@@ -34,6 +34,9 @@ export async function getEnrollmentsByAuthorizedUser(
           tags: {
             fields: ["*"],
           },
+          usersFavorited: {
+            fields: "*",
+          },
         },
         fields: ["id", "*"],
       },
@@ -61,7 +64,6 @@ export async function getEnrollmentsByAuthorizedUser(
     fields,
     pagination,
   };
-
   return await fetchAPI<Enrollment[]>(path, {
     urlParams,
     next: { tags: ["enrollments"], revalidate: 0 },
