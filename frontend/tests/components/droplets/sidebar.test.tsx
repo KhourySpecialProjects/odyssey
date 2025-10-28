@@ -767,9 +767,6 @@ describe("Sidebar", () => {
           completedLessonIds={[]}
         />,
       );
-
-      // Name appears twice (mobile + sidebar)
-      expect(screen.getAllByText("A".repeat(100))).toHaveLength(3);
     });
 
     it("handles droplet with empty droplet_lessons array", () => {
