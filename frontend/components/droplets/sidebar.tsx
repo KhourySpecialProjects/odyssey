@@ -79,7 +79,7 @@ export default function Sidebar({
       <div
         className={cn(
           "fixed inset-0 bg-slate-900/50 transition-opacity xl:hidden dark:bg-slate-900/80",
-          expanded ? "z-30 opacity-1" : "-z-10 opacity-0",
+          expanded ? "z-30 opacity-100" : "-z-10 opacity-0",
         )}
         onClick={() => setExpanded(false)}
       ></div>
