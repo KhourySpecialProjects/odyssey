@@ -365,8 +365,10 @@ describe("DropletTile", () => {
         <DropletTile droplet={mockDroplet as any} isArchived={undefined} />,
       );
 
-      const button = screen.queryByRole("button");
-      expect(button).toHaveClass("visibility: hidden");
+      const archiveButton = screen.queryByRole("button", { name: "Archive" });
+
+      expect(archiveButton).toBeInTheDocument();
+      expect(archiveButton).toHaveClass("invisible");
     });
 
     it("handles successful archive", async () => {
@@ -374,7 +376,7 @@ describe("DropletTile", () => {
 
       render(<DropletTile droplet={mockDroplet as any} isArchived={false} />);
 
-      fireEvent.click(screen.getByRole("button"));
+      fireEvent.click(screen.getByRole("button", { name: "Archive" }));
 
       await waitFor(() => {
         expect(archiveDroplet).toHaveBeenCalledWith(mockDroplet, true);
@@ -389,7 +391,7 @@ describe("DropletTile", () => {
 
       render(<DropletTile droplet={mockDroplet as any} isArchived={true} />);
 
-      fireEvent.click(screen.getByRole("button"));
+      fireEvent.click(screen.getByRole("button", { name: "Unarchive" }));
 
       await waitFor(() => {
         expect(archiveDroplet).toHaveBeenCalledWith(mockDroplet, false);
@@ -404,7 +406,7 @@ describe("DropletTile", () => {
 
       render(<DropletTile droplet={mockDroplet as any} isArchived={false} />);
 
-      fireEvent.click(screen.getByRole("button"));
+      fireEvent.click(screen.getByRole("button", { name: "Archive" }));
 
       await waitFor(() => {
         expect(toast.error).toHaveBeenCalledWith(
@@ -419,7 +421,7 @@ describe("DropletTile", () => {
 
       render(<DropletTile droplet={mockDroplet as any} isArchived={false} />);
 
-      fireEvent.click(screen.getByRole("button"));
+      fireEvent.click(screen.getByRole("button", { name: "Archive" }));
 
       await waitFor(() => {
         expect(toast.error).toHaveBeenCalledWith(
@@ -436,7 +438,7 @@ describe("DropletTile", () => {
         <DropletTile droplet={mockDroplet as any} isArchived={false} />,
       );
 
-      const button = screen.getByRole("button");
+      const button = screen.getByRole("button", { name: "Archive" });
       const clickEvent = new MouseEvent("click", { bubbles: true });
       const preventDefaultSpy = jest.spyOn(clickEvent, "preventDefault");
       const stopPropagationSpy = jest.spyOn(clickEvent, "stopPropagation");

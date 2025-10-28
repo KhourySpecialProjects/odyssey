@@ -617,6 +617,11 @@ export interface ApiAuthorizedUserAuthorizedUser extends Schema.CollectionType {
       'manyToMany',
       'api::droplet.droplet'
     >;
+    dropletsFavorited: Attribute.Relation<
+      'api::authorized-user.authorized-user',
+      'manyToMany',
+      'api::droplet.droplet'
+    >;
     due_dates: Attribute.Relation<
       'api::authorized-user.authorized-user',
       'oneToMany',
@@ -921,6 +926,11 @@ export interface ApiDropletDroplet extends Schema.CollectionType {
       'admin::user'
     > &
       Attribute.Private;
+    usersFavorited: Attribute.Relation<
+      'api::droplet.droplet',
+      'manyToMany',
+      'api::authorized-user.authorized-user'
+    >;
   };
 }
 
@@ -1317,6 +1327,7 @@ export interface ApiLessonLesson extends Schema.CollectionType {
       'oneToMany',
       'api::note.note'
     >;
+    orderIndex: Attribute.Integer;
     publishedAt: Attribute.DateTime;
     slug: Attribute.UID<'api::lesson.lesson', 'name'> & Attribute.Required;
     type: Attribute.Enumeration<['general', 'setup', 'activity', 'caseStudy']> &
