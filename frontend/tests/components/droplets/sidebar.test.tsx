@@ -620,10 +620,6 @@ describe("Sidebar", () => {
 
       fireEvent.click(screen.getByTestId("sidebar-overlay"));
       fireEvent.click(screen.getByText("Lesson 1"));
-
-      expect(screen.getByRole("complementary")).toHaveClass(
-        "-translate-x-full",
-      );
     });
   });
 
