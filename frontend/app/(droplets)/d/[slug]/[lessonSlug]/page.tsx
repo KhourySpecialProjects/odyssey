@@ -62,13 +62,6 @@ export default async function Page({ params }: Props) {
         await updateCompletionDate(enrollment.id);
       }
     }
-    // if (
-    //   enrollment &&
-    //   enrollment.isComplete === true &&
-    //   !enrollment.completionDate
-    // ) {
-      
-    // }
   }
 
   const currentUser = await getCurrentUser();
