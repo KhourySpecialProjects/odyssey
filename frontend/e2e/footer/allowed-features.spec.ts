@@ -2,7 +2,7 @@ import { test, expect } from "@playwright/test";
 
 test.describe("Allowed Footer Navigation Tests", () => {
   test("Navigate To Landing Page", async ({ page }) => {
-    await page.goto("http://localhost:3000/");
+    await page.goto("https://dev.khouryodyssey.org/");
     await page.getByRole("link", { name: "About Odyssey" }).click();
     await expect(
       page.getByRole("heading", { name: "About Odyssey" }),
@@ -10,7 +10,7 @@ test.describe("Allowed Footer Navigation Tests", () => {
   });
 
   test("Navigate to About Odyssey", async ({ page }) => {
-    await page.goto("http://localhost:3000/");
+    await page.goto("https://dev.khouryodyssey.org/");
     await expect(
       page.getByRole("link", { name: "Khoury Odyssey Logo Odyssey," }),
     ).toBeVisible();
@@ -23,7 +23,7 @@ test.describe("Allowed Footer Navigation Tests", () => {
   });
 
   test("Navigate to Features", async ({ page }) => {
-    await page.goto("http://localhost:3000/");
+    await page.goto("https://dev.khouryodyssey.org/");
     await expect(
       page.getByRole("link", { name: "Khoury Odyssey Logo Odyssey," }),
     ).toBeVisible();
@@ -34,7 +34,7 @@ test.describe("Allowed Footer Navigation Tests", () => {
   });
 
   test("Navigate to Contributors", async ({ page }) => {
-    await page.goto("http://localhost:3000/");
+    await page.goto("https://dev.khouryodyssey.org/");
     await expect(
       page.getByRole("link", { name: "Khoury Odyssey Logo Odyssey," }),
     ).toBeVisible();
@@ -48,7 +48,7 @@ test.describe("Allowed Footer Navigation Tests", () => {
     ).toBeVisible();
   });
   test("Go to Github", async ({ page }) => {
-    await page.goto("http://localhost:3000/");
+    await page.goto("https://dev.khouryodyssey.org/");
     await expect(
       page.getByRole("link", { name: "Khoury Odyssey Logo Odyssey," }),
     ).toBeVisible();
@@ -66,7 +66,7 @@ test.describe("Allowed Footer Navigation Tests", () => {
 
 test.describe("Footer Flows", () => {
   test("Reporting a bug", async ({ page }) => {
-    await page.goto("http://localhost:3000/");
+    await page.goto("https://dev.khouryodyssey.org/");
     await expect(
       page.getByRole("link", { name: "Khoury Odyssey Logo Odyssey," }),
     ).toBeVisible();
