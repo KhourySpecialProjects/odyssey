@@ -179,7 +179,6 @@ export default function Sidebar({
                       ? activeLinkClasses
                       : inactiveLinkClasses
                   }
-                  onClick={() => setExpanded(false)}
                 >
                   <TargetIcon className="shrink-0" />
                   <span className="ms-3 leading-snug">Overview</span>
@@ -219,7 +218,6 @@ export default function Sidebar({
                             e.preventDefault();
                             return;
                           }
-                          setExpanded(false);
                         }}
                         aria-disabled={!!isLocked}
                       >
@@ -257,7 +255,6 @@ export default function Sidebar({
                       ? activeLinkClasses
                       : inactiveLinkClasses
                   }
-                  onClick={() => setExpanded(false)}
                 >
                   <HistoryIcon className="shrink-0" />
                   <span className="ms-3 leading-snug">Recap</span>
