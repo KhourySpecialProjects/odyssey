@@ -472,7 +472,7 @@ export async function createEnrollment(
   }
 }
 
-// create function to updatge viewed lessons and mark as isComplete if all lessons are viewed
+// create function to update viewed lessons and mark as isComplete if all lessons are viewed
 export async function updateViewedLessons(
   enrollmentId: string,
   lessonId: number,
@@ -570,6 +570,7 @@ export async function updateCompletionDate(enrollmentID: string) {
         },
         body: JSON.stringify({
           data: {
+            isComplete: true,
             completionDate: new Date(),
           },
         }),
