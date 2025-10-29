@@ -31,6 +31,10 @@ export async function EnrolledDropletsGrid({
 
   const authorizedUser = await getAuthorizedUserByEmail(user.email);
   const enrollments = await getEnrollmentsByAuthorizedUser(authorizedUser.id);
+  
+  const uniqueEnrollments = enrollments.filter((enrollment, index, self) =>
+    index === self.findIndex((e) => e.droplet === enrollment.droplet)
+  );
 
   const filteredEnrollments = enrollments.filter((e) => e.isArchived !== true);
 
