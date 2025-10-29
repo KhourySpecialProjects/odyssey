@@ -32,7 +32,7 @@ import { markLessonAsComplete } from "@/lib/requests/lesson";
 
 interface LessonRendererProps {
   lesson: Lesson;
-  droplet: Pick<Droplet, "id" | "droplet_lessons">;
+  droplet: Pick<Droplet, "id" | "lessons">;
   enrollmentId?: string;
   completedLessonIds: number[];
   user?: User | null;
@@ -170,13 +170,13 @@ export function LessonRenderer({
     onUpdate();
   };
 
-  const currentLessonOrder = droplet.droplet_lessons.find(
-    (dl) => dl.lesson.id === lesson.id,
+  const currentLessonOrder = (droplet.lessons ?? []).find(
+    (dl) => dl.id === lesson.id,
   )?.orderIndex;
 
-  const previousLesson = droplet.droplet_lessons.find(
+  const previousLesson = (droplet.lessons ?? []).find(
     (dl) => dl.orderIndex === (currentLessonOrder as number) - 1,
-  )?.lesson;
+  );
 
   const isLocked =
     previousLesson &&

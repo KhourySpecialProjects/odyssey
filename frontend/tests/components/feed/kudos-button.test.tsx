@@ -35,6 +35,7 @@ const mockAuthUser: AuthorizedUser = {
   blocked: [],
   was_blocked: [],
   timeZone: "America/New_York",
+  isPublic: true
 };
 const mockDroplet = {
   id: 1,
@@ -46,7 +47,6 @@ const mockDroplet = {
   tags: [{ id: 1, name: "React" }] as Tag[],
   learningObjectives: [],
   status: "published" as DropletStatus,
-  droplet_lessons: [],
 };
 const mockAnnouncement = {
   id: 1,
@@ -65,7 +65,7 @@ describe("KudosButton", () => {
     render(
       <KudosButton
         announcement={mockAnnouncement}
-        droplet="droplet"
+        droplet={mockDroplet}
         authUser={mockAuthUser}
       />,
     );
@@ -87,7 +87,7 @@ describe("KudosButton", () => {
     render(
       <KudosButton
         announcement={announcementWithKudos}
-        droplet="droplet"
+        droplet={mockDroplet}
         authUser={mockAuthUser}
       />,
     );
@@ -105,7 +105,7 @@ describe("KudosButton", () => {
     render(
       <KudosButton
         announcement={announcementWithUserKudos}
-        droplet="droplet"
+        droplet={mockDroplet}
         authUser={mockAuthUser}
       />,
     );
@@ -122,7 +122,7 @@ describe("KudosButton", () => {
     render(
       <KudosButton
         announcement={mockAnnouncement}
-        droplet="droplet"
+        droplet={mockDroplet}
         authUser={mockAuthUser}
       />,
     );
@@ -140,7 +140,7 @@ describe("KudosButton", () => {
     render(
       <KudosButton
         announcement={mockAnnouncement}
-        droplet="droplet"
+        droplet={mockDroplet}
         authUser={mockAuthUser}
       />,
     );
@@ -161,7 +161,7 @@ describe("KudosButton", () => {
     render(
       <KudosButton
         announcement={announcementWithUserKudos}
-        droplet="droplet"
+        droplet={mockDroplet}
         authUser={mockAuthUser}
       />,
     );

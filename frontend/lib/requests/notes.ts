@@ -80,11 +80,6 @@ export async function getNotesByDroplet(
       },
       lesson: {
         fields: ["*"],
-        populate: {
-          droplet_lessons: {
-            fields: ["*"],
-          },
-        },
       },
     },
     fields,

@@ -2,6 +2,7 @@ import { useRef, useEffect } from "react";
 import { useState, useCallback } from "react";
 import { Droplet } from "@/types";
 import { updateDroplet } from "@/lib/requests/droplet";
+import { updateLesson } from "@/lib/requests/lesson";
 
 interface QueueItem {
   dropletLessons: { id: number; orderIndex: number }[];
@@ -9,52 +10,44 @@ interface QueueItem {
 }
 
 export function useLessonOrder(
-  droplet: Pick<Droplet, "id" | "droplet_lessons">,
+  droplet: Pick<Droplet, "id" | "lessons">,
 ) {
   const [dropletLessons, setDropletLessons] = useState(
-    droplet.droplet_lessons || [],
+    droplet.lessons || [],
   );
   const [isProcessing, setIsProcessing] = useState(false);
   const orderQueue = useRef<QueueItem[]>([]);
   const latestOrderTimestamp = useRef<number>(Date.now());
 
   useEffect(() => {
-    setDropletLessons(droplet.droplet_lessons || []);
-  }, [droplet.droplet_lessons]);
+    setDropletLessons(droplet.lessons || []);
+  }, [droplet.lessons]);
 
-  const processQueue = useCallback(async () => {
-    if (isProcessing || orderQueue.current.length === 0) return;
+const processQueue = useCallback(async () => {
+  if (isProcessing || orderQueue.current.length === 0) return;
+  setIsProcessing(true);
 
-    setIsProcessing(true);
+  try {
+    const latestOrder = orderQueue.current.reduce((latest, current) => {
+      return current.timestamp > latest.timestamp ? current : latest;
+    });
 
-    try {
-      const latestOrder = orderQueue.current.reduce((latest, current) => {
-        return current.timestamp > latest.timestamp ? current : latest;
-      });
+    await Promise.all(
+      latestOrder.dropletLessons.map(({ id, orderIndex }) =>
+        updateLesson(id, { orderIndex }),
+      ),
+    );
 
-      const result = await updateDroplet(
-        droplet.id,
-        {
-          droplet_lessons: latestOrder.dropletLessons,
-        },
-        { revalidate: true },
-      );
+    
 
-      if (!result.ok) {
-        console.error("Error updating lesson order:", result.error);
-        setDropletLessons(droplet.droplet_lessons || []);
-      }
-
-      orderQueue.current = orderQueue.current.filter(
-        (item) => item.timestamp > latestOrder.timestamp,
-      );
-    } finally {
-      setIsProcessing(false);
-      if (orderQueue.current.length > 0) {
-        processQueue();
-      }
-    }
-  }, [droplet.id, droplet.droplet_lessons, isProcessing]);
+    orderQueue.current = orderQueue.current.filter(
+      (item) => item.timestamp > latestOrder.timestamp,
+    );
+  } finally {
+    setIsProcessing(false);
+    if (orderQueue.current.length > 0) processQueue();
+  }
+}, [isProcessing]);
 
   const handleLessonReorder = useCallback(
     (newOrder: typeof dropletLessons) => {

@@ -7,6 +7,7 @@ import {
   HighlightColor,
   Tag,
 } from "@/types";
+import { DateTime } from "luxon";
 
 describe("NotesSummaryClient", () => {
   const mockDroplet = {
@@ -19,7 +20,6 @@ describe("NotesSummaryClient", () => {
     tags: [{ id: 1, name: "React" }] as Tag[],
     learningObjectives: [],
     status: "published" as DropletStatus,
-    droplet_lessons: [],
   };
   const mockProps = {
     index: 0,
@@ -43,6 +43,7 @@ describe("NotesSummaryClient", () => {
       notes: [],
       isFirstTime: false,
       isArchived: false,
+      completionDate: DateTime.local().toJSDate()
     },
     allNotes: [
       {

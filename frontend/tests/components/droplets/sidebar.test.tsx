@@ -40,50 +40,41 @@ describe("Sidebar", () => {
   const mockDroplet = {
     name: "Test Droplet",
     slug: "test-droplet",
-    droplet_lessons: [
-      {
-        orderIndex: 0,
-        id: 1,
-        lesson: {
-          id: 1,
-          name: "Lesson 1",
-          slug: "lesson-1",
-          type: "general" as const,
-          droplets: [],
-          droplet_lessons: [],
+    lessons: [
+    {
+         orderIndex: 0,
+         id: 1,
+           name: "Lesson 1",
+           slug: "lesson-1",
+           type: "general" as const,
+           droplets: [],
+           notes: [],
+           blocks: [],
+       },
+       {
+         orderIndex: 1,
+         id: 2,
+           name: "Lesson 2",
+           slug: "lesson-2",
+           type: "activity" as const,
+           droplets: [],
+           notes: [],
+           blocks: [],
+         
+       },
+       {
+         orderIndex: 2,
+         id: 3,
+
+           name: "Lesson 3",
+           slug: "lesson-3",
+           type: "caseStudy" as const,
+           droplets: [],
           notes: [],
-          blocks: [],
-        },
-      },
-      {
-        orderIndex: 1,
-        id: 2,
-        lesson: {
-          id: 2,
-          name: "Lesson 2",
-          slug: "lesson-2",
-          type: "activity" as const,
-          droplets: [],
-          droplet_lessons: [],
-          notes: [],
-          blocks: [],
-        },
-      },
-      {
-        orderIndex: 2,
-        id: 3,
-        lesson: {
-          id: 3,
-          name: "Lesson 3",
-          slug: "lesson-3",
-          type: "caseStudy" as const,
-          droplets: [],
-          droplet_lessons: [],
-          notes: [],
-          blocks: [],
-        },
-      },
-    ],
+           blocks: [],
+         
+       },
+     ],
   };
 
   beforeEach(() => {
@@ -322,7 +313,6 @@ describe("Sidebar", () => {
     it("handles droplet with no lessons", () => {
       const dropletNoLessons = {
         ...mockDroplet,
-        droplet_lessons: [],
       };
 
       render(
@@ -780,10 +770,10 @@ describe("Sidebar", () => {
       expect(screen.getAllByText("A".repeat(100))).toHaveLength(2);
     });
 
-    it("handles droplet with empty droplet_lessons array", () => {
+    it("handles droplet with empty lessons array", () => {
       const emptyLessonsDroplet = {
         ...mockDroplet,
-        droplet_lessons: [],
+        lessons: [],
       };
 
       render(

@@ -32,9 +32,9 @@ describe("AddLesson", () => {
         slug: "existing-lesson",
         type: "general" as const,
         blocks: [],
-        droplet_lessons: [],
         droplets: [],
         notes: [],
+        orderIndex: 0
       },
     ],
   };

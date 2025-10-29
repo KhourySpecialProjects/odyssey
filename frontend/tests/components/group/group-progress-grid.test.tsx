@@ -26,7 +26,6 @@ describe("GroupProgressGrid", () => {
         learningObjectives: [],
         isArchived: false,
         status: "ACTIVE" as DropletStatus,
-        droplet_lessons: [],
         createdAt: new Date(),
         updatedAt: new Date(),
       },
@@ -41,7 +40,6 @@ describe("GroupProgressGrid", () => {
         learningObjectives: [],
         isArchived: false,
         status: "ACTIVE" as DropletStatus,
-        droplet_lessons: [],
         createdAt: new Date(),
         updatedAt: new Date(),
       },
@@ -53,7 +51,7 @@ describe("GroupProgressGrid", () => {
   });
 
   it("renders member names and droplet names", () => {
-    render(<GroupProgressGrid group={mockGroup} />);
+    render(<GroupProgressGrid group={mockGroup} statuses={{}} />);
     expect(screen.getByText("Test Droplet")).toBeInTheDocument();
   });
 
@@ -63,7 +61,7 @@ describe("GroupProgressGrid", () => {
       droplets: Array(10).fill({ id: 1, name: "Test Droplet", lessons: [] }),
     };
 
-    render(<GroupProgressGrid group={groupWithManyDroplets} />);
+    render(<GroupProgressGrid group={groupWithManyDroplets} statuses={{}}/>);
     expect(screen.getByRole("button", { name: /next/i })).toBeInTheDocument();
   });
 
@@ -77,7 +75,7 @@ describe("GroupProgressGrid", () => {
   });
 
   test("renders pagination controls correctly", () => {
-    render(<GroupProgressGrid group={mockGroup} />);
+    render(<GroupProgressGrid group={mockGroup} statuses={{}}/>);
 
     expect(
       screen.getByRole("button", { name: /next page/i }),
@@ -91,7 +89,7 @@ describe("GroupProgressGrid", () => {
       members: [],
     };
 
-    render(<GroupProgressGrid group={emptyGroup} />);
+    render(<GroupProgressGrid group={emptyGroup} statuses={{}}/>);
 
     expect(
       screen.getByText(/No droplets have been added/i),
@@ -113,7 +111,7 @@ describe("GroupProgressGrid", () => {
   });
 
   it("should handle pagination correctly", () => {
-    render(<GroupProgressGrid group={mockGroup} />);
+    render(<GroupProgressGrid group={mockGroup} statuses={{}}/>);
 
     const nextButton = screen.getByLabelText("Next page");
     fireEvent.click(nextButton);

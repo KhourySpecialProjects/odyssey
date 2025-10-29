@@ -6,6 +6,7 @@ import {
   HighlightColor,
   Tag,
 } from "@/types";
+import { DateTime } from "luxon";
 import { PDFDocument } from "pdf-lib";
 
 jest.mock("pdf-lib");
@@ -21,7 +22,6 @@ describe("NoteSummary", () => {
     tags: [{ id: 1, name: "React" }] as Tag[],
     learningObjectives: [],
     status: "published" as DropletStatus,
-    droplet_lessons: [],
   };
   const mockLesson = {
     id: 1,
@@ -29,7 +29,6 @@ describe("NoteSummary", () => {
     slug: "test-lesson",
     blocks: [],
     droplets: [],
-    droplet_lessons: [],
     notes: [],
   };
   const mockProps = {
@@ -44,14 +43,8 @@ describe("NoteSummary", () => {
           name: "Test Lesson",
           slug: "test-lesson",
           droplets: [],
-          droplet_lessons: [
-            {
-              id: 123,
-              orderIndex: 1,
-              lesson: mockLesson,
-            },
-          ],
           notes: [],
+          orderIndex: 1,
           blocks: [
             {
               id: 1,
@@ -117,14 +110,8 @@ describe("NoteSummary", () => {
           slug: "test-lesson",
           blocks: [],
           droplets: [],
-          droplet_lessons: [
-            {
-              id: 123,
-              orderIndex: 1,
-              lesson: mockLesson,
-            },
-          ],
           notes: [],
+          orderIndex: 1
         },
         enrollment: {
           id: "1",
@@ -136,6 +123,7 @@ describe("NoteSummary", () => {
           notes: [],
           isFirstTime: false,
           isArchived: false,
+          completionDate: DateTime.local().toJSDate()
         },
         positionY: 0,
         highlight: {

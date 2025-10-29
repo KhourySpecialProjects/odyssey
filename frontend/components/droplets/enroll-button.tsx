@@ -32,7 +32,7 @@ export function EnrollButton({ droplet, isEnrolled }: EnrollButtonProps) {
             toast.success(`You are now enrolled in ${droplet.name}!`);
             if (droplet.lessons) {
               router.push(
-                `/d/${droplet.slug}/${droplet.droplet_lessons[0].lesson.slug}`,
+                `/d/${droplet.slug}/${droplet.lessons[0].slug}`,
               );
             }
           } else {

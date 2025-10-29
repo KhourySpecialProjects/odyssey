@@ -1,6 +1,5 @@
 import { DropletList } from "@/components/group/group-management-droplet-list";
 import {
-  DropletLesson,
   DropletStatus,
   DropletType,
   FocusArea,
@@ -50,7 +49,6 @@ describe("DropletList", () => {
     tags: [{ id: 1, name: "React" }] as Tag[],
     learningObjectives: [] as LearningObjective[],
     status: "published" as DropletStatus,
-    droplet_lessons: [] as DropletLesson[],
     focusArea: "personal" as FocusArea,
     isHidden: false,
   }));

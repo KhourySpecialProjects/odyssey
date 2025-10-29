@@ -1,6 +1,6 @@
 "use client";
 import { cn } from "@/lib/utils";
-import { Droplet, DropletLesson } from "@/types";
+import { Droplet, Lesson } from "@/types";
 import { ArrowLeftIcon, ArrowRightIcon, LockIcon } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -20,7 +20,7 @@ export default function DropletFooter({
   enrollmentId,
   currentLessonId,
 }: {
-  droplet: Pick<Droplet, "slug" | "droplet_lessons">;
+  droplet: Pick<Droplet, "slug" | "lessons">;
   enrollmentId?: string;
   currentLessonId?: number;
 }) {
@@ -28,9 +28,9 @@ export default function DropletFooter({
   const [canProceed, setCanProceed] = useState(false);
 
   const handleNextClick = async () => {
-    if (enrollmentId && currentLessonId && droplet.droplet_lessons) {
-      const allDropletLessonIds = droplet.droplet_lessons.map(
-        (l) => l.lesson.id,
+    if (enrollmentId && currentLessonId && droplet.lessons) {
+      const allDropletLessonIds = droplet.lessons.map(
+        (l) => l.id,
       );
 
       await updateViewedLessons(
@@ -85,7 +85,7 @@ export default function DropletFooter({
     return () => observer.disconnect();
   }, [currentLessonId]);
 
-  if (!droplet.droplet_lessons || droplet.droplet_lessons.length === 0)
+  if (!droplet.lessons || droplet.lessons.length === 0)
     return null;
 
   let previous: PaginationProps | null = null;
@@ -96,8 +96,8 @@ export default function DropletFooter({
   if (pathSegments.length > 3) {
     const lessonSlug = pathname.split("/").at(-1);
     if (!lessonSlug) return null;
-    const lessonSlugs = droplet.droplet_lessons.map(
-      (l: DropletLesson) => l.lesson.slug,
+    const lessonSlugs = droplet.lessons.map(
+      (l: Lesson) => l.slug,
     );
     const currentLessonSlugIndex = lessonSlugs.indexOf(lessonSlug);
 
@@ -107,30 +107,30 @@ export default function DropletFooter({
         name: "Overview",
       };
     } else {
-      const prevLesson = droplet.droplet_lessons[currentLessonSlugIndex - 1];
+      const prevLesson = droplet.lessons[currentLessonSlugIndex - 1];
       previous = {
-        link: `/d/${droplet.slug}/${prevLesson.lesson.slug}`,
-        name: prevLesson.lesson.name,
+        link: `/d/${droplet.slug}/${prevLesson.slug}`,
+        name: prevLesson.name,
       };
     }
 
-    if (currentLessonSlugIndex === droplet.droplet_lessons.length - 1) {
+    if (currentLessonSlugIndex === droplet.lessons.length - 1) {
       next = {
         link: `/d/${droplet.slug}/recap`,
         name: "Recap",
       };
     } else {
-      const nextLesson = droplet.droplet_lessons[currentLessonSlugIndex + 1];
+      const nextLesson = droplet.lessons[currentLessonSlugIndex + 1];
       next = {
-        link: `/d/${droplet.slug}/${nextLesson.lesson.slug}`,
-        name: nextLesson.lesson.name,
+        link: `/d/${droplet.slug}/${nextLesson.slug}`,
+        name: nextLesson.name,
       };
     }
   } else {
-    const nextLesson = droplet.droplet_lessons[0];
+    const nextLesson = droplet.lessons[0];
     next = {
-      link: `/d/${droplet.slug}/${nextLesson.lesson.slug}`,
-      name: nextLesson.lesson.name,
+      link: `/d/${droplet.slug}/${nextLesson.slug}`,
+      name: nextLesson.name,
     };
   }
 

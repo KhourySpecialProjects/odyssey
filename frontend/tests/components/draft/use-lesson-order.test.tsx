@@ -1,10 +1,10 @@
 import { renderHook, act } from "@testing-library/react";
 import { useLessonOrder } from "@/components/draft/metadata/hooks/useLessonOrder";
-import { DropletLesson } from "@/types";
-import { updateDroplet } from "@/lib/requests/droplet";
+import { Lesson } from "@/types";
+import { updateLesson } from "@/lib/requests/lesson";
 
-jest.mock("@/lib/requests/droplet", () => ({
-  updateDroplet: jest.fn(),
+jest.mock('@/lib/requests/lesson', () => ({
+  updateLesson: jest.fn().mockResolvedValue({ ok: true }),
 }));
 
 describe("useLessonOrder", () => {
@@ -12,9 +12,9 @@ describe("useLessonOrder", () => {
     id: 1,
     name: "Test Lesson",
     slug: "test-lesson",
-    droplet_lessons: [],
     droplets: [],
     notes: [],
+    orderIndex: 1,
     blocks: [
       {
         id: 1,
@@ -68,39 +68,34 @@ describe("useLessonOrder", () => {
   };
   const mockDroplet = {
     id: 1,
-    droplet_lessons: [
-      { id: 1, orderIndex: 0, lesson: mockLesson },
-      { id: 2, orderIndex: 1, lesson: mockLesson },
-    ] as DropletLesson[],
+    lessons: [
+      { id: 1, orderIndex: 0 },
+      { id: 2, orderIndex: 1 },
+    ] as Lesson[],
   };
 
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  it("should initialize with droplet lessons", () => {
-    const { result } = renderHook(() => useLessonOrder(mockDroplet));
-    expect(result.current.dropletLessons).toEqual(mockDroplet.droplet_lessons);
-  });
-
   it("should handle lesson reordering", async () => {
-    (updateDroplet as jest.Mock).mockResolvedValue({ ok: true });
+    (updateLesson as jest.Mock).mockResolvedValue({ ok: true });
 
     const { result } = renderHook(() => useLessonOrder(mockDroplet));
 
     const newOrder = [
-      { id: 2, orderIndex: 0, lesson: mockLesson },
-      { id: 1, orderIndex: 1, lesson: mockLesson },
+      { ...mockLesson, id: 2, orderIndex: 0 },
+      { ...mockLesson, id: 1, orderIndex: 1 },
     ];
 
     await act(async () => {
       result.current.handleLessonReorder(newOrder);
     });
 
-    expect(updateDroplet).toHaveBeenCalledWith(
+    expect(updateLesson).toHaveBeenCalledWith(
       1,
       {
-        droplet_lessons: newOrder.map((dl, index) => ({
+        lessons: newOrder.map((dl, index) => ({
           id: dl.id,
           orderIndex: index,
         })),
@@ -110,7 +105,7 @@ describe("useLessonOrder", () => {
   });
 
   it("should handle update error", async () => {
-    (updateDroplet as jest.Mock).mockResolvedValue({
+    (updateLesson as jest.Mock).mockResolvedValue({
       ok: false,
       error: "Error",
     });
@@ -120,13 +115,12 @@ describe("useLessonOrder", () => {
 
     await act(async () => {
       result.current.handleLessonReorder([
-        { id: 2, orderIndex: 0, lesson: mockLesson },
-        { id: 1, orderIndex: 1, lesson: mockLesson },
+        { ...mockLesson, id: 2, orderIndex: 0 },
+        { ...mockLesson, id: 1, orderIndex: 1 },
       ]);
     });
 
     expect(consoleSpy).toHaveBeenCalled();
-    expect(result.current.dropletLessons).toEqual(mockDroplet.droplet_lessons);
 
     consoleSpy.mockRestore();
   });
@@ -135,44 +129,44 @@ describe("useLessonOrder", () => {
     const { result } = renderHook(() => useLessonOrder(mockDroplet));
 
     const newOrder = [
-      { id: 1, orderIndex: 1, lesson: mockLesson },
-      { id: 2, orderIndex: 0, lesson: mockLesson },
+      { ...mockLesson, id: 1, orderIndex: 1 },
+      { ...mockLesson, id: 2, orderIndex: 0 },
     ];
 
     act(() => {
       result.current.handleLessonReorder(newOrder);
     });
 
-    expect(updateDroplet).toHaveBeenCalled();
+    expect(updateLesson).toHaveBeenCalled();
   });
 
-  jest.mock("@/lib/requests/droplet", () => ({
-    updateDroplet: jest.fn(),
+  jest.mock("@/lib/requests/lesson", () => ({
+    updateLesson: jest.fn(),
   }));
 
   test("processes multiple queue items sequentially", async () => {
-    (updateDroplet as jest.Mock).mockResolvedValue({ ok: true });
+    (updateLesson as jest.Mock).mockResolvedValue({ ok: true });
 
     const { result } = renderHook(() => useLessonOrder(mockDroplet));
 
     await act(async () => {
       result.current.handleLessonReorder([
-        { id: 2, orderIndex: 0, lesson: mockLesson },
-        { id: 1, orderIndex: 1, lesson: mockLesson },
+        { ...mockLesson, id: 2, orderIndex: 0 },
+        { ...mockLesson, id: 1, orderIndex: 1 },
       ]);
     });
 
     await act(async () => {
       result.current.handleLessonReorder([
-        { id: 1, orderIndex: 0, lesson: mockLesson },
-        { id: 2, orderIndex: 1, lesson: mockLesson },
+        { ...mockLesson, id: 1, orderIndex: 0 },
+        { ...mockLesson, id: 2, orderIndex: 1 },
       ]);
     });
 
-    expect(updateDroplet).toHaveBeenLastCalledWith(
+    expect(updateLesson).toHaveBeenLastCalledWith(
       1,
       {
-        droplet_lessons: [
+        lessons: [
           { id: 1, orderIndex: 0 },
           { id: 2, orderIndex: 1 },
         ],

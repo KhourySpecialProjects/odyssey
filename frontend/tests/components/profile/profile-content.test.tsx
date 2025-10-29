@@ -65,7 +65,6 @@ describe("ProfileContent - Additional Coverage", () => {
         type: "knowledge",
         focusArea: "technical",
         learningObjectives: [],
-        droplet_lessons: [],
       },
     ],
   };
@@ -85,7 +84,6 @@ describe("ProfileContent - Additional Coverage", () => {
         type: "skill",
         focusArea: "personal",
         learningObjectives: [],
-        droplet_lessons: [],
         lessons: [],
       },
       viewedLessons: [],
@@ -148,6 +146,7 @@ describe("ProfileContent - Additional Coverage", () => {
           announcements={mockAnnouncements}
           currentUserCompletedIds={[]}
           isViewingOwnProfile={false}
+          currentUser={mockUserData}
         />,
       );
 
@@ -163,6 +162,7 @@ describe("ProfileContent - Additional Coverage", () => {
           announcements={mockAnnouncements}
           currentUserCompletedIds={[]}
           isViewingOwnProfile={false}
+          currentUser={mockUserData}
         />,
       );
 
@@ -187,6 +187,7 @@ describe("ProfileContent - Additional Coverage", () => {
           announcements={mockAnnouncements}
           currentUserCompletedIds={[]}
           isViewingOwnProfile={false}
+          currentUser={mockUserData}
         />,
       );
 
@@ -206,6 +207,7 @@ describe("ProfileContent - Additional Coverage", () => {
           announcements={mockAnnouncements}
           currentUserCompletedIds={[]}
           isViewingOwnProfile={false}
+          currentUser={mockUserData}
         />,
       );
 
@@ -223,6 +225,7 @@ describe("ProfileContent - Additional Coverage", () => {
           announcements={mockAnnouncements}
           currentUserCompletedIds={[]}
           isViewingOwnProfile={false}
+          currentUser={mockUserData}
         />,
       );
 
@@ -242,6 +245,7 @@ describe("ProfileContent - Additional Coverage", () => {
           announcements={mockAnnouncements}
           currentUserCompletedIds={[]}
           isViewingOwnProfile={false}
+          currentUser={mockUserData}
         />,
       );
 
@@ -264,6 +268,7 @@ describe("ProfileContent - Additional Coverage", () => {
           announcements={mockAnnouncements}
           currentUserCompletedIds={[]}
           isViewingOwnProfile={false}
+          currentUser={userWithFullUrls}
         />,
       );
 
@@ -292,6 +297,7 @@ describe("ProfileContent - Additional Coverage", () => {
           announcements={mockAnnouncements}
           currentUserCompletedIds={[]}
           isViewingOwnProfile={false}
+          currentUser={userWithoutSocial}
         />,
       );
 
@@ -314,6 +320,7 @@ describe("ProfileContent - Additional Coverage", () => {
           announcements={mockAnnouncements}
           currentUserCompletedIds={[]}
           isViewingOwnProfile={false}
+          currentUser={mockUserData}
         />,
       );
 
@@ -342,6 +349,7 @@ describe("ProfileContent - Additional Coverage", () => {
           announcements={mockAnnouncements}
           currentUserCompletedIds={[]}
           isViewingOwnProfile={false}
+          currentUser={mockUserData}
         />,
       );
 
@@ -367,6 +375,7 @@ describe("ProfileContent - Additional Coverage", () => {
           announcements={mockAnnouncements}
           currentUserCompletedIds={[]}
           isViewingOwnProfile={false}
+          currentUser={mockUserData}
         />,
       );
 
@@ -386,6 +395,7 @@ describe("ProfileContent - Additional Coverage", () => {
           announcements={mockAnnouncements}
           currentUserCompletedIds={[]}
           isViewingOwnProfile={false}
+          currentUser={mockUserData}
         />,
       );
 
@@ -406,6 +416,7 @@ describe("ProfileContent - Additional Coverage", () => {
             announcements={mockAnnouncements}
             currentUserCompletedIds={[]}
             isViewingOwnProfile={false}
+            currentUser={mockUserData}
           />,
         );
 
@@ -431,6 +442,7 @@ describe("ProfileContent - Additional Coverage", () => {
             announcements={announcementWithInvalidDate}
             currentUserCompletedIds={[]}
             isViewingOwnProfile={false}
+            currentUser={mockUserData}
           />,
         );
 
@@ -456,6 +468,7 @@ describe("ProfileContent - Additional Coverage", () => {
             announcements={announcementWithUndefinedDate}
             currentUserCompletedIds={[]}
             isViewingOwnProfile={false}
+            currentUser={mockUserData}
           />,
         );
 
@@ -473,6 +486,7 @@ describe("ProfileContent - Additional Coverage", () => {
             announcements={mockAnnouncements}
             currentUserCompletedIds={[]}
             isViewingOwnProfile={false}
+            currentUser={mockUserData}
           />,
         );
 
@@ -513,7 +527,6 @@ describe("ProfileContent - Additional Coverage", () => {
               type: "skill",
               focusArea: "personal",
               learningObjectives: [],
-              droplet_lessons: [],
               lessons: [],
             },
             viewedLessons: [],
@@ -534,6 +547,7 @@ describe("ProfileContent - Additional Coverage", () => {
             announcements={mockAnnouncements}
             currentUserCompletedIds={[]}
             isViewingOwnProfile={false}
+            currentUser={mockUserData}
           />,
         );
 
@@ -559,8 +573,7 @@ describe("ProfileContent - Additional Coverage", () => {
               type: "knowledge" as const,
               focusArea: "technical" as const,
               learningObjectives: [],
-              droplet_lessons: [],
-              lessons: [], // Add this if it's required
+              lessons: [],
             },
           ],
         };
@@ -573,6 +586,7 @@ describe("ProfileContent - Additional Coverage", () => {
             announcements={mockAnnouncements}
             currentUserCompletedIds={[]}
             isViewingOwnProfile={false}
+            currentUser={userWithMultipleDroplets}
           />,
         );
 
@@ -600,7 +614,6 @@ describe("ProfileContent - Additional Coverage", () => {
                 type: "skill",
                 focusArea: "personal",
                 learningObjectives: [],
-                droplet_lessons: [],
                 lessons: [],
               },
               viewedLessons: [],
@@ -621,6 +634,7 @@ describe("ProfileContent - Additional Coverage", () => {
               announcements={mockAnnouncements}
               currentUserCompletedIds={[]}
               isViewingOwnProfile={false}
+              currentUser={mockUserData}
             />,
           );
 
@@ -643,6 +657,7 @@ describe("ProfileContent - Additional Coverage", () => {
               announcements={mockAnnouncements}
               currentUserCompletedIds={[]}
               isViewingOwnProfile={false}
+              currentUser={mockUserData}
             />,
           );
 
@@ -672,7 +687,6 @@ describe("ProfileContent - Additional Coverage", () => {
                   type: "skill",
                   focusArea: "personal",
                   learningObjectives: [],
-                  droplet_lessons: [],
                   lessons: [],
                 },
                 viewedLessons: [],
@@ -693,6 +707,7 @@ describe("ProfileContent - Additional Coverage", () => {
                 announcements={mockAnnouncements}
                 currentUserCompletedIds={[]}
                 isViewingOwnProfile={false}
+                currentUser={mockUserData}
               />,
             );
 
@@ -721,6 +736,7 @@ describe("ProfileContent - Additional Coverage", () => {
                 announcements={unknownTypeAnnouncement}
                 currentUserCompletedIds={[]}
                 isViewingOwnProfile={false}
+                currentUser={mockUserData}
               />,
             );
 
@@ -752,6 +768,7 @@ describe("ProfileContent - Additional Coverage", () => {
                 announcements={mockAnnouncements}
                 currentUserCompletedIds={[]}
                 isViewingOwnProfile={false}
+                currentUser={dropletWithoutRating}
               />,
             );
 
@@ -778,6 +795,7 @@ describe("ProfileContent - Additional Coverage", () => {
                 announcements={mockAnnouncements}
                 currentUserCompletedIds={[]}
                 isViewingOwnProfile={false}
+                currentUser={mockUserData}
               />,
             );
 

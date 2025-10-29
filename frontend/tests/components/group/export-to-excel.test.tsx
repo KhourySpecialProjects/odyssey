@@ -44,6 +44,7 @@ const mockAuthUser1: AuthorizedUser = {
   blocked: [],
   was_blocked: [],
   timeZone: "America/New_York",
+  isPublic: true
 };
 
 const mockAuthUser2: AuthorizedUser = {
@@ -64,6 +65,7 @@ const mockAuthUser2: AuthorizedUser = {
   blocked: [],
   was_blocked: [],
   timeZone: "America/New_York",
+  isPublic: true
 };
 
 const mockAuthUser3: AuthorizedUser = {
@@ -84,6 +86,7 @@ const mockAuthUser3: AuthorizedUser = {
   blocked: [],
   was_blocked: [],
   timeZone: "America/New_York",
+  isPublic: true
 };
 
 const mockLesson1: Lesson = {
@@ -92,8 +95,8 @@ const mockLesson1: Lesson = {
   slug: "lesson-1",
   blocks: [],
   droplets: [],
-  droplet_lessons: [],
   notes: [],
+  orderIndex: 0
 };
 
 const mockLesson2: Lesson = {
@@ -102,8 +105,8 @@ const mockLesson2: Lesson = {
   slug: "lesson-2",
   blocks: [],
   droplets: [],
-  droplet_lessons: [],
   notes: [],
+  orderIndex: 1
 };
 
 const mockDroplet1: Droplet = {
@@ -116,7 +119,6 @@ const mockDroplet1: Droplet = {
   tags: [{ id: 1, name: "React" }] as Tag[],
   learningObjectives: [],
   status: "published" as DropletStatus,
-  droplet_lessons: [],
   lessons: [mockLesson1, mockLesson2],
 };
 
@@ -130,7 +132,6 @@ const mockDroplet2: Droplet = {
   tags: [{ id: 2, name: "TypeScript" }] as Tag[],
   learningObjectives: [],
   status: "published" as DropletStatus,
-  droplet_lessons: [],
   lessons: [mockLesson1],
 };
 

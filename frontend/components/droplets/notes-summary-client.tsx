@@ -95,7 +95,7 @@ export function NotesSummaryClient({
           allNotes={allNotes[index]}
           dropletHighlights={dropletHighlights}
           dropletNotes={dropletNotes}
-          mappedLessons={enrollment.droplet.droplet_lessons}
+          mappedLessons={enrollment.droplet.lessons || []}
         />
       )}
     </Card>

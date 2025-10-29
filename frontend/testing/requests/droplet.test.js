@@ -262,32 +262,6 @@ describe("Droplet API Functions", () => {
   });
 
   describe("updateDroplet", () => {
-    it("handles droplet_lessons updates", async () => {
-      global.fetch.mockResolvedValueOnce({ ok: true }).mockResolvedValueOnce({
-        ok: true,
-        json: () => Promise.resolve({ data: { id: 1 } }),
-      });
-
-      const updateData = {
-        droplet_lessons: [
-          { id: 1, orderIndex: 1 },
-          { id: 2, orderIndex: 2 },
-        ],
-      };
-
-      const result = await updateDroplet(123, updateData);
-
-      expect(global.fetch).toHaveBeenCalledWith(
-        expect.stringMatching("/api/droplet-lessons/1"),
-        expect.objectContaining({
-          method: "PUT",
-          body: JSON.stringify({
-            data: { orderIndex: 1 },
-          }),
-        }),
-      );
-      expect(result).toEqual({ ok: true, error: null, data: { id: 1 } });
-    });
 
     it("handles update failure", async () => {
       global.fetch.mockResolvedValueOnce({
@@ -305,21 +279,6 @@ describe("Droplet API Functions", () => {
       expect(result).toEqual({
         ok: false,
         error: "Validation failed (name)",
-        data: null,
-      });
-    });
-
-    it("handles droplet_lessons update failure", async () => {
-      global.fetch.mockResolvedValueOnce({ ok: false }); // droplet_lessons update fails
-
-      const updateData = {
-        droplet_lessons: [{ id: 1, orderIndex: 1 }],
-      };
-
-      const result = await updateDroplet(123, updateData);
-      expect(result).toEqual({
-        ok: false,
-        error: "Failed to update droplet lessons order",
         data: null,
       });
     });

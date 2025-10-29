@@ -163,7 +163,7 @@ export async function NoteSummary({
 
   const lessonNotes = notes.reduce(
     (acc, note) => {
-      const lessonId = note.lesson?.droplet_lessons[0].id;
+      const lessonId = note.lesson?.id;
       if (lessonId) {
         if (!acc[lessonId]) {
           acc[lessonId] = {
@@ -187,7 +187,7 @@ export async function NoteSummary({
   );
 
   const lessonHighlights = filteredHighlights.reduce((acc, highlight) => {
-    const lessonId = highlight.lesson?.droplet_lessons[0].id;
+    const lessonId = highlight.lesson?.id;
     if (lessonId) {
       if (!acc[lessonId]) {
         acc[lessonId] = {

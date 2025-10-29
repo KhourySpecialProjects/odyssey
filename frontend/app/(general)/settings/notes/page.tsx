@@ -30,13 +30,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       lessons: {
         fields: ["id", "name", "slug"],
       },
-      droplet_lessons: {
-        populate: {
-          lesson: {
-            fields: ["id", "name", "slug"],
-          },
-        },
-      },
     },
   });
 
@@ -72,17 +65,6 @@ export default async function DropletRecapRoute({ params }: Props) {
       populate: {
         viewedLessons: {
           fields: ["id", "name", "slug"],
-        },
-        droplet: {
-          populate: {
-            droplet_lessons: {
-              populate: {
-                lesson: {
-                  fields: ["id", "name", "slug"],
-                },
-              },
-            },
-          },
         },
       },
     });

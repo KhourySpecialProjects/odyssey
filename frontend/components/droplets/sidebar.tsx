@@ -31,7 +31,7 @@ export default function Sidebar({
 }: {
   user?: User | null;
   author: boolean;
-  droplet: Pick<Droplet, "name" | "slug" | "droplet_lessons">;
+  droplet: Pick<Droplet, "name" | "slug" | "lessons">;
   completedLessonIds: number[];
   enrollmentId?: string | undefined;
 }) {
@@ -46,10 +46,10 @@ export default function Sidebar({
   const inactiveLinkClasses =
     "w-full flex items-center p-2 rounded-lg text-slate-900 dark:text-white hover:bg-slate-100 dark:hover:bg-slate-700 group transition-colors";
 
-  const totalLessons = droplet.droplet_lessons?.length ?? 0;
+  const totalLessons = droplet.lessons?.length ?? 0;
 
   const totalLessonsCompleted = completedLessonIds.filter((id) =>
-    droplet.droplet_lessons?.some((lesson) => lesson.lesson.id === id),
+    droplet.lessons?.some((lesson) => lesson.id === id),
   ).length;
 
   const dropletProgress = Math.round(
@@ -161,13 +161,12 @@ export default function Sidebar({
                 </Link>
               </li>
 
-              {droplet.droplet_lessons
+              {(droplet.lessons || [])
                 .sort((a, b) => a.orderIndex - b.orderIndex)
-                .map((dropletLesson, index) => {
-                  const lesson = dropletLesson.lesson;
+                .map((lesson, index) => {
                   const previousLesson =
                     index > 0
-                      ? droplet.droplet_lessons[index - 1].lesson
+                      ? (droplet.lessons || [])[index - 1]
                       : null;
 
                   // Check sequential unlock separately from enrollment

@@ -59,7 +59,6 @@ export function AddLesson({
         slug: response.data.attributes.slug,
         type: response.data.attributes.type || "general",
         blocks: [],
-        droplet_lessons: [],
         droplets: [
           {
             id: droplet.id,
@@ -70,10 +69,10 @@ export function AddLesson({
             learningObjectives: [],
             isHidden: false,
             status: "draft",
-            droplet_lessons: [],
           },
         ],
         notes: [],
+        orderIndex: response.data.orderIndex
       };
 
       onAddLesson(newLesson);
