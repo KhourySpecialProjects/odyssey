@@ -28,10 +28,14 @@ export function EnrollButton({ droplet, isEnrolled }: EnrollButtonProps) {
       try {
         startTransition(async () => {
           // is there NOT already an enrollment created for the user with this droplet?
-          if (!droplet.authorized_users?.some(
-            (user) => user.enrollments?.some(
-              (enrollment: Enrollment) => enrollment.droplet.id === droplet.id)
-            )) {
+          if (
+            !droplet.authorized_users?.some((user) =>
+              user.enrollments?.some(
+                (enrollment: Enrollment) =>
+                  enrollment.droplet.id === droplet.id,
+              ),
+            )
+          ) {
             const enrollment = await createEnrollment(droplet, []);
             if (enrollment && enrollment.ok) {
               toast.success(`You are now enrolled in ${droplet.name}!`);
@@ -42,7 +46,8 @@ export function EnrollButton({ droplet, isEnrolled }: EnrollButtonProps) {
               }
             } else {
               toast.error("Uh oh! Something went wrong.");
-            }}
+            }
+          }
         });
       } catch {
         toast.error("Failed to enroll in the course");
