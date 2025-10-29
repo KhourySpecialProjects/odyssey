@@ -35,7 +35,6 @@ export function DraggableBlockListClient({
             key={`${block.__component}-${index}-${blocks.length}`}
             className="flex w-full flex-col items-center justify-center"
           >
-            <AddBlock add={addBlock(index)} />
             <DraggableBlockTile
               block={block}
               index={index}
@@ -45,7 +44,6 @@ export function DraggableBlockListClient({
             />
           </div>
         ))}
-        <AddBlock add={addBlock(blocks.length + 1)} />
       </div>
     </>
   );
