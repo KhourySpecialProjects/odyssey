@@ -29,8 +29,8 @@ export function EnrollButton({ droplet, isEnrolled }: EnrollButtonProps) {
         startTransition(async () => {
           // is there NOT already an enrollment created for the user with this droplet?
           if (!droplet.authorized_users?.some(
-            (user) => user.enrollments.some(
-              (enrollment: Enrollment) => enrollment.droplet === droplet)
+            (user) => user.enrollments?.some(
+              (enrollment: Enrollment) => enrollment.droplet.id === droplet.id)
             )) {
             const enrollment = await createEnrollment(droplet, []);
             if (enrollment && enrollment.ok) {
