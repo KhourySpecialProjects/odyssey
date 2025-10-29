@@ -28,7 +28,7 @@
     "save:academicAdmin": "cd e2e/academicAdmin && npx playwright codegen https://dev.khouryodyssey.org/ --save-storage=auth.json",
     "save:contentCreator": "cd e2e/contentCreator && npx playwright codegen https://dev.khouryodyssey.org/ --save-storage=auth.json",
     "save:contentEditor": "cd e2e/contentEditor && npx playwright codegen https://dev.khouryodyssey.org/ --save-storage=auth.json",
-    "save:faculty": "cd e2e/cd faculty && npx playwright codegen https://dev.khouryodyssey.org/ --save-storage=auth.json",
+    "save:faculty": "cd e2e/faculty && npx playwright codegen https://dev.khouryodyssey.org/ --save-storage=auth.json",
     "load:user": "cd e2e/user && npx playwright codegen https://dev.khouryodyssey.org/explore --load-storage=auth.json",
     "load:websiteCreator": "cd e2e/websiteCreator && npx playwright codegen https://dev.khouryodyssey.org/explore --load-storage=auth.json",
     "load:systemAdmin": "cd e2e/systemAdmin && npx playwright codegen https://dev.khouryodyssey.org/explore --load-storage=auth.json",
