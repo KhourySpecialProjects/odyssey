@@ -3,22 +3,27 @@
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Button } from "../ui/button";
 
+interface FilterSelectorProps {
+  droplets: number;
+  playlists: number;
+  groups: number;
+  archived: number;
+  favorited: number;
+}
+
 export function FilterSelector({
   droplets,
   playlists,
   groups,
   archived,
-}: {
-  droplets: number;
-  playlists: number;
-  groups: number;
-  archived: number;
-}) {
+  favorited,
+}: FilterSelectorProps) {
   const contentTypes = [
     { name: `Droplets (${droplets})`, value: "droplets" },
     { name: `Playlists (${playlists})`, value: "playlists" },
     { name: `Groups (${groups})`, value: "groups" },
     { name: `Archived (${archived})`, value: "archived" },
+    { name: `Favorited (${favorited})`, value: "favorited" },
   ];
   const router = useRouter();
   const pathname = usePathname();

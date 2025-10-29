@@ -1,34 +1,40 @@
 "use client";
 
-import { useMemo, useState, useEffect } from "react";
-import { Droplet, DueDate } from "@/types";
+import { useEffect, useMemo, useState } from "react";
+import { AuthorizedUser, Droplet, DueDate } from "@/types";
 import { DropletTile } from "../droplets/droplet-tile";
 import { PageNav } from "../ui/page-nav";
 import { useSearch } from "@/contexts/SearchContext";
 
 const ITEMS_PER_PAGE = 9;
 
-export function EnrolledDropletsGridClient({
-  dropletsWithCompletion,
-  completedLessonIds,
-  isArchived,
-  dueDates,
-  sortKey,
-  ratingsMap,
-  tags,
-  type,
-  focusArea,
-}: {
+interface EnrolledDropletsGridClientProps {
   dropletsWithCompletion: Array<Droplet & { completionPercentage: number }>;
   completedLessonIds: number[];
-  isArchived: boolean;
+  isArchived?: boolean;
+  isFavorited?: boolean;
   dueDates?: DueDate[];
   sortKey?: string;
   ratingsMap: Map<number, number>;
   tags?: string[] | string;
   type?: string | string[];
   focusArea?: string | string[];
-}) {
+  currentUser?: AuthorizedUser;
+}
+
+export function EnrolledDropletsGridClient({
+  dropletsWithCompletion,
+  completedLessonIds,
+  isArchived,
+  isFavorited,
+  dueDates,
+  sortKey,
+  ratingsMap,
+  tags,
+  type,
+  focusArea,
+  currentUser,
+}: EnrolledDropletsGridClientProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const { searchQuery } = useSearch();
 
@@ -154,6 +160,13 @@ export function EnrolledDropletsGridClient({
             isEnrolled={true}
             completedLessonIds={completedLessonIds}
             isArchived={isArchived}
+            isFavorited={
+              isFavorited !== undefined
+                ? isFavorited
+                : droplet.usersFavorited?.some(
+                    (user) => user.id === currentUser?.id,
+                  )
+            }
             dueDate={
               dueDates?.find((dueDate) => dueDate.droplet?.id === droplet.id)
                 ?.dueDate || ""
