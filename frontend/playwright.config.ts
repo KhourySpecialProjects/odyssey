@@ -23,7 +23,7 @@ export default defineConfig({
 
   /* Opt out of parallel tests on CI. */
   // becareful with CPU usage and increasing the number of workers to be used
-  workers: process.env.CI ? '80%' : undefined,
+  workers: process.env.CI ? "80%" : undefined,
 
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   // need the JSON part to run tests across multple data combos
