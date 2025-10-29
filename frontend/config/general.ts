@@ -33,13 +33,13 @@ export const getMainNav = (user: User) => {
     },
     {
       href: "/my-content",
-      label: "My Content",
+      label: "Create",
       isHidden:
         !isContentCreator(user.roles) && !isAuthorizedUserAdmin(user.roles),
     },
     {
       href: "/review",
-      label: "To Review",
+      label: "Review",
       isHidden:
         !isContentEditor(user.roles) && !isAuthorizedUserAdmin(user.roles),
     },
