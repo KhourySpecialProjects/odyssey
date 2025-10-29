@@ -1,6 +1,9 @@
 import { Metadata } from "next";
 import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
-import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
+import {
+  getEnrollmentsByAuthorizedUser,
+  updateCompletionDate,
+} from "@/lib/requests/enrollment";
 import { getDropletBySlug } from "@/lib/requests/droplet";
 import { getLessonBySlug } from "@/lib/requests/lesson";
 import { getServerSession } from "next-auth";
@@ -58,6 +61,9 @@ export default async function Page({ params }: Props) {
       enrollmentId = enrollment.id;
       completedLessonIds =
         enrollment.viewedLessons?.map((l: { id: number }) => l.id) || [];
+      if (completedLessonIds.length === enrollment.droplet.lessons?.length) {
+        await updateCompletionDate(enrollment.id);
+      }
     }
   }
 

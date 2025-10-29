@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { createEnrollment, deleteEnrollment } from "@/lib/requests/enrollment";
 import { DropletEnrollmentSchema } from "@/lib/validations/enrollment";
-import { Droplet } from "@/types";
+import { Droplet, Enrollment } from "@/types";
 import { ArrowRightIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
@@ -27,16 +27,26 @@ export function EnrollButton({ droplet, isEnrolled }: EnrollButtonProps) {
     if (droplet.lessons && droplet.lessons.length > 0) {
       try {
         startTransition(async () => {
-          const enrollment = await createEnrollment(droplet, []);
-          if (enrollment && enrollment.ok) {
-            toast.success(`You are now enrolled in ${droplet.name}!`);
-            if (droplet.lessons) {
-              router.push(
-                `/d/${droplet.slug}/${droplet.droplet_lessons[0].lesson.slug}`,
-              );
+          // is there NOT already an enrollment created for the user with this droplet?
+          if (
+            !droplet.authorized_users?.some((user) =>
+              user.enrollments?.some(
+                (enrollment: Enrollment) =>
+                  enrollment.droplet.id === droplet.id,
+              ),
+            )
+          ) {
+            const enrollment = await createEnrollment(droplet, []);
+            if (enrollment && enrollment.ok) {
+              toast.success(`You are now enrolled in ${droplet.name}!`);
+              if (droplet.lessons) {
+                router.push(
+                  `/d/${droplet.slug}/${droplet.droplet_lessons[0].lesson.slug}`,
+                );
+              }
+            } else {
+              toast.error("Uh oh! Something went wrong.");
             }
-          } else {
-            toast.error("Uh oh! Something went wrong.");
           }
         });
       } catch {
