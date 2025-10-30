@@ -17,6 +17,7 @@ import { getDropletBySlug } from "@/lib/requests/droplet";
 import { Block } from "./add-block";
 import { toast } from "sonner";
 import { deleteLesson, updateLesson } from "@/lib/requests/lesson";
+import AddLessonBlock from "./add-tools";
 
 export interface BaseBlock {
   __component: string;
@@ -179,6 +180,74 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
     [blocks, updateBlocksBackendReload],
   );
 
+  // Add this new handler for the FAB
+  const handleAddBlockFromFAB = useCallback(
+    (blockType: string, calloutType?: string) => {
+      let newBlock: Block;
+      
+      switch (blockType) {
+        case 'Text':
+          newBlock = {
+            __component: "droplets.text",
+            content: "<p>Enter your text here...</p>",
+          };
+          break;
+        case 'Expandable':
+          newBlock = {
+            __component: "droplets.expandable",
+            title: "Expandable Title",
+            content: "<p>Expandable content...</p>",
+          };
+          break;
+        case 'Callout Block':
+          newBlock = {
+            __component: "droplets.callout",
+            type: calloutType?.toLowerCase() || "default",
+            content: "<p>Callout content...</p>",
+          };
+          break;
+        case 'Video':
+          newBlock = {
+            __component: "droplets.video",
+            url: "",
+            content: "",
+          };
+          break;
+        case 'Multiple Choice Quiz':
+          newBlock = {
+            __component: "droplets.quiz",
+            questions: [],
+            color: "#3b82f6",
+            content: "",
+          } as QuizBlock;
+          break;
+        case 'Open Ended Quiz':
+          newBlock = {
+            __component: "droplets.open-ended-quiz",
+            questions: [],
+            content: "",
+          } as OpenEndedQuizBlock;
+          break;
+        case 'True/False Quiz':
+          newBlock = {
+            __component: "droplets.true-false-quiz",
+            questions: [],
+            content: "",
+          };
+          break;
+        default:
+          return;
+      }
+      
+      // Add the block at the end of the list
+      const updatedBlocks = [...blocks, newBlock];
+      setBlocks(updatedBlocks);
+      updateBlocksBackendReload(updatedBlocks);
+      toast.success(`${blockType} block added!`);
+    },
+    [blocks, updateBlocksBackendReload],
+  );
+
   useEffect(() => {
     debounceUpdate(blocks);
     return () => {
@@ -274,6 +343,9 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
           </div>
         </DndProvider>
       </div>
+
+      {/* Add the floating action button */}
+      <AddLessonBlock onAddBlock={handleAddBlockFromFAB} />
     </>
   );
 }
