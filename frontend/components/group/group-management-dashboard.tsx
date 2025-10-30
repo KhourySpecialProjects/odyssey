@@ -57,133 +57,154 @@ export function GroupDashboard({
   const router = useRouter();
 
   const tabParam = searchParams.get("tab");
-  const defaultIndex = tabNames.indexOf(tabParam || "droplets");
-  const [selectedIndex, setSelectedIndex] = useState(
-    defaultIndex >= 0 ? defaultIndex : 0,
-  );
+  
+  // Calculate selected index directly from URL
+  const selectedIndex = (() => {
+    const index = tabNames.indexOf(tabParam || "droplets");
+    return index >= 0 ? index : 0;
+  })();
 
   const handleTabSelect = (index: number) => {
-    setSelectedIndex(index);
     const tabName = tabNames[index];
-
     const params = new URLSearchParams(searchParams.toString());
     params.set("tab", tabName);
     router.replace(`?${params.toString()}`);
   };
 
+  // Track which tabs have been visited
+  const [visitedTabs, setVisitedTabs] = useState<Set<number>>(
+    new Set([selectedIndex])
+  );
+
+  const handleTabSelectWithTracking = (index: number) => {
+    setVisitedTabs((prev) => new Set(prev).add(index));
+    handleTabSelect(index);
+  };
+
   return (
-    <Tabs
-      title=""
-      forceRenderTabPanel
-      onSelect={handleTabSelect}
-      selectedIndex={selectedIndex}
-    >
-      <TabList className="flex border-b">
-        <Tab className={tabStyle}>Droplets</Tab>
-        <Tab className={tabStyle}>Playlists</Tab>
-        {(canEdit || isAdmin) && <Tab className={tabStyle}>Progress</Tab>}
-      </TabList>
-      <TabPanel>
-        <ContentSection
-          title=""
-          emptyMessage="No droplets have been added to this group yet."
-        >
-          {group.droplets && group.droplets.length > 0 ? (
-            <div className="flex flex-col gap-4">
-              <div className="grid auto-rows-fr grid-cols-1 gap-4 sm:grid-cols-2">
-                {paginatedDroplets?.map((droplet) => (
-                  <div key={droplet.id} className="h-full w-full">
-                    <GroupDropletTile
-                      key={droplet.id}
-                      droplet={droplet}
-                      dueDate={
-                        dueDates?.find(
-                          (dueDate) => dueDate.droplet?.id === droplet.id,
-                        )?.dueDate || ""
-                      }
-                      authUser={authUser}
-                    />
-                  </div>
-                ))}
-              </div>
-              <div className="flex justify-end gap-2">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={handlePrevPage}
-                  disabled={currentPage === 0}
-                  className={`${currentPage === 0 ? "visibility: hidden" : "visibility: visible"} dark:bg-slate-300 dark:text-black`}
-                >
-                  Previous
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={handleNextPage}
-                  disabled={currentPage === totalPages - 1}
-                  className={`${currentPage === totalPages - 1 ? "visibility: hidden" : "visibility: visible"} dark:bg-slate-300 dark:text-black`}
-                >
-                  Next
-                </Button>
-              </div>
-            </div>
-          ) : (
-            <div className="rounded-lg border border-dashed p-8 text-center text-slate-500 dark:border-slate-500 dark:text-slate-300">
-              No droplets have been added to this group yet.
-            </div>
-          )}
-        </ContentSection>
-      </TabPanel>
-      <TabPanel>
-        <ContentSection
-          title=""
-          emptyMessage="No playlists have been added to this group yet."
-        >
-          {group.playlists && group.playlists.length > 0 ? (
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              {group.playlists.map((playlist) => (
-                <PlaylistCard
-                  key={playlist.id}
-                  playlist={playlist}
-                  dueDate={
-                    dueDates?.find(
-                      (dueDate) => dueDate.playlist?.id === playlist.id,
-                    )?.dueDate || ""
-                  }
-                  timeZone={authUser.timeZone?.trim()}
-                />
-              ))}
-            </div>
-          ) : (
-            <div className="rounded-lg border border-dashed p-8 text-center text-slate-500 dark:border-slate-500 dark:text-slate-300">
-              No playlists have been added to this group yet.
-            </div>
-          )}
-        </ContentSection>
-      </TabPanel>
-      {(canEdit || isAdmin) && (
+    <>
+      <style jsx global>{`
+        .react-tabs__tab-panel {
+          display: none;
+        }
+        .react-tabs__tab-panel--selected {
+          display: block;
+        }
+      `}</style>
+      <Tabs
+        title=""
+        onSelect={handleTabSelectWithTracking}
+        selectedIndex={selectedIndex}
+      >
+        <TabList className="flex border-b">
+          <Tab className={tabStyle}>Droplets</Tab>
+          <Tab className={tabStyle}>Playlists</Tab>
+          {(canEdit || isAdmin) && <Tab className={tabStyle}>Progress</Tab>}
+        </TabList>
         <TabPanel>
           <ContentSection
             title=""
-            emptyMessage="No students are enrolled in any droplets or playlists."
+            emptyMessage="No droplets have been added to this group yet."
           >
-            {((group.droplets && group.droplets.length > 0) ||
-              (group.playlists && group.playlists.length > 0)) &&
-            group.members &&
-            group.members.length > 0 ? (
-              <div className="flex flex-row items-start overflow-x-auto">
-                <div className="" key={group.id}>
-                  <GroupProgressGrid group={group} statuses={statuses} />
+            {group.droplets && group.droplets.length > 0 ? (
+              <div className="flex flex-col gap-4">
+                <div className="grid auto-rows-fr grid-cols-1 gap-4 sm:grid-cols-2">
+                  {paginatedDroplets?.map((droplet) => (
+                    <div key={droplet.id} className="h-full w-full">
+                      <GroupDropletTile
+                        key={droplet.id}
+                        droplet={droplet}
+                        dueDate={
+                          dueDates?.find(
+                            (dueDate) => dueDate.droplet?.id === droplet.id,
+                          )?.dueDate || ""
+                        }
+                        authUser={authUser}
+                      />
+                    </div>
+                  ))}
+                </div>
+                <div className="flex justify-end gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={handlePrevPage}
+                    disabled={currentPage === 0}
+                    className={`${currentPage === 0 ? "visibility: hidden" : "visibility: visible"} dark:bg-slate-300 dark:text-black`}
+                  >
+                    Previous
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={handleNextPage}
+                    disabled={currentPage === totalPages - 1}
+                    className={`${currentPage === totalPages - 1 ? "visibility: hidden" : "visibility: visible"} dark:bg-slate-300 dark:text-black`}
+                  >
+                    Next
+                  </Button>
                 </div>
               </div>
             ) : (
               <div className="rounded-lg border border-dashed p-8 text-center text-slate-500 dark:border-slate-500 dark:text-slate-300">
-                No droplets or members have been added to this group yet.
+                No droplets have been added to this group yet.
               </div>
             )}
           </ContentSection>
         </TabPanel>
-      )}
-    </Tabs>
+        <TabPanel>
+          <ContentSection
+            title=""
+            emptyMessage="No playlists have been added to this group yet."
+          >
+            {group.playlists && group.playlists.length > 0 ? (
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                {group.playlists.map((playlist) => (
+                  <PlaylistCard
+                    key={playlist.id}
+                    playlist={playlist}
+                    dueDate={
+                      dueDates?.find(
+                        (dueDate) => dueDate.playlist?.id === playlist.id,
+                      )?.dueDate || ""
+                    }
+                    timeZone={authUser.timeZone?.trim()}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="rounded-lg border border-dashed p-8 text-center text-slate-500 dark:border-slate-500 dark:text-slate-300">
+                No playlists have been added to this group yet.
+              </div>
+            )}
+          </ContentSection>
+        </TabPanel>
+        {(canEdit || isAdmin) && (
+          <TabPanel>
+            {visitedTabs.has(2) ? (
+              <ContentSection
+                title=""
+                emptyMessage="No students are enrolled in any droplets or playlists."
+              >
+                {((group.droplets && group.droplets.length > 0) ||
+                  (group.playlists && group.playlists.length > 0)) &&
+                group.members &&
+                group.members.length > 0 ? (
+                  <div className="flex flex-row items-start overflow-x-auto">
+                    <div className="" key={group.id}>
+                      <GroupProgressGrid group={group} statuses={statuses} />
+                    </div>
+                  </div>
+                ) : (
+                  <div className="rounded-lg border border-dashed p-8 text-center text-slate-500 dark:border-slate-500 dark:text-slate-300">
+                    No droplets or members have been added to this group yet.
+                  </div>
+                )}
+              </ContentSection>
+            ) : null}
+          </TabPanel>
+        )}
+      </Tabs>
+    </>
   );
 }
