@@ -83,26 +83,6 @@ export default function AddLessonBlock({ onAddBlock }: AddLessonBlockProps) {
         })}
       </div>
 
-      <div className="mx-auto max-w-3xl p-10">
-        <h1 className="mb-6 text-4xl font-bold text-gray-900">Lesson Editor Demo</h1>
-        <p className="mb-6 text-gray-600">Click the floating button in the bottom-right corner to add blocks!</p>
-        <div className="mb-6 rounded-lg bg-gray-100 p-6">
-          <h2 className="mb-4 text-xl font-semibold text-gray-800">How to use:</h2>
-          <ul className="space-y-2 text-gray-700">
-            <li className="flex items-start"><span className="mr-2">•</span><span>Click the <strong>+ button</strong> to open the menu</span></li>
-            <li className="flex items-start"><span className="mr-2">•</span><span>Hover over any option to see its label</span></li>
-            <li className="flex items-start"><span className="mr-2">•</span><span>Click <strong>Callout Block</strong> to expand callout type options</span></li>
-            <li className="flex items-start"><span className="mr-2">•</span><span>Click any block type to "create" it (currently just logs to console)</span></li>
-          </ul>
-        </div>
-        <div className="space-y-4">
-          <div className="rounded-lg border-2 border-dashed border-gray-300 p-8 text-center text-gray-500">Sample lesson block would appear here</div>
-          <div className="rounded-lg border-2 border-dashed border-gray-300 p-8 text-center text-gray-500">Another sample lesson block</div>
-        </div>
-        <div className="mt-16 h-96"></div>
-        <p className="text-center text-sm text-gray-400">Scroll to see the floating button in action...</p>
-        <div className="h-96"></div>
-      </div>
     </>
   );
 }
