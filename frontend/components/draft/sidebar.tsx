@@ -113,6 +113,7 @@ export function Sidebar({
         ...l,
         orderIndex: i,
       }));
+      console.log("newLessons after reorder", newLessons); 
       handleLessonReorder(newLessons);
     }
   };
@@ -126,6 +127,7 @@ export function Sidebar({
       },
     ]);
   };
+  console.log("new lessons ", dropletLessons)
 
   const [mounted, setMounted] = useState(false);
   const router = useRouter();

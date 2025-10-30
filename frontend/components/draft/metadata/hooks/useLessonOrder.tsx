@@ -41,7 +41,7 @@ export function useLessonOrder(droplet: Pick<Droplet, "id" | "lessons">) {
       setIsProcessing(false);
       if (orderQueue.current.length > 0) processQueue();
     }
-  }, [isProcessing]);
+  }, [droplet.id, droplet.lessons, isProcessing]);
 
   const handleLessonReorder = useCallback(
     (newOrder: typeof dropletLessons) => {
