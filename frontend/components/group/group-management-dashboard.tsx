@@ -24,7 +24,14 @@ interface RenderGroupDashboardProps {
 }
 
 const tabStyle =
-  "px-4 py-2 cursor-pointer border-b-2 border-transparent focus:outline-none hover:border-gray-300";
+  "px-4 py-2 cursor-pointer border-b-2 transition-colors focus:outline-none";
+
+const getTabClassName = (isSelected: boolean) =>
+  `${tabStyle} ${
+    isSelected
+      ? "border-blue-500 text-blue-600 dark:border-blue-400 dark:text-blue-400"
+      : "border-transparent hover:border-gray-300 hover:text-gray-700 dark:hover:border-gray-600 dark:hover:text-gray-300"
+  }`;
 
 export function GroupDashboard({
   group,
@@ -93,10 +100,12 @@ export function GroupDashboard({
         }
       `}</style>
       <Tabs title="" onSelect={handleTabSelect} selectedIndex={selectedIndex}>
-        <TabList className="flex border-b">
-          <Tab className={tabStyle}>Droplets</Tab>
-          <Tab className={tabStyle}>Playlists</Tab>
-          {(canEdit || isAdmin) && <Tab className={tabStyle}>Progress</Tab>}
+        <TabList className="flex border-b border-gray-200 dark:border-gray-700">
+          <Tab className={getTabClassName(selectedIndex === 0)}>Droplets</Tab>
+          <Tab className={getTabClassName(selectedIndex === 1)}>Playlists</Tab>
+          {(canEdit || isAdmin) && (
+            <Tab className={getTabClassName(selectedIndex === 2)}>Progress</Tab>
+          )}
         </TabList>
         <TabPanel>
           <ContentSection
