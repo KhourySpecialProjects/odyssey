@@ -17,6 +17,7 @@ import { getDropletBySlug } from "@/lib/requests/droplet";
 import { Block } from "./add-block";
 import { toast } from "sonner";
 import { deleteLesson, updateLesson } from "@/lib/requests/lesson";
+import { BlockToolbar } from "./block-toolbar";
 
 export interface BaseBlock {
   __component: string;
@@ -261,17 +262,25 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
         </div>
       </div>
 
-      <div className="flex w-full flex-col items-center justify-center space-y-4">
+      <div className="mb-5 flex w-full flex-col items-center justify-start space-y-4">
+        {" "}
         <DndProvider backend={HTML5Backend}>
-          <div className="w-full max-w-2xl">
-            <DraggableBlockList
-              blocks={blocks}
-              onReorder={handleReorderSource}
-              onAddBlock={handleAddBlock}
-              setBlock={setBlock}
-              deleteBlock={deleteBlock}
-            />
-          </div>
+          <>
+            <div className="w-full max-w-5xl">
+              <BlockToolbar
+                onAddBlock={(block) => handleAddBlock(blocks.length, block)}
+              />
+            </div>
+            <div className="w-full max-w-2xl">
+              <DraggableBlockList
+                blocks={blocks}
+                onReorder={handleReorderSource}
+                onAddBlock={handleAddBlock}
+                setBlock={setBlock}
+                deleteBlock={deleteBlock}
+              />
+            </div>
+          </>
         </DndProvider>
       </div>
     </>
