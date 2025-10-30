@@ -33,7 +33,7 @@ export function PageNav({ currentPage, updatePage, totalPages }: PageNavProps) {
           onClick={handlePrevPage}
           disabled={currentPage === 1}
           aria-label="chevron-left"
-          className={`${currentPage === 1 ? "text-slate-400 dark:text-slate-600" : ""} ${totalPages === 0 ? "visibility: hidden" : "visibility: visible"}`}
+          className={`${currentPage === 1 ? "text-slate-400 dark:text-slate-600" : ""} ${totalPages === 0 ? "invisible" : "visible"}`}
         >
           <ChevronLeft />
         </button>
@@ -64,7 +64,7 @@ export function PageNav({ currentPage, updatePage, totalPages }: PageNavProps) {
           onClick={handleNextPage}
           disabled={currentPage === totalPages}
           aria-label="chevron-right"
-          className={`${currentPage === totalPages ? "text-slate-400 dark:text-slate-600" : ""} ${totalPages === 0 ? "visibility: hidden" : "visibility: visible"}`}
+          className={`${currentPage === totalPages ? "text-slate-400 dark:text-slate-600" : ""} ${totalPages === 0 ? "invisible" : "visible"}`}
         >
           <ChevronRight />
         </button>
