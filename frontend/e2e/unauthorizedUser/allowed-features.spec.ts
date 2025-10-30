@@ -25,6 +25,13 @@ test.describe("Unauthorized Navigation Tests", () => {
     await expect(page.getByRole("heading", { name: "Explore" })).toBeVisible();
     await expect(page.getByRole("heading")).toContainText("Explore");
   });
+  test("Navigate to playlists", async ({ page }) => {
+    await page.goto("https://dev.khouryodyssey.org/p/react");
+    await expect(page.locator("h1")).toContainText("React");
+    await expect(page.getByRole("main")).toContainText(
+      "Pick Up Where You Left Off",
+    );
+  });
 });
 
 test.describe("Unauthorized Workflow Tests", () => {
