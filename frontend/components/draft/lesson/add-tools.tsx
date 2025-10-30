@@ -19,14 +19,14 @@ export default function AddLessonBlock({ onAddBlock }: AddLessonBlockProps) {
     { label: 'True/False Quiz', icon: CheckCircle2, color: 'bg-indigo-500 hover:bg-indigo-600' },
   ];
 
-  const calloutTypes = [
-    { label: 'Warning', icon: AlertTriangle, color: 'bg-orange-500 hover:bg-orange-600' },
-    { label: 'Question', icon: HelpCircle, color: 'bg-blue-500 hover:bg-blue-600' },
-    { label: 'Important', icon: AlertCircle, color: 'bg-red-500 hover:bg-red-600' },
-    { label: 'Definition', icon: BookOpen, color: 'bg-purple-500 hover:bg-purple-600' },
-    { label: 'Information', icon: Info, color: 'bg-cyan-500 hover:bg-cyan-600' },
-    { label: 'Caution', icon: AlertOctagon, color: 'bg-red-600 hover:bg-red-700' },
-    { label: 'Default', icon: Circle, color: 'bg-gray-500 hover:bg-gray-600' },
+   const calloutTypes = [
+    { label: 'Warning', icon: AlertTriangle, color: 'bg-red-300 hover:bg-red-400' },
+    { label: 'Question', icon: HelpCircle, color: 'bg-blue-300 hover:bg-blue-400' },
+    { label: 'Important', icon: AlertCircle, color: 'bg-orange-300 hover:bg-orange-400' },
+    { label: 'Definition', icon: BookOpen, color: 'bg-green-300 hover:bg-green-400' },
+    { label: 'Information', icon: Info, color: 'bg-purple-300 hover:bg-purple-400' },
+    { label: 'Caution', icon: AlertOctagon, color: 'bg-amber-300 hover:bg-amber-400' },
+    { label: 'Default', icon: Circle, color: 'bg-sky-50 hover:bg-sky-100' },
   ];
 
   return (
