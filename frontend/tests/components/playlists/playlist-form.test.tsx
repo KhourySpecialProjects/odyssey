@@ -1057,20 +1057,20 @@ describe("PlaylistForm", () => {
     });
 
     it("handles very long playlist names", async () => {
-  const user = userEvent.setup();
-  render(
-    <PlaylistForm droplets={mockDroplets} author={mockAuthor} userId={1} />,
-  );
+      const user = userEvent.setup();
+      render(
+        <PlaylistForm droplets={mockDroplets} author={mockAuthor} userId={1} />,
+      );
 
-  const longName = "A".repeat(500);
-  const nameInput = screen.getByPlaceholderText("Enter playlist name");
-  
-  // Use paste instead of type for long strings
-  await user.click(nameInput);
-  await user.paste(longName);
+      const longName = "A".repeat(500);
+      const nameInput = screen.getByPlaceholderText("Enter playlist name");
 
-  expect(nameInput).toHaveValue(longName);
-});
+      // Use paste instead of type for long strings
+      await user.click(nameInput);
+      await user.paste(longName);
+
+      expect(nameInput).toHaveValue(longName);
+    });
 
     it("preserves form state during interactions", async () => {
       const user = userEvent.setup();

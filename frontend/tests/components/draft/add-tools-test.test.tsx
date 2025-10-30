@@ -30,7 +30,7 @@ describe("AddLessonBlock", () => {
       <div>
         <div data-testid="outside">Outside</div>
         <AddLessonBlock onAddBlock={mockOnAddBlock} />
-      </div>
+      </div>,
     );
 
     const fabButton = screen.getByLabelText("Add a block");
@@ -208,7 +208,10 @@ describe("AddLessonBlock", () => {
       const definitionButton = screen.getByLabelText("Definition");
       fireEvent.click(definitionButton);
 
-      expect(mockOnAddBlock).toHaveBeenCalledWith("Callout Block", "Definition");
+      expect(mockOnAddBlock).toHaveBeenCalledWith(
+        "Callout Block",
+        "Definition",
+      );
     });
 
     it("adds an information callout block when Information option is clicked", () => {
@@ -223,7 +226,10 @@ describe("AddLessonBlock", () => {
       const informationButton = screen.getByLabelText("Information");
       fireEvent.click(informationButton);
 
-      expect(mockOnAddBlock).toHaveBeenCalledWith("Callout Block", "Information");
+      expect(mockOnAddBlock).toHaveBeenCalledWith(
+        "Callout Block",
+        "Information",
+      );
     });
 
     it("adds a caution callout block when Caution option is clicked", () => {
