@@ -9,7 +9,7 @@ import { AuthorizedUser, DueDate, Group } from "@/types";
 import { PlaylistCard } from "@/components/playlists/playlist-card";
 import { GroupProgressGrid } from "@/components/group/group-progress-grid";
 import { Button } from "../ui/button";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 interface RenderGroupDashboardProps {
@@ -57,28 +57,29 @@ export function GroupDashboard({
   const router = useRouter();
 
   const tabParam = searchParams.get("tab");
-  
+
   // Calculate selected index directly from URL
   const selectedIndex = (() => {
     const index = tabNames.indexOf(tabParam || "droplets");
     return index >= 0 ? index : 0;
   })();
 
+  // Track which tabs have been visited - initialize with current tab from URL
+  const [visitedTabs, setVisitedTabs] = useState<Set<number>>(
+    new Set([selectedIndex]),
+  );
+
+  // Update visited tabs when URL changes
+  useEffect(() => {
+    setVisitedTabs((prev) => new Set(prev).add(selectedIndex));
+  }, [selectedIndex]);
+
   const handleTabSelect = (index: number) => {
+    setVisitedTabs((prev) => new Set(prev).add(index));
     const tabName = tabNames[index];
     const params = new URLSearchParams(searchParams.toString());
     params.set("tab", tabName);
     router.replace(`?${params.toString()}`);
-  };
-
-  // Track which tabs have been visited
-  const [visitedTabs, setVisitedTabs] = useState<Set<number>>(
-    new Set([selectedIndex])
-  );
-
-  const handleTabSelectWithTracking = (index: number) => {
-    setVisitedTabs((prev) => new Set(prev).add(index));
-    handleTabSelect(index);
   };
 
   return (
@@ -91,11 +92,7 @@ export function GroupDashboard({
           display: block;
         }
       `}</style>
-      <Tabs
-        title=""
-        onSelect={handleTabSelectWithTracking}
-        selectedIndex={selectedIndex}
-      >
+      <Tabs title="" onSelect={handleTabSelect} selectedIndex={selectedIndex}>
         <TabList className="flex border-b">
           <Tab className={tabStyle}>Droplets</Tab>
           <Tab className={tabStyle}>Playlists</Tab>
@@ -153,31 +150,33 @@ export function GroupDashboard({
           </ContentSection>
         </TabPanel>
         <TabPanel>
-          <ContentSection
-            title=""
-            emptyMessage="No playlists have been added to this group yet."
-          >
-            {group.playlists && group.playlists.length > 0 ? (
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                {group.playlists.map((playlist) => (
-                  <PlaylistCard
-                    key={playlist.id}
-                    playlist={playlist}
-                    dueDate={
-                      dueDates?.find(
-                        (dueDate) => dueDate.playlist?.id === playlist.id,
-                      )?.dueDate || ""
-                    }
-                    timeZone={authUser.timeZone?.trim()}
-                  />
-                ))}
-              </div>
-            ) : (
-              <div className="rounded-lg border border-dashed p-8 text-center text-slate-500 dark:border-slate-500 dark:text-slate-300">
-                No playlists have been added to this group yet.
-              </div>
-            )}
-          </ContentSection>
+          {visitedTabs.has(1) ? (
+            <ContentSection
+              title=""
+              emptyMessage="No playlists have been added to this group yet."
+            >
+              {group.playlists && group.playlists.length > 0 ? (
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  {group.playlists.map((playlist) => (
+                    <PlaylistCard
+                      key={playlist.id}
+                      playlist={playlist}
+                      dueDate={
+                        dueDates?.find(
+                          (dueDate) => dueDate.playlist?.id === playlist.id,
+                        )?.dueDate || ""
+                      }
+                      timeZone={authUser.timeZone?.trim()}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="rounded-lg border border-dashed p-8 text-center text-slate-500 dark:border-slate-500 dark:text-slate-300">
+                  No playlists have been added to this group yet.
+                </div>
+              )}
+            </ContentSection>
+          ) : null}
         </TabPanel>
         {(canEdit || isAdmin) && (
           <TabPanel>
