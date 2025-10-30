@@ -32,7 +32,7 @@ export function EnrollButton({ droplet, isEnrolled }: EnrollButtonProps) {
             !droplet.authorized_users?.some((user) =>
               user.enrollments?.some(
                 (enrollment: Enrollment) =>
-                  enrollment.droplet.id === droplet.id,
+                  enrollment.droplet?.id === droplet.id,
               ),
             )
           ) {
