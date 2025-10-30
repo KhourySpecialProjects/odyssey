@@ -203,8 +203,6 @@ export default async function GroupDetailPage({ params }: Props) {
               data-testid="group-edit-controls"
             />
           </ContentSection>
-
-          <Separator />
         </div>
       </div>
     </div>
