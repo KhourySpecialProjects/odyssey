@@ -7,7 +7,7 @@ interface PageNavProps {
   updatePage: (num: number) => void;
   totalPages: number;
 }
-
+// page navigation
 export function PageNav({ currentPage, updatePage, totalPages }: PageNavProps) {
   const handleNextPage = () => {
     if (currentPage < totalPages) {
@@ -58,7 +58,6 @@ export function PageNav({ currentPage, updatePage, totalPages }: PageNavProps) {
             </div>
           ) : null,
         )}
-
         <button
           key="next"
           onClick={handleNextPage}
