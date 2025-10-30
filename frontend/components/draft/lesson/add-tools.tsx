@@ -198,6 +198,7 @@ export default function AddLessonBlock({ onAddBlock }: AddLessonBlockProps) {
                       }
                     }}
                     className={`flex h-12 w-12 items-center justify-center rounded-full text-white shadow-lg transition-all duration-200 ${option.color}`}
+                    aria-label={option.label}
                   >
                     <Icon size={20} />
                   </button>
@@ -237,6 +238,7 @@ export default function AddLessonBlock({ onAddBlock }: AddLessonBlockProps) {
                       setShowCalloutOptions(false);
                     }}
                     className={`flex h-12 w-12 items-center justify-center rounded-full shadow-lg transition-all duration-200 ${callout.color} ${callout.label === "Default" ? "text-gray-700" : "text-gray-800"}`}
+                    aria-label={callout.label}
                   >
                     <Icon size={20} />
                   </button>
