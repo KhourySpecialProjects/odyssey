@@ -118,6 +118,7 @@ export default function Sidebar({
           type="button"
           className="fixed top-[120px] left-3 z-40 hidden items-center rounded-lg bg-white p-3 text-slate-800 shadow-md transition-all hover:scale-110 hover:bg-slate-100 focus:ring-2 focus:ring-slate-200 focus:outline-none xl:inline-flex dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700 dark:focus:ring-slate-600"
           onClick={() => setExpanded(true)}
+          onMouseEnter={() => setExpanded(true)}
         >
           <PanelRightClose className="h-6 w-6 dark:text-white" />
           <span className="sr-only">Open sidebar</span>
@@ -179,7 +180,6 @@ export default function Sidebar({
                       ? activeLinkClasses
                       : inactiveLinkClasses
                   }
-                  onClick={() => setExpanded(false)}
                 >
                   <TargetIcon className="shrink-0" />
                   <span className="ms-3 leading-snug">Overview</span>
@@ -219,7 +219,6 @@ export default function Sidebar({
                             e.preventDefault();
                             return;
                           }
-                          setExpanded(false);
                         }}
                         aria-disabled={!!isLocked}
                       >
@@ -257,7 +256,6 @@ export default function Sidebar({
                       ? activeLinkClasses
                       : inactiveLinkClasses
                   }
-                  onClick={() => setExpanded(false)}
                 >
                   <HistoryIcon className="shrink-0" />
                   <span className="ms-3 leading-snug">Recap</span>
