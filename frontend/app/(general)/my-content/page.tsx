@@ -53,15 +53,6 @@ export default async function CreateRoute() {
                 New Droplet
               </Button>
             </Link>
-            <Link href="/new/playlist">
-              <Button
-                after={<PlusIcon />}
-                className="select-none dark:bg-slate-300"
-                size="sm"
-              >
-                New Playlist
-              </Button>
-            </Link>
           </div>
         </div>
         <Separator orientation="horizontal" className="mt-2 mb-4" />
@@ -83,9 +74,22 @@ export default async function CreateRoute() {
         {(isContentCreator(user.roles) ||
           isAuthorizedUserAdmin(user.roles)) && (
           <>
-            <h2 className="mt-4 mb-2 text-lg dark:text-slate-300">
-              My Playlists
-            </h2>
+            <div className="s mx-auto w-full max-w-7xl px-4 xl:p-0">
+              <div className="flex w-full items-end justify-between">
+                <h2 className="mt-4 mb-2 text-lg dark:text-slate-300">
+                  My Playlists
+                </h2>
+                <Link href="/new/playlist">
+                  <Button
+                    after={<PlusIcon />}
+                    className="select-none dark:bg-slate-300"
+                    size="sm"
+                  >
+                    New Playlist
+                  </Button>
+                </Link>
+              </div>
+            </div>
             <Separator orientation="horizontal" className="mt-2 mb-4" />
             {!playlists || playlists.length === 0 ? (
               <div className="flex h-full items-center justify-center">
