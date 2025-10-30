@@ -14,7 +14,7 @@ import DraggableBlockList from "./draggable_block_list";
 import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import { getDropletBySlug } from "@/lib/requests/droplet";
-import { Block } from "./add-block";
+import { Block } from "./add-tools";
 import { toast } from "sonner";
 import { deleteLesson, updateLesson } from "@/lib/requests/lesson";
 import AddLessonBlock from "./add-tools";
@@ -181,7 +181,7 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
   );
 
   // Add this new handler for the FAB
-  const handleAddBlockFromFAB = useCallback(
+  const handleAddTool = useCallback(
     (blockType: string, calloutType?: string) => {
       let newBlock: Block;
 
@@ -277,7 +277,6 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
       const updatedBlocks = [...blocks, newBlock];
       setBlocks(updatedBlocks);
       updateBlocksBackendReload(updatedBlocks);
-      toast.success(`${blockType} added!`);
     },
     [blocks, updateBlocksBackendReload],
   );
@@ -379,7 +378,7 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
       </div>
 
       {/* Add the floating action button */}
-      <AddLessonBlock onAddBlock={handleAddBlockFromFAB} />
+      <AddLessonBlock onAddBlock={handleAddTool} />
     </>
   );
 }
