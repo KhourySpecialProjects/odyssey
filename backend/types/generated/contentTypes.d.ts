@@ -1,19 +1,19 @@
-import type { Attribute, Schema } from '@strapi/strapi';
+import type { Attribute, Schema } from "@strapi/strapi";
 
 export interface AdminApiToken extends Schema.CollectionType {
-  collectionName: 'strapi_api_tokens';
+  collectionName: "strapi_api_tokens";
   info: {
-    description: '';
-    displayName: 'Api Token';
-    name: 'Api Token';
-    pluralName: 'api-tokens';
-    singularName: 'api-token';
+    description: "";
+    displayName: "Api Token";
+    name: "Api Token";
+    pluralName: "api-tokens";
+    singularName: "api-token";
   };
   pluginOptions: {
-    'content-manager': {
+    "content-manager": {
       visible: false;
     };
-    'content-type-builder': {
+    "content-type-builder": {
       visible: false;
     };
   };
@@ -25,16 +25,16 @@ export interface AdminApiToken extends Schema.CollectionType {
       }>;
     createdAt: Attribute.DateTime;
     createdBy: Attribute.Relation<
-      'admin::api-token',
-      'oneToOne',
-      'admin::user'
+      "admin::api-token",
+      "oneToOne",
+      "admin::user"
     > &
       Attribute.Private;
     description: Attribute.String &
       Attribute.SetMinMaxLength<{
         minLength: 1;
       }> &
-      Attribute.DefaultTo<''>;
+      Attribute.DefaultTo<"">;
     expiresAt: Attribute.DateTime;
     lastUsedAt: Attribute.DateTime;
     lifespan: Attribute.BigInteger;
@@ -45,37 +45,37 @@ export interface AdminApiToken extends Schema.CollectionType {
         minLength: 1;
       }>;
     permissions: Attribute.Relation<
-      'admin::api-token',
-      'oneToMany',
-      'admin::api-token-permission'
+      "admin::api-token",
+      "oneToMany",
+      "admin::api-token-permission"
     >;
-    type: Attribute.Enumeration<['read-only', 'full-access', 'custom']> &
+    type: Attribute.Enumeration<["read-only", "full-access", "custom"]> &
       Attribute.Required &
-      Attribute.DefaultTo<'read-only'>;
+      Attribute.DefaultTo<"read-only">;
     updatedAt: Attribute.DateTime;
     updatedBy: Attribute.Relation<
-      'admin::api-token',
-      'oneToOne',
-      'admin::user'
+      "admin::api-token",
+      "oneToOne",
+      "admin::user"
     > &
       Attribute.Private;
   };
 }
 
 export interface AdminApiTokenPermission extends Schema.CollectionType {
-  collectionName: 'strapi_api_token_permissions';
+  collectionName: "strapi_api_token_permissions";
   info: {
-    description: '';
-    displayName: 'API Token Permission';
-    name: 'API Token Permission';
-    pluralName: 'api-token-permissions';
-    singularName: 'api-token-permission';
+    description: "";
+    displayName: "API Token Permission";
+    name: "API Token Permission";
+    pluralName: "api-token-permissions";
+    singularName: "api-token-permission";
   };
   pluginOptions: {
-    'content-manager': {
+    "content-manager": {
       visible: false;
     };
-    'content-type-builder': {
+    "content-type-builder": {
       visible: false;
     };
   };
@@ -87,40 +87,40 @@ export interface AdminApiTokenPermission extends Schema.CollectionType {
       }>;
     createdAt: Attribute.DateTime;
     createdBy: Attribute.Relation<
-      'admin::api-token-permission',
-      'oneToOne',
-      'admin::user'
+      "admin::api-token-permission",
+      "oneToOne",
+      "admin::user"
     > &
       Attribute.Private;
     token: Attribute.Relation<
-      'admin::api-token-permission',
-      'manyToOne',
-      'admin::api-token'
+      "admin::api-token-permission",
+      "manyToOne",
+      "admin::api-token"
     >;
     updatedAt: Attribute.DateTime;
     updatedBy: Attribute.Relation<
-      'admin::api-token-permission',
-      'oneToOne',
-      'admin::user'
+      "admin::api-token-permission",
+      "oneToOne",
+      "admin::user"
     > &
       Attribute.Private;
   };
 }
 
 export interface AdminPermission extends Schema.CollectionType {
-  collectionName: 'admin_permissions';
+  collectionName: "admin_permissions";
   info: {
-    description: '';
-    displayName: 'Permission';
-    name: 'Permission';
-    pluralName: 'permissions';
-    singularName: 'permission';
+    description: "";
+    displayName: "Permission";
+    name: "Permission";
+    pluralName: "permissions";
+    singularName: "permission";
   };
   pluginOptions: {
-    'content-manager': {
+    "content-manager": {
       visible: false;
     };
-    'content-type-builder': {
+    "content-type-builder": {
       visible: false;
     };
   };
@@ -134,41 +134,41 @@ export interface AdminPermission extends Schema.CollectionType {
     conditions: Attribute.JSON & Attribute.DefaultTo<[]>;
     createdAt: Attribute.DateTime;
     createdBy: Attribute.Relation<
-      'admin::permission',
-      'oneToOne',
-      'admin::user'
+      "admin::permission",
+      "oneToOne",
+      "admin::user"
     > &
       Attribute.Private;
     properties: Attribute.JSON & Attribute.DefaultTo<{}>;
-    role: Attribute.Relation<'admin::permission', 'manyToOne', 'admin::role'>;
+    role: Attribute.Relation<"admin::permission", "manyToOne", "admin::role">;
     subject: Attribute.String &
       Attribute.SetMinMaxLength<{
         minLength: 1;
       }>;
     updatedAt: Attribute.DateTime;
     updatedBy: Attribute.Relation<
-      'admin::permission',
-      'oneToOne',
-      'admin::user'
+      "admin::permission",
+      "oneToOne",
+      "admin::user"
     > &
       Attribute.Private;
   };
 }
 
 export interface AdminRole extends Schema.CollectionType {
-  collectionName: 'admin_roles';
+  collectionName: "admin_roles";
   info: {
-    description: '';
-    displayName: 'Role';
-    name: 'Role';
-    pluralName: 'roles';
-    singularName: 'role';
+    description: "";
+    displayName: "Role";
+    name: "Role";
+    pluralName: "roles";
+    singularName: "role";
   };
   pluginOptions: {
-    'content-manager': {
+    "content-manager": {
       visible: false;
     };
-    'content-type-builder': {
+    "content-type-builder": {
       visible: false;
     };
   };
@@ -180,7 +180,7 @@ export interface AdminRole extends Schema.CollectionType {
         minLength: 1;
       }>;
     createdAt: Attribute.DateTime;
-    createdBy: Attribute.Relation<'admin::role', 'oneToOne', 'admin::user'> &
+    createdBy: Attribute.Relation<"admin::role", "oneToOne", "admin::user"> &
       Attribute.Private;
     description: Attribute.String;
     name: Attribute.String &
@@ -190,31 +190,31 @@ export interface AdminRole extends Schema.CollectionType {
         minLength: 1;
       }>;
     permissions: Attribute.Relation<
-      'admin::role',
-      'oneToMany',
-      'admin::permission'
+      "admin::role",
+      "oneToMany",
+      "admin::permission"
     >;
     updatedAt: Attribute.DateTime;
-    updatedBy: Attribute.Relation<'admin::role', 'oneToOne', 'admin::user'> &
+    updatedBy: Attribute.Relation<"admin::role", "oneToOne", "admin::user"> &
       Attribute.Private;
-    users: Attribute.Relation<'admin::role', 'manyToMany', 'admin::user'>;
+    users: Attribute.Relation<"admin::role", "manyToMany", "admin::user">;
   };
 }
 
 export interface AdminTransferToken extends Schema.CollectionType {
-  collectionName: 'strapi_transfer_tokens';
+  collectionName: "strapi_transfer_tokens";
   info: {
-    description: '';
-    displayName: 'Transfer Token';
-    name: 'Transfer Token';
-    pluralName: 'transfer-tokens';
-    singularName: 'transfer-token';
+    description: "";
+    displayName: "Transfer Token";
+    name: "Transfer Token";
+    pluralName: "transfer-tokens";
+    singularName: "transfer-token";
   };
   pluginOptions: {
-    'content-manager': {
+    "content-manager": {
       visible: false;
     };
-    'content-type-builder': {
+    "content-type-builder": {
       visible: false;
     };
   };
@@ -226,16 +226,16 @@ export interface AdminTransferToken extends Schema.CollectionType {
       }>;
     createdAt: Attribute.DateTime;
     createdBy: Attribute.Relation<
-      'admin::transfer-token',
-      'oneToOne',
-      'admin::user'
+      "admin::transfer-token",
+      "oneToOne",
+      "admin::user"
     > &
       Attribute.Private;
     description: Attribute.String &
       Attribute.SetMinMaxLength<{
         minLength: 1;
       }> &
-      Attribute.DefaultTo<''>;
+      Attribute.DefaultTo<"">;
     expiresAt: Attribute.DateTime;
     lastUsedAt: Attribute.DateTime;
     lifespan: Attribute.BigInteger;
@@ -246,34 +246,34 @@ export interface AdminTransferToken extends Schema.CollectionType {
         minLength: 1;
       }>;
     permissions: Attribute.Relation<
-      'admin::transfer-token',
-      'oneToMany',
-      'admin::transfer-token-permission'
+      "admin::transfer-token",
+      "oneToMany",
+      "admin::transfer-token-permission"
     >;
     updatedAt: Attribute.DateTime;
     updatedBy: Attribute.Relation<
-      'admin::transfer-token',
-      'oneToOne',
-      'admin::user'
+      "admin::transfer-token",
+      "oneToOne",
+      "admin::user"
     > &
       Attribute.Private;
   };
 }
 
 export interface AdminTransferTokenPermission extends Schema.CollectionType {
-  collectionName: 'strapi_transfer_token_permissions';
+  collectionName: "strapi_transfer_token_permissions";
   info: {
-    description: '';
-    displayName: 'Transfer Token Permission';
-    name: 'Transfer Token Permission';
-    pluralName: 'transfer-token-permissions';
-    singularName: 'transfer-token-permission';
+    description: "";
+    displayName: "Transfer Token Permission";
+    name: "Transfer Token Permission";
+    pluralName: "transfer-token-permissions";
+    singularName: "transfer-token-permission";
   };
   pluginOptions: {
-    'content-manager': {
+    "content-manager": {
       visible: false;
     };
-    'content-type-builder': {
+    "content-type-builder": {
       visible: false;
     };
   };
@@ -285,47 +285,47 @@ export interface AdminTransferTokenPermission extends Schema.CollectionType {
       }>;
     createdAt: Attribute.DateTime;
     createdBy: Attribute.Relation<
-      'admin::transfer-token-permission',
-      'oneToOne',
-      'admin::user'
+      "admin::transfer-token-permission",
+      "oneToOne",
+      "admin::user"
     > &
       Attribute.Private;
     token: Attribute.Relation<
-      'admin::transfer-token-permission',
-      'manyToOne',
-      'admin::transfer-token'
+      "admin::transfer-token-permission",
+      "manyToOne",
+      "admin::transfer-token"
     >;
     updatedAt: Attribute.DateTime;
     updatedBy: Attribute.Relation<
-      'admin::transfer-token-permission',
-      'oneToOne',
-      'admin::user'
+      "admin::transfer-token-permission",
+      "oneToOne",
+      "admin::user"
     > &
       Attribute.Private;
   };
 }
 
 export interface AdminUser extends Schema.CollectionType {
-  collectionName: 'admin_users';
+  collectionName: "admin_users";
   info: {
-    description: '';
-    displayName: 'User';
-    name: 'User';
-    pluralName: 'users';
-    singularName: 'user';
+    description: "";
+    displayName: "User";
+    name: "User";
+    pluralName: "users";
+    singularName: "user";
   };
   pluginOptions: {
-    'content-manager': {
+    "content-manager": {
       visible: false;
     };
-    'content-type-builder': {
+    "content-type-builder": {
       visible: false;
     };
   };
   attributes: {
     blocked: Attribute.Boolean & Attribute.Private & Attribute.DefaultTo<false>;
     createdAt: Attribute.DateTime;
-    createdBy: Attribute.Relation<'admin::user', 'oneToOne', 'admin::user'> &
+    createdBy: Attribute.Relation<"admin::user", "oneToOne", "admin::user"> &
       Attribute.Private;
     email: Attribute.Email &
       Attribute.Required &
@@ -353,52 +353,52 @@ export interface AdminUser extends Schema.CollectionType {
     preferedLanguage: Attribute.String;
     registrationToken: Attribute.String & Attribute.Private;
     resetPasswordToken: Attribute.String & Attribute.Private;
-    roles: Attribute.Relation<'admin::user', 'manyToMany', 'admin::role'> &
+    roles: Attribute.Relation<"admin::user", "manyToMany", "admin::role"> &
       Attribute.Private;
     updatedAt: Attribute.DateTime;
-    updatedBy: Attribute.Relation<'admin::user', 'oneToOne', 'admin::user'> &
+    updatedBy: Attribute.Relation<"admin::user", "oneToOne", "admin::user"> &
       Attribute.Private;
     username: Attribute.String;
   };
 }
 
 export interface ApiAccessRequestAccessRequest extends Schema.CollectionType {
-  collectionName: 'access_requests';
+  collectionName: "access_requests";
   info: {
-    description: '';
-    displayName: 'Access Request';
-    pluralName: 'access-requests';
-    singularName: 'access-request';
+    description: "";
+    displayName: "Access Request";
+    pluralName: "access-requests";
+    singularName: "access-request";
   };
   options: {
     draftAndPublish: false;
   };
   attributes: {
     affiliation: Attribute.Enumeration<
-      ['undergraduateStudent', 'graduateStudent', 'faculty', 'staff', 'other']
+      ["undergraduateStudent", "graduateStudent", "faculty", "staff", "other"]
     > &
       Attribute.Required;
     college: Attribute.Enumeration<
       [
-        'BV',
-        'CAMD',
-        'COE',
-        'CPS',
-        'COS',
-        'CSSH',
-        'DMSB',
-        'KCCS',
-        'MI',
-        'LAW',
-        'other'
+        "BV",
+        "CAMD",
+        "COE",
+        "CPS",
+        "COS",
+        "CSSH",
+        "DMSB",
+        "KCCS",
+        "MI",
+        "LAW",
+        "other",
       ]
     > &
       Attribute.Required;
     createdAt: Attribute.DateTime;
     createdBy: Attribute.Relation<
-      'api::access-request.access-request',
-      'oneToOne',
-      'admin::user'
+      "api::access-request.access-request",
+      "oneToOne",
+      "admin::user"
     > &
       Attribute.Private;
     email: Attribute.Email & Attribute.Required & Attribute.Unique;
@@ -406,30 +406,30 @@ export interface ApiAccessRequestAccessRequest extends Schema.CollectionType {
     givenName: Attribute.String & Attribute.Required;
     updatedAt: Attribute.DateTime;
     updatedBy: Attribute.Relation<
-      'api::access-request.access-request',
-      'oneToOne',
-      'admin::user'
+      "api::access-request.access-request",
+      "oneToOne",
+      "admin::user"
     > &
       Attribute.Private;
   };
 }
 
 export interface ApiAnnouncementAnnouncement extends Schema.CollectionType {
-  collectionName: 'announcements';
+  collectionName: "announcements";
   info: {
-    description: '';
-    displayName: 'Announcement';
-    pluralName: 'announcements';
-    singularName: 'announcement';
+    description: "";
+    displayName: "Announcement";
+    pluralName: "announcements";
+    singularName: "announcement";
   };
   options: {
     draftAndPublish: false;
   };
   attributes: {
     authorized_user: Attribute.Relation<
-      'api::announcement.announcement',
-      'manyToOne',
-      'api::authorized-user.authorized-user'
+      "api::announcement.announcement",
+      "manyToOne",
+      "api::authorized-user.authorized-user"
     >;
     content: Attribute.Text &
       Attribute.Required &
@@ -438,62 +438,62 @@ export interface ApiAnnouncementAnnouncement extends Schema.CollectionType {
       }>;
     createdAt: Attribute.DateTime;
     createdBy: Attribute.Relation<
-      'api::announcement.announcement',
-      'oneToOne',
-      'admin::user'
+      "api::announcement.announcement",
+      "oneToOne",
+      "admin::user"
     > &
       Attribute.Private;
     droplet: Attribute.Relation<
-      'api::announcement.announcement',
-      'manyToOne',
-      'api::droplet.droplet'
+      "api::announcement.announcement",
+      "manyToOne",
+      "api::droplet.droplet"
     >;
     firstCreated: Attribute.DateTime & Attribute.Required;
     group: Attribute.Relation<
-      'api::announcement.announcement',
-      'manyToOne',
-      'api::group.group'
+      "api::announcement.announcement",
+      "manyToOne",
+      "api::group.group"
     >;
     kudosGiven: Attribute.Relation<
-      'api::announcement.announcement',
-      'manyToMany',
-      'api::authorized-user.authorized-user'
+      "api::announcement.announcement",
+      "manyToMany",
+      "api::authorized-user.authorized-user"
     >;
     playlist: Attribute.Relation<
-      'api::announcement.announcement',
-      'manyToOne',
-      'api::playlist.playlist'
+      "api::announcement.announcement",
+      "manyToOne",
+      "api::playlist.playlist"
     >;
     type: Attribute.Enumeration<
-      ['playlist', 'droplet', 'friend', 'system', 'group', 'kudos']
+      ["playlist", "droplet", "friend", "system", "group", "kudos"]
     > &
       Attribute.Required;
     updatedAt: Attribute.DateTime;
     updatedBy: Attribute.Relation<
-      'api::announcement.announcement',
-      'oneToOne',
-      'admin::user'
+      "api::announcement.announcement",
+      "oneToOne",
+      "admin::user"
     > &
       Attribute.Private;
   };
 }
 
 export interface ApiAuthorAuthor extends Schema.CollectionType {
-  collectionName: 'authors';
+  collectionName: "authors";
   info: {
-    description: '';
-    displayName: 'Author';
-    pluralName: 'authors';
-    singularName: 'author';
+    description: "";
+    displayName: "Author";
+    pluralName: "authors";
+    singularName: "author";
   };
   options: {
     draftAndPublish: false;
   };
   attributes: {
     authorized_user: Attribute.Relation<
-      'api::author.author',
-      'oneToOne',
-      'api::authorized-user.authorized-user'
+      "api::author.author",
+      "oneToOne",
+      "api::authorized-user.authorized-user"
     >;
     bio: Attribute.Text &
       Attribute.SetMinMaxLength<{
@@ -501,28 +501,28 @@ export interface ApiAuthorAuthor extends Schema.CollectionType {
       }>;
     createdAt: Attribute.DateTime;
     createdBy: Attribute.Relation<
-      'api::author.author',
-      'oneToOne',
-      'admin::user'
+      "api::author.author",
+      "oneToOne",
+      "admin::user"
     > &
       Attribute.Private;
     droplets: Attribute.Relation<
-      'api::author.author',
-      'manyToMany',
-      'api::droplet.droplet'
+      "api::author.author",
+      "manyToMany",
+      "api::droplet.droplet"
     >;
     name: Attribute.String & Attribute.Required;
-    photo: Attribute.Media<'images'>;
+    photo: Attribute.Media<"images">;
     playlists: Attribute.Relation<
-      'api::author.author',
-      'oneToMany',
-      'api::playlist.playlist'
+      "api::author.author",
+      "oneToMany",
+      "api::playlist.playlist"
     >;
     updatedAt: Attribute.DateTime;
     updatedBy: Attribute.Relation<
-      'api::author.author',
-      'oneToOne',
-      'admin::user'
+      "api::author.author",
+      "oneToOne",
+      "admin::user"
     > &
       Attribute.Private;
   };
@@ -530,146 +530,146 @@ export interface ApiAuthorAuthor extends Schema.CollectionType {
 
 export interface ApiAuthorizedUserRoleAuthorizedUserRole
   extends Schema.CollectionType {
-  collectionName: 'authorized_user_roles';
+  collectionName: "authorized_user_roles";
   info: {
-    description: '';
-    displayName: 'Authorized User Role';
-    pluralName: 'authorized-user-roles';
-    singularName: 'authorized-user-role';
+    description: "";
+    displayName: "Authorized User Role";
+    pluralName: "authorized-user-roles";
+    singularName: "authorized-user-role";
   };
   options: {
     draftAndPublish: false;
   };
   attributes: {
     authorizedUsers: Attribute.Relation<
-      'api::authorized-user-role.authorized-user-role',
-      'manyToMany',
-      'api::authorized-user.authorized-user'
+      "api::authorized-user-role.authorized-user-role",
+      "manyToMany",
+      "api::authorized-user.authorized-user"
     >;
     createdAt: Attribute.DateTime;
     createdBy: Attribute.Relation<
-      'api::authorized-user-role.authorized-user-role',
-      'oneToOne',
-      'admin::user'
+      "api::authorized-user-role.authorized-user-role",
+      "oneToOne",
+      "admin::user"
     > &
       Attribute.Private;
     title: Attribute.String;
     updatedAt: Attribute.DateTime;
     updatedBy: Attribute.Relation<
-      'api::authorized-user-role.authorized-user-role',
-      'oneToOne',
-      'admin::user'
+      "api::authorized-user-role.authorized-user-role",
+      "oneToOne",
+      "admin::user"
     > &
       Attribute.Private;
   };
 }
 
 export interface ApiAuthorizedUserAuthorizedUser extends Schema.CollectionType {
-  collectionName: 'authorized_users';
+  collectionName: "authorized_users";
   info: {
-    description: '';
-    displayName: 'Authorized User';
-    pluralName: 'authorized-users';
-    singularName: 'authorized-user';
+    description: "";
+    displayName: "Authorized User";
+    pluralName: "authorized-users";
+    singularName: "authorized-user";
   };
   options: {
     draftAndPublish: false;
   };
   attributes: {
     announcements: Attribute.Relation<
-      'api::authorized-user.authorized-user',
-      'oneToMany',
-      'api::announcement.announcement'
+      "api::authorized-user.authorized-user",
+      "oneToMany",
+      "api::announcement.announcement"
     >;
     archived_groups: Attribute.Relation<
-      'api::authorized-user.authorized-user',
-      'manyToMany',
-      'api::group.group'
+      "api::authorized-user.authorized-user",
+      "manyToMany",
+      "api::group.group"
     >;
     author: Attribute.Relation<
-      'api::authorized-user.authorized-user',
-      'oneToOne',
-      'api::author.author'
+      "api::authorized-user.authorized-user",
+      "oneToOne",
+      "api::author.author"
     >;
     bio: Attribute.Text &
       Attribute.SetMinMaxLength<{
         maxLength: 400;
       }>;
     blocked: Attribute.Relation<
-      'api::authorized-user.authorized-user',
-      'manyToMany',
-      'api::authorized-user.authorized-user'
+      "api::authorized-user.authorized-user",
+      "manyToMany",
+      "api::authorized-user.authorized-user"
     >;
     created_playlists: Attribute.Relation<
-      'api::authorized-user.authorized-user',
-      'manyToMany',
-      'api::playlist.playlist'
+      "api::authorized-user.authorized-user",
+      "manyToMany",
+      "api::playlist.playlist"
     >;
     createdAt: Attribute.DateTime;
     createdBy: Attribute.Relation<
-      'api::authorized-user.authorized-user',
-      'oneToOne',
-      'admin::user'
+      "api::authorized-user.authorized-user",
+      "oneToOne",
+      "admin::user"
     > &
       Attribute.Private;
     droplets: Attribute.Relation<
-      'api::authorized-user.authorized-user',
-      'manyToMany',
-      'api::droplet.droplet'
+      "api::authorized-user.authorized-user",
+      "manyToMany",
+      "api::droplet.droplet"
     >;
     dropletsFavorited: Attribute.Relation<
-      'api::authorized-user.authorized-user',
-      'manyToMany',
-      'api::droplet.droplet'
+      "api::authorized-user.authorized-user",
+      "manyToMany",
+      "api::droplet.droplet"
     >;
     due_dates: Attribute.Relation<
-      'api::authorized-user.authorized-user',
-      'oneToMany',
-      'api::due-date.due-date'
+      "api::authorized-user.authorized-user",
+      "oneToMany",
+      "api::due-date.due-date"
     >;
     email: Attribute.Email & Attribute.Required & Attribute.Unique;
     enrollments: Attribute.Relation<
-      'api::authorized-user.authorized-user',
-      'oneToMany',
-      'api::enrollment.enrollment'
+      "api::authorized-user.authorized-user",
+      "oneToMany",
+      "api::enrollment.enrollment"
     >;
     firstName: Attribute.String;
     firstTime: Attribute.Boolean & Attribute.DefaultTo<true>;
     friendships: Attribute.Relation<
-      'api::authorized-user.authorized-user',
-      'manyToMany',
-      'api::friendship.friendship'
+      "api::authorized-user.authorized-user",
+      "manyToMany",
+      "api::friendship.friendship"
     >;
     gaveKudos: Attribute.Relation<
-      'api::authorized-user.authorized-user',
-      'manyToMany',
-      'api::announcement.announcement'
+      "api::authorized-user.authorized-user",
+      "manyToMany",
+      "api::announcement.announcement"
     >;
     github: Attribute.String;
     groupAdmin: Attribute.Relation<
-      'api::authorized-user.authorized-user',
-      'manyToMany',
-      'api::group.group'
+      "api::authorized-user.authorized-user",
+      "manyToMany",
+      "api::group.group"
     >;
     groupManager: Attribute.Relation<
-      'api::authorized-user.authorized-user',
-      'manyToMany',
-      'api::group.group'
+      "api::authorized-user.authorized-user",
+      "manyToMany",
+      "api::group.group"
     >;
     groups: Attribute.Relation<
-      'api::authorized-user.authorized-user',
-      'manyToMany',
-      'api::group.group'
+      "api::authorized-user.authorized-user",
+      "manyToMany",
+      "api::group.group"
     >;
     groupsCreated: Attribute.Relation<
-      'api::authorized-user.authorized-user',
-      'oneToMany',
-      'api::group.group'
+      "api::authorized-user.authorized-user",
+      "oneToMany",
+      "api::group.group"
     >;
     highlights: Attribute.Relation<
-      'api::authorized-user.authorized-user',
-      'oneToMany',
-      'api::highlight.highlight'
+      "api::authorized-user.authorized-user",
+      "oneToMany",
+      "api::highlight.highlight"
     >;
     isEnabled: Attribute.Boolean &
       Attribute.Required &
@@ -680,92 +680,92 @@ export interface ApiAuthorizedUserAuthorizedUser extends Schema.CollectionType {
     lastName: Attribute.String;
     linkedin: Attribute.String;
     playlists: Attribute.Relation<
-      'api::authorized-user.authorized-user',
-      'manyToMany',
-      'api::playlist.playlist'
+      "api::authorized-user.authorized-user",
+      "manyToMany",
+      "api::playlist.playlist"
     >;
     profilePhoto: Attribute.Text;
     received_requests: Attribute.Relation<
-      'api::authorized-user.authorized-user',
-      'manyToMany',
-      'api::authorized-user.authorized-user'
+      "api::authorized-user.authorized-user",
+      "manyToMany",
+      "api::authorized-user.authorized-user"
     >;
     roles: Attribute.Relation<
-      'api::authorized-user.authorized-user',
-      'manyToMany',
-      'api::authorized-user-role.authorized-user-role'
+      "api::authorized-user.authorized-user",
+      "manyToMany",
+      "api::authorized-user-role.authorized-user-role"
     >;
     sent_requests: Attribute.Relation<
-      'api::authorized-user.authorized-user',
-      'manyToMany',
-      'api::authorized-user.authorized-user'
+      "api::authorized-user.authorized-user",
+      "manyToMany",
+      "api::authorized-user.authorized-user"
     >;
     timeZone: Attribute.Enumeration<
       [
-        'America/New_York  ',
-        'America/Chicago  ',
-        'America/Denver  ',
-        'America/Phoenix  ',
-        'America/Los_Angeles  ',
-        'America/Anchorage  ',
-        'America/Honolulu  ',
-        'America/Bogota  ',
-        'America/Lima  ',
-        'America/Caracas  ',
-        'America/Santiago  ',
-        'America/Argentina/Buenos_Aires  ',
-        'America/Sao_Paulo  ',
-        'Europe/London  ',
-        'Europe/Berlin  ',
-        'Europe/Paris  ',
-        'Europe/Madrid  ',
-        'Europe/Rome  ',
-        'Europe/Athens  ',
-        'Europe/Istanbul  ',
-        'Europe/Moscow  ',
-        'Asia/Dubai  ',
-        'Asia/Kolkata  ',
-        'Asia/Shanghai  ',
-        'Asia/Tokyo  ',
-        'Asia/Seoul  ',
-        'Asia/Bangkok  ',
-        'Asia/Singapore  ',
-        'Asia/Jakarta  ',
-        'Asia/Hong_Kong  ',
-        'Australia/Sydney  ',
-        'Australia/Melbourne  ',
-        'Australia/Brisbane  ',
-        'Pacific/Auckland  ',
-        'Pacific/Fiji  ',
-        'Africa/Cairo  ',
-        'Africa/Johannesburg  ',
-        'Africa/Lagos  ',
-        'Africa/Nairobi  '
+        "America/New_York  ",
+        "America/Chicago  ",
+        "America/Denver  ",
+        "America/Phoenix  ",
+        "America/Los_Angeles  ",
+        "America/Anchorage  ",
+        "America/Honolulu  ",
+        "America/Bogota  ",
+        "America/Lima  ",
+        "America/Caracas  ",
+        "America/Santiago  ",
+        "America/Argentina/Buenos_Aires  ",
+        "America/Sao_Paulo  ",
+        "Europe/London  ",
+        "Europe/Berlin  ",
+        "Europe/Paris  ",
+        "Europe/Madrid  ",
+        "Europe/Rome  ",
+        "Europe/Athens  ",
+        "Europe/Istanbul  ",
+        "Europe/Moscow  ",
+        "Asia/Dubai  ",
+        "Asia/Kolkata  ",
+        "Asia/Shanghai  ",
+        "Asia/Tokyo  ",
+        "Asia/Seoul  ",
+        "Asia/Bangkok  ",
+        "Asia/Singapore  ",
+        "Asia/Jakarta  ",
+        "Asia/Hong_Kong  ",
+        "Australia/Sydney  ",
+        "Australia/Melbourne  ",
+        "Australia/Brisbane  ",
+        "Pacific/Auckland  ",
+        "Pacific/Fiji  ",
+        "Africa/Cairo  ",
+        "Africa/Johannesburg  ",
+        "Africa/Lagos  ",
+        "Africa/Nairobi  ",
       ]
     > &
-      Attribute.DefaultTo<'America/New_York  '>;
+      Attribute.DefaultTo<"America/New_York  ">;
     updatedAt: Attribute.DateTime;
     updatedBy: Attribute.Relation<
-      'api::authorized-user.authorized-user',
-      'oneToOne',
-      'admin::user'
+      "api::authorized-user.authorized-user",
+      "oneToOne",
+      "admin::user"
     > &
       Attribute.Private;
     was_blocked: Attribute.Relation<
-      'api::authorized-user.authorized-user',
-      'manyToMany',
-      'api::authorized-user.authorized-user'
+      "api::authorized-user.authorized-user",
+      "manyToMany",
+      "api::authorized-user.authorized-user"
     >;
   };
 }
 
 export interface ApiDropletLessonDropletLesson extends Schema.CollectionType {
-  collectionName: 'droplet_lessons';
+  collectionName: "droplet_lessons";
   info: {
-    description: '';
-    displayName: 'DropletLesson';
-    pluralName: 'droplet-lessons';
-    singularName: 'droplet-lesson';
+    description: "";
+    displayName: "DropletLesson";
+    pluralName: "droplet-lessons";
+    singularName: "droplet-lesson";
   };
   options: {
     draftAndPublish: false;
@@ -773,20 +773,20 @@ export interface ApiDropletLessonDropletLesson extends Schema.CollectionType {
   attributes: {
     createdAt: Attribute.DateTime;
     createdBy: Attribute.Relation<
-      'api::droplet-lesson.droplet-lesson',
-      'oneToOne',
-      'admin::user'
+      "api::droplet-lesson.droplet-lesson",
+      "oneToOne",
+      "admin::user"
     > &
       Attribute.Private;
     droplet: Attribute.Relation<
-      'api::droplet-lesson.droplet-lesson',
-      'manyToOne',
-      'api::droplet.droplet'
+      "api::droplet-lesson.droplet-lesson",
+      "manyToOne",
+      "api::droplet.droplet"
     >;
     lesson: Attribute.Relation<
-      'api::droplet-lesson.droplet-lesson',
-      'manyToOne',
-      'api::lesson.lesson'
+      "api::droplet-lesson.droplet-lesson",
+      "manyToOne",
+      "api::lesson.lesson"
     >;
     orderIndex: Attribute.Integer &
       Attribute.Required &
@@ -798,21 +798,21 @@ export interface ApiDropletLessonDropletLesson extends Schema.CollectionType {
       >;
     updatedAt: Attribute.DateTime;
     updatedBy: Attribute.Relation<
-      'api::droplet-lesson.droplet-lesson',
-      'oneToOne',
-      'admin::user'
+      "api::droplet-lesson.droplet-lesson",
+      "oneToOne",
+      "admin::user"
     > &
       Attribute.Private;
   };
 }
 
 export interface ApiDropletDroplet extends Schema.CollectionType {
-  collectionName: 'droplets';
+  collectionName: "droplets";
   info: {
-    description: '';
-    displayName: 'Droplet';
-    pluralName: 'droplets';
-    singularName: 'droplet';
+    description: "";
+    displayName: "Droplet";
+    pluralName: "droplets";
+    singularName: "droplet";
   };
   options: {
     draftAndPublish: true;
@@ -820,19 +820,19 @@ export interface ApiDropletDroplet extends Schema.CollectionType {
   attributes: {
     afterReview: Attribute.Text;
     announcements: Attribute.Relation<
-      'api::droplet.droplet',
-      'oneToMany',
-      'api::announcement.announcement'
+      "api::droplet.droplet",
+      "oneToMany",
+      "api::announcement.announcement"
     >;
     authorized_users: Attribute.Relation<
-      'api::droplet.droplet',
-      'manyToMany',
-      'api::authorized-user.authorized-user'
+      "api::droplet.droplet",
+      "manyToMany",
+      "api::authorized-user.authorized-user"
     >;
     authors: Attribute.Relation<
-      'api::droplet.droplet',
-      'manyToMany',
-      'api::author.author'
+      "api::droplet.droplet",
+      "manyToMany",
+      "api::author.author"
     >;
     averageRating: Attribute.Decimal &
       Attribute.SetMinMax<
@@ -845,9 +845,9 @@ export interface ApiDropletDroplet extends Schema.CollectionType {
       Attribute.DefaultTo<0>;
     createdAt: Attribute.DateTime;
     createdBy: Attribute.Relation<
-      'api::droplet.droplet',
-      'oneToOne',
-      'admin::user'
+      "api::droplet.droplet",
+      "oneToOne",
+      "admin::user"
     > &
       Attribute.Private;
     description: Attribute.Text &
@@ -855,164 +855,164 @@ export interface ApiDropletDroplet extends Schema.CollectionType {
         maxLength: 500;
       }>;
     droplet_lessons: Attribute.Relation<
-      'api::droplet.droplet',
-      'oneToMany',
-      'api::droplet-lesson.droplet-lesson'
+      "api::droplet.droplet",
+      "oneToMany",
+      "api::droplet-lesson.droplet-lesson"
     >;
     enrollments: Attribute.Relation<
-      'api::droplet.droplet',
-      'oneToMany',
-      'api::enrollment.enrollment'
+      "api::droplet.droplet",
+      "oneToMany",
+      "api::enrollment.enrollment"
     >;
     focusArea: Attribute.Enumeration<
-      ['personal', 'professional', 'technical']
+      ["personal", "professional", "technical"]
     > &
       Attribute.Required;
     funFact: Attribute.Text;
     groups: Attribute.Relation<
-      'api::droplet.droplet',
-      'manyToMany',
-      'api::group.group'
+      "api::droplet.droplet",
+      "manyToMany",
+      "api::group.group"
     >;
     inReview: Attribute.Boolean;
     isHidden: Attribute.Boolean &
       Attribute.Required &
       Attribute.DefaultTo<false>;
     learningObjectives: Attribute.Component<
-      'droplets.learning-objective',
+      "droplets.learning-objective",
       true
     > &
       Attribute.Required;
     lessons: Attribute.Relation<
-      'api::droplet.droplet',
-      'manyToMany',
-      'api::lesson.lesson'
+      "api::droplet.droplet",
+      "manyToMany",
+      "api::lesson.lesson"
     >;
     name: Attribute.String & Attribute.Required & Attribute.Unique;
-    nextSteps: Attribute.Component<'droplets.resource', true>;
+    nextSteps: Attribute.Component<"droplets.resource", true>;
     overview: Attribute.RichText &
       Attribute.CustomField<
-        'plugin::ckeditor.CKEditor',
+        "plugin::ckeditor.CKEditor",
         {
-          output: 'HTML';
-          preset: 'light';
+          output: "HTML";
+          preset: "light";
         }
       >;
     postrequisites: Attribute.Relation<
-      'api::droplet.droplet',
-      'manyToMany',
-      'api::droplet.droplet'
+      "api::droplet.droplet",
+      "manyToMany",
+      "api::droplet.droplet"
     >;
     prerequisites: Attribute.Relation<
-      'api::droplet.droplet',
-      'manyToMany',
-      'api::droplet.droplet'
+      "api::droplet.droplet",
+      "manyToMany",
+      "api::droplet.droplet"
     >;
     publishedAt: Attribute.DateTime;
-    slug: Attribute.UID<'api::droplet.droplet', 'name'> & Attribute.Required;
-    status: Attribute.Enumeration<['draft', 'edit', 'published']> &
+    slug: Attribute.UID<"api::droplet.droplet", "name"> & Attribute.Required;
+    status: Attribute.Enumeration<["draft", "edit", "published"]> &
       Attribute.Required &
-      Attribute.DefaultTo<'draft'>;
+      Attribute.DefaultTo<"draft">;
     tags: Attribute.Relation<
-      'api::droplet.droplet',
-      'manyToMany',
-      'api::tag.tag'
+      "api::droplet.droplet",
+      "manyToMany",
+      "api::tag.tag"
     >;
-    type: Attribute.Enumeration<['knowledge', 'skill']> & Attribute.Required;
+    type: Attribute.Enumeration<["knowledge", "skill"]> & Attribute.Required;
     updatedAt: Attribute.DateTime;
     updatedBy: Attribute.Relation<
-      'api::droplet.droplet',
-      'oneToOne',
-      'admin::user'
+      "api::droplet.droplet",
+      "oneToOne",
+      "admin::user"
     > &
       Attribute.Private;
     usersFavorited: Attribute.Relation<
-      'api::droplet.droplet',
-      'manyToMany',
-      'api::authorized-user.authorized-user'
+      "api::droplet.droplet",
+      "manyToMany",
+      "api::authorized-user.authorized-user"
     >;
   };
 }
 
 export interface ApiDueDateDueDate extends Schema.CollectionType {
-  collectionName: 'due_dates';
+  collectionName: "due_dates";
   info: {
-    description: '';
-    displayName: 'Due Date';
-    pluralName: 'due-dates';
-    singularName: 'due-date';
+    description: "";
+    displayName: "Due Date";
+    pluralName: "due-dates";
+    singularName: "due-date";
   };
   options: {
     draftAndPublish: false;
   };
   attributes: {
     authorized_user: Attribute.Relation<
-      'api::due-date.due-date',
-      'manyToOne',
-      'api::authorized-user.authorized-user'
+      "api::due-date.due-date",
+      "manyToOne",
+      "api::authorized-user.authorized-user"
     >;
     createdAt: Attribute.DateTime;
     createdBy: Attribute.Relation<
-      'api::due-date.due-date',
-      'oneToOne',
-      'admin::user'
+      "api::due-date.due-date",
+      "oneToOne",
+      "admin::user"
     > &
       Attribute.Private;
     droplet: Attribute.Relation<
-      'api::due-date.due-date',
-      'oneToOne',
-      'api::droplet.droplet'
+      "api::due-date.due-date",
+      "oneToOne",
+      "api::droplet.droplet"
     >;
     dueDate: Attribute.DateTime;
     group: Attribute.Relation<
-      'api::due-date.due-date',
-      'oneToOne',
-      'api::group.group'
+      "api::due-date.due-date",
+      "oneToOne",
+      "api::group.group"
     >;
     playlist: Attribute.Relation<
-      'api::due-date.due-date',
-      'oneToOne',
-      'api::playlist.playlist'
+      "api::due-date.due-date",
+      "oneToOne",
+      "api::playlist.playlist"
     >;
     updatedAt: Attribute.DateTime;
     updatedBy: Attribute.Relation<
-      'api::due-date.due-date',
-      'oneToOne',
-      'admin::user'
+      "api::due-date.due-date",
+      "oneToOne",
+      "admin::user"
     > &
       Attribute.Private;
   };
 }
 
 export interface ApiEnrollmentEnrollment extends Schema.CollectionType {
-  collectionName: 'enrollments';
+  collectionName: "enrollments";
   info: {
-    description: '';
-    displayName: 'Enrollment';
-    pluralName: 'enrollments';
-    singularName: 'enrollment';
+    description: "";
+    displayName: "Enrollment";
+    pluralName: "enrollments";
+    singularName: "enrollment";
   };
   options: {
     draftAndPublish: false;
   };
   attributes: {
     authorizedUser: Attribute.Relation<
-      'api::enrollment.enrollment',
-      'manyToOne',
-      'api::authorized-user.authorized-user'
+      "api::enrollment.enrollment",
+      "manyToOne",
+      "api::authorized-user.authorized-user"
     >;
     completionDate: Attribute.DateTime;
     createdAt: Attribute.DateTime;
     createdBy: Attribute.Relation<
-      'api::enrollment.enrollment',
-      'oneToOne',
-      'admin::user'
+      "api::enrollment.enrollment",
+      "oneToOne",
+      "admin::user"
     > &
       Attribute.Private;
     droplet: Attribute.Relation<
-      'api::enrollment.enrollment',
-      'manyToOne',
-      'api::droplet.droplet'
+      "api::enrollment.enrollment",
+      "manyToOne",
+      "api::droplet.droplet"
     >;
     dueDate: Attribute.DateTime;
     isArchived: Attribute.Boolean & Attribute.DefaultTo<false>;
@@ -1021,9 +1021,9 @@ export interface ApiEnrollmentEnrollment extends Schema.CollectionType {
       Attribute.DefaultTo<false>;
     isFirstTime: Attribute.Boolean & Attribute.DefaultTo<true>;
     notes: Attribute.Relation<
-      'api::enrollment.enrollment',
-      'oneToMany',
-      'api::note.note'
+      "api::enrollment.enrollment",
+      "oneToMany",
+      "api::note.note"
     >;
     rating: Attribute.Integer &
       Attribute.SetMinMax<
@@ -1035,60 +1035,60 @@ export interface ApiEnrollmentEnrollment extends Schema.CollectionType {
       >;
     updatedAt: Attribute.DateTime;
     updatedBy: Attribute.Relation<
-      'api::enrollment.enrollment',
-      'oneToOne',
-      'admin::user'
+      "api::enrollment.enrollment",
+      "oneToOne",
+      "admin::user"
     > &
       Attribute.Private;
     viewedLessons: Attribute.Relation<
-      'api::enrollment.enrollment',
-      'manyToMany',
-      'api::lesson.lesson'
+      "api::enrollment.enrollment",
+      "manyToMany",
+      "api::lesson.lesson"
     >;
   };
 }
 
 export interface ApiFriendshipFriendship extends Schema.CollectionType {
-  collectionName: 'friendships';
+  collectionName: "friendships";
   info: {
-    description: '';
-    displayName: 'Friendship';
-    pluralName: 'friendships';
-    singularName: 'friendship';
+    description: "";
+    displayName: "Friendship";
+    pluralName: "friendships";
+    singularName: "friendship";
   };
   options: {
     draftAndPublish: false;
   };
   attributes: {
     authorized_users: Attribute.Relation<
-      'api::friendship.friendship',
-      'manyToMany',
-      'api::authorized-user.authorized-user'
+      "api::friendship.friendship",
+      "manyToMany",
+      "api::authorized-user.authorized-user"
     >;
     createdAt: Attribute.DateTime;
     createdBy: Attribute.Relation<
-      'api::friendship.friendship',
-      'oneToOne',
-      'admin::user'
+      "api::friendship.friendship",
+      "oneToOne",
+      "admin::user"
     > &
       Attribute.Private;
     updatedAt: Attribute.DateTime;
     updatedBy: Attribute.Relation<
-      'api::friendship.friendship',
-      'oneToOne',
-      'admin::user'
+      "api::friendship.friendship",
+      "oneToOne",
+      "admin::user"
     > &
       Attribute.Private;
   };
 }
 
 export interface ApiGalleryGallery extends Schema.CollectionType {
-  collectionName: 'galleries';
+  collectionName: "galleries";
   info: {
-    description: '';
-    displayName: 'Gallery';
-    pluralName: 'galleries';
-    singularName: 'gallery';
+    description: "";
+    displayName: "Gallery";
+    pluralName: "galleries";
+    singularName: "gallery";
   };
   options: {
     draftAndPublish: false;
@@ -1096,164 +1096,164 @@ export interface ApiGalleryGallery extends Schema.CollectionType {
   attributes: {
     createdAt: Attribute.DateTime;
     createdBy: Attribute.Relation<
-      'api::gallery.gallery',
-      'oneToOne',
-      'admin::user'
+      "api::gallery.gallery",
+      "oneToOne",
+      "admin::user"
     > &
       Attribute.Private;
-    items: Attribute.Component<'galleries.gallery-item', true>;
+    items: Attribute.Component<"galleries.gallery-item", true>;
     slug: Attribute.UID & Attribute.Required;
     subtitle: Attribute.String & Attribute.Required;
     title: Attribute.String & Attribute.Required;
     updatedAt: Attribute.DateTime;
     updatedBy: Attribute.Relation<
-      'api::gallery.gallery',
-      'oneToOne',
-      'admin::user'
+      "api::gallery.gallery",
+      "oneToOne",
+      "admin::user"
     > &
       Attribute.Private;
   };
 }
 
 export interface ApiGroupGroup extends Schema.CollectionType {
-  collectionName: 'groups';
+  collectionName: "groups";
   info: {
-    description: '';
-    displayName: 'Group';
-    pluralName: 'groups';
-    singularName: 'group';
+    description: "";
+    displayName: "Group";
+    pluralName: "groups";
+    singularName: "group";
   };
   options: {
     draftAndPublish: false;
   };
   attributes: {
     admins: Attribute.Relation<
-      'api::group.group',
-      'manyToMany',
-      'api::authorized-user.authorized-user'
+      "api::group.group",
+      "manyToMany",
+      "api::authorized-user.authorized-user"
     >;
     announcements: Attribute.Relation<
-      'api::group.group',
-      'oneToMany',
-      'api::announcement.announcement'
+      "api::group.group",
+      "oneToMany",
+      "api::announcement.announcement"
     >;
     createdAt: Attribute.DateTime;
     createdBy: Attribute.Relation<
-      'api::group.group',
-      'oneToOne',
-      'admin::user'
+      "api::group.group",
+      "oneToOne",
+      "admin::user"
     > &
       Attribute.Private;
     creator: Attribute.Relation<
-      'api::group.group',
-      'manyToOne',
-      'api::authorized-user.authorized-user'
+      "api::group.group",
+      "manyToOne",
+      "api::authorized-user.authorized-user"
     >;
     description: Attribute.Text;
     dropletDueDates: Attribute.JSON;
     droplets: Attribute.Relation<
-      'api::group.group',
-      'manyToMany',
-      'api::droplet.droplet'
+      "api::group.group",
+      "manyToMany",
+      "api::droplet.droplet"
     >;
     groupName: Attribute.String & Attribute.Required;
     isArchived: Attribute.Boolean & Attribute.DefaultTo<false>;
     managers: Attribute.Relation<
-      'api::group.group',
-      'manyToMany',
-      'api::authorized-user.authorized-user'
+      "api::group.group",
+      "manyToMany",
+      "api::authorized-user.authorized-user"
     >;
     members: Attribute.Relation<
-      'api::group.group',
-      'manyToMany',
-      'api::authorized-user.authorized-user'
+      "api::group.group",
+      "manyToMany",
+      "api::authorized-user.authorized-user"
     >;
     playlistDueDates: Attribute.JSON;
     playlists: Attribute.Relation<
-      'api::group.group',
-      'manyToMany',
-      'api::playlist.playlist'
+      "api::group.group",
+      "manyToMany",
+      "api::playlist.playlist"
     >;
     semester: Attribute.Enumeration<
       [
-        'Open Membership',
-        'Spring 2025',
-        'Summer 1 2025',
-        'Summer 2 2025',
-        'Summer 2025',
-        'Fall 2025',
-        'Spring 2026',
-        'Summer 1 2026',
-        'Summer 2 2026',
-        'Summer 2026',
-        'Fall 2026',
-        'Spring 2027',
-        'Summer 1 2027',
-        'Summer 2 2027',
-        'Summer 2027',
-        'Fall 2027'
+        "Open Membership",
+        "Spring 2025",
+        "Summer 1 2025",
+        "Summer 2 2025",
+        "Summer 2025",
+        "Fall 2025",
+        "Spring 2026",
+        "Summer 1 2026",
+        "Summer 2 2026",
+        "Summer 2026",
+        "Fall 2026",
+        "Spring 2027",
+        "Summer 1 2027",
+        "Summer 2 2027",
+        "Summer 2027",
+        "Fall 2027",
       ]
     > &
-      Attribute.DefaultTo<'Open Membership'>;
-    slug: Attribute.UID<'api::group.group', 'groupName'> & Attribute.Required;
+      Attribute.DefaultTo<"Open Membership">;
+    slug: Attribute.UID<"api::group.group", "groupName"> & Attribute.Required;
     updatedAt: Attribute.DateTime;
     updatedBy: Attribute.Relation<
-      'api::group.group',
-      'oneToOne',
-      'admin::user'
+      "api::group.group",
+      "oneToOne",
+      "admin::user"
     > &
       Attribute.Private;
     users_archived: Attribute.Relation<
-      'api::group.group',
-      'manyToMany',
-      'api::authorized-user.authorized-user'
+      "api::group.group",
+      "manyToMany",
+      "api::authorized-user.authorized-user"
     >;
   };
 }
 
 export interface ApiHighlightHighlight extends Schema.CollectionType {
-  collectionName: 'highlights';
+  collectionName: "highlights";
   info: {
-    description: '';
-    displayName: 'Highlight';
-    pluralName: 'highlights';
-    singularName: 'highlight';
+    description: "";
+    displayName: "Highlight";
+    pluralName: "highlights";
+    singularName: "highlight";
   };
   options: {
     draftAndPublish: false;
   };
   attributes: {
     authorized_user: Attribute.Relation<
-      'api::highlight.highlight',
-      'manyToOne',
-      'api::authorized-user.authorized-user'
+      "api::highlight.highlight",
+      "manyToOne",
+      "api::authorized-user.authorized-user"
     >;
     blockId: Attribute.Integer;
-    color: Attribute.String & Attribute.DefaultTo<'yellow'>;
+    color: Attribute.String & Attribute.DefaultTo<"yellow">;
     createdAt: Attribute.DateTime;
     createdBy: Attribute.Relation<
-      'api::highlight.highlight',
-      'oneToOne',
-      'admin::user'
+      "api::highlight.highlight",
+      "oneToOne",
+      "admin::user"
     > &
       Attribute.Private;
     lesson: Attribute.Relation<
-      'api::highlight.highlight',
-      'manyToOne',
-      'api::lesson.lesson'
+      "api::highlight.highlight",
+      "manyToOne",
+      "api::lesson.lesson"
     >;
     note: Attribute.Relation<
-      'api::highlight.highlight',
-      'oneToOne',
-      'api::note.note'
+      "api::highlight.highlight",
+      "oneToOne",
+      "api::note.note"
     >;
     position: Attribute.JSON;
     text: Attribute.Text;
     updatedAt: Attribute.DateTime;
     updatedBy: Attribute.Relation<
-      'api::highlight.highlight',
-      'oneToOne',
-      'admin::user'
+      "api::highlight.highlight",
+      "oneToOne",
+      "admin::user"
     > &
       Attribute.Private;
     yLevel: Attribute.Decimal &
@@ -1268,12 +1268,12 @@ export interface ApiHighlightHighlight extends Schema.CollectionType {
 }
 
 export interface ApiLessonLesson extends Schema.CollectionType {
-  collectionName: 'lessons';
+  collectionName: "lessons";
   info: {
-    description: '';
-    displayName: 'Lesson';
-    pluralName: 'lessons';
-    singularName: 'lesson';
+    description: "";
+    displayName: "Lesson";
+    pluralName: "lessons";
+    singularName: "lesson";
   };
   options: {
     draftAndPublish: true;
@@ -1281,41 +1281,41 @@ export interface ApiLessonLesson extends Schema.CollectionType {
   attributes: {
     blocks: Attribute.DynamicZone<
       [
-        'droplets.generic',
-        'droplets.video',
-        'droplets.quiz',
-        'droplets.callout',
-        'droplets.expandable',
-        'droplets.open-ended-quiz'
+        "droplets.generic",
+        "droplets.video",
+        "droplets.quiz",
+        "droplets.callout",
+        "droplets.expandable",
+        "droplets.open-ended-quiz",
       ]
     > &
       Attribute.Required;
     createdAt: Attribute.DateTime;
     createdBy: Attribute.Relation<
-      'api::lesson.lesson',
-      'oneToOne',
-      'admin::user'
+      "api::lesson.lesson",
+      "oneToOne",
+      "admin::user"
     > &
       Attribute.Private;
     droplet_lessons: Attribute.Relation<
-      'api::lesson.lesson',
-      'oneToMany',
-      'api::droplet-lesson.droplet-lesson'
+      "api::lesson.lesson",
+      "oneToMany",
+      "api::droplet-lesson.droplet-lesson"
     >;
     droplets: Attribute.Relation<
-      'api::lesson.lesson',
-      'manyToMany',
-      'api::droplet.droplet'
+      "api::lesson.lesson",
+      "manyToMany",
+      "api::droplet.droplet"
     >;
     enrollments: Attribute.Relation<
-      'api::lesson.lesson',
-      'manyToMany',
-      'api::enrollment.enrollment'
+      "api::lesson.lesson",
+      "manyToMany",
+      "api::enrollment.enrollment"
     >;
     highlights: Attribute.Relation<
-      'api::lesson.lesson',
-      'oneToMany',
-      'api::highlight.highlight'
+      "api::lesson.lesson",
+      "oneToMany",
+      "api::highlight.highlight"
     >;
     name: Attribute.String &
       Attribute.Required &
@@ -1323,31 +1323,32 @@ export interface ApiLessonLesson extends Schema.CollectionType {
         maxLength: 100;
       }>;
     notes: Attribute.Relation<
-      'api::lesson.lesson',
-      'oneToMany',
-      'api::note.note'
+      "api::lesson.lesson",
+      "oneToMany",
+      "api::note.note"
     >;
+    orderIndex: Attribute.Integer;
     publishedAt: Attribute.DateTime;
-    slug: Attribute.UID<'api::lesson.lesson', 'name'> & Attribute.Required;
-    type: Attribute.Enumeration<['general', 'setup', 'activity', 'caseStudy']> &
-      Attribute.DefaultTo<'general'>;
+    slug: Attribute.UID<"api::lesson.lesson", "name"> & Attribute.Required;
+    type: Attribute.Enumeration<["general", "setup", "activity", "caseStudy"]> &
+      Attribute.DefaultTo<"general">;
     updatedAt: Attribute.DateTime;
     updatedBy: Attribute.Relation<
-      'api::lesson.lesson',
-      'oneToOne',
-      'admin::user'
+      "api::lesson.lesson",
+      "oneToOne",
+      "admin::user"
     > &
       Attribute.Private;
   };
 }
 
 export interface ApiNoteNote extends Schema.CollectionType {
-  collectionName: 'notes';
+  collectionName: "notes";
   info: {
-    description: '';
-    displayName: 'Note';
-    pluralName: 'notes';
-    singularName: 'note';
+    description: "";
+    displayName: "Note";
+    pluralName: "notes";
+    singularName: "note";
   };
   options: {
     draftAndPublish: false;
@@ -1355,104 +1356,104 @@ export interface ApiNoteNote extends Schema.CollectionType {
   attributes: {
     content: Attribute.Text;
     createdAt: Attribute.DateTime;
-    createdBy: Attribute.Relation<'api::note.note', 'oneToOne', 'admin::user'> &
+    createdBy: Attribute.Relation<"api::note.note", "oneToOne", "admin::user"> &
       Attribute.Private;
     enrollment: Attribute.Relation<
-      'api::note.note',
-      'manyToOne',
-      'api::enrollment.enrollment'
+      "api::note.note",
+      "manyToOne",
+      "api::enrollment.enrollment"
     >;
     highlight: Attribute.Relation<
-      'api::note.note',
-      'oneToOne',
-      'api::highlight.highlight'
+      "api::note.note",
+      "oneToOne",
+      "api::highlight.highlight"
     >;
     lesson: Attribute.Relation<
-      'api::note.note',
-      'manyToOne',
-      'api::lesson.lesson'
+      "api::note.note",
+      "manyToOne",
+      "api::lesson.lesson"
     >;
     positionY: Attribute.Integer;
     updatedAt: Attribute.DateTime;
-    updatedBy: Attribute.Relation<'api::note.note', 'oneToOne', 'admin::user'> &
+    updatedBy: Attribute.Relation<"api::note.note", "oneToOne", "admin::user"> &
       Attribute.Private;
   };
 }
 
 export interface ApiPlaylistPlaylist extends Schema.CollectionType {
-  collectionName: 'playlists';
+  collectionName: "playlists";
   info: {
-    description: '';
-    displayName: 'Playlist';
-    pluralName: 'playlists';
-    singularName: 'playlist';
+    description: "";
+    displayName: "Playlist";
+    pluralName: "playlists";
+    singularName: "playlist";
   };
   options: {
     draftAndPublish: true;
   };
   attributes: {
     announcements: Attribute.Relation<
-      'api::playlist.playlist',
-      'oneToMany',
-      'api::announcement.announcement'
+      "api::playlist.playlist",
+      "oneToMany",
+      "api::announcement.announcement"
     >;
     author: Attribute.Relation<
-      'api::playlist.playlist',
-      'manyToOne',
-      'api::author.author'
+      "api::playlist.playlist",
+      "manyToOne",
+      "api::author.author"
     >;
     authorized_users: Attribute.Relation<
-      'api::playlist.playlist',
-      'manyToMany',
-      'api::authorized-user.authorized-user'
+      "api::playlist.playlist",
+      "manyToMany",
+      "api::authorized-user.authorized-user"
     >;
     authors: Attribute.Relation<
-      'api::playlist.playlist',
-      'manyToMany',
-      'api::authorized-user.authorized-user'
+      "api::playlist.playlist",
+      "manyToMany",
+      "api::authorized-user.authorized-user"
     >;
     createdAt: Attribute.DateTime;
     createdBy: Attribute.Relation<
-      'api::playlist.playlist',
-      'oneToOne',
-      'admin::user'
+      "api::playlist.playlist",
+      "oneToOne",
+      "admin::user"
     > &
       Attribute.Private;
     description: Attribute.Text;
     droplets: Attribute.Relation<
-      'api::playlist.playlist',
-      'oneToMany',
-      'api::droplet.droplet'
+      "api::playlist.playlist",
+      "oneToMany",
+      "api::droplet.droplet"
     >;
-    duration: Attribute.Enumeration<['short', 'medium', 'long']> &
+    duration: Attribute.Enumeration<["short", "medium", "long"]> &
       Attribute.Required &
-      Attribute.DefaultTo<'medium'>;
+      Attribute.DefaultTo<"medium">;
     groups: Attribute.Relation<
-      'api::playlist.playlist',
-      'manyToMany',
-      'api::group.group'
+      "api::playlist.playlist",
+      "manyToMany",
+      "api::group.group"
     >;
     isPublic: Attribute.Boolean;
     name: Attribute.String & Attribute.Required;
     publishedAt: Attribute.DateTime;
-    slug: Attribute.UID<'api::playlist.playlist', 'name'> & Attribute.Required;
+    slug: Attribute.UID<"api::playlist.playlist", "name"> & Attribute.Required;
     updatedAt: Attribute.DateTime;
     updatedBy: Attribute.Relation<
-      'api::playlist.playlist',
-      'oneToOne',
-      'admin::user'
+      "api::playlist.playlist",
+      "oneToOne",
+      "admin::user"
     > &
       Attribute.Private;
   };
 }
 
 export interface ApiReportReport extends Schema.CollectionType {
-  collectionName: 'reports';
+  collectionName: "reports";
   info: {
-    description: '';
-    displayName: 'Report';
-    pluralName: 'reports';
-    singularName: 'report';
+    description: "";
+    displayName: "Report";
+    pluralName: "reports";
+    singularName: "report";
   };
   options: {
     draftAndPublish: false;
@@ -1460,9 +1461,9 @@ export interface ApiReportReport extends Schema.CollectionType {
   attributes: {
     createdAt: Attribute.DateTime;
     createdBy: Attribute.Relation<
-      'api::report.report',
-      'oneToOne',
-      'admin::user'
+      "api::report.report",
+      "oneToOne",
+      "admin::user"
     > &
       Attribute.Private;
     description: Attribute.Text & Attribute.Required;
@@ -1470,89 +1471,89 @@ export interface ApiReportReport extends Schema.CollectionType {
     fullName: Attribute.String & Attribute.Required;
     path: Attribute.String & Attribute.Required;
     time: Attribute.DateTime;
-    type: Attribute.Enumeration<['bug']> & Attribute.Required;
+    type: Attribute.Enumeration<["bug"]> & Attribute.Required;
     updatedAt: Attribute.DateTime;
     updatedBy: Attribute.Relation<
-      'api::report.report',
-      'oneToOne',
-      'admin::user'
+      "api::report.report",
+      "oneToOne",
+      "admin::user"
     > &
       Attribute.Private;
   };
 }
 
 export interface ApiTagTag extends Schema.CollectionType {
-  collectionName: 'tags';
+  collectionName: "tags";
   info: {
-    description: '';
-    displayName: 'Tag';
-    pluralName: 'tags';
-    singularName: 'tag';
+    description: "";
+    displayName: "Tag";
+    pluralName: "tags";
+    singularName: "tag";
   };
   options: {
     draftAndPublish: false;
   };
   attributes: {
     createdAt: Attribute.DateTime;
-    createdBy: Attribute.Relation<'api::tag.tag', 'oneToOne', 'admin::user'> &
+    createdBy: Attribute.Relation<"api::tag.tag", "oneToOne", "admin::user"> &
       Attribute.Private;
     droplets: Attribute.Relation<
-      'api::tag.tag',
-      'manyToMany',
-      'api::droplet.droplet'
+      "api::tag.tag",
+      "manyToMany",
+      "api::droplet.droplet"
     >;
     name: Attribute.String & Attribute.Required & Attribute.Unique;
-    slug: Attribute.UID<'api::tag.tag', 'name'> & Attribute.Required;
+    slug: Attribute.UID<"api::tag.tag", "name"> & Attribute.Required;
     updatedAt: Attribute.DateTime;
-    updatedBy: Attribute.Relation<'api::tag.tag', 'oneToOne', 'admin::user'> &
+    updatedBy: Attribute.Relation<"api::tag.tag", "oneToOne", "admin::user"> &
       Attribute.Private;
   };
 }
 
 export interface PluginContentReleasesRelease extends Schema.CollectionType {
-  collectionName: 'strapi_releases';
+  collectionName: "strapi_releases";
   info: {
-    displayName: 'Release';
-    pluralName: 'releases';
-    singularName: 'release';
+    displayName: "Release";
+    pluralName: "releases";
+    singularName: "release";
   };
   options: {
     draftAndPublish: false;
   };
   pluginOptions: {
-    'content-manager': {
+    "content-manager": {
       visible: false;
     };
-    'content-type-builder': {
+    "content-type-builder": {
       visible: false;
     };
   };
   attributes: {
     actions: Attribute.Relation<
-      'plugin::content-releases.release',
-      'oneToMany',
-      'plugin::content-releases.release-action'
+      "plugin::content-releases.release",
+      "oneToMany",
+      "plugin::content-releases.release-action"
     >;
     createdAt: Attribute.DateTime;
     createdBy: Attribute.Relation<
-      'plugin::content-releases.release',
-      'oneToOne',
-      'admin::user'
+      "plugin::content-releases.release",
+      "oneToOne",
+      "admin::user"
     > &
       Attribute.Private;
     name: Attribute.String & Attribute.Required;
     releasedAt: Attribute.DateTime;
     scheduledAt: Attribute.DateTime;
     status: Attribute.Enumeration<
-      ['ready', 'blocked', 'failed', 'done', 'empty']
+      ["ready", "blocked", "failed", "done", "empty"]
     > &
       Attribute.Required;
     timezone: Attribute.String;
     updatedAt: Attribute.DateTime;
     updatedBy: Attribute.Relation<
-      'plugin::content-releases.release',
-      'oneToOne',
-      'admin::user'
+      "plugin::content-releases.release",
+      "oneToOne",
+      "admin::user"
     > &
       Attribute.Private;
   };
@@ -1560,20 +1561,20 @@ export interface PluginContentReleasesRelease extends Schema.CollectionType {
 
 export interface PluginContentReleasesReleaseAction
   extends Schema.CollectionType {
-  collectionName: 'strapi_release_actions';
+  collectionName: "strapi_release_actions";
   info: {
-    displayName: 'Release Action';
-    pluralName: 'release-actions';
-    singularName: 'release-action';
+    displayName: "Release Action";
+    pluralName: "release-actions";
+    singularName: "release-action";
   };
   options: {
     draftAndPublish: false;
   };
   pluginOptions: {
-    'content-manager': {
+    "content-manager": {
       visible: false;
     };
-    'content-type-builder': {
+    "content-type-builder": {
       visible: false;
     };
   };
@@ -1581,50 +1582,50 @@ export interface PluginContentReleasesReleaseAction
     contentType: Attribute.String & Attribute.Required;
     createdAt: Attribute.DateTime;
     createdBy: Attribute.Relation<
-      'plugin::content-releases.release-action',
-      'oneToOne',
-      'admin::user'
+      "plugin::content-releases.release-action",
+      "oneToOne",
+      "admin::user"
     > &
       Attribute.Private;
     entry: Attribute.Relation<
-      'plugin::content-releases.release-action',
-      'morphToOne'
+      "plugin::content-releases.release-action",
+      "morphToOne"
     >;
     isEntryValid: Attribute.Boolean;
     locale: Attribute.String;
     release: Attribute.Relation<
-      'plugin::content-releases.release-action',
-      'manyToOne',
-      'plugin::content-releases.release'
+      "plugin::content-releases.release-action",
+      "manyToOne",
+      "plugin::content-releases.release"
     >;
-    type: Attribute.Enumeration<['publish', 'unpublish']> & Attribute.Required;
+    type: Attribute.Enumeration<["publish", "unpublish"]> & Attribute.Required;
     updatedAt: Attribute.DateTime;
     updatedBy: Attribute.Relation<
-      'plugin::content-releases.release-action',
-      'oneToOne',
-      'admin::user'
+      "plugin::content-releases.release-action",
+      "oneToOne",
+      "admin::user"
     > &
       Attribute.Private;
   };
 }
 
 export interface PluginI18NLocale extends Schema.CollectionType {
-  collectionName: 'i18n_locale';
+  collectionName: "i18n_locale";
   info: {
-    collectionName: 'locales';
-    description: '';
-    displayName: 'Locale';
-    pluralName: 'locales';
-    singularName: 'locale';
+    collectionName: "locales";
+    description: "";
+    displayName: "Locale";
+    pluralName: "locales";
+    singularName: "locale";
   };
   options: {
     draftAndPublish: false;
   };
   pluginOptions: {
-    'content-manager': {
+    "content-manager": {
       visible: false;
     };
-    'content-type-builder': {
+    "content-type-builder": {
       visible: false;
     };
   };
@@ -1632,9 +1633,9 @@ export interface PluginI18NLocale extends Schema.CollectionType {
     code: Attribute.String & Attribute.Unique;
     createdAt: Attribute.DateTime;
     createdBy: Attribute.Relation<
-      'plugin::i18n.locale',
-      'oneToOne',
-      'admin::user'
+      "plugin::i18n.locale",
+      "oneToOne",
+      "admin::user"
     > &
       Attribute.Private;
     name: Attribute.String &
@@ -1647,27 +1648,27 @@ export interface PluginI18NLocale extends Schema.CollectionType {
       >;
     updatedAt: Attribute.DateTime;
     updatedBy: Attribute.Relation<
-      'plugin::i18n.locale',
-      'oneToOne',
-      'admin::user'
+      "plugin::i18n.locale",
+      "oneToOne",
+      "admin::user"
     > &
       Attribute.Private;
   };
 }
 
 export interface PluginUploadFile extends Schema.CollectionType {
-  collectionName: 'files';
+  collectionName: "files";
   info: {
-    description: '';
-    displayName: 'File';
-    pluralName: 'files';
-    singularName: 'file';
+    description: "";
+    displayName: "File";
+    pluralName: "files";
+    singularName: "file";
   };
   pluginOptions: {
-    'content-manager': {
+    "content-manager": {
       visible: false;
     };
-    'content-type-builder': {
+    "content-type-builder": {
       visible: false;
     };
   };
@@ -1676,16 +1677,16 @@ export interface PluginUploadFile extends Schema.CollectionType {
     caption: Attribute.String;
     createdAt: Attribute.DateTime;
     createdBy: Attribute.Relation<
-      'plugin::upload.file',
-      'oneToOne',
-      'admin::user'
+      "plugin::upload.file",
+      "oneToOne",
+      "admin::user"
     > &
       Attribute.Private;
     ext: Attribute.String;
     folder: Attribute.Relation<
-      'plugin::upload.file',
-      'manyToOne',
-      'plugin::upload.folder'
+      "plugin::upload.file",
+      "manyToOne",
+      "plugin::upload.folder"
     > &
       Attribute.Private;
     folderPath: Attribute.String &
@@ -1705,13 +1706,13 @@ export interface PluginUploadFile extends Schema.CollectionType {
     previewUrl: Attribute.String;
     provider: Attribute.String & Attribute.Required;
     provider_metadata: Attribute.JSON;
-    related: Attribute.Relation<'plugin::upload.file', 'morphToMany'>;
+    related: Attribute.Relation<"plugin::upload.file", "morphToMany">;
     size: Attribute.Decimal & Attribute.Required;
     updatedAt: Attribute.DateTime;
     updatedBy: Attribute.Relation<
-      'plugin::upload.file',
-      'oneToOne',
-      'admin::user'
+      "plugin::upload.file",
+      "oneToOne",
+      "admin::user"
     > &
       Attribute.Private;
     url: Attribute.String & Attribute.Required;
@@ -1720,37 +1721,37 @@ export interface PluginUploadFile extends Schema.CollectionType {
 }
 
 export interface PluginUploadFolder extends Schema.CollectionType {
-  collectionName: 'upload_folders';
+  collectionName: "upload_folders";
   info: {
-    displayName: 'Folder';
-    pluralName: 'folders';
-    singularName: 'folder';
+    displayName: "Folder";
+    pluralName: "folders";
+    singularName: "folder";
   };
   pluginOptions: {
-    'content-manager': {
+    "content-manager": {
       visible: false;
     };
-    'content-type-builder': {
+    "content-type-builder": {
       visible: false;
     };
   };
   attributes: {
     children: Attribute.Relation<
-      'plugin::upload.folder',
-      'oneToMany',
-      'plugin::upload.folder'
+      "plugin::upload.folder",
+      "oneToMany",
+      "plugin::upload.folder"
     >;
     createdAt: Attribute.DateTime;
     createdBy: Attribute.Relation<
-      'plugin::upload.folder',
-      'oneToOne',
-      'admin::user'
+      "plugin::upload.folder",
+      "oneToOne",
+      "admin::user"
     > &
       Attribute.Private;
     files: Attribute.Relation<
-      'plugin::upload.folder',
-      'oneToMany',
-      'plugin::upload.file'
+      "plugin::upload.folder",
+      "oneToMany",
+      "plugin::upload.file"
     >;
     name: Attribute.String &
       Attribute.Required &
@@ -1761,9 +1762,9 @@ export interface PluginUploadFolder extends Schema.CollectionType {
         number
       >;
     parent: Attribute.Relation<
-      'plugin::upload.folder',
-      'manyToOne',
-      'plugin::upload.folder'
+      "plugin::upload.folder",
+      "manyToOne",
+      "plugin::upload.folder"
     >;
     path: Attribute.String &
       Attribute.Required &
@@ -1776,9 +1777,9 @@ export interface PluginUploadFolder extends Schema.CollectionType {
     pathId: Attribute.Integer & Attribute.Required & Attribute.Unique;
     updatedAt: Attribute.DateTime;
     updatedBy: Attribute.Relation<
-      'plugin::upload.folder',
-      'oneToOne',
-      'admin::user'
+      "plugin::upload.folder",
+      "oneToOne",
+      "admin::user"
     > &
       Attribute.Private;
   };
@@ -1786,19 +1787,19 @@ export interface PluginUploadFolder extends Schema.CollectionType {
 
 export interface PluginUsersPermissionsPermission
   extends Schema.CollectionType {
-  collectionName: 'up_permissions';
+  collectionName: "up_permissions";
   info: {
-    description: '';
-    displayName: 'Permission';
-    name: 'permission';
-    pluralName: 'permissions';
-    singularName: 'permission';
+    description: "";
+    displayName: "Permission";
+    name: "permission";
+    pluralName: "permissions";
+    singularName: "permission";
   };
   pluginOptions: {
-    'content-manager': {
+    "content-manager": {
       visible: false;
     };
-    'content-type-builder': {
+    "content-type-builder": {
       visible: false;
     };
   };
@@ -1806,49 +1807,49 @@ export interface PluginUsersPermissionsPermission
     action: Attribute.String & Attribute.Required;
     createdAt: Attribute.DateTime;
     createdBy: Attribute.Relation<
-      'plugin::users-permissions.permission',
-      'oneToOne',
-      'admin::user'
+      "plugin::users-permissions.permission",
+      "oneToOne",
+      "admin::user"
     > &
       Attribute.Private;
     role: Attribute.Relation<
-      'plugin::users-permissions.permission',
-      'manyToOne',
-      'plugin::users-permissions.role'
+      "plugin::users-permissions.permission",
+      "manyToOne",
+      "plugin::users-permissions.role"
     >;
     updatedAt: Attribute.DateTime;
     updatedBy: Attribute.Relation<
-      'plugin::users-permissions.permission',
-      'oneToOne',
-      'admin::user'
+      "plugin::users-permissions.permission",
+      "oneToOne",
+      "admin::user"
     > &
       Attribute.Private;
   };
 }
 
 export interface PluginUsersPermissionsRole extends Schema.CollectionType {
-  collectionName: 'up_roles';
+  collectionName: "up_roles";
   info: {
-    description: '';
-    displayName: 'Role';
-    name: 'role';
-    pluralName: 'roles';
-    singularName: 'role';
+    description: "";
+    displayName: "Role";
+    name: "role";
+    pluralName: "roles";
+    singularName: "role";
   };
   pluginOptions: {
-    'content-manager': {
+    "content-manager": {
       visible: false;
     };
-    'content-type-builder': {
+    "content-type-builder": {
       visible: false;
     };
   };
   attributes: {
     createdAt: Attribute.DateTime;
     createdBy: Attribute.Relation<
-      'plugin::users-permissions.role',
-      'oneToOne',
-      'admin::user'
+      "plugin::users-permissions.role",
+      "oneToOne",
+      "admin::user"
     > &
       Attribute.Private;
     description: Attribute.String;
@@ -1858,34 +1859,34 @@ export interface PluginUsersPermissionsRole extends Schema.CollectionType {
         minLength: 3;
       }>;
     permissions: Attribute.Relation<
-      'plugin::users-permissions.role',
-      'oneToMany',
-      'plugin::users-permissions.permission'
+      "plugin::users-permissions.role",
+      "oneToMany",
+      "plugin::users-permissions.permission"
     >;
     type: Attribute.String & Attribute.Unique;
     updatedAt: Attribute.DateTime;
     updatedBy: Attribute.Relation<
-      'plugin::users-permissions.role',
-      'oneToOne',
-      'admin::user'
+      "plugin::users-permissions.role",
+      "oneToOne",
+      "admin::user"
     > &
       Attribute.Private;
     users: Attribute.Relation<
-      'plugin::users-permissions.role',
-      'oneToMany',
-      'plugin::users-permissions.user'
+      "plugin::users-permissions.role",
+      "oneToMany",
+      "plugin::users-permissions.user"
     >;
   };
 }
 
 export interface PluginUsersPermissionsUser extends Schema.CollectionType {
-  collectionName: 'up_users';
+  collectionName: "up_users";
   info: {
-    description: '';
-    displayName: 'User';
-    name: 'user';
-    pluralName: 'users';
-    singularName: 'user';
+    description: "";
+    displayName: "User";
+    name: "user";
+    pluralName: "users";
+    singularName: "user";
   };
   options: {
     draftAndPublish: false;
@@ -1897,9 +1898,9 @@ export interface PluginUsersPermissionsUser extends Schema.CollectionType {
     confirmed: Attribute.Boolean & Attribute.DefaultTo<false>;
     createdAt: Attribute.DateTime;
     createdBy: Attribute.Relation<
-      'plugin::users-permissions.user',
-      'oneToOne',
-      'admin::user'
+      "plugin::users-permissions.user",
+      "oneToOne",
+      "admin::user"
     > &
       Attribute.Private;
     email: Attribute.Email &
@@ -1915,15 +1916,15 @@ export interface PluginUsersPermissionsUser extends Schema.CollectionType {
     provider: Attribute.String;
     resetPasswordToken: Attribute.String & Attribute.Private;
     role: Attribute.Relation<
-      'plugin::users-permissions.user',
-      'manyToOne',
-      'plugin::users-permissions.role'
+      "plugin::users-permissions.user",
+      "manyToOne",
+      "plugin::users-permissions.role"
     >;
     updatedAt: Attribute.DateTime;
     updatedBy: Attribute.Relation<
-      'plugin::users-permissions.user',
-      'oneToOne',
-      'admin::user'
+      "plugin::users-permissions.user",
+      "oneToOne",
+      "admin::user"
     > &
       Attribute.Private;
     username: Attribute.String &
@@ -1935,42 +1936,42 @@ export interface PluginUsersPermissionsUser extends Schema.CollectionType {
   };
 }
 
-declare module '@strapi/types' {
+declare module "@strapi/types" {
   export module Shared {
     export interface ContentTypes {
-      'admin::api-token': AdminApiToken;
-      'admin::api-token-permission': AdminApiTokenPermission;
-      'admin::permission': AdminPermission;
-      'admin::role': AdminRole;
-      'admin::transfer-token': AdminTransferToken;
-      'admin::transfer-token-permission': AdminTransferTokenPermission;
-      'admin::user': AdminUser;
-      'api::access-request.access-request': ApiAccessRequestAccessRequest;
-      'api::announcement.announcement': ApiAnnouncementAnnouncement;
-      'api::author.author': ApiAuthorAuthor;
-      'api::authorized-user-role.authorized-user-role': ApiAuthorizedUserRoleAuthorizedUserRole;
-      'api::authorized-user.authorized-user': ApiAuthorizedUserAuthorizedUser;
-      'api::droplet-lesson.droplet-lesson': ApiDropletLessonDropletLesson;
-      'api::droplet.droplet': ApiDropletDroplet;
-      'api::due-date.due-date': ApiDueDateDueDate;
-      'api::enrollment.enrollment': ApiEnrollmentEnrollment;
-      'api::friendship.friendship': ApiFriendshipFriendship;
-      'api::gallery.gallery': ApiGalleryGallery;
-      'api::group.group': ApiGroupGroup;
-      'api::highlight.highlight': ApiHighlightHighlight;
-      'api::lesson.lesson': ApiLessonLesson;
-      'api::note.note': ApiNoteNote;
-      'api::playlist.playlist': ApiPlaylistPlaylist;
-      'api::report.report': ApiReportReport;
-      'api::tag.tag': ApiTagTag;
-      'plugin::content-releases.release': PluginContentReleasesRelease;
-      'plugin::content-releases.release-action': PluginContentReleasesReleaseAction;
-      'plugin::i18n.locale': PluginI18NLocale;
-      'plugin::upload.file': PluginUploadFile;
-      'plugin::upload.folder': PluginUploadFolder;
-      'plugin::users-permissions.permission': PluginUsersPermissionsPermission;
-      'plugin::users-permissions.role': PluginUsersPermissionsRole;
-      'plugin::users-permissions.user': PluginUsersPermissionsUser;
+      "admin::api-token": AdminApiToken;
+      "admin::api-token-permission": AdminApiTokenPermission;
+      "admin::permission": AdminPermission;
+      "admin::role": AdminRole;
+      "admin::transfer-token": AdminTransferToken;
+      "admin::transfer-token-permission": AdminTransferTokenPermission;
+      "admin::user": AdminUser;
+      "api::access-request.access-request": ApiAccessRequestAccessRequest;
+      "api::announcement.announcement": ApiAnnouncementAnnouncement;
+      "api::author.author": ApiAuthorAuthor;
+      "api::authorized-user-role.authorized-user-role": ApiAuthorizedUserRoleAuthorizedUserRole;
+      "api::authorized-user.authorized-user": ApiAuthorizedUserAuthorizedUser;
+      "api::droplet-lesson.droplet-lesson": ApiDropletLessonDropletLesson;
+      "api::droplet.droplet": ApiDropletDroplet;
+      "api::due-date.due-date": ApiDueDateDueDate;
+      "api::enrollment.enrollment": ApiEnrollmentEnrollment;
+      "api::friendship.friendship": ApiFriendshipFriendship;
+      "api::gallery.gallery": ApiGalleryGallery;
+      "api::group.group": ApiGroupGroup;
+      "api::highlight.highlight": ApiHighlightHighlight;
+      "api::lesson.lesson": ApiLessonLesson;
+      "api::note.note": ApiNoteNote;
+      "api::playlist.playlist": ApiPlaylistPlaylist;
+      "api::report.report": ApiReportReport;
+      "api::tag.tag": ApiTagTag;
+      "plugin::content-releases.release": PluginContentReleasesRelease;
+      "plugin::content-releases.release-action": PluginContentReleasesReleaseAction;
+      "plugin::i18n.locale": PluginI18NLocale;
+      "plugin::upload.file": PluginUploadFile;
+      "plugin::upload.folder": PluginUploadFolder;
+      "plugin::users-permissions.permission": PluginUsersPermissionsPermission;
+      "plugin::users-permissions.role": PluginUsersPermissionsRole;
+      "plugin::users-permissions.user": PluginUsersPermissionsUser;
     }
   }
 }
