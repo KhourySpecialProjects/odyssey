@@ -2,7 +2,6 @@
 
 import { useCallback } from "react";
 import { Block } from "./add-block";
-import { AddBlock } from "./add-block";
 import DraggableBlockTile from "./draggable_block_tile";
 
 export function DraggableBlockListClient({
@@ -35,7 +34,6 @@ export function DraggableBlockListClient({
             key={`${block.__component}-${index}-${blocks.length}`}
             className="flex w-full flex-col items-center justify-center"
           >
-            <AddBlock add={addBlock(index)} />
             <DraggableBlockTile
               block={block}
               index={index}
@@ -45,7 +43,6 @@ export function DraggableBlockListClient({
             />
           </div>
         ))}
-        <AddBlock add={addBlock(blocks.length + 1)} />
       </div>
     </>
   );
