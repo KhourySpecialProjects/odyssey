@@ -259,7 +259,10 @@ const handleAddBlockFromFAB = useCallback(
             {
               id: Math.random(),
               content: "",
-              answerOptions: [],
+              answerOptions: [
+                { id: Math.random(), content: "True", isCorrect: true },
+                { id: Math.random(), content: "False", isCorrect: false },
+              ],
             },
           ],
         };
