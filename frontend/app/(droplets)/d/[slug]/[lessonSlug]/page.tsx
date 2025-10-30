@@ -61,7 +61,10 @@ export default async function Page({ params }: Props) {
       enrollmentId = enrollment.id;
       completedLessonIds =
         enrollment.viewedLessons?.map((l: { id: number }) => l.id) || [];
-      if (completedLessonIds.length === enrollment.droplet.lessons?.length) {
+      if (
+        completedLessonIds.length === enrollment.droplet.lessons?.length &&
+        !enrollment.completionDate
+      ) {
         await updateCompletionDate(enrollment.id);
       }
     }
