@@ -111,7 +111,7 @@ describe("NoteSummary", () => {
           blocks: [],
           droplets: [],
           notes: [],
-          orderIndex: 1
+          orderIndex: 1,
         },
         enrollment: {
           id: "1",
@@ -123,7 +123,7 @@ describe("NoteSummary", () => {
           notes: [],
           isFirstTime: false,
           isArchived: false,
-          completionDate: DateTime.local().toJSDate()
+          completionDate: DateTime.local().toJSDate(),
         },
         positionY: 0,
         highlight: {

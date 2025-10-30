@@ -9,12 +9,8 @@ interface QueueItem {
   timestamp: number;
 }
 
-export function useLessonOrder(
-  droplet: Pick<Droplet, "id" | "lessons">,
-) {
-  const [dropletLessons, setDropletLessons] = useState(
-    droplet.lessons || [],
-  );
+export function useLessonOrder(droplet: Pick<Droplet, "id" | "lessons">) {
+  const [dropletLessons, setDropletLessons] = useState(droplet.lessons || []);
   const [isProcessing, setIsProcessing] = useState(false);
   const orderQueue = useRef<QueueItem[]>([]);
   const latestOrderTimestamp = useRef<number>(Date.now());
@@ -23,31 +19,29 @@ export function useLessonOrder(
     setDropletLessons(droplet.lessons || []);
   }, [droplet.lessons]);
 
-const processQueue = useCallback(async () => {
-  if (isProcessing || orderQueue.current.length === 0) return;
-  setIsProcessing(true);
+  const processQueue = useCallback(async () => {
+    if (isProcessing || orderQueue.current.length === 0) return;
+    setIsProcessing(true);
 
-  try {
-    const latestOrder = orderQueue.current.reduce((latest, current) => {
-      return current.timestamp > latest.timestamp ? current : latest;
-    });
+    try {
+      const latestOrder = orderQueue.current.reduce((latest, current) => {
+        return current.timestamp > latest.timestamp ? current : latest;
+      });
 
-    await Promise.all(
-      latestOrder.dropletLessons.map(({ id, orderIndex }) =>
-        updateLesson(id, { orderIndex }),
-      ),
-    );
+      await Promise.all(
+        latestOrder.dropletLessons.map(({ id, orderIndex }) =>
+          updateLesson(id, { orderIndex }),
+        ),
+      );
 
-    
-
-    orderQueue.current = orderQueue.current.filter(
-      (item) => item.timestamp > latestOrder.timestamp,
-    );
-  } finally {
-    setIsProcessing(false);
-    if (orderQueue.current.length > 0) processQueue();
-  }
-}, [isProcessing]);
+      orderQueue.current = orderQueue.current.filter(
+        (item) => item.timestamp > latestOrder.timestamp,
+      );
+    } finally {
+      setIsProcessing(false);
+      if (orderQueue.current.length > 0) processQueue();
+    }
+  }, [isProcessing]);
 
   const handleLessonReorder = useCallback(
     (newOrder: typeof dropletLessons) => {

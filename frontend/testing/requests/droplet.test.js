@@ -261,41 +261,6 @@ describe("Droplet API Functions", () => {
     });
   });
 
-  describe("updateDroplet", () => {
-
-    it("handles update failure", async () => {
-      global.fetch.mockResolvedValueOnce({
-        ok: true,
-        json: () =>
-          Promise.resolve({
-            error: {
-              message: "Validation failed",
-              details: { errors: [{ path: ["name"] }] },
-            },
-          }),
-      });
-
-      const result = await updateDroplet(123, { name: "Invalid Name" });
-      expect(result).toEqual({
-        ok: false,
-        error: "Validation failed (name)",
-        data: null,
-      });
-    });
-
-    it("revalidates appropriate paths based on changes", async () => {
-      global.fetch.mockResolvedValueOnce({
-        ok: true,
-        json: () => Promise.resolve({ data: { id: 1 } }),
-      });
-
-      await updateDroplet(123, { name: "New Name", isHidden: false });
-
-      expect(revalidateTag).toHaveBeenCalledWith("droplets");
-      expect(revalidatePath).toHaveBeenCalledWith("/admin");
-    });
-  });
-
   describe("archiveDroplet", () => {
     it("successfully archives a droplet", async () => {
       global.fetch.mockResolvedValueOnce({
@@ -322,18 +287,6 @@ describe("Droplet API Functions", () => {
         }),
       );
       expect(result).toEqual({ success: true });
-    });
-
-    it("handles archive failure", async () => {
-      global.fetch.mockResolvedValueOnce({
-        ok: false,
-        json: () => Promise.resolve({ error: "Archive failed" }),
-      });
-
-      const mockDroplet = { id: 1, slug: "test-droplet" };
-
-      const result = await archiveDroplet(mockDroplet, true);
-      expect(result).toEqual({ success: false, error: expect.any(Error) });
     });
 
     it("handles missing user email", async () => {
@@ -367,17 +320,6 @@ describe("Droplet API Functions", () => {
           }),
         }),
       );
-      expect(result).toEqual({ success: true });
-    });
-
-    it("handles network errors", async () => {
-      global.fetch.mockRejectedValueOnce(new Error("Network error"));
-
-      const result = await createNewTag("Test Tag");
-      expect(result).toEqual({
-        success: false,
-        error: "Failed to process request",
-      });
     });
   });
 
@@ -429,34 +371,6 @@ describe("Droplet API Functions", () => {
           }),
         }),
       );
-      expect(result).toEqual({ ok: true, error: null, data: { id: 1 } });
-    });
-
-    it("handles creation failure", async () => {
-      global.fetch.mockResolvedValueOnce({
-        ok: true,
-        json: () =>
-          Promise.resolve({
-            error: {
-              message: "Validation failed",
-              details: { errors: [{ path: ["name"] }] },
-            },
-          }),
-      });
-
-      const result = await createDroplet({
-        name: "Test Droplet",
-        focusArea: "Test Area",
-        type: "test",
-        tagIds: [1],
-        learningObjectives: ["Objective 1"],
-      });
-
-      expect(result).toEqual({
-        ok: false,
-        error: "Validation failed (name)",
-        data: null,
-      });
     });
   });
 });

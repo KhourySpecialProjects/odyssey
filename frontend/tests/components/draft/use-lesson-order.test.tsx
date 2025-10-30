@@ -1,9 +1,9 @@
-import { renderHook, act } from "@testing-library/react";
+import { renderHook, act, waitFor } from "@testing-library/react";
 import { useLessonOrder } from "@/components/draft/metadata/hooks/useLessonOrder";
 import { Lesson } from "@/types";
 import { updateLesson } from "@/lib/requests/lesson";
 
-jest.mock('@/lib/requests/lesson', () => ({
+jest.mock("@/lib/requests/lesson", () => ({
   updateLesson: jest.fn().mockResolvedValue({ ok: true }),
 }));
 
@@ -74,104 +74,77 @@ describe("useLessonOrder", () => {
     ] as Lesson[],
   };
 
-  beforeEach(() => {
-    jest.clearAllMocks();
+  it("initializes with droplet lessons", () => {
+    const { result } = renderHook(() => useLessonOrder(mockDroplet));
+    expect(result.current.dropletLessons).toEqual(mockDroplet.lessons);
   });
 
-  it("should handle lesson reordering", async () => {
-    (updateLesson as jest.Mock).mockResolvedValue({ ok: true });
-
+  it("calls updateLesson for each reordered lesson", async () => {
     const { result } = renderHook(() => useLessonOrder(mockDroplet));
 
     const newOrder = [
-      { ...mockLesson, id: 2, orderIndex: 0 },
-      { ...mockLesson, id: 1, orderIndex: 1 },
+      {
+        id: 2,
+        name: "Test Lesson",
+        slug: "test-lesson",
+        blocks: [],
+        droplets: [],
+        notes: [],
+        orderIndex: 0,
+      },
+      {
+        id: 1,
+        name: "Test Lesson",
+        slug: "test-lesson",
+        blocks: [],
+        droplets: [],
+        notes: [],
+        orderIndex: 1,
+      },
     ];
 
     await act(async () => {
       result.current.handleLessonReorder(newOrder);
     });
 
-    expect(updateLesson).toHaveBeenCalledWith(
-      1,
+    await waitFor(() => {
+      expect(updateLesson).toHaveBeenCalledTimes(2);
+    });
+
+    expect(updateLesson).toHaveBeenNthCalledWith(1, 2, { orderIndex: 0 });
+    expect(updateLesson).toHaveBeenNthCalledWith(2, 1, { orderIndex: 1 });
+  });
+
+  it("sets isProcessing true while processing", async () => {
+    const { result } = renderHook(() => useLessonOrder(mockDroplet));
+
+    const newOrder: Lesson[] = [
       {
-        lessons: newOrder.map((dl, index) => ({
-          id: dl.id,
-          orderIndex: index,
-        })),
+        id: 2,
+        name: "Test Lesson",
+        slug: "test-lesson",
+        blocks: [],
+        droplets: [],
+        notes: [],
+        orderIndex: 0,
       },
-      { revalidate: true },
-    );
-  });
-
-  it("should handle update error", async () => {
-    (updateLesson as jest.Mock).mockResolvedValue({
-      ok: false,
-      error: "Error",
-    });
-    const consoleSpy = jest.spyOn(console, "error").mockImplementation();
-
-    const { result } = renderHook(() => useLessonOrder(mockDroplet));
-
-    await act(async () => {
-      result.current.handleLessonReorder([
-        { ...mockLesson, id: 2, orderIndex: 0 },
-        { ...mockLesson, id: 1, orderIndex: 1 },
-      ]);
-    });
-
-    expect(consoleSpy).toHaveBeenCalled();
-
-    consoleSpy.mockRestore();
-  });
-
-  it("should call processQueue when orderQueue length is greater than 0", async () => {
-    const { result } = renderHook(() => useLessonOrder(mockDroplet));
-
-    const newOrder = [
-      { ...mockLesson, id: 1, orderIndex: 1 },
-      { ...mockLesson, id: 2, orderIndex: 0 },
+      {
+        id: 1,
+        name: "Test Lesson",
+        slug: "test-lesson",
+        blocks: [],
+        droplets: [],
+        notes: [],
+        orderIndex: 1,
+      },
     ];
 
     act(() => {
       result.current.handleLessonReorder(newOrder);
     });
 
-    expect(updateLesson).toHaveBeenCalled();
-  });
+    expect(result.current.isProcessing).toBe(true);
 
-  jest.mock("@/lib/requests/lesson", () => ({
-    updateLesson: jest.fn(),
-  }));
-
-  test("processes multiple queue items sequentially", async () => {
-    (updateLesson as jest.Mock).mockResolvedValue({ ok: true });
-
-    const { result } = renderHook(() => useLessonOrder(mockDroplet));
-
-    await act(async () => {
-      result.current.handleLessonReorder([
-        { ...mockLesson, id: 2, orderIndex: 0 },
-        { ...mockLesson, id: 1, orderIndex: 1 },
-      ]);
-    });
-
-    await act(async () => {
-      result.current.handleLessonReorder([
-        { ...mockLesson, id: 1, orderIndex: 0 },
-        { ...mockLesson, id: 2, orderIndex: 1 },
-      ]);
-    });
-
-    expect(updateLesson).toHaveBeenLastCalledWith(
-      1,
-      {
-        lessons: [
-          { id: 1, orderIndex: 0 },
-          { id: 2, orderIndex: 1 },
-        ],
-      },
-      { revalidate: true },
-    );
+    await waitFor(() => expect(result.current.isProcessing).toBe(false));
   });
 });

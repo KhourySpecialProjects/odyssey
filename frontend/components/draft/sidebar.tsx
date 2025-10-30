@@ -68,7 +68,8 @@ export function Sidebar({
   } = useLessonOrder(droplet);
 
   const [isOpen, setIsOpen] = useState(false);
-  const lessons = (dropletLessons || []).slice()
+  const lessons = (dropletLessons || [])
+    .slice()
     .sort((a, b) => a.orderIndex - b.orderIndex);
 
   useLayoutEffect(() => {
@@ -108,8 +109,10 @@ export function Sidebar({
     if (active.id !== over?.id) {
       const oldIndex = lessons.findIndex((item) => item.id === active.id);
       const newIndex = lessons.findIndex((item) => item.id === over?.id);
-      const newLessons = arrayMove(lessons, oldIndex, newIndex)
-        .map((l, i) => ({ ...l, orderIndex: i })); 
+      const newLessons = arrayMove(lessons, oldIndex, newIndex).map((l, i) => ({
+        ...l,
+        orderIndex: i,
+      }));
       handleLessonReorder(newLessons);
     }
   };

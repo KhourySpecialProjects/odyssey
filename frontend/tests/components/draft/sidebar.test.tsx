@@ -93,7 +93,7 @@ describe("Sidebar", () => {
     name: "Test Droplet",
     slug: "test-droplet",
     status: "published" as DropletStatus,
-    lessons: [{...mockLesson, orderIndex: 0}]
+    lessons: [{ ...mockLesson, orderIndex: 0 }],
   };
 
   const mockAuthorizedUser = {
@@ -114,7 +114,7 @@ describe("Sidebar", () => {
     blocked: [],
     was_blocked: [],
     timeZone: "America/New_York" as TimeZone,
-    isPublic: true
+    isPublic: true,
   };
 
   beforeEach(() => {

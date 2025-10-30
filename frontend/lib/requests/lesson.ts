@@ -118,10 +118,7 @@ export async function completeLesson(activityId: number, lessonIds: number[]) {
   }
 }
 
-export async function deleteLesson(
-  id: number,
-  revalidate: boolean = true,
-) {
+export async function deleteLesson(id: number, revalidate: boolean = true) {
   try {
     const response = await fetch(
       NEXT_PUBLIC_STRAPI_API_URL + "/api/lessons/" + id,
@@ -225,7 +222,7 @@ export async function addLesson(formData: z.infer<typeof CreateLessonSchema>) {
       droplets: {
         connect: [formData.dropletId],
       },
-      orderIndex: formData.orderIndex
+      orderIndex: formData.orderIndex,
     };
 
     const lessonResponse = await fetch(

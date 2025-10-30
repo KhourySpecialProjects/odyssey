@@ -49,8 +49,7 @@ export default function NotesSummary({
                   (note) => note.lesson?.id === lesson.id,
                 );
                 const lessonHighlights = dropletHighlights.filter(
-                  (highlight) =>
-                    highlight.lesson?.id === lesson.id,
+                  (highlight) => highlight.lesson?.id === lesson.id,
                 );
                 const filteredHighlights = lessonHighlights.filter(
                   (highlight) => selectedColors.includes(highlight.color),

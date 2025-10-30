@@ -16,7 +16,7 @@ describe("NotesSummary", () => {
     blocks: [],
     droplets: [],
     notes: [],
-    orderIndex: 0
+    orderIndex: 0,
   };
 
   const mockDroplet = {

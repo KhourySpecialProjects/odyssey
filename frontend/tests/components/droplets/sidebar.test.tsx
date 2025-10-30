@@ -41,40 +41,38 @@ describe("Sidebar", () => {
     name: "Test Droplet",
     slug: "test-droplet",
     lessons: [
-    {
-         orderIndex: 0,
-         id: 1,
-           name: "Lesson 1",
-           slug: "lesson-1",
-           type: "general" as const,
-           droplets: [],
-           notes: [],
-           blocks: [],
-       },
-       {
-         orderIndex: 1,
-         id: 2,
-           name: "Lesson 2",
-           slug: "lesson-2",
-           type: "activity" as const,
-           droplets: [],
-           notes: [],
-           blocks: [],
-         
-       },
-       {
-         orderIndex: 2,
-         id: 3,
+      {
+        orderIndex: 0,
+        id: 1,
+        name: "Lesson 1",
+        slug: "lesson-1",
+        type: "general" as const,
+        droplets: [],
+        notes: [],
+        blocks: [],
+      },
+      {
+        orderIndex: 1,
+        id: 2,
+        name: "Lesson 2",
+        slug: "lesson-2",
+        type: "activity" as const,
+        droplets: [],
+        notes: [],
+        blocks: [],
+      },
+      {
+        orderIndex: 2,
+        id: 3,
 
-           name: "Lesson 3",
-           slug: "lesson-3",
-           type: "caseStudy" as const,
-           droplets: [],
-          notes: [],
-           blocks: [],
-         
-       },
-     ],
+        name: "Lesson 3",
+        slug: "lesson-3",
+        type: "caseStudy" as const,
+        droplets: [],
+        notes: [],
+        blocks: [],
+      },
+    ],
   };
 
   beforeEach(() => {

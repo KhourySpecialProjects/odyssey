@@ -29,9 +29,7 @@ export default function DropletFooter({
 
   const handleNextClick = async () => {
     if (enrollmentId && currentLessonId && droplet.lessons) {
-      const allDropletLessonIds = droplet.lessons.map(
-        (l) => l.id,
-      );
+      const allDropletLessonIds = droplet.lessons.map((l) => l.id);
 
       await updateViewedLessons(
         enrollmentId,
@@ -85,8 +83,7 @@ export default function DropletFooter({
     return () => observer.disconnect();
   }, [currentLessonId]);
 
-  if (!droplet.lessons || droplet.lessons.length === 0)
-    return null;
+  if (!droplet.lessons || droplet.lessons.length === 0) return null;
 
   let previous: PaginationProps | null = null;
   let next: PaginationProps | null = null;
@@ -96,9 +93,7 @@ export default function DropletFooter({
   if (pathSegments.length > 3) {
     const lessonSlug = pathname.split("/").at(-1);
     if (!lessonSlug) return null;
-    const lessonSlugs = droplet.lessons.map(
-      (l: Lesson) => l.slug,
-    );
+    const lessonSlugs = droplet.lessons.map((l: Lesson) => l.slug);
     const currentLessonSlugIndex = lessonSlugs.indexOf(lessonSlug);
 
     if (currentLessonSlugIndex === 0) {

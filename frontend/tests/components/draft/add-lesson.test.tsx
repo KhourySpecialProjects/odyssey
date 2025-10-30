@@ -34,7 +34,7 @@ describe("AddLesson", () => {
         blocks: [],
         droplets: [],
         notes: [],
-        orderIndex: 0
+        orderIndex: 0,
       },
     ],
   };

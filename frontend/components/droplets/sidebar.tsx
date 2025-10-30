@@ -165,9 +165,7 @@ export default function Sidebar({
                 .sort((a, b) => a.orderIndex - b.orderIndex)
                 .map((lesson, index) => {
                   const previousLesson =
-                    index > 0
-                      ? (droplet.lessons || [])[index - 1]
-                      : null;
+                    index > 0 ? (droplet.lessons || [])[index - 1] : null;
 
                   // Check sequential unlock separately from enrollment
                   const isPreviousLessonIncomplete =

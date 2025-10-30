@@ -31,7 +31,7 @@ describe("AuthorDroplets", () => {
     blocked: [],
     was_blocked: [],
     timeZone: "America/New_York" as TimeZone,
-    isPublic: true
+    isPublic: true,
   };
 
   const mockDroplet = {

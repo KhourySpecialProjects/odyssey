@@ -44,7 +44,7 @@ describe("NotesBar", () => {
     droplets: [],
     notes: [],
     blocks: [],
-    orderIndex: 1
+    orderIndex: 1,
   };
 
   const mockDroplet = {

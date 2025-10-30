@@ -43,7 +43,7 @@ describe("NotesSummaryClient", () => {
       notes: [],
       isFirstTime: false,
       isArchived: false,
-      completionDate: DateTime.local().toJSDate()
+      completionDate: DateTime.local().toJSDate(),
     },
     allNotes: [
       {

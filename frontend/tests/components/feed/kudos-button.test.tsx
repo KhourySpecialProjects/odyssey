@@ -35,7 +35,7 @@ const mockAuthUser: AuthorizedUser = {
   blocked: [],
   was_blocked: [],
   timeZone: "America/New_York",
-  isPublic: true
+  isPublic: true,
 };
 const mockDroplet = {
   id: 1,

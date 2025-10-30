@@ -72,7 +72,7 @@ export function AddLesson({
           },
         ],
         notes: [],
-        orderIndex: response.data.orderIndex
+        orderIndex: response.data.orderIndex,
       };
 
       onAddLesson(newLesson);

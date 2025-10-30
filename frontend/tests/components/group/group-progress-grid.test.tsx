@@ -61,7 +61,7 @@ describe("GroupProgressGrid", () => {
       droplets: Array(10).fill({ id: 1, name: "Test Droplet", lessons: [] }),
     };
 
-    render(<GroupProgressGrid group={groupWithManyDroplets} statuses={{}}/>);
+    render(<GroupProgressGrid group={groupWithManyDroplets} statuses={{}} />);
     expect(screen.getByRole("button", { name: /next/i })).toBeInTheDocument();
   });
 
@@ -75,7 +75,7 @@ describe("GroupProgressGrid", () => {
   });
 
   test("renders pagination controls correctly", () => {
-    render(<GroupProgressGrid group={mockGroup} statuses={{}}/>);
+    render(<GroupProgressGrid group={mockGroup} statuses={{}} />);
 
     expect(
       screen.getByRole("button", { name: /next page/i }),
@@ -89,7 +89,7 @@ describe("GroupProgressGrid", () => {
       members: [],
     };
 
-    render(<GroupProgressGrid group={emptyGroup} statuses={{}}/>);
+    render(<GroupProgressGrid group={emptyGroup} statuses={{}} />);
 
     expect(
       screen.getByText(/No droplets have been added/i),
@@ -111,7 +111,7 @@ describe("GroupProgressGrid", () => {
   });
 
   it("should handle pagination correctly", () => {
-    render(<GroupProgressGrid group={mockGroup} statuses={{}}/>);
+    render(<GroupProgressGrid group={mockGroup} statuses={{}} />);
 
     const nextButton = screen.getByLabelText("Next page");
     fireEvent.click(nextButton);

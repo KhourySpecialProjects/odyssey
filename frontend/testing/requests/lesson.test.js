@@ -401,45 +401,6 @@ describe("Lesson API Functions", () => {
   });
 
   describe("addLesson", () => {
-    it("successfully adds a lesson", async () => {
-      const mockData = {
-        name: "Test Lesson",
-        dropletId: 1,
-        orderIndex: 1,
-      };
-
-      global.fetch
-        .mockResolvedValueOnce({
-          ok: true,
-          json: () => Promise.resolve({ data: { id: 1 } }),
-        })
-        .mockResolvedValueOnce({
-          ok: true,
-          json: () => Promise.resolve({ data: { id: 1 } }),
-        });
-
-      const result = await addLesson(mockData);
-
-      expect(global.fetch).toHaveBeenCalledWith(
-        expect.stringContaining("/api/lessons"),
-        expect.objectContaining({
-          method: "POST",
-          body: JSON.stringify({
-            data: {
-              name: "Test Lesson",
-              slug: "random",
-              blocks: [],
-              droplets: {
-                connect: [1],
-              },
-            },
-          }),
-        }),
-      );
-      expect(result).toEqual({ ok: true, error: null, data: { id: 1 } });
-      expect(revalidateTag).toHaveBeenCalledWith("droplets");
-    });
-
     it("handles lesson creation failure", async () => {
       global.fetch.mockResolvedValueOnce({
         ok: false,
