@@ -180,8 +180,7 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
     [blocks, updateBlocksBackendReload],
   );
 
-  // Add this new handler for the FAB
-  // Add this new handler for the FAB
+// Add this new handler for the FAB
 const handleAddBlockFromFAB = useCallback(
   (blockType: string, calloutType?: string) => {
     let newBlock: Block;
@@ -236,10 +235,7 @@ const handleAddBlockFromFAB = useCallback(
             {
               id: Math.random(),
               content: "",
-              answerOptions: [
-                { id: Math.random(), content: "", isCorrect: true },
-                { id: Math.random(), content: "", isCorrect: false },
-              ],
+              answerOptions: [],
             },
           ],
         };
@@ -263,10 +259,7 @@ const handleAddBlockFromFAB = useCallback(
             {
               id: Math.random(),
               content: "",
-              answerOptions: [
-                { id: Math.random(), content: "True", isCorrect: true },
-                { id: Math.random(), content: "False", isCorrect: false },
-              ],
+              answerOptions: [],
             },
           ],
         };
