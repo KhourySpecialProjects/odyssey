@@ -16,9 +16,14 @@ type Props = {
 
 export default async function GroupManagementPage({ searchParams }: Props) {
   const user = await getCurrentUser();
-  if (!user?.email) {
+  if (
+    !user ||
+    !user?.email ||
+    (!isContentCreator(user.roles) &&
+      !isAuthorizedUserAdmin(user.roles) &&
+      !isAuthorizedUserFaculty(user.roles))
+  )
     return notFound();
-  }
 
   const authorizedUser = await getAuthorizedUserByEmail(user.email);
   if (!authorizedUser) return notFound();
