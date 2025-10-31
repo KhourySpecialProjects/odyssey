@@ -28,7 +28,7 @@ export function QuizEditor({
 
   const addQuestion = () => {
     let question = null;
-    if (questions[0].answerOptions[0].content === "True") {
+    if (questions[0]?.answerOptions[0]?.content === "True") {
       const newQuestion: QuizQuestion = {
         id: Math.random(),
         content: "",

@@ -199,7 +199,7 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
             content: "",
           };
           break;
-        case "Callout Block":
+        case "Callout Block": {
           // Map callout type names to colors
           const calloutColorMap: Record<string, string> = {
             Warning: "bg-red-300",
@@ -224,6 +224,7 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
             type: "info",
           };
           break;
+        }
         case "Video":
           newBlock = {
             __component: "droplets.video",
