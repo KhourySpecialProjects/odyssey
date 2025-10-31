@@ -1,12 +1,20 @@
 "use client";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { User2Icon } from "lucide-react";
+import { User2Icon, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import { AuthorizedUser } from "@/types";
+import { Button } from "../ui/button";
 
-export function AuthorCard(author: AuthorizedUser) {
+
+interface AuthorCardProps extends AuthorizedUser {
+  inDraft?: boolean;
+  onRemove?: () => void;
+  author: AuthorizedUser
+}
+
+export function AuthorCard({inDraft, onRemove, author}: AuthorCardProps) {
   const router = useRouter();
 
   const handleClick = () => {
@@ -14,6 +22,11 @@ export function AuthorCard(author: AuthorizedUser) {
     router.push(
       `/prof/${author.email?.slice(0, author.email.indexOf("@")) || ""}`,
     );
+  };
+
+    const handleRemove = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onRemove?.();
   };
 
   return (
@@ -43,6 +56,17 @@ export function AuthorCard(author: AuthorizedUser) {
           </p>
         ) : null}
       </div>
+      {inDraft && onRemove && (
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={handleRemove}
+          className="h-8 w-8 shrink-0 text-slate-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950 dark:hover:text-red-400"
+          aria-label="Remove author"
+        >
+          <X className="h-4 w-4" />
+        </Button>
+      )}
     </li>
   );
 }
