@@ -17,40 +17,14 @@ import {
   CheckCircle2,
   ArrowLeft,
 } from "lucide-react";
-import { OpenEndedQuizBlock, QuizBlock } from "./lesson-renderer";
 
 interface AddLessonBlockProps {
   onAddBlock: (blockType: string, calloutType?: string) => void;
 }
 
-export type Block =
-  | { __component: "droplets.generic"; content: string }
-  | { __component: "droplets.expandable"; title: string; content: string }
-  | {
-      __component: "droplets.callout";
-      content: { type: string; children: { type: string; text: string }[] }[];
-      color: string;
-      type: string;
-    }
-  | { __component: "droplets.video"; url: string }
-  | {
-      __component: "droplets.quiz";
-      questions: {
-        id: number;
-        content: string;
-        answerOptions: { id: number; content: string; isCorrect: boolean }[];
-      }[];
-    }
-  | {
-      __component: "droplets.open-ended-quiz";
-      questions: { id: number; content: string; correctAnswer: string }[];
-    }
-  | QuizBlock
-  | OpenEndedQuizBlock;
-
 export default function AddLessonBlock({ onAddBlock }: AddLessonBlockProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [showCalloutOptions, setShowCalloutOptions] = useState(false);
+  const [showCalloutModal, setShowCalloutModal] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
   const blockOptions = [
@@ -88,194 +62,219 @@ export default function AddLessonBlock({ onAddBlock }: AddLessonBlockProps) {
     {
       label: "Warning",
       icon: AlertTriangle,
-      color: "bg-red-300 hover:bg-red-400",
+      color: "bg-red-300",
+      textColor: "text-gray-900",
     },
     {
       label: "Question",
       icon: HelpCircle,
-      color: "bg-blue-300 hover:bg-blue-400",
+      color: "bg-blue-300",
+      textColor: "text-gray-900",
     },
     {
       label: "Important",
       icon: AlertCircle,
-      color: "bg-orange-300 hover:bg-orange-400",
+      color: "bg-orange-300",
+      textColor: "text-gray-900",
     },
     {
       label: "Definition",
       icon: BookOpen,
-      color: "bg-green-300 hover:bg-green-400",
+      color: "bg-green-300",
+      textColor: "text-gray-900",
     },
     {
       label: "Information",
       icon: Info,
-      color: "bg-purple-300 hover:bg-purple-400",
+      color: "bg-purple-300",
+      textColor: "text-gray-900",
     },
     {
       label: "Caution",
       icon: AlertOctagon,
-      color: "bg-amber-300 hover:bg-amber-400",
+      color: "bg-amber-300",
+      textColor: "text-gray-900",
     },
-    { label: "Default", icon: Circle, color: "bg-sky-50 hover:bg-sky-100" },
+    {
+      label: "Default",
+      icon: Circle,
+      color: "bg-sky-50",
+      textColor: "text-gray-700",
+    },
   ];
 
-  // Close menu when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
+      // Don't close if clicking inside the modal
+      const modalElement = document.querySelector("[data-callout-modal]");
+      if (modalElement && modalElement.contains(event.target as Node)) {
+        return;
+      }
+
       if (
         containerRef.current &&
         !containerRef.current.contains(event.target as Node)
       ) {
         setIsOpen(false);
-        setShowCalloutOptions(false);
+        setShowCalloutModal(false);
       }
     };
 
-    if (isOpen) {
+    if (isOpen || showCalloutModal) {
       document.addEventListener("mousedown", handleClickOutside);
     }
 
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [isOpen]);
+  }, [isOpen, showCalloutModal]);
 
   const handleMainButtonClick = () => {
-    if (isOpen && showCalloutOptions) {
-      setShowCalloutOptions(false);
-    } else {
-      setIsOpen(!isOpen);
-      setShowCalloutOptions(false);
-    }
+    setIsOpen(!isOpen);
+    setShowCalloutModal(false);
+  };
+
+  const handleCalloutBlockClick = () => {
+    setShowCalloutModal(true);
+  };
+
+  const handleCalloutSelect = (calloutLabel: string) => {
+    // First call the callback to add the block
+    onAddBlock("Callout Block", calloutLabel);
+    // Then close everything
+    setShowCalloutModal(false);
+    setIsOpen(false);
+  };
+
+  const handleBackFromCallout = () => {
+    setShowCalloutModal(false);
+    // Keep isOpen true so tools stay visible
   };
 
   return (
     <>
-      <div className="fixed right-8 bottom-8 z-50" ref={containerRef}>
-        <div className="group relative">
-          <button
-            onClick={handleMainButtonClick}
-            className="flex h-14 w-14 items-center justify-center rounded-full bg-blue-600 text-white shadow-lg transition-all duration-300 hover:bg-blue-700 hover:shadow-xl"
-            aria-label={
-              isOpen ? (showCalloutOptions ? "Back" : "Close") : "Add a block"
-            }
-          >
-            <div className="relative h-6 w-6">
-              {/* Plus icon - show when closed */}
-              <Plus
-                className={`absolute inset-0 transition-all duration-300 ${
-                  !isOpen
-                    ? "scale-100 rotate-0 opacity-100"
-                    : "scale-0 rotate-45 opacity-0"
-                }`}
-                size={24}
-              />
-              {/* Back arrow - show when in callout submenu */}
-              <ArrowLeft
-                className={`absolute inset-0 transition-all duration-300 ${
-                  isOpen && showCalloutOptions
-                    ? "scale-100 rotate-0 opacity-100"
-                    : "scale-0 rotate-45 opacity-0"
-                }`}
-                size={24}
-              />
-              {/* X icon - show when in main menu */}
-              <X
-                className={`absolute inset-0 transition-all duration-300 ${
-                  isOpen && !showCalloutOptions
-                    ? "scale-100 rotate-0 opacity-100"
-                    : "scale-0 rotate-45 opacity-0"
-                }`}
-                size={24}
-              />
+      <div
+        className="flex w-full items-center justify-center py-4"
+        ref={containerRef}
+      >
+        <div
+          className={`flex items-center justify-center gap-2 transition-all duration-300 ${isOpen ? "opacity-100" : "opacity-100"}`}
+        >
+          {/* Tool buttons - appear on both sides when open */}
+          {isOpen &&
+            blockOptions.map((option, index) => {
+              const Icon = option.icon;
+
+              return (
+                <div
+                  key={option.label}
+                  className={`transition-all duration-300 ${
+                    isOpen ? "scale-100 opacity-100" : "scale-0 opacity-0"
+                  }`}
+                  style={{
+                    transitionDelay: isOpen ? `${index * 50}ms` : "0ms",
+                  }}
+                >
+                  <div className="group relative">
+                    <button
+                      onClick={() => {
+                        if (option.hasSubmenu) {
+                          handleCalloutBlockClick();
+                        } else {
+                          onAddBlock(option.label);
+                          setIsOpen(false);
+                        }
+                      }}
+                      className={`flex h-12 w-12 items-center justify-center rounded-full text-white shadow-lg transition-all duration-200 ${option.color}`}
+                      aria-label={option.label}
+                    >
+                      <Icon size={20} />
+                    </button>
+                    <div className="pointer-events-none absolute top-full left-1/2 mt-2 -translate-x-1/2 rounded bg-gray-900 px-3 py-1 text-sm whitespace-nowrap text-white opacity-0 transition-opacity group-hover:opacity-100">
+                      {option.label}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+
+          {/* Main Button - always centered, distinct styling */}
+          <div className="group relative z-10 mx-4">
+            <button
+              onClick={handleMainButtonClick}
+              className={`flex h-14 w-14 items-center justify-center rounded-full shadow-xl transition-all duration-300 ${
+                isOpen
+                  ? "bg-gray-600 ring-2 ring-gray-400 hover:bg-gray-700"
+                  : "bg-blue-600 hover:bg-blue-700"
+              } text-white`}
+              aria-label={isOpen ? "Close" : "Add a block"}
+            >
+              <div className="relative h-6 w-6">
+                <Plus
+                  className={`absolute inset-0 transition-all duration-300 ${
+                    !isOpen
+                      ? "scale-100 rotate-0 opacity-100"
+                      : "scale-0 rotate-45 opacity-0"
+                  }`}
+                  size={24}
+                />
+                <X
+                  className={`absolute inset-0 transition-all duration-300 ${
+                    isOpen
+                      ? "scale-100 rotate-0 opacity-100"
+                      : "scale-0 rotate-45 opacity-0"
+                  }`}
+                  size={24}
+                />
+              </div>
+            </button>
+            <div className="pointer-events-none absolute top-full left-1/2 mt-2 -translate-x-1/2 rounded bg-gray-900 px-3 py-1 text-sm whitespace-nowrap text-white opacity-0 transition-opacity group-hover:opacity-100">
+              {isOpen ? "Close" : "Add Block"}
             </div>
-          </button>
-          <div className="pointer-events-none absolute right-0 bottom-full mb-2 rounded bg-gray-900 px-3 py-1 text-sm whitespace-nowrap text-white opacity-0 transition-opacity group-hover:opacity-100">
-            {isOpen ? (showCalloutOptions ? "Back" : "Close") : "Add a block"}
           </div>
         </div>
+      </div>
 
-        {/* Main Block Options */}
-        {!showCalloutOptions &&
-          blockOptions.map((option, index) => {
-            const Icon = option.icon;
-            const bottomOffset = (blockOptions.length - index) * 64;
-
-            return (
-              <div
-                key={option.label}
-                className={`absolute right-0 transition-all duration-300 ${
-                  isOpen
-                    ? "pointer-events-auto translate-y-0 opacity-100"
-                    : "pointer-events-none translate-y-4 opacity-0"
-                }`}
-                style={{
-                  bottom: `${bottomOffset}px`,
-                  transitionDelay: isOpen ? `${index * 50}ms` : "0ms",
-                }}
-              >
-                <div className="group/option relative">
+      {/* Callout Modal */}
+      {showCalloutModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div
+            data-callout-modal
+            className="max-h-[80vh] w-full max-w-md overflow-y-auto rounded-lg bg-white p-6 shadow-2xl dark:bg-slate-900"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 className="mb-4 text-xl font-semibold text-gray-900 dark:text-white">
+              Select Callout Type
+            </h2>
+            <div className="space-y-2">
+              {calloutTypes.map((callout) => {
+                const Icon = callout.icon;
+                return (
                   <button
-                    onClick={() => {
-                      if (option.hasSubmenu) {
-                        setShowCalloutOptions(true);
-                      } else {
-                        onAddBlock(option.label);
-                        setIsOpen(false);
-                      }
+                    key={callout.label}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleCalloutSelect(callout.label);
                     }}
-                    className={`flex h-12 w-12 items-center justify-center rounded-full text-white shadow-lg transition-all duration-200 ${option.color}`}
-                    aria-label={option.label}
-                  >
-                    <Icon size={20} />
-                  </button>
-                  <div className="pointer-events-none absolute top-1/2 right-full mr-3 -translate-y-1/2 rounded bg-gray-900 px-3 py-1 text-sm whitespace-nowrap text-white opacity-0 transition-opacity group-hover/option:opacity-100">
-                    {option.label}
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-
-        {/* Callout Type Options - Replace main menu */}
-        {showCalloutOptions &&
-          calloutTypes.map((callout, index) => {
-            const Icon = callout.icon;
-            const bottomOffset = (calloutTypes.length - index) * 64;
-
-            return (
-              <div
-                key={callout.label}
-                className={`absolute right-0 transition-all duration-300 ${
-                  isOpen && showCalloutOptions
-                    ? "pointer-events-auto translate-y-0 opacity-100"
-                    : "pointer-events-none translate-y-4 opacity-0"
-                }`}
-                style={{
-                  bottom: `${bottomOffset}px`,
-                  transitionDelay:
-                    isOpen && showCalloutOptions ? `${index * 50}ms` : "0ms",
-                }}
-              >
-                <div className="group/callout relative">
-                  <button
-                    onClick={() => {
-                      onAddBlock("Callout Block", callout.label);
-                      setIsOpen(false);
-                      setShowCalloutOptions(false);
-                    }}
-                    className={`flex h-12 w-12 items-center justify-center rounded-full shadow-lg transition-all duration-200 ${callout.color} ${callout.label === "Default" ? "text-gray-700" : "text-gray-800"}`}
+                    className={`flex w-full items-center gap-3 rounded-lg p-4 transition-all duration-200 hover:scale-[1.02] hover:shadow-md ${callout.color} ${callout.textColor}`}
                     aria-label={callout.label}
                   >
-                    <Icon size={20} />
+                    <Icon size={24} className="flex-shrink-0" />
+                    <span className="text-lg font-medium">{callout.label}</span>
                   </button>
-                  <div className="pointer-events-none absolute top-1/2 right-full mr-3 -translate-y-1/2 rounded bg-gray-900 px-3 py-1 text-sm whitespace-nowrap text-white opacity-0 transition-opacity group-hover/callout:opacity-100">
-                    {callout.label}
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-      </div>
+                );
+              })}
+            </div>
+            <button
+              onClick={handleBackFromCallout}
+              className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg bg-gray-200 px-4 py-2 font-medium text-gray-900 transition-colors hover:bg-gray-300 dark:bg-slate-700 dark:text-white dark:hover:bg-slate-600"
+            >
+              <ArrowLeft size={20} />
+              Back
+            </button>
+          </div>
+        </div>
+      )}
     </>
   );
 }
