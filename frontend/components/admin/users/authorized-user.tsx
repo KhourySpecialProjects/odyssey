@@ -5,7 +5,7 @@ import { useDropzone } from "react-dropzone";
 import { Button } from "@/components/ui/button";
 import { uploadImage } from "@/lib/actions";
 import { AuthorizedUser } from "@/types";
-import { Pencil, User2Icon } from "lucide-react";
+import { Pencil, User2Icon, Activity, ChevronDown, ChevronUp } from "lucide-react";
 import { useFormStatus } from "react-dom";
 import { isAuthorizedUserAdmin } from "@/lib/utils";
 import {
@@ -25,6 +25,13 @@ import { Textarea } from "@/components/ui/textarea";
 import imageCompression from "browser-image-compression";
 import { updateUserInfo } from "@/lib/requests/authorized-user";
 
+interface UserActivity {
+  timestamp: string;
+  type: 'enrollment' | 'page_view' | 'lesson_view' | 'completion' | 'rating';
+  description: string;
+  details?: any;
+}
+
 export function AuthorizedUserBlock({
   user: initialUser,
 }: {
@@ -32,6 +39,9 @@ export function AuthorizedUserBlock({
 }) {
   const [user, setUser] = useState(initialUser);
   const [open, setOpen] = useState(false);
+  const [activityOpen, setActivityOpen] = useState(false);
+  const [activities, setActivities] = useState<UserActivity[]>([]);
+  const [loadingActivities, setLoadingActivities] = useState(false);
   const isAdmin = isAuthorizedUserAdmin(user.roles.map((role) => role.title));
   const [firstName, setFirstName] = useState(user.firstName || "");
   const [lastName, setLastName] = useState(user.lastName || "");
@@ -55,6 +65,31 @@ export function AuthorizedUserBlock({
         ? current.filter((r) => r !== role)
         : [...current, role],
     );
+  };
+
+  const handleViewActivity = async () => {
+    setActivityOpen(true);
+    setLoadingActivities(true);
+    
+    try {
+      // Call a server action to get activity data
+      const response = await fetch(`/api/user-activity/${user.id}`, {
+        method: 'GET',
+        cache: 'no-store',
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch activity');
+      }
+      
+      const activityData = await response.json();
+      setActivities(activityData);
+    } catch (error) {
+      console.error("Error loading activity:", error);
+      toast.error("Failed to load user activity");
+    } finally {
+      setLoadingActivities(false);
+    }
   };
 
   const compressImage = async (imageFile: File) => {
@@ -145,10 +180,24 @@ export function AuthorizedUserBlock({
     setOpen(false);
   };
 
+  const formatTimestamp = (timestamp: string) => {
+    const date = new Date(timestamp);
+    return date.toLocaleString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
   return (
     <li className="py-0 pb-3 md:pb-0 [&:not(:first-child)]:pt-0">
       <div className="flex items-center space-x-4">
-        <div className="min-w-0 flex-1">
+        <div 
+          className="min-w-0 flex-1 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg p-2 transition-colors"
+          onClick={handleViewActivity}
+        >
           <div className="flex items-center space-x-3">
             <Avatar variant="round" size="sm">
               <AvatarImage src={user.profilePhoto || undefined} />
@@ -315,6 +364,61 @@ export function AuthorizedUserBlock({
           </Dialog>
         </div>
       </div>
+
+      {/* Activity Timeline Dialog */}
+      <Dialog open={activityOpen} onOpenChange={setActivityOpen}>
+        <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Activity className="h-5 w-5" />
+              Activity Timeline - {user.firstName} {user.lastName}
+            </DialogTitle>
+            <DialogDescription>
+              Chronological view of all website activity
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="mt-4">
+            {loadingActivities ? (
+              <div className="flex items-center justify-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-sky-600"></div>
+              </div>
+            ) : activities.length === 0 ? (
+              <div className="text-center py-8 text-slate-500">
+                No activity recorded yet
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {activities.map((activity, index) => (
+                  <div
+                    key={index}
+                    className="flex gap-4 p-4 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+                  >
+                    <div className="flex-shrink-0 w-32 text-sm text-slate-500">
+                      {formatTimestamp(activity.timestamp)}
+                    </div>
+                    <div className="flex-1">
+                      <div className="font-medium text-slate-900 dark:text-slate-100">
+                        {activity.description}
+                      </div>
+                      {activity.type === 'page_view' && activity.details?.properties?.$current_url && (
+                        <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                          {new URL(activity.details.properties.$current_url).pathname}
+                        </div>
+                      )}
+                      {activity.type !== 'page_view' && activity.details?.source === 'enrollment_data' && (
+                        <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                          From enrollment records
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </li>
   );
 }
