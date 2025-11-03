@@ -20,8 +20,7 @@ import { ReviewDroplet } from "@/components/draft/metadata/review-droplet";
 import Anthropic from "@anthropic-ai/sdk";
 import { FunFactEditor } from "@/components/draft/metadata/fun-fact-editor";
 import { ClickableBadges } from "@/components/draft/metadata/clickable-badges";
-import { toast } from "sonner";
-import { revalidatePath } from "next/cache";
+
 import { GeneralInfo } from "@/components/draft/metadata/general-info";
 
 type Props = {
@@ -54,8 +53,8 @@ export default async function Droplet({ params }: Props) {
       learningObjectives: { populate: "*" },
       lessons: { populate: "*" },
       tags: { populate: "*" },
-      prerequisites: { populate: ["id", "name", "slug"] },
-      postrequisites: { populate: ["id", "name", "slug"] },
+      prerequisites: { populate: "*" },
+      postrequisites: { populate: "*" },
       nextSteps: { fields: ["label", "url"] },
     },
   });
@@ -189,12 +188,6 @@ export default async function Droplet({ params }: Props) {
             initialContent={droplet.overview ?? ""}
           />
 
-          <FunFactEditor
-            funFact={droplet.funFact ?? ""}
-            generateFact={generateFunFact}
-            deleteFact={deleteFunFact}
-          />
-
           <LearningObjectives
             dropletId={droplet.id}
             learningObjectives={droplet.learningObjectives}
@@ -212,6 +205,11 @@ export default async function Droplet({ params }: Props) {
             droplets={droplets}
             prerequisites={droplet.prerequisites ?? []}
             postrequisites={droplet.postrequisites ?? []}
+          />
+          <FunFactEditor
+            funFact={droplet.funFact ?? ""}
+            generateFact={generateFunFact}
+            deleteFact={deleteFunFact}
           />
         </div>
       </GradientBackground>
