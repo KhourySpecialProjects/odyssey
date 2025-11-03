@@ -107,6 +107,7 @@ resource "aws_ecs_task_definition" "frontend" {
 
      portMappings = [
        {
+         hostPort      = 3000
          containerPort = 3000
          protocol      = "tcp"
        }
@@ -238,6 +239,7 @@ resource "aws_ecs_task_definition" "backend" {
 
      portMappings = [
        {
+         hostPort = 1337
          containerPort = 1337
          protocol      = "tcp"
        }

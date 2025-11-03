@@ -35,7 +35,7 @@ export default function Sidebar({
   completedLessonIds: number[];
   enrollmentId?: string | undefined;
 }) {
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(true);
   const pathname = usePathname();
   const isAdmin = user && isAuthorizedUserAdmin(user.roles);
 
@@ -57,8 +57,17 @@ export default function Sidebar({
   );
 
   useLayoutEffect(() => {
-    window.addEventListener("resize", () => setExpanded(false));
-    return () => window.removeEventListener("resize", () => setExpanded(false));
+    const handleResize = () => {
+      // Auto-collapse sidebar on mobile screens
+      if (window.innerWidth < 1280) {
+        setExpanded(false);
+      }
+    };
+
+    handleResize();
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   if (!user) return <UnauthorizedRoute />;
@@ -69,17 +78,23 @@ export default function Sidebar({
     <>
       <div
         className={cn(
-          "fixed inset-0 bg-slate-900/50 transition-opacity dark:bg-slate-900/80",
-          expanded ? "z-30 opacity-1" : "-z-10 opacity-0",
+          "fixed inset-0 bg-slate-900/50 transition-opacity xl:hidden dark:bg-slate-900/80",
+          expanded ? "z-30 opacity-100" : "-z-10 opacity-0",
         )}
         onClick={() => setExpanded(false)}
       ></div>
 
-      <div className="z-20 inline-flex w-full items-center gap-2 border-b border-b-slate-200 px-3 py-2 text-sm xl:hidden">
+      {/* Mobile header - visible on small screens, hidden when sidebar is open */}
+      <div
+        className={cn(
+          "fixed top-[107px] right-0 left-0 z-40 w-full items-center gap-2 border-b border-b-slate-200 bg-white/80 px-3 py-2 text-sm backdrop-blur-sm xl:hidden dark:border-b-slate-700 dark:bg-slate-800/80",
+          expanded ? "hidden" : "inline-flex",
+        )}
+      >
         <button
           aria-controls="sidebar"
           type="button"
-          className="z-20 inline-flex items-center rounded-lg p-2 text-sm text-slate-500 hover:bg-slate-100 focus:ring-2 focus:ring-slate-200 focus:outline-none xl:hidden dark:text-slate-400 dark:hover:bg-slate-700 dark:focus:ring-slate-600"
+          className="inline-flex items-center rounded-lg p-2 text-sm text-slate-500 hover:bg-slate-100 focus:ring-2 focus:ring-slate-200 focus:outline-none dark:text-slate-400 dark:hover:bg-slate-700 dark:focus:ring-slate-600"
           onClick={() => setExpanded(true)}
         >
           <span className="sr-only">Open sidebar</span>
@@ -90,17 +105,31 @@ export default function Sidebar({
         </button>
         <Link
           href={getPath("droplet", droplet.slug)}
-          className="z-20 text-lg font-bold"
+          className="text-lg font-bold"
         >
           {droplet.name}
         </Link>
       </div>
 
+      {/* Desktop floating button - no bar background */}
+      {!expanded && (
+        <button
+          aria-controls="sidebar"
+          type="button"
+          className="fixed top-[120px] left-3 z-40 hidden items-center rounded-lg bg-white p-3 text-slate-800 shadow-md transition-all hover:scale-110 hover:bg-slate-100 focus:ring-2 focus:ring-slate-200 focus:outline-none xl:inline-flex dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700 dark:focus:ring-slate-600"
+          onClick={() => setExpanded(true)}
+          onMouseEnter={() => setExpanded(true)}
+        >
+          <PanelRightClose className="h-6 w-6 dark:text-white" />
+          <span className="sr-only">Open sidebar</span>
+        </button>
+      )}
+
       <aside
         id="sidebar"
         className={cn(
-          "fixed left-0 z-40 h-screen w-64 transition-transform xl:sticky xl:top-0",
-          expanded ? "translate-x-0" : "-translate-x-full xl:translate-x-0",
+          "fixed left-0 z-40 h-screen w-64 transition-transform",
+          expanded ? "translate-x-0" : "-translate-x-full",
         )}
         aria-label="Sidebar"
       >
@@ -121,11 +150,8 @@ export default function Sidebar({
               </Link>
 
               <div className="w-full"></div>
-
-              <button
-                onClick={() => setExpanded(false)}
-                className={`xl:hidden`}
-              >
+              {/* Close button - always visible inside sidebar */}
+              <button onClick={() => setExpanded(false)}>
                 <PanelRightOpen />
               </button>
             </div>
@@ -154,7 +180,6 @@ export default function Sidebar({
                       ? activeLinkClasses
                       : inactiveLinkClasses
                   }
-                  onClick={() => setExpanded(false)}
                 >
                   <TargetIcon className="shrink-0" />
                   <span className="ms-3 leading-snug">Overview</span>
@@ -167,7 +192,6 @@ export default function Sidebar({
                   const previousLesson =
                     index > 0 ? (droplet.lessons || [])[index - 1] : null;
 
-                  // Check sequential unlock separately from enrollment
                   const isPreviousLessonIncomplete =
                     previousLesson &&
                     !completedLessonIds.includes(previousLesson.id) &&
@@ -192,7 +216,6 @@ export default function Sidebar({
                             e.preventDefault();
                             return;
                           }
-                          setExpanded(false);
                         }}
                         aria-disabled={!!isLocked}
                       >
@@ -230,7 +253,6 @@ export default function Sidebar({
                       ? activeLinkClasses
                       : inactiveLinkClasses
                   }
-                  onClick={() => setExpanded(false)}
                 >
                   <HistoryIcon className="shrink-0" />
                   <span className="ms-3 leading-snug">Recap</span>

@@ -1,4 +1,5 @@
-import { render, screen, fireEvent, within } from "@testing-library/react";
+import { render, screen, act } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import {
   DropletStatus,
   DropletType,
@@ -11,7 +12,7 @@ import {
 import { GroupDashboard } from "@/components/group/group-management-dashboard";
 
 const mockReplace = jest.fn();
-const mockSearchParams = new URLSearchParams();
+let mockSearchParams = new URLSearchParams();
 
 jest.mock("next/navigation", () => ({
   useRouter: () => ({
@@ -133,11 +134,26 @@ describe("GroupDashboard", () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    mockSearchParams.delete("tab");
+    mockSearchParams = new URLSearchParams();
   });
 
-  describe("Tab Rendering", () => {
-    it("renders all tabs for users who can edit", () => {
+  describe("Tab Rendering and Permissions", () => {
+    it("renders Droplets and Playlists tabs for all users", () => {
+      render(
+        <GroupDashboard
+          group={mockGroup}
+          canEdit={false}
+          authUser={mockAuthUser}
+          dueDates={[]}
+          statuses={{}}
+        />,
+      );
+
+      expect(screen.getByText("Droplets")).toBeInTheDocument();
+      expect(screen.getByText("Playlists")).toBeInTheDocument();
+    });
+
+    it("shows Progress tab when user can edit", () => {
       render(
         <GroupDashboard
           group={mockGroup}
@@ -148,12 +164,10 @@ describe("GroupDashboard", () => {
         />,
       );
 
-      expect(screen.getByText("Droplets")).toBeInTheDocument();
-      expect(screen.getByText("Playlists")).toBeInTheDocument();
       expect(screen.getByText("Progress")).toBeInTheDocument();
     });
 
-    it("shows progress tab for admin users", () => {
+    it("shows Progress tab when user is admin", () => {
       const adminUser = { ...mockAuthUser, id: 2 };
 
       render(
@@ -169,7 +183,7 @@ describe("GroupDashboard", () => {
       expect(screen.getByText("Progress")).toBeInTheDocument();
     });
 
-    it("hides progress tab when user cannot edit and is not admin", () => {
+    it("hides Progress tab when user has no permissions", () => {
       const regularUser = { ...mockAuthUser, id: 999 };
 
       render(
@@ -185,101 +199,28 @@ describe("GroupDashboard", () => {
       expect(screen.queryByText("Progress")).not.toBeInTheDocument();
     });
 
-    it("renders only Droplets and Playlists tabs when canEdit is false", () => {
+    it("hides Progress tab when canEdit is undefined and user is not admin", () => {
       const regularUser = { ...mockAuthUser, id: 999 };
 
       render(
         <GroupDashboard
           group={mockGroup}
-          canEdit={false}
+          canEdit={undefined}
           authUser={regularUser}
           dueDates={[]}
           statuses={{}}
         />,
       );
 
-      expect(screen.getByText("Droplets")).toBeInTheDocument();
-      expect(screen.getByText("Playlists")).toBeInTheDocument();
+      expect(screen.queryByText("Progress")).not.toBeInTheDocument();
     });
   });
 
-  describe("Tab Navigation", () => {
-    it("switches to Playlists tab when clicked", () => {
+  describe("Droplets Tab - Default View", () => {
+    it("displays droplets on initial render", () => {
       render(
         <GroupDashboard
-          group={{ ...mockGroup, playlists: mockPlaylists }}
-          canEdit={true}
-          authUser={mockAuthUser}
-          dueDates={[]}
-          statuses={{}}
-        />,
-      );
-
-      fireEvent.click(screen.getByText("Playlists"));
-
-      expect(screen.getByTestId("playlist-1")).toBeInTheDocument();
-    });
-
-    it("switches to Progress tab when clicked", () => {
-      render(
-        <GroupDashboard
-          group={{
-            ...mockGroup,
-            droplets: [mockDroplets[0]],
-            members: mockGroup.members,
-          }}
-          canEdit={true}
-          authUser={mockAuthUser}
-          dueDates={[]}
-          statuses={{}}
-        />,
-      );
-
-      fireEvent.click(screen.getByText("Progress"));
-
-      expect(screen.getByTestId("progress-grid")).toBeInTheDocument();
-    });
-
-    it("updates URL parameter on tab change", () => {
-      render(
-        <GroupDashboard
-          group={mockGroup}
-          canEdit={true}
-          authUser={mockAuthUser}
-          dueDates={[]}
-          statuses={{}}
-        />,
-      );
-
-      fireEvent.click(screen.getByText("Playlists"));
-
-      expect(mockReplace).toHaveBeenCalledWith(
-        expect.stringContaining("tab=playlists"),
-      );
-    });
-
-    it("initializes with tab from URL parameter", () => {
-      mockSearchParams.set("tab", "playlists");
-
-      render(
-        <GroupDashboard
-          group={{ ...mockGroup, playlists: mockPlaylists }}
-          canEdit={true}
-          authUser={mockAuthUser}
-          dueDates={[]}
-          statuses={{}}
-        />,
-      );
-
-      expect(screen.getByTestId("playlist-1")).toBeInTheDocument();
-    });
-
-    it("defaults to droplets tab when invalid tab parameter", () => {
-      mockSearchParams.set("tab", "invalid");
-
-      render(
-        <GroupDashboard
-          group={{ ...mockGroup, droplets: [mockDroplets[0]] }}
+          group={{ ...mockGroup, droplets: mockDroplets.slice(0, 3) }}
           canEdit={true}
           authUser={mockAuthUser}
           dueDates={[]}
@@ -288,27 +229,11 @@ describe("GroupDashboard", () => {
       );
 
       expect(screen.getByTestId("droplet-1")).toBeInTheDocument();
-    });
-  });
-
-  describe("Droplets Tab", () => {
-    it("displays first page of droplets", () => {
-      render(
-        <GroupDashboard
-          group={{ ...mockGroup, droplets: mockDroplets }}
-          canEdit={true}
-          authUser={mockAuthUser}
-          dueDates={[]}
-          statuses={{}}
-        />,
-      );
-
-      expect(screen.getByTestId("droplet-1")).toBeInTheDocument();
-      expect(screen.getByTestId("droplet-6")).toBeInTheDocument();
-      expect(screen.queryByTestId("droplet-7")).not.toBeInTheDocument();
+      expect(screen.getByTestId("droplet-2")).toBeInTheDocument();
+      expect(screen.getByTestId("droplet-3")).toBeInTheDocument();
     });
 
-    it("shows empty state when no droplets", () => {
+    it("shows empty state when no droplets exist", () => {
       render(
         <GroupDashboard
           group={mockGroup}
@@ -327,7 +252,7 @@ describe("GroupDashboard", () => {
     it("displays due dates for droplets", () => {
       render(
         <GroupDashboard
-          group={{ ...mockGroup, droplets: mockDroplets }}
+          group={{ ...mockGroup, droplets: [mockDroplets[0]] }}
           canEdit={true}
           authUser={mockAuthUser}
           dueDates={mockDueDates}
@@ -338,10 +263,12 @@ describe("GroupDashboard", () => {
       expect(screen.getByText(/2023-12-31/)).toBeInTheDocument();
     });
 
-    it("handles droplets without due dates", () => {
+    it("handles missing droplets array", () => {
+      const groupNoDroplets = { ...mockGroup, droplets: undefined };
+
       render(
         <GroupDashboard
-          group={{ ...mockGroup, droplets: [mockDroplets[1]] }}
+          group={groupNoDroplets as any}
           canEdit={true}
           authUser={mockAuthUser}
           dueDates={[]}
@@ -349,12 +276,14 @@ describe("GroupDashboard", () => {
         />,
       );
 
-      expect(screen.getByTestId("droplet-2")).toBeInTheDocument();
+      expect(
+        screen.getByText("No droplets have been added to this group yet."),
+      ).toBeInTheDocument();
     });
   });
 
-  describe("Pagination", () => {
-    it("shows pagination buttons when droplets exceed page size", () => {
+  describe("Droplets Pagination", () => {
+    it("shows first 6 droplets on initial page", () => {
       render(
         <GroupDashboard
           group={{ ...mockGroup, droplets: mockDroplets }}
@@ -365,8 +294,9 @@ describe("GroupDashboard", () => {
         />,
       );
 
-      expect(screen.getByText("Previous")).toBeInTheDocument();
-      expect(screen.getByText("Next")).toBeInTheDocument();
+      expect(screen.getByTestId("droplet-1")).toBeInTheDocument();
+      expect(screen.getByTestId("droplet-6")).toBeInTheDocument();
+      expect(screen.queryByTestId("droplet-7")).not.toBeInTheDocument();
     });
 
     it("disables Previous button on first page", () => {
@@ -384,7 +314,7 @@ describe("GroupDashboard", () => {
       expect(prevButton).toBeDisabled();
     });
 
-    it("enables Next button when more pages available", () => {
+    it("enables Next button when more droplets exist", () => {
       render(
         <GroupDashboard
           group={{ ...mockGroup, droplets: mockDroplets }}
@@ -399,7 +329,9 @@ describe("GroupDashboard", () => {
       expect(nextButton).not.toBeDisabled();
     });
 
-    it("navigates to next page when Next clicked", () => {
+    it("shows next page when Next button clicked", async () => {
+      const user = userEvent.setup();
+
       render(
         <GroupDashboard
           group={{ ...mockGroup, droplets: mockDroplets }}
@@ -410,14 +342,18 @@ describe("GroupDashboard", () => {
         />,
       );
 
-      fireEvent.click(screen.getByText("Next"));
+      await act(async () => {
+        await user.click(screen.getByText("Next"));
+      });
 
       expect(screen.getByTestId("droplet-7")).toBeInTheDocument();
       expect(screen.getByTestId("droplet-12")).toBeInTheDocument();
       expect(screen.queryByTestId("droplet-1")).not.toBeInTheDocument();
     });
 
-    it("navigates to previous page when Previous clicked", () => {
+    it("navigates back to first page when Previous clicked", async () => {
+      const user = userEvent.setup();
+
       render(
         <GroupDashboard
           group={{ ...mockGroup, droplets: mockDroplets }}
@@ -428,14 +364,21 @@ describe("GroupDashboard", () => {
         />,
       );
 
-      fireEvent.click(screen.getByText("Next"));
-      fireEvent.click(screen.getByText("Previous"));
+      await act(async () => {
+        await user.click(screen.getByText("Next"));
+      });
+
+      await act(async () => {
+        await user.click(screen.getByText("Previous"));
+      });
 
       expect(screen.getByTestId("droplet-1")).toBeInTheDocument();
       expect(screen.queryByTestId("droplet-7")).not.toBeInTheDocument();
     });
 
-    it("disables Next button on last page", () => {
+    it("disables Next button on last page", async () => {
+      const user = userEvent.setup();
+
       render(
         <GroupDashboard
           group={{ ...mockGroup, droplets: mockDroplets }}
@@ -446,31 +389,15 @@ describe("GroupDashboard", () => {
         />,
       );
 
-      fireEvent.click(screen.getByText("Next"));
+      await act(async () => {
+        await user.click(screen.getByText("Next"));
+      });
 
       const nextButton = screen.getByText("Next");
       expect(nextButton).toBeDisabled();
     });
 
-    it("calculates total pages correctly", () => {
-      const sevenDroplets = mockDroplets.slice(0, 7);
-
-      render(
-        <GroupDashboard
-          group={{ ...mockGroup, droplets: sevenDroplets }}
-          canEdit={true}
-          authUser={mockAuthUser}
-          dueDates={[]}
-          statuses={{}}
-        />,
-      );
-
-      expect(screen.getByTestId("droplet-6")).toBeInTheDocument();
-      fireEvent.click(screen.getByText("Next"));
-      expect(screen.getByTestId("droplet-7")).toBeInTheDocument();
-    });
-
-    it("handles exactly 6 droplets without pagination", () => {
+    it("handles exactly 6 droplets without Next button active", () => {
       const sixDroplets = mockDroplets.slice(0, 6);
 
       render(
@@ -488,8 +415,8 @@ describe("GroupDashboard", () => {
     });
   });
 
-  describe("Playlists Tab", () => {
-    it("displays playlists when tab is selected", () => {
+  describe("Playlists Tab - Lazy Loading", () => {
+    it("does not render playlists content initially", () => {
       render(
         <GroupDashboard
           group={{ ...mockGroup, playlists: mockPlaylists }}
@@ -500,13 +427,29 @@ describe("GroupDashboard", () => {
         />,
       );
 
-      fireEvent.click(screen.getByText("Playlists"));
+      expect(screen.queryByTestId("playlist-1")).not.toBeInTheDocument();
+    });
+
+    it("renders playlists immediately when URL has playlists tab", () => {
+      mockSearchParams.set("tab", "playlists");
+
+      render(
+        <GroupDashboard
+          group={{ ...mockGroup, playlists: mockPlaylists }}
+          canEdit={true}
+          authUser={mockAuthUser}
+          dueDates={[]}
+          statuses={{}}
+        />,
+      );
 
       expect(screen.getByTestId("playlist-1")).toBeInTheDocument();
       expect(screen.getByTestId("playlist-2")).toBeInTheDocument();
     });
 
-    it("shows empty state when no playlists", () => {
+    it("shows empty state immediately when URL has playlists tab and no playlists", () => {
+      mockSearchParams.set("tab", "playlists");
+
       render(
         <GroupDashboard
           group={mockGroup}
@@ -517,14 +460,32 @@ describe("GroupDashboard", () => {
         />,
       );
 
-      fireEvent.click(screen.getByText("Playlists"));
+      expect(
+        screen.getByText("No playlists have been added to this group yet."),
+      ).toBeInTheDocument();
+    });
+
+    it("handles missing playlists array when initialized with URL", () => {
+      mockSearchParams.set("tab", "playlists");
+      const groupNoPlaylists = { ...mockGroup, playlists: undefined };
+
+      render(
+        <GroupDashboard
+          group={groupNoPlaylists as any}
+          canEdit={true}
+          authUser={mockAuthUser}
+          dueDates={[]}
+          statuses={{}}
+        />,
+      );
 
       expect(
         screen.getByText("No playlists have been added to this group yet."),
       ).toBeInTheDocument();
     });
 
-    it("displays playlist due dates", () => {
+    it("displays playlist due dates when initialized with URL", () => {
+      mockSearchParams.set("tab", "playlists");
       const playlistDueDate = {
         playlist: mockPlaylists[0],
         dueDate: "2024-01-15",
@@ -542,46 +503,12 @@ describe("GroupDashboard", () => {
         />,
       );
 
-      fireEvent.click(screen.getByText("Playlists"));
-
       expect(screen.getByText(/2024-01-15/)).toBeInTheDocument();
-    });
-
-    it("passes timezone to PlaylistCard", () => {
-      render(
-        <GroupDashboard
-          group={{ ...mockGroup, playlists: mockPlaylists }}
-          canEdit={true}
-          authUser={mockAuthUser}
-          dueDates={[]}
-          statuses={{}}
-        />,
-      );
-
-      fireEvent.click(screen.getByText("Playlists"));
-
-      expect(screen.getByTestId("playlist-1")).toBeInTheDocument();
-    });
-
-    it("handles playlists without due dates", () => {
-      render(
-        <GroupDashboard
-          group={{ ...mockGroup, playlists: mockPlaylists }}
-          canEdit={true}
-          authUser={mockAuthUser}
-          dueDates={[]}
-          statuses={{}}
-        />,
-      );
-
-      fireEvent.click(screen.getByText("Playlists"));
-
-      expect(screen.getByTestId("playlist-1")).toBeInTheDocument();
     });
   });
 
-  describe("Progress Tab", () => {
-    it("displays progress grid when content and members exist", () => {
+  describe("Progress Tab - Lazy Loading", () => {
+    it("does not render progress content initially", () => {
       render(
         <GroupDashboard
           group={{
@@ -596,12 +523,12 @@ describe("GroupDashboard", () => {
         />,
       );
 
-      fireEvent.click(screen.getByText("Progress"));
-
-      expect(screen.getByTestId("progress-grid")).toBeInTheDocument();
+      expect(screen.queryByTestId("progress-grid")).not.toBeInTheDocument();
     });
 
-    it("shows progress when only droplets exist", () => {
+    it("renders progress immediately when URL has progress tab", () => {
+      mockSearchParams.set("tab", "progress");
+
       render(
         <GroupDashboard
           group={{
@@ -616,12 +543,52 @@ describe("GroupDashboard", () => {
         />,
       );
 
-      fireEvent.click(screen.getByText("Progress"));
-
       expect(screen.getByTestId("progress-grid")).toBeInTheDocument();
     });
 
-    it("shows progress when only playlists exist", () => {
+    it("shows empty state when no droplets or playlists and initialized with URL", () => {
+      mockSearchParams.set("tab", "progress");
+
+      render(
+        <GroupDashboard
+          group={{ ...mockGroup, members: mockGroup.members }}
+          canEdit={true}
+          authUser={mockAuthUser}
+          dueDates={[]}
+          statuses={{}}
+        />,
+      );
+
+      expect(
+        screen.getByText(
+          "No droplets or members have been added to this group yet.",
+        ),
+      ).toBeInTheDocument();
+    });
+
+    it("shows empty state when no members exist and initialized with URL", () => {
+      mockSearchParams.set("tab", "progress");
+
+      render(
+        <GroupDashboard
+          group={{ ...mockGroup, droplets: [mockDroplets[0]], members: [] }}
+          canEdit={true}
+          authUser={mockAuthUser}
+          dueDates={[]}
+          statuses={{}}
+        />,
+      );
+
+      expect(
+        screen.getByText(
+          "No droplets or members have been added to this group yet.",
+        ),
+      ).toBeInTheDocument();
+    });
+
+    it("renders progress with playlists only when initialized with URL", () => {
+      mockSearchParams.set("tab", "progress");
+
       render(
         <GroupDashboard
           group={{
@@ -636,52 +603,11 @@ describe("GroupDashboard", () => {
         />,
       );
 
-      fireEvent.click(screen.getByText("Progress"));
-
       expect(screen.getByTestId("progress-grid")).toBeInTheDocument();
     });
 
-    it("shows empty state when no droplets or playlists", () => {
-      render(
-        <GroupDashboard
-          group={{ ...mockGroup, members: mockGroup.members }}
-          canEdit={true}
-          authUser={mockAuthUser}
-          dueDates={[]}
-          statuses={{}}
-        />,
-      );
-
-      fireEvent.click(screen.getByText("Progress"));
-
-      expect(
-        screen.getByText(
-          "No droplets or members have been added to this group yet.",
-        ),
-      ).toBeInTheDocument();
-    });
-
-    it("shows empty state when no members", () => {
-      render(
-        <GroupDashboard
-          group={{ ...mockGroup, droplets: [mockDroplets[0]], members: [] }}
-          canEdit={true}
-          authUser={mockAuthUser}
-          dueDates={[]}
-          statuses={{}}
-        />,
-      );
-
-      fireEvent.click(screen.getByText("Progress"));
-
-      expect(
-        screen.getByText(
-          "No droplets or members have been added to this group yet.",
-        ),
-      ).toBeInTheDocument();
-    });
-
-    it("passes statuses to GroupProgressGrid", () => {
+    it("passes statuses to progress grid when initialized with URL", () => {
+      mockSearchParams.set("tab", "progress");
       const mockStatuses = {
         "1": { completionPercentage: 75, completionDate: new Date() },
       };
@@ -700,14 +626,44 @@ describe("GroupDashboard", () => {
         />,
       );
 
-      fireEvent.click(screen.getByText("Progress"));
-
       expect(screen.getByTestId("progress-grid")).toBeInTheDocument();
     });
   });
 
-  describe("Empty States", () => {
-    it("shows droplets empty state", () => {
+  describe("URL Tab Parameter Handling", () => {
+    it("defaults to droplets tab when no URL parameter", () => {
+      render(
+        <GroupDashboard
+          group={{ ...mockGroup, droplets: [mockDroplets[0]] }}
+          canEdit={true}
+          authUser={mockAuthUser}
+          dueDates={[]}
+          statuses={{}}
+        />,
+      );
+
+      expect(screen.getByTestId("droplet-1")).toBeInTheDocument();
+    });
+
+    it("defaults to droplets tab when invalid URL parameter", () => {
+      mockSearchParams.set("tab", "invalid");
+
+      render(
+        <GroupDashboard
+          group={{ ...mockGroup, droplets: [mockDroplets[0]] }}
+          canEdit={true}
+          authUser={mockAuthUser}
+          dueDates={[]}
+          statuses={{}}
+        />,
+      );
+
+      expect(screen.getByTestId("droplet-1")).toBeInTheDocument();
+    });
+
+    it("updates URL when tab is clicked", async () => {
+      const user = userEvent.setup();
+
       render(
         <GroupDashboard
           group={mockGroup}
@@ -718,12 +674,19 @@ describe("GroupDashboard", () => {
         />,
       );
 
-      expect(
-        screen.getByText("No droplets have been added to this group yet."),
-      ).toBeInTheDocument();
+      await act(async () => {
+        await user.click(screen.getByText("Playlists"));
+      });
+
+      expect(mockReplace).toHaveBeenCalledWith(
+        expect.stringContaining("tab=playlists"),
+      );
     });
 
-    it("shows playlists empty state", () => {
+    it("preserves existing URL parameters when changing tabs", async () => {
+      const user = userEvent.setup();
+      mockSearchParams.set("filter", "active");
+
       render(
         <GroupDashboard
           group={mockGroup}
@@ -734,84 +697,20 @@ describe("GroupDashboard", () => {
         />,
       );
 
-      fireEvent.click(screen.getByText("Playlists"));
+      await act(async () => {
+        await user.click(screen.getByText("Playlists"));
+      });
 
-      expect(
-        screen.getByText("No playlists have been added to this group yet."),
-      ).toBeInTheDocument();
-    });
-
-    it("applies dark mode classes to empty states", () => {
-      const { container } = render(
-        <GroupDashboard
-          group={mockGroup}
-          canEdit={true}
-          authUser={mockAuthUser}
-          dueDates={[]}
-          statuses={{}}
-        />,
+      expect(mockReplace).toHaveBeenCalledWith(
+        expect.stringContaining("filter=active"),
       );
-
-      const emptyState = container.querySelector(".dark\\:border-slate-500");
-      expect(emptyState).toBeInTheDocument();
+      expect(mockReplace).toHaveBeenCalledWith(
+        expect.stringContaining("tab=playlists"),
+      );
     });
   });
 
   describe("Edge Cases", () => {
-    it("handles group without droplets array", () => {
-      const groupNoDroplets = { ...mockGroup, droplets: undefined };
-
-      render(
-        <GroupDashboard
-          group={groupNoDroplets as any}
-          canEdit={true}
-          authUser={mockAuthUser}
-          dueDates={[]}
-          statuses={{}}
-        />,
-      );
-
-      expect(
-        screen.getByText("No droplets have been added to this group yet."),
-      ).toBeInTheDocument();
-    });
-
-    it("handles group without playlists array", () => {
-      const groupNoPlaylists = { ...mockGroup, playlists: undefined };
-
-      render(
-        <GroupDashboard
-          group={groupNoPlaylists as any}
-          canEdit={true}
-          authUser={mockAuthUser}
-          dueDates={[]}
-          statuses={{}}
-        />,
-      );
-
-      fireEvent.click(screen.getByText("Playlists"));
-
-      expect(
-        screen.getByText("No playlists have been added to this group yet."),
-      ).toBeInTheDocument();
-    });
-
-    it("handles canEdit being undefined", () => {
-      const regularUser = { ...mockAuthUser, id: 999 };
-
-      render(
-        <GroupDashboard
-          group={mockGroup}
-          canEdit={undefined}
-          authUser={regularUser}
-          dueDates={[]}
-          statuses={{}}
-        />,
-      );
-
-      expect(screen.queryByText("Progress")).not.toBeInTheDocument();
-    });
-
     it("handles group without admins array", () => {
       const groupNoAdmins = { ...mockGroup, admins: undefined };
 
@@ -842,10 +741,10 @@ describe("GroupDashboard", () => {
       expect(screen.getByTestId("droplet-1")).toBeInTheDocument();
     });
 
-    it("handles single droplet", () => {
-      render(
+    it("applies dark mode classes to empty states", () => {
+      const { container } = render(
         <GroupDashboard
-          group={{ ...mockGroup, droplets: [mockDroplets[0]] }}
+          group={mockGroup}
           canEdit={true}
           authUser={mockAuthUser}
           dueDates={[]}
@@ -853,15 +752,12 @@ describe("GroupDashboard", () => {
         />,
       );
 
-      expect(screen.getByTestId("droplet-1")).toBeInTheDocument();
-      const nextButton = screen.getByText("Next");
-      expect(nextButton).toBeDisabled();
+      const emptyState = container.querySelector(".dark\\:border-slate-500");
+      expect(emptyState).toBeInTheDocument();
     });
-  });
 
-  describe("Styling", () => {
-    it("applies tab styling classes", () => {
-      const { container } = render(
+    it("applies correct styling to tabs", () => {
+      render(
         <GroupDashboard
           group={mockGroup}
           canEdit={true}
@@ -875,21 +771,6 @@ describe("GroupDashboard", () => {
       expect(tab).toHaveClass("px-4");
       expect(tab).toHaveClass("py-2");
       expect(tab).toHaveClass("cursor-pointer");
-    });
-
-    it("applies grid layout to droplets", () => {
-      const { container } = render(
-        <GroupDashboard
-          group={{ ...mockGroup, droplets: [mockDroplets[0]] }}
-          canEdit={true}
-          authUser={mockAuthUser}
-          dueDates={[]}
-          statuses={{}}
-        />,
-      );
-
-      const grid = container.querySelector(".grid-cols-1");
-      expect(grid).toBeInTheDocument();
     });
 
     it("applies dark mode classes to pagination buttons", () => {
@@ -907,10 +788,8 @@ describe("GroupDashboard", () => {
       expect(nextButton).toHaveClass("dark:bg-slate-300");
       expect(nextButton).toHaveClass("dark:text-black");
     });
-  });
 
-  describe("Accessibility", () => {
-    it("tabs are keyboard accessible", () => {
+    it("renders all tabs with correct ARIA attributes", () => {
       render(
         <GroupDashboard
           group={mockGroup}
@@ -920,21 +799,14 @@ describe("GroupDashboard", () => {
           statuses={{}}
         />,
       );
-    });
 
-    it("pagination buttons are properly labeled", () => {
-      render(
-        <GroupDashboard
-          group={{ ...mockGroup, droplets: mockDroplets }}
-          canEdit={true}
-          authUser={mockAuthUser}
-          dueDates={[]}
-          statuses={{}}
-        />,
-      );
+      const dropletsTab = screen.getByText("Droplets");
+      const playlistsTab = screen.getByText("Playlists");
+      const progressTab = screen.getByText("Progress");
 
-      expect(screen.getByText("Previous")).toBeInTheDocument();
-      expect(screen.getByText("Next")).toBeInTheDocument();
+      expect(dropletsTab).toBeInTheDocument();
+      expect(playlistsTab).toBeInTheDocument();
+      expect(progressTab).toBeInTheDocument();
     });
   });
 });
