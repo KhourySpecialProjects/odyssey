@@ -1,4 +1,4 @@
-import { getDropletBySlug, updateDropletFunFact } from "@/lib/requests/droplet";
+import { getDropletBySlug, updateDroplet, updateDropletFunFact } from "@/lib/requests/droplet";
 import type { Droplet } from "@/types";
 import { DropletName } from "@/components/draft/metadata/droplet-name";
 import { LearningObjectives } from "@/components/draft/metadata/learning-objectives/learning-objectives";
@@ -19,6 +19,9 @@ import { notFound } from "next/navigation";
 import { ReviewDroplet } from "@/components/draft/metadata/review-droplet";
 import Anthropic from "@anthropic-ai/sdk";
 import { FunFactEditor } from "@/components/draft/metadata/fun-fact-editor";
+import { ClickableBadges } from "@/components/draft/metadata/clickable-badges";
+import { toast } from "sonner";
+import { revalidatePath } from "next/cache";
 
 type Props = {
   params: Promise<Params>;
@@ -128,10 +131,11 @@ export default async function Droplet({ params }: Props) {
       <GradientBackground className="px-0">
         <div className="mx-auto max-w-2xl px-5 md:px-0">
           <div className="flex flex-0 flex-row flex-wrap gap-1.5">
-            <Badge variant="outline">
-              {uppercaseFirstChar(droplet.focusArea)}
-            </Badge>
-            <Badge variant="outline">{uppercaseFirstChar(droplet.type)}</Badge>
+            <ClickableBadges 
+              focusArea={droplet.focusArea}
+              type={droplet.type}
+              dropletId={droplet.id}
+            />
             {droplet.tags?.map((tag) => (
               <Badge key={tag.id} variant="outline">
                 {tag.name}
