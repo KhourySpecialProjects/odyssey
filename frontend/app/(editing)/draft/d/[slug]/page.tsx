@@ -212,20 +212,7 @@ export default async function Droplet({ params }: Props) {
               Information that users will see when they view the droplet{" "}
             </p>
             <div className="flex w-full flex-col space-y-4">
-              <div className="flex items-center justify-center">
-                <div className="flex flex-row space-x-5">
-                  <Filter
-                    dropletId={droplet.id}
-                    initial={droplet.focusArea}
-                    variant="focusArea"
-                  />
-                  <Filter
-                    dropletId={droplet.id}
-                    initial={droplet.type}
-                    variant="type"
-                  />
-                </div>
-              </div>
+              
               <Selection
                 variant="tag"
                 dropletId={droplet.id}
