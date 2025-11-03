@@ -512,7 +512,7 @@ describe("LessonRenderer", () => {
       });
 
       await waitFor(() => {
-        expect(deleteLesson).toHaveBeenCalledWith(1, true, 5);
+        expect(deleteLesson).toHaveBeenCalledWith(1, true);
       });
 
       await waitFor(() => {
