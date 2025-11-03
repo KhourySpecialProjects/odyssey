@@ -1,11 +1,44 @@
-import * as authorizedUser from "./authorized-user";
-
+// lib/requests/user-activity.ts
+// import * as authorizedUser from "./authorized-user";
+import { getEnrollmentsByAuthorizedUser } from "./enrollment";
 
 interface UserActivity {
   timestamp: string;
-  type: 'enrollment' | 'page_view' | 'lesson_view' | 'completion' | 'rating';
+  type: "enrollment" | "page_view" | "lesson_view" | "completion" | "rating";
   description: string;
   details?: any;
+}
+
+/**
+ * Converts PostHog events to our activity format
+ */
+function convertPostHogEvents(events: any[]): UserActivity[] {
+  return events
+    .filter((event: any) => {
+      // Filter out non-useful events
+      const eventName = event.event.toLowerCase();
+      return (
+        eventName !== "$identify" &&
+        eventName !== "identify" &&
+        eventName !== "$pageleave" &&
+        eventName !== "pageleave" &&
+        eventName !== "$set" &&
+        eventName !== "set"
+      );
+    })
+    .map((event: any, index: number) => {
+      const eventType = mapPostHogEventType(event.event);
+
+      return {
+        timestamp: event.timestamp,
+        type: eventType,
+        description: formatPostHogDescription(event),
+        details: {
+          event_name: event.event,
+          properties: event.properties,
+        },
+      };
+    });
 }
 
 /**
@@ -14,25 +47,33 @@ interface UserActivity {
  */
 async function getPostHogActivity(userId: number): Promise<UserActivity[]> {
   // Check if we're on the server
-  if (typeof window !== 'undefined') {
-    console.error("getPostHogActivity must be called from server-side code only");
+  if (typeof window !== "undefined") {
+    console.error(
+      "getPostHogActivity must be called from server-side code only",
+    );
     return [];
   }
 
   const projectId = "53063";
   const apiKey = process.env.POSTHOG_API_KEY;
-  const host = process.env.NEXT_PUBLIC_POSTHOG_HOST || "https://app.posthog.com";
-  
+  const host =
+    process.env.NEXT_PUBLIC_POSTHOG_HOST || "https://app.posthog.com";
+
   if (!apiKey) {
-    console.error("PostHog API key not configured. Make sure POSTHOG_API_KEY is set in your .env file");
-    console.error("Available env vars:", Object.keys(process.env).filter(k => k.includes('POSTHOG')));
+    console.error(
+      "PostHog API key not configured. Make sure POSTHOG_API_KEY is set in your .env file",
+    );
+    console.error(
+      "Available env vars:",
+      Object.keys(process.env).filter((k) => k.includes("POSTHOG")),
+    );
     return [];
   }
 
   try {
     // Query PostHog Events API for this specific user
     const url = `${host}/api/projects/${projectId}/events/?distinct_id=${userId}&limit=1000`;
-    
+
     const headers = {
       Authorization: `Bearer ${apiKey.trim()}`,
       "Content-Type": "application/json",
@@ -62,19 +103,7 @@ async function getPostHogActivity(userId: number): Promise<UserActivity[]> {
       const events = data.results || [];
 
       // Convert PostHog events to our activity format
-      return events.map((event: any) => {
-        const eventType = mapPostHogEventType(event.event);
-        
-        return {
-          timestamp: event.timestamp,
-          type: eventType,
-          description: formatPostHogDescription(event),
-          details: {
-            event_name: event.event,
-            properties: event.properties,
-          },
-        };
-      });
+      return convertPostHogEvents(events);
     } catch (parseError) {
       console.error("Failed to parse PostHog response:", parseError);
       console.error("Response text:", responseText.substring(0, 500));
@@ -93,26 +122,31 @@ async function getPostHogActivity(userId: number): Promise<UserActivity[]> {
 /**
  * Maps PostHog event names to activity types
  */
-function mapPostHogEventType(eventName: string): UserActivity['type'] {
+function mapPostHogEventType(eventName: string): UserActivity["type"] {
   const lower = eventName.toLowerCase();
-  
-  if (lower.includes('lesson') && lower.includes('view')) {
-    return 'lesson_view';
+
+  // Treat autocapture as page views
+  if (lower === "$autocapture" || lower === "autocapture") {
+    return "page_view";
   }
-  if (lower.includes('course') && lower.includes('complete')) {
-    return 'completion';
+
+  if (lower.includes("lesson") && lower.includes("view")) {
+    return "lesson_view";
   }
-  if (lower.includes('enroll')) {
-    return 'enrollment';
+  if (lower.includes("course") && lower.includes("complete")) {
+    return "completion";
   }
-  if (lower.includes('rating') || lower.includes('rate')) {
-    return 'rating';
+  if (lower.includes("enroll")) {
+    return "enrollment";
   }
-  if (lower.includes('pageview') || lower === '$pageview') {
-    return 'page_view';
+  if (lower.includes("rating") || lower.includes("rate")) {
+    return "rating";
   }
-  
-  return 'page_view';
+  if (lower.includes("pageview") || lower === "$pageview") {
+    return "page_view";
+  }
+
+  return "page_view";
 }
 
 /**
@@ -120,46 +154,156 @@ function mapPostHogEventType(eventName: string): UserActivity['type'] {
  */
 function formatPostHogDescription(event: any): string {
   const { event: eventName, properties } = event;
-  
-  // Handle standard pageview event
-  if (eventName === '$pageview' || eventName === 'pageview') {
-    const url = properties.$current_url || properties.url || properties.pathname;
-    if (url) {
-      const pathname = new URL(url, 'https://example.com').pathname;
-      return `Viewed page: ${pathname}`;
+
+  // Handle autocapture and pageview events
+  if (
+    eventName === "$autocapture" ||
+    eventName === "$pageview" ||
+    eventName === "pageview" ||
+    eventName === "autocapture"
+  ) {
+    // Try to get the pathname - $pathname is the most reliable for autocapture
+    let pathname = properties.$pathname || properties.pathname || null;
+
+    // Fallback to extracting from URL if pathname not available
+    if (!pathname && properties.$current_url) {
+      try {
+        pathname = new URL(properties.$current_url).pathname;
+      } catch (e) {
+        pathname = properties.$current_url;
+      }
+    } else if (!pathname && properties.current_url) {
+      try {
+        pathname = new URL(properties.current_url).pathname;
+      } catch (e) {
+        pathname = properties.current_url;
+      }
+    } else if (!pathname && properties.url) {
+      try {
+        pathname = new URL(properties.url).pathname;
+      } catch (e) {
+        pathname = properties.url;
+      }
     }
-    return 'Viewed page';
+
+    if (pathname) {
+      // Clean up the pathname
+      const cleanPath = pathname.replace(/\/$/, "");
+
+      if (cleanPath === "/" || cleanPath === "") {
+        return "Viewed: Home";
+      }
+
+      // Handle /d/ paths (lessons/courses) - YOUR PRIMARY USE CASE
+      if (cleanPath.startsWith("/d/")) {
+        const segments = cleanPath.split("/").filter(Boolean);
+        // segments: ['d', 'course-name', 'lesson-name']
+
+        if (segments.length === 2) {
+          // Just the course: /d/course-name
+          const courseName = segments[1].replace(/-/g, " ");
+          const capitalizedCourseName = courseName
+            .split(" ")
+            .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
+            .join(" ");
+          return `Viewed course: ${capitalizedCourseName}`;
+        } else if (segments.length >= 3) {
+          // Course and lesson: /d/course-name/lesson-name
+          const courseName = segments[1].replace(/-/g, " ");
+          const lessonName = segments[2].replace(/-/g, " ");
+
+          // Capitalize first letter of each word
+          const capitalizedLesson = lessonName
+            .split(" ")
+            .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
+            .join(" ");
+          const capitalizedCourse = courseName
+            .split(" ")
+            .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
+            .join(" ");
+
+          return `Viewed: ${capitalizedLesson} (${capitalizedCourse})`;
+        }
+      }
+
+      // Format common patterns nicely
+      if (cleanPath.startsWith("/droplets/")) {
+        const dropletSlug = cleanPath.split("/").filter(Boolean).pop();
+        const formatted = dropletSlug?.replace(/-/g, " ") || "course";
+        return `Viewed course: ${formatted.charAt(0).toUpperCase() + formatted.slice(1)}`;
+      }
+
+      if (cleanPath.startsWith("/lessons/")) {
+        const lessonSlug = cleanPath.split("/").filter(Boolean).pop();
+        const formatted = lessonSlug?.replace(/-/g, " ") || "lesson";
+        return `Viewed lesson: ${formatted.charAt(0).toUpperCase() + formatted.slice(1)}`;
+      }
+
+      if (cleanPath.startsWith("/admin")) {
+        const adminPath = cleanPath.replace("/admin", "").replace(/^\//, "");
+        if (adminPath) {
+          const formatted = adminPath.replace(/-/g, " ");
+          return `Viewed: Admin - ${formatted.charAt(0).toUpperCase() + formatted.slice(1)}`;
+        }
+        return `Viewed: Admin Panel`;
+      }
+
+      if (cleanPath.startsWith("/profile")) {
+        return `Viewed: Profile`;
+      }
+
+      if (cleanPath.startsWith("/dashboard")) {
+        return `Viewed: Dashboard`;
+      }
+
+      // For other pages, show the last meaningful segment
+      const segments = cleanPath.split("/").filter(Boolean);
+      if (segments.length > 0) {
+        const lastSegment = segments[segments.length - 1].replace(/-/g, " ");
+        return `Viewed: ${lastSegment.charAt(0).toUpperCase() + lastSegment.slice(1)}`;
+      }
+    }
+
+    // Fallback
+    return "Viewed page";
   }
-  
+
   // Handle lesson view events
-  if (eventName.toLowerCase().includes('lesson')) {
-    const lessonName = properties.lesson_name || properties.lessonName || properties.name;
+  if (eventName.toLowerCase().includes("lesson")) {
+    const lessonName =
+      properties.lesson_name || properties.lessonName || properties.name;
     if (lessonName) {
       return `Viewed lesson: ${lessonName}`;
     }
-    return 'Viewed lesson';
+    return "Viewed lesson";
   }
-  
+
   // Handle enrollment events
-  if (eventName.toLowerCase().includes('enroll')) {
-    const dropletName = properties.droplet_name || properties.dropletName || properties.course_name;
+  if (eventName.toLowerCase().includes("enroll")) {
+    const dropletName =
+      properties.droplet_name ||
+      properties.dropletName ||
+      properties.course_name;
     if (dropletName) {
       return `Enrolled in: ${dropletName}`;
     }
-    return 'Enrolled in course';
+    return "Enrolled in course";
   }
-  
+
   // Handle completion events
-  if (eventName.toLowerCase().includes('complete')) {
-    const dropletName = properties.droplet_name || properties.dropletName || properties.course_name;
+  if (eventName.toLowerCase().includes("complete")) {
+    const dropletName =
+      properties.droplet_name ||
+      properties.dropletName ||
+      properties.course_name;
     if (dropletName) {
       return `Completed: ${dropletName}`;
     }
-    return 'Completed course';
+    return "Completed course";
   }
-  
+
   // Handle rating events
-  if (eventName.toLowerCase().includes('rating')) {
+  if (eventName.toLowerCase().includes("rating")) {
     const rating = properties.rating;
     const dropletName = properties.droplet_name || properties.dropletName;
     if (rating && dropletName) {
@@ -168,16 +312,11 @@ function formatPostHogDescription(event: any): string {
     if (rating) {
       return `Gave rating: ${rating}/5 stars`;
     }
-    return 'Left a rating';
+    return "Left a rating";
   }
-  
-  // Default: use event name and any available title/name
-  const title = properties.page_title || properties.title || properties.name;
-  if (title) {
-    return `${eventName}: ${title}`;
-  }
-  
-  return eventName;
+
+  // Default: use event name only (simplified)
+  return eventName.replace(/_/g, " ").replace(/\$/g, "");
 }
 
 /**
@@ -187,14 +326,14 @@ function enrollmentsToActivities(enrollments: any[]): UserActivity[] {
   const activities: UserActivity[] = [];
 
   enrollments.forEach((enrollment) => {
-    // Enrollment creation
+    // Enrollment creation - use createdAt if available
     if (enrollment.createdAt) {
       activities.push({
         timestamp: enrollment.createdAt,
-        type: 'enrollment',
-        description: `Enrolled in: ${enrollment.droplet?.name || 'Unknown Course'}`,
+        type: "enrollment",
+        description: `Enrolled in: ${enrollment.droplet?.name || "Unknown Course"}`,
         details: {
-          source: 'enrollment_data',
+          source: "enrollment_data",
           dropletId: enrollment.droplet?.id,
           dropletName: enrollment.droplet?.name,
           isFirstTime: enrollment.isFirstTime,
@@ -202,44 +341,49 @@ function enrollmentsToActivities(enrollments: any[]): UserActivity[] {
       });
     }
 
-    // Course completion
-    if (enrollment.isComplete && enrollment.completionDate) {
+    // Course completion - ALWAYS show if marked complete
+    if (enrollment.isComplete) {
+      const completionTimestamp =
+        enrollment.completionDate ||
+        enrollment.updatedAt ||
+        new Date().toISOString();
       activities.push({
-        timestamp: enrollment.completionDate,
-        type: 'completion',
-        description: `Completed: ${enrollment.droplet?.name || 'Unknown Course'}`,
+        timestamp: completionTimestamp,
+        type: "completion",
+        description: `Completed: ${enrollment.droplet?.name || "Unknown Course"}`,
         details: {
-          source: 'enrollment_data',
+          source: "enrollment_data",
           dropletId: enrollment.droplet?.id,
           dropletName: enrollment.droplet?.name,
           rating: enrollment.rating,
+          completionDate: enrollment.completionDate,
         },
       });
     }
 
-    // Rating given
-    if (enrollment.rating && enrollment.updatedAt) {
+    // Rating given - use updatedAt if available (but don't duplicate if completion shown)
+    if (enrollment.rating && enrollment.updatedAt && !enrollment.isComplete) {
       activities.push({
         timestamp: enrollment.updatedAt,
-        type: 'rating',
+        type: "rating",
         description: `Rated "${enrollment.droplet?.name}" - ${enrollment.rating}/5 stars`,
         details: {
-          source: 'enrollment_data',
+          source: "enrollment_data",
           dropletId: enrollment.droplet?.id,
           rating: enrollment.rating,
         },
       });
     }
 
-    // Viewed lessons
+    // Viewed lessons - each viewed lesson becomes an activity
     if (enrollment.viewedLessons && enrollment.viewedLessons.length > 0) {
       enrollment.viewedLessons.forEach((lesson: any) => {
         activities.push({
           timestamp: enrollment.updatedAt || new Date().toISOString(),
-          type: 'lesson_view',
-          description: `Viewed lesson: ${lesson.name} (in ${enrollment.droplet?.name})`,
+          type: "lesson_view",
+          description: `Viewed: ${lesson.name} (${enrollment.droplet?.name})`,
           details: {
-            source: 'enrollment_data',
+            source: "enrollment_data",
             lessonId: lesson.id,
             lessonName: lesson.name,
             lessonSlug: lesson.slug,
@@ -258,8 +402,8 @@ function enrollmentsToActivities(enrollments: any[]): UserActivity[] {
  */
 function deduplicateActivities(activities: UserActivity[]): UserActivity[] {
   const seen = new Map<string, UserActivity>();
-  
-  activities.forEach(activity => {
+
+  activities.forEach((activity) => {
     // Create a key based on type, timestamp (rounded to minute), and key details
     const timestamp = new Date(activity.timestamp);
     const roundedTime = new Date(
@@ -267,23 +411,25 @@ function deduplicateActivities(activities: UserActivity[]): UserActivity[] {
       timestamp.getMonth(),
       timestamp.getDate(),
       timestamp.getHours(),
-      timestamp.getMinutes()
+      timestamp.getMinutes(),
     ).toISOString();
-    
-    const key = `${activity.type}-${roundedTime}-${JSON.stringify(activity.details?.dropletId || '')}`;
-    
+
+    const key = `${activity.type}-${roundedTime}-${JSON.stringify(activity.details?.dropletId || "")}`;
+
     // Prefer enrollment data over PostHog for enrollments, completions, and ratings
     if (!seen.has(key)) {
       seen.set(key, activity);
     } else {
       const existing = seen.get(key)!;
-      if (activity.details?.source === 'enrollment_data' && 
-          ['enrollment', 'completion', 'rating'].includes(activity.type)) {
+      if (
+        activity.details?.source === "enrollment_data" &&
+        ["enrollment", "completion", "rating"].includes(activity.type)
+      ) {
         seen.set(key, activity);
       }
     }
   });
-  
+
   return Array.from(seen.values());
 }
 
@@ -292,17 +438,43 @@ function deduplicateActivities(activities: UserActivity[]): UserActivity[] {
  */
 export async function getUserActivity(userId: number): Promise<UserActivity[]> {
   try {
-    // Fetch from both sources in parallel
-    const enrollmentsPromise = (authorizedUser as any).getEnrollmentsByAuthorizedUser
-      ? (authorizedUser as any).getEnrollmentsByAuthorizedUser(userId)
-      : (authorizedUser as any).default
-        ? (authorizedUser as any).default(userId)
-        : Promise.resolve([]);
+    // Fetch PostHog activities
+    const posthogActivities = await getPostHogActivity(userId);
 
-    const [posthogActivities, enrollments] = await Promise.all([
-      getPostHogActivity(userId),
-      enrollmentsPromise,
-    ]);
+    // Try to fetch enrollments with timestamps
+    let enrollments: any[] = [];
+    try {
+      if (getEnrollmentsByAuthorizedUser) {
+        enrollments = await getEnrollmentsByAuthorizedUser(userId, {
+          fields: [
+            "id",
+            "rating",
+            "isComplete",
+            "isFirstTime",
+            "isArchived",
+            "completionDate",
+            "createdAt",
+            "updatedAt",
+          ],
+          populate: {
+            droplet: {
+              populate: {
+                lessons: {
+                  fields: ["id", "name", "slug"],
+                },
+              },
+              fields: ["id", "name", "slug"],
+            },
+            viewedLessons: {
+              fields: ["id", "name", "slug"],
+            },
+          },
+        });
+      }
+    } catch (error) {
+      console.log("Enrollment data not available:", error);
+      // Continue without enrollment data - just show PostHog activities
+    }
 
     // Convert enrollments to activities
     const enrollmentActivities = enrollmentsToActivities(enrollments);
@@ -314,8 +486,9 @@ export async function getUserActivity(userId: number): Promise<UserActivity[]> {
     const uniqueActivities = deduplicateActivities(allActivities);
 
     // Sort by timestamp (most recent first)
-    uniqueActivities.sort((a, b) => 
-      new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+    uniqueActivities.sort(
+      (a, b) =>
+        new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
     );
 
     return uniqueActivities;

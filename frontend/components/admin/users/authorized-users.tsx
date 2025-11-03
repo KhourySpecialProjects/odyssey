@@ -14,7 +14,8 @@ export async function AuthorizedUsers() {
     <section>
       <h1 className="font-bold dark:text-slate-300">Authorized Users</h1>
       <p className="dark:text-slate-300">
-        The following users have access to this application.
+        The following users have access to this application. Click a name to see
+        their activity logs.
       </p>
 
       <div className="mt-4">

@@ -1,12 +1,12 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { getUserActivity } from '@/lib/requests/user-activity';
-import { getServerSession } from 'next-auth';
+import { NextRequest, NextResponse } from "next/server";
+import { getUserActivity } from "@/lib/requests/user-activity";
+import { getServerSession } from "next-auth";
 // Import your auth config
 // import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { userId: string } }
+  { params }: { params: Promise<{ userId: string }> },
 ) {
   try {
     // Optional: Check if user is authenticated and authorized
@@ -32,13 +32,12 @@ export async function GET(
     }
     */
 
-    const userId = parseInt(params.userId);
-    
+    // Await params in Next.js 15
+    const { userId: userIdString } = await params;
+    const userId = parseInt(userIdString);
+
     if (isNaN(userId)) {
-      return NextResponse.json(
-        { error: 'Invalid user ID' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Invalid user ID" }, { status: 400 });
     }
 
     // Fetch user activity (this runs server-side, so POSTHOG_API_KEY is available)
@@ -46,14 +45,14 @@ export async function GET(
 
     return NextResponse.json(activities, {
       headers: {
-        'Cache-Control': 'no-store, max-age=0',
+        "Cache-Control": "no-store, max-age=0",
       },
     });
   } catch (error) {
-    console.error('Error in user-activity API route:', error);
+    console.error("Error in user-activity API route:", error);
     return NextResponse.json(
-      { error: 'Failed to fetch user activity' },
-      { status: 500 }
+      { error: "Failed to fetch user activity" },
+      { status: 500 },
     );
   }
 }
