@@ -1076,12 +1076,14 @@ describe("PlaylistForm", () => {
       );
 
       const nameInput = screen.getByPlaceholderText("Enter playlist name");
-      await user.type(nameInput, "Test Name");
+      await user.click(nameInput);
+      await user.paste("Test Name");
 
       const descInput = screen.getByPlaceholderText(
         "Enter playlist description",
       );
-      await user.type(descInput, "Test Description");
+      await user.click(descInput);
+      await user.paste("Test Description");
 
       const switchElement = screen.getByLabelText("Make this playlist public");
       await user.click(switchElement);

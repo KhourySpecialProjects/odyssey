@@ -7,7 +7,7 @@ interface PageNavProps {
   updatePage: (num: number) => void;
   totalPages: number;
 }
-
+// page navigation
 export function PageNav({ currentPage, updatePage, totalPages }: PageNavProps) {
   const handleNextPage = () => {
     if (currentPage < totalPages) {
@@ -33,7 +33,7 @@ export function PageNav({ currentPage, updatePage, totalPages }: PageNavProps) {
           onClick={handlePrevPage}
           disabled={currentPage === 1}
           aria-label="chevron-left"
-          className={`${currentPage === 1 ? "text-slate-400 dark:text-slate-600" : ""} ${totalPages === 0 ? "visibility: hidden" : "visibility: visible"}`}
+          className={`${currentPage === 1 ? "text-slate-400 dark:text-slate-600" : ""} ${totalPages === 0 ? "invisible" : "visible"}`}
         >
           <ChevronLeft />
         </button>
@@ -58,13 +58,12 @@ export function PageNav({ currentPage, updatePage, totalPages }: PageNavProps) {
             </div>
           ) : null,
         )}
-
         <button
           key="next"
           onClick={handleNextPage}
           disabled={currentPage === totalPages}
           aria-label="chevron-right"
-          className={`${currentPage === totalPages ? "text-slate-400 dark:text-slate-600" : ""} ${totalPages === 0 ? "visibility: hidden" : "visibility: visible"}`}
+          className={`${currentPage === totalPages ? "text-slate-400 dark:text-slate-600" : ""} ${totalPages === 0 ? "invisible" : "visible"}`}
         >
           <ChevronRight />
         </button>
