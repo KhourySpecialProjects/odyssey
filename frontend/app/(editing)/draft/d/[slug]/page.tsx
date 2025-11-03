@@ -6,7 +6,6 @@ import {
 import type { Droplet } from "@/types";
 import { DropletName } from "@/components/draft/metadata/droplet-name";
 import { LearningObjectives } from "@/components/draft/metadata/learning-objectives/learning-objectives";
-import { Selection } from "@/components/draft/metadata/selection";
 import { getDroplets } from "@/lib/requests/droplet";
 import { getTags } from "@/lib/requests/tag";
 import { NextSteps } from "@/components/draft/metadata/next-steps/next-steps";
@@ -26,8 +25,6 @@ import { FunFactEditor } from "@/components/draft/metadata/fun-fact-editor";
 import { ClickableBadges } from "@/components/draft/metadata/clickable-badges";
 
 import { GeneralInfo } from "@/components/draft/metadata/general-info";
-import { toast } from "sonner";
-import { CircleHelp } from "lucide-react";
 import { RequestReviewButton } from "@/components/draft/metadata/request-review";
 
 type Props = {
