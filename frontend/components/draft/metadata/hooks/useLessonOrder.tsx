@@ -1,7 +1,6 @@
 import { useRef, useEffect } from "react";
 import { useState, useCallback } from "react";
 import { Droplet } from "@/types";
-import { updateDroplet } from "@/lib/requests/droplet";
 import { updateLesson } from "@/lib/requests/lesson";
 
 interface QueueItem {

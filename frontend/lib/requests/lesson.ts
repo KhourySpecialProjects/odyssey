@@ -161,7 +161,7 @@ export async function updateLesson(
       ...(data.name && { name: data.name }),
       ...(data.slug && { slug: data.slug }),
       ...(data.blocks && { blocks: data.blocks }),
-      ...(data.orderIndex && { orderIndex: data.orderIndex }),
+      ...(data.orderIndex !== undefined && { orderIndex: data.orderIndex }),
     };
     dataToSend.regenerateSlug = options.regenerateSlug;
 

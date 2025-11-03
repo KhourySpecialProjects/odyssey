@@ -354,7 +354,6 @@ export function FeedBlock({
                     otherUser={announcement.authorized_user}
                     isOpen={profileOpen}
                     setIsOpen={setProfileOpen}
-                    isFeed={true}
                   />
                 )}
             </div>

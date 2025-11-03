@@ -77,7 +77,6 @@ export function FriendSentRequestsBlock({
         <ProfileBlock
           otherUser={request}
           user={user}
-          isFeed={false}
           isOpen={open}
           setIsOpen={setOpen}
         />

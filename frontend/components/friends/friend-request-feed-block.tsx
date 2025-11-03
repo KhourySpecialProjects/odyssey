@@ -114,7 +114,6 @@ export function FriendRequestFeedBlock({
           otherUser={request}
           isOpen={open}
           setIsOpen={setOpen}
-          isFeed={true}
         />
       </div>
     </div>
