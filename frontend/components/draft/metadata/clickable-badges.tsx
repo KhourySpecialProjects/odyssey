@@ -21,15 +21,17 @@ type ClickableBadgesProps = {
 const focusAreaOptions = ["Personal", "Professional", "Academic"];
 const typeOptions = ["Skill", "Knowledge"];
 
-export function ClickableBadges({ 
-  focusArea, 
-  type, 
+export function ClickableBadges({
+  focusArea,
+  type,
   dropletId,
   tags: initialTags,
   selectedTags: initialSelectedTags,
-  availableTags
+  availableTags,
 }: ClickableBadgesProps) {
-  const [activePopup, setActivePopup] = useState<"focusArea" | "type" | "addTag" | null>(null);
+  const [activePopup, setActivePopup] = useState<
+    "focusArea" | "type" | "addTag" | null
+  >(null);
   const [isPending, startTransition] = useTransition();
   const [localFocusArea, setLocalFocusArea] = useState(focusArea);
   const [localType, setLocalType] = useState(type);
@@ -40,7 +42,7 @@ export function ClickableBadges({
 
   const handleSelect = async (variant: "focusArea" | "type", value: string) => {
     setActivePopup(null);
-    
+
     // Optimistic update
     if (variant === "focusArea") {
       setLocalFocusArea(value);
@@ -52,18 +54,22 @@ export function ClickableBadges({
     startTransition(async () => {
       try {
         const result = await updateDroplet(dropletId, {
-          [variant]: value.toLowerCase()
+          [variant]: value.toLowerCase(),
         });
 
         if (result.ok) {
-          toast.success(`${variant === "focusArea" ? "Focus area" : "Type"} updated successfully`);
+          toast.success(
+            `${variant === "focusArea" ? "Focus area" : "Type"} updated successfully`,
+          );
           router.refresh();
         } else {
           throw new Error(result.error || "Update failed");
         }
       } catch (error) {
         console.error(`Error updating ${variant}:`, error);
-        toast.error(`Failed to update ${variant === "focusArea" ? "focus area" : "type"}`);
+        toast.error(
+          `Failed to update ${variant === "focusArea" ? "focus area" : "type"}`,
+        );
         // Revert optimistic update on error
         if (variant === "focusArea") {
           setLocalFocusArea(focusArea);
@@ -75,13 +81,13 @@ export function ClickableBadges({
   };
 
   const handleRemoveTag = async (tagId: number) => {
-    const updatedTags = selectedTags.filter(t => t.id !== tagId);
+    const updatedTags = selectedTags.filter((t) => t.id !== tagId);
     setSelectedTags(updatedTags);
 
     startTransition(async () => {
       try {
         const result = await updateDroplet(dropletId, {
-          tagIds: updatedTags.map(t => t.id)
+          tagIds: updatedTags.map((t) => t.id),
         });
 
         if (result.ok) {
@@ -100,7 +106,7 @@ export function ClickableBadges({
   };
 
   const handleAddTag = async (tagId: number) => {
-    const tagToAdd = availableTags.find(t => t.id === tagId);
+    const tagToAdd = availableTags.find((t) => t.id === tagId);
     if (!tagToAdd) return;
 
     const updatedTags = [...selectedTags, tagToAdd];
@@ -111,7 +117,7 @@ export function ClickableBadges({
     startTransition(async () => {
       try {
         const result = await updateDroplet(dropletId, {
-          tagIds: updatedTags.map(t => t.id)
+          tagIds: updatedTags.map((t) => t.id),
         });
 
         if (result.ok) {
@@ -130,11 +136,11 @@ export function ClickableBadges({
   };
 
   const unselectedTags = availableTags.filter(
-    tag => !selectedTags.some(st => st.id === tag.id)
+    (tag) => !selectedTags.some((st) => st.id === tag.id),
   );
 
-  const filteredTags = unselectedTags.filter(tag =>
-    tag.name.toLowerCase().includes(tagSearchQuery.toLowerCase())
+  const filteredTags = unselectedTags.filter((tag) =>
+    tag.name.toLowerCase().includes(tagSearchQuery.toLowerCase()),
   );
 
   return (
@@ -151,11 +157,11 @@ export function ClickableBadges({
 
         {activePopup === "focusArea" && (
           <>
-            <div 
-              className="fixed inset-0 z-40" 
+            <div
+              className="fixed inset-0 z-40"
               onClick={() => setActivePopup(null)}
             />
-            
+
             <div className="absolute z-50 mt-2 w-48 rounded-lg border border-slate-200 bg-white shadow-lg dark:border-slate-700 dark:bg-slate-800">
               <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3 dark:border-slate-700">
                 <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
@@ -185,10 +191,7 @@ export function ClickableBadges({
       </div>
 
       <div className="relative">
-        <button
-          onClick={() => setActivePopup("type")}
-          disabled={isPending}
-        >
+        <button onClick={() => setActivePopup("type")} disabled={isPending}>
           <Badge variant="outline" className="bg-gray-200 dark:bg-black">
             {uppercaseFirstChar(localType)}
           </Badge>
@@ -196,11 +199,11 @@ export function ClickableBadges({
 
         {activePopup === "type" && (
           <>
-            <div 
-              className="fixed inset-0 z-40" 
+            <div
+              className="fixed inset-0 z-40"
               onClick={() => setActivePopup(null)}
             />
-            
+
             <div className="absolute z-50 mt-2 w-48 rounded-lg border border-slate-200 bg-white shadow-lg dark:border-slate-700 dark:bg-slate-800">
               <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3 dark:border-slate-700">
                 <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
@@ -248,26 +251,26 @@ export function ClickableBadges({
       ))}
 
       <div className="relative">
-        <button
-          onClick={() => setActivePopup("addTag")}
-          disabled={isPending}
-        >
-          <Badge variant="outline" className="border-dashed border-slate-400 bg-transparent dark:border-slate-500">
-            <Plus className="h-3 w-3 mr-1" />
+        <button onClick={() => setActivePopup("addTag")} disabled={isPending}>
+          <Badge
+            variant="outline"
+            className="border-dashed border-slate-400 bg-transparent dark:border-slate-500"
+          >
+            <Plus className="mr-1 h-3 w-3" />
             Add Tag
           </Badge>
         </button>
 
         {activePopup === "addTag" && (
           <>
-            <div 
-              className="fixed inset-0 z-40" 
+            <div
+              className="fixed inset-0 z-40"
               onClick={() => {
                 setActivePopup(null);
                 setTagSearchQuery("");
               }}
             />
-            
+
             <div className="absolute z-50 mt-2 w-64 rounded-lg border border-slate-200 bg-white shadow-lg dark:border-slate-700 dark:bg-slate-800">
               <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3 dark:border-slate-700">
                 <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
@@ -289,11 +292,11 @@ export function ClickableBadges({
                   placeholder="Search tags..."
                   value={tagSearchQuery}
                   onChange={(e) => setTagSearchQuery(e.target.value)}
-                  className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:border-slate-500 focus:outline-none focus:ring-1 focus:ring-slate-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white dark:placeholder-slate-400 dark:focus:border-slate-400 dark:focus:ring-slate-400"
+                  className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:border-slate-500 focus:ring-1 focus:ring-slate-500 focus:outline-none dark:border-slate-600 dark:bg-slate-700 dark:text-white dark:placeholder-slate-400 dark:focus:border-slate-400 dark:focus:ring-slate-400"
                   autoFocus
                 />
               </div>
-              <div className="p-2 max-h-60 overflow-y-auto">
+              <div className="max-h-60 overflow-y-auto p-2">
                 {filteredTags.length > 0 ? (
                   filteredTags.map((tag) => (
                     <button
@@ -306,7 +309,9 @@ export function ClickableBadges({
                   ))
                 ) : (
                   <p className="px-3 py-2 text-sm text-slate-500 dark:text-slate-400">
-                    {tagSearchQuery ? "No tags found" : "No more tags available"}
+                    {tagSearchQuery
+                      ? "No tags found"
+                      : "No more tags available"}
                   </p>
                 )}
               </div>

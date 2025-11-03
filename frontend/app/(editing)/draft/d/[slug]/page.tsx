@@ -1,4 +1,8 @@
-import { getDropletBySlug, updateDroplet, updateDropletFunFact } from "@/lib/requests/droplet";
+import {
+  getDropletBySlug,
+  updateDroplet,
+  updateDropletFunFact,
+} from "@/lib/requests/droplet";
 import type { Droplet } from "@/types";
 import { DropletName } from "@/components/draft/metadata/droplet-name";
 import { LearningObjectives } from "@/components/draft/metadata/learning-objectives/learning-objectives";
@@ -134,7 +138,7 @@ export default async function Droplet({ params }: Props) {
       <GradientBackground className="px-0">
         <div className="mx-auto max-w-2xl px-5 md:px-0">
           <div className="flex flex-0 flex-row flex-wrap gap-1.5">
-            <ClickableBadges 
+            <ClickableBadges
               focusArea={droplet.focusArea}
               type={droplet.type}
               dropletId={droplet.id}
@@ -143,16 +147,16 @@ export default async function Droplet({ params }: Props) {
               availableTags={tags}
             />
           </div>
-          
-<DropletName
-  data-testid="droplet-name"
-  dropletId={droplet.id}
-  startingName={droplet.name}
-/>
 
-{droplet.status === "draft" && droplet.inReview && (
-  <div className="p-2">Droplet currently in review</div>
-)}
+          <DropletName
+            data-testid="droplet-name"
+            dropletId={droplet.id}
+            startingName={droplet.name}
+          />
+
+          {droplet.status === "draft" && droplet.inReview && (
+            <div className="p-2">Droplet currently in review</div>
+          )}
           <div
             className={`pt-4 pb-4 ${droplet.status === "draft" ? "visibility: visible" : "visibility: hidden"} text-red-500 dark:text-red-300`}
           >
@@ -215,12 +219,9 @@ export default async function Droplet({ params }: Props) {
             deleteFact={deleteFunFact}
           />
           {!droplet.inReview && droplet.status === "draft" && (
-            <RequestReviewButton 
-              droplet={droplet}
-            />
+            <RequestReviewButton droplet={droplet} />
           )}
         </div>
-        
       </GradientBackground>
     </>
   );

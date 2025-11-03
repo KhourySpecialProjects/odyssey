@@ -18,10 +18,10 @@ export function DropletName({
     return name
       .toLowerCase()
       .trim()
-      .replace(/[^\w\s-]/g, '') // Remove special characters
-      .replace(/\s+/g, '-') // Replace spaces with hyphens
-      .replace(/-+/g, '-') // Replace multiple hyphens with single hyphen
-      .replace(/^-+|-+$/g, ''); // Remove leading/trailing hyphens
+      .replace(/[^\w\s-]/g, "") // Remove special characters
+      .replace(/\s+/g, "-") // Replace spaces with hyphens
+      .replace(/-+/g, "-") // Replace multiple hyphens with single hyphen
+      .replace(/^-+|-+$/g, ""); // Remove leading/trailing hyphens
   };
 
   const updateName = (htmlName: string) => {
@@ -29,16 +29,16 @@ export function DropletName({
       .replace(/<[^>]*>?/gm, "")
       .replace("&nbsp;", " ")
       .trim();
-    
+
     setName(cleanName);
-    
+
     // Generate slug from the cleaned name
     const newSlug = generateSlug(cleanName);
-    
+
     // Update both name and slug
-    handleChange({ 
+    handleChange({
       name: cleanName,
-      slug: newSlug 
+      slug: newSlug,
     });
   };
 

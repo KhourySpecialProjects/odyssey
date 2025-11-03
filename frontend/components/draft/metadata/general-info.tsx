@@ -35,12 +35,12 @@ function RemovableDropletTile({
       onMouseLeave={() => setIsHovering(false)}
     >
       <DropletTile droplet={droplet} />
-      
+
       {isHovering && (
         <>
           {/* Gray overlay */}
           <div className="absolute inset-0 z-10 rounded-md bg-black/50 backdrop-blur-sm" />
-          
+
           {/* Trash icon */}
           <button
             onClick={(e) => {
@@ -48,7 +48,7 @@ function RemovableDropletTile({
               e.stopPropagation();
               onRemove();
             }}
-            className="absolute top-1/2 left-1/2 z-20 -translate-x-1/2 -translate-y-1/2 transform rounded-full bg-red-500 p-4 text-white transition-all hover:bg-red-600 hover:scale-110"
+            className="absolute top-1/2 left-1/2 z-20 -translate-x-1/2 -translate-y-1/2 transform rounded-full bg-red-500 p-4 text-white transition-all hover:scale-110 hover:bg-red-600"
             aria-label="Remove droplet"
           >
             <Trash2 className="h-6 w-6" />
@@ -72,7 +72,7 @@ export function GeneralInfo({
 
   const handleRemovePrerequisite = async (dropletToRemove: Droplet) => {
     if (isRemoving) return;
-    
+
     setIsRemoving(true);
     try {
       const updatedPrerequisites = prerequisites
@@ -99,7 +99,7 @@ export function GeneralInfo({
 
   const handleRemovePostrequisite = async (dropletToRemove: Droplet) => {
     if (isRemoving) return;
-    
+
     setIsRemoving(true);
     try {
       const updatedPostrequisites = postrequisites
@@ -134,7 +134,7 @@ export function GeneralInfo({
       </p>
       <div className="flex w-full flex-col space-y-4">
         <div>
-          <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-4">
+          <h2 className="mb-4 text-xl font-bold text-slate-900 dark:text-white">
             Prerequisite Droplets
           </h2>
           <Selection
@@ -157,8 +157,8 @@ export function GeneralInfo({
         </div>
 
         <div>
-          <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-4">
-          Similar Droplets
+          <h2 className="mb-4 text-xl font-bold text-slate-900 dark:text-white">
+            Similar Droplets
           </h2>
           <Selection
             variant="postrequisite"

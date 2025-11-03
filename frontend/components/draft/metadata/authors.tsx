@@ -33,7 +33,7 @@ export function Authors({
   };
 
   const selectedUsers = users.filter((user) =>
-    currentSelectedIds.includes(user.id)
+    currentSelectedIds.includes(user.id),
   );
 
   return (
@@ -41,18 +41,18 @@ export function Authors({
       <h2 className="pb-4 text-2xl font-bold text-slate-900 dark:text-white">
         Author(s)
       </h2>
-      
+
       {selectedUsers.length > 0 && (
-        <ul className="mb-4 rounded-lg border border-slate-200 dark:border-slate-700 divide-y divide-slate-200 dark:divide-slate-700">
+        <ul className="mb-4 divide-y divide-slate-200 rounded-lg border border-slate-200 dark:divide-slate-700 dark:border-slate-700">
           {selectedUsers.map((user) => (
-            <AuthorCard 
-              key={user.id} 
+            <AuthorCard
+              key={user.id}
               author={user}
-              {...user} 
+              {...user}
               inDraft={true}
               onRemove={() => {
                 const newSelectedIds = currentSelectedIds.filter(
-                  (id) => id !== user.id
+                  (id) => id !== user.id,
                 );
                 handleSelectionChange(newSelectedIds);
               }}
@@ -60,7 +60,7 @@ export function Authors({
           ))}
         </ul>
       )}
-      
+
       <UserMultiSelect
         selectedIds={currentSelectedIds}
         onChange={handleSelectionChange}
