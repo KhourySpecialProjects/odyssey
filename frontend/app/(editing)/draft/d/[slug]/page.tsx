@@ -22,6 +22,9 @@ import { FunFactEditor } from "@/components/draft/metadata/fun-fact-editor";
 import { ClickableBadges } from "@/components/draft/metadata/clickable-badges";
 
 import { GeneralInfo } from "@/components/draft/metadata/general-info";
+import { toast } from "sonner";
+import { CircleHelp } from "lucide-react";
+import { RequestReviewButton } from "@/components/draft/metadata/request-review";
 
 type Props = {
   params: Promise<Params>;
@@ -140,14 +143,16 @@ export default async function Droplet({ params }: Props) {
               availableTags={tags}
             />
           </div>
-          <DropletName
-            data-testid="droplet-name"
-            dropletId={droplet.id}
-            startingName={droplet.name}
-          />
-          <div className="my-3 flex w-full flex-row items-center space-x-10">
-            <RegenerateSlugButton droplet={droplet} name={droplet.name} />
-          </div>
+          
+<DropletName
+  data-testid="droplet-name"
+  dropletId={droplet.id}
+  startingName={droplet.name}
+/>
+
+{droplet.status === "draft" && droplet.inReview && (
+  <div className="p-2">Droplet currently in review</div>
+)}
           <div
             className={`pt-4 pb-4 ${droplet.status === "draft" ? "visibility: visible" : "visibility: hidden"} text-red-500 dark:text-red-300`}
           >
@@ -171,7 +176,7 @@ export default async function Droplet({ params }: Props) {
             )}
         </div>
 
-        <div className="mx-auto mt-10 w-full max-w-2xl space-y-10">
+        <div className="mx-auto w-full max-w-2xl space-y-10">
           <Authors
             dropletId={droplet.id}
             selectedIds={droplet.authorized_users?.map((user) => user.id) || []}
@@ -209,7 +214,13 @@ export default async function Droplet({ params }: Props) {
             generateFact={generateFunFact}
             deleteFact={deleteFunFact}
           />
+          {!droplet.inReview && droplet.status === "draft" && (
+            <RequestReviewButton 
+              droplet={droplet}
+            />
+          )}
         </div>
+        
       </GradientBackground>
     </>
   );
