@@ -133,13 +133,6 @@ export function GeneralInfo({
         Information that users will see when they view the droplet{" "}
       </p>
       <div className="flex w-full flex-col space-y-4">
-        <Selection
-          variant="tag"
-          dropletId={dropletId}
-          items={tags}
-          selectedItems={selectedTags}
-        />
-        
         <div>
           <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-4">
             Prerequisite Droplets
@@ -165,7 +158,7 @@ export function GeneralInfo({
 
         <div>
           <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-4">
-            Post Droplets
+          Similar Droplets
           </h2>
           <Selection
             variant="postrequisite"

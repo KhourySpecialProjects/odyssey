@@ -135,12 +135,10 @@ export default async function Droplet({ params }: Props) {
               focusArea={droplet.focusArea}
               type={droplet.type}
               dropletId={droplet.id}
+              tags={droplet.tags ?? []}
+              selectedTags={droplet.tags ?? []}
+              availableTags={tags}
             />
-            {droplet.tags?.map((tag) => (
-              <Badge key={tag.id} variant="outline">
-                {tag.name}
-              </Badge>
-            ))}
           </div>
           <DropletName
             data-testid="droplet-name"
