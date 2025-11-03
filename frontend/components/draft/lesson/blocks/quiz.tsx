@@ -1,7 +1,7 @@
 import { QuizQuestion } from "@/types";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { GripVertical, PlusIcon, Trash2Icon } from "lucide-react";
+import { PlusIcon, Trash2Icon } from "lucide-react";
 import { QuizQuestionEditor } from "./quiz-question-editor";
 
 interface QuizEditorProps {
@@ -86,46 +86,37 @@ export function QuizEditor({
   };
 
   return (
-    <div className="flex flex-row items-center">
-      <div className="z-10 cursor-grab text-slate-400 hover:text-slate-600 active:cursor-grabbing">
-        <GripVertical size={20} />
+    <div className="w-full max-w-2xl pb-4">
+      <div className="mb-4 flex w-full flex-row items-center justify-between p-4">
+        <h2 className="text-lg">
+          {questions[0].answerOptions[0].content === "True"
+            ? "True/False Quiz"
+            : "Multiple Choice Quiz"}
+        </h2>
+        <Trash2Icon
+          className="cursor-pointer text-red-600 hover:text-red-700"
+          onClick={deleteBlock}
+          data-testid="delete-block"
+        />
       </div>
-      <div className="w-full max-w-2xl pb-4">
-        <div className="mb-4 flex w-full flex-row items-center justify-between p-4">
-          <h2 className="text-lg">
-            {questions[0].answerOptions[0].content === "True"
-              ? "True/False Quiz"
-              : "Multiple Choice Quiz"}
-          </h2>
-          <Trash2Icon
-            className="cursor-pointer text-red-600 hover:text-red-700"
-            onClick={deleteBlock}
-            data-testid="delete-block"
+
+      <div className="space-y-6">
+        {questions.map((question, index) => (
+          <QuizQuestionEditor
+            key={question.id}
+            question={question}
+            onUpdate={(updatedQuestion) =>
+              updateQuestion(index, updatedQuestion)
+            }
+            onDelete={() => removeQuestion(index)}
           />
-        </div>
-
-        <div className="space-y-6">
-          {questions.map((question, index) => (
-            <QuizQuestionEditor
-              key={question.id}
-              question={question}
-              onUpdate={(updatedQuestion) =>
-                updateQuestion(index, updatedQuestion)
-              }
-              onDelete={() => removeQuestion(index)}
-            />
-          ))}
-        </div>
-
-        <Button
-          onClick={() => addQuestion()}
-          variant="outline"
-          className="mt-4"
-        >
-          <PlusIcon className="mr-2 h-4 w-4" />
-          Add Question
-        </Button>
+        ))}
       </div>
+
+      <Button onClick={() => addQuestion()} variant="outline" className="mt-4">
+        <PlusIcon className="mr-2 h-4 w-4" />
+        Add Question
+      </Button>
     </div>
   );
 }

@@ -69,16 +69,6 @@ jest.mock("@/components/draft/lesson/delete-lesson", () => ({
   ),
 }));
 
-jest.mock("react-dnd", () => ({
-  DndProvider: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
-  ),
-}));
-
-jest.mock("react-dnd-html5-backend", () => ({
-  HTML5Backend: "HTML5Backend",
-}));
-
 jest.mock("@/lib/requests/lesson", () => ({
   updateLesson: jest.fn(),
   deleteLesson: jest.fn(),

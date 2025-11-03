@@ -1,22 +1,21 @@
 "use client";
-
 import { useCallback } from "react";
 import { Block } from "./add-block";
 import { AddBlock } from "./add-block";
-import DraggableBlockTile from "./draggable_block_tile";
+import BlockTile from "./draggable_block_tile";
 
-export function DraggableBlockListClient({
+export function BlockListClient({
   blocks,
-  moveCard,
   onAddBlock,
   setBlock,
   deleteBlock,
+  onMoveBlock,
 }: {
   blocks: Block[];
-  moveCard: (dragIndex: number, hoverIndex: number) => void;
   onAddBlock: (index: number, block: Block) => void;
   setBlock: (index: number) => (block: any) => void;
   deleteBlock: (index: number) => () => void;
+  onMoveBlock: (fromIndex: number, toIndex: number) => void;
 }) {
   const addBlock = useCallback(
     (index: number) => {
@@ -25,6 +24,22 @@ export function DraggableBlockListClient({
       };
     },
     [onAddBlock],
+  );
+
+  const moveBlockUp = useCallback(
+    (index: number) => {
+      if (index === 0) return;
+      onMoveBlock(index, index - 1);
+    },
+    [onMoveBlock],
+  );
+
+  const moveBlockDown = useCallback(
+    (index: number) => {
+      if (index === blocks.length - 1) return;
+      onMoveBlock(index, index + 1);
+    },
+    [onMoveBlock, blocks.length],
   );
 
   return (
@@ -36,10 +51,12 @@ export function DraggableBlockListClient({
             className="flex w-full flex-col items-center justify-center"
           >
             <AddBlock add={addBlock(index)} />
-            <DraggableBlockTile
+            <BlockTile
               block={block}
               index={index}
-              moveCard={moveCard}
+              totalBlocks={blocks.length}
+              moveBlockUp={moveBlockUp}
+              moveBlockDown={moveBlockDown}
               setBlock={setBlock}
               deleteBlock={deleteBlock}
             />

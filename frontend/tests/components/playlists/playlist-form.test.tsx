@@ -51,16 +51,6 @@ jest.mock("next/navigation", () => ({
   useSearchParams: jest.fn(),
 }));
 
-jest.mock("react-dnd", () => ({
-  useDrag: () => [{ isDragging: false }, jest.fn()],
-  useDrop: () => [{}, jest.fn()],
-  DndProvider: ({ children }: { children: React.ReactNode }) => children,
-}));
-
-jest.mock("react-dnd-html5-backend", () => ({
-  HTML5Backend: {},
-}));
-
 describe("PlaylistForm", () => {
   const mockRouter = {
     push: jest.fn(),

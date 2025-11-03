@@ -10,9 +10,7 @@ import { DeleteLessonButton } from "./delete-lesson";
 import { useMemo } from "react";
 import { LessonNameInput } from "@/components/ui/tiptap/lesson-name-input";
 import { QuizQuestion } from "@/types";
-import DraggableBlockList from "./draggable_block_list";
-import { DndProvider } from "react-dnd";
-import { HTML5Backend } from "react-dnd-html5-backend";
+import BlockList from "./draggable_block_list";
 import { getDropletBySlug } from "@/lib/requests/droplet";
 import { Block } from "./add-block";
 import { toast } from "sonner";
@@ -179,29 +177,14 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
     [blocks, updateBlocksBackendReload],
   );
 
-  useEffect(() => {
-    debounceUpdate(blocks);
-    return () => {
-      debounceUpdate.cancel();
-    };
-  }, [blocks, debounceUpdate]);
-
-  useEffect(() => {
-    setBlocks(lesson.blocks);
-    setLastSavedBlocks(lesson.blocks);
-  }, [lesson]);
-
-  useEffect(() => {
-    lastSavedBlocksRef.current = lastSavedBlocks;
-  }, [lastSavedBlocks]);
-
   const handleReorderSource = (fromIndex: number, toIndex: number) => {
-    setBlocks((current) => {
-      const newItems = [...current];
-      const [removed] = newItems.splice(fromIndex, 1);
-      newItems.splice(toIndex, 0, removed);
-      return newItems;
-    });
+    const newItems = [...blocks];
+    const [removed] = newItems.splice(fromIndex, 1);
+    newItems.splice(toIndex, 0, removed);
+
+    setBlocks(newItems);
+    // Force immediate save with reload to persist the order
+    updateBlocksBackendReload(newItems);
   };
 
   const [isPopupOpen, setIsPopupOpen] = useState(false);
@@ -262,17 +245,15 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
       </div>
 
       <div className="flex w-full flex-col items-center justify-center space-y-4">
-        <DndProvider backend={HTML5Backend}>
-          <div className="w-full max-w-2xl">
-            <DraggableBlockList
-              blocks={blocks}
-              onReorder={handleReorderSource}
-              onAddBlock={handleAddBlock}
-              setBlock={setBlock}
-              deleteBlock={deleteBlock}
-            />
-          </div>
-        </DndProvider>
+        <div className="w-full max-w-2xl">
+          <BlockList
+            blocks={blocks}
+            onReorder={handleReorderSource}
+            onAddBlock={handleAddBlock}
+            setBlock={setBlock}
+            deleteBlock={deleteBlock}
+          />
+        </div>
       </div>
     </>
   );
