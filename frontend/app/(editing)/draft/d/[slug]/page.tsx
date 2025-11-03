@@ -22,6 +22,7 @@ import { FunFactEditor } from "@/components/draft/metadata/fun-fact-editor";
 import { ClickableBadges } from "@/components/draft/metadata/clickable-badges";
 import { toast } from "sonner";
 import { revalidatePath } from "next/cache";
+import { GeneralInfo } from "@/components/draft/metadata/general-info";
 
 type Props = {
   params: Promise<Params>;
@@ -204,35 +205,14 @@ export default async function Droplet({ params }: Props) {
             nextSteps={droplet.nextSteps ?? []}
           />
 
-          <section>
-            <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
-              General Info
-            </h1>
-            <p className="mb-8 text-slate-500 dark:text-slate-300">
-              Information that users will see when they view the droplet{" "}
-            </p>
-            <div className="flex w-full flex-col space-y-4">
-              
-              <Selection
-                variant="tag"
-                dropletId={droplet.id}
-                items={tags}
-                selectedItems={droplet.tags ?? []}
-              />
-              <Selection
-                variant="prerequisite"
-                dropletId={droplet.id}
-                items={droplets}
-                selectedItems={droplet.prerequisites ?? []}
-              />
-              <Selection
-                variant="postrequisite"
-                dropletId={droplet.id}
-                items={droplets}
-                selectedItems={droplet.postrequisites ?? []}
-              />
-            </div>
-          </section>
+          <GeneralInfo
+            dropletId={droplet.id}
+            tags={tags}
+            selectedTags={droplet.tags ?? []}
+            droplets={droplets}
+            prerequisites={droplet.prerequisites ?? []}
+            postrequisites={droplet.postrequisites ?? []}
+          />
         </div>
       </GradientBackground>
     </>
