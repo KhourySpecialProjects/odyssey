@@ -5,7 +5,13 @@ import { useDropzone } from "react-dropzone";
 import { Button } from "@/components/ui/button";
 import { uploadImage } from "@/lib/actions";
 import { AuthorizedUser } from "@/types";
-import { Pencil, User2Icon, Activity, Play } from "lucide-react";
+import {
+  Pencil,
+  User2Icon,
+  Activity,
+  ChevronDown,
+  ChevronUp,
+} from "lucide-react";
 import { useFormStatus } from "react-dom";
 import { isAuthorizedUserAdmin } from "@/lib/utils";
 import {
@@ -231,7 +237,7 @@ export function AuthorizedUserBlock({
             aria-label="view activity"
           >
             <div className="group relative">
-              <Play className="h-4 w-4 text-sky-600" />
+              <Activity className="h-5 w-5 text-sky-600" />
               <span className="absolute top-full left-1/2 mt-1 w-max -translate-x-1/2 transform rounded bg-gray-800 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100">
                 View Activity
               </span>
@@ -247,7 +253,7 @@ export function AuthorizedUserBlock({
                 aria-label="edit user"
               >
                 <div className="group relative">
-                  <Pencil className="text-sky-600" />
+                  <Pencil className="h-5 w-5 text-sky-600" />
                   <span className="absolute top-full left-1/2 mt-1 w-max -translate-x-1/2 transform rounded bg-gray-800 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100">
                     Edit User
                   </span>
