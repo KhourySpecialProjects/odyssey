@@ -185,7 +185,7 @@ export function Sidebar({
                 onClick={() =>
                   droplet.status !== "draft"
                     ? setIsOpen(true)
-                    : router.push(`/drafts`)
+                    : router.push(`/my-content`)
                 }
                 className={cn(
                   "flex items-center justify-start gap-2 bg-slate-50 text-base text-black hover:bg-slate-100 dark:bg-slate-800 dark:text-white dark:hover:bg-slate-700",
