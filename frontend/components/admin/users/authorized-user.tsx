@@ -5,13 +5,7 @@ import { useDropzone } from "react-dropzone";
 import { Button } from "@/components/ui/button";
 import { uploadImage } from "@/lib/actions";
 import { AuthorizedUser } from "@/types";
-import {
-  Pencil,
-  User2Icon,
-  Activity,
-  ChevronDown,
-  ChevronUp,
-} from "lucide-react";
+import { Pencil, User2Icon, Activity, Play } from "lucide-react";
 import { useFormStatus } from "react-dom";
 import { isAuthorizedUserAdmin } from "@/lib/utils";
 import {
@@ -200,10 +194,7 @@ export function AuthorizedUserBlock({
   return (
     <li className="py-0 pb-3 md:pb-0 [&:not(:first-child)]:pt-0">
       <div className="flex items-center space-x-4">
-        <div
-          className="min-w-0 flex-1 cursor-pointer rounded-lg p-2 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800"
-          onClick={handleViewActivity}
-        >
+        <div className="min-w-0 flex-1">
           <div className="flex items-center space-x-3">
             <Avatar variant="round" size="sm">
               <AvatarImage src={user.profilePhoto || undefined} />
@@ -231,6 +222,22 @@ export function AuthorizedUserBlock({
         </div>
 
         <div className="inline-flex items-center gap-2">
+          {/* Activity Button */}
+          <Button
+            size="sm"
+            onClick={handleViewActivity}
+            className="bg-white dark:bg-slate-300"
+            role="button"
+            aria-label="view activity"
+          >
+            <div className="group relative">
+              <Play className="h-4 w-4 text-sky-600" />
+              <span className="absolute top-full left-1/2 mt-1 w-max -translate-x-1/2 transform rounded bg-gray-800 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100">
+                View Activity
+              </span>
+            </div>
+          </Button>
+
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
               <Button

@@ -44,9 +44,7 @@ describe("AuthorizedUsers", () => {
 
     expect(screen.getByText("Authorized Users")).toBeInTheDocument();
     expect(
-      screen.getByText(
-        "The following users have access to this application. Click a name to see their activity logs.",
-      ),
+      screen.getByText("The following users have access to this application."),
     ).toBeInTheDocument();
   });
 
