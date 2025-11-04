@@ -20,6 +20,7 @@ import {
   MoveRightIcon,
   MoveLeftIcon,
   User2Icon,
+  ExternalLink,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
@@ -29,9 +30,12 @@ import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { getInitials } from "@/lib/utils";
 import { RadioSelect } from "./radio-select";
 import { createDroplet } from "@/lib/requests/droplet";
+import { getDroplets } from "@/lib/requests/droplet";
+import Link from "next/link";
 
 type SubmissionState = {
   error: string | null;
+  existingDropletName?: string;
 };
 
 const initialSubmissionState: SubmissionState = {
@@ -58,10 +62,14 @@ export function CreateDropletForm({
   const [submissionState, setSubmissionState] = useState(
     initialSubmissionState,
   );
+  const [existingDropletSlug, setExistingDropletSlug] = useState<string | null>(
+    null,
+  );
 
   //resets error message when changes made to fields
   useEffect(() => {
     setSubmissionState(initialSubmissionState);
+    setExistingDropletSlug(null);
   }, [
     dropletName,
     focusAreaValue,
@@ -97,10 +105,33 @@ export function CreateDropletForm({
 
     const response = await createDroplet(data);
 
-    if (!response.error && response.data) {
+    if (response.ok && response.data) {
       router.push("/draft/d/" + response.data.attributes.slug);
     } else {
-      setSubmissionState({ error: response.error });
+      // Check if it's a duplicate name error
+      if (response.error?.includes("This attribute must be unique (name)")) {
+        // Fetch the existing droplet to get its slug
+        try {
+          const existingDroplets = await getDroplets({
+            filters: { name: dropletName as string },
+            fields: ["name", "slug"],
+            pagination: { pageSize: 1, page: 1 },
+          });
+
+          if (existingDroplets && existingDroplets.length > 0) {
+            setExistingDropletSlug(existingDroplets[0].slug);
+          }
+        } catch (fetchError) {
+          console.error("Failed to fetch existing droplet:", fetchError);
+        }
+
+        setSubmissionState({
+          error: "A droplet with this name already exists.",
+          existingDropletName: dropletName as string,
+        });
+      } else {
+        setSubmissionState({ error: response.error || "An error occurred" });
+      }
     }
   }
 
@@ -234,9 +265,23 @@ export function CreateDropletForm({
 
         <SubmitButton />
       </div>
-      {submissionState.error ? (
-        <p className="text-red-500">{submissionState.error}</p>
-      ) : null}
+
+      {submissionState.error && (
+        <div className="w-full rounded-md border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-950">
+          <p className="text-sm font-medium text-red-800 dark:text-red-200">
+            {submissionState.error}
+          </p>
+          {existingDropletSlug && (
+            <Link
+              href={`/draft/d/${existingDropletSlug}`}
+              className="mt-2 inline-flex items-center gap-1 text-sm text-red-700 hover:text-red-900 dark:text-red-300 dark:hover:text-red-100"
+            >
+              View existing droplet "{submissionState.existingDropletName}"
+              <ExternalLink className="h-3 w-3" />
+            </Link>
+          )}
+        </div>
+      )}
     </form>
   );
 }
