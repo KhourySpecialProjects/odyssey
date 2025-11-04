@@ -48,11 +48,11 @@ export function DraggableBlockListClient({
           key={`${block.__component}-${index}-${blocks.length}`}
           className="flex w-full flex-col items-center justify-center"
         >
-          <AddLessonBlock
+          {/* <AddLessonBlock
             onAddBlock={(blockType, calloutType) =>
               onAddBlock(index, createBlock(blockType, calloutType))
             }
-          />
+          /> */}
           <DraggableBlockTile
             block={block}
             index={index}
@@ -60,11 +60,11 @@ export function DraggableBlockListClient({
             setBlock={setBlock}
             deleteBlock={deleteBlock}
           />
-          <AddLessonBlock
+          {/* <AddLessonBlock
             onAddBlock={(blockType, calloutType) =>
               onAddBlock(index, createBlock(blockType, calloutType))
             }
-          />
+          /> */}
         </div>
       ))}
     </div>

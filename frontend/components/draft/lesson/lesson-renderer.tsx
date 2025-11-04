@@ -364,6 +364,7 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
         </div>
       </div>
 
+      <AddLessonBlock onAddBlock={handleAddTool} />
       <div className="flex w-full flex-col items-center justify-center space-y-4">
         <DndProvider backend={HTML5Backend}>
           <div className="w-full max-w-2xl">
@@ -377,9 +378,6 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
           </div>
         </DndProvider>
       </div>
-
-      {/* Add the floating action button */}
-      <AddLessonBlock onAddBlock={handleAddTool} />
     </>
   );
 }
