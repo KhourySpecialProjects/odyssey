@@ -153,8 +153,8 @@ export type Lesson = {
   type?: "general" | "setup" | "activity" | "caseStudy";
   blocks: any[];
   droplets: Droplet[];
-  droplet_lessons: DropletLesson[];
   notes: Note[];
+  orderIndex: number;
 };
 
 export type Tag = {
@@ -175,12 +175,6 @@ export type Resource = {
   url: string;
 };
 
-interface DropletLesson {
-  id: number;
-  orderIndex: number;
-  lesson: Lesson;
-}
-
 export type Droplet = {
   id: number;
   slug: string;
@@ -197,7 +191,6 @@ export type Droplet = {
   postrequisites?: Droplet[];
   isHidden: boolean;
   status: DropletStatus;
-  droplet_lessons: DropletLesson[];
   authorized_users?: AuthorizedUser[];
   isArchived?: boolean;
   inReview?: boolean;

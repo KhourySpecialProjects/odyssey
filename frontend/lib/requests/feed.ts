@@ -244,7 +244,6 @@ export async function createKudosAnnouncement(
     console.error("Error updating kudos:", error);
     throw error;
   }
-  console.log("Droplet in createKudosAnnouncement:", droplet.id);
   try {
     const curDate = new Date();
     const response = await fetch(

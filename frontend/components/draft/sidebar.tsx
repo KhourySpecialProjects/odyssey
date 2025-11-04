@@ -54,15 +54,11 @@ export function Sidebar({
   authorizedUser,
 }: {
   user: User;
-  droplet: Pick<Droplet, "id" | "name" | "slug" | "droplet_lessons" | "status">;
+  droplet: Pick<Droplet, "id" | "name" | "slug" | "lessons" | "status">;
   authorizedUser: AuthorizedUser | null;
 }) {
   const [expanded, setExpanded] = useState(false);
   const pathname = usePathname();
-
-  const lessons = droplet.droplet_lessons
-    .sort((a, b) => a.orderIndex - b.orderIndex)
-    .map((dl) => dl.lesson);
 
   const {
     dropletLessons,
@@ -72,6 +68,9 @@ export function Sidebar({
   } = useLessonOrder(droplet);
 
   const [isOpen, setIsOpen] = useState(false);
+  const lessons = (dropletLessons || [])
+    .slice()
+    .sort((a, b) => a.orderIndex - b.orderIndex);
 
   useLayoutEffect(() => {
     window.addEventListener("resize", () => setExpanded(false));
@@ -107,25 +106,14 @@ export function Sidebar({
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
-
     if (active.id !== over?.id) {
       const oldIndex = lessons.findIndex((item) => item.id === active.id);
       const newIndex = lessons.findIndex((item) => item.id === over?.id);
-      const newLessons = arrayMove(lessons, oldIndex, newIndex);
-
-      const newDropletLessons = newLessons.map((lesson, index) => ({
-        id: dropletLessons.find((dl) => dl.lesson.id === lesson.id)?.id,
-        lesson,
-        orderIndex: index,
+      const newLessons = arrayMove(lessons, oldIndex, newIndex).map((l, i) => ({
+        ...l,
+        orderIndex: i,
       }));
-
-      handleLessonReorder(
-        newDropletLessons.map((dl) => ({
-          id: dl.id ?? 0,
-          lesson: dl.lesson,
-          orderIndex: dl.orderIndex,
-        })),
-      );
+      handleLessonReorder(newLessons);
     }
   };
 
@@ -133,8 +121,7 @@ export function Sidebar({
     updateDropletLessons([
       ...dropletLessons,
       {
-        id: 0,
-        lesson: newLesson,
+        ...newLesson,
         orderIndex: dropletLessons.length,
       },
     ]);

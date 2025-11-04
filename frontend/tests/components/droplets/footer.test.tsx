@@ -17,10 +17,10 @@ jest.mock("@/lib/requests/enrollment", () => ({
 describe("DropletFooter", () => {
   const mockDroplet = {
     slug: "test-droplet",
-    droplet_lessons: [
-      { lesson: { id: 1, slug: "lesson-1", name: "Lesson 1" } },
-      { lesson: { id: 2, slug: "lesson-2", name: "Lesson 2" } },
-      { lesson: { id: 3, slug: "lesson-3", name: "Lesson 3" } },
+    lessons: [
+      { id: 1, slug: "lesson-1", name: "Lesson 1" },
+      { id: 2, slug: "lesson-2", name: "Lesson 2" },
+      { id: 3, slug: "lesson-3", name: "Lesson 3" },
     ],
   };
 
@@ -35,7 +35,7 @@ describe("DropletFooter", () => {
 
   describe("Returns Null Cases", () => {
     it("returns null when no droplet lessons", () => {
-      const noLessonsDroplet = { slug: "test", droplet_lessons: [] };
+      const noLessonsDroplet = { slug: "test" };
       (usePathname as jest.Mock).mockReturnValue("/d/test");
 
       const { container } = render(
@@ -45,10 +45,10 @@ describe("DropletFooter", () => {
       expect(container.firstChild).toBeNull();
     });
 
-    it("returns null when droplet_lessons is undefined", () => {
+    it("returns null when lessons is undefined", () => {
       const undefinedLessonsDroplet = {
         slug: "test",
-        droplet_lessons: undefined,
+        lessons: undefined,
       };
       (usePathname as jest.Mock).mockReturnValue("/d/test");
 
@@ -284,9 +284,7 @@ describe("DropletFooter", () => {
     it("handles droplet with single lesson", () => {
       const singleLessonDroplet = {
         slug: "test",
-        droplet_lessons: [
-          { lesson: { id: 1, slug: "only-lesson", name: "Only Lesson" } },
-        ],
+        lessons: [{ id: 1, slug: "only-lesson", name: "Only Lesson" }],
       };
 
       (usePathname as jest.Mock).mockReturnValue("/d/test/only-lesson");
@@ -360,9 +358,7 @@ describe("DropletFooter", () => {
     it("handles lessons with very long names", () => {
       const longNameDroplet = {
         slug: "test",
-        droplet_lessons: [
-          { lesson: { id: 1, slug: "lesson", name: "A".repeat(100) } },
-        ],
+        lessons: [{ id: 1, slug: "lesson", name: "A".repeat(100) }],
       };
 
       (usePathname as jest.Mock).mockReturnValue("/d/test");
@@ -375,9 +371,7 @@ describe("DropletFooter", () => {
     it("handles droplet with special characters in lesson names", () => {
       const specialDroplet = {
         slug: "test",
-        droplet_lessons: [
-          { lesson: { id: 1, slug: "lesson-1", name: "Lesson & <Special>" } },
-        ],
+        lessons: [{ id: 1, slug: "lesson-1", name: "Lesson & <Special>" }],
       };
 
       (usePathname as jest.Mock).mockReturnValue("/d/test");

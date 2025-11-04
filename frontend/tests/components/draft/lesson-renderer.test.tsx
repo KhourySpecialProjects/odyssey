@@ -123,9 +123,9 @@ describe("LessonRenderer", () => {
     id: 1,
     name: "Test Lesson",
     slug: "test-lesson",
-    droplet_lessons: [],
     droplets: [],
     notes: [],
+    orderIndex: 1,
     blocks: [
       {
         id: 1,
@@ -512,7 +512,7 @@ describe("LessonRenderer", () => {
       });
 
       await waitFor(() => {
-        expect(deleteLesson).toHaveBeenCalledWith(1, true, 5);
+        expect(deleteLesson).toHaveBeenCalledWith(1, true);
       });
 
       await waitFor(() => {

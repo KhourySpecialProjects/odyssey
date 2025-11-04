@@ -66,7 +66,6 @@ describe("NotesManager", () => {
     tags: [{ id: 1, name: "React" }] as Tag[],
     learningObjectives: [],
     status: "published" as DropletStatus,
-    droplet_lessons: [],
   };
 
   const mockEnrollment = {
