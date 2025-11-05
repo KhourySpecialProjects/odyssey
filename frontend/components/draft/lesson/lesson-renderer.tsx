@@ -14,10 +14,11 @@ import DraggableBlockList from "./draggable_block_list";
 import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import { getDropletBySlug } from "@/lib/requests/droplet";
-import { Block } from "./add-block";
+
+import { Block } from "@/types";
 import { toast } from "sonner";
 import { deleteLesson, updateLesson } from "@/lib/requests/lesson";
-import { BlockToolbar } from "./block-toolbar";
+import AddLessonBlock from "./add-tools";
 
 export interface BaseBlock {
   __component: string;
@@ -180,6 +181,108 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
     [blocks, updateBlocksBackendReload],
   );
 
+  // Add this new handler for the FAB
+  const handleAddTool = useCallback(
+    (blockType: string, calloutType?: string) => {
+      let newBlock: Block;
+
+      switch (blockType) {
+        case "Text":
+          newBlock = {
+            __component: "droplets.generic",
+            content: "",
+          };
+          break;
+        case "Expandable":
+          newBlock = {
+            __component: "droplets.expandable",
+            title: "",
+            content: "",
+          };
+          break;
+        case "Callout Block": {
+          // Map callout type names to colors
+          const calloutColorMap: Record<string, string> = {
+            Warning: "bg-red-300",
+            Question: "bg-blue-300",
+            Important: "bg-orange-300",
+            Definition: "bg-green-300",
+            Information: "bg-purple-300",
+            Caution: "bg-amber-300",
+            Default: "bg-sky-50 dark:bg-sky-200",
+          };
+          newBlock = {
+            __component: "droplets.callout",
+            content: [
+              {
+                type: "paragraph",
+                children: [{ type: "text", text: "" }],
+              },
+            ],
+            color:
+              calloutColorMap[calloutType || "Default"] ||
+              "bg-sky-50 dark:bg-sky-200",
+            type: "info",
+          };
+          break;
+        }
+        case "Video":
+          newBlock = {
+            __component: "droplets.video",
+            url: "",
+          };
+          break;
+        case "Multiple Choice Quiz":
+          newBlock = {
+            __component: "droplets.quiz",
+            questions: [
+              {
+                id: Math.random(),
+                content: "",
+                answerOptions: [],
+              },
+            ],
+          };
+          break;
+        case "Open Ended Quiz":
+          newBlock = {
+            __component: "droplets.open-ended-quiz",
+            questions: [
+              {
+                id: Math.random(),
+                content: "",
+                correctAnswer: "",
+              },
+            ],
+          };
+          break;
+        case "True/False Quiz":
+          newBlock = {
+            __component: "droplets.quiz",
+            questions: [
+              {
+                id: Math.random(),
+                content: "",
+                answerOptions: [
+                  { id: Math.random(), content: "True", isCorrect: true },
+                  { id: Math.random(), content: "False", isCorrect: false },
+                ],
+              },
+            ],
+          };
+          break;
+        default:
+          return;
+      }
+
+      // Add the block at the end of the list
+      const updatedBlocks = [...blocks, newBlock];
+      setBlocks(updatedBlocks);
+      updateBlocksBackendReload(updatedBlocks);
+    },
+    [blocks, updateBlocksBackendReload],
+  );
+
   useEffect(() => {
     debounceUpdate(blocks);
     return () => {
@@ -262,8 +365,8 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
         </div>
       </div>
 
-      <div className="mb-5 flex w-full flex-col items-center justify-start space-y-4">
-        {" "}
+      <AddLessonBlock onAddBlock={handleAddTool} />
+      <div className="flex w-full flex-col items-center justify-center space-y-4">
         <DndProvider backend={HTML5Backend}>
           <>
             <div className="w-full max-w-5xl">

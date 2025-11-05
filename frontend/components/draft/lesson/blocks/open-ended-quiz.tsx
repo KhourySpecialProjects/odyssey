@@ -4,7 +4,7 @@ import { OpenEndedQuizQuestion } from "@/types";
 import { TrashIcon, PlusIcon, GripVertical, Trash2Icon } from "lucide-react";
 import { GenericBlockInput as TipTapEditor } from "@/components/ui/tiptap/generic-block-input";
 import { useState } from "react";
-import { Block } from "../add-block";
+import { Block } from "@/types";
 
 interface OpenEndedQuizBlock extends Omit<Block, "questions"> {
   questions: OpenEndedQuizQuestion[];
@@ -70,7 +70,7 @@ export function OpenEndedQuizEditor({
   };
 
   return (
-    <div className="flex flex-row items-center">
+    <div className="mb-4 flex flex-row items-center">
       <div className="z-10 cursor-grab text-slate-400 hover:text-slate-600 active:cursor-grabbing">
         <GripVertical size={20} />
       </div>

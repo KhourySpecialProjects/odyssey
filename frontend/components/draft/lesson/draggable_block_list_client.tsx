@@ -1,13 +1,12 @@
 "use client";
 import { useCallback } from "react";
-import { Block } from "./add-block";
+import { Block } from "@/types";
 import DraggableBlockTile from "./draggable_block_tile";
 import {
   Message,
   MessageDescription,
   MessageHeader,
 } from "@/components/message";
-
 export function DraggableBlockListClient({
   blocks,
   moveCard,
@@ -21,26 +20,18 @@ export function DraggableBlockListClient({
   setBlock: (index: number) => (block: any) => void;
   deleteBlock: (index: number) => () => void;
 }) {
-  const addBlock = useCallback(
-    (index: number) => {
-      return (block: Block) => {
-        onAddBlock(index, block);
-      };
-    },
-    [onAddBlock],
-  );
-
   if (blocks.length === 0) {
     return (
-      <Message className="mb-8 rounded-md border border-dashed border-slate-200 dark:border-slate-500 dark:bg-slate-800">
-        <MessageHeader subtitle="" title="No Blocks" />
-        <MessageDescription>
-          Use the toolbar above to get started!
-        </MessageDescription>
-      </Message>
+      <>
+        <Message className="mb-8 rounded-md dark:border-slate-500 dark:bg-slate-800">
+          <MessageHeader subtitle="" title="No Blocks" />
+          <MessageDescription>
+            Use the add button to get started!
+          </MessageDescription>
+        </Message>
+      </>
     );
   }
-
   return (
     <div className="grid grid-cols-1 space-y-8">
       {blocks.map((block, index) => (
