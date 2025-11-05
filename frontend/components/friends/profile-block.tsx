@@ -12,13 +12,7 @@ import {
   DialogTitle,
 } from "../ui/dialog";
 import { Button } from "../ui/button";
-import {
-  Github,
-  Linkedin,
-  User2Icon,
-  UserRound,
-  ExternalLink,
-} from "lucide-react";
+import { Github, Linkedin, User2Icon, ExternalLink } from "lucide-react";
 import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { getInitials } from "@/lib/utils";
@@ -29,15 +23,11 @@ export function ProfileBlock({
   otherUser,
   isOpen,
   setIsOpen,
-  isFeed,
-  isProfile,
 }: {
   user: AuthorizedUser;
   otherUser: AuthorizedUser;
   isOpen: boolean;
   setIsOpen: (member: boolean) => void;
-  isFeed: boolean;
-  isProfile?: boolean;
 }) {
   const handleBlock = () => {
     startTransition(async () => {

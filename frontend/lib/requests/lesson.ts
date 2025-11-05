@@ -118,45 +118,8 @@ export async function completeLesson(activityId: number, lessonIds: number[]) {
   }
 }
 
-export async function deleteLesson(
-  id: number,
-  revalidate: boolean = true,
-  dropletId?: number,
-) {
+export async function deleteLesson(id: number, revalidate: boolean = true) {
   try {
-    if (dropletId) {
-      const droplet = await getDropletById<Droplet>(dropletId, {
-        populate: {
-          droplet_lessons: {
-            populate: ["lesson"],
-          },
-        },
-      });
-
-      const dropletLesson = droplet.droplet_lessons.find(
-        (dl) => dl.lesson.id === id,
-      );
-
-      if (dropletLesson) {
-        const deleteDropletLessonResponse = await fetch(
-          NEXT_PUBLIC_STRAPI_API_URL +
-            "/api/droplet-lessons/" +
-            dropletLesson.id,
-          {
-            method: "DELETE",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
-            },
-          },
-        );
-
-        if (!deleteDropletLessonResponse.ok) {
-          console.error("Failed to delete droplet_lesson");
-        }
-      }
-    }
-
     const response = await fetch(
       NEXT_PUBLIC_STRAPI_API_URL + "/api/lessons/" + id,
       {
@@ -198,6 +161,7 @@ export async function updateLesson(
       ...(data.name && { name: data.name }),
       ...(data.slug && { slug: data.slug }),
       ...(data.blocks && { blocks: data.blocks }),
+      ...(data.orderIndex !== undefined && { orderIndex: data.orderIndex }),
     };
     dataToSend.regenerateSlug = options.regenerateSlug;
 
@@ -258,6 +222,7 @@ export async function addLesson(formData: z.infer<typeof CreateLessonSchema>) {
       droplets: {
         connect: [formData.dropletId],
       },
+      orderIndex: formData.orderIndex,
     };
 
     const lessonResponse = await fetch(
@@ -276,34 +241,6 @@ export async function addLesson(formData: z.infer<typeof CreateLessonSchema>) {
 
     if (!lessonResponse.ok || lessonResult.error) {
       return { ok: false, error: lessonResult.error?.message, data: null };
-    }
-
-    const dropletLessonData = {
-      droplet: formData.dropletId,
-      lesson: lessonResult.data.id,
-      orderIndex: formData.orderIndex,
-    };
-
-    const dropletLessonResponse = await fetch(
-      NEXT_PUBLIC_STRAPI_API_URL + "/api/droplet-lessons",
-      {
-        method: "POST",
-        body: JSON.stringify({ data: dropletLessonData }),
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
-        },
-      },
-    );
-
-    const dropletLessonResult = await dropletLessonResponse.json();
-
-    if (!dropletLessonResponse.ok || dropletLessonResult.error) {
-      return {
-        ok: false,
-        error: dropletLessonResult.error?.message,
-        data: null,
-      };
     }
 
     revalidateTag("droplets");

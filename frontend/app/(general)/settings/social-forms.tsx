@@ -397,8 +397,6 @@ export function SocialForms({
           otherUser={authorizedUser}
           isOpen={open}
           setIsOpen={setOpen}
-          isFeed={false}
-          isProfile={true}
         />
       </div>
     </>

@@ -66,8 +66,7 @@ export async function getDropletBySlug<T extends Partial<Droplet> = Droplet>(
     filters: { ...filters, slug },
     populate: {
       ...(typeof populate === "object" ? populate : { populate: "*" }),
-      droplet_lessons: {
-        populate: ["lesson"],
+      lessons: {
         sort: ["orderIndex:asc"],
       },
     },
@@ -298,37 +297,6 @@ export async function updateDroplet(
 
     dataToSend.regenerateSlug = options.regenerateSlug;
 
-    // Handle updating droplet_lessons collection updates separately if they exist
-    if (data.droplet_lessons) {
-      const dropletLessonsResponse = await Promise.all(
-        data.droplet_lessons.map(async (dl) => {
-          const response = await fetch(
-            STRAPI_API_URL + "/api/droplet-lessons/" + dl.id,
-            {
-              method: "PUT",
-              body: JSON.stringify({
-                data: {
-                  orderIndex: dl.orderIndex,
-                },
-              }),
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
-              },
-            },
-          );
-          return response.ok;
-        }),
-      );
-
-      if (!dropletLessonsResponse.every(Boolean)) {
-        return {
-          ok: false,
-          error: "Failed to update droplet lessons order",
-          data: null,
-        };
-      }
-    }
     const response = await fetch(STRAPI_API_URL + "/api/droplets/" + id, {
       method: "PUT",
       body: JSON.stringify({ data: dataToSend }),

@@ -146,7 +146,6 @@ describe("Highlights Tests", () => {
             id: 201,
             name: "Introduction",
             slug: "intro",
-            droplet_lessons: [{ id: 301 }],
           },
         },
         {
@@ -157,7 +156,6 @@ describe("Highlights Tests", () => {
             id: 202,
             name: "Advanced Topics",
             slug: "advanced",
-            droplet_lessons: [{ id: 302 }],
           },
         },
       ];
@@ -186,11 +184,6 @@ describe("Highlights Tests", () => {
           populate: {
             lesson: {
               fields: ["id", "name", "slug"],
-              populate: {
-                droplet_lessons: {
-                  fields: ["id"],
-                },
-              },
             },
           },
           fields: ["text", "color", "yLevel"],

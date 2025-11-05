@@ -42,9 +42,9 @@ describe("NotesBar", () => {
     name: "Test Lesson",
     slug: "test-lesson",
     droplets: [],
-    droplet_lessons: [],
     notes: [],
     blocks: [],
+    orderIndex: 1,
   };
 
   const mockDroplet = {
@@ -57,7 +57,6 @@ describe("NotesBar", () => {
     tags: [{ id: 1, name: "React" }] as Tag[],
     learningObjectives: [],
     status: "published" as DropletStatus,
-    droplet_lessons: [],
   };
 
   const mockEnrollment = {

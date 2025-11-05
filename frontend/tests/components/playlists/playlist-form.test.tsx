@@ -83,11 +83,6 @@ describe("PlaylistForm", () => {
     tags: [{ id: 1, name: "React", droplets: [], slug: "react" }] as Tag[],
     learningObjectives: [],
     status: "published" as DropletStatus,
-    droplet_lessons: [],
-    lessons: [
-      { id: 1, name: "Lesson 1" },
-      { id: 2, name: "Lesson 2" },
-    ],
   });
 
   const mockDroplets = Array.from({ length: 15 }, (_, i) =>
