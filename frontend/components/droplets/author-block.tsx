@@ -27,12 +27,29 @@ export function AuthorCard({ inDraft, onRemove, author }: AuthorCardProps) {
     onRemove?.();
   };
 
-  return (
+   return (
     <li
-      onClick={handleClick}
-      className="inline-flex cursor-pointer gap-4 p-4 transition-colors hover:bg-slate-100 dark:hover:bg-slate-700"
+      onClick={inDraft ? undefined : handleClick}
+      // Added flex with items-center to align all three parts
+      className={`flex items-center gap-4 p-4 transition-colors ${
+        inDraft 
+          ? "cursor-default" 
+          : "cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700"
+      }`}
     >
-      <Avatar variant="round" className="border border-sky-800">
+      {inDraft && onRemove && (
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={handleRemove}
+          className="h-8 w-8 shrink-0 text-slate-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950 dark:hover:text-red-400"
+          aria-label="Remove author"
+        >
+          <X className="h-4 w-4" />
+        </Button>
+      )}
+
+      <Avatar variant="round" className="border border-sky-800 shrink-0">
         <AvatarImage src={author?.profilePhoto || undefined} />
         <AvatarFallback>
           {author?.firstName && author?.lastName ? (
@@ -43,28 +60,17 @@ export function AuthorCard({ inDraft, onRemove, author }: AuthorCardProps) {
         </AvatarFallback>
       </Avatar>
 
-      <div className={!author.bio ? "flex flex-row items-center" : ""}>
+      <div className="flex flex-col gap-1 flex-1 min-w-0">
         <span className="leading-relaxed font-bold">
           {author.firstName + " " + author.lastName}
         </span>
 
-        {author.bio ? (
+        {author.bio && (
           <p className="text-sm text-slate-600 dark:text-slate-300">
             {author.bio}
           </p>
-        ) : null}
+        )}
       </div>
-      {inDraft && onRemove && (
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={handleRemove}
-          className="h-8 w-8 shrink-0 text-slate-500 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950 dark:hover:text-red-400"
-          aria-label="Remove author"
-        >
-          <X className="h-4 w-4" />
-        </Button>
-      )}
     </li>
   );
 }
