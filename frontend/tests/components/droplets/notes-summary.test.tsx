@@ -15,8 +15,8 @@ describe("NotesSummary", () => {
     slug: "test-lesson",
     blocks: [],
     droplets: [],
-    droplet_lessons: [],
     notes: [],
+    orderIndex: 0,
   };
 
   const mockDroplet = {
@@ -29,13 +29,6 @@ describe("NotesSummary", () => {
     tags: [{ id: 1, name: "React" }] as Tag[],
     learningObjectives: [],
     status: "published" as DropletStatus,
-    droplet_lessons: [
-      {
-        id: 123,
-        orderIndex: 1,
-        lesson: mockLesson,
-      },
-    ],
   };
 
   const mockEnrollment = {
@@ -59,7 +52,6 @@ describe("NotesSummary", () => {
     blockId: 1,
     lesson: {
       ...mockLesson,
-      droplet_lessons: [{ id: 123, orderIndex: 1, lesson: mockLesson }],
     },
   };
 
@@ -68,7 +60,6 @@ describe("NotesSummary", () => {
     content: "Test note content",
     lesson: {
       ...mockLesson,
-      droplet_lessons: [{ id: 123, orderIndex: 1, lesson: mockLesson }],
     },
     enrollment: mockEnrollment,
     positionY: 0,
@@ -76,11 +67,8 @@ describe("NotesSummary", () => {
   };
 
   const mockMappedLesson = {
-    id: 123,
-    lesson: {
-      ...mockLesson,
-      droplet_lessons: [{ id: 123, orderIndex: 1, lesson: mockLesson }],
-    },
+    ...mockLesson,
+    id: 1,
     orderIndex: 1,
   };
 
@@ -422,16 +410,12 @@ describe("NotesSummary", () => {
 
     it("renders multiple lessons with notes", () => {
       const lesson2 = {
-        id: 456,
-        lesson: {
-          id: 2,
-          name: "Second Lesson",
-          slug: "second-lesson",
-          droplets: [],
-          droplet_lessons: [{ id: 456, orderIndex: 2, lesson: mockLesson }],
-          notes: [],
-          blocks: [],
-        },
+        id: 2,
+        name: "Second Lesson",
+        slug: "second-lesson",
+        droplets: [],
+        notes: [],
+        blocks: [],
         orderIndex: 2,
       };
 
@@ -440,8 +424,7 @@ describe("NotesSummary", () => {
         id: 2,
         text: "Highlight in lesson 2",
         lesson: {
-          ...mockLesson,
-          droplet_lessons: [{ id: 456, orderIndex: 2, lesson: mockLesson }],
+          ...lesson2,
         },
       };
 

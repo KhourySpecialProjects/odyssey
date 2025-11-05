@@ -1,30 +1,25 @@
 import { useRef, useEffect } from "react";
 import { useState, useCallback } from "react";
 import { Droplet } from "@/types";
-import { updateDroplet } from "@/lib/requests/droplet";
+import { updateLesson } from "@/lib/requests/lesson";
 
 interface QueueItem {
   dropletLessons: { id: number; orderIndex: number }[];
   timestamp: number;
 }
 
-export function useLessonOrder(
-  droplet: Pick<Droplet, "id" | "droplet_lessons">,
-) {
-  const [dropletLessons, setDropletLessons] = useState(
-    droplet.droplet_lessons || [],
-  );
+export function useLessonOrder(droplet: Pick<Droplet, "id" | "lessons">) {
+  const [dropletLessons, setDropletLessons] = useState(droplet.lessons || []);
   const [isProcessing, setIsProcessing] = useState(false);
   const orderQueue = useRef<QueueItem[]>([]);
   const latestOrderTimestamp = useRef<number>(Date.now());
 
   useEffect(() => {
-    setDropletLessons(droplet.droplet_lessons || []);
-  }, [droplet.droplet_lessons]);
+    setDropletLessons(droplet.lessons || []);
+  }, [droplet.lessons]);
 
   const processQueue = useCallback(async () => {
     if (isProcessing || orderQueue.current.length === 0) return;
-
     setIsProcessing(true);
 
     try {
@@ -32,29 +27,20 @@ export function useLessonOrder(
         return current.timestamp > latest.timestamp ? current : latest;
       });
 
-      const result = await updateDroplet(
-        droplet.id,
-        {
-          droplet_lessons: latestOrder.dropletLessons,
-        },
-        { revalidate: true },
+      await Promise.all(
+        latestOrder.dropletLessons.map(({ id, orderIndex }) =>
+          updateLesson(id, { orderIndex }),
+        ),
       );
-
-      if (!result.ok) {
-        console.error("Error updating lesson order:", result.error);
-        setDropletLessons(droplet.droplet_lessons || []);
-      }
 
       orderQueue.current = orderQueue.current.filter(
         (item) => item.timestamp > latestOrder.timestamp,
       );
     } finally {
       setIsProcessing(false);
-      if (orderQueue.current.length > 0) {
-        processQueue();
-      }
+      if (orderQueue.current.length > 0) processQueue();
     }
-  }, [droplet.id, droplet.droplet_lessons, isProcessing]);
+  }, [droplet.id, droplet.lessons, isProcessing]);
 
   const handleLessonReorder = useCallback(
     (newOrder: typeof dropletLessons) => {

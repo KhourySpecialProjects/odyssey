@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { NoteTypeTitle } from "@/lib/globals";
-import { DropletLesson, Highlight, HighlightColor, Note } from "@/types";
+import { Highlight, HighlightColor, Lesson, Note } from "@/types";
 import { NotesFilter } from "./notes-filter";
 import NotesSummary from "./notes-summary";
 
@@ -14,7 +14,7 @@ export function NotesContainer({
 }: {
   dropletHighlights: Highlight[];
   dropletNotes: Note[];
-  mappedLessons: DropletLesson[];
+  mappedLessons: Lesson[];
   allNotes: {
     dropletId: number;
     notes: Note[];

@@ -14,7 +14,6 @@ describe("GroupDropletTile", () => {
     tags: [{ id: 1, name: "React" }] as Tag[],
     learningObjectives: [],
     status: "published" as DropletStatus,
-    droplet_lessons: [],
   };
 
   it("renders droplet information", () => {

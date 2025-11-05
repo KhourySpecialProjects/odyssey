@@ -77,7 +77,6 @@ export function FriendBlock({
         <ProfileBlock
           otherUser={friend}
           user={user}
-          isFeed={false}
           isOpen={open}
           setIsOpen={setOpen}
         />

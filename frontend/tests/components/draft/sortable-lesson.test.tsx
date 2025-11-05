@@ -23,8 +23,8 @@ describe("SortableLesson", () => {
     name: "Test Lesson",
     slug: "test-lesson",
     droplets: [],
-    droplet_lessons: [],
     notes: [],
+    orderIndex: 1,
     blocks: [
       {
         id: 1,

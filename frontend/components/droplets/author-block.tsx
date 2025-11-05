@@ -17,7 +17,6 @@ export function AuthorCard({ inDraft, onRemove, author }: AuthorCardProps) {
   const router = useRouter();
 
   const handleClick = () => {
-    console.log(author.email);
     router.push(
       `/prof/${author.email?.slice(0, author.email.indexOf("@")) || ""}`,
     );

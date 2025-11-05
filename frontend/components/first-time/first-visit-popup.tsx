@@ -111,13 +111,7 @@ export function FirstVisitPopup({ user }: { user: AuthorizedUser | null }) {
           "Hey there — welcome to Odyssey! This is where you'll see updates to your droplets, playlists, and groups.",
           user,
         );
-        const introDroplet = await getDropletById<Droplet>(43, {
-          populate: {
-            droplet_lessons: {
-              populate: ["lesson"],
-            },
-          },
-        });
+        const introDroplet = await getDropletById<Droplet>(43);
         const enrollData = await getEnrollmentsByAuthorizedUser(user.id);
         if (
           enrollData &&

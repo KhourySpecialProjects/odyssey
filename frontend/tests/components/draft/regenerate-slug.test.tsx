@@ -33,7 +33,6 @@ describe("RegenerateSlugButton", () => {
     tags: [{ id: 1, name: "React" }] as Tag[],
     learningObjectives: [],
     status: "draft" as DropletStatus,
-    droplet_lessons: [],
     inReview: false,
     afterReview: false,
   } as any;

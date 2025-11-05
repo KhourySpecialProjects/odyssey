@@ -35,7 +35,6 @@ describe("DropletBlock", () => {
     type: "lesson" as DropletType,
     status: "published" as DropletStatus,
     learningObjectives: [],
-    droplet_lessons: [],
     tags: [],
   };
 
@@ -265,10 +264,10 @@ describe("DropletBlock", () => {
         expect(screen.getByText("Test Droplet")).toBeInTheDocument();
       });
 
-      it("handles droplet with undefined droplet_lessons", () => {
+      it("handles droplet with undefined lessons", () => {
         const dropletWithUndefinedLessons = {
           ...mockDroplet,
-          droplet_lessons: undefined as any,
+          lessons: undefined as any,
         };
         render(<DropletBlock droplet={dropletWithUndefinedLessons} />);
         expect(screen.getByText("Test Droplet")).toBeInTheDocument();
@@ -284,7 +283,6 @@ describe("DropletBlock", () => {
           type: "lesson" as DropletType,
           status: "published" as DropletStatus,
           learningObjectives: [],
-          droplet_lessons: [],
           tags: [],
         };
         render(<DropletBlock droplet={minimalDroplet} />);
