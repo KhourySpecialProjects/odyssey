@@ -89,6 +89,12 @@ export function AuthorizedUserBlock({
       }
 
       const activityData = await response.json();
+      console.log("Received activities:", activityData.length);
+      console.log("First 3 activities:", activityData.slice(0, 3));
+      console.log(
+        "Activity types:",
+        activityData.map((a: any) => a.type),
+      );
       setActivities(activityData);
     } catch (error) {
       console.error("Error loading activity:", error);
@@ -425,16 +431,23 @@ export function AuthorizedUserBlock({
                         : null);
                   }
 
-                  // Determine if this is a completion
-                  const isCompletion = activity.type === "completion";
+                  // Determine completion types
+                  const isLessonCompletion =
+                    activity.type === "completion" &&
+                    (activity.description.includes("lesson") ||
+                      activity.description.includes("Marked complete"));
+                  const isCourseCompletion =
+                    activity.type === "completion" && !isLessonCompletion;
 
                   return (
                     <div
                       key={index}
                       className={`flex gap-4 rounded-lg border p-4 transition-colors ${
-                        isCompletion
+                        isCourseCompletion
                           ? "border-green-300 bg-green-50 hover:bg-green-100 dark:border-green-700 dark:bg-green-950 dark:hover:bg-green-900"
-                          : "border-slate-200 hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800"
+                          : isLessonCompletion
+                            ? "border-blue-300 bg-blue-50 hover:bg-blue-100 dark:border-blue-700 dark:bg-blue-950 dark:hover:bg-blue-900"
+                            : "border-slate-200 hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800"
                       }`}
                     >
                       <div className="w-32 flex-shrink-0 text-sm text-slate-500">
@@ -443,12 +456,19 @@ export function AuthorizedUserBlock({
                       <div className="flex-1">
                         <div
                           className={`text-lg font-semibold ${
-                            isCompletion
+                            isCourseCompletion
                               ? "text-green-700 dark:text-green-400"
-                              : "text-slate-900 dark:text-slate-100"
+                              : isLessonCompletion
+                                ? "text-blue-700 dark:text-blue-400"
+                                : "text-slate-900 dark:text-slate-100"
                           }`}
                         >
-                          {isCompletion && <span className="mr-2">✓</span>}
+                          {isCourseCompletion && (
+                            <span className="mr-2">✓</span>
+                          )}
+                          {isLessonCompletion && (
+                            <span className="mr-2">✓</span>
+                          )}
                           {activity.description}
                         </div>
                         {pathname && (
@@ -458,7 +478,8 @@ export function AuthorizedUserBlock({
                         )}
                         {activity.type !== "page_view" &&
                           activity.details?.source === "enrollment_data" &&
-                          !isCompletion && (
+                          !isCourseCompletion &&
+                          !isLessonCompletion && (
                             <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
                               From enrollment records
                             </div>
