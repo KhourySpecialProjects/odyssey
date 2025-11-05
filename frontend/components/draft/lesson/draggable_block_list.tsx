@@ -2,7 +2,7 @@
 
 import { useCallback } from "react";
 import { useDrop } from "react-dnd";
-import { Block } from "./add-block";
+import { Block } from "@/types";
 import { DraggableBlockListClient } from "./draggable_block_list_client";
 
 interface DraggableCardListProps {

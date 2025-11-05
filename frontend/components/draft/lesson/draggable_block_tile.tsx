@@ -1,6 +1,6 @@
 import { useDrag, useDrop } from "react-dnd";
 import { OpenEndedQuizBlock, QuizBlock } from "./lesson-renderer";
-import { Block } from "./add-block";
+import { Block } from "@/types";
 import { useCallback } from "react";
 import { OpenEndedQuizQuestion, QuizQuestion } from "@/types";
 import { GenericEditor } from "./blocks/generic";
@@ -43,7 +43,7 @@ export default function DraggableBlockTile({
   });
 
   const blockClassName = cn(
-    "relative w-full transition-colors border rounded-md border-slate-200 dark:border-slate-500 hover:border-slate-300 bg-slate-50 dark:bg-slate-800",
+    "relative w-full transition-colors border mb-4 rounded-md border-slate-200 dark:border-slate-500 hover:border-slate-300 bg-slate-50 dark:bg-slate-800",
   );
 
   const [, drop] = useDrop({
