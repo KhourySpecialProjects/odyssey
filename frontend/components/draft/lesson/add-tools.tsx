@@ -17,13 +17,39 @@ import {
   CheckCircle2,
   ArrowLeft,
 } from "lucide-react";
+import { OpenEndedQuizBlock, QuizBlock } from "./lesson-renderer";
 
 interface AddLessonBlockProps {
   onAddBlock: (blockType: string, calloutType?: string) => void;
 }
 
+export type Block =
+  | { __component: "droplets.generic"; content: string }
+  | { __component: "droplets.expandable"; title: string; content: string }
+  | {
+      __component: "droplets.callout";
+      content: { type: string; children: { type: string; text: string }[] }[];
+      color: string;
+      type: string;
+    }
+  | { __component: "droplets.video"; url: string }
+  | {
+      __component: "droplets.quiz";
+      questions: {
+        id: number;
+        content: string;
+        answerOptions: { id: number; content: string; isCorrect: boolean }[];
+      }[];
+    }
+  | {
+      __component: "droplets.open-ended-quiz";
+      questions: { id: number; content: string; correctAnswer: string }[];
+    }
+  | QuizBlock
+  | OpenEndedQuizBlock;
+
 export default function AddLessonBlock({ onAddBlock }: AddLessonBlockProps) {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(true); // Start as open
   const [showCalloutModal, setShowCalloutModal] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -154,13 +180,48 @@ export default function AddLessonBlock({ onAddBlock }: AddLessonBlockProps) {
   return (
     <>
       <div
-        className="flex w-full items-center justify-center py-4"
+        className="fixed top-1/2 right-8 z-40 -translate-y-1/2"
         ref={containerRef}
       >
         <div
-          className={`flex items-center justify-center gap-2 transition-all duration-300 ${isOpen ? "opacity-100" : "opacity-100"}`}
+          className={`flex flex-col items-center justify-center gap-2 transition-all duration-300`}
         >
-          {/* Tool buttons - appear on both sides when open */}
+          {/* Main Button - at the top, distinct styling */}
+          <div className="group relative z-10">
+            <button
+              onClick={handleMainButtonClick}
+              className={`flex h-14 w-14 items-center justify-center rounded-full shadow-xl transition-all duration-300 ${
+                isOpen
+                  ? "bg-gray-600 ring-2 ring-gray-400 hover:bg-gray-700"
+                  : "bg-blue-600 hover:bg-blue-700"
+              } text-white`}
+              aria-label={isOpen ? "Close" : "Add a block"}
+            >
+              <div className="relative h-6 w-6">
+                <Plus
+                  className={`absolute inset-0 transition-all duration-300 ${
+                    !isOpen
+                      ? "scale-100 rotate-0 opacity-100"
+                      : "scale-0 rotate-45 opacity-0"
+                  }`}
+                  size={24}
+                />
+                <X
+                  className={`absolute inset-0 transition-all duration-300 ${
+                    isOpen
+                      ? "scale-100 rotate-0 opacity-100"
+                      : "scale-0 rotate-45 opacity-0"
+                  }`}
+                  size={24}
+                />
+              </div>
+            </button>
+            <div className="pointer-events-none absolute top-1/2 right-full mr-3 -translate-y-1/2 rounded bg-gray-900 px-3 py-1 text-sm whitespace-nowrap text-white opacity-0 transition-opacity group-hover:opacity-100">
+              {isOpen ? "Close" : "Add Block"}
+            </div>
+          </div>
+
+          {/* Tool buttons - appear below the main button */}
           {isOpen &&
             blockOptions.map((option, index) => {
               const Icon = option.icon;
@@ -190,48 +251,13 @@ export default function AddLessonBlock({ onAddBlock }: AddLessonBlockProps) {
                     >
                       <Icon size={20} />
                     </button>
-                    <div className="pointer-events-none absolute top-full left-1/2 mt-2 -translate-x-1/2 rounded bg-gray-900 px-3 py-1 text-sm whitespace-nowrap text-white opacity-0 transition-opacity group-hover:opacity-100">
+                    <div className="pointer-events-none absolute top-1/2 right-full mr-3 -translate-y-1/2 rounded bg-gray-900 px-3 py-1 text-sm whitespace-nowrap text-white opacity-0 transition-opacity group-hover:opacity-100">
                       {option.label}
                     </div>
                   </div>
                 </div>
               );
             })}
-
-          {/* Main Button - always centered, distinct styling */}
-          <div className="group relative z-10 mx-4">
-            <button
-              onClick={handleMainButtonClick}
-              className={`flex h-14 w-14 items-center justify-center rounded-full shadow-xl transition-all duration-300 ${
-                isOpen
-                  ? "bg-gray-600 ring-2 ring-gray-400 hover:bg-gray-700"
-                  : "bg-blue-600 hover:bg-blue-700"
-              } text-white`}
-              aria-label={isOpen ? "Close" : "Add a block"}
-            >
-              <div className="relative h-6 w-6">
-                <Plus
-                  className={`absolute inset-0 transition-all duration-300 ${
-                    !isOpen
-                      ? "scale-100 rotate-0 opacity-100"
-                      : "scale-0 rotate-45 opacity-0"
-                  }`}
-                  size={24}
-                />
-                <X
-                  className={`absolute inset-0 transition-all duration-300 ${
-                    isOpen
-                      ? "scale-100 rotate-0 opacity-100"
-                      : "scale-0 rotate-45 opacity-0"
-                  }`}
-                  size={24}
-                />
-              </div>
-            </button>
-            <div className="pointer-events-none absolute top-full left-1/2 mt-2 -translate-x-1/2 rounded bg-gray-900 px-3 py-1 text-sm whitespace-nowrap text-white opacity-0 transition-opacity group-hover:opacity-100">
-              {isOpen ? "Close" : "Add Block"}
-            </div>
-          </div>
         </div>
       </div>
 
