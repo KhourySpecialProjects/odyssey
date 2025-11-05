@@ -180,13 +180,12 @@ export default async function DropletRoute({ params }: Props) {
               This Droplet contains the following lessons:
             </p>
 
-            {droplet.droplet_lessons && droplet.droplet_lessons.length > 0 ? (
+            {droplet.lessons && droplet.lessons.length > 0 ? (
               <div className="mt-4 rounded-md border border-slate-200 bg-slate-50 dark:border-slate-500 dark:bg-slate-800">
                 <ul className="flex flex-col divide-y divide-slate-200 dark:divide-slate-500">
-                  {droplet.droplet_lessons
+                  {droplet.lessons
                     .sort((a, b) => a.orderIndex - b.orderIndex)
-                    .map((dropletLesson) => {
-                      const lesson = dropletLesson.lesson;
+                    .map((lesson) => {
                       return (
                         <li
                           key={`lesson-${lesson.id}`}

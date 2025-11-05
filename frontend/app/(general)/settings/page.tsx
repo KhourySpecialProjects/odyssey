@@ -13,15 +13,10 @@ import { getCurrentUser } from "@/lib/auth/session";
 import { getInitials, condenseRoleTitles } from "@/lib/utils";
 import { User2Icon } from "lucide-react";
 import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
-import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
-import { AuthorizedUser, Droplet } from "@/types";
+import { AuthorizedUser } from "@/types";
 
 export default async function Settings() {
   const user = await getCurrentUser();
-  let completedDropletNames: string[] = [];
-  let enrollmentDropletList: Droplet[] = [];
-  let enrollmentDroplets = 0;
-  let completedDroplets = 0;
   let authorizedUser: AuthorizedUser | null = null;
   if (user?.email) {
     authorizedUser = (await getAuthorizedUserByEmail(
@@ -30,13 +25,6 @@ export default async function Settings() {
     if (!authorizedUser?.id) {
       throw new Error("Authorized user not found");
     }
-    const enrollments = await getEnrollmentsByAuthorizedUser(authorizedUser.id);
-    enrollmentDropletList = enrollments.map((e) => e.droplet);
-    completedDropletNames = enrollments
-      .filter((e) => e.viewedLessons.length === e.droplet.lessons?.length)
-      .map((d) => d.droplet.name);
-    enrollmentDroplets = enrollmentDropletList.length;
-    completedDroplets = completedDropletNames.length;
   }
   if (!authorizedUser) {
     throw new Error("Authorized user not found");

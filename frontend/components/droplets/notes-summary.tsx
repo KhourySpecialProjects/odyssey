@@ -1,5 +1,5 @@
 "use client";
-import { DropletLesson, Highlight, HighlightColor, Note } from "@/types";
+import { Highlight, HighlightColor, Lesson, Note } from "@/types";
 import { HighlighterIcon, NotebookPen } from "lucide-react";
 
 const stripHtmlTags = (html: string) => {
@@ -24,7 +24,7 @@ export default function NotesSummary({
 }: {
   dropletHighlights: Highlight[];
   dropletNotes: Note[];
-  mappedLessons: DropletLesson[];
+  mappedLessons: Lesson[];
   selectedColors: HighlightColor[];
   allNotes: {
     dropletId: number;
@@ -46,11 +46,10 @@ export default function NotesSummary({
             <ul className="flex flex-col">
               {mappedLessons.map((lesson) => {
                 const lessonNotes = allNotes.notes.filter(
-                  (note) => note.lesson?.droplet_lessons[0].id === lesson.id,
+                  (note) => note.lesson?.id === lesson.id,
                 );
                 const lessonHighlights = dropletHighlights.filter(
-                  (highlight) =>
-                    highlight.lesson?.droplet_lessons[0].id === lesson.id,
+                  (highlight) => highlight.lesson?.id === lesson.id,
                 );
                 const filteredHighlights = lessonHighlights.filter(
                   (highlight) => selectedColors.includes(highlight.color),
@@ -65,7 +64,7 @@ export default function NotesSummary({
                     {(filteredNotes.length > 0 ||
                       filteredHighlights.length > 0) && (
                       <p className="border pl-4 font-bold dark:border-slate-500">
-                        {lesson.lesson.name}
+                        {lesson.name}
                       </p>
                     )}
                     {filteredHighlights.map((highlight) => (

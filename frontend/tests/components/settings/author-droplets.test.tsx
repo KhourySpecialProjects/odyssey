@@ -31,6 +31,7 @@ describe("AuthorDroplets", () => {
     blocked: [],
     was_blocked: [],
     timeZone: "America/New_York" as TimeZone,
+    isPublic: true,
   };
 
   const mockDroplet = {
@@ -42,7 +43,6 @@ describe("AuthorDroplets", () => {
     type: "lesson" as DropletType,
     status: "published" as DropletStatus,
     learningObjectives: [],
-    droplet_lessons: [],
   };
 
   beforeEach(() => {

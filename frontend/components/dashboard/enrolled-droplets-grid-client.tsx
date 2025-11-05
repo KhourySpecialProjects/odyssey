@@ -44,8 +44,8 @@ export function EnrolledDropletsGridClient({
     if (sortKey) {
       const [field, direction] = sortKey.split(":");
       sorted.sort((a, b) => {
-        let ratingA = ratingsMap.get(a.id) || 0;
-        let ratingB = ratingsMap.get(b.id) || 0;
+        const ratingA = ratingsMap.get(a.id) || 0;
+        const ratingB = ratingsMap.get(b.id) || 0;
 
         if (field === "name") {
           return direction === "asc"

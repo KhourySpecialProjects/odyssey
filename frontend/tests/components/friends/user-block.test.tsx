@@ -39,6 +39,7 @@ describe("UserBlock", () => {
     blocked: [],
     was_blocked: [],
     timeZone: "America/New_York" as TimeZone,
+    isPublic: true,
   };
 
   const mockCurrentUser = {
@@ -59,6 +60,7 @@ describe("UserBlock", () => {
     blocked: [],
     was_blocked: [],
     timeZone: "America/New_York" as TimeZone,
+    isPublic: true,
   };
 
   beforeEach(() => {
@@ -70,7 +72,6 @@ describe("UserBlock", () => {
       <ProfileBlock
         otherUser={mockUser}
         user={mockCurrentUser}
-        isFeed={false}
         isOpen={true}
         setIsOpen={() => {}}
       />,
@@ -90,7 +91,6 @@ describe("UserBlock", () => {
       <ProfileBlock
         otherUser={mockUser}
         user={mockCurrentUser}
-        isFeed={false}
         isOpen={true}
         setIsOpen={() => {}}
       />,
@@ -115,7 +115,6 @@ describe("UserBlock", () => {
       <ProfileBlock
         otherUser={mockUser}
         user={mockCurrentUser}
-        isFeed={false}
         isOpen={true}
         setIsOpen={() => {}}
       />,
@@ -133,7 +132,6 @@ describe("UserBlock", () => {
       <ProfileBlock
         otherUser={mockUser}
         user={mockCurrentUser}
-        isFeed={false}
         isOpen={true}
         setIsOpen={() => {}}
       />,

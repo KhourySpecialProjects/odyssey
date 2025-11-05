@@ -142,11 +142,6 @@ describe("Notes Tests", () => {
             },
             lesson: {
               fields: ["*"],
-              populate: {
-                droplet_lessons: {
-                  fields: ["*"],
-                },
-              },
             },
           },
           fields: ["id", "content", "positionY"],

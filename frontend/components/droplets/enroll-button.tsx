@@ -32,7 +32,7 @@ export function EnrollButton({ droplet, isEnrolled }: EnrollButtonProps) {
             !droplet.authorized_users?.some((user) =>
               user.enrollments?.some(
                 (enrollment: Enrollment) =>
-                  enrollment.droplet.id === droplet.id,
+                  enrollment.droplet?.id === droplet.id,
               ),
             )
           ) {
@@ -40,9 +40,7 @@ export function EnrollButton({ droplet, isEnrolled }: EnrollButtonProps) {
             if (enrollment && enrollment.ok) {
               toast.success(`You are now enrolled in ${droplet.name}!`);
               if (droplet.lessons) {
-                router.push(
-                  `/d/${droplet.slug}/${droplet.droplet_lessons[0].lesson.slug}`,
-                );
+                router.push(`/d/${droplet.slug}/${droplet.lessons[0].slug}`);
               }
             } else {
               toast.error("Uh oh! Something went wrong.");

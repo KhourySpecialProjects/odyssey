@@ -34,6 +34,7 @@ module "alb" {
   public_subnet_ids = module.vpc.public_subnet_ids
   certificate_arn  = var.certificate_arn
   be_certificate_arn = var.be_certificate_arn
+  backend_health_check_path = "/"
 }
 
 # Create ECS cluster and services
