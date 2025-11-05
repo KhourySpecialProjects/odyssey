@@ -2,7 +2,7 @@
 import { useCallback } from "react";
 import { Block } from "./add-block";
 import { AddBlock } from "./add-block";
-import BlockTile from "./draggable_block_tile";
+import BlockTile from "./block_tile";
 
 export function BlockListClient({
   blocks,

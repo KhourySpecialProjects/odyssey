@@ -10,7 +10,7 @@ import { DeleteLessonButton } from "./delete-lesson";
 import { useMemo } from "react";
 import { LessonNameInput } from "@/components/ui/tiptap/lesson-name-input";
 import { QuizQuestion } from "@/types";
-import BlockList from "./draggable_block_list";
+import BlockList from "./block_list";
 import { getDropletBySlug } from "@/lib/requests/droplet";
 import { Block } from "./add-block";
 import { toast } from "sonner";
