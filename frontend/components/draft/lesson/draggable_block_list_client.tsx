@@ -1,6 +1,6 @@
 "use client";
 import { useCallback } from "react";
-import AddLessonBlock, { Block } from "./add-tools";
+import { Block } from "@/types";
 import DraggableBlockTile from "./draggable_block_tile";
 import {
   Message,
@@ -20,15 +20,6 @@ export function DraggableBlockListClient({
   setBlock: (index: number) => (block: any) => void;
   deleteBlock: (index: number) => () => void;
 }) {
-  const addBlock = useCallback(
-    (index: number) => {
-      return (block: Block) => {
-        onAddBlock(index, block);
-      };
-    },
-    [onAddBlock],
-  );
-
   if (blocks.length === 0) {
     return (
       <>
@@ -48,11 +39,6 @@ export function DraggableBlockListClient({
           key={`${block.__component}-${index}-${blocks.length}`}
           className="flex w-full flex-col items-center justify-center"
         >
-          {/* <AddLessonBlock
-            onAddBlock={(blockType, calloutType) =>
-              onAddBlock(index, createBlock(blockType, calloutType))
-            }
-          /> */}
           <DraggableBlockTile
             block={block}
             index={index}
@@ -60,11 +46,6 @@ export function DraggableBlockListClient({
             setBlock={setBlock}
             deleteBlock={deleteBlock}
           />
-          {/* <AddLessonBlock
-            onAddBlock={(blockType, calloutType) =>
-              onAddBlock(index, createBlock(blockType, calloutType))
-            }
-          /> */}
         </div>
       ))}
     </div>
