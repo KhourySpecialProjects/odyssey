@@ -472,7 +472,7 @@ export async function getUserActivity(userId: number): Promise<UserActivity[]> {
         });
       }
     } catch (error) {
-      console.log("Enrollment data not available:", error);
+      console.error("Enrollment data not available:", error);
       // Continue without enrollment data - just show PostHog activities
     }
 

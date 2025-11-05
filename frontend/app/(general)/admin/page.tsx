@@ -24,14 +24,8 @@ import { StatisticsSelector } from "@/components/admin/statistics-selector";
 import { WeeklyActiveUsersChart } from "@/components/admin/weekly-active-users-chart";
 import { UniquePageviewChart } from "@/components/admin/unique-pageview";
 
-export default async function Page({
-  searchParams,
-}: {
-  searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
-}) {
+export default async function Page() {
   const user = await getCurrentUser();
-
-  const params = await searchParams;
 
   const [
     authorizedUsers,
