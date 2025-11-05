@@ -20,8 +20,7 @@ export default function BlockNoteTestEditor() {
       },
     }),
   });
-
-  const getCustomSlashMenuItems = (editor: typeof editor) => [
+  const getCustomSlashMenuItems = (editor: any) => [
     ...getDefaultReactSlashMenuItems(editor),
     ...getCalloutSlashMenuItems(editor),
   ];
