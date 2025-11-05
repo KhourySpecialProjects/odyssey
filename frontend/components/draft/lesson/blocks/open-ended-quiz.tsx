@@ -70,7 +70,7 @@ export function OpenEndedQuizEditor({
   };
 
   return (
-    <div className="flex flex-row items-center">
+    <div className="mb-4 flex flex-row items-center">
       <div className="z-10 cursor-grab text-slate-400 hover:text-slate-600 active:cursor-grabbing">
         <GripVertical size={20} />
       </div>
