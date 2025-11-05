@@ -369,11 +369,6 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
       <div className="flex w-full flex-col items-center justify-center space-y-4">
         <DndProvider backend={HTML5Backend}>
           <>
-            <div className="w-full max-w-5xl">
-              <BlockToolbar
-                onAddBlock={(block) => handleAddBlock(blocks.length, block)}
-              />
-            </div>
             <div className="w-full max-w-2xl">
               <DraggableBlockList
                 blocks={blocks}
