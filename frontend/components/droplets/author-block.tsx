@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import { AuthorizedUser } from "@/types";
 import { Button } from "../ui/button";
 
-interface AuthorCardProps extends AuthorizedUser {
+interface AuthorCardProps {
   inDraft?: boolean;
   onRemove?: () => void;
   author: AuthorizedUser;
@@ -30,7 +30,6 @@ export function AuthorCard({ inDraft, onRemove, author }: AuthorCardProps) {
    return (
     <li
       onClick={inDraft ? undefined : handleClick}
-      // Added flex with items-center to align all three parts
       className={`flex items-center gap-4 p-4 transition-colors ${
         inDraft 
           ? "cursor-default" 
