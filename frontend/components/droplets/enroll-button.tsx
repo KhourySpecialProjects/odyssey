@@ -84,9 +84,7 @@ export function EnrollButton({ droplet, isEnrolled }: EnrollButtonProps) {
             after={<ArrowRightIcon />}
             onClick={() => {
               if (droplet.lessons) {
-                router.push(
-                  `/d/${droplet.slug}/${droplet.droplet_lessons[0].lesson.slug}`,
-                );
+                router.push(`/d/${droplet.slug}/${droplet.lessons[0].slug}`);
               }
             }}
             className="dark:bg-slate-300 dark:text-black dark:hover:bg-slate-400"
