@@ -14,7 +14,8 @@ import DraggableBlockList from "./draggable_block_list";
 import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import { getDropletBySlug } from "@/lib/requests/droplet";
-import { Block } from "./add-tools";
+
+import { Block } from "@/types";
 import { toast } from "sonner";
 import { deleteLesson, updateLesson } from "@/lib/requests/lesson";
 import AddLessonBlock from "./add-tools";

@@ -4,7 +4,7 @@ import { OpenEndedQuizQuestion } from "@/types";
 import { TrashIcon, PlusIcon, GripVertical, Trash2Icon } from "lucide-react";
 import { GenericBlockInput as TipTapEditor } from "@/components/ui/tiptap/generic-block-input";
 import { useState } from "react";
-import { Block } from "../add-block";
+import { Block } from "@/types";
 
 interface OpenEndedQuizBlock extends Omit<Block, "questions"> {
   questions: OpenEndedQuizQuestion[];

@@ -17,36 +17,10 @@ import {
   CheckCircle2,
   ArrowLeft,
 } from "lucide-react";
-import { OpenEndedQuizBlock, QuizBlock } from "./lesson-renderer";
 
 interface AddLessonBlockProps {
   onAddBlock: (blockType: string, calloutType?: string) => void;
 }
-
-export type Block =
-  | { __component: "droplets.generic"; content: string }
-  | { __component: "droplets.expandable"; title: string; content: string }
-  | {
-      __component: "droplets.callout";
-      content: { type: string; children: { type: string; text: string }[] }[];
-      color: string;
-      type: string;
-    }
-  | { __component: "droplets.video"; url: string }
-  | {
-      __component: "droplets.quiz";
-      questions: {
-        id: number;
-        content: string;
-        answerOptions: { id: number; content: string; isCorrect: boolean }[];
-      }[];
-    }
-  | {
-      __component: "droplets.open-ended-quiz";
-      questions: { id: number; content: string; correctAnswer: string }[];
-    }
-  | QuizBlock
-  | OpenEndedQuizBlock;
 
 export default function AddLessonBlock({ onAddBlock }: AddLessonBlockProps) {
   const [isOpen, setIsOpen] = useState(true); // Start as open
