@@ -1,8 +1,11 @@
-import { getDropletBySlug, updateDropletFunFact } from "@/lib/requests/droplet";
+import {
+  getDropletBySlug,
+  updateDroplet,
+  updateDropletFunFact,
+} from "@/lib/requests/droplet";
 import type { Droplet } from "@/types";
 import { DropletName } from "@/components/draft/metadata/droplet-name";
 import { LearningObjectives } from "@/components/draft/metadata/learning-objectives/learning-objectives";
-import { Selection } from "@/components/draft/metadata/selection";
 import { getDroplets } from "@/lib/requests/droplet";
 import { getTags } from "@/lib/requests/tag";
 import { NextSteps } from "@/components/draft/metadata/next-steps/next-steps";
@@ -19,6 +22,10 @@ import { notFound } from "next/navigation";
 import { ReviewDroplet } from "@/components/draft/metadata/review-droplet";
 import Anthropic from "@anthropic-ai/sdk";
 import { FunFactEditor } from "@/components/draft/metadata/fun-fact-editor";
+import { ClickableBadges } from "@/components/draft/metadata/clickable-badges";
+
+import { GeneralInfo } from "@/components/draft/metadata/general-info";
+import { RequestReviewButton } from "@/components/draft/metadata/request-review";
 
 type Props = {
   params: Promise<Params>;
@@ -50,8 +57,8 @@ export default async function Droplet({ params }: Props) {
       learningObjectives: { populate: "*" },
       lessons: { populate: "*" },
       tags: { populate: "*" },
-      prerequisites: { populate: ["id", "name", "slug"] },
-      postrequisites: { populate: ["id", "name", "slug"] },
+      prerequisites: { populate: "*" },
+      postrequisites: { populate: "*" },
       nextSteps: { fields: ["label", "url"] },
     },
   });
@@ -128,24 +135,25 @@ export default async function Droplet({ params }: Props) {
       <GradientBackground className="px-0">
         <div className="mx-auto max-w-2xl px-5 md:px-0">
           <div className="flex flex-0 flex-row flex-wrap gap-1.5">
-            <Badge variant="outline">
-              {uppercaseFirstChar(droplet.focusArea)}
-            </Badge>
-            <Badge variant="outline">{uppercaseFirstChar(droplet.type)}</Badge>
-            {droplet.tags?.map((tag) => (
-              <Badge key={tag.id} variant="outline">
-                {tag.name}
-              </Badge>
-            ))}
+            <ClickableBadges
+              focusArea={droplet.focusArea}
+              type={droplet.type}
+              dropletId={droplet.id}
+              tags={droplet.tags ?? []}
+              selectedTags={droplet.tags ?? []}
+              availableTags={tags}
+            />
           </div>
+
           <DropletName
             data-testid="droplet-name"
             dropletId={droplet.id}
             startingName={droplet.name}
           />
-          <div className="my-3 flex w-full flex-row items-center space-x-10">
-            <RegenerateSlugButton droplet={droplet} name={droplet.name} />
-          </div>
+
+          {droplet.status === "draft" && droplet.inReview && (
+            <div className="p-2">Droplet currently in review</div>
+          )}
           <div
             className={`pt-4 pb-4 ${droplet.status === "draft" ? "visibility: visible" : "visibility: hidden"} text-red-500 dark:text-red-300`}
           >
@@ -169,7 +177,7 @@ export default async function Droplet({ params }: Props) {
             )}
         </div>
 
-        <div className="mx-auto mt-10 w-full max-w-2xl space-y-10">
+        <div className="mx-auto w-full max-w-2xl space-y-10">
           <Authors
             dropletId={droplet.id}
             selectedIds={droplet.authorized_users?.map((user) => user.id) || []}
@@ -184,12 +192,6 @@ export default async function Droplet({ params }: Props) {
             initialContent={droplet.overview ?? ""}
           />
 
-          <FunFactEditor
-            funFact={droplet.funFact ?? ""}
-            generateFact={generateFunFact}
-            deleteFact={deleteFunFact}
-          />
-
           <LearningObjectives
             dropletId={droplet.id}
             learningObjectives={droplet.learningObjectives}
@@ -200,48 +202,22 @@ export default async function Droplet({ params }: Props) {
             nextSteps={droplet.nextSteps ?? []}
           />
 
-          <section>
-            <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
-              General Info
-            </h1>
-            <p className="mb-8 text-slate-500 dark:text-slate-300">
-              Information that users will see when they view the droplet{" "}
-            </p>
-            <div className="flex w-full flex-col space-y-4">
-              <div className="flex items-center justify-center">
-                <div className="flex flex-row space-x-5">
-                  <Filter
-                    dropletId={droplet.id}
-                    initial={droplet.focusArea}
-                    variant="focusArea"
-                  />
-                  <Filter
-                    dropletId={droplet.id}
-                    initial={droplet.type}
-                    variant="type"
-                  />
-                </div>
-              </div>
-              <Selection
-                variant="tag"
-                dropletId={droplet.id}
-                items={tags}
-                selectedItems={droplet.tags ?? []}
-              />
-              <Selection
-                variant="prerequisite"
-                dropletId={droplet.id}
-                items={droplets}
-                selectedItems={droplet.prerequisites ?? []}
-              />
-              <Selection
-                variant="postrequisite"
-                dropletId={droplet.id}
-                items={droplets}
-                selectedItems={droplet.postrequisites ?? []}
-              />
-            </div>
-          </section>
+          <GeneralInfo
+            dropletId={droplet.id}
+            tags={tags}
+            selectedTags={droplet.tags ?? []}
+            droplets={droplets}
+            prerequisites={droplet.prerequisites ?? []}
+            postrequisites={droplet.postrequisites ?? []}
+          />
+          <FunFactEditor
+            funFact={droplet.funFact ?? ""}
+            generateFact={generateFunFact}
+            deleteFact={deleteFunFact}
+          />
+          {!droplet.inReview && droplet.status === "draft" && (
+            <RequestReviewButton droplet={droplet} />
+          )}
         </div>
       </GradientBackground>
     </>

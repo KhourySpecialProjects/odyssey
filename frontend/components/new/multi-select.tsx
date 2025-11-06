@@ -62,6 +62,7 @@ export function MultiSelect({
           toast.success("Tag created successfully");
         } else {
           console.error("Failed to create tag", result.error);
+          toast.error(`"${tagName} tag already exists"`);
         }
         setIsOpen(false);
       }

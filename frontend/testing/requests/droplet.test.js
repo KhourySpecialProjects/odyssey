@@ -324,7 +324,17 @@ describe("Droplet API Functions", () => {
   });
 
   describe("createDroplet", () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+      getCurrentUser.mockResolvedValue({ email: "test@example.com" });
+      getAuthorizedUserByEmail.mockResolvedValue({ id: 1 });
+    });
+
     it("successfully creates a droplet", async () => {
+      // Mock getDroplets to return no duplicates
+      const { fetchAPI } = require("@/lib/utils");
+      fetchAPI.mockResolvedValue([]);
+
       global.fetch.mockResolvedValueOnce({
         ok: true,
         json: () => Promise.resolve({ data: { id: 1 } }),
@@ -348,7 +358,7 @@ describe("Droplet API Functions", () => {
         },
       );
       expect(global.fetch).toHaveBeenCalledWith(
-        expect.stringMatching("/api/droplets"),
+        expect.stringMatching(/\/api\/droplets$/),
         expect.objectContaining({
           method: "POST",
           body: JSON.stringify({
@@ -371,6 +381,93 @@ describe("Droplet API Functions", () => {
           }),
         }),
       );
+      expect(result).toEqual({
+        ok: true,
+        error: null,
+        data: { id: 1 },
+      });
+    });
+
+    it("handles duplicate droplet name", async () => {
+      // Mock getDroplets to return a duplicate
+      const { fetchAPI } = require("@/lib/utils");
+      fetchAPI.mockResolvedValue([
+        {
+          id: 2,
+          name: "Test Droplet",
+          slug: "test-droplet",
+          status: "published",
+        },
+      ]);
+
+      global.fetch.mockResolvedValueOnce({
+        ok: false,
+        json: () =>
+          Promise.resolve({
+            error: {
+              message: "This attribute must be unique",
+              details: {
+                errors: [{ path: ["name"] }],
+              },
+            },
+          }),
+      });
+
+      const dropletData = {
+        name: "Test Droplet",
+        focusArea: "Test Area",
+        type: "test",
+        tagIds: [1, 2],
+        learningObjectives: ["Objective 1"],
+      };
+
+      const result = await createDroplet(dropletData);
+
+      expect(result).toEqual({
+        ok: false,
+        error: "This attribute must be unique (name)",
+        data: null,
+      });
+    });
+
+    it("handles missing user email", async () => {
+      getCurrentUser.mockResolvedValue(null);
+
+      const dropletData = {
+        name: "Test Droplet",
+        focusArea: "Test Area",
+        type: "test",
+        tagIds: [1, 2],
+        learningObjectives: ["Objective 1"],
+      };
+
+      const result = await createDroplet(dropletData);
+
+      expect(result).toEqual({
+        ok: false,
+        error: "Database Error: Failed to create droplet.",
+        data: null,
+      });
+    });
+
+    it("handles missing author", async () => {
+      getAuthorizedUserByEmail.mockResolvedValue(null);
+
+      const dropletData = {
+        name: "Test Droplet",
+        focusArea: "Test Area",
+        type: "test",
+        tagIds: [1, 2],
+        learningObjectives: ["Objective 1"],
+      };
+
+      const result = await createDroplet(dropletData);
+
+      expect(result).toEqual({
+        ok: false,
+        error: "Database Error: Failed to create droplet.",
+        data: null,
+      });
     });
   });
 });
