@@ -79,8 +79,11 @@ export function CreateDropletForm({
   ]);
 
   async function addDroplet() {
+    // Normalize the name for comparison (trim and convert to lowercase for checking)
+    const normalizedName = dropletName.trim();
+    
     const data = {
-      name: dropletName.trim(),
+      name: normalizedName,
       focusArea: focusAreaValue as FocusArea,
       type: typeValue as DropletType,
       tagIds: selectedTags.map((tag) => tag.id),
@@ -112,7 +115,7 @@ export function CreateDropletForm({
         // Fetch the existing droplet to get its slug and status
         try {
           const existingDroplets = await getDroplets({
-            filters: { name: dropletName.trim().toLowerCase() },
+            filters: { name: dropletName.trim() },
             fields: ["name", "slug", "status"],
             populate: {
               authorized_users: {
@@ -133,7 +136,7 @@ export function CreateDropletForm({
               const authorName = firstAuthor?.name || firstAuthor?.email || "the author";
               
               setSubmissionState({
-                error: `There is a droplet in progress with the same title. Contact ${authorName} to become a co-author of "${dropletName.trim()}."`,
+                error: `There is a droplet in progress with the same title. Contact ${authorName} to become a co-author of "${dropletName.trim()}".`,
                 existingDropletName: dropletName.trim(),
                 existingDropletAuthor: authorName,
                 isDraft: true,
