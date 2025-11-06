@@ -84,7 +84,11 @@ export const Callout = createReactBlockSpec(
                 contentEditable={false}
               >
                 {Icon ? (
-                  <Icon size={24} strokeWidth={2} />
+                  <Icon
+                    size={24}
+                    strokeWidth={2}
+                    className="text-slate-800 dark:text-slate-900"
+                  />
                 ) : (
                   <div style={{ width: 24, height: 24 }} />
                 )}

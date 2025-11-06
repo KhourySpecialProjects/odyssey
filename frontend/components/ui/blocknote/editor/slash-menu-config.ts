@@ -1,4 +1,5 @@
 import { DefaultReactSuggestionItem } from "@blocknote/react";
+import { insertOrUpdateBlock } from "@blocknote/core";
 
 const createCalloutItem = (
   editor: any,
@@ -9,11 +10,10 @@ const createCalloutItem = (
 ) => ({
   title,
   onItemClick: () => {
-    editor.insertBlocks(
-      [{ type: "callout", props: { calloutType: type } }],
-      editor.getTextCursorPosition().block,
-      "after",
-    );
+    insertOrUpdateBlock(editor, {
+      type: "callout",
+      props: { calloutType: type },
+    });
   },
   aliases,
   group: "Callouts",

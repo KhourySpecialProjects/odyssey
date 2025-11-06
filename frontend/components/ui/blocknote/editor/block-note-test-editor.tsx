@@ -10,8 +10,11 @@ import { BlockNoteView } from "@blocknote/mantine";
 import "@blocknote/mantine/style.css";
 import { Callout } from "@/components/ui/blocknote/blocks/callout-block";
 import { getCalloutSlashMenuItems } from "@/components/ui/blocknote/editor/slash-menu-config";
+import { useTheme } from "next-themes";
 
 export default function BlockNoteTestEditor() {
+  const { theme } = useTheme(); // Get Odyssey's theme
+
   const editor = useCreateBlockNote({
     schema: BlockNoteSchema.create({
       blockSpecs: {
@@ -20,14 +23,19 @@ export default function BlockNoteTestEditor() {
       },
     }),
   });
+
   const getCustomSlashMenuItems = (editor: any) => [
     ...getDefaultReactSlashMenuItems(editor),
     ...getCalloutSlashMenuItems(editor),
   ];
 
   return (
-    <div className="rounded-lg border border-slate-200 bg-white p-6">
-      <BlockNoteView editor={editor} slashMenu={false}>
+    <div style={{ width: "100%", maxWidth: "900px", minHeight: "500px" }}>
+      <BlockNoteView
+        editor={editor}
+        slashMenu={false}
+        theme={theme === "dark" ? "dark" : "light"}
+      >
         <SuggestionMenuController
           triggerCharacter="/"
           getItems={async (query) =>
