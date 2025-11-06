@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getUserActivity } from "@/lib/requests/user-activity";
 // Import your auth config
-// import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { authOptions } from "@/lib/auth/options";
+import { getServerSession } from "next-auth";
+import { AuthorizedUserRoleTitle } from "@/lib/globals";
 
 export async function GET(
   request: NextRequest,
@@ -10,26 +12,25 @@ export async function GET(
   try {
     // Optional: Check if user is authenticated and authorized
     // Uncomment these lines if you want to restrict access
-    /*
+
     const session = await getServerSession(authOptions);
     if (!session) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-    
+
     // Check if user is admin
-    const isAdmin = session.user.roles?.some(role => 
-      role.title === 'SysAdmin' || role.title === 'AcadAdmin'
+    const isAdmin = session.user.roles?.some(
+      (role) =>
+        role === AuthorizedUserRoleTitle.SysAdmin ||
+        role === AuthorizedUserRoleTitle.AcadAdmin ||
+        role === AuthorizedUserRoleTitle.WebsiteEditor,
     );
     if (!isAdmin) {
       return NextResponse.json(
-        { error: 'Forbidden - Admin access required' },
-        { status: 403 }
+        { error: "Forbidden - Admin access required" },
+        { status: 403 },
       );
     }
-    */
 
     // Await params in Next.js 15
     const { userId: userIdString } = await params;
