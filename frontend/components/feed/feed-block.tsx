@@ -305,7 +305,7 @@ export function FeedBlock({
               {parsedContent.userName}
             </span>
             <span>
-              {"\u00A0"}has given you kudos for{"\u00A0"}
+              {"\u00A0"}has given you kudos for completing{"\u00A0"}
             </span>
             {announcement.droplet ? (
               <span

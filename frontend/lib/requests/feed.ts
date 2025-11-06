@@ -4,7 +4,6 @@ import { Announcement, AuthorizedUser, Droplet } from "@/types";
 import qs from "qs";
 import { flattenAttributes } from "../utils";
 import { revalidatePath } from "next/cache";
-import { AnnouncementType } from "@/types";
 
 const NEXT_PUBLIC_STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
@@ -56,6 +55,7 @@ export async function fetchAnnouncements(
             },
           },
           {
+            type: "droplet",
             droplet: {
               enrollments: {
                 authorizedUser: {
@@ -157,17 +157,7 @@ export async function fetchAnnouncements(
       },
     );
     const data = await response.json();
-    const announcements = flattenAttributes(data.data);
-
-    return announcements.filter((a: Announcement) => {
-      if (
-        (a.type === "friend" || a.type === "kudos") &&
-        a.authorized_user?.id === user.id
-      ) {
-        return false;
-      }
-      return true;
-    });
+    return flattenAttributes(data.data);
   } catch (error) {
     console.error("Database Error:", error);
     throw new Error("Failed to fetch announcement data.");
