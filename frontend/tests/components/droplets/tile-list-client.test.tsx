@@ -6,16 +6,6 @@ jest.mock("flat", () => ({
   unflatten: jest.fn((obj) => obj),
 }));
 
-jest.mock("react-dnd", () => ({
-  useDrag: () => [{ isDragging: false }, jest.fn()],
-  useDrop: () => [{}, jest.fn()],
-  DndProvider: ({ children }: { children: React.ReactNode }) => children,
-}));
-
-jest.mock("react-dnd-html5-backend", () => ({
-  HTML5Backend: {},
-}));
-
 describe("DraggableTileListClient", () => {
   const mockDroplets = Array.from({ length: 7 }, (_, i) => ({
     id: i + 1,
