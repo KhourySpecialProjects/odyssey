@@ -40,9 +40,7 @@ export function EnrollButton({ droplet, isEnrolled }: EnrollButtonProps) {
             if (enrollment && enrollment.ok) {
               toast.success(`You are now enrolled in ${droplet.name}!`);
               if (droplet.lessons) {
-                router.push(
-                  `/d/${droplet.slug}/${droplet.droplet_lessons[0].lesson.slug}`,
-                );
+                router.push(`/d/${droplet.slug}/${droplet.lessons[0].slug}`);
               }
             } else {
               toast.error("Uh oh! Something went wrong.");
@@ -78,20 +76,35 @@ export function EnrollButton({ droplet, isEnrolled }: EnrollButtonProps) {
   }
 
   return (
-    <Button
-      size="lg"
-      after={<ArrowRightIcon />}
-      onClick={() => {
-        if (droplet.lessons && droplet.lessons[0] && !isEnrolled) {
-          enroll();
-        } else {
-          unenroll();
-        }
-      }}
-      variant={isEnrolled ? "secondary" : "default"}
-      className="dark:bg-slate-300 dark:text-black dark:hover:bg-slate-400"
-    >
-      {isEnrolled ? "Unenroll" : "Enroll and Continue"}
-    </Button>
+    <div className="flex gap-2">
+      {isEnrolled ? (
+        <>
+          <Button
+            size="lg"
+            after={<ArrowRightIcon />}
+            onClick={() => {
+              if (droplet.lessons) {
+                router.push(`/d/${droplet.slug}/${droplet.lessons[0].slug}`);
+              }
+            }}
+            className="dark:bg-slate-300 dark:text-black dark:hover:bg-slate-400"
+          >
+            Continue
+          </Button>
+          <Button size="lg" onClick={unenroll} variant="secondary">
+            Unenroll
+          </Button>
+        </>
+      ) : (
+        <Button
+          size="lg"
+          after={<ArrowRightIcon />}
+          onClick={enroll}
+          className="dark:bg-slate-300 dark:text-black dark:hover:bg-slate-400"
+        >
+          Enroll and Continue
+        </Button>
+      )}
+    </div>
   );
 }

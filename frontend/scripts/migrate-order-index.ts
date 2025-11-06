@@ -86,10 +86,6 @@ async function migrateOrderIndex() {
     let totalPages = 1;
     let updatedCount = 0;
 
-    console.log(
-      "Starting migration of orderIndex from droplet-lessons to lessons...",
-    );
-
     while (page <= totalPages) {
       // Fetch all droplet-lessons with their orderIndex and related lesson data
       const dropletLessonsResponse = (await fetchAPI("/droplet-lessons", {
@@ -105,15 +101,10 @@ async function migrateOrderIndex() {
       const dropletLessons = dropletLessonsResponse.data;
       totalPages = dropletLessonsResponse.meta.pagination.pageCount;
 
-      console.log(
-        `Processing page ${page} of ${totalPages} (${dropletLessons.length} droplet-lessons)`,
-      );
-
       for (const dropletLesson of dropletLessons) {
         const { orderIndex, lesson } = dropletLesson.attributes;
         const lessonId = lesson.data.id;
         const lessonName = lesson.data.attributes.name;
-        const currentOrderIndex = lesson.data.attributes.orderIndex;
 
         try {
           // Update the lesson's orderIndex to match the droplet-lesson's orderIndex
@@ -126,9 +117,6 @@ async function migrateOrderIndex() {
             }),
           });
 
-          console.log(
-            `Updated Lesson "${lessonName}" (ID: ${lessonId}) orderIndex: ${currentOrderIndex} → ${orderIndex}`,
-          );
           updatedCount++;
         } catch (updateError) {
           console.error(
@@ -140,8 +128,6 @@ async function migrateOrderIndex() {
 
       page++;
     }
-
-    console.log(`\n Migration completed! Updated ${updatedCount} lessons.`);
   } catch (error) {
     console.error("Migration failed:", error);
   }

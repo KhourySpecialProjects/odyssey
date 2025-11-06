@@ -1,9 +1,12 @@
 "use client";
 import { useCallback } from "react";
-import { Block } from "./add-block";
-import { AddBlock } from "./add-block";
+import { Block } from "@/types";
 import BlockTile from "./block_tile";
-
+import {
+  Message,
+  MessageDescription,
+  MessageHeader,
+} from "@/components/message";
 export function BlockListClient({
   blocks,
   onAddBlock,
@@ -17,15 +20,18 @@ export function BlockListClient({
   deleteBlock: (index: number) => () => void;
   onMoveBlock: (fromIndex: number, toIndex: number) => void;
 }) {
-  const addBlock = useCallback(
-    (index: number) => {
-      return (block: Block) => {
-        onAddBlock(index, block);
-      };
-    },
-    [onAddBlock],
-  );
-
+  if (blocks.length === 0) {
+    return (
+      <>
+        <Message className="mb-8 rounded-md dark:border-slate-500 dark:bg-slate-800">
+          <MessageHeader subtitle="" title="No Blocks" />
+          <MessageDescription>
+            Use the add button to get started!
+          </MessageDescription>
+        </Message>
+      </>
+    );
+  }
   const moveBlockUp = useCallback(
     (index: number) => {
       if (index === 0) return;
@@ -50,7 +56,6 @@ export function BlockListClient({
             key={block._clientId || block.id || `fallback-${index}`}
             className="flex w-full flex-col items-center justify-center"
           >
-            <AddBlock add={addBlock(index)} />
             <BlockTile
               block={block}
               index={index}
@@ -62,7 +67,6 @@ export function BlockListClient({
             />
           </div>
         ))}
-        <AddBlock add={addBlock(blocks.length + 1)} />
       </div>
     </>
   );

@@ -89,7 +89,6 @@ export function FriendSuggestionsBlock({
           <ProfileBlock
             otherUser={suggUser}
             user={curUser}
-            isFeed={false}
             isOpen={open}
             setIsOpen={setOpen}
           />

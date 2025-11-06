@@ -13,7 +13,6 @@ describe("NotesPdfButton", () => {
     tags: [{ id: 1, name: "React" }] as Tag[],
     learningObjectives: [],
     status: "published" as DropletStatus,
-    droplet_lessons: [],
   };
   const mockProps = {
     pdfBytes: new Uint8Array([1, 2, 3]),

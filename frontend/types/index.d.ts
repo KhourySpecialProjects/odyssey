@@ -113,26 +113,15 @@ export type GeneralConfig = {
 };
 
 export type Block =
-  | {
-      __component: "droplets.generic";
-      content: string;
-    }
-  | {
-      __component: "droplets.expandable";
-      title: string;
-      content: string;
-    }
+  | { __component: "droplets.generic"; content: string }
+  | { __component: "droplets.expandable"; title: string; content: string }
   | {
       __component: "droplets.callout";
       content: { type: string; children: { type: string; text: string }[] }[];
       color: string;
-      type: "info" | "warning";
-      iconEnabled?: boolean;
+      type: string;
     }
-  | {
-      __component: "droplets.video";
-      url: string;
-    }
+  | { __component: "droplets.video"; url: string }
   | {
       __component: "droplets.quiz";
       questions: {
@@ -144,7 +133,9 @@ export type Block =
   | {
       __component: "droplets.open-ended-quiz";
       questions: { id: number; content: string; correctAnswer: string }[];
-    };
+    }
+  | QuizBlock
+  | OpenEndedQuizBlock;
 
 export type Lesson = {
   id: number;
@@ -153,8 +144,8 @@ export type Lesson = {
   type?: "general" | "setup" | "activity" | "caseStudy";
   blocks: any[];
   droplets: Droplet[];
-  droplet_lessons: DropletLesson[];
   notes: Note[];
+  orderIndex: number;
 };
 
 export type Tag = {
@@ -175,12 +166,6 @@ export type Resource = {
   url: string;
 };
 
-interface DropletLesson {
-  id: number;
-  orderIndex: number;
-  lesson: Lesson;
-}
-
 export type Droplet = {
   id: number;
   slug: string;
@@ -197,7 +182,6 @@ export type Droplet = {
   postrequisites?: Droplet[];
   isHidden: boolean;
   status: DropletStatus;
-  droplet_lessons: DropletLesson[];
   authorized_users?: AuthorizedUser[];
   isArchived?: boolean;
   inReview?: boolean;

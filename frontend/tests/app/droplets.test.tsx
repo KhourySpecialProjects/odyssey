@@ -8,17 +8,10 @@ import confetti from "canvas-confetti";
 //codebase to help set up a production build
 //Affected files: confetti.tsx, app/(droplets)/d/[slug]/recap/page.tsx, droplets.test.skip.tsx
 
-jest.mock("@/components/droplets/lessons/droplet-lesson-wrapper", () => ({
-  DropletLessonWrapper: jest.fn(() => (
-    <div>Mock DropletLessonWrapper Component</div>
-  )),
-}));
-
 jest.mock("@/lib/requests/droplet", () => ({
   getDropletBySlug: jest.fn().mockResolvedValue({
     id: 1,
     slug: "test-droplet",
-    droplet_lessons: [],
   }),
 }));
 

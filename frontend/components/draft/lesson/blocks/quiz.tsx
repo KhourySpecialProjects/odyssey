@@ -28,7 +28,12 @@ export function QuizEditor({
 
   const addQuestion = () => {
     let question = null;
-    if (questions[0].answerOptions[0].content === "True") {
+    // Check if this is a True/False quiz
+    const isTrueFalse =
+      questions.length > 0 &&
+      questions[0]?.answerOptions?.[0]?.content === "True";
+
+    if (isTrueFalse) {
       const newQuestion: QuizQuestion = {
         id: Math.random(),
         content: "",
@@ -85,13 +90,16 @@ export function QuizEditor({
     });
   };
 
+  // Determine quiz type safely
+  const isTrueFalse =
+    questions.length > 0 &&
+    questions[0]?.answerOptions?.[0]?.content === "True";
+
   return (
     <div className="w-full max-w-2xl pb-4">
       <div className="mb-4 flex w-full flex-row items-center justify-between p-4">
         <h2 className="text-lg">
-          {questions[0].answerOptions[0].content === "True"
-            ? "True/False Quiz"
-            : "Multiple Choice Quiz"}
+          {isTrueFalse ? "True/False Quiz" : "Multiple Choice Quiz"}
         </h2>
         <Trash2Icon
           className="cursor-pointer text-red-600 hover:text-red-700"
@@ -99,7 +107,6 @@ export function QuizEditor({
           data-testid="delete-block"
         />
       </div>
-
       <div className="space-y-6">
         {questions.map((question, index) => (
           <QuizQuestionEditor
@@ -112,7 +119,6 @@ export function QuizEditor({
           />
         ))}
       </div>
-
       <Button onClick={() => addQuestion()} variant="outline" className="mt-4">
         <PlusIcon className="mr-2 h-4 w-4" />
         Add Question

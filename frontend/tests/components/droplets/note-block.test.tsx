@@ -31,7 +31,6 @@ describe("NoteBlock", () => {
       slug: "test-lesson",
       blocks: [],
       droplets: [],
-      droplet_lessons: [],
       notes: [],
     },
     enrollment: {
@@ -62,7 +61,6 @@ describe("NoteBlock", () => {
       slug: "test-lesson",
       blocks: [],
       droplets: [],
-      droplet_lessons: [],
       notes: [],
     },
     enrollment: {

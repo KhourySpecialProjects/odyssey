@@ -1,7 +1,6 @@
 import { render, screen, fireEvent, within } from "@testing-library/react";
 import { EnrolledDropletsGridClient } from "@/components/dashboard/enrolled-droplets-grid-client";
 import {
-  DropletLesson,
   DropletStatus,
   DropletType,
   FocusArea,
@@ -34,7 +33,6 @@ describe("EnrolledDropletsGridClient", () => {
     tags: [{ id: 1, name: "React" }] as Tag[],
     learningObjectives: [] as LearningObjective[],
     status: "published" as DropletStatus,
-    droplet_lessons: [] as DropletLesson[],
     focusArea: "personal" as FocusArea,
     isHidden: false,
   }));

@@ -24,7 +24,6 @@ describe("EnrollButton", () => {
     name: "Test Droplet",
     slug: "test-droplet",
     lessons: [{ slug: "lesson-1" }],
-    droplet_lessons: [{ lesson: { slug: "lesson-1" } }],
   };
 
   const mockRouter = { push: jest.fn() };

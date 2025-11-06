@@ -1,7 +1,6 @@
 import { render, screen, act } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import {
-  DropletLesson,
   DropletStatus,
   DropletType,
   FocusArea,
@@ -103,7 +102,6 @@ describe("GroupDashboard", () => {
     tags: [{ id: 1, name: "React" }] as Tag[],
     learningObjectives: [] as LearningObjective[],
     status: "published" as DropletStatus,
-    droplet_lessons: [] as DropletLesson[],
     focusArea: "personal" as FocusArea,
     isHidden: false,
   }));
