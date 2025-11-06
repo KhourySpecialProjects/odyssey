@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { CalloutIcon } from "@/components/ui/callout-icons";
-import { Block } from "./add-block";
+import { Block } from "@/types";
 import {
   Type,
   ChevronDown,
