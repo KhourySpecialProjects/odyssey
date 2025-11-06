@@ -1,6 +1,6 @@
 "use client";
-import { Block } from "./add-block";
-import { BlockListClient } from "./block_list_client"; // renamed
+import { Block } from "@/types";
+import { BlockListClient } from "./block_list_client";
 
 interface BlockListProps {
   blocks: Block[];

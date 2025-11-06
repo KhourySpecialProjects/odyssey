@@ -1,5 +1,5 @@
 import { OpenEndedQuizBlock, QuizBlock } from "./lesson-renderer";
-import { Block } from "./add-block";
+import { Block } from "@/types";
 import { useCallback } from "react";
 import { OpenEndedQuizQuestion, QuizQuestion } from "@/types";
 import { GenericEditor } from "./blocks/generic";
