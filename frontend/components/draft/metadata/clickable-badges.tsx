@@ -203,7 +203,7 @@ export function ClickableBadges({
           onClick={() => setActivePopup("focusArea")}
           disabled={isPending}
         >
-          <Badge variant="outline" className="bg-gray-200 dark:bg-black">
+          <Badge variant="outline" className="bg-purple-200 dark:bg-purple-600">
             {uppercaseFirstChar(localFocusArea)}
           </Badge>
         </button>
@@ -245,7 +245,7 @@ export function ClickableBadges({
 
       <div className="relative">
         <button onClick={() => setActivePopup("type")} disabled={isPending}>
-          <Badge variant="outline" className="bg-gray-200 dark:bg-black">
+          <Badge variant="outline" className="bg-blue-200 dark:bg-blue-900">
             {uppercaseFirstChar(localType)}
           </Badge>
         </button>
