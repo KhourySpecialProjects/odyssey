@@ -5,9 +5,10 @@ import { Badge } from "@/components/ui/badge";
 import { uppercaseFirstChar } from "@/lib/utils";
 import { X, Plus } from "lucide-react";
 import { toast } from "sonner";
-import { updateDroplet } from "@/lib/requests/droplet";
+import { updateDroplet, createNewTag } from "@/lib/requests/droplet";
 import { useRouter } from "next/navigation";
 import type { Tag } from "@/types";
+import { Button } from "@/components/ui/button";
 
 type ClickableBadgesProps = {
   focusArea: string;
@@ -27,7 +28,7 @@ export function ClickableBadges({
   dropletId,
   tags: initialTags,
   selectedTags: initialSelectedTags,
-  availableTags,
+  availableTags: initialAvailableTags,
 }: ClickableBadgesProps) {
   const [activePopup, setActivePopup] = useState<
     "focusArea" | "type" | "addTag" | null
@@ -36,8 +37,11 @@ export function ClickableBadges({
   const [localFocusArea, setLocalFocusArea] = useState(focusArea);
   const [localType, setLocalType] = useState(type);
   const [selectedTags, setSelectedTags] = useState(initialSelectedTags);
+  const [availableTags, setAvailableTags] = useState(initialAvailableTags);
   const [hoveredTagId, setHoveredTagId] = useState<number | null>(null);
   const [tagSearchQuery, setTagSearchQuery] = useState("");
+  const [isCreatingTag, setIsCreatingTag] = useState(false);
+  const [newTagName, setNewTagName] = useState("");
   const router = useRouter();
 
   const handleSelect = async (variant: "focusArea" | "type", value: string) => {
@@ -130,6 +134,55 @@ export function ClickableBadges({
       } catch (error) {
         console.error("Error adding tag:", error);
         toast.error("Failed to add tag");
+        setSelectedTags(selectedTags);
+      }
+    });
+  };
+
+  const handleCreateAndAddTag = async () => {
+    if (!newTagName.trim()) {
+      toast.error("Please enter a tag name");
+      return;
+    }
+
+    startTransition(async () => {
+      try {
+        const result = await createNewTag(newTagName.trim());
+
+        if (result.success && result.data) {
+          const newTag = result.data;
+
+          // Add to available tags
+          setAvailableTags([...availableTags, newTag]);
+
+          // Add to selected tags and update droplet
+          const updatedTags = [...selectedTags, newTag];
+          setSelectedTags(updatedTags);
+
+          const updateResult = await updateDroplet(dropletId, {
+            tagIds: updatedTags.map((t) => t.id),
+          });
+
+          if (updateResult.ok) {
+            toast.success("Tag created and added successfully");
+            setNewTagName("");
+            setIsCreatingTag(false);
+            setActivePopup(null);
+            setTagSearchQuery("");
+            router.refresh();
+          } else {
+            // Revert on update failure
+            setAvailableTags(availableTags);
+            setSelectedTags(selectedTags);
+            toast.error("Failed to add tag to droplet");
+          }
+        } else {
+          toast.error(result.error || `"${newTagName}" tag already exists`);
+        }
+      } catch (error) {
+        console.error("Failed to create new tag:", error);
+        toast.error("Failed to create tag");
+        setAvailableTags(availableTags);
         setSelectedTags(selectedTags);
       }
     });
@@ -268,53 +321,110 @@ export function ClickableBadges({
               onClick={() => {
                 setActivePopup(null);
                 setTagSearchQuery("");
+                setIsCreatingTag(false);
+                setNewTagName("");
               }}
             />
 
             <div className="absolute z-50 mt-2 w-64 rounded-lg border border-slate-200 bg-white shadow-lg dark:border-slate-700 dark:bg-slate-800">
               <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3 dark:border-slate-700">
                 <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
-                  Add Tag
+                  {isCreatingTag ? "Create New Tag" : "Add Tag"}
                 </h3>
                 <button
                   onClick={() => {
                     setActivePopup(null);
                     setTagSearchQuery("");
+                    setIsCreatingTag(false);
+                    setNewTagName("");
                   }}
                   className="text-slate-400 hover:text-slate-900 dark:hover:text-white"
                 >
                   <X className="h-4 w-4" />
                 </button>
               </div>
-              <div className="p-2">
-                <input
-                  type="text"
-                  placeholder="Search tags..."
-                  value={tagSearchQuery}
-                  onChange={(e) => setTagSearchQuery(e.target.value)}
-                  className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:border-slate-500 focus:ring-1 focus:ring-slate-500 focus:outline-none dark:border-slate-600 dark:bg-slate-700 dark:text-white dark:placeholder-slate-400 dark:focus:border-slate-400 dark:focus:ring-slate-400"
-                  autoFocus
-                />
-              </div>
-              <div className="max-h-60 overflow-y-auto p-2">
-                {filteredTags.length > 0 ? (
-                  filteredTags.map((tag) => (
-                    <button
-                      key={tag.id}
-                      onClick={() => handleAddTag(tag.id)}
-                      className="w-full rounded px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700"
+
+              {isCreatingTag ? (
+                <div className="space-y-3 p-4">
+                  <input
+                    type="text"
+                    placeholder="Enter tag name..."
+                    value={newTagName}
+                    onChange={(e) => setNewTagName(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        handleCreateAndAddTag();
+                      }
+                    }}
+                    className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:border-slate-500 focus:ring-1 focus:ring-slate-500 focus:outline-none dark:border-slate-600 dark:bg-slate-700 dark:text-white dark:placeholder-slate-400 dark:focus:border-slate-400 dark:focus:ring-slate-400"
+                    autoFocus
+                    disabled={isPending}
+                  />
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={handleCreateAndAddTag}
+                      disabled={isPending || !newTagName.trim()}
+                      className="flex-1"
+                      size="sm"
                     >
-                      {tag.name}
+                      Create & Add
+                    </Button>
+                    <Button
+                      onClick={() => {
+                        setIsCreatingTag(false);
+                        setNewTagName("");
+                      }}
+                      disabled={isPending}
+                      variant="outline"
+                      className="flex-1"
+                      size="sm"
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <div className="p-2">
+                    <input
+                      type="text"
+                      placeholder="Search tags..."
+                      value={tagSearchQuery}
+                      onChange={(e) => setTagSearchQuery(e.target.value)}
+                      className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:border-slate-500 focus:ring-1 focus:ring-slate-500 focus:outline-none dark:border-slate-600 dark:bg-slate-700 dark:text-white dark:placeholder-slate-400 dark:focus:border-slate-400 dark:focus:ring-slate-400"
+                      autoFocus
+                    />
+                  </div>
+                  <div className="max-h-60 overflow-y-auto p-2">
+                    {filteredTags.length > 0 ? (
+                      filteredTags.map((tag) => (
+                        <button
+                          key={tag.id}
+                          onClick={() => handleAddTag(tag.id)}
+                          className="w-full rounded px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700"
+                        >
+                          {tag.name}
+                        </button>
+                      ))
+                    ) : (
+                      <p className="px-3 py-2 text-sm text-slate-500 dark:text-slate-400">
+                        {tagSearchQuery
+                          ? "No tags found"
+                          : "No more tags available"}
+                      </p>
+                    )}
+                  </div>
+                  <div className="border-t border-slate-200 p-2 dark:border-slate-700">
+                    <button
+                      onClick={() => setIsCreatingTag(true)}
+                      className="flex w-full items-center gap-2 rounded px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700"
+                    >
+                      <Plus className="h-4 w-4" />
+                      Create New Tag
                     </button>
-                  ))
-                ) : (
-                  <p className="px-3 py-2 text-sm text-slate-500 dark:text-slate-400">
-                    {tagSearchQuery
-                      ? "No tags found"
-                      : "No more tags available"}
-                  </p>
-                )}
-              </div>
+                  </div>
+                </>
+              )}
             </div>
           </>
         )}

@@ -396,9 +396,20 @@ export async function createNewTag(tag: string) {
       return { success: false, error: "Failed to add new tag" };
     }
 
+    const result = await response.json();
+    const createdTag = result.data;
+
     revalidatePath("/new/droplet");
     revalidatePath("/draft/d/[slug]/[lessonSlug]", "page");
-    return { success: true };
+    return {
+      success: true,
+      data: {
+        id: createdTag.id,
+        name: createdTag.attributes.name,
+        slug: createdTag.attributes.slug,
+        droplets: [],
+      },
+    };
   } catch (error) {
     console.error("Error adding tag:", error);
     return { success: false, error: "Failed to process request" };
