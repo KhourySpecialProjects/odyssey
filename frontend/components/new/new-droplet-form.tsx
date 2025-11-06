@@ -64,7 +64,9 @@ export function CreateDropletForm({
   const [submissionState, setSubmissionState] = useState(
     initialSubmissionState,
   );
-  const [existingDropletSlug, setExistingDropletSlug] = useState<string | null>(null);
+  const [existingDropletSlug, setExistingDropletSlug] = useState<string | null>(
+    null,
+  );
 
   //resets error message when changes made to fields
   useEffect(() => {
@@ -81,7 +83,7 @@ export function CreateDropletForm({
   async function addDroplet() {
     // Normalize the name for comparison (trim and convert to lowercase for checking)
     const normalizedName = dropletName.trim();
-    
+
     const data = {
       name: normalizedName,
       focusArea: focusAreaValue as FocusArea,
@@ -129,12 +131,13 @@ export function CreateDropletForm({
             const existingDroplet = existingDroplets[0];
             const isDraft = existingDroplet.status === "draft";
             const slug = existingDroplet.slug;
-            
+
             if (isDraft) {
               // Get the first author's name
               const firstAuthor = existingDroplet.authorized_users?.[0];
-              const authorName = firstAuthor?.name || firstAuthor?.email || "the author";
-              
+              const authorName =
+                firstAuthor?.name || firstAuthor?.email || "the author";
+
               setSubmissionState({
                 error: `There is a droplet in progress with the same title. Contact ${authorName} to become a co-author of "${dropletName.trim()}".`,
                 existingDropletName: dropletName.trim(),
@@ -310,10 +313,10 @@ export function CreateDropletForm({
 
         <SubmitButton />
       </div>
-      
+
       {submissionState.error && (
         <div className="w-full rounded-md border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-950">
-          {typeof submissionState.error === 'string' ? (
+          {typeof submissionState.error === "string" ? (
             <p className="text-sm font-medium text-red-800 dark:text-red-200">
               {submissionState.error}
             </p>

@@ -5,7 +5,6 @@ import { useDropletUpdate } from "./hooks/useDropletUpdate";
 import { DropletNameInput } from "@/components/ui/tiptap/droplet-name-input";
 import { getDroplets } from "@/lib/requests/droplet";
 
-
 export function DropletName({
   startingName,
   dropletId,
@@ -15,11 +14,6 @@ export function DropletName({
 }) {
   const [name, setName] = useState(startingName);
   const { error, handleChange } = useDropletUpdate(dropletId);
-  const [errorMsg, setErrorMsg] = useState("");
-
-  async function handleError() {
-    
-  }
 
   const generateSlug = (name: string): string => {
     return name
@@ -58,8 +52,7 @@ export function DropletName({
         updateContent={updateName}
         initialContent={`<h1>${name}</h1>`}
       />
-      {error && <div className="mt-2 text-red-500">{error
-      }</div>}
+      {error && <div className="mt-2 text-red-500">{error}</div>}
     </>
   );
 }

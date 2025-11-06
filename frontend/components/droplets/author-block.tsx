@@ -27,12 +27,12 @@ export function AuthorCard({ inDraft, onRemove, author }: AuthorCardProps) {
     onRemove?.();
   };
 
-   return (
+  return (
     <li
       onClick={inDraft ? undefined : handleClick}
       className={`flex items-center gap-4 p-4 transition-colors ${
-        inDraft 
-          ? "cursor-default" 
+        inDraft
+          ? "cursor-default"
           : "cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700"
       }`}
     >
@@ -41,14 +41,14 @@ export function AuthorCard({ inDraft, onRemove, author }: AuthorCardProps) {
           variant="ghost"
           size="icon"
           onClick={handleRemove}
-          className="h-8 w-8 shrink-0 text-slate-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950 dark:hover:text-red-400"
+          className="h-8 w-8 shrink-0 text-slate-500 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950 dark:hover:text-red-400"
           aria-label="Remove author"
         >
           <X className="h-4 w-4" />
         </Button>
       )}
 
-      <Avatar variant="round" className="border border-sky-800 shrink-0">
+      <Avatar variant="round" className="shrink-0 border border-sky-800">
         <AvatarImage src={author?.profilePhoto || undefined} />
         <AvatarFallback>
           {author?.firstName && author?.lastName ? (
@@ -59,7 +59,7 @@ export function AuthorCard({ inDraft, onRemove, author }: AuthorCardProps) {
         </AvatarFallback>
       </Avatar>
 
-      <div className="flex flex-col gap-1 flex-1 min-w-0">
+      <div className="flex min-w-0 flex-1 flex-col gap-1">
         <span className="leading-relaxed font-bold">
           {author.firstName + " " + author.lastName}
         </span>
