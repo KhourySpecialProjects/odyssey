@@ -19,7 +19,7 @@ export function useDropletUpdate(dropletId: number) {
         router.replace(`/draft/d/${response.data.attributes.slug}`);
       }
     } else {
-      setError("Error updating droplet");
+      setError("A droplet with a similar title is in progress or already exists.");
     }
   };
 

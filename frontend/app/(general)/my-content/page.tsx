@@ -36,7 +36,7 @@ export default async function CreateRoute() {
           My Content
         </h1>
         <p className="light:text-slate-600 mt-4 text-lg leading-normal text-balance dark:text-slate-300">
-          Create a new Droplet or Playlist draft!
+          Create a new Droplet or Playlist draft
         </p>
       </div>
 
