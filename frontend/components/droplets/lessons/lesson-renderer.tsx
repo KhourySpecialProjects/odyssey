@@ -331,6 +331,10 @@ export function LessonRenderer({
               key={i}
               block={b}
               lessonId={lesson.id}
+              dropletId={droplet.id}
+              dropletName={(droplet as any).name} // Add this - you may need to update the Droplet type
+              lessonName={lesson.name}
+              userId={authUser?.id}
               highlights={highlights}
               onHighlight={handleHighlight}
               onDeleteHighlight={handleDeleteHighlight}
@@ -369,6 +373,10 @@ export function LessonRenderer({
 function LessonBlockRenderer({
   block,
   lessonId,
+  dropletId,
+  dropletName,
+  lessonName,
+  userId,
   highlights,
   onHighlight,
   onDeleteHighlight,
@@ -381,6 +389,10 @@ function LessonBlockRenderer({
 }: {
   block: any;
   lessonId: number;
+  dropletId: number;
+  dropletName?: string;
+  lessonName: string;
+  userId?: number;
   highlights: Highlight[];
   onHighlight: (highlight: Highlight, isWithNote?: boolean) => void;
   onDeleteHighlight: (id: number) => void;
@@ -424,10 +436,28 @@ function LessonBlockRenderer({
       );
 
     case "droplets.quiz":
-      return <QuizBlock data={block} lessonId={lessonId} />;
+      return (
+        <QuizBlock
+          data={block}
+          lessonId={lessonId}
+          dropletId={dropletId}
+          dropletName={dropletName}
+          lessonName={lessonName}
+          userId={userId}
+        />
+      );
 
     case "droplets.open-ended-quiz":
-      return <OpenEndedQuizBlock data={block} />;
+      return (
+        <OpenEndedQuizBlock
+          data={block}
+          lessonId={lessonId}
+          dropletId={dropletId}
+          dropletName={dropletName}
+          lessonName={lessonName}
+          userId={userId}
+        />
+      );
 
     case "droplets.callout":
       return (

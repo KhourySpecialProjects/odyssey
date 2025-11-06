@@ -89,12 +89,6 @@ export function AuthorizedUserBlock({
       }
 
       const activityData = await response.json();
-      console.log("Received activities:", activityData.length);
-      console.log("First 3 activities:", activityData.slice(0, 3));
-      console.log(
-        "Activity types:",
-        activityData.map((a: any) => a.type),
-      );
       setActivities(activityData);
     } catch (error) {
       console.error("Error loading activity:", error);
@@ -432,6 +426,8 @@ export function AuthorizedUserBlock({
                   }
 
                   // Determine completion types
+                  const isQuizCorrect =
+                    activity.description.includes("Quiz correct");
                   const isLessonCompletion =
                     activity.type === "completion" &&
                     (activity.description.includes("lesson") ||
@@ -447,7 +443,9 @@ export function AuthorizedUserBlock({
                           ? "border-green-300 bg-green-50 hover:bg-green-100 dark:border-green-700 dark:bg-green-950 dark:hover:bg-green-900"
                           : isLessonCompletion
                             ? "border-blue-300 bg-blue-50 hover:bg-blue-100 dark:border-blue-700 dark:bg-blue-950 dark:hover:bg-blue-900"
-                            : "border-slate-200 hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800"
+                            : isQuizCorrect
+                              ? "border-purple-300 bg-purple-50 hover:bg-purple-100 dark:border-purple-700 dark:bg-purple-950 dark:hover:bg-purple-900"
+                              : "border-slate-200 hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800"
                       }`}
                     >
                       <div className="w-32 flex-shrink-0 text-sm text-slate-500">
@@ -460,7 +458,9 @@ export function AuthorizedUserBlock({
                               ? "text-green-700 dark:text-green-400"
                               : isLessonCompletion
                                 ? "text-blue-700 dark:text-blue-400"
-                                : "text-slate-900 dark:text-slate-100"
+                                : isQuizCorrect
+                                  ? "text-purple-700 dark:text-purple-400"
+                                  : "text-slate-900 dark:text-slate-100"
                           }`}
                         >
                           {isCourseCompletion && (
@@ -469,6 +469,7 @@ export function AuthorizedUserBlock({
                           {isLessonCompletion && (
                             <span className="mr-2">✓</span>
                           )}
+                          {isQuizCorrect && <span className="mr-2">✓</span>}
                           {activity.description}
                         </div>
                         {pathname && (

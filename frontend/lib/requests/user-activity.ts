@@ -12,8 +12,6 @@ interface UserActivity {
  * Converts PostHog events to our activity format
  */
 function convertPostHogEvents(events: any[]): UserActivity[] {
-  console.log(`Converting ${events.length} PostHog events`);
-
   const filtered = events.filter((event: any) => {
     const eventName = event.event.toLowerCase();
     const shouldKeep =
@@ -24,23 +22,12 @@ function convertPostHogEvents(events: any[]): UserActivity[] {
       eventName !== "$set" &&
       eventName !== "set";
 
-    if (!shouldKeep) {
-      console.log(`Filtering out event: ${event.event}`);
-    }
     return shouldKeep;
   });
 
   return filtered.map((event: any) => {
     const eventType = mapPostHogEventType(event.event);
     const description = formatPostHogDescription(event);
-
-    if (!event.event.startsWith("$")) {
-      console.log(`Custom event found: ${event.event}`, {
-        type: eventType,
-        description: description,
-        properties: event.properties,
-      });
-    }
 
     return {
       timestamp: event.timestamp,
@@ -122,6 +109,10 @@ function mapPostHogEventType(eventName: string): UserActivity["type"] {
   }
 
   if (lower.includes("continue")) {
+    return "page_view";
+  }
+
+  if (lower.includes("quiz")) {
     return "page_view";
   }
 
@@ -224,6 +215,39 @@ function formatPostHogDescription(event: any): string {
     return "Viewed page";
   }
 
+  if (eventName.toLowerCase().includes("quiz_answered_correctly")) {
+    const questionTitle = properties.question_title || "";
+    const lessonName = properties.lesson_name;
+    const dropletName = properties.droplet_name;
+    const quizType = properties.quiz_type || "";
+
+    // Truncate question title if too long
+    const truncatedTitle =
+      questionTitle.length > 50
+        ? questionTitle.substring(0, 50) + "..."
+        : questionTitle;
+
+    if (lessonName && dropletName) {
+      return `Quiz correct: "${truncatedTitle}" in ${lessonName} (${dropletName})`;
+    }
+    if (lessonName) {
+      return `Quiz correct: "${truncatedTitle}" in ${lessonName}`;
+    }
+    return "Answered quiz question correctly";
+  }
+
+  if (
+    eventName.toLowerCase().includes("quiz_answer_submitted") &&
+    properties.is_correct === false
+  ) {
+    const questionTitle = properties.question_title || "";
+    const truncatedTitle =
+      questionTitle.length > 50
+        ? questionTitle.substring(0, 50) + "..."
+        : questionTitle;
+
+    return `Quiz attempted: "${truncatedTitle}"`;
+  }
   if (eventName.toLowerCase().includes("lesson_completed")) {
     const lessonName = properties.lesson_name || properties.lessonName;
     const dropletId = properties.droplet_id;
@@ -417,9 +441,6 @@ function deduplicateActivities(activities: UserActivity[]): UserActivity[] {
 export async function getUserActivity(userId: number): Promise<UserActivity[]> {
   try {
     const posthogActivities = await getPostHogActivity(userId);
-    console.log(
-      `Fetched ${posthogActivities.length} PostHog activities for user ${userId}`,
-    );
 
     let enrollments: any[] = [];
     try {
@@ -449,18 +470,12 @@ export async function getUserActivity(userId: number): Promise<UserActivity[]> {
             },
           },
         });
-        console.log(
-          `Fetched ${enrollments.length} enrollments for user ${userId}`,
-        );
       }
     } catch (error) {
       console.log("Enrollment data not available:", error);
     }
 
     const enrollmentActivities = enrollmentsToActivities(enrollments);
-    console.log(
-      `Converted to ${enrollmentActivities.length} enrollment activities`,
-    );
 
     const allActivities = [...posthogActivities, ...enrollmentActivities];
     const uniqueActivities = deduplicateActivities(allActivities);
@@ -470,7 +485,6 @@ export async function getUserActivity(userId: number): Promise<UserActivity[]> {
         new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
     );
 
-    console.log(`Returning ${uniqueActivities.length} total activities`);
     return uniqueActivities;
   } catch (error) {
     console.error("Error fetching user activity:", error);
