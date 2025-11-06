@@ -1,7 +1,6 @@
 "use client";
 
-import { Block } from "../draft/lesson/add-block";
-
+import { Block } from "@/types";
 interface DropletProps {
   droplet: {
     name: string;

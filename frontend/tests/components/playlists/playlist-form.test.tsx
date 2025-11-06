@@ -1059,7 +1059,10 @@ describe("PlaylistForm", () => {
 
       const longName = "A".repeat(500);
       const nameInput = screen.getByPlaceholderText("Enter playlist name");
-      await user.type(nameInput, longName);
+
+      // Use paste instead of type for long strings
+      await user.click(nameInput);
+      await user.paste(longName);
 
       expect(nameInput).toHaveValue(longName);
     });

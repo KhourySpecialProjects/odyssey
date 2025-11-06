@@ -26,7 +26,7 @@ import {
   getHighlights,
   getHighlightsForLesson,
 } from "@/lib/requests/highlights";
-import { Block } from "@/components/draft/lesson/add-block";
+import { Block } from "@/types";
 import { GenericBlock } from "@/components/draft/lesson/blocks/generic";
 import { markLessonAsComplete } from "@/lib/requests/lesson";
 import posthog from "posthog-js";
