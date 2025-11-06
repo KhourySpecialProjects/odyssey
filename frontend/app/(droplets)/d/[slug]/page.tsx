@@ -1,7 +1,6 @@
 import { DropletTile } from "@/components/droplets/droplet-tile";
 import { EnrollButton } from "@/components/droplets/enroll-button";
 import { GradientBackground } from "@/components/gradient-bg";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { getDropletBySlug } from "@/lib/requests/droplet";
 import { uppercaseFirstChar } from "@/lib/utils";
@@ -11,7 +10,6 @@ import {
   FilePieChartIcon,
   GoalIcon,
   HammerIcon,
-  User2Icon,
 } from "lucide-react";
 import { Metadata } from "next";
 import { notFound } from "next/navigation";

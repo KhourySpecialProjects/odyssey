@@ -5,13 +5,7 @@ import { useDropzone } from "react-dropzone";
 import { Button } from "@/components/ui/button";
 import { uploadImage } from "@/lib/actions";
 import { AuthorizedUser } from "@/types";
-import {
-  Pencil,
-  User2Icon,
-  Activity,
-  ChevronDown,
-  ChevronUp,
-} from "lucide-react";
+import { Pencil, User2Icon, Activity } from "lucide-react";
 import { useFormStatus } from "react-dom";
 import { isAuthorizedUserAdmin } from "@/lib/utils";
 import {
