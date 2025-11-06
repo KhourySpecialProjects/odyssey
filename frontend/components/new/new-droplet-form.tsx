@@ -34,8 +34,10 @@ import { getDroplets } from "@/lib/requests/droplet";
 import Link from "next/link";
 
 type SubmissionState = {
-  error: string | null;
+  error: string | React.ReactNode | null;
   existingDropletName?: string;
+  existingDropletAuthor?: string;
+  isDraft?: boolean;
 };
 
 const initialSubmissionState: SubmissionState = {
@@ -50,9 +52,9 @@ export function CreateDropletForm({
   author: User;
 }) {
   const router = useRouter();
-  const [dropletName, setDropletName] = useState<string | null>(null);
-  const [focusAreaValue, setFocusAreaValue] = useState<string | null>(null);
-  const [typeValue, setTypeValue] = useState<string | null>(null);
+  const [dropletName, setDropletName] = useState<string>("");
+  const [focusAreaValue, setFocusAreaValue] = useState<string>("");
+  const [typeValue, setTypeValue] = useState<string>("");
   const initArr1: string[] = [""];
   const [learningObjectives, setLearningObjectives] = useState(initArr1);
 
@@ -62,9 +64,7 @@ export function CreateDropletForm({
   const [submissionState, setSubmissionState] = useState(
     initialSubmissionState,
   );
-  const [existingDropletSlug, setExistingDropletSlug] = useState<string | null>(
-    null,
-  );
+  const [existingDropletSlug, setExistingDropletSlug] = useState<string | null>(null);
 
   //resets error message when changes made to fields
   useEffect(() => {
@@ -80,12 +80,12 @@ export function CreateDropletForm({
 
   async function addDroplet() {
     const data = {
-      name: dropletName as string,
+      name: dropletName.trim(),
       focusArea: focusAreaValue as FocusArea,
       type: typeValue as DropletType,
       tagIds: selectedTags.map((tag) => tag.id),
       learningObjectives: learningObjectives.filter(
-        (objective) => objective !== "",
+        (objective) => objective.trim() !== "",
       ),
     };
 
@@ -93,7 +93,6 @@ export function CreateDropletForm({
       !data.name ||
       !data.focusArea ||
       !data.type ||
-      !data.learningObjectives ||
       data.tagIds.length === 0 ||
       data.learningObjectives.length === 0
     ) {
@@ -110,16 +109,57 @@ export function CreateDropletForm({
     } else {
       // Check if it's a duplicate name error
       if (response.error?.includes("This attribute must be unique (name)")) {
-        // Fetch the existing droplet to get its slug
+        // Fetch the existing droplet to get its slug and status
         try {
           const existingDroplets = await getDroplets({
-            filters: { name: dropletName as string },
-            fields: ["name", "slug"],
+            filters: { name: dropletName.trim().toLowerCase() },
+            fields: ["name", "slug", "status"],
+            populate: {
+              authorized_users: {
+                fields: ["name", "email"],
+              },
+            },
             pagination: { pageSize: 1, page: 1 },
           });
 
           if (existingDroplets && existingDroplets.length > 0) {
-            setExistingDropletSlug(existingDroplets[0].slug);
+            const existingDroplet = existingDroplets[0];
+            const isDraft = existingDroplet.status === "draft";
+            const slug = existingDroplet.slug;
+            
+            if (isDraft) {
+              // Get the first author's name
+              const firstAuthor = existingDroplet.authorized_users?.[0];
+              const authorName = firstAuthor?.name || firstAuthor?.email || "the author";
+              
+              setSubmissionState({
+                error: `There is a droplet in progress with the same title. Contact ${authorName} to become a co-author of "${dropletName.trim()}."`,
+                existingDropletName: dropletName.trim(),
+                existingDropletAuthor: authorName,
+                isDraft: true,
+              });
+            } else {
+              setExistingDropletSlug(slug);
+              setSubmissionState({
+                error: (
+                  <div>
+                    <p className="text-sm font-medium text-red-800 dark:text-red-200">
+                      A published droplet with this name already exists.
+                    </p>
+                    <Link
+                      href={`/d/${slug}`}
+                      className="mt-2 inline-flex items-center gap-1 text-sm text-red-700 hover:text-red-900 dark:text-red-300 dark:hover:text-red-100"
+                    >
+                      View existing droplet "{dropletName.trim()}"
+                      <ExternalLink className="h-3 w-3" />
+                    </Link>
+                  </div>
+                ) as any,
+                existingDropletName: dropletName.trim(),
+                isDraft: false,
+              });
+            }
+            return;
           }
         } catch (fetchError) {
           console.error("Failed to fetch existing droplet:", fetchError);
@@ -127,7 +167,7 @@ export function CreateDropletForm({
 
         setSubmissionState({
           error: "A droplet with this name already exists.",
-          existingDropletName: dropletName as string,
+          existingDropletName: dropletName.trim(),
         });
       } else {
         setSubmissionState({ error: response.error || "An error occurred" });
@@ -159,6 +199,7 @@ export function CreateDropletForm({
               name="name"
               placeholder="Developing a Droplet"
               className="max-w-full"
+              value={dropletName}
               onChange={(e) => setDropletName(e.target.value)}
             />
           </div>
@@ -167,6 +208,7 @@ export function CreateDropletForm({
               <Select
                 key={focusAreaFilter.name}
                 name={focusAreaFilter.name}
+                value={focusAreaValue}
                 onValueChange={setFocusAreaValue}
               >
                 <SelectGroup className="xs:w-full flex flex-col items-start lg:w-1/2">
@@ -265,20 +307,15 @@ export function CreateDropletForm({
 
         <SubmitButton />
       </div>
-
+      
       {submissionState.error && (
         <div className="w-full rounded-md border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-950">
-          <p className="text-sm font-medium text-red-800 dark:text-red-200">
-            {submissionState.error}
-          </p>
-          {existingDropletSlug && (
-            <Link
-              href={`/draft/d/${existingDropletSlug}`}
-              className="mt-2 inline-flex items-center gap-1 text-sm text-red-700 hover:text-red-900 dark:text-red-300 dark:hover:text-red-100"
-            >
-              View existing droplet "{submissionState.existingDropletName}"
-              <ExternalLink className="h-3 w-3" />
-            </Link>
+          {typeof submissionState.error === 'string' ? (
+            <p className="text-sm font-medium text-red-800 dark:text-red-200">
+              {submissionState.error}
+            </p>
+          ) : (
+            submissionState.error
           )}
         </div>
       )}

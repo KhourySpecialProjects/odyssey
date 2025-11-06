@@ -439,6 +439,21 @@ export async function createDroplet(data: z.infer<typeof CreateDropletSchema>) {
       })),
     };
 
+    // ensure no duplicate droplets made regardless of casing from the $eqi
+    const existingDroplets = await getDroplets({
+      filters: { name: { $eqi: data.name } },
+      fields: ["name"],
+      pagination: { pageSize: 1, page: 1 },
+    });
+
+    if (existingDroplets && existingDroplets.length > 0) {
+      return {
+        ok: false,
+        error: "This attribute must be unique (name)",
+        data: null,
+      };
+    }
+
     const response = await fetch(STRAPI_API_URL + "/api/droplets", {
       method: "POST",
       body: JSON.stringify({ data: dataToSend }),
