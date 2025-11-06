@@ -219,7 +219,7 @@ export default async function DropletRoute({ params }: Props) {
 
             <ul className="mt-4 flex flex-col divide-y divide-slate-200 rounded-md border border-slate-200 bg-slate-50 dark:divide-slate-500 dark:border-slate-500 dark:bg-slate-800">
               {droplet.authorized_users?.map((author) => (
-                <AuthorCard key={author.id} {...author} />
+                <AuthorCard key={author.id} author={author} />
               ))}
             </ul>
           </section>

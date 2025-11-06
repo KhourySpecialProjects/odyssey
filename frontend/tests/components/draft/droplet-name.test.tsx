@@ -24,6 +24,7 @@ describe("DropletName", () => {
   const mockHandleChange = jest.fn();
 
   beforeEach(() => {
+    jest.clearAllMocks();
     (useDropletUpdate as jest.Mock).mockReturnValue({
       error: null,
       handleChange: mockHandleChange,
@@ -32,12 +33,16 @@ describe("DropletName", () => {
 
   it("shows error message when present", () => {
     (useDropletUpdate as jest.Mock).mockReturnValue({
-      error: "Error updating name",
+      error: "A droplet with a similar title is in progress or already exists.",
       handleChange: mockHandleChange,
     });
 
     render(<DropletName startingName="Test Droplet" dropletId={1} />);
-    expect(screen.getByText("Error updating name")).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "A droplet with a similar title is in progress or already exists.",
+      ),
+    ).toBeInTheDocument();
   });
 
   it("sanitizes HTML and updates name correctly", () => {
@@ -53,6 +58,7 @@ describe("DropletName", () => {
 
     expect(mockHandleChange).toHaveBeenCalledWith({
       name: "New Name with spaces",
+      slug: "new-name-with-spaces",
     });
   });
 
@@ -68,6 +74,23 @@ describe("DropletName", () => {
 
     expect(mockHandleChange).toHaveBeenCalledWith({
       name: "Spaces Around",
+      slug: "spaces-around",
+    });
+  });
+
+  it("generates proper slug from name", () => {
+    render(<DropletName startingName="Initial Name" dropletId={1} />);
+
+    const input = screen.getByTestId("name-input");
+
+    fireEvent.input(input, {
+      target: { innerHTML: "My Cool Droplet!" },
+      currentTarget: { innerHTML: "My Cool Droplet!" },
+    });
+
+    expect(mockHandleChange).toHaveBeenCalledWith({
+      name: "My Cool Droplet!",
+      slug: "my-cool-droplet",
     });
   });
 });

@@ -368,15 +368,17 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
       <AddLessonBlock onAddBlock={handleAddTool} />
       <div className="flex w-full flex-col items-center justify-center space-y-4">
         <DndProvider backend={HTML5Backend}>
-          <div className="w-full max-w-2xl">
-            <DraggableBlockList
-              blocks={blocks}
-              onReorder={handleReorderSource}
-              onAddBlock={handleAddBlock}
-              setBlock={setBlock}
-              deleteBlock={deleteBlock}
-            />
-          </div>
+          <>
+            <div className="w-full max-w-2xl">
+              <DraggableBlockList
+                blocks={blocks}
+                onReorder={handleReorderSource}
+                onAddBlock={handleAddBlock}
+                setBlock={setBlock}
+                deleteBlock={deleteBlock}
+              />
+            </div>
+          </>
         </DndProvider>
       </div>
     </>
