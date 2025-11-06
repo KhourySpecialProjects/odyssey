@@ -24,6 +24,7 @@ export interface BaseBlock {
   type?: string;
   label?: string;
   url?: string;
+  _clientId?: string;
 }
 
 export interface QuizBlock extends BaseBlock {

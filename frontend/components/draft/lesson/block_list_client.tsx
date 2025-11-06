@@ -47,7 +47,7 @@ export function BlockListClient({
       <div className="grid grid-cols-1 space-y-8">
         {blocks.map((block, index) => (
           <div
-            key={`${block.__component}-${index}-${blocks.length}`}
+            key={block._clientId || block.id || `fallback-${index}`}
             className="flex w-full flex-col items-center justify-center"
           >
             <AddBlock add={addBlock(index)} />

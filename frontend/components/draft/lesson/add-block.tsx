@@ -14,15 +14,21 @@ import { OpenEndedQuizBlock, QuizBlock } from "./lesson-renderer";
 import { Separator } from "@/components/ui/separator";
 
 export type Block =
-  | { __component: "droplets.generic"; content: string }
-  | { __component: "droplets.expandable"; title: string; content: string }
+  | { __component: "droplets.generic"; content: string; _clientId?: string }
+  | {
+      __component: "droplets.expandable";
+      title: string;
+      content: string;
+      _clientId?: string;
+    }
   | {
       __component: "droplets.callout";
       content: { type: string; children: { type: string; text: string }[] }[];
       color: string;
       type: string;
+      _clientId?: string;
     }
-  | { __component: "droplets.video"; url: string }
+  | { __component: "droplets.video"; url: string; _clientId?: string }
   | {
       __component: "droplets.quiz";
       questions: {
@@ -30,13 +36,19 @@ export type Block =
         content: string;
         answerOptions: { id: number; content: string; isCorrect: boolean }[];
       }[];
+      _clientId?: string;
     }
   | {
       __component: "droplets.open-ended-quiz";
       questions: { id: number; content: string; correctAnswer: string }[];
+      _clientId?: string;
     }
   | QuizBlock
   | OpenEndedQuizBlock;
+
+// Helper function to generate unique IDs
+const generateClientId = () =>
+  `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
 
 export function AddBlock({ add }: { add: (block: Block) => void }) {
   const ref = useRef(null);
@@ -85,6 +97,7 @@ export function AddBlock({ add }: { add: (block: Block) => void }) {
                 add({
                   __component: "droplets.generic",
                   content: "",
+                  _clientId: generateClientId(),
                 });
               }}
               variant="ghost"
@@ -99,6 +112,7 @@ export function AddBlock({ add }: { add: (block: Block) => void }) {
                   __component: "droplets.expandable",
                   title: "",
                   content: "",
+                  _clientId: generateClientId(),
                 });
               }}
               variant="ghost"
@@ -132,6 +146,7 @@ export function AddBlock({ add }: { add: (block: Block) => void }) {
                         ],
                         color: "bg-red-300",
                         type: "info",
+                        _clientId: generateClientId(),
                       });
                     }}
                     variant={dropdownVariants}
@@ -154,6 +169,7 @@ export function AddBlock({ add }: { add: (block: Block) => void }) {
                         ],
                         color: "bg-blue-300",
                         type: "info",
+                        _clientId: generateClientId(),
                       });
                     }}
                     variant={dropdownVariants}
@@ -176,6 +192,7 @@ export function AddBlock({ add }: { add: (block: Block) => void }) {
                         ],
                         color: "bg-orange-300",
                         type: "info",
+                        _clientId: generateClientId(),
                       });
                     }}
                     variant={dropdownVariants}
@@ -198,6 +215,7 @@ export function AddBlock({ add }: { add: (block: Block) => void }) {
                         ],
                         color: "bg-green-300",
                         type: "info",
+                        _clientId: generateClientId(),
                       });
                     }}
                     variant={dropdownVariants}
@@ -220,6 +238,7 @@ export function AddBlock({ add }: { add: (block: Block) => void }) {
                         ],
                         color: "bg-purple-300",
                         type: "info",
+                        _clientId: generateClientId(),
                       });
                     }}
                     variant={dropdownVariants}
@@ -242,6 +261,7 @@ export function AddBlock({ add }: { add: (block: Block) => void }) {
                         ],
                         color: "bg-amber-300",
                         type: "info",
+                        _clientId: generateClientId(),
                       });
                     }}
                     variant={dropdownVariants}
@@ -264,6 +284,7 @@ export function AddBlock({ add }: { add: (block: Block) => void }) {
                         ],
                         color: "bg-sky-50 dark:bg-sky-200",
                         type: "info",
+                        _clientId: generateClientId(),
                       });
                     }}
                     variant={dropdownVariants}
@@ -282,6 +303,7 @@ export function AddBlock({ add }: { add: (block: Block) => void }) {
                 add({
                   __component: "droplets.video",
                   url: "",
+                  _clientId: generateClientId(),
                 });
               }}
               variant="ghost"
@@ -304,6 +326,7 @@ export function AddBlock({ add }: { add: (block: Block) => void }) {
                       ],
                     },
                   ],
+                  _clientId: generateClientId(),
                 });
               }}
               variant="ghost"
@@ -323,6 +346,7 @@ export function AddBlock({ add }: { add: (block: Block) => void }) {
                       correctAnswer: "",
                     },
                   ],
+                  _clientId: generateClientId(),
                 });
               }}
               variant="ghost"
@@ -349,6 +373,7 @@ export function AddBlock({ add }: { add: (block: Block) => void }) {
                       ],
                     },
                   ],
+                  _clientId: generateClientId(),
                 });
               }}
               variant="ghost"

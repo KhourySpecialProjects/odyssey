@@ -34,10 +34,13 @@ describe("AddBlock", () => {
 
     fireEvent.click(screen.getByText("Text Block"));
 
-    expect(mockAdd).toHaveBeenCalledWith({
-      __component: "droplets.generic",
-      content: "",
-    });
+    expect(mockAdd).toHaveBeenCalledWith(
+      expect.objectContaining({
+        __component: "droplets.generic",
+        content: "",
+        _clientId: expect.any(String),
+      }),
+    );
   });
 
   it("adds an expandable block when Expandable Block is clicked", () => {
@@ -49,6 +52,7 @@ describe("AddBlock", () => {
       __component: "droplets.expandable",
       title: "",
       content: "",
+      _clientId: expect.any(String),
     });
   });
 
@@ -60,6 +64,7 @@ describe("AddBlock", () => {
     expect(mockAdd).toHaveBeenCalledWith({
       __component: "droplets.video",
       url: "",
+      _clientId: expect.any(String),
     });
   });
 
@@ -79,6 +84,7 @@ describe("AddBlock", () => {
           ],
         }),
       ],
+      _clientId: expect.any(String),
     });
   });
 
@@ -95,6 +101,7 @@ describe("AddBlock", () => {
           correctAnswer: "",
         }),
       ],
+      _clientId: expect.any(String),
     });
   });
 
@@ -114,6 +121,7 @@ describe("AddBlock", () => {
           ],
         }),
       ],
+      _clientId: expect.any(String),
     });
   });
 
@@ -134,6 +142,7 @@ describe("AddBlock", () => {
       content: expect.any(Array),
       color: "bg-red-300",
       type: "info",
+      _clientId: expect.any(String),
     });
   });
 
@@ -173,6 +182,7 @@ describe("AddBlock", () => {
         ],
         color: "bg-red-300",
         type: "info",
+        _clientId: expect.any(String),
       });
     });
   });
@@ -202,6 +212,7 @@ describe("AddBlock", () => {
           ],
           color: "bg-red-300",
           type: "info",
+          _clientId: expect.any(String),
         });
       });
 
@@ -227,6 +238,7 @@ describe("AddBlock", () => {
               __component: "droplets.callout",
               color,
               type: "info",
+              _clientId: expect.any(String),
             }),
           );
         });

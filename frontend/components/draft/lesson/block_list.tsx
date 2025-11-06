@@ -1,6 +1,6 @@
 "use client";
 import { Block } from "./add-block";
-import { BlockListClient } from "./draggable_block_list_client"; // renamed
+import { BlockListClient } from "./block_list_client"; // renamed
 
 interface BlockListProps {
   blocks: Block[];

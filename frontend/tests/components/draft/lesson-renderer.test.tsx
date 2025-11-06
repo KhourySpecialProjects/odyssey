@@ -19,7 +19,7 @@ jest.mock("@/components/ui/tiptap/lesson-name-input", () => ({
   ),
 }));
 
-jest.mock("@/components/draft/lesson/draggable_block_list", () => ({
+jest.mock("@/components/draft/lesson/block_list", () => ({
   __esModule: true,
   default: ({ blocks, deleteBlock, onReorder, onAddBlock, setBlock }: any) => (
     <div data-testid="draggable-block-list">
