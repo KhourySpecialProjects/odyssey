@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getUserActivity } from "@/lib/requests/user-activity";
-import { getServerSession } from "next-auth";
 // Import your auth config
 // import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 
