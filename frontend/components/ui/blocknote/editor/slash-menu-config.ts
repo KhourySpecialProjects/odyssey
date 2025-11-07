@@ -3,11 +3,11 @@ import { insertOrUpdateBlock } from "@blocknote/core";
 
 const createCalloutItem = (
   editor: any,
-  type: string,
+  type: any,
   title: string,
   aliases: string[],
   subtext: string,
-) => ({
+): any => ({
   title,
   onItemClick: () => {
     insertOrUpdateBlock(editor, {
