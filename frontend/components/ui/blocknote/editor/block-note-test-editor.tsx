@@ -1,5 +1,4 @@
 "use client";
-
 import { BlockNoteSchema, defaultBlockSpecs } from "@blocknote/core";
 import {
   useCreateBlockNote,
@@ -9,17 +8,26 @@ import {
 import { BlockNoteView } from "@blocknote/mantine";
 import "@blocknote/mantine/style.css";
 import { Callout } from "@/components/ui/blocknote/blocks/callout-block";
-import { getCalloutSlashMenuItems } from "@/components/ui/blocknote/editor/slash-menu-config";
+import { TrueFalseQuiz } from "@/components/ui/blocknote/blocks/quiz-true-false-block";
+import { OpenEndedQuiz } from "@/components/ui/blocknote/blocks/quiz-open-ended-block";
+import { MultipleChoiceQuiz } from "@/components/ui/blocknote/blocks/quiz-multiple-choice-block";
+import {
+  getCalloutSlashMenuItems,
+  getQuizSlashMenuItems,
+} from "@/components/ui/blocknote/editor/slash-menu-config";
 import { useTheme } from "next-themes";
 
 export default function BlockNoteTestEditor() {
-  const { resolvedTheme } = useTheme(); // Get Odyssey's theme
+  const { resolvedTheme } = useTheme();
 
   const editor = useCreateBlockNote({
     schema: BlockNoteSchema.create({
       blockSpecs: {
         ...defaultBlockSpecs,
         callout: Callout(),
+        "quiz-true-false": TrueFalseQuiz(),
+        "quiz-open-ended": OpenEndedQuiz(),
+        "quiz-multiple-choice": MultipleChoiceQuiz(),
       },
     }),
   });
@@ -27,6 +35,7 @@ export default function BlockNoteTestEditor() {
   const getCustomSlashMenuItems = (editor: any) => [
     ...getDefaultReactSlashMenuItems(editor),
     ...getCalloutSlashMenuItems(editor),
+    ...getQuizSlashMenuItems(editor),
   ];
 
   return (
