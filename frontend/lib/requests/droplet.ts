@@ -469,6 +469,167 @@ export async function createDroplet(data: z.infer<typeof CreateDropletSchema>) {
   }
 }
 
+export async function duplicateDroplet(dropletId: number) {
+  try {
+    const user = await getCurrentUser();
+    if (!user?.email) throw new Error("No email identified");
+    const author = await getAuthorizedUserByEmail(user.email, {
+      populate: {},
+    });
+    if (!author) throw new Error("No author identified");
+
+    // Fetch the original droplet with all its data
+    const originalDroplet = await getDropletById<Droplet>(dropletId, {
+      fields: ["*"],
+      populate: {
+        tags: true,
+        learningObjectives: true,
+        lessons: {
+          populate: "*",
+          sort: ["orderIndex:asc"],
+        },
+        prerequisites: true,
+        postrequisites: true,
+        nextSteps: true,
+      },
+    });
+
+    if (!originalDroplet) {
+      throw new Error("Original droplet not found");
+    }
+
+    // Create the new droplet with DRAFT prefix
+    const newDropletData = {
+      name: `DRAFT ${originalDroplet.name}`,
+      slug: "random", // will be regenerated
+      focusArea: originalDroplet.focusArea,
+      type: originalDroplet.type,
+      description: originalDroplet.description,
+      overview: originalDroplet.overview,
+      status: "draft",
+      tags: {
+        connect: originalDroplet.tags?.map((tag) => tag.id) || [],
+      },
+      authorized_users: {
+        connect: [author.id],
+      },
+      learningObjectives: originalDroplet.learningObjectives?.map((obj) => ({
+        objective: obj.objective,
+      })) || [],
+      prerequisites: {
+        connect: originalDroplet.prerequisites?.map((p) => p.id) || [],
+      },
+      postrequisites: {
+        connect: originalDroplet.postrequisites?.map((p) => p.id) || [],
+      },
+      nextSteps: originalDroplet.nextSteps || [],
+    };
+
+    // Create the new droplet
+    const dropletResponse = await fetch(STRAPI_API_URL + "/api/droplets", {
+      method: "POST",
+      body: JSON.stringify({ data: newDropletData }),
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+      },
+    });
+
+    const dropletResponseData = await dropletResponse.json();
+
+    if (!dropletResponse.ok || dropletResponseData.error) {
+      throw new Error(dropletResponseData.error?.message || "Failed to create droplet");
+    }
+
+    const newDropletId = dropletResponseData.data.id;
+
+    // Helper function to remove ids from blocks while preserving structure
+    const cleanBlocks = (blocks: any[]): any[] => {
+      if (!Array.isArray(blocks)) return [];
+      
+      return blocks.map((block) => {
+        // Create a copy without the id field
+        const { id, ...blockWithoutId } = block;
+        
+        // Handle nested structures (like quiz questions with ids)
+        if (block.__component === "droplets.quiz" && block.questions) {
+          return {
+            ...blockWithoutId,
+            questions: block.questions.map((q: any) => {
+              const { id: qId, ...questionWithoutId } = q;
+              return {
+                ...questionWithoutId,
+                answerOptions: q.answerOptions?.map((a: any) => {
+                  const { id: aId, ...answerWithoutId } = a;
+                  return answerWithoutId;
+                }) || []
+              };
+            })
+          };
+        }
+        
+        if (block.__component === "droplets.open-ended-quiz" && block.questions) {
+          return {
+            ...blockWithoutId,
+            questions: block.questions.map((q: any) => {
+              const { id: qId, ...questionWithoutId } = q;
+              return questionWithoutId;
+            })
+          };
+        }
+        
+        return blockWithoutId;
+      });
+    };
+
+    // Duplicate all lessons
+    if (originalDroplet.lessons && originalDroplet.lessons.length > 0) {
+      const lessonPromises = originalDroplet.lessons.map(async (lesson) => {
+        const lessonData = {
+          name: lesson.name,
+          slug: "random", // will be regenerated
+          type: lesson.type,
+          orderIndex: lesson.orderIndex,
+          blocks: cleanBlocks(lesson.blocks),
+          droplets: [newDropletId],
+        };
+
+        const response = await fetch(STRAPI_API_URL + "/api/lessons", {
+          method: "POST",
+          body: JSON.stringify({ data: lessonData }),
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+          },
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          console.error("Failed to create lesson:", errorData);
+          throw new Error(`Failed to create lesson: ${lesson.name}`);
+        }
+
+        return response;
+      });
+
+      await Promise.all(lessonPromises);
+    }
+
+    revalidateTag("authors");
+    revalidateTag("droplets");
+    revalidatePath("(general)/my-content", "page");
+    
+    return { ok: true, error: null, data: dropletResponseData.data };
+  } catch (err) {
+    console.error(err);
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : "Database Error: Failed to duplicate droplet.",
+      data: null,
+    };
+  }
+}
+
 export async function favoriteDroplet(
   droplet: Droplet,
   favoriteState: boolean,
