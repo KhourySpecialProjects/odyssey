@@ -1,5 +1,6 @@
 import { createReactBlockSpec } from "@blocknote/react";
 import { Menu } from "@mantine/core";
+import type { CalloutType } from "@/lib/blocknote/types";
 import {
   TriangleAlert,
   CircleHelp,
@@ -8,15 +9,6 @@ import {
   BadgeInfo,
   Bell,
 } from "lucide-react";
-
-type CalloutType =
-  | "warning"
-  | "question"
-  | "important"
-  | "definition"
-  | "more-information"
-  | "caution"
-  | "default";
 
 const calloutConfigs = {
   warning: { bg: "#FFCCCB", icon: TriangleAlert, title: "Warning" },

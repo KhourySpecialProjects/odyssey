@@ -13,7 +13,7 @@ import { getCalloutSlashMenuItems } from "@/components/ui/blocknote/editor/slash
 import { useTheme } from "next-themes";
 
 export default function BlockNoteTestEditor() {
-  const { theme } = useTheme(); // Get Odyssey's theme
+  const { resolvedTheme } = useTheme(); // Get Odyssey's theme
 
   const editor = useCreateBlockNote({
     schema: BlockNoteSchema.create({
@@ -34,7 +34,7 @@ export default function BlockNoteTestEditor() {
       <BlockNoteView
         editor={editor}
         slashMenu={false}
-        theme={theme === "dark" ? "dark" : "light"}
+        theme={resolvedTheme === "dark" ? "dark" : "light"}
       >
         <SuggestionMenuController
           triggerCharacter="/"
