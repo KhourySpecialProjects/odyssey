@@ -27,6 +27,9 @@ export function SocialForms({
     authorizedUser?.linkedin || "",
   );
   const [githubValue, setGithubValue] = useState(authorizedUser?.github || "");
+  const [websiteValue, setWebsiteValue] = useState(
+    authorizedUser?.website || "",
+  );
   const [profileImage, setProfileImage] = useState<string | null>(
     authorizedUser?.profilePhoto || "",
   );
@@ -49,6 +52,10 @@ export function SocialForms({
 
   function isValidLinkedinUrl(url: string) {
     return /^https:\/\/(www\.)?linkedin\.com\/in\/[A-Za-z0-9_-]+\/?$/.test(url);
+  }
+
+  function isValidWebsiteUrl(url: string) {
+    return /^https:\/\/([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}(\/.*)?$/.test(url);
   }
 
   const compressImage = async (imageFile: File) => {
@@ -335,6 +342,49 @@ export function SocialForms({
           className="hidden min-w-[120px] sm:block dark:bg-slate-300"
         >
           Save GitHub
+        </Button>
+        <Button
+          type="submit"
+          className="w-[13%] p-0 sm:hidden dark:bg-slate-300"
+        >
+          <Check className="h-5 w-5" />
+        </Button>
+      </form>
+      <form
+        action={async (formData: FormData) => {
+          const website = formData.get("website") as string;
+          if (!isValidWebsiteUrl(website) && website !== "") {
+            toast.error("Please enter a valid website URL");
+            return;
+          }
+          if (authorizedUser?.id) {
+            const result = await updateUserInfo(authorizedUser.id, {
+              website: website,
+            });
+            if (result.success) {
+              setWebsiteValue(website);
+              toast.success("Website URL updated successfully");
+            } else {
+              toast.error("Not a valid Website URL");
+            }
+          }
+        }}
+        className="flex flex-row items-center gap-4 px-6 py-4"
+      >
+        {" "}
+        <div className="mr-5 w-[12%] sm:mr-0">Website:</div>
+        <Input
+          name="website"
+          value={websiteValue}
+          onChange={(e) => setWebsiteValue(e.target.value)}
+          placeholder="Enter your personal website url"
+          className="w-[50%]"
+        />
+        <Button
+          type="submit"
+          className="hidden min-w-[120px] sm:block dark:bg-slate-300"
+        >
+          Save Website
         </Button>
         <Button
           type="submit"

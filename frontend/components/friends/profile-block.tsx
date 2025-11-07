@@ -12,7 +12,13 @@ import {
   DialogTitle,
 } from "../ui/dialog";
 import { Button } from "../ui/button";
-import { Github, Linkedin, User2Icon, ExternalLink } from "lucide-react";
+import {
+  Github,
+  Linkedin,
+  User2Icon,
+  ExternalLink,
+  LinkIcon,
+} from "lucide-react";
 import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { getInitials } from "@/lib/utils";
@@ -81,6 +87,13 @@ export function ProfileBlock({
               <Link href={otherUser.github} legacyBehavior role="link">
                 <a target="_blank" rel="noopener noreferrer">
                   <Github />
+                </a>
+              </Link>
+            )}
+            {otherUser.website && (
+              <Link href={otherUser.website} legacyBehavior role="link">
+                <a target="_blank" rel="noopener noreferrer">
+                  <LinkIcon />
                 </a>
               </Link>
             )}

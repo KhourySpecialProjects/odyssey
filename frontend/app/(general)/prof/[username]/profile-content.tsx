@@ -17,6 +17,7 @@ import {
   UserPlus,
   Clock,
   X,
+  LinkIcon,
 } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
@@ -260,6 +261,23 @@ export function ProfileContent({
                   className="dark:!text-white"
                 >
                   <GitHubIcon fontSize="large" />
+                </IconButton>
+              )}
+              {userData.website && (
+                <IconButton
+                  component="a"
+                  href={
+                    userData.website.startsWith("http")
+                      ? userData.website
+                      : `https://${userData.website}`
+                  }
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Website"
+                  sx={{ color: "#333", fontSize: 40 }}
+                  className="dark:!text-white"
+                >
+                  <LinkIcon fontSize="large" />
                 </IconButton>
               )}
             </div>
