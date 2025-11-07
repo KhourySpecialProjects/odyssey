@@ -17,21 +17,10 @@ import {
   PanelRightOpen,
 } from "lucide-react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useLayoutEffect, useState } from "react";
 import { Label } from "../ui/label";
 import { Progress } from "../ui/progress";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { duplicateDroplet } from "@/lib/requests/droplet";
 
 export default function Sidebar({
   user,
@@ -42,15 +31,12 @@ export default function Sidebar({
 }: {
   user?: User | null;
   author: boolean;
-  droplet: Pick<Droplet, "name" | "slug" | "lessons" | "status" | "id">;
+  droplet: Pick<Droplet, "name" | "slug" | "lessons">;
   completedLessonIds: number[];
   enrollmentId?: string | undefined;
 }) {
   const [expanded, setExpanded] = useState(true);
-  const [showEditDialog, setShowEditDialog] = useState(false);
-  const [isCreatingDraft, setIsCreatingDraft] = useState(false);
   const pathname = usePathname();
-  const router = useRouter();
   const isAdmin = user && isAuthorizedUserAdmin(user.roles);
 
   const isEnrolled = !!enrollmentId || author || isAdmin;
@@ -87,40 +73,6 @@ export default function Sidebar({
   if (!user) return <UnauthorizedRoute />;
 
   const curPath = pathname.split("d/")[1];
-  const editPath = `/draft/d/${curPath === `${droplet.slug}/recap` ? `${droplet.slug}` : `/${curPath}`}`;
-
-  const handleEditClick = () => {
-    // Show warning if droplet is published (for both authors and admins)
-    if (droplet.status === "published") {
-      setShowEditDialog(true);
-    } else {
-      // Navigate directly without warning for draft droplets
-      router.push(editPath);
-    }
-  };
-
-  const handleEditConfirm = async () => {
-    setIsCreatingDraft(true);
-    
-    try {
-      // Call the server action directly
-      const result = await duplicateDroplet(droplet.id);
-
-      if (!result.ok) {
-        throw new Error(result.error || 'Failed to create draft droplet');
-      }
-      
-      // Navigate to the new draft droplet's edit page
-      router.push(`/draft/d/${result.data.attributes.slug}`);
-    } catch (error) {
-      console.error('Error creating draft:', error);
-      // You might want to show an error toast/notification here
-      alert('Failed to create draft. Please try again.');
-    } finally {
-      setIsCreatingDraft(false);
-      setShowEditDialog(false);
-    }
-  };
 
   return (
     <>
@@ -210,12 +162,12 @@ export default function Sidebar({
 
             {(author || isAdmin) && (
               <div className="w-full pb-4 text-center">
-                <button
+                <Link
                   className="w-full rounded-full bg-green-600 px-6 py-2 text-white hover:bg-green-700"
-                  onClick={handleEditClick}
+                  href={`/draft/d/${curPath === `${droplet.slug}/recap` ? `${droplet.slug}` : `/${curPath}`}`}
                 >
                   Edit
-                </button>
+                </Link>
               </div>
             )}
 
@@ -317,32 +269,6 @@ export default function Sidebar({
           </div>
         </div>
       </aside>
-
-      {/* Edit Warning Dialog */}
-      <AlertDialog open={showEditDialog} onOpenChange={setShowEditDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Edit Droplet Content</AlertDialogTitle>
-            <AlertDialogDescription>
-              You are about to create a draft copy of this published droplet. 
-              A new droplet titled "DRAFT {droplet.name}" will be created, 
-              and you'll be able to make changes without affecting the live content. 
-              You can publish the draft later to replace the current version.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={isCreatingDraft}>
-              Cancel
-            </AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={handleEditConfirm}
-              disabled={isCreatingDraft}
-            >
-              {isCreatingDraft ? 'Creating Draft...' : 'Create Draft & Edit'}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </>
   );
 }
