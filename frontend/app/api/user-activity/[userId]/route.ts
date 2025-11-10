@@ -4,6 +4,7 @@ import { getUserActivity } from "@/lib/requests/user-activity";
 import { authOptions } from "@/lib/auth/options";
 import { getServerSession } from "next-auth";
 import { AuthorizedUserRoleTitle } from "@/lib/globals";
+import { isAuthorizedUserAdmin } from "@/lib/utils";
 
 export async function GET(
   request: NextRequest,
@@ -19,12 +20,7 @@ export async function GET(
     }
 
     // Check if user is admin
-    const isAdmin = session.user.roles?.some(
-      (role) =>
-        role === AuthorizedUserRoleTitle.SysAdmin ||
-        role === AuthorizedUserRoleTitle.AcadAdmin ||
-        role === AuthorizedUserRoleTitle.WebsiteEditor,
-    );
+    const isAdmin = isAuthorizedUserAdmin(session.user.roles);
     if (!isAdmin) {
       return NextResponse.json(
         { error: "Forbidden - Admin access required" },
