@@ -47,29 +47,6 @@ export function GroupCard({
       className="inline-block h-full w-full rounded-md border border-slate-200 bg-slate-50 hover:border-slate-300 dark:border-slate-500 dark:bg-slate-800"
     >
       <div className="p-2 transition-colors">
-        {dashboardPage && (
-          <Button
-            size="sm"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              changeVisibility();
-            }}
-            className={`${isArchived === true || isArchived === false ? "visibility: visible" : "visibility: hidden"} bg-white hover:bg-slate-300 dark:bg-slate-300`}
-          >
-            <div className="group relative">
-              {isArchived ? (
-                <ArchiveRestore className="text-purple-800" />
-              ) : (
-                <Archive className="text-purple-800" />
-              )}
-              <span className="absolute top-full left-1/2 mt-1 w-max -translate-x-1/2 transform rounded bg-gray-800 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100">
-                {isArchived ? "Unarchive" : "Archive"}
-              </span>
-            </div>
-          </Button>
-        )}
-
         <div className="flex h-full flex-col rounded-md bg-slate-50 p-6 dark:bg-slate-800">
           <div className="flex-grow">
             <div className="flex items-center justify-between">
@@ -117,6 +94,30 @@ export function GroupCard({
             )}
           </div>
         </div>
+        {dashboardPage && (
+          <div className="flex justify-end p-2">
+          <Button
+            size="sm"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              changeVisibility();
+            }}
+            className={`${isArchived === true || isArchived === false ? "visibility: visible" : "visibility: hidden"} bg-slate-50 hover:bg-slate-300 dark:bg-slate-300 justify-end`}
+          >
+            <div className="group relative">
+              {isArchived ? (
+                <ArchiveRestore className="text-purple-500" />
+              ) : (
+                <Archive className="text-purple-500" />
+              )}
+              <span className="absolute top-full left-1/2 mt-1 w-max -translate-x-1/2 transform rounded bg-gray-800 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100">
+                {isArchived ? "Unarchive" : "Archive"}
+              </span>
+            </div>
+          </Button>
+          </div>
+        )}
       </div>
     </Link>
   );
