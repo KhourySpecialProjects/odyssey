@@ -53,6 +53,7 @@ export default async function Droplet({ params }: Props) {
       prerequisites: { populate: ["id", "name", "slug"] },
       postrequisites: { populate: ["id", "name", "slug"] },
       nextSteps: { fields: ["label", "url"] },
+      originalDropletId: { populate: "*" },
     },
   });
   const droplets = await getDroplets({

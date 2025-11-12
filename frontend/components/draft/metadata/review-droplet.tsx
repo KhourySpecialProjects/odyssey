@@ -2,11 +2,22 @@
 
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { updateDroplet } from "@/lib/requests/droplet";
+import { updateDroplet, publishDraftToOriginal } from "@/lib/requests/droplet";
 import { Droplet } from "@/types";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 export function ReviewDroplet({
   name,
@@ -17,8 +28,9 @@ export function ReviewDroplet({
 }) {
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [changes, setChanges] = useState(droplet.afterReview || "");
+  const [isPublishing, setIsPublishing] = useState(false);
   const router = useRouter();
-
+  console.log("Droplet in ReviewDroplet:", droplet);
   const handlePublishDroplet = async () => {
     const response = await updateDroplet(
       droplet.id,
@@ -31,6 +43,34 @@ export function ReviewDroplet({
     } else {
       toast.error("Error publishing droplet");
       setIsPopupOpen(false);
+    }
+  };
+
+  const handlePublishDraft = async () => {
+    if (!droplet.originalDropletId) {
+      toast.error("No original droplet linked");
+      return;
+    }
+
+    setIsPublishing(true);
+
+    try {
+      const result = await publishDraftToOriginal(
+        droplet.id,
+        droplet.originalDropletId,
+      );
+
+      if (!result.ok) {
+        throw new Error(result.error || "Failed to publish draft");
+      }
+
+      toast.success("Draft published successfully!");
+      router.push(`/d/${result.slug}`);
+    } catch (error) {
+      console.error("Error publishing draft:", error);
+      toast.error("Failed to publish draft. Please try again.");
+    } finally {
+      setIsPublishing(false);
     }
   };
 
@@ -53,13 +93,52 @@ export function ReviewDroplet({
   return (
     <>
       <div className="flex flex-row space-x-2">
-        <Button
-          variant="outline"
-          className="dark:bg-slate-800 dark:outline dark:outline-slate-500"
-          onClick={handlePublishDroplet}
-        >
-          Publish Droplet
-        </Button>
+        {droplet.originalDropletId ? (
+          // Show "Publish Draft" button with confirmation dialog
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button
+                variant="outline"
+                className="dark:bg-slate-800 dark:outline dark:outline-slate-500"
+                disabled={isPublishing}
+              >
+                {isPublishing ? "Publishing..." : "Publish Draft"}
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Publish Draft Changes</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This will replace the published droplet with your draft
+                  changes. The current published version will be permanently
+                  overwritten, and this draft will be deleted. This action
+                  cannot be undone.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel disabled={isPublishing}>
+                  Cancel
+                </AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={handlePublishDraft}
+                  disabled={isPublishing}
+                >
+                  {isPublishing ? "Publishing..." : "Publish"}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        ) : (
+          // Show regular "Publish Droplet" button
+          <Button
+            variant="outline"
+            className="dark:bg-slate-800 dark:outline dark:outline-slate-500"
+            onClick={handlePublishDroplet}
+          >
+            Publish Droplet
+          </Button>
+        )}
+
         <Button
           variant="outline"
           className="dark:bg-slate-800 dark:outline dark:outline-slate-500"

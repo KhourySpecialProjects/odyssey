@@ -159,6 +159,9 @@
       "relation": "manyToMany",
       "target": "api::authorized-user.authorized-user",
       "inversedBy": "dropletsFavorited"
+    },
+    "originalDropletId": {
+      "type": "integer"
     }
   }
 }

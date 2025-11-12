@@ -101,21 +101,21 @@ export default function Sidebar({
 
   const handleEditConfirm = async () => {
     setIsCreatingDraft(true);
-    
+
     try {
       // Call the server action directly
       const result = await duplicateDroplet(droplet.id);
 
       if (!result.ok) {
-        throw new Error(result.error || 'Failed to create draft droplet');
+        throw new Error(result.error || "Failed to create draft droplet");
       }
-      
+
       // Navigate to the new draft droplet's edit page
       router.push(`/draft/d/${result.data.attributes.slug}`);
     } catch (error) {
-      console.error('Error creating draft:', error);
+      console.error("Error creating draft:", error);
       // You might want to show an error toast/notification here
-      alert('Failed to create draft. Please try again.');
+      alert("Failed to create draft. Please try again.");
     } finally {
       setIsCreatingDraft(false);
       setShowEditDialog(false);
@@ -324,9 +324,9 @@ export default function Sidebar({
           <AlertDialogHeader>
             <AlertDialogTitle>Edit Droplet Content</AlertDialogTitle>
             <AlertDialogDescription>
-              You are about to create a draft copy of this published droplet. 
-              A new droplet titled "[EDIT]- {droplet.name}" will be created, 
-              and you'll be able to make changes without affecting the live content. 
+              You are about to create a draft copy of this published droplet. A
+              new droplet titled "[EDIT]- {droplet.name}" will be created, and
+              you'll be able to make changes without affecting the live content.
               You can publish the draft later to replace the current version.
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -334,11 +334,11 @@ export default function Sidebar({
             <AlertDialogCancel disabled={isCreatingDraft}>
               Cancel
             </AlertDialogCancel>
-            <AlertDialogAction 
+            <AlertDialogAction
               onClick={handleEditConfirm}
               disabled={isCreatingDraft}
             >
-              {isCreatingDraft ? 'Creating Draft...' : 'Create Draft & Edit'}
+              {isCreatingDraft ? "Creating Draft..." : "Create Draft & Edit"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
