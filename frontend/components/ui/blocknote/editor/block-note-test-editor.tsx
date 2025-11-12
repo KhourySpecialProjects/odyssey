@@ -45,7 +45,6 @@ export default function BlockNoteTestEditor() {
         editor={editor}
         slashMenu={false}
         theme={resolvedTheme === "dark" ? "dark" : "light"}
-        data-quiz-blocks
       >
         <SuggestionMenuController
           triggerCharacter="/"
