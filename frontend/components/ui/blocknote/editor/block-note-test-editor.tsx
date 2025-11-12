@@ -7,6 +7,7 @@ import {
 } from "@blocknote/react";
 import { BlockNoteView } from "@blocknote/mantine";
 import "@blocknote/mantine/style.css";
+import "./custom-blocknote.css";
 import { Callout } from "@/components/ui/blocknote/blocks/callout-block";
 import { TrueFalseQuiz } from "@/components/ui/blocknote/blocks/quiz-true-false-block";
 import { OpenEndedQuiz } from "@/components/ui/blocknote/blocks/quiz-open-ended-block";

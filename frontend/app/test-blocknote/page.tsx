@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
+import { useTheme } from "next-themes";
 
 // Dynamically import BlockNote components with no SSR
 const BlockNoteEditor = dynamic(
@@ -11,10 +12,27 @@ const BlockNoteEditor = dynamic(
 
 export default function TestBlockNotePage() {
   const [isMounted, setIsMounted] = useState(false);
+  const { theme, resolvedTheme } = useTheme();
 
   useEffect(() => {
     setIsMounted(true);
   }, []);
+
+  // Debug logging
+  useEffect(() => {
+    if (isMounted) {
+      console.log("Next.js theme:", theme);
+      console.log("Next.js resolvedTheme:", resolvedTheme);
+      const container = document.querySelector(".bn-container");
+      if (container) {
+        console.log(
+          "BlockNote data-color-scheme:",
+          container.getAttribute("data-color-scheme"),
+        );
+        console.log("BlockNote classes:", container.className);
+      }
+    }
+  }, [isMounted, theme, resolvedTheme]);
 
   if (!isMounted) {
     return (

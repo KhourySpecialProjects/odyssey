@@ -33,36 +33,159 @@ export const MultipleChoiceQuiz = createReactBlockSpec(
       const blockRef = React.useRef<HTMLDivElement>(null);
 
       React.useEffect(() => {
-        if (blockRef.current) {
-          const blockContent = blockRef.current.closest(
-            ".bn-block-content",
-          ) as HTMLElement;
-          if (blockContent) {
-            const removeStyles = () => {
-              blockContent.removeAttribute("style");
-            };
+        if (!blockRef.current) return;
 
-            removeStyles();
+        const updateTextColors = () => {
+          // Check current theme
+          const container = blockRef.current?.closest(".bn-container");
+          const isLightMode =
+            container && container.classList.contains("light");
+          const isDarkMode = container && container.classList.contains("dark");
 
-            const observer = new MutationObserver(removeStyles);
-            observer.observe(blockContent, {
-              attributes: true,
-              attributeFilter: ["style"],
+          if (!container) return;
+
+          // Find all text elements inside the quiz block
+          const textareas = blockRef.current?.querySelectorAll("textarea");
+          const inputs = blockRef.current?.querySelectorAll("input");
+          const labels = blockRef.current?.querySelectorAll("label");
+          const headings = blockRef.current?.querySelectorAll("h2, h3, h4");
+          const buttons = blockRef.current?.querySelectorAll("button");
+          const allElements = blockRef.current?.querySelectorAll("*");
+
+          // Function to clear color styles
+          const clearColorStyles = (element: Element) => {
+            const htmlEl = element as HTMLElement;
+            htmlEl.style.removeProperty("color");
+            htmlEl.style.removeProperty("-webkit-text-fill-color");
+            if (htmlEl.tagName === "TEXTAREA" || htmlEl.tagName === "INPUT") {
+              htmlEl.style.removeProperty("caret-color");
+            }
+          };
+
+          // Function to set dark color (for light mode only)
+          const setDarkColor = (element: Element) => {
+            const htmlEl = element as HTMLElement;
+            // Skip if element has no text and no children with text
+            if (htmlEl.children.length > 0 && !htmlEl.textContent?.trim()) {
+              return;
+            }
+            const darkColor = "rgb(17, 24, 39)";
+            htmlEl.style.setProperty("color", darkColor, "important");
+            htmlEl.style.setProperty(
+              "-webkit-text-fill-color",
+              darkColor,
+              "important",
+            );
+            if (htmlEl.tagName === "TEXTAREA" || htmlEl.tagName === "INPUT") {
+              htmlEl.style.setProperty("caret-color", darkColor, "important");
+            }
+          };
+
+          // In dark mode: clear all our color overrides to let BlockNote handle it
+          if (isDarkMode) {
+            textareas?.forEach(clearColorStyles);
+            inputs?.forEach(clearColorStyles);
+            labels?.forEach(clearColorStyles);
+            headings?.forEach(clearColorStyles);
+            buttons?.forEach(clearColorStyles);
+            allElements?.forEach((el) => {
+              const htmlEl = el as HTMLElement;
+              if (
+                htmlEl.textContent?.trim() ||
+                htmlEl.tagName === "TEXTAREA" ||
+                htmlEl.tagName === "INPUT" ||
+                htmlEl.tagName === "LABEL" ||
+                htmlEl.tagName === "BUTTON" ||
+                htmlEl.tagName === "H2" ||
+                htmlEl.tagName === "H3" ||
+                htmlEl.tagName === "H4"
+              ) {
+                clearColorStyles(htmlEl);
+              }
             });
-
-            const events = ["click", "mousedown", "focus", "focusin"];
-            events.forEach((event) => {
-              blockContent.addEventListener(event, removeStyles, true);
-            });
-
-            return () => {
-              observer.disconnect();
-              events.forEach((event) => {
-                blockContent.removeEventListener(event, removeStyles, true);
-              });
-            };
+            return;
           }
+
+          // In light mode: apply dark colors
+          if (isLightMode) {
+            textareas?.forEach(setDarkColor);
+            inputs?.forEach(setDarkColor);
+            labels?.forEach(setDarkColor);
+            headings?.forEach(setDarkColor);
+            buttons?.forEach(setDarkColor);
+            allElements?.forEach((el) => {
+              const htmlEl = el as HTMLElement;
+              if (
+                htmlEl.textContent?.trim() ||
+                htmlEl.tagName === "TEXTAREA" ||
+                htmlEl.tagName === "INPUT" ||
+                htmlEl.tagName === "LABEL" ||
+                htmlEl.tagName === "BUTTON" ||
+                htmlEl.tagName === "H2" ||
+                htmlEl.tagName === "H3" ||
+                htmlEl.tagName === "H4"
+              ) {
+                setDarkColor(htmlEl);
+              }
+            });
+          }
+        };
+
+        // Run immediately
+        updateTextColors();
+
+        // Watch for theme changes on the container
+        const container = blockRef.current?.closest(".bn-container");
+        const containerObserver = container
+          ? new MutationObserver(() => {
+              // Theme changed, update colors
+              setTimeout(updateTextColors, 0);
+            })
+          : null;
+
+        if (container && containerObserver) {
+          containerObserver.observe(container, {
+            attributes: true,
+            attributeFilter: ["class"],
+          });
         }
+
+        // Set up observer to run on any changes
+        const observer = new MutationObserver(() => {
+          // Small delay to let BlockNote apply its styles first
+          setTimeout(updateTextColors, 0);
+        });
+
+        if (blockRef.current) {
+          observer.observe(blockRef.current, {
+            childList: true,
+            subtree: true,
+            attributes: true,
+            attributeFilter: ["style", "data-selected"],
+          });
+        }
+
+        // Also run on events
+        const events = ["click", "mousedown", "focus", "focusin", "mouseup"];
+        events.forEach((event) => {
+          blockRef.current?.addEventListener(event, updateTextColors, true);
+        });
+
+        // Run on selection changes (check less frequently)
+        const checkSelection = setInterval(updateTextColors, 200);
+
+        return () => {
+          observer.disconnect();
+          containerObserver?.disconnect();
+          clearInterval(checkSelection);
+          events.forEach((event) => {
+            blockRef.current?.removeEventListener(
+              event,
+              updateTextColors,
+              true,
+            );
+          });
+        };
       }, []);
 
       const handleQuestionChange = (
@@ -130,7 +253,7 @@ export const MultipleChoiceQuiz = createReactBlockSpec(
               }
             }
           }}
-          className="w-full max-w-2xl rounded-lg border-2 border-gray-200 bg-white pb-4 dark:border-gray-700 dark:bg-gray-800"
+          className="w-full rounded-lg border-2 border-gray-200 bg-white pb-4 dark:border-gray-700 dark:bg-gray-800"
         >
           {/* Header */}
           <div className="mb-4 flex w-full flex-row items-center justify-between p-4">
