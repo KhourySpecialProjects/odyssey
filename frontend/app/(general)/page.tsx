@@ -50,7 +50,7 @@ export default async function HomeRoute() {
               >
                 <Link href="/explore">Explore</Link>
               </Button>
-              {user?.roles?.some((role) => role === "Content Creator") && (
+              {user?.roles?.some((role) => role === "Content Creator" || role === "Faculty" || role == "System Admin") && (
                 <Button
                   size="lg"
                   className="bg-sky-200 text-slate-900 hover:bg-sky-300 dark:bg-blue-400 dark:text-slate-900 dark:hover:bg-blue-500"
