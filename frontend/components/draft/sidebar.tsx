@@ -34,6 +34,7 @@ import { SortableLesson } from "@/components/draft/sortable-lesson";
 import { useLessonOrder } from "./metadata/hooks/useLessonOrder";
 import { Button } from "../ui/button";
 import { createDropletAnnouncement } from "@/lib/requests/feed";
+import { RequestReviewButton } from "./metadata/request-review";
 
 export function Sidebar({
   user,
@@ -41,7 +42,7 @@ export function Sidebar({
   authorizedUser,
 }: {
   user: User;
-  droplet: Pick<Droplet, "id" | "name" | "slug" | "lessons" | "status">;
+  droplet: Pick<Droplet, "id" | "name" | "slug" | "lessons" | "status" | "inReview" | "focusArea" | "learningObjectives" | "isHidden" | "type">;
   authorizedUser: AuthorizedUser | null;
 }) {
   const [expanded, setExpanded] = useState(false);
@@ -216,15 +217,19 @@ export function Sidebar({
                   </DialogContent>
                 </Dialog>
               </li>
-              <li className="w-full pb-2 text-center">
-                <Link
-                  className="w-full rounded-full bg-purple-500 px-6 py-2 text-white hover:bg-purple-600"
-                  href={`/d/${pathname.split("d/")[1]}`}
-                >
-                  Preview
-                </Link>
-              </li>
             </ul>
+              <div className="w-full pb-2 flex flex-col gap-2">
+  <Link
+    className="rounded-full bg-purple-400 dark:bg-purple-600 px-6 py-2 text-black hover:bg-purple-600 dark:hover:bg-purple-800 text-center dark:text-white"
+    href={`/d/${pathname.split("d/")[1]}`}
+  >
+    Preview
+  </Link>
+  
+  {!droplet.inReview && droplet.status === "draft" && (
+    <RequestReviewButton droplet={droplet}/>
+  )}
+</div>
 
             <Separator
               orientation="horizontal"

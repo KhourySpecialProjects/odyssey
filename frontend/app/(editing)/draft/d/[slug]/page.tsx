@@ -18,7 +18,6 @@ import { FunFactEditor } from "@/components/draft/metadata/fun-fact-editor";
 import { ClickableBadges } from "@/components/draft/metadata/clickable-badges";
 
 import { GeneralInfo } from "@/components/draft/metadata/general-info";
-import { RequestReviewButton } from "@/components/draft/metadata/request-review";
 
 type Props = {
   params: Promise<Params>;
@@ -208,9 +207,6 @@ export default async function Droplet({ params }: Props) {
             generateFact={generateFunFact}
             deleteFact={deleteFunFact}
           />
-          {!droplet.inReview && droplet.status === "draft" && (
-            <RequestReviewButton droplet={droplet} />
-          )}
         </div>
       </GradientBackground>
     </>
