@@ -7,13 +7,9 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { createPortal } from "react-dom";
 
-export function RequestReviewButton({ 
-  droplet,
-}: { 
-  droplet: Droplet;
-}) {
+export function RequestReviewButton({ droplet }: { droplet: Droplet }) {
   const [isReviewPopupOpen, setIsReviewPopupOpen] = useState(false);
-  
+
   const handleRequestReview = async () => {
     const response = await updateDroplet(
       droplet.id,
@@ -31,15 +27,15 @@ export function RequestReviewButton({
   };
 
   const modalContent = isReviewPopupOpen ? (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black bg-opacity-50">
-      <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl dark:bg-slate-900 mx-4">
+    <div className="bg-opacity-50 fixed inset-0 z-[9999] flex items-center justify-center bg-black">
+      <div className="mx-4 w-full max-w-md rounded-lg bg-white p-6 shadow-xl dark:bg-slate-900">
         <h3 className="mb-4 text-lg font-medium text-slate-900 dark:text-slate-100">
           Are you sure you want to submit this droplet for review?
         </h3>
         <p className="mb-2">
-            Once this droplet is reviewed by a Content Editor, it will either be
-            published or sent back with change requests.
-            </p>
+          Once this droplet is reviewed by a Content Editor, it will either be
+          published or sent back with change requests.
+        </p>
         <div className="flex justify-end space-x-2">
           <Button
             variant="outline"
@@ -59,19 +55,18 @@ export function RequestReviewButton({
     </div>
   ) : null;
 
-    return (
-      <>
-        <button
-          onClick={() => setIsReviewPopupOpen(true)}
-          className="w-full rounded-full bg-green-400 dark:bg-green-600 px-6 py-2 text-black dark:text-white hover:bg-green-600 dark:hover:bg-green-800 text-center whitespace-nowrap"
-        >
-          {droplet.afterReview ? "Re-Request Review" : "Request Review"}
-        </button>
+  return (
+    <>
+      <button
+        onClick={() => setIsReviewPopupOpen(true)}
+        className="w-full rounded-full bg-green-400 px-6 py-2 text-center whitespace-nowrap text-black hover:bg-green-600 dark:bg-green-600 dark:text-white dark:hover:bg-green-800"
+      >
+        {droplet.afterReview ? "Re-Request Review" : "Request Review"}
+      </button>
 
-        {typeof document !== 'undefined' && modalContent && createPortal(
-          modalContent,
-          document.body
-        )}
-      </>
-    );
+      {typeof document !== "undefined" &&
+        modalContent &&
+        createPortal(modalContent, document.body)}
+    </>
+  );
 }

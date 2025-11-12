@@ -42,7 +42,19 @@ export function Sidebar({
   authorizedUser,
 }: {
   user: User;
-  droplet: Pick<Droplet, "id" | "name" | "slug" | "lessons" | "status" | "inReview" | "focusArea" | "learningObjectives" | "isHidden" | "type">;
+  droplet: Pick<
+    Droplet,
+    | "id"
+    | "name"
+    | "slug"
+    | "lessons"
+    | "status"
+    | "inReview"
+    | "focusArea"
+    | "learningObjectives"
+    | "isHidden"
+    | "type"
+  >;
   authorizedUser: AuthorizedUser | null;
 }) {
   const [expanded, setExpanded] = useState(false);
@@ -218,18 +230,18 @@ export function Sidebar({
                 </Dialog>
               </li>
             </ul>
-              <div className="w-full pb-2 flex flex-col gap-2">
-  <Link
-    className="rounded-full bg-purple-400 dark:bg-purple-600 px-6 py-2 text-black hover:bg-purple-600 dark:hover:bg-purple-800 text-center dark:text-white"
-    href={`/d/${pathname.split("d/")[1]}`}
-  >
-    Preview
-  </Link>
-  
-  {!droplet.inReview && droplet.status === "draft" && (
-    <RequestReviewButton droplet={droplet}/>
-  )}
-</div>
+            <div className="flex w-full flex-col gap-2 pb-2">
+              <Link
+                className="rounded-full bg-purple-400 px-6 py-2 text-center text-black hover:bg-purple-600 dark:bg-purple-600 dark:text-white dark:hover:bg-purple-800"
+                href={`/d/${pathname.split("d/")[1]}`}
+              >
+                Preview
+              </Link>
+
+              {!droplet.inReview && droplet.status === "draft" && (
+                <RequestReviewButton droplet={droplet} />
+              )}
+            </div>
 
             <Separator
               orientation="horizontal"

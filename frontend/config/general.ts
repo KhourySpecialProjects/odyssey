@@ -36,7 +36,9 @@ export const getMainNav = (user: User) => {
       href: "/my-content",
       label: "Create",
       isHidden:
-        !isContentCreator(user.roles) && !isAuthorizedUserAdmin(user.roles) && !isAuthorizedUserFaculty(user.roles),
+        !isContentCreator(user.roles) &&
+        !isAuthorizedUserAdmin(user.roles) &&
+        !isAuthorizedUserFaculty(user.roles),
     },
     {
       href: "/review",
