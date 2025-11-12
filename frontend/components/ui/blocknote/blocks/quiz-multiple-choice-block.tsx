@@ -314,7 +314,7 @@ export const MultipleChoiceQuiz = createReactBlockSpec(
                         onMouseDown={(e) => e.stopPropagation()}
                         className="mt-3 rounded p-2 text-red-600 hover:bg-red-50 hover:text-red-700 dark:hover:bg-red-900/20"
                       >
-                        <XIcon size={20} />
+                        <XIcon size={20} color="red" />
                       </button>
                     )}
                   </div>
