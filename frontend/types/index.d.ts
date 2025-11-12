@@ -62,6 +62,7 @@ export type AuthorizedUser = {
   playlists?: Playlist[];
   linkedin: string;
   github: string;
+  website: string;
   firstTime: boolean;
   firstName: string;
   lastName: string;

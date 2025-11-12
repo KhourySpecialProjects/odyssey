@@ -29,6 +29,7 @@ import {
 import { Block } from "@/types";
 import { GenericBlock } from "@/components/draft/lesson/blocks/generic";
 import { markLessonAsComplete } from "@/lib/requests/lesson";
+import posthog from "posthog-js";
 
 interface LessonRendererProps {
   lesson: Lesson;
@@ -75,6 +76,22 @@ export function LessonRenderer({
 
   const isAdmin = user && isAuthorizedUserAdmin(user.roles);
   const isNotEnrolled = !enrollmentId && !author && !isAdmin;
+
+  // Initialize PostHog once when component mounts
+  useEffect(() => {
+    if (typeof window !== "undefined" && !(window as any).posthog) {
+      posthog.init(process.env.NEXT_PUBLIC_POSTHOG_KEY!, {
+        api_host:
+          process.env.NEXT_PUBLIC_POSTHOG_HOST || "https://app.posthog.com",
+      });
+
+      (window as any).posthog = posthog;
+
+      if (authUser?.id) {
+        posthog.identify(authUser.id.toString());
+      }
+    }
+  }, [authUser?.id]);
 
   if (isNotEnrolled) {
     return (
@@ -203,6 +220,17 @@ export function LessonRenderer({
       return;
     }
 
+    // Track button click
+    posthog.capture("mark_as_complete_clicked", {
+      lesson_id: lesson.id,
+      lesson_name: lesson.name,
+      droplet_id: droplet.id,
+      enrollment_id: enrollmentId,
+      user_id: authUser?.id,
+      page: window.location.pathname,
+      timestamp: new Date().toISOString(),
+    });
+
     startTransition(async () => {
       const success = await markLessonAsComplete(
         enrollmentId,
@@ -211,10 +239,24 @@ export function LessonRenderer({
       );
       if (success) {
         completedLessonIds.push(lesson.id);
+
+        // Track successful completion
+        posthog.capture("lesson_completed", {
+          lesson_id: lesson.id,
+          lesson_name: lesson.name,
+          droplet_id: droplet.id,
+          enrollment_id: enrollmentId,
+          user_id: authUser?.id,
+          page: window.location.pathname,
+          timestamp: new Date().toISOString(),
+        });
+
         await router.refresh();
       }
     });
   }
+
+  // ... rest of your component code stays the same
 
   let headings: Heading[] = [];
   lesson.blocks
@@ -289,6 +331,10 @@ export function LessonRenderer({
               key={i}
               block={b}
               lessonId={lesson.id}
+              dropletId={droplet.id}
+              dropletName={(droplet as any).name} // Add this - you may need to update the Droplet type
+              lessonName={lesson.name}
+              userId={authUser?.id}
               highlights={highlights}
               onHighlight={handleHighlight}
               onDeleteHighlight={handleDeleteHighlight}
@@ -327,6 +373,10 @@ export function LessonRenderer({
 function LessonBlockRenderer({
   block,
   lessonId,
+  dropletId,
+  dropletName,
+  lessonName,
+  userId,
   highlights,
   onHighlight,
   onDeleteHighlight,
@@ -339,6 +389,10 @@ function LessonBlockRenderer({
 }: {
   block: any;
   lessonId: number;
+  dropletId: number;
+  dropletName?: string;
+  lessonName: string;
+  userId?: number;
   highlights: Highlight[];
   onHighlight: (highlight: Highlight, isWithNote?: boolean) => void;
   onDeleteHighlight: (id: number) => void;
@@ -382,10 +436,28 @@ function LessonBlockRenderer({
       );
 
     case "droplets.quiz":
-      return <QuizBlock data={block} lessonId={lessonId} />;
+      return (
+        <QuizBlock
+          data={block}
+          lessonId={lessonId}
+          dropletId={dropletId}
+          dropletName={dropletName}
+          lessonName={lessonName}
+          userId={userId}
+        />
+      );
 
     case "droplets.open-ended-quiz":
-      return <OpenEndedQuizBlock data={block} />;
+      return (
+        <OpenEndedQuizBlock
+          data={block}
+          lessonId={lessonId}
+          dropletId={dropletId}
+          dropletName={dropletName}
+          lessonName={lessonName}
+          userId={userId}
+        />
+      );
 
     case "droplets.callout":
       return (

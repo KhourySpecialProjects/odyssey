@@ -6,18 +6,40 @@ import { DropletEnrollmentSchema } from "@/lib/validations/enrollment";
 import { Droplet, Enrollment } from "@/types";
 import { ArrowRightIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useTransition } from "react";
+import { useTransition, useEffect } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
+import posthog from "posthog-js";
 
 interface EnrollButtonProps {
   droplet: Droplet;
   isEnrolled?: boolean;
+  userId?: number;
 }
 
-export function EnrollButton({ droplet, isEnrolled }: EnrollButtonProps) {
+export function EnrollButton({
+  droplet,
+  isEnrolled,
+  userId,
+}: EnrollButtonProps) {
   const router = useRouter();
   const [, startTransition] = useTransition();
+
+  // Initialize PostHog once when component mounts
+  useEffect(() => {
+    if (typeof window !== "undefined" && !(window as any).posthog) {
+      posthog.init(process.env.NEXT_PUBLIC_POSTHOG_KEY!, {
+        api_host:
+          process.env.NEXT_PUBLIC_POSTHOG_HOST || "https://app.posthog.com",
+      });
+
+      (window as any).posthog = posthog;
+
+      if (userId) {
+        posthog.identify(userId.toString());
+      }
+    }
+  }, [userId]);
 
   if (!droplet.lessons || droplet.lessons.length === 0) {
     return null;
@@ -26,8 +48,17 @@ export function EnrollButton({ droplet, isEnrolled }: EnrollButtonProps) {
   async function enroll() {
     if (droplet.lessons && droplet.lessons.length > 0) {
       try {
+        // Track enrollment button click directly
+        posthog.capture("enroll_button_clicked", {
+          droplet_id: droplet.id,
+          droplet_name: droplet.name,
+          droplet_slug: droplet.slug,
+          user_id: userId,
+          page: window.location.pathname,
+          timestamp: new Date().toISOString(),
+        });
+
         startTransition(async () => {
-          // is there NOT already an enrollment created for the user with this droplet?
           if (
             !droplet.authorized_users?.some((user) =>
               user.enrollments?.some(
@@ -38,6 +69,16 @@ export function EnrollButton({ droplet, isEnrolled }: EnrollButtonProps) {
           ) {
             const enrollment = await createEnrollment(droplet, []);
             if (enrollment && enrollment.ok) {
+              // Track successful enrollment
+              posthog.capture("course_enrolled", {
+                droplet_id: droplet.id,
+                droplet_name: droplet.name,
+                droplet_slug: droplet.slug,
+                user_id: userId,
+                page: window.location.pathname,
+                timestamp: new Date().toISOString(),
+              });
+
               toast.success(`You are now enrolled in ${droplet.name}!`);
               if (droplet.lessons) {
                 router.push(`/d/${droplet.slug}/${droplet.lessons[0].slug}`);
@@ -55,6 +96,16 @@ export function EnrollButton({ droplet, isEnrolled }: EnrollButtonProps) {
 
   function unenroll() {
     if (droplet.lessons && droplet.lessons.length > 0) {
+      // Track unenroll button click
+      posthog.capture("unenroll_button_clicked", {
+        droplet_id: droplet.id,
+        droplet_name: droplet.name,
+        droplet_slug: droplet.slug,
+        user_id: userId,
+        page: window.location.pathname,
+        timestamp: new Date().toISOString(),
+      });
+
       const values: z.infer<typeof DropletEnrollmentSchema> = {
         droplet: droplet.id,
         viewedLessons: [],
@@ -63,7 +114,19 @@ export function EnrollButton({ droplet, isEnrolled }: EnrollButtonProps) {
       startTransition(() => {
         toast.promise(deleteEnrollment(values), {
           loading: "Unenrolling...",
-          success: () => `You are now unenrolled from ${droplet.name}!`,
+          success: () => {
+            // Track successful unenrollment
+            posthog.capture("course_unenrolled", {
+              droplet_id: droplet.id,
+              droplet_name: droplet.name,
+              droplet_slug: droplet.slug,
+              user_id: userId,
+              page: window.location.pathname,
+              timestamp: new Date().toISOString(),
+            });
+
+            return `You are now unenrolled from ${droplet.name}!`;
+          },
           error: (error) => (
             <div>
               <p>Uh oh! Something went wrong.</p>
@@ -75,6 +138,25 @@ export function EnrollButton({ droplet, isEnrolled }: EnrollButtonProps) {
     }
   }
 
+  function handleContinue() {
+    // Track continue button click
+    posthog.capture("continue_course_clicked", {
+      droplet_id: droplet.id,
+      droplet_name: droplet.name,
+      droplet_slug: droplet.slug,
+      user_id: userId,
+      page: window.location.pathname,
+      destination: droplet.lessons
+        ? `/d/${droplet.slug}/${droplet.lessons[0].slug}`
+        : null,
+      timestamp: new Date().toISOString(),
+    });
+
+    if (droplet.lessons) {
+      router.push(`/d/${droplet.slug}/${droplet.lessons[0].slug}`);
+    }
+  }
+
   return (
     <div className="flex gap-2">
       {isEnrolled ? (
@@ -82,11 +164,7 @@ export function EnrollButton({ droplet, isEnrolled }: EnrollButtonProps) {
           <Button
             size="lg"
             after={<ArrowRightIcon />}
-            onClick={() => {
-              if (droplet.lessons) {
-                router.push(`/d/${droplet.slug}/${droplet.lessons[0].slug}`);
-              }
-            }}
+            onClick={handleContinue}
             className="dark:bg-slate-300 dark:text-black dark:hover:bg-slate-400"
           >
             Continue

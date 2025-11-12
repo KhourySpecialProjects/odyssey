@@ -18,6 +18,7 @@ import { useMemo, useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { saveQuizAnswer, getQuizAnswer } from "@/lib/quiz-storage";
+import posthog from "posthog-js";
 
 const formSchema = z.object({
   answerIds: z.array(z.string()),
@@ -26,9 +27,17 @@ const formSchema = z.object({
 export function QuizQuestionBlock({
   question,
   lessonId,
+  dropletId,
+  dropletName,
+  lessonName,
+  userId,
 }: {
   question: QuizQuestion;
   lessonId: number;
+  dropletId?: number;
+  dropletName?: string;
+  lessonName?: string;
+  userId?: number;
 }) {
   const [showResult, setShowResult] = useState(false);
   const correctAnswers = useMemo(
@@ -43,16 +52,29 @@ export function QuizQuestionBlock({
     },
   });
 
+  // Initialize PostHog
+  useEffect(() => {
+    if (typeof window !== "undefined" && !(window as any).posthog) {
+      posthog.init(process.env.NEXT_PUBLIC_POSTHOG_KEY!, {
+        api_host:
+          process.env.NEXT_PUBLIC_POSTHOG_HOST || "https://app.posthog.com",
+      });
+
+      (window as any).posthog = posthog;
+
+      if (userId) {
+        posthog.identify(userId.toString());
+      }
+    }
+  }, [userId]);
+
   // Load saved answer on mount
   useEffect(() => {
     const saved = getQuizAnswer(lessonId, question.id);
     if (saved && saved.answerIds.length > 0) {
-      // Set form values
       form.reset({ answerIds: saved.answerIds });
 
-      // Set showResult after ensuring form is populated
       if (saved.showResult) {
-        // Use a microtask to ensure React has processed the form reset
         Promise.resolve().then(() => {
           setShowResult(true);
         });
@@ -85,6 +107,43 @@ export function QuizQuestionBlock({
 
   function onSubmit(values: z.infer<typeof formSchema>) {
     if (values.answerIds.length > 0) {
+      const isCorrect = areAnswersCorrect(values.answerIds);
+
+      // Track quiz answer submission
+      posthog.capture("quiz_answer_submitted", {
+        question_id: question.id,
+        question_title: question.content
+          .replace(/<[^>]*>/g, "")
+          .substring(0, 100), // Strip HTML, limit length
+        lesson_id: lessonId,
+        lesson_name: lessonName,
+        droplet_id: dropletId,
+        droplet_name: dropletName,
+        is_correct: isCorrect,
+        quiz_type: "multiple_choice",
+        user_id: userId,
+        page: window.location.pathname,
+        timestamp: new Date().toISOString(),
+      });
+
+      // If correct, track separately
+      if (isCorrect) {
+        posthog.capture("quiz_answered_correctly", {
+          question_id: question.id,
+          question_title: question.content
+            .replace(/<[^>]*>/g, "")
+            .substring(0, 100),
+          lesson_id: lessonId,
+          lesson_name: lessonName,
+          droplet_id: dropletId,
+          droplet_name: dropletName,
+          quiz_type: "multiple_choice",
+          user_id: userId,
+          page: window.location.pathname,
+          timestamp: new Date().toISOString(),
+        });
+      }
+
       setShowResult(true);
     }
   }
