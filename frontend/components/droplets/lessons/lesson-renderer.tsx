@@ -58,6 +58,93 @@ interface HighlightResponseItem {
   };
 }
 
+function convertBlockNoteToV1Blocks(blocksV2: any[]): Block[] {
+  if (!Array.isArray(blocksV2)) return [];
+
+  return blocksV2.map((block) => {
+    switch (block.type) {
+      case "callout":
+        const calloutColorMap: Record<string, string> = {
+          warning: "bg-red-300",
+          question: "bg-blue-300",
+          important: "bg-orange-300",
+          definition: "bg-green-300",
+          "more-information": "bg-purple-300",
+          caution: "bg-amber-300",
+          default: "bg-sky-50 dark:bg-sky-200",
+        };
+
+        return {
+          __component: "droplets.callout",
+          content: block.content || [],
+          color:
+            calloutColorMap[block.props?.calloutType] ||
+            calloutColorMap.default,
+          type: "info",
+          iconEnabled: true,
+        };
+
+      case "quiz-multiple-choice":
+        return {
+          __component: "droplets.quiz",
+          questions: [
+            {
+              id: Math.random(),
+              content: block.props?.question || "",
+              answerOptions: (block.props?.options || []).map((opt: any) => ({
+                id: Math.random(),
+                content: opt.text || "",
+                isCorrect: opt.isCorrect || false,
+              })),
+            },
+          ],
+        };
+
+      case "quiz-true-false":
+        return {
+          __component: "droplets.quiz",
+          questions: [
+            {
+              id: Math.random(),
+              content: block.props?.question || "",
+              answerOptions: [
+                {
+                  id: Math.random(),
+                  content: "True",
+                  isCorrect: block.props?.correctAnswer === true,
+                },
+                {
+                  id: Math.random(),
+                  content: "False",
+                  isCorrect: block.props?.correctAnswer === false,
+                },
+              ],
+            },
+          ],
+        };
+
+      case "quiz-open-ended":
+        return {
+          __component: "droplets.open-ended-quiz",
+          questions: [
+            {
+              id: Math.random(),
+              content: block.props?.question || "",
+              correctAnswer: "",
+            },
+          ],
+        };
+
+      case "paragraph":
+      default:
+        return {
+          __component: "droplets.generic",
+          content: block.content || [],
+        };
+    }
+  });
+}
+
 export function LessonRenderer({
   lesson,
   droplet,
@@ -77,7 +164,6 @@ export function LessonRenderer({
   const isAdmin = user && isAuthorizedUserAdmin(user.roles);
   const isNotEnrolled = !enrollmentId && !author && !isAdmin;
 
-  // Initialize PostHog once when component mounts
   useEffect(() => {
     if (typeof window !== "undefined" && !(window as any).posthog) {
       posthog.init(process.env.NEXT_PUBLIC_POSTHOG_KEY!, {
@@ -168,7 +254,6 @@ export function LessonRenderer({
     setExpanded(true);
     const enrollment = await getEnrollByID(String(enrollmentId));
 
-    //code that takes the text and notePos and gets the highlight
     if (authUser) {
       const highlight = await getHighlights(authUser.id, text);
       const result = await createNote(
@@ -220,7 +305,6 @@ export function LessonRenderer({
       return;
     }
 
-    // Track button click
     posthog.capture("mark_as_complete_clicked", {
       lesson_id: lesson.id,
       lesson_name: lesson.name,
@@ -240,7 +324,6 @@ export function LessonRenderer({
       if (success) {
         completedLessonIds.push(lesson.id);
 
-        // Track successful completion
         posthog.capture("lesson_completed", {
           lesson_id: lesson.id,
           lesson_name: lesson.name,
@@ -256,17 +339,20 @@ export function LessonRenderer({
     });
   }
 
-  // ... rest of your component code stays the same
+  const displayBlocks =
+    lesson.blocksVersion === "v2" && lesson.blocksV2
+      ? convertBlockNoteToV1Blocks(lesson.blocksV2)
+      : lesson.blocks;
 
   let headings: Heading[] = [];
-  lesson.blocks
+  displayBlocks
     .filter((b: Block) => b.__component === "droplets.generic")
     .forEach((b: Block) => {
       headings = headings.concat(extractHeadings((b as GenericBlock).content));
     });
 
   const [canProceed, setCanProceed] = useState(false);
-  const [activeBlock, setActiveBlock] = useState(lesson.blocks[0].id);
+  const [activeBlock, setActiveBlock] = useState(displayBlocks[0]?.id);
 
   useEffect(() => {
     const checkQuizAnswers = () => {
@@ -326,13 +412,13 @@ export function LessonRenderer({
         )}
 
         <div className="mt-8 space-y-12">
-          {lesson.blocks.map((b: Block, i: number) => (
+          {displayBlocks.map((b: Block, i: number) => (
             <LessonBlockRenderer
               key={i}
               block={b}
               lessonId={lesson.id}
               dropletId={droplet.id}
-              dropletName={(droplet as any).name} // Add this - you may need to update the Droplet type
+              dropletName={(droplet as any).name}
               lessonName={lesson.name}
               userId={authUser?.id}
               highlights={highlights}

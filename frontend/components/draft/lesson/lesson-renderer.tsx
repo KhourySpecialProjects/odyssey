@@ -53,6 +53,12 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
   const lastSavedBlocksRef = useRef<Block[]>(lastSavedBlocks);
   const [name, setName] = useState(lesson.name);
 
+  const [editorVersion, setEditorVersion] = useState<"v1" | "v2">(
+    lesson.blocksVersion || "v1",
+  );
+
+  const isNewLesson = blocks.length === 0 && !lesson.blocksV2;
+
   const updateBlocksBackend = useCallback(
     async (blocks: any[]) => {
       const response = await updateLesson(lesson.id, { blocks });
@@ -180,7 +186,6 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
     [blocks, updateBlocksBackendReload],
   );
 
-  // Add this new handler for the FAB
   const handleAddTool = useCallback(
     (blockType: string, calloutType?: string) => {
       let newBlock: Block;
@@ -200,7 +205,6 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
           };
           break;
         case "Callout Block": {
-          // Map callout type names to colors
           const calloutColorMap: Record<string, string> = {
             Warning: "bg-red-300",
             Question: "bg-blue-300",
@@ -274,7 +278,6 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
           return;
       }
 
-      // Add the block at the end of the list
       const updatedBlocks = [...blocks, newBlock];
       setBlocks(updatedBlocks);
       updateBlocksBackendReload(updatedBlocks);
@@ -304,7 +307,6 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
     newItems.splice(toIndex, 0, removed);
 
     setBlocks(newItems);
-    // Force immediate save with reload to persist the order
     updateBlocksBackendReload(newItems);
   };
 
@@ -358,6 +360,18 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
               </div>
             </div>
           )}
+          {isNewLesson && (
+            <Button
+              variant={editorVersion === "v2" ? "default" : "outline"}
+              onClick={() =>
+                setEditorVersion(editorVersion === "v1" ? "v2" : "v1")
+              }
+            >
+              {editorVersion === "v1"
+                ? "Use BlockNote Editor"
+                : "Use Classic Editor"}
+            </Button>
+          )}
           <DeleteLessonButton
             deleteLesson={deleteLessonBackend}
             dropletSlug={dropletSlug}
@@ -365,18 +379,33 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
         </div>
       </div>
 
-      <AddLessonBlock onAddBlock={handleAddTool} />
-      <div className="flex w-full flex-col items-center justify-center space-y-4">
-        <div className="w-full max-w-2xl">
-          <BlockList
-            blocks={blocks}
-            onReorder={handleReorderSource}
-            onAddBlock={handleAddBlock}
-            setBlock={setBlock}
-            deleteBlock={deleteBlock}
-          />
+      {editorVersion === "v1" ? (
+        <>
+          <AddLessonBlock onAddBlock={handleAddTool} />
+          <div className="flex w-full flex-col items-center justify-center space-y-4">
+            <div className="w-full max-w-2xl">
+              <BlockList
+                blocks={blocks}
+                onReorder={handleReorderSource}
+                onAddBlock={handleAddBlock}
+                setBlock={setBlock}
+                deleteBlock={deleteBlock}
+              />
+            </div>
+          </div>
+        </>
+      ) : (
+        <div className="mx-auto mt-8 w-full max-w-4xl">
+          <p className="mb-4 text-center text-sm text-slate-500">
+            BlockNote editor - Content will be saved to blocksV2 field
+          </p>
+          <div className="rounded-lg border p-4">
+            <p className="text-center text-slate-400">
+              BlockNote editor integration coming next...
+            </p>
+          </div>
         </div>
-      </div>
+      )}
     </>
   );
 }
