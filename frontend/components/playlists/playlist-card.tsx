@@ -45,12 +45,15 @@ export function PlaylistCard({
   dueDate,
   timeZone,
   dashboardPage,
-  isArchived
+  isArchived,
 }: PlaylistCardProps) {
   const [descriptionExpanded, setDescriptionExpanded] = useState(false);
   async function changeVisibility() {
     try {
-      const result = await archivePlaylist((playlist as Playlist), isArchived ? false : true);
+      const result = await archivePlaylist(
+        playlist as Playlist,
+        isArchived ? false : true,
+      );
       if (result.success) {
         toast.success(
           isArchived
@@ -103,10 +106,13 @@ export function PlaylistCard({
     .toFormat("MM/dd hh:mm a");
 
   return (
-    <Link href={linkTo} className="inline-block h-full w-full rounded-md border border-slate-200 bg-slate-50 hover:border-slate-300 dark:border-slate-500 dark:bg-slate-800">
+    <Link
+      href={linkTo}
+      className="inline-block h-full w-full rounded-md border border-slate-200 bg-slate-50 hover:border-slate-300 dark:border-slate-500 dark:bg-slate-800"
+    >
       <div className="p-6">
         <div>
-          <div >
+          <div>
             {dueDate && dueDate !== "" && daysUntil > -2 && (
               <Badge
                 className={getDueDateBadgeColor(daysUntil, true)}
@@ -184,7 +190,7 @@ export function PlaylistCard({
         </div>
       </div>
       {dashboardPage && (
-          <div className="flex justify-end p-2">
+        <div className="flex justify-end p-2">
           <Button
             size="sm"
             onClick={(e) => {
@@ -192,7 +198,7 @@ export function PlaylistCard({
               e.stopPropagation();
               changeVisibility();
             }}
-            className={`${isArchived === true || isArchived === false ? "visibility: visible" : "visibility: hidden"} bg-slate-50 hover:bg-slate-300 dark:bg-slate-300 justify-end`}
+            className={`${isArchived === true || isArchived === false ? "visibility: visible" : "visibility: hidden"} justify-end bg-slate-50 hover:bg-slate-300 dark:bg-slate-300`}
           >
             <div className="group relative">
               {isArchived ? (
@@ -205,8 +211,8 @@ export function PlaylistCard({
               </span>
             </div>
           </Button>
-          </div>
-        )}
+        </div>
+      )}
     </Link>
   );
 }

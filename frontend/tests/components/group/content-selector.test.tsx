@@ -1,5 +1,5 @@
 import { render, screen } from "@testing-library/react";
-import { ContentSelector } from "@/components/dashboard/content-selector";
+import { FilterSelector } from "@/components/dashboard/filter-selector";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 
 jest.mock("next/navigation", () => ({
@@ -17,7 +17,13 @@ describe("ContentSelector", () => {
 
   it("renders all tabs", () => {
     render(
-      <ContentSelector droplets={1} playlists={1} archived={1} groups={1} />,
+      <FilterSelector
+        droplets={1}
+        playlists={1}
+        archived={1}
+        groups={1}
+        favorited={0}
+      />,
     );
     expect(screen.getByText(/droplets/i)).toBeInTheDocument();
     expect(screen.getByText(/playlists/i)).toBeInTheDocument();
@@ -30,10 +36,16 @@ describe("ContentSelector", () => {
       new URLSearchParams("tab=playlists"),
     );
     render(
-      <ContentSelector droplets={1} playlists={1} archived={1} groups={1} />,
+      <FilterSelector
+        droplets={1}
+        playlists={1}
+        archived={1}
+        groups={1}
+        favorited={0}
+      />,
     );
     expect(screen.getByText(/playlists/i).parentElement).toHaveClass(
-      "space-x-8",
+      "flex flex-wrap gap-2",
     );
   });
 });

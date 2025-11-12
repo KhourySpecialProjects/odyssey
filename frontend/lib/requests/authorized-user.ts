@@ -65,10 +65,9 @@ export async function getAuthorizedUserByEmail<
             },
           },
           users_archived: {
-            fields: ["*"]
-          }
+            fields: ["*"],
+          },
         },
-        
       },
       friendships: {
         populate: {

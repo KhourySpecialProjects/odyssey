@@ -10,7 +10,7 @@ export function UserPlaylistsClient({
   publicPlaylists,
   dueDates,
   isArchived,
-  dashboardPage
+  dashboardPage,
 }: {
   customPlaylists: Playlist[];
   publicPlaylists: Playlist[];

@@ -26,8 +26,8 @@ export async function UserPlaylistsGrid({ sortKey }: { sortKey?: string }) {
             },
           },
           users_archived: {
-            fields: ["*"]
-          }
+            fields: ["*"],
+          },
         },
       },
       groups: {
@@ -68,7 +68,10 @@ export async function UserPlaylistsGrid({ sortKey }: { sortKey?: string }) {
     },
   );
 
-  const activePlaylists = allPlaylists.filter((playlist) => !playlist.users_archived?.some((user) => user.id === authorizedUser.id));
+  const activePlaylists = allPlaylists.filter(
+    (playlist) =>
+      !playlist.users_archived?.some((user) => user.id === authorizedUser.id),
+  );
 
   const publicPlaylists = activePlaylists.filter((p: Playlist) => p.isPublic);
   const customPlaylists = activePlaylists.filter((p: Playlist) => !p.isPublic);

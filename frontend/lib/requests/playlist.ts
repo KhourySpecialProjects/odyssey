@@ -285,7 +285,10 @@ export async function deletePlaylist(id: number) {
   }
 }
 
-export async function archivePlaylist(playlist: Playlist, archiveState: boolean) {
+export async function archivePlaylist(
+  playlist: Playlist,
+  archiveState: boolean,
+) {
   try {
     const user = await getCurrentUser();
     if (!user?.email) throw new Error("No email identified");
@@ -299,14 +302,17 @@ export async function archivePlaylist(playlist: Playlist, archiveState: boolean)
       },
     };
 
-    const response = await fetch(`${NEXT_PUBLIC_STRAPI_API_URL}/api/playlists/${playlist.id}`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+    const response = await fetch(
+      `${NEXT_PUBLIC_STRAPI_API_URL}/api/playlists/${playlist.id}`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+        },
+        body: JSON.stringify(requestBody),
       },
-      body: JSON.stringify(requestBody),
-    });
+    );
 
     const responseText = await response.text();
 
