@@ -485,7 +485,15 @@ export async function duplicateDroplet(dropletId: number) {
         tags: true,
         learningObjectives: true,
         lessons: {
-          populate: "*",
+          populate: {
+            blocks: {
+              populate: {
+                questions: {
+                  populate: ["answerOptions"],
+                },
+              },
+            },
+          },
           sort: ["orderIndex:asc"],
         },
         prerequisites: true,
@@ -498,15 +506,21 @@ export async function duplicateDroplet(dropletId: number) {
       throw new Error("Original droplet not found");
     }
 
-    // Create the new droplet with DRAFT prefix
+    // Generate a truly unique slug
+    const timestamp = Date.now();
+    const randomSuffix = Math.random().toString(36).substring(2, 15);
+    const uniqueSlug = `draft-${timestamp}-${randomSuffix}`;
+
+    // Create the new droplet with [EDIT]- prefix and store original droplet ID
     const newDropletData = {
-      name: `DRAFT ${originalDroplet.name}`,
-      slug: "random", // will be regenerated
+      name: `[EDIT]- ${originalDroplet.name}`,
+      slug: uniqueSlug,
       focusArea: originalDroplet.focusArea,
       type: originalDroplet.type,
       description: originalDroplet.description,
       overview: originalDroplet.overview,
       status: "draft",
+      originalDropletId: dropletId, // Store the original droplet ID
       tags: {
         connect: originalDroplet.tags?.map((tag) => tag.id) || [],
       },
@@ -525,6 +539,8 @@ export async function duplicateDroplet(dropletId: number) {
       nextSteps: originalDroplet.nextSteps || [],
     };
 
+    console.log("Creating droplet with slug:", uniqueSlug);
+
     // Create the new droplet
     const dropletResponse = await fetch(STRAPI_API_URL + "/api/droplets", {
       method: "POST",
@@ -538,16 +554,25 @@ export async function duplicateDroplet(dropletId: number) {
     const dropletResponseData = await dropletResponse.json();
 
     if (!dropletResponse.ok || dropletResponseData.error) {
+      console.error("Droplet creation error details:", JSON.stringify(dropletResponseData, null, 2));
       throw new Error(dropletResponseData.error?.message || "Failed to create droplet");
     }
 
     const newDropletId = dropletResponseData.data.id;
+    console.log("Created new droplet with ID:", newDropletId);
 
     // Helper function to remove ids from blocks while preserving structure
     const cleanBlocks = (blocks: any[]): any[] => {
-      if (!Array.isArray(blocks)) return [];
+      if (!Array.isArray(blocks)) {
+        console.log("Blocks is not an array:", blocks);
+        return [];
+      }
       
-      return blocks.map((block) => {
+      console.log(`Cleaning ${blocks.length} blocks`);
+      
+      return blocks.map((block, index) => {
+        console.log(`Block ${index}:`, block.__component);
+        
         // Create a copy without the id field
         const { id, ...blockWithoutId } = block;
         
@@ -584,15 +609,27 @@ export async function duplicateDroplet(dropletId: number) {
 
     // Duplicate all lessons
     if (originalDroplet.lessons && originalDroplet.lessons.length > 0) {
-      const lessonPromises = originalDroplet.lessons.map(async (lesson) => {
+      console.log(`Duplicating ${originalDroplet.lessons.length} lessons`);
+      
+      for (const lesson of originalDroplet.lessons) {
+        const lessonTimestamp = Date.now();
+        const lessonRandomSuffix = Math.random().toString(36).substring(2, 15);
+        const uniqueLessonSlug = `lesson-${lessonTimestamp}-${lessonRandomSuffix}`;
+        
+        console.log("Original lesson blocks:", lesson.blocks?.length || 0, "blocks");
+        
+        const cleanedBlocks = cleanBlocks(lesson.blocks || []);
+        
         const lessonData = {
           name: lesson.name,
-          slug: "random", // will be regenerated
+          slug: uniqueLessonSlug,
           type: lesson.type,
           orderIndex: lesson.orderIndex,
-          blocks: cleanBlocks(lesson.blocks),
+          blocks: cleanedBlocks,
           droplets: [newDropletId],
         };
+
+        console.log(`Creating lesson: ${lesson.name} with ${cleanedBlocks.length} blocks`);
 
         const response = await fetch(STRAPI_API_URL + "/api/lessons", {
           method: "POST",
@@ -605,14 +642,16 @@ export async function duplicateDroplet(dropletId: number) {
 
         if (!response.ok) {
           const errorData = await response.json();
-          console.error("Failed to create lesson:", errorData);
+          console.error("Failed to create lesson:", JSON.stringify(errorData, null, 2));
           throw new Error(`Failed to create lesson: ${lesson.name}`);
         }
 
-        return response;
-      });
+        const createdLesson = await response.json();
+        console.log(`Created lesson with ${createdLesson.data.attributes.blocks?.length || 0} blocks`);
 
-      await Promise.all(lessonPromises);
+        // Small delay to avoid rate limiting
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
     }
 
     revalidateTag("authors");
@@ -626,6 +665,187 @@ export async function duplicateDroplet(dropletId: number) {
       ok: false,
       error: err instanceof Error ? err.message : "Database Error: Failed to duplicate droplet.",
       data: null,
+    };
+  }
+}
+
+export async function publishDraftToOriginal(draftDropletId: number, originalDropletId: number) {
+  try {
+    const user = await getCurrentUser();
+    if (!user?.email) throw new Error("No email identified");
+    const author = await getAuthorizedUserByEmail(user.email, {
+      populate: {},
+    });
+    if (!author) throw new Error("No author identified");
+
+    // Fetch the draft droplet with all its data
+    const draftDroplet = await getDropletById<Droplet>(draftDropletId, {
+      fields: ["*"],
+      populate: {
+        tags: true,
+        learningObjectives: true,
+        lessons: {
+          populate: {
+            blocks: {
+              populate: {
+                questions: {
+                  populate: ["answerOptions"],
+                },
+              },
+            },
+          },
+          sort: ["orderIndex:asc"],
+        },
+        prerequisites: true,
+        postrequisites: true,
+        nextSteps: true,
+      },
+    });
+
+    if (!draftDroplet) {
+      throw new Error("Draft droplet not found");
+    }
+
+    // Fetch the original droplet to get its lessons for deletion
+    const originalDroplet = await getDropletById<Droplet>(originalDropletId, {
+      fields: ["*"],
+      populate: {
+        lessons: {
+          populate: "*",
+        },
+      },
+    });
+
+    if (!originalDroplet) {
+      throw new Error("Original droplet not found");
+    }
+
+    // Delete all lessons from the original droplet
+    if (originalDroplet.lessons && originalDroplet.lessons.length > 0) {
+      console.log(`Deleting ${originalDroplet.lessons.length} lessons from original droplet`);
+      
+      for (const lesson of originalDroplet.lessons) {
+        await deleteLesson(lesson.id, false);
+      }
+    }
+
+    // Update the original droplet with draft data (remove "[EDIT]- " prefix from name)
+    const updatedName = draftDroplet.name.replace(/^\[EDIT\]-\s*/i, "");
+    
+    const updateData = {
+      name: updatedName,
+      focusArea: draftDroplet.focusArea,
+      type: draftDroplet.type,
+      description: draftDroplet.description,
+      overview: draftDroplet.overview,
+      status: "published",
+      tagIds: draftDroplet.tags?.map((tag) => tag.id) || [],
+      learningObjectives: draftDroplet.learningObjectives?.map((obj) => obj.objective) || [],
+      prerequisiteIds: draftDroplet.prerequisites?.map((p) => p.id) || [],
+      postrequisiteIds: draftDroplet.postrequisites?.map((p) => p.id) || [],
+      nextSteps: draftDroplet.nextSteps || [],
+    };
+
+    const updateResult = await updateDroplet(originalDropletId, updateData, {
+      regenerateSlug: false,
+      revalidate: true,
+    });
+
+    if (!updateResult.ok) {
+      throw new Error(updateResult.error || "Failed to update original droplet");
+    }
+
+    console.log("Updated original droplet, now creating new lessons");
+
+    // Helper function to remove ids from blocks
+    const cleanBlocks = (blocks: any[]): any[] => {
+      if (!Array.isArray(blocks)) return [];
+      
+      return blocks.map((block) => {
+        const { id, ...blockWithoutId } = block;
+        
+        if (block.__component === "droplets.quiz" && block.questions) {
+          return {
+            ...blockWithoutId,
+            questions: block.questions.map((q: any) => {
+              const { id: qId, ...questionWithoutId } = q;
+              return {
+                ...questionWithoutId,
+                answerOptions: q.answerOptions?.map((a: any) => {
+                  const { id: aId, ...answerWithoutId } = a;
+                  return answerWithoutId;
+                }) || []
+              };
+            })
+          };
+        }
+        
+        if (block.__component === "droplets.open-ended-quiz" && block.questions) {
+          return {
+            ...blockWithoutId,
+            questions: block.questions.map((q: any) => {
+              const { id: qId, ...questionWithoutId } = q;
+              return questionWithoutId;
+            })
+          };
+        }
+        
+        return blockWithoutId;
+      });
+    };
+
+    // Create lessons from draft in the original droplet
+    if (draftDroplet.lessons && draftDroplet.lessons.length > 0) {
+      console.log(`Creating ${draftDroplet.lessons.length} lessons in original droplet`);
+      
+      for (const lesson of draftDroplet.lessons) {
+        const cleanedBlocks = cleanBlocks(lesson.blocks || []);
+        
+        const lessonData = {
+          name: lesson.name,
+          slug: lesson.slug,
+          type: lesson.type,
+          orderIndex: lesson.orderIndex,
+          blocks: cleanedBlocks,
+          droplets: [originalDropletId],
+        };
+
+        const response = await fetch(STRAPI_API_URL + "/api/lessons", {
+          method: "POST",
+          body: JSON.stringify({ data: lessonData }),
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+          },
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          console.error("Failed to create lesson:", JSON.stringify(errorData, null, 2));
+          throw new Error(`Failed to create lesson: ${lesson.name}`);
+        }
+
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+    }
+
+    console.log("Successfully merged lessons, now deleting draft droplet");
+
+    // Delete the draft droplet
+    await deepDeleteDroplet(draftDropletId);
+
+    revalidateTag("authors");
+    revalidateTag("droplets");
+    revalidatePath("(general)/my-content", "page");
+    revalidatePath(`/d/${originalDroplet.slug}`, "page");
+    
+    return { ok: true, error: null, slug: originalDroplet.slug };
+  } catch (err) {
+    console.error(err);
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : "Database Error: Failed to publish draft.",
+      slug: null,
     };
   }
 }

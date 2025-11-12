@@ -325,7 +325,7 @@ export default function Sidebar({
             <AlertDialogTitle>Edit Droplet Content</AlertDialogTitle>
             <AlertDialogDescription>
               You are about to create a draft copy of this published droplet. 
-              A new droplet titled "DRAFT {droplet.name}" will be created, 
+              A new droplet titled "[EDIT]- {droplet.name}" will be created, 
               and you'll be able to make changes without affecting the live content. 
               You can publish the draft later to replace the current version.
             </AlertDialogDescription>
