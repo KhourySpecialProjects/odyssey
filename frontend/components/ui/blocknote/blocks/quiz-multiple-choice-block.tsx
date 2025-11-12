@@ -1,6 +1,7 @@
 import { createReactBlockSpec } from "@blocknote/react";
 import { defaultProps } from "@blocknote/core";
 import { Trash2Icon, PlusIcon, XIcon } from "lucide-react";
+import React from "react";
 
 interface AnswerOption {
   id: string;
@@ -29,6 +30,40 @@ export const MultipleChoiceQuiz = createReactBlockSpec(
     render: (props) => {
       const { question } = props.block.props;
       const options = (props.block.props.options || []) as AnswerOption[];
+      const blockRef = React.useRef<HTMLDivElement>(null);
+
+      React.useEffect(() => {
+        if (blockRef.current) {
+          const blockContent = blockRef.current.closest(
+            ".bn-block-content",
+          ) as HTMLElement;
+          if (blockContent) {
+            const removeStyles = () => {
+              blockContent.removeAttribute("style");
+            };
+
+            removeStyles();
+
+            const observer = new MutationObserver(removeStyles);
+            observer.observe(blockContent, {
+              attributes: true,
+              attributeFilter: ["style"],
+            });
+
+            const events = ["click", "mousedown", "focus", "focusin"];
+            events.forEach((event) => {
+              blockContent.addEventListener(event, removeStyles, true);
+            });
+
+            return () => {
+              observer.disconnect();
+              events.forEach((event) => {
+                blockContent.removeEventListener(event, removeStyles, true);
+              });
+            };
+          }
+        }
+      }, []);
 
       const handleQuestionChange = (
         e: React.ChangeEvent<HTMLTextAreaElement>,
@@ -83,23 +118,32 @@ export const MultipleChoiceQuiz = createReactBlockSpec(
       };
 
       return (
-        <div className="w-full max-w-2xl rounded-lg border-2 border-gray-200 bg-white pb-4 dark:border-gray-700 dark:bg-gray-800">
+        <div
+          ref={blockRef}
+          onMouseDown={(e) => {
+            if (blockRef.current) {
+              const blockContent = blockRef.current.closest(
+                ".bn-block-content",
+              ) as HTMLElement;
+              if (blockContent) {
+                blockContent.removeAttribute("style");
+              }
+            }
+          }}
+          className="w-full max-w-2xl rounded-lg border-2 border-gray-200 bg-white pb-4 dark:border-gray-700 dark:bg-gray-800"
+        >
           {/* Header */}
-          <div
-            className="mb-4 flex w-full flex-row items-center justify-between p-4"
-            contentEditable="false"
-          >
+          <div className="mb-4 flex w-full flex-row items-center justify-between p-4">
             <h2 className="text-lg">Multiple Choice Quiz</h2>
-            <div contentEditable="false">
-              <Trash2Icon
-                className="cursor-pointer text-red-600 hover:text-red-700"
-                onClick={handleDelete}
-                data-testid="delete-block"
-              />
-            </div>
+            <Trash2Icon
+              className="cursor-pointer text-red-600 hover:text-red-700"
+              onClick={handleDelete}
+              onMouseDown={(e) => e.preventDefault()}
+              data-testid="delete-block"
+            />
           </div>
 
-          <div className="space-y-6 px-4" contentEditable="false">
+          <div className="space-y-6 px-4">
             {/* Question */}
             <div>
               <label className="mb-2 block text-left text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -122,14 +166,13 @@ export const MultipleChoiceQuiz = createReactBlockSpec(
                 {options.map((option: AnswerOption, index: number) => (
                   <div key={option.id} className="flex items-start gap-2">
                     {/* Checkbox for correct answer */}
-                    <div contentEditable="false">
-                      <input
-                        type="checkbox"
-                        checked={option.isCorrect}
-                        onChange={() => handleOptionCorrectChange(option.id)}
-                        className="mt-4 h-5 w-5 cursor-pointer"
-                      />
-                    </div>
+                    <input
+                      type="checkbox"
+                      checked={option.isCorrect}
+                      onChange={() => handleOptionCorrectChange(option.id)}
+                      onMouseDown={(e) => e.stopPropagation()}
+                      className="mt-4 h-5 w-5 cursor-pointer"
+                    />
 
                     {/* Option text */}
                     <textarea
@@ -143,14 +186,13 @@ export const MultipleChoiceQuiz = createReactBlockSpec(
 
                     {/* Delete option button */}
                     {options.length > 2 && (
-                      <div contentEditable="false">
-                        <button
-                          onClick={() => handleRemoveOption(option.id)}
-                          className="mt-3 rounded p-2 text-red-600 hover:bg-red-50 hover:text-red-700 dark:hover:bg-red-900/20"
-                        >
-                          <XIcon size={20} />
-                        </button>
-                      </div>
+                      <button
+                        onClick={() => handleRemoveOption(option.id)}
+                        onMouseDown={(e) => e.stopPropagation()}
+                        className="mt-3 rounded p-2 text-red-600 hover:bg-red-50 hover:text-red-700 dark:hover:bg-red-900/20"
+                      >
+                        <XIcon size={20} />
+                      </button>
                     )}
                   </div>
                 ))}
@@ -158,15 +200,14 @@ export const MultipleChoiceQuiz = createReactBlockSpec(
 
               {/* Add Option Button */}
               {options.length < 6 && (
-                <div contentEditable="false">
-                  <button
-                    onClick={handleAddOption}
-                    className="mt-3 flex items-center gap-2 rounded-md border border-gray-300 px-4 py-2 text-sm transition-colors hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700"
-                  >
-                    <PlusIcon size={16} />
-                    Add Option
-                  </button>
-                </div>
+                <button
+                  onClick={handleAddOption}
+                  onMouseDown={(e) => e.stopPropagation()}
+                  className="mt-3 flex items-center gap-2 rounded-md border border-gray-300 px-4 py-2 text-sm transition-colors hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700"
+                >
+                  <PlusIcon size={16} />
+                  Add Option
+                </button>
               )}
             </div>
           </div>

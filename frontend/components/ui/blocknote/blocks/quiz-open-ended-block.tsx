@@ -1,6 +1,7 @@
 import { createReactBlockSpec } from "@blocknote/react";
 import { defaultProps } from "@blocknote/core";
 import { Trash2Icon } from "lucide-react";
+import React from "react";
 
 export const OpenEndedQuiz = createReactBlockSpec(
   {
@@ -19,6 +20,40 @@ export const OpenEndedQuiz = createReactBlockSpec(
   {
     render: (props) => {
       const { question, correctAnswer } = props.block.props;
+      const blockRef = React.useRef<HTMLDivElement>(null);
+
+      React.useEffect(() => {
+        if (blockRef.current) {
+          const blockContent = blockRef.current.closest(
+            ".bn-block-content",
+          ) as HTMLElement;
+          if (blockContent) {
+            const removeStyles = () => {
+              blockContent.removeAttribute("style");
+            };
+
+            removeStyles();
+
+            const observer = new MutationObserver(removeStyles);
+            observer.observe(blockContent, {
+              attributes: true,
+              attributeFilter: ["style"],
+            });
+
+            const events = ["click", "mousedown", "focus", "focusin"];
+            events.forEach((event) => {
+              blockContent.addEventListener(event, removeStyles, true);
+            });
+
+            return () => {
+              observer.disconnect();
+              events.forEach((event) => {
+                blockContent.removeEventListener(event, removeStyles, true);
+              });
+            };
+          }
+        }
+      }, []);
 
       const handleQuestionChange = (
         e: React.ChangeEvent<HTMLTextAreaElement>,
@@ -41,26 +76,35 @@ export const OpenEndedQuiz = createReactBlockSpec(
       };
 
       return (
-        <div className="w-full max-w-2xl rounded-lg border-2 border-gray-200 bg-white pb-4 dark:border-gray-700 dark:bg-gray-800">
+        <div
+          ref={blockRef}
+          onMouseDown={(e) => {
+            if (blockRef.current) {
+              const blockContent = blockRef.current.closest(
+                ".bn-block-content",
+              ) as HTMLElement;
+              if (blockContent) {
+                blockContent.removeAttribute("style");
+              }
+            }
+          }}
+          className="w-full max-w-2xl rounded-lg border-2 border-gray-200 bg-white pb-4 dark:border-gray-700 dark:bg-gray-800"
+        >
           {/* Header */}
-          <div
-            className="mb-4 flex w-full flex-row items-center justify-between p-4"
-            contentEditable="false"
-          >
+          <div className="mb-4 flex w-full flex-row items-center justify-between p-4">
             <h2 className="text-lg">Open-Ended Quiz</h2>
-            <div contentEditable="false">
-              <Trash2Icon
-                className="cursor-pointer text-red-600 hover:text-red-700"
-                onClick={handleDelete}
-                data-testid="delete-block"
-              />
-            </div>
+            <Trash2Icon
+              className="cursor-pointer text-red-600 hover:text-red-700"
+              onClick={handleDelete}
+              onMouseDown={(e) => e.stopPropagation()}
+              data-testid="delete-block"
+            />
           </div>
 
           <div className="space-y-6 px-4">
             {/* Question */}
             <div>
-              <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+              <label className="mb-2 block text-left text-sm font-medium text-gray-700 dark:text-gray-300">
                 Question:
               </label>
               <textarea
@@ -73,7 +117,7 @@ export const OpenEndedQuiz = createReactBlockSpec(
 
             {/* Correct Answer */}
             <div>
-              <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+              <label className="mb-2 block text-left text-sm font-medium text-gray-700 dark:text-gray-300">
                 Correct Answer:
               </label>
               <textarea

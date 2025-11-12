@@ -1,6 +1,7 @@
 import { createReactBlockSpec } from "@blocknote/react";
 import { defaultProps } from "@blocknote/core";
 import { Trash2Icon } from "lucide-react";
+import React from "react";
 
 export const TrueFalseQuiz = createReactBlockSpec(
   {
@@ -20,6 +21,40 @@ export const TrueFalseQuiz = createReactBlockSpec(
   {
     render: (props) => {
       const { question, correctAnswer } = props.block.props;
+      const blockRef = React.useRef<HTMLDivElement>(null);
+
+      React.useEffect(() => {
+        if (blockRef.current) {
+          const blockContent = blockRef.current.closest(
+            ".bn-block-content",
+          ) as HTMLElement;
+          if (blockContent) {
+            const removeStyles = () => {
+              blockContent.removeAttribute("style");
+            };
+
+            removeStyles();
+
+            const observer = new MutationObserver(removeStyles);
+            observer.observe(blockContent, {
+              attributes: true,
+              attributeFilter: ["style"],
+            });
+
+            const events = ["click", "mousedown", "focus", "focusin"];
+            events.forEach((event) => {
+              blockContent.addEventListener(event, removeStyles, true);
+            });
+
+            return () => {
+              observer.disconnect();
+              events.forEach((event) => {
+                blockContent.removeEventListener(event, removeStyles, true);
+              });
+            };
+          }
+        }
+      }, []);
 
       const handleQuestionChange = (
         e: React.ChangeEvent<HTMLTextAreaElement>,
@@ -33,6 +68,17 @@ export const TrueFalseQuiz = createReactBlockSpec(
         props.editor.updateBlock(props.block, {
           props: { correctAnswer: value },
         });
+
+        setTimeout(() => {
+          if (blockRef.current) {
+            const blockContent = blockRef.current.closest(
+              ".bn-block-content",
+            ) as HTMLElement;
+            if (blockContent) {
+              blockContent.removeAttribute("style");
+            }
+          }
+        }, 0);
       };
 
       const handleDelete = () => {
@@ -40,17 +86,27 @@ export const TrueFalseQuiz = createReactBlockSpec(
       };
 
       return (
-        <div className="w-full max-w-2xl rounded-lg border-2 border-gray-200 bg-white pb-4 dark:border-gray-700 dark:bg-gray-800">
+        <div
+          ref={blockRef}
+          onMouseDown={(e) => {
+            if (blockRef.current) {
+              const blockContent = blockRef.current.closest(
+                ".bn-block-content",
+              ) as HTMLElement;
+              if (blockContent) {
+                blockContent.removeAttribute("style");
+              }
+            }
+          }}
+          className="w-full max-w-2xl rounded-lg border-2 border-gray-200 bg-white pb-4 dark:border-gray-700 dark:bg-gray-800"
+        >
           {/* Header matching QuizEditor */}
-          <div
-            className="mb-4 flex w-full flex-row items-center justify-between p-4"
-            contentEditable="false"
-          >
-            {" "}
+          <div className="mb-4 flex w-full flex-row items-center justify-between p-4">
             <h2 className="text-lg">True/False Quiz</h2>
             <Trash2Icon
               className="cursor-pointer text-red-600 hover:text-red-700"
               onClick={handleDelete}
+              onMouseDown={(e) => e.stopPropagation()}
               data-testid="delete-block"
             />
           </div>
@@ -58,7 +114,7 @@ export const TrueFalseQuiz = createReactBlockSpec(
           <div className="space-y-6 px-4">
             {/* Question */}
             <div>
-              <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+              <label className="mb-2 block text-left text-sm font-medium text-gray-700 dark:text-gray-300">
                 Question:
               </label>
               <textarea
@@ -71,13 +127,23 @@ export const TrueFalseQuiz = createReactBlockSpec(
 
             {/* Answer Selection */}
             <div>
-              <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+              <label className="mb-2 block text-left text-sm font-medium text-gray-700 dark:text-gray-300">
                 Correct Answer:
               </label>
-              <div className="flex gap-4" contentEditable={false}>
+              <div className="flex gap-4">
                 <button
                   onClick={() => handleAnswerChange(true)}
-                  contentEditable="false"
+                  onMouseDown={(e) => {
+                    e.stopPropagation();
+                    if (blockRef.current) {
+                      const blockContent = blockRef.current.closest(
+                        ".bn-block-content",
+                      ) as HTMLElement;
+                      if (blockContent) {
+                        blockContent.removeAttribute("style");
+                      }
+                    }
+                  }}
                   className={`flex-1 rounded-md border-2 p-3 font-medium transition-colors ${
                     correctAnswer === true
                       ? "border-green-500 bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-300"
@@ -88,7 +154,17 @@ export const TrueFalseQuiz = createReactBlockSpec(
                 </button>
                 <button
                   onClick={() => handleAnswerChange(false)}
-                  contentEditable="false"
+                  onMouseDown={(e) => {
+                    e.stopPropagation();
+                    if (blockRef.current) {
+                      const blockContent = blockRef.current.closest(
+                        ".bn-block-content",
+                      ) as HTMLElement;
+                      if (blockContent) {
+                        blockContent.removeAttribute("style");
+                      }
+                    }
+                  }}
                   className={`flex-1 rounded-md border-2 p-3 font-medium transition-colors ${
                     correctAnswer === false
                       ? "border-red-500 bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-300"

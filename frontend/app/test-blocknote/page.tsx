@@ -29,7 +29,7 @@ export default function TestBlockNotePage() {
       <div className="mx-auto max-w-4xl">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100">
-            BlockNote Callout Test
+            BlockNote Custom Block Test
           </h1>
           <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
             Type "/" to see callout options: warning, question, important,
