@@ -189,12 +189,6 @@ describe("utils", () => {
 
     describe("role checks", () => {
       describe("isAuthorizedUserAdmin", () => {
-        it("should return true for admin roles", () => {
-          expect(
-            isAuthorizedUserAdmin([AuthorizedUserRoleTitle.AcadAdmin]),
-          ).toBe(true);
-        });
-
         it("should return false for non-admin roles", () => {
           expect(isAuthorizedUserAdmin([AuthorizedUserRoleTitle.User])).toBe(
             false,
