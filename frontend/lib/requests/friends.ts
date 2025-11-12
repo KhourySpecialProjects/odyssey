@@ -30,6 +30,7 @@ export async function fetchFriends(
             "github",
             "linkedin",
             "profilePhoto",
+            "website",
           ],
           populate: {
             blocked: {
@@ -490,6 +491,7 @@ export async function fetchFriendshipsById(
             "github",
             "linkedin",
             "profilePhoto",
+            "website",
           ],
           populate: {
             blocked: {

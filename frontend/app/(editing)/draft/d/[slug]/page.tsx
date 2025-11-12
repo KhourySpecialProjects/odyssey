@@ -1,8 +1,4 @@
-import {
-  getDropletBySlug,
-  updateDroplet,
-  updateDropletFunFact,
-} from "@/lib/requests/droplet";
+import { getDropletBySlug, updateDropletFunFact } from "@/lib/requests/droplet";
 import type { Droplet } from "@/types";
 import { DropletName } from "@/components/draft/metadata/droplet-name";
 import { LearningObjectives } from "@/components/draft/metadata/learning-objectives/learning-objectives";
@@ -10,11 +6,8 @@ import { getDroplets } from "@/lib/requests/droplet";
 import { getTags } from "@/lib/requests/tag";
 import { NextSteps } from "@/components/draft/metadata/next-steps/next-steps";
 import { Overview } from "@/components/draft/metadata/overview";
-import { Filter } from "@/components/draft/metadata/filter";
 import { Description } from "@/components/draft/metadata/description";
-import { isContentEditor, uppercaseFirstChar } from "@/lib/utils";
-import { Badge } from "@/components/ui/badge";
-import { RegenerateSlugButton } from "@/components/draft/metadata/regenerate-slug";
+import { isContentEditor } from "@/lib/utils";
 import { Authors } from "@/components/draft/metadata/authors";
 import { GradientBackground } from "@/components/gradient-bg";
 import { getCurrentUser } from "@/lib/auth/session";

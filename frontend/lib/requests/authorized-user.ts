@@ -26,16 +26,16 @@ export async function getAuthorizedUserByEmail<
     filters,
     populate = {
       received_requests: {
-        fields: ["id", "email", "firstName", "lastName", "bio", "profilePhoto"],
+        fields: ["*"],
       },
       sent_requests: {
-        fields: ["id", "email", "firstName", "lastName", "bio", "profilePhoto"],
+        fields: ["*"],
       },
       blocked: {
-        fields: ["id", "email", "firstName", "lastName", "bio", "profilePhoto"],
+        fields: ["*"],
       },
       was_blocked: {
-        fields: ["id", "email", "firstName", "lastName", "bio", "profilePhoto"],
+        fields: ["*"],
       },
       droplets: {
         fields: ["*"],
@@ -78,6 +78,7 @@ export async function getAuthorizedUserByEmail<
               "github",
               "linkedin",
               "profilePhoto",
+              "website",
             ],
             populate: {
               blocked: {
@@ -108,6 +109,7 @@ export async function getAuthorizedUserByEmail<
       "timeZone",
       "linkedin",
       "github",
+      "website",
     ],
   }: StrapiRequestParams = {},
 ): Promise<T> {
@@ -145,6 +147,7 @@ export async function fetchAuthorizedUsers(): Promise<AuthorizedUser[]> {
         "profilePhoto",
         "linkedin",
         "github",
+        "website",
       ],
       populate: {
         roles: { fields: ["title"] },
@@ -243,6 +246,7 @@ export async function fetchContentCreators(): Promise<AuthorizedUser[]> {
         "profilePhoto",
         "linkedin",
         "github",
+        "website",
       ],
       populate: {
         roles: {
@@ -305,6 +309,7 @@ export async function fetchWebsiteCreators(): Promise<AuthorizedUser[]> {
         "profilePhoto",
         "linkedin",
         "github",
+        "website",
       ],
       populate: {
         roles: {
@@ -523,6 +528,7 @@ export async function updateUserInfo(
     linkedin?: string | null;
     github?: string | null;
     photo?: string | null;
+    website?: string | null;
   },
 ) {
   try {
@@ -538,6 +544,7 @@ export async function updateUserInfo(
       linkedin,
       github,
       photo,
+      website,
     } = updates;
     const roleIds = roles
       ? await Promise.all(
@@ -556,6 +563,7 @@ export async function updateUserInfo(
     if (firstTime !== undefined) data.firstTime = updates.firstTime;
     if (linkedin !== undefined) data.linkedin = linkedin;
     if (github !== undefined) data.github = github;
+    if (website !== undefined) data.website = website;
     if (photo !== undefined) data.profilePhoto = photo;
     if (roles && roles.length > 0) {
       data.roles = {
@@ -563,7 +571,7 @@ export async function updateUserInfo(
       };
     }
 
-    const response = await fetch(
+    await fetch(
       `${NEXT_PUBLIC_STRAPI_API_URL}/api/authorized-users/${userId}`,
       {
         method: "PUT",

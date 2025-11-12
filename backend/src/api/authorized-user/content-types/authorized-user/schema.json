@@ -220,6 +220,9 @@
       "relation": "manyToMany",
       "target": "api::droplet.droplet",
       "mappedBy": "usersFavorited"
+    },
+    "website": {
+      "type": "string"
     }
   }
 }
