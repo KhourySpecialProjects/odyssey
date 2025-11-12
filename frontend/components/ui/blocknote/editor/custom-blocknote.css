@@ -1,0 +1,78 @@
+/* Force dark text in quiz blocks - light mode only */
+/* Target by data-content-type attribute on any element */
+
+/* All quiz block content */
+.bn-container.light [data-content-type="quiz-multiple-choice"] *,
+.bn-container.light [data-content-type="quiz-true-false"] *,
+.bn-container.light [data-content-type="quiz-open-ended"] *,
+.bn-container.light [data-content-type^="quiz-"] * {
+  color: rgb(17 24 39) !important;
+  -webkit-text-fill-color: rgb(17 24 39) !important;
+}
+
+/* Form elements specifically */
+.bn-container.light [data-content-type^="quiz-"] textarea,
+.bn-container.light [data-content-type^="quiz-"] input {
+  color: rgb(17 24 39) !important;
+  -webkit-text-fill-color: rgb(17 24 39) !important;
+  caret-color: rgb(17 24 39) !important;
+}
+
+/* When block is selected - override BlockNote's selection color */
+.bn-container.light
+  .bn-block[data-selected="true"]
+  [data-content-type^="quiz-"]
+  *,
+.bn-container.light
+  .bn-block[data-selected="true"]
+  [data-content-type="quiz-multiple-choice"]
+  *,
+.bn-container.light
+  .bn-block[data-selected="true"]
+  [data-content-type="quiz-true-false"]
+  *,
+.bn-container.light
+  .bn-block[data-selected="true"]
+  [data-content-type="quiz-open-ended"]
+  * {
+  color: rgb(17 24 39) !important;
+  -webkit-text-fill-color: rgb(17 24 39) !important;
+}
+
+.bn-container.light
+  .bn-block[data-selected="true"]
+  [data-content-type^="quiz-"]
+  textarea,
+.bn-container.light
+  .bn-block[data-selected="true"]
+  [data-content-type^="quiz-"]
+  input {
+  color: rgb(17 24 39) !important;
+  -webkit-text-fill-color: rgb(17 24 39) !important;
+  caret-color: rgb(17 24 39) !important;
+}
+
+/* Also check if data-content-type is on bn-block-content */
+.bn-container.light .bn-block-content[data-content-type^="quiz-"] *,
+.bn-container.light
+  .bn-block[data-selected="true"]
+  .bn-block-content[data-content-type^="quiz-"]
+  * {
+  color: rgb(17 24 39) !important;
+  -webkit-text-fill-color: rgb(17 24 39) !important;
+}
+
+.bn-container.light .bn-block-content[data-content-type^="quiz-"] textarea,
+.bn-container.light .bn-block-content[data-content-type^="quiz-"] input,
+.bn-container.light
+  .bn-block[data-selected="true"]
+  .bn-block-content[data-content-type^="quiz-"]
+  textarea,
+.bn-container.light
+  .bn-block[data-selected="true"]
+  .bn-block-content[data-content-type^="quiz-"]
+  input {
+  color: rgb(17 24 39) !important;
+  -webkit-text-fill-color: rgb(17 24 39) !important;
+  caret-color: rgb(17 24 39) !important;
+}

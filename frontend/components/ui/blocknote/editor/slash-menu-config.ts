@@ -73,3 +73,71 @@ export const getCalloutSlashMenuItems = (
     "Gray default callout",
   ),
 ];
+export const getQuizSlashMenuItems = (editor: any) => [
+  {
+    title: "True/False Quiz",
+    onItemClick: () => {
+      editor.insertBlocks(
+        [
+          {
+            type: "quiz-true-false",
+            props: {
+              question: "",
+              correctAnswer: true,
+            },
+          },
+        ],
+        editor.getTextCursorPosition().block,
+        "after",
+      );
+    },
+    aliases: ["true false", "tf", "quiz tf", "true/false", "quiz"],
+    group: "Quizzes",
+    subtext: "Create a true/false question",
+  },
+  {
+    title: "Open-Ended Quiz",
+    onItemClick: () => {
+      editor.insertBlocks(
+        [
+          {
+            type: "quiz-open-ended",
+            props: {
+              question: "",
+              correctAnswer: "",
+            },
+          },
+        ],
+        editor.getTextCursorPosition().block,
+        "after",
+      );
+    },
+    aliases: ["open ended", "open", "essay", "free response", "quiz open"],
+    group: "Quizzes",
+    subtext: "Create an open-ended question",
+  },
+  {
+    title: "Multiple Choice Quiz",
+    onItemClick: () => {
+      editor.insertBlocks(
+        [
+          {
+            type: "quiz-multiple-choice",
+            props: {
+              question: "",
+              options: [
+                { id: "1", text: "", isCorrect: true },
+                { id: "2", text: "", isCorrect: false },
+              ],
+            },
+          },
+        ],
+        editor.getTextCursorPosition().block,
+        "after",
+      );
+    },
+    aliases: ["multiple choice", "mc", "quiz mc", "mcq"],
+    group: "Quizzes",
+    subtext: "Create a multiple choice question",
+  },
+];
