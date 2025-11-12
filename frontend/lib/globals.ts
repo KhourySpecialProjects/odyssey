@@ -23,9 +23,7 @@ export enum NoteTypeTitle {
   Blue = "#93c5fd",
 }
 
-export const AuthorizedUserAdminRoles = [
-  AuthorizedUserRoleTitle.SysAdmin,
-];
+export const AuthorizedUserAdminRoles = [AuthorizedUserRoleTitle.SysAdmin];
 
 type College = {
   value: string;
