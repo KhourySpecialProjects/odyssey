@@ -2,7 +2,7 @@
 
 import { AuthorizedUser } from "@/types";
 import Link from "next/link";
-import { Github, Linkedin } from "lucide-react";
+import { Github, LinkIcon, Linkedin } from "lucide-react";
 import { useState } from "react";
 
 export function ContentCreatorBlock({
@@ -55,6 +55,13 @@ export function ContentCreatorBlock({
                 <Link href={contentCreator.github} legacyBehavior>
                   <a target="_blank" rel="noopener noreferrer">
                     <Github className="dark:text-slate-300" />
+                  </a>
+                </Link>
+              )}
+              {contentCreator.website && (
+                <Link href={contentCreator.website} legacyBehavior>
+                  <a target="_blank" rel="noopener noreferrer">
+                    <LinkIcon className="dark:text-slate-300" />
                   </a>
                 </Link>
               )}

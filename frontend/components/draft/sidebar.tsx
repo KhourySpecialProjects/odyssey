@@ -1,32 +1,19 @@
 "use client";
 
 import UnauthorizedRoute from "@/app/(general)/unauthorized/page";
-import { cn, getInitials, getPath, condenseRoleTitles } from "@/lib/utils";
+import { cn, getPath } from "@/lib/utils";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
 import { AuthorizedUser, Droplet, Lesson, User } from "@/types";
 import {
-  ChevronDownIcon,
-  PersonStanding,
-  LogOutIcon,
-  ShipIcon,
   SettingsIcon,
   ArrowLeftIcon,
   PanelRightClose,
   PanelRightOpen,
   Home,
 } from "lucide-react";
-import { signOut } from "next-auth/react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import React, { useLayoutEffect, useState, useEffect } from "react";
-import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuTrigger,
-} from "../ui/dropdown-menu";
 import { Separator } from "../ui/separator";
 import { AddLesson } from "@/components/draft/add-lesson";
 import {

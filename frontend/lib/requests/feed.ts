@@ -93,6 +93,7 @@ export async function fetchAnnouncements(
             "linkedin",
             "profilePhoto",
             "isPublic",
+            "website",
           ],
           populate: {
             blocked: {
@@ -113,6 +114,7 @@ export async function fetchAnnouncements(
             "github",
             "linkedin",
             "profilePhoto",
+            "website",
           ],
           populate: {
             blocked: {
@@ -433,6 +435,7 @@ export async function fetchAnnouncementById(id: number) {
             "github",
             "linkedin",
             "profilePhoto",
+            "website",
           ],
           populate: {
             blocked: {
