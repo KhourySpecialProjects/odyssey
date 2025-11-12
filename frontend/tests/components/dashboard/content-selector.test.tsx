@@ -1,5 +1,5 @@
 import { render, screen, fireEvent } from "@testing-library/react";
-import { ContentSelector } from "@/components/dashboard/content-selector";
+import { FilterSelector } from "@/components/dashboard/filter-selector";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 
 jest.mock("next/navigation", () => ({
@@ -28,7 +28,7 @@ describe("ContentSelector", () => {
 
   it("navigates to the correct URL when a tab is clicked", () => {
     render(
-      <ContentSelector droplets={1} playlists={1} archived={1} groups={1} />,
+      <FilterSelector droplets={1} playlists={1} archived={1} groups={1} favorited={0} />,
     );
 
     fireEvent.click(screen.getByText(/playlists/i));

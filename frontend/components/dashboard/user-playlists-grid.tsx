@@ -25,6 +25,9 @@ export async function UserPlaylistsGrid({ sortKey }: { sortKey?: string }) {
               },
             },
           },
+          users_archived: {
+            fields: ["*"]
+          }
         },
       },
       groups: {
@@ -65,10 +68,12 @@ export async function UserPlaylistsGrid({ sortKey }: { sortKey?: string }) {
     },
   );
 
-  const publicPlaylists = allPlaylists.filter((p: Playlist) => p.isPublic);
-  const customPlaylists = allPlaylists.filter((p: Playlist) => !p.isPublic);
+  const activePlaylists = allPlaylists.filter((playlist) => !playlist.users_archived?.some((user) => user.id === authorizedUser.id));
 
-  if (!allPlaylists || allPlaylists.length === 0) {
+  const publicPlaylists = activePlaylists.filter((p: Playlist) => p.isPublic);
+  const customPlaylists = activePlaylists.filter((p: Playlist) => !p.isPublic);
+
+  if (!activePlaylists || activePlaylists.length === 0) {
     return (
       <Message className="mb-8 rounded-md border border-dashed border-slate-200">
         <MessageHeader subtitle="No Results" title="No Saved Playlists" />
@@ -102,6 +107,8 @@ export async function UserPlaylistsGrid({ sortKey }: { sortKey?: string }) {
       customPlaylists={customPlaylists}
       publicPlaylists={publicPlaylists}
       dueDates={dueDates}
+      dashboardPage={true}
+      isArchived={false}
     />
   );
 }

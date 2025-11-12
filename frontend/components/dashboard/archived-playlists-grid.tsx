@@ -21,9 +21,12 @@ export async function ArchivedPlaylistsGrid({ sortKey }: { sortKey?: string }) {
           droplets: {
             populate: {
               lessons: {
-                fields: ["id", "name", "slug"],
+                fields: ["*"],
               },
             },
+          },
+          users_archived: {
+            fields: ["*"]
           },
         },
       },
@@ -65,16 +68,14 @@ export async function ArchivedPlaylistsGrid({ sortKey }: { sortKey?: string }) {
     },
   );
 
-  const publicPlaylists = allPlaylists.filter((p: Playlist) => p.isPublic);
-  const customPlaylists = allPlaylists.filter((p: Playlist) => !p.isPublic);
+  const allArchivedPlaylists = allPlaylists.filter((playlist) => playlist.users_archived?.some((user) => user.id === authorizedUser.id));
 
-  if (!allPlaylists || allPlaylists.length === 0) {
+  if (!allArchivedPlaylists || allArchivedPlaylists.length === 0) {
     return (
-      <Message className="mb-8 rounded-md border border-dashed border-slate-200">
-        <MessageHeader subtitle="No Results" title="No Saved Playlists" />
+      <Message className="mb-8 rounded-md border border-dashed border-slate-200 dark:border-slate-500 dark:bg-slate-800">
+        <MessageHeader subtitle="No Results" title="No Archived Playlists" />
         <MessageDescription>
-          You haven&apos;t saved any playlists yet. Browse the explore page to
-          find playlists to save.
+          You haven&apos;t archived any Playlists yet.
         </MessageDescription>
       </Message>
     );
@@ -84,12 +85,7 @@ export async function ArchivedPlaylistsGrid({ sortKey }: { sortKey?: string }) {
   if (sortKey) {
     const [field, direction] = sortKey.split(":");
     if (field === "name") {
-      customPlaylists?.sort((a, b) => {
-        return direction === "asc"
-          ? a.name.localeCompare(b.name)
-          : b.name.localeCompare(a.name);
-      });
-      publicPlaylists?.sort((a, b) => {
+      allArchivedPlaylists?.sort((a, b) => {
         return direction === "asc"
           ? a.name.localeCompare(b.name)
           : b.name.localeCompare(a.name);
@@ -99,9 +95,11 @@ export async function ArchivedPlaylistsGrid({ sortKey }: { sortKey?: string }) {
 
   return (
     <UserPlaylistsClient
-      customPlaylists={customPlaylists}
-      publicPlaylists={publicPlaylists}
+      customPlaylists={allArchivedPlaylists}
+      publicPlaylists={[]}
       dueDates={dueDates}
+      isArchived={true}
+      dashboardPage={true}
     />
   );
 }

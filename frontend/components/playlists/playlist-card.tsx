@@ -3,10 +3,14 @@
 import Link from "next/link";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { getDueDateBadgeColor } from "@/lib/utils";
-import { Clock } from "lucide-react";
+import { Archive, ArchiveRestore, Clock } from "lucide-react";
 import { Badge } from "../ui/badge";
 import { DateTime } from "luxon";
 import { useState, useEffect, useRef } from "react";
+import { Button } from "../ui/button";
+import { toast } from "sonner";
+import { archivePlaylist } from "@/lib/requests/playlist";
+import { Playlist } from "@/types";
 
 interface PlaylistCardProps {
   playlist: {
@@ -31,6 +35,8 @@ interface PlaylistCardProps {
   toDraft?: boolean;
   dueDate?: string;
   timeZone?: string;
+  dashboardPage?: boolean;
+  isArchived?: boolean;
 }
 
 export function PlaylistCard({
@@ -38,8 +44,28 @@ export function PlaylistCard({
   toDraft = false,
   dueDate,
   timeZone,
+  dashboardPage,
+  isArchived
 }: PlaylistCardProps) {
   const [descriptionExpanded, setDescriptionExpanded] = useState(false);
+  async function changeVisibility() {
+    try {
+      const result = await archivePlaylist((playlist as Playlist), isArchived ? false : true);
+      if (result.success) {
+        toast.success(
+          isArchived
+            ? `${playlist.name} is now unarchived!`
+            : `${playlist.name} is now archived!`,
+        );
+      } else {
+        toast.error("Failed to update group visibility");
+      }
+    } catch (error) {
+      toast.error("An error occurred while updating the group");
+      console.error(error);
+    }
+  }
+
   const [isTextClamped, setIsTextClamped] = useState(false);
   const textRef = useRef(null);
   const dropletCount = playlist.droplets ? playlist.droplets.length : 0;
@@ -77,10 +103,10 @@ export function PlaylistCard({
     .toFormat("MM/dd hh:mm a");
 
   return (
-    <Link href={linkTo} className="block h-full">
-      <Card className="flex h-full flex-col border-slate-200 bg-slate-50 dark:border-slate-500 dark:bg-slate-800">
-        <CardHeader>
-          <div>
+    <Link href={linkTo} className="inline-block h-full w-full rounded-md border border-slate-200 bg-slate-50 hover:border-slate-300 dark:border-slate-500 dark:bg-slate-800">
+      <div className="p-6">
+        <div>
+          <div >
             {dueDate && dueDate !== "" && daysUntil > -2 && (
               <Badge
                 className={getDueDateBadgeColor(daysUntil, true)}
@@ -107,9 +133,9 @@ export function PlaylistCard({
               </Badge>
             )}
           </div>
-          <CardTitle className="block w-full place-self-end text-3xl font-black text-slate-950 dark:text-slate-300">
+          <div className="block w-full place-self-end text-3xl font-black text-slate-950 dark:text-slate-300">
             {playlist.name}
-          </CardTitle>
+          </div>
 
           <p className="light:text-slate-600 pt-2 text-sm dark:text-slate-300">
             Droplets: {dropletCount} &nbsp;&nbsp;&nbsp;&nbsp; Lessons:{" "}
@@ -155,8 +181,32 @@ export function PlaylistCard({
                 </>
               )}
           </div>
-        </CardHeader>
-      </Card>
+        </div>
+      </div>
+      {dashboardPage && (
+          <div className="flex justify-end p-2">
+          <Button
+            size="sm"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              changeVisibility();
+            }}
+            className={`${isArchived === true || isArchived === false ? "visibility: visible" : "visibility: hidden"} bg-slate-50 hover:bg-slate-300 dark:bg-slate-300 justify-end`}
+          >
+            <div className="group relative">
+              {isArchived ? (
+                <ArchiveRestore className="text-purple-500" />
+              ) : (
+                <Archive className="text-purple-500" />
+              )}
+              <span className="absolute top-full left-1/2 mt-1 w-max -translate-x-1/2 transform rounded bg-gray-800 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100">
+                {isArchived ? "Unarchive" : "Archive"}
+              </span>
+            </div>
+          </Button>
+          </div>
+        )}
     </Link>
   );
 }
