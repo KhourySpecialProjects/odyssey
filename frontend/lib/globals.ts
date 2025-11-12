@@ -1,11 +1,9 @@
 export enum AuthorizedUserRoleTitle {
   SysAdmin = "System Admin",
-  AcadAdmin = "Academic Admin",
   ContentCreator = "Content Creator",
   User = "User",
   ContentEditor = "Content Editor",
   Faculty = "Faculty",
-  WebsiteEditor = "Website Editor",
 }
 
 export enum AnnouncementTypeTitle {
@@ -27,7 +25,6 @@ export enum NoteTypeTitle {
 
 export const AuthorizedUserAdminRoles = [
   AuthorizedUserRoleTitle.SysAdmin,
-  AuthorizedUserRoleTitle.AcadAdmin,
 ];
 
 type College = {

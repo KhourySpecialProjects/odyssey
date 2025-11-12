@@ -52,7 +52,6 @@ export function AuthorizedUserBlock({
   );
 
   const roleOptions = [
-    { value: AuthorizedUserRoleTitle.AcadAdmin, label: "Academic Admin" },
     { value: AuthorizedUserRoleTitle.Faculty, label: "Faculty" },
     { value: AuthorizedUserRoleTitle.ContentCreator, label: "Content Creator" },
     { value: AuthorizedUserRoleTitle.ContentEditor, label: "Content Editor" },
