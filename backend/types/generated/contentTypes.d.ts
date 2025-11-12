@@ -756,7 +756,6 @@ export interface ApiAuthorizedUserAuthorizedUser extends Schema.CollectionType {
       'manyToMany',
       'api::authorized-user.authorized-user'
     >;
-    website: Attribute.String;
   };
 }
 
