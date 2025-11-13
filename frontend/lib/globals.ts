@@ -1,6 +1,5 @@
 export enum AuthorizedUserRoleTitle {
   SysAdmin = "System Admin",
-  AcadAdmin = "Academic Admin",
   ContentCreator = "Content Creator",
   User = "User",
   ContentEditor = "Content Editor",
@@ -24,10 +23,7 @@ export enum NoteTypeTitle {
   Blue = "#93c5fd",
 }
 
-export const AuthorizedUserAdminRoles = [
-  AuthorizedUserRoleTitle.SysAdmin,
-  AuthorizedUserRoleTitle.AcadAdmin,
-];
+export const AuthorizedUserAdminRoles = [AuthorizedUserRoleTitle.SysAdmin];
 
 type College = {
   value: string;

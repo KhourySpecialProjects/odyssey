@@ -150,7 +150,7 @@ export default async function Droplet({ params }: Props) {
             className={`pt-4 pb-4 ${droplet.status === "draft" ? "visibility: visible" : "visibility: hidden"} text-red-500 dark:text-red-300`}
           >
             This is currently a draft droplet. To publish this droplet, contact
-            a Website Creator.
+            a Content Editor or Faculty.
           </div>
           {!droplet.inReview &&
             droplet.afterReview !== null &&
