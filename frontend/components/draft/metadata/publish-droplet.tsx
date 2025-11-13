@@ -33,7 +33,7 @@ export function PublishDropletButton({ droplet }: { droplet: Droplet }) {
       setIsPublishPopupOpen(false);
       setUserTxt(""); // Reset input
       toast.success("Droplet published successfully!");
-      router.push("/review");
+      router.push("/explore");
     } else {
       toast.error("Error publishing droplet");
       setIsPublishPopupOpen(false);
