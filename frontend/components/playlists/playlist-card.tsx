@@ -61,10 +61,10 @@ export function PlaylistCard({
             : `${playlist.name} is now archived!`,
         );
       } else {
-        toast.error("Failed to update group visibility");
+        toast.error("Failed to update playlist visibility");
       }
     } catch (error) {
-      toast.error("An error occurred while updating the group");
+      toast.error("An error occurred while updating the playlist");
       console.error(error);
     }
   }

@@ -296,7 +296,7 @@ export function DropletTile({
           </div>
 
           {/* Bottom section with ratings, favorite button, and archive button */}
-          <div className="gap- flex items-center justify-between">
+          <div className="flex items-center justify-between gap-2">
             {/* Left side - ratings */}
             <div className="flex items-center">
               {droplet.averageRating && droplet.averageRating != 0.0 ? (
