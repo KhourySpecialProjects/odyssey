@@ -286,8 +286,8 @@ const WEBSITE_CREATOR_ORDER = [
   "palazzi.r@northeastern.edu",
   "palmer.gi@northeastern.edu",
   "houser.ch@northeastern.edu",
-  "d.saadat@northeastern.edu",
   "j.almanzar@northeastern.edu",
+  "d.saadat@northeastern.edu",
   "chapman.w@northeastern.edu",
 ];
 
