@@ -7,14 +7,10 @@ import { toast } from "sonner";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 
-export function PublishDropletButton({ 
-  droplet,
-}: { 
-  droplet: Droplet;
-}) {
+export function PublishDropletButton({ droplet }: { droplet: Droplet }) {
   const [isPublishPopupOpen, setIsPublishPopupOpen] = useState(false);
   const router = useRouter();
-  
+
   const handlePublishDroplet = async () => {
     const response = await updateDroplet(
       droplet.id,
@@ -32,8 +28,8 @@ export function PublishDropletButton({
   };
 
   const modalContent = isPublishPopupOpen ? (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black bg-opacity-50">
-      <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl dark:bg-slate-900 mx-4">
+    <div className="bg-opacity-50 fixed inset-0 z-[9999] flex items-center justify-center bg-black">
+      <div className="mx-4 w-full max-w-md rounded-lg bg-white p-6 shadow-xl dark:bg-slate-900">
         <h3 className="mb-4 text-lg font-medium text-slate-900 dark:text-slate-100">
           Are you sure you want to publish this droplet?
         </h3>
@@ -56,20 +52,18 @@ export function PublishDropletButton({
     </div>
   ) : null;
 
-    return (
-      <>
-        <button
-          onClick={() => setIsPublishPopupOpen(true)}
-          className="w-full rounded-full bg-blue-400 dark:bg-blue-600 px-6 py-2 text-black dark:text-white hover:bg-blue-500 dark:hover:bg-blue-800 text-center whitespace-nowrap"
-        >
-          Publish Droplet
-        </button>
+  return (
+    <>
+      <button
+        onClick={() => setIsPublishPopupOpen(true)}
+        className="w-full rounded-full bg-blue-400 px-6 py-2 text-center whitespace-nowrap text-black hover:bg-blue-500 dark:bg-blue-600 dark:text-white dark:hover:bg-blue-800"
+      >
+        Publish Droplet
+      </button>
 
-        {typeof document !== 'undefined' && modalContent && createPortal(
-          modalContent,
-          document.body
-        )}
-      </>
-    );
-
+      {typeof document !== "undefined" &&
+        modalContent &&
+        createPortal(modalContent, document.body)}
+    </>
+  );
 }

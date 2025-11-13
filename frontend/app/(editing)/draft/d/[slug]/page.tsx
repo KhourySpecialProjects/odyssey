@@ -7,7 +7,11 @@ import { getTags } from "@/lib/requests/tag";
 import { NextSteps } from "@/components/draft/metadata/next-steps/next-steps";
 import { Overview } from "@/components/draft/metadata/overview";
 import { Description } from "@/components/draft/metadata/description";
-import { isAuthorizedUserAdmin, isAuthorizedUserFaculty, isContentEditor } from "@/lib/utils";
+import {
+  isAuthorizedUserAdmin,
+  isAuthorizedUserFaculty,
+  isContentEditor,
+} from "@/lib/utils";
 import { Authors } from "@/components/draft/metadata/authors";
 import { GradientBackground } from "@/components/gradient-bg";
 import { getCurrentUser } from "@/lib/auth/session";
@@ -160,7 +164,6 @@ export default async function Droplet({ params }: Props) {
                 <div>{droplet.afterReview}</div>
               </div>
             )}
-          
         </div>
 
         <div className="mx-auto w-full max-w-2xl space-y-10">

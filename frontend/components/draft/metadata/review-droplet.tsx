@@ -40,7 +40,7 @@ export function ReviewDroplet({
       <div className="flex flex-row space-x-2">
         <Button
           variant="outline"
-          className="w-full rounded-full bg-red-400 dark:bg-red-600 px-6 py-2 text-black dark:text-white hover:bg-red-500 dark:hover:bg-red-800 text-center whitespace-nowrap"
+          className="w-full rounded-full bg-red-400 px-6 py-2 text-center whitespace-nowrap text-black hover:bg-red-500 dark:bg-red-600 dark:text-white dark:hover:bg-red-800"
           onClick={() => setIsPopupOpen(true)}
         >
           Request Changes

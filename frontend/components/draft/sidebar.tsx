@@ -1,7 +1,13 @@
 "use client";
 
 import UnauthorizedRoute from "@/app/(general)/unauthorized/page";
-import { cn, getPath, isAuthorizedUserAdmin, isAuthorizedUserFaculty, isContentEditor } from "@/lib/utils";
+import {
+  cn,
+  getPath,
+  isAuthorizedUserAdmin,
+  isAuthorizedUserFaculty,
+  isContentEditor,
+} from "@/lib/utils";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
 import { AuthorizedUser, Droplet, Lesson, User } from "@/types";
 import {
@@ -241,27 +247,29 @@ export function Sidebar({
               </Link>
 
               {/* Request Review Button - Non-privileged users with draft not in review */}
-{!droplet.inReview && 
- droplet.status === "draft" && 
- !isAuthorizedUserFaculty(user.roles) && 
- !isContentEditor(user.roles) && 
- !isAuthorizedUserAdmin(user.roles) && (
-  <RequestReviewButton droplet={droplet} />
-)}
+              {!droplet.inReview &&
+                droplet.status === "draft" &&
+                !isAuthorizedUserFaculty(user.roles) &&
+                !isContentEditor(user.roles) &&
+                !isAuthorizedUserAdmin(user.roles) && (
+                  <RequestReviewButton droplet={droplet} />
+                )}
 
-{/* Review Droplet Button - Content editors and admins only, draft in review */}
-{droplet.inReview && 
- droplet.status === "draft" && 
- (isContentEditor(user.roles) || isAuthorizedUserAdmin(user.roles)) && (
-  <ReviewDroplet name={droplet.name} droplet={droplet} />
-)}
+              {/* Review Droplet Button - Content editors and admins only, draft in review */}
+              {droplet.inReview &&
+                droplet.status === "draft" &&
+                (isContentEditor(user.roles) ||
+                  isAuthorizedUserAdmin(user.roles)) && (
+                  <ReviewDroplet name={droplet.name} droplet={droplet} />
+                )}
 
-{/* Publish Button - Faculty/Admin anytime, Content Editor only when in review */}
-{droplet.status === "draft" &&
- ((isAuthorizedUserFaculty(user.roles) || isAuthorizedUserAdmin(user.roles)) || 
-  (isContentEditor(user.roles) && droplet.inReview)) && (
-  <PublishDropletButton droplet={droplet} />
-)}
+              {/* Publish Button - Faculty/Admin anytime, Content Editor only when in review */}
+              {droplet.status === "draft" &&
+                (isAuthorizedUserFaculty(user.roles) ||
+                  isAuthorizedUserAdmin(user.roles) ||
+                  (isContentEditor(user.roles) && droplet.inReview)) && (
+                  <PublishDropletButton droplet={droplet} />
+                )}
             </div>
 
             <Separator
