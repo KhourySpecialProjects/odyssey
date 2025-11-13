@@ -214,16 +214,16 @@ export function BlockToolbar({
                         children: [{ type: "text", text: "" }],
                       },
                     ],
-                    color: "bg-sky-50 dark:bg-sky-200",
+                    color: "bg-sky-100",
                     type: "info",
                   });
                 }}
                 variant="outline"
                 size="sm"
-                className="w-full justify-between bg-sky-50 dark:bg-sky-200 dark:text-black"
+                className="w-full justify-between bg-sky-100 dark:bg-sky-100 dark:text-black"
               >
                 Default
-                <CalloutIcon color="bg-sky-50" />
+                <CalloutIcon color="bg-sky-100" />
               </Button>
             </div>
           </PopoverContent>
