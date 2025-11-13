@@ -289,6 +289,7 @@ const WEBSITE_CREATOR_ORDER = [
   "j.almanzar@northeastern.edu",
   "d.saadat@northeastern.edu",
   "chapman.w@northeastern.edu",
+  "singh.simran@northeastern.edu",
 ];
 
 export async function fetchWebsiteCreators(): Promise<AuthorizedUser[]> {
