@@ -232,7 +232,7 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
             Definition: "bg-green-300",
             Information: "bg-purple-300",
             Caution: "bg-amber-300",
-            Default: "bg-sky-50 dark:bg-sky-200",
+            Default: "bg-sky-100",
           };
           newBlock = {
             __component: "droplets.callout",
@@ -244,7 +244,7 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
             ],
             color:
               calloutColorMap[calloutType || "Default"] ||
-              "bg-sky-50 dark:bg-sky-200",
+              "bg-sky-100 dark:bg-sky-100",
             type: "info",
           };
           break;
