@@ -596,79 +596,104 @@ export async function duplicateDroplet(dropletId: number) {
         console.log("Blocks is not an array:", blocks);
         return [];
       }
-
+      
       console.log(`Cleaning ${blocks.length} blocks`);
-
+      
       return blocks.map((block, index) => {
         console.log(`Block ${index}:`, block.__component);
-
-        // Create a copy without the id field
+        
+        // Always remove the id field from the block itself
         const { id, ...blockWithoutId } = block;
-
-        // Handle nested structures (like quiz questions with ids)
-        if (block.__component === "droplets.quiz" && block.questions) {
-          return {
-            ...blockWithoutId,
-            questions: block.questions.map((q: any) => {
-              const { id: qId, ...questionWithoutId } = q;
+        
+        // Handle different block types
+        switch (block.__component) {
+          case "droplets.quiz":
+            if (block.questions) {
               return {
-                ...questionWithoutId,
-                answerOptions:
-                  q.answerOptions?.map((a: any) => {
-                    const { id: aId, ...answerWithoutId } = a;
-                    return answerWithoutId;
-                  }) || [],
+                ...blockWithoutId,
+                questions: block.questions.map((q: any) => {
+                  const { id: qId, ...questionWithoutId } = q;
+                  return {
+                    ...questionWithoutId,
+                    answerOptions: q.answerOptions?.map((a: any) => {
+                      const { id: aId, ...answerWithoutId } = a;
+                      return answerWithoutId;
+                    }) || []
+                  };
+                })
               };
-            }),
-          };
+            }
+            return blockWithoutId;
+          
+          case "droplets.open-ended-quiz":
+            if (block.questions) {
+              return {
+                ...blockWithoutId,
+                questions: block.questions.map((q: any) => {
+                  const { id: qId, ...questionWithoutId } = q;
+                  return questionWithoutId;
+                })
+              };
+            }
+            return blockWithoutId;
+          
+          case "droplets.callout":
+            // Callout has content which might be BlockNode[] with nested structure
+            if (block.content && Array.isArray(block.content)) {
+              return {
+                ...blockWithoutId,
+                content: block.content.map((node: any) => {
+                  const { id: nodeId, ...nodeWithoutId } = node;
+                  // Also clean children if they exist
+                  if (nodeWithoutId.children && Array.isArray(nodeWithoutId.children)) {
+                    nodeWithoutId.children = nodeWithoutId.children.map((child: any) => {
+                      const { id: childId, ...childWithoutId } = child;
+                      return childWithoutId;
+                    });
+                  }
+                  return nodeWithoutId;
+                })
+              };
+            }
+            return blockWithoutId;
+          
+          case "droplets.generic":
+          case "droplets.expandable":
+          case "droplets.video":
+          default:
+            // These are simple blocks, just return without id
+            return blockWithoutId;
         }
-
-        if (
-          block.__component === "droplets.open-ended-quiz" &&
-          block.questions
-        ) {
-          return {
-            ...blockWithoutId,
-            questions: block.questions.map((q: any) => {
-              const { id: qId, ...questionWithoutId } = q;
-              return questionWithoutId;
-            }),
-          };
-        }
-
-        return blockWithoutId;
       });
     };
 
     // Duplicate all lessons
     if (originalDroplet.lessons && originalDroplet.lessons.length > 0) {
       console.log(`Duplicating ${originalDroplet.lessons.length} lessons`);
-
-      for (const lesson of originalDroplet.lessons) {
+      
+      // Sort lessons by orderIndex to ensure correct order
+      const sortedLessons = [...originalDroplet.lessons].sort((a, b) => a.orderIndex - b.orderIndex);
+      
+      for (let index = 0; index < sortedLessons.length; index++) {
+        const lesson = sortedLessons[index];
         const lessonTimestamp = Date.now();
         const lessonRandomSuffix = Math.random().toString(36).substring(2, 15);
         const uniqueLessonSlug = `lesson-${lessonTimestamp}-${lessonRandomSuffix}`;
-
-        console.log(
-          "Original lesson blocks:",
-          lesson.blocks?.length || 0,
-          "blocks",
-        );
-
+        
+        console.log("Original lesson blocks:", lesson.blocks?.length || 0, "blocks");
+        
         const cleanedBlocks = cleanBlocks(lesson.blocks || []);
-
+        
         const lessonData = {
           name: lesson.name,
           slug: uniqueLessonSlug,
           type: lesson.type,
-          orderIndex: lesson.orderIndex,
+          orderIndex: index, // Use the array index to ensure sequential ordering (0, 1, 2, ...)
           blocks: cleanedBlocks,
           droplets: [newDropletId],
         };
 
-        console.log(
-          `Creating lesson: ${lesson.name} with ${cleanedBlocks.length} blocks`,
-        );
+        console.log(`Creating lesson: ${lesson.name} with orderIndex: ${index}`);
 
         const response = await fetch(STRAPI_API_URL + "/api/lessons", {
           method: "POST",
@@ -681,20 +706,15 @@ export async function duplicateDroplet(dropletId: number) {
 
         if (!response.ok) {
           const errorData = await response.json();
-          console.error(
-            "Failed to create lesson:",
-            JSON.stringify(errorData, null, 2),
-          );
+          console.error("Failed to create lesson:", JSON.stringify(errorData, null, 2));
           throw new Error(`Failed to create lesson: ${lesson.name}`);
         }
 
         const createdLesson = await response.json();
-        console.log(
-          `Created lesson with ${createdLesson.data.attributes.blocks?.length || 0} blocks`,
-        );
+        console.log(`Created lesson with ${createdLesson.data.attributes.blocks?.length || 0} blocks and orderIndex: ${index}`);
 
         // Small delay to avoid rate limiting
-        await new Promise((resolve) => setTimeout(resolve, 100));
+        await new Promise(resolve => setTimeout(resolve, 100));
       }
     }
 
@@ -919,30 +939,30 @@ export async function publishDraftToOriginal(
 
     // Create lessons from draft in the original droplet
     if (draftDroplet.lessons && draftDroplet.lessons.length > 0) {
-      console.log(
-        `Creating ${draftDroplet.lessons.length} lessons in original droplet`,
-      );
-
-      for (const lesson of draftDroplet.lessons) {
+      console.log(`Creating ${draftDroplet.lessons.length} lessons in original droplet`);
+      
+      // Sort lessons by orderIndex to ensure correct order
+      const sortedLessons = [...draftDroplet.lessons].sort((a, b) => a.orderIndex - b.orderIndex);
+      
+      for (let index = 0; index < sortedLessons.length; index++) {
+        const lesson = sortedLessons[index];
         try {
           const cleanedBlocks = cleanBlocks(lesson.blocks || []);
-
+          
           // Generate new unique slug for the lesson
           const timestamp = Date.now();
           const randomSuffix = Math.random().toString(36).substring(2, 10);
-
+          
           const lessonData = {
             name: lesson.name,
             slug: `${lesson.slug}-${timestamp}-${randomSuffix}`,
             type: lesson.type,
-            orderIndex: lesson.orderIndex,
+            orderIndex: index, // Use the array index to ensure sequential ordering
             blocks: cleanedBlocks,
             droplets: [originalDropletId],
           };
 
-          console.log(
-            `Creating lesson: ${lesson.name} with slug: ${lessonData.slug}`,
-          );
+          console.log(`Creating lesson: ${lesson.name} with orderIndex: ${index}`);
           const response = await fetch(STRAPI_API_URL + "/api/lessons", {
             method: "POST",
             body: JSON.stringify({ data: lessonData }),
@@ -954,17 +974,12 @@ export async function publishDraftToOriginal(
 
           if (!response.ok) {
             const errorData = await response.json();
-            console.error("Failed to create lesson:", errorData);
-            throw new Error(
-              `Failed to create lesson: ${lesson.name} - ${JSON.stringify(errorData)}`,
-            );
+            console.error("Failed to create lesson:", JSON.stringify(errorData, null, 2));
+            throw new Error(`Failed to create lesson: ${lesson.name}`);
           }
 
-          const createdLesson = await response.json();
-          console.log(
-            `Successfully created lesson: ${lesson.name} with ID: ${createdLesson.data.id}`,
-          );
-          await new Promise((resolve) => setTimeout(resolve, 100));
+          console.log(`Successfully created lesson: ${lesson.name} with orderIndex: ${index}`);
+          await new Promise(resolve => setTimeout(resolve, 100));
         } catch (error) {
           console.error(`Error creating lesson ${lesson.name}:`, error);
           throw error;
