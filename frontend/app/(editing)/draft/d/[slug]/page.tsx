@@ -7,7 +7,7 @@ import { getTags } from "@/lib/requests/tag";
 import { NextSteps } from "@/components/draft/metadata/next-steps/next-steps";
 import { Overview } from "@/components/draft/metadata/overview";
 import { Description } from "@/components/draft/metadata/description";
-import { isContentEditor } from "@/lib/utils";
+import { isAuthorizedUserAdmin, isAuthorizedUserFaculty, isContentEditor } from "@/lib/utils";
 import { Authors } from "@/components/draft/metadata/authors";
 import { GradientBackground } from "@/components/gradient-bg";
 import { getCurrentUser } from "@/lib/auth/session";
@@ -147,7 +147,7 @@ export default async function Droplet({ params }: Props) {
             <div className="p-2">Droplet currently in review</div>
           )}
           <div
-            className={`pt-4 pb-4 ${droplet.status === "draft" ? "visibility: visible" : "visibility: hidden"} text-red-500 dark:text-red-300`}
+            className={`pt-4 pb-4 ${droplet.status === "draft" && !droplet.inReview ? "visibility: visible" : "visibility: hidden"} text-red-500 dark:text-red-300`}
           >
             This is currently a draft droplet. To publish this droplet, contact
             a Content Editor or Faculty.
@@ -160,13 +160,7 @@ export default async function Droplet({ params }: Props) {
                 <div>{droplet.afterReview}</div>
               </div>
             )}
-          {droplet.inReview &&
-            isContentEditor(user.roles) &&
-            droplet.status === "draft" && (
-              <div className="rounded-md dark:text-slate-200">
-                <ReviewDroplet name={droplet.name} droplet={droplet} />
-              </div>
-            )}
+          
         </div>
 
         <div className="mx-auto w-full max-w-2xl space-y-10">

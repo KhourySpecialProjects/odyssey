@@ -1,7 +1,7 @@
 "use client";
 
 import UnauthorizedRoute from "@/app/(general)/unauthorized/page";
-import { cn, getPath } from "@/lib/utils";
+import { cn, getPath, isAuthorizedUserAdmin, isAuthorizedUserFaculty, isContentEditor } from "@/lib/utils";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
 import { AuthorizedUser, Droplet, Lesson, User } from "@/types";
 import {
@@ -35,6 +35,8 @@ import { useLessonOrder } from "./metadata/hooks/useLessonOrder";
 import { Button } from "../ui/button";
 import { createDropletAnnouncement } from "@/lib/requests/feed";
 import { RequestReviewButton } from "./metadata/request-review";
+import { PublishDropletButton } from "./metadata/publish-droplet";
+import { ReviewDroplet } from "./metadata/review-droplet";
 
 export function Sidebar({
   user,
@@ -232,15 +234,34 @@ export function Sidebar({
             </ul>
             <div className="flex w-full flex-col gap-2 pb-2">
               <Link
-                className="rounded-full bg-purple-400 px-6 py-2 text-center text-black hover:bg-purple-600 dark:bg-purple-600 dark:text-white dark:hover:bg-purple-800"
+                className="rounded-full bg-purple-400 px-6 py-2 text-center text-black hover:bg-purple-500 dark:bg-purple-600 dark:text-white dark:hover:bg-purple-800"
                 href={`/d/${pathname.split("d/")[1]}`}
               >
                 Preview
               </Link>
 
-              {!droplet.inReview && droplet.status === "draft" && (
-                <RequestReviewButton droplet={droplet} />
-              )}
+              {/* Request Review Button - Non-privileged users with draft not in review */}
+{!droplet.inReview && 
+ droplet.status === "draft" && 
+ !isAuthorizedUserFaculty(user.roles) && 
+ !isContentEditor(user.roles) && 
+ !isAuthorizedUserAdmin(user.roles) && (
+  <RequestReviewButton droplet={droplet} />
+)}
+
+{/* Review Droplet Button - Content editors and admins only, draft in review */}
+{droplet.inReview && 
+ droplet.status === "draft" && 
+ (isContentEditor(user.roles) || isAuthorizedUserAdmin(user.roles)) && (
+  <ReviewDroplet name={droplet.name} droplet={droplet} />
+)}
+
+{/* Publish Button - Faculty/Admin anytime, Content Editor only when in review */}
+{droplet.status === "draft" &&
+ ((isAuthorizedUserFaculty(user.roles) || isAuthorizedUserAdmin(user.roles)) || 
+  (isContentEditor(user.roles) && droplet.inReview)) && (
+  <PublishDropletButton droplet={droplet} />
+)}
             </div>
 
             <Separator

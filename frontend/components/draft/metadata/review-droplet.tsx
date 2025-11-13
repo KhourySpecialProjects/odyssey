@@ -19,21 +19,6 @@ export function ReviewDroplet({
   const [changes, setChanges] = useState(droplet.afterReview || "");
   const router = useRouter();
 
-  const handlePublishDroplet = async () => {
-    const response = await updateDroplet(
-      droplet.id,
-      { name: name, status: "published", inReview: false },
-      { regenerateSlug: false },
-    );
-    if (response.ok && !response.error) {
-      toast.success("Droplet published successfully!");
-      router.push("/review");
-    } else {
-      toast.error("Error publishing droplet");
-      setIsPopupOpen(false);
-    }
-  };
-
   const handleRequestReview = async () => {
     const response = await updateDroplet(
       droplet.id,
@@ -55,14 +40,7 @@ export function ReviewDroplet({
       <div className="flex flex-row space-x-2">
         <Button
           variant="outline"
-          className="dark:bg-slate-800 dark:outline dark:outline-slate-500"
-          onClick={handlePublishDroplet}
-        >
-          Publish Droplet
-        </Button>
-        <Button
-          variant="outline"
-          className="dark:bg-slate-800 dark:outline dark:outline-slate-500"
+          className="w-full rounded-full bg-red-400 dark:bg-red-600 px-6 py-2 text-black dark:text-white hover:bg-red-500 dark:hover:bg-red-800 text-center whitespace-nowrap"
           onClick={() => setIsPopupOpen(true)}
         >
           Request Changes

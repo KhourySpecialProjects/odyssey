@@ -59,7 +59,7 @@ export function RequestReviewButton({ droplet }: { droplet: Droplet }) {
     <>
       <button
         onClick={() => setIsReviewPopupOpen(true)}
-        className="w-full rounded-full bg-green-400 px-6 py-2 text-center whitespace-nowrap text-black hover:bg-green-600 dark:bg-green-600 dark:text-white dark:hover:bg-green-800"
+        className="w-full rounded-full bg-green-400 px-6 py-2 text-center whitespace-nowrap text-black hover:bg-green-500 dark:bg-green-600 dark:text-white dark:hover:bg-green-800"
       >
         {droplet.afterReview ? "Re-Request Review" : "Request Review"}
       </button>
