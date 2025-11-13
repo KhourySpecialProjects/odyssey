@@ -153,14 +153,14 @@ export default function CalloutTypeTool({
                 __component: "droplets.callout",
                 content: block.content,
                 type: "info",
-                color: "bg-sky-50 dark:bg-sky-200",
+                color: "bg-sky-100",
               });
             }}
             variant={dropdownVariants}
-            className="w-full border border-slate-200 bg-sky-50 dark:bg-sky-200 dark:text-black"
+            className="w-full border border-slate-200 bg-sky-100 dark:bg-sky-100 dark:text-black"
           >
             Default
-            {<CalloutIcon color={"bg-sky-50"}></CalloutIcon>}
+            {<CalloutIcon color={"bg-sky-100"}></CalloutIcon>}
           </Button>
         </div>
       </PopoverContent>

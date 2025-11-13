@@ -57,7 +57,7 @@ describe("CalloutTypeTool", () => {
     { name: "Definition", color: "bg-green-300" },
     { name: "More Information", color: "bg-purple-300" },
     { name: "Caution", color: "bg-amber-300" },
-    { name: "Default", color: "bg-sky-50 dark:bg-sky-200" },
+    { name: "Default", color: "bg-sky-100" },
   ];
 
   it.each(calloutTypes)(
