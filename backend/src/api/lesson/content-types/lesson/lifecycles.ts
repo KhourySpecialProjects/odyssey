@@ -20,7 +20,18 @@ module.exports = {
     
     // Validate content fields if either is being updated
     if ('blocks' in data || 'blocksV2' in data) {
-      if (!data.blocks && !data.blocksV2) {
+      // Fetch existing lesson to check final state
+      const existingLesson = await strapi.entityService.findOne(
+        'api::lesson.lesson',
+        event.params.where.id
+      );
+      
+      // Determine final state after update
+      const existingLessonAny = existingLesson as any;
+      const finalBlocks = 'blocks' in data ? data.blocks : existingLessonAny?.blocks;
+      const finalBlocksV2 = 'blocksV2' in data ? data.blocksV2 : existingLessonAny?.blocksV2;
+      
+      if (!finalBlocks && !finalBlocksV2) {
         throw new Error('Lesson must have either blocks or blocksV2 content');
       }
     }
