@@ -61,88 +61,128 @@ interface HighlightResponseItem {
 function convertBlockNoteToV1Blocks(blocksV2: any[]): Block[] {
   if (!Array.isArray(blocksV2)) return [];
 
-  return blocksV2.map((block) => {
-    switch (block.type) {
-      case "callout":
-        const calloutColorMap: Record<string, string> = {
-          warning: "bg-red-300",
-          question: "bg-blue-300",
-          important: "bg-orange-300",
-          definition: "bg-green-300",
-          "more-information": "bg-purple-300",
-          caution: "bg-amber-300",
-          default: "bg-sky-50 dark:bg-sky-200",
-        };
+  return blocksV2
+    .map((block) => {
+      switch (block.type) {
+        case "heading":
+        case "paragraph":
+          // Convert BlockNote content array to plain text or simple HTML
+          const textContent =
+            block.content
+              ?.map((item: any) => {
+                if (item.type === "text") {
+                  let text = item.text || "";
+                  // Apply styles
+                  if (item.styles?.bold) text = `<strong>${text}</strong>`;
+                  if (item.styles?.italic) text = `<em>${text}</em>`;
+                  if (item.styles?.underline) text = `<u>${text}</u>`;
+                  if (item.styles?.code) text = `<code>${text}</code>`;
+                  return text;
+                }
+                return "";
+              })
+              .join("") || "";
 
-        return {
-          __component: "droplets.callout",
-          content: block.content || [],
-          color:
-            calloutColorMap[block.props?.calloutType] ||
-            calloutColorMap.default,
-          type: "info",
-          iconEnabled: true,
-        };
+          // Wrap in appropriate HTML tag
+          let htmlContent = "";
+          if (block.type === "heading") {
+            const level = block.props?.level || 1;
+            htmlContent = `<h${level}>${textContent}</h${level}>`;
+          } else {
+            htmlContent = `<p>${textContent}</p>`;
+          }
 
-      case "quiz-multiple-choice":
-        return {
-          __component: "droplets.quiz",
-          questions: [
-            {
-              id: Math.random(),
-              content: block.props?.question || "",
-              answerOptions: (block.props?.options || []).map((opt: any) => ({
+          return {
+            __component: "droplets.generic",
+            content: htmlContent,
+          };
+
+        case "callout":
+          const calloutColorMap: Record<string, string> = {
+            warning: "bg-red-300",
+            question: "bg-blue-300",
+            important: "bg-orange-300",
+            definition: "bg-green-300",
+            "more-information": "bg-purple-300",
+            caution: "bg-amber-300",
+            default: "bg-sky-50 dark:bg-sky-200",
+          };
+
+          // Convert callout content to HTML
+          const calloutText =
+            block.content?.map((item: any) => item.text || "").join("") || "";
+
+          return {
+            __component: "droplets.callout",
+            content: [
+              {
+                type: "paragraph",
+                children: [{ type: "text", text: calloutText }],
+              },
+            ],
+            color:
+              calloutColorMap[block.props?.calloutType] ||
+              calloutColorMap.default,
+            type: "info",
+            iconEnabled: true,
+          };
+
+        case "quiz-multiple-choice":
+          return {
+            __component: "droplets.quiz",
+            questions: [
+              {
                 id: Math.random(),
-                content: opt.text || "",
-                isCorrect: opt.isCorrect || false,
-              })),
-            },
-          ],
-        };
-
-      case "quiz-true-false":
-        return {
-          __component: "droplets.quiz",
-          questions: [
-            {
-              id: Math.random(),
-              content: block.props?.question || "",
-              answerOptions: [
-                {
+                content: block.props?.question || "",
+                answerOptions: (block.props?.options || []).map((opt: any) => ({
                   id: Math.random(),
-                  content: "True",
-                  isCorrect: block.props?.correctAnswer === true,
-                },
-                {
-                  id: Math.random(),
-                  content: "False",
-                  isCorrect: block.props?.correctAnswer === false,
-                },
-              ],
-            },
-          ],
-        };
+                  content: opt.text || "",
+                  isCorrect: opt.isCorrect || false,
+                })),
+              },
+            ],
+          };
 
-      case "quiz-open-ended":
-        return {
-          __component: "droplets.open-ended-quiz",
-          questions: [
-            {
-              id: Math.random(),
-              content: block.props?.question || "",
-              correctAnswer: "",
-            },
-          ],
-        };
+        case "quiz-true-false":
+          return {
+            __component: "droplets.quiz",
+            questions: [
+              {
+                id: Math.random(),
+                content: block.props?.question || "",
+                answerOptions: [
+                  {
+                    id: Math.random(),
+                    content: "True",
+                    isCorrect: block.props?.correctAnswer === true,
+                  },
+                  {
+                    id: Math.random(),
+                    content: "False",
+                    isCorrect: block.props?.correctAnswer === false,
+                  },
+                ],
+              },
+            ],
+          };
 
-      case "paragraph":
-      default:
-        return {
-          __component: "droplets.generic",
-          content: block.content || [],
-        };
-    }
-  });
+        case "quiz-open-ended":
+          return {
+            __component: "droplets.open-ended-quiz",
+            questions: [
+              {
+                id: Math.random(),
+                content: block.props?.question || "",
+                correctAnswer: "",
+              },
+            ],
+          };
+
+        default:
+          return null;
+      }
+    })
+    .filter((block): block is Block => block !== null);
 }
 
 export function LessonRenderer({
@@ -394,22 +434,6 @@ export function LessonRenderer({
     <div className="mx-auto w-full min-w-[300px] py-8 md:min-w-[700px]">
       <div className="relative mx-auto w-full max-w-2xl xl:py-8">
         <h1 className="text-6xl font-extrabold text-balance">{lesson.name}</h1>
-
-        {headings.length > 2 && (
-          <div className="mt-8 rounded-md border border-slate-200 bg-slate-50 p-6 dark:border-slate-500 dark:bg-slate-800">
-            <h2 className="text-xl font-bold">Contents</h2>
-            <ul className="mt-3 ml-4 list-inside list-disc">
-              {headings.map((heading, index) => (
-                <li
-                  key={index}
-                  style={{ marginLeft: `${(heading.level - 2) * 25}px` }}
-                >
-                  {heading.text}
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
 
         <div className="mt-8 space-y-12">
           {displayBlocks.map((b: Block, i: number) => (

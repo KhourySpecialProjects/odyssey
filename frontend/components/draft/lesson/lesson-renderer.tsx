@@ -17,6 +17,7 @@ import { Block } from "@/types";
 import { toast } from "sonner";
 import { deleteLesson, updateLesson } from "@/lib/requests/lesson";
 import AddLessonBlock from "./add-tools";
+import { BlockNoteEditor } from "./blocknote-editor";
 
 export interface BaseBlock {
   __component: string;
@@ -68,6 +69,25 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
       }
     },
     [lesson.id],
+  );
+
+  const updateBlocksV2Backend = useCallback(
+    async (blocksV2: any) => {
+      const response = await updateLesson(lesson.id, {
+        blocksV2,
+        blocksVersion: "v2",
+      });
+
+      if (!response || response.error || !response.ok) {
+        return;
+      }
+    },
+    [lesson.id],
+  );
+
+  const debounceUpdateV2 = useMemo(
+    () => debounce(updateBlocksV2Backend, 1000, { maxWait: 3000 }),
+    [updateBlocksV2Backend],
   );
 
   const updateBlocksBackendReload = useCallback(
@@ -397,13 +417,14 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
       ) : (
         <div className="mx-auto mt-8 w-full max-w-4xl">
           <p className="mb-4 text-center text-sm text-slate-500">
-            BlockNote editor - Content will be saved to blocksV2 field
+            BlockNote Editor - Content automatically saved to blocksV2
           </p>
-          <div className="rounded-lg border p-4">
-            <p className="text-center text-slate-400">
-              BlockNote editor integration coming next...
-            </p>
-          </div>
+          <BlockNoteEditor
+            initialContent={lesson.blocksV2}
+            onChange={(content) => {
+              debounceUpdateV2(content);
+            }}
+          />
         </div>
       )}
     </>

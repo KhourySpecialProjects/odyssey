@@ -170,7 +170,7 @@ export const Callout = createReactBlockSpec(
           </Menu>
           {/* Editable content with placeholder */}
           <div
-            className="inline-content"
+            className="inline-content text-slate-900 dark:text-slate-900"
             ref={props.contentRef}
             style={{
               flex: 1,
