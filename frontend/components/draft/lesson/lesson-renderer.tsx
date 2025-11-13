@@ -417,7 +417,7 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
       ) : (
         <div className="mx-auto mt-8 w-full max-w-4xl">
           <p className="mb-4 text-center text-sm text-slate-500">
-            BlockNote Editor - Content automatically saved to blocksV2
+            BlockNote Editor - Content automatically saved
           </p>
           <BlockNoteEditor
             initialContent={lesson.blocksV2}
