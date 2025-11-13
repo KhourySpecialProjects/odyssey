@@ -318,7 +318,9 @@ describe("CreateDropletForm", () => {
 
       const nameInput = screen.getByPlaceholderText("Developing a Droplet");
       const longName = "A".repeat(200);
-      await user.type(nameInput, longName);
+
+      await user.click(nameInput);
+      await user.paste(longName);
 
       expect(nameInput).toHaveValue(longName);
     });
