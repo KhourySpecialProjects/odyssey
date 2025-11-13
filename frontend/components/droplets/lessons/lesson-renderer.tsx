@@ -27,6 +27,7 @@ import {
   getHighlightsForLesson,
 } from "@/lib/requests/highlights";
 import { Block } from "@/types";
+import type { Block as BlockNoteBlock } from "@blocknote/core";
 import { GenericBlock } from "@/components/draft/lesson/blocks/generic";
 import { markLessonAsComplete } from "@/lib/requests/lesson";
 import posthog from "posthog-js";
@@ -58,20 +59,21 @@ interface HighlightResponseItem {
   };
 }
 
-function convertBlockNoteToV1Blocks(blocksV2: any[]): Block[] {
+function convertBlockNoteToV1Blocks(blocksV2: BlockNoteBlock[]): Block[] {
   if (!Array.isArray(blocksV2)) return [];
 
   return blocksV2
-    .map((block) => {
-      switch (block.type) {
+    .map((block, blockIndex) => {
+      const blockAny = block as any;
+      switch (blockAny.type) {
         case "heading":
-        case "paragraph":
-          // Convert BlockNote content array to plain text or simple HTML
+        case "paragraph": {
+          const inlineContent = (blockAny.content ?? []) as any[];
           const textContent =
-            block.content
-              ?.map((item: any) => {
+            inlineContent
+              .map((item: any) => {
                 if (item.type === "text") {
-                  let text = item.text || "";
+                  let text = item.text ?? "";
                   // Apply styles
                   if (item.styles?.bold) text = `<strong>${text}</strong>`;
                   if (item.styles?.italic) text = `<em>${text}</em>`;
@@ -83,21 +85,20 @@ function convertBlockNoteToV1Blocks(blocksV2: any[]): Block[] {
               })
               .join("") || "";
 
-          // Wrap in appropriate HTML tag
-          let htmlContent = "";
-          if (block.type === "heading") {
-            const level = block.props?.level || 1;
-            htmlContent = `<h${level}>${textContent}</h${level}>`;
-          } else {
-            htmlContent = `<p>${textContent}</p>`;
-          }
+          const headingLevel = Number(blockAny.props?.level) || 1;
+          const htmlContent =
+            blockAny.type === "heading"
+              ? `<h${headingLevel}>${textContent}</h${headingLevel}>`
+              : `<p>${textContent}</p>`;
 
           return {
             __component: "droplets.generic",
+            id: blockIndex,
             content: htmlContent,
           };
+        }
 
-        case "callout":
+        case "callout": {
           const calloutColorMap: Record<string, string> = {
             warning: "bg-red-300",
             question: "bg-blue-300",
@@ -108,12 +109,15 @@ function convertBlockNoteToV1Blocks(blocksV2: any[]): Block[] {
             default: "bg-sky-50 dark:bg-sky-200",
           };
 
-          // Convert callout content to HTML
+          const calloutContent = (blockAny.content ?? []) as any[];
           const calloutText =
-            block.content?.map((item: any) => item.text || "").join("") || "";
+            calloutContent
+              .map((item: any) => (item.type === "text" ? item.text ?? "" : ""))
+              .join("") || "";
 
           return {
             __component: "droplets.callout",
+            id: blockIndex,
             content: [
               {
                 type: "paragraph",
@@ -121,62 +125,71 @@ function convertBlockNoteToV1Blocks(blocksV2: any[]): Block[] {
               },
             ],
             color:
-              calloutColorMap[block.props?.calloutType] ||
+              calloutColorMap[blockAny.props?.calloutType] ||
               calloutColorMap.default,
-            type: "info",
+            type: blockAny.props?.calloutType || "info",
             iconEnabled: true,
           };
+        }
 
-        case "quiz-multiple-choice":
+        case "quiz-multiple-choice": {
+          const options =
+            (blockAny.props?.options as
+              | { text?: string; isCorrect?: boolean }[]
+              | undefined) ?? [];
+
           return {
             __component: "droplets.quiz",
             questions: [
               {
-                id: Math.random(),
-                content: block.props?.question || "",
-                answerOptions: (block.props?.options || []).map((opt: any) => ({
-                  id: Math.random(),
+                id: blockIndex,
+                content: blockAny.props?.question || "",
+                answerOptions: options.map((opt, optionIndex) => ({
+                  id: blockIndex * 100 + optionIndex,
                   content: opt.text || "",
-                  isCorrect: opt.isCorrect || false,
+                  isCorrect: !!opt.isCorrect,
                 })),
               },
             ],
           };
+        }
 
-        case "quiz-true-false":
+        case "quiz-true-false": {
           return {
             __component: "droplets.quiz",
             questions: [
               {
-                id: Math.random(),
-                content: block.props?.question || "",
+                id: blockIndex,
+                content: blockAny.props?.question || "",
                 answerOptions: [
                   {
-                    id: Math.random(),
+                    id: blockIndex * 10 + 1,
                     content: "True",
-                    isCorrect: block.props?.correctAnswer === true,
+                    isCorrect: blockAny.props?.correctAnswer === true,
                   },
                   {
-                    id: Math.random(),
+                    id: blockIndex * 10 + 2,
                     content: "False",
-                    isCorrect: block.props?.correctAnswer === false,
+                    isCorrect: blockAny.props?.correctAnswer === false,
                   },
                 ],
               },
             ],
           };
+        }
 
-        case "quiz-open-ended":
+        case "quiz-open-ended": {
           return {
             __component: "droplets.open-ended-quiz",
             questions: [
               {
-                id: Math.random(),
-                content: block.props?.question || "",
+                id: blockIndex,
+                content: blockAny.props?.question || "",
                 correctAnswer: "",
               },
             ],
           };
+        }
 
         default:
           return null;

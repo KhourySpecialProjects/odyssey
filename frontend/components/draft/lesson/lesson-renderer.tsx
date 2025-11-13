@@ -383,9 +383,16 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
           {isNewLesson && (
             <Button
               variant={editorVersion === "v2" ? "default" : "outline"}
-              onClick={() =>
-                setEditorVersion(editorVersion === "v1" ? "v2" : "v1")
-              }
+              onClick={async () => {
+                if (editorVersion === "v2") {
+                  debounceUpdateV2.flush();
+                  await updateLesson(lesson.id, {
+                    blocksVersion: "v1",
+                    blocksV2: null,
+                  });
+                }
+                setEditorVersion(editorVersion === "v1" ? "v2" : "v1");
+              }}
             >
               {editorVersion === "v1"
                 ? "Use BlockNote Editor"
@@ -417,7 +424,7 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
       ) : (
         <div className="mx-auto mt-8 w-full max-w-4xl">
           <p className="mb-4 text-center text-sm text-slate-500">
-            BlockNote Editor - Content automatically saved
+            BlockNote Editor - Changes saved automatically
           </p>
           <BlockNoteEditor
             initialContent={lesson.blocksV2}
