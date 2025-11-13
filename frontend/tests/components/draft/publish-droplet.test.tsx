@@ -1,4 +1,5 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { updateDroplet } from "@/lib/requests/droplet";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
@@ -67,6 +68,9 @@ describe("PublishDropletButton", () => {
     expect(
       screen.getByText(/are you sure you want to publish this droplet/i),
     ).toBeInTheDocument();
+    expect(
+      screen.getByPlaceholderText("Enter droplet name"),
+    ).toBeInTheDocument();
   });
 
   it("closes modal when cancel button is clicked", () => {
@@ -88,7 +92,37 @@ describe("PublishDropletButton", () => {
     ).not.toBeInTheDocument();
   });
 
+  it("confirm button is disabled until droplet name is typed", async () => {
+    const user = userEvent.setup();
+    render(<PublishDropletButton droplet={mockDroplet} />);
+
+    // Open modal
+    const publishButton = screen.getByRole("button", {
+      name: /publish droplet/i,
+    });
+    fireEvent.click(publishButton);
+
+    const confirmButton = screen.getByRole("button", { name: /confirm/i });
+    const input = screen.getByPlaceholderText("Enter droplet name");
+
+    // Confirm button should be disabled initially
+    expect(confirmButton).toBeDisabled();
+
+    // Type incorrect name
+    await user.type(input, "Wrong Name");
+    expect(confirmButton).toBeDisabled();
+
+    // Clear and type correct name
+    await user.clear(input);
+    await user.type(input, mockDroplet.name);
+
+    await waitFor(() => {
+      expect(confirmButton).not.toBeDisabled();
+    });
+  });
+
   it("calls updateDroplet with correct parameters when confirmed", async () => {
+    const user = userEvent.setup();
     mockUpdateDroplet.mockResolvedValue({ ok: true, error: null } as any);
 
     render(<PublishDropletButton droplet={mockDroplet} />);
@@ -99,8 +133,13 @@ describe("PublishDropletButton", () => {
     });
     fireEvent.click(publishButton);
 
+    // Type droplet name
+    const input = screen.getByPlaceholderText("Enter droplet name");
+    await user.type(input, mockDroplet.name);
+
     // Confirm publish
     const confirmButton = screen.getByRole("button", { name: /confirm/i });
+    await waitFor(() => expect(confirmButton).not.toBeDisabled());
     fireEvent.click(confirmButton);
 
     await waitFor(() => {
@@ -113,23 +152,33 @@ describe("PublishDropletButton", () => {
   });
 
   it("shows success toast and redirects on successful publish", async () => {
+    const user = userEvent.setup();
     mockUpdateDroplet.mockResolvedValue({ ok: true, error: null } as any);
 
     render(<PublishDropletButton droplet={mockDroplet} />);
 
-    // Open modal and confirm
+    // Open modal
     fireEvent.click(screen.getByRole("button", { name: /publish droplet/i }));
-    fireEvent.click(screen.getByRole("button", { name: /confirm/i }));
+
+    // Type droplet name
+    const input = screen.getByPlaceholderText("Enter droplet name");
+    await user.type(input, mockDroplet.name);
+
+    // Confirm
+    const confirmButton = screen.getByRole("button", { name: /confirm/i });
+    await waitFor(() => expect(confirmButton).not.toBeDisabled());
+    fireEvent.click(confirmButton);
 
     await waitFor(() => {
       expect(mockToast.success).toHaveBeenCalledWith(
         "Droplet published successfully!",
       );
-      expect(mockPush).toHaveBeenCalledWith("/review");
+      expect(mockPush).toHaveBeenCalledWith("/explore");
     });
   });
 
   it("shows error toast and closes modal on failed publish", async () => {
+    const user = userEvent.setup();
     mockUpdateDroplet.mockResolvedValue({
       ok: false,
       error: "Network error",
@@ -137,9 +186,17 @@ describe("PublishDropletButton", () => {
 
     render(<PublishDropletButton droplet={mockDroplet} />);
 
-    // Open modal and confirm
+    // Open modal
     fireEvent.click(screen.getByRole("button", { name: /publish droplet/i }));
-    fireEvent.click(screen.getByRole("button", { name: /confirm/i }));
+
+    // Type droplet name
+    const input = screen.getByPlaceholderText("Enter droplet name");
+    await user.type(input, mockDroplet.name);
+
+    // Confirm
+    const confirmButton = screen.getByRole("button", { name: /confirm/i });
+    await waitFor(() => expect(confirmButton).not.toBeDisabled());
+    fireEvent.click(confirmButton);
 
     await waitFor(() => {
       expect(mockToast.error).toHaveBeenCalledWith("Error publishing droplet");
@@ -147,9 +204,11 @@ describe("PublishDropletButton", () => {
     });
 
     // Modal should close
-    expect(
-      screen.queryByText(/are you sure you want to publish this droplet/i),
-    ).not.toBeInTheDocument();
+    await waitFor(() => {
+      expect(
+        screen.queryByText(/are you sure you want to publish this droplet/i),
+      ).not.toBeInTheDocument();
+    });
   });
 
   it("renders modal using createPortal", () => {
@@ -229,7 +288,27 @@ describe("PublishDropletButton", () => {
     ).not.toBeInTheDocument();
   });
 
+  it("resets input when modal is closed", async () => {
+    const user = userEvent.setup();
+    render(<PublishDropletButton droplet={mockDroplet} />);
+
+    // Open modal and type
+    fireEvent.click(screen.getByRole("button", { name: /publish droplet/i }));
+    const input = screen.getByPlaceholderText("Enter droplet name");
+    await user.type(input, "Some text");
+
+    // Close modal
+    fireEvent.click(screen.getByRole("button", { name: /cancel/i }));
+
+    // Reopen modal
+    fireEvent.click(screen.getByRole("button", { name: /publish droplet/i }));
+    const newInput = screen.getByPlaceholderText("Enter droplet name");
+
+    expect(newInput).toHaveValue("");
+  });
+
   it("handles droplet with inReview set to true", async () => {
+    const user = userEvent.setup();
     const dropletInReview: Droplet = {
       ...mockDroplet,
       inReview: true,
@@ -240,7 +319,13 @@ describe("PublishDropletButton", () => {
     render(<PublishDropletButton droplet={dropletInReview} />);
 
     fireEvent.click(screen.getByRole("button", { name: /publish droplet/i }));
-    fireEvent.click(screen.getByRole("button", { name: /confirm/i }));
+
+    const input = screen.getByPlaceholderText("Enter droplet name");
+    await user.type(input, dropletInReview.name);
+
+    const confirmButton = screen.getByRole("button", { name: /confirm/i });
+    await waitFor(() => expect(confirmButton).not.toBeDisabled());
+    fireEvent.click(confirmButton);
 
     await waitFor(() => {
       expect(mockUpdateDroplet).toHaveBeenCalledWith(

@@ -164,7 +164,7 @@ export default function Sidebar({
             {(author || isAdmin) && (
               <div className="flex w-full flex-col gap-2 pb-2">
                 <Link
-                className="rounded-full bg-green-400 px-6 py-2 text-center text-black hover:bg-green-500 dark:bg-green-600 dark:text-white dark:hover:bg-green-800"
+                  className="rounded-full bg-green-400 px-6 py-2 text-center text-black hover:bg-green-500 dark:bg-green-600 dark:text-white dark:hover:bg-green-800"
                   href={`/draft/d/${curPath === `${droplet.slug}/recap` ? `${droplet.slug}` : `/${curPath}`}`}
                 >
                   Edit

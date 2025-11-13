@@ -148,9 +148,9 @@ export default async function Droplet({ params }: Props) {
             startingName={droplet.name}
           />
 
-            {droplet.status === "published" &&(
-              <div className="p-2">This droplet is currently live</div>
-            )}
+          {droplet.status === "published" && (
+            <div className="p-2">This droplet is currently live</div>
+          )}
           <div
             className={`pt-4 pb-4 ${droplet.status === "draft" && !droplet.inReview && isContentCreator(user.roles) ? "visibility: visible" : "visibility: hidden"} text-red-500 dark:text-red-300`}
           >
