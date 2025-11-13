@@ -148,11 +148,13 @@ export default async function Droplet({ params }: Props) {
             startingName={droplet.name}
           />
 
-          {droplet.status === "draft" && droplet.inReview && isContentCreator(user.roles) && (
-            <div className="p-2">Droplet currently in review</div>
-          )}
+          {droplet.status === "draft" &&
+            droplet.inReview &&
+            isContentCreator(user.roles) && (
+              <div className="p-2">Droplet currently in review</div>
+            )}
           <div
-            className={`pt-4 pb-4 ${droplet.status === "draft" && !droplet.inReview && (isContentCreator(user.roles)) ? "visibility: visible" : "visibility: hidden"} text-red-500 dark:text-red-300`}
+            className={`pt-4 pb-4 ${droplet.status === "draft" && !droplet.inReview && isContentCreator(user.roles) ? "visibility: visible" : "visibility: hidden"} text-red-500 dark:text-red-300`}
           >
             This is currently a draft droplet. To publish this droplet, contact
             a Content Editor or Admin.
