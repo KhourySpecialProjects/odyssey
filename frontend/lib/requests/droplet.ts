@@ -895,7 +895,39 @@ export async function publishDraftToOriginal(
     }
 
     console.log("Updated original droplet successfully");
+    // After updating original droplet and creating lessons, update enrollments
+    try {
+      console.log("Updating enrollments to point to original droplet");
+      
+      // Fetch all enrollments for the draft
+      const draftEnrollments = await fetch(
+        `${STRAPI_API_URL}/api/enrollments?filters[droplet][id][$eq]=${draftDropletId}&populate=*`,
+        {
+          headers: {
+            Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+          },
+        }
+      ).then(res => res.json());
 
+      // Update each enrollment to point to the original droplet
+      for (const enrollment of draftEnrollments.data || []) {
+        await fetch(`${STRAPI_API_URL}/api/enrollments/${enrollment.id}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+          },
+          body: JSON.stringify({
+            data: {
+              droplet: originalDropletId,
+            },
+          }),
+        });
+        console.log(`Updated enrollment ${enrollment.id} to point to original droplet`);
+      }
+    } catch (error) {
+      console.error("Error updating enrollments:", error);
+    }
     // Helper function to remove ids from blocks
     const cleanBlocks = (blocks: any[]): any[] => {
       if (!Array.isArray(blocks)) return [];
