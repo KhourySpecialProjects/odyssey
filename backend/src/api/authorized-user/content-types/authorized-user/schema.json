@@ -223,6 +223,12 @@
     },
     "website": {
       "type": "string"
+    },
+    "playlists_archived": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::playlist.playlist",
+      "inversedBy": "users_archived"
     }
   }
 }

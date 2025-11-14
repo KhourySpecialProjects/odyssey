@@ -5,6 +5,8 @@ import { StrapiRequestParams } from "@/types/strapi";
 import { fetchAPI, flattenAttributes } from "@/lib/utils";
 import qs from "qs";
 import { revalidatePath, revalidateTag } from "next/cache";
+import { getCurrentUser } from "../auth/session";
+import { getAuthorizedUserByEmail } from "./authorized-user";
 
 const NEXT_PUBLIC_STRAPI_API_URL =
   process.env.NEXT_PUBLIC_STRAPI_API_URL || "http://localhost:1337";
@@ -280,5 +282,54 @@ export async function deletePlaylist(id: number) {
   } catch (err) {
     console.error(err);
     return { error: "Database Error: Failed to Delete Playlist." };
+  }
+}
+
+export async function archivePlaylist(
+  playlist: Playlist,
+  archiveState: boolean,
+) {
+  try {
+    const user = await getCurrentUser();
+    if (!user?.email) throw new Error("No email identified");
+    const authorizedUser = await getAuthorizedUserByEmail(user.email);
+
+    const requestBody = {
+      data: {
+        users_archived: archiveState
+          ? { connect: [{ id: authorizedUser.id }] }
+          : { disconnect: [{ id: authorizedUser.id }] },
+      },
+    };
+
+    const response = await fetch(
+      `${NEXT_PUBLIC_STRAPI_API_URL}/api/playlists/${playlist.id}`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+        },
+        body: JSON.stringify(requestBody),
+      },
+    );
+
+    const responseText = await response.text();
+
+    if (!response.ok) {
+      console.error("Archive playlist error response:", responseText);
+      console.error("Response status:", response.status);
+      throw new Error("Failed to archive playlist");
+    }
+
+    revalidateTag("dashboard");
+    revalidatePath("/");
+    revalidatePath("/draft");
+    revalidatePath("/dashboard");
+    revalidatePath("/dashboard/archived");
+    return { success: true };
+  } catch (error) {
+    console.error("Error archiving playlist:", error);
+    return { success: false, error };
   }
 }

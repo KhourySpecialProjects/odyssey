@@ -684,6 +684,11 @@ export interface ApiAuthorizedUserAuthorizedUser extends Schema.CollectionType {
       'manyToMany',
       'api::playlist.playlist'
     >;
+    playlists_archived: Attribute.Relation<
+      'api::authorized-user.authorized-user',
+      'manyToMany',
+      'api::playlist.playlist'
+    >;
     profilePhoto: Attribute.Text;
     received_requests: Attribute.Relation<
       'api::authorized-user.authorized-user',
@@ -1445,6 +1450,11 @@ export interface ApiPlaylistPlaylist extends Schema.CollectionType {
       'admin::user'
     > &
       Attribute.Private;
+    users_archived: Attribute.Relation<
+      'api::playlist.playlist',
+      'manyToMany',
+      'api::authorized-user.authorized-user'
+    >;
   };
 }
 

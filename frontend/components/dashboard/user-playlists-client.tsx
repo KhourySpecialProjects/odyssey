@@ -9,10 +9,14 @@ export function UserPlaylistsClient({
   customPlaylists,
   publicPlaylists,
   dueDates,
+  isArchived,
+  dashboardPage,
 }: {
   customPlaylists: Playlist[];
   publicPlaylists: Playlist[];
   dueDates: DueDate[];
+  isArchived?: boolean;
+  dashboardPage?: boolean;
 }) {
   const { searchQuery } = useSearch();
   const filteredPublic = useMemo(() => {
@@ -28,11 +32,11 @@ export function UserPlaylistsClient({
   }, [customPlaylists, searchQuery]);
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 pb-4">
       {filteredCustom.length > 0 && (
         <section>
           <h2 className="mb-4 text-xl font-semibold dark:text-slate-300">
-            Private Playlists
+            {!isArchived && "Private Playlists"}
           </h2>
           <div className="grid grid-flow-row auto-rows-fr grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
             {filteredCustom.map((playlist: Playlist, index) => (
@@ -40,6 +44,8 @@ export function UserPlaylistsClient({
                 key={playlist.id}
                 playlist={playlist}
                 data-testid={`playlist-card-${index}`}
+                dashboardPage={dashboardPage}
+                isArchived={isArchived}
               />
             ))}
           </div>
@@ -60,6 +66,8 @@ export function UserPlaylistsClient({
                       (dueDate) => dueDate.playlist?.id === playlist.id,
                     )?.dueDate || ""
                   }
+                  dashboardPage={dashboardPage}
+                  isArchived={isArchived}
                 />
               </div>
             ))}

@@ -53,6 +53,18 @@ jest.mock("@/components/dashboard/archived-droplets-grid", () => ({
   ),
 }));
 
+jest.mock("@/components/dashboard/archived-playlists-grid", () => ({
+  ArchivedPlaylistsGrid: ({ sortKey }: { sortKey?: string }) => (
+    <div data-testid="archived-playlists-grid">Archived Playlists Grid</div>
+  ),
+}));
+
+jest.mock("@/components/dashboard/favorited-droplet-grid", () => ({
+  FavoriteDropletsGrid: ({ sortKey }: { sortKey?: string }) => (
+    <div data-testid="favorited-grid">Favorite Droplets Grid</div>
+  ),
+}));
+
 jest.mock("@/components/dashboard/user-groups", () => ({
   UserGroups: ({
     activeGroups,
@@ -120,7 +132,7 @@ describe("MyContent", () => {
   });
 
   describe("Authentication", () => {
-    it("returns null when user is not found", async () => {
+    it("calls notFound when user is not found", async () => {
       (getCurrentUser as jest.Mock).mockResolvedValue(null);
 
       await MyContent({ searchParams: {} });
@@ -150,41 +162,65 @@ describe("MyContent", () => {
   });
 
   describe("Content Type Rendering", () => {
-    it("defaults to droplets tab when no tab is specified", async () => {
+    it("defaults to droplets tab when no contentType is specified", async () => {
       render(await MyContent({ searchParams: {} }));
 
       expect(screen.getByTestId("droplets-grid")).toBeInTheDocument();
     });
 
-    it("renders the droplets grid when tab is droplets", async () => {
+    it("renders the droplets grid when contentType is droplets", async () => {
       render(await MyContent({ searchParams: { contentType: "droplets" } }));
 
       expect(screen.getByTestId("droplets-grid")).toBeInTheDocument();
     });
 
-    it("renders the playlists grid when tab is playlists", async () => {
+    it("renders the playlists grid when contentType is playlists", async () => {
       render(await MyContent({ searchParams: { contentType: "playlists" } }));
 
       expect(screen.getByTestId("playlists-grid")).toBeInTheDocument();
     });
 
-    it("renders groups grid when tab is groups", async () => {
+    it("renders groups grid when contentType is groups", async () => {
       render(await MyContent({ searchParams: { contentType: "groups" } }));
 
       expect(screen.getByTestId("active-groups")).toBeInTheDocument();
     });
 
-    it("renders the archived grid when tab is archived", async () => {
+    it("renders the archived section when contentType is archived", async () => {
       render(await MyContent({ searchParams: { contentType: "archived" } }));
 
       expect(screen.getByTestId("archived-grid")).toBeInTheDocument();
+      expect(screen.getByTestId("archived-playlists-grid")).toBeInTheDocument();
       expect(screen.getByTestId("archived-groups")).toBeInTheDocument();
     });
 
-    it("renders both archived sections with headers", async () => {
+    it("renders the favorited grid when contentType is favorited", async () => {
+      render(await MyContent({ searchParams: { contentType: "favorited" } }));
+
+      expect(screen.getByTestId("favorited-grid")).toBeInTheDocument();
+    });
+
+    it("renders null when contentType is invalid", async () => {
+      const { container } = render(
+        await MyContent({ searchParams: { contentType: "invalid" } }),
+      );
+
+      expect(
+        container.querySelector('[data-testid="droplets-grid"]'),
+      ).not.toBeInTheDocument();
+      expect(
+        container.querySelector('[data-testid="playlists-grid"]'),
+      ).not.toBeInTheDocument();
+      expect(
+        container.querySelector('[data-testid="favorited-grid"]'),
+      ).not.toBeInTheDocument();
+    });
+
+    it("renders all archived section headers", async () => {
       render(await MyContent({ searchParams: { contentType: "archived" } }));
 
       expect(screen.getByText("Droplets")).toBeInTheDocument();
+      expect(screen.getByText("Playlists")).toBeInTheDocument();
       expect(screen.getByText("Groups")).toBeInTheDocument();
     });
   });
@@ -229,6 +265,42 @@ describe("MyContent", () => {
 
       // System archived group (id: 3) should not be in active groups
       expect(screen.getByText("User Groups (1)")).toBeInTheDocument();
+    });
+
+    it("filters groups correctly when user is member of multiple groups", async () => {
+      const multipleGroups = [
+        {
+          id: 1,
+          groupName: "Group 1",
+          slug: "group-1",
+          isArchived: false,
+          members: [{ id: 1 }],
+          users_archived: [],
+        },
+        {
+          id: 2,
+          groupName: "Group 2",
+          slug: "group-2",
+          isArchived: false,
+          members: [{ id: 1 }],
+          users_archived: [],
+        },
+        {
+          id: 3,
+          groupName: "Group 3",
+          slug: "group-3",
+          isArchived: false,
+          members: [{ id: 1 }],
+          users_archived: [{ id: 1 }],
+        },
+      ];
+
+      (getUserGroups as jest.Mock).mockResolvedValue(multipleGroups);
+
+      render(await MyContent({ searchParams: { contentType: "groups" } }));
+
+      // Should show 2 active groups (groups 1 and 2)
+      expect(screen.getByText("User Groups (2)")).toBeInTheDocument();
     });
   });
 
@@ -280,6 +352,28 @@ describe("MyContent", () => {
       expect(screen.getByTestId("droplets-grid")).toBeInTheDocument();
     });
 
+    it("passes sortKey to UserPlaylistsGrid", async () => {
+      render(
+        await MyContent({
+          searchParams: { contentType: "playlists" },
+          sortKey: "name:desc",
+        }),
+      );
+
+      expect(screen.getByTestId("playlists-grid")).toBeInTheDocument();
+    });
+
+    it("passes sortKey to FavoriteDropletsGrid", async () => {
+      render(
+        await MyContent({
+          searchParams: { contentType: "favorited" },
+          sortKey: "name:asc",
+        }),
+      );
+
+      expect(screen.getByTestId("favorited-grid")).toBeInTheDocument();
+    });
+
     it("passes type filter to EnrolledDropletsGrid", async () => {
       render(
         await MyContent({
@@ -308,6 +402,30 @@ describe("MyContent", () => {
       );
 
       expect(screen.getByTestId("droplets-grid")).toBeInTheDocument();
+    });
+
+    it("passes tags as array to EnrolledDropletsGrid", async () => {
+      render(
+        await MyContent({
+          searchParams: {
+            contentType: "droplets",
+            tags: ["react", "javascript"],
+          },
+        }),
+      );
+
+      expect(screen.getByTestId("droplets-grid")).toBeInTheDocument();
+    });
+
+    it("passes sortKey to UserGroups", async () => {
+      render(
+        await MyContent({
+          searchParams: { contentType: "groups" },
+          sortKey: "name:asc",
+        }),
+      );
+
+      expect(screen.getByTestId("active-groups")).toBeInTheDocument();
     });
   });
 
@@ -353,6 +471,40 @@ describe("MyContent", () => {
       expect(screen.getByText("User Groups (1)")).toBeInTheDocument();
     });
 
+    it("handles groups with null members", async () => {
+      (getUserGroups as jest.Mock).mockResolvedValue([
+        {
+          id: 1,
+          groupName: "Group With Null Members",
+          slug: "null-members",
+          isArchived: false,
+          members: null,
+          users_archived: [],
+        },
+      ]);
+
+      render(await MyContent({ searchParams: { contentType: "groups" } }));
+
+      expect(screen.getByText("No Enrolled Groups")).toBeInTheDocument();
+    });
+
+    it("handles empty members array", async () => {
+      (getUserGroups as jest.Mock).mockResolvedValue([
+        {
+          id: 1,
+          groupName: "Group With Empty Members",
+          slug: "empty-members",
+          isArchived: false,
+          members: [],
+          users_archived: [],
+        },
+      ]);
+
+      render(await MyContent({ searchParams: { contentType: "groups" } }));
+
+      expect(screen.getByText("No Enrolled Groups")).toBeInTheDocument();
+    });
+
     it("handles multiple group memberships", async () => {
       const multipleActiveGroups = [
         {
@@ -382,12 +534,13 @@ describe("MyContent", () => {
   });
 
   describe("Archived Content Section", () => {
-    it("includes divider between archived sections", async () => {
+    it("includes dividers between archived sections", async () => {
       const { container } = render(
         await MyContent({ searchParams: { contentType: "archived" } }),
       );
 
-      expect(container.querySelector("hr")).toBeInTheDocument();
+      const dividers = container.querySelectorAll("hr");
+      expect(dividers.length).toBeGreaterThan(0);
     });
 
     it("renders archived droplets grid", async () => {
@@ -396,10 +549,58 @@ describe("MyContent", () => {
       expect(screen.getByTestId("archived-grid")).toBeInTheDocument();
     });
 
+    it("renders archived playlists grid", async () => {
+      render(await MyContent({ searchParams: { contentType: "archived" } }));
+
+      expect(screen.getByTestId("archived-playlists-grid")).toBeInTheDocument();
+    });
+
     it("renders archived groups section", async () => {
       render(await MyContent({ searchParams: { contentType: "archived" } }));
 
       expect(screen.getByTestId("archived-groups")).toBeInTheDocument();
+    });
+
+    it("renders all archived sections in correct order", async () => {
+      const { container } = render(
+        await MyContent({ searchParams: { contentType: "archived" } }),
+      );
+
+      const dropletsHeader = screen.getByText("Droplets");
+      const playlistsHeader = screen.getByText("Playlists");
+      const groupsHeader = screen.getByText("Groups");
+
+      expect(dropletsHeader).toBeInTheDocument();
+      expect(playlistsHeader).toBeInTheDocument();
+      expect(groupsHeader).toBeInTheDocument();
+
+      // Verify order by checking that droplets comes before playlists
+      const allText = container.textContent || "";
+      const dropletsIndex = allText.indexOf("Droplets");
+      const playlistsIndex = allText.indexOf("Playlists");
+      const groupsIndex = allText.indexOf("Groups");
+
+      expect(dropletsIndex).toBeLessThan(playlistsIndex);
+      expect(playlistsIndex).toBeLessThan(groupsIndex);
+    });
+  });
+
+  describe("Favorited Content", () => {
+    it("renders favorited droplets grid", async () => {
+      render(await MyContent({ searchParams: { contentType: "favorited" } }));
+
+      expect(screen.getByTestId("favorited-grid")).toBeInTheDocument();
+    });
+
+    it("passes sortKey to FavoriteDropletsGrid", async () => {
+      render(
+        await MyContent({
+          searchParams: { contentType: "favorited" },
+          sortKey: "name:desc",
+        }),
+      );
+
+      expect(screen.getByTestId("favorited-grid")).toBeInTheDocument();
     });
   });
 });
