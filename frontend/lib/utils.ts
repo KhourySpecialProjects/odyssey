@@ -528,6 +528,7 @@ export const getDueDateBadgeColor = (
 };
 
 export const stripHtmlTags = (html: string) => {
+  if (!html) return "";
   return html
     .replace(/<[^>]*>/g, "")
     .replace(/&nbsp;/g, " ")
