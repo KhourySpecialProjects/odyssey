@@ -4,9 +4,17 @@ import { QuizQuestionBlock } from "./quiz-question";
 export function QuizBlock({
   data,
   lessonId,
+  dropletId,
+  dropletName,
+  lessonName,
+  userId,
 }: {
   data: Quiz;
   lessonId: number;
+  dropletId?: number;
+  dropletName?: string;
+  lessonName?: string;
+  userId?: number;
 }) {
   return (
     <div className="-mx-6 my-12 rounded-md border border-slate-200 bg-slate-50 px-6 py-12 dark:border-slate-500 dark:bg-slate-800">
@@ -24,7 +32,14 @@ export function QuizBlock({
               id="quiz-question"
               className="mx-auto mt-8 w-full max-w-lg divide-slate-200 rounded-md border border-slate-200 bg-white p-6 dark:border-slate-500 dark:bg-slate-900"
             >
-              <QuizQuestionBlock question={question} lessonId={lessonId} />
+              <QuizQuestionBlock
+                question={question}
+                lessonId={lessonId}
+                dropletId={dropletId}
+                dropletName={dropletName}
+                lessonName={lessonName}
+                userId={userId}
+              />
             </div>
           );
         })}

@@ -12,6 +12,7 @@ import {
 } from "@/components/message";
 import { UserGroups } from "./user-groups";
 import { FavoriteDropletsGrid } from "./favorited-droplet-grid";
+import { ArchivedPlaylistsGrid } from "./archived-playlists-grid";
 
 export async function MyContent({
   searchParams,
@@ -78,6 +79,9 @@ export async function MyContent({
           <>
             <div className="pb-2 text-xl font-bold">Droplets</div>
             <ArchivedDropletsGrid sortKey={sortKey} />
+            <hr className="pb-2" />
+            <div className="pb-2 text-xl font-bold">Playlists</div>
+            <ArchivedPlaylistsGrid sortKey={sortKey} />
             <hr className="pb-2" />
             <div className="pb-2 text-xl font-bold">Groups</div>
             {archivedGroups.length === 0 && (

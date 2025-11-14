@@ -419,9 +419,20 @@ export async function createNewTag(tag: string) {
       return { success: false, error: "Failed to add new tag" };
     }
 
+    const result = await response.json();
+    const createdTag = result.data;
+
     revalidatePath("/new/droplet");
     revalidatePath("/draft/d/[slug]/[lessonSlug]", "page");
-    return { success: true };
+    return {
+      success: true,
+      data: {
+        id: createdTag.id,
+        name: createdTag.attributes.name,
+        slug: createdTag.attributes.slug,
+        droplets: [],
+      },
+    };
   } catch (error) {
     console.error("Error adding tag:", error);
     return { success: false, error: "Failed to process request" };
@@ -461,6 +472,21 @@ export async function createDroplet(data: z.infer<typeof CreateDropletSchema>) {
         objective: obj,
       })),
     };
+
+    // ensure no duplicate droplets made regardless of casing from the $eqi
+    const existingDroplets = await getDroplets({
+      filters: { name: { $eqi: data.name } },
+      fields: ["name"],
+      pagination: { pageSize: 1, page: 1 },
+    });
+
+    if (existingDroplets && existingDroplets.length > 0) {
+      return {
+        ok: false,
+        error: "This attribute must be unique (name)",
+        data: null,
+      };
+    }
 
     const response = await fetch(STRAPI_API_URL + "/api/droplets", {
       method: "POST",

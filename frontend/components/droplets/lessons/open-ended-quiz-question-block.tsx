@@ -1,14 +1,25 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { OpenEndedQuizQuestion } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeftIcon } from "lucide-react";
+import posthog from "posthog-js";
 
 export function OpenEndedQuizQuestionBlock({
   question,
+  lessonId,
+  dropletId,
+  dropletName,
+  lessonName,
+  userId,
 }: {
   question: OpenEndedQuizQuestion;
+  lessonId?: number;
+  dropletId?: number;
+  dropletName?: string;
+  lessonName?: string;
+  userId?: number;
 }) {
   const [userAnswer, setUserAnswer] = useState("");
   const [showResult, setShowResult] = useState(false);
@@ -16,14 +27,69 @@ export function OpenEndedQuizQuestionBlock({
   const [numTries, setNumTries] = useState(0);
   const [revealAnswer, setRevealAnswer] = useState(false);
 
+  // Initialize PostHog
+  useEffect(() => {
+    if (typeof window !== "undefined" && !(window as any).posthog) {
+      posthog.init(process.env.NEXT_PUBLIC_POSTHOG_KEY!, {
+        api_host:
+          process.env.NEXT_PUBLIC_POSTHOG_HOST || "https://app.posthog.com",
+      });
+
+      (window as any).posthog = posthog;
+
+      if (userId) {
+        posthog.identify(userId.toString());
+      }
+    }
+  }, [userId]);
+
   const checkAnswer = () => {
     const isAnswerCorrect =
       userAnswer.trim().toLowerCase() ===
       question.correctAnswer.trim().toLowerCase();
     setIsCorrect(isAnswerCorrect);
-    if (!isCorrect) {
+
+    if (!isAnswerCorrect) {
       setNumTries(numTries + 1);
     }
+
+    // Track quiz answer submission
+    posthog.capture("quiz_answer_submitted", {
+      question_id: question.id,
+      question_title: question.content
+        .replace(/<[^>]*>/g, "")
+        .substring(0, 100),
+      lesson_id: lessonId,
+      lesson_name: lessonName,
+      droplet_id: dropletId,
+      droplet_name: dropletName,
+      is_correct: isAnswerCorrect,
+      quiz_type: "open_ended",
+      attempt_number: numTries + 1,
+      user_id: userId,
+      page: window.location.pathname,
+      timestamp: new Date().toISOString(),
+    });
+
+    // If correct, track separately
+    if (isAnswerCorrect) {
+      posthog.capture("quiz_answered_correctly", {
+        question_id: question.id,
+        question_title: question.content
+          .replace(/<[^>]*>/g, "")
+          .substring(0, 100),
+        lesson_id: lessonId,
+        lesson_name: lessonName,
+        droplet_id: dropletId,
+        droplet_name: dropletName,
+        quiz_type: "open_ended",
+        attempts_taken: numTries + 1,
+        user_id: userId,
+        page: window.location.pathname,
+        timestamp: new Date().toISOString(),
+      });
+    }
+
     setShowResult(true);
   };
 

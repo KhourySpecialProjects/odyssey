@@ -1,5 +1,5 @@
 import { render, screen, fireEvent } from "@testing-library/react";
-import { ContentSelector } from "@/components/dashboard/content-selector";
+import { FilterSelector } from "@/components/dashboard/filter-selector";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 
 jest.mock("next/navigation", () => ({
@@ -18,7 +18,7 @@ describe("ContentSelector", () => {
     (useRouter as jest.Mock).mockReturnValue(mockRouter);
     (usePathname as jest.Mock).mockReturnValue("/dashboard");
 
-    const mockSearchParams = new URLSearchParams("tab=droplets");
+    const mockSearchParams = new URLSearchParams("contentType=droplets");
     (useSearchParams as jest.Mock).mockReturnValue({
       get: (key: string) => mockSearchParams.get(key),
       toString: () => mockSearchParams.toString(),
@@ -28,11 +28,19 @@ describe("ContentSelector", () => {
 
   it("navigates to the correct URL when a tab is clicked", () => {
     render(
-      <ContentSelector droplets={1} playlists={1} archived={1} groups={1} />,
+      <FilterSelector
+        droplets={1}
+        playlists={1}
+        archived={1}
+        groups={1}
+        favorited={0}
+      />,
     );
 
     fireEvent.click(screen.getByText(/playlists/i));
 
-    expect(mockRouter.push).toHaveBeenCalledWith("/dashboard?tab=playlists");
+    expect(mockRouter.push).toHaveBeenCalledWith(
+      "/dashboard?contentType=playlists",
+    );
   });
 });

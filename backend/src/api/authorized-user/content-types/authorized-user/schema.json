@@ -220,6 +220,15 @@
       "relation": "manyToMany",
       "target": "api::droplet.droplet",
       "mappedBy": "usersFavorited"
+    },
+    "website": {
+      "type": "string"
+    },
+    "playlists_archived": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::playlist.playlist",
+      "inversedBy": "users_archived"
     }
   }
 }

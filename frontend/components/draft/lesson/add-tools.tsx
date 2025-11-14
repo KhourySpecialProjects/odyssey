@@ -98,8 +98,8 @@ export default function AddLessonBlock({ onAddBlock }: AddLessonBlockProps) {
     {
       label: "Default",
       icon: Circle,
-      color: "bg-sky-50",
-      textColor: "text-gray-700",
+      color: "bg-sky-100",
+      textColor: "text-gray-900",
     },
   ];
 

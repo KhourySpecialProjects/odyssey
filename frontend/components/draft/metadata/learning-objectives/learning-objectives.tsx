@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useDropletUpdate } from "../hooks/useDropletUpdate";
 import { Input } from "@/components/ui/input";
 import { LearningObjectiveDisplay } from "@/components/draft/metadata/learning-objectives/learning-objective";
@@ -16,7 +16,17 @@ export function LearningObjectives({
   learningObjectives: LearningObjective[];
 }) {
   const { error, handleChange } = useDropletUpdate(dropletId);
+  const storageKey = `droplet-${dropletId}-draft-objective`;
+
+  // Load from localStorage on mount
   const [newObjective, setNewObjective] = useState("");
+
+  useEffect(() => {
+    const saved = localStorage.getItem(storageKey);
+    if (saved) {
+      setNewObjective(saved);
+    }
+  }, [storageKey]);
 
   const addLearningObjective = async (formData: FormData) => {
     const objective = (formData.get("objective") as string).trim();
@@ -29,6 +39,7 @@ export function LearningObjectives({
     });
     if (!response.error && response.data) {
       setNewObjective("");
+      localStorage.removeItem(storageKey); // Clear draft after adding
     }
   };
 
@@ -52,6 +63,15 @@ export function LearningObjectives({
         learningObjectives: newLearningObjectives.map((obj) => obj.objective),
       });
     };
+  };
+
+  const handleDraftChange = (value: string) => {
+    setNewObjective(value);
+    if (value.trim()) {
+      localStorage.setItem(storageKey, value);
+    } else {
+      localStorage.removeItem(storageKey);
+    }
   };
 
   return (
@@ -81,7 +101,7 @@ export function LearningObjectives({
                 name="objective"
                 value={newObjective}
                 onChange={(e) => {
-                  setNewObjective(e.target.value);
+                  handleDraftChange(e.target.value);
                 }}
                 placeholder="New Learning Objective..."
                 autoComplete="off"

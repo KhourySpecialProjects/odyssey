@@ -35,6 +35,9 @@ export default async function DashboardRoute({ searchParams }: Props) {
   }
   const { sortKey } = sorting.find((item) => item.slug === sort) || defaultSort;
   const authorizedUser = await getAuthorizedUserByEmail(user.email);
+  const archivedPlaylists = authorizedUser.playlists?.filter((playlist) =>
+    playlist.users_archived?.some((user) => user.id === authorizedUser.id),
+  );
   const allEnrollments = await getEnrollmentsByAuthorizedUser(
     authorizedUser.id,
   );
@@ -78,7 +81,11 @@ export default async function DashboardRoute({ searchParams }: Props) {
             droplets={activeDroplets}
             playlists={allPlaylists}
             groups={activeGroups.length}
-            archived={archivedDroplets + archivedGroups.length}
+            archived={
+              archivedDroplets +
+              archivedGroups.length +
+              (archivedPlaylists?.length || 0)
+            }
             favorited={favoritedDroplets}
           />
 

@@ -19,9 +19,9 @@ jest.mock("@/components/ui/tiptap/lesson-name-input", () => ({
   ),
 }));
 
-jest.mock("@/components/draft/lesson/draggable_block_list", () => ({
+jest.mock("@/components/draft/lesson/block_list", () => ({
   __esModule: true,
-  default: ({ blocks, deleteBlock, onReorder, onAddBlock, setBlock }: any) => (
+  default: ({ blocks, deleteBlock, onReorder, setBlock }: any) => (
     <div data-testid="draggable-block-list">
       {blocks.map((block: any, index: number) => (
         <div key={block.id || index} data-testid={`block-${block.__component}`}>
@@ -37,17 +37,6 @@ jest.mock("@/components/draft/lesson/draggable_block_list", () => ({
             data-testid={`reorder-block-${index}`}
           >
             Reorder Block {index}
-          </button>
-          <button
-            onClick={() =>
-              onAddBlock(index, {
-                __component: "droplets.generic",
-                content: "New block",
-              })
-            }
-            data-testid={`add-block-${index}`}
-          >
-            Add Block
           </button>
           <button
             onClick={() => setBlock(index)({ content: "Updated content" })}
@@ -67,16 +56,6 @@ jest.mock("@/components/draft/lesson/delete-lesson", () => ({
       Delete Lesson
     </button>
   ),
-}));
-
-jest.mock("react-dnd", () => ({
-  DndProvider: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
-  ),
-}));
-
-jest.mock("react-dnd-html5-backend", () => ({
-  HTML5Backend: "HTML5Backend",
 }));
 
 jest.mock("@/lib/requests/lesson", () => ({
@@ -472,17 +451,6 @@ describe("LessonRenderer", () => {
 
       const deleteButton = screen.getByTestId("delete-block-0");
       fireEvent.click(deleteButton);
-
-      await waitFor(() => {
-        expect(updateLesson).toHaveBeenCalled();
-      });
-    });
-
-    it("adds block at specific index", async () => {
-      render(<LessonRenderer lesson={mockLesson} dropletSlug="test-droplet" />);
-
-      const addButton = screen.getByTestId("add-block-0");
-      fireEvent.click(addButton);
 
       await waitFor(() => {
         expect(updateLesson).toHaveBeenCalled();

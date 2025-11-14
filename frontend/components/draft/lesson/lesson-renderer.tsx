@@ -10,9 +10,7 @@ import { DeleteLessonButton } from "./delete-lesson";
 import { useMemo } from "react";
 import { LessonNameInput } from "@/components/ui/tiptap/lesson-name-input";
 import { QuizQuestion } from "@/types";
-import DraggableBlockList from "./draggable_block_list";
-import { DndProvider } from "react-dnd";
-import { HTML5Backend } from "react-dnd-html5-backend";
+import BlockList from "./block_list";
 import { getDropletBySlug } from "@/lib/requests/droplet";
 
 import { Block } from "@/types";
@@ -28,6 +26,7 @@ export interface BaseBlock {
   type?: string;
   label?: string;
   url?: string;
+  _clientId?: string;
 }
 
 export interface QuizBlock extends BaseBlock {
@@ -209,7 +208,7 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
             Definition: "bg-green-300",
             Information: "bg-purple-300",
             Caution: "bg-amber-300",
-            Default: "bg-sky-50 dark:bg-sky-200",
+            Default: "bg-sky-100",
           };
           newBlock = {
             __component: "droplets.callout",
@@ -221,7 +220,7 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
             ],
             color:
               calloutColorMap[calloutType || "Default"] ||
-              "bg-sky-50 dark:bg-sky-200",
+              "bg-sky-100 dark:bg-sky-100",
             type: "info",
           };
           break;
@@ -300,12 +299,13 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
   }, [lastSavedBlocks]);
 
   const handleReorderSource = (fromIndex: number, toIndex: number) => {
-    setBlocks((current) => {
-      const newItems = [...current];
-      const [removed] = newItems.splice(fromIndex, 1);
-      newItems.splice(toIndex, 0, removed);
-      return newItems;
-    });
+    const newItems = [...blocks];
+    const [removed] = newItems.splice(fromIndex, 1);
+    newItems.splice(toIndex, 0, removed);
+
+    setBlocks(newItems);
+    // Force immediate save with reload to persist the order
+    updateBlocksBackendReload(newItems);
   };
 
   const [isPopupOpen, setIsPopupOpen] = useState(false);
@@ -367,17 +367,15 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
 
       <AddLessonBlock onAddBlock={handleAddTool} />
       <div className="flex w-full flex-col items-center justify-center space-y-4">
-        <DndProvider backend={HTML5Backend}>
-          <div className="w-full max-w-2xl">
-            <DraggableBlockList
-              blocks={blocks}
-              onReorder={handleReorderSource}
-              onAddBlock={handleAddBlock}
-              setBlock={setBlock}
-              deleteBlock={deleteBlock}
-            />
-          </div>
-        </DndProvider>
+        <div className="w-full max-w-2xl">
+          <BlockList
+            blocks={blocks}
+            onReorder={handleReorderSource}
+            onAddBlock={handleAddBlock}
+            setBlock={setBlock}
+            deleteBlock={deleteBlock}
+          />
+        </div>
       </div>
     </>
   );

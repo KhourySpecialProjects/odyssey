@@ -1,109 +1,92 @@
 "use client";
 
 import { Playlist } from "@/types";
-import { DndProvider, useDrag, useDrop } from "react-dnd";
-import { HTML5Backend } from "react-dnd-html5-backend";
-import { XCircleIcon, GripVertical } from "lucide-react";
+import { XCircleIcon, ChevronUp, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useRef } from "react";
 import React from "react";
 import { Badge } from "@/components/ui/badge";
-import { uppercaseFirstChar } from "@/lib/utils";
-
-function useCombinedRefs<T>(
-  ...refs: (React.Ref<T> | ((instance: T | null) => void))[]
-): React.RefObject<T> {
-  const targetRef = useRef<T>(null);
-
-  React.useEffect(() => {
-    refs.forEach((ref) => {
-      if (!ref) return;
-
-      if (typeof ref === "function") {
-        ref(targetRef.current);
-      } else {
-        (ref as React.MutableRefObject<T>).current = targetRef.current as T;
-      }
-    });
-  }, [refs]);
-
-  return targetRef;
-}
+import { uppercaseFirstChar, cn } from "@/lib/utils";
 
 interface PlaylistItemProps {
   playlist: Playlist;
   index: number;
-  movePlaylist: (dragIndex: number, hoverIndex: number) => void;
+  totalPlaylists: number;
+  movePlaylistUp: (index: number) => void;
+  movePlaylistDown: (index: number) => void;
   onRemove: (playlistId: number) => void;
 }
 
 const PlaylistItem = ({
   playlist,
   index,
-  movePlaylist,
+  totalPlaylists,
+  movePlaylistUp,
+  movePlaylistDown,
   onRemove,
 }: PlaylistItemProps) => {
-  const [{ isDragging }, drag] = useDrag({
-    type: "playlist",
-    item: { index },
-    collect: (monitor) => ({
-      isDragging: monitor.isDragging(),
-    }),
-  });
-
-  const [, drop] = useDrop({
-    accept: "playlist",
-    hover: (item: { index: number }) => {
-      if (item.index !== index) {
-        movePlaylist(item.index, index);
-        item.index = index;
-      }
-    },
-  });
-
-  const combinedRef = useCombinedRefs<HTMLDivElement>(drag, drop);
-
   return (
-    <div
-      ref={combinedRef}
-      className={`group relative rounded-md border border-slate-200 bg-slate-50 transition-colors hover:border-slate-300 dark:border-slate-500 dark:bg-slate-800 ${
-        isDragging ? "opacity-50 shadow-lg" : ""
-      }`}
-    >
-      <div className="flex items-center p-4">
-        <div {...drag} className="mr-4 cursor-grab active:cursor-grabbing">
-          <GripVertical className="h-5 w-5 shrink-0 text-slate-400" />
-        </div>
+    <div className="relative flex items-start gap-3">
+      {/* Arrow controls on the left */}
+      <div className="flex flex-col gap-1 pt-4">
+        <button
+          onClick={() => movePlaylistUp(index)}
+          disabled={index === 0}
+          className={cn(
+            "rounded-md border border-slate-300 bg-white p-1.5 text-slate-600 transition-colors hover:bg-slate-100 hover:shadow-md dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700",
+            index === 0 && "cursor-not-allowed opacity-30",
+          )}
+          aria-label="Move block up"
+          title="Move block up"
+        >
+          <ChevronUp className="h-4 w-4" />
+        </button>
+        <button
+          onClick={() => movePlaylistDown(index)}
+          disabled={index === totalPlaylists - 1}
+          className={cn(
+            "rounded-md border border-slate-300 bg-white p-1.5 text-slate-600 transition-colors hover:bg-slate-100 hover:shadow-md dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700",
+            index === totalPlaylists - 1 && "cursor-not-allowed opacity-30",
+          )}
+          aria-label="Move block down"
+          title="Move block down"
+        >
+          <ChevronDown className="h-4 w-4" />
+        </button>
+      </div>
 
-        <div className="flex-grow">
-          <div className="mb-2 flex flex-0 flex-row flex-wrap gap-1.5">
-            <Badge variant="default" className="dark:bg-slate-700">
-              {playlist.isPublic ? "Public" : "Private"}
-            </Badge>
-            <Badge variant="default" className="dark:bg-slate-700">
-              {uppercaseFirstChar(playlist.duration || "medium")}
-            </Badge>
+      {/* Playlist content */}
+      <div className="group relative flex-1 rounded-md border border-slate-200 bg-slate-50 transition-colors hover:border-slate-300 dark:border-slate-500 dark:bg-slate-800">
+        <div className="flex items-center p-4">
+          <div className="flex-grow">
+            <div className="mb-2 flex flex-0 flex-row flex-wrap gap-1.5">
+              <Badge variant="default" className="dark:bg-slate-700">
+                {playlist.isPublic ? "Public" : "Private"}
+              </Badge>
+              <Badge variant="default" className="dark:bg-slate-700">
+                {uppercaseFirstChar(playlist.duration || "medium")}
+              </Badge>
+            </div>
+
+            <span className="block text-xl font-bold text-slate-950 dark:text-slate-300">
+              {playlist.name}
+            </span>
+
+            {playlist.droplets && (
+              <p className="text-muted-foreground mt-1 text-sm">
+                {playlist.droplets.length} droplets
+              </p>
+            )}
           </div>
 
-          <span className="block text-xl font-bold text-slate-950 dark:text-slate-300">
-            {playlist.name}
-          </span>
-
-          {playlist.droplets && (
-            <p className="text-muted-foreground mt-1 text-sm">
-              {playlist.droplets.length} droplets
-            </p>
-          )}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => onRemove(playlist.id)}
+            className="text-slate-400 opacity-0 transition-opacity group-hover:opacity-100 hover:text-red-500"
+          >
+            <XCircleIcon className="h-5 w-5" />
+          </Button>
         </div>
-
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => onRemove(playlist.id)}
-          className="text-slate-400 opacity-0 transition-opacity group-hover:opacity-100 hover:text-red-500"
-        >
-          <XCircleIcon className="h-5 w-5" />
-        </Button>
       </div>
     </div>
   );
@@ -120,26 +103,39 @@ export function PlaylistList({
   onReorder,
   onRemove,
 }: PlaylistListProps) {
-  const movePlaylist = (dragIndex: number, hoverIndex: number) => {
+  const movePlaylistUp = (index: number) => {
+    if (index === 0) return;
     const reorderedPlaylists = [...playlists];
-    const [draggedItem] = reorderedPlaylists.splice(dragIndex, 1);
-    reorderedPlaylists.splice(hoverIndex, 0, draggedItem);
+    [reorderedPlaylists[index - 1], reorderedPlaylists[index]] = [
+      reorderedPlaylists[index],
+      reorderedPlaylists[index - 1],
+    ];
+    onReorder(reorderedPlaylists);
+  };
+
+  const movePlaylistDown = (index: number) => {
+    if (index === playlists.length - 1) return;
+    const reorderedPlaylists = [...playlists];
+    [reorderedPlaylists[index], reorderedPlaylists[index + 1]] = [
+      reorderedPlaylists[index + 1],
+      reorderedPlaylists[index],
+    ];
     onReorder(reorderedPlaylists);
   };
 
   return (
-    <DndProvider backend={HTML5Backend}>
-      <div className="space-y-2">
-        {playlists.map((playlist, index) => (
-          <PlaylistItem
-            key={playlist.id}
-            playlist={playlist}
-            index={index}
-            movePlaylist={movePlaylist}
-            onRemove={onRemove}
-          />
-        ))}
-      </div>
-    </DndProvider>
+    <div className="space-y-2">
+      {playlists.map((playlist, index) => (
+        <PlaylistItem
+          key={playlist.id}
+          playlist={playlist}
+          index={index}
+          totalPlaylists={playlists.length}
+          movePlaylistUp={movePlaylistUp}
+          movePlaylistDown={movePlaylistDown}
+          onRemove={onRemove}
+        />
+      ))}
+    </div>
   );
 }

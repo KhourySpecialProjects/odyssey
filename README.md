@@ -15,7 +15,7 @@ See each subdirectory's README for additional information.
 
 ## About
 
-Odyssey is a platform designed to provide on-demand access to modern knowledge and skills pertinent to today’s undergraduate Khoury students.
+Odyssey is a new platform designed to provide on-demand access to modern knowledge and skills pertinent to today’s undergraduate Khoury students.
 
 ### Architecture
 
@@ -44,7 +44,7 @@ Make sure to have the following technologies installed before proceeding.
 
 Navigate to the Odyssey Github repository [here](https://github.com/KhourySpecialProjects/odyssey)
 
-The `develop` branch of the repository contains the most up-to-date code that will eventually be merged into the `production` branch, so clone from that branch using the following command: 
+The `develop` branch of the repository contains the most up-to-date code that will eventually be merged into the `main` branch, so clone from that branch using the following command: 
 
 ```
 git clone -b develop https://github.com/KhourySpecialProjects/odyssey.git
@@ -69,7 +69,7 @@ Open the cloned repository in your IDE of choice (Most common is VSCode)
 
 Navigate to **.env.example** and change the filename to **.env** 
 
-Fill in the database section with the following, replacing **`<dbname>`, `<user>`,** and **`<password>`** with anything you see fit. In my local development, I set **`<dbname>`** as **strapi** and **`<user>`** as **strapi_user.** 
+fill in the database section with the following, replacing **`<dbname>`, `<user>`,** and **`<password>`** with anything you see fit. In my local development, I set **`<dbname>`** as **strapi** and **`<user>`** as **strapi_user.** 
 
 ```bash
 HOST=0.0.0.0
@@ -150,7 +150,6 @@ APP_URL=
 DO_CDN_URL=
 
 NEXT_PUBLIC_POSTHOG_KEY=
-POSTHOG_API_KEY=
 NEXT_PUBLIC_POSTHOG_HOST=
 NEXT_PUBLIC_APP_ENV=local
 
@@ -166,7 +165,7 @@ AWS_SECRET_ACCESS_KEY=
 AWS_S3_BUCKET_URL=
 ```
 
-Request all other fields from a team member, leaving `STRAPI_ACCESS_TOKEN` blank.
+Request all other fields from a team member, leaving `STRAPI_ACCESS_TOKEN`
 
 
 Like before, these fields are sensitive as they connect to the same services as our production version does, so it is important not to store these anywhere except in your local development environment.
@@ -174,7 +173,7 @@ Like before, these fields are sensitive as they connect to the same services as 
 
 Now navigate to the **.docker.env.example** in the same **frontend** directory and rename it to **.docker.env**
 
-Leave this file unchanged for now, as we’ll generate the API key in **Step 5**
+Leave this file unchanged for now, we’ll generate the API key in **Step 5**
 
 
 ### 4. Database Setup
@@ -183,7 +182,7 @@ There are two options: using data from the development server or starting from s
 
 #### Using Old Data
 
-Before getting the production data, we need to make sure that you’ll be allowed to sign into Strapi on your local development. To ensure this, have a current team member sign you up through [dev.data.khouryodyssey.org](http://dev.data.khouryodyssey.org). 
+Before getting the production data, we need to make sure that you’ll be allowed to sign into Strapi on your local development. To ensure this, have a current team member sign you up through [dev2.data.khouryodyssey.org](http://dev2.data.khouryodyssey.org). 
 
 Once you are signed up through strapi. Request for a current team member to send you the SQL startup file (it should be named `data.sql`). When the docker containers are started for the first time, the database will be populated with the current data in the development server through the commands in the `data.sql` file. 
 
@@ -265,9 +264,9 @@ STRAPI_API_URL=http://host.docker.internal:1337
 STRAPI_ACCESS_TOKEN=<your_token>
 ```
 
-Now all you have to do is restart the server.
+Now all you have to do is restart the server
 
-Stop the containers by pressing **control c** in the terminal where it was running and then starting it back up again with
+stop the containers by pressing **control c** in the terminal where it was running and then starting it back up again with
 
 ```bash
 docker compose up

@@ -1,32 +1,19 @@
 "use client";
 
 import UnauthorizedRoute from "@/app/(general)/unauthorized/page";
-import { cn, getInitials, getPath, condenseRoleTitles } from "@/lib/utils";
+import { cn, getPath } from "@/lib/utils";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
 import { AuthorizedUser, Droplet, Lesson, User } from "@/types";
 import {
-  ChevronDownIcon,
-  PersonStanding,
-  LogOutIcon,
-  ShipIcon,
   SettingsIcon,
   ArrowLeftIcon,
   PanelRightClose,
   PanelRightOpen,
   Home,
 } from "lucide-react";
-import { signOut } from "next-auth/react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import React, { useLayoutEffect, useState, useEffect } from "react";
-import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuTrigger,
-} from "../ui/dropdown-menu";
 import { Separator } from "../ui/separator";
 import { AddLesson } from "@/components/draft/add-lesson";
 import {
@@ -290,73 +277,6 @@ export function Sidebar({
                 Updating lesson order...
               </div>
             )}
-          </div>
-
-          <div className="bottom-0 left-0 mt-4 w-full space-y-4 border-t border-t-slate-200 bg-slate-50 p-2 md:sticky md:mb-0 md:flex-col md:px-3 dark:bg-slate-800">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <div className="group wg-antialiased flex w-full shrink cursor-pointer items-center justify-between gap-1 rounded-lg p-1.5 px-2 text-sm text-slate-600 transition-colors duration-100 select-none hover:bg-slate-100 dark:hover:bg-white/5">
-                  <div className="inline-flex flex-row items-center justify-between">
-                    {authorizedUser?.profilePhoto ? (
-                      <Avatar variant="round" size="xs">
-                        <AvatarImage
-                          src={
-                            authorizedUser?.profilePhoto ||
-                            user?.image ||
-                            undefined
-                          }
-                        />
-                      </Avatar>
-                    ) : user.image ? (
-                      <Avatar variant="round" size="xs">
-                        <AvatarImage src={user.image} />
-                        <AvatarFallback>
-                          {getInitials(user.name ?? "")}
-                        </AvatarFallback>
-                      </Avatar>
-                    ) : null}
-
-                    <span className="ms-2 font-medium dark:text-slate-300">
-                      Hi, <b>{user.name ?? user.email}</b>!
-                    </span>
-                  </div>
-
-                  <ChevronDownIcon className="trigger-icon h-5 w-5 text-slate-400" />
-                </div>
-              </DropdownMenuTrigger>
-
-              <DropdownMenuContent className="mb-3 min-w-[220px]">
-                <DropdownMenuLabel className="text-xs">
-                  NUID: {user.nuid || "unknown"}
-                  <br />
-                  <p className="text-muted-foreground max-w-56 text-xs leading-none">
-                    Role(s): {condenseRoleTitles(user.roles)}
-                  </p>
-                </DropdownMenuLabel>
-
-                <DropdownMenuItem asChild>
-                  <Link href="/explore">
-                    <ShipIcon className="mr-2 h-4 w-4" />
-                    <span>Explore</span>
-                  </Link>
-                </DropdownMenuItem>
-
-                <DropdownMenuItem asChild>
-                  <Link href="/settings">
-                    <PersonStanding className="mr-2 h-4 w-4" />
-                    <span>Profile</span>
-                  </Link>
-                </DropdownMenuItem>
-
-                <DropdownMenuItem
-                  onClick={() => signOut()}
-                  className="cursor-pointer"
-                >
-                  <LogOutIcon className="mr-2 h-4 w-4" />
-                  <span>Sign out</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
           </div>
         </div>
       </aside>
