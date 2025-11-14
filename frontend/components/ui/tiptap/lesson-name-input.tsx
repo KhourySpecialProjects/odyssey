@@ -27,7 +27,7 @@ export function LessonNameInput({
     ],
 
     onUpdate: ({ editor }) => {
-      (updateContent as (content: string) => void)(editor.getHTML());
+      (updateContent as (content: string) => void)(editor.getText());
     },
 
     content: initialContent,
