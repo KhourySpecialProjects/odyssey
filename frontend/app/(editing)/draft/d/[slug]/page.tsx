@@ -7,17 +7,11 @@ import { getTags } from "@/lib/requests/tag";
 import { NextSteps } from "@/components/draft/metadata/next-steps/next-steps";
 import { Overview } from "@/components/draft/metadata/overview";
 import { Description } from "@/components/draft/metadata/description";
-import {
-  isAuthorizedUserAdmin,
-  isAuthorizedUserFaculty,
-  isContentCreator,
-  isContentEditor,
-} from "@/lib/utils";
+import { isContentCreator } from "@/lib/utils";
 import { Authors } from "@/components/draft/metadata/authors";
 import { GradientBackground } from "@/components/gradient-bg";
 import { getCurrentUser } from "@/lib/auth/session";
 import { notFound } from "next/navigation";
-import { ReviewDroplet } from "@/components/draft/metadata/review-droplet";
 import Anthropic from "@anthropic-ai/sdk";
 import { FunFactEditor } from "@/components/draft/metadata/fun-fact-editor";
 import { ClickableBadges } from "@/components/draft/metadata/clickable-badges";

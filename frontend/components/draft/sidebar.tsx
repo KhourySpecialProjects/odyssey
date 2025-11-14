@@ -6,6 +6,7 @@ import {
   getPath,
   isAuthorizedUserAdmin,
   isAuthorizedUserFaculty,
+  isContentCreator,
   isContentEditor,
 } from "@/lib/utils";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
@@ -40,9 +41,8 @@ import { SortableLesson } from "@/components/draft/sortable-lesson";
 import { useLessonOrder } from "./metadata/hooks/useLessonOrder";
 import { Button } from "../ui/button";
 import { createDropletAnnouncement } from "@/lib/requests/feed";
-import { RequestReviewButton } from "./metadata/request-review";
-import { PublishDropletButton } from "./metadata/publish-droplet";
-import { ReviewDroplet } from "./metadata/review-droplet";
+
+import { ContentActionButton } from "./metadata/content-action-button";
 
 export function Sidebar({
   user,
@@ -58,6 +58,7 @@ export function Sidebar({
     | "lessons"
     | "status"
     | "inReview"
+    | "afterReview"
     | "focusArea"
     | "learningObjectives"
     | "isHidden"
@@ -246,13 +247,18 @@ export function Sidebar({
                 Preview
               </Link>
 
-              {/* Request Review Button - Non-privileged users with draft not in review */}
               {!droplet.inReview &&
                 droplet.status === "draft" &&
-                !isAuthorizedUserFaculty(user.roles) &&
-                !isContentEditor(user.roles) &&
-                !isAuthorizedUserAdmin(user.roles) && (
-                  <RequestReviewButton droplet={droplet} />
+                isContentCreator(user.roles) && (
+                  <ContentActionButton
+                    droplet={droplet}
+                    actionType="requestReview"
+                    buttonText={
+                      droplet.afterReview
+                        ? "Re-Request Review"
+                        : "Request Review"
+                    }
+                  />
                 )}
 
               {/* Review Droplet Button - Content editors and admins only, draft in review */}
@@ -260,7 +266,12 @@ export function Sidebar({
                 droplet.status === "draft" &&
                 (isContentEditor(user.roles) ||
                   isAuthorizedUserAdmin(user.roles)) && (
-                  <ReviewDroplet name={droplet.name} droplet={droplet} />
+                  // <ReviewDroplet name={droplet.name} droplet={droplet} />
+                  <ContentActionButton
+                    droplet={droplet}
+                    actionType="requestChanges"
+                    buttonText="Request Changes"
+                  />
                 )}
 
               {/* Publish Button - Faculty/Admin anytime, Content Editor only when in review */}
@@ -268,7 +279,12 @@ export function Sidebar({
                 (isAuthorizedUserFaculty(user.roles) ||
                   isAuthorizedUserAdmin(user.roles) ||
                   (isContentEditor(user.roles) && droplet.inReview)) && (
-                  <PublishDropletButton droplet={droplet} />
+                  // <PublishDropletButton droplet={droplet} />
+                  <ContentActionButton
+                    droplet={droplet}
+                    actionType="publish"
+                    buttonText="Publish Droplet"
+                  />
                 )}
             </div>
 
