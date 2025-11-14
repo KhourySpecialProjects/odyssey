@@ -3,8 +3,6 @@ import { stripHtmlTags } from "@/lib/utils";
 import { Highlight, HighlightColor, Lesson, Note } from "@/types";
 import { HighlighterIcon, NotebookPen } from "lucide-react";
 
-
-
 export default function NotesSummary({
   dropletHighlights,
   dropletNotes,

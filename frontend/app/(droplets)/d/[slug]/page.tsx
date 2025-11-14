@@ -19,7 +19,6 @@ import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
 import { StarRating } from "@/components/ui/rating-stars";
 import { AuthorCard } from "@/components/droplets/author-block";
 
-
 type Props = {
   params: Promise<params>;
 };
@@ -27,7 +26,6 @@ type Props = {
 type params = {
   slug: string;
 };
-
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const p = await params;

@@ -339,15 +339,15 @@ describe("MultiSelect", () => {
 
     it("creates new tag successfully when Save is clicked", async () => {
       const user = userEvent.setup();
-mockedCreateNewTag.mockResolvedValue({ 
-  success: true,
-  data: {
-    id: 1,
-    name: "New Tag",
-    slug: "new-tag",
-    droplets: []
-  }
-});
+      mockedCreateNewTag.mockResolvedValue({
+        success: true,
+        data: {
+          id: 1,
+          name: "New Tag",
+          slug: "new-tag",
+          droplets: [],
+        },
+      });
       render(
         <MultiSelect
           label="Tags"
@@ -455,15 +455,15 @@ mockedCreateNewTag.mockResolvedValue({
 
     it("closes dialog after successful tag creation", async () => {
       const user = userEvent.setup();
-mockedCreateNewTag.mockResolvedValue({ 
-  success: true,
-  data: {
-    id: 1,
-    name: "New Tag",
-    slug: "new-tag",
-    droplets: []
-  }
-});
+      mockedCreateNewTag.mockResolvedValue({
+        success: true,
+        data: {
+          id: 1,
+          name: "New Tag",
+          slug: "new-tag",
+          droplets: [],
+        },
+      });
       render(
         <MultiSelect
           label="Tags"
