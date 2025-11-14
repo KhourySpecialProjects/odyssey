@@ -47,7 +47,6 @@ import { ContentActionButton } from "./metadata/content-action-button";
 export function Sidebar({
   user,
   droplet,
-  authorizedUser,
 }: {
   user: User;
   droplet: Pick<
@@ -64,7 +63,6 @@ export function Sidebar({
     | "isHidden"
     | "type"
   >;
-  authorizedUser: AuthorizedUser | null;
 }) {
   const [expanded, setExpanded] = useState(false);
   const pathname = usePathname();

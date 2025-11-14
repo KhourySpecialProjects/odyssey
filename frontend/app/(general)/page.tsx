@@ -54,7 +54,7 @@ export default async function HomeRoute() {
                 (role) =>
                   role === "Content Creator" ||
                   role === "Faculty" ||
-                  role == "System Admin",
+                  role === "System Admin",
               ) && (
                 <Button
                   size="lg"
