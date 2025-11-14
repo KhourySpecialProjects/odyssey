@@ -200,12 +200,13 @@ export function ClickableBadges({
     <div className="flex flex-wrap gap-1.5">
       <div className="relative">
         <button
+          className="h-full"
           onClick={() => setActivePopup("focusArea")}
           disabled={isPending}
         >
           <Badge
             variant="outline"
-            className="bg-purple-200 hover:bg-purple-400 dark:bg-purple-600 dark:hover:bg-purple-400"
+            className="h-full bg-purple-200 hover:bg-purple-400 dark:bg-purple-600 dark:hover:bg-purple-400"
           >
             {uppercaseFirstChar(localFocusArea)}
           </Badge>
@@ -247,10 +248,14 @@ export function ClickableBadges({
       </div>
 
       <div className="relative">
-        <button onClick={() => setActivePopup("type")} disabled={isPending}>
+        <button
+          className="h-full"
+          onClick={() => setActivePopup("type")}
+          disabled={isPending}
+        >
           <Badge
             variant="outline"
-            className="bg-blue-200 hover:bg-blue-400 dark:bg-blue-900 dark:hover:bg-blue-400"
+            className="h-full bg-blue-200 hover:bg-blue-400 dark:bg-blue-900 dark:hover:bg-blue-400"
           >
             {uppercaseFirstChar(localType)}
           </Badge>
@@ -300,7 +305,7 @@ export function ClickableBadges({
           disabled={isPending}
           className="relative"
         >
-          <Badge variant="outline" className="relative">
+          <Badge variant="outline" className="relative h-full">
             {tag.name}
             {hoveredTagId === tag.id && (
               <div className="absolute inset-0 rounded-md bg-red-500/30" />
@@ -309,11 +314,15 @@ export function ClickableBadges({
         </button>
       ))}
 
-      <div className="relative">
-        <button onClick={() => setActivePopup("addTag")} disabled={isPending}>
+      <div className="relative h-full">
+        <button
+          className="h-full"
+          onClick={() => setActivePopup("addTag")}
+          disabled={isPending}
+        >
           <Badge
             variant="outline"
-            className="border-dashed border-slate-400 bg-transparent dark:border-slate-500"
+            className="h-full border-dashed border-slate-400 bg-transparent dark:border-slate-500"
           >
             <Plus className="mr-1 h-3 w-3" />
             Add Tag
