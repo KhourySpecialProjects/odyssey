@@ -3,9 +3,10 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { cn } from "@/lib/utils";
+import { cn, stripHtmlTags } from "@/lib/utils";
 import { Lesson, Droplet } from "@/types";
 import { GripVertical, Hammer, FilePieChart, BookText } from "lucide-react";
+
 
 interface SortableLessonProps {
   lesson: Lesson;
@@ -82,7 +83,7 @@ export function SortableLesson({
           ) : (
             <BookText className="shrink-0" />
           )}
-          <span className="ml-3 leading-snug">{lesson.name}</span>
+          <span className="ml-3 leading-snug">{stripHtmlTags(lesson.name)}</span>
         </Link>
       </div>
     </li>
