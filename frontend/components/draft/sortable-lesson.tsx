@@ -82,9 +82,7 @@ export function SortableLesson({
           ) : (
             <BookText className="shrink-0" />
           )}
-          <span className="ml-3 leading-snug">
-            {stripHtmlTags(lesson.name)}
-          </span>
+          <span className="ml-3 leading-snug">{lesson.name}</span>
         </Link>
       </div>
     </li>
