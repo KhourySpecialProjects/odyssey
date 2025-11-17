@@ -21,6 +21,7 @@ import { usePathname } from "next/navigation";
 import { useLayoutEffect, useState } from "react";
 import { Label } from "../ui/label";
 import { Progress } from "../ui/progress";
+import { Separator } from "../ui/separator";
 
 export default function Sidebar({
   user,
@@ -161,15 +162,20 @@ export default function Sidebar({
             </p>
 
             {(author || isAdmin) && (
-              <div className="w-full pb-4 text-center">
+              <div className="flex w-full flex-col gap-2 pb-2">
                 <Link
-                  className="w-full rounded-full bg-green-600 px-6 py-2 text-white hover:bg-green-700"
+                  className="rounded-full bg-green-400 px-6 py-2 text-center text-black hover:bg-green-500 dark:bg-green-600 dark:text-white dark:hover:bg-green-800"
                   href={`/draft/d/${curPath === `${droplet.slug}/recap` ? `${droplet.slug}` : `/${curPath}`}`}
                 >
                   Edit
                 </Link>
               </div>
             )}
+
+            <Separator
+              orientation="horizontal"
+              className="my-2 dark:bg-slate-500"
+            />
 
             <ul className="flex flex-col items-center space-y-2 font-medium">
               <li className="w-full">
