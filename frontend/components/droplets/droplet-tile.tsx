@@ -156,6 +156,24 @@ export function DropletTile({
     }
   }
 
+  async function exportDropletMarkdown() {
+    const content = "# Hello there!";
+
+    const blob = new Blob([content], {type: 'text/markdown'});
+
+    const url = URL.createObjectURL(blob);
+
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'example.md';
+
+    document.body.appendChild(link);
+    link.click();
+
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  }
+
   if (compact) {
     return (
       <li className="rounded-md border border-slate-200 bg-slate-50 transition-colors hover:border-slate-300 dark:bg-slate-800">
@@ -323,10 +341,17 @@ export function DropletTile({
                   exportDropletMarkdown();
                 }}
                 className={`${isAdmin ? "visible" : "invisible"} bg-slate-50 hover:bg-slate-300 dark:bg-slate-800`}>
+                  <div className="group relative">
                   <Download color="#000000"/>
+                  <span className="absolute top-full left-1/2 mt-1 w-max -translate-x-1/2 transform rounded bg-gray-800 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100">
+                    Export Markdown
+                  </span>
+                </div>
               </Button>
               
-              <Button
+              {typeof isArchived === "boolean" && (
+                <>
+ <Button
                 size="sm"
                 aria-label={isArchived ? "Unarchive" : "Archive"}
                 onClick={(e) => {
@@ -334,7 +359,7 @@ export function DropletTile({
                   e.stopPropagation();
                   changeVisibility();
                 }}
-                className={`${typeof isArchived === "boolean" ? "visible" : "invisible"} bg-slate-50 hover:bg-slate-300 dark:bg-slate-800`}
+                className={`bg-slate-50 hover:bg-slate-300 dark:bg-slate-800`}
               >
                 <div className="group relative">
                   {isArchived ? (
@@ -358,7 +383,7 @@ export function DropletTile({
                   e.stopPropagation();
                   toggleFavorite();
                 }}
-                className={`${typeof isArchived === "boolean" ? "visible" : "invisible"} bg-slate-50 hover:bg-slate-300 disabled:opacity-50 dark:bg-slate-800`}
+                className={`bg-slate-50 hover:bg-slate-300 disabled:opacity-50 dark:bg-slate-800`}
               >
                 <div className="group relative">
                   {isFavorited || isHovering ? (
@@ -371,6 +396,10 @@ export function DropletTile({
                   </span>
                 </div>
               </Button>
+              </>
+              )}
+              
+             
             </div>
           </div>
         </div>
