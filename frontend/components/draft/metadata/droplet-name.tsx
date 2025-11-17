@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Label } from "../../ui/label";
 import { useDropletUpdate } from "./hooks/useDropletUpdate";
 import { DropletNameInput } from "@/components/ui/tiptap/droplet-name-input";
+import { stripHtmlTags } from "@/lib/utils";
 
 export function DropletName({
   startingName,
@@ -37,7 +38,7 @@ export function DropletName({
 
     // Update both name and slug
     handleChange({
-      name: cleanName,
+      name: stripHtmlTags(cleanName),
       slug: newSlug,
     });
   };
