@@ -19,7 +19,10 @@ jest.mock("@/lib/blocknote/types", () => ({
   CalloutType: {} as any,
 }));
 
-import { getCalloutSlashMenuItems, getQuizSlashMenuItems } from "@/components/ui/blocknote/editor/slash-menu-config";
+import {
+  getCalloutSlashMenuItems,
+  getQuizSlashMenuItems,
+} from "@/components/ui/blocknote/editor/slash-menu-config";
 
 // Mock BlockNote editor
 const createMockEditor = () => {
@@ -153,7 +156,9 @@ describe("getQuizSlashMenuItems", () => {
   it("should insert open-ended quiz with correct props", () => {
     const editor = createMockEditor();
     const items = getQuizSlashMenuItems(editor);
-    const openEndedItem = items.find((item) => item.title === "Open-Ended Quiz");
+    const openEndedItem = items.find(
+      (item) => item.title === "Open-Ended Quiz",
+    );
 
     openEndedItem?.onItemClick?.();
 
@@ -197,4 +202,3 @@ describe("getQuizSlashMenuItems", () => {
     );
   });
 });
-

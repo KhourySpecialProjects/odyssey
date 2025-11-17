@@ -43,9 +43,12 @@ jest.mock("@/components/ui/blocknote/blocks/quiz-open-ended-block", () => ({
   OpenEndedQuiz: jest.fn(() => ({ type: "quiz-open-ended" })),
 }));
 
-jest.mock("@/components/ui/blocknote/blocks/quiz-multiple-choice-block", () => ({
-  MultipleChoiceQuiz: jest.fn(() => ({ type: "quiz-multiple-choice" })),
-}));
+jest.mock(
+  "@/components/ui/blocknote/blocks/quiz-multiple-choice-block",
+  () => ({
+    MultipleChoiceQuiz: jest.fn(() => ({ type: "quiz-multiple-choice" })),
+  }),
+);
 
 import { blockNoteSchema } from "@/lib/blocknote/schema";
 

@@ -193,4 +193,3 @@ describe("BlockNote to v1 Block Conversion", () => {
     });
   });
 });
-
