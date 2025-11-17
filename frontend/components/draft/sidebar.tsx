@@ -43,6 +43,7 @@ import { Button } from "../ui/button";
 import { createDropletAnnouncement } from "@/lib/requests/feed";
 
 import { ContentActionButton } from "./metadata/content-action-button";
+import { publishDraftToOriginal } from "@/lib/requests/droplet";
 
 export function Sidebar({
   user,
@@ -62,6 +63,7 @@ export function Sidebar({
     | "learningObjectives"
     | "isHidden"
     | "type"
+    | "originalDropletId"
   >;
 }) {
   const [expanded, setExpanded] = useState(false);
@@ -245,45 +247,100 @@ export function Sidebar({
                 Preview
               </Link>
 
-              {!droplet.inReview &&
-                droplet.status === "draft" &&
-                isContentCreator(user.roles) && (
-                  <ContentActionButton
-                    droplet={droplet}
-                    actionType="requestReview"
-                    buttonText={
-                      droplet.afterReview
-                        ? "Re-Request Review"
-                        : "Request Review"
-                    }
-                  />
-                )}
+              {/* Edit Draft - Special handling */}
+              {droplet.originalDropletId && droplet.status === "draft" && (
+                <>
+                  {/* Content Creators can only request review for edit drafts */}
+                  {!droplet.inReview &&
+                    isContentCreator(user.roles) &&
+                    isAuthorizedUserFaculty(user.roles) &&
+                    !isAuthorizedUserAdmin(user.roles) && (
+                      <>
+                        <ContentActionButton
+                          droplet={droplet}
+                          actionType="requestReview"
+                          buttonText={
+                            droplet.afterReview
+                              ? "Re-Request Review"
+                              : "Request Review"
+                          }
+                        />
+                        <p className="px-2 text-xs text-slate-600 dark:text-slate-400">
+                          Submit your changes for review before publishing
+                        </p>
+                      </>
+                    )}
 
-              {/* Review Droplet Button - Content editors and admins only, draft in review */}
-              {droplet.inReview &&
-                droplet.status === "draft" &&
-                (isContentEditor(user.roles) ||
-                  isAuthorizedUserAdmin(user.roles)) && (
-                  // <ReviewDroplet name={droplet.name} droplet={droplet} />
-                  <ContentActionButton
-                    droplet={droplet}
-                    actionType="requestChanges"
-                    buttonText="Request Changes"
-                  />
-                )}
+                  {/* Content Editors and Admins can request changes on edit drafts in review */}
+                  {droplet.inReview &&
+                    (isContentEditor(user.roles) ||
+                      isAuthorizedUserAdmin(user.roles)) && (
+                      <ContentActionButton
+                        droplet={droplet}
+                        actionType="requestChanges"
+                        buttonText="Request Changes"
+                      />
+                    )}
 
-              {/* Publish Button - Faculty/Admin anytime, Content Editor only when in review */}
-              {droplet.status === "draft" &&
-                (isAuthorizedUserFaculty(user.roles) ||
-                  isAuthorizedUserAdmin(user.roles) ||
-                  (isContentEditor(user.roles) && droplet.inReview)) && (
-                  // <PublishDropletButton droplet={droplet} />
-                  <ContentActionButton
-                    droplet={droplet}
-                    actionType="publish"
-                    buttonText="Publish Droplet"
-                  />
-                )}
+                  {/* Faculty/Admin/Content Editors (when in review) can publish edit drafts */}
+                  {(isAuthorizedUserAdmin(user.roles) ||
+                    (isContentEditor(user.roles) && droplet.inReview)) && (
+                    <>
+                      <ContentActionButton
+                        droplet={droplet}
+                        actionType="publishDraft"
+                        buttonText="Publish Changes"
+                      />
+                      <p className="px-2 text-xs text-slate-600 dark:text-slate-400">
+                        This will update the published version with your changes
+                      </p>
+                    </>
+                  )}
+                </>
+              )}
+
+              {/* Regular Draft - Show normal workflow */}
+              {!droplet.originalDropletId && (
+                <>
+                  {!droplet.inReview &&
+                    droplet.status === "draft" &&
+                    isContentCreator(user.roles) && (
+                      <ContentActionButton
+                        droplet={droplet}
+                        actionType="requestReview"
+                        buttonText={
+                          droplet.afterReview
+                            ? "Re-Request Review"
+                            : "Request Review"
+                        }
+                      />
+                    )}
+
+                  {/* Review Droplet Button - Content editors and admins only, draft in review */}
+                  {droplet.inReview &&
+                    droplet.status === "draft" &&
+                    (isContentEditor(user.roles) ||
+                      isAuthorizedUserAdmin(user.roles)) && (
+                      <ContentActionButton
+                        droplet={droplet}
+                        actionType="requestChanges"
+                        buttonText="Request Changes"
+                      />
+                    )}
+
+                  {/* Publish Button - Faculty/Admin anytime, Content Editor only when in review */}
+                  {droplet.status === "draft" &&
+                    (isAuthorizedUserFaculty(user.roles) ||
+                      isAuthorizedUserAdmin(user.roles) ||
+                      (isContentEditor(user.roles) && droplet.inReview)) && (
+                      <ContentActionButton
+                        droplet={droplet}
+                        actionType="publish"
+                        buttonText="Publish Droplet"
+                      />
+                    )}
+                </>
+              )}
             </div>
 
             <Separator
