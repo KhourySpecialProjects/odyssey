@@ -25,12 +25,6 @@
       ],
       "required": true
     },
-    "authors": {
-      "type": "relation",
-      "relation": "manyToMany",
-      "target": "api::author.author",
-      "inversedBy": "droplets"
-    },
     "slug": {
       "type": "uid",
       "targetField": "name",

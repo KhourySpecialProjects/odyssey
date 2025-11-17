@@ -78,6 +78,7 @@ export type AuthorizedUser = {
   droplets?: Droplet[];
   created_playlists?: Playlist[];
   dropletsFavorited?: Droplet[];
+  playlists_archived?: Playlist[];
 };
 
 export type Media = {
@@ -248,6 +249,7 @@ export interface Playlist {
     email: string;
   }[];
   authors?: AuthorizedUser[];
+  users_archived?: AuthorizedUser[];
 }
 
 export type PlaylistListResponse = {

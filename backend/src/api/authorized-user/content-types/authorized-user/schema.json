@@ -204,12 +204,6 @@
       "target": "api::group.group",
       "mappedBy": "users_archived"
     },
-    "author": {
-      "type": "relation",
-      "relation": "oneToOne",
-      "target": "api::author.author",
-      "mappedBy": "authorized_user"
-    },
     "isPublic": {
       "type": "boolean",
       "default": false,
@@ -223,6 +217,12 @@
     },
     "website": {
       "type": "string"
+    },
+    "playlists_archived": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::playlist.playlist",
+      "inversedBy": "users_archived"
     }
   }
 }

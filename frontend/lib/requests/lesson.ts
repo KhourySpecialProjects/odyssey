@@ -1,7 +1,7 @@
 "use server";
 import { Droplet, Lesson } from "@/types";
 import { StrapiRequestParams } from "@/types/strapi";
-import { fetchAPI } from "../utils";
+import { fetchAPI, stripHtmlTags } from "../utils";
 import { revalidatePath, revalidateTag } from "next/cache";
 import { getDropletById } from "./droplet";
 import { z } from "zod";
@@ -158,7 +158,7 @@ export async function updateLesson(
       data.blocks = data.blocks.map(({ id, ...rest }) => rest);
     }
     const dataToSend: any = {
-      ...(data.name && { name: data.name }),
+      ...(data.name && { name: stripHtmlTags(data.name) }),
       ...(data.slug && { slug: data.slug }),
       ...(data.blocks && { blocks: data.blocks }),
       ...(data.blocksV2 && { blocksV2: data.blocksV2 }),
