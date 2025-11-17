@@ -7,18 +7,16 @@ import { getTags } from "@/lib/requests/tag";
 import { NextSteps } from "@/components/draft/metadata/next-steps/next-steps";
 import { Overview } from "@/components/draft/metadata/overview";
 import { Description } from "@/components/draft/metadata/description";
-import { isContentEditor } from "@/lib/utils";
+import { isContentCreator } from "@/lib/utils";
 import { Authors } from "@/components/draft/metadata/authors";
 import { GradientBackground } from "@/components/gradient-bg";
 import { getCurrentUser } from "@/lib/auth/session";
 import { notFound } from "next/navigation";
-import { ReviewDroplet } from "@/components/draft/metadata/review-droplet";
 import Anthropic from "@anthropic-ai/sdk";
 import { FunFactEditor } from "@/components/draft/metadata/fun-fact-editor";
 import { ClickableBadges } from "@/components/draft/metadata/clickable-badges";
 
 import { GeneralInfo } from "@/components/draft/metadata/general-info";
-import { RequestReviewButton } from "@/components/draft/metadata/request-review";
 
 type Props = {
   params: Promise<Params>;
@@ -145,14 +143,14 @@ export default async function Droplet({ params }: Props) {
             startingName={droplet.name}
           />
 
-          {droplet.status === "draft" && droplet.inReview && (
-            <div className="p-2">Droplet currently in review</div>
+          {droplet.status === "published" && (
+            <div className="p-2">This droplet is currently live</div>
           )}
           <div
-            className={`pt-4 pb-4 ${droplet.status === "draft" ? "visibility: visible" : "visibility: hidden"} text-red-500 dark:text-red-300`}
+            className={`pt-4 pb-4 ${droplet.status === "draft" && !droplet.inReview && isContentCreator(user.roles) ? "visibility: visible" : "visibility: hidden"} text-red-500 dark:text-red-300`}
           >
             This is currently a draft droplet. To publish this droplet, contact
-            a Content Editor or Faculty.
+            a Content Editor or Admin.
           </div>
           {!droplet.inReview &&
             droplet.afterReview !== null &&
@@ -160,13 +158,6 @@ export default async function Droplet({ params }: Props) {
               <div className="rounded-md border border-slate-400 bg-white p-4 dark:border-slate-500 dark:bg-slate-800 dark:text-slate-200">
                 <p className="font-bold">Feedback for Revision:</p>
                 <div>{droplet.afterReview}</div>
-              </div>
-            )}
-          {droplet.inReview &&
-            isContentEditor(user.roles) &&
-            droplet.status === "draft" && (
-              <div className="rounded-md dark:text-slate-200">
-                <ReviewDroplet name={droplet.name} droplet={droplet} />
               </div>
             )}
         </div>
@@ -209,9 +200,6 @@ export default async function Droplet({ params }: Props) {
             generateFact={generateFunFact}
             deleteFact={deleteFunFact}
           />
-          {!droplet.inReview && droplet.status === "draft" && (
-            <RequestReviewButton droplet={droplet} />
-          )}
         </div>
       </GradientBackground>
     </>
