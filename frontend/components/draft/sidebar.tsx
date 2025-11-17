@@ -1,7 +1,14 @@
 "use client";
 
 import UnauthorizedRoute from "@/app/(general)/unauthorized/page";
-import { cn, getPath } from "@/lib/utils";
+import {
+  cn,
+  getPath,
+  isAuthorizedUserAdmin,
+  isAuthorizedUserFaculty,
+  isContentCreator,
+  isContentEditor,
+} from "@/lib/utils";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
 import { AuthorizedUser, Droplet, Lesson, User } from "@/types";
 import {
@@ -35,14 +42,27 @@ import { useLessonOrder } from "./metadata/hooks/useLessonOrder";
 import { Button } from "../ui/button";
 import { createDropletAnnouncement } from "@/lib/requests/feed";
 
+import { ContentActionButton } from "./metadata/content-action-button";
+
 export function Sidebar({
   user,
   droplet,
-  authorizedUser,
 }: {
   user: User;
-  droplet: Pick<Droplet, "id" | "name" | "slug" | "lessons" | "status">;
-  authorizedUser: AuthorizedUser | null;
+  droplet: Pick<
+    Droplet,
+    | "id"
+    | "name"
+    | "slug"
+    | "lessons"
+    | "status"
+    | "inReview"
+    | "afterReview"
+    | "focusArea"
+    | "learningObjectives"
+    | "isHidden"
+    | "type"
+  >;
 }) {
   const [expanded, setExpanded] = useState(false);
   const pathname = usePathname();
@@ -216,15 +236,55 @@ export function Sidebar({
                   </DialogContent>
                 </Dialog>
               </li>
-              <li className="w-full pb-2 text-center">
-                <Link
-                  className="w-full rounded-full bg-purple-500 px-6 py-2 text-white hover:bg-purple-600"
-                  href={`/d/${pathname.split("d/")[1]}`}
-                >
-                  Preview
-                </Link>
-              </li>
             </ul>
+            <div className="flex w-full flex-col gap-2 pb-2">
+              <Link
+                className="rounded-full bg-purple-400 px-6 py-2 text-center text-black hover:bg-purple-500 dark:bg-purple-600 dark:text-white dark:hover:bg-purple-800"
+                href={`/d/${pathname.split("d/")[1]}`}
+              >
+                Preview
+              </Link>
+
+              {!droplet.inReview &&
+                droplet.status === "draft" &&
+                isContentCreator(user.roles) && (
+                  <ContentActionButton
+                    droplet={droplet}
+                    actionType="requestReview"
+                    buttonText={
+                      droplet.afterReview
+                        ? "Re-Request Review"
+                        : "Request Review"
+                    }
+                  />
+                )}
+
+              {/* Review Droplet Button - Content editors and admins only, draft in review */}
+              {droplet.inReview &&
+                droplet.status === "draft" &&
+                (isContentEditor(user.roles) ||
+                  isAuthorizedUserAdmin(user.roles)) && (
+                  // <ReviewDroplet name={droplet.name} droplet={droplet} />
+                  <ContentActionButton
+                    droplet={droplet}
+                    actionType="requestChanges"
+                    buttonText="Request Changes"
+                  />
+                )}
+
+              {/* Publish Button - Faculty/Admin anytime, Content Editor only when in review */}
+              {droplet.status === "draft" &&
+                (isAuthorizedUserFaculty(user.roles) ||
+                  isAuthorizedUserAdmin(user.roles) ||
+                  (isContentEditor(user.roles) && droplet.inReview)) && (
+                  // <PublishDropletButton droplet={droplet} />
+                  <ContentActionButton
+                    droplet={droplet}
+                    actionType="publish"
+                    buttonText="Publish Droplet"
+                  />
+                )}
+            </div>
 
             <Separator
               orientation="horizontal"
