@@ -8,6 +8,7 @@ import {
   BookOpenText,
   BadgeInfo,
   Bell,
+  Pin,
 } from "lucide-react";
 
 const calloutConfigs = {
@@ -21,7 +22,7 @@ const calloutConfigs = {
     title: "More Information",
   },
   caution: { bg: "#FFF59D", icon: Bell, title: "Caution" },
-  default: { bg: "#EEEEEE", icon: null, title: "Default" },
+  default: { bg: "#EEEEEE", icon: Pin, title: "Default" },
 };
 
 export const Callout = createReactBlockSpec(
@@ -156,7 +157,7 @@ export const Callout = createReactBlockSpec(
                 Caution
               </Menu.Item>
               <Menu.Item
-                leftSection={<div style={{ width: 18, height: 18 }} />}
+                leftSection={<Pin size={18} />}
                 onClick={() =>
                   props.editor.updateBlock(props.block, {
                     type: "callout",
