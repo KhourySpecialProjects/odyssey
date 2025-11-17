@@ -9,7 +9,7 @@ import { StarRating } from "@/components/ui/rating-stars";
 import { useState, useEffect, useRef } from "react";
 import { Button } from "../ui/button";
 import { toast } from "sonner";
-import { Archive, ArchiveRestore, Clock } from "lucide-react";
+import { Archive, ArchiveRestore, Clock, Download } from "lucide-react";
 import { getDueDateBadgeColor } from "@/lib/utils";
 import { DateTime } from "luxon";
 import { archiveDroplet, favoriteDroplet } from "@/lib/requests/droplet";
@@ -25,6 +25,7 @@ interface DropletTileProps {
   isArchived?: boolean;
   isFavorited?: boolean;
   dueDate?: string;
+  isAdmin?: boolean;
 }
 
 export function DropletTile({
@@ -36,6 +37,7 @@ export function DropletTile({
   isArchived,
   isFavorited: initialIsFavorited,
   dueDate,
+  isAdmin,
 }: DropletTileProps) {
   const [descriptionExpanded, setDescriptionExpanded] = useState(false);
   const [isTextClamped, setIsTextClamped] = useState(false);
@@ -313,6 +315,17 @@ export function DropletTile({
 
             {/* Right side - favorite and archive buttons */}
             <div className="flex items-center gap-2">
+              <Button
+                size="sm"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  exportDropletMarkdown();
+                }}
+                className={`${isAdmin ? "visible" : "invisible"} bg-slate-50 hover:bg-slate-300 dark:bg-slate-800`}>
+                  <Download color="#000000"/>
+              </Button>
+              
               <Button
                 size="sm"
                 aria-label={isArchived ? "Unarchive" : "Archive"}
