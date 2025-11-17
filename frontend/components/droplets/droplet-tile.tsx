@@ -157,15 +157,17 @@ export function DropletTile({
   }
 
   async function exportDropletMarkdown() {
+    // mock markdown content
     const content = "# Hello there!";
 
-    const blob = new Blob([content], {type: 'text/markdown'});
+    // creating a binary large object file of markdown type
+    const blob = new Blob([content], { type: "text/markdown" });
 
     const url = URL.createObjectURL(blob);
 
-    const link = document.createElement('a');
+    const link = document.createElement("a");
     link.href = url;
-    link.download = 'example.md';
+    link.download = "example.md";
 
     document.body.appendChild(link);
     link.click();
@@ -340,66 +342,65 @@ export function DropletTile({
                   e.stopPropagation();
                   exportDropletMarkdown();
                 }}
-                className={`${isAdmin ? "visible" : "invisible"} bg-slate-50 hover:bg-slate-300 dark:bg-slate-800`}>
-                  <div className="group relative">
-                  <Download color="#000000"/>
+                className={`${isAdmin ? "visible" : "invisible"} bg-slate-50 hover:bg-slate-300 dark:bg-slate-800`}
+              >
+                <div className="group relative">
+                  <Download color="#000000" />
                   <span className="absolute top-full left-1/2 mt-1 w-max -translate-x-1/2 transform rounded bg-gray-800 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100">
                     Export Markdown
                   </span>
                 </div>
               </Button>
-              
+
               {typeof isArchived === "boolean" && (
                 <>
- <Button
-                size="sm"
-                aria-label={isArchived ? "Unarchive" : "Archive"}
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  changeVisibility();
-                }}
-                className={`bg-slate-50 hover:bg-slate-300 dark:bg-slate-800`}
-              >
-                <div className="group relative">
-                  {isArchived ? (
-                    <ArchiveRestore className="text-purple-500" />
-                  ) : (
-                    <Archive className="text-purple-500" />
-                  )}
-                  <span className="absolute top-full left-1/2 mt-1 w-max -translate-x-1/2 transform rounded bg-gray-800 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100">
-                    {isArchived ? "Unarchive" : "Archive"}
-                  </span>
-                </div>
-              </Button>
-              <Button
-                size="sm"
-                aria-label="Favorite"
-                disabled={isFavoritePending}
-                onMouseEnter={() => setIsHovering(true)}
-                onMouseLeave={() => setIsHovering(false)}
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  toggleFavorite();
-                }}
-                className={`bg-slate-50 hover:bg-slate-300 disabled:opacity-50 dark:bg-slate-800`}
-              >
-                <div className="group relative">
-                  {isFavorited || isHovering ? (
-                    <FavoriteIcon className="text-pink-500" />
-                  ) : (
-                    <FavoriteBorderIcon className="text-purple-500" />
-                  )}
-                  <span className="absolute top-full left-1/2 mt-1 w-max -translate-x-1/2 transform rounded bg-gray-800 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100">
-                    {isFavorited ? "Unfavorite" : "Favorite"}
-                  </span>
-                </div>
-              </Button>
-              </>
+                  <Button
+                    size="sm"
+                    aria-label={isArchived ? "Unarchive" : "Archive"}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      changeVisibility();
+                    }}
+                    className={`bg-slate-50 hover:bg-slate-300 dark:bg-slate-800`}
+                  >
+                    <div className="group relative">
+                      {isArchived ? (
+                        <ArchiveRestore className="text-purple-500" />
+                      ) : (
+                        <Archive className="text-purple-500" />
+                      )}
+                      <span className="absolute top-full left-1/2 mt-1 w-max -translate-x-1/2 transform rounded bg-gray-800 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100">
+                        {isArchived ? "Unarchive" : "Archive"}
+                      </span>
+                    </div>
+                  </Button>
+                  <Button
+                    size="sm"
+                    aria-label="Favorite"
+                    disabled={isFavoritePending}
+                    onMouseEnter={() => setIsHovering(true)}
+                    onMouseLeave={() => setIsHovering(false)}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      toggleFavorite();
+                    }}
+                    className={`bg-slate-50 hover:bg-slate-300 disabled:opacity-50 dark:bg-slate-800`}
+                  >
+                    <div className="group relative">
+                      {isFavorited || isHovering ? (
+                        <FavoriteIcon className="text-pink-500" />
+                      ) : (
+                        <FavoriteBorderIcon className="text-purple-500" />
+                      )}
+                      <span className="absolute top-full left-1/2 mt-1 w-max -translate-x-1/2 transform rounded bg-gray-800 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100">
+                        {isFavorited ? "Unfavorite" : "Favorite"}
+                      </span>
+                    </div>
+                  </Button>
+                </>
               )}
-              
-             
             </div>
           </div>
         </div>
