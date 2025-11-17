@@ -33,6 +33,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { duplicateDroplet } from "@/lib/requests/droplet";
 import { Separator } from "../ui/separator";
+import { toast } from "sonner";
 
 export default function Sidebar({
   user,
@@ -111,11 +112,19 @@ export default function Sidebar({
         throw new Error(result.error || "Failed to create draft droplet");
       }
 
-      // Navigate to the new draft droplet's edit page
-      router.push(`/draft/d/${result.data.attributes.slug}`);
+      // Show different message based on whether it's existing or new
+      if (result.isExisting) {
+        toast.success("Navigating to your existing draft");
+      } else {
+        toast.success("Draft created successfully");
+      }
+
+      // Navigate to the draft droplet's edit page
+      router.push(
+        `/draft/d/${result.data.attributes?.slug || result.data.slug}`,
+      );
     } catch (error) {
       console.error("Error creating draft:", error);
-      // You might want to show an error toast/notification here
       alert("Failed to create draft. Please try again.");
     } finally {
       setIsCreatingDraft(false);
@@ -330,10 +339,19 @@ export default function Sidebar({
           <AlertDialogHeader>
             <AlertDialogTitle>Edit Droplet Content</AlertDialogTitle>
             <AlertDialogDescription>
-              You are about to create a draft copy of this published droplet. A
-              new droplet titled "[EDIT]- {droplet.name}" will be created, and
-              you'll be able to make changes without affecting the live content.
-              You can publish the draft later to replace the current version.
+              {droplet.status === "published" ? (
+                <>
+                  We'll check if you already have a draft for this droplet. If
+                  not, a new draft titled "[EDIT]- {droplet.name}" will be
+                  created. You'll be able to make changes without affecting the
+                  live content.
+                </>
+              ) : (
+                <>
+                  You are about to edit this draft. Changes will be saved
+                  automatically.
+                </>
+              )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

@@ -533,6 +533,7 @@ export async function duplicateDroplet(dropletId: number) {
       populate: {
         tags: true,
         learningObjectives: true,
+        authorized_users: { fields: ["id"] }, // Add this to get existing authors
         lessons: {
           populate: {
             blocks: {
@@ -555,6 +556,91 @@ export async function duplicateDroplet(dropletId: number) {
       throw new Error("Original droplet not found");
     }
 
+    console.log("Checking for existing edit draft...");
+    console.log("Current user ID:", author.id);
+    console.log("Original droplet ID:", dropletId);
+    console.log("Original droplet name:", originalDroplet.name);
+
+    // Check if an edit draft already exists - simplified approach
+    try {
+      // Get all drafts with this originalDropletId
+      const url = `${STRAPI_API_URL}/api/droplets?filters[originalDropletId][$eq]=${dropletId}&filters[status][$eq]=draft&populate[authorized_users][fields][0]=id&fields[0]=id&fields[1]=name&fields[2]=slug&fields[3]=originalDropletId`;
+
+      console.log("Checking URL:", url);
+
+      const existingDraftsResponse = await fetch(url, {
+        headers: {
+          Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+        },
+      });
+
+      const existingDraftsData = await existingDraftsResponse.json();
+
+      console.log("API Response status:", existingDraftsResponse.status);
+      console.log("API Response:", JSON.stringify(existingDraftsData, null, 2));
+
+      if (existingDraftsResponse.ok && existingDraftsData.data) {
+        console.log(
+          `Found ${existingDraftsData.data.length} draft(s) with originalDropletId=${dropletId}`,
+        );
+
+        for (const draft of existingDraftsData.data) {
+          console.log("Checking draft:", {
+            id: draft.id,
+            name: draft.attributes?.name,
+            slug: draft.attributes?.slug,
+            authorizedUsers: draft.attributes?.authorized_users?.data?.map(
+              (u: any) => u.id,
+            ),
+          });
+
+          const authorizedUserIds =
+            draft.attributes?.authorized_users?.data?.map((u: any) => u.id) ||
+            [];
+          console.log("Draft authorized users:", authorizedUserIds);
+          console.log(
+            "Current user is authorized?",
+            authorizedUserIds.includes(author.id),
+          );
+
+          if (authorizedUserIds.includes(author.id)) {
+            console.log(
+              "✓ Found existing edit draft for current user:",
+              draft.id,
+            );
+
+            return {
+              ok: true,
+              error: null,
+              data: {
+                id: draft.id,
+                attributes: {
+                  slug: draft.attributes.slug,
+                  name: draft.attributes.name,
+                },
+              },
+              isExisting: true,
+            };
+          }
+        }
+
+        console.log("No drafts found where current user is authorized");
+      }
+    } catch (error) {
+      console.error("Error checking for existing draft:", error);
+    }
+
+    console.log("No existing draft found, creating new one...");
+
+    // Get existing authors and add current user if not already included
+    const existingAuthorIds =
+      originalDroplet.authorized_users?.map((u) => u.id) || [];
+    const authorIds = existingAuthorIds.includes(author.id)
+      ? existingAuthorIds
+      : [...existingAuthorIds, author.id];
+
+    console.log("Authors for new draft:", authorIds);
+
     // Generate a truly unique slug
     const timestamp = Date.now();
     const randomSuffix = Math.random().toString(36).substring(2, 15);
@@ -569,12 +655,12 @@ export async function duplicateDroplet(dropletId: number) {
       description: originalDroplet.description,
       overview: originalDroplet.overview,
       status: "draft",
-      originalDropletId: dropletId, // Store the original droplet ID
+      originalDropletId: dropletId,
       tags: {
         connect: originalDroplet.tags?.map((tag) => tag.id) || [],
       },
       authorized_users: {
-        connect: [author.id],
+        connect: authorIds, // Use combined author list
       },
       learningObjectives:
         originalDroplet.learningObjectives?.map((obj) => ({
@@ -628,10 +714,8 @@ export async function duplicateDroplet(dropletId: number) {
       return blocks.map((block, index) => {
         console.log(`Block ${index}:`, block.__component);
 
-        // Always remove the id field from the block itself
         const { id, ...blockWithoutId } = block;
 
-        // Handle different block types
         switch (block.__component) {
           case "droplets.quiz":
             if (block.questions) {
@@ -665,13 +749,11 @@ export async function duplicateDroplet(dropletId: number) {
             return blockWithoutId;
 
           case "droplets.callout":
-            // Callout has content which might be BlockNode[] with nested structure
             if (block.content && Array.isArray(block.content)) {
               return {
                 ...blockWithoutId,
                 content: block.content.map((node: any) => {
                   const { id: nodeId, ...nodeWithoutId } = node;
-                  // Also clean children if they exist
                   if (
                     nodeWithoutId.children &&
                     Array.isArray(nodeWithoutId.children)
@@ -693,7 +775,6 @@ export async function duplicateDroplet(dropletId: number) {
           case "droplets.expandable":
           case "droplets.video":
           default:
-            // These are simple blocks, just return without id
             return blockWithoutId;
         }
       });
@@ -703,7 +784,6 @@ export async function duplicateDroplet(dropletId: number) {
     if (originalDroplet.lessons && originalDroplet.lessons.length > 0) {
       console.log(`Duplicating ${originalDroplet.lessons.length} lessons`);
 
-      // Sort lessons by orderIndex to ensure correct order
       const sortedLessons = [...originalDroplet.lessons].sort(
         (a, b) => a.orderIndex - b.orderIndex,
       );
@@ -726,13 +806,13 @@ export async function duplicateDroplet(dropletId: number) {
           name: lesson.name,
           slug: uniqueLessonSlug,
           type: lesson.type,
-          orderIndex: index, // Use the array index to ensure sequential ordering (0, 1, 2, ...)
+          orderIndex: index,
           blocks: cleanedBlocks,
           droplets: [newDropletId],
         };
 
         console.log(
-          `Creating lesson: ${lesson.name} with orderIndex: ${index}`,
+          `Creating lesson: ${lesson.name} with ${cleanedBlocks.length} blocks`,
         );
 
         const response = await fetch(STRAPI_API_URL + "/api/lessons", {
@@ -755,10 +835,9 @@ export async function duplicateDroplet(dropletId: number) {
 
         const createdLesson = await response.json();
         console.log(
-          `Created lesson with ${createdLesson.data.attributes.blocks?.length || 0} blocks and orderIndex: ${index}`,
+          `Created lesson with ${createdLesson.data.attributes.blocks?.length || 0} blocks`,
         );
 
-        // Small delay to avoid rate limiting
         await new Promise((resolve) => setTimeout(resolve, 100));
       }
     }
@@ -767,7 +846,12 @@ export async function duplicateDroplet(dropletId: number) {
     revalidateTag("droplets");
     revalidatePath("(general)/my-content", "page");
 
-    return { ok: true, error: null, data: dropletResponseData.data };
+    return {
+      ok: true,
+      error: null,
+      data: dropletResponseData.data,
+      isExisting: false,
+    };
   } catch (err) {
     console.error(err);
     return {
@@ -777,6 +861,7 @@ export async function duplicateDroplet(dropletId: number) {
           ? err.message
           : "Database Error: Failed to duplicate droplet.",
       data: null,
+      isExisting: false,
     };
   }
 }
