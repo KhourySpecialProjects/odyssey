@@ -3,7 +3,7 @@ import { EnrollButton } from "@/components/droplets/enroll-button";
 import { GradientBackground } from "@/components/gradient-bg";
 import { Badge } from "@/components/ui/badge";
 import { getDropletBySlug } from "@/lib/requests/droplet";
-import { uppercaseFirstChar } from "@/lib/utils";
+import { stripHtmlTags, uppercaseFirstChar } from "@/lib/utils";
 import { Droplet } from "@/types";
 import {
   BookTextIcon,
@@ -25,19 +25,6 @@ type Props = {
 
 type params = {
   slug: string;
-};
-
-const stripHtmlTags = (html: string) => {
-  return html
-    .replace(/<[^>]*>/g, "")
-    .replace(/&nbsp;/g, " ")
-    .replace(/&amp;/g, "&")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
-    .replace(/\s+/g, " ")
-    .trim();
 };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {

@@ -1,3 +1,4 @@
+import { stripHtmlTags } from "@/lib/utils";
 import { Droplet, Highlight, Note } from "@/types";
 import { PDFDocument, rgb } from "pdf-lib";
 
@@ -14,19 +15,6 @@ export async function NoteSummary({
 
   let page = pdfDoc.addPage([595.28, 841.89]);
   const { height } = page.getSize();
-
-  const stripHtmlTags = (html: string) => {
-    return html
-      .replace(/<[^>]*>/g, "")
-      .replace(/&nbsp;/g, " ")
-      .replace(/&amp;/g, "&")
-      .replace(/&lt;/g, "<")
-      .replace(/&gt;/g, ">")
-      .replace(/&quot;/g, '"')
-      .replace(/&#39;/g, "'")
-      .replace(/\s+/g, " ")
-      .trim();
-  };
 
   const drawLessonIcon = (x: number, y: number) => {
     page.drawRectangle({
