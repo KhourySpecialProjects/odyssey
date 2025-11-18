@@ -17,6 +17,7 @@ import { Block } from "@/types";
 import { toast } from "sonner";
 import { deleteLesson, updateLesson } from "@/lib/requests/lesson";
 import AddLessonBlock from "./add-tools";
+import { BlockNoteEditor } from "./blocknote-editor";
 
 export interface BaseBlock {
   __component: string;
@@ -53,6 +54,12 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
   const lastSavedBlocksRef = useRef<Block[]>(lastSavedBlocks);
   const [name, setName] = useState(lesson.name);
 
+  const [editorVersion, setEditorVersion] = useState<"v1" | "v2">(
+    lesson.blocksVersion || "v1",
+  );
+
+  const isNewLesson = blocks.length === 0 && !lesson.blocksV2;
+
   const updateBlocksBackend = useCallback(
     async (blocks: any[]) => {
       const response = await updateLesson(lesson.id, { blocks });
@@ -62,6 +69,25 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
       }
     },
     [lesson.id],
+  );
+
+  const updateBlocksV2Backend = useCallback(
+    async (blocksV2: any) => {
+      const response = await updateLesson(lesson.id, {
+        blocksV2,
+        blocksVersion: "v2",
+      });
+
+      if (!response || response.error || !response.ok) {
+        return;
+      }
+    },
+    [lesson.id],
+  );
+
+  const debounceUpdateV2 = useMemo(
+    () => debounce(updateBlocksV2Backend, 1000, { maxWait: 3000 }),
+    [updateBlocksV2Backend],
   );
 
   const updateBlocksBackendReload = useCallback(
@@ -180,7 +206,6 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
     [blocks, updateBlocksBackendReload],
   );
 
-  // Add this new handler for the FAB
   const handleAddTool = useCallback(
     (blockType: string, calloutType?: string) => {
       let newBlock: Block;
@@ -200,7 +225,6 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
           };
           break;
         case "Callout Block": {
-          // Map callout type names to colors
           const calloutColorMap: Record<string, string> = {
             Warning: "bg-red-300",
             Question: "bg-blue-300",
@@ -274,7 +298,6 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
           return;
       }
 
-      // Add the block at the end of the list
       const updatedBlocks = [...blocks, newBlock];
       setBlocks(updatedBlocks);
       updateBlocksBackendReload(updatedBlocks);
@@ -304,7 +327,6 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
     newItems.splice(toIndex, 0, removed);
 
     setBlocks(newItems);
-    // Force immediate save with reload to persist the order
     updateBlocksBackendReload(newItems);
   };
 
@@ -358,6 +380,30 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
               </div>
             </div>
           )}
+          {isNewLesson && (
+            <Button
+              variant={editorVersion === "v2" ? "default" : "outline"}
+              onClick={async () => {
+                if (editorVersion === "v2") {
+                  debounceUpdateV2.flush();
+                  await updateLesson(lesson.id, {
+                    blocksVersion: "v1",
+                    blocksV2: null,
+                  });
+                }
+                setEditorVersion(editorVersion === "v1" ? "v2" : "v1");
+              }}
+              className={`inline-flex h-10 items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium whitespace-nowrap ring-offset-white transition-colors focus-visible:ring-2 focus-visible:ring-slate-950 focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 dark:ring-offset-slate-950 dark:focus-visible:ring-slate-300 ${
+                editorVersion === "v1"
+                  ? "animate-border border-2 text-slate-900 [background:linear-gradient(#fff,#fff)_padding-box,conic-gradient(from_var(--border-angle),theme(colors.slate.200)_0%,theme(colors.indigo.500)_25%,theme(colors.indigo.300)_50%,theme(colors.indigo.500)_75%,theme(colors.slate.200)_100%)_border-box] dark:text-slate-50 dark:[background:linear-gradient(theme(colors.slate.950),theme(colors.slate.950))_padding-box,conic-gradient(from_var(--border-angle),theme(colors.slate.800/.48)_0%,theme(colors.indigo.500)_25%,theme(colors.indigo.300)_50%,theme(colors.indigo.500)_75%,theme(colors.slate.800/.48)_100%)_border-box]"
+                  : "border border-slate-200 bg-white text-slate-900 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-50"
+              } border-transparent hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-slate-800 dark:hover:text-slate-50`}
+            >
+              {editorVersion === "v1"
+                ? "Use BlockNote Editor"
+                : "Use Classic Editor"}
+            </Button>
+          )}
           <DeleteLessonButton
             deleteLesson={deleteLessonBackend}
             dropletSlug={dropletSlug}
@@ -365,18 +411,34 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
         </div>
       </div>
 
-      <AddLessonBlock onAddBlock={handleAddTool} />
-      <div className="flex w-full flex-col items-center justify-center space-y-4">
-        <div className="w-full max-w-2xl">
-          <BlockList
-            blocks={blocks}
-            onReorder={handleReorderSource}
-            onAddBlock={handleAddBlock}
-            setBlock={setBlock}
-            deleteBlock={deleteBlock}
+      {editorVersion === "v1" ? (
+        <>
+          <AddLessonBlock onAddBlock={handleAddTool} />
+          <div className="flex w-full flex-col items-center justify-center space-y-4">
+            <div className="w-full max-w-2xl">
+              <BlockList
+                blocks={blocks}
+                onReorder={handleReorderSource}
+                onAddBlock={handleAddBlock}
+                setBlock={setBlock}
+                deleteBlock={deleteBlock}
+              />
+            </div>
+          </div>
+        </>
+      ) : (
+        <div className="mx-auto mt-8 w-full max-w-4xl">
+          <p className="mb-4 text-center text-sm text-slate-500">
+            BlockNote Editor - Changes saved automatically
+          </p>
+          <BlockNoteEditor
+            initialContent={lesson.blocksV2}
+            onChange={(content) => {
+              debounceUpdateV2(content);
+            }}
           />
         </div>
-      </div>
+      )}
     </>
   );
 }

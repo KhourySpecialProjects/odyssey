@@ -73,3 +73,14 @@
 .dark [class*="bg-sky-50"] {
   background-color: rgb(15 23 42) !important;
 }
+
+@property --border-angle {
+  inherits: false;
+  initial-value: 0deg;
+  syntax: "<angle>";
+}
+@keyframes border {
+  to {
+    --border-angle: 360deg;
+  }
+}

@@ -1235,8 +1235,10 @@ export interface ApiLessonLesson extends Schema.CollectionType {
         'droplets.expandable',
         'droplets.open-ended-quiz'
       ]
-    > &
-      Attribute.Required;
+    >;
+    blocksV2: Attribute.JSON;
+    blocksVersion: Attribute.Enumeration<['v1', 'v2']> &
+      Attribute.DefaultTo<'v1'>;
     createdAt: Attribute.DateTime;
     createdBy: Attribute.Relation<
       'api::lesson.lesson',

@@ -76,3 +76,12 @@
   -webkit-text-fill-color: rgb(17 24 39) !important;
   caret-color: rgb(17 24 39) !important;
 }
+
+/* Hide link button in BlockNote formatting toolbar */
+.blocknote-no-link .bn-formatting-toolbar button[aria-label*="link" i],
+.blocknote-no-link .bn-formatting-toolbar button[aria-label*="Link" i],
+.blocknote-no-link .bn-formatting-toolbar button[title*="link" i],
+.blocknote-no-link .bn-formatting-toolbar button[title*="Link" i],
+.blocknote-no-link .bn-formatting-toolbar button[aria-label*="Create link" i] {
+  display: none !important;
+}

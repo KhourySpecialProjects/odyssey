@@ -16,4 +16,6 @@ export const LessonSchema = z.object({
   dropletId: z.number().int(),
   orderIndex: z.number(),
   blocks: BlockSchema.array(),
+  blocksVersion: z.enum(["v1", "v2"]).optional(),
+  blocksV2: z.any().optional(),
 });
