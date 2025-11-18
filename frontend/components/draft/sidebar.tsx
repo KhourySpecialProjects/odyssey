@@ -43,7 +43,6 @@ import { Button } from "../ui/button";
 import { createDropletAnnouncement } from "@/lib/requests/feed";
 
 import { ContentActionButton } from "./metadata/content-action-button";
-import { publishDraftToOriginal } from "@/lib/requests/droplet";
 
 export function Sidebar({
   user,
@@ -251,29 +250,27 @@ export function Sidebar({
               {droplet.originalDropletId && droplet.status === "draft" && (
                 <>
                   {/* Content Creators can only request review for edit drafts */}
-                  {!droplet.inReview &&
-                    isContentCreator(user.roles) &&
-                    isAuthorizedUserFaculty(user.roles) &&
-                    !isAuthorizedUserAdmin(user.roles) && (
-                      <>
-                        <ContentActionButton
-                          droplet={droplet}
-                          actionType="requestReview"
-                          buttonText={
-                            droplet.afterReview
-                              ? "Re-Request Review"
-                              : "Request Review"
-                          }
-                        />
-                        <p className="px-2 text-xs text-slate-600 dark:text-slate-400">
-                          Submit your changes for review before publishing
-                        </p>
-                      </>
-                    )}
+                  {!droplet.inReview && isContentCreator(user.roles) && (
+                    <>
+                      <ContentActionButton
+                        droplet={droplet}
+                        actionType="requestReview"
+                        buttonText={
+                          droplet.afterReview
+                            ? "Re-Request Review"
+                            : "Request Review"
+                        }
+                      />
+                      <p className="px-2 text-xs text-slate-600 dark:text-slate-400">
+                        Submit your changes for review before publishing
+                      </p>
+                    </>
+                  )}
 
                   {/* Content Editors and Admins can request changes on edit drafts in review */}
                   {droplet.inReview &&
                     (isContentEditor(user.roles) ||
+                      isAuthorizedUserFaculty(user.roles) ||
                       isAuthorizedUserAdmin(user.roles)) && (
                       <ContentActionButton
                         droplet={droplet}
@@ -284,6 +281,7 @@ export function Sidebar({
 
                   {/* Faculty/Admin/Content Editors (when in review) can publish edit drafts */}
                   {(isAuthorizedUserAdmin(user.roles) ||
+                    isAuthorizedUserFaculty(user.roles) ||
                     (isContentEditor(user.roles) && droplet.inReview)) && (
                     <>
                       <ContentActionButton

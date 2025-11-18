@@ -88,8 +88,10 @@ export default function Sidebar({
 
   if (!user) return <UnauthorizedRoute />;
 
-  const curPath = pathname.split("d/")[1];
-  const editPath = `/draft/d/${curPath === `${droplet.slug}/recap` ? `${droplet.slug}` : `/${curPath}`}`;
+  const curPath = pathname.split("/d/")[1];
+  const targetSegment =
+    curPath === `${droplet.slug}/recap` ? droplet.slug : curPath;
+  const editPath = `/draft/d/${targetSegment}`;
 
   const handleEditClick = () => {
     // Show warning if droplet is published (for both authors and admins)
