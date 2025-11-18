@@ -78,7 +78,7 @@ export function BlockNoteEditorClient({
                 "table",
                 "audio",
                 "file",
-                "checklist",
+                "check list",
                 "toggle heading 1",
                 "toggle heading 2",
                 "toggle heading 3",
