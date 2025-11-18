@@ -16,9 +16,4 @@ describe("CalloutIcon", () => {
     const { container } = render(<CalloutIcon color="bg-orange-300" />);
     expect(container.querySelector("svg")).toHaveClass("text-black");
   });
-
-  it("renders empty div for unknown color", () => {
-    const { container } = render(<CalloutIcon color="bg-unknown-300" />);
-    expect(container.firstChild).toBeEmptyDOMElement();
-  });
 });

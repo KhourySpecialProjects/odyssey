@@ -15,7 +15,7 @@ const config = {
     "^.+\\.(ts|tsx|js|jsx)$": ["babel-jest", { presets: ["next/babel"] }],
   },
   transformIgnorePatterns: [
-    "/node_modules/(?!(@panva|jose|openid-client|flat|@lemonsqueezy|next-auth|uuid|@smithy|@aws-sdk|@microsoft|node-fetch|isomorphic-dompurify|react-dnd|react-dnd-html5-backend|lowlight)(/.*)?)",
+    "/node_modules/(?!(@panva|jose|openid-client|flat|@lemonsqueezy|next-auth|uuid|@smithy|@aws-sdk|@microsoft|node-fetch|isomorphic-dompurify|react-dnd|react-dnd-html5-backend|lowlight|@blocknote|prosemirror-highlight)(/.*)?)",
   ],
   moduleDirectories: ["node_modules", "<rootDir>"],
   testEnvironmentOptions: {
