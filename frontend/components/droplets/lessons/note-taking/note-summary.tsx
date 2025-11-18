@@ -76,7 +76,7 @@ export async function NoteSummary({
     backgroundColor: { r: number; g: number; b: number },
   ) => {
     const lines = calculateLines(text, maxWidth, fontSize);
-    const lineHeight = fontSize * 1.6;
+    const lineHeight = fontSize * 1.8;
     const totalHeight = lines * lineHeight;
 
     if (!hasTextBelow) {
@@ -233,7 +233,7 @@ export async function NoteSummary({
             90,
             yPosition,
             12,
-            475,
+            400,
             hasContent,
             { r, g, b },
           );

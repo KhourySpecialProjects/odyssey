@@ -10,6 +10,7 @@ import { getHighlightsByDroplet } from "@/lib/requests/highlights";
 import { PDFDocument } from "pdf-lib";
 import { NoteSummary } from "@/components/droplets/lessons/note-taking/note-summary";
 import { NotesManager } from "@/components/droplets/notes-manager";
+import { all } from "lowlight";
 
 type Props = {
   params: Promise<Params>;
@@ -66,33 +67,54 @@ export default async function DropletRecapRoute({ params }: Props) {
         viewedLessons: {
           fields: ["id", "name", "slug"],
         },
+        droplet: {
+          populate: {
+            lessons: {
+              fields: ["id", "name", "slug"],
+            },
+            tags: {
+              fields: ["*"],
+            },
+            usersFavorited: {
+              fields: "*",
+            },
+          },
+          fields: ["id", "*"],
+        },
       },
     });
 
     const authUser = await getAuthorizedUserByEmail(user.email);
 
-    const allNotes = await Promise.all(
-      enrollments.map(async (enrollment) => {
-        const dropletNotes = await getNotesByDroplet(
-          authUser.id,
-          enrollment.droplet.id,
-        );
-        const dropletHighlights = await getHighlightsByDroplet(
-          authUser.id,
-          enrollment.droplet.id,
-        );
-        return {
-          dropletId: enrollment.droplet.id,
-          notes: dropletNotes,
-          highlights: dropletHighlights.filter(
-            (highlight) =>
-              !dropletNotes.some(
-                (lesson) => lesson.highlight?.id === highlight.id,
-              ),
-          ),
-        };
-      }),
-    );
+    const defined = <T,>(v: T | null | undefined): v is T => v != null;
+
+    const allNotes = (
+      await Promise.all(
+        enrollments.map(async (enrollment) => {
+          if (!enrollment) return null;
+          const dropletNotes = await getNotesByDroplet(
+            authUser.id,
+            enrollment.droplet.id,
+          );
+          const dropletHighlights = await getHighlightsByDroplet(
+            authUser.id,
+            enrollment.droplet.id,
+          );
+          console.log("Fetched notes:", dropletNotes);
+          console.log("Fetched highlights:", dropletHighlights);
+          return {
+            dropletId: enrollment.droplet.id,
+            notes: dropletNotes,
+            highlights: dropletHighlights.filter(
+              (highlight) =>
+                !dropletNotes.some(
+                  (lesson) => lesson.highlight?.id === highlight.id,
+                ),
+            ),
+          };
+        }),
+      )
+    ).filter(defined);
 
     const pdfDoc = await PDFDocument.create();
 
@@ -101,8 +123,8 @@ export default async function DropletRecapRoute({ params }: Props) {
       const dropletData = allNotes[i];
 
       const sectionPdfBytes = await NoteSummary({
-        filteredHighlights: dropletData.highlights,
-        notes: dropletData.notes,
+        filteredHighlights: dropletData?.highlights || [],
+        notes: dropletData?.notes || [],
         droplet: enrollment.droplet,
       });
 
@@ -120,7 +142,7 @@ export default async function DropletRecapRoute({ params }: Props) {
     return (
       <NotesManager
         enrollments={enrollments}
-        allNotes={allNotes}
+        allNotes={allNotes ? allNotes : []}
         initialPdfBytes={initialPdfBytes}
       />
     );

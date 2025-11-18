@@ -89,7 +89,12 @@ export function NotesManager({
 
   const filteredEnrollments = enrollments.filter((e, index) => {
     const dropletData = allNotes[index];
-    return dropletData.highlights.length > 0 || dropletData.notes.length > 0;
+    if (!e || !dropletData) return false;
+    console.log("Filtering enrollment:", e, dropletData);
+    return (
+      (dropletData.highlights && dropletData.highlights.length > 0) ||
+      dropletData.notes.length > 0
+    );
   });
 
   return (
