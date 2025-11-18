@@ -342,10 +342,10 @@ export function DropletTile({
                   e.stopPropagation();
                   exportDropletMarkdown();
                 }}
-                className={`${isAdmin ? "visible" : "invisible"} bg-slate-50 hover:bg-slate-300 dark:bg-slate-800`}
+                className={`${isAdmin ? "visible" : "invisible"} bg-slate-50 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-900`}
               >
                 <div className="group relative">
-                  <Download color="#000000" />
+                  <Download className="text-black dark:text-white" />
                   <span className="absolute top-full left-1/2 mt-1 w-max -translate-x-1/2 transform rounded bg-gray-800 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100">
                     Export Markdown
                   </span>
