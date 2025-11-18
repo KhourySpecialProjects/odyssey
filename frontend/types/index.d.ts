@@ -144,7 +144,7 @@ export type Lesson = {
   name: string;
   slug: string;
   type?: "general" | "setup" | "activity" | "caseStudy";
-  blocks: any[];
+  blocks: Block[];
   droplets: Droplet[];
   notes: Note[];
   orderIndex: number;

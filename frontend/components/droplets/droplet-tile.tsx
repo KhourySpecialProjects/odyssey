@@ -157,8 +157,51 @@ export function DropletTile({
   }
 
   async function exportDropletMarkdown() {
-    // mock markdown content
-    const content = "# Hello there!";
+        // mock markdown content
+    const content = `# ${droplet.name}
+
+## **Metadata**
+
+Type: ${droplet.type}
+FocusArea: ${droplet.focusArea}
+
+### Tags
+${droplet.tags?.map(tag => `* ${tag.name}`).join('\n') || 'No tags'}
+
+### Authors
+${droplet.authorized_users?.map(user => `* ${user.firstName} ${user.lastName}`).join('\n') || 'No authors'}
+
+### Description
+${droplet.description ? droplet.description.concat('\n') : 'No description'} 
+
+### Overview
+${droplet.overview ? droplet.overview.concat('\n') : 'No overview'}
+
+### Learning Objectives
+${droplet.learningObjectives?.map(objective => `* ${objective.objective}`).join('\n') || 'No objectives'}
+
+### Next Steps
+${droplet.nextSteps?.map(resource => `* ${resource.label} linked to: ${resource.url}`).join('\n') || 'No next steps'}
+
+### Prerequisites
+${droplet.prerequisites?.map(prereq => `* ${prereq.name}`).join('\n') || 'No prereqs'}
+
+### Postrequisites
+${droplet.postrequisites?.map(postreq => `* ${postreq.name}`).join('\n') || 'No postreqs'}
+
+## **Lessons**
+
+${droplet.lessons?.map(lesson => `
+### ${lesson.name}
+
+${lesson.blocks?.map(block => `
+### ${block}  
+`)}
+  `).join('\n') || 'No lessons'}
+
+`;
+
+    
 
     // creating a binary large object file of markdown type
     const blob = new Blob([content], { type: "text/markdown" });
@@ -167,7 +210,7 @@ export function DropletTile({
 
     const link = document.createElement("a");
     link.href = url;
-    link.download = "example.md";
+    link.download = `${droplet.name}.md`;
 
     document.body.appendChild(link);
     link.click();

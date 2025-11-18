@@ -68,6 +68,21 @@ export default async function ExplorePage({
       tags: {
         fields: ["*"],
       },
+       authorized_users: {
+      fields: ["firstName", "lastName", "email"], 
+    },
+    learningObjectives: {
+      fields: ["objective"],
+    },
+    nextSteps: {
+      fields: ["label", "url"],
+    },
+    prerequisites: {
+      fields: ["name"]
+    },
+    postrequisites: {
+      fields: ["name"]
+    },
     },
     fields: ["*"],
   });
