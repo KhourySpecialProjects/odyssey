@@ -157,7 +157,7 @@ export function DropletTile({
   }
 
   async function exportDropletMarkdown() {
-        // mock markdown content
+    // mock markdown content
     const content = `# ${droplet.name}
 
 ## **Metadata**
@@ -166,74 +166,92 @@ Type: ${droplet.type}
 Focus Area: ${droplet.focusArea}
 
 ### Tags
-${droplet.tags?.map(tag => `* ${tag.name}`).join('\n') || 'No tags'}
+${droplet.tags?.map((tag) => `* ${tag.name}`).join("\n") || "No tags"}
 
 ### Authors
-${droplet.authorized_users?.map(user => `* ${user.firstName} ${user.lastName}`).join('\n') || 'No authors'}
+${droplet.authorized_users?.map((user) => `* ${user.firstName} ${user.lastName}`).join("\n") || "No authors"}
 
 ### Description
-${droplet.description ? droplet.description.concat('\n') : 'No description'} 
+${droplet.description ? droplet.description.concat("\n") : "No description"} 
 
 ### Overview
-${droplet.overview ? droplet.overview.concat('\n') : 'No overview'}
+${droplet.overview ? droplet.overview.concat("\n") : "No overview"}
 
 ### Learning Objectives
-${droplet.learningObjectives?.map(objective => `* ${objective.objective}`).join('\n') || 'No objectives'}
+${droplet.learningObjectives?.map((objective) => `* ${objective.objective}`).join("\n") || "No objectives"}
 
 ### Next Steps
-${droplet.nextSteps?.map(resource => `* ${resource.label} linked to: ${resource.url}`).join('\n') || 'No next steps'}
+${droplet.nextSteps?.map((resource) => `* ${resource.label} linked to: ${resource.url}`).join("\n") || "No next steps"}
 
 ### Prerequisites
-${droplet.prerequisites?.map(prereq => `* ${prereq.name}`).join('\n') || 'No prereqs'}
+${droplet.prerequisites?.map((prereq) => `* ${prereq.name}`).join("\n") || "No prereqs"}
 
 ### Postrequisites
-${droplet.postrequisites?.map(postreq => `* ${postreq.name}`).join('\n') || 'No postreqs'}
+${droplet.postrequisites?.map((postreq) => `* ${postreq.name}`).join("\n") || "No postreqs"}
 
 ## **Lessons**
-${droplet.lessons?.map(lesson => `
+${
+  droplet.lessons
+    ?.map(
+      (lesson) => `
 ### ${lesson.name}
 
-${lesson.blocks?.map(block => {
-  if (block.__component === "droplets.generic") {
-    return `#### Generic Droplet\n\n${block.content}`;
-  }
-  
-  if (block.__component === "droplets.expandable") {
-    return `#### Expandable Droplet\n\n##### ${block.title}\n\n${block.content}`;
-  }
-  
-  if (block.__component === "droplets.callout") {
-    const calloutContent = block.content.map(contentBlock => 
-      contentBlock.children.map(child => child.text).join('')
-    ).join('\n');
-    return `#### Callout Droplet\n\nColor: ${block.color}\nType: ${block.type}\n\n${calloutContent}`;
-  }
-  
-  if (block.__component === "droplets.video") {
-    return `#### Video\n\nVideo Link: ${block.url}`;
-  }
-  
-  if (block.__component === "droplets.quiz") {
-    const quizContent = block.questions.map((question, qIndex) => 
-      `${qIndex + 1}. ${question.content}\n${question.answerOptions.map((answer, aIndex) => 
-        `   ${aIndex + 1}. Answer: ${answer.content} is ${answer.isCorrect ? 'correct' : 'incorrect'}`
-      ).join('\n')}`
-    ).join('\n');
-    return `#### Quiz\n\n${quizContent}`;
-  }
-  
-  if (block.__component === "droplets.open-ended-quiz") {
-    const openEndedContent = block.questions.map((question, qIndex) => 
-      `${qIndex + 1}. ${question.content}\n   * Answer: ${question.correctAnswer}`
-    ).join('\n');
-    return `#### Open-Ended Quiz\n\n${openEndedContent}`;
-  }
-  
-  return '';
-}).join('\n\n')}
-`).join('\n') || 'No lessons'}
+${lesson.blocks
+  ?.map((block) => {
+    if (block.__component === "droplets.generic") {
+      return `#### Generic Droplet\n\n${block.content}`;
+    }
+
+    if (block.__component === "droplets.expandable") {
+      return `#### Expandable Droplet\n\n##### ${block.title}\n\n${block.content}`;
+    }
+
+    if (block.__component === "droplets.callout") {
+      const calloutContent = block.content
+        .map((contentBlock) =>
+          contentBlock.children.map((child) => child.text).join(""),
+        )
+        .join("\n");
+      return `#### Callout Droplet\n\nColor: ${block.color}\nType: ${block.type}\n\n${calloutContent}`;
+    }
+
+    if (block.__component === "droplets.video") {
+      return `#### Video\n\nVideo Link: ${block.url}`;
+    }
+
+    if (block.__component === "droplets.quiz") {
+      const quizContent = block.questions
+        .map(
+          (question, qIndex) =>
+            `${qIndex + 1}. ${question.content}\n${question.answerOptions
+              .map(
+                (answer, aIndex) =>
+                  `   ${aIndex + 1}. Answer: ${answer.content} is ${answer.isCorrect ? "correct" : "incorrect"}`,
+              )
+              .join("\n")}`,
+        )
+        .join("\n");
+      return `#### Quiz\n\n${quizContent}`;
+    }
+
+    if (block.__component === "droplets.open-ended-quiz") {
+      const openEndedContent = block.questions
+        .map(
+          (question, qIndex) =>
+            `${qIndex + 1}. ${question.content}\n   * Answer: ${question.correctAnswer}`,
+        )
+        .join("\n");
+      return `#### Open-Ended Quiz\n\n${openEndedContent}`;
+    }
+
+    return "";
+  })
+  .join("\n\n")}
+`,
+    )
+    .join("\n") || "No lessons"
+}
 `;
-    
 
     // creating a binary large object file of markdown type
     const blob = new Blob([content], { type: "text/markdown" });
