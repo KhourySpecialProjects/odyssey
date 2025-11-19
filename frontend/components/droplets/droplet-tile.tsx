@@ -163,7 +163,7 @@ export function DropletTile({
 ## **Metadata**
 
 Type: ${droplet.type}
-FocusArea: ${droplet.focusArea}
+Focus Area: ${droplet.focusArea}
 
 ### Tags
 ${droplet.tags?.map(tag => `* ${tag.name}`).join('\n') || 'No tags'}
@@ -190,17 +190,49 @@ ${droplet.prerequisites?.map(prereq => `* ${prereq.name}`).join('\n') || 'No pre
 ${droplet.postrequisites?.map(postreq => `* ${postreq.name}`).join('\n') || 'No postreqs'}
 
 ## **Lessons**
-
 ${droplet.lessons?.map(lesson => `
 ### ${lesson.name}
 
-${lesson.blocks?.map(block => `
-### ${block}  
-`)}
-  `).join('\n') || 'No lessons'}
-
+${lesson.blocks?.map(block => {
+  if (block.__component === "droplets.generic") {
+    return `#### Generic Droplet\n\n${block.content}`;
+  }
+  
+  if (block.__component === "droplets.expandable") {
+    return `#### Expandable Droplet\n\n##### ${block.title}\n\n${block.content}`;
+  }
+  
+  if (block.__component === "droplets.callout") {
+    const calloutContent = block.content.map(contentBlock => 
+      contentBlock.children.map(child => child.text).join('')
+    ).join('\n');
+    return `#### Callout Droplet\n\nColor: ${block.color}\nType: ${block.type}\n\n${calloutContent}`;
+  }
+  
+  if (block.__component === "droplets.video") {
+    return `#### Video\n\nVideo Link: ${block.url}`;
+  }
+  
+  if (block.__component === "droplets.quiz") {
+    const quizContent = block.questions.map((question, qIndex) => 
+      `${qIndex + 1}. ${question.content}\n${question.answerOptions.map((answer, aIndex) => 
+        `   ${aIndex + 1}. Answer: ${answer.content} is ${answer.isCorrect ? 'correct' : 'incorrect'}`
+      ).join('\n')}`
+    ).join('\n');
+    return `#### Quiz\n\n${quizContent}`;
+  }
+  
+  if (block.__component === "droplets.open-ended-quiz") {
+    const openEndedContent = block.questions.map((question, qIndex) => 
+      `${qIndex + 1}. ${question.content}\n   * Answer: ${question.correctAnswer}`
+    ).join('\n');
+    return `#### Open-Ended Quiz\n\n${openEndedContent}`;
+  }
+  
+  return '';
+}).join('\n\n')}
+`).join('\n') || 'No lessons'}
 `;
-
     
 
     // creating a binary large object file of markdown type

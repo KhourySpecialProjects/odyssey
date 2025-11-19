@@ -135,9 +135,7 @@ export type Block =
   | {
       __component: "droplets.open-ended-quiz";
       questions: { id: number; content: string; correctAnswer: string }[];
-    }
-  | QuizBlock
-  | OpenEndedQuizBlock;
+    };
 
 export type Lesson = {
   id: number;

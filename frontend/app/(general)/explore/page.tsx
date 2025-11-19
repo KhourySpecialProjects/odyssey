@@ -62,28 +62,60 @@ export default async function ExplorePage({
       ],
     },
     populate: {
-      lessons: {
-        fields: ["*"],
+  lessons: {
+    fields: ["*"],
+    populate: {
+  blocks: {
+    on: {
+      "droplets.generic": {
+        populate: "*",
       },
-      tags: {
-        fields: ["*"],
+      "droplets.expandable": {
+        populate: "*",
       },
-       authorized_users: {
-      fields: ["firstName", "lastName", "email"], 
+      "droplets.callout": {
+        populate: "*",
+      },
+      "droplets.video": {
+        populate: "*",
+      },
+      "droplets.quiz": {
+        populate: {
+          questions: {
+            populate: {
+              answerOptions: true,
+            },
+          },
+        },
+      },
+      "droplets.open-ended-quiz": {
+        populate: {
+          questions: true,
+        },
+      },
     },
-    learningObjectives: {
-      fields: ["objective"],
-    },
-    nextSteps: {
-      fields: ["label", "url"],
-    },
-    prerequisites: {
-      fields: ["name"]
-    },
-    postrequisites: {
-      fields: ["name"]
-    },
-    },
+  },
+},
+  },
+  tags: {
+    fields: ["*"],
+  },
+  authorized_users: {
+    fields: ["firstName", "lastName", "email"], 
+  },
+  learningObjectives: {
+    fields: ["objective"],
+  },
+  nextSteps: {
+    fields: ["label", "url"],
+  },
+  prerequisites: {
+    fields: ["name"]
+  },
+  postrequisites: {
+    fields: ["name"]
+  },
+},
     fields: ["*"],
   });
 
