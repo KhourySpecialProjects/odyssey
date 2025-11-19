@@ -334,10 +334,7 @@ function convertSingleBlock(blockAny: any, blockIndex: number): Block | null {
         default: "bg-sky-50 dark:bg-sky-200",
       };
 
-      const calloutContent = (blockAny.content ?? []) as Array<{
-        type?: string;
-        text?: string;
-      }>;
+      const calloutContent = (blockAny.content ?? []) as any[];
       const calloutText =
         calloutContent
           .map((item: any) => (item.type === "text" ? (item.text ?? "") : ""))
