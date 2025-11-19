@@ -337,7 +337,7 @@ function convertSingleBlock(blockAny: any, blockIndex: number): Block | null {
       const calloutContent = (blockAny.content ?? []) as any[];
       const calloutText =
         calloutContent
-          .map((item: any) => (item.type === "text" ? (item.text ?? "") : ""))
+          .map((item: any) => (item.type === "text" ? item.text ?? "" : ""))
           .join("") || "";
 
       return {
