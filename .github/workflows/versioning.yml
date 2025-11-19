@@ -3,12 +3,12 @@ name: Automatic Semantic Versioning
 on:
   push:
     branches:
-      - main
+      - production
       - develop
   pull_request:
     types: [closed]
     branches:
-      - main
+      - production
       - develop
 
 jobs:
