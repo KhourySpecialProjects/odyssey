@@ -135,6 +135,7 @@ export type Block =
       type: string;
       id?: number;
       _clientId?: string;
+      iconEnabled?: boolean;
     }
   | {
       __component: "droplets.video";
