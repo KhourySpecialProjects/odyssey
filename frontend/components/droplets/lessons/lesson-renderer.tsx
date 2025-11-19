@@ -283,10 +283,10 @@ function convertBlockNoteToV1Blocks(blocksV2: BlockNoteBlock[]): Block[] {
 
     // For non-numbered-list blocks, process normally
     const convertedBlock = convertSingleBlock(blockAny, i);
-if (convertedBlock !== null) {
-  processedBlocks.push(convertedBlock);
-}
-i++;
+    if (convertedBlock !== null) {
+      processedBlocks.push(convertedBlock);
+    }
+    i++;
   }
 
   return processedBlocks.filter((block): block is Block => block !== null);
