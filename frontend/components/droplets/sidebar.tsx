@@ -344,7 +344,7 @@ export default function Sidebar({
               {droplet.status === "published" ? (
                 <>
                   We'll check if you already have a draft for this droplet. If
-                  not, a new draft titled "[EDIT]- {droplet.name}" will be
+                  not, a new draft titled "[EDIT] {droplet.name}" will be
                   created. You'll be able to make changes without affecting the
                   live content.
                 </>

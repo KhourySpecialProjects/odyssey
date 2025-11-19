@@ -646,9 +646,9 @@ export async function duplicateDroplet(dropletId: number) {
     const randomSuffix = Math.random().toString(36).substring(2, 15);
     const uniqueSlug = `draft-${timestamp}-${randomSuffix}`;
 
-    // Create the new droplet with [EDIT]- prefix and store original droplet ID
+    // Create the new droplet with [EDIT] prefix and store original droplet ID
     const newDropletData = {
-      name: `[EDIT]- ${originalDroplet.name}`,
+      name: `[EDIT] ${originalDroplet.name}`,
       slug: uniqueSlug,
       focusArea: originalDroplet.focusArea,
       type: originalDroplet.type,
@@ -955,7 +955,7 @@ export async function publishDraftToOriginal(
     }
 
     // Update the original droplet with draft data
-    const updatedName = draftDroplet.name.replace(/^\[EDIT\]-\s*/i, "");
+    const updatedName = draftDroplet.name.replace(/^\[EDIT\]\s*/i, "");
 
     const updateData: any = {
       name: updatedName,
