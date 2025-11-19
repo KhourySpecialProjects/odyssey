@@ -99,25 +99,25 @@ describe("LessonRenderer", () => {
   };
 
   const mockLesson = {
-    id: 1,
-    name: "Test Lesson",
-    slug: "test-lesson",
-    droplets: [],
-    notes: [],
-    orderIndex: 1,
-    blocks: [
-      {
-        id: 1,
-        __component: "droplets.generic",
-        content: "Generic content",
-      },
-      {
-        id: 2,
-        __component: "droplets.video",
-        url: "https://example.com/video",
-      },
-    ],
-  };
+  id: 1,
+  name: "Test Lesson",
+  slug: "test-lesson",
+  droplets: [],
+  notes: [],
+  orderIndex: 1,
+  blocks: [
+    {
+      id: 1,
+      __component: "droplets.generic" as const,
+      content: "Generic content",
+    },
+    {
+      id: 2,
+      __component: "droplets.video" as const,
+      url: "https://example.com/video",
+    },
+  ],
+};
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -375,16 +375,30 @@ describe("LessonRenderer", () => {
   describe("Block Management", () => {
     it("renders different block types", () => {
       const lessonWithAllBlocks = {
-        ...mockLesson,
-        blocks: [
-          { __component: "droplets.generic", id: 1, content: "" },
-          { __component: "droplets.video", id: 2, url: "" },
-          { __component: "droplets.expandable", id: 3, title: "", content: "" },
-          { __component: "droplets.callout", id: 4, content: "", color: "" },
-          { __component: "droplets.quiz", id: 5, questions: [] },
-          { __component: "droplets.open-ended-quiz", id: 6, questions: [] },
-        ],
-      };
+  ...mockLesson,
+  blocks: [
+    { __component: "droplets.generic" as const, id: 1, content: "" },
+    { __component: "droplets.video" as const, id: 2, url: "" },
+    { __component: "droplets.expandable" as const, id: 3, title: "", content: "" },
+    { 
+      __component: "droplets.callout" as const, 
+      id: 4, 
+      content: [{ type: "paragraph", children: [{ type: "text", text: "" }] }], 
+      color: "blue",
+      type: "info"
+    },
+    { 
+      __component: "droplets.quiz" as const, 
+      id: 5, 
+      questions: [] 
+    },
+    { 
+      __component: "droplets.open-ended-quiz" as const, 
+      id: 6, 
+      questions: [] 
+    },
+  ],
+};
 
       render(
         <LessonRenderer
@@ -420,12 +434,12 @@ describe("LessonRenderer", () => {
     });
 
     it("handles lesson with single block", () => {
-      const singleBlockLesson = {
-        ...mockLesson,
-        blocks: [
-          { __component: "droplets.generic", id: 1, content: "Content" },
-        ],
-      };
+       const singleBlockLesson = {
+    ...mockLesson,
+    blocks: [
+      { __component: "droplets.generic" as const, id: 1, content: "Content" },
+    ],
+  };
 
       render(
         <LessonRenderer
@@ -508,33 +522,34 @@ describe("LessonRenderer", () => {
 
   describe("Lesson Updates", () => {
     it("syncs blocks when lesson prop changes", () => {
-      const { rerender } = render(
-        <LessonRenderer lesson={mockLesson} dropletSlug="test-droplet" />,
-      );
+  const { rerender } = render(
+    <LessonRenderer lesson={mockLesson} dropletSlug="test-droplet" />,
+  );
 
-      expect(screen.getByTestId("block-droplets.generic")).toBeInTheDocument();
+  expect(screen.getByTestId("block-droplets.generic")).toBeInTheDocument();
 
-      const updatedLesson = {
-        ...mockLesson,
-        blocks: [
-          {
-            __component: "droplets.callout",
-            id: 3,
-            content: "New content",
-            color: "blue",
-          },
-        ],
-      };
+  const updatedLesson = {
+    ...mockLesson,
+    blocks: [
+      {
+        __component: "droplets.callout" as const,
+        id: 3,
+        content: [{ type: "paragraph", children: [{ type: "text", text: "New content" }] }],
+        color: "blue",
+        type: "info",
+      },
+    ],
+  };
 
-      rerender(
-        <LessonRenderer lesson={updatedLesson} dropletSlug="test-droplet" />,
-      );
+  rerender(
+    <LessonRenderer lesson={updatedLesson} dropletSlug="test-droplet" />,
+  );
 
-      expect(screen.getByTestId("block-droplets.callout")).toBeInTheDocument();
-      expect(
-        screen.queryByTestId("block-droplets.generic"),
-      ).not.toBeInTheDocument();
-    });
+  expect(screen.getByTestId("block-droplets.callout")).toBeInTheDocument();
+  expect(
+    screen.queryByTestId("block-droplets.generic"),
+  ).not.toBeInTheDocument();
+});
   });
 
   describe("Edge Cases", () => {
@@ -568,17 +583,17 @@ describe("LessonRenderer", () => {
     });
 
     it("handles blocks without id", () => {
-      const blocksWithoutId = {
-        ...mockLesson,
-        blocks: [{ __component: "droplets.generic", content: "No ID" }],
-      };
+  const blocksWithoutId = {
+    ...mockLesson,
+    blocks: [{ __component: "droplets.generic" as const, content: "No ID" }],
+  };
 
-      render(
-        <LessonRenderer lesson={blocksWithoutId} dropletSlug="test-droplet" />,
-      );
+  render(
+    <LessonRenderer lesson={blocksWithoutId} dropletSlug="test-droplet" />,
+  );
 
-      expect(screen.getByTestId("block-droplets.generic")).toBeInTheDocument();
-    });
+  expect(screen.getByTestId("block-droplets.generic")).toBeInTheDocument();
+});
 
     it("handles empty dropletSlug", async () => {
       render(<LessonRenderer lesson={mockLesson} dropletSlug="" />);
