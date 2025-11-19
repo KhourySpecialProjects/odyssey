@@ -1,4 +1,12 @@
 // Mock BlockNote before importing schema
+jest.mock("@blocknote/react", () => ({
+  createReactBlockSpec: jest.fn((config, spec) => ({
+    type: config.type,
+    propSchema: config.propSchema,
+    ...spec,
+  })),
+}));
+
 jest.mock("@blocknote/core", () => ({
   BlockNoteSchema: {
     create: jest.fn((config) => ({
@@ -29,6 +37,11 @@ jest.mock("@blocknote/core", () => ({
   Block: jest.fn(),
   BlockNoteEditor: jest.fn(),
   PartialBlock: jest.fn(),
+  createStyleSpec: jest.fn((config, spec) => ({
+    type: config.type,
+    propSchema: config.propSchema,
+    ...spec,
+  })),
 }));
 
 jest.mock("@/components/ui/blocknote/blocks/callout-block", () => ({
@@ -49,6 +62,19 @@ jest.mock(
     MultipleChoiceQuiz: jest.fn(() => ({ type: "quiz-multiple-choice" })),
   }),
 );
+
+// Mock Dialog component to avoid importing BlockNote's FloatingComposer
+jest.mock("@/components/ui/dialog", () => ({
+  Dialog: jest.fn(),
+  DialogContent: jest.fn(),
+  DialogTitle: jest.fn(),
+  DialogHeader: jest.fn(),
+  DialogFooter: jest.fn(),
+}));
+
+jest.mock("@/components/ui/blocknote/blocks/latex-block", () => ({
+  LatexBlock: jest.fn(() => ({ type: "latex" })),
+}));
 
 import { blockNoteSchema } from "@/lib/blocknote/schema";
 
@@ -78,6 +104,11 @@ describe("blockNoteSchema", () => {
     expect(blockSpecs).toHaveProperty("quiz-true-false");
     expect(blockSpecs).toHaveProperty("quiz-open-ended");
     expect(blockSpecs).toHaveProperty("quiz-multiple-choice");
+  });
+
+  it("should include custom latex block", () => {
+    const blockSpecs = blockNoteSchema.blockSpecs;
+    expect(blockSpecs).toHaveProperty("latex");
   });
 
   it("should include default blocks that are not filtered", () => {

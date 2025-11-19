@@ -14,6 +14,11 @@ jest.mock("@blocknote/core", () => ({
   Block: jest.fn(),
   BlockNoteEditor: jest.fn(),
   PartialBlock: jest.fn(),
+  createStyleSpec: jest.fn((config, spec) => ({
+    type: config.type,
+    propSchema: config.propSchema,
+    ...spec,
+  })),
 }));
 
 jest.mock("@/components/ui/blocknote/blocks/callout-block", () => ({
@@ -35,6 +40,10 @@ jest.mock(
   }),
 );
 
+jest.mock("@/components/ui/blocknote/blocks/latex-block", () => ({
+  LatexBlock: jest.fn(() => ({ type: "latex" })),
+}));
+
 jest.mock("next-themes", () => ({
   useTheme: jest.fn(() => ({
     resolvedTheme: "light",
@@ -45,11 +54,25 @@ jest.mock("@blocknote/react", () => ({
   useCreateBlockNote: jest.fn(() => ({
     document: [],
     onChange: jest.fn(),
+    dictionary: {},
   })),
   SuggestionMenuController: ({ children }: any) => (
     <div data-testid="suggestion-menu">{children}</div>
   ),
+  FormattingToolbarController: ({ children }: any) => (
+    <div data-testid="formatting-toolbar-controller">{children}</div>
+  ),
+  FormattingToolbar: ({ children }: any) => (
+    <div data-testid="formatting-toolbar">{children}</div>
+  ),
   getDefaultReactSlashMenuItems: jest.fn(() => []),
+  blockTypeSelectItems: jest.fn(() => []),
+  getFormattingToolbarItems: jest.fn((items) => items),
+  createReactBlockSpec: jest.fn((config, spec) => ({
+    type: config.type,
+    propSchema: config.propSchema,
+    ...spec,
+  })),
 }));
 
 jest.mock("@blocknote/mantine", () => ({
@@ -61,9 +84,24 @@ jest.mock("@blocknote/mantine", () => ({
 jest.mock("@/components/ui/blocknote/editor/slash-menu-config", () => ({
   getCalloutSlashMenuItems: jest.fn(() => []),
   getQuizSlashMenuItems: jest.fn(() => []),
+  getLatexSlashMenuItems: jest.fn(() => []),
 }));
 
 jest.mock("@/components/ui/blocknote/editor/custom-blocknote.css", () => ({}));
+
+// Mock Dialog component to avoid importing BlockNote's FloatingComposer
+jest.mock("@/components/ui/dialog", () => ({
+  Dialog: jest.fn(),
+  DialogContent: jest.fn(),
+  DialogTitle: jest.fn(),
+  DialogHeader: jest.fn(),
+  DialogFooter: jest.fn(),
+}));
+
+// Mock latex-block after other mocks
+jest.mock("@/components/ui/blocknote/blocks/latex-block", () => ({
+  LatexBlock: jest.fn(() => ({ type: "latex" })),
+}));
 
 import { render, screen, waitFor } from "@testing-library/react";
 import { BlockNoteEditorClient } from "@/components/draft/lesson/blocknote-editor-client";
@@ -80,6 +118,9 @@ describe("BlockNoteEditorClient", () => {
 
     expect(screen.getByTestId("blocknote-view")).toBeInTheDocument();
     expect(screen.getByTestId("suggestion-menu")).toBeInTheDocument();
+    expect(
+      screen.getByTestId("formatting-toolbar-controller"),
+    ).toBeInTheDocument();
   });
 
   it("should render with initial content", () => {

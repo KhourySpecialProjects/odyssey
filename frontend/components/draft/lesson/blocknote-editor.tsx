@@ -3,6 +3,7 @@
 import dynamic from "next/dynamic";
 import "@blocknote/core/fonts/inter.css";
 import "@blocknote/mantine/style.css";
+import "katex/dist/katex.min.css";
 
 interface BlockNoteEditorProps {
   initialContent?: any;

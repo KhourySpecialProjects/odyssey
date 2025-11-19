@@ -23,6 +23,7 @@ interface GenericBlockRendererProps {
   setExpanded: (expanded: boolean) => void;
   activeBlock: number;
   setActiveBlock: (id: number) => void;
+  author?: boolean;
 }
 
 interface EnlargedImage {
@@ -41,6 +42,7 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
   setExpanded,
   activeBlock,
   setActiveBlock,
+  author = false,
 }) => {
   const contentRef = useRef<HTMLDivElement>(null);
   const popupRef = useRef<{
@@ -615,7 +617,7 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
 
   return (
     <div>
-      {enrollmentId && (
+      {enrollmentId && !author && (
         <HighlightDropdown
           selectedColor={selectedColor}
           handleApplyColor={handleApplyColor}

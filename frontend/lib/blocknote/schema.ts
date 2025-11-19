@@ -5,26 +5,18 @@ import {
   BlockNoteEditor as CoreBlockNoteEditor,
   BlockNoteSchema,
   PartialBlock,
+  createStyleSpec,
   defaultBlockSpecs,
   defaultStyleSpecs,
 } from "@blocknote/core";
+import katex from "katex";
 import { Callout } from "@/components/ui/blocknote/blocks/callout-block";
 import { TrueFalseQuiz } from "@/components/ui/blocknote/blocks/quiz-true-false-block";
 import { OpenEndedQuiz } from "@/components/ui/blocknote/blocks/quiz-open-ended-block";
 import { MultipleChoiceQuiz } from "@/components/ui/blocknote/blocks/quiz-multiple-choice-block";
+import { LatexBlock } from "@/components/ui/blocknote/blocks/latex-block";
 
-// Exclude specific block types from the block type selector dropdown
-// Available block types: paragraph, heading, bulletListItem, numberedListItem,
-// toggleListItem, checklistItem, codeBlock, image, video, table, quote, etc.
-// Add block type names to this array to remove them from the dropdown
-const blockTypesToHide = new Set([
-  "quote", // Quote block (also prevents Tab key from inserting quotes)
-  "toggleListItem", // Toggle List
-  "checklistItem", // Check List
-  // "heading",      // Uncomment to hide all headings (H1-H6)
-  // "bulletListItem", // Uncomment to hide Bullet List
-  // "numberedListItem", // Uncomment to hide Numbered List
-]);
+const blockTypesToHide = new Set(["quote", "toggleListItem", "checklistItem"]);
 
 // Filter out unwanted block types from default specs
 const filteredBlockSpecs = Object.fromEntries(
@@ -45,6 +37,90 @@ const filteredStyleSpecs = Object.fromEntries(
   Object.entries(defaultStyleSpecs).filter(([key]) => !stylesToHide.has(key)),
 );
 
+const latexStyleSpec = createStyleSpec(
+  {
+    type: "latex",
+    propSchema: "boolean",
+  },
+  {
+    render: () => {
+      const wrapper = document.createElement("span");
+      wrapper.classList.add("bn-inline-latex");
+
+      const editable = document.createElement("span");
+      editable.classList.add("bn-inline-latex-input");
+      editable.setAttribute("data-editable", "true");
+
+      const preview = document.createElement("span");
+      preview.classList.add("bn-inline-latex-preview");
+      preview.setAttribute("aria-hidden", "true");
+
+      const renderPreview = () => {
+        const latex = editable.textContent ?? "";
+        if (!latex.trim()) {
+          preview.innerHTML = "";
+          wrapper.classList.remove("bn-inline-latex--error");
+          return;
+        }
+        try {
+          katex.render(latex, preview, {
+            throwOnError: false,
+            displayMode: false,
+          });
+          wrapper.classList.remove("bn-inline-latex--error");
+        } catch (error) {
+          preview.textContent = latex;
+          wrapper.classList.add("bn-inline-latex--error");
+        }
+      };
+
+      const observer = new MutationObserver(renderPreview);
+      observer.observe(editable, {
+        characterData: true,
+        childList: true,
+        subtree: true,
+      });
+
+      const handleInput = () => renderPreview();
+      const handleFocus = () =>
+        wrapper.classList.add("bn-inline-latex--editing");
+      const handleBlur = () =>
+        wrapper.classList.remove("bn-inline-latex--editing");
+      const handlePreviewMouseDown = (event: MouseEvent) => {
+        event.preventDefault();
+        editable.focus();
+      };
+
+      editable.addEventListener("input", handleInput);
+      editable.addEventListener("focus", handleFocus);
+      editable.addEventListener("blur", handleBlur);
+      preview.addEventListener("mousedown", handlePreviewMouseDown);
+
+      renderPreview();
+
+      wrapper.appendChild(editable);
+      wrapper.appendChild(preview);
+
+      return {
+        dom: wrapper,
+        contentDOM: editable,
+        destroy: () => {
+          observer.disconnect();
+          editable.removeEventListener("input", handleInput);
+          editable.removeEventListener("focus", handleFocus);
+          editable.removeEventListener("blur", handleBlur);
+          preview.removeEventListener("mousedown", handlePreviewMouseDown);
+        },
+      };
+    },
+  },
+);
+
+const customStyleSpecs = {
+  ...filteredStyleSpecs,
+  latex: latexStyleSpec,
+};
+
 export const blockNoteSchema = BlockNoteSchema.create({
   blockSpecs: {
     ...filteredBlockSpecs,
@@ -52,8 +128,9 @@ export const blockNoteSchema = BlockNoteSchema.create({
     "quiz-true-false": TrueFalseQuiz(),
     "quiz-open-ended": OpenEndedQuiz(),
     "quiz-multiple-choice": MultipleChoiceQuiz(),
+    latex: LatexBlock(),
   },
-  styleSpecs: filteredStyleSpecs,
+  styleSpecs: customStyleSpecs,
 });
 
 export type CustomBlockSchema = typeof blockNoteSchema.blockSchema;

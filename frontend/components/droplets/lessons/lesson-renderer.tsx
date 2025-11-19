@@ -31,6 +31,8 @@ import type { Block as BlockNoteBlock } from "@blocknote/core";
 import { GenericBlock } from "@/components/draft/lesson/blocks/generic";
 import { markLessonAsComplete } from "@/lib/requests/lesson";
 import posthog from "posthog-js";
+import katex from "katex";
+import "katex/dist/katex.min.css";
 
 interface LessonRendererProps {
   lesson: Lesson;
@@ -59,19 +61,33 @@ interface HighlightResponseItem {
   };
 }
 
+function renderTextWithStyles(
+  text: string,
+  styles?: Record<string, any>,
+): string {
+  if (!styles) return text;
+
+  if (styles.latex) {
+    return `$${text}$`;
+  }
+
+  let styledText = text;
+  if (styles.bold) styledText = `<strong>${styledText}</strong>`;
+  if (styles.italic) styledText = `<em>${styledText}</em>`;
+  if (styles.underline) styledText = `<u>${styledText}</u>`;
+  if (styles.code) styledText = `<code>${styledText}</code>`;
+
+  return styledText;
+}
+
 // Helper function to convert inline content to HTML
 function convertInlineContentToHtml(inlineContent: any[]): string {
   return (
     inlineContent
       .map((contentItem: any) => {
         if (contentItem.type === "text") {
-          let text = contentItem.text ?? "";
-          // Apply styles
-          if (contentItem.styles?.bold) text = `<strong>${text}</strong>`;
-          if (contentItem.styles?.italic) text = `<em>${text}</em>`;
-          if (contentItem.styles?.underline) text = `<u>${text}</u>`;
-          if (contentItem.styles?.code) text = `<code>${text}</code>`;
-          return text;
+          const text = contentItem.text ?? "";
+          return renderTextWithStyles(text, contentItem.styles);
         }
         return "";
       })
@@ -84,8 +100,6 @@ function convertNumberedListItem(item: any, depth: number = 0): string {
   const inlineContent = (item.content ?? []) as any[];
   const textContent = convertInlineContentToHtml(inlineContent);
 
-  // Check if this item has children (nested list items)
-  // BlockNote stores nested items in the children array
   const children = (item.children ?? []) as any[];
 
   // Filter for numbered list items and also check for any blocks that might represent nested lists
@@ -93,8 +107,6 @@ function convertNumberedListItem(item: any, depth: number = 0): string {
     (child: any) => child.type === "numberedListItem",
   );
 
-  // Also check if there are any other blocks that might be nested (like paragraphs containing lists)
-  // Sometimes BlockNote might wrap nested content differently
   let nestedListHtml = "";
   if (nestedListItems.length > 0) {
     // Recursively convert nested list items
@@ -103,8 +115,6 @@ function convertNumberedListItem(item: any, depth: number = 0): string {
       .join("");
     nestedListHtml = `<ol class="list-decimal list-outside ml-6 my-1">${nestedListContent}</ol>`;
   } else if (children.length > 0) {
-    // If there are children but they're not numbered list items, check if they contain nested lists
-    // This handles cases where BlockNote might wrap nested items in paragraph blocks
     const allChildrenContent = children
       .map((child: any) => {
         if (child.type === "numberedListItem") {
@@ -142,8 +152,6 @@ function convertBulletListItem(item: any, depth: number = 0): string {
     (child: any) => child.type === "bulletListItem",
   );
 
-  // Also check if there are any other blocks that might be nested (like paragraphs containing lists)
-  // Sometimes BlockNote might wrap nested content differently
   let nestedListHtml = "";
   if (nestedListItems.length > 0) {
     // Recursively convert nested list items
@@ -152,8 +160,6 @@ function convertBulletListItem(item: any, depth: number = 0): string {
       .join("");
     nestedListHtml = `<ul class="list-disc list-outside ml-6 my-1">${nestedListContent}</ul>`;
   } else if (children.length > 0) {
-    // If there are children but they're not bullet list items, check if they contain nested lists
-    // This handles cases where BlockNote might wrap nested items in paragraph blocks
     const allChildrenContent = children
       .map((child: any) => {
         if (child.type === "bulletListItem") {
@@ -180,10 +186,6 @@ function convertBulletListItem(item: any, depth: number = 0): string {
 function convertBlockNoteToV1Blocks(blocksV2: BlockNoteBlock[]): Block[] {
   if (!Array.isArray(blocksV2)) return [];
 
-  // Debug: Log the block structure to understand how nested lists are stored
-  // Uncomment this to debug nested list structure:
-  // console.log("BlockNote blocks structure:", JSON.stringify(blocksV2, null, 2));
-
   // First, group consecutive numbered list items together
   const processedBlocks: Block[] = [];
   let i = 0;
@@ -191,7 +193,7 @@ function convertBlockNoteToV1Blocks(blocksV2: BlockNoteBlock[]): Block[] {
   while (i < blocksV2.length) {
     const blockAny = blocksV2[i] as any;
 
-    // Skip quote blocks (they shouldn't exist but handle them gracefully)
+    // Skip quote blocks
     if (blockAny.type === "quote") {
       // Convert quote to paragraph to avoid losing content
       const quoteContent = (blockAny.content ?? []) as any[];
@@ -294,21 +296,7 @@ function convertSingleBlock(blockAny: any, blockIndex: number): Block | null {
     case "heading":
     case "paragraph": {
       const inlineContent = (blockAny.content ?? []) as any[];
-      const textContent =
-        inlineContent
-          .map((item: any) => {
-            if (item.type === "text") {
-              let text = item.text ?? "";
-              // Apply styles
-              if (item.styles?.bold) text = `<strong>${text}</strong>`;
-              if (item.styles?.italic) text = `<em>${text}</em>`;
-              if (item.styles?.underline) text = `<u>${text}</u>`;
-              if (item.styles?.code) text = `<code>${text}</code>`;
-              return text;
-            }
-            return "";
-          })
-          .join("") || "";
+      const textContent = convertInlineContentToHtml(inlineContent);
 
       const headingLevel = Number(blockAny.props?.level) || 1;
       const htmlContent =
@@ -335,10 +323,7 @@ function convertSingleBlock(blockAny: any, blockIndex: number): Block | null {
       };
 
       const calloutContent = (blockAny.content ?? []) as any[];
-      const calloutText =
-        calloutContent
-          .map((item: any) => (item.type === "text" ? item.text ?? "" : ""))
-          .join("") || "";
+      const calloutText = convertInlineContentToHtml(calloutContent);
 
       return {
         __component: "droplets.callout",
@@ -451,6 +436,40 @@ function convertSingleBlock(blockAny: any, blockIndex: number): Block | null {
       };
     }
 
+    case "latex": {
+      // Convert LaTeX block to generic block with rendered LaTeX
+      const latexContent = blockAny.props?.content || "";
+      const isDisplayMode = blockAny.props?.displayMode || false;
+
+      if (!latexContent) {
+        return null;
+      }
+
+      try {
+        const rendered = katex.renderToString(latexContent, {
+          throwOnError: false,
+          displayMode: isDisplayMode,
+        });
+
+        const wrapperClass = isDisplayMode
+          ? "my-4 flex justify-center"
+          : "inline-block";
+
+        return {
+          __component: "droplets.generic",
+          id: blockIndex,
+          content: `<div class="${wrapperClass}">${rendered}</div>`,
+        };
+      } catch (e) {
+        // Fallback: show raw LaTeX if rendering fails
+        return {
+          __component: "droplets.generic",
+          id: blockIndex,
+          content: `<div class="rounded bg-red-50 p-2 text-red-600 dark:bg-red-900/20 dark:text-red-400 font-mono text-sm">LaTeX Error: ${latexContent}</div>`,
+        };
+      }
+    }
+
     case "table": {
       const tableContent = blockAny.content;
       if (!tableContent || !tableContent.rows) {
@@ -461,19 +480,7 @@ function convertSingleBlock(blockAny: any, blockIndex: number): Block | null {
         const cells = row.cells
           .map((cell: any) => {
             const cellContent = (cell.content ?? []) as any[];
-            const cellText = cellContent
-              .map((item: any) => {
-                if (item.type === "text") {
-                  let text = item.text ?? "";
-                  if (item.styles?.bold) text = `<strong>${text}</strong>`;
-                  if (item.styles?.italic) text = `<em>${text}</em>`;
-                  if (item.styles?.underline) text = `<u>${text}</u>`;
-                  if (item.styles?.code) text = `<code>${text}</code>`;
-                  return text;
-                }
-                return "";
-              })
-              .join("");
+            const cellText = convertInlineContentToHtml(cellContent);
 
             const tag = rowIndex === 0 ? "th" : "td";
             const cellClasses =
@@ -783,6 +790,7 @@ export function LessonRenderer({
               setExpanded={setExpanded}
               activeBlock={activeBlock}
               setActiveBlock={(id: number) => setActiveBlock(id)}
+              author={author}
             />
           ))}
         </div>
@@ -825,6 +833,7 @@ function LessonBlockRenderer({
   setExpanded,
   activeBlock,
   setActiveBlock,
+  author,
 }: {
   block: any;
   lessonId: number;
@@ -841,6 +850,7 @@ function LessonBlockRenderer({
   setExpanded: (expanded: boolean) => void;
   activeBlock: number;
   setActiveBlock: (id: number) => void;
+  author: boolean;
 }) {
   switch (block.__component) {
     case "droplets.generic":
@@ -856,6 +866,7 @@ function LessonBlockRenderer({
           setExpanded={setExpanded}
           activeBlock={activeBlock}
           setActiveBlock={setActiveBlock}
+          author={author}
         />
       );
 

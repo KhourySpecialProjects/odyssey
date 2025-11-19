@@ -15,6 +15,7 @@ import {
   ToggleLeft,
   FileText,
   LayoutList,
+  TypeIcon,
 } from "lucide-react";
 
 const createCalloutItem = (
@@ -169,5 +170,39 @@ export const getQuizSlashMenuItems = (
     aliases: ["multiple choice", "mc", "quiz mc", "mcq"],
     group: "Quizzes",
     subtext: "Create a multiple choice question",
+  },
+];
+
+export const getLatexSlashMenuItems = (
+  editor: CustomBlockNoteEditor,
+): DefaultReactSuggestionItem[] => [
+  {
+    title: "LaTeX",
+    icon: createElement(TypeIcon, { className: "h-4 w-4" }),
+    onItemClick: () => {
+      // Insert a new LaTeX block
+      const currentBlock = editor.getTextCursorPosition().block;
+      editor.insertBlocks(
+        [
+          {
+            type: "latex",
+            props: {
+              content: "",
+              displayMode: false,
+            },
+          },
+        ],
+        currentBlock,
+        "after",
+      );
+      
+      // Open the edit dialog immediately
+      // We'll need to trigger the edit dialog programmatically
+      // For now, the block will render with an Edit button
+      // The user can click Edit to open the dialog
+    },
+    aliases: ["latex", "math", "formula", "equation"],
+    group: "Math",
+    subtext: "Insert LaTeX math formula block",
   },
 ];
