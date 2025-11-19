@@ -88,31 +88,22 @@ export default function BlockTile({
               />
             );
           case "droplets.quiz":
-            return (
-              <QuizEditor
-                block={{
-                  ...(props.block as QuizBlock),
-                  questions:
-                    ((props.block as QuizBlock).questions as QuizQuestion[]) ||
-                    [],
-                }}
-                updateBlock={props.updateBlock}
-                deleteBlock={props.deleteBlock}
-              />
-            );
-          case "droplets.open-ended-quiz":
-            return (
-              <OpenEndedQuizEditor
-                block={{
-                  ...(props.block as OpenEndedQuizBlock),
-                  questions:
-                    ((props.block as OpenEndedQuizBlock)
-                      .questions as OpenEndedQuizQuestion[]) || [],
-                }}
-                updateBlock={props.updateBlock}
-                deleteBlock={props.deleteBlock}
-              />
-            );
+  return (
+    <QuizEditor
+      block={props.block as Extract<Block, { __component: "droplets.quiz" }>}
+      updateBlock={props.updateBlock}
+      deleteBlock={props.deleteBlock}
+    />
+  );
+
+case "droplets.open-ended-quiz":
+  return (
+    <OpenEndedQuizEditor
+      block={props.block as Extract<Block, { __component: "droplets.open-ended-quiz" }>}
+      updateBlock={props.updateBlock}
+      deleteBlock={props.deleteBlock}
+    />
+  );
           default:
             return null;
         }

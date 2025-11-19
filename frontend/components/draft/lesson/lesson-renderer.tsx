@@ -162,24 +162,15 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
   };
 
   const setBlock = useCallback((index: number) => {
-    return (block: Partial<Block>) => {
-      setBlocks((prevBlocks) =>
-        prevBlocks.map((b, i) => {
-          if (i !== index) return b;
-          if (b.__component === "droplets.quiz" && "questions" in block) {
-            return { ...b, ...block } as QuizBlock;
-          }
-          if (
-            b.__component === "droplets.open-ended-quiz" &&
-            "questions" in block
-          ) {
-            return { ...b, ...block } as OpenEndedQuizBlock;
-          }
-          return { ...b, ...block } as Block;
-        }),
-      );
-    };
-  }, []);
+  return (block: Partial<Block>) => {
+    setBlocks((prevBlocks) =>
+      prevBlocks.map((b, i) => {
+        if (i !== index) return b;
+        return { ...b, ...block } as Block;
+      }),
+    );
+  };
+}, []);
 
   const deleteLessonBackend = useCallback(async () => {
     const response = await getDropletBySlug(dropletSlug).then((droplet) =>

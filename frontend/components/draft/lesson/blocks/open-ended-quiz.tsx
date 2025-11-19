@@ -6,13 +6,9 @@ import { GenericBlockInput as TipTapEditor } from "@/components/ui/tiptap/generi
 import { useState } from "react";
 import { Block } from "@/types";
 
-interface OpenEndedQuizBlock extends Omit<Block, "questions"> {
-  questions: OpenEndedQuizQuestion[];
-}
-
 interface OpenEndedQuizEditorProps {
-  block: OpenEndedQuizBlock;
-  updateBlock: (block: Partial<OpenEndedQuizBlock>) => void;
+  block: Extract<Block, { __component: "droplets.open-ended-quiz" }>;
+  updateBlock: (block: Partial<Extract<Block, { __component: "droplets.open-ended-quiz" }>>) => void;
   deleteBlock: () => void;
 }
 

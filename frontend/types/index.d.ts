@@ -115,15 +115,17 @@ export type GeneralConfig = {
 };
 
 export type Block =
-  | { __component: "droplets.generic"; content: string }
-  | { __component: "droplets.expandable"; title: string; content: string }
+  | { __component: "droplets.generic"; content: string; id?: number; _clientId?: string; }
+  | { __component: "droplets.expandable"; title: string; content: string; id?: number; _clientId?: string; }
   | {
       __component: "droplets.callout";
       content: { type: string; children: { type: string; text: string }[] }[];
       color: string;
       type: string;
+      id?: number;
+      _clientId?: string;
     }
-  | { __component: "droplets.video"; url: string }
+  | { __component: "droplets.video"; url: string; id?: number; _clientId?: string; }
   | {
       __component: "droplets.quiz";
       questions: {
@@ -131,10 +133,14 @@ export type Block =
         content: string;
         answerOptions: { id: number; content: string; isCorrect: boolean }[];
       }[];
+      id?: number;
+      _clientId?: string;
     }
   | {
       __component: "droplets.open-ended-quiz";
       questions: { id: number; content: string; correctAnswer: string }[];
+      id?: number;
+      _clientId?: string;
     };
 
 export type Lesson = {
