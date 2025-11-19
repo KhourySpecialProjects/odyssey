@@ -724,7 +724,9 @@ export function LessonRenderer({
     });
 
   const [canProceed, setCanProceed] = useState(false);
-const [activeBlock, setActiveBlock] = useState<number | undefined>(displayBlocks[0]?.id);
+  const [activeBlock, setActiveBlock] = useState<number | undefined>(
+    displayBlocks[0]?.id,
+  );
 
   useEffect(() => {
     const checkQuizAnswers = () => {
