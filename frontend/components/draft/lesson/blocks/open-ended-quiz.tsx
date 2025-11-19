@@ -8,7 +8,9 @@ import { Block } from "@/types";
 
 interface OpenEndedQuizEditorProps {
   block: Extract<Block, { __component: "droplets.open-ended-quiz" }>;
-  updateBlock: (block: Partial<Extract<Block, { __component: "droplets.open-ended-quiz" }>>) => void;
+  updateBlock: (
+    block: Partial<Extract<Block, { __component: "droplets.open-ended-quiz" }>>,
+  ) => void;
   deleteBlock: () => void;
 }
 

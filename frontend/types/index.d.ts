@@ -115,8 +115,19 @@ export type GeneralConfig = {
 };
 
 export type Block =
-  | { __component: "droplets.generic"; content: string; id?: number; _clientId?: string; }
-  | { __component: "droplets.expandable"; title: string; content: string; id?: number; _clientId?: string; }
+  | {
+      __component: "droplets.generic";
+      content: string;
+      id?: number;
+      _clientId?: string;
+    }
+  | {
+      __component: "droplets.expandable";
+      title: string;
+      content: string;
+      id?: number;
+      _clientId?: string;
+    }
   | {
       __component: "droplets.callout";
       content: { type: string; children: { type: string; text: string }[] }[];
@@ -125,7 +136,12 @@ export type Block =
       id?: number;
       _clientId?: string;
     }
-  | { __component: "droplets.video"; url: string; id?: number; _clientId?: string; }
+  | {
+      __component: "droplets.video";
+      url: string;
+      id?: number;
+      _clientId?: string;
+    }
   | {
       __component: "droplets.quiz";
       questions: {

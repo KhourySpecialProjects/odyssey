@@ -162,15 +162,15 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
   };
 
   const setBlock = useCallback((index: number) => {
-  return (block: Partial<Block>) => {
-    setBlocks((prevBlocks) =>
-      prevBlocks.map((b, i) => {
-        if (i !== index) return b;
-        return { ...b, ...block } as Block;
-      }),
-    );
-  };
-}, []);
+    return (block: Partial<Block>) => {
+      setBlocks((prevBlocks) =>
+        prevBlocks.map((b, i) => {
+          if (i !== index) return b;
+          return { ...b, ...block } as Block;
+        }),
+      );
+    };
+  }, []);
 
   const deleteLessonBackend = useCallback(async () => {
     const response = await getDropletBySlug(dropletSlug).then((droplet) =>
