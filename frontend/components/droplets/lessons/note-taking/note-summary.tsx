@@ -47,7 +47,7 @@ export async function NoteSummary({
   };
 
   const calculateLines = (text: string, maxWidth: number, fontSize: number) => {
-    const avgCharWidth = fontSize * 0.4;
+    const avgCharWidth = fontSize * 0.45;
     const words = text.split(" ");
     let currentLineWidth = 0;
     let lineCount = 1;
@@ -78,7 +78,7 @@ export async function NoteSummary({
     const lines = calculateLines(text, maxWidth, fontSize);
     const lineHeight = fontSize * 1.8;
     const totalHeight = lines * lineHeight;
-
+    text = text.replace(/\n+/g, " ");
     if (!hasTextBelow) {
       page.drawLine({
         start: { x: 70, y: y - totalHeight + 5 },
@@ -233,7 +233,7 @@ export async function NoteSummary({
             90,
             yPosition,
             12,
-            400,
+            475,
             hasContent,
             { r, g, b },
           );
