@@ -1,7 +1,6 @@
 const { flattenAttributes } = require("../../lib/utils");
 const {
   fetchFriends,
-  getSentRequest,
   getSentRequestIds,
   acceptFriendRequest,
   rejectFriendRequest,
@@ -289,68 +288,6 @@ describe("Friends tests", () => {
       global.fetch.mockRejectedValueOnce(new Error("Network error"));
 
       await expect(fetchFriends(mockUser)).rejects.toThrow(
-        "Failed to fetch friends data.",
-      );
-    });
-  });
-
-  describe("getSentRequest", () => {
-    it("should return true if a friend request has been sent", async () => {
-      const requester = { id: 5, email: "test.user@northeastern.edu" };
-      const requestee = { id: 6, email: "friend.one@northeastern.edu" };
-
-      const mockStrapiResponse = {
-        data: [{ id: 5 }],
-      };
-
-      global.fetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => mockStrapiResponse,
-      });
-
-      flattenAttributes.mockImplementationOnce((data) => data);
-
-      const result = await getSentRequest(requester, requestee);
-
-      expect(global.fetch).toHaveBeenCalledWith(
-        expect.stringMatching(/\/api\/authorized-users\?/),
-        expect.objectContaining({
-          headers: expect.objectContaining({
-            Authorization: expect.stringContaining("Bearer"),
-          }),
-          cache: "no-store",
-        }),
-      );
-
-      expect(result).toBe(true);
-    });
-
-    it("should return false if no friend request has been sent", async () => {
-      const requester = { id: 5, email: "test.user@northeastern.edu" };
-      const requestee = { id: 6, email: "friend.one@northeastern.edu" };
-
-      const mockStrapiResponse = {
-        data: [],
-      };
-
-      global.fetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => mockStrapiResponse,
-      });
-
-      flattenAttributes.mockImplementationOnce((data) => data);
-
-      const result = await getSentRequest(requester, requestee);
-
-      expect(result).toBe(false);
-    });
-
-    it("should handle fetch errors", async () => {
-      const requester = { id: 5 };
-      const requestee = { id: 6 };
-      global.fetch.mockRejectedValueOnce(new Error("Network error"));
-
-      await expect(getSentRequest(requester, requestee)).rejects.toThrow(
         "Failed to fetch friends data.",
       );
     });
@@ -1311,27 +1248,6 @@ describe("Friends tests", () => {
         await expect(fetchFriends(mockUser)).rejects.toThrow(
           "Failed to fetch friends data",
         );
-      });
-    });
-
-    describe("getSentRequest", () => {
-      it("checks if request was sent", async () => {
-        const mockResponse = {
-          data: [
-            {
-              id: 1,
-              attributes: {},
-            },
-          ],
-        };
-
-        global.fetch.mockResolvedValueOnce({
-          ok: true,
-          json: () => Promise.resolve(mockResponse),
-        });
-
-        const result = await getSentRequest(mockUser, mockUser);
-        expect(result).toBe(true);
       });
     });
 

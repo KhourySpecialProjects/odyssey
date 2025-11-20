@@ -467,7 +467,7 @@ export async function fetchAnnouncementById(id: number) {
         },
       },
       pagination: {
-        pageSize: 100,
+        pageSize: 1,
         page: 1,
       },
     });
