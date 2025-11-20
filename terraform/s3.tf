@@ -29,9 +29,9 @@
 
   resource "aws_s3_bucket_public_access_block" "prod_data" {
     bucket                  = aws_s3_bucket.prod_data.id
-    block_public_acls       = false
+    block_public_acls       = true
     block_public_policy     = false
-    ignore_public_acls      = false
+    ignore_public_acls      = true
     restrict_public_buckets = false
   }
 
@@ -41,22 +41,24 @@
     Version = "2012-10-17",
     Statement = [
       {
-        Sid: "AllowPublicRead"
+        "Sid": "AllowPublicRead"
         Effect = "Allow"
         Principal = "*"
         Action = "s3:GetObject"
-        Resource = "arn:aws:s3:::odyssey-prod-bucket/*"
+        Resource = "${aws_s3_bucket.prod_data.arn}/*"
       }
     ]
   })
   }
+
+  # arn:aws:s3:::odyssey-prod-bucket/*
 
   resource "aws_s3_bucket_cors_configuration" "cors_config" {
   bucket = aws_s3_bucket.prod_data.id
   cors_rule {
     allowed_headers = ["*"] 
     allowed_methods = ["GET", "POST", "PUT", "DELETE", "HEAD"] 
-    allowed_origins = ["http://localhost:1337"] 
+    allowed_origins = [var.cors_allowed_origin] 
     expose_headers  = [] 
     max_age_seconds = 3000 
     id              = "my-cors-rule-1"
