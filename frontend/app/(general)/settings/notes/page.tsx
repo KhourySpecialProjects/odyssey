@@ -100,8 +100,9 @@ export default async function DropletRecapRoute({ params }: Props) {
             authUser.id,
             enrollment.droplet.id,
           );
-          console.log("Fetched notes:", dropletNotes);
-          console.log("Fetched highlights:", dropletHighlights);
+          // console.log(`Enrollment ${enrollment.id}, Droplet ${enrollment.droplet.id}: ${dropletHighlights.length} highlights found`);
+          // console.log(`Lessons in droplet: ${enrollment.droplet.lessons?.map(l => l.id).join(', ')}`);
+          
           return {
             dropletId: enrollment.droplet.id,
             notes: dropletNotes,
@@ -121,7 +122,6 @@ export default async function DropletRecapRoute({ params }: Props) {
     for (let i = 0; i < enrollments.length; i++) {
       const enrollment = enrollments[i];
       const dropletData = allNotes[i];
-
       const sectionPdfBytes = await NoteSummary({
         filteredHighlights: dropletData?.highlights || [],
         notes: dropletData?.notes || [],
