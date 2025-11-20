@@ -84,3 +84,15 @@ variable "database_password" {
   type        = string
   sensitive   = true
 }
+
+variable "prod_data_bucket_name" {
+  description = "S3 bucket for prod"
+  type        = string
+  default = "odyssey-prod-bucket"
+}
+
+variable "cors_allowed_origin" {
+  description = "Allowed origin for CORS requests"
+  type = string
+  default = "http://localhost:1337"
+}

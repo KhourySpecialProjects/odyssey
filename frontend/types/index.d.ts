@@ -186,6 +186,7 @@ export type Droplet = {
   postrequisites?: Droplet[];
   isHidden: boolean;
   status: DropletStatus;
+  originalDropletId?: number;
   authorized_users?: AuthorizedUser[];
   isArchived?: boolean;
   inReview?: boolean;

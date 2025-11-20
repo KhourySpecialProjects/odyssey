@@ -170,7 +170,11 @@ describe("Droplet API Functions", () => {
         urlParams: expect.objectContaining({
           filters: {},
           populate: { "*": true },
-          fields: ["*", "isHidden"],
+          fields: expect.arrayContaining([
+            "*",
+            "isHidden",
+            "originalDropletId",
+          ]),
         }),
       });
       expect(result).toEqual(mockDroplet);
