@@ -282,7 +282,10 @@ function convertBlockNoteToV1Blocks(blocksV2: BlockNoteBlock[]): Block[] {
     }
 
     // For non-numbered-list blocks, process normally
-    processedBlocks.push(convertSingleBlock(blockAny, i));
+    const convertedBlock = convertSingleBlock(blockAny, i);
+    if (convertedBlock !== null) {
+      processedBlocks.push(convertedBlock);
+    }
     i++;
   }
 
@@ -721,7 +724,9 @@ export function LessonRenderer({
     });
 
   const [canProceed, setCanProceed] = useState(false);
-  const [activeBlock, setActiveBlock] = useState(displayBlocks[0]?.id);
+  const [activeBlock, setActiveBlock] = useState<number | undefined>(
+    displayBlocks[0]?.id,
+  );
 
   useEffect(() => {
     const checkQuizAnswers = () => {
@@ -839,7 +844,7 @@ function LessonBlockRenderer({
   enrollmentId: string | undefined;
   expanded: boolean;
   setExpanded: (expanded: boolean) => void;
-  activeBlock: number;
+  activeBlock: number | undefined;
   setActiveBlock: (id: number) => void;
 }) {
   switch (block.__component) {

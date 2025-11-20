@@ -1,20 +1,13 @@
-import { QuizQuestion } from "@/types";
+import { Block, QuizQuestion } from "@/types";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { PlusIcon, Trash2Icon } from "lucide-react";
 import { QuizQuestionEditor } from "./quiz-question-editor";
 
 interface QuizEditorProps {
-  block: Block;
+  block: Extract<Block, { __component: "droplets.quiz" }>;
   updateBlock: (block: Partial<Block>) => void;
   deleteBlock: () => void;
-}
-
-interface Block {
-  __component: string;
-  content?: string;
-  id?: number;
-  questions?: QuizQuestion[];
 }
 
 export function QuizEditor({
