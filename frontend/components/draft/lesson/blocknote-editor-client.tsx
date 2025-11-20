@@ -36,6 +36,12 @@ export function BlockNoteEditorClient({
   const editor = useCreateBlockNote({
     schema: blockNoteSchema,
     initialContent: initialContent || undefined,
+    tables: {
+      splitCells: false,
+      cellBackgroundColor: true,
+      headers: false,
+      cellTextColor: false,
+    },
   });
 
   useEffect(() => {
@@ -84,7 +90,6 @@ export function BlockNoteEditorClient({
   const itemsToHide = new Set([
     "Quote",
     "Divider",
-    "Table",
     "Audio",
     "Code Block",
     "File",

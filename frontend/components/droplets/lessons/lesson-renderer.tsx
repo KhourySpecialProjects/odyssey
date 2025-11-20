@@ -10,7 +10,7 @@ import { User, Droplet, Lesson, AuthorizedUser } from "@/types";
 import { BlocksRenderer } from "@strapi/blocks-react-renderer";
 import { ArrowDownFromLineIcon } from "lucide-react";
 import { QuizBlock } from "./quiz";
-import GenericBlockRenderer from "./GenericBlockRenderer";
+import GenericBlockRenderer from "./generic-block-renderer";
 import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { LockIcon } from "lucide-react";
@@ -88,6 +88,20 @@ function convertInlineContentToHtml(inlineContent: any[]): string {
         if (contentItem.type === "text") {
           const text = contentItem.text ?? "";
           return renderTextWithStyles(text, contentItem.styles);
+        }
+        return "";
+      })
+      .join("") || ""
+  );
+}
+
+// Helper function to convert inline content to plain text (for markdown)
+function convertInlineContentToText(inlineContent: any[]): string {
+  return (
+    inlineContent
+      .map((contentItem: any) => {
+        if (contentItem.type === "text") {
+          return contentItem.text ?? "";
         }
         return "";
       })
@@ -476,43 +490,61 @@ function convertSingleBlock(blockAny: any, blockIndex: number): Block | null {
         return null;
       }
 
-      const rows = tableContent.rows.map((row: any, rowIndex: number) => {
-        const cells = row.cells
-          .map((cell: any) => {
-            const cellContent = (cell.content ?? []) as any[];
-            const cellText = convertInlineContentToHtml(cellContent);
+      const hasHeaders = blockAny.props?.headers !== false; // Default to true if not specified
+      const cellBackgroundColors: Record<string, string> = {};
 
-            const tag = rowIndex === 0 ? "th" : "td";
-            const cellClasses =
-              rowIndex === 0
-                ? "px-4 py-2 text-left font-semibold bg-slate-100 dark:bg-slate-700"
-                : "px-4 py-2 border-t border-slate-300 dark:border-slate-600";
-            return `<${tag} class="${cellClasses}">${cellText}</${tag}>`;
-          })
-          .join("");
+      // Convert table to markdown (GFM format)
+      const markdownRows: string[] = [];
 
-        return rowIndex === 0
-          ? `<thead><tr>${cells}</tr></thead>`
-          : `<tr>${cells}</tr>`;
+      tableContent.rows.forEach((row: any, rowIndex: number) => {
+        const cells = row.cells.map((cell: any, cellIndex: number) => {
+          const cellContent = (cell.content ?? []) as any[];
+          const cellText = convertInlineContentToText(cellContent);
+
+          // Store background color if present
+          if (cell.props?.backgroundColor) {
+            const key = `${rowIndex}-${cellIndex}`;
+            cellBackgroundColors[key] = cell.props.backgroundColor;
+          }
+
+          // Escape pipe characters in cell content
+          return cellText.replace(/\|/g, "\\|").trim();
+        });
+
+        markdownRows.push(`| ${cells.join(" | ")} |`);
+
+        // Add separator row after header row
+        if (hasHeaders && rowIndex === 0) {
+          const separator = cells.map(() => "---").join(" | ");
+          markdownRows.push(`| ${separator} |`);
+        }
       });
 
-      const headerRow = rows[0];
-      const bodyRows = rows.slice(1).join("");
+      const tableMarkdown = markdownRows.join("\n");
 
-      // Wrap table in a scrollable container
-      const tableHtml = `
-            <div class="overflow-x-auto -mx-4 md:mx-0">
-              <table class="w-full border-collapse border border-slate-300 dark:border-slate-600 table-fixed">
-                ${headerRow}
-                <tbody>${bodyRows}</tbody>
-              </table>
-            </div>
-          `;
+      // Store table data with a special marker so we can identify it in the renderer
+      // Note: We store both markdown (for future use) and the full HTML data for rendering
+      const tableData = {
+        markdown: tableMarkdown,
+        hasHeaders,
+        cellBackgroundColors,
+        rows: tableContent.rows.map((row: any, rowIndex: number) => ({
+          cells: row.cells.map((cell: any, cellIndex: number) => {
+            const cellContent = (cell.content ?? []) as any[];
+            return {
+              content: convertInlineContentToHtml(cellContent),
+              backgroundColor: cell.props?.backgroundColor || null,
+              rowIndex,
+              cellIndex,
+            };
+          }),
+        })),
+      };
 
       return {
         __component: "droplets.generic",
         id: blockIndex,
-        content: tableHtml,
+        content: `<!--TABLE_START-->${JSON.stringify(tableData)}<!--TABLE_END-->`,
       };
     }
 
