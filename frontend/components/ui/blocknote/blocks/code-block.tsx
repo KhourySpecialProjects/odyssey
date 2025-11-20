@@ -2,8 +2,9 @@
 
 import { createReactBlockSpec } from "@blocknote/react";
 import { useState, useEffect } from "react";
+import React from "react";
 import { Light as SyntaxHighlighter } from "react-syntax-highlighter";
-import { atomOneDark } from "react-syntax-highlighter/dist/esm/styles/hljs"; // Dark theme for hljs
+import { atomOneDark } from "react-syntax-highlighter/dist/esm/styles/hljs";
 // Import languages
 import javascript from "react-syntax-highlighter/dist/esm/languages/hljs/javascript";
 import typescript from "react-syntax-highlighter/dist/esm/languages/hljs/typescript";
@@ -187,15 +188,6 @@ const CodeBlockComponent = ({ block, editor }: any) => {
     setIsMounted(true);
   }, []);
 
-  // Debug log
-  console.log("CodeBlock render:", {
-    isViewMode,
-    isEditable: editor?.isEditable,
-    language: block.props.language,
-    hasCode: !!code,
-    isMounted,
-  });
-
   const handleSave = () => {
     if (!isMounted || !editor) return;
     try {
@@ -205,7 +197,6 @@ const CodeBlockComponent = ({ block, editor }: any) => {
       setIsEditing(false);
     } catch (error) {
       console.error("Error saving code:", error);
-      // Still close the editor even if save fails
       setIsEditing(false);
     }
   };
@@ -385,7 +376,7 @@ const CodeBlockComponent = ({ block, editor }: any) => {
           </div>
         ) : (
           <div className="relative">
-            {/* @ts-expect-error - React 18 type incompatibility with react-syntax-highlighter */}
+            {/* @ts-ignore - SyntaxHighlighter React 18 compatibility */}
             <SyntaxHighlighter
               language={block.props.language}
               style={atomOneDark}
@@ -394,6 +385,7 @@ const CodeBlockComponent = ({ block, editor }: any) => {
                 padding: "1rem",
                 background: "transparent",
               }}
+              PreTag="div"
             >
               {code || "// Write your code here"}
             </SyntaxHighlighter>
@@ -466,6 +458,39 @@ const CodeBlockComponent = ({ block, editor }: any) => {
   );
 };
 
+// Error boundary to catch rendering errors
+class CodeBlockErrorBoundary extends React.Component<
+  { children: React.ReactNode },
+  { hasError: boolean }
+> {
+  constructor(props: { children: React.ReactNode }) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(error: any) {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: any, errorInfo: any) {
+    console.error("CodeBlock Error:", error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="my-4 w-full rounded-lg border border-red-700 bg-red-50 p-4 dark:bg-red-950">
+          <p className="text-sm text-red-700 dark:text-red-300">
+            Code block failed to load. Try refreshing the page.
+          </p>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
+
 export const CodeBlock = createReactBlockSpec(
   {
     type: "code-block",
@@ -486,6 +511,10 @@ export const CodeBlock = createReactBlockSpec(
     content: "none",
   },
   {
-    render: (props) => <CodeBlockComponent {...props} />,
+    render: (props) => (
+      <CodeBlockErrorBoundary>
+        <CodeBlockComponent {...props} />
+      </CodeBlockErrorBoundary>
+    ),
   },
 );
