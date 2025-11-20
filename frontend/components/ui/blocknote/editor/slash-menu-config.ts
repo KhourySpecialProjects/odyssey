@@ -195,7 +195,7 @@ export const getLatexSlashMenuItems = (
         currentBlock,
         "after",
       );
-      
+
       // Open the edit dialog immediately
       // We'll need to trigger the edit dialog programmatically
       // For now, the block will render with an Edit button
