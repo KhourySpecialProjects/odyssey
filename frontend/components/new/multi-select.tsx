@@ -99,7 +99,7 @@ export function MultiSelect({
                   ? "Select Tags..."
                   : label === "Prerequisites"
                     ? "Select Prerequisites..."
-                    : "Select Postrequisites..."}
+                    : "Select Similar Droplets..."}
               </p>
             )}
           </Button>
