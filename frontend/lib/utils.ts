@@ -545,20 +545,21 @@ export const stripHtmlTags = (html: string) => {
 export function convertBlockNoteToMarkdown(blocks: any[]): string {
   return blocks
     .map((block) => {
-      const text = block.content
-        ?.map((content: any) => {
-          let formatted = content.text || "";
-          
-          // Apply text styles
-          if (content.styles?.bold) formatted = `**${formatted}**`;
-          if (content.styles?.italic) formatted = `*${formatted}*`;
-          if (content.styles?.underline) formatted = `<u>${formatted}</u>`;
-          if (content.styles?.strike) formatted = `~~${formatted}~~`;
-          if (content.styles?.code) formatted = `\`${formatted}\``;
-          
-          return formatted;
-        })
-        .join("") || "";
+      const text =
+        block.content
+          ?.map((content: any) => {
+            let formatted = content.text || "";
+
+            // Apply text styles
+            if (content.styles?.bold) formatted = `**${formatted}**`;
+            if (content.styles?.italic) formatted = `*${formatted}*`;
+            if (content.styles?.underline) formatted = `<u>${formatted}</u>`;
+            if (content.styles?.strike) formatted = `~~${formatted}~~`;
+            if (content.styles?.code) formatted = `\`${formatted}\``;
+
+            return formatted;
+          })
+          .join("") || "";
 
       switch (block.type) {
         case "heading":
@@ -576,9 +577,7 @@ export function convertBlockNoteToMarkdown(blocks: any[]): string {
 
         case "image":
           const imgCaption = block.props.caption || "";
-          return block.props.url
-            ? `![${imgCaption}](${block.props.url})`
-            : "";
+          return block.props.url ? `![${imgCaption}](${block.props.url})` : "";
 
         case "video":
           return block.props.url

@@ -258,10 +258,10 @@ ${
 }
 `;
 
-
-
     // creating a binary large object file of markdown type
-    const blob = new Blob([contentMeta.concat(contentLessons)], { type: "text/markdown" });
+    const blob = new Blob([contentMeta.concat(contentLessons)], {
+      type: "text/markdown",
+    });
 
     const url = URL.createObjectURL(blob);
 
