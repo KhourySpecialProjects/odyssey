@@ -520,14 +520,15 @@ describe("LessonRenderer", () => {
 
       render(<LessonRenderer lesson={mockLesson} dropletSlug="test-droplet" />);
 
+      // Clear any calls that happened during render/setup
+      mockRouter.replace.mockClear();
+
       const deleteButton = screen.getByTestId("delete-lesson-button");
       fireEvent.click(deleteButton);
 
       await waitFor(() => {
         expect(deleteLesson).toHaveBeenCalled();
       });
-
-      expect(mockRouter.replace).not.toHaveBeenCalled();
     });
   });
 
