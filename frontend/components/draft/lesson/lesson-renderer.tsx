@@ -54,11 +54,43 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
   const lastSavedBlocksRef = useRef<Block[]>(lastSavedBlocks);
   const [name, setName] = useState(lesson.name);
 
-  const [editorVersion, setEditorVersion] = useState<"v1" | "v2">(
-    lesson.blocksVersion || "v1",
-  );
+  const isNewLesson =
+    (lesson.blocks?.length === 0 || !lesson.blocks) && !lesson.blocksV2;
 
-  const isNewLesson = blocks.length === 0 && !lesson.blocksV2;
+  const [editorVersion, setEditorVersion] = useState<"v1" | "v2">(() => {
+    if (isNewLesson && lesson.blocksVersion === "v1") {
+      return "v2";
+    }
+    return lesson.blocksVersion || "v1";
+  });
+
+  const hasSetVersionRef = useRef(false);
+
+  useEffect(() => {
+    const isNew =
+      (lesson.blocks?.length === 0 || !lesson.blocks) && !lesson.blocksV2;
+
+    if (
+      isNew &&
+      lesson.blocksVersion === "v1" &&
+      editorVersion !== "v2" &&
+      !hasSetVersionRef.current
+    ) {
+      hasSetVersionRef.current = true;
+      setEditorVersion("v2");
+      updateLesson(lesson.id, {
+        blocksVersion: "v2",
+      }).catch(() => {
+        // Ignore errors - lesson might not be fully created yet
+      });
+    }
+  }, [
+    lesson.blocks,
+    lesson.blocksV2,
+    lesson.blocksVersion,
+    lesson.id,
+    editorVersion,
+  ]);
 
   const updateBlocksBackend = useCallback(
     async (blocks: any[]) => {
@@ -123,6 +155,7 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
   useEffect(() => {
     setBlocks(lesson.blocks);
     setLastSavedBlocks(lesson.blocks);
+    hasSetVersionRef.current = !!lesson.blocksVersion;
   }, [lesson]);
 
   useEffect(() => {
@@ -315,6 +348,7 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
   useEffect(() => {
     setBlocks(lesson.blocks);
     setLastSavedBlocks(lesson.blocks);
+    hasSetVersionRef.current = !!lesson.blocksVersion;
   }, [lesson]);
 
   useEffect(() => {
@@ -384,14 +418,24 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
             <Button
               variant={editorVersion === "v2" ? "default" : "outline"}
               onClick={async () => {
-                if (editorVersion === "v2") {
+                const newVersion = editorVersion === "v1" ? "v2" : "v1";
+                hasSetVersionRef.current = true;
+
+                if (newVersion === "v2") {
+                  debounceUpdateV2.flush();
+                  await updateLesson(lesson.id, {
+                    blocksVersion: "v2",
+                    blocksV2: null,
+                  });
+                } else {
                   debounceUpdateV2.flush();
                   await updateLesson(lesson.id, {
                     blocksVersion: "v1",
                     blocksV2: null,
                   });
                 }
-                setEditorVersion(editorVersion === "v1" ? "v2" : "v1");
+
+                setEditorVersion(newVersion);
               }}
               className={`inline-flex h-10 items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium whitespace-nowrap ring-offset-white transition-colors focus-visible:ring-2 focus-visible:ring-slate-950 focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 dark:ring-offset-slate-950 dark:focus-visible:ring-slate-300 ${
                 editorVersion === "v1"

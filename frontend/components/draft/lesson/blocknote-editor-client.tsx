@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   blockTypeSelectItems,
   FormattingToolbar,
@@ -32,6 +32,7 @@ export function BlockNoteEditorClient({
   onChange,
 }: BlockNoteEditorClientProps) {
   const { resolvedTheme } = useTheme();
+  const [isReady, setIsReady] = useState(false);
 
   const editor = useCreateBlockNote({
     schema: blockNoteSchema,
@@ -44,15 +45,95 @@ export function BlockNoteEditorClient({
     },
   });
 
+  // Delay initialization to ensure DOM is stable after route transitions
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsReady(true);
+    }, 150); // Delay to ensure DOM is stable
+
+    return () => clearTimeout(timer);
+  }, []);
+
   useEffect(() => {
     let isMounted = true;
+    let processingPattern = false;
 
     const handleChange = async () => {
-      if (!isMounted) return;
+      if (!isMounted || !isReady || processingPattern) return;
+
       try {
         const content = editor.document;
+
+        // Check for LaTeX markdown patterns in the document
+        for (const block of content) {
+          // Skip custom blocks that don't support text content
+          const customBlockTypes = [
+            "latex",
+            "image",
+            "callout",
+            "quiz-true-false",
+            "quiz-open-ended",
+            "quiz-multiple-choice",
+          ];
+          if (customBlockTypes.includes(block.type as string)) {
+            continue;
+          }
+
+          // Try to convert block to markdown - skip if it fails or has no text
+          let blockText: string;
+          try {
+            blockText = editor.blocksToMarkdownLossy([block]);
+            if (!blockText || typeof blockText !== "string") continue;
+          } catch {
+            continue;
+          }
+
+          // Check for $...$ pattern (inline LaTeX) - split into blocks
+          const inlineLatexMatch = blockText.match(/\$([^$]+)\$/);
+          if (inlineLatexMatch && inlineLatexMatch.index !== undefined) {
+            const latexContent = inlineLatexMatch[1].trim();
+            if (latexContent) {
+              const textBefore = blockText
+                .substring(0, inlineLatexMatch.index)
+                .trim();
+              const textAfter = blockText
+                .substring(inlineLatexMatch.index + inlineLatexMatch[0].length)
+                .trim();
+
+              const blocksToInsert: any[] = [];
+              if (textBefore) {
+                blocksToInsert.push({
+                  type: "paragraph",
+                  content: textBefore,
+                } as any);
+              }
+              blocksToInsert.push({
+                type: "latex",
+                props: {
+                  content: latexContent,
+                  displayMode: false,
+                },
+              } as any);
+              if (textAfter) {
+                blocksToInsert.push({
+                  type: "paragraph",
+                  content: textAfter,
+                } as any);
+              }
+
+              if (blocksToInsert.length > 0) {
+                processingPattern = true;
+                await editor.replaceBlocks([block], blocksToInsert);
+                processingPattern = false;
+              }
+            }
+          }
+        }
+
+        // Always call onChange with the final content
         onChange(content);
       } catch (error) {
+        processingPattern = false;
         // Silently handle errors that occur when editor is unmounted or DOM nodes are missing
         if (
           error instanceof Error &&
@@ -67,13 +148,15 @@ export function BlockNoteEditorClient({
       }
     };
 
-    editor.onChange(handleChange);
+    const unsubscribe = editor.onChange(handleChange);
 
     return () => {
       isMounted = false;
-      // Component unmounting - editor will be cleaned up by React
+      if (unsubscribe) {
+        unsubscribe();
+      }
     };
-  }, [editor, onChange]);
+  }, [editor, onChange, isReady]);
 
   //  formatting toolbar block types to hide
   const blockedBlockTypes = new Set([
@@ -115,6 +198,19 @@ export function BlockNoteEditorClient({
     const defaultItems = getFormattingToolbarItems(filteredBlockTypeItems);
     return defaultItems;
   }, [filteredBlockTypeItems]);
+
+  // Show loading skeleton until ready
+  if (!isReady) {
+    return (
+      <div className="blocknote-no-link w-full rounded-lg border border-slate-200 p-4 dark:border-slate-700">
+        <div className="animate-pulse space-y-4">
+          <div className="h-4 w-3/4 rounded bg-slate-200 dark:bg-slate-700"></div>
+          <div className="h-4 w-1/2 rounded bg-slate-200 dark:bg-slate-700"></div>
+          <div className="h-4 w-5/6 rounded bg-slate-200 dark:bg-slate-700"></div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="blocknote-no-link w-full rounded-lg border border-slate-200 dark:border-slate-700">
