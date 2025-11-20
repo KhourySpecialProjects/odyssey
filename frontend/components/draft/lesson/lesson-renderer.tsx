@@ -166,15 +166,6 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
       setBlocks((prevBlocks) =>
         prevBlocks.map((b, i) => {
           if (i !== index) return b;
-          if (b.__component === "droplets.quiz" && "questions" in block) {
-            return { ...b, ...block } as QuizBlock;
-          }
-          if (
-            b.__component === "droplets.open-ended-quiz" &&
-            "questions" in block
-          ) {
-            return { ...b, ...block } as OpenEndedQuizBlock;
-          }
           return { ...b, ...block } as Block;
         }),
       );
