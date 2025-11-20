@@ -61,7 +61,7 @@ describe("MultiSelect", () => {
           setSelected={mockSetSelected}
         />,
       );
-      expect(screen.getByText("Select Postrequisites...")).toBeInTheDocument();
+      expect(screen.getByText("Select Similar Droplets...")).toBeInTheDocument();
     });
 
     it("shows selected items as badges", () => {
