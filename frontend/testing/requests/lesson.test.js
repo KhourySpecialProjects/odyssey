@@ -16,6 +16,11 @@ jest.mock("@/lib/utils", () => ({
   fetchAPI: jest.fn(),
 }));
 
+jest.mock("@/lib/utils", () => ({
+  fetchAPI: jest.fn(),
+  stripHtmlTags: jest.fn((str) => str),
+}));
+
 jest.mock("next/cache", () => ({
   revalidatePath: jest.fn(),
   revalidateTag: jest.fn(),

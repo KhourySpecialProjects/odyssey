@@ -145,6 +145,8 @@ export type Lesson = {
   slug: string;
   type?: "general" | "setup" | "activity" | "caseStudy";
   blocks: any[];
+  blocksVersion?: "v1" | "v2";
+  blocksV2?: any;
   droplets: Droplet[];
   notes: Note[];
   orderIndex: number;
@@ -184,6 +186,7 @@ export type Droplet = {
   postrequisites?: Droplet[];
   isHidden: boolean;
   status: DropletStatus;
+  originalDropletId?: number;
   authorized_users?: AuthorizedUser[];
   isArchived?: boolean;
   inReview?: boolean;

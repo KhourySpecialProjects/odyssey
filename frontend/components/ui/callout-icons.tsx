@@ -5,6 +5,7 @@ import {
   BookOpenText,
   BadgeInfo,
   Bell,
+  Pin,
 } from "lucide-react";
 
 export function CalloutIcon({ color }: { color: string }) {
@@ -24,7 +25,7 @@ export function CalloutIcon({ color }: { color: string }) {
       case "amber":
         return <Bell className={iconStyle} />;
       default:
-        return <div />;
+        return <Pin className={iconStyle} />;
     }
   })();
 }
