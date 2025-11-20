@@ -149,7 +149,7 @@ export async function fetchReports() {
   try {
     let page = 1;
     const pageSize = 250;
-    let allReports: Report[] = [];
+    let allReports: any[] = [];
 
     while (true) {
       const query = qs.stringify({
