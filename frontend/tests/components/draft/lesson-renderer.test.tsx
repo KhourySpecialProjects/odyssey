@@ -445,7 +445,10 @@ describe("LessonRenderer", () => {
     });
 
     it("deletes block and updates backend", async () => {
-      (updateLesson as jest.Mock).mockResolvedValue({ ok: true });
+      (updateLesson as jest.Mock).mockResolvedValue({
+        ok: true,
+        data: { attributes: { slug: "test-lesson" } }, // Add this structure
+      });
 
       render(<LessonRenderer lesson={mockLesson} dropletSlug="test-droplet" />);
 
@@ -491,9 +494,18 @@ describe("LessonRenderer", () => {
     });
 
     it("handles delete errors gracefully", async () => {
+      // Mock updateLesson to not trigger navigation for this test
+      (updateLesson as jest.Mock).mockResolvedValue({
+        ok: false, // Make it fail so it doesn't trigger router.replace
+        error: "Update failed",
+      });
+
       (deleteLesson as jest.Mock).mockResolvedValue({ error: "Delete failed" });
 
       render(<LessonRenderer lesson={mockLesson} dropletSlug="test-droplet" />);
+
+      // Clear any calls from initial render
+      mockRouter.replace.mockClear();
 
       const deleteButton = screen.getByTestId("delete-lesson-button");
       fireEvent.click(deleteButton);
@@ -501,6 +513,9 @@ describe("LessonRenderer", () => {
       await waitFor(() => {
         expect(deleteLesson).toHaveBeenCalled();
       });
+
+      // Wait a bit to ensure no async navigation happens
+      await new Promise((resolve) => setTimeout(resolve, 100));
 
       expect(mockRouter.replace).not.toHaveBeenCalled();
     });

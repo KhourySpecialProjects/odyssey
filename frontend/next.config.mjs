@@ -33,7 +33,7 @@ const nextConfig = {
             value: `
               default-src 'self';
               script-src 'self' 'unsafe-inline' 'unsafe-eval' https://us-assets.i.posthog.com https://cdn.jsdelivr.net;
-              connect-src 'self' https://app.posthog.com https://*.posthog.com https://strapi.odyssey.khoury.northeastern.edu;
+              connect-src 'self' https://app.posthog.com https://*.posthog.com https://strapi.odyssey.khoury.northeastern.edu https://emkc.org;
               style-src 'self' 'unsafe-inline';
               img-src 'self' data: https: blob:;
               font-src 'self' data:;

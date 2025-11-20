@@ -12,6 +12,7 @@ import { Callout } from "@/components/ui/blocknote/blocks/callout-block";
 import { TrueFalseQuiz } from "@/components/ui/blocknote/blocks/quiz-true-false-block";
 import { OpenEndedQuiz } from "@/components/ui/blocknote/blocks/quiz-open-ended-block";
 import { MultipleChoiceQuiz } from "@/components/ui/blocknote/blocks/quiz-multiple-choice-block";
+import { CodeBlock } from "@/components/ui/blocknote/blocks/code-block"; // ADD THIS
 
 // Exclude specific block types from the block type selector dropdown
 // Available block types: paragraph, heading, bulletListItem, numberedListItem,
@@ -52,6 +53,7 @@ export const blockNoteSchema = BlockNoteSchema.create({
     "quiz-true-false": TrueFalseQuiz(),
     "quiz-open-ended": OpenEndedQuiz(),
     "quiz-multiple-choice": MultipleChoiceQuiz(),
+    "code-block": CodeBlock(),
   },
   styleSpecs: filteredStyleSpecs,
 });
