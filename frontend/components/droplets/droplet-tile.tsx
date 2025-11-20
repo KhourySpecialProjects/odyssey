@@ -1,7 +1,7 @@
 "use client";
 
 import { Badge } from "@/components/ui/badge";
-import { uppercaseFirstChar } from "@/lib/utils";
+import { convertBlockNoteToMarkdown, uppercaseFirstChar } from "@/lib/utils";
 import { Droplet } from "@/types";
 import Link from "next/link";
 
@@ -158,7 +158,7 @@ export function DropletTile({
 
   async function exportDropletMarkdown() {
     // mock markdown content
-    const content = `# ${droplet.name}
+    const contentMeta = `# ${droplet.name}
 
 ## **Metadata**
 
@@ -187,8 +187,9 @@ ${droplet.nextSteps?.map((resource) => `* ${resource.label} linked to: ${resourc
 ${droplet.prerequisites?.map((prereq) => `* ${prereq.name}`).join("\n") || "No prereqs"}
 
 ### Postrequisites
-${droplet.postrequisites?.map((postreq) => `* ${postreq.name}`).join("\n") || "No postreqs"}
+${droplet.postrequisites?.map((postreq) => `* ${postreq.name}`).join("\n") || "No postreqs"}`;
 
+    const contentLessons = `
 ## **Lessons**
 ${
   droplet.lessons
@@ -196,65 +197,71 @@ ${
       (lesson) => `
 ### ${lesson.name}
 
-${lesson.blocks
-  ?.map((block) => {
-    if (block.__component === "droplets.generic") {
-      return `#### Generic Droplet\n\n${block.content}`;
-    }
+${
+  lesson.blocksVersion === "v2" && lesson.blocksV2
+    ? convertBlockNoteToMarkdown(lesson.blocksV2)
+    : lesson.blocks
+        ?.map((block) => {
+          if (block.__component === "droplets.generic") {
+            return `#### Generic Droplet\n\n${block.content}`;
+          }
 
-    if (block.__component === "droplets.expandable") {
-      return `#### Expandable Droplet\n\n##### ${block.title}\n\n${block.content}`;
-    }
+          if (block.__component === "droplets.expandable") {
+            return `#### Expandable Droplet\n\n##### ${block.title}\n\n${block.content}`;
+          }
 
-    if (block.__component === "droplets.callout") {
-      const calloutContent = block.content
-        .map((contentBlock) =>
-          contentBlock.children.map((child) => child.text).join(""),
-        )
-        .join("\n");
-      return `#### Callout Droplet\n\nColor: ${block.color}\nType: ${block.type}\n\n${calloutContent}`;
-    }
-
-    if (block.__component === "droplets.video") {
-      return `#### Video\n\nVideo Link: ${block.url}`;
-    }
-
-    if (block.__component === "droplets.quiz") {
-      const quizContent = block.questions
-        .map(
-          (question, qIndex) =>
-            `${qIndex + 1}. ${question.content}\n${question.answerOptions
-              .map(
-                (answer, aIndex) =>
-                  `   ${aIndex + 1}. Answer: ${answer.content} is ${answer.isCorrect ? "correct" : "incorrect"}`,
+          if (block.__component === "droplets.callout") {
+            const calloutContent = block.content
+              .map((contentBlock) =>
+                contentBlock.children.map((child) => child.text).join(""),
               )
-              .join("\n")}`,
-        )
-        .join("\n");
-      return `#### Quiz\n\n${quizContent}`;
-    }
+              .join("\n");
+            return `#### Callout Droplet\n\nColor: ${block.color}\nType: ${block.type}\n\n${calloutContent}`;
+          }
 
-    if (block.__component === "droplets.open-ended-quiz") {
-      const openEndedContent = block.questions
-        .map(
-          (question, qIndex) =>
-            `${qIndex + 1}. ${question.content}\n   * Answer: ${question.correctAnswer}`,
-        )
-        .join("\n");
-      return `#### Open-Ended Quiz\n\n${openEndedContent}`;
-    }
+          if (block.__component === "droplets.video") {
+            return `#### Video\n\nVideo Link: ${block.url}`;
+          }
 
-    return "";
-  })
-  .join("\n\n")}
+          if (block.__component === "droplets.quiz") {
+            const quizContent = block.questions
+              .map(
+                (question, qIndex) =>
+                  `${qIndex + 1}. ${question.content}\n${question.answerOptions
+                    .map(
+                      (answer, aIndex) =>
+                        `   ${aIndex + 1}. Answer: ${answer.content} is ${answer.isCorrect ? "correct" : "incorrect"}`,
+                    )
+                    .join("\n")}`,
+              )
+              .join("\n");
+            return `#### Quiz\n\n${quizContent}`;
+          }
+
+          if (block.__component === "droplets.open-ended-quiz") {
+            const openEndedContent = block.questions
+              .map(
+                (question, qIndex) =>
+                  `${qIndex + 1}. ${question.content}\n   * Answer: ${question.correctAnswer}`,
+              )
+              .join("\n");
+            return `#### Open-Ended Quiz\n\n${openEndedContent}`;
+          }
+
+          return "";
+        })
+        .join("\n\n") || ""
+}
 `,
     )
     .join("\n") || "No lessons"
 }
 `;
 
+
+
     // creating a binary large object file of markdown type
-    const blob = new Blob([content], { type: "text/markdown" });
+    const blob = new Blob([contentMeta.concat(contentLessons)], { type: "text/markdown" });
 
     const url = URL.createObjectURL(blob);
 
