@@ -187,7 +187,7 @@ export const getCodeSlashMenuItems = (
             props: {
               language: "javascript",
               code: "// Write your code here\n",
-              editable: false,
+              editable: true,
               runnable: false,
             },
           },
