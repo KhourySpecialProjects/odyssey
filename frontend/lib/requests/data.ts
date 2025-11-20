@@ -2,6 +2,7 @@ import { AccessRequest } from "@/components/shared/access-manager/access-request
 import { flattenAttributes } from "@/lib/utils";
 import { Droplet, Group } from "@/types";
 import qs from "qs";
+import { Report } from "@/components/admin/reports/reports";
 
 const NEXT_PUBLIC_STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
@@ -39,7 +40,7 @@ export async function fetchDroplets() {
     return allDroplets;
   } catch (error) {
     console.error("Database Error:", error);
-    throw new Error("Failed to fetch authorized users data.");
+    throw new Error("Failed to fetch droplet data.");
   }
 }
 
@@ -149,7 +150,7 @@ export async function fetchReports() {
   try {
     let page = 1;
     const pageSize = 250;
-    let allReports: any[] = [];
+    let allReports: Report[] = [];
 
     while (true) {
       const query = qs.stringify({
@@ -179,6 +180,6 @@ export async function fetchReports() {
     return allReports;
   } catch (error) {
     console.error("Database Error:", error);
-    throw new Error("Failed to fetch access requests data.");
+    throw new Error("Failed to fetch reports data.");
   }
 }
