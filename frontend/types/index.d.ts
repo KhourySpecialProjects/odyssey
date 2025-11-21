@@ -159,7 +159,7 @@ export type Block =
       id?: number;
       _clientId?: string;
     }
-    | {
+  | {
       __component: "droplets.code-block";
       id?: number;
       _clientId?: string;
