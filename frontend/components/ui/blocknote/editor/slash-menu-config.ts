@@ -1,14 +1,32 @@
 import { DefaultReactSuggestionItem } from "@blocknote/react";
 import { insertOrUpdateBlock } from "@blocknote/core";
+import { createElement } from "react";
+import type { ReactElement } from "react";
+import type { CustomBlockNoteEditor } from "@/lib/blocknote/schema";
+import type { CalloutType } from "@/lib/blocknote/types";
+import {
+  TriangleAlert,
+  CircleHelp,
+  CircleAlert,
+  BookOpenText,
+  BadgeInfo,
+  Bell,
+  Pin,
+  ToggleLeft,
+  FileText,
+  LayoutList,
+} from "lucide-react";
 
 const createCalloutItem = (
-  editor: any,
-  type: any,
+  editor: CustomBlockNoteEditor,
+  type: CalloutType,
   title: string,
   aliases: string[],
   subtext: string,
-): any => ({
+  icon?: ReactElement,
+): DefaultReactSuggestionItem => ({
   title,
+  icon,
   onItemClick: () => {
     insertOrUpdateBlock(editor, {
       type: "callout",
@@ -21,7 +39,7 @@ const createCalloutItem = (
 });
 
 export const getCalloutSlashMenuItems = (
-  editor: any,
+  editor: CustomBlockNoteEditor,
 ): DefaultReactSuggestionItem[] => [
   createCalloutItem(
     editor,
@@ -29,6 +47,7 @@ export const getCalloutSlashMenuItems = (
     "Warning",
     ["warning", "warn", "alert"],
     "Pink warning callout",
+    createElement(TriangleAlert, { className: "h-4 w-4" }),
   ),
   createCalloutItem(
     editor,
@@ -36,6 +55,7 @@ export const getCalloutSlashMenuItems = (
     "Question",
     ["question", "q", "help"],
     "Blue question callout",
+    createElement(CircleHelp, { className: "h-4 w-4" }),
   ),
   createCalloutItem(
     editor,
@@ -43,6 +63,7 @@ export const getCalloutSlashMenuItems = (
     "Important",
     ["important", "imp", "key"],
     "Orange important callout",
+    createElement(CircleAlert, { className: "h-4 w-4" }),
   ),
   createCalloutItem(
     editor,
@@ -50,6 +71,7 @@ export const getCalloutSlashMenuItems = (
     "Definition",
     ["definition", "def", "define"],
     "Green definition callout",
+    createElement(BookOpenText, { className: "h-4 w-4" }),
   ),
   createCalloutItem(
     editor,
@@ -57,6 +79,7 @@ export const getCalloutSlashMenuItems = (
     "More Information",
     ["more", "info", "more information", "additional"],
     "Purple info callout",
+    createElement(BadgeInfo, { className: "h-4 w-4" }),
   ),
   createCalloutItem(
     editor,
@@ -64,6 +87,7 @@ export const getCalloutSlashMenuItems = (
     "Caution",
     ["caution", "careful", "watch"],
     "Yellow caution callout",
+    createElement(Bell, { className: "h-4 w-4" }),
   ),
   createCalloutItem(
     editor,
@@ -71,11 +95,15 @@ export const getCalloutSlashMenuItems = (
     "Default Callout",
     ["callout", "default", "note"],
     "Gray default callout",
+    createElement(Pin, { className: "h-4 w-4" }),
   ),
 ];
-export const getQuizSlashMenuItems = (editor: any) => [
+export const getQuizSlashMenuItems = (
+  editor: CustomBlockNoteEditor,
+): DefaultReactSuggestionItem[] => [
   {
     title: "True/False Quiz",
+    icon: createElement(ToggleLeft, { className: "h-4 w-4" }),
     onItemClick: () => {
       editor.insertBlocks(
         [
@@ -97,6 +125,7 @@ export const getQuizSlashMenuItems = (editor: any) => [
   },
   {
     title: "Open-Ended Quiz",
+    icon: createElement(FileText, { className: "h-4 w-4" }),
     onItemClick: () => {
       editor.insertBlocks(
         [
@@ -118,6 +147,7 @@ export const getQuizSlashMenuItems = (editor: any) => [
   },
   {
     title: "Multiple Choice Quiz",
+    icon: createElement(LayoutList, { className: "h-4 w-4" }),
     onItemClick: () => {
       editor.insertBlocks(
         [
@@ -130,7 +160,7 @@ export const getQuizSlashMenuItems = (editor: any) => [
                 { id: "2", text: "", isCorrect: false },
               ],
             },
-          },
+          } as any,
         ],
         editor.getTextCursorPosition().block,
         "after",

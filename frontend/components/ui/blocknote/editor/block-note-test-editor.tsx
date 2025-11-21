@@ -33,11 +33,15 @@ export default function BlockNoteTestEditor() {
     }),
   });
 
-  const getCustomSlashMenuItems = (editor: any) => [
-    ...getDefaultReactSlashMenuItems(editor),
-    ...getCalloutSlashMenuItems(editor),
-    ...getQuizSlashMenuItems(editor),
-  ];
+  const getCustomSlashMenuItems = (editor: any) => {
+    const defaultItems = getDefaultReactSlashMenuItems(editor);
+
+    return [
+      ...defaultItems,
+      ...getCalloutSlashMenuItems(editor),
+      ...getQuizSlashMenuItems(editor),
+    ];
+  };
 
   return (
     <div style={{ width: "100%", maxWidth: "900px", minHeight: "500px" }}>
