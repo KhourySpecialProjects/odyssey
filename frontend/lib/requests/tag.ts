@@ -20,7 +20,7 @@ export async function getTags({
       },
     },
     pagination: {
-      pageSize: 250,
+      pageSize: 50,
       page: 1,
     },
   };

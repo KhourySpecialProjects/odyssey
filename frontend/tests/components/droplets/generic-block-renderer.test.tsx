@@ -1,5 +1,5 @@
 import { render, fireEvent, screen, waitFor } from "@testing-library/react";
-import GenericBlockRenderer from "@/components/droplets/lessons/GenericBlockRenderer";
+import GenericBlockRenderer from "@/components/droplets/lessons/generic-block-renderer";
 import hljs from "highlight.js";
 import katex from "katex";
 import { Highlight, HighlightColor } from "@/types";

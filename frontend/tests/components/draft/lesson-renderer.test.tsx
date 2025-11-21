@@ -437,7 +437,6 @@ describe("LessonRenderer", () => {
       );
 
       expect(screen.getByTestId("lesson-name-input")).toBeInTheDocument();
-      expect(screen.getByTestId("draggable-block-list")).toBeInTheDocument();
     });
 
     it("handles lesson with single block", () => {

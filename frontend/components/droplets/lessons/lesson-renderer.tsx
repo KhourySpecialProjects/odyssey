@@ -10,7 +10,7 @@ import { User, Droplet, Lesson, AuthorizedUser } from "@/types";
 import { BlocksRenderer } from "@strapi/blocks-react-renderer";
 import { ArrowDownFromLineIcon } from "lucide-react";
 import { QuizBlock } from "./quiz";
-import GenericBlockRenderer from "./GenericBlockRenderer";
+import GenericBlockRenderer from "./generic-block-renderer";
 import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { LockIcon } from "lucide-react";
@@ -31,6 +31,8 @@ import type { Block as BlockNoteBlock } from "@blocknote/core";
 import { GenericBlock } from "@/components/draft/lesson/blocks/generic";
 import { markLessonAsComplete } from "@/lib/requests/lesson";
 import posthog from "posthog-js";
+import katex from "katex";
+import "katex/dist/katex.min.css";
 import { CodeBlockViewer } from "@/components/draft/lesson/code-block-viewer";
 
 interface LessonRendererProps {
@@ -60,19 +62,47 @@ interface HighlightResponseItem {
   };
 }
 
+function renderTextWithStyles(
+  text: string,
+  styles?: Record<string, any>,
+): string {
+  if (!styles) return text;
+
+  if (styles.latex) {
+    return `$${text}$`;
+  }
+
+  let styledText = text;
+  if (styles.bold) styledText = `<strong>${styledText}</strong>`;
+  if (styles.italic) styledText = `<em>${styledText}</em>`;
+  if (styles.underline) styledText = `<u>${styledText}</u>`;
+  if (styles.code) styledText = `<code>${styledText}</code>`;
+
+  return styledText;
+}
+
 // Helper function to convert inline content to HTML
 function convertInlineContentToHtml(inlineContent: any[]): string {
   return (
     inlineContent
       .map((contentItem: any) => {
         if (contentItem.type === "text") {
-          let text = contentItem.text ?? "";
-          // Apply styles
-          if (contentItem.styles?.bold) text = `<strong>${text}</strong>`;
-          if (contentItem.styles?.italic) text = `<em>${text}</em>`;
-          if (contentItem.styles?.underline) text = `<u>${text}</u>`;
-          if (contentItem.styles?.code) text = `<code>${text}</code>`;
-          return text;
+          const text = contentItem.text ?? "";
+          return renderTextWithStyles(text, contentItem.styles);
+        }
+        return "";
+      })
+      .join("") || ""
+  );
+}
+
+// Helper function to convert inline content to plain text (for markdown)
+function convertInlineContentToText(inlineContent: any[]): string {
+  return (
+    inlineContent
+      .map((contentItem: any) => {
+        if (contentItem.type === "text") {
+          return contentItem.text ?? "";
         }
         return "";
       })
@@ -85,8 +115,6 @@ function convertNumberedListItem(item: any, depth: number = 0): string {
   const inlineContent = (item.content ?? []) as any[];
   const textContent = convertInlineContentToHtml(inlineContent);
 
-  // Check if this item has children (nested list items)
-  // BlockNote stores nested items in the children array
   const children = (item.children ?? []) as any[];
 
   // Filter for numbered list items and also check for any blocks that might represent nested lists
@@ -94,8 +122,6 @@ function convertNumberedListItem(item: any, depth: number = 0): string {
     (child: any) => child.type === "numberedListItem",
   );
 
-  // Also check if there are any other blocks that might be nested (like paragraphs containing lists)
-  // Sometimes BlockNote might wrap nested content differently
   let nestedListHtml = "";
   if (nestedListItems.length > 0) {
     // Recursively convert nested list items
@@ -104,8 +130,6 @@ function convertNumberedListItem(item: any, depth: number = 0): string {
       .join("");
     nestedListHtml = `<ol class="list-decimal list-outside ml-6 my-1">${nestedListContent}</ol>`;
   } else if (children.length > 0) {
-    // If there are children but they're not numbered list items, check if they contain nested lists
-    // This handles cases where BlockNote might wrap nested items in paragraph blocks
     const allChildrenContent = children
       .map((child: any) => {
         if (child.type === "numberedListItem") {
@@ -143,8 +167,6 @@ function convertBulletListItem(item: any, depth: number = 0): string {
     (child: any) => child.type === "bulletListItem",
   );
 
-  // Also check if there are any other blocks that might be nested (like paragraphs containing lists)
-  // Sometimes BlockNote might wrap nested content differently
   let nestedListHtml = "";
   if (nestedListItems.length > 0) {
     // Recursively convert nested list items
@@ -153,8 +175,6 @@ function convertBulletListItem(item: any, depth: number = 0): string {
       .join("");
     nestedListHtml = `<ul class="list-disc list-outside ml-6 my-1">${nestedListContent}</ul>`;
   } else if (children.length > 0) {
-    // If there are children but they're not bullet list items, check if they contain nested lists
-    // This handles cases where BlockNote might wrap nested items in paragraph blocks
     const allChildrenContent = children
       .map((child: any) => {
         if (child.type === "bulletListItem") {
@@ -181,10 +201,6 @@ function convertBulletListItem(item: any, depth: number = 0): string {
 function convertBlockNoteToV1Blocks(blocksV2: BlockNoteBlock[]): Block[] {
   if (!Array.isArray(blocksV2)) return [];
 
-  // Debug: Log the block structure to understand how nested lists are stored
-  // Uncomment this to debug nested list structure:
-  // console.log("BlockNote blocks structure:", JSON.stringify(blocksV2, null, 2));
-
   // First, group consecutive numbered list items together
   const processedBlocks: Block[] = [];
   let i = 0;
@@ -192,7 +208,7 @@ function convertBlockNoteToV1Blocks(blocksV2: BlockNoteBlock[]): Block[] {
   while (i < blocksV2.length) {
     const blockAny = blocksV2[i] as any;
 
-    // Skip quote blocks (they shouldn't exist but handle them gracefully)
+    // Skip quote blocks
     if (blockAny.type === "quote") {
       // Convert quote to paragraph to avoid losing content
       const quoteContent = (blockAny.content ?? []) as any[];
@@ -298,21 +314,7 @@ function convertSingleBlock(blockAny: any, blockIndex: number): Block | null {
     case "heading":
     case "paragraph": {
       const inlineContent = (blockAny.content ?? []) as any[];
-      const textContent =
-        inlineContent
-          .map((item: any) => {
-            if (item.type === "text") {
-              let text = item.text ?? "";
-              // Apply styles
-              if (item.styles?.bold) text = `<strong>${text}</strong>`;
-              if (item.styles?.italic) text = `<em>${text}</em>`;
-              if (item.styles?.underline) text = `<u>${text}</u>`;
-              if (item.styles?.code) text = `<code>${text}</code>`;
-              return text;
-            }
-            return "";
-          })
-          .join("") || "";
+      const textContent = convertInlineContentToHtml(inlineContent);
 
       const headingLevel = Number(blockAny.props?.level) || 1;
       const htmlContent =
@@ -339,10 +341,7 @@ function convertSingleBlock(blockAny: any, blockIndex: number): Block | null {
       };
 
       const calloutContent = (blockAny.content ?? []) as any[];
-      const calloutText =
-        calloutContent
-          .map((item: any) => (item.type === "text" ? item.text ?? "" : ""))
-          .join("") || "";
+      const calloutText = convertInlineContentToHtml(calloutContent);
 
       return {
         __component: "droplets.callout",
@@ -455,61 +454,126 @@ function convertSingleBlock(blockAny: any, blockIndex: number): Block | null {
       };
     }
 
+    case "latex": {
+      // Convert LaTeX block to generic block with rendered LaTeX
+      const latexContent = blockAny.props?.content || "";
+      const isDisplayMode = blockAny.props?.displayMode || false;
+
+      if (!latexContent) {
+        return null;
+      }
+
+      try {
+        const rendered = katex.renderToString(latexContent, {
+          throwOnError: false,
+          displayMode: isDisplayMode,
+        });
+
+        const wrapperClass = isDisplayMode
+          ? "my-4 flex justify-center"
+          : "inline-block";
+
+        return {
+          __component: "droplets.generic",
+          id: blockIndex,
+          content: `<div class="${wrapperClass}">${rendered}</div>`,
+        };
+      } catch {
+        // Fallback: show raw LaTeX if rendering fails
+        const escapedLatex = latexContent
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;");
+
+        return {
+          __component: "droplets.generic",
+          id: blockIndex,
+          content: `<div class="rounded bg-red-50 p-2 text-red-600 dark:bg-red-900/20 dark:text-red-400 font-mono text-sm">LaTeX Error: ${escapedLatex}</div>`,
+        };
+      }
+    }
+
     case "table": {
       const tableContent = blockAny.content;
       if (!tableContent || !tableContent.rows) {
         return null;
       }
 
-      const rows = tableContent.rows.map((row: any, rowIndex: number) => {
-        const cells = row.cells
-          .map((cell: any) => {
-            const cellContent = (cell.content ?? []) as any[];
-            const cellText = cellContent
-              .map((item: any) => {
-                if (item.type === "text") {
-                  let text = item.text ?? "";
-                  if (item.styles?.bold) text = `<strong>${text}</strong>`;
-                  if (item.styles?.italic) text = `<em>${text}</em>`;
-                  if (item.styles?.underline) text = `<u>${text}</u>`;
-                  if (item.styles?.code) text = `<code>${text}</code>`;
-                  return text;
-                }
-                return "";
-              })
-              .join("");
+      const hasHeaders = blockAny.props?.headers !== false; // Default to true if not specified
+      const cellBackgroundColors: Record<string, string> = {};
 
-            const tag = rowIndex === 0 ? "th" : "td";
-            const cellClasses =
-              rowIndex === 0
-                ? "px-4 py-2 text-left font-semibold bg-slate-100 dark:bg-slate-700"
-                : "px-4 py-2 border-t border-slate-300 dark:border-slate-600";
-            return `<${tag} class="${cellClasses}">${cellText}</${tag}>`;
-          })
-          .join("");
+      // Convert table to markdown (GFM format)
+      const markdownRows: string[] = [];
 
-        return rowIndex === 0
-          ? `<thead><tr>${cells}</tr></thead>`
-          : `<tr>${cells}</tr>`;
+      tableContent.rows.forEach((row: any, rowIndex: number) => {
+        const cells = row.cells.map((cell: any, cellIndex: number) => {
+          const cellContent = (cell.content ?? []) as any[];
+          const cellText = convertInlineContentToText(cellContent);
+
+          // Store background color if present
+          if (cell.props?.backgroundColor) {
+            const key = `${rowIndex}-${cellIndex}`;
+            cellBackgroundColors[key] = cell.props.backgroundColor;
+          }
+
+          // Escape pipe characters in cell content
+          return cellText.replace(/\|/g, "\\|").trim();
+        });
+
+        markdownRows.push(`| ${cells.join(" | ")} |`);
+
+        // Add separator row after header row
+        if (hasHeaders && rowIndex === 0) {
+          const separator = cells.map(() => "---").join(" | ");
+          markdownRows.push(`| ${separator} |`);
+        }
       });
 
-      const headerRow = rows[0];
-      const bodyRows = rows.slice(1).join("");
+      const tableMarkdown = markdownRows.join("\n");
 
-      // Wrap table in a scrollable container
-      const tableHtml = `
-            <div class="overflow-x-auto -mx-4 md:mx-0">
-              <table class="w-full border-collapse border border-slate-300 dark:border-slate-600 table-fixed">
-                ${headerRow}
-                <tbody>${bodyRows}</tbody>
-              </table>
-            </div>
-          `;
+      // Store table data with a special marker so we can identify it in the renderer
+      // Note: We store both markdown (for future use) and the full HTML data for rendering
+      const tableData = {
+        markdown: tableMarkdown,
+        hasHeaders,
+        cellBackgroundColors,
+        rows: tableContent.rows.map((row: any, rowIndex: number) => ({
+          cells: row.cells.map((cell: any, cellIndex: number) => {
+            const cellContent = (cell.content ?? []) as any[];
+            return {
+              content: convertInlineContentToHtml(cellContent),
+              backgroundColor: cell.props?.backgroundColor || null,
+              rowIndex,
+              cellIndex,
+            };
+          }),
+        })),
+      };
 
       return {
         __component: "droplets.generic",
         id: blockIndex,
-        content: tableHtml,
+        content: `<!--TABLE_START-->${JSON.stringify(tableData)}<!--TABLE_END-->`,
+      };
+    }
+
+    case "code-block": {
+      // Code blocks need special handling - render them as a custom component
+      // We'll create a simple code display block that respects the editable/runnable props
+      const language = blockAny.props?.language || "javascript";
+      const code = blockAny.props?.code || "";
+      const editable = blockAny.props?.editable || false;
+      const runnable = blockAny.props?.runnable || false;
+
+      // For now, convert to a generic block with a special data attribute
+      // that the GenericBlockRenderer can detect and render specially
+      return {
+        __component: "droplets.code-block",
+        id: blockIndex,
+        language,
+        code,
+        editable,
+        runnable,
       };
     }
 
@@ -809,6 +873,7 @@ export function LessonRenderer({
               setExpanded={setExpanded}
               activeBlock={activeBlock}
               setActiveBlock={(id: number) => setActiveBlock(id)}
+              author={author}
             />
           ))}
         </div>
@@ -851,6 +916,7 @@ function LessonBlockRenderer({
   setExpanded,
   activeBlock,
   setActiveBlock,
+  author,
 }: {
   block: any;
   lessonId: number;
@@ -867,6 +933,7 @@ function LessonBlockRenderer({
   setExpanded: (expanded: boolean) => void;
   activeBlock: number | undefined;
   setActiveBlock: (id: number) => void;
+  author: boolean;
 }) {
   switch (block.__component) {
     case "droplets.generic":
@@ -882,6 +949,7 @@ function LessonBlockRenderer({
           setExpanded={setExpanded}
           activeBlock={activeBlock}
           setActiveBlock={setActiveBlock}
+          author={author}
         />
       );
 

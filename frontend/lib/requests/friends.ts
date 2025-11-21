@@ -11,55 +11,67 @@ export async function fetchFriends(
   authorizedUser: AuthorizedUser,
 ): Promise<AuthorizedUser[]> {
   try {
-    const query = qs.stringify({
-      filters: {
-        authorized_users: {
-          id: {
-            $eq: authorizedUser.id,
-          },
-        },
-      },
-      populate: {
-        authorized_users: {
-          fields: [
-            "id",
-            "email",
-            "firstName",
-            "lastName",
-            "bio",
-            "github",
-            "linkedin",
-            "profilePhoto",
-            "website",
-          ],
-          populate: {
-            blocked: {
-              fields: ["id"],
-            },
-            was_blocked: {
-              fields: ["id"],
+    let page = 1;
+    const pageSize = 250;
+    let allFriendsConcat: Friendship[] = [];
+
+    while (true) {
+      const query = qs.stringify({
+        filters: {
+          authorized_users: {
+            id: {
+              $eq: authorizedUser.id,
             },
           },
         },
-      },
-      sort: ["authorized_users.lastName:asc"],
-      pagination: {
-        pageSize: 250,
-        page: 1,
-      },
-    });
+        populate: {
+          authorized_users: {
+            fields: [
+              "id",
+              "email",
+              "firstName",
+              "lastName",
+              "bio",
+              "github",
+              "linkedin",
+              "profilePhoto",
+              "website",
+            ],
+            populate: {
+              blocked: {
+                fields: ["id"],
+              },
+              was_blocked: {
+                fields: ["id"],
+              },
+            },
+          },
+        },
+        sort: ["authorized_users.lastName:asc"],
+        pagination: {
+          pageSize,
+          page,
+        },
+      });
 
-    const response = await fetch(
-      NEXT_PUBLIC_STRAPI_API_URL + "/api/friendships?" + query,
-      {
-        headers: { Authorization: "Bearer " + STRAPI_ACCESS_TOKEN },
-        cache: "no-store",
-      },
-    );
-    const data = await response.json();
-    const friendships = flattenAttributes(data.data);
+      const response = await fetch(
+        NEXT_PUBLIC_STRAPI_API_URL + "/api/friendships?" + query,
+        {
+          headers: { Authorization: "Bearer " + STRAPI_ACCESS_TOKEN },
+          cache: "no-store",
+        },
+      );
+      const data = await response.json();
+      const friendships = flattenAttributes(data.data);
+      allFriendsConcat = allFriendsConcat.concat(friendships);
 
-    const allFriends = friendships.flatMap((friendship: Friendship) =>
+      // If we got fewer than pageSize, we reached the end
+      if (friendships.length < pageSize) break;
+
+      page++; // fetch next page
+    }
+
+    const allFriends = allFriendsConcat.flatMap((friendship: Friendship) =>
       friendship.authorized_users.filter(
         (friend) =>
           friend.id !== authorizedUser.id &&
@@ -82,73 +94,48 @@ export async function fetchFriends(
   }
 }
 
-export async function getSentRequest(
-  requester: AuthorizedUser,
-  requestee: AuthorizedUser,
-): Promise<boolean> {
-  try {
-    const query = qs.stringify({
-      filters: {
-        sent_requests: {
-          id: {
-            $eq: requestee.id,
-          },
-        },
-      },
-      populate: [],
-      pagination: {
-        pageSize: 250,
-        page: 1,
-      },
-    });
-
-    const response = await fetch(
-      NEXT_PUBLIC_STRAPI_API_URL + "/api/authorized-users?" + query,
-      {
-        headers: { Authorization: "Bearer " + STRAPI_ACCESS_TOKEN },
-        cache: "no-store",
-      },
-    );
-    const data = await response.json();
-    const friendships = flattenAttributes(data.data);
-
-    return friendships.length != 0;
-  } catch (error) {
-    console.error("Database Error:", error);
-    throw new Error("Failed to fetch friends data.");
-  }
-}
-
 export async function getSentRequestIds(
   requester: AuthorizedUser,
 ): Promise<Number[]> {
   try {
-    const query = qs.stringify({
-      filters: {
-        received_requests: {
-          id: {
-            $eq: requester.id,
+    let page = 1;
+    const pageSize = 250;
+    let allSent: AuthorizedUser[] = [];
+
+    while (true) {
+      const query = qs.stringify({
+        filters: {
+          received_requests: {
+            id: {
+              $eq: requester.id,
+            },
           },
         },
-      },
-      pagination: {
-        pageSize: 250,
-        page: 1,
-      },
-      fields: ["id"],
-    });
+        pagination: {
+          pageSize,
+          page,
+        },
+        fields: ["id"],
+      });
 
-    const response = await fetch(
-      NEXT_PUBLIC_STRAPI_API_URL + "/api/authorized-users?" + query,
-      {
-        headers: { Authorization: "Bearer " + STRAPI_ACCESS_TOKEN },
-        cache: "no-store",
-      },
-    );
-    const data = await response.json();
-    const friendships: AuthorizedUser[] = flattenAttributes(data.data);
+      const response = await fetch(
+        NEXT_PUBLIC_STRAPI_API_URL + "/api/authorized-users?" + query,
+        {
+          headers: { Authorization: "Bearer " + STRAPI_ACCESS_TOKEN },
+          cache: "no-store",
+        },
+      );
+      const data = await response.json();
+      const friendships: AuthorizedUser[] = flattenAttributes(data.data);
 
-    return friendships.map((user) => user.id);
+      allSent = allSent.concat(friendships);
+
+      // If we got fewer than pageSize, we reached the end
+      if (friendships.length < pageSize) break;
+
+      page++; // fetch next page
+    }
+    return allSent.map((user) => user.id);
   } catch (error) {
     console.error("Database Error:", error);
     throw new Error("Failed to fetch friends data.");
@@ -585,76 +572,3 @@ export async function fetchSuggestionsById(
     throw new Error("Failed to fetch friend suggestions");
   }
 }
-
-/*
-export async function fetchSuggestions(): Promise<Friendship[]> {
-    try {
-        const query = qs.stringify({
-            sort: [],
-            fields: [],
-            populate: {
-                authorized_users: { 
-                    populate: {
-                        friendships: {
-                            fields: ["authorized_users"]
-                        }
-                    },
-                    fields: ["id", "email"] },
-            },
-            pagination: {
-                pageSize: 25,
-                page: 1,
-            },
-        });
-        const response = await fetch(
-            NEXT_PUBLIC_STRAPI_API_URL + "/api/friendships?" + query,
-            {
-                headers: { Authorization: "Bearer " + STRAPI_ACCESS_TOKEN },
-                cache: "no-store",
-            },
-        );
-        const data = await response.json();
-        const authorizedUsers = flattenAttributes(data.data);
-        return authorizedUsers;
-    } catch (error) {
-        console.error("Database Error:", error);
-        throw new Error("Failed to fetch authorized users data.");
-    }
-}
-
-export async function getSuggestionsFromEmail(userEmail: string) {
-
-    const curUser = await getAuthorizedUserByEmail(userEmail);
-
-
-    //all of the current user's Friendships
-    const userFriends = (await fetchSuggestions()).filter(friendship =>
-        friendship.authorized_users.some(user => user.id === curUser.id),
-    );
-
-
-    //array of AuthorizedUser objects of the given user's friends
-    const friendFriendships = userFriends.map((friendship) => {
-        if (friendship?.authorized_users[0] === 29) {
-            return friendship?.authorized_users[0]
-        } else {
-            return friendship?.authorized_users[1]
-        }
-    })
-
-    /*
-    const suggestions = friendFriendships.map((friendID) => {
-        const suggestionFunc = async () => {
-            return (await fetchSuggestions()).filter(friendship =>
-                friendship.authorized_users.some(user => user.id === friendID.id)
-            );
-        }
-        return suggestionFunc();
-    })
-
-        return friendFriendships;
-
-
-
-}
-*/

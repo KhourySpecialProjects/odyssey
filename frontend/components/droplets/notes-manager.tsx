@@ -44,11 +44,15 @@ export function NotesManager({
     try {
       const pdfDoc = await PDFDocument.create();
 
-      for (let i = 0; i < filteredEnrollments.length; i++) {
-        const enrollment = filteredEnrollments[i];
+      for (const enrollment of filteredEnrollments) {
         if (!selectedIds.has(enrollment.droplet.id)) continue;
 
-        const dropletData = allNotes[i];
+        const dropletData = allNotes.find(
+          (data) => data.dropletId === enrollment.droplet.id,
+        );
+
+        if (!dropletData) continue;
+
         const sectionPdfBytes = await NoteSummary({
           filteredHighlights: dropletData.highlights,
           notes: dropletData.notes,
@@ -89,7 +93,11 @@ export function NotesManager({
 
   const filteredEnrollments = enrollments.filter((e, index) => {
     const dropletData = allNotes[index];
-    return dropletData.highlights.length > 0 || dropletData.notes.length > 0;
+    if (!e || !dropletData) return false;
+    return (
+      (dropletData.highlights && dropletData.highlights.length > 0) ||
+      dropletData.notes.length > 0
+    );
   });
 
   return (
@@ -131,16 +139,21 @@ export function NotesManager({
         </Button>
       </div>
       <div className="mx-auto w-full space-y-4">
-        {filteredEnrollments.map((enrollment, index) => {
-          const dropletData = allNotes[index];
+        {filteredEnrollments.map((enrollment) => {
+          const dropletData = allNotes.find(
+            (data) => data.dropletId === enrollment.droplet.id,
+          );
+
+          if (!dropletData) return null;
+
           return (
             <NotesSummaryClient
               key={enrollment.id}
-              index={index}
+              // Remove index prop
               dropletHighlights={dropletData.highlights}
               dropletNotes={dropletData.notes}
               enrollment={enrollment}
-              allNotes={allNotes}
+              allNotes={allNotes} // Keep the full array
               onSelectionChange={handleSelectionChange}
               selectedDropletIds={selectedDropletIds}
             />

@@ -54,11 +54,44 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
   const lastSavedBlocksRef = useRef<Block[]>(lastSavedBlocks);
   const [name, setName] = useState(lesson.name);
 
+  // Check if lesson is truly new (empty from props and no blocksV2)
+  const isLessonEmpty =
+    (lesson.blocks?.length === 0 || !lesson.blocks) && !lesson.blocksV2;
+
   const [editorVersion, setEditorVersion] = useState<"v1" | "v2">(
     lesson.blocksVersion || "v1",
   );
 
-  const isNewLesson = blocks.length === 0 && !lesson.blocksV2;
+  // Show toggle button if:
+  // 1. Lesson is truly empty (new lesson), OR
+  // 2. We're in v1 mode and current blocks state is empty (all blocks deleted)
+  const shouldShowEditorToggle = useMemo(() => {
+    return (
+      isLessonEmpty ||
+      (editorVersion === "v1" && (blocks?.length === 0 || !blocks))
+    );
+  }, [isLessonEmpty, editorVersion, blocks]);
+
+  const hasSetVersionRef = useRef(false);
+
+  useEffect(() => {
+    const isNew =
+      (lesson.blocks?.length === 0 || !lesson.blocks) && !lesson.blocksV2;
+
+    if (
+      isNew &&
+      (!lesson.blocksVersion || lesson.blocksVersion === "v1") &&
+      !hasSetVersionRef.current
+    ) {
+      hasSetVersionRef.current = true;
+      setEditorVersion("v2");
+      updateLesson(lesson.id, {
+        blocksVersion: "v2",
+      }).catch(() => {
+        // Ignore errors - lesson might not be fully created yet
+      });
+    }
+  }, [lesson.blocks, lesson.blocksV2, lesson.blocksVersion, lesson.id]);
 
   const updateBlocksBackend = useCallback(
     async (blocks: any[]) => {
@@ -123,6 +156,9 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
   useEffect(() => {
     setBlocks(lesson.blocks);
     setLastSavedBlocks(lesson.blocks);
+    if (lesson.blocksVersion) {
+      hasSetVersionRef.current = true;
+    }
   }, [lesson]);
 
   useEffect(() => {
@@ -304,11 +340,6 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
   }, [blocks, debounceUpdate]);
 
   useEffect(() => {
-    setBlocks(lesson.blocks);
-    setLastSavedBlocks(lesson.blocks);
-  }, [lesson]);
-
-  useEffect(() => {
     lastSavedBlocksRef.current = lastSavedBlocks;
   }, [lastSavedBlocks]);
 
@@ -371,24 +402,34 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
               </div>
             </div>
           )}
-          {isNewLesson && (
+          {shouldShowEditorToggle && (
             <Button
               variant={editorVersion === "v2" ? "default" : "outline"}
               onClick={async () => {
-                if (editorVersion === "v2") {
+                const newVersion = editorVersion === "v1" ? "v2" : "v1";
+                hasSetVersionRef.current = true;
+
+                if (newVersion === "v2") {
+                  debounceUpdateV2.flush();
+                  await updateLesson(lesson.id, {
+                    blocksVersion: "v2",
+                    blocksV2: null,
+                  });
+                } else {
                   debounceUpdateV2.flush();
                   await updateLesson(lesson.id, {
                     blocksVersion: "v1",
                     blocksV2: null,
                   });
                 }
-                setEditorVersion(editorVersion === "v1" ? "v2" : "v1");
+
+                setEditorVersion(newVersion);
               }}
               className={`inline-flex h-10 items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium whitespace-nowrap ring-offset-white transition-colors focus-visible:ring-2 focus-visible:ring-slate-950 focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 dark:ring-offset-slate-950 dark:focus-visible:ring-slate-300 ${
                 editorVersion === "v1"
-                  ? "animate-border border-2 text-slate-900 [background:linear-gradient(#fff,#fff)_padding-box,conic-gradient(from_var(--border-angle),theme(colors.slate.200)_0%,theme(colors.indigo.500)_25%,theme(colors.indigo.300)_50%,theme(colors.indigo.500)_75%,theme(colors.slate.200)_100%)_border-box] dark:text-slate-50 dark:[background:linear-gradient(theme(colors.slate.950),theme(colors.slate.950))_padding-box,conic-gradient(from_var(--border-angle),theme(colors.slate.800/.48)_0%,theme(colors.indigo.500)_25%,theme(colors.indigo.300)_50%,theme(colors.indigo.500)_75%,theme(colors.slate.800/.48)_100%)_border-box]"
+                  ? "animate-border border-2 border-transparent text-slate-900 [background:linear-gradient(#fff,#fff)_padding-box,conic-gradient(from_var(--border-angle),theme(colors.slate.200)_0%,theme(colors.indigo.500)_25%,theme(colors.indigo.300)_50%,theme(colors.indigo.500)_75%,theme(colors.slate.200)_100%)_border-box] dark:text-slate-50 dark:[background:linear-gradient(theme(colors.slate.950),theme(colors.slate.950))_padding-box,conic-gradient(from_var(--border-angle),theme(colors.slate.800/.48)_0%,theme(colors.indigo.500)_25%,theme(colors.indigo.300)_50%,theme(colors.indigo.500)_75%,theme(colors.slate.800/.48)_100%)_border-box]"
                   : "border border-slate-200 bg-white text-slate-900 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-50"
-              } border-transparent hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-slate-800 dark:hover:text-slate-50`}
+              } hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-slate-800 dark:hover:text-slate-50`}
             >
               {editorVersion === "v1"
                 ? "Use BlockNote Editor"
