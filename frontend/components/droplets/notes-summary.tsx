@@ -26,6 +26,12 @@ export default function NotesSummary({
   const filteredNewNotes = dropletNotes.filter(
     (note) => !note.highlight || selectedColors.includes(note.highlight.color),
   );
+  // console.log("dropletHighlights:", dropletHighlights.length);
+  // console.log("dropletNotes:", dropletNotes.length);
+  // console.log("selectedColors:", selectedColors);
+  // console.log("filteredNewHighlights:", filteredNewHighlights.length);
+  // console.log("filteredNewNotes:", filteredNewNotes.length);
+  // console.log("dropletNotes IDs:", dropletNotes.map(n => n.id).join(', '));
   return (
     <>
       <div className=" ">
