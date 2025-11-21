@@ -20,7 +20,6 @@ export default function NotesSummary({
     highlights: Highlight[];
   };
 }) {
-  
   const filteredNewHighlights = dropletHighlights.filter((highlight) =>
     selectedColors.includes(highlight.color),
   );

@@ -48,9 +48,9 @@ export function NotesManager({
         if (!selectedIds.has(enrollment.droplet.id)) continue;
 
         const dropletData = allNotes.find(
-          (data) => data.dropletId === enrollment.droplet.id
+          (data) => data.dropletId === enrollment.droplet.id,
         );
-        
+
         if (!dropletData) continue;
 
         const sectionPdfBytes = await NoteSummary({
@@ -141,11 +141,11 @@ export function NotesManager({
       <div className="mx-auto w-full space-y-4">
         {filteredEnrollments.map((enrollment) => {
           const dropletData = allNotes.find(
-            (data) => data.dropletId === enrollment.droplet.id
+            (data) => data.dropletId === enrollment.droplet.id,
           );
-          
+
           if (!dropletData) return null;
-          
+
           return (
             <NotesSummaryClient
               key={enrollment.id}

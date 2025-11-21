@@ -29,14 +29,16 @@ export function NotesSummaryClient({
 }) {
   // Find the matching droplet data
   const currentDropletData = allNotes.find(
-    (data) => data.dropletId === enrollment.droplet.id
+    (data) => data.dropletId === enrollment.droplet.id,
   );
 
-  const [openDroplets, setOpenDroplets] = useState<{ [key: number]: boolean }>({});
-  
-  const [selectedDroplets, setSelectedDroplets] = useState<Record<number, boolean>>(
-    Object.fromEntries(Array.from(selectedDropletIds).map((id) => [id, true]))
+  const [openDroplets, setOpenDroplets] = useState<{ [key: number]: boolean }>(
+    {},
   );
+
+  const [selectedDroplets, setSelectedDroplets] = useState<
+    Record<number, boolean>
+  >(Object.fromEntries(Array.from(selectedDropletIds).map((id) => [id, true])));
 
   useEffect(() => {
     setSelectedDroplets(
@@ -82,7 +84,10 @@ export function NotesSummaryClient({
           </Link>
         </div>
         <div className="pr-2">
-          ({currentDropletData.highlights.length + currentDropletData.notes.length})
+          (
+          {currentDropletData.highlights.length +
+            currentDropletData.notes.length}
+          )
         </div>
         <button
           className="ml-auto flex justify-end border py-2 font-bold dark:border-slate-500"
@@ -95,7 +100,7 @@ export function NotesSummaryClient({
           )}
         </button>
       </div>
-      
+
       {openDroplets[enrollment.droplet.id] && (
         <NotesContainer
           allNotes={currentDropletData}

@@ -102,7 +102,7 @@ export default async function DropletRecapRoute({ params }: Props) {
           );
           // console.log(`Enrollment ${enrollment.id}, Droplet ${enrollment.droplet.id}: ${dropletHighlights.length} highlights found`);
           // console.log(`Lessons in droplet: ${enrollment.droplet.lessons?.map(l => l.id).join(', ')}`);
-          
+
           return {
             dropletId: enrollment.droplet.id,
             notes: dropletNotes,
