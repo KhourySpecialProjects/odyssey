@@ -252,3 +252,162 @@ export async function addLesson(formData: z.infer<typeof CreateLessonSchema>) {
     return { error: "Database Error: Failed to create lesson." };
   }
 }
+
+export async function duplicateLessonToDroplet(
+  sourceLessonId: number,
+  targetDropletId: number,
+  newOrderIndex: number,
+) {
+  try {
+    // Fetch the source lesson with all its data
+    const sourceLesson = await fetch(
+      `${NEXT_PUBLIC_STRAPI_API_URL}/api/lessons/${sourceLessonId}?populate[blocks][populate][questions][populate]=answerOptions`,
+      {
+        headers: {
+          Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+        },
+      },
+    );
+
+    if (!sourceLesson.ok) {
+      throw new Error("Failed to fetch source lesson");
+    }
+
+    const sourceLessonData = await sourceLesson.json();
+
+    if (!sourceLessonData.data) {
+      throw new Error("Source lesson not found");
+    }
+
+    const lesson = sourceLessonData.data.attributes;
+
+    // Helper function to remove ids from blocks while preserving structure
+    const cleanBlocks = (blocks: any[]): any[] => {
+      if (!Array.isArray(blocks)) {
+        return [];
+      }
+
+      return blocks.map((block) => {
+        const { id, ...blockWithoutId } = block;
+
+        switch (block.__component) {
+          case "droplets.quiz":
+            if (block.questions) {
+              return {
+                ...blockWithoutId,
+                questions: block.questions.map((q: any) => {
+                  const { id: qId, ...questionWithoutId } = q;
+                  return {
+                    ...questionWithoutId,
+                    answerOptions:
+                      q.answerOptions?.map((a: any) => {
+                        const { id: aId, ...answerWithoutId } = a;
+                        return answerWithoutId;
+                      }) || [],
+                  };
+                }),
+              };
+            }
+            return blockWithoutId;
+
+          case "droplets.open-ended-quiz":
+            if (block.questions) {
+              return {
+                ...blockWithoutId,
+                questions: block.questions.map((q: any) => {
+                  const { id: qId, ...questionWithoutId } = q;
+                  return questionWithoutId;
+                }),
+              };
+            }
+            return blockWithoutId;
+
+          case "droplets.callout":
+            if (block.content && Array.isArray(block.content)) {
+              return {
+                ...blockWithoutId,
+                content: block.content.map((node: any) => {
+                  const { id: nodeId, ...nodeWithoutId } = node;
+                  if (
+                    nodeWithoutId.children &&
+                    Array.isArray(nodeWithoutId.children)
+                  ) {
+                    nodeWithoutId.children = nodeWithoutId.children.map(
+                      (child: any) => {
+                        const { id: childId, ...childWithoutId } = child;
+                        return childWithoutId;
+                      },
+                    );
+                  }
+                  return nodeWithoutId;
+                }),
+              };
+            }
+            return blockWithoutId;
+
+          case "droplets.generic":
+          case "droplets.expandable":
+          case "droplets.video":
+          default:
+            return blockWithoutId;
+        }
+      });
+    };
+
+    // Generate unique slug for the duplicated lesson
+    const timestamp = Date.now();
+    const randomSuffix = Math.random().toString(36).substring(2, 10);
+    const uniqueSlug = `${lesson.slug}-copy-${timestamp}-${randomSuffix}`;
+
+    const cleanedBlocks = cleanBlocks(lesson.blocks || []);
+
+    const lessonData = {
+      name: `${lesson.name} (Copy)`,
+      slug: uniqueSlug,
+      type: lesson.type,
+      orderIndex: newOrderIndex,
+      blocks: cleanedBlocks,
+      droplets: {
+        connect: [targetDropletId],
+      },
+    };
+
+    const response = await fetch(NEXT_PUBLIC_STRAPI_API_URL + "/api/lessons", {
+      method: "POST",
+      body: JSON.stringify({ data: lessonData }),
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+      },
+    });
+
+    const responseData = await response.json();
+
+    if (!response.ok || responseData.error) {
+      return {
+        ok: false,
+        error: responseData.error?.message || "Failed to duplicate lesson",
+        data: null,
+      };
+    }
+
+    revalidateTag("droplets");
+    revalidatePath("(editing)/draft/d/[slug]", "page");
+
+    return {
+      ok: true,
+      error: null,
+      data: responseData.data,
+    };
+  } catch (err) {
+    console.error("Error duplicating lesson:", err);
+    return {
+      ok: false,
+      error:
+        err instanceof Error
+          ? err.message
+          : "Database Error: Failed to duplicate lesson.",
+      data: null,
+    };
+  }
+}
