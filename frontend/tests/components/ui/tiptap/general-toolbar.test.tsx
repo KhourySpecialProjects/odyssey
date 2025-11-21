@@ -34,8 +34,5 @@ describe("GeneralToolbar", () => {
     expect(screen.queryByTitle("Heading 1")).not.toBeInTheDocument();
   });
 
-  it("renders LaTeX tool when isDroplet is true", () => {
-    render(<GeneralToolbar editor={mockEditor} isDroplet={true} />);
-    expect(screen.getByTitle("LaTeX")).toBeInTheDocument();
-  });
+  // Note: LaTeX tool removed - LaTeX functionality moved to BlockNote
 });
