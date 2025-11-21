@@ -81,13 +81,25 @@ export const LatexBlock = createReactBlockSpec(
       }, [editContent, isEditing]);
 
       const handleSave = () => {
-        props.editor.updateBlock(props.block, {
-          props: {
-            content: editContent,
-            displayMode: true, // Always use display mode
-          },
-        });
-        setIsEditing(false);
+        try {
+          props.editor.updateBlock(props.block, {
+            props: {
+              content: editContent,
+              displayMode: true, // Always use display mode
+            },
+          });
+          setIsEditing(false);
+        } catch (error) {
+          if (
+            error instanceof Error &&
+            (error.message.includes("node position") ||
+              error.message.includes("Cannot find") ||
+              error.message.includes("not mounted"))
+          ) {
+            return;
+          }
+          console.error("LatexBlock update error:", error);
+        }
       };
 
       const handleCancel = () => {

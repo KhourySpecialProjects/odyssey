@@ -327,12 +327,6 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
   }, [blocks, debounceUpdate]);
 
   useEffect(() => {
-    setBlocks(lesson.blocks);
-    setLastSavedBlocks(lesson.blocks);
-    hasSetVersionRef.current = !!lesson.blocksVersion;
-  }, [lesson]);
-
-  useEffect(() => {
     lastSavedBlocksRef.current = lastSavedBlocks;
   }, [lastSavedBlocks]);
 

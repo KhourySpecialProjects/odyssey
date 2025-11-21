@@ -161,11 +161,12 @@ export type Block =
     }
   | {
       __component: "droplets.code-block";
-      id: number;
+      id?: number;
       language: string;
       code: string;
       editable: boolean;
       runnable: boolean;
+      _clientId?: string;
     };
 
 export type Lesson = {
