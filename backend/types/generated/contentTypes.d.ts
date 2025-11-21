@@ -836,6 +836,7 @@ export interface ApiDropletDroplet extends Schema.CollectionType {
     >;
     name: Attribute.String & Attribute.Required & Attribute.Unique;
     nextSteps: Attribute.Component<'droplets.resource', true>;
+    originalDropletId: Attribute.Integer;
     overview: Attribute.RichText &
       Attribute.CustomField<
         'plugin::ckeditor.CKEditor',
@@ -1275,6 +1276,7 @@ export interface ApiLessonLesson extends Schema.CollectionType {
       'oneToMany',
       'api::note.note'
     >;
+    orderIndex: Attribute.Integer;
     publishedAt: Attribute.DateTime;
     slug: Attribute.UID<'api::lesson.lesson', 'name'> & Attribute.Required;
     type: Attribute.Enumeration<['general', 'setup', 'activity', 'caseStudy']> &

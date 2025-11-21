@@ -31,6 +31,7 @@ import type { Block as BlockNoteBlock } from "@blocknote/core";
 import { GenericBlock } from "@/components/draft/lesson/blocks/generic";
 import { markLessonAsComplete } from "@/lib/requests/lesson";
 import posthog from "posthog-js";
+import { CodeBlockViewer } from "@/components/draft/lesson/code-block-viewer";
 
 interface LessonRendererProps {
   lesson: Lesson;
@@ -282,7 +283,10 @@ function convertBlockNoteToV1Blocks(blocksV2: BlockNoteBlock[]): Block[] {
     }
 
     // For non-numbered-list blocks, process normally
-    processedBlocks.push(convertSingleBlock(blockAny, i));
+    const convertedBlock = convertSingleBlock(blockAny, i);
+    if (convertedBlock !== null) {
+      processedBlocks.push(convertedBlock);
+    }
     i++;
   }
 
@@ -509,6 +513,26 @@ function convertSingleBlock(blockAny: any, blockIndex: number): Block | null {
       };
     }
 
+    case "code-block": {
+      // Code blocks need special handling - render them as a custom component
+      // We'll create a simple code display block that respects the editable/runnable props
+      const language = blockAny.props?.language || "javascript";
+      const code = blockAny.props?.code || "";
+      const editable = blockAny.props?.editable || false;
+      const runnable = blockAny.props?.runnable || false;
+
+      // For now, convert to a generic block with a special data attribute
+      // that the GenericBlockRenderer can detect and render specially
+      return {
+        __component: "droplets.code-block",
+        id: blockIndex,
+        language,
+        code,
+        editable,
+        runnable,
+      };
+    }
+
     default:
       return null;
   }
@@ -721,7 +745,9 @@ export function LessonRenderer({
     });
 
   const [canProceed, setCanProceed] = useState(false);
-  const [activeBlock, setActiveBlock] = useState(displayBlocks[0]?.id);
+  const [activeBlock, setActiveBlock] = useState<number | undefined>(
+    displayBlocks[0]?.id,
+  );
 
   useEffect(() => {
     const checkQuizAnswers = () => {
@@ -839,7 +865,7 @@ function LessonBlockRenderer({
   enrollmentId: string | undefined;
   expanded: boolean;
   setExpanded: (expanded: boolean) => void;
-  activeBlock: number;
+  activeBlock: number | undefined;
   setActiveBlock: (id: number) => void;
 }) {
   switch (block.__component) {
@@ -931,6 +957,16 @@ function LessonBlockRenderer({
             ></div>
           </CollapsibleContent>
         </Collapsible>
+      );
+
+    case "droplets.code-block":
+      return (
+        <CodeBlockViewer
+          language={block.language}
+          code={block.code}
+          editable={block.editable}
+          runnable={block.runnable}
+        />
       );
 
     default:

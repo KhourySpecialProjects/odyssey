@@ -10,6 +10,7 @@ import { DropletTile } from "../droplets/droplet-tile";
 import { SortedDropletsGrid } from "./sorted-droplets-grid";
 import { Droplet, DueDate, Enrollment } from "@/types";
 import { getUserDueDates } from "@/lib/requests/groups";
+import { isAuthorizedUserAdmin } from "@/lib/utils";
 
 interface Lesson {
   id: number;
@@ -113,6 +114,7 @@ export async function DropletsGrid({
       enrolledDropletIds={enrolledDropletIds}
       ratingsMap={ratingsMap}
       dueDates={dueDates}
+      isAdmin={isAuthorizedUserAdmin(user?.roles)}
     />
   );
 }

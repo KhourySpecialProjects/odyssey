@@ -1,7 +1,7 @@
 "use client";
 
 import { Badge } from "@/components/ui/badge";
-import { uppercaseFirstChar } from "@/lib/utils";
+import { convertBlockNoteToMarkdown, uppercaseFirstChar } from "@/lib/utils";
 import { Droplet } from "@/types";
 import Link from "next/link";
 
@@ -9,7 +9,7 @@ import { StarRating } from "@/components/ui/rating-stars";
 import { useState, useEffect, useRef } from "react";
 import { Button } from "../ui/button";
 import { toast } from "sonner";
-import { Archive, ArchiveRestore, Clock } from "lucide-react";
+import { Archive, ArchiveRestore, Clock, Download } from "lucide-react";
 import { getDueDateBadgeColor } from "@/lib/utils";
 import { DateTime } from "luxon";
 import { archiveDroplet, favoriteDroplet } from "@/lib/requests/droplet";
@@ -25,6 +25,7 @@ interface DropletTileProps {
   isArchived?: boolean;
   isFavorited?: boolean;
   dueDate?: string;
+  isAdmin?: boolean;
 }
 
 export function DropletTile({
@@ -36,6 +37,7 @@ export function DropletTile({
   isArchived,
   isFavorited: initialIsFavorited,
   dueDate,
+  isAdmin,
 }: DropletTileProps) {
   const [descriptionExpanded, setDescriptionExpanded] = useState(false);
   const [isTextClamped, setIsTextClamped] = useState(false);
@@ -152,6 +154,126 @@ export function DropletTile({
     } finally {
       setIsFavoritePending(false);
     }
+  }
+
+  async function exportDropletMarkdown() {
+    // mock markdown content
+    const contentMeta = `# ${droplet.name}
+
+## **Metadata**
+
+Type: ${droplet.type}
+Focus Area: ${droplet.focusArea}
+
+### Tags
+${droplet.tags?.map((tag) => `* ${tag.name}`).join("\n") || "No tags"}
+
+### Authors
+${droplet.authorized_users?.map((user) => `* ${user.firstName} ${user.lastName}`).join("\n") || "No authors"}
+
+### Description
+${droplet.description ? droplet.description.concat("\n") : "No description"} 
+
+### Overview
+${droplet.overview ? droplet.overview.concat("\n") : "No overview"}
+
+### Learning Objectives
+${droplet.learningObjectives?.map((objective) => `* ${objective.objective}`).join("\n") || "No objectives"}
+
+### Next Steps
+${droplet.nextSteps?.map((resource) => `* ${resource.label} linked to: ${resource.url}`).join("\n") || "No next steps"}
+
+### Prerequisites
+${droplet.prerequisites?.map((prereq) => `* ${prereq.name}`).join("\n") || "No prereqs"}
+
+### Postrequisites
+${droplet.postrequisites?.map((postreq) => `* ${postreq.name}`).join("\n") || "No postreqs"}`;
+
+    const contentLessons = `
+## **Lessons**
+${
+  droplet.lessons
+    ?.map(
+      (lesson) => `
+### ${lesson.name}
+
+${
+  lesson.blocksVersion === "v2" && lesson.blocksV2
+    ? convertBlockNoteToMarkdown(lesson.blocksV2)
+    : lesson.blocks
+        ?.map((block) => {
+          if (block.__component === "droplets.generic") {
+            return `#### Generic Droplet\n\n${block.content}`;
+          }
+
+          if (block.__component === "droplets.expandable") {
+            return `#### Expandable Droplet\n\n##### ${block.title}\n\n${block.content}`;
+          }
+
+          if (block.__component === "droplets.callout") {
+            const calloutContent = block.content
+              .map((contentBlock) =>
+                contentBlock.children.map((child) => child.text).join(""),
+              )
+              .join("\n");
+            return `#### Callout Droplet\n\nColor: ${block.color}\nType: ${block.type}\n\n${calloutContent}`;
+          }
+
+          if (block.__component === "droplets.video") {
+            return `#### Video\n\nVideo Link: ${block.url}`;
+          }
+
+          if (block.__component === "droplets.quiz") {
+            const quizContent = block.questions
+              .map(
+                (question, qIndex) =>
+                  `${qIndex + 1}. ${question.content}\n${question.answerOptions
+                    .map(
+                      (answer, aIndex) =>
+                        `   ${aIndex + 1}. Answer: ${answer.content} is ${answer.isCorrect ? "correct" : "incorrect"}`,
+                    )
+                    .join("\n")}`,
+              )
+              .join("\n");
+            return `#### Quiz\n\n${quizContent}`;
+          }
+
+          if (block.__component === "droplets.open-ended-quiz") {
+            const openEndedContent = block.questions
+              .map(
+                (question, qIndex) =>
+                  `${qIndex + 1}. ${question.content}\n   * Answer: ${question.correctAnswer}`,
+              )
+              .join("\n");
+            return `#### Open-Ended Quiz\n\n${openEndedContent}`;
+          }
+
+          return "";
+        })
+        .join("\n\n") || ""
+}
+`,
+    )
+    .join("\n") || "No lessons"
+}
+`;
+
+    // creating a binary large object file of markdown type
+    const blob = new Blob([contentMeta.concat(contentLessons)], {
+      type: "text/markdown",
+    });
+
+    const url = URL.createObjectURL(blob);
+
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${droplet.name}.md`;
+
+    document.body.appendChild(link);
+    link.click();
+
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   }
 
   if (compact) {
@@ -315,49 +437,70 @@ export function DropletTile({
             <div className="flex items-center gap-2">
               <Button
                 size="sm"
-                aria-label={isArchived ? "Unarchive" : "Archive"}
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
-                  changeVisibility();
+                  exportDropletMarkdown();
                 }}
-                className={`${typeof isArchived === "boolean" ? "visible" : "invisible"} bg-slate-50 hover:bg-slate-300 dark:bg-slate-800`}
+                className={`${isAdmin ? "visible" : "invisible"} bg-slate-50 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-900`}
               >
                 <div className="group relative">
-                  {isArchived ? (
-                    <ArchiveRestore className="text-purple-500" />
-                  ) : (
-                    <Archive className="text-purple-500" />
-                  )}
+                  <Download className="text-black dark:text-white" />
                   <span className="absolute top-full left-1/2 mt-1 w-max -translate-x-1/2 transform rounded bg-gray-800 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100">
-                    {isArchived ? "Unarchive" : "Archive"}
+                    Export Markdown
                   </span>
                 </div>
               </Button>
-              <Button
-                size="sm"
-                aria-label="Favorite"
-                disabled={isFavoritePending}
-                onMouseEnter={() => setIsHovering(true)}
-                onMouseLeave={() => setIsHovering(false)}
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  toggleFavorite();
-                }}
-                className={`${typeof isArchived === "boolean" ? "visible" : "invisible"} bg-slate-50 hover:bg-slate-300 disabled:opacity-50 dark:bg-slate-800`}
-              >
-                <div className="group relative">
-                  {isFavorited || isHovering ? (
-                    <FavoriteIcon className="text-pink-500" />
-                  ) : (
-                    <FavoriteBorderIcon className="text-purple-500" />
-                  )}
-                  <span className="absolute top-full left-1/2 mt-1 w-max -translate-x-1/2 transform rounded bg-gray-800 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100">
-                    {isFavorited ? "Unfavorite" : "Favorite"}
-                  </span>
-                </div>
-              </Button>
+
+              {typeof isArchived === "boolean" && (
+                <>
+                  <Button
+                    size="sm"
+                    aria-label={isArchived ? "Unarchive" : "Archive"}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      changeVisibility();
+                    }}
+                    className={`bg-slate-50 hover:bg-slate-300 dark:bg-slate-800`}
+                  >
+                    <div className="group relative">
+                      {isArchived ? (
+                        <ArchiveRestore className="text-purple-500" />
+                      ) : (
+                        <Archive className="text-purple-500" />
+                      )}
+                      <span className="absolute top-full left-1/2 mt-1 w-max -translate-x-1/2 transform rounded bg-gray-800 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100">
+                        {isArchived ? "Unarchive" : "Archive"}
+                      </span>
+                    </div>
+                  </Button>
+                  <Button
+                    size="sm"
+                    aria-label="Favorite"
+                    disabled={isFavoritePending}
+                    onMouseEnter={() => setIsHovering(true)}
+                    onMouseLeave={() => setIsHovering(false)}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      toggleFavorite();
+                    }}
+                    className={`bg-slate-50 hover:bg-slate-300 disabled:opacity-50 dark:bg-slate-800`}
+                  >
+                    <div className="group relative">
+                      {isFavorited || isHovering ? (
+                        <FavoriteIcon className="text-pink-500" />
+                      ) : (
+                        <FavoriteBorderIcon className="text-purple-500" />
+                      )}
+                      <span className="absolute top-full left-1/2 mt-1 w-max -translate-x-1/2 transform rounded bg-gray-800 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100">
+                        {isFavorited ? "Unfavorite" : "Favorite"}
+                      </span>
+                    </div>
+                  </Button>
+                </>
+              )}
             </div>
           </div>
         </div>
