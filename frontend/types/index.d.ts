@@ -158,6 +158,14 @@ export type Block =
       questions: { id: number; content: string; correctAnswer: string }[];
       id?: number;
       _clientId?: string;
+    }
+  | {
+      __component: "droplets.code-block";
+      id: number;
+      language: string;
+      code: string;
+      editable: boolean;
+      runnable: boolean;
     };
 
 export type Lesson = {
