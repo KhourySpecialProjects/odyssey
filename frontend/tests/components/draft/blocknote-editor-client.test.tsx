@@ -40,10 +40,6 @@ jest.mock(
   }),
 );
 
-jest.mock("@/components/ui/blocknote/blocks/latex-block", () => ({
-  LatexBlock: jest.fn(() => ({ type: "latex" })),
-}));
-
 jest.mock("next-themes", () => ({
   useTheme: jest.fn(() => ({
     resolvedTheme: "light",

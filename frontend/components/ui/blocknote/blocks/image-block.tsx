@@ -54,11 +54,6 @@ export const ImageBlock = createReactBlockSpec(
       const fileInputRef = useRef<HTMLInputElement>(null);
       const isMountedRef = useRef(true);
 
-      // Early return if editor or block is not ready
-      if (!props.editor || !props.block) {
-        return null;
-      }
-
       // Mounting check - delay rendering to ensure editor is fully initialized
       useEffect(() => {
         setIsReady(false);
@@ -82,7 +77,10 @@ export const ImageBlock = createReactBlockSpec(
         setCaption(props.block?.props?.caption || "");
       }, [props.block?.props?.url, props.block?.props?.caption, isReady]);
 
-      // Removed auto-open on reload - user must click Edit button to open dialog
+      // Early return if editor or block is not ready
+      if (!props.editor || !props.block) {
+        return null;
+      }
 
       // Don't render until ready to avoid "Cannot find node position" errors
       if (!isReady) {

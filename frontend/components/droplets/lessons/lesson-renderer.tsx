@@ -474,12 +474,17 @@ function convertSingleBlock(blockAny: any, blockIndex: number): Block | null {
           id: blockIndex,
           content: `<div class="${wrapperClass}">${rendered}</div>`,
         };
-      } catch (e) {
+      } catch {
         // Fallback: show raw LaTeX if rendering fails
+        const escapedLatex = latexContent
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;");
+
         return {
           __component: "droplets.generic",
           id: blockIndex,
-          content: `<div class="rounded bg-red-50 p-2 text-red-600 dark:bg-red-900/20 dark:text-red-400 font-mono text-sm">LaTeX Error: ${latexContent}</div>`,
+          content: `<div class="rounded bg-red-50 p-2 text-red-600 dark:bg-red-900/20 dark:text-red-400 font-mono text-sm">LaTeX Error: ${escapedLatex}</div>`,
         };
       }
     }

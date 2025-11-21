@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import DOMPurify from "isomorphic-dompurify";
 
 interface TableData {
   markdown: string;
@@ -42,6 +43,7 @@ export function TableRenderer({ tableData }: TableRendererProps) {
             <tr className="border-b border-slate-300 dark:border-slate-600">
               {headerRow.cells.map((cell, cellIndex) => {
                 const bgColor = cell.backgroundColor || "inherit";
+                const sanitizedContent = DOMPurify.sanitize(cell.content);
                 return (
                   <th
                     key={cellIndex}
@@ -50,7 +52,7 @@ export function TableRenderer({ tableData }: TableRendererProps) {
                       backgroundColor:
                         bgColor !== "inherit" ? bgColor : undefined,
                     }}
-                    dangerouslySetInnerHTML={{ __html: cell.content }}
+                    dangerouslySetInnerHTML={{ __html: sanitizedContent }}
                   />
                 );
               })}
@@ -69,6 +71,7 @@ export function TableRenderer({ tableData }: TableRendererProps) {
               >
                 {row.cells.map((cell, cellIndex) => {
                   const bgColor = cell.backgroundColor || null;
+                  const sanitizedContent = DOMPurify.sanitize(cell.content);
                   return (
                     <td
                       key={cellIndex}
@@ -76,7 +79,7 @@ export function TableRenderer({ tableData }: TableRendererProps) {
                       style={{
                         backgroundColor: bgColor || undefined,
                       }}
-                      dangerouslySetInnerHTML={{ __html: cell.content }}
+                      dangerouslySetInnerHTML={{ __html: sanitizedContent }}
                     />
                   );
                 })}

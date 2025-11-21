@@ -17,7 +17,12 @@ import { MultipleChoiceQuiz } from "@/components/ui/blocknote/blocks/quiz-multip
 import { LatexBlock } from "@/components/ui/blocknote/blocks/latex-block";
 import { ImageBlock } from "@/components/ui/blocknote/blocks/image-block";
 
-const blockTypesToHide = new Set(["quote", "toggleListItem", "checklistItem", "image"]);
+const blockTypesToHide = new Set([
+  "quote",
+  "toggleListItem",
+  "checklistItem",
+  "image",
+]);
 
 // Filter out unwanted block types from default specs
 const filteredBlockSpecs = Object.fromEntries(
@@ -130,7 +135,7 @@ export const blockNoteSchema = BlockNoteSchema.create({
     "quiz-open-ended": OpenEndedQuiz(),
     "quiz-multiple-choice": MultipleChoiceQuiz(),
     latex: LatexBlock(),
-    image: ImageBlock,
+    image: ImageBlock(),
   },
   styleSpecs: customStyleSpecs,
 });

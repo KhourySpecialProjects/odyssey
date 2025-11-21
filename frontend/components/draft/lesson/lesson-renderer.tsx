@@ -57,12 +57,9 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
   const isNewLesson =
     (lesson.blocks?.length === 0 || !lesson.blocks) && !lesson.blocksV2;
 
-  const [editorVersion, setEditorVersion] = useState<"v1" | "v2">(() => {
-    if (isNewLesson && lesson.blocksVersion === "v1") {
-      return "v2";
-    }
-    return lesson.blocksVersion || "v1";
-  });
+  const [editorVersion, setEditorVersion] = useState<"v1" | "v2">(
+    lesson.blocksVersion || "v1",
+  );
 
   const hasSetVersionRef = useRef(false);
 
@@ -70,12 +67,7 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
     const isNew =
       (lesson.blocks?.length === 0 || !lesson.blocks) && !lesson.blocksV2;
 
-    if (
-      isNew &&
-      lesson.blocksVersion === "v1" &&
-      editorVersion !== "v2" &&
-      !hasSetVersionRef.current
-    ) {
+    if (isNew && lesson.blocksVersion === "v1" && !hasSetVersionRef.current) {
       hasSetVersionRef.current = true;
       setEditorVersion("v2");
       updateLesson(lesson.id, {
@@ -84,13 +76,7 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
         // Ignore errors - lesson might not be fully created yet
       });
     }
-  }, [
-    lesson.blocks,
-    lesson.blocksV2,
-    lesson.blocksVersion,
-    lesson.id,
-    editorVersion,
-  ]);
+  }, [lesson.blocks, lesson.blocksV2, lesson.blocksVersion, lesson.id]);
 
   const updateBlocksBackend = useCallback(
     async (blocks: any[]) => {

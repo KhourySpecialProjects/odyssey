@@ -75,8 +75,7 @@ export const LatexBlock = createReactBlockSpec(
           });
           setPreviewHtml(html);
           setHasError(false);
-        } catch (e) {
-          setPreviewHtml(content);
+        } catch {
           setHasError(true);
         }
       }, [editContent, isEditing]);
@@ -136,13 +135,17 @@ export const LatexBlock = createReactBlockSpec(
             </Button>
           </div>
 
-          {previewHtml ? (
+          {previewHtml && !hasError ? (
             <div
-              className={`min-h-[40px] overflow-x-auto select-none ${hasError ? "rounded bg-red-50 p-2 text-red-600 dark:bg-red-900/20 dark:text-red-400" : "p-2"}`}
+              className="min-h-[40px] overflow-x-auto p-2 select-none"
               dangerouslySetInnerHTML={{ __html: previewHtml }}
               onMouseDown={(e) => e.preventDefault()}
               style={{ userSelect: "none", WebkitUserSelect: "none" }}
             />
+          ) : hasError ? (
+            <div className="min-h-[40px] rounded bg-red-50 p-2 text-red-600 dark:bg-red-900/20 dark:text-red-400">
+              {editContent}
+            </div>
           ) : (
             <div className="min-h-[40px] rounded bg-slate-100 p-2 text-sm text-slate-400 dark:bg-slate-700">
               Click Edit to add LaTeX formula
