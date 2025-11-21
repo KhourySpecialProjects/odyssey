@@ -159,9 +159,10 @@ export type Block =
       id?: number;
       _clientId?: string;
     }
-  | {
+    | {
       __component: "droplets.code-block";
-      id: number;
+      id?: number;
+      _clientId?: string;
       language: string;
       code: string;
       editable: boolean;
