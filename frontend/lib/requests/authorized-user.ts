@@ -138,38 +138,53 @@ export async function getAuthorizedUserByEmail<
 
 export async function fetchAuthorizedUsers(): Promise<AuthorizedUser[]> {
   try {
-    const query = qs.stringify({
-      sort: ["lastName"],
-      fields: [
-        "id",
-        "email",
-        "isEnabled",
-        "firstName",
-        "lastName",
-        "bio",
-        "profilePhoto",
-        "linkedin",
-        "github",
-        "website",
-      ],
-      populate: {
-        roles: { fields: ["title"] },
-      },
-      pagination: {
-        pageSize: 10000,
-        page: 1,
-      },
-    });
-    const response = await fetch(
-      NEXT_PUBLIC_STRAPI_API_URL + "/api/authorized-users?" + query,
-      {
-        headers: { Authorization: "Bearer " + STRAPI_ACCESS_TOKEN },
-        cache: "no-store",
-      },
-    );
-    const data = await response.json();
-    const authorizedUsers = flattenAttributes(data.data);
-    return authorizedUsers;
+    let page = 1;
+    const pageSize = 250;
+    let allUsers: AuthorizedUser[] = [];
+
+    while (true) {
+      const query = qs.stringify({
+        sort: ["lastName"],
+        fields: [
+          "id",
+          "email",
+          "isEnabled",
+          "firstName",
+          "lastName",
+          "bio",
+          "profilePhoto",
+          "linkedin",
+          "github",
+          "website",
+        ],
+        populate: {
+          roles: { fields: ["title"] },
+        },
+        pagination: {
+          page,
+          pageSize,
+        },
+      });
+
+      const response = await fetch(
+        `${NEXT_PUBLIC_STRAPI_API_URL}/api/authorized-users?${query}`,
+        {
+          headers: { Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}` },
+          cache: "no-store",
+        },
+      );
+      const data = await response.json();
+
+      const users = flattenAttributes(data.data);
+      allUsers = allUsers.concat(users);
+
+      // If we got fewer than pageSize, we reached the end
+      if (users.length < pageSize) break;
+
+      page++; // fetch next page
+    }
+
+    return allUsers;
   } catch (error) {
     console.error("Database Error:", error);
     throw new Error("Failed to fetch authorized users data.");
@@ -327,7 +342,7 @@ export async function fetchWebsiteCreators(): Promise<AuthorizedUser[]> {
         },
       },
       pagination: {
-        pageSize: 100,
+        pageSize: 50,
         page: 1,
       },
     });

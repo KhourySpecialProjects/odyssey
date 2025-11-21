@@ -150,7 +150,7 @@ describe("Data requests", () => {
       global.fetch.mockRejectedValueOnce(new Error("Network error"));
 
       await expect(fetchDroplets()).rejects.toThrow(
-        "Failed to fetch authorized users data.",
+        "Failed to fetch droplet data.",
       );
     });
   });
@@ -316,7 +316,7 @@ describe("Data requests", () => {
       global.fetch.mockRejectedValueOnce(new Error("Network error"));
 
       await expect(fetchReports()).rejects.toThrow(
-        "Failed to fetch access requests data.",
+        "Failed to fetch reports data.",
       );
     });
   });
