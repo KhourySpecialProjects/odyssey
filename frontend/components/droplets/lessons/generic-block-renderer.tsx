@@ -22,7 +22,7 @@ interface GenericBlockRendererProps {
   enrollmentId: string | undefined;
   expanded: boolean;
   setExpanded: (expanded: boolean) => void;
-  activeBlock: number;
+  activeBlock: number | undefined;
   setActiveBlock: (id: number) => void;
   author?: boolean;
 }

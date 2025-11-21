@@ -1,4 +1,48 @@
-// Mock all BlockNote dependencies before imports
+// Mock code block and its dependencies FIRST
+jest.mock("@/components/ui/blocknote/blocks/code-block", () => ({
+  CodeBlock: jest.fn(() => ({ type: "code-block" })),
+}));
+
+jest.mock("react-syntax-highlighter", () => ({
+  Light: jest.fn(({ children }: any) => <div>{children}</div>),
+}));
+
+jest.mock("react-syntax-highlighter/dist/esm/styles/hljs", () => ({
+  atomOneDark: {},
+}));
+
+// Mock language imports
+jest.mock(
+  "react-syntax-highlighter/dist/esm/languages/hljs/javascript",
+  () => ({}),
+);
+jest.mock(
+  "react-syntax-highlighter/dist/esm/languages/hljs/typescript",
+  () => ({}),
+);
+jest.mock(
+  "react-syntax-highlighter/dist/esm/languages/hljs/python",
+  () => ({}),
+);
+jest.mock("react-syntax-highlighter/dist/esm/languages/hljs/java", () => ({}));
+jest.mock("react-syntax-highlighter/dist/esm/languages/hljs/cpp", () => ({}));
+jest.mock("react-syntax-highlighter/dist/esm/languages/hljs/c", () => ({}));
+jest.mock(
+  "react-syntax-highlighter/dist/esm/languages/hljs/csharp",
+  () => ({}),
+);
+jest.mock("react-syntax-highlighter/dist/esm/languages/hljs/php", () => ({}));
+jest.mock("react-syntax-highlighter/dist/esm/languages/hljs/ruby", () => ({}));
+jest.mock("react-syntax-highlighter/dist/esm/languages/hljs/bash", () => ({}));
+jest.mock("react-syntax-highlighter/dist/esm/languages/hljs/go", () => ({}));
+jest.mock("react-syntax-highlighter/dist/esm/languages/hljs/rust", () => ({}));
+jest.mock(
+  "react-syntax-highlighter/dist/esm/languages/hljs/kotlin",
+  () => ({}),
+);
+jest.mock("react-syntax-highlighter/dist/esm/languages/hljs/swift", () => ({}));
+
+// Mock all BlockNote dependencies
 jest.mock("@blocknote/core", () => ({
   BlockNoteSchema: {
     create: jest.fn((config) => ({
@@ -81,6 +125,7 @@ jest.mock("@/components/ui/blocknote/editor/slash-menu-config", () => ({
   getCalloutSlashMenuItems: jest.fn(() => []),
   getQuizSlashMenuItems: jest.fn(() => []),
   getLatexSlashMenuItems: jest.fn(() => []),
+  getCodeSlashMenuItems: jest.fn(() => []),
 }));
 
 jest.mock("@/components/ui/blocknote/editor/custom-blocknote.css", () => ({}));
@@ -99,6 +144,10 @@ jest.mock("@/components/ui/blocknote/blocks/latex-block", () => ({
   LatexBlock: jest.fn(() => ({ type: "latex" })),
 }));
 
+jest.mock("@/components/ui/blocknote/blocks/image-block", () => ({
+  ImageBlock: jest.fn(() => ({ type: "image" })),
+}));
+
 import { render, screen, waitFor } from "@testing-library/react";
 import { BlockNoteEditorClient } from "@/components/draft/lesson/blocknote-editor-client";
 
@@ -109,7 +158,18 @@ describe("BlockNoteEditorClient", () => {
     jest.clearAllMocks();
   });
 
-  it("should render with initial content", () => {
+  it("should render the editor", async () => {
+    render(<BlockNoteEditorClient onChange={mockOnChange} />);
+
+    // Wait for loading state to finish
+    await waitFor(() => {
+      expect(screen.getByTestId("blocknote-view")).toBeInTheDocument();
+    });
+
+    expect(screen.getByTestId("suggestion-menu")).toBeInTheDocument();
+  });
+
+  it("should render with initial content", async () => {
     const initialContent = [
       {
         type: "paragraph",
@@ -123,6 +183,10 @@ describe("BlockNoteEditorClient", () => {
         onChange={mockOnChange}
       />,
     );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("blocknote-view")).toBeInTheDocument();
+    });
   });
 
   it("should call onChange when content changes", async () => {
@@ -140,6 +204,10 @@ describe("BlockNoteEditorClient", () => {
     render(<BlockNoteEditorClient onChange={mockOnChange} />);
 
     await waitFor(() => {
+      expect(screen.getByTestId("blocknote-view")).toBeInTheDocument();
+    });
+
+    await waitFor(() => {
       expect(mockEditor.onChange).toHaveBeenCalled();
     });
   });
@@ -148,7 +216,6 @@ describe("BlockNoteEditorClient", () => {
     const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation();
     const { useCreateBlockNote } = require("@blocknote/react");
 
-    // Create editor with document that throws error
     const mockEditor = {
       get document() {
         throw new Error("Test error");
@@ -164,6 +231,10 @@ describe("BlockNoteEditorClient", () => {
 
     render(<BlockNoteEditorClient onChange={mockOnChange} />);
 
+    await waitFor(() => {
+      expect(screen.getByTestId("blocknote-view")).toBeInTheDocument();
+    });
+
     await waitFor(
       () => {
         expect(mockEditor.onChange).toHaveBeenCalled();
@@ -171,10 +242,12 @@ describe("BlockNoteEditorClient", () => {
       { timeout: 1000 },
     );
 
-    // Wait for error to be handled by component's try-catch
     await new Promise((resolve) => setTimeout(resolve, 50));
 
-    // Verify error was logged
+    expect(consoleErrorSpy).toHaveBeenCalledWith(
+      "BlockNote onChange error:",
+      expect.any(Error),
+    );
 
     consoleErrorSpy.mockRestore();
   });
@@ -183,7 +256,6 @@ describe("BlockNoteEditorClient", () => {
     const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation();
     const { useCreateBlockNote } = require("@blocknote/react");
 
-    // Create editor with document that throws "Cannot find node position" error
     const mockEditor = {
       get document() {
         throw new Error("Cannot find node position");
@@ -201,6 +273,10 @@ describe("BlockNoteEditorClient", () => {
       <BlockNoteEditorClient onChange={mockOnChange} />,
     );
 
+    await waitFor(() => {
+      expect(screen.getByTestId("blocknote-view")).toBeInTheDocument();
+    });
+
     await waitFor(
       () => {
         expect(mockEditor.onChange).toHaveBeenCalled();
@@ -208,27 +284,31 @@ describe("BlockNoteEditorClient", () => {
       { timeout: 1000 },
     );
 
-    // Wait for error to be handled (should be silently ignored)
     await new Promise((resolve) => setTimeout(resolve, 50));
 
-    // Verify error was NOT logged (silently ignored)
     expect(consoleErrorSpy).not.toHaveBeenCalled();
 
     unmount();
     consoleErrorSpy.mockRestore();
   });
 
-  it("should apply correct theme", () => {
+  it("should apply correct theme", async () => {
     const { useTheme } = require("next-themes");
     useTheme.mockReturnValue({ resolvedTheme: "dark" });
 
     render(<BlockNoteEditorClient onChange={mockOnChange} />);
   });
 
-  it("should have correct container classes", () => {
+  it("should have correct container classes", async () => {
     const { container } = render(
       <BlockNoteEditorClient onChange={mockOnChange} />,
     );
+
+    // Wait for component to render
+    await waitFor(() => {
+      expect(screen.getByTestId("blocknote-view")).toBeInTheDocument();
+    });
+
     const editorContainer = container.firstChild;
 
     expect(editorContainer).toHaveClass("blocknote-no-link");

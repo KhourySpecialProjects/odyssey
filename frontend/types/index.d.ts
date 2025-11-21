@@ -115,15 +115,34 @@ export type GeneralConfig = {
 };
 
 export type Block =
-  | { __component: "droplets.generic"; content: string }
-  | { __component: "droplets.expandable"; title: string; content: string }
+  | {
+      __component: "droplets.generic";
+      content: string;
+      id?: number;
+      _clientId?: string;
+    }
+  | {
+      __component: "droplets.expandable";
+      title: string;
+      content: string;
+      id?: number;
+      _clientId?: string;
+    }
   | {
       __component: "droplets.callout";
       content: { type: string; children: { type: string; text: string }[] }[];
       color: string;
       type: string;
+      id?: number;
+      _clientId?: string;
+      iconEnabled?: boolean;
     }
-  | { __component: "droplets.video"; url: string }
+  | {
+      __component: "droplets.video";
+      url: string;
+      id?: number;
+      _clientId?: string;
+    }
   | {
       __component: "droplets.quiz";
       questions: {
@@ -131,20 +150,30 @@ export type Block =
         content: string;
         answerOptions: { id: number; content: string; isCorrect: boolean }[];
       }[];
+      id?: number;
+      _clientId?: string;
     }
   | {
       __component: "droplets.open-ended-quiz";
       questions: { id: number; content: string; correctAnswer: string }[];
+      id?: number;
+      _clientId?: string;
     }
-  | QuizBlock
-  | OpenEndedQuizBlock;
+  | {
+      __component: "droplets.code-block";
+      id: number;
+      language: string;
+      code: string;
+      editable: boolean;
+      runnable: boolean;
+    };
 
 export type Lesson = {
   id: number;
   name: string;
   slug: string;
   type?: "general" | "setup" | "activity" | "caseStudy";
-  blocks: any[];
+  blocks: Block[];
   blocksVersion?: "v1" | "v2";
   blocksV2?: any;
   droplets: Droplet[];
@@ -186,6 +215,7 @@ export type Droplet = {
   postrequisites?: Droplet[];
   isHidden: boolean;
   status: DropletStatus;
+  originalDropletId?: number;
   authorized_users?: AuthorizedUser[];
   isArchived?: boolean;
   inReview?: boolean;

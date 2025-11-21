@@ -1,3 +1,47 @@
+// Mock code block and its dependencies FIRST (before any other mocks)
+jest.mock("@/components/ui/blocknote/blocks/code-block", () => ({
+  CodeBlock: jest.fn(() => ({ type: "code-block" })),
+}));
+
+jest.mock("react-syntax-highlighter", () => ({
+  Light: jest.fn(),
+}));
+
+jest.mock("react-syntax-highlighter/dist/esm/styles/hljs", () => ({
+  atomOneDark: {},
+}));
+
+// Mock all language imports
+jest.mock(
+  "react-syntax-highlighter/dist/esm/languages/hljs/javascript",
+  () => ({}),
+);
+jest.mock(
+  "react-syntax-highlighter/dist/esm/languages/hljs/typescript",
+  () => ({}),
+);
+jest.mock(
+  "react-syntax-highlighter/dist/esm/languages/hljs/python",
+  () => ({}),
+);
+jest.mock("react-syntax-highlighter/dist/esm/languages/hljs/java", () => ({}));
+jest.mock("react-syntax-highlighter/dist/esm/languages/hljs/cpp", () => ({}));
+jest.mock("react-syntax-highlighter/dist/esm/languages/hljs/c", () => ({}));
+jest.mock(
+  "react-syntax-highlighter/dist/esm/languages/hljs/csharp",
+  () => ({}),
+);
+jest.mock("react-syntax-highlighter/dist/esm/languages/hljs/php", () => ({}));
+jest.mock("react-syntax-highlighter/dist/esm/languages/hljs/ruby", () => ({}));
+jest.mock("react-syntax-highlighter/dist/esm/languages/hljs/bash", () => ({}));
+jest.mock("react-syntax-highlighter/dist/esm/languages/hljs/go", () => ({}));
+jest.mock("react-syntax-highlighter/dist/esm/languages/hljs/rust", () => ({}));
+jest.mock(
+  "react-syntax-highlighter/dist/esm/languages/hljs/kotlin",
+  () => ({}),
+);
+jest.mock("react-syntax-highlighter/dist/esm/languages/hljs/swift", () => ({}));
+
 // Mock BlockNote before importing schema
 jest.mock("@blocknote/react", () => ({
   createReactBlockSpec: jest.fn((config, spec) => ({
@@ -76,6 +120,10 @@ jest.mock("@/components/ui/blocknote/blocks/latex-block", () => ({
   LatexBlock: jest.fn(() => ({ type: "latex" })),
 }));
 
+jest.mock("@/components/ui/blocknote/blocks/image-block", () => ({
+  ImageBlock: jest.fn(() => ({ type: "image" })),
+}));
+
 import { blockNoteSchema } from "@/lib/blocknote/schema";
 
 describe("blockNoteSchema", () => {
@@ -109,6 +157,11 @@ describe("blockNoteSchema", () => {
   it("should include custom latex block", () => {
     const blockSpecs = blockNoteSchema.blockSpecs;
     expect(blockSpecs).toHaveProperty("latex");
+  });
+
+  it("should include custom code-block", () => {
+    const blockSpecs = blockNoteSchema.blockSpecs;
+    expect(blockSpecs).toHaveProperty("code-block");
   });
 
   it("should include default blocks that are not filtered", () => {

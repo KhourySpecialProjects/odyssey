@@ -4,6 +4,7 @@ import { createElement } from "react";
 import type { ReactElement } from "react";
 import type { CustomBlockNoteEditor } from "@/lib/blocknote/schema";
 import type { CalloutType } from "@/lib/blocknote/types";
+import { Code, FileCode, Terminal } from "lucide-react";
 import {
   TriangleAlert,
   CircleHelp,
@@ -204,5 +205,34 @@ export const getLatexSlashMenuItems = (
     aliases: ["latex", "math", "formula", "equation"],
     group: "Math",
     subtext: "Insert LaTeX math formula block",
+  },
+];
+
+export const getCodeSlashMenuItems = (
+  editor: CustomBlockNoteEditor,
+): DefaultReactSuggestionItem[] => [
+  {
+    title: "Code Block",
+    icon: createElement(Code, { className: "h-4 w-4" }),
+    onItemClick: () => {
+      editor.insertBlocks(
+        [
+          {
+            type: "code-block",
+            props: {
+              language: "javascript",
+              code: "// Write your code here\n",
+              editable: true,
+              runnable: false,
+            },
+          },
+        ],
+        editor.getTextCursorPosition().block,
+        "after",
+      );
+    },
+    aliases: ["code", "snippet", "programming", "syntax"],
+    group: "Code",
+    subtext: "Display code with syntax highlighting",
   },
 ];

@@ -19,6 +19,7 @@ interface SortedDropletsGridProps {
   searchValue?: string;
   ratingsMap: Map<number, number>;
   dueDates: DueDate[];
+  isAdmin?: boolean;
 }
 
 export function SortedDropletsGrid({
@@ -29,6 +30,7 @@ export function SortedDropletsGrid({
   searchValue,
   ratingsMap,
   dueDates,
+  isAdmin,
 }: SortedDropletsGridProps) {
   const ITEMS_PER_PAGE = 9;
   const [currentPage, setCurrentPage] = useState(1);
@@ -151,6 +153,7 @@ export function SortedDropletsGrid({
               dueDates?.find((dueDate) => dueDate.droplet?.id === droplet.id)
                 ?.dueDate || ""
             }
+            isAdmin={isAdmin}
           />
         ))}
       </ul>

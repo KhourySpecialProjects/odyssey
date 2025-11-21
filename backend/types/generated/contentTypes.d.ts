@@ -836,6 +836,7 @@ export interface ApiDropletDroplet extends Schema.CollectionType {
     >;
     name: Attribute.String & Attribute.Required & Attribute.Unique;
     nextSteps: Attribute.Component<'droplets.resource', true>;
+    originalDropletId: Attribute.Integer;
     overview: Attribute.RichText &
       Attribute.CustomField<
         'plugin::ckeditor.CKEditor',

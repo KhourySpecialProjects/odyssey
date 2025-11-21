@@ -16,6 +16,7 @@ import { OpenEndedQuiz } from "@/components/ui/blocknote/blocks/quiz-open-ended-
 import { MultipleChoiceQuiz } from "@/components/ui/blocknote/blocks/quiz-multiple-choice-block";
 import { LatexBlock } from "@/components/ui/blocknote/blocks/latex-block";
 import { ImageBlock } from "@/components/ui/blocknote/blocks/image-block";
+import { CodeBlock } from "@/components/ui/blocknote/blocks/code-block"; // ADD THIS
 
 const blockTypesToHide = new Set([
   "quote",
@@ -136,6 +137,7 @@ export const blockNoteSchema = BlockNoteSchema.create({
     "quiz-multiple-choice": MultipleChoiceQuiz(),
     latex: LatexBlock(),
     image: ImageBlock(),
+    "code-block": CodeBlock(),
   },
   styleSpecs: customStyleSpecs,
 });

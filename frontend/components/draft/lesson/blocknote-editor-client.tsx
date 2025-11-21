@@ -19,17 +19,20 @@ import {
   getCalloutSlashMenuItems,
   getQuizSlashMenuItems,
   getLatexSlashMenuItems,
+  getCodeSlashMenuItems,
 } from "@/components/ui/blocknote/editor/slash-menu-config";
 import "@/components/ui/blocknote/editor/custom-blocknote.css";
 
 interface BlockNoteEditorClientProps {
   initialContent?: any;
-  onChange: (content: any) => void;
+  onChange?: (content: any) => void;
+  editable?: boolean;
 }
 
 export function BlockNoteEditorClient({
   initialContent,
   onChange,
+  editable = true,
 }: BlockNoteEditorClientProps) {
   const { resolvedTheme } = useTheme();
   const [isReady, setIsReady] = useState(false);
@@ -55,6 +58,8 @@ export function BlockNoteEditorClient({
   }, []);
 
   useEffect(() => {
+    if (!editable || !onChange || !isReady) return;
+
     let isMounted = true;
     let processingPattern = false;
 
@@ -141,7 +146,6 @@ export function BlockNoteEditorClient({
             error.message.includes("Cannot find") ||
             error.message.includes("not mounted"))
         ) {
-          // Component is unmounting or DOM has changed, ignore the error
           return;
         }
         console.error("BlockNote onChange error:", error);
@@ -216,6 +220,7 @@ export function BlockNoteEditorClient({
     <div className="blocknote-no-link w-full rounded-lg border border-slate-200 dark:border-slate-700">
       <BlockNoteView
         editor={editor}
+        editable={editable}
         theme={resolvedTheme === "dark" ? "dark" : "light"}
         slashMenu={false}
         formattingToolbar={false}
@@ -235,12 +240,14 @@ export function BlockNoteEditorClient({
             const calloutItems = getCalloutSlashMenuItems(editor);
             const quizItems = getQuizSlashMenuItems(editor);
             const latexItems = getLatexSlashMenuItems(editor);
+            const codeItems = getCodeSlashMenuItems(editor);
 
             const allItems = [
               ...defaultItems,
               ...calloutItems,
               ...quizItems,
               ...latexItems,
+              ...codeItems,
             ];
 
             return allItems.filter(

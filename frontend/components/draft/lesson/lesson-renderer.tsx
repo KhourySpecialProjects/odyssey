@@ -67,7 +67,11 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
     const isNew =
       (lesson.blocks?.length === 0 || !lesson.blocks) && !lesson.blocksV2;
 
-    if (isNew && lesson.blocksVersion === "v1" && !hasSetVersionRef.current) {
+    if (
+      isNew &&
+      (!lesson.blocksVersion || lesson.blocksVersion === "v1") &&
+      !hasSetVersionRef.current
+    ) {
       hasSetVersionRef.current = true;
       setEditorVersion("v2");
       updateLesson(lesson.id, {
@@ -185,15 +189,6 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
       setBlocks((prevBlocks) =>
         prevBlocks.map((b, i) => {
           if (i !== index) return b;
-          if (b.__component === "droplets.quiz" && "questions" in block) {
-            return { ...b, ...block } as QuizBlock;
-          }
-          if (
-            b.__component === "droplets.open-ended-quiz" &&
-            "questions" in block
-          ) {
-            return { ...b, ...block } as OpenEndedQuizBlock;
-          }
           return { ...b, ...block } as Block;
         }),
       );
@@ -457,16 +452,19 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
           </div>
         </>
       ) : (
-        <div className="mx-auto mt-8 w-full max-w-4xl">
-          <p className="mb-4 text-center text-sm text-slate-500">
-            BlockNote Editor - Changes saved automatically
-          </p>
-          <BlockNoteEditor
-            initialContent={lesson.blocksV2}
-            onChange={(content) => {
-              debounceUpdateV2(content);
-            }}
-          />
+        <div className="mx-auto mt-8 w-full px-4">
+          <div className="mx-auto w-full max-w-4xl min-w-[300px] md:min-w-[700px]">
+            <p className="mb-4 text-center text-sm text-slate-500">
+              BlockNote Editor - Changes saved automatically
+            </p>
+            <BlockNoteEditor
+              key={`editor-${lesson.id}`} // Add this line - forces remount on navigation
+              initialContent={lesson.blocksV2}
+              onChange={(content) => {
+                debounceUpdateV2(content);
+              }}
+            />
+          </div>
         </div>
       )}
     </>
