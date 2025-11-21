@@ -5089,9 +5089,6 @@
                                                                                   }
                                                                                 }
                                                                               },
-                                                                              "orderIndex": {
-                                                                                "type": "integer"
-                                                                              },
                                                                               "createdAt": {
                                                                                 "type": "string",
                                                                                 "format": "date-time"
@@ -32416,9 +32413,6 @@
                   ],
                   "example": "string or id"
                 }
-              },
-              "orderIndex": {
-                "type": "integer"
               }
             }
           }
@@ -35378,9 +35372,6 @@
                 }
               }
             }
-          },
-          "orderIndex": {
-            "type": "integer"
           },
           "createdAt": {
             "type": "string",
@@ -38414,9 +38405,6 @@
                             }
                           }
                         }
-                      },
-                      "orderIndex": {
-                        "type": "integer"
                       },
                       "createdAt": {
                         "type": "string",

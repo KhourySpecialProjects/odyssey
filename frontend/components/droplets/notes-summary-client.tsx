@@ -9,7 +9,6 @@ import { ChevronDown, ChevronRight } from "lucide-react";
 import { Checkbox } from "../ui/checkbox";
 
 export function NotesSummaryClient({
-  index,
   dropletHighlights,
   dropletNotes,
   enrollment,
@@ -17,7 +16,6 @@ export function NotesSummaryClient({
   onSelectionChange,
   selectedDropletIds,
 }: {
-  index: number;
   dropletHighlights: Highlight[];
   dropletNotes: Note[];
   enrollment: Enrollment;
@@ -29,9 +27,15 @@ export function NotesSummaryClient({
   onSelectionChange: (dropletId: number, isSelected: boolean) => void;
   selectedDropletIds: Set<number>;
 }) {
+  // Find the matching droplet data
+  const currentDropletData = allNotes.find(
+    (data) => data.dropletId === enrollment.droplet.id,
+  );
+
   const [openDroplets, setOpenDroplets] = useState<{ [key: number]: boolean }>(
     {},
   );
+
   const [selectedDroplets, setSelectedDroplets] = useState<
     Record<number, boolean>
   >(Object.fromEntries(Array.from(selectedDropletIds).map((id) => [id, true])));
@@ -60,6 +64,9 @@ export function NotesSummaryClient({
     onSelectionChange(dropletId, newValue);
   };
 
+  // Safety check - if no data found, don't render
+  if (!currentDropletData) return null;
+
   return (
     <Card key={`enrollment-${enrollment.id}`} className="p-2 dark:bg-slate-800">
       <div
@@ -77,7 +84,10 @@ export function NotesSummaryClient({
           </Link>
         </div>
         <div className="pr-2">
-          ({allNotes[index].highlights.length + allNotes[index].notes.length})
+          (
+          {currentDropletData.highlights.length +
+            currentDropletData.notes.length}
+          )
         </div>
         <button
           className="ml-auto flex justify-end border py-2 font-bold dark:border-slate-500"
@@ -90,9 +100,10 @@ export function NotesSummaryClient({
           )}
         </button>
       </div>
+
       {openDroplets[enrollment.droplet.id] && (
         <NotesContainer
-          allNotes={allNotes[index]}
+          allNotes={currentDropletData}
           dropletHighlights={dropletHighlights}
           dropletNotes={dropletNotes}
           mappedLessons={enrollment.droplet.lessons || []}
