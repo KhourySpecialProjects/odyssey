@@ -156,7 +156,7 @@ export async function fetchAuthorizedUsers(): Promise<AuthorizedUser[]> {
         roles: { fields: ["title"] },
       },
       pagination: {
-        pageSize: 500,
+        pageSize: 10000,
         page: 1,
       },
     });

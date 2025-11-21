@@ -1275,7 +1275,6 @@ export interface ApiLessonLesson extends Schema.CollectionType {
       'oneToMany',
       'api::note.note'
     >;
-    orderIndex: Attribute.Integer;
     publishedAt: Attribute.DateTime;
     slug: Attribute.UID<'api::lesson.lesson', 'name'> & Attribute.Required;
     type: Attribute.Enumeration<['general', 'setup', 'activity', 'caseStudy']> &
