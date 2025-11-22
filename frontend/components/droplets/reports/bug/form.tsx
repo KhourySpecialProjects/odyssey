@@ -20,7 +20,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { createBugReport } from "@/lib/actions";
 import { reportSchema } from "@/lib/validations/report";
 import { ArrowRightIcon, LoaderIcon } from "lucide-react";
-import { redirect, usePathname } from "next/navigation";
+import { redirect, usePathname, useSearchParams } from "next/navigation";
 
 type Props = {
   name?: string | null;
@@ -31,6 +31,8 @@ type Props = {
 export function ReportBugForm({ name, email, onSuccess }: Props) {
   const pathname = usePathname();
   const [isPending, startTransition] = useTransition();
+  const searchParams = useSearchParams();
+  const currentTab = searchParams.get("adminTab");
 
   const form = useForm<z.infer<typeof reportSchema>>({
     resolver: zodResolver(reportSchema),
@@ -53,7 +55,9 @@ export function ReportBugForm({ name, email, onSuccess }: Props) {
           onSuccess();
           toast.success("Your report has been successfully submitted.");
           if (values.path === "/admin") {
-            redirect(values.path + "?ts=" + Date.now());
+            redirect(
+              values.path + "?ts=" + Date.now() + "&adminTab=" + currentTab,
+            );
           }
         }
       });
