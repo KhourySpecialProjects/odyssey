@@ -38,7 +38,6 @@ export function ClickableBadges({
   const [localType, setLocalType] = useState(type);
   const [selectedTags, setSelectedTags] = useState(initialSelectedTags);
   const [availableTags, setAvailableTags] = useState(initialAvailableTags);
-  const [hoveredTagId, setHoveredTagId] = useState<number | null>(null);
   const [tagSearchQuery, setTagSearchQuery] = useState("");
   const [isCreatingTag, setIsCreatingTag] = useState(false);
   const [newTagName, setNewTagName] = useState("");
@@ -197,17 +196,14 @@ export function ClickableBadges({
   );
 
   return (
-    <div className="flex flex-wrap gap-1.5">
+    <div className="flex flex-wrap gap-1.5 pb-2">
       <div className="relative">
         <button
           className="h-full"
           onClick={() => setActivePopup("focusArea")}
           disabled={isPending}
         >
-          <Badge
-            variant="outline"
-            className="h-full bg-purple-200 hover:bg-purple-400 dark:bg-purple-600 dark:hover:bg-purple-400"
-          >
+          <Badge className="h-full border border-slate-300 bg-purple-200 text-black hover:bg-purple-400 dark:bg-purple-600 dark:hover:bg-purple-400">
             {uppercaseFirstChar(localFocusArea)}
           </Badge>
         </button>
@@ -253,10 +249,7 @@ export function ClickableBadges({
           onClick={() => setActivePopup("type")}
           disabled={isPending}
         >
-          <Badge
-            variant="outline"
-            className="h-full bg-blue-200 hover:bg-blue-400 dark:bg-blue-900 dark:hover:bg-blue-400"
-          >
+          <Badge className="h-full border border-slate-300 bg-blue-200 text-black hover:bg-blue-400 dark:bg-blue-900 dark:hover:bg-blue-400">
             {uppercaseFirstChar(localType)}
           </Badge>
         </button>
@@ -300,33 +293,25 @@ export function ClickableBadges({
         <button
           key={tag.id}
           onClick={() => handleRemoveTag(tag.id)}
-          onMouseEnter={() => setHoveredTagId(tag.id)}
-          onMouseLeave={() => setHoveredTagId(null)}
           disabled={isPending}
-          className="relative"
+          className="h-full"
         >
-          <Badge variant="outline" className="relative h-full">
+          <Badge className="h-full border border-slate-300 bg-transparent text-black hover:bg-red-300">
             {tag.name}
-            {hoveredTagId === tag.id && (
-              <div className="absolute inset-0 rounded-md bg-red-500/30" />
-            )}
           </Badge>
         </button>
       ))}
 
-      <div className="relative h-full">
+      <div className="relative h-full p-0">
         <button
           className="h-full"
           onClick={() => setActivePopup("addTag")}
           disabled={isPending}
         >
-          <Badge
-            variant="outline"
-            className="h-full border-dashed border-slate-400 bg-transparent dark:border-slate-500"
-          >
-            <Plus className="mr-1 h-3 w-3" />
-            Add Tag
-          </Badge>
+          <div className="flex h-full flex-row items-center text-black">
+            <Plus className="h-4 w-4" />
+            <p>Add Tag</p>
+          </div>
         </button>
 
         {activePopup === "addTag" && (
