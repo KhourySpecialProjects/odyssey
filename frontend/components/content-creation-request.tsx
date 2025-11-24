@@ -33,18 +33,18 @@ export function ContentCreatorRequestForm() {
   const isFormValid = motivation.trim().length > 0 && ideas.trim().length > 0;
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900">
-      <Card className="w-full max-w-2xl shadow-xl border-slate-200 dark:border-slate-800">
+    <div className="min-h-screen flex items-center justify-center p-4 bg-white dark:bg-black">
+      <Card className="w-full max-w-2xl shadow-xl border-gray-200 dark:border-gray-800 bg-white dark:bg-black">
         <CardHeader className="space-y-3 pb-6">
           <div className="flex items-center gap-2">
-            <div className="p-2 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600">
-              <Sparkles className="h-6 w-6 text-white" />
+            <div className="p-2 rounded-lg bg-black dark:bg-white">
+              <Sparkles className="h-6 w-6 text-white dark:text-black" />
             </div>
-            <CardTitle className="text-2xl font-bold text-slate-900 dark:text-white">
+            <CardTitle className="text-2xl font-bold text-black dark:text-white">
               Request Content Creator Role
             </CardTitle>
           </div>
-          <CardDescription className="text-base text-slate-600 dark:text-slate-400">
+          <CardDescription className="text-base text-gray-600 dark:text-gray-400">
             Help us understand your goals and ideas for creating educational content on Odyssey.
           </CardDescription>
         </CardHeader>
@@ -54,15 +54,15 @@ export function ContentCreatorRequestForm() {
             {/* Motivation Section */}
             <div className="space-y-3">
               <div className="flex items-start gap-2">
-                <Lightbulb className="h-5 w-5 text-amber-500 mt-1 flex-shrink-0" />
+                <Lightbulb className="h-5 w-5 text-black dark:text-white mt-1 flex-shrink-0" />
                 <div className="flex-1">
                   <Label 
                     htmlFor="motivation" 
-                    className="text-base font-semibold text-slate-900 dark:text-white"
+                    className="text-base font-semibold text-black dark:text-white"
                   >
-                    Why do you want to create a droplet?
+                    Why do you want to create?
                   </Label>
-                  <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                     Share your motivation and what you hope to achieve
                   </p>
                 </div>
@@ -72,9 +72,9 @@ export function ContentCreatorRequestForm() {
                 value={motivation}
                 onChange={(e) => setMotivation(e.target.value)}
                 placeholder="I want to create educational content because..."
-                className="min-h-[120px] resize-none border-slate-300 dark:border-slate-700 focus:border-blue-500 dark:focus:border-blue-500 focus:ring-blue-500"
+                className="min-h-[120px] resize-none border-gray-300 dark:border-gray-700 bg-white dark:bg-black text-black dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-500 focus:border-black dark:focus:border-white focus:ring-black dark:focus:ring-white"
               />
-              <p className="text-xs text-slate-500 dark:text-slate-500">
+              <p className="text-xs text-gray-500 dark:text-gray-500">
                 {motivation.length} characters
               </p>
             </div>
@@ -82,15 +82,15 @@ export function ContentCreatorRequestForm() {
             {/* Ideas Section */}
             <div className="space-y-3">
               <div className="flex items-start gap-2">
-                <Sparkles className="h-5 w-5 text-purple-500 mt-1 flex-shrink-0" />
+                <Sparkles className="h-5 w-5 text-black dark:text-white mt-1 flex-shrink-0" />
                 <div className="flex-1">
                   <Label 
                     htmlFor="ideas" 
-                    className="text-base font-semibold text-slate-900 dark:text-white"
+                    className="text-base font-semibold text-black dark:text-white"
                   >
                     What are some ideas you have for a droplet?
                   </Label>
-                  <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                     Describe the topics or concepts you'd like to teach
                   </p>
                 </div>
@@ -100,9 +100,9 @@ export function ContentCreatorRequestForm() {
                 value={ideas}
                 onChange={(e) => setIdeas(e.target.value)}
                 placeholder="Some droplet ideas I have include..."
-                className="min-h-[120px] resize-none border-slate-300 dark:border-slate-700 focus:border-purple-500 dark:focus:border-purple-500 focus:ring-purple-500"
+                className="min-h-[120px] resize-none border-gray-300 dark:border-gray-700 bg-white dark:bg-black text-black dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-500 focus:border-black dark:focus:border-white focus:ring-black dark:focus:ring-white"
               />
-              <p className="text-xs text-slate-500 dark:text-slate-500">
+              <p className="text-xs text-gray-500 dark:text-gray-500">
                 {ideas.length} characters
               </p>
             </div>
@@ -112,11 +112,11 @@ export function ContentCreatorRequestForm() {
               <Button
                 onClick={handleSubmit}
                 disabled={!isFormValid || isSubmitting}
-                className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-6 text-base shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full bg-black text-white hover:bg-gray-900 dark:bg-white dark:text-black dark:hover:bg-gray-100 font-semibold py-6 text-base shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed border border-black dark:border-white"
               >
                 {isSubmitting ? (
                   <span className="flex items-center gap-2">
-                    <span className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    <span className="h-4 w-4 border-2 border-white dark:border-black border-t-transparent rounded-full animate-spin" />
                     Submitting Request...
                   </span>
                 ) : (
