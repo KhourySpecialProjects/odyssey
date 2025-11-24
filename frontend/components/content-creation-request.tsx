@@ -33,7 +33,7 @@ export function ContentCreatorRequestForm() {
   const isFormValid = motivation.trim().length > 0 && ideas.trim().length > 0;
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-white dark:bg-black">
+    <div className="min-h-screen flex items-center justify-center p-4">
       <Card className="w-full max-w-2xl shadow-xl border-gray-200 dark:border-gray-800 bg-white dark:bg-black">
         <CardHeader className="space-y-3 pb-6">
           <div className="flex items-center gap-2">
