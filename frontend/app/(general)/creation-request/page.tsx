@@ -1,7 +1,9 @@
+import { ContentCreatorRequestForm } from "@/components/content-creation-request"
+
 export default function RequestContentCreatorRole() {
-    return <>
-        <h1>
-            Hello there student!
-        </h1>
+    return (
+    <>
+        <ContentCreatorRequestForm />
     </>
+    )
 }
