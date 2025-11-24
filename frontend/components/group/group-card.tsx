@@ -93,31 +93,31 @@ export function GroupCard({
               </div>
             )}
           </div>
+          {dashboardPage && (
+            <div className="mt-auto flex justify-end pt-4">
+              <Button
+                size="sm"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  changeVisibility();
+                }}
+                className={`${isArchived === true || isArchived === false ? "visibility: visible" : "visibility: hidden"} justify-end bg-slate-50 hover:bg-slate-300 dark:bg-slate-300`}
+              >
+                <div className="group relative">
+                  {isArchived ? (
+                    <ArchiveRestore className="text-purple-500" />
+                  ) : (
+                    <Archive className="text-purple-500" />
+                  )}
+                  <span className="absolute top-full left-1/2 mt-1 w-max -translate-x-1/2 transform rounded bg-gray-800 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100">
+                    {isArchived ? "Unarchive" : "Archive"}
+                  </span>
+                </div>
+              </Button>
+            </div>
+          )}
         </div>
-        {dashboardPage && (
-          <div className="flex justify-end p-2">
-            <Button
-              size="sm"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                changeVisibility();
-              }}
-              className={`${isArchived === true || isArchived === false ? "visibility: visible" : "visibility: hidden"} justify-end bg-slate-50 hover:bg-slate-300 dark:bg-slate-300`}
-            >
-              <div className="group relative">
-                {isArchived ? (
-                  <ArchiveRestore className="text-purple-500" />
-                ) : (
-                  <Archive className="text-purple-500" />
-                )}
-                <span className="absolute top-full left-1/2 mt-1 w-max -translate-x-1/2 transform rounded bg-gray-800 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100">
-                  {isArchived ? "Unarchive" : "Archive"}
-                </span>
-              </div>
-            </Button>
-          </div>
-        )}
       </div>
     </Link>
   );
