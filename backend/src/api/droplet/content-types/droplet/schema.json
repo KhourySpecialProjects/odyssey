@@ -156,6 +156,12 @@
     },
     "originalDropletId": {
       "type": "integer"
+    },
+    "reviewDroplet": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::authorized-user.authorized-user",
+      "inversedBy": "reviewers"
     }
   }
 }

@@ -191,7 +191,7 @@ export async function fetchAuthorizedUsers(): Promise<AuthorizedUser[]> {
   }
 }
 
-//Gets just one enrollment but also returns the response metadata to get pagination data
+// Gets just one enrollment but also returns the response metadata to get pagination data
 export async function fetchAuthorizedUsersMetadata({
   sort,
   filters,
@@ -638,4 +638,43 @@ export async function deleteAuthorizedUser(formData: FormData) {
   }
 
   revalidatePath("/admin");
+}
+
+// fetching content editors
+export async function fetchContentEditors(): Promise<AuthorizedUser[]> {
+  
+  // create a query for the backend
+  const query = qs.stringify({
+    // we need filter for role by title
+    filters: {
+      roles: {
+        title: {
+          $eq: "Content Editor"
+        }
+      }
+    },
+    // now we need what fields necessary
+    fields: ["id", "username", "email"],
+  
+    populate: "*",
+    // sort in query
+    sort: ["username"],
+    // set pagination - 
+    pagination: {
+      pageSize: 900,
+      page: 1
+    }
+  });
+
+  // now, we can await a response with our query
+  const response = await fetch(`/api/authorized-users?${query}`);
+
+  // finally got response, so handle it
+  if (!response.ok) {
+    throw new Error("Could not get content editors");
+  }
+
+  // get the json from response and return
+  const data = await response.json();
+  return data.users;
 }

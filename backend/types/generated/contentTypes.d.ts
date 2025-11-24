@@ -640,6 +640,11 @@ export interface ApiAuthorizedUserAuthorizedUser extends Schema.CollectionType {
       'manyToMany',
       'api::authorized-user.authorized-user'
     >;
+    reviewers: Attribute.Relation<
+      'api::authorized-user.authorized-user',
+      'manyToMany',
+      'api::droplet.droplet'
+    >;
     roles: Attribute.Relation<
       'api::authorized-user.authorized-user',
       'manyToMany',
@@ -856,6 +861,11 @@ export interface ApiDropletDroplet extends Schema.CollectionType {
       'api::droplet.droplet'
     >;
     publishedAt: Attribute.DateTime;
+    reviewDroplet: Attribute.Relation<
+      'api::droplet.droplet',
+      'manyToMany',
+      'api::authorized-user.authorized-user'
+    >;
     slug: Attribute.UID<'api::droplet.droplet', 'name'> & Attribute.Required;
     status: Attribute.Enumeration<['draft', 'edit', 'published']> &
       Attribute.Required &

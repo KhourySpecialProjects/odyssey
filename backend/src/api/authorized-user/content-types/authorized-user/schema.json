@@ -223,6 +223,12 @@
       "relation": "manyToMany",
       "target": "api::playlist.playlist",
       "inversedBy": "users_archived"
+    },
+    "reviewers": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::droplet.droplet",
+      "mappedBy": "reviewDroplet"
     }
   }
 }
