@@ -207,7 +207,7 @@
     "isPublic": {
       "type": "boolean",
       "default": false,
-      "required": true
+      "required": false
     },
     "dropletsFavorited": {
       "type": "relation",
