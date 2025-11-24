@@ -63,7 +63,7 @@ export function DropletLessonWrapper({
     <>
       <div className="lesson-wrapper relative z-30 h-full w-full overflow-x-hidden">
         <div
-          className={`flex flex-col items-center justify-center pr-10 pl-10 md:min-w-[500px] xl:pl-0 ${expanded ? "w-[65%]" : "w-full"}`}
+          className={`flex w-full flex-col items-center justify-center pr-10 pl-10 md:min-w-[500px] xl:pl-0`}
         >
           <LessonRenderer
             lesson={lesson}
@@ -89,9 +89,7 @@ export function DropletLessonWrapper({
               className={cn(
                 "absolute h-full min-h-screen min-w-[375px] border border-slate-200 bg-slate-50 dark:border-slate-500 dark:bg-slate-800",
                 "sliding-notes-bar z-10 overflow-y-hidden",
-                expanded
-                  ? "visibility: visible top-0 right-0"
-                  : "visibility: hidden",
+                expanded ? "visible top-0 right-0" : "invisible",
               )}
             >
               <div className="flex items-center justify-end border-b border-slate-200 p-4 dark:border-slate-500">
