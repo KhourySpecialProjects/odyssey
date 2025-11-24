@@ -37,6 +37,7 @@ jest.mock("next/navigation", () => ({
 }));
 
 const { redirect } = require("next/navigation");
+const { revalidatePath } = require("next/cache");
 
 describe("Server Actions", () => {
   let mockS3Send: jest.Mock;
@@ -525,13 +526,13 @@ describe("Server Actions", () => {
   });
 
   describe("deleteReport", () => {
-    it("successfully deletes report and redirects", async () => {
+    it("successfully deletes report and revalidates path", async () => {
       (global.fetch as jest.Mock).mockResolvedValueOnce({
         ok: true,
         json: () => Promise.resolve({ data: {} }),
       });
 
-      await deleteReport("456");
+      const result = await deleteReport("456");
 
       expect(global.fetch).toHaveBeenCalledWith(
         expect.stringContaining("/api/reports/456"),
@@ -539,20 +540,18 @@ describe("Server Actions", () => {
           method: "DELETE",
         }),
       );
-      expect(redirect).toHaveBeenCalledWith(expect.stringContaining("/admin"));
-      expect(redirect).toHaveBeenCalledWith(
-        expect.stringContaining("adminTab=Reports"),
-      );
+      expect(revalidatePath).toHaveBeenCalledWith("/admin?adminTab=Reports");
+      expect(result).toEqual({ success: true });
     });
 
-    it("throws error when response not ok", async () => {
+    it("returns error when response not ok", async () => {
       (global.fetch as jest.Mock).mockResolvedValueOnce({
         ok: false,
       });
 
-      await expect(deleteReport("456")).rejects.toThrow(
-        "Failed to delete report",
-      );
+      const result = await deleteReport("456");
+
+      expect(result).toEqual({ error: "Failed to delete report" });
     });
   });
 
