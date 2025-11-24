@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Light as SyntaxHighlighterBase } from "react-syntax-highlighter";
+import { Light as SyntaxHighlighter } from "react-syntax-highlighter";
 import { atomOneDark } from "react-syntax-highlighter/dist/esm/styles/hljs";
 // Import languages
 import javascript from "react-syntax-highlighter/dist/esm/languages/hljs/javascript";
@@ -20,8 +20,21 @@ import kotlin from "react-syntax-highlighter/dist/esm/languages/hljs/kotlin";
 import swift from "react-syntax-highlighter/dist/esm/languages/hljs/swift";
 import { Play, Edit, Check, X, AlertCircle, Loader2 } from "lucide-react";
 
-// Type assertion to fix React 18 compatibility
-const SyntaxHighlighter = SyntaxHighlighterBase as any;
+// Register languages
+SyntaxHighlighter.registerLanguage("javascript", javascript);
+SyntaxHighlighter.registerLanguage("typescript", typescript);
+SyntaxHighlighter.registerLanguage("python", python);
+SyntaxHighlighter.registerLanguage("java", java);
+SyntaxHighlighter.registerLanguage("cpp", cpp);
+SyntaxHighlighter.registerLanguage("c", c);
+SyntaxHighlighter.registerLanguage("csharp", csharp);
+SyntaxHighlighter.registerLanguage("php", php);
+SyntaxHighlighter.registerLanguage("ruby", ruby);
+SyntaxHighlighter.registerLanguage("bash", bash);
+SyntaxHighlighter.registerLanguage("go", go);
+SyntaxHighlighter.registerLanguage("rust", rust);
+SyntaxHighlighter.registerLanguage("kotlin", kotlin);
+SyntaxHighlighter.registerLanguage("swift", swift);
 
 // Register languages
 SyntaxHighlighter.registerLanguage("javascript", javascript);
@@ -62,6 +75,7 @@ const executePistonCode = async (
   language: string,
   code: string,
   fileName: string,
+  pistonLanguageName: string,
 ) => {
   try {
     const response = await fetch(PISTON_API_URL, {
@@ -70,7 +84,7 @@ const executePistonCode = async (
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        language,
+        language: pistonLanguageName,
         version: "*",
         files: [{ name: fileName, content: code }],
         stdin: "",
@@ -146,6 +160,24 @@ export function CodeBlockViewer({
     setExecutionSuccess(true);
 
     try {
+      // Map language to Piston language name
+      const pistonLanguageMap: Record<string, string> = {
+        javascript: "javascript",
+        typescript: "typescript",
+        python: "python",
+        java: "java",
+        cpp: "c++",
+        c: "c",
+        csharp: "csharp",
+        php: "php",
+        ruby: "ruby",
+        bash: "bash",
+        go: "go",
+        rust: "rust",
+        kotlin: "kotlin",
+        swift: "swift",
+      };
+
       // Get proper file name for language
       const fileNames: Record<string, string> = {
         javascript: "index.js",
@@ -164,8 +196,14 @@ export function CodeBlockViewer({
         swift: "main.swift",
       };
 
+      const pistonLanguage = pistonLanguageMap[language] || language;
       const fileName = fileNames[language] || "main.txt";
-      const result = await executePistonCode(language, code, fileName);
+      const result = await executePistonCode(
+        language,
+        code,
+        fileName,
+        pistonLanguage,
+      );
       setOutput(result.output);
       setExecutionSuccess(result.success);
     } catch (error: any) {
@@ -177,7 +215,7 @@ export function CodeBlockViewer({
   };
 
   return (
-    <div className="my-4 overflow-hidden rounded-lg border border-gray-700 bg-gray-900">
+    <div className="my-4 w-full overflow-hidden rounded-lg border border-gray-700 bg-gray-900">
       {/* Header */}
       <div className="flex items-center justify-between border-b border-gray-700 bg-gray-800 px-4 py-2">
         <span className="text-sm font-medium text-gray-200">
@@ -224,7 +262,11 @@ export function CodeBlockViewer({
             </div>
           </div>
         ) : (
-          <div className="relative">
+          <div
+            className="group relative cursor-pointer"
+            onClick={() => editable && setIsEditing(true)}
+          >
+            {/* @ts-ignore - SyntaxHighlighter React 18 compatibility */}
             <SyntaxHighlighter
               language={language}
               style={atomOneDark}
@@ -238,13 +280,11 @@ export function CodeBlockViewer({
               {code || "// Code here"}
             </SyntaxHighlighter>
             {editable && (
-              <button
-                onClick={() => setIsEditing(true)}
-                className="absolute top-2 right-2 rounded bg-gray-700 p-2 text-gray-300 hover:bg-gray-600"
-                title="Edit code"
-              >
-                <Edit size={16} />
-              </button>
+              <div className="absolute top-2 right-2 opacity-0 transition-opacity group-hover:opacity-100">
+                <span className="rounded bg-gray-800 px-2 py-1 text-xs text-gray-400">
+                  Click to edit
+                </span>
+              </div>
             )}
           </div>
         )}
