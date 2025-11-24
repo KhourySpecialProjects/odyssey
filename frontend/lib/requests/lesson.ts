@@ -362,7 +362,7 @@ export async function duplicateLessonToDroplet(
     const cleanedBlocks = cleanBlocks(lesson.blocks || []);
 
     const lessonData = {
-      name: `${lesson.name} (Copy)`,
+      name: `${lesson.name}`,
       slug: uniqueSlug,
       type: lesson.type,
       orderIndex: newOrderIndex,

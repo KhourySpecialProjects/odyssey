@@ -366,7 +366,7 @@ export function Sidebar({
 
             {/* Add lesson section */}
             <AddLesson droplet={droplet} onAddLesson={addLessonCallback} />
-  
+
             {/* Add existing lesson section - NEW */}
             <AddExistingLesson
               droplet={droplet}

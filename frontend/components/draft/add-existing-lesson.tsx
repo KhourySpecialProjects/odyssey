@@ -50,7 +50,7 @@ export function AddExistingLesson({
   const [isLoading, setIsLoading] = useState(false);
 
   const selectedDroplet = availableDroplets.find(
-    (d) => d.id.toString() === selectedDropletId
+    (d) => d.id.toString() === selectedDropletId,
   );
 
   const availableLessons =
@@ -67,31 +67,31 @@ export function AddExistingLesson({
       const result = await duplicateLessonToDroplet(
         parseInt(selectedLessonId),
         droplet.id,
-        currentLessonCount
+        currentLessonCount,
       );
 
       if (result.ok && result.data) {
-      const newLesson: Lesson = {
-        id: result.data.id,
-        name: result.data.attributes.name,
-        slug: result.data.attributes.slug,
-        type: result.data.attributes.type,
-        orderIndex: result.data.attributes.orderIndex,
-        blocks: result.data.attributes.blocks || [],
-        notes: result.data.attributes.notes || null, // Add notes
-        droplets: [
-          {
-            id: droplet.id,
-            name: droplet.name,
-            slug: droplet.slug,
-            type: droplet.type,
-            focusArea: droplet.focusArea,
-            learningObjectives: droplet.learningObjectives,
-            status: droplet.status,
-          } as Droplet,
-        ]
-      };
-        
+        const newLesson: Lesson = {
+          id: result.data.id,
+          name: result.data.attributes.name,
+          slug: result.data.attributes.slug,
+          type: result.data.attributes.type,
+          orderIndex: result.data.attributes.orderIndex,
+          blocks: result.data.attributes.blocks || [],
+          notes: result.data.attributes.notes || null, // Add notes
+          droplets: [
+            {
+              id: droplet.id,
+              name: droplet.name,
+              slug: droplet.slug,
+              type: droplet.type,
+              focusArea: droplet.focusArea,
+              learningObjectives: droplet.learningObjectives,
+              status: droplet.status,
+            } as Droplet,
+          ],
+        };
+
         onAddLesson(newLesson);
         toast.success("Lesson duplicated successfully!");
         setIsOpen(false);
@@ -112,11 +112,11 @@ export function AddExistingLesson({
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
         <Button
-          variant="outline"
-          className="w-full justify-start gap-2 mt-2"
+          variant="ghost"
+          className="flex w-full items-center justify-between rounded-lg p-2 text-slate-900 transition-colors hover:bg-slate-100 dark:text-white dark:hover:bg-slate-700"
         >
-          <Copy className="h-4 w-4" />
-          Add Existing Lesson
+          <span className="text-left">Add Existing Lesson</span>
+          <Copy className="h-4 w-4 shrink-0" />
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[500px]">
@@ -170,7 +170,7 @@ export function AddExistingLesson({
           )}
 
           {selectedDropletId && availableLessons.length === 0 && (
-            <p className="text-sm text-muted-foreground">
+            <p className="text-muted-foreground text-sm">
               No lessons available in this droplet
             </p>
           )}

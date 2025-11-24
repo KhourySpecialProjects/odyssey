@@ -50,20 +50,24 @@ export default async function CheckPermission({ params, children }: Props) {
     return notFound();
   }
   const availableDroplets = await getDroplets({
-  fields: ["id", "name", "slug"],
-  populate: {
-    lessons: {
-      fields: ["id", "name", "slug", "type", "orderIndex"],
+    fields: ["id", "name", "slug"],
+    populate: {
+      lessons: {
+        fields: ["id", "name", "slug", "type", "orderIndex"],
+      },
     },
-  },
-  filters: {
-    status: "published", // Only show published droplets
-  },
-});
+    filters: {
+      status: "published", // Only show published droplets
+    },
+  });
 
   return (
     <div className="flex min-h-screen flex-col xl:flex-row">
-      <Sidebar droplet={droplet} user={user} availableDroplets={availableDroplets}/>
+      <Sidebar
+        droplet={droplet}
+        user={user}
+        availableDroplets={availableDroplets}
+      />
       <main className="mx-auto w-full flex-1 items-center justify-center rounded-lg md:border-2 md:border-dashed md:border-slate-200 md:dark:border-slate-700">
         {!droplet.inReview ? (
           <div className="bg-red-100 p-1 text-center dark:bg-red-100 dark:text-black">
