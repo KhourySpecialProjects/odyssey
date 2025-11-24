@@ -132,12 +132,12 @@ describe("Sidebar", () => {
   });
 
   it("renders droplet name and lessons", () => {
-    render(<Sidebar user={mockUser as any} droplet={mockDroplet as any} />);
+    render(<Sidebar user={mockUser as any} droplet={mockDroplet as any} availableDroplets={[]} />);
     expect(screen.getByText("Test Lesson")).toBeInTheDocument();
   });
 
   it("toggles mobile menu", () => {
-    render(<Sidebar user={mockUser as any} droplet={mockDroplet as any} />);
+    render(<Sidebar user={mockUser as any} droplet={mockDroplet as any} availableDroplets={[]} />);
     const menuButton = screen.getByRole("button", { name: /open sidebar/i });
     fireEvent.click(menuButton);
     expect(screen.getByRole("complementary")).toHaveClass(
@@ -146,7 +146,7 @@ describe("Sidebar", () => {
   });
 
   it("navigates to /my-content when home button clicked on draft droplet", async () => {
-    render(<Sidebar user={mockUser} droplet={mockDroplet} />);
+    render(<Sidebar user={mockUser as any} droplet={mockDroplet as any} availableDroplets={[]} />);
 
     const homeButton = screen.getByTestId("home");
     fireEvent.click(homeButton);
@@ -157,7 +157,7 @@ describe("Sidebar", () => {
   });
 
   it("shows announcement dialog when home button clicked on published droplet", async () => {
-    render(<Sidebar user={mockUser} droplet={mockPublishedDroplet} />);
+    render(<Sidebar user={mockUser as any} droplet={mockPublishedDroplet as any} availableDroplets={[]} />);
 
     // Click the home button to trigger the dialog
     const homeButton = screen.getByTestId("home");
@@ -180,7 +180,7 @@ describe("Sidebar", () => {
   });
 
   it("handles droplet announcement when Share is clicked", async () => {
-    render(<Sidebar user={mockUser} droplet={mockPublishedDroplet} />);
+    render(<Sidebar user={mockUser as any} droplet={mockPublishedDroplet as any} availableDroplets={[]} />);
 
     // Click the home button to open dialog
     const homeButton = screen.getByTestId("home");
@@ -209,7 +209,7 @@ describe("Sidebar", () => {
   });
 
   it("handles 'Not Now' in announcement dialog", async () => {
-    render(<Sidebar user={mockUser} droplet={mockPublishedDroplet} />);
+    render(<Sidebar user={mockUser as any} droplet={mockPublishedDroplet as any} availableDroplets={[]} />);
 
     // Click the home button to open dialog
     const homeButton = screen.getByTestId("home");
@@ -233,14 +233,14 @@ describe("Sidebar", () => {
   });
 
   it("handles lesson reordering", () => {
-    render(<Sidebar user={mockUser} droplet={mockDroplet} />);
+    render(<Sidebar user={mockUser as any} droplet={mockDroplet as any} availableDroplets={[]} />);
 
     const lists = screen.getAllByRole("list");
     expect(lists.length).toBeGreaterThan(0);
   });
 
   it("expands/collapses on mobile", () => {
-    render(<Sidebar user={mockUser} droplet={mockDroplet} />);
+    render(<Sidebar user={mockUser as any} droplet={mockDroplet as any} availableDroplets={[]} />);
 
     const menuButton = screen.getByRole("button", { name: /open sidebar/i });
     fireEvent.click(menuButton);
@@ -252,7 +252,7 @@ describe("Sidebar", () => {
   });
 
   it("renders preview button", () => {
-    render(<Sidebar user={mockUser} droplet={mockDroplet} />);
+    render(<Sidebar user={mockUser as any} droplet={mockDroplet as any} availableDroplets={[]} />);
 
     const previewLink = screen.getByText("Preview");
     expect(previewLink).toBeInTheDocument();
@@ -260,7 +260,7 @@ describe("Sidebar", () => {
   });
 
   it("renders metadata link", () => {
-    render(<Sidebar user={mockUser} droplet={mockDroplet} />);
+    render(<Sidebar user={mockUser as any} droplet={mockDroplet as any} availableDroplets={[]} />);
 
     const metadataLink = screen.getByText("Metadata");
     expect(metadataLink).toBeInTheDocument();
