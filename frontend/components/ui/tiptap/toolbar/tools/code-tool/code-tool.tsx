@@ -27,12 +27,12 @@ function CodeBlockComponent({
   extension,
 }: CodeBlockProps) {
   return (
-    <NodeViewWrapper className="code-block">
+    <NodeViewWrapper className="code-block my-4">
       <select
         contentEditable={false}
         defaultValue={defaultLanguage}
         onChange={(event) => updateAttributes({ language: event.target.value })}
-        className="rounded-md border border-gray-300 px-2 py-1 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none dark:text-black"
+        className="mb-2 rounded-md border border-gray-300 bg-white px-2 py-1 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-white"
       >
         <option value="null">auto</option>
         <option disabled>—</option>
@@ -44,8 +44,8 @@ function CodeBlockComponent({
             </option>
           ))}
       </select>
-      <pre className="overflow-x-auto py-3 pr-4 pl-12">
-        <div className="absolute top-0 bottom-0 left-0 flex min-w-[2.5rem] flex-col border-r border-slate-300 bg-slate-50 text-sm text-slate-500 select-none">
+      <pre className="relative overflow-x-auto rounded-md bg-slate-900 py-3 pr-4 pl-12 dark:bg-slate-950">
+        <div className="absolute top-0 bottom-0 left-0 flex min-w-[2.5rem] flex-col border-r border-slate-700 bg-slate-800 text-sm text-slate-400 select-none dark:border-slate-800 dark:bg-slate-900">
           <div className="pt-3 pl-3">
             {Array.from({
               length: (node.textContent.match(/\n/g) || []).length + 1,
@@ -62,7 +62,7 @@ function CodeBlockComponent({
         </div>
         <NodeViewContent
           as="code"
-          className="block min-w-full overflow-x-auto whitespace-pre"
+          className="block font-mono text-sm leading-5 whitespace-pre text-slate-50"
         />
       </pre>
     </NodeViewWrapper>

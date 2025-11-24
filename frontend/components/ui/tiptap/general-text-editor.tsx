@@ -55,7 +55,28 @@ export function GeneralTextEditor({
         allowBase64: true,
       }),
       Placeholder.configure({
-        placeholder: placeholder,
+        placeholder: ({ editor }) => {
+          // Only show placeholder if editor is completely empty
+          const json = editor.getJSON();
+          const hasContent = json.content && json.content.length > 0;
+
+          if (!hasContent) {
+            return placeholder;
+          }
+
+          // Check if there's only one empty paragraph
+          if (
+            json.content &&
+            json.content.length === 1 &&
+            json.content[0].type === "paragraph" &&
+            (!json.content[0].content || json.content[0].content.length === 0)
+          ) {
+            return placeholder;
+          }
+
+          return "";
+        },
+        showOnlyWhenEditable: true,
         emptyEditorClass:
           "cursor-text before:content-[attr(data-placeholder)] before:text-gray-500 dark:before:text-slate-300 before:absolute before:top-4 before:left-4 before:pointer-events-none before:select-none",
       }),
