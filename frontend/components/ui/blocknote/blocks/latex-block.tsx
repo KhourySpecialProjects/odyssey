@@ -36,7 +36,63 @@ export const LatexBlock = createReactBlockSpec(
       const [previewHtml, setPreviewHtml] = useState("");
       const [hasError, setHasError] = useState(false);
       const [hasOpenedInitially, setHasOpenedInitially] = useState(false);
+      const [effectiveDisplayMode, setEffectiveDisplayMode] = useState(
+        props.block.props.displayMode ?? true,
+      );
       const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+      const normalizeLatexInput = (
+        value: string,
+        fallbackDisplayMode: boolean,
+      ) => {
+        const trimmed = value.trim();
+
+        const matchDelimited = (
+          input: string,
+          start: string,
+          end: string,
+          displayMode: boolean,
+        ) => {
+          if (
+            input.startsWith(start) &&
+            input.endsWith(end) &&
+            input.length > start.length + end.length
+          ) {
+            return {
+              content: input.slice(start.length, -end.length).trim(),
+              displayMode,
+            };
+          }
+          return null;
+        };
+
+        const blockDelimiters = [
+          ["$$", "$$", true],
+          ["\\[", "\\]", true],
+        ] as const;
+        for (const [start, end, displayMode] of blockDelimiters) {
+          const matched = matchDelimited(trimmed, start, end, displayMode);
+          if (matched) {
+            return matched;
+          }
+        }
+
+        const inlineDelimiters = [
+          ["$", "$", false],
+          ["\\(", "\\)", false],
+        ] as const;
+        for (const [start, end, displayMode] of inlineDelimiters) {
+          const matched = matchDelimited(trimmed, start, end, displayMode);
+          if (matched) {
+            return matched;
+          }
+        }
+
+        return {
+          content: trimmed,
+          displayMode: fallbackDisplayMode,
+        };
+      };
 
       // Auto-open dialog when block is first created (empty content)
       useEffect(() => {
@@ -61,7 +117,11 @@ export const LatexBlock = createReactBlockSpec(
 
       // Render preview
       useEffect(() => {
-        const content = editContent || "";
+        const { content, displayMode } = normalizeLatexInput(
+          editContent || "",
+          props.block.props.displayMode ?? true,
+        );
+        setEffectiveDisplayMode(displayMode);
         if (!content.trim()) {
           setPreviewHtml("");
           setHasError(false);
@@ -71,21 +131,25 @@ export const LatexBlock = createReactBlockSpec(
         try {
           const html = katex.renderToString(content, {
             throwOnError: false,
-            displayMode: true, // Always use display mode
+            displayMode,
           });
           setPreviewHtml(html);
           setHasError(false);
         } catch {
           setHasError(true);
         }
-      }, [editContent, isEditing]);
+      }, [editContent, isEditing, props.block.props.displayMode]);
 
       const handleSave = () => {
         try {
+          const normalized = normalizeLatexInput(
+            editContent,
+            effectiveDisplayMode,
+          );
           props.editor.updateBlock(props.block, {
             props: {
-              content: editContent,
-              displayMode: true, // Always use display mode
+              content: normalized.content,
+              displayMode: normalized.displayMode,
             },
           });
           setIsEditing(false);
@@ -208,7 +272,12 @@ export const LatexBlock = createReactBlockSpec(
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Preview</Label>
+                  <div className="flex items-center justify-between">
+                    <Label>Preview</Label>
+                    <span className="text-xs font-medium text-slate-500 uppercase dark:text-slate-400">
+                      {effectiveDisplayMode ? "Display" : "Inline"}
+                    </span>
+                  </div>
                   <div className="min-h-[80px] rounded border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
                     {previewHtml ? (
                       <div
