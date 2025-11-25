@@ -390,7 +390,11 @@ export async function fetchCreationRequests(): Promise<CreationRequest[]> {
 
     while (true) {
       const query = qs.stringify({
-        populate: ["authorized_user"],
+        populate: {
+          authorized_user: {
+            fields: ["firstName", "lastName", "email", "id"]
+          }
+        },
         pagination: {
           pageSize,
           page,
