@@ -12,6 +12,11 @@ import {
   deleteAccessRequest,
   deleteReport,
   createAuthorizedUserWithState,
+  createCreationRequest,
+  approveCreationRequest,
+  deleteCreationRequest,
+  fetchCreationRequests,
+  fetchCreationRequestById,
 } from "@/lib/actions";
 import { createAuthorizedUser } from "@/lib/requests/authorized-user";
 
@@ -584,6 +589,605 @@ describe("Server Actions", () => {
       const result = await createAuthorizedUserWithState({}, formData);
 
       expect(result).toEqual({ ok: false, error: "Invalid email" });
+    });
+  });
+
+  describe("createCreationRequest", () => {
+    it("successfully creates creation request", async () => {
+      const formData = {
+        motivation: "I want to create educational content",
+        dropletIdea: "Something unique",
+        user: 1,
+      };
+
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ data: { id: 1 } }),
+      });
+
+      const result = await createCreationRequest(formData);
+
+      expect(global.fetch).toHaveBeenCalledWith(
+        expect.stringContaining("/api/creation-requests"),
+        expect.objectContaining({
+          method: "POST",
+          body: JSON.stringify({ data: formData }),
+        }),
+      );
+      expect(result).toEqual({
+        ok: true,
+        data: { data: { id: 1 } },
+        error: null,
+      });
+    });
+
+    it("handles API error when ok is false", async () => {
+      const formData = {
+        motivation: "I want to create educational content",
+        dropletIdea: "",
+        user: 1,
+      };
+
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: false,
+        json: () =>
+          Promise.resolve({
+            error: {
+              message: "Validation failed",
+              details: { errors: [{ path: ["reason"] }] },
+            },
+          }),
+      });
+
+      const result = await createCreationRequest(formData);
+
+      expect(result.ok).toBe(false);
+      expect(result.error).toContain("Validation failed");
+      expect(result.error).toContain("reason");
+    });
+
+    it("handles API error when ok is true but has error property", async () => {
+      const formData = {
+        motivation: "I want to create educational content",
+        dropletIdea: "Something unique",
+        user: 1,
+      };
+
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            error: {
+              message: "Server error",
+              details: { errors: [{ path: ["user"] }] },
+            },
+          }),
+      });
+
+      const result = await createCreationRequest(formData);
+
+      expect(result.ok).toBe(false);
+      expect(result.error).toContain("Server error");
+      expect(result.error).toContain("user");
+    });
+
+    it("handles network exception", async () => {
+      const consoleError = jest.spyOn(console, "error").mockImplementation();
+      const formData = {
+        motivation: "I want to create educational content",
+        dropletIdea: "Something unique",
+        user: 1,
+      };
+
+      (global.fetch as jest.Mock).mockRejectedValueOnce(
+        new Error("Network error"),
+      );
+
+      const result = await createCreationRequest(formData);
+
+      expect(result).toEqual({
+        ok: false,
+        error: "Database Error: Failed to create creation request.",
+        data: null,
+      });
+      expect(consoleError).toHaveBeenCalled();
+      consoleError.mockRestore();
+    });
+  });
+
+  describe("approveCreationRequest", () => {
+    it("successfully approves creation request and grants Content Creator role", async () => {
+      // Mock fetching user data
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            data: {
+              attributes: {
+                roles: {
+                  data: [{ id: 1 }], // Existing role
+                },
+              },
+            },
+          }),
+      });
+
+      // Mock fetching Content Creator role
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            data: [{ id: 2 }], // Content Creator role ID
+          }),
+      });
+
+      // Mock updating user roles
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ data: { id: 1 } }),
+      });
+
+      // Mock deleting creation request
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({}),
+      });
+
+      const result = await approveCreationRequest("123", 1);
+
+      expect(result).toEqual({ ok: true, error: null, data: null });
+      expect(revalidatePath).toHaveBeenCalledWith("/admin");
+      expect(global.fetch).toHaveBeenCalledTimes(4);
+    });
+
+    it("skips role update if user already has Content Creator role", async () => {
+      // Mock fetching user data with Content Creator role already present
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            data: {
+              attributes: {
+                roles: {
+                  data: [{ id: 2 }], // Already has Content Creator role
+                },
+              },
+            },
+          }),
+      });
+
+      // Mock fetching Content Creator role
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            data: [{ id: 2 }],
+          }),
+      });
+
+      // Mock deleting creation request (skips role update)
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({}),
+      });
+
+      const result = await approveCreationRequest("123", 1);
+
+      expect(result).toEqual({ ok: true, error: null, data: null });
+      expect(global.fetch).toHaveBeenCalledTimes(3); // No role update call
+    });
+
+    it("handles failure to fetch user data", async () => {
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: false,
+      });
+
+      const consoleError = jest.spyOn(console, "error").mockImplementation();
+      const result = await approveCreationRequest("123", 1);
+
+      expect(result).toEqual({
+        ok: false,
+        error: "Failed to fetch user data",
+        data: null,
+      });
+      expect(consoleError).toHaveBeenCalledWith("Failed to fetch user data");
+      consoleError.mockRestore();
+    });
+
+    it("handles failure to fetch Content Creator role", async () => {
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            data: {
+              attributes: {
+                roles: { data: [] },
+              },
+            },
+          }),
+      });
+
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: false,
+      });
+
+      const consoleError = jest.spyOn(console, "error").mockImplementation();
+      const result = await approveCreationRequest("123", 1);
+
+      expect(result).toEqual({
+        ok: false,
+        error: "Failed to fetch Content Creator role",
+        data: null,
+      });
+      expect(consoleError).toHaveBeenCalledWith(
+        "Failed to fetch Content Creator role",
+      );
+      consoleError.mockRestore();
+    });
+
+    it("handles Content Creator role not found in system", async () => {
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            data: {
+              attributes: {
+                roles: { data: [] },
+              },
+            },
+          }),
+      });
+
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ data: [] }), // No roles found
+      });
+
+      const consoleError = jest.spyOn(console, "error").mockImplementation();
+      const result = await approveCreationRequest("123", 1);
+
+      expect(result).toEqual({
+        ok: false,
+        error: "Content Creator role not found in system",
+        data: null,
+      });
+      expect(consoleError).toHaveBeenCalledWith("Content Creator role not found");
+      consoleError.mockRestore();
+    });
+
+    it("handles failure to update user roles", async () => {
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            data: {
+              attributes: {
+                roles: { data: [{ id: 1 }] },
+              },
+            },
+          }),
+      });
+
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ data: [{ id: 2 }] }),
+      });
+
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: false,
+        json: () => Promise.resolve({ error: "Update failed" }),
+      });
+
+      const consoleError = jest.spyOn(console, "error").mockImplementation();
+      const result = await approveCreationRequest("123", 1);
+
+      expect(result).toEqual({
+        ok: false,
+        error: "Failed to update user roles",
+        data: null,
+      });
+      expect(consoleError).toHaveBeenCalledWith(
+        "Failed to update user roles:",
+        { error: "Update failed" },
+      );
+      consoleError.mockRestore();
+    });
+
+    it("handles failure to delete creation request", async () => {
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            data: {
+              attributes: {
+                roles: { data: [{ id: 2 }] },
+              },
+            },
+          }),
+      });
+
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ data: [{ id: 2 }] }),
+      });
+
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: false,
+      });
+
+      const consoleError = jest.spyOn(console, "error").mockImplementation();
+      const result = await approveCreationRequest("123", 1);
+
+      expect(result).toEqual({
+        ok: false,
+        error: "Failed to delete creation request",
+        data: null,
+      });
+      expect(consoleError).toHaveBeenCalledWith(
+        "Failed to delete creation request",
+      );
+      consoleError.mockRestore();
+    });
+
+    it("handles network exception", async () => {
+      (global.fetch as jest.Mock).mockRejectedValueOnce(
+        new Error("Network error"),
+      );
+
+      const consoleError = jest.spyOn(console, "error").mockImplementation();
+      const result = await approveCreationRequest("123", 1);
+
+      expect(result).toEqual({
+        ok: false,
+        error: "Database Error: Failed to approve creation request.",
+        data: null,
+      });
+      expect(consoleError).toHaveBeenCalled();
+      consoleError.mockRestore();
+    });
+  });
+
+  describe("deleteCreationRequest", () => {
+    it("successfully deletes creation request and revalidates path", async () => {
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({}),
+      });
+
+      const result = await deleteCreationRequest("123");
+
+      expect(global.fetch).toHaveBeenCalledWith(
+        expect.stringContaining("/api/creation-requests/123"),
+        expect.objectContaining({
+          method: "DELETE",
+        }),
+      );
+      expect(revalidatePath).toHaveBeenCalledWith("/admin");
+      expect(result).toEqual({ ok: true, error: null, data: null });
+    });
+
+    it("handles deletion failure", async () => {
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: false,
+      });
+
+      const result = await deleteCreationRequest("123");
+
+      expect(result).toEqual({
+        ok: false,
+        error: "Failed to delete creation request",
+        data: null,
+      });
+    });
+
+    it("handles network exception", async () => {
+      (global.fetch as jest.Mock).mockRejectedValueOnce(
+        new Error("Network error"),
+      );
+
+      const consoleError = jest.spyOn(console, "error").mockImplementation();
+      const result = await deleteCreationRequest("123");
+
+      expect(result).toEqual({
+        ok: false,
+        error: "Database Error: Failed to delete creation request.",
+        data: null,
+      });
+      expect(consoleError).toHaveBeenCalled();
+      consoleError.mockRestore();
+    });
+  });
+
+  describe("fetchCreationRequests", () => {
+    it("successfully fetches all creation requests with pagination", async () => {
+      // First page
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            data: Array(250).fill({
+              id: 1,
+              attributes: {
+                reason: "Test reason",
+                user: {
+                  data: {
+                    id: 1,
+                    attributes: {
+                      firstName: "John",
+                      lastName: "Doe",
+                      email: "john@example.com",
+                    },
+                  },
+                },
+              },
+            }),
+          }),
+      });
+
+      // Second page (partial)
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            data: Array(100).fill({
+              id: 2,
+              attributes: {
+                reason: "Another reason",
+                user: {
+                  data: {
+                    id: 2,
+                    attributes: {
+                      firstName: "Jane",
+                      lastName: "Smith",
+                      email: "jane@example.com",
+                    },
+                  },
+                },
+              },
+            }),
+          }),
+      });
+
+      const result = await fetchCreationRequests();
+
+      expect(result.length).toBe(350);
+      expect(global.fetch).toHaveBeenCalledTimes(2);
+    });
+
+    it("handles single page of results", async () => {
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            data: [
+              {
+                id: 1,
+                attributes: {
+                  reason: "Test reason",
+                  user: {
+                    data: {
+                      id: 1,
+                      attributes: {
+                        firstName: "John",
+                        lastName: "Doe",
+                        email: "john@example.com",
+                      },
+                    },
+                  },
+                },
+              },
+            ],
+          }),
+      });
+
+      const result = await fetchCreationRequests();
+
+      expect(result.length).toBe(1);
+      expect(global.fetch).toHaveBeenCalledTimes(1);
+    });
+
+    it("handles fetch failure", async () => {
+      const consoleError = jest.spyOn(console, "error").mockImplementation();
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: false,
+        json: () => Promise.resolve({ error: "Fetch failed" }),
+      });
+
+      await expect(fetchCreationRequests()).rejects.toThrow(
+        "Failed to fetch creation requests data.",
+      );
+      expect(consoleError).toHaveBeenCalledWith(
+        "Failed to fetch creation requests",
+        { error: "Fetch failed" },
+      );
+      consoleError.mockRestore();
+    });
+
+    it("handles network exception", async () => {
+      const consoleError = jest.spyOn(console, "error").mockImplementation();
+      (global.fetch as jest.Mock).mockRejectedValueOnce(
+        new Error("Network error"),
+      );
+
+      await expect(fetchCreationRequests()).rejects.toThrow(
+        "Failed to fetch creation requests data.",
+      );
+      expect(consoleError).toHaveBeenCalledWith(
+        "Database Error:",
+        expect.any(Error),
+      );
+      consoleError.mockRestore();
+    });
+  });
+
+  describe("fetchCreationRequestById", () => {
+    it("successfully fetches single creation request", async () => {
+      const mockRequest = {
+        id: 1,
+        attributes: {
+          reason: "Test reason",
+          user: {
+            data: {
+              id: 1,
+              attributes: {
+                firstName: "John",
+                lastName: "Doe",
+                email: "john@example.com",
+              },
+            },
+          },
+        },
+      };
+
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ data: mockRequest }),
+      });
+
+      const result = await fetchCreationRequestById("123");
+
+      expect(global.fetch).toHaveBeenCalledWith(
+        expect.stringContaining("/api/creation-requests/123?populate=user"),
+        expect.objectContaining({
+          cache: "no-store",
+        }),
+      );
+      expect(result).toEqual({
+        ok: true,
+        error: null,
+        data: mockRequest,
+      });
+    });
+
+    it("handles fetch failure", async () => {
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: false,
+      });
+
+      const result = await fetchCreationRequestById("123");
+
+      expect(result).toEqual({
+        ok: false,
+        error: "Failed to fetch creation request",
+        data: null,
+      });
+    });
+
+    it("handles network exception", async () => {
+      (global.fetch as jest.Mock).mockRejectedValueOnce(
+        new Error("Network error"),
+      );
+
+      const consoleError = jest.spyOn(console, "error").mockImplementation();
+      const result = await fetchCreationRequestById("123");
+
+      expect(result).toEqual({
+        ok: false,
+        error: "Database Error: Failed to fetch creation request.",
+        data: null,
+      });
+      expect(consoleError).toHaveBeenCalled();
+      consoleError.mockRestore();
     });
   });
 });
