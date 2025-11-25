@@ -427,5 +427,5 @@ export type CreationRequest = {
   id: number;
   motivation: String;
   dropletIdea: String;
-  user: AuthorizedUser
-}
+  user: AuthorizedUser;
+};

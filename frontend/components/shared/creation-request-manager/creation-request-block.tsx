@@ -6,11 +6,14 @@ import { useTransition } from "react";
 import { Check, X } from "lucide-react";
 import { createAuthorizedUser } from "@/lib/requests/authorized-user";
 import { toast } from "sonner";
-import { AlignCenter } from 'lucide-react';
+import { AlignCenter } from "lucide-react";
 import { CreationRequest } from "@/types";
 
-
-export function CreationRequestBlock({ request }: { request: CreationRequest }) {
+export function CreationRequestBlock({
+  request,
+}: {
+  request: CreationRequest;
+}) {
   const [isPending, startTransition] = useTransition();
 
   const handleDeleteRequest = async (formData: FormData) => {
@@ -38,10 +41,9 @@ export function CreationRequestBlock({ request }: { request: CreationRequest }) 
           disabled={isPending}
           role="button"
         >
-          <AlignCenter className="text-black dark:text-white"/>
+          <AlignCenter className="text-black dark:text-white" />
           <p className="hidden sm:block">View</p>
         </Button>
-
       </div>
     </li>
   );

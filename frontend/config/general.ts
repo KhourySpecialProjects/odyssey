@@ -53,12 +53,14 @@ export const getMainNav = (user: User) => {
     },
     {
       href: "/creation-request",
-label: "Create",
-isHidden:
-  !(user?.roles?.some((role) => role === "User") &&
-  !user?.roles?.some((role) => 
-    ["Content Creator", "Faculty", "System Admin"].includes(role)
-  ))},
+      label: "Create",
+      isHidden: !(
+        user?.roles?.some((role) => role === "User") &&
+        !user?.roles?.some((role) =>
+          ["Content Creator", "Faculty", "System Admin"].includes(role),
+        )
+      ),
+    },
   ];
   return mainNav;
 };
