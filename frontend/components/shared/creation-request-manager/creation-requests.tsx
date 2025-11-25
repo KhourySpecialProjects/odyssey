@@ -1,5 +1,5 @@
 import { fetchAccessRequests } from "@/lib/requests/data";
-import { AccessRequestBlock } from "./access-request";
+import { AccessRequestBlock } from "../access-manager/access-requests/access-request";
 import { fetchAuthorizedUsers } from "@/lib/requests/authorized-user";
 import { AuthorizedUser } from "@/types";
 
@@ -30,7 +30,7 @@ export function accessFilter(
   );
 }
 
-export async function AccessRequests() {
+export async function CreationRequests() {
   const accessRequests = await fetchAccessRequests();
   const authorizedUsers = await fetchAuthorizedUsers();
 
@@ -38,9 +38,9 @@ export async function AccessRequests() {
 
   return (
       <section>
-        <h1 className="font-bold dark:text-slate-300">Access Requests</h1>
+        <h1 className="font-bold dark:text-slate-300">Content Creation Requests</h1>
         <p className="dark:text-slate-300">
-          The following individuals have requested access to this application.
+          The following individuals have requested to become a content creator.
         </p>
         <div className="mt-4 rounded-md bg-slate-100 p-4 dark:bg-slate-800">
           {filteredRequests.length > 0 ? (
