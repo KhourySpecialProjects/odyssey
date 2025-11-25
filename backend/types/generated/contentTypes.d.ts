@@ -624,9 +624,7 @@ export interface ApiAuthorizedUserAuthorizedUser extends Schema.CollectionType {
     isEnabled: Attribute.Boolean &
       Attribute.Required &
       Attribute.DefaultTo<true>;
-    isPublic: Attribute.Boolean &
-      Attribute.Required &
-      Attribute.DefaultTo<false>;
+    isPublic: Attribute.Boolean & Attribute.DefaultTo<false>;
     lastName: Attribute.String;
     linkedin: Attribute.String;
     playlists: Attribute.Relation<
