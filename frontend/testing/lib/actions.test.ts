@@ -624,7 +624,7 @@ describe("Server Actions", () => {
     it("handles API error when ok is false", async () => {
       const formData = {
         motivation: "I want to create educational content",
-        dropletIdea: "",
+        dropletIdea: "Something unique",
         user: 1,
       };
 
@@ -634,7 +634,7 @@ describe("Server Actions", () => {
           Promise.resolve({
             error: {
               message: "Validation failed",
-              details: { errors: [{ path: ["reason"] }] },
+              details: { errors: [{ path: ["motivation"] }] },
             },
           }),
       });
@@ -643,7 +643,7 @@ describe("Server Actions", () => {
 
       expect(result.ok).toBe(false);
       expect(result.error).toContain("Validation failed");
-      expect(result.error).toContain("reason");
+      expect(result.error).toContain("motivation");
     });
 
     it("handles API error when ok is true but has error property", async () => {
@@ -1086,16 +1086,16 @@ describe("Server Actions", () => {
       expect(global.fetch).toHaveBeenCalledTimes(1);
     });
 
-    it("handles fetch failure", async () => {
+    it("handles fetch failure and returns empty array", async () => {
       const consoleError = jest.spyOn(console, "error").mockImplementation();
       (global.fetch as jest.Mock).mockResolvedValueOnce({
         ok: false,
         json: () => Promise.resolve({ error: "Fetch failed" }),
       });
 
-      await expect(fetchCreationRequests()).rejects.toThrow(
-        "Failed to fetch creation requests data.",
-      );
+      const result = await fetchCreationRequests();
+
+      expect(result).toEqual([]);
       expect(consoleError).toHaveBeenCalledWith(
         "Failed to fetch creation requests",
         { error: "Fetch failed" },
