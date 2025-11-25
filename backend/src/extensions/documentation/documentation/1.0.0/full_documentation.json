@@ -11,7 +11,7 @@
       "url": "https://khouryodyssey.org"
     },
     "license": null,
-    "x-generation-date": "2025-11-25T17:54:01.937Z"
+    "x-generation-date": "2025-11-25T18:13:06.020Z"
   },
   "x-strapi-config": {
     "plugins": [
@@ -2763,7 +2763,7 @@
                                                                           "dropletIdea": {
                                                                             "type": "string"
                                                                           },
-                                                                          "authorized_user": {
+                                                                          "user": {
                                                                             "type": "object",
                                                                             "properties": {
                                                                               "data": {
@@ -6793,7 +6793,7 @@
                                                 "dropletIdea": {
                                                   "type": "string"
                                                 },
-                                                "authorized_user": {
+                                                "user": {
                                                   "type": "object",
                                                   "properties": {
                                                     "data": {
@@ -10415,7 +10415,7 @@
                                     "dropletIdea": {
                                       "type": "string"
                                     },
-                                    "authorized_user": {
+                                    "user": {
                                       "type": "object",
                                       "properties": {
                                         "data": {
@@ -10614,7 +10614,7 @@
               "dropletIdea": {
                 "type": "string"
               },
-              "authorized_user": {
+              "user": {
                 "oneOf": [
                   {
                     "type": "integer"
@@ -10684,7 +10684,7 @@
           "dropletIdea": {
             "type": "string"
           },
-          "authorized_user": {
+          "user": {
             "type": "object",
             "properties": {
               "data": {
@@ -13425,7 +13425,7 @@
                                   "dropletIdea": {
                                     "type": "string"
                                   },
-                                  "authorized_user": {
+                                  "user": {
                                     "type": "object",
                                     "properties": {
                                       "data": {
@@ -16135,7 +16135,7 @@
                                                                             "dropletIdea": {
                                                                               "type": "string"
                                                                             },
-                                                                            "authorized_user": {
+                                                                            "user": {
                                                                               "type": "object",
                                                                               "properties": {
                                                                                 "data": {
@@ -19238,7 +19238,7 @@
                                                                           "dropletIdea": {
                                                                             "type": "string"
                                                                           },
-                                                                          "authorized_user": {
+                                                                          "user": {
                                                                             "type": "object",
                                                                             "properties": {
                                                                               "data": {
@@ -22992,7 +22992,7 @@
                                   "dropletIdea": {
                                     "type": "string"
                                   },
-                                  "authorized_user": {
+                                  "user": {
                                     "type": "object",
                                     "properties": {
                                       "data": {
@@ -26105,7 +26105,7 @@
                                   "dropletIdea": {
                                     "type": "string"
                                   },
-                                  "authorized_user": {
+                                  "user": {
                                     "type": "object",
                                     "properties": {
                                       "data": {
@@ -29184,7 +29184,7 @@
                                     "dropletIdea": {
                                       "type": "string"
                                     },
-                                    "authorized_user": {
+                                    "user": {
                                       "type": "object",
                                       "properties": {
                                         "data": {
@@ -32766,7 +32766,7 @@
                                     "dropletIdea": {
                                       "type": "string"
                                     },
-                                    "authorized_user": {
+                                    "user": {
                                       "type": "object",
                                       "properties": {
                                         "data": {
@@ -35972,7 +35972,7 @@
                                   "dropletIdea": {
                                     "type": "string"
                                   },
-                                  "authorized_user": {
+                                  "user": {
                                     "type": "object",
                                     "properties": {
                                       "data": {
@@ -38474,7 +38474,7 @@
                                                                             "dropletIdea": {
                                                                               "type": "string"
                                                                             },
-                                                                            "authorized_user": {
+                                                                            "user": {
                                                                               "type": "object",
                                                                               "properties": {
                                                                                 "data": {
@@ -41911,7 +41911,7 @@
                                                                           "dropletIdea": {
                                                                             "type": "string"
                                                                           },
-                                                                          "authorized_user": {
+                                                                          "user": {
                                                                             "type": "object",
                                                                             "properties": {
                                                                               "data": {
@@ -44884,7 +44884,7 @@
                                                                             "dropletIdea": {
                                                                               "type": "string"
                                                                             },
-                                                                            "authorized_user": {
+                                                                            "user": {
                                                                               "type": "object",
                                                                               "properties": {
                                                                                 "data": {
@@ -48471,7 +48471,7 @@
                                                                             "dropletIdea": {
                                                                               "type": "string"
                                                                             },
-                                                                            "authorized_user": {
+                                                                            "user": {
                                                                               "type": "object",
                                                                               "properties": {
                                                                                 "data": {

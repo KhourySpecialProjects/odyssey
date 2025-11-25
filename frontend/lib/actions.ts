@@ -391,20 +391,15 @@ export async function fetchCreationRequests(): Promise<CreationRequest[]> {
     while (true) {
       const query = qs.stringify({
         populate: {
-          authorized_user: {
-            fields: ["firstName", "lastName", "email", "id"]
-          }
+          user: {
+            fields: ["firstName", "lastName", "email", "id"],
+          },
         },
         pagination: {
           pageSize,
           page,
         },
       });
-
-      console.log(
-        "Fetching URL:",
-        `${STRAPI_API_URL}/api/creation-requests?${query}`,
-      );
 
       const response = await fetch(
         `${STRAPI_API_URL}/api/creation-requests?${query}`,
@@ -416,10 +411,7 @@ export async function fetchCreationRequests(): Promise<CreationRequest[]> {
         },
       );
 
-      console.log("Response status:", response.status);
-
       const data = await response.json();
-      console.log("Raw data:", JSON.stringify(data, null, 2));
 
       if (!response.ok) {
         console.error("Failed to fetch creation requests", data);
@@ -427,7 +419,6 @@ export async function fetchCreationRequests(): Promise<CreationRequest[]> {
       }
 
       const creationRequests = flattenAttributes(data.data);
-      console.log("After flattenAttributes:", creationRequests);
 
       allCreationRequests = allCreationRequests.concat(creationRequests);
 
@@ -435,7 +426,6 @@ export async function fetchCreationRequests(): Promise<CreationRequest[]> {
       page++;
     }
 
-    console.log("Final result:", allCreationRequests);
     return allCreationRequests;
   } catch (error) {
     console.error("Database Error:", error);

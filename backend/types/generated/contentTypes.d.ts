@@ -719,6 +719,7 @@ export interface ApiCreationRequestCreationRequest
   extends Schema.CollectionType {
   collectionName: 'creation_requests';
   info: {
+    description: '';
     displayName: 'Creation Request';
     pluralName: 'creation-requests';
     singularName: 'creation-request';
@@ -727,11 +728,6 @@ export interface ApiCreationRequestCreationRequest
     draftAndPublish: true;
   };
   attributes: {
-    authorized_user: Attribute.Relation<
-      'api::creation-request.creation-request',
-      'oneToOne',
-      'api::authorized-user.authorized-user'
-    >;
     createdAt: Attribute.DateTime;
     createdBy: Attribute.Relation<
       'api::creation-request.creation-request',
@@ -749,6 +745,11 @@ export interface ApiCreationRequestCreationRequest
       'admin::user'
     > &
       Attribute.Private;
+    user: Attribute.Relation<
+      'api::creation-request.creation-request',
+      'oneToOne',
+      'api::authorized-user.authorized-user'
+    >;
   };
 }
 

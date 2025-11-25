@@ -5,7 +5,6 @@ import { fetchCreationRequests } from "@/lib/actions";
 export async function CreationRequests() {
   const creationRequests = await fetchCreationRequests();
 
-  console.log(creationRequests);
   return (
     <section>
       <h1 className="font-bold dark:text-slate-300">

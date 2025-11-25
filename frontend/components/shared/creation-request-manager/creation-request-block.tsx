@@ -25,6 +25,7 @@ export function CreationRequestBlock({
     }
   };
 
+  console.log(request);
   return (
     <li className="flex items-center justify-between py-4">
       <div>
@@ -42,7 +43,7 @@ export function CreationRequestBlock({
           role="button"
         >
           <AlignCenter className="text-black dark:text-white" />
-          <p className="hidden sm:block">View</p>
+          <p className="hidden text-black sm:block dark:text-white">View</p>
         </Button>
       </div>
     </li>

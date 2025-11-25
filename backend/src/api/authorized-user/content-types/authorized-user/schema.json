@@ -228,7 +228,7 @@
       "type": "relation",
       "relation": "oneToOne",
       "target": "api::creation-request.creation-request",
-      "inversedBy": "authorized_user"
+      "mappedBy": "user"
     }
   }
 }
