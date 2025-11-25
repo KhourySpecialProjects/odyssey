@@ -1,0 +1,27 @@
+{
+  "kind": "collectionType",
+  "collectionName": "creation_requests",
+  "info": {
+    "singularName": "creation-request",
+    "pluralName": "creation-requests",
+    "displayName": "Creation Request"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "motivation": {
+      "type": "text"
+    },
+    "dropletIdea": {
+      "type": "text"
+    },
+    "authorized_user": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::authorized-user.authorized-user",
+      "inversedBy": "creation_request"
+    }
+  }
+}

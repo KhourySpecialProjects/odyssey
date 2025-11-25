@@ -421,3 +421,9 @@ export type DueDate = {
   playlist?: Playlist;
   group: Group;
 };
+
+export type CreationRequest = {
+  motivation: String;
+  dropletIdea: String;
+  user: AuthorizedUser
+}
