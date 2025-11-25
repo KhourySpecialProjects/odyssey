@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/card";
 import { Sparkles, Lightbulb } from "lucide-react";
 import { AuthorizedUser } from "@/types";
+import { toast } from "sonner";
 
 export function ContentCreatorRequestForm({
   user,
@@ -25,7 +26,7 @@ export function ContentCreatorRequestForm({
 
   const handleSubmit = async () => {
     if (!user?.id) {
-      alert("You must be logged in to submit a request.");
+      toast.error("You must be logged in to submit a request.");
       return;
     }
 
@@ -39,16 +40,16 @@ export function ContentCreatorRequestForm({
       });
 
       if (result.ok) {
-        alert("Request submitted successfully!");
+        toast.success("Request submitted successfully!");
         // Optionally redirect or clear the form
         setMotivation("");
         setIdeas("");
       } else {
-        alert(`Failed to submit request: ${result.error}`);
+        toast.error(`Failed to submit request: ${result.error}`);
       }
     } catch (error) {
       console.error("Submission error:", error);
-      alert("Failed to submit request. Please try again.");
+      toast.error("Failed to submit request. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
