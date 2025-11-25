@@ -257,12 +257,15 @@ export async function createCreationRequest(
 /**
  * Approves a creation request and grants Content Creator role to the user
  */
+/**
+ * Approves a creation request and grants Content Creator role to the user
+ */
 export async function approveCreationRequest(
   requestId: string,
   userId: number,
 ) {
   try {
-    // First, get the current user to append the new role
+    // First, get the current user with their roles
     const userResponse = await fetch(
       `${STRAPI_API_URL}/api/authorized-users/${userId}?populate=roles`,
       {
@@ -274,6 +277,7 @@ export async function approveCreationRequest(
     );
 
     if (!userResponse.ok) {
+      console.error("Failed to fetch user data");
       return {
         ok: false,
         error: "Failed to fetch user data",
@@ -282,10 +286,44 @@ export async function approveCreationRequest(
     }
 
     const userData = await userResponse.json();
-    const currentRoles = userData.data.attributes.roles || [];
+    const currentRoles = userData.data.attributes.roles?.data || [];
+    const currentRoleIds = currentRoles.map((role: any) => role.id);
+
+    // Find the Content Creator role ID
+    const rolesResponse = await fetch(
+      `${STRAPI_API_URL}/api/authorized-user-roles?filters[title][$eq]=Content Creator`,
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+        },
+      },
+    );
+
+    if (!rolesResponse.ok) {
+      console.error("Failed to fetch Content Creator role");
+      return {
+        ok: false,
+        error: "Failed to fetch Content Creator role",
+        data: null,
+      };
+    }
+
+    const rolesData = await rolesResponse.json();
+
+    if (!rolesData.data || rolesData.data.length === 0) {
+      console.error("Content Creator role not found");
+      return {
+        ok: false,
+        error: "Content Creator role not found in system",
+        data: null,
+      };
+    }
+
+    const contentCreatorRoleId = rolesData.data[0].id;
 
     // Add Content Creator role if not already present
-    if (!currentRoles.includes("Content Creator")) {
+    if (!currentRoleIds.includes(contentCreatorRoleId)) {
       const updateResponse = await fetch(
         `${STRAPI_API_URL}/api/authorized-users/${userId}`,
         {
@@ -296,13 +334,15 @@ export async function approveCreationRequest(
           },
           body: JSON.stringify({
             data: {
-              roles: [...currentRoles, "Content Creator"],
+              roles: [...currentRoleIds, contentCreatorRoleId],
             },
           }),
         },
       );
 
       if (!updateResponse.ok) {
+        const errorData = await updateResponse.json();
+        console.error("Failed to update user roles:", errorData);
         return {
           ok: false,
           error: "Failed to update user roles",
@@ -324,6 +364,7 @@ export async function approveCreationRequest(
     );
 
     if (!deleteResponse.ok) {
+      console.error("Failed to delete creation request");
       return {
         ok: false,
         error: "Failed to delete creation request",

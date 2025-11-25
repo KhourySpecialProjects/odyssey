@@ -129,7 +129,7 @@ export function CreationRequestModal({
             onClick={handleDecline}
             disabled={isProcessing}
             variant="outline"
-            className="flex-1 border-gray-300 text-black hover:bg-gray-100 dark:border-gray-700 dark:text-white dark:hover:bg-gray-900"
+            className="flex-1 bg-red-500 text-black hover:bg-red-600 dark:bg-red-700 dark:text-white dark:hover:bg-red-900"
           >
             <X className="mr-2 h-4 w-4" />
             Decline
