@@ -557,7 +557,7 @@ export interface ApiAuthorizedUserAuthorizedUser extends Schema.CollectionType {
       'admin::user'
     > &
       Attribute.Private;
-    creation_request: Attribute.Relation<
+    creationRequest: Attribute.Relation<
       'api::authorized-user.authorized-user',
       'oneToOne',
       'api::creation-request.creation-request'

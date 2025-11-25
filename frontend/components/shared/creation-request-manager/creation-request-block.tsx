@@ -26,10 +26,10 @@ export function CreationRequestBlock({ request }: { request: CreationRequest }) 
     <li className="flex items-center justify-between py-4">
       <div>
         <p className="font-medium dark:text-slate-300">
-          {request.user.firstName} {request.user.lastName}
+          {request?.user?.firstName} {request?.user?.lastName}
         </p>
         <p className="text-sm text-gray-600 dark:text-slate-400">
-          {request.user.email}
+          {request?.user?.email}
         </p>
       </div>
       <div className="flex gap-2">

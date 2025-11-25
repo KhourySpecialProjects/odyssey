@@ -11,7 +11,7 @@
       "url": "https://khouryodyssey.org"
     },
     "license": null,
-    "x-generation-date": "2025-11-25T14:41:22.138Z"
+    "x-generation-date": "2025-11-25T17:38:19.664Z"
   },
   "x-strapi-config": {
     "plugins": [
@@ -2745,7 +2745,7 @@
                                                                   }
                                                                 }
                                                               },
-                                                              "creation_request": {
+                                                              "creationRequest": {
                                                                 "type": "object",
                                                                 "properties": {
                                                                   "data": {
@@ -4099,7 +4099,7 @@
                   "example": "string or id"
                 }
               },
-              "creation_request": {
+              "creationRequest": {
                 "oneOf": [
                   {
                     "type": "integer"
@@ -6775,7 +6775,7 @@
                                         }
                                       }
                                     },
-                                    "creation_request": {
+                                    "creationRequest": {
                                       "type": "object",
                                       "properties": {
                                         "data": {
@@ -7507,7 +7507,7 @@
               }
             }
           },
-          "creation_request": {
+          "creationRequest": {
             "type": "object",
             "properties": {
               "data": {
@@ -10397,7 +10397,7 @@
                             }
                           }
                         },
-                        "creation_request": {
+                        "creationRequest": {
                           "type": "object",
                           "properties": {
                             "data": {
@@ -13407,7 +13407,7 @@
                           }
                         }
                       },
-                      "creation_request": {
+                      "creationRequest": {
                         "type": "object",
                         "properties": {
                           "data": {
@@ -16117,7 +16117,7 @@
                                                                     }
                                                                   }
                                                                 },
-                                                                "creation_request": {
+                                                                "creationRequest": {
                                                                   "type": "object",
                                                                   "properties": {
                                                                     "data": {
@@ -19220,7 +19220,7 @@
                                                                   }
                                                                 }
                                                               },
-                                                              "creation_request": {
+                                                              "creationRequest": {
                                                                 "type": "object",
                                                                 "properties": {
                                                                   "data": {
@@ -22974,7 +22974,7 @@
                           }
                         }
                       },
-                      "creation_request": {
+                      "creationRequest": {
                         "type": "object",
                         "properties": {
                           "data": {
@@ -26087,7 +26087,7 @@
                           }
                         }
                       },
-                      "creation_request": {
+                      "creationRequest": {
                         "type": "object",
                         "properties": {
                           "data": {
@@ -29166,7 +29166,7 @@
                             }
                           }
                         },
-                        "creation_request": {
+                        "creationRequest": {
                           "type": "object",
                           "properties": {
                             "data": {
@@ -32748,7 +32748,7 @@
                             }
                           }
                         },
-                        "creation_request": {
+                        "creationRequest": {
                           "type": "object",
                           "properties": {
                             "data": {
@@ -35954,7 +35954,7 @@
                           }
                         }
                       },
-                      "creation_request": {
+                      "creationRequest": {
                         "type": "object",
                         "properties": {
                           "data": {
@@ -38456,7 +38456,7 @@
                                                                     }
                                                                   }
                                                                 },
-                                                                "creation_request": {
+                                                                "creationRequest": {
                                                                   "type": "object",
                                                                   "properties": {
                                                                     "data": {
@@ -41893,7 +41893,7 @@
                                                                   }
                                                                 }
                                                               },
-                                                              "creation_request": {
+                                                              "creationRequest": {
                                                                 "type": "object",
                                                                 "properties": {
                                                                   "data": {
@@ -44866,7 +44866,7 @@
                                                                     }
                                                                   }
                                                                 },
-                                                                "creation_request": {
+                                                                "creationRequest": {
                                                                   "type": "object",
                                                                   "properties": {
                                                                     "data": {
@@ -48453,7 +48453,7 @@
                                                                     }
                                                                   }
                                                                 },
-                                                                "creation_request": {
+                                                                "creationRequest": {
                                                                   "type": "object",
                                                                   "properties": {
                                                                     "data": {

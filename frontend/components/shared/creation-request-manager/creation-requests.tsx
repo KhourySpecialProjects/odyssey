@@ -1,41 +1,12 @@
-import { fetchAccessRequests } from "@/lib/requests/data";
-import { AccessRequestBlock } from "../access-manager/access-requests/access-request";
-import { fetchAuthorizedUsers } from "@/lib/requests/authorized-user";
-import { AuthorizedUser } from "@/types";
 
-export type AccessRequest = {
-  id: string;
-  givenName: string;
-  familyName: string;
-  email: string;
-  affiliation: string;
-  college: string;
-};
-
-export function accessFilter(
-  requests: AccessRequest[],
-  users: AuthorizedUser[],
-) {
-  return requests.filter(
-    (req) =>
-      !users.some(
-        (user) =>
-          user.firstName?.toLowerCase()?.trim() ===
-            req.givenName?.toLowerCase()?.trim() &&
-          user.lastName?.toLowerCase()?.trim() ===
-            req.familyName?.toLowerCase()?.trim() &&
-          user.email?.toLowerCase()?.trim() ===
-            req.email?.toLowerCase()?.trim(),
-      ),
-  );
-}
+import { CreationRequest } from "@/types";
+import { CreationRequestBlock } from "./creation-request-block";
+import { fetchCreationRequests } from "@/lib/actions";
 
 export async function CreationRequests() {
-  const accessRequests = await fetchAccessRequests();
-  const authorizedUsers = await fetchAuthorizedUsers();
+  const creationRequests = await fetchCreationRequests();
 
-  const filteredRequests = accessFilter(accessRequests, authorizedUsers);
-
+  console.log(creationRequests);
   return (
       <section>
         <h1 className="font-bold dark:text-slate-300">Content Creation Requests</h1>
@@ -43,10 +14,10 @@ export async function CreationRequests() {
           The following individuals have requested to become a content creator.
         </p>
         <div className="mt-4 rounded-md bg-slate-100 p-4 dark:bg-slate-800">
-          {filteredRequests.length > 0 ? (
+          {creationRequests.length > 0 ? (
             <ul className="divide-y divide-slate-200 md:space-y-4 dark:divide-slate-700">
-              {filteredRequests.map((request: AccessRequest) => {
-                return <AccessRequestBlock request={request} key={request.id} />;
+              {creationRequests.map((request: CreationRequest) => {
+                return <CreationRequestBlock request={request} key={request.id} />;
               })}
             </ul>
           ) : (

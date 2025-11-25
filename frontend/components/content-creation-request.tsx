@@ -1,34 +1,50 @@
 "use client";
-
+import { createCreationRequest } from "@/lib/actions";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Sparkles, Lightbulb } from "lucide-react";
+import { AuthorizedUser } from "@/types";
 
-export function ContentCreatorRequestForm() {
+
+export function ContentCreatorRequestForm({user}: {user: AuthorizedUser | undefined}) {
   const [motivation, setMotivation] = useState("");
   const [ideas, setIdeas] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = async () => {
-    setIsSubmitting(true);
+ 
+const handleSubmit = async () => {
+  if (!user?.id) {
+    alert("You must be logged in to submit a request.");
+    return;
+  }
+
+  setIsSubmitting(true);
+  
+  try {
+    const result = await createCreationRequest({
+      motivation,
+      dropletIdea: ideas,
+      user: user.id,
+    });
     
-    try {
-      // Add your submission logic here
-      // Example: await submitRequest({ motivation, ideas });
-      console.log({ motivation, ideas });
-      
-      // Show success message
+    if (result.ok) {
       alert("Request submitted successfully!");
-    } catch (error) {
-      console.error("Submission error:", error);
-      alert("Failed to submit request. Please try again.");
-    } finally {
-      setIsSubmitting(false);
+      // Optionally redirect or clear the form
+      setMotivation("");
+      setIdeas("");
+    } else {
+      alert(`Failed to submit request: ${result.error}`);
     }
-  };
+  } catch (error) {
+    console.error("Submission error:", error);
+    alert("Failed to submit request. Please try again.");
+  } finally {
+    setIsSubmitting(false);
+  }
+};
 
   const isFormValid = motivation.trim().length > 0 && ideas.trim().length > 0;
 
