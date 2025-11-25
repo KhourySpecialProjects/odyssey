@@ -77,7 +77,7 @@ export default async function HomeRoute() {
       after={<ArrowRightIcon />}
       asChild
     >
-      <Link href="/creation-request">Create a Droplet</Link>
+      <Link href="/creation-request">Request Creation Role</Link>
     </Button>
   )}
               {!user && (
