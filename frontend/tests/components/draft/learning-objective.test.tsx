@@ -29,13 +29,49 @@ describe("LearningObjectiveDisplay", () => {
     expect(input).toHaveValue("Test Objective");
   });
 
-  it("should call update when editing objective", () => {
+  it("should call update when pressing Enter", () => {
     render(<LearningObjectiveDisplay {...defaultProps} />);
 
     fireEvent.click(screen.getByText("Test Objective"));
     const input = screen.getByRole("textbox");
 
     fireEvent.change(input, { target: { value: "Updated Objective" } });
+    fireEvent.keyDown(input, { key: "Enter", code: "Enter" });
+
+    expect(mockUpdate).toHaveBeenCalledWith("Updated Objective");
+  });
+
+  it("should call update when input loses focus (blur)", () => {
+    render(<LearningObjectiveDisplay {...defaultProps} />);
+
+    fireEvent.click(screen.getByText("Test Objective"));
+    const input = screen.getByRole("textbox");
+
+    fireEvent.change(input, { target: { value: "Updated Objective" } });
+    fireEvent.blur(input);
+
+    expect(mockUpdate).toHaveBeenCalledWith("Updated Objective");
+  });
+
+  it("should not call update if value hasn't changed", () => {
+    render(<LearningObjectiveDisplay {...defaultProps} />);
+
+    fireEvent.click(screen.getByText("Test Objective"));
+    const input = screen.getByRole("textbox");
+
+    fireEvent.blur(input);
+
+    expect(mockUpdate).not.toHaveBeenCalled();
+  });
+
+  it("should trim whitespace when saving", () => {
+    render(<LearningObjectiveDisplay {...defaultProps} />);
+
+    fireEvent.click(screen.getByText("Test Objective"));
+    const input = screen.getByRole("textbox");
+
+    fireEvent.change(input, { target: { value: "  Updated Objective  " } });
+    fireEvent.keyDown(input, { key: "Enter", code: "Enter" });
 
     expect(mockUpdate).toHaveBeenCalledWith("Updated Objective");
   });

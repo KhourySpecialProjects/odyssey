@@ -6,13 +6,16 @@ import { LearningObjectiveDisplay } from "../draft/metadata/learning-objectives/
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
 import { CornerDownLeft } from "lucide-react";
+import { updateDropletLearningObjective } from "@/lib/requests/droplet";
 
 export function LearningObjectivesInput({
+  dropletId,
   learningObjectives,
   setLearningObjectives,
   className,
   firstTime,
 }: {
+  dropletId?: number; // Add this prop
   learningObjectives: string[];
   setLearningObjectives: (learningObjectives: string[]) => void;
   className?: string;
@@ -23,6 +26,28 @@ export function LearningObjectivesInput({
   const addLearningObjective = (obj: string) => {
     setLearningObjectives([...learningObjectives, obj]);
     setNewObjective("");
+  };
+
+  const updateLearningObjective = async (oldObj: string, newObj: string) => {
+    // Update locally first for immediate feedback
+    setLearningObjectives(
+      learningObjectives.map((obj) => (obj === oldObj ? newObj : obj)),
+    );
+
+    // If we have a dropletId, update the backend
+    if (dropletId) {
+      const result = await updateDropletLearningObjective(
+        dropletId,
+        oldObj,
+        newObj,
+      );
+      if (!result.success) {
+        // Revert on error
+        setLearningObjectives(
+          learningObjectives.map((obj) => (obj === newObj ? oldObj : obj)),
+        );
+      }
+    }
   };
 
   const removeLearningObjective = (obj: string) => {
@@ -72,7 +97,9 @@ export function LearningObjectivesInput({
             <LearningObjectiveDisplay
               objective={objective}
               key={index}
-              update={() => addLearningObjective(objective)}
+              update={(newValue) =>
+                updateLearningObjective(objective, newValue)
+              }
               remove={() => removeLearningObjective(objective)}
             />
           ))}
