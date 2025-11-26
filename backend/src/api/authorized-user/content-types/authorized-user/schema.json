@@ -223,6 +223,12 @@
       "relation": "manyToMany",
       "target": "api::playlist.playlist",
       "inversedBy": "users_archived"
+    },
+    "creationRequest": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::creation-request.creation-request",
+      "mappedBy": "user"
     }
   }
 }
