@@ -345,10 +345,10 @@ describe("CodeBlockComponent", () => {
 
       const lineNumbers = container.querySelector(".select-none");
       expect(lineNumbers).toHaveClass(
-        "absolute top-0 bottom-0 left-0 flex min-w-[2.5rem] flex-col border-r border-slate-700 bg-slate-800 text-sm text-slate-400 select-none dark:border-slate-800 dark:bg-slate-900",
+        "absolute top-3 bottom-3 left-0 flex min-w-[2.5rem] flex-col border-r border-slate-700 bg-slate-800 text-sm text-slate-400 select-none dark:border-slate-800 dark:bg-slate-900",
       );
       expect(lineNumbers).toHaveClass(
-        "absolute top-0 bottom-0 left-0 flex min-w-[2.5rem] flex-col border-r border-slate-700 bg-slate-800 text-sm text-slate-400 select-none dark:border-slate-800 dark:bg-slate-900",
+        "absolute top-3 bottom-3 left-0 flex min-w-[2.5rem] flex-col border-r border-slate-700 bg-slate-800 text-sm text-slate-400 select-none dark:border-slate-800 dark:bg-slate-900",
       );
     });
 
