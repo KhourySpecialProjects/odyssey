@@ -16,7 +16,6 @@ import {
   approveCreationRequest,
   deleteCreationRequest,
   fetchCreationRequests,
-  fetchCreationRequestById,
 } from "@/lib/actions";
 import { createAuthorizedUser } from "@/lib/requests/authorized-user";
 
@@ -1122,74 +1121,4 @@ describe("Server Actions", () => {
     });
   });
 
-  describe("fetchCreationRequestById", () => {
-    it("successfully fetches single creation request", async () => {
-      const mockRequest = {
-        id: 1,
-        attributes: {
-          reason: "Test reason",
-          user: {
-            data: {
-              id: 1,
-              attributes: {
-                firstName: "John",
-                lastName: "Doe",
-                email: "john@example.com",
-              },
-            },
-          },
-        },
-      };
-
-      (global.fetch as jest.Mock).mockResolvedValueOnce({
-        ok: true,
-        json: () => Promise.resolve({ data: mockRequest }),
-      });
-
-      const result = await fetchCreationRequestById("123");
-
-      expect(global.fetch).toHaveBeenCalledWith(
-        expect.stringContaining("/api/creation-requests/123?populate=user"),
-        expect.objectContaining({
-          cache: "no-store",
-        }),
-      );
-      expect(result).toEqual({
-        ok: true,
-        error: null,
-        data: mockRequest,
-      });
-    });
-
-    it("handles fetch failure", async () => {
-      (global.fetch as jest.Mock).mockResolvedValueOnce({
-        ok: false,
-      });
-
-      const result = await fetchCreationRequestById("123");
-
-      expect(result).toEqual({
-        ok: false,
-        error: "Failed to fetch creation request",
-        data: null,
-      });
-    });
-
-    it("handles network exception", async () => {
-      (global.fetch as jest.Mock).mockRejectedValueOnce(
-        new Error("Network error"),
-      );
-
-      const consoleError = jest.spyOn(console, "error").mockImplementation();
-      const result = await fetchCreationRequestById("123");
-
-      expect(result).toEqual({
-        ok: false,
-        error: "Database Error: Failed to fetch creation request.",
-        data: null,
-      });
-      expect(consoleError).toHaveBeenCalled();
-      consoleError.mockRestore();
-    });
-  });
 });

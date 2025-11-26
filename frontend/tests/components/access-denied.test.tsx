@@ -1,5 +1,5 @@
 import { render, screen, fireEvent } from "@testing-library/react";
-import AccessDenied from "@/components/access-denied";
+import AccessDenied from "@/components/requests/access-denied";
 import { signIn } from "next-auth/react";
 
 jest.mock("next-auth/react", () => ({

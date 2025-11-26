@@ -475,37 +475,55 @@ export async function fetchCreationRequests(): Promise<CreationRequest[]> {
 }
 
 /**
- * Fetches a single creation request by ID with user information
+ * Fetches creation request for a specific user
+ * @param userId - The ID of the authorized user
+ * @returns The creation request if found, null otherwise
  */
-export async function fetchCreationRequestById(requestId: string) {
+export async function fetchCreationRequestByUser(
+  userId: number
+): Promise<CreationRequest | null> {
   try {
+    const query = qs.stringify({
+      filters: {
+        user: {
+          id: {
+            $eq: userId,
+          },
+        },
+      },
+      populate: {
+        user: {
+          fields: ["firstName", "lastName", "email", "id"],
+        },
+      },
+    });
+
     const response = await fetch(
-      `${STRAPI_API_URL}/api/creation-requests/${requestId}?populate=user`,
+      `${STRAPI_API_URL}/api/creation-requests?${query}`,
       {
         headers: {
-          "Content-Type": "application/json",
           Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
         },
         cache: "no-store",
-      },
+      }
     );
 
     if (!response.ok) {
-      return {
-        ok: false,
-        error: "Failed to fetch creation request",
-        data: null,
-      };
+      console.error("Failed to fetch creation request by user");
+      return null;
     }
 
     const data = await response.json();
-    return { ok: true, error: null, data: data.data };
-  } catch (err) {
-    console.error(err);
-    return {
-      ok: false,
-      error: "Database Error: Failed to fetch creation request.",
-      data: null,
-    };
+
+    if (!data.data || data.data.length === 0) {
+      return null;
+    }
+
+    // Return the first (and should be only) creation request for this user
+    const flattened = flattenAttributes([data.data[0]]);
+    return flattened[0];
+  } catch (error) {
+    console.error("Database Error:", error);
+    return null;
   }
 }

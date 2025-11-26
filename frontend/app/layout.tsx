@@ -10,7 +10,7 @@ import { FirstVisitPopup } from "@/components/first-time/first-visit-popup";
 import { getCurrentUser } from "../lib/auth/session";
 import { getAuthorizedUserByEmail } from "../lib/requests/authorized-user";
 import { ThemeClientProvider } from "@/components/theme.client.provider";
-import AccessRequestBanner from "@/components/access-request-banner";
+import AccessRequestBanner from "@/components/requests/access-request-banner";
 import { EnvironmentBanner } from "@/components/debug/environmentBanner";
 import Footer from "@/components/footer/page";
 import { Suspense } from "react";
