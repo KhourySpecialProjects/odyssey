@@ -327,7 +327,9 @@ describe("CodeBlockComponent", () => {
       const select = screen.getByRole("combobox");
       expect(select).toHaveClass("rounded-md");
       expect(select).toHaveClass("border-gray-300");
-      expect(select).toHaveClass("dark:text-black");
+      expect(select).toHaveClass(
+        "mb-2 rounded-md border border-gray-300 bg-white px-2 py-1 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-white",
+      );
     });
 
     it("applies focus styles to select", () => {
@@ -342,8 +344,12 @@ describe("CodeBlockComponent", () => {
       const { container } = render(<CodeBlockComponent {...baseProps} />);
 
       const lineNumbers = container.querySelector(".select-none");
-      expect(lineNumbers).toHaveClass("bg-slate-50");
-      expect(lineNumbers).toHaveClass("text-slate-500");
+      expect(lineNumbers).toHaveClass(
+        "absolute top-3 bottom-3 left-0 flex min-w-[2.5rem] flex-col border-r border-slate-700 bg-slate-800 text-sm text-slate-400 select-none dark:border-slate-800 dark:bg-slate-900",
+      );
+      expect(lineNumbers).toHaveClass(
+        "absolute top-3 bottom-3 left-0 flex min-w-[2.5rem] flex-col border-r border-slate-700 bg-slate-800 text-sm text-slate-400 select-none dark:border-slate-800 dark:bg-slate-900",
+      );
     });
 
     it("pre element has overflow styling", () => {
