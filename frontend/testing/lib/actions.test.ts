@@ -851,7 +851,9 @@ describe("Server Actions", () => {
         error: "Content Creator role not found in system",
         data: null,
       });
-      expect(consoleError).toHaveBeenCalledWith("Content Creator role not found");
+      expect(consoleError).toHaveBeenCalledWith(
+        "Content Creator role not found",
+      );
       consoleError.mockRestore();
     });
 

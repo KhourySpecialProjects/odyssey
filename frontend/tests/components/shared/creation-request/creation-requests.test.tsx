@@ -9,15 +9,20 @@ jest.mock("@/lib/actions", () => ({
 }));
 
 // Mock the CreationRequestBlock component
-jest.mock("@/components/shared/creation-request-manager/creation-request-block", () => ({
-  CreationRequestBlock: jest.fn(({ request }) => (
-    <div data-testid={`request-block-${request.id}`}>
-      {request.user.firstName} {request.user.lastName}
-    </div>
-  )),
-}));
+jest.mock(
+  "@/components/shared/creation-request-manager/creation-request-block",
+  () => ({
+    CreationRequestBlock: jest.fn(({ request }) => (
+      <div data-testid={`request-block-${request.id}`}>
+        {request.user.firstName} {request.user.lastName}
+      </div>
+    )),
+  }),
+);
 
-const { CreationRequestBlock } = require("@/components/shared/creation-request-manager/creation-request-block");
+const {
+  CreationRequestBlock,
+} = require("@/components/shared/creation-request-manager/creation-request-block");
 
 describe("CreationRequests", () => {
   const mockRequests: CreationRequest[] = [
@@ -68,8 +73,8 @@ describe("CreationRequests", () => {
     expect(screen.getByText("Content Creation Requests")).toBeInTheDocument();
     expect(
       screen.getByText(
-        "The following individuals have requested to become a content creator."
-      )
+        "The following individuals have requested to become a content creator.",
+      ),
     ).toBeInTheDocument();
   });
 
@@ -91,15 +96,15 @@ describe("CreationRequests", () => {
 
     expect(CreationRequestBlock).toHaveBeenCalledWith(
       expect.objectContaining({ request: mockRequests[0] }),
-      expect.anything()
+      expect.anything(),
     );
     expect(CreationRequestBlock).toHaveBeenCalledWith(
       expect.objectContaining({ request: mockRequests[1] }),
-      expect.anything()
+      expect.anything(),
     );
     expect(CreationRequestBlock).toHaveBeenCalledWith(
       expect.objectContaining({ request: mockRequests[2] }),
-      expect.anything()
+      expect.anything(),
     );
   });
 
@@ -109,7 +114,7 @@ describe("CreationRequests", () => {
     render(await CreationRequests());
 
     expect(
-      screen.getByText("There are no access requests at this time.")
+      screen.getByText("There are no access requests at this time."),
     ).toBeInTheDocument();
     expect(CreationRequestBlock).not.toHaveBeenCalled();
   });
@@ -151,7 +156,7 @@ describe("CreationRequests", () => {
     expect(section).toBeInTheDocument();
 
     const requestsContainer = container.querySelector(
-      ".rounded-md.bg-slate-100"
+      ".rounded-md.bg-slate-100",
     );
     expect(requestsContainer).toBeInTheDocument();
     expect(requestsContainer).toHaveClass(
@@ -159,7 +164,7 @@ describe("CreationRequests", () => {
       "rounded-md",
       "bg-slate-100",
       "p-4",
-      "dark:bg-slate-800"
+      "dark:bg-slate-800",
     );
   });
 
@@ -174,24 +179,24 @@ describe("CreationRequests", () => {
       "divide-y",
       "divide-slate-200",
       "md:space-y-4",
-      "dark:divide-slate-700"
+      "dark:divide-slate-700",
     );
   });
 
   it("passes correct props to each CreationRequestBlock", async () => {
-  (fetchCreationRequests as jest.Mock).mockResolvedValue(mockRequests);
+    (fetchCreationRequests as jest.Mock).mockResolvedValue(mockRequests);
 
-  render(await CreationRequests());
+    render(await CreationRequests());
 
-  mockRequests.forEach((request) => {
-    expect(CreationRequestBlock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        request: expect.objectContaining({ id: request.id }),
-      }),
-      expect.anything()
-    );
+    mockRequests.forEach((request) => {
+      expect(CreationRequestBlock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          request: expect.objectContaining({ id: request.id }),
+        }),
+        expect.anything(),
+      );
+    });
   });
-});
 
   it("handles empty array from fetchCreationRequests", async () => {
     (fetchCreationRequests as jest.Mock).mockResolvedValue([]);
@@ -199,7 +204,7 @@ describe("CreationRequests", () => {
     const { container } = render(await CreationRequests());
 
     expect(
-      screen.getByText("There are no access requests at this time.")
+      screen.getByText("There are no access requests at this time."),
     ).toBeInTheDocument();
     expect(container.querySelector("ul")).not.toBeInTheDocument();
   });
@@ -220,7 +225,7 @@ describe("CreationRequests", () => {
     render(await CreationRequests());
 
     const description = screen.getByText(
-      "The following individuals have requested to become a content creator."
+      "The following individuals have requested to become a content creator.",
     );
     expect(description.tagName).toBe("P");
     expect(description).toHaveClass("dark:text-slate-300");

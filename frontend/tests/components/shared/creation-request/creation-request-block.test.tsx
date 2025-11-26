@@ -4,12 +4,14 @@ import { CreationRequest } from "@/types";
 
 // Mock the CreationRequestModal component
 jest.mock("@/components/shared/creation-request-manager/view-request", () => ({
-  CreationRequestModal: jest.fn(({ isOpen, onClose }) => 
+  CreationRequestModal: jest.fn(({ isOpen, onClose }) =>
     isOpen ? (
       <div data-testid="creation-request-modal">
-        <button onClick={onClose} data-testid="close-modal">Close</button>
+        <button onClick={onClose} data-testid="close-modal">
+          Close
+        </button>
       </div>
-    ) : null
+    ) : null,
   ),
 }));
 
@@ -49,7 +51,9 @@ describe("CreationRequestBlock", () => {
     render(<CreationRequestBlock request={mockRequest} />);
 
     const viewButton = screen.getByRole("button", { name: /view/i });
-    expect(screen.queryByTestId("creation-request-modal")).not.toBeInTheDocument();
+    expect(
+      screen.queryByTestId("creation-request-modal"),
+    ).not.toBeInTheDocument();
 
     fireEvent.click(viewButton);
 
@@ -67,7 +71,9 @@ describe("CreationRequestBlock", () => {
     // Close modal
     const closeButton = screen.getByTestId("close-modal");
     fireEvent.click(closeButton);
-    expect(screen.queryByTestId("creation-request-modal")).not.toBeInTheDocument();
+    expect(
+      screen.queryByTestId("creation-request-modal"),
+    ).not.toBeInTheDocument();
   });
 
   it("renders with user having only first name", () => {
@@ -103,10 +109,17 @@ describe("CreationRequestBlock", () => {
   });
 
   it("applies correct styling classes to container", () => {
-    const { container } = render(<CreationRequestBlock request={mockRequest} />);
+    const { container } = render(
+      <CreationRequestBlock request={mockRequest} />,
+    );
 
     const listItem = container.querySelector("li");
-    expect(listItem).toHaveClass("flex", "items-center", "justify-between", "py-4");
+    expect(listItem).toHaveClass(
+      "flex",
+      "items-center",
+      "justify-between",
+      "py-4",
+    );
   });
 
   it("applies correct styling to view button", () => {
@@ -117,16 +130,20 @@ describe("CreationRequestBlock", () => {
   });
 
   it("renders AlignCenter icon within button", () => {
-    const { container } = render(<CreationRequestBlock request={mockRequest} />);
+    const { container } = render(
+      <CreationRequestBlock request={mockRequest} />,
+    );
 
-    const icon = container.querySelector('svg');
+    const icon = container.querySelector("svg");
     expect(icon).toBeInTheDocument();
   });
 
   it("modal stays closed on initial render", () => {
     render(<CreationRequestBlock request={mockRequest} />);
 
-    expect(screen.queryByTestId("creation-request-modal")).not.toBeInTheDocument();
+    expect(
+      screen.queryByTestId("creation-request-modal"),
+    ).not.toBeInTheDocument();
   });
 
   it("handles multiple open/close cycles", () => {
@@ -140,7 +157,9 @@ describe("CreationRequestBlock", () => {
 
     // First close
     fireEvent.click(screen.getByTestId("close-modal"));
-    expect(screen.queryByTestId("creation-request-modal")).not.toBeInTheDocument();
+    expect(
+      screen.queryByTestId("creation-request-modal"),
+    ).not.toBeInTheDocument();
 
     // Second open
     fireEvent.click(viewButton);
@@ -148,18 +167,28 @@ describe("CreationRequestBlock", () => {
 
     // Second close
     fireEvent.click(screen.getByTestId("close-modal"));
-    expect(screen.queryByTestId("creation-request-modal")).not.toBeInTheDocument();
+    expect(
+      screen.queryByTestId("creation-request-modal"),
+    ).not.toBeInTheDocument();
   });
 
   it("renders email with correct styling", () => {
-    const { container } = render(<CreationRequestBlock request={mockRequest} />);
+    const { container } = render(
+      <CreationRequestBlock request={mockRequest} />,
+    );
 
     const emailElement = screen.getByText("john.doe@example.com");
-    expect(emailElement).toHaveClass("text-sm", "text-gray-600", "dark:text-slate-400");
+    expect(emailElement).toHaveClass(
+      "text-sm",
+      "text-gray-600",
+      "dark:text-slate-400",
+    );
   });
 
   it("renders name with correct styling", () => {
-    const { container } = render(<CreationRequestBlock request={mockRequest} />);
+    const { container } = render(
+      <CreationRequestBlock request={mockRequest} />,
+    );
 
     const nameElement = screen.getByText("John Doe");
     expect(nameElement).toHaveClass("font-medium", "dark:text-slate-300");

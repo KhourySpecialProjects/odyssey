@@ -10,11 +10,18 @@ jest.mock("@/lib/utils", () => ({
 }));
 
 // Mock the CreationRequests component
-jest.mock("@/components/shared/creation-request-manager/creation-requests", () => ({
-  CreationRequests: jest.fn(() => <div data-testid="creation-requests">Creation Requests Component</div>),
-}));
+jest.mock(
+  "@/components/shared/creation-request-manager/creation-requests",
+  () => ({
+    CreationRequests: jest.fn(() => (
+      <div data-testid="creation-requests">Creation Requests Component</div>
+    )),
+  }),
+);
 
-const { CreationRequests } = require("@/components/shared/creation-request-manager/creation-requests");
+const {
+  CreationRequests,
+} = require("@/components/shared/creation-request-manager/creation-requests");
 
 describe("CreationRequestManager", () => {
   const mockAdminUser: User = {
@@ -60,14 +67,14 @@ describe("CreationRequestManager", () => {
   });
 
   it("does not render any content when user is not admin", async () => {
-  (isAuthorizedUserAdmin as jest.Mock).mockReturnValue(false);
+    (isAuthorizedUserAdmin as jest.Mock).mockReturnValue(false);
 
-  render(await CreationRequestManager({ user: mockNonAdminUser }));
+    render(await CreationRequestManager({ user: mockNonAdminUser }));
 
-  // Should not render the CreationRequests component
-  expect(screen.queryByTestId("creation-requests")).not.toBeInTheDocument();
-  expect(CreationRequests).not.toHaveBeenCalled();
-});
+    // Should not render the CreationRequests component
+    expect(screen.queryByTestId("creation-requests")).not.toBeInTheDocument();
+    expect(CreationRequests).not.toHaveBeenCalled();
+  });
 
   it("correctly identifies admin user with admin role", async () => {
     (isAuthorizedUserAdmin as jest.Mock).mockReturnValue(true);
@@ -75,7 +82,9 @@ describe("CreationRequestManager", () => {
     render(await CreationRequestManager({ user: mockAdminUser }));
 
     expect(isAuthorizedUserAdmin).toHaveBeenCalledTimes(1);
-    expect(isAuthorizedUserAdmin).toHaveBeenCalledWith([AuthorizedUserRoleTitle.SysAdmin]);
+    expect(isAuthorizedUserAdmin).toHaveBeenCalledWith([
+      AuthorizedUserRoleTitle.SysAdmin,
+    ]);
   });
 
   it("handles user with multiple roles including admin", async () => {
@@ -84,10 +93,7 @@ describe("CreationRequestManager", () => {
       email: "multi@example.com",
       image: null,
       nuid: "003456789",
-      roles: [
-        AuthorizedUserRoleTitle.SysAdmin,
-        AuthorizedUserRoleTitle.User,
-      ],
+      roles: [AuthorizedUserRoleTitle.SysAdmin, AuthorizedUserRoleTitle.User],
       isActive: true,
     };
 
