@@ -23,7 +23,7 @@ export async function CreationRequests() {
             })}
           </ul>
         ) : (
-          <p>There are no access requests at this time.</p>
+          <p>There are no creation requests at this time.</p>
         )}
       </div>
     </section>

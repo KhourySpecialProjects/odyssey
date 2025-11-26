@@ -27,7 +27,7 @@ export function CreationRequestBlock({
         <div className="flex gap-2">
           <Button
             onClick={() => setIsModalOpen(true)}
-            className="bg-blue-600 px-2 hover:bg-blue-700 sm:px-4 dark:bg-blue-800 dark:text-white dark:hover:bg-blue-900"
+            className="bg-blue-400 px-2 hover:bg-blue-500 sm:px-4 dark:bg-blue-800 dark:text-white dark:hover:bg-blue-900"
           >
             <AlignCenter className="text-black dark:text-white" />
             <p className="hidden text-black sm:block dark:text-white">View</p>

@@ -22,11 +22,11 @@ export function PendingRequestCard({ request }: PendingRequestCardProps) {
               <Clock className="h-6 w-6 text-white dark:text-black" />
             </div>
             <CardTitle className="text-2xl font-bold text-black dark:text-white">
-              Request Already Submitted
+              Request Submitted
             </CardTitle>
           </div>
           <CardDescription className="text-base text-gray-600 dark:text-gray-400">
-            Your content creator request is pending review.
+            Your content creation request is pending review.
           </CardDescription>
         </CardHeader>
         <CardContent>

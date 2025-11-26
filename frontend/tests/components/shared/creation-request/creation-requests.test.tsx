@@ -114,7 +114,7 @@ describe("CreationRequests", () => {
     render(await CreationRequests());
 
     expect(
-      screen.getByText("There are no access requests at this time."),
+      screen.getByText("There are no creation requests at this time."),
     ).toBeInTheDocument();
     expect(CreationRequestBlock).not.toHaveBeenCalled();
   });
@@ -204,7 +204,7 @@ describe("CreationRequests", () => {
     const { container } = render(await CreationRequests());
 
     expect(
-      screen.getByText("There are no access requests at this time."),
+      screen.getByText("There are no creation requests at this time."),
     ).toBeInTheDocument();
     expect(container.querySelector("ul")).not.toBeInTheDocument();
   });

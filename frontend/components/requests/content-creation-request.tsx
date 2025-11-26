@@ -14,6 +14,7 @@ import {
 import { Sparkles, Lightbulb } from "lucide-react";
 import { AuthorizedUser } from "@/types";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 export function ContentCreatorRequestForm({
   user,
@@ -23,6 +24,7 @@ export function ContentCreatorRequestForm({
   const [motivation, setMotivation] = useState("");
   const [ideas, setIdeas] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const router = useRouter();
 
   const handleSubmit = async () => {
     if (!user?.id) {
@@ -44,6 +46,7 @@ export function ContentCreatorRequestForm({
         // Optionally redirect or clear the form
         setMotivation("");
         setIdeas("");
+        router.push("/explore");
       } else {
         toast.error(`Failed to submit request: ${result.error}`);
       }

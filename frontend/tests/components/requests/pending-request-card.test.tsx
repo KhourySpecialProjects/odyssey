@@ -35,14 +35,14 @@ describe("PendingRequestCard", () => {
     it("renders card with title", () => {
       render(<PendingRequestCard request={mockRequest} />);
 
-      expect(screen.getByText("Request Already Submitted")).toBeInTheDocument();
+      expect(screen.getByText("Request Submitted")).toBeInTheDocument();
     });
 
     it("renders card description", () => {
       render(<PendingRequestCard request={mockRequest} />);
 
       expect(
-        screen.getByText("Your content creator request is pending review."),
+        screen.getByText("Your content creation request is pending review."),
       ).toBeInTheDocument();
     });
 
@@ -99,7 +99,7 @@ describe("PendingRequestCard", () => {
         <PendingRequestCard request={mockRequest} />,
       );
 
-      const title = screen.getByText("Request Already Submitted");
+      const title = screen.getByText("Request Submitted");
       expect(title.tagName).toBe("H3");
       expect(title).toHaveClass("text-2xl", "font-bold");
     });
@@ -119,7 +119,7 @@ describe("PendingRequestCard", () => {
       render(<PendingRequestCard request={mockRequest} />);
 
       // Component renders without errors
-      expect(screen.getByText("Request Already Submitted")).toBeInTheDocument();
+      expect(screen.getByText("Request Submitted")).toBeInTheDocument();
     });
 
     it("renders with different request data", () => {
@@ -133,7 +133,7 @@ describe("PendingRequestCard", () => {
       render(<PendingRequestCard request={differentRequest} />);
 
       // Component still renders correctly with different data
-      expect(screen.getByText("Request Already Submitted")).toBeInTheDocument();
+      expect(screen.getByText("Request Submitted")).toBeInTheDocument();
     });
   });
 
