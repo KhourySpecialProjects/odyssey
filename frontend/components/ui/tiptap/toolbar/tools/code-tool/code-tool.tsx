@@ -26,6 +26,8 @@ function CodeBlockComponent({
   updateAttributes,
   extension,
 }: CodeBlockProps) {
+  const lineCount = (node.textContent.match(/\n/g) || []).length + 1;
+
   return (
     <NodeViewWrapper className="code-block my-4">
       <select
@@ -45,24 +47,24 @@ function CodeBlockComponent({
           ))}
       </select>
       <pre className="relative overflow-x-auto rounded-md bg-slate-900 py-3 pr-4 pl-12 dark:bg-slate-950">
-        <div className="absolute top-0 bottom-0 left-0 flex min-w-[2.5rem] flex-col border-r border-slate-700 bg-slate-800 text-sm text-slate-400 select-none dark:border-slate-800 dark:bg-slate-900">
-          <div className="pt-3 pl-3">
-            {Array.from({
-              length: (node.textContent.match(/\n/g) || []).length + 1,
-            }).map((_, i) => (
-              <span
-                key={i}
-                className="block pr-2 text-right leading-5"
-                style={{ paddingTop: "0.15rem", paddingBottom: "0.15rem" }}
-              >
-                {i + 1}
-              </span>
-            ))}
-          </div>
+        <div className="absolute top-3 bottom-3 left-0 flex min-w-[2.5rem] flex-col border-r border-slate-700 bg-slate-800 text-sm text-slate-400 select-none dark:border-slate-800 dark:bg-slate-900">
+          {Array.from({ length: lineCount }).map((_, i) => (
+            <div
+              key={i}
+              className="pr-2 text-right font-mono"
+              style={{
+                lineHeight: "1.25rem",
+                height: "1.25rem",
+              }}
+            >
+              {i + 1}
+            </div>
+          ))}
         </div>
         <NodeViewContent
           as="code"
-          className="block font-mono text-sm leading-5 whitespace-pre text-slate-50"
+          className="block font-mono text-sm whitespace-pre text-slate-50"
+          style={{ lineHeight: "1.25rem" }}
         />
       </pre>
     </NodeViewWrapper>
