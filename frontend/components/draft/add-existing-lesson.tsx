@@ -144,6 +144,7 @@ export function AddExistingLesson({
               <SelectContent>
                 {availableDroplets
                   .filter((d) => d.id !== droplet.id) // Exclude current droplet
+                  .sort((a, b) => a.name.localeCompare(b.name)) // Sort alphabetically
                   .map((d) => (
                     <SelectItem key={d.id} value={d.id.toString()}>
                       {d.name}
