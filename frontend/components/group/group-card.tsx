@@ -44,11 +44,11 @@ export function GroupCard({
   return (
     <Link
       href={`/g/${group.slug}`}
-      className="inline-block h-full w-full rounded-md border border-slate-200 bg-slate-50 hover:border-slate-300 dark:border-slate-500 dark:bg-slate-800"
+      className="flex h-full w-full rounded-md border border-slate-200 bg-slate-50 hover:border-slate-300 dark:border-slate-500 dark:bg-slate-800"
     >
-      <div className="p-2 transition-colors">
-        <div className="flex h-full flex-col rounded-md bg-slate-50 p-6 dark:bg-slate-800">
-          <div className="flex-grow">
+      <div className="flex h-full w-full flex-col p-2 transition-colors">
+        <div className="flex h-full flex-col justify-between gap-3 rounded-md bg-slate-50 p-6 dark:bg-slate-800">
+          <div className="space-y-3">
             <div className="flex items-center justify-between">
               <h3 className="text-3xl font-black text-slate-950 dark:text-slate-300">
                 {group.groupName}
@@ -63,61 +63,71 @@ export function GroupCard({
                 {role}
               </Badge>
             </div>
-          </div>
-          <div>
-            {(role === "creator" || role === "admin" || role === "manager") && (
-              <div className="light:text-slate-600 flex items-center gap-4 text-sm dark:text-slate-300">
-                <UsersIcon className="h-4 w-4" />
-                <div className="flex gap-3">
-                  <span>Admins: {group.admins?.length || 0}</span>
-                  <span>Managers: {group.managers?.length || 0}</span>
-                  <span>Members: {group.members?.length || 0}</span>
+            <div>
+              {(role === "creator" ||
+                role === "admin" ||
+                role === "manager") && (
+                <div className="light:text-slate-600 flex items-center gap-4 text-sm dark:text-slate-300">
+                  <UsersIcon className="h-4 w-4" />
+                  <div className="flex gap-3">
+                    <span>Admins: {group.admins?.length || 0}</span>
+                    <span>Managers: {group.managers?.length || 0}</span>
+                    <span>Members: {group.members?.length || 0}</span>
+                  </div>
                 </div>
-              </div>
-            )}
-            {!(
-              role === "creator" ||
-              role === "admin" ||
-              role === "manager"
-            ) && (
-              <div className="light:text-slate-600 pt-2 text-sm dark:text-slate-300">
-                <div className="flex gap-3">
-                  <span>Members: {group.members?.length || 0}</span>
-                </div>
+              )}
+              {!(
+                role === "creator" ||
+                role === "admin" ||
+                role === "manager"
+              ) && (
                 <div className="light:text-slate-600 pt-2 text-sm dark:text-slate-300">
-                  Creator:{" "}
-                  {group.creator.firstName && group.creator.lastName
-                    ? group.creator?.firstName + " " + group.creator?.lastName
-                    : group.creator.email}
+                  <div className="flex gap-3">
+                    <span>Members: {group.members?.length || 0}</span>
+                  </div>
+                  <div className="light:text-slate-600 pt-2 text-sm dark:text-slate-300">
+                    Creator:{" "}
+                    {group.creator.firstName && group.creator.lastName
+                      ? group.creator?.firstName + " " + group.creator?.lastName
+                      : group.creator.email}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
+
+          {/* Bottom section with archive button */}
+          {dashboardPage && (
+            <div className="flex items-center justify-between gap-2">
+              {/* Left side - empty for alignment */}
+              <div className="flex items-center"></div>
+
+              {/* Right side - archive button */}
+              <div className="flex items-center gap-2">
+                <Button
+                  size="sm"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    changeVisibility();
+                  }}
+                  className={`${isArchived === true || isArchived === false ? "visibility: visible" : "visibility: hidden"} bg-slate-50 hover:bg-slate-300 dark:bg-slate-800`}
+                >
+                  <div className="group relative">
+                    {isArchived ? (
+                      <ArchiveRestore className="text-purple-500" />
+                    ) : (
+                      <Archive className="text-purple-500" />
+                    )}
+                    <span className="absolute top-full left-1/2 mt-1 w-max -translate-x-1/2 transform rounded bg-gray-800 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100">
+                      {isArchived ? "Unarchive" : "Archive"}
+                    </span>
+                  </div>
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
-        {dashboardPage && (
-          <div className="flex justify-end p-2">
-            <Button
-              size="sm"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                changeVisibility();
-              }}
-              className={`${isArchived === true || isArchived === false ? "visibility: visible" : "visibility: hidden"} justify-end bg-slate-50 hover:bg-slate-300 dark:bg-slate-300`}
-            >
-              <div className="group relative">
-                {isArchived ? (
-                  <ArchiveRestore className="text-purple-500" />
-                ) : (
-                  <Archive className="text-purple-500" />
-                )}
-                <span className="absolute top-full left-1/2 mt-1 w-max -translate-x-1/2 transform rounded bg-gray-800 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100">
-                  {isArchived ? "Unarchive" : "Archive"}
-                </span>
-              </div>
-            </Button>
-          </div>
-        )}
       </div>
     </Link>
   );
