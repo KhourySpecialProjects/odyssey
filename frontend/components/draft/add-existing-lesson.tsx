@@ -71,14 +71,19 @@ export function AddExistingLesson({
       );
 
       if (result.ok && result.data) {
+        const attributes = result.data.attributes;
+        const blocksVersion = attributes.blocksVersion || "v1";
+
         const newLesson: Lesson = {
           id: result.data.id,
-          name: result.data.attributes.name,
-          slug: result.data.attributes.slug,
-          type: result.data.attributes.type,
-          orderIndex: result.data.attributes.orderIndex,
-          blocks: result.data.attributes.blocks || [],
-          notes: result.data.attributes.notes || null, // Add notes
+          name: attributes.name,
+          slug: attributes.slug,
+          type: attributes.type,
+          orderIndex: attributes.orderIndex,
+          blocks: attributes.blocks || [],
+          blocksV2: attributes.blocksV2 || null, // Add blocksV2
+          blocksVersion: blocksVersion, // Add blocksVersion
+          notes: attributes.notes || null,
           droplets: [
             {
               id: droplet.id,
