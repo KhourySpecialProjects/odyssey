@@ -851,7 +851,9 @@ describe("Server Actions", () => {
         error: "Content Creator role not found in system",
         data: null,
       });
-      expect(consoleError).toHaveBeenCalledWith("Content Creator role not found");
+      expect(consoleError).toHaveBeenCalledWith(
+        "Content Creator role not found",
+      );
       consoleError.mockRestore();
     });
 
@@ -1121,114 +1123,12 @@ describe("Server Actions", () => {
   });
 
   describe("fetchCreationRequestByUser", () => {
-  it("successfully fetches creation request for a user", async () => {
-    const mockRequest = {
-      id: 1,
-      attributes: {
-        motivation: "Test motivation",
-        dropletIdea: "Test idea",
-        user: {
-          data: {
-            id: 1,
-            attributes: {
-              firstName: "John",
-              lastName: "Doe",
-              email: "john@example.com",
-            },
-          },
-        },
-      },
-    };
-
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
-      ok: true,
-      json: () =>
-        Promise.resolve({
-          data: [mockRequest],
-        }),
-    });
-
-    const result = await fetchCreationRequestByUser(1);
-
-    expect(global.fetch).toHaveBeenCalledWith(
-      expect.stringContaining("/api/creation-requests"),
-      expect.objectContaining({
-        cache: "no-store",
-      })
-    );
-    expect(result).toBeTruthy();
-    expect(result?.id).toBe(1);
-  });
-
-  it("returns null when no creation request exists for user", async () => {
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
-      ok: true,
-      json: () =>
-        Promise.resolve({
-          data: [],
-        }),
-    });
-
-    const result = await fetchCreationRequestByUser(999);
-
-    expect(result).toBeNull();
-  });
-
-  it("returns null when fetch fails", async () => {
-    const consoleError = jest.spyOn(console, "error").mockImplementation();
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
-      ok: false,
-    });
-
-    const result = await fetchCreationRequestByUser(1);
-
-    expect(result).toBeNull();
-    expect(consoleError).toHaveBeenCalledWith(
-      "Failed to fetch creation request by user"
-    );
-    consoleError.mockRestore();
-  });
-
-  it("returns null on network exception", async () => {
-    const consoleError = jest.spyOn(console, "error").mockImplementation();
-    (global.fetch as jest.Mock).mockRejectedValueOnce(
-      new Error("Network error")
-    );
-
-    const result = await fetchCreationRequestByUser(1);
-
-    expect(result).toBeNull();
-    expect(consoleError).toHaveBeenCalledWith(
-      "Database Error:",
-      expect.any(Error)
-    );
-    consoleError.mockRestore();
-  });
-
-  it("includes correct query parameters for user filtering", async () => {
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
-      ok: true,
-      json: () =>
-        Promise.resolve({
-          data: [],
-        }),
-    });
-
-    await fetchCreationRequestByUser(5);
-
-    const fetchCall = (global.fetch as jest.Mock).mock.calls[0][0];
-    expect(fetchCall).toContain("filters");
-    expect(fetchCall).toContain("user");
-    expect(fetchCall).toContain("populate");
-  });
-
-  it("returns only the first request when multiple exist", async () => {
-    const mockRequests = [
-      {
+    it("successfully fetches creation request for a user", async () => {
+      const mockRequest = {
         id: 1,
         attributes: {
-          motivation: "First request",
-          dropletIdea: "First idea",
+          motivation: "Test motivation",
+          dropletIdea: "Test idea",
           user: {
             data: {
               id: 1,
@@ -1240,78 +1140,180 @@ describe("Server Actions", () => {
             },
           },
         },
-      },
-      {
-        id: 2,
-        attributes: {
-          motivation: "Second request",
-          dropletIdea: "Second idea",
-          user: {
-            data: {
-              id: 1,
-              attributes: {
-                firstName: "John",
-                lastName: "Doe",
-                email: "john@example.com",
+      };
+
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            data: [mockRequest],
+          }),
+      });
+
+      const result = await fetchCreationRequestByUser(1);
+
+      expect(global.fetch).toHaveBeenCalledWith(
+        expect.stringContaining("/api/creation-requests"),
+        expect.objectContaining({
+          cache: "no-store",
+        }),
+      );
+      expect(result).toBeTruthy();
+      expect(result?.id).toBe(1);
+    });
+
+    it("returns null when no creation request exists for user", async () => {
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            data: [],
+          }),
+      });
+
+      const result = await fetchCreationRequestByUser(999);
+
+      expect(result).toBeNull();
+    });
+
+    it("returns null when fetch fails", async () => {
+      const consoleError = jest.spyOn(console, "error").mockImplementation();
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: false,
+      });
+
+      const result = await fetchCreationRequestByUser(1);
+
+      expect(result).toBeNull();
+      expect(consoleError).toHaveBeenCalledWith(
+        "Failed to fetch creation request by user",
+      );
+      consoleError.mockRestore();
+    });
+
+    it("returns null on network exception", async () => {
+      const consoleError = jest.spyOn(console, "error").mockImplementation();
+      (global.fetch as jest.Mock).mockRejectedValueOnce(
+        new Error("Network error"),
+      );
+
+      const result = await fetchCreationRequestByUser(1);
+
+      expect(result).toBeNull();
+      expect(consoleError).toHaveBeenCalledWith(
+        "Database Error:",
+        expect.any(Error),
+      );
+      consoleError.mockRestore();
+    });
+
+    it("includes correct query parameters for user filtering", async () => {
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            data: [],
+          }),
+      });
+
+      await fetchCreationRequestByUser(5);
+
+      const fetchCall = (global.fetch as jest.Mock).mock.calls[0][0];
+      expect(fetchCall).toContain("filters");
+      expect(fetchCall).toContain("user");
+      expect(fetchCall).toContain("populate");
+    });
+
+    it("returns only the first request when multiple exist", async () => {
+      const mockRequests = [
+        {
+          id: 1,
+          attributes: {
+            motivation: "First request",
+            dropletIdea: "First idea",
+            user: {
+              data: {
+                id: 1,
+                attributes: {
+                  firstName: "John",
+                  lastName: "Doe",
+                  email: "john@example.com",
+                },
               },
             },
           },
         },
-      },
-    ];
+        {
+          id: 2,
+          attributes: {
+            motivation: "Second request",
+            dropletIdea: "Second idea",
+            user: {
+              data: {
+                id: 1,
+                attributes: {
+                  firstName: "John",
+                  lastName: "Doe",
+                  email: "john@example.com",
+                },
+              },
+            },
+          },
+        },
+      ];
 
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
-      ok: true,
-      json: () =>
-        Promise.resolve({
-          data: mockRequests,
-        }),
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            data: mockRequests,
+          }),
+      });
+
+      const result = await fetchCreationRequestByUser(1);
+
+      expect(result).toBeTruthy();
+      expect(result?.id).toBe(1);
     });
 
-    const result = await fetchCreationRequestByUser(1);
+    it("uses no-store cache setting", async () => {
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            data: [],
+          }),
+      });
 
-    expect(result).toBeTruthy();
-    expect(result?.id).toBe(1);
-  });
+      await fetchCreationRequestByUser(1);
 
-  it("uses no-store cache setting", async () => {
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
-      ok: true,
-      json: () =>
-        Promise.resolve({
-          data: [],
+      expect(global.fetch).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({
+          cache: "no-store",
         }),
+      );
     });
 
-    await fetchCreationRequestByUser(1);
+    it("includes authorization header", async () => {
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            data: [],
+          }),
+      });
 
-    expect(global.fetch).toHaveBeenCalledWith(
-      expect.any(String),
-      expect.objectContaining({
-        cache: "no-store",
-      })
-    );
+      await fetchCreationRequestByUser(1);
+
+      expect(global.fetch).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({
+          headers: expect.objectContaining({
+            Authorization: expect.stringMatching(/^Bearer /),
+          }),
+        }),
+      );
+    });
   });
-
-  it("includes authorization header", async () => {
-  (global.fetch as jest.Mock).mockResolvedValueOnce({
-    ok: true,
-    json: () =>
-      Promise.resolve({
-        data: [],
-      }),
-  });
-
-  await fetchCreationRequestByUser(1);
-
-  expect(global.fetch).toHaveBeenCalledWith(
-    expect.any(String),
-    expect.objectContaining({
-      headers: expect.objectContaining({
-        Authorization: expect.stringMatching(/^Bearer /),
-      }),
-    })
-  );
-});
-});
 });

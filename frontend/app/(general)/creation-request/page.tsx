@@ -9,7 +9,7 @@ import { notFound } from "next/navigation";
 export default async function RequestContentCreatorRole() {
   const user = await getCurrentUser();
   if (!user || !user?.email) return notFound();
-  
+
   const authUser = await getAuthorizedUserByEmail(user?.email);
   if (!authUser) return notFound();
 

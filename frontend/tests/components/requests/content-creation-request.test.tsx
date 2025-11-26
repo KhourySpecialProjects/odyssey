@@ -49,17 +49,31 @@ describe("ContentCreatorRequestForm", () => {
     it("renders form with all required elements", () => {
       render(<ContentCreatorRequestForm user={mockUser} />);
 
-      expect(screen.getByText("Request Content Creator Role")).toBeInTheDocument();
-      expect(screen.getByText("Why do you want to create?")).toBeInTheDocument();
-      expect(screen.getByText("What are some ideas you have for a droplet?")).toBeInTheDocument();
-      expect(screen.getByRole("button", { name: /submit request/i })).toBeInTheDocument();
+      expect(
+        screen.getByText("Request Content Creator Role"),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText("Why do you want to create?"),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText("What are some ideas you have for a droplet?"),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: /submit request/i }),
+      ).toBeInTheDocument();
     });
 
     it("renders textareas with correct placeholders", () => {
       render(<ContentCreatorRequestForm user={mockUser} />);
 
-      expect(screen.getByPlaceholderText(/I want to create educational content because/i)).toBeInTheDocument();
-      expect(screen.getByPlaceholderText(/Some droplet ideas I have include/i)).toBeInTheDocument();
+      expect(
+        screen.getByPlaceholderText(
+          /I want to create educational content because/i,
+        ),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByPlaceholderText(/Some droplet ideas I have include/i),
+      ).toBeInTheDocument();
     });
 
     it("renders character counters", () => {
@@ -72,12 +86,16 @@ describe("ContentCreatorRequestForm", () => {
     it("renders submit button as disabled initially", () => {
       render(<ContentCreatorRequestForm user={mockUser} />);
 
-      const submitButton = screen.getByRole("button", { name: /submit request/i });
+      const submitButton = screen.getByRole("button", {
+        name: /submit request/i,
+      });
       expect(submitButton).toBeDisabled();
     });
 
     it("renders icons for each section", () => {
-      const { container } = render(<ContentCreatorRequestForm user={mockUser} />);
+      const { container } = render(
+        <ContentCreatorRequestForm user={mockUser} />,
+      );
 
       const icons = container.querySelectorAll("svg");
       expect(icons.length).toBeGreaterThan(0);
@@ -88,8 +106,12 @@ describe("ContentCreatorRequestForm", () => {
     it("updates motivation textarea on input", () => {
       render(<ContentCreatorRequestForm user={mockUser} />);
 
-      const motivationTextarea = screen.getByPlaceholderText(/I want to create educational content because/i);
-      fireEvent.change(motivationTextarea, { target: { value: "My motivation" } });
+      const motivationTextarea = screen.getByPlaceholderText(
+        /I want to create educational content because/i,
+      );
+      fireEvent.change(motivationTextarea, {
+        target: { value: "My motivation" },
+      });
 
       expect(motivationTextarea).toHaveValue("My motivation");
     });
@@ -97,7 +119,9 @@ describe("ContentCreatorRequestForm", () => {
     it("updates ideas textarea on input", () => {
       render(<ContentCreatorRequestForm user={mockUser} />);
 
-      const ideasTextarea = screen.getByPlaceholderText(/Some droplet ideas I have include/i);
+      const ideasTextarea = screen.getByPlaceholderText(
+        /Some droplet ideas I have include/i,
+      );
       fireEvent.change(ideasTextarea, { target: { value: "My ideas" } });
 
       expect(ideasTextarea).toHaveValue("My ideas");
@@ -106,8 +130,12 @@ describe("ContentCreatorRequestForm", () => {
     it("updates character counter for motivation", () => {
       render(<ContentCreatorRequestForm user={mockUser} />);
 
-      const motivationTextarea = screen.getByPlaceholderText(/I want to create educational content because/i);
-      fireEvent.change(motivationTextarea, { target: { value: "Test motivation" } });
+      const motivationTextarea = screen.getByPlaceholderText(
+        /I want to create educational content because/i,
+      );
+      fireEvent.change(motivationTextarea, {
+        target: { value: "Test motivation" },
+      });
 
       expect(screen.getByText("15 characters")).toBeInTheDocument();
     });
@@ -115,7 +143,9 @@ describe("ContentCreatorRequestForm", () => {
     it("updates character counter for ideas", () => {
       render(<ContentCreatorRequestForm user={mockUser} />);
 
-      const ideasTextarea = screen.getByPlaceholderText(/Some droplet ideas I have include/i);
+      const ideasTextarea = screen.getByPlaceholderText(
+        /Some droplet ideas I have include/i,
+      );
       fireEvent.change(ideasTextarea, { target: { value: "Test ideas" } });
 
       expect(screen.getByText("10 characters")).toBeInTheDocument();
@@ -124,13 +154,21 @@ describe("ContentCreatorRequestForm", () => {
     it("enables submit button when both fields are filled", () => {
       render(<ContentCreatorRequestForm user={mockUser} />);
 
-      const motivationTextarea = screen.getByPlaceholderText(/I want to create educational content because/i);
-      const ideasTextarea = screen.getByPlaceholderText(/Some droplet ideas I have include/i);
-      const submitButton = screen.getByRole("button", { name: /submit request/i });
+      const motivationTextarea = screen.getByPlaceholderText(
+        /I want to create educational content because/i,
+      );
+      const ideasTextarea = screen.getByPlaceholderText(
+        /Some droplet ideas I have include/i,
+      );
+      const submitButton = screen.getByRole("button", {
+        name: /submit request/i,
+      });
 
       expect(submitButton).toBeDisabled();
 
-      fireEvent.change(motivationTextarea, { target: { value: "My motivation" } });
+      fireEvent.change(motivationTextarea, {
+        target: { value: "My motivation" },
+      });
       fireEvent.change(ideasTextarea, { target: { value: "My ideas" } });
 
       expect(submitButton).not.toBeDisabled();
@@ -139,9 +177,15 @@ describe("ContentCreatorRequestForm", () => {
     it("keeps submit button disabled if motivation is only whitespace", () => {
       render(<ContentCreatorRequestForm user={mockUser} />);
 
-      const motivationTextarea = screen.getByPlaceholderText(/I want to create educational content because/i);
-      const ideasTextarea = screen.getByPlaceholderText(/Some droplet ideas I have include/i);
-      const submitButton = screen.getByRole("button", { name: /submit request/i });
+      const motivationTextarea = screen.getByPlaceholderText(
+        /I want to create educational content because/i,
+      );
+      const ideasTextarea = screen.getByPlaceholderText(
+        /Some droplet ideas I have include/i,
+      );
+      const submitButton = screen.getByRole("button", {
+        name: /submit request/i,
+      });
 
       fireEvent.change(motivationTextarea, { target: { value: "   " } });
       fireEvent.change(ideasTextarea, { target: { value: "My ideas" } });
@@ -152,11 +196,19 @@ describe("ContentCreatorRequestForm", () => {
     it("keeps submit button disabled if ideas is only whitespace", () => {
       render(<ContentCreatorRequestForm user={mockUser} />);
 
-      const motivationTextarea = screen.getByPlaceholderText(/I want to create educational content because/i);
-      const ideasTextarea = screen.getByPlaceholderText(/Some droplet ideas I have include/i);
-      const submitButton = screen.getByRole("button", { name: /submit request/i });
+      const motivationTextarea = screen.getByPlaceholderText(
+        /I want to create educational content because/i,
+      );
+      const ideasTextarea = screen.getByPlaceholderText(
+        /Some droplet ideas I have include/i,
+      );
+      const submitButton = screen.getByRole("button", {
+        name: /submit request/i,
+      });
 
-      fireEvent.change(motivationTextarea, { target: { value: "My motivation" } });
+      fireEvent.change(motivationTextarea, {
+        target: { value: "My motivation" },
+      });
       fireEvent.change(ideasTextarea, { target: { value: "   " } });
 
       expect(submitButton).toBeDisabled();
@@ -169,11 +221,19 @@ describe("ContentCreatorRequestForm", () => {
 
       render(<ContentCreatorRequestForm user={mockUser} />);
 
-      const motivationTextarea = screen.getByPlaceholderText(/I want to create educational content because/i);
-      const ideasTextarea = screen.getByPlaceholderText(/Some droplet ideas I have include/i);
-      const submitButton = screen.getByRole("button", { name: /submit request/i });
+      const motivationTextarea = screen.getByPlaceholderText(
+        /I want to create educational content because/i,
+      );
+      const ideasTextarea = screen.getByPlaceholderText(
+        /Some droplet ideas I have include/i,
+      );
+      const submitButton = screen.getByRole("button", {
+        name: /submit request/i,
+      });
 
-      fireEvent.change(motivationTextarea, { target: { value: "My motivation" } });
+      fireEvent.change(motivationTextarea, {
+        target: { value: "My motivation" },
+      });
       fireEvent.change(ideasTextarea, { target: { value: "My ideas" } });
       fireEvent.click(submitButton);
 
@@ -191,16 +251,26 @@ describe("ContentCreatorRequestForm", () => {
 
       render(<ContentCreatorRequestForm user={mockUser} />);
 
-      const motivationTextarea = screen.getByPlaceholderText(/I want to create educational content because/i);
-      const ideasTextarea = screen.getByPlaceholderText(/Some droplet ideas I have include/i);
-      const submitButton = screen.getByRole("button", { name: /submit request/i });
+      const motivationTextarea = screen.getByPlaceholderText(
+        /I want to create educational content because/i,
+      );
+      const ideasTextarea = screen.getByPlaceholderText(
+        /Some droplet ideas I have include/i,
+      );
+      const submitButton = screen.getByRole("button", {
+        name: /submit request/i,
+      });
 
-      fireEvent.change(motivationTextarea, { target: { value: "My motivation" } });
+      fireEvent.change(motivationTextarea, {
+        target: { value: "My motivation" },
+      });
       fireEvent.change(ideasTextarea, { target: { value: "My ideas" } });
       fireEvent.click(submitButton);
 
       await waitFor(() => {
-        expect(toast.success).toHaveBeenCalledWith("Request submitted successfully!");
+        expect(toast.success).toHaveBeenCalledWith(
+          "Request submitted successfully!",
+        );
       });
     });
 
@@ -209,11 +279,19 @@ describe("ContentCreatorRequestForm", () => {
 
       render(<ContentCreatorRequestForm user={mockUser} />);
 
-      const motivationTextarea = screen.getByPlaceholderText(/I want to create educational content because/i) as HTMLTextAreaElement;
-      const ideasTextarea = screen.getByPlaceholderText(/Some droplet ideas I have include/i) as HTMLTextAreaElement;
-      const submitButton = screen.getByRole("button", { name: /submit request/i });
+      const motivationTextarea = screen.getByPlaceholderText(
+        /I want to create educational content because/i,
+      ) as HTMLTextAreaElement;
+      const ideasTextarea = screen.getByPlaceholderText(
+        /Some droplet ideas I have include/i,
+      ) as HTMLTextAreaElement;
+      const submitButton = screen.getByRole("button", {
+        name: /submit request/i,
+      });
 
-      fireEvent.change(motivationTextarea, { target: { value: "My motivation" } });
+      fireEvent.change(motivationTextarea, {
+        target: { value: "My motivation" },
+      });
       fireEvent.change(ideasTextarea, { target: { value: "My ideas" } });
       fireEvent.click(submitButton);
 
@@ -231,36 +309,61 @@ describe("ContentCreatorRequestForm", () => {
 
       render(<ContentCreatorRequestForm user={mockUser} />);
 
-      const motivationTextarea = screen.getByPlaceholderText(/I want to create educational content because/i);
-      const ideasTextarea = screen.getByPlaceholderText(/Some droplet ideas I have include/i);
-      const submitButton = screen.getByRole("button", { name: /submit request/i });
+      const motivationTextarea = screen.getByPlaceholderText(
+        /I want to create educational content because/i,
+      );
+      const ideasTextarea = screen.getByPlaceholderText(
+        /Some droplet ideas I have include/i,
+      );
+      const submitButton = screen.getByRole("button", {
+        name: /submit request/i,
+      });
 
-      fireEvent.change(motivationTextarea, { target: { value: "My motivation" } });
+      fireEvent.change(motivationTextarea, {
+        target: { value: "My motivation" },
+      });
       fireEvent.change(ideasTextarea, { target: { value: "My ideas" } });
       fireEvent.click(submitButton);
 
       await waitFor(() => {
-        expect(toast.error).toHaveBeenCalledWith("Failed to submit request: Validation failed");
+        expect(toast.error).toHaveBeenCalledWith(
+          "Failed to submit request: Validation failed",
+        );
       });
     });
 
     it("displays error toast on network exception", async () => {
       const consoleError = jest.spyOn(console, "error").mockImplementation();
-      (createCreationRequest as jest.Mock).mockRejectedValue(new Error("Network error"));
+      (createCreationRequest as jest.Mock).mockRejectedValue(
+        new Error("Network error"),
+      );
 
       render(<ContentCreatorRequestForm user={mockUser} />);
 
-      const motivationTextarea = screen.getByPlaceholderText(/I want to create educational content because/i);
-      const ideasTextarea = screen.getByPlaceholderText(/Some droplet ideas I have include/i);
-      const submitButton = screen.getByRole("button", { name: /submit request/i });
+      const motivationTextarea = screen.getByPlaceholderText(
+        /I want to create educational content because/i,
+      );
+      const ideasTextarea = screen.getByPlaceholderText(
+        /Some droplet ideas I have include/i,
+      );
+      const submitButton = screen.getByRole("button", {
+        name: /submit request/i,
+      });
 
-      fireEvent.change(motivationTextarea, { target: { value: "My motivation" } });
+      fireEvent.change(motivationTextarea, {
+        target: { value: "My motivation" },
+      });
       fireEvent.change(ideasTextarea, { target: { value: "My ideas" } });
       fireEvent.click(submitButton);
 
       await waitFor(() => {
-        expect(toast.error).toHaveBeenCalledWith("Failed to submit request. Please try again.");
-        expect(consoleError).toHaveBeenCalledWith("Submission error:", expect.any(Error));
+        expect(toast.error).toHaveBeenCalledWith(
+          "Failed to submit request. Please try again.",
+        );
+        expect(consoleError).toHaveBeenCalledWith(
+          "Submission error:",
+          expect.any(Error),
+        );
       });
 
       consoleError.mockRestore();
@@ -269,16 +372,26 @@ describe("ContentCreatorRequestForm", () => {
     it("displays error toast when user is undefined", async () => {
       render(<ContentCreatorRequestForm user={undefined} />);
 
-      const motivationTextarea = screen.getByPlaceholderText(/I want to create educational content because/i);
-      const ideasTextarea = screen.getByPlaceholderText(/Some droplet ideas I have include/i);
-      const submitButton = screen.getByRole("button", { name: /submit request/i });
+      const motivationTextarea = screen.getByPlaceholderText(
+        /I want to create educational content because/i,
+      );
+      const ideasTextarea = screen.getByPlaceholderText(
+        /Some droplet ideas I have include/i,
+      );
+      const submitButton = screen.getByRole("button", {
+        name: /submit request/i,
+      });
 
-      fireEvent.change(motivationTextarea, { target: { value: "My motivation" } });
+      fireEvent.change(motivationTextarea, {
+        target: { value: "My motivation" },
+      });
       fireEvent.change(ideasTextarea, { target: { value: "My ideas" } });
       fireEvent.click(submitButton);
 
       await waitFor(() => {
-        expect(toast.error).toHaveBeenCalledWith("You must be logged in to submit a request.");
+        expect(toast.error).toHaveBeenCalledWith(
+          "You must be logged in to submit a request.",
+        );
       });
       expect(createCreationRequest).not.toHaveBeenCalled();
     });
@@ -287,32 +400,53 @@ describe("ContentCreatorRequestForm", () => {
       const userWithoutId = { ...mockUser, id: undefined as any };
       render(<ContentCreatorRequestForm user={userWithoutId} />);
 
-      const motivationTextarea = screen.getByPlaceholderText(/I want to create educational content because/i);
-      const ideasTextarea = screen.getByPlaceholderText(/Some droplet ideas I have include/i);
-      const submitButton = screen.getByRole("button", { name: /submit request/i });
+      const motivationTextarea = screen.getByPlaceholderText(
+        /I want to create educational content because/i,
+      );
+      const ideasTextarea = screen.getByPlaceholderText(
+        /Some droplet ideas I have include/i,
+      );
+      const submitButton = screen.getByRole("button", {
+        name: /submit request/i,
+      });
 
-      fireEvent.change(motivationTextarea, { target: { value: "My motivation" } });
+      fireEvent.change(motivationTextarea, {
+        target: { value: "My motivation" },
+      });
       fireEvent.change(ideasTextarea, { target: { value: "My ideas" } });
       fireEvent.click(submitButton);
 
       await waitFor(() => {
-        expect(toast.error).toHaveBeenCalledWith("You must be logged in to submit a request.");
+        expect(toast.error).toHaveBeenCalledWith(
+          "You must be logged in to submit a request.",
+        );
       });
       expect(createCreationRequest).not.toHaveBeenCalled();
     });
 
     it("disables submit button during submission", async () => {
       (createCreationRequest as jest.Mock).mockImplementation(
-        () => new Promise((resolve) => setTimeout(() => resolve({ ok: true }), 100))
+        () =>
+          new Promise((resolve) =>
+            setTimeout(() => resolve({ ok: true }), 100),
+          ),
       );
 
       render(<ContentCreatorRequestForm user={mockUser} />);
 
-      const motivationTextarea = screen.getByPlaceholderText(/I want to create educational content because/i);
-      const ideasTextarea = screen.getByPlaceholderText(/Some droplet ideas I have include/i);
-      const submitButton = screen.getByRole("button", { name: /submit request/i });
+      const motivationTextarea = screen.getByPlaceholderText(
+        /I want to create educational content because/i,
+      );
+      const ideasTextarea = screen.getByPlaceholderText(
+        /Some droplet ideas I have include/i,
+      );
+      const submitButton = screen.getByRole("button", {
+        name: /submit request/i,
+      });
 
-      fireEvent.change(motivationTextarea, { target: { value: "My motivation" } });
+      fireEvent.change(motivationTextarea, {
+        target: { value: "My motivation" },
+      });
       fireEvent.change(ideasTextarea, { target: { value: "My ideas" } });
       fireEvent.click(submitButton);
 
@@ -325,16 +459,27 @@ describe("ContentCreatorRequestForm", () => {
 
     it("shows submitting state during submission", async () => {
       (createCreationRequest as jest.Mock).mockImplementation(
-        () => new Promise((resolve) => setTimeout(() => resolve({ ok: true }), 100))
+        () =>
+          new Promise((resolve) =>
+            setTimeout(() => resolve({ ok: true }), 100),
+          ),
       );
 
       render(<ContentCreatorRequestForm user={mockUser} />);
 
-      const motivationTextarea = screen.getByPlaceholderText(/I want to create educational content because/i);
-      const ideasTextarea = screen.getByPlaceholderText(/Some droplet ideas I have include/i);
-      const submitButton = screen.getByRole("button", { name: /submit request/i });
+      const motivationTextarea = screen.getByPlaceholderText(
+        /I want to create educational content because/i,
+      );
+      const ideasTextarea = screen.getByPlaceholderText(
+        /Some droplet ideas I have include/i,
+      );
+      const submitButton = screen.getByRole("button", {
+        name: /submit request/i,
+      });
 
-      fireEvent.change(motivationTextarea, { target: { value: "My motivation" } });
+      fireEvent.change(motivationTextarea, {
+        target: { value: "My motivation" },
+      });
       fireEvent.change(ideasTextarea, { target: { value: "My ideas" } });
       fireEvent.click(submitButton);
 
@@ -348,7 +493,9 @@ describe("ContentCreatorRequestForm", () => {
 
   describe("Styling", () => {
     it("applies correct styling classes to card", () => {
-      const { container } = render(<ContentCreatorRequestForm user={mockUser} />);
+      const { container } = render(
+        <ContentCreatorRequestForm user={mockUser} />,
+      );
 
       const card = container.querySelector('[class*="border-gray-200"]');
       expect(card).toBeInTheDocument();
@@ -357,7 +504,9 @@ describe("ContentCreatorRequestForm", () => {
     it("applies correct styling to textareas", () => {
       render(<ContentCreatorRequestForm user={mockUser} />);
 
-      const motivationTextarea = screen.getByPlaceholderText(/I want to create educational content because/i);
+      const motivationTextarea = screen.getByPlaceholderText(
+        /I want to create educational content because/i,
+      );
       expect(motivationTextarea).toHaveClass("min-h-[120px]", "resize-none");
     });
   });

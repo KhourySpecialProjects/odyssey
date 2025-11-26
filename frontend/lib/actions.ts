@@ -480,7 +480,7 @@ export async function fetchCreationRequests(): Promise<CreationRequest[]> {
  * @returns The creation request if found, null otherwise
  */
 export async function fetchCreationRequestByUser(
-  userId: number
+  userId: number,
 ): Promise<CreationRequest | null> {
   try {
     const query = qs.stringify({
@@ -505,7 +505,7 @@ export async function fetchCreationRequestByUser(
           Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
         },
         cache: "no-store",
-      }
+      },
     );
 
     if (!response.ok) {
