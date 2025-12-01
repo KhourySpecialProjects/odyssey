@@ -82,7 +82,7 @@ describe("Enrollment Tests", () => {
               $and: [
                 undefined,
                 { authorizedUser: { id: { $eq: 1 } } },
-                { droplet: { id: { $notNull: true } } }, 
+                { droplet: { id: { $notNull: true } } },
               ],
             },
           }),
