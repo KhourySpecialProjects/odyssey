@@ -245,7 +245,7 @@ export function Sidebar({
             <div className="flex w-full flex-col gap-2 pb-2">
               <Link
                 className="rounded-full bg-purple-400 px-6 py-2 text-center text-black hover:bg-purple-500 dark:bg-purple-600 dark:text-white dark:hover:bg-purple-800"
-                href={`/d/${pathname.split("d/")[1]}`}
+                href={`/d/${pathname.split("/d/")[1]}`}
               >
                 Preview
               </Link>
