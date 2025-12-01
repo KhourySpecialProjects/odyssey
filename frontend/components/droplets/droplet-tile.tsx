@@ -316,7 +316,7 @@ ${
     <Link
       href={(droplet.status == "draft" ? `/draft` : "") + `/d/${droplet.slug}`}
     >
-      <li className="h-full rounded-md border border-slate-200 bg-slate-50 p-2 transition-colors hover:border-slate-300 dark:border-slate-500 dark:bg-slate-800">
+      <li className="h-full overflow-hidden rounded-md border border-slate-200 bg-slate-50 p-2 transition-colors hover:border-slate-300 dark:border-slate-500 dark:bg-slate-800">
         <div className="flex h-full flex-col justify-between gap-3 p-4">
           <div className="space-y-3">
             <div className="flex flex-0 flex-row flex-wrap gap-1.5">
@@ -418,11 +418,11 @@ ${
           </div>
 
           {/* Bottom section with ratings, favorite button, and archive button */}
-          <div className="flex items-center justify-between gap-2">
+          <div className="flex w-full flex-nowrap items-center justify-between gap-2">
             {/* Left side - ratings */}
-            <div className="flex items-center">
+            <div className="flex min-w-0 items-center">
               {droplet.averageRating && droplet.averageRating != 0.0 ? (
-                <div className="origin-left scale-[0.55]">
+                <div className="max-w-full origin-left scale-[0.55]">
                   <StarRating
                     value={droplet.averageRating || 0}
                     enrollmentID={""}
@@ -434,7 +434,7 @@ ${
             </div>
 
             {/* Right side - favorite and archive buttons */}
-            <div className="flex items-center gap-2">
+            <div className="ml-2 flex flex-shrink-0 items-center gap-2">
               <Button
                 size="sm"
                 onClick={(e) => {
