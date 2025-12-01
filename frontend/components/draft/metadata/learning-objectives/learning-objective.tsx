@@ -11,12 +11,19 @@ export function LearningObjectiveDisplay({
   remove,
 }: {
   objective: string;
-  update: (objective: string) => void;
+  update: (newObjective: string) => void;
   remove: () => void;
 }) {
   const [learningObjective, setLearningObjective] = useState(objective);
   const ref = useRef<HTMLLIElement>(null);
   const { open, setOpen } = useOffClick(ref);
+
+  const handleSave = () => {
+    if (learningObjective.trim() !== objective.trim()) {
+      update(learningObjective.trim());
+    }
+    setOpen(false);
+  };
 
   return (
     <li
@@ -36,7 +43,13 @@ export function LearningObjectiveDisplay({
             value={learningObjective}
             onChange={(e) => {
               setLearningObjective(e.target.value);
-              update(e.target.value);
+            }}
+            onBlur={handleSave}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                handleSave();
+              }
             }}
           />
           <Button

@@ -2,7 +2,7 @@ import { authOptions } from "@/lib/auth/options";
 import { ArrowRightIcon } from "lucide-react";
 import { getServerSession } from "next-auth";
 import Link from "next/link";
-import { Button } from "./ui/button";
+import { Button } from "../ui/button";
 
 export default async function AccessRequestBanner() {
   const session = await getServerSession(authOptions);

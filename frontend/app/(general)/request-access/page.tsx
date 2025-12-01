@@ -1,4 +1,4 @@
-import { RequestAccessForm } from "@/components/access-request-form";
+import { RequestAccessForm } from "@/components/requests/access-request-form";
 import { GradientBackground } from "@/components/gradient-bg";
 import { authOptions } from "@/lib/auth/options";
 import { Metadata } from "next";

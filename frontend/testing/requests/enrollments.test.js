@@ -79,7 +79,11 @@ describe("Enrollment Tests", () => {
         expect.objectContaining({
           urlParams: expect.objectContaining({
             filters: {
-              $and: [undefined, { authorizedUser: { id: { $eq: 1 } } }],
+              $and: [
+                undefined,
+                { authorizedUser: { id: { $eq: 1 } } },
+                { droplet: { id: { $notNull: true } } },
+              ],
             },
           }),
         }),
@@ -101,6 +105,7 @@ describe("Enrollment Tests", () => {
               $and: [
                 { isArchived: false },
                 { authorizedUser: { id: { $eq: 1 } } },
+                { droplet: { id: { $notNull: true } } },
               ],
             },
           }),

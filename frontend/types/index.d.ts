@@ -79,6 +79,7 @@ export type AuthorizedUser = {
   created_playlists?: Playlist[];
   dropletsFavorited?: Droplet[];
   playlists_archived?: Playlist[];
+  creationRequest?: CreationRequest;
 };
 
 export type Media = {
@@ -420,4 +421,11 @@ export type DueDate = {
   droplet?: Droplet;
   playlist?: Playlist;
   group: Group;
+};
+
+export type CreationRequest = {
+  id: number;
+  motivation: String;
+  dropletIdea: String;
+  user: AuthorizedUser;
 };

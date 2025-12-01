@@ -44,9 +44,12 @@ import { createDropletAnnouncement } from "@/lib/requests/feed";
 
 import { ContentActionButton } from "./metadata/content-action-button";
 
+import { AddExistingLesson } from "@/components/draft/add-existing-lesson";
+
 export function Sidebar({
   user,
   droplet,
+  availableDroplets,
 }: {
   user: User;
   droplet: Pick<
@@ -64,6 +67,7 @@ export function Sidebar({
     | "type"
     | "originalDropletId"
   >;
+  availableDroplets: Pick<Droplet, "id" | "name" | "slug" | "lessons">[];
 }) {
   const [expanded, setExpanded] = useState(false);
   const pathname = usePathname();
@@ -241,7 +245,7 @@ export function Sidebar({
             <div className="flex w-full flex-col gap-2 pb-2">
               <Link
                 className="rounded-full bg-purple-400 px-6 py-2 text-center text-black hover:bg-purple-500 dark:bg-purple-600 dark:text-white dark:hover:bg-purple-800"
-                href={`/d/${pathname.split("d/")[1]}`}
+                href={`/d/${pathname.split("/d/")[1]}`}
               >
                 Preview
               </Link>
@@ -362,6 +366,14 @@ export function Sidebar({
 
             {/* Add lesson section */}
             <AddLesson droplet={droplet} onAddLesson={addLessonCallback} />
+
+            {/* Add existing lesson section - NEW */}
+            <AddExistingLesson
+              droplet={droplet}
+              availableDroplets={availableDroplets}
+              currentLessonCount={dropletLessons.length}
+              onAddLesson={addLessonCallback}
+            />
 
             {/* Sortable lessons list */}
             <DndContext
