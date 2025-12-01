@@ -15,11 +15,9 @@ import HeadingTool from "./tools/heading-tool";
 export default function DefaultToolbar({
   editor,
   note,
-  isDroplet,
 }: {
   editor: Editor;
   note?: boolean | null;
-  isDroplet?: boolean;
 }) {
   return (
     <div
