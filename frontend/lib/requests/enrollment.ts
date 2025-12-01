@@ -59,7 +59,7 @@ export async function getEnrollmentsByAuthorizedUser(
     sort,
     filters: {
       $and: [
-        filters, 
+        filters,
         { authorizedUser: { id: { $eq: authorizedUserId } } },
         { droplet: { id: { $notNull: true } } },
       ],
@@ -373,7 +373,7 @@ export async function createEnrollmentFromEmail(
 
     if (
       !enrollments
-      .filter((enrollment) => enrollment.droplet != null)
+        .filter((enrollment) => enrollment.droplet != null)
         .map((enrollment) => enrollment.droplet.id)
         .includes(formData.droplet)
     ) {
@@ -411,10 +411,8 @@ export async function deleteEnrollment(
     const enrollments = await getEnrollmentsByAuthorizedUser(authorizedUser.id);
 
     const toRemove = enrollments
-    .filter((e) => e.droplet != null)
-    .filter(
-      (e) => e.droplet.id === formData.droplet,
-    );
+      .filter((e) => e.droplet != null)
+      .filter((e) => e.droplet.id === formData.droplet);
 
     if (toRemove.length > 0) {
       const response = await fetch(

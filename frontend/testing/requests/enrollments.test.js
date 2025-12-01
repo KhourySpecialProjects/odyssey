@@ -74,22 +74,20 @@ describe("Enrollment Tests", () => {
       const result = await getEnrollmentsByAuthorizedUser(1);
 
       expect(result).toEqual(mockEnrollment);
-expect(fetchAPI).toHaveBeenCalledWith(
-  "/enrollments",
-  expect.objectContaining({
-    urlParams: expect.objectContaining({
-      filters: {
-        $and: [
-          undefined, 
-          { authorizedUser: { id: { $eq: 1 } } },
-          { droplet: { id: { $notNull: true } } }, // 👈 ADD THIS LINE
-        ],
-      },
-    }),
-  })
-);
-
-
+      expect(fetchAPI).toHaveBeenCalledWith(
+        "/enrollments",
+        expect.objectContaining({
+          urlParams: expect.objectContaining({
+            filters: {
+              $and: [
+                undefined,
+                { authorizedUser: { id: { $eq: 1 } } },
+                { droplet: { id: { $notNull: true } } }, // 👈 ADD THIS LINE
+              ],
+            },
+          }),
+        }),
+      );
     });
 
     it("should use custom filters", async () => {
@@ -100,19 +98,19 @@ expect(fetchAPI).toHaveBeenCalledWith(
       });
 
       expect(fetchAPI).toHaveBeenCalledWith(
-  "/enrollments",
-  expect.objectContaining({
-    urlParams: expect.objectContaining({
-      filters: {
-        $and: [
-          { isArchived: false }, 
-          { authorizedUser: { id: { $eq: 1 } } },
-          { droplet: { id: { $notNull: true } } }, // 👈 ADD THIS LINE
-        ],
-      },
-    }),
-  })
-);
+        "/enrollments",
+        expect.objectContaining({
+          urlParams: expect.objectContaining({
+            filters: {
+              $and: [
+                { isArchived: false },
+                { authorizedUser: { id: { $eq: 1 } } },
+                { droplet: { id: { $notNull: true } } }, // 👈 ADD THIS LINE
+              ],
+            },
+          }),
+        }),
+      );
     });
 
     it("should handle fetch errors", async () => {
