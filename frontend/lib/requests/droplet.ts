@@ -1314,3 +1314,58 @@ export async function favoriteDroplet(
     return { success: false, error };
   }
 }
+
+export async function updateDropletLearningObjective(
+  dropletId: number,
+  oldObjective: string,
+  newObjective: string,
+) {
+  try {
+    // Fetch current droplet with learning objectives
+    const droplet = await getDropletById<Droplet>(dropletId, {
+      fields: ["*"],
+      populate: {
+        learningObjectives: true,
+      },
+    });
+
+    if (!droplet) {
+      throw new Error("Droplet not found");
+    }
+
+    // Update the specific objective
+    const updatedObjectives =
+      droplet.learningObjectives?.map((obj) =>
+        obj.objective === oldObjective ? newObjective : obj.objective,
+      ) || [];
+
+    // Update the droplet
+    const response = await fetch(
+      `${STRAPI_API_URL}/api/droplets/${dropletId}`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+        },
+        body: JSON.stringify({
+          data: {
+            learningObjectives: updatedObjectives.map((obj) => ({
+              objective: obj,
+            })),
+          },
+        }),
+      },
+    );
+
+    if (!response.ok) {
+      throw new Error("Failed to update learning objective");
+    }
+
+    revalidateTag("droplets");
+    return { success: true };
+  } catch (error) {
+    console.error("Error updating learning objective:", error);
+    return { success: false, error };
+  }
+}
