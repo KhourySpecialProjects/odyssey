@@ -1,17 +1,15 @@
 import { DropletTile } from "@/components/droplets/droplet-tile";
 import { EnrollButton } from "@/components/droplets/enroll-button";
 import { GradientBackground } from "@/components/gradient-bg";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { getDropletBySlug } from "@/lib/requests/droplet";
-import { uppercaseFirstChar } from "@/lib/utils";
+import { stripHtmlTags, uppercaseFirstChar } from "@/lib/utils";
 import { Droplet } from "@/types";
 import {
   BookTextIcon,
   FilePieChartIcon,
   GoalIcon,
   HammerIcon,
-  User2Icon,
 } from "lucide-react";
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
@@ -27,19 +25,6 @@ type Props = {
 
 type params = {
   slug: string;
-};
-
-const stripHtmlTags = (html: string) => {
-  return html
-    .replace(/<[^>]*>/g, "")
-    .replace(/&nbsp;/g, " ")
-    .replace(/&amp;/g, "&")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
-    .replace(/\s+/g, " ")
-    .trim();
 };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -180,13 +165,12 @@ export default async function DropletRoute({ params }: Props) {
               This Droplet contains the following lessons:
             </p>
 
-            {droplet.droplet_lessons && droplet.droplet_lessons.length > 0 ? (
+            {droplet.lessons && droplet.lessons.length > 0 ? (
               <div className="mt-4 rounded-md border border-slate-200 bg-slate-50 dark:border-slate-500 dark:bg-slate-800">
                 <ul className="flex flex-col divide-y divide-slate-200 dark:divide-slate-500">
-                  {droplet.droplet_lessons
+                  {droplet.lessons
                     .sort((a, b) => a.orderIndex - b.orderIndex)
-                    .map((dropletLesson) => {
-                      const lesson = dropletLesson.lesson;
+                    .map((lesson) => {
                       return (
                         <li
                           key={`lesson-${lesson.id}`}
@@ -222,7 +206,7 @@ export default async function DropletRoute({ params }: Props) {
 
             <ul className="mt-4 flex flex-col divide-y divide-slate-200 rounded-md border border-slate-200 bg-slate-50 dark:divide-slate-500 dark:border-slate-500 dark:bg-slate-800">
               {droplet.authorized_users?.map((author) => (
-                <AuthorCard key={author.id} {...author} />
+                <AuthorCard key={author.id} author={author} />
               ))}
             </ul>
           </section>

@@ -360,17 +360,6 @@ describe("DropletTile", () => {
       expect(unarchiveIcon).toBeInTheDocument();
     });
 
-    it("hides archive button when isArchived is undefined", () => {
-      const { container } = render(
-        <DropletTile droplet={mockDroplet as any} isArchived={undefined} />,
-      );
-
-      const archiveButton = screen.queryByRole("button", { name: "Archive" });
-
-      expect(archiveButton).toBeInTheDocument();
-      expect(archiveButton).toHaveClass("invisible");
-    });
-
     it("handles successful archive", async () => {
       (archiveDroplet as jest.Mock).mockResolvedValue({ success: true });
 

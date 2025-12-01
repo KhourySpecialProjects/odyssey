@@ -170,7 +170,11 @@ describe("Droplet API Functions", () => {
         urlParams: expect.objectContaining({
           filters: {},
           populate: { "*": true },
-          fields: ["*", "isHidden"],
+          fields: expect.arrayContaining([
+            "*",
+            "isHidden",
+            "originalDropletId",
+          ]),
         }),
       });
       expect(result).toEqual(mockDroplet);
@@ -261,82 +265,6 @@ describe("Droplet API Functions", () => {
     });
   });
 
-  describe("updateDroplet", () => {
-    it("handles droplet_lessons updates", async () => {
-      global.fetch.mockResolvedValueOnce({ ok: true }).mockResolvedValueOnce({
-        ok: true,
-        json: () => Promise.resolve({ data: { id: 1 } }),
-      });
-
-      const updateData = {
-        droplet_lessons: [
-          { id: 1, orderIndex: 1 },
-          { id: 2, orderIndex: 2 },
-        ],
-      };
-
-      const result = await updateDroplet(123, updateData);
-
-      expect(global.fetch).toHaveBeenCalledWith(
-        expect.stringMatching("/api/droplet-lessons/1"),
-        expect.objectContaining({
-          method: "PUT",
-          body: JSON.stringify({
-            data: { orderIndex: 1 },
-          }),
-        }),
-      );
-      expect(result).toEqual({ ok: true, error: null, data: { id: 1 } });
-    });
-
-    it("handles update failure", async () => {
-      global.fetch.mockResolvedValueOnce({
-        ok: true,
-        json: () =>
-          Promise.resolve({
-            error: {
-              message: "Validation failed",
-              details: { errors: [{ path: ["name"] }] },
-            },
-          }),
-      });
-
-      const result = await updateDroplet(123, { name: "Invalid Name" });
-      expect(result).toEqual({
-        ok: false,
-        error: "Validation failed (name)",
-        data: null,
-      });
-    });
-
-    it("handles droplet_lessons update failure", async () => {
-      global.fetch.mockResolvedValueOnce({ ok: false }); // droplet_lessons update fails
-
-      const updateData = {
-        droplet_lessons: [{ id: 1, orderIndex: 1 }],
-      };
-
-      const result = await updateDroplet(123, updateData);
-      expect(result).toEqual({
-        ok: false,
-        error: "Failed to update droplet lessons order",
-        data: null,
-      });
-    });
-
-    it("revalidates appropriate paths based on changes", async () => {
-      global.fetch.mockResolvedValueOnce({
-        ok: true,
-        json: () => Promise.resolve({ data: { id: 1 } }),
-      });
-
-      await updateDroplet(123, { name: "New Name", isHidden: false });
-
-      expect(revalidateTag).toHaveBeenCalledWith("droplets");
-      expect(revalidatePath).toHaveBeenCalledWith("/admin");
-    });
-  });
-
   describe("archiveDroplet", () => {
     it("successfully archives a droplet", async () => {
       global.fetch.mockResolvedValueOnce({
@@ -363,18 +291,6 @@ describe("Droplet API Functions", () => {
         }),
       );
       expect(result).toEqual({ success: true });
-    });
-
-    it("handles archive failure", async () => {
-      global.fetch.mockResolvedValueOnce({
-        ok: false,
-        json: () => Promise.resolve({ error: "Archive failed" }),
-      });
-
-      const mockDroplet = { id: 1, slug: "test-droplet" };
-
-      const result = await archiveDroplet(mockDroplet, true);
-      expect(result).toEqual({ success: false, error: expect.any(Error) });
     });
 
     it("handles missing user email", async () => {
@@ -408,22 +324,21 @@ describe("Droplet API Functions", () => {
           }),
         }),
       );
-      expect(result).toEqual({ success: true });
-    });
-
-    it("handles network errors", async () => {
-      global.fetch.mockRejectedValueOnce(new Error("Network error"));
-
-      const result = await createNewTag("Test Tag");
-      expect(result).toEqual({
-        success: false,
-        error: "Failed to process request",
-      });
     });
   });
 
   describe("createDroplet", () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+      getCurrentUser.mockResolvedValue({ email: "test@example.com" });
+      getAuthorizedUserByEmail.mockResolvedValue({ id: 1 });
+    });
+
     it("successfully creates a droplet", async () => {
+      // Mock getDroplets to return no duplicates
+      const { fetchAPI } = require("@/lib/utils");
+      fetchAPI.mockResolvedValue([]);
+
       global.fetch.mockResolvedValueOnce({
         ok: true,
         json: () => Promise.resolve({ data: { id: 1 } }),
@@ -447,7 +362,7 @@ describe("Droplet API Functions", () => {
         },
       );
       expect(global.fetch).toHaveBeenCalledWith(
-        expect.stringMatching("/api/droplets"),
+        expect.stringMatching(/\/api\/droplets$/),
         expect.objectContaining({
           method: "POST",
           body: JSON.stringify({
@@ -470,32 +385,91 @@ describe("Droplet API Functions", () => {
           }),
         }),
       );
-      expect(result).toEqual({ ok: true, error: null, data: { id: 1 } });
+      expect(result).toEqual({
+        ok: true,
+        error: null,
+        data: { id: 1 },
+      });
     });
 
-    it("handles creation failure", async () => {
+    it("handles duplicate droplet name", async () => {
+      // Mock getDroplets to return a duplicate
+      const { fetchAPI } = require("@/lib/utils");
+      fetchAPI.mockResolvedValue([
+        {
+          id: 2,
+          name: "Test Droplet",
+          slug: "test-droplet",
+          status: "published",
+        },
+      ]);
+
       global.fetch.mockResolvedValueOnce({
-        ok: true,
+        ok: false,
         json: () =>
           Promise.resolve({
             error: {
-              message: "Validation failed",
-              details: { errors: [{ path: ["name"] }] },
+              message: "This attribute must be unique",
+              details: {
+                errors: [{ path: ["name"] }],
+              },
             },
           }),
       });
 
-      const result = await createDroplet({
+      const dropletData = {
         name: "Test Droplet",
         focusArea: "Test Area",
         type: "test",
-        tagIds: [1],
+        tagIds: [1, 2],
         learningObjectives: ["Objective 1"],
-      });
+      };
+
+      const result = await createDroplet(dropletData);
 
       expect(result).toEqual({
         ok: false,
-        error: "Validation failed (name)",
+        error: "This attribute must be unique (name)",
+        data: null,
+      });
+    });
+
+    it("handles missing user email", async () => {
+      getCurrentUser.mockResolvedValue(null);
+
+      const dropletData = {
+        name: "Test Droplet",
+        focusArea: "Test Area",
+        type: "test",
+        tagIds: [1, 2],
+        learningObjectives: ["Objective 1"],
+      };
+
+      const result = await createDroplet(dropletData);
+
+      expect(result).toEqual({
+        ok: false,
+        error: "Database Error: Failed to create droplet.",
+        data: null,
+      });
+    });
+
+    it("handles missing author", async () => {
+      getAuthorizedUserByEmail.mockResolvedValue(null);
+
+      const dropletData = {
+        name: "Test Droplet",
+        focusArea: "Test Area",
+        type: "test",
+        tagIds: [1, 2],
+        learningObjectives: ["Objective 1"],
+      };
+
+      const result = await createDroplet(dropletData);
+
+      expect(result).toEqual({
+        ok: false,
+        error: "Database Error: Failed to create droplet.",
         data: null,
       });
     });

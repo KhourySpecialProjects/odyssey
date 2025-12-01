@@ -12,7 +12,7 @@ import { DateTime } from "luxon";
 export function ReportBlock({ report }: { report: Report }) {
   const handleDeleteReport = async (reportId: string) => {
     const response = await deleteReport(reportId);
-    if (response && !response.error) {
+    if (response && response.success) {
       toast.success("Report removed");
     } else {
       toast.error("Failed to remove report");

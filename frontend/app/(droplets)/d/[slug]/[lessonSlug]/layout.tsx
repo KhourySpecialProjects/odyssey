@@ -14,12 +14,13 @@ type Params = {
 
 export default async function RootLayout({ params, children }: Props) {
   const p = await params;
-  const droplet = await getDropletBySlug<
-    Pick<Droplet, "slug" | "droplet_lessons">
-  >(p.slug, {
-    fields: ["slug"],
-    populate: ["lessons"],
-  });
+  const droplet = await getDropletBySlug<Pick<Droplet, "slug" | "lessons">>(
+    p.slug,
+    {
+      fields: ["slug"],
+      populate: ["lessons"],
+    },
+  );
   if (!droplet) return notFound();
 
   return <>{children}</>;

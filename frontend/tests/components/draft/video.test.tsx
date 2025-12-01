@@ -38,19 +38,6 @@ describe("VideoEditor", () => {
       expect(screen.getByText("Video Block")).toBeInTheDocument();
     });
 
-    it("renders drag handle icon", () => {
-      const { container } = render(
-        <VideoEditor
-          block={mockBlock}
-          updateBlock={mockUpdateBlock}
-          deleteBlock={mockDeleteBlock}
-        />,
-      );
-
-      const gripIcon = container.querySelector(".lucide-grip-vertical");
-      expect(gripIcon).toBeInTheDocument();
-    });
-
     it("renders delete button", () => {
       render(
         <VideoEditor
@@ -288,20 +275,6 @@ describe("VideoEditor", () => {
 
       const blockContainer = container.querySelector(".shadow-md");
       expect(blockContainer).not.toBeInTheDocument();
-    });
-
-    it("applies correct drag handle styling", () => {
-      const { container } = render(
-        <VideoEditor
-          block={mockBlock}
-          updateBlock={mockUpdateBlock}
-          deleteBlock={mockDeleteBlock}
-        />,
-      );
-
-      const dragHandle = container.querySelector(".cursor-grab");
-      expect(dragHandle).toHaveClass("z-10");
-      expect(dragHandle).toHaveClass("text-slate-400");
     });
   });
 

@@ -1,7 +1,21 @@
 import { OpenEndedQuiz } from "@/types";
 import { OpenEndedQuizQuestionBlock } from "./open-ended-quiz-question-block";
 
-export function OpenEndedQuizBlock({ data }: { data: OpenEndedQuiz }) {
+export function OpenEndedQuizBlock({
+  data,
+  lessonId,
+  dropletId,
+  dropletName,
+  lessonName,
+  userId,
+}: {
+  data: OpenEndedQuiz;
+  lessonId?: number;
+  dropletId?: number;
+  dropletName?: string;
+  lessonName?: string;
+  userId?: number;
+}) {
   return (
     <div className="-mx-6 my-12 rounded-md border border-slate-200 bg-slate-50 px-6 py-12 dark:border-slate-500 dark:bg-slate-800">
       <div className="text-center">
@@ -18,7 +32,14 @@ export function OpenEndedQuizBlock({ data }: { data: OpenEndedQuiz }) {
               key={question.id}
               className="mx-auto mt-8 w-full max-w-lg divide-slate-200 rounded-md border border-slate-200 bg-white p-6 dark:border-slate-500 dark:bg-slate-900"
             >
-              <OpenEndedQuizQuestionBlock question={question} />
+              <OpenEndedQuizQuestionBlock
+                question={question}
+                lessonId={lessonId}
+                dropletId={dropletId}
+                dropletName={dropletName}
+                lessonName={lessonName}
+                userId={userId}
+              />
             </div>
           );
         })}

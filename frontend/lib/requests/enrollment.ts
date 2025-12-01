@@ -58,7 +58,11 @@ export async function getEnrollmentsByAuthorizedUser(
   const urlParams = {
     sort,
     filters: {
-      $and: [filters, { authorizedUser: { id: { $eq: authorizedUserId } } }],
+      $and: [
+        filters,
+        { authorizedUser: { id: { $eq: authorizedUserId } } },
+        { droplet: { id: { $notNull: true } } },
+      ],
     },
     populate,
     fields,
@@ -224,35 +228,57 @@ export async function calculateDropletAverageRating(
   droplet: Droplet,
 ): Promise<number> {
   const path = `/enrollments`;
-  const urlParams = {
-    filters: {
-      droplet: { id: { $eq: droplet.id } },
-      rating: { $notNull: true },
-    },
-    fields: ["rating"],
-    pagination: {
-      pageSize: 1000,
-      page: 1,
-    },
-  };
+
+  let page = 1;
+  const pageSize = 250;
+  let allEnrollments: Enrollment[] = [];
 
   try {
-    const enrollments = await fetchAPI<Enrollment[]>(path, {
-      urlParams,
-    });
+    while (true) {
+      const urlParams = {
+        filters: {
+          droplet: { id: { $eq: droplet.id } },
+          rating: { $notNull: true },
+        },
+        fields: ["rating"],
+        pagination: {
+          page,
+          pageSize,
+        },
+      };
 
-    if (!enrollments || enrollments.length < 5) {
+      const enrollmentsPage = await fetchAPI<Enrollment[]>(path, {
+        urlParams,
+      });
+
+      if (!enrollmentsPage || enrollmentsPage.length === 0) {
+        break;
+      }
+
+      allEnrollments = allEnrollments.concat(enrollmentsPage);
+
+      // if fewer results than pageSize, this was the last page
+      if (enrollmentsPage.length < pageSize) {
+        break;
+      }
+
+      page++;
+    }
+
+    // If fewer than 5 ratings, return 0
+    if (allEnrollments.length < 5) {
       return 0;
     }
 
-    const totalRating = enrollments.reduce((sum, enrollment) => {
-      return sum + (enrollment.rating || 0);
-    }, 0);
+    const totalRating = allEnrollments.reduce(
+      (sum, enrollment) => sum + (enrollment.rating || 0),
+      0,
+    );
 
-    return totalRating / enrollments.length;
+    return totalRating / allEnrollments.length;
   } catch (error) {
     console.error("Error calculating droplet average rating:", error);
-    return Promise.reject(new Error("Error getting droplet average rating"));
+    throw new Error("Error getting droplet average rating");
   }
 }
 
@@ -347,6 +373,7 @@ export async function createEnrollmentFromEmail(
 
     if (
       !enrollments
+        .filter((enrollment) => enrollment.droplet != null)
         .map((enrollment) => enrollment.droplet.id)
         .includes(formData.droplet)
     ) {
@@ -383,9 +410,9 @@ export async function deleteEnrollment(
     const authorizedUser = await getAuthorizedUserByEmail(user.email);
     const enrollments = await getEnrollmentsByAuthorizedUser(authorizedUser.id);
 
-    const toRemove = enrollments.filter(
-      (e) => e.droplet.id === formData.droplet,
-    );
+    const toRemove = enrollments
+      .filter((e) => e.droplet != null)
+      .filter((e) => e.droplet.id === formData.droplet);
 
     if (toRemove.length > 0) {
       const response = await fetch(
@@ -428,6 +455,7 @@ export async function createEnrollment(
 
     if (
       !enrollments
+        .filter((enrollment) => enrollment.droplet != null)
         .map((enrollment) => enrollment.droplet.id)
         .includes(droplet.id)
     ) {

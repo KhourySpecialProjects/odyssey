@@ -62,6 +62,7 @@ export function MultiSelect({
           toast.success("Tag created successfully");
         } else {
           console.error("Failed to create tag", result.error);
+          toast.error(`"${tagName} tag already exists"`);
         }
         setIsOpen(false);
       }
@@ -98,7 +99,7 @@ export function MultiSelect({
                   ? "Select Tags..."
                   : label === "Prerequisites"
                     ? "Select Prerequisites..."
-                    : "Select Postrequisites..."}
+                    : "Select Similar Droplets..."}
               </p>
             )}
           </Button>

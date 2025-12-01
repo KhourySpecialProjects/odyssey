@@ -1,32 +1,26 @@
 "use client";
 
 import UnauthorizedRoute from "@/app/(general)/unauthorized/page";
-import { cn, getInitials, getPath, condenseRoleTitles } from "@/lib/utils";
+import {
+  cn,
+  getPath,
+  isAuthorizedUserAdmin,
+  isAuthorizedUserFaculty,
+  isContentCreator,
+  isContentEditor,
+} from "@/lib/utils";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
 import { AuthorizedUser, Droplet, Lesson, User } from "@/types";
 import {
-  ChevronDownIcon,
-  PersonStanding,
-  LogOutIcon,
-  ShipIcon,
   SettingsIcon,
   ArrowLeftIcon,
   PanelRightClose,
   PanelRightOpen,
   Home,
 } from "lucide-react";
-import { signOut } from "next-auth/react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import React, { useLayoutEffect, useState, useEffect } from "react";
-import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuTrigger,
-} from "../ui/dropdown-menu";
 import { Separator } from "../ui/separator";
 import { AddLesson } from "@/components/draft/add-lesson";
 import {
@@ -48,21 +42,35 @@ import { useLessonOrder } from "./metadata/hooks/useLessonOrder";
 import { Button } from "../ui/button";
 import { createDropletAnnouncement } from "@/lib/requests/feed";
 
+import { ContentActionButton } from "./metadata/content-action-button";
+
+import { AddExistingLesson } from "@/components/draft/add-existing-lesson";
+
 export function Sidebar({
   user,
   droplet,
-  authorizedUser,
+  availableDroplets,
 }: {
   user: User;
-  droplet: Pick<Droplet, "id" | "name" | "slug" | "droplet_lessons" | "status">;
-  authorizedUser: AuthorizedUser | null;
+  droplet: Pick<
+    Droplet,
+    | "id"
+    | "name"
+    | "slug"
+    | "lessons"
+    | "status"
+    | "inReview"
+    | "afterReview"
+    | "focusArea"
+    | "learningObjectives"
+    | "isHidden"
+    | "type"
+    | "originalDropletId"
+  >;
+  availableDroplets: Pick<Droplet, "id" | "name" | "slug" | "lessons">[];
 }) {
   const [expanded, setExpanded] = useState(false);
   const pathname = usePathname();
-
-  const lessons = droplet.droplet_lessons
-    .sort((a, b) => a.orderIndex - b.orderIndex)
-    .map((dl) => dl.lesson);
 
   const {
     dropletLessons,
@@ -72,6 +80,9 @@ export function Sidebar({
   } = useLessonOrder(droplet);
 
   const [isOpen, setIsOpen] = useState(false);
+  const lessons = (dropletLessons || [])
+    .slice()
+    .sort((a, b) => a.orderIndex - b.orderIndex);
 
   useLayoutEffect(() => {
     window.addEventListener("resize", () => setExpanded(false));
@@ -107,25 +118,14 @@ export function Sidebar({
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
-
     if (active.id !== over?.id) {
       const oldIndex = lessons.findIndex((item) => item.id === active.id);
       const newIndex = lessons.findIndex((item) => item.id === over?.id);
-      const newLessons = arrayMove(lessons, oldIndex, newIndex);
-
-      const newDropletLessons = newLessons.map((lesson, index) => ({
-        id: dropletLessons.find((dl) => dl.lesson.id === lesson.id)?.id,
-        lesson,
-        orderIndex: index,
+      const newLessons = arrayMove(lessons, oldIndex, newIndex).map((l, i) => ({
+        ...l,
+        orderIndex: i,
       }));
-
-      handleLessonReorder(
-        newDropletLessons.map((dl) => ({
-          id: dl.id ?? 0,
-          lesson: dl.lesson,
-          orderIndex: dl.orderIndex,
-        })),
-      );
+      handleLessonReorder(newLessons);
     }
   };
 
@@ -133,8 +133,7 @@ export function Sidebar({
     updateDropletLessons([
       ...dropletLessons,
       {
-        id: 0,
-        lesson: newLesson,
+        ...newLesson,
         orderIndex: dropletLessons.length,
       },
     ]);
@@ -198,7 +197,7 @@ export function Sidebar({
                 onClick={() =>
                   droplet.status !== "draft"
                     ? setIsOpen(true)
-                    : router.push(`/drafts`)
+                    : router.push(`/my-content`)
                 }
                 className={cn(
                   "flex items-center justify-start gap-2 bg-slate-50 text-base text-black hover:bg-slate-100 dark:bg-slate-800 dark:text-white dark:hover:bg-slate-700",
@@ -242,15 +241,109 @@ export function Sidebar({
                   </DialogContent>
                 </Dialog>
               </li>
-              <li className="w-full pb-2 text-center">
-                <Link
-                  className="w-full rounded-full bg-purple-500 px-6 py-2 text-white hover:bg-purple-600"
-                  href={`/d/${pathname.split("d/")[1]}`}
-                >
-                  Preview
-                </Link>
-              </li>
             </ul>
+            <div className="flex w-full flex-col gap-2 pb-2">
+              <Link
+                className="rounded-full bg-purple-400 px-6 py-2 text-center text-black hover:bg-purple-500 dark:bg-purple-600 dark:text-white dark:hover:bg-purple-800"
+                href={`/d/${pathname.split("/d/")[1]}`}
+              >
+                Preview
+              </Link>
+
+              {/* Edit Draft - Special handling */}
+              {droplet.originalDropletId && droplet.status === "draft" && (
+                <>
+                  {/* Content Creators can only request review for edit drafts */}
+                  {!droplet.inReview && isContentCreator(user.roles) && (
+                    <>
+                      <ContentActionButton
+                        droplet={droplet}
+                        actionType="requestReview"
+                        buttonText={
+                          droplet.afterReview
+                            ? "Re-Request Review"
+                            : "Request Review"
+                        }
+                      />
+                      <p className="px-2 text-xs text-slate-600 dark:text-slate-400">
+                        Submit your changes for review before publishing
+                      </p>
+                    </>
+                  )}
+
+                  {/* Content Editors and Admins can request changes on edit drafts in review */}
+                  {droplet.inReview &&
+                    (isContentEditor(user.roles) ||
+                      isAuthorizedUserFaculty(user.roles) ||
+                      isAuthorizedUserAdmin(user.roles)) && (
+                      <ContentActionButton
+                        droplet={droplet}
+                        actionType="requestChanges"
+                        buttonText="Request Changes"
+                      />
+                    )}
+
+                  {/* Faculty/Admin/Content Editors (when in review) can publish edit drafts */}
+                  {(isAuthorizedUserAdmin(user.roles) ||
+                    isAuthorizedUserFaculty(user.roles) ||
+                    (isContentEditor(user.roles) && droplet.inReview)) && (
+                    <>
+                      <ContentActionButton
+                        droplet={droplet}
+                        actionType="publishDraft"
+                        buttonText="Publish Changes"
+                      />
+                      <p className="px-2 text-xs text-slate-600 dark:text-slate-400">
+                        This will update the published version with your changes
+                      </p>
+                    </>
+                  )}
+                </>
+              )}
+
+              {/* Regular Draft - Show normal workflow */}
+              {!droplet.originalDropletId && (
+                <>
+                  {!droplet.inReview &&
+                    droplet.status === "draft" &&
+                    isContentCreator(user.roles) && (
+                      <ContentActionButton
+                        droplet={droplet}
+                        actionType="requestReview"
+                        buttonText={
+                          droplet.afterReview
+                            ? "Re-Request Review"
+                            : "Request Review"
+                        }
+                      />
+                    )}
+
+                  {/* Review Droplet Button - Content editors and admins only, draft in review */}
+                  {droplet.inReview &&
+                    droplet.status === "draft" &&
+                    (isContentEditor(user.roles) ||
+                      isAuthorizedUserAdmin(user.roles)) && (
+                      <ContentActionButton
+                        droplet={droplet}
+                        actionType="requestChanges"
+                        buttonText="Request Changes"
+                      />
+                    )}
+
+                  {/* Publish Button - Faculty/Admin anytime, Content Editor only when in review */}
+                  {droplet.status === "draft" &&
+                    (isAuthorizedUserFaculty(user.roles) ||
+                      isAuthorizedUserAdmin(user.roles) ||
+                      (isContentEditor(user.roles) && droplet.inReview)) && (
+                      <ContentActionButton
+                        droplet={droplet}
+                        actionType="publish"
+                        buttonText="Publish Droplet"
+                      />
+                    )}
+                </>
+              )}
+            </div>
 
             <Separator
               orientation="horizontal"
@@ -273,6 +366,14 @@ export function Sidebar({
 
             {/* Add lesson section */}
             <AddLesson droplet={droplet} onAddLesson={addLessonCallback} />
+
+            {/* Add existing lesson section - NEW */}
+            <AddExistingLesson
+              droplet={droplet}
+              availableDroplets={availableDroplets}
+              currentLessonCount={dropletLessons.length}
+              onAddLesson={addLessonCallback}
+            />
 
             {/* Sortable lessons list */}
             <DndContext
@@ -303,73 +404,6 @@ export function Sidebar({
                 Updating lesson order...
               </div>
             )}
-          </div>
-
-          <div className="bottom-0 left-0 mt-4 w-full space-y-4 border-t border-t-slate-200 bg-slate-50 p-2 md:sticky md:mb-0 md:flex-col md:px-3 dark:bg-slate-800">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <div className="group wg-antialiased flex w-full shrink cursor-pointer items-center justify-between gap-1 rounded-lg p-1.5 px-2 text-sm text-slate-600 transition-colors duration-100 select-none hover:bg-slate-100 dark:hover:bg-white/5">
-                  <div className="inline-flex flex-row items-center justify-between">
-                    {authorizedUser?.profilePhoto ? (
-                      <Avatar variant="round" size="xs">
-                        <AvatarImage
-                          src={
-                            authorizedUser?.profilePhoto ||
-                            user?.image ||
-                            undefined
-                          }
-                        />
-                      </Avatar>
-                    ) : user.image ? (
-                      <Avatar variant="round" size="xs">
-                        <AvatarImage src={user.image} />
-                        <AvatarFallback>
-                          {getInitials(user.name ?? "")}
-                        </AvatarFallback>
-                      </Avatar>
-                    ) : null}
-
-                    <span className="ms-2 font-medium dark:text-slate-300">
-                      Hi, <b>{user.name ?? user.email}</b>!
-                    </span>
-                  </div>
-
-                  <ChevronDownIcon className="trigger-icon h-5 w-5 text-slate-400" />
-                </div>
-              </DropdownMenuTrigger>
-
-              <DropdownMenuContent className="mb-3 min-w-[220px]">
-                <DropdownMenuLabel className="text-xs">
-                  NUID: {user.nuid || "unknown"}
-                  <br />
-                  <p className="text-muted-foreground max-w-56 text-xs leading-none">
-                    Role(s): {condenseRoleTitles(user.roles)}
-                  </p>
-                </DropdownMenuLabel>
-
-                <DropdownMenuItem asChild>
-                  <Link href="/explore">
-                    <ShipIcon className="mr-2 h-4 w-4" />
-                    <span>Explore</span>
-                  </Link>
-                </DropdownMenuItem>
-
-                <DropdownMenuItem asChild>
-                  <Link href="/settings">
-                    <PersonStanding className="mr-2 h-4 w-4" />
-                    <span>Profile</span>
-                  </Link>
-                </DropdownMenuItem>
-
-                <DropdownMenuItem
-                  onClick={() => signOut()}
-                  className="cursor-pointer"
-                >
-                  <LogOutIcon className="mr-2 h-4 w-4" />
-                  <span>Sign out</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
           </div>
         </div>
       </aside>

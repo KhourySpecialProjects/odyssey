@@ -1,3 +1,4 @@
+import { stripHtmlTags } from "@/lib/utils";
 import { Droplet, Highlight, Note } from "@/types";
 import { PDFDocument, rgb } from "pdf-lib";
 
@@ -14,19 +15,6 @@ export async function NoteSummary({
 
   let page = pdfDoc.addPage([595.28, 841.89]);
   const { height } = page.getSize();
-
-  const stripHtmlTags = (html: string) => {
-    return html
-      .replace(/<[^>]*>/g, "")
-      .replace(/&nbsp;/g, " ")
-      .replace(/&amp;/g, "&")
-      .replace(/&lt;/g, "<")
-      .replace(/&gt;/g, ">")
-      .replace(/&quot;/g, '"')
-      .replace(/&#39;/g, "'")
-      .replace(/\s+/g, " ")
-      .trim();
-  };
 
   const drawLessonIcon = (x: number, y: number) => {
     page.drawRectangle({
@@ -59,7 +47,7 @@ export async function NoteSummary({
   };
 
   const calculateLines = (text: string, maxWidth: number, fontSize: number) => {
-    const avgCharWidth = fontSize * 0.4;
+    const avgCharWidth = fontSize * 0.45;
     const words = text.split(" ");
     let currentLineWidth = 0;
     let lineCount = 1;
@@ -88,9 +76,9 @@ export async function NoteSummary({
     backgroundColor: { r: number; g: number; b: number },
   ) => {
     const lines = calculateLines(text, maxWidth, fontSize);
-    const lineHeight = fontSize * 1.6;
+    const lineHeight = fontSize * 1.8;
     const totalHeight = lines * lineHeight;
-
+    text = text.replace(/\n+/g, " ");
     if (!hasTextBelow) {
       page.drawLine({
         start: { x: 70, y: y - totalHeight + 5 },
@@ -163,7 +151,7 @@ export async function NoteSummary({
 
   const lessonNotes = notes.reduce(
     (acc, note) => {
-      const lessonId = note.lesson?.droplet_lessons[0].id;
+      const lessonId = note.lesson?.id;
       if (lessonId) {
         if (!acc[lessonId]) {
           acc[lessonId] = {
@@ -187,7 +175,7 @@ export async function NoteSummary({
   );
 
   const lessonHighlights = filteredHighlights.reduce((acc, highlight) => {
-    const lessonId = highlight.lesson?.droplet_lessons[0].id;
+    const lessonId = highlight.lesson?.id;
     if (lessonId) {
       if (!acc[lessonId]) {
         acc[lessonId] = {

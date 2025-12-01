@@ -19,7 +19,6 @@ describe("AddDropletDialog", () => {
       tags: [{ id: 1, name: "React" }] as Tag[],
       learningObjectives: [],
       status: "published" as DropletStatus,
-      droplet_lessons: [],
     },
     {
       id: 1,
@@ -31,7 +30,6 @@ describe("AddDropletDialog", () => {
       tags: [{ id: 1, name: "React" }] as Tag[],
       learningObjectives: [],
       status: "published" as DropletStatus,
-      droplet_lessons: [],
     },
     {
       id: 1,
@@ -43,7 +41,6 @@ describe("AddDropletDialog", () => {
       tags: [{ id: 1, name: "React" }] as Tag[],
       learningObjectives: [],
       status: "published" as DropletStatus,
-      droplet_lessons: [],
     },
   ];
   const mockOnAddDroplets = jest.fn();
@@ -73,7 +70,6 @@ describe("AddDropletDialog", () => {
       tags: [{ id: 1, name: "React" }] as Tag[],
       learningObjectives: [],
       status: "published" as DropletStatus,
-      droplet_lessons: [],
     },
   ];
 

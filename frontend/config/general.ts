@@ -1,5 +1,6 @@
 import {
   isAuthorizedUserAdmin,
+  isAuthorizedUserFaculty,
   isContentCreator,
   isContentEditor,
 } from "@/lib/utils";
@@ -33,13 +34,15 @@ export const getMainNav = (user: User) => {
     },
     {
       href: "/my-content",
-      label: "My Content",
+      label: "Create",
       isHidden:
-        !isContentCreator(user.roles) && !isAuthorizedUserAdmin(user.roles),
+        !isContentCreator(user.roles) &&
+        !isAuthorizedUserAdmin(user.roles) &&
+        !isAuthorizedUserFaculty(user.roles),
     },
     {
       href: "/review",
-      label: "To Review",
+      label: "Review",
       isHidden:
         !isContentEditor(user.roles) && !isAuthorizedUserAdmin(user.roles),
     },
@@ -47,6 +50,16 @@ export const getMainNav = (user: User) => {
       href: "/admin",
       label: "Admin",
       isHidden: !isAuthorizedUserAdmin(user.roles),
+    },
+    {
+      href: "/creation-request",
+      label: "Create",
+      isHidden: !(
+        user?.roles?.some((role) => role === "User") &&
+        !user?.roles?.some((role) =>
+          ["Content Creator", "Faculty", "System Admin"].includes(role),
+        )
+      ),
     },
   ];
   return mainNav;

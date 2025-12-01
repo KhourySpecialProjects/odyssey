@@ -19,7 +19,16 @@ export function useDropletUpdate(dropletId: number) {
         router.replace(`/draft/d/${response.data.attributes.slug}`);
       }
     } else {
-      setError("Error updating droplet");
+      if (
+        response.error ===
+        "description must be at most 500 characters (description)"
+      ) {
+        setError("The description must be less than 500 characters");
+      } else {
+        setError(
+          "A droplet with a similar title is in progress or already exists.",
+        );
+      }
     }
   };
 

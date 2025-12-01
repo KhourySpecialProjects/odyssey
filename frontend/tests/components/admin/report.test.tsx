@@ -91,7 +91,7 @@ describe("ReportBlock", () => {
 
   describe("Delete Functionality", () => {
     it("handles successful report deletion", async () => {
-      (deleteReport as jest.Mock).mockResolvedValue({ error: null });
+      (deleteReport as jest.Mock).mockResolvedValue({ success: true });
 
       render(<ReportBlock report={mockReport} />);
 

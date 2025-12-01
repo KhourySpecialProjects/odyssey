@@ -1,9 +1,15 @@
-import { render, screen, fireEvent, act } from "@testing-library/react";
+import {
+  render,
+  screen,
+  fireEvent,
+  act,
+  waitFor,
+} from "@testing-library/react";
 import { Sidebar } from "@/components/draft/sidebar";
 import { useRouter, usePathname } from "next/navigation";
 import { createDropletAnnouncement } from "@/lib/requests/feed";
 import { AuthorizedUserRoleTitle } from "@/lib/globals";
-import { DropletStatus, TimeZone } from "@/types";
+import { DropletStatus, DropletType, FocusArea } from "@/types";
 
 jest.mock("next/navigation", () => ({
   useRouter: jest.fn(),
@@ -22,6 +28,11 @@ jest.mock("@/components/draft/add-lesson", () => ({
   AddLesson: () => <div data-testid="add-lesson" />,
 }));
 
+// Mock the ContentActionButton component to avoid complex setup
+jest.mock("@/components/draft/metadata/content-action-button", () => ({
+  ContentActionButton: () => <div data-testid="content-action-button" />,
+}));
+
 describe("Sidebar", () => {
   const mockUser = {
     name: "Test User",
@@ -35,7 +46,6 @@ describe("Sidebar", () => {
     name: "Test Lesson",
     slug: "test-lesson",
     droplets: [],
-    droplet_lessons: [],
     notes: [],
     blocks: [
       {
@@ -93,40 +103,29 @@ describe("Sidebar", () => {
     id: 1,
     name: "Test Droplet",
     slug: "test-droplet",
-    droplet_lessons: [
-      {
-        orderIndex: 0,
-        id: 1,
-        lesson: mockLesson,
-      },
-    ],
+    status: "draft" as DropletStatus,
+    type: "knowledge" as DropletType,
+    focusArea: "personal" as FocusArea,
+    isHidden: false,
+    learningObjectives: [],
+    inReview: false,
+    afterReview: undefined,
+    lessons: [{ ...mockLesson, orderIndex: 0 }],
+  };
+
+  const mockPublishedDroplet = {
+    ...mockDroplet,
     status: "published" as DropletStatus,
   };
 
-  const mockAuthorizedUser = {
-    id: 1,
-    email: `user@example.com`,
-    isEnabled: true,
-    roles: [],
-    linkedin: "https://www.google.com/",
-    github: "https://www.google.com/",
-    firstName: "first",
-    lastName: "last",
-    bio: "bio",
-    firstTime: false,
-    friendships: [],
-    sent_requests: [],
-    received_requests: [],
-    profilePhoto: "",
-    blocked: [],
-    was_blocked: [],
-    timeZone: "America/New_York" as TimeZone,
+  const mockRouter = {
+    push: jest.fn(),
   };
 
   beforeEach(() => {
     jest.clearAllMocks();
     (useRouter as jest.Mock).mockReturnValue(mockRouter);
-    (usePathname as jest.Mock).mockReturnValue("/test");
+    (usePathname as jest.Mock).mockReturnValue("/draft/d/test-droplet");
     (createDropletAnnouncement as jest.Mock).mockResolvedValue({
       success: true,
     });
@@ -137,7 +136,7 @@ describe("Sidebar", () => {
       <Sidebar
         user={mockUser as any}
         droplet={mockDroplet as any}
-        authorizedUser={mockAuthorizedUser as any}
+        availableDroplets={[]}
       />,
     );
     expect(screen.getByText("Test Lesson")).toBeInTheDocument();
@@ -148,7 +147,7 @@ describe("Sidebar", () => {
       <Sidebar
         user={mockUser as any}
         droplet={mockDroplet as any}
-        authorizedUser={mockAuthorizedUser as any}
+        availableDroplets={[]}
       />,
     );
     const menuButton = screen.getByRole("button", { name: /open sidebar/i });
@@ -158,38 +157,123 @@ describe("Sidebar", () => {
     );
   });
 
-  const mockRouter = {
-    push: jest.fn(),
-  };
-
-  it("handles droplet announcement", async () => {
+  it("navigates to /my-content when home button clicked on draft droplet", async () => {
     render(
       <Sidebar
-        user={mockUser}
-        droplet={mockDroplet}
-        authorizedUser={mockAuthorizedUser}
+        user={mockUser as any}
+        droplet={mockDroplet as any}
+        availableDroplets={[]}
       />,
     );
 
-    fireEvent.click(screen.getByTestId("home"));
+    const homeButton = screen.getByTestId("home");
+    fireEvent.click(homeButton);
 
-    await act(async () => {
-      fireEvent.click(screen.getByText("Share"));
+    // For draft droplets, it should navigate directly without showing dialog
+    expect(mockRouter.push).toHaveBeenCalledWith("/my-content");
+    expect(createDropletAnnouncement).not.toHaveBeenCalled();
+  });
+
+  it("shows announcement dialog when home button clicked on published droplet", async () => {
+    render(
+      <Sidebar
+        user={mockUser as any}
+        droplet={mockPublishedDroplet as any}
+        availableDroplets={[]}
+      />,
+    );
+
+    // Click the home button to trigger the dialog
+    const homeButton = screen.getByTestId("home");
+    fireEvent.click(homeButton);
+
+    // Wait for the dialog to appear
+    await waitFor(() => {
+      expect(
+        screen.getByText(
+          /would you like to announce these changes to everyone enrolled in this droplet/i,
+        ),
+      ).toBeInTheDocument();
     });
 
-    expect(createDropletAnnouncement).toHaveBeenCalledWith(
-      mockDroplet.name,
-      mockDroplet.id,
+    // Verify Share and Not Now buttons are present
+    expect(screen.getByRole("button", { name: /share/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /not now/i }),
+    ).toBeInTheDocument();
+  });
+
+  it("handles droplet announcement when Share is clicked", async () => {
+    render(
+      <Sidebar
+        user={mockUser as any}
+        droplet={mockPublishedDroplet as any}
+        availableDroplets={[]}
+      />,
     );
-    expect(mockRouter.push).toHaveBeenCalledWith("/my-content");
+
+    // Click the home button to open dialog
+    const homeButton = screen.getByTestId("home");
+    fireEvent.click(homeButton);
+
+    // Wait for dialog and click Share
+    await waitFor(() => {
+      expect(
+        screen.getByRole("button", { name: /share/i }),
+      ).toBeInTheDocument();
+    });
+
+    const shareButton = screen.getByRole("button", { name: /share/i });
+    await act(async () => {
+      fireEvent.click(shareButton);
+    });
+
+    // Verify announcement was created and navigation happened
+    await waitFor(() => {
+      expect(createDropletAnnouncement).toHaveBeenCalledWith(
+        mockPublishedDroplet.name,
+        mockPublishedDroplet.id,
+      );
+      expect(mockRouter.push).toHaveBeenCalledWith("/my-content");
+    });
+  });
+
+  it("handles 'Not Now' in announcement dialog", async () => {
+    render(
+      <Sidebar
+        user={mockUser as any}
+        droplet={mockPublishedDroplet as any}
+        availableDroplets={[]}
+      />,
+    );
+
+    // Click the home button to open dialog
+    const homeButton = screen.getByTestId("home");
+    fireEvent.click(homeButton);
+
+    // Wait for dialog and click Not Now
+    await waitFor(() => {
+      expect(
+        screen.getByRole("button", { name: /not now/i }),
+      ).toBeInTheDocument();
+    });
+
+    const notNowButton = screen.getByRole("button", { name: /not now/i });
+    fireEvent.click(notNowButton);
+
+    // Verify only redirect happened, no announcement created
+    await waitFor(() => {
+      expect(createDropletAnnouncement).not.toHaveBeenCalled();
+      expect(mockRouter.push).toHaveBeenCalledWith("/my-content");
+    });
   });
 
   it("handles lesson reordering", () => {
     render(
       <Sidebar
-        user={mockUser}
-        droplet={mockDroplet}
-        authorizedUser={mockAuthorizedUser}
+        user={mockUser as any}
+        droplet={mockDroplet as any}
+        availableDroplets={[]}
       />,
     );
 
@@ -200,9 +284,9 @@ describe("Sidebar", () => {
   it("expands/collapses on mobile", () => {
     render(
       <Sidebar
-        user={mockUser}
-        droplet={mockDroplet}
-        authorizedUser={mockAuthorizedUser}
+        user={mockUser as any}
+        droplet={mockDroplet as any}
+        availableDroplets={[]}
       />,
     );
 
@@ -215,22 +299,34 @@ describe("Sidebar", () => {
     );
   });
 
-  beforeEach(() => {
-    jest.clearAllMocks();
-    (useRouter as jest.Mock).mockReturnValue(mockRouter);
-    (usePathname as jest.Mock).mockReturnValue("/draft/d/test-droplet");
-  });
-
-  it("should handle mobile menu expansion", () => {
+  it("renders preview button", () => {
     render(
-      <Sidebar user={mockUser} droplet={mockDroplet} authorizedUser={null} />,
+      <Sidebar
+        user={mockUser as any}
+        droplet={mockDroplet as any}
+        availableDroplets={[]}
+      />,
     );
 
-    const menuButton = screen.getByRole("button", { name: /open sidebar/i });
-    fireEvent.click(menuButton);
+    const previewLink = screen.getByText("Preview");
+    expect(previewLink).toBeInTheDocument();
+    expect(previewLink).toHaveAttribute("href", "/d/test-droplet");
+  });
 
-    expect(screen.getByRole("complementary")).toHaveClass(
-      "fixed xl:sticky xl:top-0 left-0 z-40 w-64 h-screen transition-transform translate-x-0",
+  it("renders metadata link", () => {
+    render(
+      <Sidebar
+        user={mockUser as any}
+        droplet={mockDroplet as any}
+        availableDroplets={[]}
+      />,
+    );
+
+    const metadataLink = screen.getByText("Metadata");
+    expect(metadataLink).toBeInTheDocument();
+    expect(metadataLink.closest("a")).toHaveAttribute(
+      "href",
+      "/draft/d/test-droplet",
     );
   });
 });

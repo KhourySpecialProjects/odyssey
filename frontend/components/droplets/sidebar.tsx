@@ -17,10 +17,23 @@ import {
   PanelRightOpen,
 } from "lucide-react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useLayoutEffect, useState } from "react";
 import { Label } from "../ui/label";
 import { Progress } from "../ui/progress";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { duplicateDroplet } from "@/lib/requests/droplet";
+import { Separator } from "../ui/separator";
+import { toast } from "sonner";
 
 export default function Sidebar({
   user,
@@ -31,12 +44,15 @@ export default function Sidebar({
 }: {
   user?: User | null;
   author: boolean;
-  droplet: Pick<Droplet, "name" | "slug" | "droplet_lessons">;
+  droplet: Pick<Droplet, "name" | "slug" | "lessons" | "status" | "id">;
   completedLessonIds: number[];
   enrollmentId?: string | undefined;
 }) {
   const [expanded, setExpanded] = useState(true);
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [isCreatingDraft, setIsCreatingDraft] = useState(false);
   const pathname = usePathname();
+  const router = useRouter();
   const isAdmin = user && isAuthorizedUserAdmin(user.roles);
 
   const isEnrolled = !!enrollmentId || author || isAdmin;
@@ -46,10 +62,10 @@ export default function Sidebar({
   const inactiveLinkClasses =
     "w-full flex items-center p-2 rounded-lg text-slate-900 dark:text-white hover:bg-slate-100 dark:hover:bg-slate-700 group transition-colors";
 
-  const totalLessons = droplet.droplet_lessons?.length ?? 0;
+  const totalLessons = droplet.lessons?.length ?? 0;
 
   const totalLessonsCompleted = completedLessonIds.filter((id) =>
-    droplet.droplet_lessons?.some((lesson) => lesson.lesson.id === id),
+    droplet.lessons?.some((lesson) => lesson.id === id),
   ).length;
 
   const dropletProgress = Math.round(
@@ -72,7 +88,51 @@ export default function Sidebar({
 
   if (!user) return <UnauthorizedRoute />;
 
-  const curPath = pathname.split("d/")[1];
+  const curPath = pathname.split("/d/")[1];
+  const targetSegment =
+    curPath === `${droplet.slug}/recap` ? droplet.slug : curPath;
+  const editPath = `/draft/d/${targetSegment}`;
+
+  const handleEditClick = () => {
+    // Show warning if droplet is published (for both authors and admins)
+    if (droplet.status === "published") {
+      setShowEditDialog(true);
+    } else {
+      // Navigate directly without warning for draft droplets
+      router.push(editPath);
+    }
+  };
+
+  const handleEditConfirm = async () => {
+    setIsCreatingDraft(true);
+
+    try {
+      // Call the server action directly
+      const result = await duplicateDroplet(droplet.id);
+
+      if (!result.ok) {
+        throw new Error(result.error || "Failed to create draft droplet");
+      }
+
+      // Show different message based on whether it's existing or new
+      if (result.isExisting) {
+        toast.success("Navigating to your existing draft");
+      } else {
+        toast.success("Draft created successfully");
+      }
+
+      // Navigate to the draft droplet's edit page
+      router.push(
+        `/draft/d/${result.data.attributes?.slug || result.data.slug}`,
+      );
+    } catch (error) {
+      console.error("Error creating draft:", error);
+      alert("Failed to create draft. Please try again.");
+    } finally {
+      setIsCreatingDraft(false);
+      setShowEditDialog(false);
+    }
+  };
 
   return (
     <>
@@ -118,7 +178,6 @@ export default function Sidebar({
           type="button"
           className="fixed top-[120px] left-3 z-40 hidden items-center rounded-lg bg-white p-3 text-slate-800 shadow-md transition-all hover:scale-110 hover:bg-slate-100 focus:ring-2 focus:ring-slate-200 focus:outline-none xl:inline-flex dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700 dark:focus:ring-slate-600"
           onClick={() => setExpanded(true)}
-          onMouseEnter={() => setExpanded(true)}
         >
           <PanelRightClose className="h-6 w-6 dark:text-white" />
           <span className="sr-only">Open sidebar</span>
@@ -161,15 +220,20 @@ export default function Sidebar({
             </p>
 
             {(author || isAdmin) && (
-              <div className="w-full pb-4 text-center">
-                <Link
-                  className="w-full rounded-full bg-green-600 px-6 py-2 text-white hover:bg-green-700"
-                  href={`/draft/d/${curPath === `${droplet.slug}/recap` ? `${droplet.slug}` : `/${curPath}`}`}
+              <div className="flex w-full flex-col gap-2 pb-2">
+                <button
+                  className="rounded-full bg-green-400 px-6 py-2 text-center text-black hover:bg-green-500 dark:bg-green-600 dark:text-white dark:hover:bg-green-800"
+                  onClick={handleEditClick}
                 >
                   Edit
-                </Link>
+                </button>
               </div>
             )}
+
+            <Separator
+              orientation="horizontal"
+              className="my-2 dark:bg-slate-500"
+            />
 
             <ul className="flex flex-col items-center space-y-2 font-medium">
               <li className="w-full">
@@ -186,14 +250,11 @@ export default function Sidebar({
                 </Link>
               </li>
 
-              {droplet.droplet_lessons
+              {(droplet.lessons || [])
                 .sort((a, b) => a.orderIndex - b.orderIndex)
-                .map((dropletLesson, index) => {
-                  const lesson = dropletLesson.lesson;
+                .map((lesson, index) => {
                   const previousLesson =
-                    index > 0
-                      ? droplet.droplet_lessons[index - 1].lesson
-                      : null;
+                    index > 0 ? (droplet.lessons || [])[index - 1] : null;
 
                   const isPreviousLessonIncomplete =
                     previousLesson &&
@@ -272,6 +333,41 @@ export default function Sidebar({
           </div>
         </div>
       </aside>
+
+      {/* Edit Warning Dialog */}
+      <AlertDialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Edit Droplet Content</AlertDialogTitle>
+            <AlertDialogDescription>
+              {droplet.status === "published" ? (
+                <>
+                  We'll check if you already have a draft for this droplet. If
+                  not, a new draft titled "[EDIT] {droplet.name}" will be
+                  created. You'll be able to make changes without affecting the
+                  live content.
+                </>
+              ) : (
+                <>
+                  You are about to edit this draft. Changes will be saved
+                  automatically.
+                </>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isCreatingDraft}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleEditConfirm}
+              disabled={isCreatingDraft}
+            >
+              {isCreatingDraft ? "Creating Draft..." : "Create Draft & Edit"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }

@@ -32,7 +32,18 @@
         "droplets.expandable",
         "droplets.open-ended-quiz"
       ],
-      "required": true
+      "required": false
+    },
+    "blocksVersion": {
+      "type": "enumeration",
+      "enum": [
+        "v1",
+        "v2"
+      ],
+      "default": "v1"
+    },
+    "blocksV2": {
+      "type": "json"
     },
     "droplets": {
       "type": "relation",
@@ -73,6 +84,9 @@
       "relation": "oneToMany",
       "target": "api::highlight.highlight",
       "mappedBy": "lesson"
+    },
+    "orderIndex": {
+      "type": "integer"
     }
   }
 }

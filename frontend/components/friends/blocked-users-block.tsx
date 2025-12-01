@@ -77,7 +77,6 @@ export function BlockedUsersBlock({
           <ProfileBlock
             otherUser={blocked}
             user={user}
-            isFeed={false}
             isOpen={open}
             setIsOpen={setOpen}
           />

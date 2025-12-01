@@ -9,8 +9,6 @@ import { MoveLeftIcon, SearchIcon } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import DraggableTileList from "@/components/droplets/draggable_tile_list";
-import { DndProvider } from "react-dnd";
-import { HTML5Backend } from "react-dnd-html5-backend";
 import { createPlaylistAnnouncement } from "@/lib/requests/feed";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
 import { AuthorizedUser, Droplet } from "@/types";
@@ -312,32 +310,30 @@ export function PlaylistForm({
           </Button>
         </div>
 
-        <DndProvider backend={HTML5Backend}>
-          <div className="grid grid-cols-2 gap-2 pt-4 md:gap-8">
-            <div className="space-y-4">
-              <h3 className="text-center font-semibold dark:text-slate-300">
-                Available Droplets
-              </h3>
-              <DraggableTileList
-                droplets={filteredDroplets}
-                onDropToOther={handleDropToSource}
-                onReorder={handleReorderSource}
-                listType="source"
-              />
-            </div>
-            <div className="space-y-4">
-              <h3 className="text-center font-semibold dark:text-slate-300">
-                Selected Droplets
-              </h3>
-              <DraggableTileList
-                droplets={selectedDroplets}
-                onDropToOther={handleDropToSelected}
-                onReorder={handleReorderSelected}
-                listType="selected"
-              />
-            </div>
+        <div className="grid grid-cols-2 gap-2 pt-4 md:gap-8">
+          <div className="space-y-4">
+            <h3 className="text-center font-semibold dark:text-slate-300">
+              Available Droplets
+            </h3>
+            <DraggableTileList
+              droplets={filteredDroplets}
+              onDropToOther={handleDropToSource}
+              onReorder={handleReorderSource}
+              listType="source"
+            />
           </div>
-        </DndProvider>
+          <div className="space-y-4">
+            <h3 className="text-center font-semibold dark:text-slate-300">
+              Selected Droplets
+            </h3>
+            <DraggableTileList
+              droplets={selectedDroplets}
+              onDropToOther={handleDropToSelected}
+              onReorder={handleReorderSelected}
+              listType="selected"
+            />
+          </div>
+        </div>
       </div>
     </form>
   );

@@ -3,7 +3,11 @@ import { PlusIcon } from "lucide-react";
 import Link from "next/link";
 import { Suspense } from "react";
 import { getCurrentUser } from "@/lib/auth/session";
-import { isContentCreator, isAuthorizedUserAdmin } from "@/lib/utils";
+import {
+  isContentCreator,
+  isAuthorizedUserAdmin,
+  isAuthorizedUserFaculty,
+} from "@/lib/utils";
 import { redirect } from "next/navigation";
 import { DropletTile } from "@/components/droplets/droplet-tile";
 import { DropletsSkeleton } from "@/components/explore/droplets-skeleton";
@@ -22,7 +26,9 @@ export default async function CreateRoute() {
   if (
     !user ||
     !user.email ||
-    (!isAuthorizedUserAdmin(user.roles) && !isContentCreator(user.roles))
+    (!isAuthorizedUserAdmin(user.roles) &&
+      !isContentCreator(user.roles) &&
+      !isAuthorizedUserFaculty(user.roles))
   )
     redirect("/unauthorized");
   const authorizedUser = await getAuthorizedUserByEmail(user.email);
@@ -36,13 +42,13 @@ export default async function CreateRoute() {
           My Content
         </h1>
         <p className="light:text-slate-600 mt-4 text-lg leading-normal text-balance dark:text-slate-300">
-          Create a new Droplet or Playlist draft or edit an existing one.
+          Create a new Droplet or Playlist draft
         </p>
       </div>
 
       <div className="s mx-auto mb-8 w-full max-w-7xl px-4 xl:p-0">
         <div className="flex w-full items-end justify-between">
-          <h2 className="text-lg dark:text-slate-300">My Droplets</h2>
+          <h2 className="text-lg font-bold dark:text-slate-300">My Droplets</h2>
           <div className="flex items-center gap-2">
             <Link href="/new/droplet">
               <Button
@@ -51,15 +57,6 @@ export default async function CreateRoute() {
                 size="sm"
               >
                 New Droplet
-              </Button>
-            </Link>
-            <Link href="/new/playlist">
-              <Button
-                after={<PlusIcon />}
-                className="select-none dark:bg-slate-300"
-                size="sm"
-              >
-                New Playlist
               </Button>
             </Link>
           </div>
@@ -83,9 +80,20 @@ export default async function CreateRoute() {
         {(isContentCreator(user.roles) ||
           isAuthorizedUserAdmin(user.roles)) && (
           <>
-            <h2 className="mt-4 mb-2 text-lg dark:text-slate-300">
-              My Playlists
-            </h2>
+            <div className="flex w-full items-end justify-between">
+              <h2 className="mt-4 mb-2 text-lg font-bold dark:text-slate-300">
+                My Playlists
+              </h2>
+              <Link href="/new/playlist">
+                <Button
+                  after={<PlusIcon />}
+                  className="select-none dark:bg-slate-300"
+                  size="sm"
+                >
+                  New Playlist
+                </Button>
+              </Link>
+            </div>
             <Separator orientation="horizontal" className="mt-2 mb-4" />
             {!playlists || playlists.length === 0 ? (
               <div className="flex h-full items-center justify-center">

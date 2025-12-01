@@ -1,0 +1,205 @@
+/* Force dark text in quiz blocks - light mode only */
+/* Target by data-content-type attribute on any element */
+
+/* All quiz block content */
+.bn-container.light [data-content-type="quiz-multiple-choice"] *,
+.bn-container.light [data-content-type="quiz-true-false"] *,
+.bn-container.light [data-content-type="quiz-open-ended"] *,
+.bn-container.light [data-content-type^="quiz-"] * {
+  color: rgb(17 24 39) !important;
+  -webkit-text-fill-color: rgb(17 24 39) !important;
+}
+
+/* Form elements specifically */
+.bn-container.light [data-content-type^="quiz-"] textarea,
+.bn-container.light [data-content-type^="quiz-"] input {
+  color: rgb(17 24 39) !important;
+  -webkit-text-fill-color: rgb(17 24 39) !important;
+  caret-color: rgb(17 24 39) !important;
+}
+
+/* When block is selected - override BlockNote's selection color */
+.bn-container.light
+  .bn-block[data-selected="true"]
+  [data-content-type^="quiz-"]
+  *,
+.bn-container.light
+  .bn-block[data-selected="true"]
+  [data-content-type="quiz-multiple-choice"]
+  *,
+.bn-container.light
+  .bn-block[data-selected="true"]
+  [data-content-type="quiz-true-false"]
+  *,
+.bn-container.light
+  .bn-block[data-selected="true"]
+  [data-content-type="quiz-open-ended"]
+  * {
+  color: rgb(17 24 39) !important;
+  -webkit-text-fill-color: rgb(17 24 39) !important;
+}
+
+.bn-container.light
+  .bn-block[data-selected="true"]
+  [data-content-type^="quiz-"]
+  textarea,
+.bn-container.light
+  .bn-block[data-selected="true"]
+  [data-content-type^="quiz-"]
+  input {
+  color: rgb(17 24 39) !important;
+  -webkit-text-fill-color: rgb(17 24 39) !important;
+  caret-color: rgb(17 24 39) !important;
+}
+
+/* Also check if data-content-type is on bn-block-content */
+.bn-container.light .bn-block-content[data-content-type^="quiz-"] *,
+.bn-container.light
+  .bn-block[data-selected="true"]
+  .bn-block-content[data-content-type^="quiz-"]
+  * {
+  color: rgb(17 24 39) !important;
+  -webkit-text-fill-color: rgb(17 24 39) !important;
+}
+
+.bn-container.light .bn-block-content[data-content-type^="quiz-"] textarea,
+.bn-container.light .bn-block-content[data-content-type^="quiz-"] input,
+.bn-container.light
+  .bn-block[data-selected="true"]
+  .bn-block-content[data-content-type^="quiz-"]
+  textarea,
+.bn-container.light
+  .bn-block[data-selected="true"]
+  .bn-block-content[data-content-type^="quiz-"]
+  input {
+  color: rgb(17 24 39) !important;
+  -webkit-text-fill-color: rgb(17 24 39) !important;
+  caret-color: rgb(17 24 39) !important;
+}
+
+/* Hide link button in BlockNote formatting toolbar */
+.blocknote-no-link .bn-formatting-toolbar button[aria-label*="link" i],
+.blocknote-no-link .bn-formatting-toolbar button[aria-label*="Link" i],
+.blocknote-no-link .bn-formatting-toolbar button[title*="link" i],
+.blocknote-no-link .bn-formatting-toolbar button[title*="Link" i],
+.blocknote-no-link .bn-formatting-toolbar button[aria-label*="Create link" i] {
+  display: none !important;
+}
+
+.bn-inline-latex {
+  position: relative;
+  display: inline-block;
+  padding: 0.1rem 0.35rem;
+  border-radius: 0.35rem;
+  background-color: rgba(14, 165, 233, 0.18);
+  cursor: text;
+}
+
+.dark .bn-inline-latex {
+  background-color: rgba(56, 189, 248, 0.2);
+}
+
+.bn-inline-latex-input {
+  min-width: 0.5ch;
+  outline: none;
+  font-family:
+    "KaTeX_Main", "KaTeX_Math", "KaTeX_AMS", "Times New Roman", Georgia, serif;
+}
+
+.bn-inline-latex-preview {
+  position: absolute;
+  left: 0.35rem;
+  top: 0.05rem;
+  pointer-events: auto;
+}
+
+.bn-inline-latex:not(.bn-inline-latex--editing) .bn-inline-latex-input {
+  color: transparent;
+  caret-color: currentColor;
+}
+
+.bn-inline-latex:not(.bn-inline-latex--editing) .bn-inline-latex-preview {
+  display: inline-flex;
+  align-items: center;
+}
+
+.bn-inline-latex--editing .bn-inline-latex-preview {
+  display: none;
+}
+
+.bn-inline-latex--error {
+  background-color: rgba(248, 113, 113, 0.2);
+}
+
+/* Prevent selection highlighting on LaTeX blocks in light mode */
+.bn-container.light [data-content-type="latex"],
+.bn-container.light [data-content-type="latex"] *,
+.bn-container.light [data-content-type^="latex"],
+.bn-container.light [data-content-type^="latex"] * {
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  -moz-user-select: none !important;
+  -ms-user-select: none !important;
+}
+
+/* Override BlockNote's selection highlight for LaTeX blocks - prevents highlighting when block is selected */
+.bn-container.light .bn-block[data-selected="true"] [data-content-type="latex"],
+.bn-container.light
+  .bn-block[data-selected="true"]
+  [data-content-type="latex"]
+  *,
+.bn-container.light
+  .bn-block[data-selected="true"]
+  [data-content-type^="latex"],
+.bn-container.light
+  .bn-block[data-selected="true"]
+  [data-content-type^="latex"]
+  * {
+  background-color: transparent !important;
+  background: transparent !important;
+  color: inherit !important;
+  -webkit-text-fill-color: inherit !important;
+  text-shadow: none !important;
+}
+
+/* Also target by block content wrapper */
+.bn-container.light .bn-block-content[data-content-type="latex"],
+.bn-container.light .bn-block-content[data-content-type="latex"] *,
+.bn-container.light
+  .bn-block[data-selected="true"]
+  .bn-block-content[data-content-type="latex"],
+.bn-container.light
+  .bn-block[data-selected="true"]
+  .bn-block-content[data-content-type="latex"]
+  * {
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  background-color: transparent !important;
+  background: transparent !important;
+  color: inherit !important;
+  -webkit-text-fill-color: inherit !important;
+  text-shadow: none !important;
+}
+
+/* Prevent selection on LaTeX block container */
+.bn-container.light .bn-block[data-content-type="latex"],
+.bn-container.light .bn-block[data-content-type="latex"] * {
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  cursor: default !important;
+}
+
+/* Override ::selection pseudo-element for LaTeX blocks */
+.bn-container.light [data-content-type="latex"] *::selection,
+.bn-container.light [data-content-type^="latex"] *::selection {
+  background: transparent !important;
+  color: inherit !important;
+}
+
+.bn-container.light
+  .bn-block[data-selected="true"]
+  [data-content-type="latex"]
+  *::selection {
+  background: transparent !important;
+  color: inherit !important;
+}

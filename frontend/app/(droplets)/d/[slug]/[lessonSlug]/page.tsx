@@ -39,8 +39,7 @@ export default async function Page({ params }: Props) {
   const droplet = await getDropletBySlug(slug, {
     populate: {
       authorized_users: { populate: "*" },
-      droplet_lessons: {
-        populate: ["lesson"],
+      lessons: {
         sort: ["orderIndex:asc"],
       },
     },

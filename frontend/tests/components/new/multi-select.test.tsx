@@ -61,7 +61,9 @@ describe("MultiSelect", () => {
           setSelected={mockSetSelected}
         />,
       );
-      expect(screen.getByText("Select Postrequisites...")).toBeInTheDocument();
+      expect(
+        screen.getByText("Select Similar Droplets..."),
+      ).toBeInTheDocument();
     });
 
     it("shows selected items as badges", () => {
@@ -339,8 +341,15 @@ describe("MultiSelect", () => {
 
     it("creates new tag successfully when Save is clicked", async () => {
       const user = userEvent.setup();
-      mockedCreateNewTag.mockResolvedValue({ success: true });
-
+      mockedCreateNewTag.mockResolvedValue({
+        success: true,
+        data: {
+          id: 1,
+          name: "New Tag",
+          slug: "new-tag",
+          droplets: [],
+        },
+      });
       render(
         <MultiSelect
           label="Tags"
@@ -448,8 +457,15 @@ describe("MultiSelect", () => {
 
     it("closes dialog after successful tag creation", async () => {
       const user = userEvent.setup();
-      mockedCreateNewTag.mockResolvedValue({ success: true });
-
+      mockedCreateNewTag.mockResolvedValue({
+        success: true,
+        data: {
+          id: 1,
+          name: "New Tag",
+          slug: "new-tag",
+          droplets: [],
+        },
+      });
       render(
         <MultiSelect
           label="Tags"

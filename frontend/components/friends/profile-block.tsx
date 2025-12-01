@@ -16,8 +16,8 @@ import {
   Github,
   Linkedin,
   User2Icon,
-  UserRound,
   ExternalLink,
+  LinkIcon,
 } from "lucide-react";
 import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
@@ -29,15 +29,11 @@ export function ProfileBlock({
   otherUser,
   isOpen,
   setIsOpen,
-  isFeed,
-  isProfile,
 }: {
   user: AuthorizedUser;
   otherUser: AuthorizedUser;
   isOpen: boolean;
   setIsOpen: (member: boolean) => void;
-  isFeed: boolean;
-  isProfile?: boolean;
 }) {
   const handleBlock = () => {
     startTransition(async () => {
@@ -91,6 +87,13 @@ export function ProfileBlock({
               <Link href={otherUser.github} legacyBehavior role="link">
                 <a target="_blank" rel="noopener noreferrer">
                   <Github />
+                </a>
+              </Link>
+            )}
+            {otherUser.website && (
+              <Link href={otherUser.website} legacyBehavior role="link">
+                <a target="_blank" rel="noopener noreferrer">
+                  <LinkIcon />
                 </a>
               </Link>
             )}

@@ -4,7 +4,7 @@ import { JSONContent } from "@tiptap/react";
 import { strapiJSONToTiptapJSON, tiptapJSONToStrapiJSON } from "@/lib/utils";
 import { useCallback } from "react";
 import { debounce } from "lodash";
-import { Trash2Icon, Ban, GripVertical } from "lucide-react";
+import { Trash2Icon, Ban } from "lucide-react";
 import { CalloutBlockInput } from "@/components/ui/tiptap/callout-block-input";
 import { useState } from "react";
 import CalloutTypeTool from "@/components/ui/tiptap/toolbar/tools/callout-type-tool";
@@ -58,59 +58,50 @@ export function CalloutEditor({
   };
 
   return (
-    <div className="flex flex-row items-center">
-      <div className="z-10 cursor-grab text-slate-400 hover:text-slate-600 active:cursor-grabbing">
-        <GripVertical size={20} />
-      </div>
-      <div
-        className={`w-full rounded-md border border-slate-200 p-4 hover:shadow-md dark:border-slate-500 ${block.color || "bg-sky-50 dark:bg-sky-200"} `}
-      >
-        <div
-          className={`mb-4 flex w-full flex-row items-center justify-between`}
-        >
-          <div className="flex flex-row items-center">
-            <h2 className="text-lg dark:text-black">Callout Block</h2>
-            {block.color && !block.color.includes("sky") && (
-              <div className="relative">
-                <Button
-                  variant="transparent"
-                  onClick={handleToggleIcon}
-                  role="toggleButton"
-                >
-                  <CalloutIcon
-                    color={block.color || "bg-sky-300"}
-                  ></CalloutIcon>
-                  {!iconEnabled && (
-                    <Ban className="absolute top-0 left-0 h-full w-full text-red-500" />
-                  )}
-                </Button>
-              </div>
-            )}
-          </div>
-          <div className="flex flex-row items-center gap-2">
-            <CalloutTypeTool block={block} updateBlock={updateBlock} />
-
-            <Trash2Icon
-              className="cursor-pointer text-red-600 hover:text-red-700"
-              onClick={deleteBlock}
-              role="trash"
-            />
-          </div>
+    <div
+      className={`w-full rounded-md border border-slate-200 p-4 hover:shadow-md dark:border-slate-500 ${block.color || "bg-sky-50 dark:bg-sky-200"} `}
+    >
+      <div className={`mb-4 flex w-full flex-row items-center justify-between`}>
+        <div className="flex flex-row items-center">
+          <h2 className="text-lg dark:text-black">Callout Block</h2>
+          {block.color && !block.color.includes("sky") && (
+            <div className="relative">
+              <Button
+                variant="transparent"
+                onClick={handleToggleIcon}
+                role="toggleButton"
+              >
+                <CalloutIcon color={block.color || "bg-sky-300"}></CalloutIcon>
+                {!iconEnabled && (
+                  <Ban className="absolute top-0 left-0 h-full w-full text-red-500" />
+                )}
+              </Button>
+            </div>
+          )}
         </div>
-        <CalloutBlockInput
-          revalidate={revalidateLesson}
-          updateContent={(content: JSONContent) => {
-            handleUpdate(content);
-          }}
-          initialContent={
-            {
-              type: "doc",
-              content: strapiJSONToTiptapJSON(block.content),
-            } as JSONContent
-          }
-          data-testid="text-input"
-        />
+        <div className="flex flex-row items-center gap-2">
+          <CalloutTypeTool block={block} updateBlock={updateBlock} />
+
+          <Trash2Icon
+            className="cursor-pointer text-red-600 hover:text-red-700"
+            onClick={deleteBlock}
+            role="trash"
+          />
+        </div>
       </div>
+      <CalloutBlockInput
+        revalidate={revalidateLesson}
+        updateContent={(content: JSONContent) => {
+          handleUpdate(content);
+        }}
+        initialContent={
+          {
+            type: "doc",
+            content: strapiJSONToTiptapJSON(block.content),
+          } as JSONContent
+        }
+        data-testid="text-input"
+      />
     </div>
   );
 }

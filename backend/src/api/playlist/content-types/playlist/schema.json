@@ -42,12 +42,6 @@
       "required": true,
       "default": "medium"
     },
-    "author": {
-      "type": "relation",
-      "relation": "manyToOne",
-      "target": "api::author.author",
-      "inversedBy": "playlists"
-    },
     "authorized_users": {
       "type": "relation",
       "relation": "manyToMany",
@@ -71,6 +65,12 @@
       "relation": "manyToMany",
       "target": "api::authorized-user.authorized-user",
       "mappedBy": "created_playlists"
+    },
+    "users_archived": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::authorized-user.authorized-user",
+      "mappedBy": "playlists_archived"
     }
   }
 }

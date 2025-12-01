@@ -5,7 +5,7 @@ import { useDropzone } from "react-dropzone";
 import { Button } from "@/components/ui/button";
 import { uploadImage } from "@/lib/actions";
 import { AuthorizedUser } from "@/types";
-import { Pencil, User2Icon } from "lucide-react";
+import { Pencil, User2Icon, Activity } from "lucide-react";
 import { useFormStatus } from "react-dom";
 import { isAuthorizedUserAdmin } from "@/lib/utils";
 import {
@@ -25,6 +25,19 @@ import { Textarea } from "@/components/ui/textarea";
 import imageCompression from "browser-image-compression";
 import { updateUserInfo } from "@/lib/requests/authorized-user";
 
+interface UserActivity {
+  timestamp: string;
+  type:
+    | "enrollment"
+    | "page_view"
+    | "lesson_view"
+    | "completion"
+    | "rating"
+    | "quiz";
+  description: string;
+  details?: any;
+}
+
 export function AuthorizedUserBlock({
   user: initialUser,
 }: {
@@ -32,6 +45,9 @@ export function AuthorizedUserBlock({
 }) {
   const [user, setUser] = useState(initialUser);
   const [open, setOpen] = useState(false);
+  const [activityOpen, setActivityOpen] = useState(false);
+  const [activities, setActivities] = useState<UserActivity[]>([]);
+  const [loadingActivities, setLoadingActivities] = useState(false);
   const isAdmin = isAuthorizedUserAdmin(user.roles.map((role) => role.title));
   const [firstName, setFirstName] = useState(user.firstName || "");
   const [lastName, setLastName] = useState(user.lastName || "");
@@ -42,7 +58,6 @@ export function AuthorizedUserBlock({
   );
 
   const roleOptions = [
-    { value: AuthorizedUserRoleTitle.AcadAdmin, label: "Academic Admin" },
     { value: AuthorizedUserRoleTitle.Faculty, label: "Faculty" },
     { value: AuthorizedUserRoleTitle.ContentCreator, label: "Content Creator" },
     { value: AuthorizedUserRoleTitle.ContentEditor, label: "Content Editor" },
@@ -55,6 +70,31 @@ export function AuthorizedUserBlock({
         ? current.filter((r) => r !== role)
         : [...current, role],
     );
+  };
+
+  const handleViewActivity = async () => {
+    setActivityOpen(true);
+    setLoadingActivities(true);
+
+    try {
+      // Call a server action to get activity data
+      const response = await fetch(`/api/user-activity/${user.id}`, {
+        method: "GET",
+        cache: "no-store",
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch activity");
+      }
+
+      const activityData = await response.json();
+      setActivities(activityData);
+    } catch (error) {
+      console.error("Error loading activity:", error);
+      toast.error("Failed to load user activity");
+    } finally {
+      setLoadingActivities(false);
+    }
   };
 
   const compressImage = async (imageFile: File) => {
@@ -145,6 +185,17 @@ export function AuthorizedUserBlock({
     setOpen(false);
   };
 
+  const formatTimestamp = (timestamp: string) => {
+    const date = new Date(timestamp);
+    return date.toLocaleString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+
   return (
     <li className="py-0 pb-3 md:pb-0 [&:not(:first-child)]:pt-0">
       <div className="flex items-center space-x-4">
@@ -176,6 +227,22 @@ export function AuthorizedUserBlock({
         </div>
 
         <div className="inline-flex items-center gap-2">
+          {/* Activity Button */}
+          <Button
+            size="sm"
+            onClick={handleViewActivity}
+            className="bg-white dark:bg-slate-300"
+            role="button"
+            aria-label="view activity"
+          >
+            <div className="group relative">
+              <Activity className="h-5 w-5 text-sky-600" />
+              <span className="absolute top-full left-1/2 mt-1 w-max -translate-x-1/2 transform rounded bg-gray-800 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100">
+                View Activity
+              </span>
+            </div>
+          </Button>
+
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
               <Button
@@ -185,7 +252,7 @@ export function AuthorizedUserBlock({
                 aria-label="edit user"
               >
                 <div className="group relative">
-                  <Pencil className="text-sky-600" />
+                  <Pencil className="h-5 w-5 text-sky-600" />
                   <span className="absolute top-full left-1/2 mt-1 w-max -translate-x-1/2 transform rounded bg-gray-800 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100">
                     Edit User
                   </span>
@@ -315,6 +382,117 @@ export function AuthorizedUserBlock({
           </Dialog>
         </div>
       </div>
+
+      {/* Activity Timeline Dialog */}
+      <Dialog open={activityOpen} onOpenChange={setActivityOpen}>
+        <DialogContent className="max-h-[80vh] max-w-3xl overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Activity className="h-5 w-5" />
+              Activity Timeline - {user.firstName} {user.lastName}
+            </DialogTitle>
+            <DialogDescription>
+              Chronological view of all website activity
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="mt-4">
+            {loadingActivities ? (
+              <div className="flex items-center justify-center py-8">
+                <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-sky-600"></div>
+              </div>
+            ) : activities.length === 0 ? (
+              <div className="py-8 text-center text-slate-500">
+                No activity recorded yet
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {activities.map((activity, index) => {
+                  // Extract pathname for display
+                  let pathname = null;
+                  if (
+                    activity.type === "page_view" &&
+                    activity.details?.properties
+                  ) {
+                    const props = activity.details.properties;
+                    pathname =
+                      props.$pathname ||
+                      props.pathname ||
+                      (props.$current_url
+                        ? new URL(props.$current_url, "https://example.com")
+                            .pathname
+                        : null);
+                  }
+
+                  // Determine activity styling types
+                  const isQuiz = activity.type === "quiz";
+                  const isLessonCompletion =
+                    activity.type === "completion" &&
+                    (activity.description.includes("lesson") ||
+                      activity.description.includes("Marked complete"));
+                  const isCourseCompletion =
+                    activity.type === "completion" && !isLessonCompletion;
+
+                  return (
+                    <div
+                      key={index}
+                      className={`flex gap-4 rounded-lg border p-4 transition-colors ${
+                        isCourseCompletion
+                          ? "border-green-300 bg-green-50 hover:bg-green-100 dark:border-green-700 dark:bg-green-950 dark:hover:bg-green-900"
+                          : isLessonCompletion
+                            ? "border-blue-300 bg-blue-50 hover:bg-blue-100 dark:border-blue-700 dark:bg-blue-950 dark:hover:bg-blue-900"
+                            : isQuiz
+                              ? "border-purple-300 bg-purple-50 hover:bg-purple-100 dark:border-purple-700 dark:bg-purple-950 dark:hover:bg-purple-900"
+                              : "border-slate-200 hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800"
+                      }`}
+                    >
+                      <div className="w-32 flex-shrink-0 text-sm text-slate-500">
+                        {formatTimestamp(activity.timestamp)}
+                      </div>
+                      <div className="flex-1">
+                        <div
+                          className={`text-lg font-semibold ${
+                            isCourseCompletion
+                              ? "text-green-700 dark:text-green-400"
+                              : isLessonCompletion
+                                ? "text-blue-700 dark:text-blue-400"
+                                : isQuiz
+                                  ? "text-purple-700 dark:text-purple-400"
+                                  : "text-slate-900 dark:text-slate-100"
+                          }`}
+                        >
+                          {isCourseCompletion && (
+                            <span className="mr-2">✓</span>
+                          )}
+                          {isLessonCompletion && (
+                            <span className="mr-2">✓</span>
+                          )}
+                          {isQuiz && <span className="mr-2">✓</span>}
+                          {activity.description}
+                        </div>
+                        {pathname && (
+                          <div className="mt-1 font-mono text-sm text-slate-500 dark:text-slate-400">
+                            {pathname}
+                          </div>
+                        )}
+                        {activity.type !== "page_view" &&
+                          activity.type !== "quiz" &&
+                          activity.details?.source === "enrollment_data" &&
+                          !isCourseCompletion &&
+                          !isLessonCompletion && (
+                            <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                              From enrollment records
+                            </div>
+                          )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </li>
   );
 }

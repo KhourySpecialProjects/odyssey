@@ -62,7 +62,7 @@ resource "aws_lb_target_group" "backend" {
    healthy_threshold   = 2
    interval            = 30
    matcher            = "200"
-   path               = "/api/_health"
+   path               = var.backend_health_check_path
    port               = "traffic-port"
    protocol           = "HTTP"
    timeout            = 5
@@ -134,7 +134,7 @@ resource "aws_lb_listener_rule" "backend" {
 
  condition {
    host_header {
-     values = ["www.data.khouryodyssey.org"]
+     values = ["data.khouryodyssey.org", "www.data.khouryodyssey.org"]
    }
  }
 }

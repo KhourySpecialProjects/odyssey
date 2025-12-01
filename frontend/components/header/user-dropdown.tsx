@@ -1,13 +1,7 @@
 "use client";
 import { getInitials, condenseRoleTitles } from "@/lib/utils";
 import { AuthorizedUser, User } from "@/types";
-import {
-  ChevronDownIcon,
-  LogOutIcon,
-  PersonStanding,
-  User2Icon,
-  Settings,
-} from "lucide-react";
+import { ChevronDownIcon, LogOutIcon, User2Icon, Settings } from "lucide-react";
 import { signOut } from "next-auth/react";
 import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";

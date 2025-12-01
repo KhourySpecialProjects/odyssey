@@ -1,5 +1,4 @@
 "use client";
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Droplet } from "@/types";
@@ -9,14 +8,15 @@ const ITEMS_PER_PAGE = 5;
 
 export function DraggableTileListClient({
   droplets,
-  moveCard,
+  onReorder,
   listType,
 }: {
   droplets: Droplet[];
-  moveCard: (dragIndex: number, hoverIndex: number) => void;
+  onReorder: (dragIndex: number, hoverIndex: number) => void;
   listType: "source" | "selected";
 }) {
   const [currentPage, setCurrentPage] = useState(1);
+
   const totalPages = Math.ceil(droplets.length / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
   const paginatedDroplets = droplets.slice(
@@ -44,7 +44,7 @@ export function DraggableTileListClient({
             key={droplet.id}
             droplet={droplet}
             index={index}
-            moveCard={moveCard}
+            moveCard={onReorder}
             sourceList={listType}
           />
         ))}

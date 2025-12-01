@@ -26,16 +26,16 @@ export async function getAuthorizedUserByEmail<
     filters,
     populate = {
       received_requests: {
-        fields: ["id", "email", "firstName", "lastName", "bio", "profilePhoto"],
+        fields: ["*"],
       },
       sent_requests: {
-        fields: ["id", "email", "firstName", "lastName", "bio", "profilePhoto"],
+        fields: ["*"],
       },
       blocked: {
-        fields: ["id", "email", "firstName", "lastName", "bio", "profilePhoto"],
+        fields: ["*"],
       },
       was_blocked: {
-        fields: ["id", "email", "firstName", "lastName", "bio", "profilePhoto"],
+        fields: ["*"],
       },
       droplets: {
         fields: ["*"],
@@ -64,6 +64,9 @@ export async function getAuthorizedUserByEmail<
               },
             },
           },
+          users_archived: {
+            fields: ["*"],
+          },
         },
       },
       friendships: {
@@ -78,6 +81,7 @@ export async function getAuthorizedUserByEmail<
               "github",
               "linkedin",
               "profilePhoto",
+              "website",
             ],
             populate: {
               blocked: {
@@ -108,6 +112,7 @@ export async function getAuthorizedUserByEmail<
       "timeZone",
       "linkedin",
       "github",
+      "website",
     ],
   }: StrapiRequestParams = {},
 ): Promise<T> {
@@ -133,37 +138,53 @@ export async function getAuthorizedUserByEmail<
 
 export async function fetchAuthorizedUsers(): Promise<AuthorizedUser[]> {
   try {
-    const query = qs.stringify({
-      sort: ["lastName"],
-      fields: [
-        "id",
-        "email",
-        "isEnabled",
-        "firstName",
-        "lastName",
-        "bio",
-        "profilePhoto",
-        "linkedin",
-        "github",
-      ],
-      populate: {
-        roles: { fields: ["title"] },
-      },
-      pagination: {
-        pageSize: 10000,
-        page: 1,
-      },
-    });
-    const response = await fetch(
-      NEXT_PUBLIC_STRAPI_API_URL + "/api/authorized-users?" + query,
-      {
-        headers: { Authorization: "Bearer " + STRAPI_ACCESS_TOKEN },
-        cache: "no-store",
-      },
-    );
-    const data = await response.json();
-    const authorizedUsers = flattenAttributes(data.data);
-    return authorizedUsers;
+    let page = 1;
+    const pageSize = 250;
+    let allUsers: AuthorizedUser[] = [];
+
+    while (true) {
+      const query = qs.stringify({
+        sort: ["lastName"],
+        fields: [
+          "id",
+          "email",
+          "isEnabled",
+          "firstName",
+          "lastName",
+          "bio",
+          "profilePhoto",
+          "linkedin",
+          "github",
+          "website",
+        ],
+        populate: {
+          roles: { fields: ["title"] },
+        },
+        pagination: {
+          page,
+          pageSize,
+        },
+      });
+
+      const response = await fetch(
+        `${NEXT_PUBLIC_STRAPI_API_URL}/api/authorized-users?${query}`,
+        {
+          headers: { Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}` },
+          cache: "no-store",
+        },
+      );
+      const data = await response.json();
+
+      const users = flattenAttributes(data.data);
+      allUsers = allUsers.concat(users);
+
+      // If we got fewer than pageSize, we reached the end
+      if (users.length < pageSize) break;
+
+      page++; // fetch next page
+    }
+
+    return allUsers;
   } catch (error) {
     console.error("Database Error:", error);
     throw new Error("Failed to fetch authorized users data.");
@@ -243,6 +264,7 @@ export async function fetchContentCreators(): Promise<AuthorizedUser[]> {
         "profilePhoto",
         "linkedin",
         "github",
+        "website",
       ],
       populate: {
         roles: {
@@ -282,9 +304,10 @@ const WEBSITE_CREATOR_ORDER = [
   "palazzi.r@northeastern.edu",
   "palmer.gi@northeastern.edu",
   "houser.ch@northeastern.edu",
-  "saadat.d@northeastern.edu",
-  "almanzar.j@northeastern.edu",
+  "j.almanzar@northeastern.edu",
+  "d.saadat@northeastern.edu",
   "chapman.w@northeastern.edu",
+  "singh.simran@northeastern.edu",
 ];
 
 export async function fetchWebsiteCreators(): Promise<AuthorizedUser[]> {
@@ -305,6 +328,7 @@ export async function fetchWebsiteCreators(): Promise<AuthorizedUser[]> {
         "profilePhoto",
         "linkedin",
         "github",
+        "website",
       ],
       populate: {
         roles: {
@@ -318,7 +342,7 @@ export async function fetchWebsiteCreators(): Promise<AuthorizedUser[]> {
         },
       },
       pagination: {
-        pageSize: 100,
+        pageSize: 50,
         page: 1,
       },
     });
@@ -523,6 +547,7 @@ export async function updateUserInfo(
     linkedin?: string | null;
     github?: string | null;
     photo?: string | null;
+    website?: string | null;
   },
 ) {
   try {
@@ -538,6 +563,7 @@ export async function updateUserInfo(
       linkedin,
       github,
       photo,
+      website,
     } = updates;
     const roleIds = roles
       ? await Promise.all(
@@ -556,6 +582,7 @@ export async function updateUserInfo(
     if (firstTime !== undefined) data.firstTime = updates.firstTime;
     if (linkedin !== undefined) data.linkedin = linkedin;
     if (github !== undefined) data.github = github;
+    if (website !== undefined) data.website = website;
     if (photo !== undefined) data.profilePhoto = photo;
     if (roles && roles.length > 0) {
       data.roles = {
@@ -563,7 +590,7 @@ export async function updateUserInfo(
       };
     }
 
-    const response = await fetch(
+    await fetch(
       `${NEXT_PUBLIC_STRAPI_API_URL}/api/authorized-users/${userId}`,
       {
         method: "PUT",

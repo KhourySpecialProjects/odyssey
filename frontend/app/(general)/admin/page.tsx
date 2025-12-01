@@ -23,15 +23,10 @@ import { Droplet } from "@/types";
 import { StatisticsSelector } from "@/components/admin/statistics-selector";
 import { WeeklyActiveUsersChart } from "@/components/admin/weekly-active-users-chart";
 import { UniquePageviewChart } from "@/components/admin/unique-pageview";
+import { CreationRequestManager } from "@/components/shared/creation-request-manager/creation-manager";
 
-export default async function Page({
-  searchParams,
-}: {
-  searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
-}) {
+export default async function Page() {
   const user = await getCurrentUser();
-
-  const params = await searchParams;
 
   const [
     authorizedUsers,
@@ -61,6 +56,7 @@ export default async function Page({
     Playlists: <Playlists />,
     Groups: <Groups />,
     "Access Manager": <AccessManager user={user} />,
+    "Creators Manager": <CreationRequestManager user={user} />,
     Reports: <Reports />,
   };
 

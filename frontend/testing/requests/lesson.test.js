@@ -16,6 +16,11 @@ jest.mock("@/lib/utils", () => ({
   fetchAPI: jest.fn(),
 }));
 
+jest.mock("@/lib/utils", () => ({
+  fetchAPI: jest.fn(),
+  stripHtmlTags: jest.fn((str) => str),
+}));
+
 jest.mock("next/cache", () => ({
   revalidatePath: jest.fn(),
   revalidateTag: jest.fn(),
@@ -316,38 +321,6 @@ describe("Lesson API Functions", () => {
       expect(revalidateTag).toHaveBeenCalledWith("droplets");
     });
 
-    it("deletes droplet_lesson when dropletId is provided", async () => {
-      const mockDroplet = {
-        id: 1,
-        droplet_lessons: [
-          { id: 1, lesson: { id: 123 } },
-          { id: 2, lesson: { id: 456 } },
-        ],
-      };
-
-      getDropletById.mockResolvedValue(mockDroplet);
-
-      global.fetch.mockResolvedValueOnce({ ok: true }).mockResolvedValueOnce({
-        ok: true,
-        json: () => Promise.resolve({ data: { id: 123 } }),
-      });
-
-      const result = await deleteLesson(123, true, 1);
-
-      expect(getDropletById).toHaveBeenCalledWith(1, {
-        populate: {
-          droplet_lessons: {
-            populate: ["lesson"],
-          },
-        },
-      });
-      expect(global.fetch).toHaveBeenCalledWith(
-        expect.stringMatching("/api/droplet-lessons/1"),
-        expect.objectContaining({ method: "DELETE" }),
-      );
-      expect(result).toEqual({ ok: true, error: null, data: { id: 123 } });
-    });
-
     it("handles lesson deletion failure", async () => {
       global.fetch.mockResolvedValueOnce({
         ok: false,
@@ -360,23 +333,6 @@ describe("Lesson API Functions", () => {
         error: "Failed to delete",
         data: null,
       });
-    });
-
-    it("handles droplet_lesson deletion failure gracefully", async () => {
-      const mockDroplet = {
-        id: 1,
-        droplet_lessons: [{ id: 1, lesson: { id: 123 } }],
-      };
-
-      getDropletById.mockResolvedValue(mockDroplet);
-
-      global.fetch.mockResolvedValueOnce({ ok: false }).mockResolvedValueOnce({
-        ok: true,
-        json: () => Promise.resolve({ data: { id: 123 } }),
-      });
-
-      const result = await deleteLesson(123, true, 1);
-      expect(result).toEqual({ ok: true, error: null, data: { id: 123 } });
     });
 
     it("skips revalidation when revalidate is false", async () => {
@@ -450,58 +406,6 @@ describe("Lesson API Functions", () => {
   });
 
   describe("addLesson", () => {
-    it("successfully adds a lesson", async () => {
-      const mockData = {
-        name: "Test Lesson",
-        dropletId: 1,
-        orderIndex: 1,
-      };
-
-      global.fetch
-        .mockResolvedValueOnce({
-          ok: true,
-          json: () => Promise.resolve({ data: { id: 1 } }),
-        })
-        .mockResolvedValueOnce({
-          ok: true,
-          json: () => Promise.resolve({ data: { id: 1 } }),
-        });
-
-      const result = await addLesson(mockData);
-
-      expect(global.fetch).toHaveBeenCalledWith(
-        expect.stringContaining("/api/lessons"),
-        expect.objectContaining({
-          method: "POST",
-          body: JSON.stringify({
-            data: {
-              name: "Test Lesson",
-              slug: "random",
-              blocks: [],
-              droplets: {
-                connect: [1],
-              },
-            },
-          }),
-        }),
-      );
-      expect(global.fetch).toHaveBeenCalledWith(
-        expect.stringContaining("/api/droplet-lessons"),
-        expect.objectContaining({
-          method: "POST",
-          body: JSON.stringify({
-            data: {
-              droplet: 1,
-              lesson: 1,
-              orderIndex: 1,
-            },
-          }),
-        }),
-      );
-      expect(result).toEqual({ ok: true, error: null, data: { id: 1 } });
-      expect(revalidateTag).toHaveBeenCalledWith("droplets");
-    });
-
     it("handles lesson creation failure", async () => {
       global.fetch.mockResolvedValueOnce({
         ok: false,
@@ -517,31 +421,6 @@ describe("Lesson API Functions", () => {
       expect(result).toEqual({
         ok: false,
         error: "Creation failed",
-        data: null,
-      });
-    });
-
-    it("handles droplet_lesson creation failure", async () => {
-      global.fetch
-        .mockResolvedValueOnce({
-          ok: true,
-          json: () => Promise.resolve({ data: { id: 1 } }),
-        })
-        .mockResolvedValueOnce({
-          ok: false,
-          json: () =>
-            Promise.resolve({ error: { message: "Droplet lesson failed" } }),
-        });
-
-      const result = await addLesson({
-        name: "Test Lesson",
-        dropletId: 1,
-        orderIndex: 1,
-      });
-
-      expect(result).toEqual({
-        ok: false,
-        error: "Droplet lesson failed",
         data: null,
       });
     });

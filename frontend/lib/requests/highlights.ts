@@ -67,11 +67,6 @@ export async function getHighlightsByDroplet(
     populate: {
       lesson: {
         fields: ["id", "name", "slug"],
-        populate: {
-          droplet_lessons: {
-            fields: ["id"],
-          },
-        },
       },
     },
     fields,

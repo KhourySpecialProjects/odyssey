@@ -478,56 +478,6 @@ export interface ApiAnnouncementAnnouncement extends Schema.CollectionType {
   };
 }
 
-export interface ApiAuthorAuthor extends Schema.CollectionType {
-  collectionName: 'authors';
-  info: {
-    description: '';
-    displayName: 'Author';
-    pluralName: 'authors';
-    singularName: 'author';
-  };
-  options: {
-    draftAndPublish: false;
-  };
-  attributes: {
-    authorized_user: Attribute.Relation<
-      'api::author.author',
-      'oneToOne',
-      'api::authorized-user.authorized-user'
-    >;
-    bio: Attribute.Text &
-      Attribute.SetMinMaxLength<{
-        maxLength: 400;
-      }>;
-    createdAt: Attribute.DateTime;
-    createdBy: Attribute.Relation<
-      'api::author.author',
-      'oneToOne',
-      'admin::user'
-    > &
-      Attribute.Private;
-    droplets: Attribute.Relation<
-      'api::author.author',
-      'manyToMany',
-      'api::droplet.droplet'
-    >;
-    name: Attribute.String & Attribute.Required;
-    photo: Attribute.Media<'images'>;
-    playlists: Attribute.Relation<
-      'api::author.author',
-      'oneToMany',
-      'api::playlist.playlist'
-    >;
-    updatedAt: Attribute.DateTime;
-    updatedBy: Attribute.Relation<
-      'api::author.author',
-      'oneToOne',
-      'admin::user'
-    > &
-      Attribute.Private;
-  };
-}
-
 export interface ApiAuthorizedUserRoleAuthorizedUserRole
   extends Schema.CollectionType {
   collectionName: 'authorized_user_roles';
@@ -586,11 +536,6 @@ export interface ApiAuthorizedUserAuthorizedUser extends Schema.CollectionType {
       'manyToMany',
       'api::group.group'
     >;
-    author: Attribute.Relation<
-      'api::authorized-user.authorized-user',
-      'oneToOne',
-      'api::author.author'
-    >;
     bio: Attribute.Text &
       Attribute.SetMinMaxLength<{
         maxLength: 400;
@@ -612,6 +557,11 @@ export interface ApiAuthorizedUserAuthorizedUser extends Schema.CollectionType {
       'admin::user'
     > &
       Attribute.Private;
+    creationRequest: Attribute.Relation<
+      'api::authorized-user.authorized-user',
+      'oneToOne',
+      'api::creation-request.creation-request'
+    >;
     droplets: Attribute.Relation<
       'api::authorized-user.authorized-user',
       'manyToMany',
@@ -674,12 +624,15 @@ export interface ApiAuthorizedUserAuthorizedUser extends Schema.CollectionType {
     isEnabled: Attribute.Boolean &
       Attribute.Required &
       Attribute.DefaultTo<true>;
-    isPublic: Attribute.Boolean &
-      Attribute.Required &
-      Attribute.DefaultTo<false>;
+    isPublic: Attribute.Boolean & Attribute.DefaultTo<false>;
     lastName: Attribute.String;
     linkedin: Attribute.String;
     playlists: Attribute.Relation<
+      'api::authorized-user.authorized-user',
+      'manyToMany',
+      'api::playlist.playlist'
+    >;
+    playlists_archived: Attribute.Relation<
       'api::authorized-user.authorized-user',
       'manyToMany',
       'api::playlist.playlist'
@@ -756,6 +709,45 @@ export interface ApiAuthorizedUserAuthorizedUser extends Schema.CollectionType {
       'manyToMany',
       'api::authorized-user.authorized-user'
     >;
+    website: Attribute.String;
+  };
+}
+
+export interface ApiCreationRequestCreationRequest
+  extends Schema.CollectionType {
+  collectionName: 'creation_requests';
+  info: {
+    description: '';
+    displayName: 'Creation Request';
+    pluralName: 'creation-requests';
+    singularName: 'creation-request';
+  };
+  options: {
+    draftAndPublish: true;
+  };
+  attributes: {
+    createdAt: Attribute.DateTime;
+    createdBy: Attribute.Relation<
+      'api::creation-request.creation-request',
+      'oneToOne',
+      'admin::user'
+    > &
+      Attribute.Private;
+    dropletIdea: Attribute.Text;
+    motivation: Attribute.Text;
+    publishedAt: Attribute.DateTime;
+    updatedAt: Attribute.DateTime;
+    updatedBy: Attribute.Relation<
+      'api::creation-request.creation-request',
+      'oneToOne',
+      'admin::user'
+    > &
+      Attribute.Private;
+    user: Attribute.Relation<
+      'api::creation-request.creation-request',
+      'oneToOne',
+      'api::authorized-user.authorized-user'
+    >;
   };
 }
 
@@ -829,11 +821,6 @@ export interface ApiDropletDroplet extends Schema.CollectionType {
       'manyToMany',
       'api::authorized-user.authorized-user'
     >;
-    authors: Attribute.Relation<
-      'api::droplet.droplet',
-      'manyToMany',
-      'api::author.author'
-    >;
     averageRating: Attribute.Decimal &
       Attribute.SetMinMax<
         {
@@ -890,6 +877,7 @@ export interface ApiDropletDroplet extends Schema.CollectionType {
     >;
     name: Attribute.String & Attribute.Required & Attribute.Unique;
     nextSteps: Attribute.Component<'droplets.resource', true>;
+    originalDropletId: Attribute.Integer;
     overview: Attribute.RichText &
       Attribute.CustomField<
         'plugin::ckeditor.CKEditor',
@@ -1288,8 +1276,10 @@ export interface ApiLessonLesson extends Schema.CollectionType {
         'droplets.expandable',
         'droplets.open-ended-quiz'
       ]
-    > &
-      Attribute.Required;
+    >;
+    blocksV2: Attribute.JSON;
+    blocksVersion: Attribute.Enumeration<['v1', 'v2']> &
+      Attribute.DefaultTo<'v1'>;
     createdAt: Attribute.DateTime;
     createdBy: Attribute.Relation<
       'api::lesson.lesson',
@@ -1327,6 +1317,7 @@ export interface ApiLessonLesson extends Schema.CollectionType {
       'oneToMany',
       'api::note.note'
     >;
+    orderIndex: Attribute.Integer;
     publishedAt: Attribute.DateTime;
     slug: Attribute.UID<'api::lesson.lesson', 'name'> & Attribute.Required;
     type: Attribute.Enumeration<['general', 'setup', 'activity', 'caseStudy']> &
@@ -1396,11 +1387,6 @@ export interface ApiPlaylistPlaylist extends Schema.CollectionType {
       'oneToMany',
       'api::announcement.announcement'
     >;
-    author: Attribute.Relation<
-      'api::playlist.playlist',
-      'manyToOne',
-      'api::author.author'
-    >;
     authorized_users: Attribute.Relation<
       'api::playlist.playlist',
       'manyToMany',
@@ -1443,6 +1429,11 @@ export interface ApiPlaylistPlaylist extends Schema.CollectionType {
       'admin::user'
     > &
       Attribute.Private;
+    users_archived: Attribute.Relation<
+      'api::playlist.playlist',
+      'manyToMany',
+      'api::authorized-user.authorized-user'
+    >;
   };
 }
 
@@ -1947,9 +1938,9 @@ declare module '@strapi/types' {
       'admin::user': AdminUser;
       'api::access-request.access-request': ApiAccessRequestAccessRequest;
       'api::announcement.announcement': ApiAnnouncementAnnouncement;
-      'api::author.author': ApiAuthorAuthor;
       'api::authorized-user-role.authorized-user-role': ApiAuthorizedUserRoleAuthorizedUserRole;
       'api::authorized-user.authorized-user': ApiAuthorizedUserAuthorizedUser;
+      'api::creation-request.creation-request': ApiCreationRequestCreationRequest;
       'api::droplet-lesson.droplet-lesson': ApiDropletLessonDropletLesson;
       'api::droplet.droplet': ApiDropletDroplet;
       'api::due-date.due-date': ApiDueDateDueDate;
