@@ -249,7 +249,7 @@ export function ClickableBadges({
           onClick={() => setActivePopup("type")}
           disabled={isPending}
         >
-          <Badge className="h-full border border-slate-300 bg-blue-200 text-black hover:bg-blue-400 dark:bg-blue-900 dark:text-white dark:hover:bg-blue-400">
+          <Badge className="dark:text-whitegit h-full border border-slate-300 bg-blue-200 text-black hover:bg-blue-400 dark:bg-blue-900">
             {uppercaseFirstChar(localType)}
           </Badge>
         </button>
