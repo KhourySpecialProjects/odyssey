@@ -252,3 +252,199 @@ export async function addLesson(formData: z.infer<typeof CreateLessonSchema>) {
     return { error: "Database Error: Failed to create lesson." };
   }
 }
+
+export async function duplicateLessonToDroplet(
+  sourceLessonId: number,
+  targetDropletId: number,
+  newOrderIndex: number,
+) {
+  try {
+    // Fetch the source lesson with all its data including blocksV2 and blocksVersion
+    const sourceLesson = await fetch(
+      `${NEXT_PUBLIC_STRAPI_API_URL}/api/lessons/${sourceLessonId}?populate[blocks][populate][questions][populate]=answerOptions&fields=*`,
+      {
+        headers: {
+          Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+        },
+      },
+    );
+
+    if (!sourceLesson.ok) {
+      throw new Error("Failed to fetch source lesson");
+    }
+
+    const sourceLessonData = await sourceLesson.json();
+
+    if (!sourceLessonData.data) {
+      throw new Error("Source lesson not found");
+    }
+
+    const lesson = sourceLessonData.data.attributes;
+
+    console.log("Source lesson data:", {
+      blocksVersion: lesson.blocksVersion,
+      hasBlocksV2: !!lesson.blocksV2,
+      hasBlocks: !!lesson.blocks,
+      blocksV2Sample: lesson.blocksV2
+        ? JSON.stringify(lesson.blocksV2).substring(0, 200)
+        : null,
+    });
+
+    // Helper function to remove ids from blocks while preserving structure
+    const cleanBlocks = (blocks: any[]): any[] => {
+      if (!Array.isArray(blocks)) {
+        return [];
+      }
+
+      return blocks.map((block) => {
+        const { id, ...blockWithoutId } = block;
+
+        switch (block.__component) {
+          case "droplets.quiz":
+            if (block.questions) {
+              return {
+                ...blockWithoutId,
+                questions: block.questions.map((q: any) => {
+                  const { id: qId, ...questionWithoutId } = q;
+                  return {
+                    ...questionWithoutId,
+                    answerOptions:
+                      q.answerOptions?.map((a: any) => {
+                        const { id: aId, ...answerWithoutId } = a;
+                        return answerWithoutId;
+                      }) || [],
+                  };
+                }),
+              };
+            }
+            return blockWithoutId;
+
+          case "droplets.open-ended-quiz":
+            if (block.questions) {
+              return {
+                ...blockWithoutId,
+                questions: block.questions.map((q: any) => {
+                  const { id: qId, ...questionWithoutId } = q;
+                  return questionWithoutId;
+                }),
+              };
+            }
+            return blockWithoutId;
+
+          case "droplets.callout":
+            if (block.content && Array.isArray(block.content)) {
+              return {
+                ...blockWithoutId,
+                content: block.content.map((node: any) => {
+                  const { id: nodeId, ...nodeWithoutId } = node;
+                  if (
+                    nodeWithoutId.children &&
+                    Array.isArray(nodeWithoutId.children)
+                  ) {
+                    nodeWithoutId.children = nodeWithoutId.children.map(
+                      (child: any) => {
+                        const { id: childId, ...childWithoutId } = child;
+                        return childWithoutId;
+                      },
+                    );
+                  }
+                  return nodeWithoutId;
+                }),
+              };
+            }
+            return blockWithoutId;
+
+          case "droplets.generic":
+          case "droplets.expandable":
+          case "droplets.video":
+          default:
+            return blockWithoutId;
+        }
+      });
+    };
+
+    // Generate unique slug for the duplicated lesson
+    const timestamp = Date.now();
+    const randomSuffix = Math.random().toString(36).substring(2, 10);
+    const uniqueSlug = `${lesson.slug}-copy-${timestamp}-${randomSuffix}`;
+
+    // Determine which version of blocks to use
+    const blocksVersion = lesson.blocksVersion || "v1";
+    const isV2 = blocksVersion === "v2";
+
+    // Prepare lesson data based on version
+    const lessonData: any = {
+      name: `${lesson.name} (Copy)`,
+      slug: uniqueSlug,
+      type: lesson.type,
+      orderIndex: newOrderIndex,
+      notes: lesson.notes || null,
+      blocksVersion: blocksVersion,
+      droplets: {
+        connect: [targetDropletId],
+      },
+    };
+
+    // Add the appropriate blocks field
+    if (isV2 && lesson.blocksV2) {
+      // For v2 lessons, copy the blocksV2 JSON directly
+      lessonData.blocksV2 = lesson.blocksV2;
+      console.log(
+        "Copying v2 blocks, length:",
+        JSON.stringify(lesson.blocksV2).length,
+      );
+    } else if (lesson.blocks) {
+      // For v1 lessons, clean the blocks array
+      lessonData.blocks = cleanBlocks(lesson.blocks);
+      console.log("Copying v1 blocks, count:", lessonData.blocks.length);
+    }
+
+    console.log("Lesson data to send:", {
+      name: lessonData.name,
+      blocksVersion: lessonData.blocksVersion,
+      hasBlocksV2: !!lessonData.blocksV2,
+      hasBlocks: !!lessonData.blocks,
+    });
+
+    const response = await fetch(NEXT_PUBLIC_STRAPI_API_URL + "/api/lessons", {
+      method: "POST",
+      body: JSON.stringify({ data: lessonData }),
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+      },
+    });
+
+    const responseData = await response.json();
+
+    if (!response.ok || responseData.error) {
+      console.error("Failed to create lesson:", responseData.error);
+      return {
+        ok: false,
+        error: responseData.error?.message || "Failed to duplicate lesson",
+        data: null,
+      };
+    }
+
+    console.log("Created lesson successfully:", responseData.data.id);
+
+    revalidateTag("droplets");
+    revalidatePath("(editing)/draft/d/[slug]", "page");
+
+    return {
+      ok: true,
+      error: null,
+      data: responseData.data,
+    };
+  } catch (err) {
+    console.error("Error duplicating lesson:", err);
+    return {
+      ok: false,
+      error:
+        err instanceof Error
+          ? err.message
+          : "Database Error: Failed to duplicate lesson.",
+      data: null,
+    };
+  }
+}

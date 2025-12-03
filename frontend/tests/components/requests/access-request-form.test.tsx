@@ -1,5 +1,5 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
-import { RequestAccessForm } from "@/components/access-request-form";
+import { RequestAccessForm } from "@/components/requests/access-request-form";
 import { createAccessRequest } from "@/lib/actions";
 import { toast } from "sonner";
 import userEvent from "@testing-library/user-event";

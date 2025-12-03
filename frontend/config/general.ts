@@ -51,6 +51,16 @@ export const getMainNav = (user: User) => {
       label: "Admin",
       isHidden: !isAuthorizedUserAdmin(user.roles),
     },
+    {
+      href: "/creation-request",
+      label: "Create",
+      isHidden: !(
+        user?.roles?.some((role) => role === "User") &&
+        !user?.roles?.some((role) =>
+          ["Content Creator", "Faculty", "System Admin"].includes(role),
+        )
+      ),
+    },
   ];
   return mainNav;
 };

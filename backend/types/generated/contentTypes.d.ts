@@ -557,6 +557,11 @@ export interface ApiAuthorizedUserAuthorizedUser extends Schema.CollectionType {
       'admin::user'
     > &
       Attribute.Private;
+    creationRequest: Attribute.Relation<
+      'api::authorized-user.authorized-user',
+      'oneToOne',
+      'api::creation-request.creation-request'
+    >;
     droplets: Attribute.Relation<
       'api::authorized-user.authorized-user',
       'manyToMany',
@@ -619,9 +624,7 @@ export interface ApiAuthorizedUserAuthorizedUser extends Schema.CollectionType {
     isEnabled: Attribute.Boolean &
       Attribute.Required &
       Attribute.DefaultTo<true>;
-    isPublic: Attribute.Boolean &
-      Attribute.Required &
-      Attribute.DefaultTo<false>;
+    isPublic: Attribute.Boolean & Attribute.DefaultTo<false>;
     lastName: Attribute.String;
     linkedin: Attribute.String;
     playlists: Attribute.Relation<
@@ -707,6 +710,44 @@ export interface ApiAuthorizedUserAuthorizedUser extends Schema.CollectionType {
       'api::authorized-user.authorized-user'
     >;
     website: Attribute.String;
+  };
+}
+
+export interface ApiCreationRequestCreationRequest
+  extends Schema.CollectionType {
+  collectionName: 'creation_requests';
+  info: {
+    description: '';
+    displayName: 'Creation Request';
+    pluralName: 'creation-requests';
+    singularName: 'creation-request';
+  };
+  options: {
+    draftAndPublish: true;
+  };
+  attributes: {
+    createdAt: Attribute.DateTime;
+    createdBy: Attribute.Relation<
+      'api::creation-request.creation-request',
+      'oneToOne',
+      'admin::user'
+    > &
+      Attribute.Private;
+    dropletIdea: Attribute.Text;
+    motivation: Attribute.Text;
+    publishedAt: Attribute.DateTime;
+    updatedAt: Attribute.DateTime;
+    updatedBy: Attribute.Relation<
+      'api::creation-request.creation-request',
+      'oneToOne',
+      'admin::user'
+    > &
+      Attribute.Private;
+    user: Attribute.Relation<
+      'api::creation-request.creation-request',
+      'oneToOne',
+      'api::authorized-user.authorized-user'
+    >;
   };
 }
 
@@ -1899,6 +1940,7 @@ declare module '@strapi/types' {
       'api::announcement.announcement': ApiAnnouncementAnnouncement;
       'api::authorized-user-role.authorized-user-role': ApiAuthorizedUserRoleAuthorizedUserRole;
       'api::authorized-user.authorized-user': ApiAuthorizedUserAuthorizedUser;
+      'api::creation-request.creation-request': ApiCreationRequestCreationRequest;
       'api::droplet-lesson.droplet-lesson': ApiDropletLessonDropletLesson;
       'api::droplet.droplet': ApiDropletDroplet;
       'api::due-date.due-date': ApiDueDateDueDate;

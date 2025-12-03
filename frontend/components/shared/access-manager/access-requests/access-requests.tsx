@@ -42,7 +42,6 @@ export async function AccessRequests() {
       <p className="dark:text-slate-300">
         The following individuals have requested access to this application.
       </p>
-
       <div className="mt-4 rounded-md bg-slate-100 p-4 dark:bg-slate-800">
         {filteredRequests.length > 0 ? (
           <ul className="divide-y divide-slate-200 md:space-y-4 dark:divide-slate-700">

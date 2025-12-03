@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { accessRequestSchema } from "./validations/access-request";
 import { reportSchema } from "./validations/report";
-import type { TimeZone } from "@/types";
+import type { CreationRequest, TimeZone } from "@/types";
 import {
   S3Client,
   PutObjectCommand,
@@ -14,6 +14,9 @@ import {
 import { v4 as uuidv4 } from "uuid";
 import { Buffer } from "node:buffer";
 import { createAuthorizedUser } from "./requests/authorized-user";
+import { creationRequestSchema } from "./validations/creation-request";
+import qs from "qs";
+import { flattenAttributes } from "@/lib/utils";
 
 const STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
@@ -129,10 +132,11 @@ export async function deleteReport(id: string) {
   });
 
   if (!response.ok) {
-    throw new Error("Failed to delete report");
+    return { error: "Failed to delete report" };
   }
-  redirect("/admin?ts=" + Date.now() + "&adminTab=Reports");
-  return response.json();
+
+  revalidatePath("/admin?adminTab=Reports");
+  return { success: true };
 }
 
 export async function createBugReport(formData: z.infer<typeof reportSchema>) {
@@ -214,4 +218,312 @@ export async function deleteAccessRequest(formData: FormData) {
   }
 
   revalidatePath("/admin");
+}
+
+/**
+ * Creates a new creation request
+ */
+export async function createCreationRequest(
+  formData: z.infer<typeof creationRequestSchema>,
+) {
+  try {
+    const response = await fetch(STRAPI_API_URL + "/api/creation-requests", {
+      method: "POST",
+      body: JSON.stringify({ data: formData }),
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+      },
+    });
+    const data = await response.json();
+
+    if (!response.ok || (response.ok && data.error)) {
+      const errorPath = data.error.details.errors[0].path[0];
+      const errorMessage = `${data.error.message} (${errorPath})`;
+      return { ok: false, error: errorMessage, data: null };
+    }
+
+    return { ok: true, data, error: null };
+  } catch (err) {
+    console.error(err);
+    return {
+      ok: false,
+      error: "Database Error: Failed to create creation request.",
+      data: null,
+    };
+  }
+}
+
+/**
+ * Approves a creation request and grants Content Creator role to the user
+ */
+/**
+ * Approves a creation request and grants Content Creator role to the user
+ */
+export async function approveCreationRequest(
+  requestId: string,
+  userId: number,
+) {
+  try {
+    // First, get the current user with their roles
+    const userResponse = await fetch(
+      `${STRAPI_API_URL}/api/authorized-users/${userId}?populate=roles`,
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+        },
+      },
+    );
+
+    if (!userResponse.ok) {
+      console.error("Failed to fetch user data");
+      return {
+        ok: false,
+        error: "Failed to fetch user data",
+        data: null,
+      };
+    }
+
+    const userData = await userResponse.json();
+    const currentRoles = userData.data.attributes.roles?.data || [];
+    const currentRoleIds = currentRoles.map((role: any) => role.id);
+
+    // Find the Content Creator role ID
+    const rolesResponse = await fetch(
+      `${STRAPI_API_URL}/api/authorized-user-roles?filters[title][$eq]=Content Creator`,
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+        },
+      },
+    );
+
+    if (!rolesResponse.ok) {
+      console.error("Failed to fetch Content Creator role");
+      return {
+        ok: false,
+        error: "Failed to fetch Content Creator role",
+        data: null,
+      };
+    }
+
+    const rolesData = await rolesResponse.json();
+
+    if (!rolesData.data || rolesData.data.length === 0) {
+      console.error("Content Creator role not found");
+      return {
+        ok: false,
+        error: "Content Creator role not found in system",
+        data: null,
+      };
+    }
+
+    const contentCreatorRoleId = rolesData.data[0].id;
+
+    // Add Content Creator role if not already present
+    if (!currentRoleIds.includes(contentCreatorRoleId)) {
+      const updateResponse = await fetch(
+        `${STRAPI_API_URL}/api/authorized-users/${userId}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+          },
+          body: JSON.stringify({
+            data: {
+              roles: [...currentRoleIds, contentCreatorRoleId],
+            },
+          }),
+        },
+      );
+
+      if (!updateResponse.ok) {
+        const errorData = await updateResponse.json();
+        console.error("Failed to update user roles:", errorData);
+        return {
+          ok: false,
+          error: "Failed to update user roles",
+          data: null,
+        };
+      }
+    }
+
+    // Delete the creation request after approval
+    const deleteResponse = await fetch(
+      `${STRAPI_API_URL}/api/creation-requests/${requestId}`,
+      {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+        },
+      },
+    );
+
+    if (!deleteResponse.ok) {
+      console.error("Failed to delete creation request");
+      return {
+        ok: false,
+        error: "Failed to delete creation request",
+        data: null,
+      };
+    }
+
+    revalidatePath("/admin");
+    return { ok: true, error: null, data: null };
+  } catch (err) {
+    console.error(err);
+    return {
+      ok: false,
+      error: "Database Error: Failed to approve creation request.",
+      data: null,
+    };
+  }
+}
+
+/**
+ * Deletes a creation request
+ */
+export async function deleteCreationRequest(requestId: string) {
+  try {
+    const response = await fetch(
+      `${STRAPI_API_URL}/api/creation-requests/${requestId}`,
+      {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+        },
+      },
+    );
+
+    if (!response.ok) {
+      return {
+        ok: false,
+        error: "Failed to delete creation request",
+        data: null,
+      };
+    }
+
+    revalidatePath("/admin");
+    return { ok: true, error: null, data: null };
+  } catch (err) {
+    console.error(err);
+    return {
+      ok: false,
+      error: "Database Error: Failed to delete creation request.",
+      data: null,
+    };
+  }
+}
+
+/**
+ * Fetches all creation requests with user information
+ */
+export async function fetchCreationRequests(): Promise<CreationRequest[]> {
+  try {
+    let page = 1;
+    const pageSize = 250;
+    let allCreationRequests: CreationRequest[] = [];
+
+    while (true) {
+      const query = qs.stringify({
+        populate: {
+          user: {
+            fields: ["firstName", "lastName", "email", "id"],
+          },
+        },
+        pagination: {
+          pageSize,
+          page,
+        },
+      });
+
+      const response = await fetch(
+        `${STRAPI_API_URL}/api/creation-requests?${query}`,
+        {
+          headers: {
+            Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+          },
+          cache: "no-store",
+        },
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        console.error("Failed to fetch creation requests", data);
+        break;
+      }
+
+      const creationRequests = flattenAttributes(data.data);
+
+      allCreationRequests = allCreationRequests.concat(creationRequests);
+
+      if (creationRequests.length < pageSize) break;
+      page++;
+    }
+
+    return allCreationRequests;
+  } catch (error) {
+    console.error("Database Error:", error);
+    throw new Error("Failed to fetch creation requests data.");
+  }
+}
+
+/**
+ * Fetches creation request for a specific user
+ * @param userId - The ID of the authorized user
+ * @returns The creation request if found, null otherwise
+ */
+export async function fetchCreationRequestByUser(
+  userId: number,
+): Promise<CreationRequest | null> {
+  try {
+    const query = qs.stringify({
+      filters: {
+        user: {
+          id: {
+            $eq: userId,
+          },
+        },
+      },
+      populate: {
+        user: {
+          fields: ["firstName", "lastName", "email", "id"],
+        },
+      },
+    });
+
+    const response = await fetch(
+      `${STRAPI_API_URL}/api/creation-requests?${query}`,
+      {
+        headers: {
+          Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+        },
+        cache: "no-store",
+      },
+    );
+
+    if (!response.ok) {
+      console.error("Failed to fetch creation request by user");
+      return null;
+    }
+
+    const data = await response.json();
+
+    if (!data.data || data.data.length === 0) {
+      return null;
+    }
+
+    // Return the first (and should be only) creation request for this user
+    const flattened = flattenAttributes([data.data[0]]);
+    return flattened[0];
+  } catch (error) {
+    console.error("Database Error:", error);
+    return null;
+  }
 }
