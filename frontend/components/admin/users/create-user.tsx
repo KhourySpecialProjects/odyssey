@@ -15,10 +15,15 @@ import { DialogClose } from "@radix-ui/react-dialog";
 import { ArrowRightIcon, PlusIcon, XIcon } from "lucide-react";
 import { useActionState } from "react";
 
-const initialState: any = {
-  email: "",
-  isEnabled: true,
-  isAdmin: false,
+type CreateUserState =
+  | { ok: boolean; error: string | null; data: null; message?: undefined }
+  | { error: string; ok?: undefined; data?: undefined; message?: undefined }
+  | { message: string; ok: boolean; error?: undefined; data?: undefined };
+
+const initialState: CreateUserState = {
+  ok: false,
+  error: null,
+  data: null,
 };
 
 export function CreateUser() {
