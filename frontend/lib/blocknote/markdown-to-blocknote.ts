@@ -1,12 +1,5 @@
+import { BlockNoteBlock } from "@/types";
 import { v4 as uuidv4 } from "uuid";
-
-interface BlockNoteBlock {
-  id: string;
-  type: string;
-  props: Record<string, any>;
-  content?: any[];
-  children: any[];
-}
 
 interface ParseResult {
   title: string;

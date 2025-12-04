@@ -429,3 +429,11 @@ export type CreationRequest = {
   dropletIdea: String;
   user: AuthorizedUser;
 };
+
+interface BlockNoteBlock {
+  id: string;
+  type: string;
+  props: Record<string, any>;
+  content?: any[];
+  children: any[];
+}
