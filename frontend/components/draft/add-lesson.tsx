@@ -95,10 +95,6 @@ export function AddLesson({
       // Step 1: Parse the markdown
       const { title, blocks } = parseMarkdownToBlockNote(markdown);
 
-      console.log("Parsed title:", title);
-      console.log("Parsed blocks:", blocks);
-      console.log("Total blocks:", blocks.length);
-
       // Step 2: Create the lesson with parsed blocks
       const createResponse = await addLesson({
         name: title,
