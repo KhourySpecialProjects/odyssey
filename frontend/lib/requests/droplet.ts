@@ -10,7 +10,10 @@ import { z } from "zod";
 import { getCurrentUser } from "../auth/session";
 import { getAuthorizedUserByEmail } from "./authorized-user";
 import { getEnrollmentsByAuthorizedUser } from "./enrollment";
-import { markdownToBlockNote, extractMetadata } from "@/lib/blocknote/markdown-to-blocknote";
+import {
+  markdownToBlockNote,
+  extractMetadata,
+} from "@/lib/blocknote/markdown-to-blocknote";
 import { parseV1Markdown } from "@/lib/v1-markdown-parser";
 
 const STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
@@ -1372,14 +1375,13 @@ export async function updateDropletLearningObjective(
   }
 }
 
-
 /**
  * Creates a droplet from markdown content
  * Supports both v1 (custom format) and v2 (standard markdown) imports
  */
 export async function createDropletFromMarkdown(
   markdownContent: string,
-  version: "v1" | "v2" = "v2"
+  version: "v1" | "v2" = "v2",
 ) {
   try {
     const user = await getCurrentUser();
@@ -1398,9 +1400,10 @@ export async function createDropletFromMarkdown(
     console.error("Error creating droplet from markdown:", error);
     return {
       ok: false,
-      error: error instanceof Error 
-        ? error.message 
-        : "An unexpected error occurred while processing the markdown",
+      error:
+        error instanceof Error
+          ? error.message
+          : "An unexpected error occurred while processing the markdown",
       data: null,
     };
   }
@@ -1409,7 +1412,10 @@ export async function createDropletFromMarkdown(
 /**
  * Create droplet from v1 (custom) markdown format
  */
-async function createDropletFromV1Markdown(markdownContent: string, author: any) {
+async function createDropletFromV1Markdown(
+  markdownContent: string,
+  author: any,
+) {
   const { dropletName, metadata, lessons } = parseV1Markdown(markdownContent);
 
   // Check if slug/name already exists
@@ -1466,7 +1472,8 @@ async function createDropletFromV1Markdown(markdownContent: string, author: any)
   const dropletResponseData = await dropletResponse.json();
 
   if (!dropletResponse.ok || dropletResponseData.error) {
-    const errorMessage = dropletResponseData.error?.message || "Failed to create droplet";
+    const errorMessage =
+      dropletResponseData.error?.message || "Failed to create droplet";
     console.error("Droplet creation failed:", errorMessage);
     return {
       ok: false,
@@ -1549,7 +1556,10 @@ async function createDropletFromV1Markdown(markdownContent: string, author: any)
 /**
  * Create droplet from v2 (standard) markdown format
  */
-async function createDropletFromV2Markdown(markdownContent: string, author: any) {
+async function createDropletFromV2Markdown(
+  markdownContent: string,
+  author: any,
+) {
   // Extract first H1 as droplet name
   const h1Match = markdownContent.match(/^#\s+(.+)$/m);
   if (!h1Match) {
@@ -1583,7 +1593,7 @@ async function createDropletFromV2Markdown(markdownContent: string, author: any)
   // Split content into lessons by H2 headings
   const h2Regex = /^##\s+(?!Metadata\s*$)(.+)$/gm;
   const lessonMatches = Array.from(markdownContent.matchAll(h2Regex));
-  
+
   const lessons: Array<{
     name: string;
     content: string;
@@ -1594,12 +1604,15 @@ async function createDropletFromV2Markdown(markdownContent: string, author: any)
       const match = lessonMatches[i];
       const lessonName = match[1].trim();
       const startIndex = match.index! + match[0].length;
-      const endIndex = i < lessonMatches.length - 1 
-        ? lessonMatches[i + 1].index! 
-        : markdownContent.length;
-      
-      const lessonContent = markdownContent.substring(startIndex, endIndex).trim();
-      
+      const endIndex =
+        i < lessonMatches.length - 1
+          ? lessonMatches[i + 1].index!
+          : markdownContent.length;
+
+      const lessonContent = markdownContent
+        .substring(startIndex, endIndex)
+        .trim();
+
       if (lessonName && lessonContent) {
         lessons.push({
           name: lessonName,
@@ -1613,9 +1626,9 @@ async function createDropletFromV2Markdown(markdownContent: string, author: any)
   if (lessons.length === 0) {
     const contentAfterH1 = markdownContent
       .substring(markdownContent.indexOf(h1Match[0]) + h1Match[0].length)
-      .replace(/^##\s+Metadata[\s\S]*?(?=\n##|\n#|$)/m, '')
+      .replace(/^##\s+Metadata[\s\S]*?(?=\n##|\n#|$)/m, "")
       .trim();
-    
+
     if (contentAfterH1) {
       lessons.push({
         name: "Main Content",
@@ -1650,7 +1663,8 @@ async function createDropletFromV2Markdown(markdownContent: string, author: any)
   const dropletResponseData = await dropletResponse.json();
 
   if (!dropletResponse.ok || dropletResponseData.error) {
-    const errorMessage = dropletResponseData.error?.message || "Failed to create droplet";
+    const errorMessage =
+      dropletResponseData.error?.message || "Failed to create droplet";
     console.error("Droplet creation failed:", errorMessage);
     return {
       ok: false,
@@ -1687,7 +1701,7 @@ async function createDropletFromV2Markdown(markdownContent: string, author: any)
 
     for (let i = 0; i < lessons.length; i++) {
       const lesson = lessons[i];
-      
+
       // Convert lesson content to BlockNote JSON
       const blockNoteContent = markdownToBlockNote(lesson.content);
 

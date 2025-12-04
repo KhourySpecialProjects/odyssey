@@ -15,7 +15,6 @@ import { Separator } from "@/components/ui/separator";
 import { Metadata } from "next";
 import { PlaylistCard } from "@/components/playlists/playlist-card";
 import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
-import { ImportButtonWrapper } from "@/components/draft/ImportButton";
 
 export const metadata: Metadata = {
   title: "Create",
@@ -51,7 +50,6 @@ export default async function CreateRoute() {
         <div className="flex w-full items-end justify-between">
           <h2 className="text-lg font-bold dark:text-slate-300">My Droplets</h2>
           <div className="flex items-center gap-2">
-            <ImportButtonWrapper />
             <Link href="/new/droplet">
               <Button
                 after={<PlusIcon />}

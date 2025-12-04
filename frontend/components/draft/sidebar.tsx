@@ -367,8 +367,8 @@ export function Sidebar({
 
             {/* Add lesson section */}
             <MantineProvider>
-            <AddLesson droplet={droplet} onAddLesson={addLessonCallback} />
-</MantineProvider>
+              <AddLesson droplet={droplet} onAddLesson={addLessonCallback} />
+            </MantineProvider>
             {/* Add existing lesson section - NEW */}
             <AddExistingLesson
               droplet={droplet}
