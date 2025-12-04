@@ -2,10 +2,12 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useFormStatus } from "react-dom";
-import { PlusIcon, CornerDownLeftIcon, LoaderIcon } from "lucide-react";
+import { PlusIcon, CornerDownLeftIcon, LoaderIcon, Import } from "lucide-react";
 import { Droplet, Lesson } from "@/types";
 import { useRouter } from "next/navigation";
 import { addLesson } from "@/lib/requests/lesson";
+import { ImportLessonModal } from "../ui/import-lesson-modal";
+import { MantineProvider } from "@mantine/core";
 
 export function AddLesson({
   droplet,
@@ -15,6 +17,7 @@ export function AddLesson({
   onAddLesson: (newLesson: Lesson) => void;
 }) {
   const [isHidden, setIsHidden] = useState(true);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false); // Add this state
   const inputRef = useRef<HTMLInputElement>(null);
   const ref = useRef<HTMLLIElement>(null);
   const router = useRouter();
@@ -81,14 +84,53 @@ export function AddLesson({
     }
   }
 
+  // Updated handleImportClick function
+  function handleImportClick() {
+    setIsImportModalOpen(true);
+  }
+
+  // Placeholder for the import handler - we'll implement this later
+  async function handleImport(markdown: string) {
+    // TODO: Implement markdown to BlockNote JSON conversion
+    console.log("Importing markdown:", markdown);
+    
+    // For now, just close the modal
+    // Later, this will:
+    // 1. Parse the markdown
+    // 2. Convert to BlockNote JSON format
+    // 3. Create a new lesson with the converted content
+    // 4. Navigate to the new lesson
+  }
+
   return (
     <>
       <div className="flex w-full items-center justify-between">
         <p className="p-2 text-lg leading-7 font-bold">Lessons</p>
-        <div className="cursor-pointer p-2">
-          <PlusIcon role="button" onClick={handleClick} />
+        <div className="flex items-center gap-2"> {/* Changed to flex container */}
+          <div className="cursor-pointer p-2">
+            <Import 
+              role="button" 
+              onClick={handleImportClick}
+              className="hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+            />
+          </div>
+          <div className="cursor-pointer p-2">
+            <PlusIcon 
+              role="button" 
+              onClick={handleClick}
+              className="hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+            />
+          </div>
         </div>
       </div>
+
+      {/* Import Modal */}
+      <ImportLessonModal
+        isOpen={isImportModalOpen}
+        onClose={() => setIsImportModalOpen(false)}
+        onImport={handleImport}
+        dropletName={droplet.name}
+      />
 
       <ul>
         {!isHidden ? (
