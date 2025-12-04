@@ -14,7 +14,6 @@ type ClickableBadgesProps = {
   focusArea: string;
   type: string;
   dropletId: number;
-  tags: Tag[];
   selectedTags: Tag[];
   availableTags: Tag[];
 };
@@ -26,7 +25,6 @@ export function ClickableBadges({
   focusArea,
   type,
   dropletId,
-  tags: initialTags,
   selectedTags: initialSelectedTags,
   availableTags: initialAvailableTags,
 }: ClickableBadgesProps) {

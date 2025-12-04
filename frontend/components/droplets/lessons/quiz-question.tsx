@@ -54,13 +54,13 @@ export function QuizQuestionBlock({
 
   // Initialize PostHog
   useEffect(() => {
-    if (typeof window !== "undefined" && !(window as any).posthog) {
+    if (typeof window !== "undefined" && !window.posthog) {
       posthog.init(process.env.NEXT_PUBLIC_POSTHOG_KEY!, {
         api_host:
           process.env.NEXT_PUBLIC_POSTHOG_HOST || "https://app.posthog.com",
       });
 
-      (window as any).posthog = posthog;
+      window.posthog = posthog;
 
       if (userId) {
         posthog.identify(userId.toString());

@@ -209,7 +209,7 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
   }, []);
 
   const deleteLessonBackend = useCallback(async () => {
-    const response = await getDropletBySlug(dropletSlug).then((droplet) =>
+    const response = await getDropletBySlug(dropletSlug).then(() =>
       deleteLesson(lesson.id, true),
     );
     if (response && !response.error) {
@@ -221,16 +221,6 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
   const debouncedNameUpdate = useMemo(
     () => debounce(updateNameBackend, 1000),
     [updateNameBackend],
-  );
-
-  const handleAddBlock = useCallback(
-    (index: number, block: Block) => {
-      const updatedBlocks = [...blocks];
-      updatedBlocks.splice(index, 0, block);
-      setBlocks(updatedBlocks);
-      updateBlocksBackendReload(updatedBlocks);
-    },
-    [blocks, updateBlocksBackendReload],
   );
 
   const handleAddTool = useCallback(
@@ -451,7 +441,6 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
               <BlockList
                 blocks={blocks}
                 onReorder={handleReorderSource}
-                onAddBlock={handleAddBlock}
                 setBlock={setBlock}
                 deleteBlock={deleteBlock}
               />

@@ -30,14 +30,7 @@ describe("DraggableTileList", () => {
   });
 
   it("renders droplet list", () => {
-    render(
-      <DraggableTileList
-        droplets={mockDroplets as any}
-        onDropToOther={jest.fn()}
-        onReorder={jest.fn()}
-        listType="source"
-      />,
-    );
+    render(<DraggableTileList droplets={mockDroplets as any} />);
     expect(screen.getByTestId("droplet-list")).toBeInTheDocument();
   });
 
@@ -65,27 +58,13 @@ describe("DraggableTileList", () => {
   });
 
   it("handles empty droplet list", () => {
-    render(
-      <DraggableTileList
-        droplets={[]}
-        onDropToOther={jest.fn()}
-        onReorder={jest.fn()}
-        listType="source"
-      />,
-    );
+    render(<DraggableTileList droplets={[]} />);
 
     expect(screen.getByTestId("droplet-list")).toBeInTheDocument();
   });
 
   it("handles selected list type", () => {
-    render(
-      <DraggableTileList
-        droplets={mockDroplets as any}
-        onDropToOther={jest.fn()}
-        onReorder={jest.fn()}
-        listType="selected"
-      />,
-    );
+    render(<DraggableTileList droplets={mockDroplets as any} />);
 
     expect(screen.getByTestId("droplet-list")).toBeInTheDocument();
   });

@@ -4,7 +4,7 @@
 import { useState } from "react";
 import { Selection } from "@/components/draft/metadata/selection";
 import { DropletTile } from "@/components/droplets/droplet-tile";
-import type { Droplet, Tag } from "@/types";
+import type { Droplet } from "@/types";
 import { Trash2 } from "lucide-react";
 import { updateDroplet } from "@/lib/requests/droplet";
 import { toast } from "sonner";
@@ -12,8 +12,6 @@ import { useRouter } from "next/navigation";
 
 type GeneralInfoProps = {
   dropletId: number;
-  tags: Tag[];
-  selectedTags: Tag[];
   droplets: Pick<Droplet, "id" | "name" | "slug">[];
   prerequisites: Droplet[];
   postrequisites: Droplet[];
@@ -61,8 +59,6 @@ function RemovableDropletTile({
 
 export function GeneralInfo({
   dropletId,
-  tags,
-  selectedTags,
   droplets,
   prerequisites,
   postrequisites,

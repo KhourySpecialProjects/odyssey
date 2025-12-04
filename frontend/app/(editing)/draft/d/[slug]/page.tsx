@@ -130,7 +130,6 @@ export default async function Droplet({ params }: Props) {
               focusArea={droplet.focusArea}
               type={droplet.type}
               dropletId={droplet.id}
-              tags={droplet.tags ?? []}
               selectedTags={droplet.tags ?? []}
               availableTags={tags}
             />
@@ -188,8 +187,6 @@ export default async function Droplet({ params }: Props) {
 
           <GeneralInfo
             dropletId={droplet.id}
-            tags={tags}
-            selectedTags={droplet.tags ?? []}
             droplets={droplets}
             prerequisites={droplet.prerequisites ?? []}
             postrequisites={droplet.postrequisites ?? []}

@@ -162,7 +162,7 @@ export const getQuizSlashMenuItems = (
                 { id: "2", text: "", isCorrect: false },
               ],
             },
-          } as any,
+          } as unknown as Parameters<typeof editor.insertBlocks>[0][0],
         ],
         editor.getTextCursorPosition().block,
         "after",

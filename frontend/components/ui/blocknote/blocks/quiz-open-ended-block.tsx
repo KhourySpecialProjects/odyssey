@@ -199,7 +199,7 @@ export const OpenEndedQuiz = createReactBlockSpec(
       return (
         <div
           ref={blockRef}
-          onMouseDown={(e) => {
+          onMouseDown={() => {
             if (blockRef.current) {
               const blockContent = blockRef.current.closest(
                 ".bn-block-content",

@@ -4,10 +4,11 @@ import dynamic from "next/dynamic";
 import "@blocknote/core/fonts/inter.css";
 import "@blocknote/mantine/style.css";
 import "katex/dist/katex.min.css";
+import { Block } from "@/types";
 
 interface BlockNoteEditorProps {
-  initialContent?: any;
-  onChange: (content: any) => void;
+  initialContent?: Block[];
+  onChange: (content: Block[]) => void;
 }
 
 const BlockNoteEditorClient = dynamic(

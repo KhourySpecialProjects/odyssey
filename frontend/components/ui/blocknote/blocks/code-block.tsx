@@ -1,7 +1,7 @@
 "use client";
 
 import { createReactBlockSpec } from "@blocknote/react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, ErrorInfo } from "react";
 import React from "react";
 import { Light as SyntaxHighlighter } from "react-syntax-highlighter";
 import { atomOneDark } from "react-syntax-highlighter/dist/esm/styles/hljs";
@@ -379,7 +379,6 @@ const CodeBlockComponent = ({ block, editor }: any) => {
             className="group relative cursor-pointer"
             onClick={() => block.props.editable && setIsEditing(true)}
           >
-            {/* @ts-ignore - SyntaxHighlighter React 18 compatibility */}
             <SyntaxHighlighter
               language={block.props.language}
               style={atomOneDark}
@@ -469,11 +468,11 @@ class CodeBlockErrorBoundary extends React.Component<
     this.state = { hasError: false };
   }
 
-  static getDerivedStateFromError(error: any) {
+  static getDerivedStateFromError() {
     return { hasError: true };
   }
 
-  componentDidCatch(error: any, errorInfo: any) {
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error("CodeBlock Error:", error, errorInfo);
   }
 

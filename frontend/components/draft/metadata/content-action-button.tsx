@@ -74,6 +74,10 @@ export function ContentActionButton({
     let errorMessage = "";
     let redirectPath: string | null = null;
     let shouldReload = false;
+    const publishResult = await publishDraftToOriginal(
+      droplet.id,
+      droplet.originalDropletId || 0,
+    );
 
     try {
       switch (actionType) {
@@ -82,11 +86,6 @@ export function ContentActionButton({
             toast.error("No original droplet linked");
             return;
           }
-
-          const publishResult = await publishDraftToOriginal(
-            droplet.id,
-            droplet.originalDropletId,
-          );
 
           if (!publishResult.ok) {
             throw new Error(publishResult.error || "Failed to publish draft");
