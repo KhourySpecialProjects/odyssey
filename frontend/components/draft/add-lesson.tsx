@@ -7,7 +7,8 @@ import { Droplet, Lesson } from "@/types";
 import { useRouter } from "next/navigation";
 import { addLesson } from "@/lib/requests/lesson";
 import { ImportLessonModal } from "../ui/import-lesson-modal";
-import { MantineProvider } from "@mantine/core";
+import { toast } from "sonner";
+import { parseMarkdownToBlockNote } from "@/lib/blocknote/markdown-to-blocknote";
 
 export function AddLesson({
   droplet,
@@ -74,7 +75,7 @@ export function AddLesson({
             status: "draft",
           },
         ],
-        notes: [],
+        notes: "",
         orderIndex: response.data.orderIndex,
       };
 
@@ -89,36 +90,82 @@ export function AddLesson({
     setIsImportModalOpen(true);
   }
 
-  // Placeholder for the import handler - we'll implement this later
   async function handleImport(markdown: string) {
-    // TODO: Implement markdown to BlockNote JSON conversion
-    console.log("Importing markdown:", markdown);
-    
-    // For now, just close the modal
-    // Later, this will:
-    // 1. Parse the markdown
-    // 2. Convert to BlockNote JSON format
-    // 3. Create a new lesson with the converted content
-    // 4. Navigate to the new lesson
+    try {
+      // Step 1: Parse the markdown
+      const { title, blocks } = parseMarkdownToBlockNote(markdown);
+
+      console.log("Parsed title:", title);
+      console.log("Parsed blocks:", blocks);
+      console.log("Total blocks:", blocks.length);
+
+      // Step 2: Create the lesson with parsed blocks
+      const createResponse = await addLesson({
+        name: title,
+        dropletId: droplet.id,
+        orderIndex: droplet.lessons?.length || 0,
+        blocksV2: blocks,
+        blocksVersion: "v2",
+      });
+
+      if (createResponse && !createResponse.error) {
+        const newLesson: Lesson = {
+          id: createResponse.data.id,
+          name: createResponse.data.attributes.name,
+          slug: createResponse.data.attributes.slug,
+          type: createResponse.data.attributes.type || "general",
+          blocks: [],
+          blocksV2: blocks,
+          blocksVersion: "v2",
+          droplets: [
+            {
+              id: droplet.id,
+              name: droplet.name,
+              slug: droplet.slug,
+              type: createResponse.data.attributes.type || "",
+              focusArea: createResponse.data.attributes.focusArea || "",
+              learningObjectives: [],
+              isHidden: false,
+              status: "draft",
+            },
+          ],
+          notes: "",
+          orderIndex: createResponse.data.orderIndex,
+        };
+
+        onAddLesson(newLesson);
+        toast.success(
+          `Lesson "${title}" imported successfully with ${blocks.length} blocks!`,
+        );
+        router.push(`/draft/d/${droplet.slug}/${newLesson.slug}`);
+      } else {
+        toast.error(createResponse?.error || "Failed to create lesson");
+      }
+    } catch (error) {
+      console.error("Import error:", error);
+      toast.error("Failed to import markdown. Please check the format.");
+    }
   }
 
   return (
     <>
       <div className="flex w-full items-center justify-between">
         <p className="p-2 text-lg leading-7 font-bold">Lessons</p>
-        <div className="flex items-center gap-2"> {/* Changed to flex container */}
+        <div className="flex items-center gap-2">
+          {" "}
+          {/* Changed to flex container */}
           <div className="cursor-pointer p-2">
-            <Import 
-              role="button" 
+            <Import
+              role="button"
               onClick={handleImportClick}
-              className="hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+              className="transition-colors hover:text-slate-600 dark:hover:text-slate-300"
             />
           </div>
           <div className="cursor-pointer p-2">
-            <PlusIcon 
-              role="button" 
+            <PlusIcon
+              role="button"
               onClick={handleClick}
-              className="hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+              className="transition-colors hover:text-slate-600 dark:hover:text-slate-300"
             />
           </div>
         </div>

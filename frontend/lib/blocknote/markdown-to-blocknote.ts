@@ -1,306 +1,526 @@
-/**
- * Converts markdown text to BlockNote JSON format
- * 
- * BlockNote uses a JSON structure where each block has:
- * - id: unique identifier
- * - type: block type (heading, paragraph, bulletListItem, etc.)
- * - props: block properties (level for headings, etc.)
- * - content: array of inline content with text and styling
- * - children: nested blocks for lists
- */
+import { v4 as uuidv4 } from "uuid";
 
-type BlockNoteContent = {
-  type: string;
-  text: string;
-  styles?: {
-    bold?: boolean;
-    italic?: boolean;
-    code?: boolean;
-    strikethrough?: boolean;
-    underline?: boolean;
-  };
-}[];
-
-type BlockNoteBlock = {
+interface BlockNoteBlock {
   id: string;
   type: string;
   props: Record<string, any>;
-  content: BlockNoteContent;
-  children?: BlockNoteBlock[];
-};
+  content?: any[];
+  children: any[];
+}
 
-/**
- * Generate a unique ID for BlockNote blocks
- */
-function generateBlockId(): string {
-  return Math.random().toString(36).substring(2, 15);
+interface ParseResult {
+  title: string;
+  blocks: BlockNoteBlock[];
 }
 
 /**
- * Parse inline markdown formatting (bold, italic, code, etc.)
- * 
- * Example: "This is **bold** and *italic* text" becomes:
- * [
- *   { type: "text", text: "This is " },
- *   { type: "text", text: "bold", styles: { bold: true } },
- *   { type: "text", text: " and " },
- *   { type: "text", text: "italic", styles: { italic: true } },
- *   { type: "text", text: " text" }
- * ]
+ * Parse markdown content and convert to BlockNote JSON format
  */
-function parseInlineFormatting(text: string): BlockNoteContent {
-  const content: BlockNoteContent = [];
-  
-  // Regex patterns for different formatting
-  const patterns = {
-    bold: /\*\*(.+?)\*\*/g,
-    italic: /\*(.+?)\*/g,
-    code: /`(.+?)`/g,
-    strikethrough: /~~(.+?)~~/g,
-  };
+export function parseMarkdownToBlockNote(markdown: string): ParseResult {
+  const lines = markdown.split("\n");
+  const blocks: BlockNoteBlock[] = [];
+  let title = "Untitled Lesson";
+  let i = 0;
 
-  let lastIndex = 0;
-  const matches: Array<{ index: number; length: number; text: string; style: string }> = [];
+  while (i < lines.length) {
+    const line = lines[i];
+    const trimmedLine = line.trim();
 
-  // Find all formatting matches
-  for (const [style, pattern] of Object.entries(patterns)) {
-    let match;
-    while ((match = pattern.exec(text)) !== null) {
-      matches.push({
-        index: match.index,
-        length: match[0].length,
-        text: match[1],
-        style,
-      });
+    // Skip empty lines
+    if (!trimmedLine) {
+      i++;
+      continue;
     }
-  }
 
-  // Sort matches by index
-  matches.sort((a, b) => a.index - b.index);
+    // H1 - Title (first one becomes lesson name)
+    if (trimmedLine.startsWith("# ")) {
+      const text = trimmedLine.substring(2).trim();
+      if (blocks.length === 0) {
+        title = text; // First H1 becomes the lesson title
+      }
+      blocks.push(createHeading(text, 1));
+      i++;
+      continue;
+    }
 
-  // If no formatting, return plain text
-  if (matches.length === 0) {
-    return text ? [{ type: "text", text }] : [];
-  }
+    // H2
+    if (trimmedLine.startsWith("## ")) {
+      const text = trimmedLine.substring(3).trim();
+      blocks.push(createHeading(text, 2));
+      i++;
+      continue;
+    }
 
-  // Build content array with formatted segments
-  matches.forEach((match) => {
-    // Add plain text before this match
-    if (match.index > lastIndex) {
-      const plainText = text.substring(lastIndex, match.index);
-      if (plainText) {
-        content.push({ type: "text", text: plainText });
+    // H3
+    if (trimmedLine.startsWith("### ")) {
+      const text = trimmedLine.substring(4).trim();
+      blocks.push(createHeading(text, 3));
+      i++;
+      continue;
+    }
+
+    // Custom Callout Blocks (single %)
+    if (trimmedLine.startsWith("%") && !trimmedLine.startsWith("%%")) {
+      const result = parseCallout(trimmedLine);
+      if (result) {
+        blocks.push(result);
+      }
+      i++;
+      continue;
+    }
+
+    // Quiz Blocks (double %%)
+    if (trimmedLine.startsWith("%%")) {
+      const result = parseQuiz(lines, i);
+      if (result) {
+        blocks.push(result.block);
+        i = result.nextIndex;
+        continue;
       }
     }
 
-    // Add formatted text
-    content.push({
-      type: "text",
-      text: match.text,
-      styles: { [match.style]: true },
-    });
-
-    lastIndex = match.index + match.length;
-  });
-
-  // Add remaining plain text
-  if (lastIndex < text.length) {
-    const remaining = text.substring(lastIndex);
-    if (remaining) {
-      content.push({ type: "text", text: remaining });
+    // LaTeX Block ($$...$$)
+    if (trimmedLine.startsWith("$$")) {
+      const result = parseLatexBlock(lines, i);
+      if (result) {
+        blocks.push(result.block);
+        i = result.nextIndex;
+        continue;
+      }
     }
+
+    // Table
+    if (trimmedLine.includes("|")) {
+      const result = parseTable(lines, i);
+      if (result) {
+        blocks.push(result.block);
+        i = result.nextIndex;
+        continue;
+      }
+    }
+
+    // Numbered List
+    if (/^\d+\.\s/.test(trimmedLine)) {
+      const result = parseList(lines, i, "numbered");
+      blocks.push(...result.blocks);
+      i = result.nextIndex;
+      continue;
+    }
+
+    // Bulleted List
+    if (trimmedLine.startsWith("- ") || trimmedLine.startsWith("* ")) {
+      const result = parseList(lines, i, "bullet");
+      blocks.push(...result.blocks);
+      i = result.nextIndex;
+      continue;
+    }
+
+    // Regular paragraph (may contain inline LaTeX)
+    const paragraph = parseParagraph(trimmedLine);
+    blocks.push(paragraph);
+    i++;
   }
 
-  return content;
+  return { title, blocks };
 }
 
 /**
- * Convert a single markdown line to a BlockNote block
+ * Create a heading block
  */
-function convertLineToBlock(line: string): BlockNoteBlock | null {
-  // Skip empty lines
-  if (!line.trim()) {
-    return null;
-  }
-
-  // Heading
-  const headingMatch = line.match(/^(#{1,3})\s+(.+)$/);
-  if (headingMatch) {
-    const level = headingMatch[1].length;
-    const text = headingMatch[2].trim();
-    return {
-      id: generateBlockId(),
-      type: "heading",
-      props: {
-        level: level as 1 | 2 | 3,
-        textColor: "default",
-        backgroundColor: "default",
-        textAlignment: "left",
-      },
-      content: parseInlineFormatting(text),
-      children: [],
-    };
-  }
-
-  // Bullet list item
-  if (line.match(/^[-*]\s+/)) {
-    const text = line.replace(/^[-*]\s+/, "").trim();
-    return {
-      id: generateBlockId(),
-      type: "bulletListItem",
-      props: {
-        textColor: "default",
-        backgroundColor: "default",
-        textAlignment: "left",
-      },
-      content: parseInlineFormatting(text),
-      children: [],
-    };
-  }
-
-  // Numbered list item
-  const numberedMatch = line.match(/^\d+\.\s+(.+)$/);
-  if (numberedMatch) {
-    const text = numberedMatch[1].trim();
-    return {
-      id: generateBlockId(),
-      type: "numberedListItem",
-      props: {
-        textColor: "default",
-        backgroundColor: "default",
-        textAlignment: "left",
-      },
-      content: parseInlineFormatting(text),
-      children: [],
-    };
-  }
-
-  // Code block marker (will be handled specially)
-  if (line.trim() === "```" || line.match(/^```\w+$/)) {
-    return null; // Skip these, handled in main function
-  }
-
-  // Regular paragraph
+function createHeading(text: string, level: 1 | 2 | 3): BlockNoteBlock {
   return {
-    id: generateBlockId(),
-    type: "paragraph",
+    id: uuidv4(),
+    type: "heading",
     props: {
+      level,
       textColor: "default",
-      backgroundColor: "default",
+      isToggleable: false,
       textAlignment: "left",
+      backgroundColor: "default",
     },
-    content: parseInlineFormatting(line.trim()),
+    content: [
+      {
+        text,
+        type: "text",
+        styles: {},
+      },
+    ],
     children: [],
   };
 }
 
 /**
- * Main conversion function: Markdown string to BlockNote JSON
- * 
- * This processes the markdown line by line, handling:
- * - Headings (# ## ###)
- * - Paragraphs
- * - Lists (bullet and numbered)
- * - Code blocks
- * - Inline formatting (bold, italic, code, etc.)
+ * Parse callout blocks (%warning, %question, etc.)
  */
-export function markdownToBlockNote(markdown: string): BlockNoteBlock[] {
-  const lines = markdown.split("\n");
-  const blocks: BlockNoteBlock[] = [];
-  let inCodeBlock = false;
-  let codeBlockContent: string[] = [];
-  let codeBlockLanguage = "";
+function parseCallout(line: string): BlockNoteBlock | null {
+  const match = line.match(/^%(\S+)\s+(.+)$/);
+  if (!match) return null;
 
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i];
+  const [, calloutType, content] = match;
 
-    // Handle code blocks
-    if (line.trim().startsWith("```")) {
-      if (!inCodeBlock) {
-        // Start of code block
-        inCodeBlock = true;
-        codeBlockLanguage = line.trim().substring(3) || "plaintext";
-        codeBlockContent = [];
-      } else {
-        // End of code block
-        inCodeBlock = false;
-        blocks.push({
-          id: generateBlockId(),
-          type: "codeBlock",
-          props: {
-            language: codeBlockLanguage,
-          },
-          content: [
-            {
-              type: "text",
-              text: codeBlockContent.join("\n"),
-            },
-          ],
-          children: [],
-        });
-        codeBlockContent = [];
-      }
-      continue;
-    }
+  // Map to valid callout types
+  const validTypes = [
+    "warning",
+    "question",
+    "important",
+    "definition",
+    "more-information",
+    "caution",
+    "default",
+  ];
 
-    // Collect code block content
-    if (inCodeBlock) {
-      codeBlockContent.push(line);
-      continue;
-    }
-
-    // Convert regular line to block
-    const block = convertLineToBlock(line);
-    if (block) {
-      blocks.push(block);
-    }
+  if (!validTypes.includes(calloutType)) {
+    return null;
   }
 
-  return blocks;
+  return {
+    id: uuidv4(),
+    type: "callout",
+    props: {
+      calloutType,
+    },
+    content: [
+      {
+        text: content,
+        type: "text",
+        styles: {},
+      },
+    ],
+    children: [],
+  };
 }
 
 /**
- * Extract metadata from markdown
- * 
- * Looks for a "## Metadata" section and parses key-value pairs
- * Example:
- * ## Metadata
- * - **Description:** This is a description
- * - **Tags:** tag1, tag2, tag3
+ * Parse quiz blocks (%%true-false, %%open-ended, %%multiple-choice)
  */
-export function extractMetadata(markdown: string): {
-  description?: string;
-  tags?: string[];
-  focusArea?: string;
-  type?: string;
-} {
-  const metadata: Record<string, any> = {};
-  
-  const metadataMatch = markdown.match(/## Metadata\s*\n([\s\S]*?)(?=\n##|\n#|$)/);
-  
-  if (metadataMatch) {
-    const metadataSection = metadataMatch[1];
-    const lines = metadataSection.split("\n");
-    
-    for (const line of lines) {
-      // Match "- **Key:** Value" or "- Key: Value"
-      const match = line.match(/^[-*]\s+\*?\*?([^:*]+)\*?\*?:\s*(.+)$/);
-      if (match) {
-        const key = match[1].trim().toLowerCase();
-        const value = match[2].trim();
-        
-        if (key === "tags") {
-          metadata.tags = value.split(",").map(t => t.trim());
-        } else if (key === "description") {
-          metadata.description = value;
-        } else if (key === "focus area" || key === "focusarea") {
-          metadata.focusArea = value;
-        } else if (key === "type") {
-          metadata.type = value;
-        }
-      }
-    }
+function parseQuiz(
+  lines: string[],
+  startIndex: number,
+): { block: BlockNoteBlock; nextIndex: number } | null {
+  const firstLine = lines[startIndex].trim();
+  const quizTypeMatch = firstLine.match(/^%%(.+)$/);
+  if (!quizTypeMatch) return null;
+
+  const quizType = quizTypeMatch[1].trim();
+  let i = startIndex + 1;
+  const listItems: string[] = [];
+
+  // Collect all list items
+  while (i < lines.length && lines[i].trim().startsWith("-")) {
+    const item = lines[i].trim().substring(2).trim();
+    listItems.push(item);
+    i++;
   }
-  
-  return metadata;
+
+  if (listItems.length === 0) return null;
+
+  // Parse based on quiz type
+  if (quizType === "true-false") {
+    return {
+      block: createTrueFalseQuiz(listItems),
+      nextIndex: i,
+    };
+  } else if (quizType === "open-ended") {
+    return {
+      block: createOpenEndedQuiz(listItems),
+      nextIndex: i,
+    };
+  } else if (quizType === "multiple-choice") {
+    return {
+      block: createMultipleChoiceQuiz(listItems),
+      nextIndex: i,
+    };
+  }
+
+  return null;
+}
+
+/**
+ * Create true/false quiz block
+ */
+function createTrueFalseQuiz(items: string[]): BlockNoteBlock {
+  const question = items[0] || "";
+  const answer = items[1]?.toLowerCase() === "true";
+
+  return {
+    id: uuidv4(),
+    type: "quiz-true-false",
+    props: {
+      question,
+      textColor: "default",
+      correctAnswer: answer,
+      textAlignment: "left",
+      backgroundColor: "default",
+    },
+    children: [],
+  };
+}
+
+/**
+ * Create open-ended quiz block
+ */
+function createOpenEndedQuiz(items: string[]): BlockNoteBlock {
+  const question = items[0] || "";
+  const correctAnswer = items[1] || "";
+
+  return {
+    id: uuidv4(),
+    type: "quiz-open-ended",
+    props: {
+      question,
+      textColor: "default",
+      correctAnswer,
+      textAlignment: "left",
+      backgroundColor: "default",
+    },
+    children: [],
+  };
+}
+
+/**
+ * Create multiple choice quiz block
+ */
+function createMultipleChoiceQuiz(items: string[]): BlockNoteBlock {
+  const question = items[0] || "";
+  const options = items.slice(1).map((item, index) => {
+    const isCorrect = item.endsWith("<");
+    const text = isCorrect ? item.slice(0, -1).trim() : item.trim();
+
+    return {
+      id: (index + 1).toString(),
+      text,
+      isCorrect,
+    };
+  });
+
+  return {
+    id: uuidv4(),
+    type: "quiz-multiple-choice",
+    props: {
+      options,
+      question,
+      textColor: "default",
+      textAlignment: "left",
+      backgroundColor: "default",
+    },
+    children: [],
+  };
+}
+
+/**
+ * Parse LaTeX block ($$...$$)
+ */
+function parseLatexBlock(
+  lines: string[],
+  startIndex: number,
+): { block: BlockNoteBlock; nextIndex: number } | null {
+  const firstLine = lines[startIndex].trim();
+  if (!firstLine.startsWith("$$")) return null;
+
+  let content = "";
+  let i = startIndex;
+
+  // Single line block
+  if (firstLine.endsWith("$$") && firstLine.length > 4) {
+    content = firstLine.substring(2, firstLine.length - 2).trim();
+    return {
+      block: createLatexBlock(content, true),
+      nextIndex: i + 1,
+    };
+  }
+
+  // Multi-line block
+  i++;
+  while (i < lines.length) {
+    const line = lines[i].trim();
+    if (line.endsWith("$$")) {
+      content += line.substring(0, line.length - 2).trim();
+      return {
+        block: createLatexBlock(content, true),
+        nextIndex: i + 1,
+      };
+    }
+    content += line + " ";
+    i++;
+  }
+
+  return null;
+}
+
+/**
+ * Create LaTeX block
+ */
+function createLatexBlock(
+  content: string,
+  displayMode: boolean,
+): BlockNoteBlock {
+  return {
+    id: uuidv4(),
+    type: "latex",
+    props: {
+      content,
+      displayMode,
+    },
+    children: [],
+  };
+}
+
+/**
+ * Parse table
+ */
+function parseTable(
+  lines: string[],
+  startIndex: number,
+): { block: BlockNoteBlock; nextIndex: number } | null {
+  let i = startIndex;
+  const tableLines: string[] = [];
+
+  // Collect all table lines
+  while (i < lines.length && lines[i].trim().includes("|")) {
+    tableLines.push(lines[i].trim());
+    i++;
+  }
+
+  if (tableLines.length < 2) return null;
+
+  // Skip separator line (second line with dashes)
+  const headerLine = tableLines[0];
+  const dataLines = tableLines.slice(2);
+
+  const headers = headerLine
+    .split("|")
+    .map((h) => h.trim())
+    .filter((h) => h);
+  const rows: string[][] = [headers];
+
+  dataLines.forEach((line) => {
+    const cells = line
+      .split("|")
+      .map((c) => c.trim())
+      .filter((c) => c);
+    if (cells.length > 0) {
+      rows.push(cells);
+    }
+  });
+
+  return {
+    block: createTable(rows),
+    nextIndex: i,
+  };
+}
+
+/**
+ * Create table block
+ */
+function createTable(rows: string[][]): BlockNoteBlock {
+  const tableRows = rows.map((row) => ({
+    cells: row.map((cellText) => ({
+      type: "tableCell",
+      props: {
+        colspan: 1,
+        rowspan: 1,
+        textColor: "default",
+        textAlignment: "left",
+        backgroundColor: "default",
+      },
+      content: [
+        {
+          text: cellText,
+          type: "text",
+          styles: {},
+        },
+      ],
+    })),
+  }));
+
+  return {
+    id: uuidv4(),
+    type: "table",
+    props: {
+      textColor: "default",
+    },
+    content: {
+      rows: tableRows,
+      type: "tableContent",
+      columnWidths: rows[0].map(() => null),
+    } as any,
+    children: [],
+  };
+}
+
+/**
+ * Parse lists (numbered or bulleted)
+ */
+function parseList(
+  lines: string[],
+  startIndex: number,
+  listType: "numbered" | "bullet",
+): { blocks: BlockNoteBlock[]; nextIndex: number } {
+  const blocks: BlockNoteBlock[] = [];
+  let i = startIndex;
+
+  const isListItem = (line: string) => {
+    if (listType === "numbered") {
+      return /^\d+\.\s/.test(line.trim());
+    }
+    return line.trim().startsWith("- ") || line.trim().startsWith("* ");
+  };
+
+  while (i < lines.length && isListItem(lines[i])) {
+    const line = lines[i].trim();
+    let text = "";
+
+    if (listType === "numbered") {
+      text = line.replace(/^\d+\.\s/, "").trim();
+    } else {
+      text = line.substring(2).trim();
+    }
+
+    blocks.push({
+      id: uuidv4(),
+      type: listType === "numbered" ? "numberedListItem" : "bulletListItem",
+      props: {
+        textColor: "default",
+        textAlignment: "left",
+        backgroundColor: "default",
+      },
+      content: [
+        {
+          text,
+          type: "text",
+          styles: {},
+        },
+      ],
+      children: [],
+    });
+
+    i++;
+  }
+
+  return { blocks, nextIndex: i };
+}
+
+/**
+ * Parse paragraph (handles inline LaTeX with $...$)
+ */
+function parseParagraph(text: string): BlockNoteBlock {
+  // For now, we'll treat inline LaTeX as regular text
+  // BlockNote will need to handle inline LaTeX separately if needed
+  return {
+    id: uuidv4(),
+    type: "paragraph",
+    props: {
+      textColor: "default",
+      textAlignment: "left",
+      backgroundColor: "default",
+    },
+    content: [
+      {
+        text,
+        type: "text",
+        styles: {},
+      },
+    ],
+    children: [],
+  };
 }

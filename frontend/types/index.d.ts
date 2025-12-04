@@ -174,12 +174,12 @@ export type Lesson = {
   id: number;
   name: string;
   slug: string;
-  type?: "general" | "setup" | "activity" | "caseStudy";
-  blocks: Block[];
+  type: string;
+  blocks: Block[]; // v1 blocks
+  blocksV2?: any[]; // v2 BlockNote JSON blocks
   blocksVersion?: "v1" | "v2";
-  blocksV2?: any;
-  droplets: Droplet[];
-  notes: Note[];
+  droplets: DropletPreview[];
+  notes: string;
   orderIndex: number;
 };
 
