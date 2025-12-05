@@ -178,7 +178,7 @@ export type Lesson = {
   blocks: Block[]; // v1 blocks
   blocksV2?: any[]; // v2 BlockNote JSON blocks
   blocksVersion?: "v1" | "v2";
-  droplets: DropletPreview[];
+  droplets: Droplet[];
   notes: string;
   orderIndex: number;
 };
