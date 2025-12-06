@@ -99,7 +99,7 @@ export function GeneralTextEditor({
 
   return (
     <div className="w-full">
-      <GeneralToolbar editor={editor} isDroplet={isDroplet} />
+      <GeneralToolbar editor={editor} />
       <EditorContent
         name="general-text-editor"
         editor={editor}
