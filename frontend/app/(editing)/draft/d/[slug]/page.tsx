@@ -102,9 +102,7 @@ export default async function Droplet({ params }: Props) {
 
       // Handle specific error cases
       const status =
-        typeof error === "object" &&
-        error !== null &&
-        "status" in error
+        typeof error === "object" && error !== null && "status" in error
           ? (error as { status: number }).status
           : undefined;
 

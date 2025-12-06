@@ -159,6 +159,7 @@ const executePistonCode = async (language: string, code: string) => {
       success: true,
       output: output.trim(),
     };
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     return {
       success: false,
@@ -166,7 +167,7 @@ const executePistonCode = async (language: string, code: string) => {
     };
   }
 };
-
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const CodeBlockComponent = ({ block, editor }: any) => {
   const [isEditing, setIsEditing] = useState(false);
   const [code, setCode] = useState(block.props.code);
@@ -215,6 +216,7 @@ const CodeBlockComponent = ({ block, editor }: any) => {
       const result = await executePistonCode(block.props.language, code);
       setOutput(result.output);
       setExecutionSuccess(result.success);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       setOutput(`Unexpected error: ${error.message}`);
       setExecutionSuccess(false);

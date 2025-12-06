@@ -81,13 +81,6 @@ type BlockNoteListItem = {
   children?: BlockNoteListItem[];
 };
 
-type BlockNoteBlockNode = BlockNoteBlock & {
-  type: string;
-  content?: BlockNoteInlineContent[];
-  children?: BlockNoteListItem[];
-  props?: Record<string, unknown>;
-};
-
 type BlockNoteTableCell = {
   content?: BlockNoteInlineContent[];
   props?: {
@@ -279,6 +272,7 @@ function convertBlockNoteToV1Blocks(blocksV2: BlockNoteBlock[]): Block[] {
       // Collect consecutive numbered list items at the root level
       // Skip quote blocks that might be interspersed
       while (j < blocksV2.length) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const nextBlock = blocksV2[j] as any;
         if (nextBlock.type === "numberedListItem") {
           listItems.push(nextBlock);
@@ -293,6 +287,7 @@ function convertBlockNoteToV1Blocks(blocksV2: BlockNoteBlock[]): Block[] {
 
       // Convert all list items to HTML (handles nesting recursively)
       const listItemHtml = listItems
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         .map((item: any) => convertNumberedListItem(item, 0))
         .join("");
 
@@ -316,6 +311,7 @@ function convertBlockNoteToV1Blocks(blocksV2: BlockNoteBlock[]): Block[] {
       // Collect consecutive bullet list items at the root level
       // Skip quote blocks that might be interspersed
       while (j < blocksV2.length) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const nextBlock = blocksV2[j] as any;
         if (nextBlock.type === "bulletListItem") {
           listItems.push(nextBlock);
@@ -330,6 +326,7 @@ function convertBlockNoteToV1Blocks(blocksV2: BlockNoteBlock[]): Block[] {
 
       // Convert all list items to HTML (handles nesting recursively)
       const listItemHtml = listItems
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         .map((item: any) => convertBulletListItem(item, 0))
         .join("");
 
@@ -356,6 +353,7 @@ function convertBlockNoteToV1Blocks(blocksV2: BlockNoteBlock[]): Block[] {
   return processedBlocks.filter((block): block is Block => block !== null);
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function convertSingleBlock(blockAny: any, blockIndex: number): Block | null {
   switch (blockAny.type) {
     case "heading":
@@ -949,6 +947,7 @@ function LessonBlockRenderer({
   setActiveBlock,
   author,
 }: {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   block: any;
   lessonId: number;
   dropletId: number;

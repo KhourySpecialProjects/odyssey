@@ -27,7 +27,7 @@ export default function BlockTile({
   totalBlocks: number;
   moveBlockUp: (index: number) => void;
   moveBlockDown: (index: number) => void;
-  setBlock: (index: number) => (block: any) => void;
+  setBlock: (index: number) => (block: Block) => void;
   deleteBlock: (index: number) => () => void;
 }) {
   const renderBlock = useCallback(
@@ -81,8 +81,11 @@ export default function BlockTile({
           case "droplets.callout":
             return (
               <CalloutEditor
-                {...props}
                 block={block as unknown as CalloutBlock}
+                updateBlock={(calloutBlock: CalloutBlock) => {
+                  setBlock(index)(calloutBlock as Block);
+                }}
+                deleteBlock={deleteBlock(index)}
               />
             );
           case "droplets.quiz":
@@ -94,7 +97,9 @@ export default function BlockTile({
                     { __component: "droplets.quiz" }
                   >
                 }
-                updateBlock={props.updateBlock}
+                updateBlock={(partialBlock: Partial<Block>) => {
+                  setBlock(index)(partialBlock as Block);
+                }}
                 deleteBlock={props.deleteBlock}
               />
             );
@@ -108,7 +113,13 @@ export default function BlockTile({
                     { __component: "droplets.open-ended-quiz" }
                   >
                 }
-                updateBlock={props.updateBlock}
+                updateBlock={(
+                  partialBlock: Partial<
+                    Extract<Block, { __component: "droplets.open-ended-quiz" }>
+                  >,
+                ) => {
+                  setBlock(index)(partialBlock as Block);
+                }}
                 deleteBlock={props.deleteBlock}
               />
             );

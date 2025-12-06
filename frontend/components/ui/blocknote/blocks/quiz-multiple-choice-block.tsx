@@ -21,6 +21,7 @@ export const MultipleChoiceQuiz = createReactBlockSpec(
         default: [
           { id: "1", text: "", isCorrect: true },
           { id: "2", text: "", isCorrect: false },
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
         ] as any,
       },
     },

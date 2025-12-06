@@ -155,7 +155,7 @@ export function CreateDropletForm({
                       <ExternalLink className="h-3 w-3" />
                     </Link>
                   </div>
-                ) as any,
+                ),
                 existingDropletName: dropletName.trim(),
                 isDraft: false,
               });

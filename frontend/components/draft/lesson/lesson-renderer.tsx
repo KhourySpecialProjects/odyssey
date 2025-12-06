@@ -94,8 +94,10 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
   }, [lesson.blocks, lesson.blocksV2, lesson.blocksVersion, lesson.id]);
 
   const updateBlocksBackend = useCallback(
-    async (blocks: any[]) => {
-      const response = await updateLesson(lesson.id, { blocks });
+    async (blocks: Block[]) => {
+      const response = await updateLesson(lesson.id, {
+        blocks: blocks as unknown as BaseBlock[],
+      });
 
       if (!response || response.error || !response.ok) {
         return;
@@ -105,7 +107,7 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
   );
 
   const updateBlocksV2Backend = useCallback(
-    async (blocksV2: any) => {
+    async (blocksV2: unknown) => {
       const response = await updateLesson(lesson.id, {
         blocksV2,
         blocksVersion: "v2",
@@ -124,8 +126,12 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
   );
 
   const updateBlocksBackendReload = useCallback(
-    async (blocks: any[]) => {
-      await updateLesson(lesson.id, { blocks }, { reload: true });
+    async (blocks: Block[]) => {
+      await updateLesson(
+        lesson.id,
+        { blocks: blocks as unknown as BaseBlock[] },
+        { reload: true },
+      );
     },
     [lesson.id],
   );

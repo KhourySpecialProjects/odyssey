@@ -33,6 +33,7 @@ export default function BlockNoteTestEditor() {
     }),
   });
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const getCustomSlashMenuItems = (editor: any) => {
     const defaultItems = getDefaultReactSlashMenuItems(editor);
 

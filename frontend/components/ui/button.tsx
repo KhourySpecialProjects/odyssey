@@ -68,6 +68,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     };
 
     const innerContent = useAsChild ? (
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       React.cloneElement(children as React.ReactElement<any>, {
         className: cn(children.props.className, "gap-2"),
         children: (
