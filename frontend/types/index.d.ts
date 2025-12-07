@@ -174,12 +174,12 @@ export type Lesson = {
   id: number;
   name: string;
   slug: string;
-  type?: "general" | "setup" | "activity" | "caseStudy";
-  blocks: Block[];
+  type: string;
+  blocks: Block[]; // v1 blocks
+  blocksV2?: CustomBlockNoteBlock[]; // v2 BlockNote JSON blocks
   blocksVersion?: "v1" | "v2";
-  blocksV2?: any;
   droplets: Droplet[];
-  notes: Note[];
+  notes: string;
   orderIndex: number;
 };
 
@@ -429,3 +429,17 @@ export type CreationRequest = {
   dropletIdea: String;
   user: AuthorizedUser;
 };
+
+interface CustomBlockNoteBlock {
+  id: string;
+  type: string;
+  props: Record<string, any>;
+  content?:
+    | any[]
+    | {
+        rows: any[];
+        type: string;
+        columnWidths: (number | null)[];
+      };
+  children: any[];
+}

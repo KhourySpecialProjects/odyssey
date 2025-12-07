@@ -6,7 +6,13 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { extractHeadings, isAuthorizedUserAdmin } from "@/lib/utils";
-import { User, Droplet, Lesson, AuthorizedUser } from "@/types";
+import {
+  User,
+  Droplet,
+  Lesson,
+  AuthorizedUser,
+  CustomBlockNoteBlock,
+} from "@/types";
 import { BlocksRenderer } from "@strapi/blocks-react-renderer";
 import { ArrowDownFromLineIcon } from "lucide-react";
 import { QuizBlock } from "./quiz";
@@ -198,7 +204,7 @@ function convertBulletListItem(item: any, depth: number = 0): string {
   return `<li>${textContent}${nestedListHtml}</li>`;
 }
 
-function convertBlockNoteToV1Blocks(blocksV2: BlockNoteBlock[]): Block[] {
+function convertBlockNoteToV1Blocks(blocksV2: CustomBlockNoteBlock[]): Block[] {
   if (!Array.isArray(blocksV2)) return [];
 
   // First, group consecutive numbered list items together
