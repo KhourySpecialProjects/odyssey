@@ -176,7 +176,7 @@ export type Lesson = {
   slug: string;
   type: string;
   blocks: Block[]; // v1 blocks
-  blocksV2?: any[]; // v2 BlockNote JSON blocks
+  blocksV2?: BlockNoteBlock[]; // v2 BlockNote JSON blocks
   blocksVersion?: "v1" | "v2";
   droplets: Droplet[];
   notes: string;
