@@ -1,9 +1,9 @@
-import { BlockNoteBlock } from "@/types";
+import { CustomBlockNoteBlock } from "@/types";
 import { v4 as uuidv4 } from "uuid";
 
 interface ParseResult {
   title: string;
-  blocks: BlockNoteBlock[];
+  blocks: CustomBlockNoteBlock[];
 }
 
 /**
@@ -11,7 +11,7 @@ interface ParseResult {
  */
 export function parseMarkdownToBlockNote(markdown: string): ParseResult {
   const lines = markdown.split("\n");
-  const blocks: BlockNoteBlock[] = [];
+  const blocks: CustomBlockNoteBlock[] = [];
   let title = "Untitled Lesson";
   let i = 0;
 
@@ -120,7 +120,7 @@ export function parseMarkdownToBlockNote(markdown: string): ParseResult {
 /**
  * Create a heading block
  */
-function createHeading(text: string, level: 1 | 2 | 3): BlockNoteBlock {
+function createHeading(text: string, level: 1 | 2 | 3): CustomBlockNoteBlock {
   return {
     id: uuidv4(),
     type: "heading",
@@ -145,7 +145,7 @@ function createHeading(text: string, level: 1 | 2 | 3): BlockNoteBlock {
 /**
  * Parse callout blocks (%warning, %question, etc.)
  */
-function parseCallout(line: string): BlockNoteBlock | null {
+function parseCallout(line: string): CustomBlockNoteBlock | null {
   const match = line.match(/^%(\S+)\s+(.+)$/);
   if (!match) return null;
 
@@ -189,7 +189,7 @@ function parseCallout(line: string): BlockNoteBlock | null {
 function parseQuiz(
   lines: string[],
   startIndex: number,
-): { block: BlockNoteBlock; nextIndex: number } | null {
+): { block: CustomBlockNoteBlock; nextIndex: number } | null {
   const firstLine = lines[startIndex].trim();
   const quizTypeMatch = firstLine.match(/^%%(.+)$/);
   if (!quizTypeMatch) return null;
@@ -231,7 +231,7 @@ function parseQuiz(
 /**
  * Create true/false quiz block
  */
-function createTrueFalseQuiz(items: string[]): BlockNoteBlock {
+function createTrueFalseQuiz(items: string[]): CustomBlockNoteBlock {
   const question = items[0] || "";
   const answer = items[1]?.toLowerCase() === "true";
 
@@ -252,7 +252,7 @@ function createTrueFalseQuiz(items: string[]): BlockNoteBlock {
 /**
  * Create open-ended quiz block
  */
-function createOpenEndedQuiz(items: string[]): BlockNoteBlock {
+function createOpenEndedQuiz(items: string[]): CustomBlockNoteBlock {
   const question = items[0] || "";
   const correctAnswer = items[1] || "";
 
@@ -273,7 +273,7 @@ function createOpenEndedQuiz(items: string[]): BlockNoteBlock {
 /**
  * Create multiple choice quiz block
  */
-function createMultipleChoiceQuiz(items: string[]): BlockNoteBlock {
+function createMultipleChoiceQuiz(items: string[]): CustomBlockNoteBlock {
   const question = items[0] || "";
   const options = items.slice(1).map((item, index) => {
     const isCorrect = item.endsWith("<");
@@ -306,7 +306,7 @@ function createMultipleChoiceQuiz(items: string[]): BlockNoteBlock {
 function parseLatexBlock(
   lines: string[],
   startIndex: number,
-): { block: BlockNoteBlock; nextIndex: number } | null {
+): { block: CustomBlockNoteBlock; nextIndex: number } | null {
   const firstLine = lines[startIndex].trim();
   if (!firstLine.startsWith("$$")) return null;
 
@@ -346,7 +346,7 @@ function parseLatexBlock(
 function createLatexBlock(
   content: string,
   displayMode: boolean,
-): BlockNoteBlock {
+): CustomBlockNoteBlock {
   return {
     id: uuidv4(),
     type: "latex",
@@ -364,7 +364,7 @@ function createLatexBlock(
 function parseTable(
   lines: string[],
   startIndex: number,
-): { block: BlockNoteBlock; nextIndex: number } | null {
+): { block: CustomBlockNoteBlock; nextIndex: number } | null {
   let i = startIndex;
   const tableLines: string[] = [];
 
@@ -405,7 +405,7 @@ function parseTable(
 /**
  * Create table block
  */
-function createTable(rows: string[][]): BlockNoteBlock {
+function createTable(rows: string[][]): CustomBlockNoteBlock {
   const tableRows = rows.map((row) => ({
     cells: row.map((cellText) => ({
       type: "tableCell",
@@ -448,8 +448,8 @@ function parseList(
   lines: string[],
   startIndex: number,
   listType: "numbered" | "bullet",
-): { blocks: BlockNoteBlock[]; nextIndex: number } {
-  const blocks: BlockNoteBlock[] = [];
+): { blocks: CustomBlockNoteBlock[]; nextIndex: number } {
+  const blocks: CustomBlockNoteBlock[] = [];
   let i = startIndex;
 
   const isListItem = (line: string) => {
@@ -496,7 +496,7 @@ function parseList(
 /**
  * Parse paragraph (handles inline LaTeX with $...$)
  */
-function parseParagraph(text: string): BlockNoteBlock {
+function parseParagraph(text: string): CustomBlockNoteBlock {
   // For now, we'll treat inline LaTeX as regular text
   // BlockNote will need to handle inline LaTeX separately if needed
   return {

@@ -176,7 +176,7 @@ export type Lesson = {
   slug: string;
   type: string;
   blocks: Block[]; // v1 blocks
-  blocksV2?: BlockNoteBlock[]; // v2 BlockNote JSON blocks
+  blocksV2?: CustomBlockNoteBlock[]; // v2 BlockNote JSON blocks
   blocksVersion?: "v1" | "v2";
   droplets: Droplet[];
   notes: string;
@@ -430,10 +430,16 @@ export type CreationRequest = {
   user: AuthorizedUser;
 };
 
-interface BlockNoteBlock {
+interface CustomBlockNoteBlock {
   id: string;
   type: string;
   props: Record<string, any>;
-  content?: any[];
+  content?:
+    | any[]
+    | {
+        rows: any[];
+        type: string;
+        columnWidths: (number | null)[];
+      };
   children: any[];
 }
