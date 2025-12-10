@@ -1,10 +1,12 @@
 "use client";
 
-import { useEditor, EditorContent } from "@tiptap/react";
+import { useEditor, EditorContent, useEditorState } from "@tiptap/react";
 import Document from "@tiptap/extension-document";
 import Paragraph from "@tiptap/extension-paragraph";
 import Text from "@tiptap/extension-text";
 import Placeholder from "@tiptap/extension-placeholder";
+import Link from "@tiptap/extension-link";
+import { useCallback } from "react";
 
 export function DropletOverviewInput({
   initialContent,
@@ -14,6 +16,7 @@ export function DropletOverviewInput({
   updateContent: (content: string) => void;
 }) {
   const editor = useEditor({
+    editable: true,
     extensions: [
       Document,
       Paragraph,
@@ -23,10 +26,20 @@ export function DropletOverviewInput({
           "before:content-[attr(data-placeholder)] before:text-gray-500 before:absolute before:top-8 before:left-8 before:pointer-events-none before:select-none",
       }),
       Text,
+      Link.configure({
+        openOnClick: false,
+        HTMLAttributes: {
+          target: '_blank',
+          rel: 'noopener noreferrer nofollow',
+        },
+        autolink: true,
+        defaultProtocol: 'https',
+        protocols: ['http', 'https']
+      })
     ],
 
     onUpdate: ({ editor }) => {
-      (updateContent as (content: string) => void)(editor.getHTML());
+      updateContent(editor.getHTML());
     },
 
     content: initialContent,
@@ -39,7 +52,77 @@ export function DropletOverviewInput({
     immediatelyRender: false,
   });
 
+  const setLink = useCallback(() => {
+  if (!editor) return;
+  
+  const previousUrl = editor.getAttributes('link').href as string | undefined;
+  let url = window.prompt('URL', previousUrl || '');
+
+  // cancelled
+  if (url === null) {
+    return;
+  }
+
+  // empty
+  if (url === '') {
+    editor.chain().focus().extendMarkRange('link').unsetLink().run();
+    return;
+  }
+
+  if (!url.match(/^https?:\/\//)) {
+    url = 'https://' + url;
+  }
+
+  // update link
+  try {
+    editor.chain().focus().setLink({ href: url }).run();
+  } catch (e) {
+    const errorMessage = e instanceof Error ? e.message : 'Failed to set link';
+    alert(errorMessage);
+  }
+}, [editor]);
+
+  const editorState = useEditorState({
+    editor,
+    selector: (ctx) => {
+      if (!ctx?.editor) {
+        return { isLink: false };
+      }
+      return {
+        isLink: ctx.editor.isActive('link'),
+      };
+    },
+  });
+
+  // Now it's safe to return early
+  if (!editor) {
+    return null
+  }
+
   return (
-    <EditorContent role="textbox" name="droplet-overview" editor={editor} />
+    <>
+      <div className="control-group mb-2 mt-2">
+        <div className="button-group flex gap-2">
+          <button 
+            onClick={setLink} 
+            className={`px-3 py-1 rounded border transition-colors ${
+              editorState?.isLink 
+                ? 'bg-blue-500 text-white border-blue-600' 
+                : 'bg-white dark:bg-slate-700 border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-600'
+            }`}
+          >
+            Set link
+          </button>
+          <button 
+            onClick={() => editor.chain().focus().unsetLink().run()} 
+            disabled={!editorState?.isLink}
+            className="px-3 py-1 rounded border bg-white dark:bg-slate-700 border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Unset link
+          </button>
+        </div>
+      </div>
+      <EditorContent role="textbox" name="droplet-overview" editor={editor} />
+    </>
   );
 }
