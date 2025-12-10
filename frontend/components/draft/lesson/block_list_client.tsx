@@ -9,14 +9,12 @@ import {
 } from "@/components/message";
 export function BlockListClient({
   blocks,
-  onAddBlock,
   setBlock,
   deleteBlock,
   onMoveBlock,
 }: {
   blocks: Block[];
-  onAddBlock: (index: number, block: Block) => void;
-  setBlock: (index: number) => (block: any) => void;
+  setBlock: (index: number) => (block: Block) => void;
   deleteBlock: (index: number) => () => void;
   onMoveBlock: (fromIndex: number, toIndex: number) => void;
 }) {

@@ -64,14 +64,10 @@ export function CreateDropletForm({
   const [submissionState, setSubmissionState] = useState(
     initialSubmissionState,
   );
-  const [existingDropletSlug, setExistingDropletSlug] = useState<string | null>(
-    null,
-  );
 
   //resets error message when changes made to fields
   useEffect(() => {
     setSubmissionState(initialSubmissionState);
-    setExistingDropletSlug(null);
   }, [
     dropletName,
     focusAreaValue,
@@ -145,7 +141,6 @@ export function CreateDropletForm({
                 isDraft: true,
               });
             } else {
-              setExistingDropletSlug(slug);
               setSubmissionState({
                 error: (
                   <div>
@@ -160,7 +155,7 @@ export function CreateDropletForm({
                       <ExternalLink className="h-3 w-3" />
                     </Link>
                   </div>
-                ) as any,
+                ),
                 existingDropletName: dropletName.trim(),
                 isDraft: false,
               });

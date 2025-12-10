@@ -4,6 +4,12 @@ import { useEffect } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import posthog from "posthog-js";
 
+declare global {
+  interface Window {
+    posthog?: typeof posthog;
+  }
+}
+
 interface PostHogProviderProps {
   children: React.ReactNode;
   userId?: number;
@@ -22,7 +28,7 @@ export function PostHogProvider({
 
   useEffect(() => {
     // Initialize PostHog (only once)
-    if (typeof window !== "undefined" && !(window as any).posthog) {
+    if (typeof window !== "undefined" && !window.posthog) {
       posthog.init(process.env.NEXT_PUBLIC_POSTHOG_KEY!, {
         api_host:
           process.env.NEXT_PUBLIC_POSTHOG_HOST || "https://app.posthog.com",
@@ -33,7 +39,7 @@ export function PostHogProvider({
       });
 
       // Make posthog available globally
-      (window as any).posthog = posthog;
+      window.posthog = posthog;
     }
 
     // Identify user if logged in
@@ -67,9 +73,12 @@ export function PostHogProvider({
 
 // Hook to track custom events easily
 export function usePostHog() {
-  const trackEvent = (eventName: string, properties?: Record<string, any>) => {
-    if (typeof window !== "undefined" && (window as any).posthog) {
-      (window as any).posthog.capture(eventName, properties);
+  const trackEvent = (
+    eventName: string,
+    properties?: Record<string, string | number | boolean | null | undefined>,
+  ) => {
+    if (typeof window !== "undefined" && window.posthog) {
+      window.posthog.capture(eventName, properties);
     }
   };
 

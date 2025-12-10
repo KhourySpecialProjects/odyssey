@@ -6,15 +6,7 @@ import DraggableDropletWideTile from "./draggable-droplet-wide-tile";
 
 const ITEMS_PER_PAGE = 5;
 
-export function DraggableTileListClient({
-  droplets,
-  onReorder,
-  listType,
-}: {
-  droplets: Droplet[];
-  onReorder: (dragIndex: number, hoverIndex: number) => void;
-  listType: "source" | "selected";
-}) {
+export function DraggableTileListClient({ droplets }: { droplets: Droplet[] }) {
   const [currentPage, setCurrentPage] = useState(1);
 
   const totalPages = Math.ceil(droplets.length / ITEMS_PER_PAGE);
@@ -39,14 +31,8 @@ export function DraggableTileListClient({
   return (
     <>
       <div className="space-y-4">
-        {paginatedDroplets.map((droplet, index) => (
-          <DraggableDropletWideTile
-            key={droplet.id}
-            droplet={droplet}
-            index={index}
-            moveCard={onReorder}
-            sourceList={listType}
-          />
+        {paginatedDroplets.map((droplet) => (
+          <DraggableDropletWideTile key={droplet.id} droplet={droplet} />
         ))}
       </div>
       <div className="mt-4 flex items-center justify-end">

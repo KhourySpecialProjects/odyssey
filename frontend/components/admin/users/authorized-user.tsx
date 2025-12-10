@@ -35,7 +35,14 @@ interface UserActivity {
     | "rating"
     | "quiz";
   description: string;
-  details?: any;
+  details?: {
+    properties?: {
+      $pathname?: string;
+      pathname?: string;
+      $current_url?: string;
+    };
+    source?: string;
+  };
 }
 
 export function AuthorizedUserBlock({

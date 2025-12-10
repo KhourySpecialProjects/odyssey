@@ -18,7 +18,7 @@ import go from "react-syntax-highlighter/dist/esm/languages/hljs/go";
 import rust from "react-syntax-highlighter/dist/esm/languages/hljs/rust";
 import kotlin from "react-syntax-highlighter/dist/esm/languages/hljs/kotlin";
 import swift from "react-syntax-highlighter/dist/esm/languages/hljs/swift";
-import { Play, Edit, Check, X, AlertCircle, Loader2 } from "lucide-react";
+import { Play, Check, X, AlertCircle, Loader2 } from "lucide-react";
 
 // Register languages
 SyntaxHighlighter.registerLanguage("javascript", javascript);
@@ -125,10 +125,10 @@ const executePistonCode = async (
       success: true,
       output: output.trim(),
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     return {
       success: false,
-      output: `Execution error: ${error.message}`,
+      output: `Execution error: ${error instanceof Error ? error.message : String(error)}`,
     };
   }
 };
@@ -206,8 +206,10 @@ export function CodeBlockViewer({
       );
       setOutput(result.output);
       setExecutionSuccess(result.success);
-    } catch (error: any) {
-      setOutput(`Unexpected error: ${error.message}`);
+    } catch (error: unknown) {
+      setOutput(
+        `Unexpected error: ${error instanceof Error ? error.message : String(error)}`,
+      );
       setExecutionSuccess(false);
     } finally {
       setIsRunning(false);
@@ -266,7 +268,6 @@ export function CodeBlockViewer({
             className="group relative cursor-pointer"
             onClick={() => editable && setIsEditing(true)}
           >
-            {/* @ts-ignore - SyntaxHighlighter React 18 compatibility */}
             <SyntaxHighlighter
               language={language}
               style={atomOneDark}

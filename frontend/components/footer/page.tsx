@@ -41,9 +41,6 @@ export default async function Footer() {
             <Link className={linkStyles} href="/contributors">
               Contributors
             </Link>
-            {/* <Link className={linkStyles} href="/faq">
-              FAQ
-            </Link> */}
           </div>
         </div>
         <div className="hidden w-1/2 items-center justify-center md:flex">

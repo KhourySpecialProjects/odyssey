@@ -3,7 +3,6 @@ import { getUserActivity } from "@/lib/requests/user-activity";
 // Import your auth config
 import { authOptions } from "@/lib/auth/options";
 import { getServerSession } from "next-auth";
-import { AuthorizedUserRoleTitle } from "@/lib/globals";
 import { isAuthorizedUserAdmin } from "@/lib/utils";
 
 export async function GET(

@@ -17,26 +17,14 @@ describe("DraggableTileListClient", () => {
   }));
 
   it("renders first page of droplets", () => {
-    render(
-      <DraggableTileListClient
-        droplets={mockDroplets as any}
-        moveCard={jest.fn()}
-        listType="source"
-      />,
-    );
+    render(<DraggableTileListClient droplets={mockDroplets as any} />);
     expect(screen.getByText("Droplet 1")).toBeInTheDocument();
     expect(screen.getByText("Droplet 5")).toBeInTheDocument();
     expect(screen.queryByText("Droplet 6")).not.toBeInTheDocument();
   });
 
   it("handles pagination correctly", () => {
-    render(
-      <DraggableTileListClient
-        droplets={mockDroplets as any}
-        moveCard={jest.fn()}
-        listType="source"
-      />,
-    );
+    render(<DraggableTileListClient droplets={mockDroplets as any} />);
 
     fireEvent.click(screen.getByText("Next"));
     expect(screen.getByText("Droplet 6")).toBeInTheDocument();

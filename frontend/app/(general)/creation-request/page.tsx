@@ -19,7 +19,7 @@ export default async function RequestContentCreatorRole() {
   if (existingRequest) {
     return (
       <GradientBackground>
-        <PendingRequestCard request={existingRequest} />
+        <PendingRequestCard />
       </GradientBackground>
     );
   }
