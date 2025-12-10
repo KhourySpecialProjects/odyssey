@@ -20,6 +20,12 @@ import { z } from "zod";
 import { saveQuizAnswer, getQuizAnswer } from "@/lib/quiz-storage";
 import posthog from "posthog-js";
 
+declare global {
+  interface Window {
+    posthog?: typeof posthog;
+  }
+}
+
 const formSchema = z.object({
   answerIds: z.array(z.string()),
 });
