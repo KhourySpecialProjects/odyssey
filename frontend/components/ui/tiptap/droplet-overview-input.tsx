@@ -29,13 +29,13 @@ export function DropletOverviewInput({
       Link.configure({
         openOnClick: false,
         HTMLAttributes: {
-          target: '_blank',
-          rel: 'noopener noreferrer nofollow',
+          target: "_blank",
+          rel: "noopener noreferrer nofollow",
         },
         autolink: true,
-        defaultProtocol: 'https',
-        protocols: ['http', 'https']
-      })
+        defaultProtocol: "https",
+        protocols: ["http", "https"],
+      }),
     ],
 
     onUpdate: ({ editor }) => {
@@ -53,34 +53,35 @@ export function DropletOverviewInput({
   });
 
   const setLink = useCallback(() => {
-  if (!editor) return;
-  
-  const previousUrl = editor.getAttributes('link').href as string | undefined;
-  let url = window.prompt('URL', previousUrl || '');
+    if (!editor) return;
 
-  // cancelled
-  if (url === null) {
-    return;
-  }
+    const previousUrl = editor.getAttributes("link").href as string | undefined;
+    let url = window.prompt("URL", previousUrl || "");
 
-  // empty
-  if (url === '') {
-    editor.chain().focus().extendMarkRange('link').unsetLink().run();
-    return;
-  }
+    // cancelled
+    if (url === null) {
+      return;
+    }
 
-  if (!url.match(/^https?:\/\//)) {
-    url = 'https://' + url;
-  }
+    // empty
+    if (url === "") {
+      editor.chain().focus().extendMarkRange("link").unsetLink().run();
+      return;
+    }
 
-  // update link
-  try {
-    editor.chain().focus().setLink({ href: url }).run();
-  } catch (e) {
-    const errorMessage = e instanceof Error ? e.message : 'Failed to set link';
-    alert(errorMessage);
-  }
-}, [editor]);
+    if (!url.match(/^https?:\/\//)) {
+      url = "https://" + url;
+    }
+
+    // update link
+    try {
+      editor.chain().focus().setLink({ href: url }).run();
+    } catch (e) {
+      const errorMessage =
+        e instanceof Error ? e.message : "Failed to set link";
+      alert(errorMessage);
+    }
+  }, [editor]);
 
   const editorState = useEditorState({
     editor,
@@ -89,34 +90,34 @@ export function DropletOverviewInput({
         return { isLink: false };
       }
       return {
-        isLink: ctx.editor.isActive('link'),
+        isLink: ctx.editor.isActive("link"),
       };
     },
   });
 
   // Now it's safe to return early
   if (!editor) {
-    return null
+    return null;
   }
 
   return (
     <>
-      <div className="control-group mb-2 mt-2">
+      <div className="control-group mt-2 mb-2">
         <div className="button-group flex gap-2">
-          <button 
-            onClick={setLink} 
-            className={`px-3 py-1 rounded border transition-colors ${
-              editorState?.isLink 
-                ? 'bg-blue-500 text-white border-blue-600' 
-                : 'bg-white dark:bg-slate-700 border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-600'
+          <button
+            onClick={setLink}
+            className={`rounded border px-3 py-1 transition-colors ${
+              editorState?.isLink
+                ? "border-blue-600 bg-blue-500 text-white"
+                : "border-slate-300 bg-white hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-700 dark:hover:bg-slate-600"
             }`}
           >
             Set link
           </button>
-          <button 
-            onClick={() => editor.chain().focus().unsetLink().run()} 
+          <button
+            onClick={() => editor.chain().focus().unsetLink().run()}
             disabled={!editorState?.isLink}
-            className="px-3 py-1 rounded border bg-white dark:bg-slate-700 border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="rounded border border-slate-300 bg-white px-3 py-1 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-600 dark:bg-slate-700 dark:hover:bg-slate-600"
           >
             Unset link
           </button>
