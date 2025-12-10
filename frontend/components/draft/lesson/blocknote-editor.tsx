@@ -4,11 +4,10 @@ import dynamic from "next/dynamic";
 import "@blocknote/core/fonts/inter.css";
 import "@blocknote/mantine/style.css";
 import "katex/dist/katex.min.css";
-import type { Block as StrapiBlock } from "@/types";
 import type { Block } from "@blocknote/core";
 
 interface BlockNoteEditorProps {
-  initialContent?: StrapiBlock[];
+  initialContent?: Block[];
   onChange: (content: Block[]) => void;
 }
 
@@ -33,7 +32,7 @@ export function BlockNoteEditor({
 }: BlockNoteEditorProps) {
   return (
     <BlockNoteEditorClient
-      initialContent={initialContent as unknown as Block[]}
+      initialContent={initialContent}
       onChange={onChange}
     />
   );

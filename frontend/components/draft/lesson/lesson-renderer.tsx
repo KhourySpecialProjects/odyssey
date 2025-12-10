@@ -14,6 +14,7 @@ import BlockList from "./block_list";
 import { getDropletBySlug } from "@/lib/requests/droplet";
 
 import { Block } from "@/types";
+import type { Block as BlockNoteBlock } from "@blocknote/core";
 import { toast } from "sonner";
 import { deleteLesson, updateLesson } from "@/lib/requests/lesson";
 import AddLessonBlock from "./add-tools";
@@ -461,7 +462,7 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
             </p>
             <BlockNoteEditor
               key={`editor-${lesson.id}`} // Add this line - forces remount on navigation
-              initialContent={lesson.blocksV2}
+              initialContent={lesson.blocksV2 as unknown as BlockNoteBlock[]}
               onChange={(content) => {
                 debounceUpdateV2(content);
               }}
