@@ -4,10 +4,8 @@ import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
 import { fetchFriends } from "@/lib/requests/friends";
 import { fetchUserAnnouncements } from "@/lib/requests/feed";
 import { getCurrentUser } from "@/lib/auth/session";
-import { sendFriendRequest } from "@/lib/requests/friends";
 import { ProfileContent } from "./profile-content";
 import { PrivateProfileError } from "./private-profile-error";
-import { revalidatePath } from "next/cache";
 
 export default async function PublicProfilePage({
   params,
@@ -77,30 +75,6 @@ export default async function PublicProfilePage({
       } catch (error) {
         console.error("Error fetching current user data:", error);
       }
-    }
-
-    // Server action to handle friend requests
-    async function handleAddFriend(requestee: AuthorizedUser) {
-      "use server";
-
-      if (!currentUserData) {
-        throw new Error("Must be logged in to send friend request");
-      }
-
-      // TypeScript now knows currentUserData is not null after the check above
-      const result = await sendFriendRequest(
-        currentUserData as AuthorizedUser,
-        requestee,
-      );
-
-      if (!result.success) {
-        throw new Error(
-          result.error ? String(result.error) : "Failed to send friend request",
-        );
-      }
-
-      // Revalidate the page to show updated friendship status
-      revalidatePath(`/prof/${username}`);
     }
 
     return (

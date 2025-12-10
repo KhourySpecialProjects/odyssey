@@ -3,7 +3,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { cn, stripHtmlTags } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import { Lesson, Droplet } from "@/types";
 import { GripVertical, Hammer, FilePieChart, BookText } from "lucide-react";
 

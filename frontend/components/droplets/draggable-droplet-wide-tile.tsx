@@ -2,19 +2,11 @@ import { Droplet, Tag } from "@/types/index.d";
 import { Badge } from "@/components/ui/badge";
 import { cn, uppercaseFirstChar } from "@/lib/utils";
 
-interface DraggableDropletWideTileProps {
-  droplet: Droplet;
-  index: number;
-  moveCard: (dragIndex: number, hoverIndex: number) => void;
-  sourceList: string;
-}
-
 export default function DraggableDropletWideTile({
   droplet,
-  index,
-  moveCard,
-  sourceList,
-}: DraggableDropletWideTileProps) {
+}: {
+  droplet: Droplet;
+}) {
   return (
     <div
       className={cn(

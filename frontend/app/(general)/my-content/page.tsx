@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Import, PlusIcon } from "lucide-react";
+import { PlusIcon } from "lucide-react";
 import Link from "next/link";
 import { Suspense } from "react";
 import { getCurrentUser } from "@/lib/auth/session";

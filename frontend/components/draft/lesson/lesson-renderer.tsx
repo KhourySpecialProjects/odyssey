@@ -14,6 +14,7 @@ import BlockList from "./block_list";
 import { getDropletBySlug } from "@/lib/requests/droplet";
 
 import { Block } from "@/types";
+import type { Block as BlockNoteBlock } from "@blocknote/core";
 import { toast } from "sonner";
 import { deleteLesson, updateLesson } from "@/lib/requests/lesson";
 import AddLessonBlock from "./add-tools";
@@ -94,8 +95,10 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
   }, [lesson.blocks, lesson.blocksV2, lesson.blocksVersion, lesson.id]);
 
   const updateBlocksBackend = useCallback(
-    async (blocks: any[]) => {
-      const response = await updateLesson(lesson.id, { blocks });
+    async (blocks: Block[]) => {
+      const response = await updateLesson(lesson.id, {
+        blocks: blocks as unknown as BaseBlock[],
+      });
 
       if (!response || response.error || !response.ok) {
         return;
@@ -105,7 +108,7 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
   );
 
   const updateBlocksV2Backend = useCallback(
-    async (blocksV2: any) => {
+    async (blocksV2: unknown) => {
       const response = await updateLesson(lesson.id, {
         blocksV2,
         blocksVersion: "v2",
@@ -124,8 +127,12 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
   );
 
   const updateBlocksBackendReload = useCallback(
-    async (blocks: any[]) => {
-      await updateLesson(lesson.id, { blocks }, { reload: true });
+    async (blocks: Block[]) => {
+      await updateLesson(
+        lesson.id,
+        { blocks: blocks as unknown as BaseBlock[] },
+        { reload: true },
+      );
     },
     [lesson.id],
   );
@@ -209,7 +216,7 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
   }, []);
 
   const deleteLessonBackend = useCallback(async () => {
-    const response = await getDropletBySlug(dropletSlug).then((droplet) =>
+    const response = await getDropletBySlug(dropletSlug).then(() =>
       deleteLesson(lesson.id, true),
     );
     if (response && !response.error) {
@@ -221,16 +228,6 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
   const debouncedNameUpdate = useMemo(
     () => debounce(updateNameBackend, 1000),
     [updateNameBackend],
-  );
-
-  const handleAddBlock = useCallback(
-    (index: number, block: Block) => {
-      const updatedBlocks = [...blocks];
-      updatedBlocks.splice(index, 0, block);
-      setBlocks(updatedBlocks);
-      updateBlocksBackendReload(updatedBlocks);
-    },
-    [blocks, updateBlocksBackendReload],
   );
 
   const handleAddTool = useCallback(
@@ -451,7 +448,6 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
               <BlockList
                 blocks={blocks}
                 onReorder={handleReorderSource}
-                onAddBlock={handleAddBlock}
                 setBlock={setBlock}
                 deleteBlock={deleteBlock}
               />
@@ -466,7 +462,7 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
             </p>
             <BlockNoteEditor
               key={`editor-${lesson.id}`} // Add this line - forces remount on navigation
-              initialContent={lesson.blocksV2}
+              initialContent={lesson.blocksV2 as unknown as BlockNoteBlock[]}
               onChange={(content) => {
                 debounceUpdateV2(content);
               }}
