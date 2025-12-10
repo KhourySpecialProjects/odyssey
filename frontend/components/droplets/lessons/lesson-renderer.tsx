@@ -214,6 +214,98 @@ function convertBlockNoteToV1Blocks(blocksV2: CustomBlockNoteBlock[]): Block[] {
   while (i < blocksV2.length) {
     const blockAny = blocksV2[i] as any;
 
+    // Group consecutive non-empty paragraphs together to avoid large inter-block spacing
+    // Empty paragraphs break the grouping and create proportional spacing
+    if (blockAny.type === "paragraph") {
+      const inlineContent = (blockAny.content ?? []) as any[];
+      const textContent = convertInlineContentToHtml(inlineContent);
+      const isEmpty = !textContent || textContent.trim() === "";
+
+      // If empty paragraph, render each empty paragraph as a separate block
+      // This creates proportional spacing - more empty paragraphs = more spacing
+      if (isEmpty) {
+        const emptyParagraphBlocks: any[] = [];
+        let j = i;
+
+        // Collect consecutive empty paragraphs
+        while (j < blocksV2.length) {
+          const nextBlock = blocksV2[j] as any;
+          if (nextBlock.type === "paragraph") {
+            const nextInlineContent = (nextBlock.content ?? []) as any[];
+            const nextTextContent =
+              convertInlineContentToHtml(nextInlineContent);
+            const nextIsEmpty =
+              !nextTextContent || nextTextContent.trim() === "";
+
+            if (nextIsEmpty) {
+              emptyParagraphBlocks.push(nextBlock);
+              j++;
+            } else {
+              break;
+            }
+          } else {
+            break;
+          }
+        }
+
+        // Render each empty paragraph as a separate block
+        // Each block gets space-y-12 spacing, so multiple empty paragraphs create proportional spacing
+        emptyParagraphBlocks.forEach((_, index) => {
+          processedBlocks.push({
+            __component: "droplets.generic",
+            id: i + index,
+            content: "<p></p>",
+          });
+        });
+
+        i = j;
+        continue;
+      }
+
+      // Group consecutive non-empty paragraphs together
+      const paragraphBlocks: any[] = [];
+      let j = i;
+
+      while (j < blocksV2.length) {
+        const nextBlock = blocksV2[j] as any;
+        if (nextBlock.type === "paragraph") {
+          const nextInlineContent = (nextBlock.content ?? []) as any[];
+          const nextTextContent = convertInlineContentToHtml(nextInlineContent);
+          const nextIsEmpty = !nextTextContent || nextTextContent.trim() === "";
+
+          // Stop grouping if we hit an empty paragraph
+          if (nextIsEmpty) {
+            break;
+          }
+
+          paragraphBlocks.push(nextBlock);
+          j++;
+        } else {
+          break;
+        }
+      }
+
+      const paragraphsHtml = paragraphBlocks
+        .map((p) => {
+          const pInlineContent = (p.content ?? []) as any[];
+          const pTextContent = convertInlineContentToHtml(pInlineContent);
+          return pTextContent ? `<p>${pTextContent}</p>` : "";
+        })
+        .filter(Boolean)
+        .join("");
+
+      if (paragraphsHtml) {
+        processedBlocks.push({
+          __component: "droplets.generic",
+          id: i,
+          content: paragraphsHtml,
+        });
+      }
+
+      i = j;
+      continue;
+    }
+
     // Skip quote blocks
     if (blockAny.type === "quote") {
       // Convert quote to paragraph to avoid losing content
