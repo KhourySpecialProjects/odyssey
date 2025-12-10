@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { getDueDateBadgeColor } from "@/lib/utils";
 import { Archive, ArchiveRestore, Clock } from "lucide-react";
 import { Badge } from "../ui/badge";

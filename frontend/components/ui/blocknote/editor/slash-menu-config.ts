@@ -4,7 +4,7 @@ import { createElement } from "react";
 import type { ReactElement } from "react";
 import type { CustomBlockNoteEditor } from "@/lib/blocknote/schema";
 import type { CalloutType } from "@/lib/blocknote/types";
-import { Code, FileCode, Terminal } from "lucide-react";
+import { Code } from "lucide-react";
 import {
   TriangleAlert,
   CircleHelp,
@@ -162,7 +162,7 @@ export const getQuizSlashMenuItems = (
                 { id: "2", text: "", isCorrect: false },
               ],
             },
-          } as any,
+          } as unknown as Parameters<typeof editor.insertBlocks>[0][0],
         ],
         editor.getTextCursorPosition().block,
         "after",

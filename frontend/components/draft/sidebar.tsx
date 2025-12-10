@@ -10,7 +10,7 @@ import {
   isContentEditor,
 } from "@/lib/utils";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
-import { AuthorizedUser, Droplet, Lesson, User } from "@/types";
+import { Droplet, Lesson, User } from "@/types";
 import {
   SettingsIcon,
   ArrowLeftIcon,

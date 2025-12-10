@@ -21,6 +21,7 @@ export const MultipleChoiceQuiz = createReactBlockSpec(
         default: [
           { id: "1", text: "", isCorrect: true },
           { id: "2", text: "", isCorrect: false },
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
         ] as any,
       },
     },
@@ -201,7 +202,9 @@ export const MultipleChoiceQuiz = createReactBlockSpec(
           opt.id === id ? { ...opt, text } : opt,
         );
         props.editor.updateBlock(props.block, {
-          props: { options: updatedOptions as any },
+          props: {
+            options: updatedOptions,
+          } as unknown as typeof props.block.props,
         });
       };
 
@@ -211,18 +214,22 @@ export const MultipleChoiceQuiz = createReactBlockSpec(
           isCorrect: opt.id === id,
         }));
         props.editor.updateBlock(props.block, {
-          props: { options: updatedOptions as any },
+          props: {
+            options: updatedOptions,
+          } as unknown as typeof props.block.props,
         });
       };
 
       const handleAddOption = () => {
-        const newOption = {
+        const newOption: AnswerOption = {
           id: Date.now().toString(),
           text: "",
           isCorrect: false,
         };
         props.editor.updateBlock(props.block, {
-          props: { options: [...options, newOption] as any },
+          props: {
+            options: [...options, newOption],
+          } as unknown as typeof props.block.props,
         });
       };
 
@@ -232,7 +239,9 @@ export const MultipleChoiceQuiz = createReactBlockSpec(
           (opt: AnswerOption) => opt.id !== id,
         );
         props.editor.updateBlock(props.block, {
-          props: { options: updatedOptions as any },
+          props: {
+            options: updatedOptions,
+          } as unknown as typeof props.block.props,
         });
       };
 
@@ -243,7 +252,7 @@ export const MultipleChoiceQuiz = createReactBlockSpec(
       return (
         <div
           ref={blockRef}
-          onMouseDown={(e) => {
+          onMouseDown={() => {
             if (blockRef.current) {
               const blockContent = blockRef.current.closest(
                 ".bn-block-content",
