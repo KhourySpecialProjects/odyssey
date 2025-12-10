@@ -6,7 +6,13 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { extractHeadings, isAuthorizedUserAdmin } from "@/lib/utils";
-import { User, Droplet, Lesson, AuthorizedUser } from "@/types";
+import {
+  User,
+  Droplet,
+  Lesson,
+  AuthorizedUser,
+  CustomBlockNoteBlock,
+} from "@/types";
 import { BlocksRenderer } from "@strapi/blocks-react-renderer";
 import { ArrowDownFromLineIcon } from "lucide-react";
 import { QuizBlock } from "./quiz";
@@ -27,7 +33,6 @@ import {
   getHighlightsForLesson,
 } from "@/lib/requests/highlights";
 import { Block } from "@/types";
-import type { Block as BlockNoteBlock } from "@blocknote/core";
 import { GenericBlock } from "@/components/draft/lesson/blocks/generic";
 import { markLessonAsComplete } from "@/lib/requests/lesson";
 import posthog from "posthog-js";
@@ -238,7 +243,7 @@ function convertBulletListItem(
   return `<li>${textContent}${nestedListHtml}</li>`;
 }
 
-function convertBlockNoteToV1Blocks(blocksV2: BlockNoteBlock[]): Block[] {
+function convertBlockNoteToV1Blocks(blocksV2: CustomBlockNoteBlock[]): Block[] {
   if (!Array.isArray(blocksV2)) return [];
 
   // First, group consecutive numbered list items together

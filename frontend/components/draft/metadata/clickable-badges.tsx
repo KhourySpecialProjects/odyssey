@@ -201,7 +201,7 @@ export function ClickableBadges({
           onClick={() => setActivePopup("focusArea")}
           disabled={isPending}
         >
-          <Badge className="h-full border border-slate-300 bg-purple-200 text-black hover:bg-purple-400 dark:bg-purple-600 dark:hover:bg-purple-400">
+          <Badge className="h-full border border-slate-300 bg-purple-200 text-black hover:bg-purple-400 dark:bg-purple-600 dark:text-white dark:hover:bg-purple-400">
             {uppercaseFirstChar(localFocusArea)}
           </Badge>
         </button>
@@ -247,7 +247,7 @@ export function ClickableBadges({
           onClick={() => setActivePopup("type")}
           disabled={isPending}
         >
-          <Badge className="h-full border border-slate-300 bg-blue-200 text-black hover:bg-blue-400 dark:bg-blue-900 dark:hover:bg-blue-400">
+          <Badge className="dark:text-whitegit h-full border border-slate-300 bg-blue-200 text-black hover:bg-blue-400 dark:bg-blue-900 dark:text-white">
             {uppercaseFirstChar(localType)}
           </Badge>
         </button>
@@ -294,7 +294,7 @@ export function ClickableBadges({
           disabled={isPending}
           className="h-full"
         >
-          <Badge className="h-full border border-slate-300 bg-transparent text-black hover:bg-red-300">
+          <Badge className="h-full border border-slate-300 bg-transparent text-black hover:bg-red-300 dark:text-white">
             {tag.name}
           </Badge>
         </button>
@@ -306,7 +306,7 @@ export function ClickableBadges({
           onClick={() => setActivePopup("addTag")}
           disabled={isPending}
         >
-          <div className="flex h-full flex-row items-center text-black">
+          <div className="flex h-full flex-row items-center text-black dark:text-white">
             <Plus className="h-4 w-4" />
             <p>Add Tag</p>
           </div>

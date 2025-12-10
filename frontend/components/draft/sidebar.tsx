@@ -45,6 +45,7 @@ import { createDropletAnnouncement } from "@/lib/requests/feed";
 import { ContentActionButton } from "./metadata/content-action-button";
 
 import { AddExistingLesson } from "@/components/draft/add-existing-lesson";
+import { MantineProvider } from "@mantine/core";
 
 export function Sidebar({
   user,
@@ -365,8 +366,9 @@ export function Sidebar({
             </Link>
 
             {/* Add lesson section */}
-            <AddLesson droplet={droplet} onAddLesson={addLessonCallback} />
-
+            <MantineProvider>
+              <AddLesson droplet={droplet} onAddLesson={addLessonCallback} />
+            </MantineProvider>
             {/* Add existing lesson section - NEW */}
             <AddExistingLesson
               droplet={droplet}
