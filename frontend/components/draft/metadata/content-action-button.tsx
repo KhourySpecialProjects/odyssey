@@ -7,7 +7,6 @@ import { useRouter } from "next/navigation";
 import { ChangeEvent, FormEvent, useState } from "react";
 import { toast } from "sonner";
 import { createPortal } from "react-dom";
-import { UserMultiSelect } from "@/components/ui/user-multi-select";
 
 type ActionType =
   | "publish"
