@@ -642,28 +642,27 @@ export async function deleteAuthorizedUser(formData: FormData) {
 
 // fetching content editors
 export async function fetchContentEditors(): Promise<AuthorizedUser[]> {
-  
   // create a query for the backend
   const query = qs.stringify({
     // we need filter for role by title
     filters: {
       roles: {
         title: {
-          $eq: "Content Editor"
-        }
-      }
+          $eq: "Content Editor",
+        },
+      },
     },
     // now we need what fields necessary
     fields: ["id", "username", "email"],
-  
+
     populate: "*",
     // sort in query
     sort: ["username"],
-    // set pagination - 
+    // set pagination -
     pagination: {
       pageSize: 900,
-      page: 1
-    }
+      page: 1,
+    },
   });
 
   // now, we can await a response with our query

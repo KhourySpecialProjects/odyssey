@@ -40,20 +40,21 @@ export default async function CheckPermission({ params, children }: Props) {
   });
 
   if (!droplet || !user || !droplet.authorized_users || !user.email) {
-  return notFound();
-}
+    return notFound();
+  }
 
-// Check if user is Admin, Content Editor, or an authorized author
-const isAdmin = isAuthorizedUserAdmin(user.roles);
-const isContentEditor = user.roles?.includes(AuthorizedUserRoleTitle.ContentEditor);
-const isAuthor = droplet.authorized_users
-  .map((author) => author.id)
-  .includes(authorizedUser?.id);
+  // Check if user is Admin, Content Editor, or an authorized author
+  const isAdmin = isAuthorizedUserAdmin(user.roles);
+  const isContentEditor = user.roles?.includes(
+    AuthorizedUserRoleTitle.ContentEditor,
+  );
+  const isAuthor = droplet.authorized_users
+    .map((author) => author.id)
+    .includes(authorizedUser?.id);
 
-
-if (!isAdmin && !isContentEditor && !isAuthor) {
-  return notFound();
-}
+  if (!isAdmin && !isContentEditor && !isAuthor) {
+    return notFound();
+  }
   const availableDroplets = await getDroplets({
     fields: ["id", "name", "slug"],
     populate: {

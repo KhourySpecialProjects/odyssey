@@ -97,7 +97,8 @@ export function ReviewerSelector({
       </div>
       {selectedReviewers.length > 0 && (
         <p className="text-xs text-slate-500 dark:text-slate-400">
-          {selectedReviewers.length} reviewer{selectedReviewers.length !== 1 ? "s" : ""} selected
+          {selectedReviewers.length} reviewer
+          {selectedReviewers.length !== 1 ? "s" : ""} selected
         </p>
       )}
     </div>
