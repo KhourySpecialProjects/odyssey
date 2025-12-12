@@ -652,6 +652,76 @@ export function LessonRenderer({
   const router = useRouter();
   const [highlights, setHighlights] = useState<Highlight[]>([]);
 
+  // Move all hooks before any early returns
+  useEffect(() => {
+    const fetchHighlights = async () => {
+      const response = await getHighlightsForLesson(lesson.id);
+      if (response.data) {
+        const formattedHighlights = response.data.map(
+          (item: HighlightResponseItem) => ({
+            ...item.attributes,
+            id: item.id,
+          }),
+        );
+        setHighlights(formattedHighlights);
+      }
+    };
+    fetchHighlights();
+  }, [lesson.id]);
+
+  const displayBlocks =
+    lesson.blocksVersion === "v2" && lesson.blocksV2
+      ? convertBlockNoteToV1Blocks(lesson.blocksV2)
+      : lesson.blocks;
+
+  let headings: Heading[] = [];
+  displayBlocks
+    .filter((b: Block) => b.__component === "droplets.generic")
+    .forEach((b: Block) => {
+      headings = headings.concat(extractHeadings((b as GenericBlock).content));
+    });
+
+  const [canProceed, setCanProceed] = useState(false);
+  const [activeBlock, setActiveBlock] = useState<number | undefined>(
+    displayBlocks[0]?.id,
+  );
+
+  useEffect(() => {
+    const checkQuizAnswers = () => {
+      const questions = document.querySelectorAll('[role="question"]');
+      if (!questions) {
+        setCanProceed(true);
+        return;
+      }
+      const completedQuizQuestions =
+        document.querySelectorAll('[role="status"]');
+      if (questions.length !== completedQuizQuestions.length) {
+        setCanProceed(false);
+        return;
+      }
+
+      const allAnsweredCorrectly = Array.from(completedQuizQuestions).every(
+        (question) => {
+          const resultBadge = question.textContent;
+          return resultBadge?.toLowerCase().includes("right");
+        },
+      );
+
+      setCanProceed(allAnsweredCorrectly);
+    };
+
+    checkQuizAnswers();
+    const observer = new MutationObserver(checkQuizAnswers);
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ["class", "id"],
+    });
+
+    return () => observer.disconnect();
+  }, []);
+
   const isAdmin = user && isAuthorizedUserAdmin(user.roles);
   const isNotEnrolled = !enrollmentId && !author && !isAdmin;
 
@@ -685,22 +755,6 @@ export function LessonRenderer({
       </div>
     );
   }
-
-  useEffect(() => {
-    const fetchHighlights = async () => {
-      const response = await getHighlightsForLesson(lesson.id);
-      if (response.data) {
-        const formattedHighlights = response.data.map(
-          (item: HighlightResponseItem) => ({
-            ...item.attributes,
-            id: item.id,
-          }),
-        );
-        setHighlights(formattedHighlights);
-      }
-    };
-    fetchHighlights();
-  }, [lesson.id]);
 
   const handleHighlight = async (
     highlight: Highlight,
@@ -829,59 +883,6 @@ export function LessonRenderer({
       }
     });
   }
-
-  const displayBlocks =
-    lesson.blocksVersion === "v2" && lesson.blocksV2
-      ? convertBlockNoteToV1Blocks(lesson.blocksV2)
-      : lesson.blocks;
-
-  let headings: Heading[] = [];
-  displayBlocks
-    .filter((b: Block) => b.__component === "droplets.generic")
-    .forEach((b: Block) => {
-      headings = headings.concat(extractHeadings((b as GenericBlock).content));
-    });
-
-  const [canProceed, setCanProceed] = useState(false);
-  const [activeBlock, setActiveBlock] = useState<number | undefined>(
-    displayBlocks[0]?.id,
-  );
-
-  useEffect(() => {
-    const checkQuizAnswers = () => {
-      const questions = document.querySelectorAll('[role="question"]');
-      if (!questions) {
-        setCanProceed(true);
-        return;
-      }
-      const completedQuizQuestions =
-        document.querySelectorAll('[role="status"]');
-      if (questions.length !== completedQuizQuestions.length) {
-        setCanProceed(false);
-        return;
-      }
-
-      const allAnsweredCorrectly = Array.from(completedQuizQuestions).every(
-        (question) => {
-          const resultBadge = question.textContent;
-          return resultBadge?.toLowerCase().includes("right");
-        },
-      );
-
-      setCanProceed(allAnsweredCorrectly);
-    };
-
-    checkQuizAnswers();
-    const observer = new MutationObserver(checkQuizAnswers);
-    observer.observe(document.body, {
-      childList: true,
-      subtree: true,
-      attributes: true,
-      attributeFilter: ["class", "id"],
-    });
-
-    return () => observer.disconnect();
-  }, []);
 
   return (
     <div className="mx-auto w-full min-w-[300px] py-8 md:min-w-[700px]">

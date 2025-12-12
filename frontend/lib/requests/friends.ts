@@ -96,7 +96,7 @@ export async function fetchFriends(
 
 export async function getSentRequestIds(
   requester: AuthorizedUser,
-): Promise<Number[]> {
+): Promise<number[]> {
   try {
     let page = 1;
     const pageSize = 250;
@@ -143,7 +143,6 @@ export async function getSentRequestIds(
 }
 
 export async function acceptFriendRequest(userId: number, requestId: number) {
-  const token = process.env.STRAPI_ACCESS_TOKEN;
   try {
     const friendshipResponse = await fetch(
       NEXT_PUBLIC_STRAPI_API_URL + "/api/friendships",
@@ -199,7 +198,6 @@ export async function sendFriendRequest(
   requester: AuthorizedUser,
   requestee: AuthorizedUser,
 ) {
-  const token = process.env.STRAPI_ACCESS_TOKEN;
   try {
     const sentToResponse = await fetch(
       `${NEXT_PUBLIC_STRAPI_API_URL}/api/authorized-users/${requestee.id}`,
@@ -257,7 +255,6 @@ export async function sendFriendRequest(
 }
 
 export async function rejectFriendRequest(userId: number, requestId: number) {
-  const token = process.env.STRAPI_ACCESS_TOKEN;
   try {
     const deleteResponse = await fetch(
       `${NEXT_PUBLIC_STRAPI_API_URL}/api/authorized-users/${userId}`,
@@ -291,7 +288,6 @@ export async function rejectFriendRequest(userId: number, requestId: number) {
 }
 
 export async function cancelFriendRequest(userId: number, requestId: number) {
-  const token = process.env.STRAPI_ACCESS_TOKEN;
   try {
     const deleteResponse = await fetch(
       `${NEXT_PUBLIC_STRAPI_API_URL}/api/authorized-users/${userId}`,
@@ -324,7 +320,6 @@ export async function cancelFriendRequest(userId: number, requestId: number) {
 }
 
 export async function unblockUser(userId: number, requestId: number) {
-  const token = process.env.STRAPI_ACCESS_TOKEN;
   try {
     const deleteResponse = await fetch(
       `${NEXT_PUBLIC_STRAPI_API_URL}/api/authorized-users/${userId}`,
@@ -357,7 +352,6 @@ export async function unblockUser(userId: number, requestId: number) {
 }
 
 export async function BlockUser(userId: number, requestId: number) {
-  const token = process.env.STRAPI_ACCESS_TOKEN;
   try {
     const deleteResponse = await fetch(
       `${NEXT_PUBLIC_STRAPI_API_URL}/api/authorized-users/${userId}`,

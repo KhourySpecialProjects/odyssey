@@ -8,7 +8,6 @@ import {
 } from "@/lib/globals";
 import { JSONContent } from "@tiptap/react";
 import type { BlockNode, TextNode } from "@/types/strapi";
-import { AuthorizedUser, Group } from "@/types";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
