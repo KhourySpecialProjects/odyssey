@@ -1,5 +1,5 @@
 {
-  "extends": ["react-app", "react-app/jest"],
+  "extends": ["next/core-web-vitals", "next/typescript"],
   "rules": {
     "react/react-in-jsx-scope": "off"
   },
