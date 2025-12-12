@@ -159,7 +159,7 @@ resource "aws_ecs_task_definition" "frontend" {
          name      = "GITHUB_CLIENT_SECRET"
          valueFrom = "${var.frontend_secret_arn}:GITHUB_CLIENT_SECRET::"
        },
-       {
+              {
          name      = "NEXTAUTH_SECRET"
          valueFrom = "${var.frontend_secret_arn}:NEXTAUTH_SECRET::"
        },
@@ -194,6 +194,10 @@ resource "aws_ecs_task_definition" "frontend" {
        {
          name      = "PORT"
          valueFrom = "${var.frontend_secret_arn}:PORT::"
+       },
+       {
+         name      = "POSTHOG_API_KEY"
+         valueFrom = "${var.frontend_secret_arn}:POSTHOG_API_KEY::"
        },
        {
          name      = "STRAPI_ACCESS_TOKEN"
@@ -316,49 +320,13 @@ resource "aws_ecs_task_definition" "backend" {
          valueFrom = "${var.backend_secret_arn}:DATABASE_USERNAME::"
        },
        {
-         name      = "DO_CDN_ROOT_PATH"
-         valueFrom = "${var.backend_secret_arn}:DO_CDN_ROOT_PATH::"
-       },
-       {
-         name      = "DO_CDN_URL"
-         valueFrom = "${var.backend_secret_arn}:DO_CDN_URL::"
-       },
-       {
-         name      = "DO_SPACE_ACCESS_KEY"
-         valueFrom = "${var.backend_secret_arn}:DO_SPACE_ACCESS_KEY::"
-       },
-       {
-         name      = "DO_SPACE_BUCKET"
-         valueFrom = "${var.backend_secret_arn}:DO_SPACE_BUCKET::"
-       },
-       {
-         name      = "DO_SPACE_ENDPOINT"
-         valueFrom = "${var.backend_secret_arn}:DO_SPACE_ENDPOINT::"
-       },
-       {
-         name      = "DO_SPACE_REGION"
-         valueFrom = "${var.backend_secret_arn}:DO_SPACE_REGION::"
-       },
-       {
-         name      = "DO_SPACE_SECRET_KEY"
-         valueFrom = "${var.backend_secret_arn}:DO_SPACE_SECRET_KEY::"
-       },
-       {
-         name      = "JWT_SECRET"
-         valueFrom = "${var.backend_secret_arn}:JWT_SECRET::"
-       },
-       {
          name      = "PORT"
          valueFrom = "${var.backend_secret_arn}:PORT::"
        },
        {
          name      = "TRANSFER_TOKEN_SALT"
          valueFrom = "${var.backend_secret_arn}:TRANSFER_TOKEN_SALT::"
-       },
-       {
-         name      = "POSTHOG_API_KEY"
-         valueFrom = "${var.backend_secret_arn}:POSTHOG_API_KEY::"
-       },
+       }
      ]
 
 
