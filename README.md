@@ -79,15 +79,6 @@ API_TOKEN_SALT=
 ADMIN_JWT_SECRET=
 TRANSFER_TOKEN_SALT=
 
-#Object Storage
-DO_CDN_URL=
-DO_CDN_ROOT_PATH=
-DO_SPACE_ACCESS_KEY=
-DO_SPACE_SECRET_KEY=
-DO_SPACE_REGION=
-DO_SPACE_ENDPOINT=
-DO_SPACE_BUCKET=
-
 #AWS Object Storage
 AWS_CDN_URL=
 AWS_CDN_ROOT_PATH=
@@ -105,7 +96,6 @@ DATABASE_NAME=<dbname>
 DATABASE_USERNAME=<user>
 DATABASE_PASSWORD=<password>
 DATABASE_SSL=false
-JWT_SECRET=
 ```
 
 For the environment variables not set, request them from another team member.
