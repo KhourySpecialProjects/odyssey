@@ -66,6 +66,7 @@ interface HighlightResponseItem {
     color: string;
   };
 }
+
 type BlockNoteTextStyles = {
   bold?: boolean;
   italic?: boolean;
@@ -96,6 +97,18 @@ type BlockNoteTableCell = {
 type BlockNoteTableRow = {
   cells: BlockNoteTableCell[];
 };
+
+// Convert BlockNote string ID to a deterministic number for database storage
+function blockNoteIdToNumber(blockId: string): number {
+  // Simple hash function - sum character codes
+  let hash = 0;
+  for (let i = 0; i < blockId.length; i++) {
+    const char = blockId.charCodeAt(i);
+    hash = (hash << 5) - hash + char;
+    hash = hash & hash; // Convert to 32-bit integer
+  }
+  return Math.abs(hash);
+}
 
 function renderTextWithStyles(
   text: string,
@@ -251,7 +264,122 @@ function convertBlockNoteToV1Blocks(blocksV2: CustomBlockNoteBlock[]): Block[] {
   let i = 0;
 
   while (i < blocksV2.length) {
-    const blockAny = blocksV2[i];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const blockAny = blocksV2[i] as any;
+
+    // Check for empty paragraphs FIRST, regardless of block type context
+    // This ensures empty paragraphs between any block types are preserved for spacing
+    if (blockAny.type === "paragraph") {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const inlineContent = (blockAny.content ?? []) as any[];
+      const textContent = convertInlineContentToHtml(inlineContent);
+      const isEmpty = !textContent || textContent.trim() === "";
+
+      // If empty paragraph, render each empty paragraph as a separate block
+      // This creates proportional spacing - more empty paragraphs = more spacing
+      if (isEmpty) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const emptyParagraphBlocks: any[] = [];
+        let j = i;
+
+        // Collect consecutive empty paragraphs
+        while (j < blocksV2.length) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const nextBlock = blocksV2[j] as any;
+          if (nextBlock.type === "paragraph") {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const nextInlineContent = (nextBlock.content ?? []) as any[];
+            const nextTextContent =
+              convertInlineContentToHtml(nextInlineContent);
+            const nextIsEmpty =
+              !nextTextContent || nextTextContent.trim() === "";
+
+            if (nextIsEmpty) {
+              emptyParagraphBlocks.push(nextBlock);
+              j++;
+            } else {
+              break;
+            }
+          } else {
+            break;
+          }
+        }
+
+        // Render each empty paragraph as a separate block
+        // Each empty paragraph creates spacing proportional to the number of empty lines
+        // Using a div with min-height to create visible spacing that matches BlockNote editor
+        emptyParagraphBlocks.forEach((emptyBlock, index) => {
+          const blockId = emptyBlock.id
+            ? blockNoteIdToNumber(emptyBlock.id)
+            : i + index;
+          processedBlocks.push({
+            __component: "droplets.generic",
+            id: blockId,
+            content:
+              '<div class="empty-paragraph-spacing" style="min-height: 1.5rem;"></div>',
+          });
+        });
+
+        i = j;
+        continue;
+      }
+
+      // Group consecutive non-empty paragraphs together
+      const paragraphBlocks: CustomBlockNoteBlock[] = [];
+      const sourceBlockIds: number[] = [];
+      let j = i;
+
+      while (j < blocksV2.length) {
+        const nextBlock = blocksV2[j];
+        if (nextBlock.type === "paragraph") {
+          const nextInlineContent = (nextBlock.content ??
+            []) as BlockNoteInlineContent[];
+          const nextTextContent = convertInlineContentToHtml(nextInlineContent);
+          const nextIsEmpty = !nextTextContent || nextTextContent.trim() === "";
+
+          // Stop grouping if we hit an empty paragraph
+          if (nextIsEmpty) {
+            break;
+          }
+
+          paragraphBlocks.push(nextBlock);
+          // Store source block ID
+          if (nextBlock.id) {
+            sourceBlockIds.push(blockNoteIdToNumber(nextBlock.id));
+          }
+          j++;
+        } else {
+          break;
+        }
+      }
+
+      const paragraphsHtml = paragraphBlocks
+        .map((p) => {
+          const pInlineContent = (p.content ?? []) as BlockNoteInlineContent[];
+          const pTextContent = convertInlineContentToHtml(pInlineContent);
+          return pTextContent ? `<p>${pTextContent}</p>` : "";
+        })
+        .filter(Boolean)
+        .join("");
+
+      if (paragraphsHtml) {
+        // Use first block's ID as primary, store all in sourceBlockIds
+        const primaryId = paragraphBlocks[0]?.id
+          ? blockNoteIdToNumber(paragraphBlocks[0].id)
+          : i;
+
+        processedBlocks.push({
+          __component: "droplets.generic",
+          id: primaryId,
+          sourceBlockIds:
+            sourceBlockIds.length > 1 ? sourceBlockIds : undefined,
+          content: paragraphsHtml,
+        });
+      }
+
+      i = j;
+      continue;
+    }
 
     // Skip quote blocks
     if (blockAny.type === "quote") {
@@ -259,9 +387,10 @@ function convertBlockNoteToV1Blocks(blocksV2: CustomBlockNoteBlock[]): Block[] {
       const quoteContent = (blockAny.content ?? []) as BlockNoteInlineContent[];
       const textContent = convertInlineContentToHtml(quoteContent);
       if (textContent) {
+        const blockId = blockAny.id ? blockNoteIdToNumber(blockAny.id) : i;
         processedBlocks.push({
           __component: "droplets.generic",
-          id: i,
+          id: blockId,
           content: `<p>${textContent}</p>`,
         });
       }
@@ -271,16 +400,20 @@ function convertBlockNoteToV1Blocks(blocksV2: CustomBlockNoteBlock[]): Block[] {
 
     // If this is a numbered list item, collect all consecutive ones at the same level
     if (blockAny.type === "numberedListItem") {
-      const listItems: BlockNoteListItem[] = [];
+      const listItems: CustomBlockNoteBlock[] = [];
+      const sourceBlockIds: number[] = [];
       let j = i;
 
       // Collect consecutive numbered list items at the root level
       // Skip quote blocks that might be interspersed
       while (j < blocksV2.length) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const nextBlock = blocksV2[j] as any;
+        const nextBlock = blocksV2[j];
         if (nextBlock.type === "numberedListItem") {
           listItems.push(nextBlock);
+          // Store source block ID
+          if (nextBlock.id) {
+            sourceBlockIds.push(blockNoteIdToNumber(nextBlock.id));
+          }
           j++;
         } else if (nextBlock.type === "quote") {
           // Skip quote blocks - they might be incorrectly inserted
@@ -297,9 +430,16 @@ function convertBlockNoteToV1Blocks(blocksV2: CustomBlockNoteBlock[]): Block[] {
         .join("");
 
       if (listItemHtml) {
+        // Use first block's ID as primary, store all in sourceBlockIds
+        const primaryId = listItems[0]?.id
+          ? blockNoteIdToNumber(listItems[0].id)
+          : i;
+
         processedBlocks.push({
           __component: "droplets.generic",
-          id: i,
+          id: primaryId,
+          sourceBlockIds:
+            sourceBlockIds.length > 1 ? sourceBlockIds : undefined,
           content: `<ol class="list-decimal list-outside ml-6 my-2 space-y-1">${listItemHtml}</ol>`,
         });
       }
@@ -310,16 +450,20 @@ function convertBlockNoteToV1Blocks(blocksV2: CustomBlockNoteBlock[]): Block[] {
 
     // If this is a bullet list item, collect all consecutive ones at the same level
     if (blockAny.type === "bulletListItem") {
-      const listItems: BlockNoteListItem[] = [];
+      const listItems: CustomBlockNoteBlock[] = [];
+      const sourceBlockIds: number[] = [];
       let j = i;
 
       // Collect consecutive bullet list items at the root level
       // Skip quote blocks that might be interspersed
       while (j < blocksV2.length) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const nextBlock = blocksV2[j] as any;
+        const nextBlock = blocksV2[j];
         if (nextBlock.type === "bulletListItem") {
           listItems.push(nextBlock);
+          // Store source block ID
+          if (nextBlock.id) {
+            sourceBlockIds.push(blockNoteIdToNumber(nextBlock.id));
+          }
           j++;
         } else if (nextBlock.type === "quote") {
           // Skip quote blocks - they might be incorrectly inserted
@@ -336,9 +480,16 @@ function convertBlockNoteToV1Blocks(blocksV2: CustomBlockNoteBlock[]): Block[] {
         .join("");
 
       if (listItemHtml) {
+        // Use first block's ID as primary, store all in sourceBlockIds
+        const primaryId = listItems[0]?.id
+          ? blockNoteIdToNumber(listItems[0].id)
+          : i;
+
         processedBlocks.push({
           __component: "droplets.generic",
-          id: i,
+          id: primaryId,
+          sourceBlockIds:
+            sourceBlockIds.length > 1 ? sourceBlockIds : undefined,
           content: `<ul class="list-disc list-outside ml-6 my-2 space-y-1">${listItemHtml}</ul>`,
         });
       }
@@ -360,6 +511,9 @@ function convertBlockNoteToV1Blocks(blocksV2: CustomBlockNoteBlock[]): Block[] {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function convertSingleBlock(blockAny: any, blockIndex: number): Block | null {
+  // Use BlockNote block ID if available, otherwise fall back to index
+  const blockId = blockAny.id ? blockNoteIdToNumber(blockAny.id) : blockIndex;
+
   switch (blockAny.type) {
     case "heading":
     case "paragraph": {
@@ -375,7 +529,7 @@ function convertSingleBlock(blockAny: any, blockIndex: number): Block | null {
 
       return {
         __component: "droplets.generic",
-        id: blockIndex,
+        id: blockId,
         content: htmlContent,
       };
     }
@@ -397,7 +551,7 @@ function convertSingleBlock(blockAny: any, blockIndex: number): Block | null {
 
       return {
         __component: "droplets.callout",
-        id: blockIndex,
+        id: blockId,
         content: [
           {
             type: "paragraph",
@@ -422,7 +576,7 @@ function convertSingleBlock(blockAny: any, blockIndex: number): Block | null {
         __component: "droplets.quiz",
         questions: [
           {
-            id: blockIndex,
+            id: blockId,
             content: blockAny.props?.question || "",
             answerOptions: options.map((opt, optionIndex) => ({
               id: blockIndex * 100 + optionIndex,
@@ -439,7 +593,7 @@ function convertSingleBlock(blockAny: any, blockIndex: number): Block | null {
         __component: "droplets.quiz",
         questions: [
           {
-            id: blockIndex,
+            id: blockId,
             content: blockAny.props?.question || "",
             answerOptions: [
               {
@@ -463,7 +617,7 @@ function convertSingleBlock(blockAny: any, blockIndex: number): Block | null {
         __component: "droplets.open-ended-quiz",
         questions: [
           {
-            id: blockIndex,
+            id: blockId,
             content: blockAny.props?.question || "",
             correctAnswer: "",
           },
@@ -492,7 +646,7 @@ function convertSingleBlock(blockAny: any, blockIndex: number): Block | null {
 
       return {
         __component: "droplets.video",
-        id: blockIndex,
+        id: blockId,
         url: embedUrl,
       };
     }
@@ -501,7 +655,7 @@ function convertSingleBlock(blockAny: any, blockIndex: number): Block | null {
       // Convert to generic block with img tag so it renders in GenericBlockRenderer
       return {
         __component: "droplets.generic",
-        id: blockIndex,
+        id: blockId,
         content: `<img src="${blockAny.props?.url || ""}" alt="${blockAny.props?.name || ""}" class="rounded-md" />`,
       };
     }
@@ -527,7 +681,7 @@ function convertSingleBlock(blockAny: any, blockIndex: number): Block | null {
 
         return {
           __component: "droplets.generic",
-          id: blockIndex,
+          id: blockId,
           content: `<div class="${wrapperClass}">${rendered}</div>`,
         };
       } catch {
@@ -539,7 +693,7 @@ function convertSingleBlock(blockAny: any, blockIndex: number): Block | null {
 
         return {
           __component: "droplets.generic",
-          id: blockIndex,
+          id: blockId,
           content: `<div class="rounded bg-red-50 p-2 text-red-600 dark:bg-red-900/20 dark:text-red-400 font-mono text-sm">LaTeX Error: ${escapedLatex}</div>`,
         };
       }
@@ -606,7 +760,7 @@ function convertSingleBlock(blockAny: any, blockIndex: number): Block | null {
 
       return {
         __component: "droplets.generic",
-        id: blockIndex,
+        id: blockId,
         content: `<!--TABLE_START-->${JSON.stringify(tableData)}<!--TABLE_END-->`,
       };
     }
@@ -614,6 +768,7 @@ function convertSingleBlock(blockAny: any, blockIndex: number): Block | null {
     case "code-block": {
       // Code blocks need special handling - render them as a custom component
       // We'll create a simple code display block that respects the editable/runnable props
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const language = blockAny.props?.language || "javascript";
       const code = blockAny.props?.code || "";
       const editable = blockAny.props?.editable || false;
@@ -889,7 +1044,7 @@ export function LessonRenderer({
       <div className="relative mx-auto w-full max-w-2xl xl:py-8">
         <h1 className="text-6xl font-extrabold text-balance">{lesson.name}</h1>
 
-        <div className="mt-8 space-y-12">
+        <div className="mt-8 space-y-2">
           {displayBlocks.map((b: Block, i: number) => (
             <LessonBlockRenderer
               key={i}
