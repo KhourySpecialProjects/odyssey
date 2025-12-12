@@ -452,7 +452,6 @@ function convertBlockNoteToV1Blocks(blocksV2: CustomBlockNoteBlock[]): Block[] {
       // Collect consecutive bullet list items at the root level
       // Skip quote blocks that might be interspersed
       while (j < blocksV2.length) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const nextBlock = blocksV2[j];
         if (nextBlock.type === "bulletListItem") {
           listItems.push(nextBlock);
@@ -471,7 +470,6 @@ function convertBlockNoteToV1Blocks(blocksV2: CustomBlockNoteBlock[]): Block[] {
 
       // Convert all list items to HTML (handles nesting recursively)
       const listItemHtml = listItems
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         .map((item: any) => convertBulletListItem(item, 0))
         .join("");
