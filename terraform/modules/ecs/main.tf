@@ -184,6 +184,10 @@ resource "aws_ecs_task_definition" "frontend" {
          valueFrom = "${var.frontend_secret_arn}:PORT::"
        },
        {
+         name      = "POSTHOG_API_KEY"
+         valueFrom = "${var.backend_secret_arn}:POSTHOG_API_KEY::"
+       },
+       {
          name      = "STRAPI_ACCESS_TOKEN"
          valueFrom = "${var.frontend_secret_arn}:STRAPI_ACCESS_TOKEN::"
        },
@@ -310,11 +314,7 @@ resource "aws_ecs_task_definition" "backend" {
        {
          name      = "TRANSFER_TOKEN_SALT"
          valueFrom = "${var.backend_secret_arn}:TRANSFER_TOKEN_SALT::"
-       },
-       {
-         name      = "POSTHOG_API_KEY"
-         valueFrom = "${var.backend_secret_arn}:POSTHOG_API_KEY::"
-       },
+       }
      ]
 
 
