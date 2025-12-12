@@ -7,6 +7,7 @@ import { HighlightDropdown } from "./highlight-dropdown";
 //import "katex/dist/katex.min.css";
 import katex from "katex";
 import { TableRenderer } from "./table-renderer";
+import DOMPurify from "isomorphic-dompurify";
 
 interface Block {
   content: string;
@@ -179,7 +180,7 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
     if (!contentRef.current) return;
     if (contentRef.current) {
       const processedContent = processLatex(nonTableContent);
-      contentRef.current.innerHTML = processedContent;
+      contentRef.current.innerHTML = DOMPurify.sanitize(processedContent);
 
       const inlineLatexElements =
         contentRef.current.querySelectorAll(".katex-inline");
@@ -668,7 +669,9 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
           onMouseDown={(e) => handleMouseDown(e)}
           onClick={handleImageClick}
           className="prose prose-lg prose-sky prose-table:block prose-code:text-inherit prose-table:overflow-x-scroll prose-p:my-1 prose-li:my-1 prose-headings:text-inherit prose-strong:text-inherit select-text dark:text-slate-300"
-          dangerouslySetInnerHTML={{ __html: nonTableContent }}
+          dangerouslySetInnerHTML={{
+            __html: DOMPurify.sanitize(nonTableContent),
+          }}
         ></div>
       )}
 
