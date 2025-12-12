@@ -229,6 +229,12 @@
       "relation": "oneToOne",
       "target": "api::creation-request.creation-request",
       "mappedBy": "user"
+    },
+    "reviewers": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::droplet.droplet",
+      "mappedBy": "reviewDroplet"
     }
   }
 }

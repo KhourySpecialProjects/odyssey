@@ -220,10 +220,12 @@ export function ContentActionButton({
         return {
           title: "Are you sure you want to submit this droplet for review?",
           content: (
-            <p className="mb-2 text-sm text-slate-600 dark:text-slate-400">
-              Once this droplet is reviewed by a Content Editor, it will either
-              be published or sent back with change requests.
-            </p>
+            <div>
+              <p className="mb-2 text-sm text-slate-600 dark:text-slate-400">
+                Once this droplet is reviewed by a Content Editor, it will
+                either be published or sent back with change requests.
+              </p>
+            </div>
           ),
         };
 
