@@ -22,10 +22,11 @@ import {
   getCodeSlashMenuItems,
 } from "@/components/ui/blocknote/editor/slash-menu-config";
 import "@/components/ui/blocknote/editor/custom-blocknote.css";
+import type { Block } from "@blocknote/core";
 
 interface BlockNoteEditorClientProps {
-  initialContent?: any;
-  onChange?: (content: any) => void;
+  initialContent?: Block[];
+  onChange?: (content: Block[]) => void;
   editable?: boolean;
 }
 
@@ -105,12 +106,12 @@ export function BlockNoteEditorClient({
                 .substring(inlineLatexMatch.index + inlineLatexMatch[0].length)
                 .trim();
 
-              const blocksToInsert: any[] = [];
+              const blocksToInsert: unknown[] = [];
               if (textBefore) {
                 blocksToInsert.push({
                   type: "paragraph",
                   content: textBefore,
-                } as any);
+                } as unknown as Parameters<typeof editor.replaceBlocks>[1][0]);
               }
               blocksToInsert.push({
                 type: "latex",
@@ -118,17 +119,20 @@ export function BlockNoteEditorClient({
                   content: latexContent,
                   displayMode: false,
                 },
-              } as any);
+              } as unknown as Parameters<typeof editor.replaceBlocks>[1][0]);
               if (textAfter) {
                 blocksToInsert.push({
                   type: "paragraph",
                   content: textAfter,
-                } as any);
+                } as unknown as Parameters<typeof editor.replaceBlocks>[1][0]);
               }
 
               if (blocksToInsert.length > 0) {
                 processingPattern = true;
-                await editor.replaceBlocks([block], blocksToInsert);
+                await editor.replaceBlocks(
+                  [block],
+                  blocksToInsert as Parameters<typeof editor.replaceBlocks>[1],
+                );
                 processingPattern = false;
               }
             }
@@ -136,7 +140,7 @@ export function BlockNoteEditorClient({
         }
 
         // Always call onChange with the final content
-        onChange(content);
+        onChange(content as unknown as Block[]);
       } catch (error) {
         processingPattern = false;
         // Silently handle errors that occur when editor is unmounted or DOM nodes are missing

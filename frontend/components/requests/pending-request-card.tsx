@@ -6,13 +6,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Clock } from "lucide-react";
-import { CreationRequest } from "@/types";
 
-type PendingRequestCardProps = {
-  request: CreationRequest;
-};
-
-export function PendingRequestCard({ request }: PendingRequestCardProps) {
+export function PendingRequestCard() {
   return (
     <div className="flex min-h-screen items-center justify-center p-4">
       <Card className="w-full max-w-2xl border-gray-200 bg-white shadow-xl dark:border-gray-800 dark:bg-black">

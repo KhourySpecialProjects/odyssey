@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -40,12 +40,10 @@ export function PlaylistForm({
     existingPlaylist?.description || "",
   );
   const [isPublic, setIsPublic] = useState(existingPlaylist?.isPublic || false);
-  const [selectedDroplets, setSelectedDroplets] = useState(
-    existingPlaylist?.droplets || [],
-  );
+  const [selectedDroplets] = useState(existingPlaylist?.droplets || []);
   const [slug] = useState(existingPlaylist?.slug || "");
   const [error, setError] = useState("");
-  const [sourceDroplets, setSourceDroplets] = useState(() => {
+  const [sourceDroplets] = useState(() => {
     if (existingPlaylist?.droplets) {
       return droplets.filter(
         (d) => !existingPlaylist.droplets?.some((pd) => pd.id === d.id),
@@ -71,36 +69,6 @@ export function PlaylistForm({
     } catch (error) {
       console.error("Failed to make playlist announcement: ", error);
     }
-  };
-
-  const handleDropToSelected = useCallback((droplet: Droplet) => {
-    setSourceDroplets((current) => current.filter((d) => d.id !== droplet.id));
-    setSelectedDroplets((current) => [...current, droplet]);
-  }, []);
-
-  const handleDropToSource = useCallback((droplet: Droplet) => {
-    setSelectedDroplets((current) =>
-      current.filter((d) => d.id !== droplet.id),
-    );
-    setSourceDroplets((current) => [...current, droplet]);
-  }, []);
-
-  const handleReorderSelected = (fromIndex: number, toIndex: number) => {
-    setSelectedDroplets((current) => {
-      const newItems = [...current];
-      const [removed] = newItems.splice(fromIndex, 1);
-      newItems.splice(toIndex, 0, removed);
-      return newItems;
-    });
-  };
-
-  const handleReorderSource = (fromIndex: number, toIndex: number) => {
-    setSourceDroplets((current) => {
-      const newItems = [...current];
-      const [removed] = newItems.splice(fromIndex, 1);
-      newItems.splice(toIndex, 0, removed);
-      return newItems;
-    });
   };
 
   const [isOpen, setIsOpen] = useState(false);
@@ -315,23 +283,13 @@ export function PlaylistForm({
             <h3 className="text-center font-semibold dark:text-slate-300">
               Available Droplets
             </h3>
-            <DraggableTileList
-              droplets={filteredDroplets}
-              onDropToOther={handleDropToSource}
-              onReorder={handleReorderSource}
-              listType="source"
-            />
+            <DraggableTileList droplets={filteredDroplets} />
           </div>
           <div className="space-y-4">
             <h3 className="text-center font-semibold dark:text-slate-300">
               Selected Droplets
             </h3>
-            <DraggableTileList
-              droplets={selectedDroplets}
-              onDropToOther={handleDropToSelected}
-              onReorder={handleReorderSelected}
-              listType="selected"
-            />
+            <DraggableTileList droplets={selectedDroplets} />
           </div>
         </div>
       </div>

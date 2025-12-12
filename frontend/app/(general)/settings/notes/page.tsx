@@ -10,7 +10,6 @@ import { getHighlightsByDroplet } from "@/lib/requests/highlights";
 import { PDFDocument } from "pdf-lib";
 import { NoteSummary } from "@/components/droplets/lessons/note-taking/note-summary";
 import { NotesManager } from "@/components/droplets/notes-manager";
-import { all } from "lowlight";
 
 type Props = {
   params: Promise<Params>;

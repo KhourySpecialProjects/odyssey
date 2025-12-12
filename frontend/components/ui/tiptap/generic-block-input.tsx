@@ -111,7 +111,7 @@ export function GenericBlockInput({
 
   return (
     <div>
-      <GeneralToolbar editor={editor!} isDroplet={true} />
+      <GeneralToolbar editor={editor!} />
       <EditorContent name="lesson-generic" editor={editor} />
     </div>
   );

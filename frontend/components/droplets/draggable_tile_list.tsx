@@ -4,16 +4,10 @@ import { DraggableTileListClient } from "./draggable_tile_list_client";
 
 interface DraggableCardListProps {
   droplets: Droplet[];
-  onDropToOther: (droplet: Droplet) => void;
-  onReorder: (fromIndex: number, toIndex: number) => void;
-  listType: "source" | "selected";
 }
 
 export default function DraggableTileList({
   droplets,
-  onDropToOther,
-  onReorder,
-  listType,
 }: DraggableCardListProps) {
   return (
     <div
@@ -22,11 +16,7 @@ export default function DraggableTileList({
       )}
       data-testid="droplet-list"
     >
-      <DraggableTileListClient
-        droplets={droplets}
-        onReorder={onReorder}
-        listType={listType}
-      />
+      <DraggableTileListClient droplets={droplets} />
     </div>
   );
 }
