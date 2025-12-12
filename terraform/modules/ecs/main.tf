@@ -160,18 +160,6 @@ resource "aws_ecs_task_definition" "frontend" {
          valueFrom = "${var.frontend_secret_arn}:GITHUB_CLIENT_SECRET::"
        },
        {
-         name      = "NEXTAUTH_SECRET"
-         valueFrom = "${var.frontend_secret_arn}:NEXTAUTH_SECRET::"
-       },
-       {
-         name      = "NEXTAUTH_URL"
-         valueFrom = "${var.frontend_secret_arn}:NEXTAUTH_URL::"
-       },
-       {
-         name      = "NEXTAUTH_URL_INTERNAL"
-         valueFrom = "${var.frontend_secret_arn}:NEXTAUTH_URL_INTERNAL::"
-       },
-       {
          name      = "NEXT_PUBLIC_APP_ENV"
          valueFrom = "${var.frontend_secret_arn}:NEXT_PUBLIC_APP_ENV::"
        },
@@ -314,38 +302,6 @@ resource "aws_ecs_task_definition" "backend" {
        {
          name      = "DATABASE_USERNAME"
          valueFrom = "${var.backend_secret_arn}:DATABASE_USERNAME::"
-       },
-       {
-         name      = "DO_CDN_ROOT_PATH"
-         valueFrom = "${var.backend_secret_arn}:DO_CDN_ROOT_PATH::"
-       },
-       {
-         name      = "DO_CDN_URL"
-         valueFrom = "${var.backend_secret_arn}:DO_CDN_URL::"
-       },
-       {
-         name      = "DO_SPACE_ACCESS_KEY"
-         valueFrom = "${var.backend_secret_arn}:DO_SPACE_ACCESS_KEY::"
-       },
-       {
-         name      = "DO_SPACE_BUCKET"
-         valueFrom = "${var.backend_secret_arn}:DO_SPACE_BUCKET::"
-       },
-       {
-         name      = "DO_SPACE_ENDPOINT"
-         valueFrom = "${var.backend_secret_arn}:DO_SPACE_ENDPOINT::"
-       },
-       {
-         name      = "DO_SPACE_REGION"
-         valueFrom = "${var.backend_secret_arn}:DO_SPACE_REGION::"
-       },
-       {
-         name      = "DO_SPACE_SECRET_KEY"
-         valueFrom = "${var.backend_secret_arn}:DO_SPACE_SECRET_KEY::"
-       },
-       {
-         name      = "JWT_SECRET"
-         valueFrom = "${var.backend_secret_arn}:JWT_SECRET::"
        },
        {
          name      = "PORT"
