@@ -253,7 +253,11 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
         pre.style.paddingTop = "0rem";
         pre.insertBefore(lineNumbers, pre.firstChild);
       });
-      const blockHighlights = highlights.filter((h) => h.blockId === block.id);
+      const blockHighlights = highlights.filter((h) => {
+        if (h.blockId === block.id) return true;
+        if (block.sourceBlockIds?.includes(h.blockId)) return true;
+        return false;
+      });
 
       const sortedHighlights = [...blockHighlights].sort(
         (a, b) => (a.position?.start || 0) - (b.position?.start || 0),

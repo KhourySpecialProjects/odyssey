@@ -120,6 +120,7 @@ export type Block =
       __component: "droplets.generic";
       content: string;
       id?: number;
+      sourceBlockIds?: number[]; // For grouped blocks - all source BlockNote block IDs
       _clientId?: string;
     }
   | {

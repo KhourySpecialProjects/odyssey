@@ -68,6 +68,49 @@ interface HighlightResponseItem {
   };
 }
 
+type BlockNoteTextStyles = {
+  bold?: boolean;
+  italic?: boolean;
+  underline?: boolean;
+  code?: boolean;
+  latex?: boolean;
+};
+
+type BlockNoteInlineContent = {
+  type?: string;
+  text?: string;
+  styles?: BlockNoteTextStyles;
+};
+
+type BlockNoteListItem = {
+  type: string;
+  content?: BlockNoteInlineContent[];
+  children?: BlockNoteListItem[];
+};
+
+type BlockNoteTableCell = {
+  content?: BlockNoteInlineContent[];
+  props?: {
+    backgroundColor?: string;
+  };
+};
+
+type BlockNoteTableRow = {
+  cells: BlockNoteTableCell[];
+};
+
+// Convert BlockNote string ID to a deterministic number for database storage
+function blockNoteIdToNumber(blockId: string): number {
+  // Simple hash function - sum character codes
+  let hash = 0;
+  for (let i = 0; i < blockId.length; i++) {
+    const char = blockId.charCodeAt(i);
+    hash = (hash << 5) - hash + char;
+    hash = hash & hash; // Convert to 32-bit integer
+  }
+  return Math.abs(hash);
+}
+
 function renderTextWithStyles(
   text: string,
   styles?: Record<string, any>,
@@ -251,10 +294,13 @@ function convertBlockNoteToV1Blocks(blocksV2: CustomBlockNoteBlock[]): Block[] {
         // Render each empty paragraph as a separate block
         // Each empty paragraph creates spacing proportional to the number of empty lines
         // Using a div with min-height to create visible spacing that matches BlockNote editor
-        emptyParagraphBlocks.forEach((_, index) => {
+        emptyParagraphBlocks.forEach((emptyBlock, index) => {
+          const blockId = emptyBlock.id
+            ? blockNoteIdToNumber(emptyBlock.id)
+            : i + index;
           processedBlocks.push({
             __component: "droplets.generic",
-            id: i + index,
+            id: blockId,
             content:
               '<div class="empty-paragraph-spacing" style="min-height: 1.5rem;"></div>',
           });
@@ -265,13 +311,15 @@ function convertBlockNoteToV1Blocks(blocksV2: CustomBlockNoteBlock[]): Block[] {
       }
 
       // Group consecutive non-empty paragraphs together
-      const paragraphBlocks: any[] = [];
+      const paragraphBlocks: CustomBlockNoteBlock[] = [];
+      const sourceBlockIds: number[] = [];
       let j = i;
 
       while (j < blocksV2.length) {
-        const nextBlock = blocksV2[j] as any;
+        const nextBlock = blocksV2[j];
         if (nextBlock.type === "paragraph") {
-          const nextInlineContent = (nextBlock.content ?? []) as any[];
+          const nextInlineContent = (nextBlock.content ??
+            []) as BlockNoteInlineContent[];
           const nextTextContent = convertInlineContentToHtml(nextInlineContent);
           const nextIsEmpty = !nextTextContent || nextTextContent.trim() === "";
 
@@ -281,6 +329,10 @@ function convertBlockNoteToV1Blocks(blocksV2: CustomBlockNoteBlock[]): Block[] {
           }
 
           paragraphBlocks.push(nextBlock);
+          // Store source block ID
+          if (nextBlock.id) {
+            sourceBlockIds.push(blockNoteIdToNumber(nextBlock.id));
+          }
           j++;
         } else {
           break;
@@ -289,7 +341,7 @@ function convertBlockNoteToV1Blocks(blocksV2: CustomBlockNoteBlock[]): Block[] {
 
       const paragraphsHtml = paragraphBlocks
         .map((p) => {
-          const pInlineContent = (p.content ?? []) as any[];
+          const pInlineContent = (p.content ?? []) as BlockNoteInlineContent[];
           const pTextContent = convertInlineContentToHtml(pInlineContent);
           return pTextContent ? `<p>${pTextContent}</p>` : "";
         })
@@ -297,9 +349,16 @@ function convertBlockNoteToV1Blocks(blocksV2: CustomBlockNoteBlock[]): Block[] {
         .join("");
 
       if (paragraphsHtml) {
+        // Use first block's ID as primary, store all in sourceBlockIds
+        const primaryId = paragraphBlocks[0]?.id
+          ? blockNoteIdToNumber(paragraphBlocks[0].id)
+          : i;
+
         processedBlocks.push({
           __component: "droplets.generic",
-          id: i,
+          id: primaryId,
+          sourceBlockIds:
+            sourceBlockIds.length > 1 ? sourceBlockIds : undefined,
           content: paragraphsHtml,
         });
       }
@@ -311,12 +370,13 @@ function convertBlockNoteToV1Blocks(blocksV2: CustomBlockNoteBlock[]): Block[] {
     // Skip quote blocks
     if (blockAny.type === "quote") {
       // Convert quote to paragraph to avoid losing content
-      const quoteContent = (blockAny.content ?? []) as any[];
+      const quoteContent = (blockAny.content ?? []) as BlockNoteInlineContent[];
       const textContent = convertInlineContentToHtml(quoteContent);
       if (textContent) {
+        const blockId = blockAny.id ? blockNoteIdToNumber(blockAny.id) : i;
         processedBlocks.push({
           __component: "droplets.generic",
-          id: i,
+          id: blockId,
           content: `<p>${textContent}</p>`,
         });
       }
@@ -326,15 +386,20 @@ function convertBlockNoteToV1Blocks(blocksV2: CustomBlockNoteBlock[]): Block[] {
 
     // If this is a numbered list item, collect all consecutive ones at the same level
     if (blockAny.type === "numberedListItem") {
-      const listItems: any[] = [];
+      const listItems: CustomBlockNoteBlock[] = [];
+      const sourceBlockIds: number[] = [];
       let j = i;
 
       // Collect consecutive numbered list items at the root level
       // Skip quote blocks that might be interspersed
       while (j < blocksV2.length) {
-        const nextBlock = blocksV2[j] as any;
+        const nextBlock = blocksV2[j];
         if (nextBlock.type === "numberedListItem") {
           listItems.push(nextBlock);
+          // Store source block ID
+          if (nextBlock.id) {
+            sourceBlockIds.push(blockNoteIdToNumber(nextBlock.id));
+          }
           j++;
         } else if (nextBlock.type === "quote") {
           // Skip quote blocks - they might be incorrectly inserted
@@ -346,13 +411,21 @@ function convertBlockNoteToV1Blocks(blocksV2: CustomBlockNoteBlock[]): Block[] {
 
       // Convert all list items to HTML (handles nesting recursively)
       const listItemHtml = listItems
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         .map((item: any) => convertNumberedListItem(item, 0))
         .join("");
 
       if (listItemHtml) {
+        // Use first block's ID as primary, store all in sourceBlockIds
+        const primaryId = listItems[0]?.id
+          ? blockNoteIdToNumber(listItems[0].id)
+          : i;
+
         processedBlocks.push({
           __component: "droplets.generic",
-          id: i,
+          id: primaryId,
+          sourceBlockIds:
+            sourceBlockIds.length > 1 ? sourceBlockIds : undefined,
           content: `<ol class="list-decimal list-outside ml-6 my-2 space-y-1">${listItemHtml}</ol>`,
         });
       }
@@ -363,15 +436,20 @@ function convertBlockNoteToV1Blocks(blocksV2: CustomBlockNoteBlock[]): Block[] {
 
     // If this is a bullet list item, collect all consecutive ones at the same level
     if (blockAny.type === "bulletListItem") {
-      const listItems: any[] = [];
+      const listItems: CustomBlockNoteBlock[] = [];
+      const sourceBlockIds: number[] = [];
       let j = i;
 
       // Collect consecutive bullet list items at the root level
       // Skip quote blocks that might be interspersed
       while (j < blocksV2.length) {
-        const nextBlock = blocksV2[j] as any;
+        const nextBlock = blocksV2[j];
         if (nextBlock.type === "bulletListItem") {
           listItems.push(nextBlock);
+          // Store source block ID
+          if (nextBlock.id) {
+            sourceBlockIds.push(blockNoteIdToNumber(nextBlock.id));
+          }
           j++;
         } else if (nextBlock.type === "quote") {
           // Skip quote blocks - they might be incorrectly inserted
@@ -383,13 +461,21 @@ function convertBlockNoteToV1Blocks(blocksV2: CustomBlockNoteBlock[]): Block[] {
 
       // Convert all list items to HTML (handles nesting recursively)
       const listItemHtml = listItems
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         .map((item: any) => convertBulletListItem(item, 0))
         .join("");
 
       if (listItemHtml) {
+        // Use first block's ID as primary, store all in sourceBlockIds
+        const primaryId = listItems[0]?.id
+          ? blockNoteIdToNumber(listItems[0].id)
+          : i;
+
         processedBlocks.push({
           __component: "droplets.generic",
-          id: i,
+          id: primaryId,
+          sourceBlockIds:
+            sourceBlockIds.length > 1 ? sourceBlockIds : undefined,
           content: `<ul class="list-disc list-outside ml-6 my-2 space-y-1">${listItemHtml}</ul>`,
         });
       }
@@ -410,6 +496,9 @@ function convertBlockNoteToV1Blocks(blocksV2: CustomBlockNoteBlock[]): Block[] {
 }
 
 function convertSingleBlock(blockAny: any, blockIndex: number): Block | null {
+  // Use BlockNote block ID if available, otherwise fall back to index
+  const blockId = blockAny.id ? blockNoteIdToNumber(blockAny.id) : blockIndex;
+
   switch (blockAny.type) {
     case "heading":
     case "paragraph": {
@@ -424,7 +513,7 @@ function convertSingleBlock(blockAny: any, blockIndex: number): Block | null {
 
       return {
         __component: "droplets.generic",
-        id: blockIndex,
+        id: blockId,
         content: htmlContent,
       };
     }
@@ -445,7 +534,7 @@ function convertSingleBlock(blockAny: any, blockIndex: number): Block | null {
 
       return {
         __component: "droplets.callout",
-        id: blockIndex,
+        id: blockId,
         content: [
           {
             type: "paragraph",
@@ -470,7 +559,7 @@ function convertSingleBlock(blockAny: any, blockIndex: number): Block | null {
         __component: "droplets.quiz",
         questions: [
           {
-            id: blockIndex,
+            id: blockId,
             content: blockAny.props?.question || "",
             answerOptions: options.map((opt, optionIndex) => ({
               id: blockIndex * 100 + optionIndex,
@@ -487,7 +576,7 @@ function convertSingleBlock(blockAny: any, blockIndex: number): Block | null {
         __component: "droplets.quiz",
         questions: [
           {
-            id: blockIndex,
+            id: blockId,
             content: blockAny.props?.question || "",
             answerOptions: [
               {
@@ -511,7 +600,7 @@ function convertSingleBlock(blockAny: any, blockIndex: number): Block | null {
         __component: "droplets.open-ended-quiz",
         questions: [
           {
-            id: blockIndex,
+            id: blockId,
             content: blockAny.props?.question || "",
             correctAnswer: "",
           },
@@ -540,7 +629,7 @@ function convertSingleBlock(blockAny: any, blockIndex: number): Block | null {
 
       return {
         __component: "droplets.video",
-        id: blockIndex,
+        id: blockId,
         url: embedUrl,
       };
     }
@@ -549,7 +638,7 @@ function convertSingleBlock(blockAny: any, blockIndex: number): Block | null {
       // Convert to generic block with img tag so it renders in GenericBlockRenderer
       return {
         __component: "droplets.generic",
-        id: blockIndex,
+        id: blockId,
         content: `<img src="${blockAny.props?.url || ""}" alt="${blockAny.props?.name || ""}" class="rounded-md" />`,
       };
     }
@@ -575,7 +664,7 @@ function convertSingleBlock(blockAny: any, blockIndex: number): Block | null {
 
         return {
           __component: "droplets.generic",
-          id: blockIndex,
+          id: blockId,
           content: `<div class="${wrapperClass}">${rendered}</div>`,
         };
       } catch {
@@ -587,7 +676,7 @@ function convertSingleBlock(blockAny: any, blockIndex: number): Block | null {
 
         return {
           __component: "droplets.generic",
-          id: blockIndex,
+          id: blockId,
           content: `<div class="rounded bg-red-50 p-2 text-red-600 dark:bg-red-900/20 dark:text-red-400 font-mono text-sm">LaTeX Error: ${escapedLatex}</div>`,
         };
       }
@@ -652,7 +741,7 @@ function convertSingleBlock(blockAny: any, blockIndex: number): Block | null {
 
       return {
         __component: "droplets.generic",
-        id: blockIndex,
+        id: blockId,
         content: `<!--TABLE_START-->${JSON.stringify(tableData)}<!--TABLE_END-->`,
       };
     }
@@ -669,7 +758,7 @@ function convertSingleBlock(blockAny: any, blockIndex: number): Block | null {
       // that the GenericBlockRenderer can detect and render specially
       return {
         __component: "droplets.code-block",
-        id: blockIndex,
+        id: blockId,
         language,
         code,
         editable,
