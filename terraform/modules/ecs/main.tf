@@ -159,6 +159,18 @@ resource "aws_ecs_task_definition" "frontend" {
          name      = "GITHUB_CLIENT_SECRET"
          valueFrom = "${var.frontend_secret_arn}:GITHUB_CLIENT_SECRET::"
        },
+              {
+         name      = "NEXTAUTH_SECRET"
+         valueFrom = "${var.frontend_secret_arn}:NEXTAUTH_SECRET::"
+       },
+       {
+         name      = "NEXTAUTH_URL"
+         valueFrom = "${var.frontend_secret_arn}:NEXTAUTH_URL::"
+       },
+       {
+         name      = "NEXTAUTH_URL_INTERNAL"
+         valueFrom = "${var.frontend_secret_arn}:NEXTAUTH_URL_INTERNAL::"
+       },
        {
          name      = "NEXT_PUBLIC_APP_ENV"
          valueFrom = "${var.frontend_secret_arn}:NEXT_PUBLIC_APP_ENV::"
