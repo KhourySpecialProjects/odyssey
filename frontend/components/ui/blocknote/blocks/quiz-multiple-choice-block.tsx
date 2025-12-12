@@ -285,7 +285,7 @@ export const MultipleChoiceQuiz = createReactBlockSpec(
                 value={question}
                 onChange={handleQuestionChange}
                 placeholder="Nothing here yet..."
-                className="resize-vertical min-h-[80px] w-full rounded-md border border-gray-300 bg-white p-3 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
+                className="resize-vertical min-h-[80px] w-full rounded-md border border-gray-300 bg-white p-3 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
               />
             </div>
 
@@ -313,7 +313,7 @@ export const MultipleChoiceQuiz = createReactBlockSpec(
                         handleOptionTextChange(option.id, e.target.value)
                       }
                       placeholder={`Option ${index + 1}`}
-                      className="resize-vertical min-h-[60px] flex-1 rounded-md border border-gray-300 bg-white p-3 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
+                      className="resize-vertical min-h-[60px] flex-1 rounded-md border border-gray-300 bg-white p-3 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
                     />
 
                     {/* Delete option button */}

@@ -354,7 +354,7 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
 
   return (
     <>
-      <div className="mb-5 flex flex-col items-center justify-start rounded-md border border-slate-200 px-4 pb-7 pt-4 dark:border-slate-500">
+      <div className="mb-5 flex flex-col items-center justify-start rounded-md border border-slate-200 px-4 pt-4 pb-7 dark:border-slate-500">
         <LessonNameInput
           className="mb-3 w-[700px] max-w-2xl text-center"
           initialContent={`<h1>${name}</h1>`}
@@ -369,7 +369,7 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
             Change URL
           </Button>
           {isPopupOpen && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+            <div className="bg-opacity-50 fixed inset-0 z-50 flex items-center justify-center bg-black">
               <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl dark:bg-slate-900">
                 <h3 className="mb-4 text-lg font-medium text-slate-900 dark:text-slate-100">
                   Enter New URL Slug
@@ -422,7 +422,7 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
 
                 setEditorVersion(newVersion);
               }}
-              className={`inline-flex h-10 items-center justify-center gap-2 whitespace-nowrap rounded-md px-4 py-2 text-sm font-medium ring-offset-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-950 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 dark:ring-offset-slate-950 dark:focus-visible:ring-slate-300 ${
+              className={`inline-flex h-10 items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium whitespace-nowrap ring-offset-white transition-colors focus-visible:ring-2 focus-visible:ring-slate-950 focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 dark:ring-offset-slate-950 dark:focus-visible:ring-slate-300 ${
                 editorVersion === "v1"
                   ? "animate-border border-2 border-transparent text-slate-900 [background:linear-gradient(#fff,#fff)_padding-box,conic-gradient(from_var(--border-angle),theme(colors.slate.200)_0%,theme(colors.indigo.500)_25%,theme(colors.indigo.300)_50%,theme(colors.indigo.500)_75%,theme(colors.slate.200)_100%)_border-box] dark:text-slate-50 dark:[background:linear-gradient(theme(colors.slate.950),theme(colors.slate.950))_padding-box,conic-gradient(from_var(--border-angle),theme(colors.slate.800/.48)_0%,theme(colors.indigo.500)_25%,theme(colors.indigo.300)_50%,theme(colors.indigo.500)_75%,theme(colors.slate.800/.48)_100%)_border-box]"
                   : "border border-slate-200 bg-white text-slate-900 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-50"
@@ -456,7 +456,7 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
         </>
       ) : (
         <div className="mx-auto mt-8 w-full px-4">
-          <div className="mx-auto w-full min-w-[300px] max-w-4xl md:min-w-[700px]">
+          <div className="mx-auto w-full max-w-4xl min-w-[300px] md:min-w-[700px]">
             <p className="mb-4 text-center text-sm text-slate-500">
               BlockNote Editor - Changes saved automatically
             </p>

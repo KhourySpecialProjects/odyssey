@@ -54,7 +54,7 @@ export default async function GroupManagementPage({ searchParams }: Props) {
         <h1 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl dark:text-white">
           {group ? "Edit Group" : "Create New Group"}
         </h1>
-        <p className="mt-4 text-balance text-lg leading-normal text-slate-600 dark:text-slate-300">
+        <p className="mt-4 text-lg leading-normal text-balance text-slate-600 dark:text-slate-300">
           {group
             ? "Modify your group settings and manage members"
             : "Set up a new group and invite members"}

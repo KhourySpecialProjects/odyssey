@@ -24,7 +24,7 @@ export function UserDropdown({
   return (
     <DropdownMenu modal={false}>
       <DropdownMenuTrigger asChild>
-        <div className="light:text-slate-600 wg-antialiased group flex w-full shrink cursor-pointer select-none items-center justify-between gap-1 rounded-lg p-1.5 px-1 text-sm transition-colors duration-100 hover:bg-slate-100 dark:hover:bg-white/5">
+        <div className="light:text-slate-600 wg-antialiased group flex w-full shrink cursor-pointer items-center justify-between gap-1 rounded-lg p-1.5 px-1 text-sm transition-colors duration-100 select-none hover:bg-slate-100 dark:hover:bg-white/5">
           <div className="inline-flex flex-row items-center justify-between">
             <Avatar variant="round" size="xs">
               <AvatarImage
@@ -48,7 +48,7 @@ export function UserDropdown({
       <DropdownMenuContent className="mb-3 min-w-[220px]">
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
-            <p className="text-sm font-semibold leading-none">
+            <p className="text-sm leading-none font-semibold">
               {user.name} {user.nuid ? ` (${user.nuid})` : ""}
             </p>
             <p className="text-muted-foreground text-xs leading-none">

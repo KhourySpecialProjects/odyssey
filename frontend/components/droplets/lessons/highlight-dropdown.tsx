@@ -42,7 +42,7 @@ export function HighlightDropdown({
 
   return (
     <div
-      className={`fixed flex ${expanded ? "xs:top-44 right-[355px] top-36 flex-col md:top-36" : "right-5 top-36 flex-col"} z-20 gap-2`}
+      className={`fixed flex ${expanded ? "xs:top-44 top-36 right-[355px] flex-col md:top-36" : "top-36 right-5 flex-col"} z-20 gap-2`}
     >
       <div
         className={`z-30 rounded border border-black bg-blue-100 p-2 shadow-lg dark:border-white dark:bg-slate-700 dark:text-white`}
@@ -50,7 +50,7 @@ export function HighlightDropdown({
         <div className="group relative">
           <CircleHelp className="cursor-pointer" />
 
-          <div className="pointer-events-none absolute left-0 top-full mt-2 flex w-max -translate-x-[100%] transform flex-col items-center gap-2 rounded bg-white p-4 text-black opacity-0 shadow-lg transition-opacity group-hover:opacity-100">
+          <div className="pointer-events-none absolute top-full left-0 mt-2 flex w-max -translate-x-[100%] transform flex-col items-center gap-2 rounded bg-white p-4 text-black opacity-0 shadow-lg transition-opacity group-hover:opacity-100">
             <p>Highlighting Instructions:</p>
             <ul className="list-disc pl-4">
               <li>
@@ -98,7 +98,7 @@ export function HighlightDropdown({
           />
 
           <div
-            className={`absolute left-1/2 top-full mt-2 w-max -translate-x-1/2 transform gap-2 rounded bg-white p-4 shadow-lg ${visible ? "visible" : "hidden"} flex flex-col items-center transition-opacity`}
+            className={`absolute top-full left-1/2 mt-2 w-max -translate-x-1/2 transform gap-2 rounded bg-white p-4 shadow-lg ${visible ? "visible" : "hidden"} flex flex-col items-center transition-opacity`}
           >
             <div title="Highlighting Mode">
               <Switch

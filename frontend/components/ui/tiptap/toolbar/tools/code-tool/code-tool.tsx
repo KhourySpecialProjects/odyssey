@@ -34,7 +34,7 @@ function CodeBlockComponent({
         contentEditable={false}
         defaultValue={defaultLanguage}
         onChange={(event) => updateAttributes({ language: event.target.value })}
-        className="mb-2 rounded-md border border-gray-300 bg-white px-2 py-1 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+        className="mb-2 rounded-md border border-gray-300 bg-white px-2 py-1 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-white"
       >
         <option value="null">auto</option>
         <option disabled>—</option>
@@ -46,8 +46,8 @@ function CodeBlockComponent({
             </option>
           ))}
       </select>
-      <pre className="relative overflow-x-auto rounded-md bg-slate-900 py-3 pl-12 pr-4 dark:bg-slate-950">
-        <div className="absolute bottom-3 left-0 top-3 flex min-w-[2.5rem] select-none flex-col border-r border-slate-700 bg-slate-800 text-sm text-slate-400 dark:border-slate-800 dark:bg-slate-900">
+      <pre className="relative overflow-x-auto rounded-md bg-slate-900 py-3 pr-4 pl-12 dark:bg-slate-950">
+        <div className="absolute top-3 bottom-3 left-0 flex min-w-[2.5rem] flex-col border-r border-slate-700 bg-slate-800 text-sm text-slate-400 select-none dark:border-slate-800 dark:bg-slate-900">
           {Array.from({ length: lineCount }).map((_, i) => (
             <div
               key={i}
@@ -63,7 +63,7 @@ function CodeBlockComponent({
         </div>
         <NodeViewContent
           as="code"
-          className="block whitespace-pre font-mono text-sm text-slate-50"
+          className="block font-mono text-sm whitespace-pre text-slate-50"
           style={{ lineHeight: "1.25rem" }}
         />
       </pre>

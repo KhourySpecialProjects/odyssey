@@ -207,7 +207,7 @@ export function QuizQuestionBlock({
               </Badge>
 
               <div className="my-8">
-                <span className="text-sm font-bold uppercase text-sky-700">
+                <span className="text-sm font-bold text-sky-700 uppercase">
                   You selected:
                 </span>
                 <ul>

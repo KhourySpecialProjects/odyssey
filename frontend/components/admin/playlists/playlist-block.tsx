@@ -23,7 +23,7 @@ export function PlaylistBlock({ playlist }: { playlist: Playlist }) {
             <Button size="sm" className="bg-white dark:bg-slate-300">
               <div className="group relative">
                 <Pencil className="text-sky-600" />
-                <span className="absolute left-1/2 top-full mt-1 w-max -translate-x-1/2 transform rounded bg-gray-800 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100">
+                <span className="absolute top-full left-1/2 mt-1 w-max -translate-x-1/2 transform rounded bg-gray-800 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100">
                   Edit Playlist
                 </span>
               </div>

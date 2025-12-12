@@ -271,7 +271,7 @@ export function GroupProgressGrid({ group, statuses }: GroupProgressGridProps) {
           <button
             onClick={handlePrevPage}
             disabled={currentPage === 0}
-            className={`w-22 mr-4 px-4 py-2 ${currentPage === 0 ? "visibility: hidden" : "visibility: visible"}`}
+            className={`mr-4 w-22 px-4 py-2 ${currentPage === 0 ? "visibility: hidden" : "visibility: visible"}`}
           >
             <MoveLeft />
           </button>
@@ -293,7 +293,7 @@ export function GroupProgressGrid({ group, statuses }: GroupProgressGridProps) {
         {getDisplayedDroplets() && getDisplayedDroplets().length > 0 ? (
           <div className="flex flex-row justify-start">
             <div className="flex flex-col justify-self-start">
-              <div className="bg-white-50 w-55 flex h-24 items-center justify-center border-slate-200 p-4 transition-colors hover:border-slate-300">
+              <div className="bg-white-50 flex h-24 w-55 items-center justify-center border-slate-200 p-4 transition-colors hover:border-slate-300">
                 <span className="line-clamp-3 text-center text-sm font-semibold text-slate-950">
                   {""}
                 </span>
@@ -302,7 +302,7 @@ export function GroupProgressGrid({ group, statuses }: GroupProgressGridProps) {
               {sortedMembers.map((member) => (
                 <div
                   key={member.id}
-                  className="bg-white-50 w-55 flex h-24 items-center justify-center border-slate-200 p-4 transition-colors hover:border-slate-300"
+                  className="bg-white-50 flex h-24 w-55 items-center justify-center border-slate-200 p-4 transition-colors hover:border-slate-300"
                 >
                   <span
                     title={member.email}

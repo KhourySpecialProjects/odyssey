@@ -130,7 +130,7 @@ export default async function Droplet({ params }: Props) {
     <>
       <GradientBackground className="px-0">
         <div className="mx-auto max-w-2xl px-5 md:px-0">
-          <div className="flex-0 flex flex-row flex-wrap gap-1.5">
+          <div className="flex flex-0 flex-row flex-wrap gap-1.5">
             <ClickableBadges
               focusArea={droplet.focusArea}
               type={droplet.type}
@@ -150,7 +150,7 @@ export default async function Droplet({ params }: Props) {
             <div className="p-2">This droplet is currently live</div>
           )}
           <div
-            className={`pb-4 pt-4 ${droplet.status === "draft" && !droplet.inReview && isContentCreator(user.roles) ? "visibility: visible" : "visibility: hidden"} text-red-500 dark:text-red-300`}
+            className={`pt-4 pb-4 ${droplet.status === "draft" && !droplet.inReview && isContentCreator(user.roles) ? "visibility: visible" : "visibility: hidden"} text-red-500 dark:text-red-300`}
           >
             This is currently a draft droplet. To publish this droplet, contact
             a Content Editor or Admin.

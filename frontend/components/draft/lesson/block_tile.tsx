@@ -40,7 +40,7 @@ export default function BlockTile({
 
       // Block reordering controls - floating on the left, vertically centered
       const blockControls = (
-        <div className="absolute right-[-48px] top-1/2 flex -translate-y-1/2 flex-col gap-1">
+        <div className="absolute top-1/2 right-[-48px] flex -translate-y-1/2 flex-col gap-1">
           <button
             onClick={() => moveBlockUp(index)}
             disabled={index === 0}

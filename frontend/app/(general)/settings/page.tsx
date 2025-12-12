@@ -60,7 +60,7 @@ export default async function Settings() {
             </div>
           </div>
 
-          <div className="flex w-full items-center space-x-8 border-t border-t-slate-200 pt-4 sm:border-l sm:border-t-0 sm:border-l-slate-200 sm:pl-8 sm:pt-0">
+          <div className="flex w-full items-center space-x-8 border-t border-t-slate-200 pt-4 sm:border-t-0 sm:border-l sm:border-l-slate-200 sm:pt-0 sm:pl-8">
             <div
               className={`${
                 user?.nuid ? "visibility: visible" : "visibility: hidden"

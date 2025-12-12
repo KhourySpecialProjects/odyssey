@@ -202,7 +202,7 @@ export function PlaylistForm({
 
         <Separator className="mb-4 dark:bg-slate-300" />
 
-        <div className="flex justify-end space-x-4 pb-4 pt-4">
+        <div className="flex justify-end space-x-4 pt-4 pb-4">
           <Button
             type="button"
             variant="outline"

@@ -83,7 +83,7 @@ export default async function Page() {
         <h1 className="light:text-slate-900 text-3xl font-bold tracking-tight sm:text-4xl">
           Admin
         </h1>
-        <p className="light:text-slate-600 mt-4 text-balance text-lg leading-normal">
+        <p className="light:text-slate-600 mt-4 text-lg leading-normal text-balance">
           View Odyssey statistics and edit existing information.
         </p>
       </div>

@@ -45,7 +45,7 @@ export function CompletedDropletBlock({
         <DialogHeader>
           <GradientBackground className="h-60 min-h-0 px-0">
             <Button
-              className="absolute right-0 top-0 bg-transparent text-slate-500 hover:bg-transparent"
+              className="absolute top-0 right-0 bg-transparent text-slate-500 hover:bg-transparent"
               onClick={handleClose}
             >
               <X />

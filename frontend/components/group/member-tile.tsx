@@ -37,7 +37,7 @@ export function MemberTile({ member, onRemove }: MemberTileProps) {
             </div>
 
             <div
-              className={`absolute left-0 top-1/2 z-50 -translate-y-1/2 whitespace-nowrap rounded bg-black px-2 py-1 text-sm text-white transition-opacity duration-200 ${showEmail ? "opacity-100" : "pointer-events-none opacity-0"} md:pointer-events-auto md:static md:ml-0 md:translate-y-0 md:bg-transparent md:p-0 md:text-slate-900 md:opacity-100 md:dark:text-white`}
+              className={`absolute top-1/2 left-0 z-50 -translate-y-1/2 rounded bg-black px-2 py-1 text-sm whitespace-nowrap text-white transition-opacity duration-200 ${showEmail ? "opacity-100" : "pointer-events-none opacity-0"} md:pointer-events-auto md:static md:ml-0 md:translate-y-0 md:bg-transparent md:p-0 md:text-slate-900 md:opacity-100 md:dark:text-white`}
             >
               {member.email}
             </div>
@@ -49,7 +49,7 @@ export function MemberTile({ member, onRemove }: MemberTileProps) {
           variant="ghost"
           size="sm"
           onClick={() => onRemove?.(member.email ?? "")}
-          className="absolute right-2 top-2 text-slate-400 opacity-0 transition-opacity hover:text-red-500 group-hover:opacity-100"
+          className="absolute top-2 right-2 text-slate-400 opacity-0 transition-opacity group-hover:opacity-100 hover:text-red-500"
         >
           <XCircle className="h-5 w-5" />
         </Button>

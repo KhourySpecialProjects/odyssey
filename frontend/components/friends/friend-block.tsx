@@ -67,7 +67,7 @@ export function FriendBlock({
                 ? `${friend.firstName} ${friend.lastName}`
                 : `${friend.email}`
             }
-            className="inline-block max-w-[200px] overflow-hidden truncate font-medium text-slate-900 md:max-w-sm dark:text-slate-300"
+            className="inline-block max-w-[200px] truncate overflow-hidden font-medium text-slate-900 md:max-w-sm dark:text-slate-300"
           >
             {friend.firstName && friend.lastName
               ? friend.firstName + " " + friend.lastName
