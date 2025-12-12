@@ -421,7 +421,6 @@ function convertBlockNoteToV1Blocks(blocksV2: CustomBlockNoteBlock[]): Block[] {
       // Convert all list items to HTML (handles nesting recursively)
       const listItemHtml = listItems
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         .map((item: any) => convertNumberedListItem(item, 0))
         .join("");
 
