@@ -651,7 +651,7 @@ export function LessonRenderer({
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
   const [highlights, setHighlights] = useState<Highlight[]>([]);
-  
+
   // Move all hooks before any early returns
   useEffect(() => {
     const fetchHighlights = async () => {
