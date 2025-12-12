@@ -264,11 +264,13 @@ function convertBlockNoteToV1Blocks(blocksV2: CustomBlockNoteBlock[]): Block[] {
   let i = 0;
 
   while (i < blocksV2.length) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const blockAny = blocksV2[i] as any;
 
     // Check for empty paragraphs FIRST, regardless of block type context
     // This ensures empty paragraphs between any block types are preserved for spacing
     if (blockAny.type === "paragraph") {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const inlineContent = (blockAny.content ?? []) as any[];
       const textContent = convertInlineContentToHtml(inlineContent);
       const isEmpty = !textContent || textContent.trim() === "";
@@ -276,13 +278,16 @@ function convertBlockNoteToV1Blocks(blocksV2: CustomBlockNoteBlock[]): Block[] {
       // If empty paragraph, render each empty paragraph as a separate block
       // This creates proportional spacing - more empty paragraphs = more spacing
       if (isEmpty) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const emptyParagraphBlocks: any[] = [];
         let j = i;
 
         // Collect consecutive empty paragraphs
         while (j < blocksV2.length) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const nextBlock = blocksV2[j] as any;
           if (nextBlock.type === "paragraph") {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const nextInlineContent = (nextBlock.content ?? []) as any[];
             const nextTextContent =
               convertInlineContentToHtml(nextInlineContent);
@@ -783,6 +788,7 @@ function convertSingleBlock(blockAny: any, blockIndex: number): Block | null {
     case "code-block": {
       // Code blocks need special handling - render them as a custom component
       // We'll create a simple code display block that respects the editable/runnable props
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const language = blockAny.props?.language || "javascript";
       const code = blockAny.props?.code || "";
       const editable = blockAny.props?.editable || false;
