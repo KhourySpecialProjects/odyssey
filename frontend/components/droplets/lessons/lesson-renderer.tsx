@@ -214,8 +214,8 @@ function convertBlockNoteToV1Blocks(blocksV2: CustomBlockNoteBlock[]): Block[] {
   while (i < blocksV2.length) {
     const blockAny = blocksV2[i] as any;
 
-    // Group consecutive non-empty paragraphs together to avoid large inter-block spacing
-    // Empty paragraphs break the grouping and create proportional spacing
+    // Check for empty paragraphs FIRST, regardless of block type context
+    // This ensures empty paragraphs between any block types are preserved for spacing
     if (blockAny.type === "paragraph") {
       const inlineContent = (blockAny.content ?? []) as any[];
       const textContent = convertInlineContentToHtml(inlineContent);
@@ -249,12 +249,14 @@ function convertBlockNoteToV1Blocks(blocksV2: CustomBlockNoteBlock[]): Block[] {
         }
 
         // Render each empty paragraph as a separate block
-        // Each block gets space-y-12 spacing, so multiple empty paragraphs create proportional spacing
+        // Each empty paragraph creates spacing proportional to the number of empty lines
+        // Using a div with min-height to create visible spacing that matches BlockNote editor
         emptyParagraphBlocks.forEach((_, index) => {
           processedBlocks.push({
             __component: "droplets.generic",
             id: i + index,
-            content: "<p></p>",
+            content:
+              '<div class="empty-paragraph-spacing" style="min-height: 1.5rem;"></div>',
           });
         });
 
@@ -952,7 +954,7 @@ export function LessonRenderer({
       <div className="relative mx-auto w-full max-w-2xl xl:py-8">
         <h1 className="text-6xl font-extrabold text-balance">{lesson.name}</h1>
 
-        <div className="mt-8 space-y-12">
+        <div className="mt-8 space-y-2">
           {displayBlocks.map((b: Block, i: number) => (
             <LessonBlockRenderer
               key={i}
