@@ -89,7 +89,7 @@ export function RegenerateSlugButton({
       </div>
 
       {isPopupOpen && (
-        <div className="bg-opacity-50 fixed inset-0 z-50 flex items-center justify-center bg-black">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
           <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl dark:bg-slate-900">
             <h3 className="mb-4 text-lg font-medium text-slate-900 dark:text-slate-100">
               Enter New URL Slug
@@ -120,7 +120,7 @@ export function RegenerateSlugButton({
         </div>
       )}
       {isReviewPopupOpen && (
-        <div className="bg-opacity-50 fixed inset-0 z-50 flex items-center justify-center bg-black">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
           <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl dark:bg-slate-900">
             <h3 className="mb-4 text-lg font-medium text-slate-900 dark:text-slate-100">
               Are you sure you want to submit this droplet for review?

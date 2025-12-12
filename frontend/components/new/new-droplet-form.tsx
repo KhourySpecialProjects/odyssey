@@ -303,7 +303,7 @@ export function CreateDropletForm({
           onClick={() => router.push("/my-content")}
           className="bg-black text-white dark:bg-slate-50 dark:text-black"
         >
-          <div className="flex w-30 items-center justify-center">Cancel</div>
+          <div className="w-30 flex items-center justify-center">Cancel</div>
         </Button>
 
         <SubmitButton />
@@ -335,7 +335,7 @@ function SubmitButton() {
       variant="default"
       className="bg-black text-white dark:bg-slate-50 dark:text-black"
     >
-      <div className="flex w-30 items-center justify-center">
+      <div className="w-30 flex items-center justify-center">
         Create Droplet
       </div>
     </Button>

@@ -25,7 +25,7 @@ export function StatisticsSelector({
 
   return (
     <div>
-      <div className="align-center flex justify-center pb-4 select-none">
+      <div className="align-center flex select-none justify-center pb-4">
         <div className="flex w-max flex-row flex-nowrap space-x-2 rounded-lg px-2 py-2 shadow">
           {Object.keys(content).map((key) => (
             <div

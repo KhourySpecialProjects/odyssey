@@ -90,7 +90,7 @@ export function Header({
           <nav className="hidden flex-row items-center xl:flex">
             <NavLinks
               items={getNavLinks()}
-              className="flex-row space-y-0 space-x-8"
+              className="flex-row space-x-8 space-y-0"
             />
           </nav>
 

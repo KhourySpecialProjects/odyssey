@@ -281,7 +281,7 @@ export function CodeBlockViewer({
               {code || "// Code here"}
             </SyntaxHighlighter>
             {editable && (
-              <div className="absolute top-2 right-2 opacity-0 transition-opacity group-hover:opacity-100">
+              <div className="absolute right-2 top-2 opacity-0 transition-opacity group-hover:opacity-100">
                 <span className="rounded bg-gray-800 px-2 py-1 text-xs text-gray-400">
                   Click to edit
                 </span>
@@ -333,7 +333,7 @@ export function CodeBlockViewer({
                 )}
               </div>
               <pre
-                className={`font-mono text-sm whitespace-pre-wrap ${
+                className={`whitespace-pre-wrap font-mono text-sm ${
                   executionSuccess ? "text-green-400" : "text-red-300"
                 }`}
               >

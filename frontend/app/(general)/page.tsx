@@ -31,7 +31,7 @@ export default async function HomeRoute() {
         <div className="mx-auto max-w-2xl py-0 lg:py-4">
           <div className="text-center">
             <h1
-              className="text-4xl font-black tracking-tight text-balance text-slate-900 sm:text-6xl dark:text-white"
+              className="text-balance text-4xl font-black tracking-tight text-slate-900 sm:text-6xl dark:text-white"
               role="heading"
             >
               Reinforce Your Learning and Fuel Your Future

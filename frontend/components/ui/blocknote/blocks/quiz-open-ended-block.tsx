@@ -232,7 +232,7 @@ export const OpenEndedQuiz = createReactBlockSpec(
                 value={question}
                 onChange={handleQuestionChange}
                 placeholder="Nothing here yet..."
-                className="resize-vertical min-h-[80px] w-full rounded-md border border-gray-300 bg-white p-3 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
+                className="resize-vertical min-h-[80px] w-full rounded-md border border-gray-300 bg-white p-3 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
               />
             </div>
 
@@ -245,7 +245,7 @@ export const OpenEndedQuiz = createReactBlockSpec(
                 value={correctAnswer}
                 onChange={handleCorrectAnswerChange}
                 placeholder="Enter the correct answer..."
-                className="resize-vertical min-h-[80px] w-full rounded-md border border-gray-300 bg-white p-3 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
+                className="resize-vertical min-h-[80px] w-full rounded-md border border-gray-300 bg-white p-3 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
               />
               <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
                 Student answers will be checked for exact match

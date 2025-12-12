@@ -19,7 +19,7 @@ export default async function FeedPage() {
     <>
       <div className="mx-auto my-4 w-full max-w-7xl p-8 text-center">
         <h1 className="text-5xl font-bold">My Feed</h1>
-        <p className="light:text-slate-600 mt-2 hidden text-lg leading-normal text-balance lg:block">
+        <p className="light:text-slate-600 mt-2 hidden text-balance text-lg leading-normal lg:block">
           Check out what&apos;s happening right now
         </p>
       </div>

@@ -173,7 +173,7 @@ export const LatexBlock = createReactBlockSpec(
 
       return (
         <div
-          className="relative my-4 rounded-md border border-slate-200 bg-slate-50 p-4 select-none dark:border-slate-700 dark:bg-slate-800"
+          className="relative my-4 select-none rounded-md border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800"
           contentEditable={false}
           onMouseDown={(e) => {
             // Prevent selection when clicking anywhere on the block
@@ -213,7 +213,7 @@ export const LatexBlock = createReactBlockSpec(
 
           {previewHtml && !hasError ? (
             <div
-              className="min-h-[40px] overflow-x-auto p-2 select-none"
+              className="min-h-[40px] select-none overflow-x-auto p-2"
               dangerouslySetInnerHTML={{ __html: previewHtml }}
               onMouseDown={(e) => e.preventDefault()}
               style={{ userSelect: "none", WebkitUserSelect: "none" }}
@@ -274,7 +274,7 @@ export const LatexBlock = createReactBlockSpec(
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <Label>Preview</Label>
-                    <span className="text-xs font-medium text-slate-500 uppercase dark:text-slate-400">
+                    <span className="text-xs font-medium uppercase text-slate-500 dark:text-slate-400">
                       {effectiveDisplayMode ? "Display" : "Inline"}
                     </span>
                   </div>

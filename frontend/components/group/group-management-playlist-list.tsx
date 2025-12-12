@@ -58,7 +58,7 @@ const PlaylistItem = ({
       <div className="group relative flex-1 rounded-md border border-slate-200 bg-slate-50 transition-colors hover:border-slate-300 dark:border-slate-500 dark:bg-slate-800">
         <div className="flex items-center p-4">
           <div className="flex-grow">
-            <div className="mb-2 flex flex-0 flex-row flex-wrap gap-1.5">
+            <div className="flex-0 mb-2 flex flex-row flex-wrap gap-1.5">
               <Badge variant="default" className="dark:bg-slate-700">
                 {playlist.isPublic ? "Public" : "Private"}
               </Badge>
@@ -82,7 +82,7 @@ const PlaylistItem = ({
             variant="ghost"
             size="sm"
             onClick={() => onRemove(playlist.id)}
-            className="text-slate-400 opacity-0 transition-opacity group-hover:opacity-100 hover:text-red-500"
+            className="text-slate-400 opacity-0 transition-opacity hover:text-red-500 group-hover:opacity-100"
           >
             <XCircleIcon className="h-5 w-5" />
           </Button>

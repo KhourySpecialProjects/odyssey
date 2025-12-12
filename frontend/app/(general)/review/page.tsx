@@ -35,13 +35,13 @@ export default async function CreateRoute() {
         <h1 className="light:text-slate-900 text-3xl font-bold tracking-tight sm:text-4xl">
           To Review
         </h1>
-        <p className="light:text-slate-600 mt-4 text-lg leading-normal text-balance dark:text-slate-300">
+        <p className="light:text-slate-600 mt-4 text-balance text-lg leading-normal dark:text-slate-300">
           Look over draft droplets that have been submitted for review.
         </p>
       </div>
 
       <div className="s mx-auto mb-8 w-full max-w-5xl px-4 xl:p-0">
-        <Separator orientation="horizontal" className="mt-2 mb-4" />
+        <Separator orientation="horizontal" className="mb-4 mt-2" />
         {!drafts || drafts.length === 0 ? (
           <Message className="mb-8 rounded-md border border-dashed border-slate-200 dark:border-slate-500 dark:bg-slate-800">
             <MessageHeader

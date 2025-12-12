@@ -60,7 +60,7 @@ export function AuthorCard({ inDraft, onRemove, author }: AuthorCardProps) {
       </Avatar>
 
       <div className="flex min-w-0 flex-1 flex-col gap-1">
-        <span className="leading-relaxed font-bold">
+        <span className="font-bold leading-relaxed">
           {author.firstName + " " + author.lastName}
         </span>
 

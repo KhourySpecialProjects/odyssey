@@ -7,7 +7,7 @@ export async function EnvironmentBanner({ className }: { className?: string }) {
   return (
     <div
       className={cn(
-        "relative z-50 flex w-full items-center bg-red-800 p-2 py-4 font-mono text-xs font-medium text-white uppercase",
+        "relative z-50 flex w-full items-center bg-red-800 p-2 py-4 font-mono text-xs font-medium uppercase text-white",
         className,
       )}
     >

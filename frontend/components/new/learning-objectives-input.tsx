@@ -59,7 +59,7 @@ export function LearningObjectivesInput({
   return (
     <div
       className={cn(
-        "flex w-min flex-col items-start justify-center select-none",
+        "flex w-min select-none flex-col items-start justify-center",
         className,
       )}
     >

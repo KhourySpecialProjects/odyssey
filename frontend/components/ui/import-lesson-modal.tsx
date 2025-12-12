@@ -209,7 +209,7 @@ export function ImportLessonModal({
                 </div>
               </div>
 
-              <p className="text-xs text-slate-500 italic dark:text-slate-400">
+              <p className="text-xs italic text-slate-500 dark:text-slate-400">
                 Note: Code blocks must be added manually after import
               </p>
             </div>

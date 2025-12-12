@@ -121,7 +121,7 @@ export function OpenEndedQuizQuestionBlock({
                 Not Quite
               </Badge>
               <div className="my-8">
-                <span className="text-sm font-bold text-sky-700 uppercase">
+                <span className="text-sm font-bold uppercase text-sky-700">
                   Your answer:
                 </span>
                 <p className="mt-2 font-medium">{userAnswer}</p>

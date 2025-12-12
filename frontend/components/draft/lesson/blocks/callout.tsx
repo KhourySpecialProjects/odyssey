@@ -73,7 +73,7 @@ export function CalloutEditor({
               >
                 <CalloutIcon color={block.color || "bg-sky-300"}></CalloutIcon>
                 {!iconEnabled && (
-                  <Ban className="absolute top-0 left-0 h-full w-full text-red-500" />
+                  <Ban className="absolute left-0 top-0 h-full w-full text-red-500" />
                 )}
               </Button>
             </div>

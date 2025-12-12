@@ -19,7 +19,7 @@ export function Session() {
           <LoaderIcon className="animate-spin" />
         </div>
       ) : (
-        <pre className="mt-4 rounded-md bg-slate-100 p-4 text-sm text-wrap break-words whitespace-pre dark:bg-slate-800">
+        <pre className="mt-4 whitespace-pre text-wrap break-words rounded-md bg-slate-100 p-4 text-sm dark:bg-slate-800">
           {JSON.stringify(session, null, 2)}
         </pre>
       )}
