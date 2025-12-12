@@ -185,7 +185,7 @@ resource "aws_ecs_task_definition" "frontend" {
        },
        {
          name      = "POSTHOG_API_KEY"
-         valueFrom = "${var.backend_secret_arn}:POSTHOG_API_KEY::"
+         valueFrom = "${var.frontend_secret_arn}:POSTHOG_API_KEY::"
        },
        {
          name      = "STRAPI_ACCESS_TOKEN"
