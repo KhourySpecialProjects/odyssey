@@ -9,29 +9,15 @@ import {
 } from "@/components/message";
 export function BlockListClient({
   blocks,
-  onAddBlock,
   setBlock,
   deleteBlock,
   onMoveBlock,
 }: {
   blocks: Block[];
-  onAddBlock: (index: number, block: Block) => void;
-  setBlock: (index: number) => (block: any) => void;
+  setBlock: (index: number) => (block: Block) => void;
   deleteBlock: (index: number) => () => void;
   onMoveBlock: (fromIndex: number, toIndex: number) => void;
 }) {
-  if (blocks.length === 0) {
-    return (
-      <>
-        <Message className="mb-8 rounded-md dark:border-slate-500 dark:bg-slate-800">
-          <MessageHeader subtitle="" title="No Blocks" />
-          <MessageDescription>
-            Use the add button to get started!
-          </MessageDescription>
-        </Message>
-      </>
-    );
-  }
   const moveBlockUp = useCallback(
     (index: number) => {
       if (index === 0) return;
@@ -47,6 +33,19 @@ export function BlockListClient({
     },
     [onMoveBlock, blocks.length],
   );
+
+  if (blocks.length === 0) {
+    return (
+      <>
+        <Message className="mb-8 rounded-md dark:border-slate-500 dark:bg-slate-800">
+          <MessageHeader subtitle="" title="No Blocks" />
+          <MessageDescription>
+            Use the add button to get started!
+          </MessageDescription>
+        </Message>
+      </>
+    );
+  }
 
   return (
     <>

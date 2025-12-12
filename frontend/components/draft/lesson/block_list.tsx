@@ -5,7 +5,6 @@ import { BlockListClient } from "./block_list_client";
 interface BlockListProps {
   blocks: Block[];
   onReorder: (fromIndex: number, toIndex: number) => void;
-  onAddBlock: (index: number, block: Block) => void;
   setBlock: (index: number) => (block: Block) => void;
   deleteBlock: (index: number) => () => void;
 }
@@ -13,7 +12,6 @@ interface BlockListProps {
 export default function BlockList({
   blocks,
   onReorder,
-  onAddBlock,
   setBlock,
   deleteBlock,
 }: BlockListProps) {
@@ -25,7 +23,6 @@ export default function BlockList({
       <BlockListClient
         blocks={blocks}
         onMoveBlock={onReorder}
-        onAddBlock={onAddBlock}
         setBlock={setBlock}
         deleteBlock={deleteBlock}
       />

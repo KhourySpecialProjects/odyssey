@@ -45,6 +45,7 @@ export default function ImageToolButton({ editor }: { editor: Editor | null }) {
     setFile(null);
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const initialState: any = { image: null };
 
   const [, formAction, isPending] = useActionState(insertImage, initialState);

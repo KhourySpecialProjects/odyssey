@@ -33,13 +33,13 @@ describe("PendingRequestCard", () => {
 
   describe("Rendering", () => {
     it("renders card with title", () => {
-      render(<PendingRequestCard request={mockRequest} />);
+      render(<PendingRequestCard />);
 
       expect(screen.getByText("Request Submitted")).toBeInTheDocument();
     });
 
     it("renders card description", () => {
-      render(<PendingRequestCard request={mockRequest} />);
+      render(<PendingRequestCard />);
 
       expect(
         screen.getByText("Your content creation request is pending review."),
@@ -47,7 +47,7 @@ describe("PendingRequestCard", () => {
     });
 
     it("renders pending status message", () => {
-      render(<PendingRequestCard request={mockRequest} />);
+      render(<PendingRequestCard />);
 
       expect(
         screen.getByText(
@@ -57,7 +57,7 @@ describe("PendingRequestCard", () => {
     });
 
     it("renders admin review message", () => {
-      render(<PendingRequestCard request={mockRequest} />);
+      render(<PendingRequestCard />);
 
       expect(
         screen.getByText(/An admin will review your request and respond soon/i),
@@ -65,7 +65,7 @@ describe("PendingRequestCard", () => {
     });
 
     it("renders check back message", () => {
-      render(<PendingRequestCard request={mockRequest} />);
+      render(<PendingRequestCard />);
 
       expect(
         screen.getByText(
@@ -75,9 +75,7 @@ describe("PendingRequestCard", () => {
     });
 
     it("renders Clock icon", () => {
-      const { container } = render(
-        <PendingRequestCard request={mockRequest} />,
-      );
+      const { container } = render(<PendingRequestCard />);
 
       const icon = container.querySelector("svg");
       expect(icon).toBeInTheDocument();
@@ -86,18 +84,14 @@ describe("PendingRequestCard", () => {
 
   describe("Styling", () => {
     it("applies correct styling to card", () => {
-      const { container } = render(
-        <PendingRequestCard request={mockRequest} />,
-      );
+      const { container } = render(<PendingRequestCard />);
 
       const card = container.querySelector('[class*="border-gray-200"]');
       expect(card).toBeInTheDocument();
     });
 
     it("applies correct styling to card header", () => {
-      const { container } = render(
-        <PendingRequestCard request={mockRequest} />,
-      );
+      const { container } = render(<PendingRequestCard />);
 
       const title = screen.getByText("Request Submitted");
       expect(title.tagName).toBe("H3");
@@ -105,9 +99,7 @@ describe("PendingRequestCard", () => {
     });
 
     it("centers content on screen", () => {
-      const { container } = render(
-        <PendingRequestCard request={mockRequest} />,
-      );
+      const { container } = render(<PendingRequestCard />);
 
       const wrapper = container.querySelector(".min-h-screen");
       expect(wrapper).toHaveClass("flex", "items-center", "justify-center");
@@ -116,7 +108,7 @@ describe("PendingRequestCard", () => {
 
   describe("Props", () => {
     it("accepts request prop", () => {
-      render(<PendingRequestCard request={mockRequest} />);
+      render(<PendingRequestCard />);
 
       // Component renders without errors
       expect(screen.getByText("Request Submitted")).toBeInTheDocument();
@@ -130,7 +122,7 @@ describe("PendingRequestCard", () => {
         dropletIdea: "Different idea",
       };
 
-      render(<PendingRequestCard request={differentRequest} />);
+      render(<PendingRequestCard />);
 
       // Component still renders correctly with different data
       expect(screen.getByText("Request Submitted")).toBeInTheDocument();
@@ -139,25 +131,21 @@ describe("PendingRequestCard", () => {
 
   describe("Layout", () => {
     it("renders card with max width constraint", () => {
-      const { container } = render(
-        <PendingRequestCard request={mockRequest} />,
-      );
+      const { container } = render(<PendingRequestCard />);
 
       const card = container.querySelector(".max-w-2xl");
       expect(card).toBeInTheDocument();
     });
 
     it("applies padding to outer container", () => {
-      const { container } = render(
-        <PendingRequestCard request={mockRequest} />,
-      );
+      const { container } = render(<PendingRequestCard />);
 
       const wrapper = container.querySelector(".p-4");
       expect(wrapper).toBeInTheDocument();
     });
 
     it("renders messages in proper order", () => {
-      render(<PendingRequestCard request={mockRequest} />);
+      render(<PendingRequestCard />);
 
       const messages = screen.getAllByText(/request|admin|check/i);
       expect(messages.length).toBeGreaterThan(0);
@@ -166,9 +154,7 @@ describe("PendingRequestCard", () => {
 
   describe("Dark Mode Support", () => {
     it("includes dark mode styling classes", () => {
-      const { container } = render(
-        <PendingRequestCard request={mockRequest} />,
-      );
+      const { container } = render(<PendingRequestCard />);
 
       const darkModeElements = container.querySelectorAll('[class*="dark:"]');
       expect(darkModeElements.length).toBeGreaterThan(0);

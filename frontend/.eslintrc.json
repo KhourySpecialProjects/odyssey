@@ -1,7 +1,17 @@
 {
-  "extends": ["react-app", "react-app/jest"],
+  "extends": ["next/core-web-vitals", "next/typescript"],
   "rules": {
-    "react/react-in-jsx-scope": "off"
+    "react/react-in-jsx-scope": "off",
+    "react-hooks/rules-of-hooks": "warn",
+    "react-hooks/exhaustive-deps": "warn",
+    "react/no-unescaped-entities": "warn",
+    "@typescript-eslint/no-explicit-any": "warn",
+    "@typescript-eslint/no-unused-vars": "warn",
+    "@next/next/no-img-element": "warn",
+    "react/jsx-key": "warn",
+    "prefer-const": "warn",
+    "@typescript-eslint/no-wrapper-object-types": "warn",
+    "@typescript-eslint/no-unused-expressions": "warn"
   },
   "settings": {
     "react": {

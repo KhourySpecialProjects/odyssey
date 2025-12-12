@@ -97,15 +97,20 @@ export default async function Droplet({ params }: Props) {
       } else {
         return "";
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error generating fun fact:", error);
 
       // Handle specific error cases
-      if (error.status === 529) {
+      const status =
+        typeof error === "object" && error !== null && "status" in error
+          ? (error as { status: number }).status
+          : undefined;
+
+      if (status === 529) {
         throw new Error(
           "Anthropic API is currently overloaded. Please try again in a few moments.",
         );
-      } else if (error.status === 429) {
+      } else if (status === 429) {
         throw new Error(
           "Rate limit exceeded. Please wait before trying again.",
         );
@@ -130,7 +135,6 @@ export default async function Droplet({ params }: Props) {
               focusArea={droplet.focusArea}
               type={droplet.type}
               dropletId={droplet.id}
-              tags={droplet.tags ?? []}
               selectedTags={droplet.tags ?? []}
               availableTags={tags}
             />
@@ -188,8 +192,6 @@ export default async function Droplet({ params }: Props) {
 
           <GeneralInfo
             dropletId={droplet.id}
-            tags={tags}
-            selectedTags={droplet.tags ?? []}
             droplets={droplets}
             prerequisites={droplet.prerequisites ?? []}
             postrequisites={droplet.postrequisites ?? []}
