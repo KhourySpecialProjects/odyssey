@@ -1,9 +1,8 @@
 "use server";
-import { Droplet, Lesson } from "@/types";
+import { Lesson } from "@/types";
 import { StrapiRequestParams } from "@/types/strapi";
 import { fetchAPI, stripHtmlTags } from "../utils";
 import { revalidatePath, revalidateTag } from "next/cache";
-import { getDropletById } from "./droplet";
 import { z } from "zod";
 import { LessonSchema } from "../validations/lesson";
 
