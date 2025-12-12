@@ -255,7 +255,14 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
       });
       const blockHighlights = highlights.filter((h) => {
         if (h.blockId === block.id) return true;
-        if (block.sourceBlockIds?.includes(h.blockId)) return true;
+        // Check if block is a generic block with sourceBlockIds
+        if (
+          "sourceBlockIds" in block &&
+          Array.isArray(block.sourceBlockIds) &&
+          block.sourceBlockIds.includes(h.blockId)
+        ) {
+          return true;
+        }
         return false;
       });
 
