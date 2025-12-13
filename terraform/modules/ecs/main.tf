@@ -206,7 +206,11 @@ resource "aws_ecs_task_definition" "frontend" {
        {
          name      = "STRAPI_API_URL"
          valueFrom = "${var.frontend_secret_arn}:STRAPI_API_URL::"
-       }
+       },
+       {
+         name      = "ANTHROPIC_API_KEY"
+         valueFrom = "${var.frontend_secret_arn}:ANTHROPIC_API_KEY::"
+       },
      ]
 
 
