@@ -82,8 +82,14 @@ type BlockNoteInlineContent = {
 };
 
 // Strapi Blocks text node (minimal subset we care about)
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type StrapiBlocksTextNode = Record<string, any>;
+type StrapiBlocksTextNode = {
+  type: "text";
+  text: string;
+  bold?: boolean;
+  italic?: boolean;
+  underline?: boolean;
+  code?: boolean;
+};
 
 type BlockNoteListItem = {
   type: string;
