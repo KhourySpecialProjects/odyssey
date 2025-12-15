@@ -81,6 +81,10 @@ type BlockNoteInlineContent = {
   styles?: BlockNoteTextStyles;
 };
 
+// Strapi Blocks text node (minimal subset we care about)
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type StrapiBlocksTextNode = Record<string, any>;
+
 type BlockNoteListItem = {
   type: string;
   content?: BlockNoteInlineContent[];
@@ -144,6 +148,33 @@ function convertInlineContentToHtml(
       })
       .join("") || ""
   );
+}
+
+// Helper: convert BlockNote inline content into Strapi Blocks text nodes
+function convertInlineContentToStrapiBlocks(
+  inlineContent: BlockNoteInlineContent[],
+): StrapiBlocksTextNode[] {
+  return inlineContent.map((contentItem) => {
+    const text = contentItem.text ?? "";
+
+    // Base Strapi "text" node
+    const node: StrapiBlocksTextNode = {
+      type: "text",
+      text,
+    };
+
+    const styles = contentItem.styles;
+    if (styles) {
+      if (styles.bold) node.bold = true;
+      if (styles.italic) node.italic = true;
+      if (styles.underline) node.underline = true;
+      if (styles.code) node.code = true;
+
+      // For now we keep LaTeX as plain text – it's rendered later by GenericBlockRenderer
+    }
+
+    return node;
+  });
 }
 
 // Helper function to convert inline content to plain text (for markdown)
@@ -547,7 +578,8 @@ function convertSingleBlock(blockAny: any, blockIndex: number): Block | null {
 
       const calloutContent = (blockAny.content ??
         []) as BlockNoteInlineContent[];
-      const calloutText = convertInlineContentToHtml(calloutContent);
+      const calloutChildren =
+        convertInlineContentToStrapiBlocks(calloutContent);
 
       return {
         __component: "droplets.callout",
@@ -555,7 +587,7 @@ function convertSingleBlock(blockAny: any, blockIndex: number): Block | null {
         content: [
           {
             type: "paragraph",
-            children: [{ type: "text", text: calloutText }],
+            children: calloutChildren,
           },
         ],
         color:
