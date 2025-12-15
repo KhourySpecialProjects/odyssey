@@ -605,10 +605,18 @@ function convertSingleBlock(blockAny: any, blockIndex: number): Block | null {
     }
 
     case "quiz-multiple-choice": {
-      const options =
-        (blockAny.props?.options as
-          | { text?: string; isCorrect?: boolean }[]
-          | undefined) ?? [];
+      // Parse options if it's a string
+      let options: { text?: string; isCorrect?: boolean }[] = [];
+
+      if (typeof blockAny.props?.options === "string") {
+        try {
+          options = JSON.parse(blockAny.props.options);
+        } catch {
+          options = [];
+        }
+      } else if (Array.isArray(blockAny.props?.options)) {
+        options = blockAny.props.options;
+      }
 
       return {
         __component: "droplets.quiz",
@@ -1080,7 +1088,7 @@ export function LessonRenderer({
   return (
     <div className="mx-auto w-full min-w-[300px] py-8 md:min-w-[700px]">
       <div className="relative mx-auto w-full max-w-2xl xl:py-8">
-        <h1 className="text-6xl font-extrabold text-balance">{lesson.name}</h1>
+        <h1 className="text-balance text-6xl font-extrabold">{lesson.name}</h1>
 
         <div className="mt-8 space-y-2">
           {displayBlocks.map((b: Block, i: number) => (
