@@ -367,7 +367,7 @@ export function FeedBlock({
       {/* Playlist Popup */}
       {playlistPopupOpen && announcement.playlist && (
         <div
-          className="bg-opacity-20 dark:bg-opacity-40 fixed inset-0 z-50 flex items-center justify-center bg-gray-900 p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900 bg-opacity-20 p-4 dark:bg-opacity-40"
           onClick={() => setPlaylistPopupOpen(false)}
         >
           <div
@@ -416,7 +416,7 @@ export function FeedBlock({
       {/* Droplet Popup */}
       {dropletPopupOpen && announcement.droplet && (
         <div
-          className="bg-opacity-20 dark:bg-opacity-40 fixed inset-0 z-50 flex items-center justify-center bg-gray-900 p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900 bg-opacity-20 p-4 dark:bg-opacity-40"
           onClick={() => setDropletPopupOpen(false)}
         >
           <div
@@ -465,7 +465,7 @@ export function FeedBlock({
       {/* Group Popup */}
       {groupPopupOpen && announcement.group && (
         <div
-          className="bg-opacity-20 dark:bg-opacity-40 fixed inset-0 z-50 flex items-center justify-center bg-gray-900 p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900 bg-opacity-20 p-4 dark:bg-opacity-40"
           onClick={() => setGroupPopupOpen(false)}
         >
           <div

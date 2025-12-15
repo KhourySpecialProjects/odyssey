@@ -14,7 +14,7 @@ export function ComponentDropdown({ content }: { content: AdminContent }) {
     <div className="">
       <div className="flex w-full flex-row justify-center pb-4">
         <select
-          className="w-[65%] rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-slate-500 focus:ring-0 focus:outline-none dark:border-slate-400 dark:bg-black dark:text-white dark:focus:border-slate-200"
+          className="w-[65%] rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-slate-500 focus:outline-none focus:ring-0 dark:border-slate-400 dark:bg-black dark:text-white dark:focus:border-slate-200"
           value={selected}
           onChange={(e) => setSelected(e.target.value)}
         >

@@ -66,7 +66,7 @@ export function BlockedUsersBlock({
                 ? `${blocked.firstName} ${blocked.lastName}`
                 : `${blocked.email}`
             }
-            className="inline-block max-w-[175px] truncate overflow-hidden font-medium text-slate-900 md:max-w-sm dark:text-slate-300"
+            className="inline-block max-w-[175px] overflow-hidden truncate font-medium text-slate-900 md:max-w-sm dark:text-slate-300"
           >
             {blocked.firstName && blocked.lastName
               ? blocked.firstName + " " + blocked.lastName

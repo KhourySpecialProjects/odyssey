@@ -209,7 +209,7 @@ export function ContentActionButton({
                   setUserTxt(e.target.value)
                 }
                 placeholder="Enter droplet name"
-                className="w-full rounded-md border border-slate-300 px-3 py-2 text-slate-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:focus:border-blue-400 dark:focus:ring-blue-400"
+                className="w-full rounded-md border border-slate-300 px-3 py-2 text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:focus:border-blue-400 dark:focus:ring-blue-400"
                 autoFocus
               />
             </>
@@ -253,7 +253,7 @@ export function ContentActionButton({
   const { title, content } = getModalContent();
 
   const modalContent = isPopupOpen ? (
-    <div className="bg-opacity-50 fixed inset-0 z-[9999] flex items-center justify-center bg-black">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black bg-opacity-50">
       <div className="mx-4 w-full max-w-md rounded-lg bg-white p-6 shadow-xl dark:bg-slate-900">
         <h3 className="mb-4 text-lg font-medium text-slate-900 dark:text-slate-100">
           {title}
@@ -288,7 +288,7 @@ export function ContentActionButton({
       <button
         onClick={() => setIsPopupOpen(true)}
         disabled={isLoading}
-        className={`w-full rounded-full px-6 py-2 text-center whitespace-nowrap text-black dark:text-white ${colorConfig.button} ${colorConfig.buttonHover} ${colorConfig.darkButton} ${colorConfig.darkButtonHover} disabled:cursor-not-allowed disabled:opacity-50`}
+        className={`w-full whitespace-nowrap rounded-full px-6 py-2 text-center text-black dark:text-white ${colorConfig.button} ${colorConfig.buttonHover} ${colorConfig.darkButton} ${colorConfig.darkButtonHover} disabled:cursor-not-allowed disabled:opacity-50`}
       >
         {isLoading ? "Processing..." : buttonText}
       </button>

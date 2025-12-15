@@ -70,12 +70,12 @@ export default async function DashboardRoute({ searchParams }: Props) {
         <h1 className="light:text-slate-900 text-3xl font-bold tracking-tight sm:text-4xl">
           Dashboard
         </h1>
-        <p className="light:text-slate-600 mt-4 text-lg leading-normal text-balance">
+        <p className="light:text-slate-600 mt-4 text-balance text-lg leading-normal">
           View and manage your enrolled content
         </p>
       </div>
 
-      <div className="mx-auto mt-4 mb-8 w-full max-w-7xl px-4 xl:p-0">
+      <div className="mx-auto mb-8 mt-4 w-full max-w-7xl px-4 xl:p-0">
         <div className="flex flex-col gap-4 rounded-md border border-slate-200 bg-slate-50 p-4 dark:border-slate-500 dark:bg-slate-800">
           <FilterSelector
             droplets={activeDroplets}

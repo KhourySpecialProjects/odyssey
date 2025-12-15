@@ -78,7 +78,7 @@ export function FriendSuggestionsBlock({
                   ? `${suggUser.firstName} ${suggUser.lastName}`
                   : suggUser.email
               }
-              className="inline-block max-w-[200px] truncate overflow-hidden font-medium text-slate-900 md:max-w-[250px] dark:text-slate-300"
+              className="inline-block max-w-[200px] overflow-hidden truncate font-medium text-slate-900 md:max-w-[250px] dark:text-slate-300"
             >
               {suggUser.firstName && suggUser.lastName
                 ? suggUser.firstName + " " + suggUser.lastName

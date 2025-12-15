@@ -57,14 +57,14 @@ export function FeedContainer({ authUser }: { authUser: AuthorizedUser }) {
 
         <button
           onClick={() => setFiltersExpanded(!filtersExpanded)}
-          className={`absolute top-0 right-0 block translate-y-[-150%] md:hidden ${filtersExpanded ? "rounded-md bg-slate-300 p-1 dark:bg-slate-600" : "p-1"}`}
+          className={`absolute right-0 top-0 block translate-y-[-150%] md:hidden ${filtersExpanded ? "rounded-md bg-slate-300 p-1 dark:bg-slate-600" : "p-1"}`}
         >
           <SlidersHorizontal className="h-6 w-6" />
         </button>
 
         <button
           onClick={() => setRequestsExpanded(!requestsExpanded)}
-          className={`absolute top-0 left-0 block translate-y-[-150%] md:hidden ${requestsExpanded ? "rounded-md bg-slate-300 p-1 dark:bg-slate-600" : "p-1"}`}
+          className={`absolute left-0 top-0 block translate-y-[-150%] md:hidden ${requestsExpanded ? "rounded-md bg-slate-300 p-1 dark:bg-slate-600" : "p-1"}`}
         >
           <BellRing className="h-6 w-6" />
         </button>
@@ -74,7 +74,7 @@ export function FeedContainer({ authUser }: { authUser: AuthorizedUser }) {
             "absolute rounded-md border border-slate-200 bg-slate-50 px-5 pb-5 dark:border-slate-500 dark:bg-slate-800",
             "feed-mobile-filters z-10 overflow-y-hidden",
             filtersExpanded
-              ? "visibility: visible top-0 right-0"
+              ? "visibility: visible right-0 top-0"
               : "visibility: hidden",
           )}
         >
@@ -89,7 +89,7 @@ export function FeedContainer({ authUser }: { authUser: AuthorizedUser }) {
             "absolute rounded-md border border-slate-200 bg-slate-50 px-5 pb-5 dark:border-slate-500 dark:bg-slate-800",
             "feed-mobile-friend-requests z-10 overflow-y-hidden",
             requestsExpanded
-              ? "visibility: visible top-0 left-0"
+              ? "visibility: visible left-0 top-0"
               : "visibility: hidden",
           )}
         >

@@ -56,7 +56,7 @@ export default async function AboutPage() {
           <h1 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl dark:text-white">
             About Odyssey
           </h1>
-          <p className="mt-4 text-lg leading-normal text-balance text-slate-600 dark:text-slate-300">
+          <p className="mt-4 text-balance text-lg leading-normal text-slate-600 dark:text-slate-300">
             Odyssey is an all-new on-demand learning platform built by Khoury
             College, for Khoury College.
           </p>
@@ -64,14 +64,14 @@ export default async function AboutPage() {
 
         <div className="mx-auto mt-24 max-w-7xl px-6 lg:px-8">
           <div className="mx-auto grid max-w-2xl grid-cols-1 gap-x-8 gap-y-16 sm:gap-y-20 lg:mx-0 lg:max-w-none lg:grid-cols-2">
-            <div className="lg:pt-4 lg:pr-8">
+            <div className="lg:pr-8 lg:pt-4">
               <div className="lg:max-w-lg">
-                <h2 className="text-base leading-7 font-semibold text-sky-600">
+                <h2 className="text-base font-semibold leading-7 text-sky-600">
                   Types
                 </h2>
                 <p className="mt-2 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl dark:text-white">
                   Understand{" "}
-                  <span className="px-1.5 font-mono text-sky-600 italic">
+                  <span className="px-1.5 font-mono italic text-sky-600">
                     how
                   </span>{" "}
                   you&rsquo;ll learn
@@ -99,7 +99,7 @@ export default async function AboutPage() {
                       {type.name} Droplets
                     </span>
                   </dt>
-                  <dd className="mt-1 ml-9 dark:text-slate-400">
+                  <dd className="ml-9 mt-1 dark:text-slate-400">
                     {type.description}
                   </dd>
                 </div>
@@ -110,14 +110,14 @@ export default async function AboutPage() {
 
         <div className="mx-auto mt-24 max-w-7xl px-6 lg:px-8">
           <div className="mx-auto grid max-w-2xl grid-cols-1 gap-x-8 gap-y-16 sm:gap-y-20 lg:mx-0 lg:max-w-none lg:grid-cols-2">
-            <div className="lg:pt-4 lg:pr-8">
+            <div className="lg:pr-8 lg:pt-4">
               <div className="lg:max-w-lg">
-                <h2 className="text-base leading-7 font-semibold text-sky-600">
+                <h2 className="text-base font-semibold leading-7 text-sky-600">
                   Focus Areas
                 </h2>
                 <p className="mt-2 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl dark:text-white">
                   Understand{" "}
-                  <span className="px-1.5 font-mono text-sky-600 italic">
+                  <span className="px-1.5 font-mono italic text-sky-600">
                     what
                   </span>{" "}
                   you&rsquo;ll learn
@@ -144,7 +144,7 @@ export default async function AboutPage() {
                       {type.name} Droplets
                     </span>
                   </dt>
-                  <dd className="mt-1 ml-9 dark:text-slate-400">
+                  <dd className="ml-9 mt-1 dark:text-slate-400">
                     {type.description}
                   </dd>
                 </div>

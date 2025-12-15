@@ -146,7 +146,7 @@ export function AddLesson({
   return (
     <>
       <div className="flex w-full items-center justify-between">
-        <p className="p-2 text-lg leading-7 font-bold">Lessons</p>
+        <p className="p-2 text-lg font-bold leading-7">Lessons</p>
         <div className="flex items-center gap-2">
           {" "}
           {/* Changed to flex container */}
@@ -187,7 +187,7 @@ export function AddLesson({
               <input
                 ref={inputRef}
                 type="text"
-                className="border-0 bg-transparent ring-0 outline-none focus:ring-0 focus:outline-none"
+                className="border-0 bg-transparent outline-none ring-0 focus:outline-none focus:ring-0"
                 placeholder="Lesson Name"
                 name="name"
               />

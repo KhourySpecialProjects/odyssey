@@ -683,7 +683,7 @@ const GenericBlockRenderer: React.FC<GenericBlockRendererProps> = ({
           <img
             src={enlargedImage?.src}
             alt={enlargedImage?.alt}
-            className="absolute top-1/2 left-1/2 max-h-[75%] w-full max-w-[75%] -translate-x-[50%] -translate-y-[40%] bg-cyan-300 object-contain xl:h-full xl:w-auto xl:-translate-x-[35%]"
+            className="absolute left-1/2 top-1/2 max-h-[75%] w-full max-w-[75%] -translate-x-[50%] -translate-y-[40%] bg-cyan-300 object-contain xl:h-full xl:w-auto xl:-translate-x-[35%]"
             onClick={(e) => e.stopPropagation()}
           />
         </div>

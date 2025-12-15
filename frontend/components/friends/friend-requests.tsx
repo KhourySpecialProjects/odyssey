@@ -88,7 +88,7 @@ export function FriendRequests({
             <button
               onClick={handlePrevPage}
               disabled={currentPage === 0}
-              className={`mr-4 w-22 px-4 py-2`}
+              className={`w-22 mr-4 px-4 py-2`}
             >
               <MoveLeft
                 role="left"

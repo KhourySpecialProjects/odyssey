@@ -160,7 +160,7 @@ export function NoteBlock({
   return (
     <div
       className={cn(
-        "note-block mx-3 flex w-full flex-row rounded-xl bg-slate-200 pt-2 pr-1 pl-1",
+        "note-block mx-3 flex w-full flex-row rounded-xl bg-slate-200 pl-1 pr-1 pt-2",
         "dark:border dark:border-slate-500 dark:bg-slate-700",
         focused
           ? "shadow-[0px_0px_16px_rgb(29,58,138)] dark:shadow-[0px_0px_16px_rgb(0,255,255)]"
@@ -235,7 +235,7 @@ export function NoteBlock({
                     node = walker.nextNode();
                   }
                 }}
-                className={`block w-fit max-w-[50%] overflow-hidden text-center text-ellipsis whitespace-nowrap text-slate-700 ${getHighlightColor(note.highlight.color)} border hover:text-white dark:hover:border-white dark:hover:bg-slate-800`}
+                className={`block w-fit max-w-[50%] overflow-hidden text-ellipsis whitespace-nowrap text-center text-slate-700 ${getHighlightColor(note.highlight.color)} border hover:text-white dark:hover:border-white dark:hover:bg-slate-800`}
               >
                 {note.highlight.text.substring(0, 25)}{" "}
                 {note.highlight.text.length > 25 ? "..." : ""}

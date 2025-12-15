@@ -43,7 +43,7 @@ export function FriendsSelector({
       <div className="md:hidden">
         <div className="flex w-full flex-row justify-center pb-4">
           <select
-            className="w-[65%] rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-slate-500 focus:ring-0 focus:outline-none dark:border-slate-400 dark:bg-black dark:text-white dark:focus:border-slate-200"
+            className="w-[65%] rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-slate-500 focus:outline-none focus:ring-0 dark:border-slate-400 dark:bg-black dark:text-white dark:focus:border-slate-200"
             value={currentTab}
             onChange={(e) => {
               router.push(
@@ -74,7 +74,7 @@ export function FriendsSelector({
                 tab.value === currentTab
                   ? "border-primary-500 light:text-primary-600 dark:text-primary-300"
                   : "light:text-gray-500 border-transparent hover:border-gray-300 hover:text-gray-700 dark:text-slate-300 dark:hover:text-gray-400",
-                "border-b-2 px-1 py-4 text-sm font-medium whitespace-nowrap",
+                "whitespace-nowrap border-b-2 px-1 py-4 text-sm font-medium",
               )}
             >
               {tab.name}

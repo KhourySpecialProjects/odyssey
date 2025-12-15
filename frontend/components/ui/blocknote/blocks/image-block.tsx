@@ -86,7 +86,7 @@ export const ImageBlock = createReactBlockSpec(
       if (!isReady) {
         return (
           <div
-            className="relative my-4 rounded-md border border-slate-200 bg-slate-50 p-4 select-none dark:border-slate-700 dark:bg-slate-800"
+            className="relative my-4 select-none rounded-md border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800"
             contentEditable={false}
             data-content-type="image"
             style={{
@@ -186,7 +186,7 @@ export const ImageBlock = createReactBlockSpec(
       try {
         return (
           <div
-            className="relative my-4 rounded-md border border-slate-200 bg-slate-50 p-4 select-none dark:border-slate-700 dark:bg-slate-800"
+            className="relative my-4 select-none rounded-md border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800"
             contentEditable={false}
             data-content-type="image"
             onMouseDown={(e) => {

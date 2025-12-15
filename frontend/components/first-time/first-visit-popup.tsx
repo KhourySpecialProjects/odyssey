@@ -197,7 +197,7 @@ export function FirstVisitPopup({ user }: { user: AuthorizedUser | null }) {
           </p>
           <select
             aria-label="Choose a time zone..."
-            className="w-[50%] rounded-md border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none dark:border-slate-800 dark:bg-black dark:text-white"
+            className="w-[50%] rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-800 dark:bg-black dark:text-white"
             value={timeZone}
             onChange={(e) => setThisTimeZone(e.target.value)}
           >

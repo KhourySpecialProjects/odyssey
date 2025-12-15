@@ -102,7 +102,7 @@ export function DropletOverviewInput({
 
   return (
     <>
-      <div className="control-group mt-2 mb-2">
+      <div className="control-group mb-2 mt-2">
         <div className="button-group flex gap-2">
           <button
             onClick={setLink}

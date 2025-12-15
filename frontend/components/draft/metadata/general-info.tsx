@@ -46,7 +46,7 @@ function RemovableDropletTile({
               e.stopPropagation();
               onRemove();
             }}
-            className="absolute top-1/2 left-1/2 z-20 -translate-x-1/2 -translate-y-1/2 transform rounded-full bg-red-500 p-4 text-white transition-all hover:scale-110 hover:bg-red-600"
+            className="absolute left-1/2 top-1/2 z-20 -translate-x-1/2 -translate-y-1/2 transform rounded-full bg-red-500 p-4 text-white transition-all hover:scale-110 hover:bg-red-600"
             aria-label="Remove droplet"
           >
             <Trash2 className="h-6 w-6" />

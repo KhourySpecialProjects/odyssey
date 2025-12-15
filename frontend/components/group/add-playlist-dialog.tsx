@@ -108,7 +108,7 @@ export function AddPlaylistDialog({
                 <Button
                   variant="ghost"
                   size="lg"
-                  className="absolute top-1/2 right-4 -translate-y-1/2"
+                  className="absolute right-4 top-1/2 -translate-y-1/2"
                   onClick={() => handleAddPlaylist(playlist)}
                   data-testid="addPlaylist"
                 >
