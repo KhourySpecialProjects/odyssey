@@ -605,10 +605,18 @@ function convertSingleBlock(blockAny: any, blockIndex: number): Block | null {
     }
 
     case "quiz-multiple-choice": {
-      const options =
-        (blockAny.props?.options as
-          | { text?: string; isCorrect?: boolean }[]
-          | undefined) ?? [];
+      // Parse options if it's a string
+      let options: { text?: string; isCorrect?: boolean }[] = [];
+
+      if (typeof blockAny.props?.options === "string") {
+        try {
+          options = JSON.parse(blockAny.props.options);
+        } catch {
+          options = [];
+        }
+      } else if (Array.isArray(blockAny.props?.options)) {
+        options = blockAny.props.options;
+      }
 
       return {
         __component: "droplets.quiz",
