@@ -68,13 +68,13 @@ export default async function CheckPermission({ params, children }: Props) {
   });
 
   return (
-    <div className="flex min-h-screen flex-col xl:flex-row md:border-2 md:border-dashed md:border-slate-200 md:dark:border-slate-700">
+    <div className="flex min-h-screen flex-col md:border-2 md:border-dashed md:border-slate-200 xl:flex-row md:dark:border-slate-700">
       <Sidebar
         droplet={droplet}
         user={user}
         availableDroplets={availableDroplets}
       />
-      <main className="mx-auto w-full flex-1 items-center justify-center rounded-lg ">
+      <main className="mx-auto w-full flex-1 items-center justify-center rounded-lg">
         {!droplet.inReview ? (
           <div className="bg-red-100 p-1 text-center dark:bg-red-100 dark:text-black">
             ** Information that you enter will be saved automatically. **

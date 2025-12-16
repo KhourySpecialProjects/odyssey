@@ -198,7 +198,6 @@ export function Sidebar({
           onClick={() => setExpanded(true)}
         >
           <PanelRightClose className="h-6 w-6 dark:text-white" />
-          <span className="sr-only">Open sidebar</span>
         </button>
       )}
       <aside
