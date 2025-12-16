@@ -81,6 +81,16 @@ type BlockNoteInlineContent = {
   styles?: BlockNoteTextStyles;
 };
 
+// Strapi Blocks text node (minimal subset we care about)
+type StrapiBlocksTextNode = {
+  type: "text";
+  text: string;
+  bold?: boolean;
+  italic?: boolean;
+  underline?: boolean;
+  code?: boolean;
+};
+
 type BlockNoteListItem = {
   type: string;
   content?: BlockNoteInlineContent[];
@@ -144,6 +154,33 @@ function convertInlineContentToHtml(
       })
       .join("") || ""
   );
+}
+
+// Helper: convert BlockNote inline content into Strapi Blocks text nodes
+function convertInlineContentToStrapiBlocks(
+  inlineContent: BlockNoteInlineContent[],
+): StrapiBlocksTextNode[] {
+  return inlineContent.map((contentItem) => {
+    const text = contentItem.text ?? "";
+
+    // Base Strapi "text" node
+    const node: StrapiBlocksTextNode = {
+      type: "text",
+      text,
+    };
+
+    const styles = contentItem.styles;
+    if (styles) {
+      if (styles.bold) node.bold = true;
+      if (styles.italic) node.italic = true;
+      if (styles.underline) node.underline = true;
+      if (styles.code) node.code = true;
+
+      // For now we keep LaTeX as plain text – it's rendered later by GenericBlockRenderer
+    }
+
+    return node;
+  });
 }
 
 // Helper function to convert inline content to plain text (for markdown)
@@ -547,7 +584,8 @@ function convertSingleBlock(blockAny: any, blockIndex: number): Block | null {
 
       const calloutContent = (blockAny.content ??
         []) as BlockNoteInlineContent[];
-      const calloutText = convertInlineContentToHtml(calloutContent);
+      const calloutChildren =
+        convertInlineContentToStrapiBlocks(calloutContent);
 
       return {
         __component: "droplets.callout",
@@ -555,7 +593,7 @@ function convertSingleBlock(blockAny: any, blockIndex: number): Block | null {
         content: [
           {
             type: "paragraph",
-            children: [{ type: "text", text: calloutText }],
+            children: calloutChildren,
           },
         ],
         color:
@@ -567,10 +605,18 @@ function convertSingleBlock(blockAny: any, blockIndex: number): Block | null {
     }
 
     case "quiz-multiple-choice": {
-      const options =
-        (blockAny.props?.options as
-          | { text?: string; isCorrect?: boolean }[]
-          | undefined) ?? [];
+      // Parse options if it's a string
+      let options: { text?: string; isCorrect?: boolean }[] = [];
+
+      if (typeof blockAny.props?.options === "string") {
+        try {
+          options = JSON.parse(blockAny.props.options);
+        } catch {
+          options = [];
+        }
+      } else if (Array.isArray(blockAny.props?.options)) {
+        options = blockAny.props.options;
+      }
 
       return {
         __component: "droplets.quiz",
@@ -619,7 +665,7 @@ function convertSingleBlock(blockAny: any, blockIndex: number): Block | null {
           {
             id: blockId,
             content: blockAny.props?.question || "",
-            correctAnswer: "",
+            correctAnswer: blockAny.props?.correctAnswer || "",
           },
         ],
       };

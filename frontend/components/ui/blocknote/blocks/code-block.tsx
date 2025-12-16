@@ -175,6 +175,7 @@ const CodeBlockComponent = ({ block, editor }: any) => {
   const [isRunning, setIsRunning] = useState(false);
   const [executionSuccess, setExecutionSuccess] = useState(true);
   const [isMounted, setIsMounted] = useState(false);
+  const textareaRef = React.useRef<HTMLTextAreaElement>(null);
 
   const currentLanguage = allLanguages.find(
     (lang) => lang.value === block.props.language,
@@ -189,16 +190,42 @@ const CodeBlockComponent = ({ block, editor }: any) => {
     setIsMounted(true);
   }, []);
 
+  // Sync code state with block props (important for previewing mode)
+  useEffect(() => {
+    // Update local code state when block props change
+    if (block.props.code !== code && !isEditing) {
+      setCode(block.props.code);
+    }
+  }, [block.props.code, isEditing]);
+
+  // Focus textarea when entering editing mode
+  useEffect(() => {
+    if (isEditing && textareaRef.current) {
+      // Small delay to ensure textarea is rendered
+      const timer = setTimeout(() => {
+        textareaRef.current?.focus();
+      }, 10);
+      return () => clearTimeout(timer);
+    }
+  }, [isEditing]);
+
   const handleSave = () => {
     if (!isMounted || !editor) return;
     try {
+      // Check if editor is editable, but still try to update even in view mode
+      // The editor might allow updates even if isEditable is false
       editor.updateBlock(block, {
         props: { ...block.props, code },
       });
       setIsEditing(false);
+
+      // If updateBlock doesn't work in view mode, we might need to trigger onChange
+      // But first, let's make sure the update actually happened
+      // The onChange handler in the parent should handle saving to Strapi
     } catch (error) {
       console.error("Error saving code:", error);
-      setIsEditing(false);
+      // Don't exit editing mode if save failed - let user try again
+      // setIsEditing(false);
     }
   };
 
@@ -352,12 +379,104 @@ const CodeBlockComponent = ({ block, editor }: any) => {
         {isEditing && block.props.editable ? (
           <div>
             <textarea
+              ref={textareaRef}
               value={code}
               onChange={(e) => setCode(e.target.value)}
+              onKeyDown={(e) => {
+                // Handle Tab key for indentation - make sure it works in all modes
+                if (e.key === "Tab") {
+                  e.preventDefault();
+                  e.stopPropagation(); // Prevent BlockNote from handling it
+
+                  const textarea = e.currentTarget;
+                  const start = textarea.selectionStart;
+                  const end = textarea.selectionEnd;
+                  const value = textarea.value;
+
+                  if (e.shiftKey) {
+                    // Shift+Tab: Outdent (remove indentation)
+                    const linesBefore = value.substring(0, start).split("\n");
+                    const currentLineIndex = linesBefore.length - 1;
+                    const currentLine = linesBefore[currentLineIndex];
+
+                    // Check if line starts with tab or spaces
+                    if (currentLine.startsWith("\t")) {
+                      // Remove one tab
+                      const newValue =
+                        value.substring(0, start - 1) + value.substring(start);
+                      setCode(newValue);
+                      // Set cursor position
+                      setTimeout(() => {
+                        textarea.selectionStart = start - 1;
+                        textarea.selectionEnd = start - 1;
+                      }, 0);
+                    } else if (currentLine.match(/^ {1,4}/)) {
+                      // Remove up to 4 spaces (or fewer if less than 4)
+                      const spacesToRemove = Math.min(
+                        4,
+                        currentLine.match(/^ */)?.[0].length || 0,
+                      );
+                      if (spacesToRemove > 0) {
+                        const newValue =
+                          value.substring(0, start - spacesToRemove) +
+                          value.substring(start);
+                        setCode(newValue);
+                        setTimeout(() => {
+                          textarea.selectionStart = start - spacesToRemove;
+                          textarea.selectionEnd = start - spacesToRemove;
+                        }, 0);
+                      }
+                    }
+                  } else {
+                    // Tab: Indent
+                    const selectedText = value.substring(start, end);
+                    const lines = selectedText.split("\n");
+
+                    if (lines.length > 1) {
+                      // Multiple lines selected - indent all lines
+                      const indentedLines = lines.map((line, index) => {
+                        if (index === 0) {
+                          // First line: add tab at cursor position
+                          return "\t" + line;
+                        } else {
+                          // Subsequent lines: add tab at start
+                          return "\t" + line;
+                        }
+                      });
+                      const newValue =
+                        value.substring(0, start) +
+                        indentedLines.join("\n") +
+                        value.substring(end);
+                      setCode(newValue);
+                      // Set cursor position to maintain selection
+                      setTimeout(() => {
+                        textarea.selectionStart = start + 1;
+                        textarea.selectionEnd =
+                          start + indentedLines.join("\n").length;
+                      }, 0);
+                    } else {
+                      // Single line or no selection - insert tab
+                      const newValue =
+                        value.substring(0, start) + "\t" + value.substring(end);
+                      setCode(newValue);
+                      // Set cursor position after the tab
+                      setTimeout(() => {
+                        textarea.selectionStart = start + 1;
+                        textarea.selectionEnd = start + 1;
+                      }, 0);
+                    }
+                  }
+                }
+              }}
+              onFocus={(e) => {
+                // Ensure textarea stays focused
+                e.stopPropagation();
+              }}
               className="w-full resize-none bg-gray-900 p-4 font-mono text-sm text-gray-100 outline-none"
               rows={Math.max(5, code.split("\n").length)}
               style={{ minHeight: "120px" }}
               spellCheck={false}
+              autoFocus
             />
             <div className="flex gap-2 border-t border-gray-700 bg-gray-800 p-2">
               <button
@@ -379,7 +498,15 @@ const CodeBlockComponent = ({ block, editor }: any) => {
         ) : (
           <div
             className="group relative cursor-pointer"
-            onClick={() => block.props.editable && setIsEditing(true)}
+            onClick={() => {
+              if (block.props.editable) {
+                setIsEditing(true);
+                // Focus the textarea after state update
+                setTimeout(() => {
+                  textareaRef.current?.focus();
+                }, 0);
+              }
+            }}
           >
             <SyntaxHighlighter
               language={block.props.language}
