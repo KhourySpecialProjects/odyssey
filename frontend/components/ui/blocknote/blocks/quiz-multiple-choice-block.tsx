@@ -209,10 +209,13 @@ export const MultipleChoiceQuiz = createReactBlockSpec(
       };
 
       const handleOptionCorrectChange = (id: string) => {
-        const updatedOptions = options.map((opt: AnswerOption) => ({
-          ...opt,
-          isCorrect: opt.id === id,
-        }));
+        const updatedOptions = options.map(
+          (opt: AnswerOption) =>
+            opt.id === id
+              ? { ...opt, isCorrect: !opt.isCorrect } // toggle this one
+              : opt, // leave others unchanged
+        );
+
         props.editor.updateBlock(props.block, {
           props: {
             options: updatedOptions,
