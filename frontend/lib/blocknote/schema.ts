@@ -23,6 +23,7 @@ const blockTypesToHide = new Set([
   "toggleListItem",
   "checklistItem",
   "image",
+  "codeBlock",
 ]);
 
 // Filter out unwanted block types from default specs
