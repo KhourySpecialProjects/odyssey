@@ -665,7 +665,7 @@ function convertSingleBlock(blockAny: any, blockIndex: number): Block | null {
           {
             id: blockId,
             content: blockAny.props?.question || "",
-            correctAnswer: "",
+            correctAnswer: blockAny.props?.correctAnswer || "",
           },
         ],
       };

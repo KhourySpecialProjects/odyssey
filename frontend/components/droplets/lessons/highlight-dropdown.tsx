@@ -121,7 +121,7 @@ export function HighlightDropdown({
             <button
               title="Take Note"
               onClick={handleCreateNote}
-              className="group note-button relative"
+              className="note-button group relative"
             >
               <NotebookPen size={30} />
             </button>
