@@ -63,7 +63,7 @@ export function DropletLessonWrapper({
     <>
       <div className="lesson-wrapper relative z-30 h-full w-full overflow-x-hidden">
         <div
-          className={`flex w-full flex-col items-center justify-center pl-10 pr-10 md:min-w-[500px] xl:pl-0`}
+          className={`flex w-full flex-col items-center justify-center pr-10 pl-10 md:min-w-[500px] xl:pl-0`}
         >
           <LessonRenderer
             lesson={lesson}
