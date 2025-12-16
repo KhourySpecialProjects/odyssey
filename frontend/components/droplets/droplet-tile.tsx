@@ -319,7 +319,7 @@ ${
       <li className="h-full overflow-hidden rounded-md border border-slate-200 bg-slate-50 p-2 transition-colors hover:border-slate-300 dark:border-slate-500 dark:bg-slate-800">
         <div className="flex h-full flex-col justify-between gap-3 p-4">
           <div className="space-y-3">
-            <div className="flex-0 flex flex-row flex-wrap gap-1.5">
+            <div className="flex flex-0 flex-row flex-wrap gap-1.5">
               {droplet.status == "draft" ? (
                 <Badge variant="destructive">Draft</Badge>
               ) : null}
@@ -446,7 +446,7 @@ ${
               >
                 <div className="group relative">
                   <Download className="text-black dark:text-white" />
-                  <span className="absolute left-1/2 top-full mt-1 w-max -translate-x-1/2 transform rounded bg-gray-800 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100">
+                  <span className="absolute top-full left-1/2 mt-1 w-max -translate-x-1/2 transform rounded bg-gray-800 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100">
                     Export Markdown
                   </span>
                 </div>
@@ -470,7 +470,7 @@ ${
                       ) : (
                         <Archive className="text-purple-500" />
                       )}
-                      <span className="absolute left-1/2 top-full mt-1 w-max -translate-x-1/2 transform rounded bg-gray-800 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100">
+                      <span className="absolute top-full left-1/2 mt-1 w-max -translate-x-1/2 transform rounded bg-gray-800 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100">
                         {isArchived ? "Unarchive" : "Archive"}
                       </span>
                     </div>
@@ -494,7 +494,7 @@ ${
                       ) : (
                         <FavoriteBorderIcon className="text-purple-500" />
                       )}
-                      <span className="absolute left-1/2 top-full mt-1 w-max -translate-x-1/2 transform rounded bg-gray-800 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100">
+                      <span className="absolute top-full left-1/2 mt-1 w-max -translate-x-1/2 transform rounded bg-gray-800 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100">
                         {isFavorited ? "Unfavorite" : "Favorite"}
                       </span>
                     </div>

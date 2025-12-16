@@ -156,7 +156,7 @@ export function Sidebar({
       <div
         className={cn(
           "fixed inset-0 bg-slate-900/50 transition-opacity dark:bg-slate-900/80",
-          expanded ? "opacity-1 z-30" : "-z-10 opacity-0",
+          expanded ? "z-30 opacity-1" : "-z-10 opacity-0",
         )}
         onClick={() => setExpanded(false)}
       />
@@ -165,7 +165,7 @@ export function Sidebar({
         <button
           aria-controls="sidebar"
           type="button"
-          className="z-20 inline-flex items-center rounded-lg p-2 text-sm text-slate-500 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-200 xl:hidden dark:text-slate-400 dark:hover:bg-slate-700 dark:focus:ring-slate-600"
+          className="z-20 inline-flex items-center rounded-lg p-2 text-sm text-slate-500 hover:bg-slate-100 focus:ring-2 focus:ring-slate-200 focus:outline-none xl:hidden dark:text-slate-400 dark:hover:bg-slate-700 dark:focus:ring-slate-600"
           onClick={() => setExpanded(true)}
         >
           <span className="sr-only">Open sidebar</span>
@@ -218,7 +218,7 @@ export function Sidebar({
                 <PanelRightOpen />
               </button>
             </div>
-            <p className="my-2 p-2 text-lg font-extrabold leading-7">
+            <p className="my-2 p-2 text-lg leading-7 font-extrabold">
               {droplet.name}
             </p>
 

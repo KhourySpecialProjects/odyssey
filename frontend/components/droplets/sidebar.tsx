@@ -147,14 +147,14 @@ export default function Sidebar({
       {/* Mobile header - visible on small screens, hidden when sidebar is open */}
       <div
         className={cn(
-          "fixed left-0 right-0 top-[107px] z-40 w-full items-center gap-2 border-b border-b-slate-200 bg-white/80 px-3 py-2 text-sm backdrop-blur-sm xl:hidden dark:border-b-slate-700 dark:bg-slate-800/80",
+          "fixed top-[107px] right-0 left-0 z-40 w-full items-center gap-2 border-b border-b-slate-200 bg-white/80 px-3 py-2 text-sm backdrop-blur-sm xl:hidden dark:border-b-slate-700 dark:bg-slate-800/80",
           expanded ? "hidden" : "inline-flex",
         )}
       >
         <button
           aria-controls="sidebar"
           type="button"
-          className="inline-flex items-center rounded-lg p-2 text-sm text-slate-500 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-200 dark:text-slate-400 dark:hover:bg-slate-700 dark:focus:ring-slate-600"
+          className="inline-flex items-center rounded-lg p-2 text-sm text-slate-500 hover:bg-slate-100 focus:ring-2 focus:ring-slate-200 focus:outline-none dark:text-slate-400 dark:hover:bg-slate-700 dark:focus:ring-slate-600"
           onClick={() => setExpanded(true)}
         >
           <span className="sr-only">Open sidebar</span>
@@ -176,7 +176,7 @@ export default function Sidebar({
         <button
           aria-controls="sidebar"
           type="button"
-          className="fixed left-3 top-[120px] z-40 hidden items-center rounded-lg bg-white p-3 text-slate-800 shadow-md transition-all hover:scale-110 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-200 xl:inline-flex dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700 dark:focus:ring-slate-600"
+          className="fixed top-[120px] left-3 z-40 hidden items-center rounded-lg bg-white p-3 text-slate-800 shadow-md transition-all hover:scale-110 hover:bg-slate-100 focus:ring-2 focus:ring-slate-200 focus:outline-none xl:inline-flex dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700 dark:focus:ring-slate-600"
           onClick={() => setExpanded(true)}
         >
           <PanelRightClose className="h-6 w-6 dark:text-white" />
@@ -215,7 +215,7 @@ export default function Sidebar({
               </button>
             </div>
 
-            <p className="my-2 p-2 text-lg font-extrabold leading-7">
+            <p className="my-2 p-2 text-lg leading-7 font-extrabold">
               {droplet.name}
             </p>
 

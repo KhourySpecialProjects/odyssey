@@ -30,7 +30,7 @@ export function ReportBugDialog({
           before={<Bug />}
         >
           <span className="inline-block">Report Bug</span>
-          <span className="text-md -translate-x-90 pointer-events-none absolute right-[15%] transform whitespace-nowrap rounded bg-black px-2 py-1 text-white opacity-0 transition-opacity group-hover:opacity-100 md:hidden">
+          <span className="text-md pointer-events-none absolute right-[15%] -translate-x-90 transform rounded bg-black px-2 py-1 whitespace-nowrap text-white opacity-0 transition-opacity group-hover:opacity-100 md:hidden">
             Report Bug
           </span>
         </Button>

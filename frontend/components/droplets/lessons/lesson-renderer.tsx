@@ -1080,7 +1080,7 @@ export function LessonRenderer({
   return (
     <div className="mx-auto w-full min-w-[300px] py-8 md:min-w-[700px]">
       <div className="relative mx-auto w-full max-w-2xl xl:py-8">
-        <h1 className="text-balance text-6xl font-extrabold">{lesson.name}</h1>
+        <h1 className="text-6xl font-extrabold text-balance">{lesson.name}</h1>
 
         <div className="mt-8 space-y-2">
           {displayBlocks.map((b: Block, i: number) => (

@@ -68,7 +68,7 @@ const DropletItem = ({
       <div className="group relative flex-1 rounded-md border border-slate-200 bg-slate-50 transition-colors hover:border-slate-300 dark:border-slate-500 dark:bg-slate-800">
         <div className="flex items-center p-4">
           <div className="flex-grow">
-            <div className="flex-0 mb-2 flex flex-row flex-wrap gap-1.5">
+            <div className="mb-2 flex flex-0 flex-row flex-wrap gap-1.5">
               <Badge variant="default" className="dark:bg-slate-700">
                 {uppercaseFirstChar(droplet.focusArea)}
               </Badge>
@@ -93,7 +93,7 @@ const DropletItem = ({
                   <p
                     className={`${
                       descriptionExpanded ? "line-clamp-none" : "line-clamp-2"
-                    } text-md pr-8 pt-1 text-slate-700 dark:text-slate-300`}
+                    } text-md pt-1 pr-8 text-slate-700 dark:text-slate-300`}
                   >
                     {strippedDescription}
                   </p>
@@ -128,7 +128,7 @@ const DropletItem = ({
             variant="ghost"
             size="sm"
             onClick={() => onRemove(droplet.id)}
-            className="text-slate-400 opacity-0 transition-opacity hover:text-red-500 group-hover:opacity-100"
+            className="text-slate-400 opacity-0 transition-opacity group-hover:opacity-100 hover:text-red-500"
           >
             <XCircleIcon className="h-5 w-5" />
           </Button>

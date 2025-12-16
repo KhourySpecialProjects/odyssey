@@ -202,7 +202,7 @@ export function ProfileContent({
                 <p className="text-xs text-gray-600 dark:text-gray-400">
                   Completion
                 </p>
-                <div className="pointer-events-none absolute -top-16 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-lg bg-gray-900 px-3 py-2 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100 dark:bg-gray-700">
+                <div className="pointer-events-none absolute -top-16 left-1/2 -translate-x-1/2 rounded-lg bg-gray-900 px-3 py-2 text-xs whitespace-nowrap text-white opacity-0 transition-opacity group-hover:opacity-100 dark:bg-gray-700">
                   Percentage of droplets completed
                   <div className="absolute -bottom-1 left-1/2 h-2 w-2 -translate-x-1/2 rotate-45 bg-gray-900 dark:bg-gray-700"></div>
                 </div>
@@ -214,7 +214,7 @@ export function ProfileContent({
                 <p className="text-xs text-gray-600 dark:text-gray-400">
                   Created
                 </p>
-                <div className="pointer-events-none absolute -top-16 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-lg bg-gray-900 px-3 py-2 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100 dark:bg-gray-700">
+                <div className="pointer-events-none absolute -top-16 left-1/2 -translate-x-1/2 rounded-lg bg-gray-900 px-3 py-2 text-xs whitespace-nowrap text-white opacity-0 transition-opacity group-hover:opacity-100 dark:bg-gray-700">
                   Droplets authored by this user
                   <div className="absolute -bottom-1 left-1/2 h-2 w-2 -translate-x-1/2 rotate-45 bg-gray-900 dark:bg-gray-700"></div>
                 </div>
@@ -379,7 +379,7 @@ export function ProfileContent({
                   >
                     {!isViewingOwnProfile &&
                       isCompletedByViewer(droplet.id) && (
-                        <div className="absolute right-2 top-2 flex items-center gap-1 rounded-full bg-green-500 px-2 py-1 text-xs font-medium text-white">
+                        <div className="absolute top-2 right-2 flex items-center gap-1 rounded-full bg-green-500 px-2 py-1 text-xs font-medium text-white">
                           <Check className="h-3 w-3" />
                           Completed
                         </div>
@@ -553,7 +553,7 @@ export function ProfileContent({
       {/* DROPLET MODAL */}
       {selectedId && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900 bg-opacity-20 p-4 dark:bg-opacity-40"
+          className="bg-opacity-20 dark:bg-opacity-40 fixed inset-0 z-50 flex items-center justify-center bg-gray-900 p-4"
           onClick={() => setSelectedId(null)}
         >
           <div

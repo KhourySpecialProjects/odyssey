@@ -85,7 +85,7 @@ export function AddDropletDialog({
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="absolute right-4 top-1/2 z-10 -translate-y-1/2"
+                  className="absolute top-1/2 right-4 z-10 -translate-y-1/2"
                   onClick={() => handleAddDroplet(droplet)}
                 >
                   <PlusCircle className="h-6 w-6 text-green-700" />

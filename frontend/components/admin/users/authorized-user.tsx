@@ -244,7 +244,7 @@ export function AuthorizedUserBlock({
           >
             <div className="group relative">
               <Activity className="h-5 w-5 text-sky-600" />
-              <span className="absolute left-1/2 top-full mt-1 w-max -translate-x-1/2 transform rounded bg-gray-800 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100">
+              <span className="absolute top-full left-1/2 mt-1 w-max -translate-x-1/2 transform rounded bg-gray-800 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100">
                 View Activity
               </span>
             </div>
@@ -260,7 +260,7 @@ export function AuthorizedUserBlock({
               >
                 <div className="group relative">
                   <Pencil className="h-5 w-5 text-sky-600" />
-                  <span className="absolute left-1/2 top-full mt-1 w-max -translate-x-1/2 transform rounded bg-gray-800 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100">
+                  <span className="absolute top-full left-1/2 mt-1 w-max -translate-x-1/2 transform rounded bg-gray-800 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100">
                     Edit User
                   </span>
                 </div>
@@ -352,7 +352,7 @@ export function AuthorizedUserBlock({
                           />
                           <label
                             htmlFor={role.value}
-                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                            className="text-sm leading-none font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                           >
                             {role.label}
                           </label>

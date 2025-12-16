@@ -25,7 +25,7 @@ export function MessageHeader({
 }) {
   return (
     <>
-      <p className="text-base font-semibold uppercase text-sky-600">
+      <p className="text-base font-semibold text-sky-600 uppercase">
         {subtitle}
       </p>
       <h1 className="mt-4 text-3xl font-bold tracking-tight text-slate-900 sm:text-5xl dark:text-slate-300">

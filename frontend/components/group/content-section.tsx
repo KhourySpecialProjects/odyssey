@@ -30,7 +30,7 @@ export function ContentSection({
       ) : children ? (
         children
       ) : emptyMessage ? (
-        <p className="italic text-slate-500">{emptyMessage}</p>
+        <p className="text-slate-500 italic">{emptyMessage}</p>
       ) : null}
     </section>
   );

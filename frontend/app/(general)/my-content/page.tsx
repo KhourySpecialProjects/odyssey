@@ -41,7 +41,7 @@ export default async function CreateRoute() {
         <h1 className="light:text-slate-900 text-3xl font-bold tracking-tight sm:text-4xl">
           My Content
         </h1>
-        <p className="light:text-slate-600 mt-4 text-balance text-lg leading-normal dark:text-slate-300">
+        <p className="light:text-slate-600 mt-4 text-lg leading-normal text-balance dark:text-slate-300">
           Create a new Droplet or Playlist draft
         </p>
       </div>
@@ -61,7 +61,7 @@ export default async function CreateRoute() {
             </Link>
           </div>
         </div>
-        <Separator orientation="horizontal" className="mb-4 mt-2" />
+        <Separator orientation="horizontal" className="mt-2 mb-4" />
         {!authorizedUser.droplets || authorizedUser.droplets.length === 0 ? (
           <div className="flex h-full items-center justify-center">
             <p className="light:text-slate-500 text-lg dark:text-slate-400">
@@ -81,7 +81,7 @@ export default async function CreateRoute() {
           isAuthorizedUserAdmin(user.roles)) && (
           <>
             <div className="flex w-full items-end justify-between">
-              <h2 className="mb-2 mt-4 text-lg font-bold dark:text-slate-300">
+              <h2 className="mt-4 mb-2 text-lg font-bold dark:text-slate-300">
                 My Playlists
               </h2>
               <Link href="/new/playlist">
@@ -94,7 +94,7 @@ export default async function CreateRoute() {
                 </Button>
               </Link>
             </div>
-            <Separator orientation="horizontal" className="mb-4 mt-2" />
+            <Separator orientation="horizontal" className="mt-2 mb-4" />
             {!playlists || playlists.length === 0 ? (
               <div className="flex h-full items-center justify-center">
                 <p className="light:text-slate-500 text-lg dark:text-slate-400">

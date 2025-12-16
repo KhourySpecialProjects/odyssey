@@ -15,7 +15,7 @@ export default function DraggableDropletWideTile({
     >
       <div className="p-4">
         <div className="flex flex-col justify-end gap-2">
-          <div className="flex-0 flex flex-row flex-wrap gap-1.5">
+          <div className="flex flex-0 flex-row flex-wrap gap-1.5">
             {droplet.status === "draft" && (
               <Badge variant="destructive">Draft</Badge>
             )}
@@ -34,7 +34,7 @@ export default function DraggableDropletWideTile({
               </Badge>
             ))}
           </div>
-          <span className="block w-full place-self-end pl-1 pt-2 text-xl font-black text-slate-950 dark:text-slate-300">
+          <span className="block w-full place-self-end pt-2 pl-1 text-xl font-black text-slate-950 dark:text-slate-300">
             {droplet.name}
           </span>
         </div>

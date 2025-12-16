@@ -226,7 +226,7 @@ export function NotesBar({
 
   return (
     <div className="">
-      <div className={`mb-10 mt-5 text-center`}>
+      <div className={`mt-5 mb-10 text-center`}>
         <h1 className="text-2xl font-extrabold">My Notes</h1>
         <Badge className="border border-slate-400 bg-sky-100 text-slate-600 hover:bg-sky-100 dark:border-white dark:bg-slate-700 dark:text-white">
           Click anywhere to create a note

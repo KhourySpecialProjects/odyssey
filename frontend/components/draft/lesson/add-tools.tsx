@@ -154,7 +154,7 @@ export default function AddLessonBlock({ onAddBlock }: AddLessonBlockProps) {
   return (
     <>
       <div
-        className="fixed right-8 top-1/2 z-40 -translate-y-1/2"
+        className="fixed top-1/2 right-8 z-40 -translate-y-1/2"
         ref={containerRef}
       >
         <div
@@ -175,22 +175,22 @@ export default function AddLessonBlock({ onAddBlock }: AddLessonBlockProps) {
                 <Plus
                   className={`absolute inset-0 transition-all duration-300 ${
                     !isOpen
-                      ? "rotate-0 scale-100 opacity-100"
-                      : "rotate-45 scale-0 opacity-0"
+                      ? "scale-100 rotate-0 opacity-100"
+                      : "scale-0 rotate-45 opacity-0"
                   }`}
                   size={24}
                 />
                 <X
                   className={`absolute inset-0 transition-all duration-300 ${
                     isOpen
-                      ? "rotate-0 scale-100 opacity-100"
-                      : "rotate-45 scale-0 opacity-0"
+                      ? "scale-100 rotate-0 opacity-100"
+                      : "scale-0 rotate-45 opacity-0"
                   }`}
                   size={24}
                 />
               </div>
             </button>
-            <div className="pointer-events-none absolute right-full top-1/2 mr-3 -translate-y-1/2 whitespace-nowrap rounded bg-gray-900 px-3 py-1 text-sm text-white opacity-0 transition-opacity group-hover:opacity-100">
+            <div className="pointer-events-none absolute top-1/2 right-full mr-3 -translate-y-1/2 rounded bg-gray-900 px-3 py-1 text-sm whitespace-nowrap text-white opacity-0 transition-opacity group-hover:opacity-100">
               {isOpen ? "Close" : "Add Block"}
             </div>
           </div>
@@ -225,7 +225,7 @@ export default function AddLessonBlock({ onAddBlock }: AddLessonBlockProps) {
                     >
                       <Icon size={20} />
                     </button>
-                    <div className="pointer-events-none absolute right-full top-1/2 mr-3 -translate-y-1/2 whitespace-nowrap rounded bg-gray-900 px-3 py-1 text-sm text-white opacity-0 transition-opacity group-hover:opacity-100">
+                    <div className="pointer-events-none absolute top-1/2 right-full mr-3 -translate-y-1/2 rounded bg-gray-900 px-3 py-1 text-sm whitespace-nowrap text-white opacity-0 transition-opacity group-hover:opacity-100">
                       {option.label}
                     </div>
                   </div>
