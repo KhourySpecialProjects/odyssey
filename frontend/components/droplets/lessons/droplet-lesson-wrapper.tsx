@@ -87,9 +87,9 @@ export function DropletLessonWrapper({
           <>
             <div
               className={cn(
-                "absolute h-full min-h-screen min-w-[375px] border border-slate-200 bg-slate-50 dark:border-slate-500 dark:bg-slate-800",
+                "absolute inset-y-0 right-0 min-w-[375px] border border-slate-200 bg-slate-50 dark:border-slate-500 dark:bg-slate-800",
                 "sliding-notes-bar z-10 overflow-y-hidden",
-                expanded ? "visible top-0 right-0" : "invisible",
+                expanded ? "visible" : "invisible",
               )}
             >
               <div className="flex items-center justify-end border-b border-slate-200 p-4 dark:border-slate-500">

@@ -18,11 +18,8 @@ export const MultipleChoiceQuiz = createReactBlockSpec(
         default: "",
       },
       options: {
-        default: [
-          { id: "1", text: "", isCorrect: true },
-          { id: "2", text: "", isCorrect: false },
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        ] as any,
+        default:
+          '[{"id":"1","text":"","isCorrect":true},{"id":"2","text":"","isCorrect":false}]',
       },
     },
     content: "none",
@@ -30,7 +27,30 @@ export const MultipleChoiceQuiz = createReactBlockSpec(
   {
     render: (props) => {
       const { question } = props.block.props;
-      const options = (props.block.props.options || []) as AnswerOption[];
+
+      // Parse the options from JSON string
+      let options: AnswerOption[];
+      try {
+        options =
+          typeof props.block.props.options === "string"
+            ? JSON.parse(props.block.props.options)
+            : props.block.props.options;
+
+        // Validate it's an array
+        if (!Array.isArray(options) || options.length === 0) {
+          options = [
+            { id: "1", text: "", isCorrect: true },
+            { id: "2", text: "", isCorrect: false },
+          ];
+        }
+      } catch {
+        // Fallback if parsing fails
+        options = [
+          { id: "1", text: "", isCorrect: true },
+          { id: "2", text: "", isCorrect: false },
+        ];
+      }
+
       const blockRef = React.useRef<HTMLDivElement>(null);
 
       React.useEffect(() => {
@@ -203,20 +223,23 @@ export const MultipleChoiceQuiz = createReactBlockSpec(
         );
         props.editor.updateBlock(props.block, {
           props: {
-            options: updatedOptions,
-          } as unknown as typeof props.block.props,
+            options: JSON.stringify(updatedOptions),
+          },
         });
       };
 
       const handleOptionCorrectChange = (id: string) => {
-        const updatedOptions = options.map((opt: AnswerOption) => ({
-          ...opt,
-          isCorrect: opt.id === id,
-        }));
+        const updatedOptions = options.map(
+          (opt: AnswerOption) =>
+            opt.id === id
+              ? { ...opt, isCorrect: !opt.isCorrect } // toggle this one
+              : opt, // leave others unchanged
+        );
+
         props.editor.updateBlock(props.block, {
           props: {
-            options: updatedOptions,
-          } as unknown as typeof props.block.props,
+            options: JSON.stringify(updatedOptions),
+          },
         });
       };
 
@@ -228,8 +251,8 @@ export const MultipleChoiceQuiz = createReactBlockSpec(
         };
         props.editor.updateBlock(props.block, {
           props: {
-            options: [...options, newOption],
-          } as unknown as typeof props.block.props,
+            options: JSON.stringify([...options, newOption]),
+          },
         });
       };
 
@@ -240,8 +263,8 @@ export const MultipleChoiceQuiz = createReactBlockSpec(
         );
         props.editor.updateBlock(props.block, {
           props: {
-            options: updatedOptions,
-          } as unknown as typeof props.block.props,
+            options: JSON.stringify(updatedOptions),
+          },
         });
       };
 

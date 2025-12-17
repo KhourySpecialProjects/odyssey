@@ -70,7 +70,7 @@ export function Sidebar({
   >;
   availableDroplets: Pick<Droplet, "id" | "name" | "slug" | "lessons">[];
 }) {
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(true);
   const pathname = usePathname();
 
   const {
@@ -86,8 +86,17 @@ export function Sidebar({
     .sort((a, b) => a.orderIndex - b.orderIndex);
 
   useLayoutEffect(() => {
-    window.addEventListener("resize", () => setExpanded(false));
-    return () => window.removeEventListener("resize", () => setExpanded(false));
+    const handleResize = () => {
+      // Auto-collapse sidebar on mobile screens
+      if (window.innerWidth < 1280) {
+        setExpanded(false);
+      }
+    };
+
+    handleResize();
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   const handleDropletPost = async () => {
@@ -155,8 +164,8 @@ export function Sidebar({
     <>
       <div
         className={cn(
-          "fixed inset-0 bg-slate-900/50 transition-opacity dark:bg-slate-900/80",
-          expanded ? "z-30 opacity-1" : "-z-10 opacity-0",
+          "fixed inset-0 bg-slate-900/50 transition-opacity xl:hidden dark:bg-slate-900/80",
+          expanded ? "z-30 opacity-100" : "-z-10 opacity-0",
         )}
         onClick={() => setExpanded(false)}
       />
@@ -181,12 +190,21 @@ export function Sidebar({
           {droplet.name}
         </Link>
       </div>
-
+      {!expanded && (
+        <button
+          aria-controls="sidebar"
+          type="button"
+          className="fixed top-[120px] left-3 z-40 hidden items-center rounded-lg bg-white p-3 text-slate-800 shadow-md transition-all hover:scale-110 hover:bg-slate-100 focus:ring-2 focus:ring-slate-200 focus:outline-none xl:inline-flex dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700 dark:focus:ring-slate-600"
+          onClick={() => setExpanded(true)}
+        >
+          <PanelRightClose className="h-6 w-6 dark:text-white" />
+        </button>
+      )}
       <aside
         id="sidebar"
         className={cn(
           "fixed left-0 z-40 h-screen w-64 transition-transform xl:sticky xl:top-0",
-          expanded ? "translate-x-0" : "-translate-x-full xl:translate-x-0",
+          expanded ? "translate-x-0" : "-translate-x-full",
         )}
         aria-label="Sidebar"
       >
@@ -211,10 +229,7 @@ export function Sidebar({
               </Button>
               <div className="w-full"></div>
 
-              <button
-                onClick={() => setExpanded(false)}
-                className={`xl:hidden`}
-              >
+              <button onClick={() => setExpanded(false)}>
                 <PanelRightOpen />
               </button>
             </div>
