@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -40,10 +40,12 @@ export function PlaylistForm({
     existingPlaylist?.description || "",
   );
   const [isPublic, setIsPublic] = useState(existingPlaylist?.isPublic || false);
-  const [selectedDroplets] = useState(existingPlaylist?.droplets || []);
+  const [selectedDroplets, setSelectedDroplets] = useState(
+    existingPlaylist?.droplets || [],
+  );
   const [slug] = useState(existingPlaylist?.slug || "");
   const [error, setError] = useState("");
-  const [sourceDroplets] = useState(() => {
+  const [sourceDroplets, setSourceDroplets] = useState(() => {
     if (existingPlaylist?.droplets) {
       return droplets.filter(
         (d) => !existingPlaylist.droplets?.some((pd) => pd.id === d.id),
@@ -146,6 +148,17 @@ export function PlaylistForm({
       setError("An unexpected error occurred");
     }
   };
+
+  const handleAddDroplet = useCallback((droplet: Droplet) => {
+    setSourceDroplets((prev) => prev.filter((d) => d.id !== droplet.id));
+    setSelectedDroplets((prev) => [...prev, droplet]);
+  }, []);
+
+  const handleRemoveDroplet = useCallback((droplet: Droplet) => {
+    setSelectedDroplets((prev) => prev.filter((d) => d.id !== droplet.id));
+    setSourceDroplets((prev) => [...prev, droplet]);
+  }, []);
+
   const filteredDroplets = sourceDroplets.filter((droplet) =>
     droplet.name.toLowerCase().includes(tempQuery.toLowerCase()),
   );
@@ -283,13 +296,21 @@ export function PlaylistForm({
             <h3 className="text-center font-semibold dark:text-slate-300">
               Available Droplets
             </h3>
-            <DraggableTileList droplets={filteredDroplets} />
+            <DraggableTileList
+              droplets={filteredDroplets}
+              onAction={handleAddDroplet}
+              actionType="add"
+            />
           </div>
           <div className="space-y-4">
             <h3 className="text-center font-semibold dark:text-slate-300">
               Selected Droplets
             </h3>
-            <DraggableTileList droplets={selectedDroplets} />
+            <DraggableTileList
+              droplets={selectedDroplets}
+              onAction={handleRemoveDroplet}
+              actionType="remove"
+            />
           </div>
         </div>
       </div>
