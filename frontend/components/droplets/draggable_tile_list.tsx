@@ -1,19 +1,22 @@
 "use client";
 
 import { Droplet } from "@/types/index.d";
-
 import { DraggableTileListClient } from "./draggable_tile_list_client";
 
 interface DraggableCardListProps {
   droplets: Droplet[];
   onAction?: (droplet: Droplet) => void;
   actionType?: "add" | "remove";
+  onMoveUp?: (index: number) => void;
+  onMoveDown?: (index: number) => void;
 }
 
 export default function DraggableTileList({
   droplets,
   onAction,
   actionType,
+  onMoveUp,
+  onMoveDown,
 }: DraggableCardListProps) {
   return (
     <div
@@ -24,6 +27,8 @@ export default function DraggableTileList({
         droplets={droplets}
         onAction={onAction}
         actionType={actionType}
+        onMoveUp={onMoveUp}
+        onMoveDown={onMoveDown}
       />
     </div>
   );

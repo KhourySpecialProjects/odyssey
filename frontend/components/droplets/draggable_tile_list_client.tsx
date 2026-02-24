@@ -11,10 +11,14 @@ export function DraggableTileListClient({
   droplets,
   onAction,
   actionType,
+  onMoveUp,
+  onMoveDown,
 }: {
   droplets: Droplet[];
   onAction?: (droplet: Droplet) => void;
   actionType?: "add" | "remove";
+  onMoveUp?: (index: number) => void;
+  onMoveDown?: (index: number) => void;
 }) {
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -35,15 +39,22 @@ export function DraggableTileListClient({
 
   return (
     <div>
-      <div className="space-y-4">
-        {paginatedDroplets.map((droplet) => (
-          <DraggableDropletWideTile
-            key={droplet.id}
-            droplet={droplet}
-            onAction={onAction ? () => onAction(droplet) : undefined}
-            actionType={actionType}
-          />
-        ))}
+      <div className="space-y-2">
+        {paginatedDroplets.map((droplet, pageIndex) => {
+          const globalIndex = startIndex + pageIndex;
+          return (
+            <DraggableDropletWideTile
+              key={droplet.id}
+              droplet={droplet}
+              onAction={onAction ? () => onAction(droplet) : undefined}
+              actionType={actionType}
+              index={globalIndex}
+              totalItems={droplets.length}
+              onMoveUp={onMoveUp}
+              onMoveDown={onMoveDown}
+            />
+          );
+        })}
         {paginatedDroplets.length === 0 && (
           <p className="py-8 text-center text-sm text-slate-400">No droplets</p>
         )}

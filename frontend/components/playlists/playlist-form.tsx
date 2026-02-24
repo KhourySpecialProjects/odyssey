@@ -54,6 +54,30 @@ export function PlaylistForm({
     return droplets;
   });
 
+  const handleMoveUp = useCallback((index: number) => {
+    if (index === 0) return;
+    setSelectedDroplets((prev) => {
+      const reordered = [...prev];
+      [reordered[index - 1], reordered[index]] = [
+        reordered[index],
+        reordered[index - 1],
+      ];
+      return reordered;
+    });
+  }, []);
+
+  const handleMoveDown = useCallback((index: number) => {
+    setSelectedDroplets((prev) => {
+      if (index === prev.length - 1) return prev;
+      const reordered = [...prev];
+      [reordered[index], reordered[index + 1]] = [
+        reordered[index + 1],
+        reordered[index],
+      ];
+      return reordered;
+    });
+  }, []);
+
   const totalLessons = selectedDroplets.reduce(
     (sum, droplet) => sum + (droplet.lessons?.length || 0),
     0,
@@ -310,6 +334,8 @@ export function PlaylistForm({
               droplets={selectedDroplets}
               onAction={handleRemoveDroplet}
               actionType="remove"
+              onMoveUp={handleMoveUp}
+              onMoveDown={handleMoveDown}
             />
           </div>
         </div>
