@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -40,10 +40,12 @@ export function PlaylistForm({
     existingPlaylist?.description || "",
   );
   const [isPublic, setIsPublic] = useState(existingPlaylist?.isPublic || false);
-  const [selectedDroplets] = useState(existingPlaylist?.droplets || []);
+  const [selectedDroplets, setSelectedDroplets] = useState(
+    existingPlaylist?.droplets || [],
+  );
   const [slug] = useState(existingPlaylist?.slug || "");
   const [error, setError] = useState("");
-  const [sourceDroplets] = useState(() => {
+  const [sourceDroplets, setSourceDroplets] = useState(() => {
     if (existingPlaylist?.droplets) {
       return droplets.filter(
         (d) => !existingPlaylist.droplets?.some((pd) => pd.id === d.id),
@@ -51,6 +53,30 @@ export function PlaylistForm({
     }
     return droplets;
   });
+
+  const handleMoveUp = useCallback((index: number) => {
+    if (index === 0) return;
+    setSelectedDroplets((prev) => {
+      const reordered = [...prev];
+      [reordered[index - 1], reordered[index]] = [
+        reordered[index],
+        reordered[index - 1],
+      ];
+      return reordered;
+    });
+  }, []);
+
+  const handleMoveDown = useCallback((index: number) => {
+    setSelectedDroplets((prev) => {
+      if (index === prev.length - 1) return prev;
+      const reordered = [...prev];
+      [reordered[index], reordered[index + 1]] = [
+        reordered[index + 1],
+        reordered[index],
+      ];
+      return reordered;
+    });
+  }, []);
 
   const totalLessons = selectedDroplets.reduce(
     (sum, droplet) => sum + (droplet.lessons?.length || 0),
@@ -104,8 +130,6 @@ export function PlaylistForm({
       setError("Please select at least one droplet");
       return;
     }
-    setIsOpen(true);
-
     const updatePlaylistData = {
       name,
       description,
@@ -131,21 +155,31 @@ export function PlaylistForm({
           existingPlaylist.id,
           updatePlaylistData,
         );
-        if (!response.ok) {
-          setError(response.error || "Failed to update Playlist!");
-        }
-        setIsOpen(true);
       } else {
         response = await createPlaylist(playlistData);
-        if (!response.ok) {
-          setError(response.error || "Failed to create Playlist!");
-        }
+      }
+
+      if (response.ok) {
+        setIsOpen(true);
+      } else {
+        setError(response.error || "Failed to save Playlist!");
       }
     } catch (error) {
       console.error("Error saving playlist:", error);
       setError("An unexpected error occurred");
     }
   };
+
+  const handleAddDroplet = useCallback((droplet: Droplet) => {
+    setSourceDroplets((prev) => prev.filter((d) => d.id !== droplet.id));
+    setSelectedDroplets((prev) => [...prev, droplet]);
+  }, []);
+
+  const handleRemoveDroplet = useCallback((droplet: Droplet) => {
+    setSelectedDroplets((prev) => prev.filter((d) => d.id !== droplet.id));
+    setSourceDroplets((prev) => [...prev, droplet]);
+  }, []);
+
   const filteredDroplets = sourceDroplets.filter((droplet) =>
     droplet.name.toLowerCase().includes(tempQuery.toLowerCase()),
   );
@@ -283,13 +317,23 @@ export function PlaylistForm({
             <h3 className="text-center font-semibold dark:text-slate-300">
               Available Droplets
             </h3>
-            <DraggableTileList droplets={filteredDroplets} />
+            <DraggableTileList
+              droplets={filteredDroplets}
+              onAction={handleAddDroplet}
+              actionType="add"
+            />
           </div>
           <div className="space-y-4">
             <h3 className="text-center font-semibold dark:text-slate-300">
               Selected Droplets
             </h3>
-            <DraggableTileList droplets={selectedDroplets} />
+            <DraggableTileList
+              droplets={selectedDroplets}
+              onAction={handleRemoveDroplet}
+              actionType="remove"
+              onMoveUp={handleMoveUp}
+              onMoveDown={handleMoveDown}
+            />
           </div>
         </div>
       </div>

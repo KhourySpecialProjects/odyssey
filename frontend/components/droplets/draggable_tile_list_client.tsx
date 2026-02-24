@@ -1,64 +1,89 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Droplet } from "@/types";
 import DraggableDropletWideTile from "./draggable-droplet-wide-tile";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 const ITEMS_PER_PAGE = 5;
 
-export function DraggableTileListClient({ droplets }: { droplets: Droplet[] }) {
+export function DraggableTileListClient({
+  droplets,
+  onAction,
+  actionType,
+  onMoveUp,
+  onMoveDown,
+}: {
+  droplets: Droplet[];
+  onAction?: (droplet: Droplet) => void;
+  actionType?: "add" | "remove";
+  onMoveUp?: (index: number) => void;
+  onMoveDown?: (index: number) => void;
+}) {
   const [currentPage, setCurrentPage] = useState(1);
 
-  const totalPages = Math.ceil(droplets.length / ITEMS_PER_PAGE);
+  const totalPages = Math.max(1, Math.ceil(droplets.length / ITEMS_PER_PAGE));
+
+  // Reset to last valid page when droplets shrink (e.g. after removing items)
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
+
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
   const paginatedDroplets = droplets.slice(
     startIndex,
     startIndex + ITEMS_PER_PAGE,
   );
 
-  const handleNextPage = () => {
-    if (currentPage < totalPages) {
-      setCurrentPage((prev) => prev + 1);
-    }
-  };
-
-  const handlePrevPage = () => {
-    if (currentPage > 1) {
-      setCurrentPage((prev) => prev - 1);
-    }
-  };
-
   return (
-    <>
-      <div className="space-y-4">
-        {paginatedDroplets.map((droplet) => (
-          <DraggableDropletWideTile key={droplet.id} droplet={droplet} />
-        ))}
+    <div>
+      <div className="space-y-2">
+        {paginatedDroplets.map((droplet, pageIndex) => {
+          const globalIndex = startIndex + pageIndex;
+          return (
+            <DraggableDropletWideTile
+              key={droplet.id}
+              droplet={droplet}
+              onAction={onAction ? () => onAction(droplet) : undefined}
+              actionType={actionType}
+              index={globalIndex}
+              totalItems={droplets.length}
+              onMoveUp={onMoveUp}
+              onMoveDown={onMoveDown}
+            />
+          );
+        })}
+        {paginatedDroplets.length === 0 && (
+          <p className="py-8 text-center text-sm text-slate-400">No droplets</p>
+        )}
       </div>
-      <div className="mt-4 flex items-center justify-end">
-        <div className="flex gap-2">
+      {totalPages > 1 && (
+        <div className="mt-4 flex items-center justify-center gap-2">
           <Button
-            size="sm"
             variant="outline"
             type="button"
-            onClick={handlePrevPage}
+            onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
             disabled={currentPage === 1}
-            className={`${currentPage === 1 ? "visibility: hidden" : "visibility: visible"} dark:bg-slate-300 dark:text-black`}
+            className="h-8 w-8 p-0 dark:bg-slate-300 dark:text-black"
           >
-            Previous
+            <ChevronLeft className="h-4 w-4" />
           </Button>
+          <span className="text-sm text-slate-600 dark:text-slate-300">
+            {currentPage} / {totalPages}
+          </span>
           <Button
-            size="sm"
             variant="outline"
             type="button"
-            onClick={handleNextPage}
+            onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
             disabled={currentPage >= totalPages}
-            className={`${currentPage >= totalPages ? "visibility: hidden" : "visibility: visible"} dark:bg-slate-300 dark:text-black`}
+            className="h-8 w-8 p-0 dark:bg-slate-300 dark:text-black"
           >
-            Next
+            <ChevronRight className="h-4 w-4" />
           </Button>
         </div>
-      </div>
-    </>
+      )}
+    </div>
   );
 }
