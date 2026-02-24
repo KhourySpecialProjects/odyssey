@@ -106,7 +106,7 @@ export default function DraggableDropletWideTile({
               size="sm"
               type="button"
               onClick={onAction}
-              className="text-slate-400 opacity-0 transition-opacity group-hover:opacity-100 hover:text-red-500"
+              className="text-slate-400 opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100 hover:text-red-500 focus:opacity-100 focus-visible:opacity-100"
             >
               <XCircleIcon className="h-5 w-5" />
             </Button>

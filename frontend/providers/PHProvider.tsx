@@ -39,7 +39,13 @@ function PostHogIdentify() {
     return () => {
       cancelled = true;
     };
-  }, [ph, status, session?.user?.email, session?.user?.name, (session?.user as any)?.username]);
+  }, [
+    ph,
+    status,
+    session?.user?.email,
+    session?.user?.name,
+    (session?.user as any)?.username,
+  ]);
 
   return null;
 }

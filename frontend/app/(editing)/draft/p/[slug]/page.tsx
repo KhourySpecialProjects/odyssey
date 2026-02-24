@@ -75,7 +75,7 @@ export default async function EditPlaylistPage({ params }: Props) {
   );
 
   return (
-    <div className="flex min-h-screen w-full flex-col items-center light:bg-slate-100 px-24 pt-12">
+    <div className="flex min-h-screen w-full flex-col items-center bg-slate-100 px-24 pt-12 dark:bg-slate-800">
       <h1 className="mb-7 text-2xl font-bold tracking-tight text-slate-900 sm:text-4xl dark:text-white">
         Edit Playlist
       </h1>

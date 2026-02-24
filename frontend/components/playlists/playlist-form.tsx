@@ -130,8 +130,6 @@ export function PlaylistForm({
       setError("Please select at least one droplet");
       return;
     }
-    setIsOpen(true);
-
     const updatePlaylistData = {
       name,
       description,
@@ -157,15 +155,14 @@ export function PlaylistForm({
           existingPlaylist.id,
           updatePlaylistData,
         );
-        if (!response.ok) {
-          setError(response.error || "Failed to update Playlist!");
-        }
-        setIsOpen(true);
       } else {
         response = await createPlaylist(playlistData);
-        if (!response.ok) {
-          setError(response.error || "Failed to create Playlist!");
-        }
+      }
+
+      if (response.ok) {
+        setIsOpen(true);
+      } else {
+        setError(response.error || "Failed to save Playlist!");
       }
     } catch (error) {
       console.error("Error saving playlist:", error);

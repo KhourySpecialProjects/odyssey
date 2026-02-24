@@ -640,7 +640,7 @@ describe("NoteBlock", () => {
       render(<NoteBlock {...mockProps} />);
 
       const badge = screen.getByText("Highlighted text");
-      await userEvent.click(badge);
+      fireEvent.click(badge);
 
       // Should handle gracefully when text is not found
       await waitFor(() => {

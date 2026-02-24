@@ -145,9 +145,10 @@ describe("DraggableDropletWideTile", () => {
         />,
       );
 
-      expect(container.firstChild).toHaveClass("rounded-md");
-      expect(container.firstChild).toHaveClass("border");
-      expect(container.firstChild).toHaveClass("bg-slate-50");
+      const card = container.firstChild?.firstChild as HTMLElement;
+      expect(card).toHaveClass("rounded-md");
+      expect(card).toHaveClass("border");
+      expect(card).toHaveClass("bg-slate-50");
     });
   });
 
