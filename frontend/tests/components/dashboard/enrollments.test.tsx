@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { Enrollments } from "@/components/dashboard/enrollments";
 import { getCurrentUser } from "@/lib/auth/session";
-import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
+import { getCachedUser } from "@/lib/requests/cached";
 import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
 import { notFound } from "next/navigation";
 import { Enrollment } from "@/types";
@@ -10,8 +10,8 @@ jest.mock("@/lib/auth/session", () => ({
   getCurrentUser: jest.fn(),
 }));
 
-jest.mock("@/lib/requests/authorized-user", () => ({
-  getAuthorizedUserByEmail: jest.fn(),
+jest.mock("@/lib/requests/cached", () => ({
+  getCachedUser: jest.fn(),
 }));
 
 jest.mock("@/lib/requests/enrollment", () => ({
@@ -41,9 +41,7 @@ describe("Enrollments", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     (getCurrentUser as jest.Mock).mockResolvedValue(mockUser);
-    (getAuthorizedUserByEmail as jest.Mock).mockResolvedValue(
-      mockAuthorizedUser,
-    );
+    (getCachedUser as jest.Mock).mockResolvedValue(mockAuthorizedUser);
   });
 
   it("renders a list of enrolled droplets", async () => {

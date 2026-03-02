@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { MyContent } from "@/components/dashboard/my-content";
 import { getCurrentUser } from "@/lib/auth/session";
-import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
+import { getCachedUser } from "@/lib/requests/cached";
 import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
 import { notFound } from "next/navigation";
 import { getUserGroups } from "@/lib/requests/groups";
@@ -10,8 +10,8 @@ jest.mock("@/lib/auth/session", () => ({
   getCurrentUser: jest.fn(),
 }));
 
-jest.mock("@/lib/requests/authorized-user", () => ({
-  getAuthorizedUserByEmail: jest.fn(),
+jest.mock("@/lib/requests/cached", () => ({
+  getCachedUser: jest.fn(),
 }));
 
 jest.mock("@/lib/requests/enrollment", () => ({
@@ -124,9 +124,7 @@ describe("MyContent", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     (getCurrentUser as jest.Mock).mockResolvedValue(mockUser);
-    (getAuthorizedUserByEmail as jest.Mock).mockResolvedValue(
-      mockAuthorizedUser,
-    );
+    (getCachedUser as jest.Mock).mockResolvedValue(mockAuthorizedUser);
     (getEnrollmentsByAuthorizedUser as jest.Mock).mockResolvedValue([]);
     (getUserGroups as jest.Mock).mockResolvedValue(mockGroups);
   });
@@ -151,7 +149,7 @@ describe("MyContent", () => {
     it("fetches authorized user by email", async () => {
       await MyContent({ searchParams: {} });
 
-      expect(getAuthorizedUserByEmail).toHaveBeenCalledWith("test@example.com");
+      expect(getCachedUser).toHaveBeenCalledWith("test@example.com");
     });
 
     it("fetches user groups", async () => {

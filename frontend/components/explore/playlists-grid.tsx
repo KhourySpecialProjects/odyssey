@@ -1,5 +1,5 @@
 import { getCurrentUser } from "@/lib/auth/session";
-import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
+import { getCachedUser } from "@/lib/requests/cached";
 import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
 import {
   Message,
@@ -38,9 +38,7 @@ export async function PlaylistsGrid({
   let dueDates: DueDate[] = [];
 
   if (user?.email) {
-    authorizedUser = (await getAuthorizedUserByEmail(
-      user.email,
-    )) as AuthorizedUser;
+    authorizedUser = (await getCachedUser(user.email)) as AuthorizedUser;
     const enrollments = await getEnrollmentsByAuthorizedUser(authorizedUser.id);
     completedLessonIds = enrollments.flatMap(
       (enrollment) =>

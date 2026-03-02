@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { isAuthorizedUserAdmin, isContentCreator } from "@/lib/utils";
 import { getDroplets } from "@/lib/requests/droplet";
 import { PlaylistForm } from "@/components/playlists/playlist-form";
-import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
+import { getCachedUser } from "@/lib/requests/cached";
 import { getPlaylistBySlug } from "@/lib/requests/playlist";
 
 interface Props {
@@ -21,7 +21,7 @@ export default async function EditPlaylistPage({ params }: Props) {
   )
     return notFound();
 
-  const authUser = await getAuthorizedUserByEmail(user.email);
+  const authUser = await getCachedUser(user.email);
 
   const p = await params;
   const playlist = await getPlaylistBySlug(p.slug, {

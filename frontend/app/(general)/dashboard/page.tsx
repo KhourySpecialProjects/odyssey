@@ -13,8 +13,7 @@ import {
   playlistSorting,
   sorting,
 } from "@/lib/globals";
-import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
-import { USER_POPULATES } from "@/lib/requests/user-populates";
+import { getCachedUserDashboard } from "@/lib/requests/cached";
 import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
 import { getUserGroups } from "@/lib/requests/groups";
 import { notFound } from "next/navigation";
@@ -35,10 +34,7 @@ export default async function DashboardRoute({ searchParams }: Props) {
     return notFound();
   }
   const { sortKey } = sorting.find((item) => item.slug === sort) || defaultSort;
-  const authorizedUser = await getAuthorizedUserByEmail(
-    user.email,
-    USER_POPULATES.dashboard,
-  );
+  const authorizedUser = await getCachedUserDashboard(user.email);
   const archivedPlaylists = authorizedUser.playlists?.filter((playlist) =>
     playlist.users_archived?.some((user) => user.id === authorizedUser.id),
   );

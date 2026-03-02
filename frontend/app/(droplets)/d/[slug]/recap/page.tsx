@@ -6,13 +6,12 @@ import { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { StarRating } from "@/components/ui/rating-stars";
-import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
-import { USER_POPULATES } from "@/lib/requests/user-populates";
+import { getCachedUser } from "@/lib/requests/cached";
 import {
   getEnrollmentsByAuthorizedUser,
   updateCompletionDate,
 } from "@/lib/requests/enrollment";
-import { getServerSession } from "next-auth";
+import { getCurrentUser } from "@/lib/auth/session";
 import { CompletedDropletBlock } from "@/components/droplets/completed-droplet-block";
 import { getNotesByDroplet } from "@/lib/requests/notes";
 import { getHighlightsByDroplet } from "@/lib/requests/highlights";
@@ -86,10 +85,10 @@ export default async function DropletRecapRoute({ params }: Props) {
     populate: { tags: { populate: "*" } },
   });
 
-  const session = await getServerSession();
+  const currentUser = await getCurrentUser();
 
-  if (session?.user?.email) {
-    const user = await getAuthorizedUserByEmail(session.user.email);
+  if (currentUser?.email) {
+    const user = await getCachedUser(currentUser.email);
 
     const enrollments = await getEnrollmentsByAuthorizedUser(user.id, {
       populate: {
@@ -107,10 +106,7 @@ export default async function DropletRecapRoute({ params }: Props) {
       },
     });
 
-    const authUser = await getAuthorizedUserByEmail(
-      user.email,
-      USER_POPULATES.profile,
-    );
+    const authUser = await getCachedUser(user.email);
     let enrollID: string = "";
     const highlights = await getHighlightsByDroplet(authUser.id, droplet.id);
     const notes = await getNotesByDroplet(authUser.id, droplet.id);

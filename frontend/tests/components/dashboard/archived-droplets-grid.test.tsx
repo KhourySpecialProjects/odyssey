@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { ArchivedDropletsGrid } from "@/components/dashboard/archived-droplets-grid";
 import { getCurrentUser } from "@/lib/auth/session";
-import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
+import { getCachedUser } from "@/lib/requests/cached";
 import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
 import { Enrollment } from "@/types";
 
@@ -9,8 +9,8 @@ jest.mock("@/lib/auth/session", () => ({
   getCurrentUser: jest.fn(),
 }));
 
-jest.mock("@/lib/requests/authorized-user", () => ({
-  getAuthorizedUserByEmail: jest.fn(),
+jest.mock("@/lib/requests/cached", () => ({
+  getCachedUser: jest.fn(),
 }));
 
 jest.mock("@/lib/requests/enrollment", () => ({
@@ -59,9 +59,7 @@ describe("ArchivedDropletsGrid", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     (getCurrentUser as jest.Mock).mockResolvedValue(mockUser);
-    (getAuthorizedUserByEmail as jest.Mock).mockResolvedValue(
-      mockAuthorizedUser,
-    );
+    (getCachedUser as jest.Mock).mockResolvedValue(mockAuthorizedUser);
   });
 
   it("displays a message when no archived droplets are found", async () => {
@@ -81,9 +79,7 @@ describe("ArchivedDropletsGrid", () => {
     const mockEnrollments = [] as Enrollment[];
 
     (getCurrentUser as jest.Mock).mockResolvedValue(mockUser);
-    (getAuthorizedUserByEmail as jest.Mock).mockResolvedValue(
-      mockAuthorizedUser,
-    );
+    (getCachedUser as jest.Mock).mockResolvedValue(mockAuthorizedUser);
     (getEnrollmentsByAuthorizedUser as jest.Mock).mockResolvedValue(
       mockEnrollments,
     );
@@ -165,7 +161,7 @@ describe("ArchivedDropletsGrid", () => {
     beforeEach(() => {
       jest.clearAllMocks();
       (getCurrentUser as jest.Mock).mockResolvedValue(mockUser);
-      (getAuthorizedUserByEmail as jest.Mock).mockResolvedValue(mockUser);
+      (getCachedUser as jest.Mock).mockResolvedValue(mockUser);
       (getEnrollmentsByAuthorizedUser as jest.Mock).mockResolvedValue(
         mockEnrollments,
       );
@@ -188,7 +184,7 @@ describe("ArchivedDropletsGrid", () => {
       beforeEach(() => {
         jest.clearAllMocks();
         (getCurrentUser as jest.Mock).mockResolvedValue(mockUser);
-        (getAuthorizedUserByEmail as jest.Mock).mockResolvedValue(mockUser);
+        (getCachedUser as jest.Mock).mockResolvedValue(mockUser);
       });
 
       it("should calculate 100% completion when all lessons are completed", async () => {

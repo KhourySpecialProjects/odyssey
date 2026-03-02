@@ -8,13 +8,11 @@ import { Button } from "@/components/ui/button";
 import { ArrowRightIcon } from "lucide-react";
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth/session";
-import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
+import { getCachedUser } from "@/lib/requests/cached";
 
 export default async function CantAccessRoute() {
   const user = await getCurrentUser();
-  const authorizedUser = user?.email
-    ? await getAuthorizedUserByEmail(user.email)
-    : null;
+  const authorizedUser = user?.email ? await getCachedUser(user.email) : null;
 
   if (!user) {
     return (

@@ -1,5 +1,5 @@
 import { getCurrentUser } from "@/lib/auth/session";
-import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
+import { getCachedUser } from "@/lib/requests/cached";
 import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
 import { notFound } from "next/navigation";
 import { DropletTile } from "../droplets/droplet-tile";
@@ -8,7 +8,7 @@ export async function Enrollments() {
   const user = await getCurrentUser();
   if (!user?.email) return notFound();
 
-  const authorizedUser = await getAuthorizedUserByEmail(user.email);
+  const authorizedUser = await getCachedUser(user.email);
   const enrollments = await getEnrollmentsByAuthorizedUser(authorizedUser.id, {
     populate: {
       droplet: {

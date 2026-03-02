@@ -1,8 +1,7 @@
 import Sidebar from "@/components/droplets/sidebar";
-import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
+import { getCachedUser } from "@/lib/requests/cached";
 import { getDropletBySlug } from "@/lib/requests/droplet";
 import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
-import { getServerSession } from "next-auth";
 import { Metadata } from "next/types";
 import { AuthorizedUser, Droplet } from "@/types";
 import { getCurrentUser } from "@/lib/auth/session";
@@ -36,7 +35,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function RootLayout({ params, children }: Props) {
   const { slug } = await params;
-  const session = await getServerSession();
   const user = await getCurrentUser();
 
   if (!user) return notFound();
@@ -46,9 +44,7 @@ export default async function RootLayout({ params, children }: Props) {
   let enrollmentId: string | undefined;
 
   if (user?.email) {
-    authorizedUser = (await getAuthorizedUserByEmail(
-      user.email,
-    )) as AuthorizedUser;
+    authorizedUser = (await getCachedUser(user.email)) as AuthorizedUser;
   }
 
   // Fetch droplet first
@@ -66,8 +62,8 @@ export default async function RootLayout({ params, children }: Props) {
 
   if (!droplet) return notFound();
 
-  if (session?.user?.email) {
-    const sessionUser = await getAuthorizedUserByEmail(session.user.email);
+  if (user?.email) {
+    const sessionUser = await getCachedUser(user.email);
     const enrollments = await getEnrollmentsByAuthorizedUser(sessionUser.id);
 
     const currentEnrollment = enrollments.find(

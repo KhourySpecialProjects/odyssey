@@ -2,7 +2,7 @@ import { getPlaylistBySlug } from "@/lib/requests/playlist";
 import { notFound } from "next/navigation";
 import { DropletTile } from "@/components/droplets/droplet-tile";
 import { getCurrentUser } from "@/lib/auth/session";
-import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
+import { getCachedUser } from "@/lib/requests/cached";
 import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
@@ -70,7 +70,7 @@ export default async function PlaylistPage({ params }: Props) {
   let isEnrolled = false;
 
   if (user?.email) {
-    const authorizedUser = await getAuthorizedUserByEmail(user.email);
+    const authorizedUser = await getCachedUser(user.email);
     const enrollments = await getEnrollmentsByAuthorizedUser(authorizedUser.id);
     enrolledDropletIds = enrollments.map((e) => e.droplet.id);
 

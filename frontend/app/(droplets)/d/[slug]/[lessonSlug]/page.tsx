@@ -1,12 +1,11 @@
 import { Metadata } from "next";
-import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
+import { getCachedUser } from "@/lib/requests/cached";
 import {
   getEnrollmentsByAuthorizedUser,
   updateCompletionDate,
 } from "@/lib/requests/enrollment";
 import { getDropletBySlug } from "@/lib/requests/droplet";
 import { getLessonBySlug } from "@/lib/requests/lesson";
-import { getServerSession } from "next-auth";
 import { getCurrentUser } from "@/lib/auth/session";
 import { notFound } from "next/navigation";
 import { DropletLessonWrapper } from "@/components/droplets/lessons/droplet-lesson-wrapper";
@@ -46,12 +45,12 @@ export default async function Page({ params }: Props) {
   });
 
   const lesson = await getLessonBySlug(lessonSlug);
-  const session = await getServerSession();
+  const currentUser = await getCurrentUser();
   let completedLessonIds: number[] = [];
   let enrollmentId: string | undefined;
 
-  if (session?.user?.email) {
-    const user = await getAuthorizedUserByEmail(session.user.email);
+  if (currentUser?.email) {
+    const user = await getCachedUser(currentUser.email);
     const enrollments = await getEnrollmentsByAuthorizedUser(user.id);
 
     const enrollment = enrollments.find((e) => e.droplet.id === droplet.id);
@@ -69,9 +68,8 @@ export default async function Page({ params }: Props) {
     }
   }
 
-  const currentUser = await getCurrentUser();
   if (!currentUser || !currentUser?.email) return notFound();
-  const authUser = await getAuthorizedUserByEmail(currentUser.email);
+  const authUser = await getCachedUser(currentUser.email);
 
   const isAuthor =
     droplet.authorized_users &&

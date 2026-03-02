@@ -4,7 +4,7 @@ import {
   MessageHeader,
 } from "@/components/message";
 import { getCurrentUser } from "@/lib/auth/session";
-import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
+import { getCachedUser } from "@/lib/requests/cached";
 import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
 import { DropletTile } from "../droplets/droplet-tile";
 import { SortedDropletsGrid } from "./sorted-droplets-grid";
@@ -35,7 +35,7 @@ export async function DropletsGrid({
   let dueDates: DueDate[] = [];
 
   if (user?.email) {
-    const authorizedUser = await getAuthorizedUserByEmail(user.email);
+    const authorizedUser = await getCachedUser(user.email);
     enrollments = await getEnrollmentsByAuthorizedUser(authorizedUser.id);
 
     enrolledDropletIds = enrollments.map((e) => e.droplet.id);
