@@ -2,7 +2,7 @@ import { render, screen } from "@testing-library/react";
 import { Enrollments } from "@/components/dashboard/enrollments";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getCachedUser } from "@/lib/requests/cached";
-import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
+import { getCachedEnrollmentsDashboard } from "@/lib/requests/cached";
 import { notFound } from "next/navigation";
 import { Enrollment } from "@/types";
 
@@ -12,10 +12,7 @@ jest.mock("@/lib/auth/session", () => ({
 
 jest.mock("@/lib/requests/cached", () => ({
   getCachedUser: jest.fn(),
-}));
-
-jest.mock("@/lib/requests/enrollment", () => ({
-  getEnrollmentsByAuthorizedUser: jest.fn(),
+  getCachedEnrollmentsDashboard: jest.fn(),
 }));
 
 jest.mock("next/navigation", () => ({
@@ -67,7 +64,7 @@ describe("Enrollments", () => {
       },
     ];
 
-    (getEnrollmentsByAuthorizedUser as jest.Mock).mockResolvedValue(
+    (getCachedEnrollmentsDashboard as jest.Mock).mockResolvedValue(
       mockEnrollments,
     );
 
@@ -85,29 +82,15 @@ describe("Enrollments", () => {
     expect(notFound).toHaveBeenCalled();
   });
 
-  it("passes the correct parameters to getEnrollmentsByAuthorizedUser", async () => {
+  it("passes the correct parameters to getCachedEnrollmentsDashboard", async () => {
     const mockEnrollments = [] as Enrollment[];
-    (getEnrollmentsByAuthorizedUser as jest.Mock).mockResolvedValue(
+    (getCachedEnrollmentsDashboard as jest.Mock).mockResolvedValue(
       mockEnrollments,
     );
 
     await Enrollments();
 
-    expect(getEnrollmentsByAuthorizedUser).toHaveBeenCalledWith(1, {
-      populate: {
-        droplet: {
-          populate: {
-            tags: true,
-            lessons: {
-              fields: ["id", "name", "slug"],
-            },
-          },
-        },
-        viewedLessons: {
-          fields: ["id", "name", "slug"],
-        },
-      },
-    });
+    expect(getCachedEnrollmentsDashboard).toHaveBeenCalledWith(1);
   });
 
   it("calls notFound when user email is missing", async () => {
@@ -135,7 +118,7 @@ describe("Enrollments", () => {
       },
     ];
 
-    (getEnrollmentsByAuthorizedUser as jest.Mock).mockResolvedValue(
+    (getCachedEnrollmentsDashboard as jest.Mock).mockResolvedValue(
       mockEnrollments,
     );
 
@@ -145,7 +128,7 @@ describe("Enrollments", () => {
   });
 
   it("renders correctly when there are no enrollments", async () => {
-    (getEnrollmentsByAuthorizedUser as jest.Mock).mockResolvedValue([]);
+    (getCachedEnrollmentsDashboard as jest.Mock).mockResolvedValue([]);
 
     render(await Enrollments());
 

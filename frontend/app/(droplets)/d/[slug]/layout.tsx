@@ -1,7 +1,7 @@
 import Sidebar from "@/components/droplets/sidebar";
 import { getCachedUser } from "@/lib/requests/cached";
 import { getDropletBySlug } from "@/lib/requests/droplet";
-import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
+import { getCachedEnrollmentsWithLessonIds } from "@/lib/requests/cached";
 import { Metadata } from "next/types";
 import { AuthorizedUser, Droplet } from "@/types";
 import { getCurrentUser } from "@/lib/auth/session";
@@ -64,7 +64,7 @@ export default async function RootLayout({ params, children }: Props) {
 
   if (user?.email) {
     const sessionUser = await getCachedUser(user.email);
-    const enrollments = await getEnrollmentsByAuthorizedUser(sessionUser.id);
+    const enrollments = await getCachedEnrollmentsWithLessonIds(sessionUser.id);
 
     const currentEnrollment = enrollments.find(
       (enrollment) => enrollment.droplet?.id === droplet.id,

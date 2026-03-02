@@ -2,7 +2,6 @@ import { render, screen } from "@testing-library/react";
 import { MyContent } from "@/components/dashboard/my-content";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getCachedUser } from "@/lib/requests/cached";
-import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
 import { notFound } from "next/navigation";
 import { getUserGroups } from "@/lib/requests/groups";
 
@@ -12,11 +11,6 @@ jest.mock("@/lib/auth/session", () => ({
 
 jest.mock("@/lib/requests/cached", () => ({
   getCachedUser: jest.fn(),
-}));
-
-jest.mock("@/lib/requests/enrollment", () => ({
-  getEnrollmentsByAuthorizedUser: jest.fn(),
-  calculateDropletAverageRating: jest.fn(),
 }));
 
 jest.mock("@/lib/requests/groups", () => ({
@@ -125,7 +119,6 @@ describe("MyContent", () => {
     jest.clearAllMocks();
     (getCurrentUser as jest.Mock).mockResolvedValue(mockUser);
     (getCachedUser as jest.Mock).mockResolvedValue(mockAuthorizedUser);
-    (getEnrollmentsByAuthorizedUser as jest.Mock).mockResolvedValue([]);
     (getUserGroups as jest.Mock).mockResolvedValue(mockGroups);
   });
 

@@ -13,8 +13,10 @@ import {
   playlistSorting,
   sorting,
 } from "@/lib/globals";
-import { getCachedUserDashboard } from "@/lib/requests/cached";
-import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
+import {
+  getCachedUserDashboard,
+  getCachedEnrollmentsFavorites,
+} from "@/lib/requests/cached";
 import { getUserGroups } from "@/lib/requests/groups";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
@@ -38,9 +40,7 @@ export default async function DashboardRoute({ searchParams }: Props) {
   const archivedPlaylists = authorizedUser.playlists?.filter((playlist) =>
     playlist.users_archived?.some((user) => user.id === authorizedUser.id),
   );
-  const allEnrollments = await getEnrollmentsByAuthorizedUser(
-    authorizedUser.id,
-  );
+  const allEnrollments = await getCachedEnrollmentsFavorites(authorizedUser.id);
   const allPlaylists = authorizedUser.playlists?.length || 0;
   const allGroups = (await getUserGroups(authorizedUser.id)).filter((group) =>
     group.members?.some((member) => member.id === authorizedUser.id),

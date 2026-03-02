@@ -3,6 +3,7 @@
 import { Enrollment, Lesson } from "@/types";
 import { StrapiRequestParams } from "@/types/strapi";
 import { fetchAPI } from "../utils";
+import { ENROLLMENT_POPULATES } from "./enrollment-populates";
 
 import { getCurrentUser } from "@/lib/auth/session";
 import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
@@ -25,25 +26,7 @@ export async function getEnrollmentsByAuthorizedUser(
     sort,
     filters,
     pagination = { pageSize: 250, page: 1 },
-    populate = {
-      droplet: {
-        populate: {
-          lessons: {
-            fields: ["id", "name", "slug"],
-          },
-          tags: {
-            fields: ["*"],
-          },
-          usersFavorited: {
-            fields: "*",
-          },
-        },
-        fields: ["id", "*"],
-      },
-      viewedLessons: {
-        fields: ["id", "name", "slug"],
-      },
-    },
+    populate = ENROLLMENT_POPULATES.minimal,
     fields = [
       "id",
       "rating",
@@ -70,7 +53,7 @@ export async function getEnrollmentsByAuthorizedUser(
   };
   return await fetchAPI<Enrollment[]>(path, {
     urlParams,
-    cache: "no-store",
+    next: { tags: ["enrollments"], revalidate: 0 },
   });
 }
 
@@ -112,7 +95,6 @@ export async function getEnrollmentsForGroupMembers(
     const enrollmentsPage = await fetchAPI<Enrollment[]>(path, {
       urlParams,
       next: { tags: ["enrollments"], revalidate: 0 },
-      cache: "no-store",
     });
 
     if (!enrollmentsPage || enrollmentsPage.length === 0) break;

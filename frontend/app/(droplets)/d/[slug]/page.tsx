@@ -14,8 +14,7 @@ import {
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/session";
-import { getCachedUser } from "@/lib/requests/cached";
-import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
+import { getCachedUser, getCachedEnrollments } from "@/lib/requests/cached";
 import { StarRating } from "@/components/ui/rating-stars";
 import { AuthorCard } from "@/components/droplets/author-block";
 
@@ -61,7 +60,7 @@ export default async function DropletRoute({ params }: Props) {
   if (user?.email) {
     const authorizedUser = await getCachedUser(user.email);
 
-    const enrollments = await getEnrollmentsByAuthorizedUser(authorizedUser.id);
+    const enrollments = await getCachedEnrollments(authorizedUser.id);
     isEnrolled = enrollments.some((e) => e.droplet.id === droplet.id);
   }
 

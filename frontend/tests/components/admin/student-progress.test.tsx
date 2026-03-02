@@ -2,7 +2,7 @@ import { render, screen } from "@testing-library/react";
 import { StudentProgress } from "@/components/admin/progress/student-progress";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
-import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
+import { getCachedEnrollmentsWithLessonIds } from "@/lib/requests/cached";
 
 jest.mock("@/lib/auth/session", () => ({
   getCurrentUser: jest.fn(),
@@ -12,8 +12,8 @@ jest.mock("@/lib/requests/authorized-user", () => ({
   getAuthorizedUserByEmail: jest.fn(),
 }));
 
-jest.mock("@/lib/requests/enrollment", () => ({
-  getEnrollmentsByAuthorizedUser: jest.fn(),
+jest.mock("@/lib/requests/cached", () => ({
+  getCachedEnrollmentsWithLessonIds: jest.fn(),
 }));
 
 jest.mock("@/components/admin/progress/student-progress-list", () => ({
@@ -59,7 +59,7 @@ describe("StudentProgress", () => {
     jest.clearAllMocks();
     (getCurrentUser as jest.Mock).mockResolvedValue(mockUser);
     (getAuthorizedUserByEmail as jest.Mock).mockResolvedValue(mockAuthor);
-    (getEnrollmentsByAuthorizedUser as jest.Mock).mockResolvedValue(
+    (getCachedEnrollmentsWithLessonIds as jest.Mock).mockResolvedValue(
       mockEnrollments,
     );
   });
@@ -85,7 +85,7 @@ describe("StudentProgress", () => {
   it("calculates progress correctly", async () => {
     render(await StudentProgress());
 
-    expect(getEnrollmentsByAuthorizedUser).toHaveBeenCalledWith(2);
+    expect(getCachedEnrollmentsWithLessonIds).toHaveBeenCalledWith(2);
   });
 
   it("returns null when user is not found", async () => {
@@ -125,7 +125,7 @@ describe("StudentProgress", () => {
 
     (getCurrentUser as jest.Mock).mockResolvedValue(mockUser);
     (getAuthorizedUserByEmail as jest.Mock).mockResolvedValue(mockAuthor);
-    (getEnrollmentsByAuthorizedUser as jest.Mock).mockResolvedValue(
+    (getCachedEnrollmentsWithLessonIds as jest.Mock).mockResolvedValue(
       mockEnrollments,
     );
 
@@ -156,7 +156,7 @@ describe("StudentProgress", () => {
       mockAuthorizedUser,
     );
 
-    (getEnrollmentsByAuthorizedUser as jest.Mock).mockResolvedValue([
+    (getCachedEnrollmentsWithLessonIds as jest.Mock).mockResolvedValue([
       {
         viewedLessons: [{ id: 1 }, { id: 2 }],
       },
@@ -190,7 +190,7 @@ describe("StudentProgress", () => {
     (getAuthorizedUserByEmail as jest.Mock).mockResolvedValue(
       mockAuthorizedUser,
     );
-    (getEnrollmentsByAuthorizedUser as jest.Mock).mockResolvedValue([]);
+    (getCachedEnrollmentsWithLessonIds as jest.Mock).mockResolvedValue([]);
 
     const { container } = await render(await StudentProgress());
     expect(container).toHaveTextContent(/in your private playlists/i);

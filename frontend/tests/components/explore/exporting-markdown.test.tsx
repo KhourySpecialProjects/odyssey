@@ -1,6 +1,14 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { DropletTile } from "@/components/droplets/droplet-tile";
 import { Droplet } from "@/types";
+import { getDropletBySlug } from "@/lib/requests/droplet";
+
+jest.mock("@/lib/requests/droplet", () => ({
+  ...jest.requireActual("@/lib/requests/droplet"),
+  getDropletBySlug: jest.fn(),
+  archiveDroplet: jest.fn(),
+  favoriteDroplet: jest.fn(),
+}));
 
 // Mock URL.createObjectURL and URL.revokeObjectURL
 global.URL.createObjectURL = jest.fn(() => "blob:mock-url");
@@ -25,6 +33,17 @@ const getMarkdownContent = (blobSpy: jest.SpyInstance): string => {
   }
   return blobCall[0][0] as string;
 };
+
+/** Click export and wait for the async fetch + blob creation */
+async function clickExportAndWait(blobSpy: jest.SpyInstance) {
+  const exportButton = screen.getByRole("button", {
+    name: /export markdown/i,
+  });
+  fireEvent.click(exportButton);
+  await waitFor(() => {
+    expect(blobSpy).toHaveBeenCalled();
+  });
+}
 
 describe("Export Droplet to Markdown", () => {
   const mockDroplet: Droplet = {
@@ -147,6 +166,7 @@ describe("Export Droplet to Markdown", () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    (getDropletBySlug as jest.Mock).mockResolvedValue(mockDroplet);
   });
 
   describe("Button Visibility", () => {
@@ -175,15 +195,11 @@ describe("Export Droplet to Markdown", () => {
   });
 
   describe("Export Functionality", () => {
-    it("creates blob with correct markdown content", () => {
+    it("creates blob with correct markdown content", async () => {
       const blobSpy = jest.spyOn(global, "Blob");
 
       render(<DropletTile droplet={mockDroplet} isAdmin={true} />);
-
-      const exportButton = screen.getByRole("button", {
-        name: /export markdown/i,
-      });
-      fireEvent.click(exportButton);
+      await clickExportAndWait(blobSpy);
 
       expect(blobSpy).toHaveBeenCalledWith(
         [expect.stringContaining("# Test Droplet")],
@@ -191,13 +207,10 @@ describe("Export Droplet to Markdown", () => {
       );
     });
 
-    it("creates and revokes object URL", () => {
+    it("creates and revokes object URL", async () => {
+      const blobSpy = jest.spyOn(global, "Blob");
       render(<DropletTile droplet={mockDroplet} isAdmin={true} />);
-
-      const exportButton = screen.getByRole("button", {
-        name: /export markdown/i,
-      });
-      fireEvent.click(exportButton);
+      await clickExportAndWait(blobSpy);
 
       expect(URL.createObjectURL).toHaveBeenCalled();
       expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:mock-url");
@@ -222,38 +235,29 @@ describe("Export Droplet to Markdown", () => {
   });
 
   describe("Markdown Content Structure", () => {
-    it("includes droplet name as h1", () => {
+    it("includes droplet name as h1", async () => {
       const blobSpy = jest.spyOn(global, "Blob");
       render(<DropletTile droplet={mockDroplet} isAdmin={true} />);
-      const exportButton = screen.getByRole("button", {
-        name: /export markdown/i,
-      });
-      fireEvent.click(exportButton);
+      await clickExportAndWait(blobSpy);
       const markdownContent = getMarkdownContent(blobSpy);
 
       expect(markdownContent).toContain("# Test Droplet");
     });
 
-    it("includes type and focus area", () => {
+    it("includes type and focus area", async () => {
       const blobSpy = jest.spyOn(global, "Blob");
       render(<DropletTile droplet={mockDroplet} isAdmin={true} />);
-      const exportButton = screen.getByRole("button", {
-        name: /export markdown/i,
-      });
-      fireEvent.click(exportButton);
+      await clickExportAndWait(blobSpy);
       const markdownContent = getMarkdownContent(blobSpy);
 
       expect(markdownContent).toContain("Type: skill");
       expect(markdownContent).toContain("Focus Area: technical"); // WITH SPACE!
     });
 
-    it("includes all tags", () => {
+    it("includes all tags", async () => {
       const blobSpy = jest.spyOn(global, "Blob");
       render(<DropletTile droplet={mockDroplet} isAdmin={true} />);
-      const exportButton = screen.getByRole("button", {
-        name: /export markdown/i,
-      });
-      fireEvent.click(exportButton);
+      await clickExportAndWait(blobSpy);
       const markdownContent = getMarkdownContent(blobSpy);
 
       expect(markdownContent).toContain("## Tags");
@@ -261,13 +265,10 @@ describe("Export Droplet to Markdown", () => {
       expect(markdownContent).toContain("* React");
     });
 
-    it("includes all authors", () => {
+    it("includes all authors", async () => {
       const blobSpy = jest.spyOn(global, "Blob");
       render(<DropletTile droplet={mockDroplet} isAdmin={true} />);
-      const exportButton = screen.getByRole("button", {
-        name: /export markdown/i,
-      });
-      fireEvent.click(exportButton);
+      await clickExportAndWait(blobSpy);
       const markdownContent = getMarkdownContent(blobSpy);
 
       expect(markdownContent).toContain("## Authors");
@@ -275,39 +276,30 @@ describe("Export Droplet to Markdown", () => {
       expect(markdownContent).toContain("* Jane Smith");
     });
 
-    it("includes description", () => {
+    it("includes description", async () => {
       const blobSpy = jest.spyOn(global, "Blob");
       render(<DropletTile droplet={mockDroplet} isAdmin={true} />);
-      const exportButton = screen.getByRole("button", {
-        name: /export markdown/i,
-      });
-      fireEvent.click(exportButton);
+      await clickExportAndWait(blobSpy);
       const markdownContent = getMarkdownContent(blobSpy);
 
       expect(markdownContent).toContain("## Description");
       expect(markdownContent).toContain("A test description");
     });
 
-    it("includes overview", () => {
+    it("includes overview", async () => {
       const blobSpy = jest.spyOn(global, "Blob");
       render(<DropletTile droplet={mockDroplet} isAdmin={true} />);
-      const exportButton = screen.getByRole("button", {
-        name: /export markdown/i,
-      });
-      fireEvent.click(exportButton);
+      await clickExportAndWait(blobSpy);
       const markdownContent = getMarkdownContent(blobSpy);
 
       expect(markdownContent).toContain("## Overview");
       expect(markdownContent).toContain("A test overview");
     });
 
-    it("includes all learning objectives", () => {
+    it("includes all learning objectives", async () => {
       const blobSpy = jest.spyOn(global, "Blob");
       render(<DropletTile droplet={mockDroplet} isAdmin={true} />);
-      const exportButton = screen.getByRole("button", {
-        name: /export markdown/i,
-      });
-      fireEvent.click(exportButton);
+      await clickExportAndWait(blobSpy);
       const markdownContent = getMarkdownContent(blobSpy);
 
       expect(markdownContent).toContain("## Learning Objectives");
@@ -315,13 +307,10 @@ describe("Export Droplet to Markdown", () => {
       expect(markdownContent).toContain("* Understand React components");
     });
 
-    it("includes next steps with links", () => {
+    it("includes next steps with links", async () => {
       const blobSpy = jest.spyOn(global, "Blob");
       render(<DropletTile droplet={mockDroplet} isAdmin={true} />);
-      const exportButton = screen.getByRole("button", {
-        name: /export markdown/i,
-      });
-      fireEvent.click(exportButton);
+      await clickExportAndWait(blobSpy);
       const markdownContent = getMarkdownContent(blobSpy);
 
       expect(markdownContent).toContain("### Next Steps");
@@ -333,13 +322,10 @@ describe("Export Droplet to Markdown", () => {
       );
     });
 
-    it("includes prerequisites", () => {
+    it("includes prerequisites", async () => {
       const blobSpy = jest.spyOn(global, "Blob");
       render(<DropletTile droplet={mockDroplet} isAdmin={true} />);
-      const exportButton = screen.getByRole("button", {
-        name: /export markdown/i,
-      });
-      fireEvent.click(exportButton);
+      await clickExportAndWait(blobSpy);
       const markdownContent = getMarkdownContent(blobSpy);
 
       expect(markdownContent).toContain("## Prerequisites");
@@ -347,38 +333,29 @@ describe("Export Droplet to Markdown", () => {
       expect(markdownContent).toContain("* CSS Fundamentals");
     });
 
-    it("includes postrequisites", () => {
+    it("includes postrequisites", async () => {
       const blobSpy = jest.spyOn(global, "Blob");
       render(<DropletTile droplet={mockDroplet} isAdmin={true} />);
-      const exportButton = screen.getByRole("button", {
-        name: /export markdown/i,
-      });
-      fireEvent.click(exportButton);
+      await clickExportAndWait(blobSpy);
       const markdownContent = getMarkdownContent(blobSpy);
 
       expect(markdownContent).toContain("## Postrequisites");
       expect(markdownContent).toContain("* Advanced Patterns");
     });
 
-    it("includes lessons section", () => {
+    it("includes lessons section", async () => {
       const blobSpy = jest.spyOn(global, "Blob");
       render(<DropletTile droplet={mockDroplet} isAdmin={true} />);
-      const exportButton = screen.getByRole("button", {
-        name: /export markdown/i,
-      });
-      fireEvent.click(exportButton);
+      await clickExportAndWait(blobSpy);
       const markdownContent = getMarkdownContent(blobSpy);
 
       expect(markdownContent).toContain("## **Lessons**");
     });
 
-    it("includes lesson names as h3", () => {
+    it("includes lesson names as h3", async () => {
       const blobSpy = jest.spyOn(global, "Blob");
       render(<DropletTile droplet={mockDroplet} isAdmin={true} />);
-      const exportButton = screen.getByRole("button", {
-        name: /export markdown/i,
-      });
-      fireEvent.click(exportButton);
+      await clickExportAndWait(blobSpy);
       const markdownContent = getMarkdownContent(blobSpy);
 
       expect(markdownContent).toContain("### Introduction");
@@ -389,15 +366,11 @@ describe("Export Droplet to Markdown", () => {
   describe("Block Content Formatting", () => {
     let markdownContent: string;
 
-    beforeEach(() => {
+    beforeEach(async () => {
       const blobSpy = jest.spyOn(global, "Blob");
 
       render(<DropletTile droplet={mockDroplet} isAdmin={true} />);
-
-      const exportButton = screen.getByRole("button", {
-        name: /export markdown/i,
-      });
-      fireEvent.click(exportButton);
+      await clickExportAndWait(blobSpy);
 
       markdownContent = getMarkdownContent(blobSpy);
     });
@@ -444,109 +417,91 @@ describe("Export Droplet to Markdown", () => {
   });
 
   describe("Edge Cases", () => {
-    it("handles droplet with no tags", () => {
+    it("handles droplet with no tags", async () => {
       const dropletNoTags = { ...mockDroplet, tags: undefined };
+      (getDropletBySlug as jest.Mock).mockResolvedValue(dropletNoTags);
       const blobSpy = jest.spyOn(global, "Blob");
 
       render(<DropletTile droplet={dropletNoTags} isAdmin={true} />);
-
-      const exportButton = screen.getByRole("button", {
-        name: /export markdown/i,
-      });
-      fireEvent.click(exportButton);
+      await clickExportAndWait(blobSpy);
 
       const markdownContent = getMarkdownContent(blobSpy);
       expect(markdownContent).toContain("No tags");
     });
 
-    it("handles droplet with no authors", () => {
+    it("handles droplet with no authors", async () => {
       const dropletNoAuthors = { ...mockDroplet, authorized_users: undefined };
+      (getDropletBySlug as jest.Mock).mockResolvedValue(dropletNoAuthors);
       const blobSpy = jest.spyOn(global, "Blob");
 
       render(<DropletTile droplet={dropletNoAuthors} isAdmin={true} />);
-
-      const exportButton = screen.getByRole("button", {
-        name: /export markdown/i,
-      });
-      fireEvent.click(exportButton);
+      await clickExportAndWait(blobSpy);
 
       const markdownContent = getMarkdownContent(blobSpy);
       expect(markdownContent).toContain("No authors");
     });
 
-    it("handles droplet with no lessons", () => {
+    it("handles droplet with no lessons", async () => {
       const dropletNoLessons = { ...mockDroplet, lessons: undefined };
+      (getDropletBySlug as jest.Mock).mockResolvedValue(dropletNoLessons);
       const blobSpy = jest.spyOn(global, "Blob");
 
       render(<DropletTile droplet={dropletNoLessons} isAdmin={true} />);
-
-      const exportButton = screen.getByRole("button", {
-        name: /export markdown/i,
-      });
-      fireEvent.click(exportButton);
+      await clickExportAndWait(blobSpy);
 
       const markdownContent = getMarkdownContent(blobSpy);
       expect(markdownContent).toContain("No lessons");
     });
 
-    it("handles droplet with empty learning objectives", () => {
+    it("handles droplet with empty learning objectives", async () => {
       const dropletNoObjectives = { ...mockDroplet, learningObjectives: [] };
+      (getDropletBySlug as jest.Mock).mockResolvedValue(dropletNoObjectives);
       const blobSpy = jest.spyOn(global, "Blob");
 
       render(<DropletTile droplet={dropletNoObjectives} isAdmin={true} />);
-      const exportButton = screen.getByRole("button", {
-        name: /export markdown/i,
-      });
-      fireEvent.click(exportButton);
+      await clickExportAndWait(blobSpy);
 
       const markdownContent = getMarkdownContent(blobSpy);
       expect(markdownContent).toContain("No objectives");
     });
 
-    it("handles droplet with no prerequisites", () => {
+    it("handles droplet with no prerequisites", async () => {
       const dropletNoPrereqs = { ...mockDroplet, prerequisites: undefined };
+      (getDropletBySlug as jest.Mock).mockResolvedValue(dropletNoPrereqs);
       const blobSpy = jest.spyOn(global, "Blob");
 
       render(<DropletTile droplet={dropletNoPrereqs} isAdmin={true} />);
-      const exportButton = screen.getByRole("button", {
-        name: /export markdown/i,
-      });
-      fireEvent.click(exportButton);
+      await clickExportAndWait(blobSpy);
 
       const markdownContent = getMarkdownContent(blobSpy);
       expect(markdownContent).toContain("No prereqs");
     });
 
-    it("handles droplet with no postrequisites", () => {
+    it("handles droplet with no postrequisites", async () => {
       const dropletNoPostreqs = { ...mockDroplet, postrequisites: undefined };
+      (getDropletBySlug as jest.Mock).mockResolvedValue(dropletNoPostreqs);
       const blobSpy = jest.spyOn(global, "Blob");
 
       render(<DropletTile droplet={dropletNoPostreqs} isAdmin={true} />);
-      const exportButton = screen.getByRole("button", {
-        name: /export markdown/i,
-      });
-      fireEvent.click(exportButton);
+      await clickExportAndWait(blobSpy);
 
       const markdownContent = getMarkdownContent(blobSpy);
       expect(markdownContent).toContain("No postreqs");
     });
 
-    it("handles droplet with no next steps", () => {
+    it("handles droplet with no next steps", async () => {
       const dropletNoNextSteps = { ...mockDroplet, nextSteps: undefined };
+      (getDropletBySlug as jest.Mock).mockResolvedValue(dropletNoNextSteps);
       const blobSpy = jest.spyOn(global, "Blob");
 
       render(<DropletTile droplet={dropletNoNextSteps} isAdmin={true} />);
-
-      const exportButton = screen.getByRole("button", {
-        name: /export markdown/i,
-      });
-      fireEvent.click(exportButton);
+      await clickExportAndWait(blobSpy);
 
       const markdownContent = getMarkdownContent(blobSpy);
       expect(markdownContent).toContain("No next steps");
     });
 
-    it("handles lesson with no blocks", () => {
+    it("handles lesson with no blocks", async () => {
       const dropletEmptyBlocks = {
         ...mockDroplet,
         lessons: [
@@ -561,50 +516,41 @@ describe("Export Droplet to Markdown", () => {
           },
         ],
       };
+      (getDropletBySlug as jest.Mock).mockResolvedValue(dropletEmptyBlocks);
       const blobSpy = jest.spyOn(global, "Blob");
 
       render(<DropletTile droplet={dropletEmptyBlocks} isAdmin={true} />);
-
-      const exportButton = screen.getByRole("button", {
-        name: /export markdown/i,
-      });
-      fireEvent.click(exportButton);
+      await clickExportAndWait(blobSpy);
 
       const markdownContent = getMarkdownContent(blobSpy);
       expect(markdownContent).toContain("### Empty Lesson");
     });
 
-    it("handles droplet with special characters in name", () => {
+    it("handles droplet with special characters in name", async () => {
       const dropletSpecialName = {
         ...mockDroplet,
         name: 'Test & <Special> "Characters"',
       };
+      (getDropletBySlug as jest.Mock).mockResolvedValue(dropletSpecialName);
       const blobSpy = jest.spyOn(global, "Blob");
 
       render(<DropletTile droplet={dropletSpecialName} isAdmin={true} />);
-
-      const exportButton = screen.getByRole("button", {
-        name: /export markdown/i,
-      });
-      fireEvent.click(exportButton);
+      await clickExportAndWait(blobSpy);
 
       const markdownContent = getMarkdownContent(blobSpy);
       expect(markdownContent).toContain('# Test & <Special> "Characters"');
     });
 
-    it("handles very long droplet content", () => {
+    it("handles very long droplet content", async () => {
       const longDroplet = {
         ...mockDroplet,
         description: "A".repeat(10000),
       };
+      (getDropletBySlug as jest.Mock).mockResolvedValue(longDroplet);
       const blobSpy = jest.spyOn(global, "Blob");
 
       render(<DropletTile droplet={longDroplet} isAdmin={true} />);
-
-      const exportButton = screen.getByRole("button", {
-        name: /export markdown/i,
-      });
-      fireEvent.click(exportButton);
+      await clickExportAndWait(blobSpy);
 
       expect(blobSpy).toHaveBeenCalled();
       const markdownContent = getMarkdownContent(blobSpy);
@@ -613,7 +559,7 @@ describe("Export Droplet to Markdown", () => {
   });
 
   describe("Multiple Quiz Questions", () => {
-    it("handles quiz with multiple questions", () => {
+    it("handles quiz with multiple questions", async () => {
       const dropletMultiQuiz = {
         ...mockDroplet,
         lessons: [
@@ -650,14 +596,11 @@ describe("Export Droplet to Markdown", () => {
           },
         ],
       };
+      (getDropletBySlug as jest.Mock).mockResolvedValue(dropletMultiQuiz);
       const blobSpy = jest.spyOn(global, "Blob");
 
       render(<DropletTile droplet={dropletMultiQuiz} isAdmin={true} />);
-
-      const exportButton = screen.getByRole("button", {
-        name: /export markdown/i,
-      });
-      fireEvent.click(exportButton);
+      await clickExportAndWait(blobSpy);
 
       const markdownContent = getMarkdownContent(blobSpy);
       expect(markdownContent).toContain("1. Question 1");
@@ -666,7 +609,7 @@ describe("Export Droplet to Markdown", () => {
       expect(markdownContent).toContain("Answer D is correct");
     });
 
-    it("handles open-ended quiz with multiple questions", () => {
+    it("handles open-ended quiz with multiple questions", async () => {
       const dropletMultiOpenQuiz = {
         ...mockDroplet,
         lessons: [
@@ -697,14 +640,11 @@ describe("Export Droplet to Markdown", () => {
           },
         ],
       };
+      (getDropletBySlug as jest.Mock).mockResolvedValue(dropletMultiOpenQuiz);
       const blobSpy = jest.spyOn(global, "Blob");
 
       render(<DropletTile droplet={dropletMultiOpenQuiz} isAdmin={true} />);
-
-      const exportButton = screen.getByRole("button", {
-        name: /export markdown/i,
-      });
-      fireEvent.click(exportButton);
+      await clickExportAndWait(blobSpy);
 
       const markdownContent = getMarkdownContent(blobSpy);
       expect(markdownContent).toContain("1. Explain concept A");
@@ -715,7 +655,7 @@ describe("Export Droplet to Markdown", () => {
   });
 
   describe("Callout Content Variations", () => {
-    it("handles callout with multiple paragraphs", () => {
+    it("handles callout with multiple paragraphs", async () => {
       const dropletMultiParagraph = {
         ...mockDroplet,
         lessons: [
@@ -746,21 +686,18 @@ describe("Export Droplet to Markdown", () => {
           },
         ],
       };
+      (getDropletBySlug as jest.Mock).mockResolvedValue(dropletMultiParagraph);
       const blobSpy = jest.spyOn(global, "Blob");
 
       render(<DropletTile droplet={dropletMultiParagraph} isAdmin={true} />);
-
-      const exportButton = screen.getByRole("button", {
-        name: /export markdown/i,
-      });
-      fireEvent.click(exportButton);
+      await clickExportAndWait(blobSpy);
 
       const markdownContent = getMarkdownContent(blobSpy);
       expect(markdownContent).toContain("First paragraph");
       expect(markdownContent).toContain("Second paragraph");
     });
 
-    it("handles callout with empty content", () => {
+    it("handles callout with empty content", async () => {
       const dropletEmptyCallout = {
         ...mockDroplet,
         lessons: [
@@ -782,14 +719,11 @@ describe("Export Droplet to Markdown", () => {
           },
         ],
       };
+      (getDropletBySlug as jest.Mock).mockResolvedValue(dropletEmptyCallout);
       const blobSpy = jest.spyOn(global, "Blob");
 
       render(<DropletTile droplet={dropletEmptyCallout} isAdmin={true} />);
-
-      const exportButton = screen.getByRole("button", {
-        name: /export markdown/i,
-      });
-      fireEvent.click(exportButton);
+      await clickExportAndWait(blobSpy);
 
       const markdownContent = getMarkdownContent(blobSpy);
       expect(markdownContent).toContain("#### Callout Droplet");

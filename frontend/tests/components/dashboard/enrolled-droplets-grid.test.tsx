@@ -2,7 +2,7 @@ import { render, screen } from "@testing-library/react";
 import { EnrolledDropletsGrid } from "@/components/dashboard/enrolled-droplets-grid";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getCachedUser } from "@/lib/requests/cached";
-import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
+import { getCachedEnrollmentsDashboard } from "@/lib/requests/cached";
 import { getUserDueDates } from "@/lib/requests/groups";
 import { Enrollment } from "@/types";
 
@@ -12,11 +12,7 @@ jest.mock("@/lib/auth/session", () => ({
 
 jest.mock("@/lib/requests/cached", () => ({
   getCachedUser: jest.fn(),
-}));
-
-jest.mock("@/lib/requests/enrollment", () => ({
-  getEnrollmentsByAuthorizedUser: jest.fn(),
-  calculateDropletAverageRating: jest.fn(),
+  getCachedEnrollmentsDashboard: jest.fn(),
 }));
 
 jest.mock("@/lib/requests/groups", () => ({
@@ -65,7 +61,7 @@ describe("EnrolledDropletsGrid", () => {
   });
 
   it("displays a message when no enrolled droplets are found", async () => {
-    (getEnrollmentsByAuthorizedUser as jest.Mock).mockResolvedValue([]);
+    (getCachedEnrollmentsDashboard as jest.Mock).mockResolvedValue([]);
 
     render(await EnrolledDropletsGrid({}));
 
@@ -82,7 +78,7 @@ describe("EnrolledDropletsGrid", () => {
 
     (getCurrentUser as jest.Mock).mockResolvedValue(mockUser);
     (getCachedUser as jest.Mock).mockResolvedValue(mockAuthorizedUser);
-    (getEnrollmentsByAuthorizedUser as jest.Mock).mockResolvedValue(
+    (getCachedEnrollmentsDashboard as jest.Mock).mockResolvedValue(
       mockEnrollments,
     );
 
@@ -107,7 +103,7 @@ describe("EnrolledDropletsGrid", () => {
       },
     ];
 
-    (getEnrollmentsByAuthorizedUser as jest.Mock).mockResolvedValue(
+    (getCachedEnrollmentsDashboard as jest.Mock).mockResolvedValue(
       mockEnrollments,
     );
 
@@ -137,7 +133,7 @@ describe("EnrolledDropletsGrid", () => {
       },
     ];
 
-    (getEnrollmentsByAuthorizedUser as jest.Mock).mockResolvedValue(
+    (getCachedEnrollmentsDashboard as jest.Mock).mockResolvedValue(
       mockEnrollments,
     );
 
