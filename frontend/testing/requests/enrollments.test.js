@@ -1,5 +1,6 @@
 const {
   getEnrollmentsByAuthorizedUser,
+  getEnrollmentsForGroupMembers,
   getIsEnrolled,
   getIsEnrollComplete,
   changeEnrollmentRating,
@@ -117,6 +118,170 @@ describe("Enrollment Tests", () => {
       fetchAPI.mockRejectedValueOnce(new Error("Failed to fetch enrollments"));
 
       await expect(getEnrollmentsByAuthorizedUser(500)).rejects.toThrow();
+    });
+  });
+
+  describe("getEnrollmentsForGroupMembers", () => {
+    const memberIds = [1, 2, 3];
+    const dropletIds = [10, 20];
+
+    function makeMockEnrollment(id, memberId, dropletId) {
+      return {
+        id: String(id),
+        authorizedUser: { id: memberId },
+        droplet: {
+          id: dropletId,
+          lessons: [{ id: 1, name: "Lesson 1", slug: "lesson-1" }],
+        },
+        viewedLessons: [],
+        isComplete: false,
+        completionDate: undefined,
+      };
+    }
+
+    it("should return enrollments from a single page", async () => {
+      const mockEnrollments = [
+        makeMockEnrollment(1, 1, 10),
+        makeMockEnrollment(2, 2, 10),
+        makeMockEnrollment(3, 3, 20),
+      ];
+      fetchAPI.mockResolvedValueOnce(mockEnrollments);
+
+      const result = await getEnrollmentsForGroupMembers(
+        memberIds,
+        dropletIds,
+      );
+
+      expect(result).toEqual(mockEnrollments);
+      expect(fetchAPI).toHaveBeenCalledTimes(1);
+    });
+
+    it("should return empty array when no enrollments exist", async () => {
+      fetchAPI.mockResolvedValueOnce([]);
+
+      const result = await getEnrollmentsForGroupMembers(
+        memberIds,
+        dropletIds,
+      );
+
+      expect(result).toEqual([]);
+      expect(fetchAPI).toHaveBeenCalledTimes(1);
+    });
+
+    it("should return empty array when fetchAPI returns null", async () => {
+      fetchAPI.mockResolvedValueOnce(null);
+
+      const result = await getEnrollmentsForGroupMembers(
+        memberIds,
+        dropletIds,
+      );
+
+      expect(result).toEqual([]);
+      expect(fetchAPI).toHaveBeenCalledTimes(1);
+    });
+
+    it("should paginate when first page is full (250 results)", async () => {
+      const fullPage = Array.from({ length: 250 }, (_, i) =>
+        makeMockEnrollment(i + 1, memberIds[i % 3], dropletIds[i % 2]),
+      );
+      const partialPage = [makeMockEnrollment(251, 1, 10)];
+
+      fetchAPI
+        .mockResolvedValueOnce(fullPage)
+        .mockResolvedValueOnce(partialPage);
+
+      const result = await getEnrollmentsForGroupMembers(
+        memberIds,
+        dropletIds,
+      );
+
+      expect(result).toHaveLength(251);
+      expect(fetchAPI).toHaveBeenCalledTimes(2);
+      expect(fetchAPI.mock.calls[0][1].urlParams.pagination.page).toBe(1);
+      expect(fetchAPI.mock.calls[1][1].urlParams.pagination.page).toBe(2);
+    });
+
+    it("should stop paginating when a full page is followed by an empty page", async () => {
+      const fullPage = Array.from({ length: 250 }, (_, i) =>
+        makeMockEnrollment(i + 1, memberIds[i % 3], dropletIds[i % 2]),
+      );
+      fetchAPI.mockResolvedValueOnce(fullPage).mockResolvedValueOnce([]);
+
+      const result = await getEnrollmentsForGroupMembers(
+        memberIds,
+        dropletIds,
+      );
+
+      expect(result).toHaveLength(250);
+      expect(fetchAPI).toHaveBeenCalledTimes(2);
+    });
+
+    it("should handle three pages of results", async () => {
+      const page1 = Array.from({ length: 250 }, (_, i) =>
+        makeMockEnrollment(i + 1, memberIds[i % 3], dropletIds[i % 2]),
+      );
+      const page2 = Array.from({ length: 250 }, (_, i) =>
+        makeMockEnrollment(i + 251, memberIds[i % 3], dropletIds[i % 2]),
+      );
+      const page3 = Array.from({ length: 50 }, (_, i) =>
+        makeMockEnrollment(i + 501, memberIds[i % 3], dropletIds[i % 2]),
+      );
+
+      fetchAPI
+        .mockResolvedValueOnce(page1)
+        .mockResolvedValueOnce(page2)
+        .mockResolvedValueOnce(page3);
+
+      const result = await getEnrollmentsForGroupMembers(
+        memberIds,
+        dropletIds,
+      );
+
+      expect(result).toHaveLength(550);
+      expect(fetchAPI).toHaveBeenCalledTimes(3);
+      expect(fetchAPI.mock.calls[0][1].urlParams.pagination.page).toBe(1);
+      expect(fetchAPI.mock.calls[1][1].urlParams.pagination.page).toBe(2);
+      expect(fetchAPI.mock.calls[2][1].urlParams.pagination.page).toBe(3);
+    });
+
+    it("should send correct $in filters for member and droplet IDs", async () => {
+      fetchAPI.mockResolvedValueOnce([]);
+
+      await getEnrollmentsForGroupMembers(memberIds, dropletIds);
+
+      const callArgs = fetchAPI.mock.calls[0];
+      expect(callArgs[0]).toBe("/enrollments");
+
+      const { filters } = callArgs[1].urlParams;
+      expect(filters.$and).toEqual([
+        { authorizedUser: { id: { $in: memberIds } } },
+        { droplet: { id: { $in: dropletIds } } },
+      ]);
+    });
+
+    it("should request authorizedUser, droplet, and viewedLessons in populate", async () => {
+      fetchAPI.mockResolvedValueOnce([]);
+
+      await getEnrollmentsForGroupMembers(memberIds, dropletIds);
+
+      const { populate, fields } = fetchAPI.mock.calls[0][1].urlParams;
+      expect(populate.authorizedUser).toEqual({ fields: ["id"] });
+      expect(populate.droplet.populate.lessons).toEqual({
+        fields: ["id", "name", "slug"],
+      });
+      expect(populate.viewedLessons).toEqual({
+        fields: ["id", "name", "slug"],
+      });
+      expect(fields).toContain("isComplete");
+      expect(fields).toContain("completionDate");
+    });
+
+    it("should handle fetch errors", async () => {
+      fetchAPI.mockRejectedValueOnce(new Error("API Error"));
+
+      await expect(
+        getEnrollmentsForGroupMembers(memberIds, dropletIds),
+      ).rejects.toThrow("API Error");
     });
   });
 

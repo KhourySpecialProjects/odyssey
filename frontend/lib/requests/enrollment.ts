@@ -76,6 +76,58 @@ export async function getEnrollmentsByAuthorizedUser(
 }
 
 /**
+ * Fetches enrollments for multiple members filtered to specific droplets in a
+ * single paginated Strapi query. Replaces N per-member calls with 1 batched call.
+ */
+export async function getEnrollmentsForGroupMembers(
+  memberIds: number[],
+  groupDropletIds: number[],
+): Promise<Enrollment[]> {
+  const path = `/enrollments`;
+  const pageSize = 250;
+  let page = 1;
+  let allEnrollments: Enrollment[] = [];
+
+  while (true) {
+    const urlParams = {
+      filters: {
+        $and: [
+          { authorizedUser: { id: { $in: memberIds } } },
+          { droplet: { id: { $in: groupDropletIds } } },
+        ],
+      },
+      populate: {
+        droplet: {
+          populate: {
+            lessons: { fields: ["id", "name", "slug"] },
+          },
+          fields: ["id"],
+        },
+        viewedLessons: { fields: ["id", "name", "slug"] },
+        authorizedUser: { fields: ["id"] },
+      },
+      fields: ["id", "isComplete", "completionDate"],
+      pagination: { page, pageSize },
+    };
+
+    const enrollmentsPage = await fetchAPI<Enrollment[]>(path, {
+      urlParams,
+      next: { tags: ["enrollments"], revalidate: 0 },
+      cache: "no-store",
+    });
+
+    if (!enrollmentsPage || enrollmentsPage.length === 0) break;
+
+    allEnrollments = allEnrollments.concat(enrollmentsPage);
+
+    if (enrollmentsPage.length < pageSize) break;
+    page++;
+  }
+
+  return allEnrollments;
+}
+
+/**
  * Determines if the given authorized user is enrolled in the given Droplet.
  * @param authorizedUserId The unique ID of the authorized user.
  * @param dropletId The unique ID of the Droplet.
