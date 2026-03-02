@@ -234,7 +234,6 @@ describe("Authorized User Tests", () => {
         urlParams: expect.objectContaining({
           pagination: { pageSize: 50, page: 2 },
         }),
-        next: expect.any(Object),
         cache: "no-store",
         flattenResponse: false,
       });

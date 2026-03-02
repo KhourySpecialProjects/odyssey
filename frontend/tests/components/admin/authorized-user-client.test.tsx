@@ -26,6 +26,8 @@ describe("AuthorizedUserClient", () => {
     profilePhoto: "",
     blocked: [],
     was_blocked: [],
+    isPublic: true,
+    website: "",
     timeZone: "America/New_York" as TimeZone,
   }));
 

@@ -16,7 +16,23 @@ export async function StudentProgress() {
   const user = await getCurrentUser();
   if (!user?.email) return null;
 
-  const author = await getAuthorizedUserByEmail(user.email);
+  const author = await getAuthorizedUserByEmail(user.email, {
+    fields: ["id"],
+    populate: {
+      created_playlists: {
+        fields: ["id", "name"],
+        populate: {
+          authorized_users: { fields: ["id", "email"] },
+          droplets: {
+            fields: ["id"],
+            populate: {
+              lessons: { fields: ["id"] },
+            },
+          },
+        },
+      },
+    },
+  });
   if (!author) return null;
 
   const playlists = author.created_playlists;

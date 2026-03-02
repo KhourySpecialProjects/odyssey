@@ -9,6 +9,7 @@ import "./globals.css";
 import { FirstVisitPopup } from "@/components/first-time/first-visit-popup";
 import { getCurrentUser } from "../lib/auth/session";
 import { getAuthorizedUserByEmail } from "../lib/requests/authorized-user";
+import { USER_POPULATES } from "../lib/requests/user-populates";
 import { ThemeClientProvider } from "@/components/theme.client.provider";
 import AccessRequestBanner from "@/components/requests/access-request-banner";
 import { EnvironmentBanner } from "@/components/debug/environmentBanner";
@@ -41,7 +42,10 @@ export default async function RootLayout({
 
   if (user?.email) {
     try {
-      authorizedUser = await getAuthorizedUserByEmail(user.email);
+      authorizedUser = await getAuthorizedUserByEmail(
+        user.email,
+        USER_POPULATES.profile,
+      );
     } catch (error) {
       console.error("Error fetching authorized user:", error);
     }

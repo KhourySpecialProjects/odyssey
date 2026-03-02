@@ -7,6 +7,7 @@ import qs from "qs";
 import { AuthorizedUserSchema } from "../validations/authorized-user";
 import { getAuthorizedUserRoleIdByTitle } from "./authorized-user-roles";
 import { AuthorizedUserRoleTitle } from "../globals";
+import { USER_POPULATES } from "./user-populates";
 
 const NEXT_PUBLIC_STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
@@ -24,96 +25,8 @@ export async function getAuthorizedUserByEmail<
   {
     sort,
     filters,
-    populate = {
-      received_requests: {
-        fields: ["*"],
-      },
-      sent_requests: {
-        fields: ["*"],
-      },
-      blocked: {
-        fields: ["*"],
-      },
-      was_blocked: {
-        fields: ["*"],
-      },
-      droplets: {
-        fields: ["*"],
-      },
-      created_playlists: {
-        fields: ["*"],
-        populate: {
-          droplets: {
-            fields: "*",
-            populate: {
-              lessons: {
-                fields: ["*"], // or just ["id"] if you only need the count
-              },
-            },
-          },
-        },
-      },
-      playlists: {
-        fields: ["*"],
-        populate: {
-          droplets: {
-            fields: "*",
-            populate: {
-              lessons: {
-                fields: ["*"], // or just ["id"] if you only need the count
-              },
-            },
-          },
-          users_archived: {
-            fields: ["*"],
-          },
-        },
-      },
-      friendships: {
-        populate: {
-          authorized_users: {
-            fields: [
-              "id",
-              "email",
-              "firstName",
-              "lastName",
-              "bio",
-              "github",
-              "linkedin",
-              "profilePhoto",
-              "website",
-            ],
-            populate: {
-              blocked: {
-                fields: ["id"],
-              },
-              was_blocked: {
-                fields: ["id"],
-              },
-            },
-          },
-        },
-      },
-      groups: {
-        populate: {
-          playlists: {
-            fields: ["id"],
-          },
-        },
-        fields: ["id"],
-      },
-    },
-    fields = [
-      "*",
-      "firstName",
-      "lastName",
-      "bio",
-      "id",
-      "timeZone",
-      "linkedin",
-      "github",
-      "website",
-    ],
+    populate = USER_POPULATES.minimal.populate,
+    fields = [...USER_POPULATES.minimal.fields],
   }: StrapiRequestParams = {},
 ): Promise<T> {
   const path = `/authorized-users`;

@@ -7,6 +7,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { StarRating } from "@/components/ui/rating-stars";
 import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
+import { USER_POPULATES } from "@/lib/requests/user-populates";
 import {
   getEnrollmentsByAuthorizedUser,
   updateCompletionDate,
@@ -106,7 +107,10 @@ export default async function DropletRecapRoute({ params }: Props) {
       },
     });
 
-    const authUser = await getAuthorizedUserByEmail(user.email);
+    const authUser = await getAuthorizedUserByEmail(
+      user.email,
+      USER_POPULATES.profile,
+    );
     let enrollID: string = "";
     const highlights = await getHighlightsByDroplet(authUser.id, droplet.id);
     const notes = await getNotesByDroplet(authUser.id, droplet.id);
