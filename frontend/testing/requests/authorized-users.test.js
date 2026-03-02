@@ -196,9 +196,9 @@ describe("Authorized User Tests", () => {
     it("should handle fetch errors", async () => {
       fetchAPI.mockRejectedValueOnce(new Error("API Error"));
 
-      await expect(
-        getAuthorizedUsersByEmails(["a@test.com"]),
-      ).rejects.toThrow("API Error");
+      await expect(getAuthorizedUsersByEmails(["a@test.com"])).rejects.toThrow(
+        "API Error",
+      );
     });
   });
 
