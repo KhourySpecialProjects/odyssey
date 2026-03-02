@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { Friends } from "@/components/friends/friends";
 import { getCurrentUser } from "@/lib/auth/session";
-import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
+import { getCachedUser } from "@/lib/requests/cached";
 import { fetchFriends } from "@/lib/requests/friends";
 import { notFound } from "next/navigation";
 
@@ -13,8 +13,8 @@ jest.mock("next/navigation", () => ({
   notFound: jest.fn(),
 }));
 
-jest.mock("@/lib/requests/authorized-user", () => ({
-  getAuthorizedUserByEmail: jest.fn(),
+jest.mock("@/lib/requests/cached", () => ({
+  getCachedUser: jest.fn(),
 }));
 
 jest.mock("@/lib/requests/friends", () => ({
@@ -45,7 +45,7 @@ describe("Friends", () => {
       },
     ];
 
-    (getAuthorizedUserByEmail as jest.Mock).mockResolvedValue(mockAuthUser);
+    (getCachedUser as jest.Mock).mockResolvedValue(mockAuthUser);
     (fetchFriends as jest.Mock).mockResolvedValue(mockFriends);
 
     const { container } = await render(await Friends());
@@ -69,7 +69,7 @@ describe("Friends", () => {
       email: "test@example.com",
     };
 
-    (getAuthorizedUserByEmail as jest.Mock).mockResolvedValue(mockAuthUser);
+    (getCachedUser as jest.Mock).mockResolvedValue(mockAuthUser);
     (fetchFriends as jest.Mock).mockResolvedValue([]);
 
     await render(await Friends());
@@ -82,7 +82,7 @@ describe("Friends", () => {
       email: "test@example.com",
     };
 
-    (getAuthorizedUserByEmail as jest.Mock).mockResolvedValue(mockAuthUser);
+    (getCachedUser as jest.Mock).mockResolvedValue(mockAuthUser);
     (fetchFriends as jest.Mock).mockResolvedValue([]);
 
     await render(await Friends());

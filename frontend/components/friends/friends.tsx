@@ -1,4 +1,4 @@
-import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
+import { getCachedUser } from "@/lib/requests/cached";
 import { FriendBlock } from "./friend-block";
 import { getCurrentUser } from "@/lib/auth/session";
 import { notFound } from "next/navigation";
@@ -7,7 +7,7 @@ import { fetchFriends } from "@/lib/requests/friends";
 export async function Friends() {
   const user = await getCurrentUser();
   if (!user || !user?.email) return notFound();
-  const authUser = await getAuthorizedUserByEmail(user.email);
+  const authUser = await getCachedUser(user.email);
 
   const friends = await fetchFriends(authUser);
 

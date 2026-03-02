@@ -4,7 +4,7 @@ import {
   MessageHeader,
 } from "@/components/message";
 import { getCurrentUser } from "@/lib/auth/session";
-import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
+import { getCachedUser } from "@/lib/requests/cached";
 import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
 import { EnrolledDropletsGridClient } from "./enrolled-droplets-grid-client";
 
@@ -18,7 +18,7 @@ export async function ArchivedDropletsGrid({ sortKey }: { sortKey?: string }) {
   const user = await getCurrentUser();
   if (!user?.email) return null;
 
-  const authorizedUser = await getAuthorizedUserByEmail(user.email);
+  const authorizedUser = await getCachedUser(user.email);
   const enrollments = await getEnrollmentsByAuthorizedUser(authorizedUser.id);
 
   const filteredEnrollments = enrollments.filter((e) => e.isArchived === true);

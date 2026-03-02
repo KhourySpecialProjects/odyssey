@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { EnrolledDropletsGrid } from "@/components/dashboard/enrolled-droplets-grid";
 import { getCurrentUser } from "@/lib/auth/session";
-import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
+import { getCachedUser } from "@/lib/requests/cached";
 import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
 import { getUserDueDates } from "@/lib/requests/groups";
 import { Enrollment } from "@/types";
@@ -10,8 +10,8 @@ jest.mock("@/lib/auth/session", () => ({
   getCurrentUser: jest.fn(),
 }));
 
-jest.mock("@/lib/requests/authorized-user", () => ({
-  getAuthorizedUserByEmail: jest.fn(),
+jest.mock("@/lib/requests/cached", () => ({
+  getCachedUser: jest.fn(),
 }));
 
 jest.mock("@/lib/requests/enrollment", () => ({
@@ -60,7 +60,7 @@ describe("EnrolledDropletsGrid", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     (getCurrentUser as jest.Mock).mockResolvedValue(mockUser);
-    (getAuthorizedUserByEmail as jest.Mock).mockResolvedValue(
+    (getCachedUser as jest.Mock).mockResolvedValue(
       mockAuthorizedUser,
     );
     (getUserDueDates as jest.Mock).mockResolvedValue([]);
@@ -83,7 +83,7 @@ describe("EnrolledDropletsGrid", () => {
     const mockEnrollments = [] as Enrollment[];
 
     (getCurrentUser as jest.Mock).mockResolvedValue(mockUser);
-    (getAuthorizedUserByEmail as jest.Mock).mockResolvedValue(
+    (getCachedUser as jest.Mock).mockResolvedValue(
       mockAuthorizedUser,
     );
     (getEnrollmentsByAuthorizedUser as jest.Mock).mockResolvedValue(

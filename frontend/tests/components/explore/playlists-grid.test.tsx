@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { PlaylistsGrid } from "@/components/explore/playlists-grid";
 import { getCurrentUser } from "@/lib/auth/session";
-import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
+import { getCachedUser } from "@/lib/requests/cached";
 import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
 import { getUserDueDates } from "@/lib/requests/groups";
 import { Playlist, DueDate } from "@/types";
@@ -10,8 +10,8 @@ jest.mock("@/lib/auth/session", () => ({
   getCurrentUser: jest.fn(),
 }));
 
-jest.mock("@/lib/requests/authorized-user", () => ({
-  getAuthorizedUserByEmail: jest.fn(),
+jest.mock("@/lib/requests/cached", () => ({
+  getCachedUser: jest.fn(),
 }));
 
 jest.mock("@/lib/requests/enrollment", () => ({
@@ -39,7 +39,7 @@ jest.mock("@/components/explore/sorted-playlists-grid", () => ({
 
 describe("PlaylistsGrid", () => {
   const mockGetCurrentUser = getCurrentUser as jest.Mock;
-  const mockGetAuthorizedUserByEmail = getAuthorizedUserByEmail as jest.Mock;
+  const mockGetCachedUser = getCachedUser as jest.Mock;
   const mockGetEnrollmentsByAuthorizedUser =
     getEnrollmentsByAuthorizedUser as jest.Mock;
   const mockGetUserDueDates = getUserDueDates as jest.Mock;
@@ -70,7 +70,7 @@ describe("PlaylistsGrid", () => {
 
       expect(screen.getByText("Test Playlist")).toBeInTheDocument();
       expect(screen.getByText("Completion: 0.0%")).toBeInTheDocument();
-      expect(mockGetAuthorizedUserByEmail).not.toHaveBeenCalled();
+      expect(mockGetCachedUser).not.toHaveBeenCalled();
       expect(mockGetEnrollmentsByAuthorizedUser).not.toHaveBeenCalled();
     });
 
@@ -124,7 +124,7 @@ describe("PlaylistsGrid", () => {
 
     beforeEach(() => {
       mockGetCurrentUser.mockResolvedValue(mockUser);
-      mockGetAuthorizedUserByEmail.mockResolvedValue(mockAuthorizedUser);
+      mockGetCachedUser.mockResolvedValue(mockAuthorizedUser);
       mockGetEnrollmentsByAuthorizedUser.mockResolvedValue([]);
       mockGetUserDueDates.mockResolvedValue([]);
     });
@@ -145,7 +145,7 @@ describe("PlaylistsGrid", () => {
       render(component);
 
       expect(mockGetCurrentUser).toHaveBeenCalledTimes(1);
-      expect(mockGetAuthorizedUserByEmail).toHaveBeenCalledWith(
+      expect(mockGetCachedUser).toHaveBeenCalledWith(
         "test@example.com",
       );
       expect(mockGetEnrollmentsByAuthorizedUser).toHaveBeenCalledWith(1);
@@ -464,7 +464,7 @@ describe("PlaylistsGrid", () => {
       };
 
       mockGetCurrentUser.mockResolvedValue(mockUser);
-      mockGetAuthorizedUserByEmail.mockResolvedValue(mockAuthorizedUser);
+      mockGetCachedUser.mockResolvedValue(mockAuthorizedUser);
       mockGetUserDueDates.mockResolvedValue([]);
 
       const mockPlaylists: any[] = [
@@ -538,7 +538,7 @@ describe("PlaylistsGrid", () => {
       };
 
       mockGetCurrentUser.mockResolvedValue(mockUser);
-      mockGetAuthorizedUserByEmail.mockResolvedValue(mockAuthorizedUser);
+      mockGetCachedUser.mockResolvedValue(mockAuthorizedUser);
       mockGetUserDueDates.mockResolvedValue([]);
 
       const mockPlaylists: any[] = [
@@ -704,7 +704,7 @@ describe("PlaylistsGrid", () => {
       };
 
       mockGetCurrentUser.mockResolvedValue(mockUser);
-      mockGetAuthorizedUserByEmail.mockResolvedValue(mockAuthorizedUser);
+      mockGetCachedUser.mockResolvedValue(mockAuthorizedUser);
       mockGetUserDueDates.mockResolvedValue([]);
 
       const mockPlaylists: any[] = [
@@ -789,7 +789,7 @@ describe("PlaylistsGrid", () => {
       const component = await PlaylistsGrid({ playlists: mockPlaylists });
       render(component);
 
-      expect(mockGetAuthorizedUserByEmail).not.toHaveBeenCalled();
+      expect(mockGetCachedUser).not.toHaveBeenCalled();
       expect(screen.getByText("Test Playlist")).toBeInTheDocument();
     });
 

@@ -2,7 +2,7 @@ import { getCurrentUser } from "@/lib/auth/session";
 import { EnrolledDropletsGrid } from "./enrolled-droplets-grid";
 import { UserPlaylistsGrid } from "./user-playlists-grid";
 import { ArchivedDropletsGrid } from "./archived-droplets-grid";
-import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
+import { getCachedUser } from "@/lib/requests/cached";
 import { notFound } from "next/navigation";
 import { getUserGroups } from "@/lib/requests/groups";
 import {
@@ -31,7 +31,7 @@ export async function MyContent({
     return notFound();
   }
 
-  const authorizedUser = await getAuthorizedUserByEmail(user.email);
+  const authorizedUser = await getCachedUser(user.email);
   const allGroups = (await getUserGroups(authorizedUser.id)).filter((group) =>
     group.members?.some((member) => member.id === authorizedUser.id),
   );

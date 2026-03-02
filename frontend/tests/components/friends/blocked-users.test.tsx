@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { BlockedUsers } from "@/components/friends/blocked-users";
 import { getCurrentUser } from "@/lib/auth/session";
-import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
+import { getCachedUserSocial } from "@/lib/requests/cached";
 import { notFound } from "next/navigation";
 
 jest.mock("@/lib/auth/session", () => ({
@@ -12,8 +12,8 @@ jest.mock("next/navigation", () => ({
   notFound: jest.fn(),
 }));
 
-jest.mock("@/lib/requests/authorized-user", () => ({
-  getAuthorizedUserByEmail: jest.fn(),
+jest.mock("@/lib/requests/cached", () => ({
+  getCachedUserSocial: jest.fn(),
 }));
 
 describe("BlockedUsers", () => {
@@ -34,7 +34,7 @@ describe("BlockedUsers", () => {
         },
       ],
     };
-    (getAuthorizedUserByEmail as jest.Mock).mockResolvedValue(mockAuthUser);
+    (getCachedUserSocial as jest.Mock).mockResolvedValue(mockAuthUser);
 
     const { container } = await render(await BlockedUsers());
     expect(container.querySelector("ul")).toBeInTheDocument();
@@ -42,7 +42,7 @@ describe("BlockedUsers", () => {
 
   it("shows empty state message when no blocked users", async () => {
     const mockAuthUser = { blocked: [] };
-    (getAuthorizedUserByEmail as jest.Mock).mockResolvedValue(mockAuthUser);
+    (getCachedUserSocial as jest.Mock).mockResolvedValue(mockAuthUser);
 
     await render(await BlockedUsers());
     expect(screen.getByText("You have no blocked users")).toBeInTheDocument();
