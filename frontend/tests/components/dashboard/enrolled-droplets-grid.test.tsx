@@ -60,9 +60,7 @@ describe("EnrolledDropletsGrid", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     (getCurrentUser as jest.Mock).mockResolvedValue(mockUser);
-    (getCachedUser as jest.Mock).mockResolvedValue(
-      mockAuthorizedUser,
-    );
+    (getCachedUser as jest.Mock).mockResolvedValue(mockAuthorizedUser);
     (getUserDueDates as jest.Mock).mockResolvedValue([]);
   });
 
@@ -83,9 +81,7 @@ describe("EnrolledDropletsGrid", () => {
     const mockEnrollments = [] as Enrollment[];
 
     (getCurrentUser as jest.Mock).mockResolvedValue(mockUser);
-    (getCachedUser as jest.Mock).mockResolvedValue(
-      mockAuthorizedUser,
-    );
+    (getCachedUser as jest.Mock).mockResolvedValue(mockAuthorizedUser);
     (getEnrollmentsByAuthorizedUser as jest.Mock).mockResolvedValue(
       mockEnrollments,
     );

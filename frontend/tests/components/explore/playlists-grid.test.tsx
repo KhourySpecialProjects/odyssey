@@ -145,9 +145,7 @@ describe("PlaylistsGrid", () => {
       render(component);
 
       expect(mockGetCurrentUser).toHaveBeenCalledTimes(1);
-      expect(mockGetCachedUser).toHaveBeenCalledWith(
-        "test@example.com",
-      );
+      expect(mockGetCachedUser).toHaveBeenCalledWith("test@example.com");
       expect(mockGetEnrollmentsByAuthorizedUser).toHaveBeenCalledWith(1);
       expect(mockGetUserDueDates).toHaveBeenCalledWith(1);
     });

@@ -124,9 +124,7 @@ describe("MyContent", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     (getCurrentUser as jest.Mock).mockResolvedValue(mockUser);
-    (getCachedUser as jest.Mock).mockResolvedValue(
-      mockAuthorizedUser,
-    );
+    (getCachedUser as jest.Mock).mockResolvedValue(mockAuthorizedUser);
     (getEnrollmentsByAuthorizedUser as jest.Mock).mockResolvedValue([]);
     (getUserGroups as jest.Mock).mockResolvedValue(mockGroups);
   });
