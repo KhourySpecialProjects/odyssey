@@ -70,7 +70,6 @@ export async function getEnrollmentsByAuthorizedUser(
   };
   return await fetchAPI<Enrollment[]>(path, {
     urlParams,
-    next: { tags: ["enrollments"], revalidate: 0 },
     cache: "no-store",
   });
 }
@@ -322,7 +321,6 @@ export async function fetchEnrollmentMetadata({
       };
     }>(path, {
       urlParams,
-      next: { tags: ["enrollments"], revalidate: 0 },
       cache: "no-store",
       flattenResponse: false,
     });

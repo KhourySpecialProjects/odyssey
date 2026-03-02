@@ -876,16 +876,11 @@ export async function getGroupDueDates(
     },
     fields: [...(fields || []), "dueDate"],
     pagination,
-    revalidate: 0,
   };
 
   return await fetchAPI<DueDate[]>(path, {
     urlParams,
     cache: "no-store",
-    next: {
-      revalidate: 0,
-      tags: ["due-dates"],
-    },
   });
 }
 
@@ -915,13 +910,11 @@ export async function getUserDueDates(
     },
     fields: [...(fields || []), "dueDate"],
     pagination,
-    revalidate: 0,
-    cache: "no-store",
   };
 
   return await fetchAPI<DueDate[]>(path, {
     urlParams,
-    next: { tags: ["due-dates"], revalidate: 0 },
+    cache: "no-store",
   });
 }
 

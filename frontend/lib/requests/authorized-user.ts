@@ -231,7 +231,6 @@ export async function fetchAuthorizedUsersMetadata({
       };
     }>(path, {
       urlParams,
-      next: { tags: ["authorized-users"], revalidate: 0 },
       cache: "no-store",
       flattenResponse: false,
     });
