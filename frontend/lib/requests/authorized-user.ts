@@ -49,6 +49,33 @@ export async function getAuthorizedUserByEmail<
   );
 }
 
+/**
+ * Batch-fetches authorized users whose email is in the given list.
+ * Returns only `id` and `email` — designed for membership resolution, not
+ * full profile loads.
+ */
+export async function getAuthorizedUsersByEmails(
+  emails: string[],
+): Promise<Array<{ id: number; email: string }>> {
+  if (emails.length === 0) return [];
+
+  const path = `/authorized-users`;
+  const urlParams = {
+    filters: {
+      email: { $in: emails },
+    },
+    fields: ["id", "email"],
+    pagination: {
+      pageSize: emails.length,
+      page: 1,
+    },
+  };
+
+  return await fetchAPI<Array<{ id: number; email: string }>>(path, {
+    urlParams,
+  });
+}
+
 export async function fetchAuthorizedUsers(): Promise<AuthorizedUser[]> {
   try {
     let page = 1;
