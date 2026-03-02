@@ -17,10 +17,10 @@ jobs:
             echo "Merge requests to main branch are only allowed from develop branch."
             exit 1
           fi
-      - name: Check if PR to develop is from feature/* or bug/* or improvement/*
+      - name: Check if PR to develop is from feature/* or bug/* or improvement/* or dependabot/*
         if: github.event.pull_request.base.ref == 'develop'
         run: |
-          if [[ ! "${{ github.event.pull_request.head.ref }}" =~ ^(feature/|bug/|improvement/) ]]; then
-            echo "Pull request to develop must come from a branch beginning with 'feature/', 'bug/' or 'improvement/'."
+          if [[ ! "${{ github.event.pull_request.head.ref }}" =~ ^(feature/|bug/|improvement/|dependabot/) ]]; then
+            echo "Pull request to develop must come from a branch beginning with 'feature/', 'bug/', 'improvement/', or 'dependabot/'."
             exit 1
           fi

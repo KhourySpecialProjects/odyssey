@@ -12,6 +12,9 @@ on:
       - develop
       - production
       - 'feature/**'
+      - 'bug/**'
+      - 'improvement/**'
+      - 'dependabot/**'
 
 jobs:
   test:

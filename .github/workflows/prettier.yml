@@ -15,6 +15,7 @@ on:
       - 'feature/**'
       - 'bug/**'
       - 'improvement/**'
+      - 'dependabot/**'
 
 jobs:
   prettier-check:
