@@ -7,6 +7,7 @@ import {
   fetchAuthorizedUsers,
   getAuthorizedUserByEmail,
 } from "@/lib/requests/authorized-user";
+import { USER_POPULATES } from "@/lib/requests/user-populates";
 import { FriendSentRequests } from "@/components/friends/friend-sent-requests";
 import { FriendSearch } from "@/components/friends/friend-search";
 import {
@@ -29,7 +30,10 @@ export default async function AuthorProfileSettings({
   const user = await getCurrentUser();
   if (!user?.email) return notFound();
 
-  const authorizedUser = await getAuthorizedUserByEmail(user.email);
+  const authorizedUser = await getAuthorizedUserByEmail(
+    user.email,
+    USER_POPULATES.social,
+  );
   if (!authorizedUser) return notFound();
 
   const sentRequests = await getSentRequestIds(authorizedUser);

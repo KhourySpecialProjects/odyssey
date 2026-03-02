@@ -13,6 +13,7 @@ import { getCurrentUser } from "@/lib/auth/session";
 import { getInitials, condenseRoleTitles } from "@/lib/utils";
 import { User2Icon } from "lucide-react";
 import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
+import { USER_POPULATES } from "@/lib/requests/user-populates";
 import { AuthorizedUser } from "@/types";
 
 export default async function Settings() {
@@ -21,6 +22,7 @@ export default async function Settings() {
   if (user?.email) {
     authorizedUser = (await getAuthorizedUserByEmail(
       user.email,
+      USER_POPULATES.profile,
     )) as AuthorizedUser;
     if (!authorizedUser?.id) {
       throw new Error("Authorized user not found");

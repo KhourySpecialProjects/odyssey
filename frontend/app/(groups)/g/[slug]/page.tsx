@@ -1,5 +1,6 @@
 import { getCurrentUser } from "@/lib/auth/session";
 import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
+import { USER_POPULATES } from "@/lib/requests/user-populates";
 import { getGroupBySlugV2 } from "@/lib/requests/groups";
 import { notFound } from "next/navigation";
 import { MemberList } from "@/components/group/member-list";
@@ -28,7 +29,10 @@ export default async function GroupDetailPage({ params }: Props) {
   const user = await getCurrentUser();
   if (!user?.email) return null;
 
-  const authorizedUser = await getAuthorizedUserByEmail(user.email);
+  const authorizedUser = await getAuthorizedUserByEmail(
+    user.email,
+    USER_POPULATES.profile,
+  );
   if (!authorizedUser) return null;
 
   const p = await params;

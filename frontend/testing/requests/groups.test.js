@@ -1733,13 +1733,8 @@ describe("Groups Tests", () => {
             pageSize: 250,
             page: 1,
           },
-          revalidate: 0,
         },
         cache: "no-store",
-        next: {
-          revalidate: 0,
-          tags: ["due-dates"],
-        },
       });
 
       expect(result).toEqual(mockDueDates);
@@ -1858,13 +1853,8 @@ describe("Groups Tests", () => {
             pageSize: 250,
             page: 1,
           },
-          revalidate: 0,
-          cache: "no-store",
         },
-        next: {
-          tags: ["due-dates"],
-          revalidate: 0,
-        },
+        cache: "no-store",
       });
 
       expect(result).toEqual(mockDueDates);
