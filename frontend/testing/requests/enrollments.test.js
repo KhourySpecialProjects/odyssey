@@ -147,10 +147,7 @@ describe("Enrollment Tests", () => {
       ];
       fetchAPI.mockResolvedValueOnce(mockEnrollments);
 
-      const result = await getEnrollmentsForGroupMembers(
-        memberIds,
-        dropletIds,
-      );
+      const result = await getEnrollmentsForGroupMembers(memberIds, dropletIds);
 
       expect(result).toEqual(mockEnrollments);
       expect(fetchAPI).toHaveBeenCalledTimes(1);
@@ -159,10 +156,7 @@ describe("Enrollment Tests", () => {
     it("should return empty array when no enrollments exist", async () => {
       fetchAPI.mockResolvedValueOnce([]);
 
-      const result = await getEnrollmentsForGroupMembers(
-        memberIds,
-        dropletIds,
-      );
+      const result = await getEnrollmentsForGroupMembers(memberIds, dropletIds);
 
       expect(result).toEqual([]);
       expect(fetchAPI).toHaveBeenCalledTimes(1);
@@ -171,10 +165,7 @@ describe("Enrollment Tests", () => {
     it("should return empty array when fetchAPI returns null", async () => {
       fetchAPI.mockResolvedValueOnce(null);
 
-      const result = await getEnrollmentsForGroupMembers(
-        memberIds,
-        dropletIds,
-      );
+      const result = await getEnrollmentsForGroupMembers(memberIds, dropletIds);
 
       expect(result).toEqual([]);
       expect(fetchAPI).toHaveBeenCalledTimes(1);
@@ -190,10 +181,7 @@ describe("Enrollment Tests", () => {
         .mockResolvedValueOnce(fullPage)
         .mockResolvedValueOnce(partialPage);
 
-      const result = await getEnrollmentsForGroupMembers(
-        memberIds,
-        dropletIds,
-      );
+      const result = await getEnrollmentsForGroupMembers(memberIds, dropletIds);
 
       expect(result).toHaveLength(251);
       expect(fetchAPI).toHaveBeenCalledTimes(2);
@@ -207,10 +195,7 @@ describe("Enrollment Tests", () => {
       );
       fetchAPI.mockResolvedValueOnce(fullPage).mockResolvedValueOnce([]);
 
-      const result = await getEnrollmentsForGroupMembers(
-        memberIds,
-        dropletIds,
-      );
+      const result = await getEnrollmentsForGroupMembers(memberIds, dropletIds);
 
       expect(result).toHaveLength(250);
       expect(fetchAPI).toHaveBeenCalledTimes(2);
@@ -232,10 +217,7 @@ describe("Enrollment Tests", () => {
         .mockResolvedValueOnce(page2)
         .mockResolvedValueOnce(page3);
 
-      const result = await getEnrollmentsForGroupMembers(
-        memberIds,
-        dropletIds,
-      );
+      const result = await getEnrollmentsForGroupMembers(memberIds, dropletIds);
 
       expect(result).toHaveLength(550);
       expect(fetchAPI).toHaveBeenCalledTimes(3);
