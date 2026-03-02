@@ -1,6 +1,6 @@
 import { getCurrentUser } from "@/lib/auth/session";
 import { getCachedUser } from "@/lib/requests/cached";
-import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
+import { getCachedEnrollmentsDashboard } from "@/lib/requests/cached";
 import { notFound } from "next/navigation";
 import { DropletTile } from "../droplets/droplet-tile";
 
@@ -9,21 +9,7 @@ export async function Enrollments() {
   if (!user?.email) return notFound();
 
   const authorizedUser = await getCachedUser(user.email);
-  const enrollments = await getEnrollmentsByAuthorizedUser(authorizedUser.id, {
-    populate: {
-      droplet: {
-        populate: {
-          tags: true,
-          lessons: {
-            fields: ["id", "name", "slug"],
-          },
-        },
-      },
-      viewedLessons: {
-        fields: ["id", "name", "slug"],
-      },
-    },
-  });
+  const enrollments = await getCachedEnrollmentsDashboard(authorizedUser.id);
 
   return (
     <ul className="grid grid-flow-row grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">

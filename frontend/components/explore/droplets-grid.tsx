@@ -5,7 +5,7 @@ import {
 } from "@/components/message";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getCachedUser } from "@/lib/requests/cached";
-import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
+import { getCachedEnrollmentsWithLessonIds } from "@/lib/requests/cached";
 import { DropletTile } from "../droplets/droplet-tile";
 import { SortedDropletsGrid } from "./sorted-droplets-grid";
 import { Droplet, DueDate, Enrollment } from "@/types";
@@ -36,7 +36,7 @@ export async function DropletsGrid({
 
   if (user?.email) {
     const authorizedUser = await getCachedUser(user.email);
-    enrollments = await getEnrollmentsByAuthorizedUser(authorizedUser.id);
+    enrollments = await getCachedEnrollmentsWithLessonIds(authorizedUser.id);
 
     enrolledDropletIds = enrollments.map((e) => e.droplet.id);
     completedLessonIds = enrollments.flatMap(

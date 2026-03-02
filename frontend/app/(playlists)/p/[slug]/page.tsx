@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { DropletTile } from "@/components/droplets/droplet-tile";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getCachedUser } from "@/lib/requests/cached";
-import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
+import { getCachedEnrollmentsWithLessonIds } from "@/lib/requests/cached";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
@@ -71,7 +71,9 @@ export default async function PlaylistPage({ params }: Props) {
 
   if (user?.email) {
     const authorizedUser = await getCachedUser(user.email);
-    const enrollments = await getEnrollmentsByAuthorizedUser(authorizedUser.id);
+    const enrollments = await getCachedEnrollmentsWithLessonIds(
+      authorizedUser.id,
+    );
     enrolledDropletIds = enrollments.map((e) => e.droplet.id);
 
     completedLessonIds = enrollments.flatMap(

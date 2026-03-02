@@ -1,9 +1,7 @@
 import { Metadata } from "next";
 import { getCachedUser } from "@/lib/requests/cached";
-import {
-  getEnrollmentsByAuthorizedUser,
-  updateCompletionDate,
-} from "@/lib/requests/enrollment";
+import { updateCompletionDate } from "@/lib/requests/enrollment";
+import { getCachedEnrollmentsWithLessonIds } from "@/lib/requests/cached";
 import { getDropletBySlug } from "@/lib/requests/droplet";
 import { getLessonBySlug } from "@/lib/requests/lesson";
 import { getCurrentUser } from "@/lib/auth/session";
@@ -51,7 +49,7 @@ export default async function Page({ params }: Props) {
 
   if (currentUser?.email) {
     const user = await getCachedUser(currentUser.email);
-    const enrollments = await getEnrollmentsByAuthorizedUser(user.id);
+    const enrollments = await getCachedEnrollmentsWithLessonIds(user.id);
 
     const enrollment = enrollments.find((e) => e.droplet.id === droplet.id);
 

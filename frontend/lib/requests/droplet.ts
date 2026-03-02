@@ -61,12 +61,19 @@ export async function getDropletBySlug<T extends Partial<Droplet> = Droplet>(
   }: StrapiRequestParams = {},
 ): Promise<T> {
   const path = `/droplets`;
+  const resolvedPopulate =
+    typeof populate === "object" ? populate : { populate: "*" };
+  const existingLessons =
+    resolvedPopulate && typeof resolvedPopulate === "object"
+      ? (resolvedPopulate as Record<string, any>).lessons ?? {}
+      : {};
   const urlParams = {
     sort,
     filters: { ...filters, slug },
     populate: {
-      ...(typeof populate === "object" ? populate : { populate: "*" }),
+      ...resolvedPopulate,
       lessons: {
+        ...(typeof existingLessons === "object" ? existingLessons : {}),
         sort: ["orderIndex:asc"],
       },
     },

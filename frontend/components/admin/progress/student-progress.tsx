@@ -1,5 +1,5 @@
 import { getCurrentUser } from "@/lib/auth/session";
-import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
+import { getCachedEnrollmentsWithLessonIds } from "@/lib/requests/cached";
 import { StudentProgressList } from "./student-progress-list";
 import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
 
@@ -42,7 +42,7 @@ export async function StudentProgress() {
     playlists.map(async (playlist) => {
       const usersWithProgress = await Promise.all(
         (playlist.authorized_users || []).map(async (user: AuthorizedUser) => {
-          const enrollments = await getEnrollmentsByAuthorizedUser(user.id);
+          const enrollments = await getCachedEnrollmentsWithLessonIds(user.id);
           const completedLessonIds = enrollments.flatMap(
             (enrollment) =>
               enrollment.viewedLessons?.map((lesson: Lesson) => lesson.id) ||

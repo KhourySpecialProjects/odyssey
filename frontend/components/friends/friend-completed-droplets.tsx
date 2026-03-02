@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { AuthorizedUser, Droplet } from "@/types";
-import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
+import { getCachedEnrollmentsWithLessonIds } from "@/lib/requests/cached";
 import { FriendCompletedDropletsList } from "./friend-completed-droplets-list";
 
 export function FriendCompletedDroplets({
@@ -16,7 +16,7 @@ export function FriendCompletedDroplets({
 
   useEffect(() => {
     async function fetchCompletedDroplets() {
-      const enrollments = await getEnrollmentsByAuthorizedUser(friend.id);
+      const enrollments = await getCachedEnrollmentsWithLessonIds(friend.id);
       if (enrollments) {
         const completed = enrollments
           .filter((e) => e.viewedLessons.length === e.droplet.lessons?.length)

@@ -2,7 +2,7 @@ import { render, screen } from "@testing-library/react";
 import { UserPlaylistsGrid } from "@/components/dashboard/user-playlists-grid";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
-import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
+import { getCachedEnrollmentsWithLessonIds } from "@/lib/requests/cached";
 import { getUserDueDates } from "@/lib/requests/groups";
 
 jest.mock("@/lib/auth/session", () => ({
@@ -13,8 +13,8 @@ jest.mock("@/lib/requests/authorized-user", () => ({
   getAuthorizedUserByEmail: jest.fn(),
 }));
 
-jest.mock("@/lib/requests/enrollment", () => ({
-  getEnrollmentsByAuthorizedUser: jest.fn(),
+jest.mock("@/lib/requests/cached", () => ({
+  getCachedEnrollmentsWithLessonIds: jest.fn(),
 }));
 
 jest.mock("@/lib/requests/groups", () => ({
@@ -57,7 +57,7 @@ describe("UserPlaylistsGrid", () => {
     (getAuthorizedUserByEmail as jest.Mock).mockResolvedValue(
       mockAuthorizedUser,
     );
-    (getEnrollmentsByAuthorizedUser as jest.Mock).mockResolvedValue([]);
+    (getCachedEnrollmentsWithLessonIds as jest.Mock).mockResolvedValue([]);
     (getUserDueDates as jest.Mock).mockResolvedValue([]);
   });
 
@@ -157,7 +157,7 @@ describe("UserPlaylistsGrid", () => {
     (getAuthorizedUserByEmail as jest.Mock).mockResolvedValue(
       mockUserWithPlaylists,
     );
-    (getEnrollmentsByAuthorizedUser as jest.Mock).mockResolvedValue(
+    (getCachedEnrollmentsWithLessonIds as jest.Mock).mockResolvedValue(
       mockEnrollments,
     );
 
@@ -172,22 +172,6 @@ describe("UserPlaylistsGrid", () => {
     const result = await UserPlaylistsGrid({});
     expect(result).toBeNull();
   });
-
-  jest.mock("@/lib/auth/session", () => ({
-    getCurrentUser: jest.fn(),
-  }));
-
-  jest.mock("@/lib/requests/authorized-user", () => ({
-    getAuthorizedUserByEmail: jest.fn(),
-  }));
-
-  jest.mock("@/lib/requests/enrollment", () => ({
-    getEnrollmentsByAuthorizedUser: jest.fn(),
-  }));
-
-  jest.mock("@/lib/requests/groups", () => ({
-    getUserDueDates: jest.fn(),
-  }));
 
   describe("UserPlaylistsGrid", () => {
     const mockUser = {
@@ -217,7 +201,7 @@ describe("UserPlaylistsGrid", () => {
         ...mockUser,
         playlists: mockPlaylists,
       });
-      (getEnrollmentsByAuthorizedUser as jest.Mock).mockResolvedValue([]);
+      (getCachedEnrollmentsWithLessonIds as jest.Mock).mockResolvedValue([]);
       (getUserDueDates as jest.Mock).mockResolvedValue([]);
     });
 
