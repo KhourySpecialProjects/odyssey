@@ -1,6 +1,6 @@
 import { DropletTile } from "@/components/droplets/droplet-tile";
 import { getDropletBySlug, getDroplets } from "@/lib/requests/droplet";
-import { Droplet } from "@/types";
+import type { Droplet } from "@/types";
 import { GoalIcon, Link2Icon } from "lucide-react";
 import { Metadata } from "next";
 import Link from "next/link";
