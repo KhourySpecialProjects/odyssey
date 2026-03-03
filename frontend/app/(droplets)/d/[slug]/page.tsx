@@ -2,6 +2,7 @@ import { DropletTile } from "@/components/droplets/droplet-tile";
 import { EnrollButton } from "@/components/droplets/enroll-button";
 import { GradientBackground } from "@/components/gradient-bg";
 import { Badge } from "@/components/ui/badge";
+import { getDropletBySlug } from "@/lib/requests/droplet";
 import { stripHtmlTags, uppercaseFirstChar } from "@/lib/utils";
 import { Droplet } from "@/types";
 import {
