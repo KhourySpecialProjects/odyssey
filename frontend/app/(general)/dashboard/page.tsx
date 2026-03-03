@@ -14,10 +14,10 @@ import {
   sorting,
 } from "@/lib/globals";
 import {
-  getCachedUserDashboardFull,
+  getCachedUserDashboard,
   getCachedEnrollmentsFavorites,
-  getCachedUserGroups,
 } from "@/lib/requests/cached";
+import { getUserGroups } from "@/lib/requests/groups";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 
@@ -36,14 +36,14 @@ export default async function DashboardRoute({ searchParams }: Props) {
     return notFound();
   }
   const { sortKey } = sorting.find((item) => item.slug === sort) || defaultSort;
-  const authorizedUser = await getCachedUserDashboardFull(user.email);
+  const authorizedUser = await getCachedUserDashboard(user.email);
   const archivedPlaylists = authorizedUser.playlists?.filter((playlist) =>
     playlist.users_archived?.some((user) => user.id === authorizedUser.id),
   );
   const allEnrollments = await getCachedEnrollmentsFavorites(authorizedUser.id);
   const allPlaylists = authorizedUser.playlists?.length || 0;
-  const allGroups = (await getCachedUserGroups(authorizedUser.id)).filter(
-    (group) => group.members?.some((member) => member.id === authorizedUser.id),
+  const allGroups = (await getUserGroups(authorizedUser.id)).filter((group) =>
+    group.members?.some((member) => member.id === authorizedUser.id),
   );
   const activeGroups = allGroups.filter(
     (group) =>

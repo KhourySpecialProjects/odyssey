@@ -1,19 +1,20 @@
 import { render, screen } from "@testing-library/react";
 import { MyContent } from "@/components/dashboard/my-content";
 import { getCurrentUser } from "@/lib/auth/session";
-import {
-  getCachedUserDashboardFull,
-  getCachedUserGroups,
-} from "@/lib/requests/cached";
+import { getCachedUser } from "@/lib/requests/cached";
 import { notFound } from "next/navigation";
+import { getUserGroups } from "@/lib/requests/groups";
 
 jest.mock("@/lib/auth/session", () => ({
   getCurrentUser: jest.fn(),
 }));
 
 jest.mock("@/lib/requests/cached", () => ({
-  getCachedUserDashboardFull: jest.fn(),
-  getCachedUserGroups: jest.fn(),
+  getCachedUser: jest.fn(),
+}));
+
+jest.mock("@/lib/requests/groups", () => ({
+  getUserGroups: jest.fn(),
 }));
 
 jest.mock("next/navigation", () => ({
@@ -117,10 +118,8 @@ describe("MyContent", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     (getCurrentUser as jest.Mock).mockResolvedValue(mockUser);
-    (getCachedUserDashboardFull as jest.Mock).mockResolvedValue(
-      mockAuthorizedUser,
-    );
-    (getCachedUserGroups as jest.Mock).mockResolvedValue(mockGroups);
+    (getCachedUser as jest.Mock).mockResolvedValue(mockAuthorizedUser);
+    (getUserGroups as jest.Mock).mockResolvedValue(mockGroups);
   });
 
   describe("Authentication", () => {
@@ -143,15 +142,13 @@ describe("MyContent", () => {
     it("fetches authorized user by email", async () => {
       await MyContent({ searchParams: {} });
 
-      expect(getCachedUserDashboardFull).toHaveBeenCalledWith(
-        "test@example.com",
-      );
+      expect(getCachedUser).toHaveBeenCalledWith("test@example.com");
     });
 
     it("fetches user groups", async () => {
       await MyContent({ searchParams: {} });
 
-      expect(getCachedUserGroups).toHaveBeenCalledWith(1);
+      expect(getUserGroups).toHaveBeenCalledWith(1);
     });
   });
 
@@ -247,7 +244,7 @@ describe("MyContent", () => {
         },
       ];
 
-      (getCachedUserGroups as jest.Mock).mockResolvedValue(groupsWithNonMember);
+      (getUserGroups as jest.Mock).mockResolvedValue(groupsWithNonMember);
 
       render(await MyContent({ searchParams: { contentType: "groups" } }));
 
@@ -289,7 +286,7 @@ describe("MyContent", () => {
         },
       ];
 
-      (getCachedUserGroups as jest.Mock).mockResolvedValue(multipleGroups);
+      (getUserGroups as jest.Mock).mockResolvedValue(multipleGroups);
 
       render(await MyContent({ searchParams: { contentType: "groups" } }));
 
@@ -300,7 +297,7 @@ describe("MyContent", () => {
 
   describe("Empty States", () => {
     it("shows no groups message when no active groups", async () => {
-      (getCachedUserGroups as jest.Mock).mockResolvedValue([]);
+      (getUserGroups as jest.Mock).mockResolvedValue([]);
 
       render(await MyContent({ searchParams: { contentType: "groups" } }));
 
@@ -311,7 +308,7 @@ describe("MyContent", () => {
     });
 
     it("shows no archived groups message when no archived groups", async () => {
-      (getCachedUserGroups as jest.Mock).mockResolvedValue([]);
+      (getUserGroups as jest.Mock).mockResolvedValue([]);
 
       render(await MyContent({ searchParams: { contentType: "archived" } }));
 
@@ -431,7 +428,7 @@ describe("MyContent", () => {
     });
 
     it("handles groups with undefined members", async () => {
-      (getCachedUserGroups as jest.Mock).mockResolvedValue([
+      (getUserGroups as jest.Mock).mockResolvedValue([
         {
           id: 1,
           groupName: "Group Without Members",
@@ -448,7 +445,7 @@ describe("MyContent", () => {
     });
 
     it("handles groups with undefined users_archived", async () => {
-      (getCachedUserGroups as jest.Mock).mockResolvedValue([
+      (getUserGroups as jest.Mock).mockResolvedValue([
         {
           id: 1,
           groupName: "Group",
@@ -466,7 +463,7 @@ describe("MyContent", () => {
     });
 
     it("handles groups with null members", async () => {
-      (getCachedUserGroups as jest.Mock).mockResolvedValue([
+      (getUserGroups as jest.Mock).mockResolvedValue([
         {
           id: 1,
           groupName: "Group With Null Members",
@@ -483,7 +480,7 @@ describe("MyContent", () => {
     });
 
     it("handles empty members array", async () => {
-      (getCachedUserGroups as jest.Mock).mockResolvedValue([
+      (getUserGroups as jest.Mock).mockResolvedValue([
         {
           id: 1,
           groupName: "Group With Empty Members",
@@ -519,9 +516,7 @@ describe("MyContent", () => {
         },
       ];
 
-      (getCachedUserGroups as jest.Mock).mockResolvedValue(
-        multipleActiveGroups,
-      );
+      (getUserGroups as jest.Mock).mockResolvedValue(multipleActiveGroups);
 
       render(await MyContent({ searchParams: { contentType: "groups" } }));
 

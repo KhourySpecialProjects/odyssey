@@ -1,11 +1,9 @@
 import { render, screen } from "@testing-library/react";
 import { EnrolledDropletsGrid } from "@/components/dashboard/enrolled-droplets-grid";
 import { getCurrentUser } from "@/lib/auth/session";
-import {
-  getCachedUserDashboardFull,
-  getCachedEnrollmentsFavorites,
-  getCachedUserDueDates,
-} from "@/lib/requests/cached";
+import { getCachedUser } from "@/lib/requests/cached";
+import { getCachedEnrollmentsDashboard } from "@/lib/requests/cached";
+import { getUserDueDates } from "@/lib/requests/groups";
 import { Enrollment } from "@/types";
 
 jest.mock("@/lib/auth/session", () => ({
@@ -13,9 +11,12 @@ jest.mock("@/lib/auth/session", () => ({
 }));
 
 jest.mock("@/lib/requests/cached", () => ({
-  getCachedUserDashboardFull: jest.fn(),
-  getCachedEnrollmentsFavorites: jest.fn(),
-  getCachedUserDueDates: jest.fn(),
+  getCachedUser: jest.fn(),
+  getCachedEnrollmentsDashboard: jest.fn(),
+}));
+
+jest.mock("@/lib/requests/groups", () => ({
+  getUserDueDates: jest.fn(),
 }));
 
 jest.mock("@/components/dashboard/enrolled-droplets-grid-client", () => ({
@@ -55,14 +56,12 @@ describe("EnrolledDropletsGrid", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     (getCurrentUser as jest.Mock).mockResolvedValue(mockUser);
-    (getCachedUserDashboardFull as jest.Mock).mockResolvedValue(
-      mockAuthorizedUser,
-    );
-    (getCachedUserDueDates as jest.Mock).mockResolvedValue([]);
+    (getCachedUser as jest.Mock).mockResolvedValue(mockAuthorizedUser);
+    (getUserDueDates as jest.Mock).mockResolvedValue([]);
   });
 
   it("displays a message when no enrolled droplets are found", async () => {
-    (getCachedEnrollmentsFavorites as jest.Mock).mockResolvedValue([]);
+    (getCachedEnrollmentsDashboard as jest.Mock).mockResolvedValue([]);
 
     render(await EnrolledDropletsGrid({}));
 
@@ -78,10 +77,8 @@ describe("EnrolledDropletsGrid", () => {
     const mockEnrollments = [] as Enrollment[];
 
     (getCurrentUser as jest.Mock).mockResolvedValue(mockUser);
-    (getCachedUserDashboardFull as jest.Mock).mockResolvedValue(
-      mockAuthorizedUser,
-    );
-    (getCachedEnrollmentsFavorites as jest.Mock).mockResolvedValue(
+    (getCachedUser as jest.Mock).mockResolvedValue(mockAuthorizedUser);
+    (getCachedEnrollmentsDashboard as jest.Mock).mockResolvedValue(
       mockEnrollments,
     );
 
@@ -106,7 +103,7 @@ describe("EnrolledDropletsGrid", () => {
       },
     ];
 
-    (getCachedEnrollmentsFavorites as jest.Mock).mockResolvedValue(
+    (getCachedEnrollmentsDashboard as jest.Mock).mockResolvedValue(
       mockEnrollments,
     );
 
@@ -136,13 +133,13 @@ describe("EnrolledDropletsGrid", () => {
       },
     ];
 
-    (getCachedEnrollmentsFavorites as jest.Mock).mockResolvedValue(
+    (getCachedEnrollmentsDashboard as jest.Mock).mockResolvedValue(
       mockEnrollments,
     );
 
     await EnrolledDropletsGrid({});
 
-    expect(getCachedUserDueDates).toHaveBeenCalledWith(1);
+    expect(getUserDueDates).toHaveBeenCalledWith(1);
   });
 
   describe("EnrolledDropletsGrid", () => {

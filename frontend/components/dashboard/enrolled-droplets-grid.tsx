@@ -4,12 +4,10 @@ import {
   MessageHeader,
 } from "@/components/message";
 import { getCurrentUser } from "@/lib/auth/session";
-import {
-  getCachedUserDashboardFull,
-  getCachedEnrollmentsFavorites,
-  getCachedUserDueDates,
-} from "@/lib/requests/cached";
+import { getCachedUser } from "@/lib/requests/cached";
+import { getCachedEnrollmentsDashboard } from "@/lib/requests/cached";
 import { EnrolledDropletsGridClient } from "./enrolled-droplets-grid-client";
+import { getUserDueDates } from "@/lib/requests/groups";
 
 interface Lesson {
   id: number;
@@ -31,8 +29,8 @@ export async function EnrolledDropletsGrid({
   const user = await getCurrentUser();
   if (!user?.email) return null;
 
-  const authorizedUser = await getCachedUserDashboardFull(user.email);
-  const enrollments = await getCachedEnrollmentsFavorites(authorizedUser.id);
+  const authorizedUser = await getCachedUser(user.email);
+  const enrollments = await getCachedEnrollmentsDashboard(authorizedUser.id);
 
   const filteredEnrollments = enrollments.filter((e) => e.isArchived !== true);
 
@@ -73,7 +71,7 @@ export async function EnrolledDropletsGrid({
     );
   }
 
-  const dueDates = await getCachedUserDueDates(authorizedUser.id);
+  const dueDates = await getUserDueDates(authorizedUser.id);
 
   return (
     <EnrolledDropletsGridClient

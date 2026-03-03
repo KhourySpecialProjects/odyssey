@@ -1,14 +1,12 @@
 import { getCurrentUser } from "@/lib/auth/session";
-import {
-  getCachedUserDashboardFull,
-  getCachedEnrollmentsFavorites,
-  getCachedUserDueDates,
-} from "@/lib/requests/cached";
+import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
+import { getCachedEnrollmentsWithLessonIds } from "@/lib/requests/cached";
 import {
   Message,
   MessageDescription,
   MessageHeader,
 } from "@/components/message";
+import { getUserDueDates } from "@/lib/requests/groups";
 import { UserPlaylistsClient } from "./user-playlists-client";
 import { Lesson, Playlist } from "@/types";
 
@@ -16,9 +14,36 @@ export async function UserPlaylistsGrid({ sortKey }: { sortKey?: string }) {
   const user = await getCurrentUser();
   if (!user?.email) return null;
 
-  const authorizedUser = await getCachedUserDashboardFull(user.email);
+  const authorizedUser = await getAuthorizedUserByEmail(user.email, {
+    populate: {
+      playlists: {
+        populate: {
+          droplets: {
+            populate: {
+              lessons: {
+                fields: ["id", "name", "slug"],
+              },
+            },
+          },
+          users_archived: {
+            fields: ["*"],
+          },
+        },
+      },
+      groups: {
+        populate: {
+          playlists: {
+            fields: ["id"],
+          },
+        },
+        fields: ["id", "playlistDueDates"],
+      },
+    },
+  });
 
-  const enrollments = await getCachedEnrollmentsFavorites(authorizedUser.id);
+  const enrollments = await getCachedEnrollmentsWithLessonIds(
+    authorizedUser.id,
+  );
   const completedLessonIds = enrollments.flatMap(
     (enrollment) =>
       enrollment.viewedLessons?.map((lesson: Lesson) => lesson.id) || [],
@@ -65,7 +90,7 @@ export async function UserPlaylistsGrid({ sortKey }: { sortKey?: string }) {
     );
   }
 
-  const dueDates = await getCachedUserDueDates(authorizedUser.id);
+  const dueDates = await getUserDueDates(authorizedUser.id);
   if (sortKey) {
     const [field, direction] = sortKey.split(":");
     if (field === "name") {

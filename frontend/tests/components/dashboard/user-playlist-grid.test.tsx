@@ -1,20 +1,24 @@
 import { render, screen } from "@testing-library/react";
 import { UserPlaylistsGrid } from "@/components/dashboard/user-playlists-grid";
 import { getCurrentUser } from "@/lib/auth/session";
-import {
-  getCachedUserDashboardFull,
-  getCachedEnrollmentsFavorites,
-  getCachedUserDueDates,
-} from "@/lib/requests/cached";
+import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
+import { getCachedEnrollmentsWithLessonIds } from "@/lib/requests/cached";
+import { getUserDueDates } from "@/lib/requests/groups";
 
 jest.mock("@/lib/auth/session", () => ({
   getCurrentUser: jest.fn(),
 }));
 
+jest.mock("@/lib/requests/authorized-user", () => ({
+  getAuthorizedUserByEmail: jest.fn(),
+}));
+
 jest.mock("@/lib/requests/cached", () => ({
-  getCachedUserDashboardFull: jest.fn(),
-  getCachedEnrollmentsFavorites: jest.fn(),
-  getCachedUserDueDates: jest.fn(),
+  getCachedEnrollmentsWithLessonIds: jest.fn(),
+}));
+
+jest.mock("@/lib/requests/groups", () => ({
+  getUserDueDates: jest.fn(),
 }));
 
 jest.mock("@/components/playlists/playlist-card", () => ({
@@ -50,11 +54,11 @@ describe("UserPlaylistsGrid", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     (getCurrentUser as jest.Mock).mockResolvedValue(mockUser);
-    (getCachedUserDashboardFull as jest.Mock).mockResolvedValue(
+    (getAuthorizedUserByEmail as jest.Mock).mockResolvedValue(
       mockAuthorizedUser,
     );
-    (getCachedEnrollmentsFavorites as jest.Mock).mockResolvedValue([]);
-    (getCachedUserDueDates as jest.Mock).mockResolvedValue([]);
+    (getCachedEnrollmentsWithLessonIds as jest.Mock).mockResolvedValue([]);
+    (getUserDueDates as jest.Mock).mockResolvedValue([]);
   });
 
   it("displays a message when no playlists are found", async () => {
@@ -85,7 +89,7 @@ describe("UserPlaylistsGrid", () => {
       playlists: mockPlaylists,
     };
 
-    (getCachedUserDashboardFull as jest.Mock).mockResolvedValue(
+    (getAuthorizedUserByEmail as jest.Mock).mockResolvedValue(
       mockUserWithPlaylists,
     );
 
@@ -112,7 +116,7 @@ describe("UserPlaylistsGrid", () => {
       playlists: mockPlaylists,
     };
 
-    (getCachedUserDashboardFull as jest.Mock).mockResolvedValue(
+    (getAuthorizedUserByEmail as jest.Mock).mockResolvedValue(
       mockUserWithPlaylists,
     );
 
@@ -150,10 +154,10 @@ describe("UserPlaylistsGrid", () => {
       },
     ];
 
-    (getCachedUserDashboardFull as jest.Mock).mockResolvedValue(
+    (getAuthorizedUserByEmail as jest.Mock).mockResolvedValue(
       mockUserWithPlaylists,
     );
-    (getCachedEnrollmentsFavorites as jest.Mock).mockResolvedValue(
+    (getCachedEnrollmentsWithLessonIds as jest.Mock).mockResolvedValue(
       mockEnrollments,
     );
 
@@ -193,12 +197,12 @@ describe("UserPlaylistsGrid", () => {
     beforeEach(() => {
       jest.clearAllMocks();
       (getCurrentUser as jest.Mock).mockResolvedValue(mockUser);
-      (getCachedUserDashboardFull as jest.Mock).mockResolvedValue({
+      (getAuthorizedUserByEmail as jest.Mock).mockResolvedValue({
         ...mockUser,
         playlists: mockPlaylists,
       });
-      (getCachedEnrollmentsFavorites as jest.Mock).mockResolvedValue([]);
-      (getCachedUserDueDates as jest.Mock).mockResolvedValue([]);
+      (getCachedEnrollmentsWithLessonIds as jest.Mock).mockResolvedValue([]);
+      (getUserDueDates as jest.Mock).mockResolvedValue([]);
     });
 
     it("should render public and private playlists correctly", async () => {

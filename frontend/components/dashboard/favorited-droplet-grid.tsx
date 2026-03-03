@@ -4,10 +4,8 @@ import {
   MessageHeader,
 } from "@/components/message";
 import { getCurrentUser } from "@/lib/auth/session";
-import {
-  getCachedUserDashboardFull,
-  getCachedEnrollmentsFavorites,
-} from "@/lib/requests/cached";
+import { getCachedUser } from "@/lib/requests/cached";
+import { getCachedEnrollmentsFavorites } from "@/lib/requests/cached";
 import { EnrolledDropletsGridClient } from "./enrolled-droplets-grid-client";
 import { Lesson } from "@/types";
 
@@ -15,7 +13,7 @@ export async function FavoriteDropletsGrid({ sortKey }: { sortKey?: string }) {
   const user = await getCurrentUser();
   if (!user?.email) return null;
 
-  const authorizedUser = await getCachedUserDashboardFull(user.email);
+  const authorizedUser = await getCachedUser(user.email);
   const enrollments = await getCachedEnrollmentsFavorites(authorizedUser.id);
 
   // Fixed: Added return and compare IDs instead of objects
