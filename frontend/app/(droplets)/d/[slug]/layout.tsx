@@ -1,7 +1,10 @@
 import Sidebar from "@/components/droplets/sidebar";
-import { getCachedUser } from "@/lib/requests/cached";
+import {
+  getCachedUser,
+  getCachedEnrollmentsWithLessonIds,
+  getCachedDropletBySlug,
+} from "@/lib/requests/cached";
 import { getDropletBySlug } from "@/lib/requests/droplet";
-import { getCachedEnrollmentsWithLessonIds } from "@/lib/requests/cached";
 import { Metadata } from "next/types";
 import { AuthorizedUser, Droplet } from "@/types";
 import { getCurrentUser } from "@/lib/auth/session";
@@ -35,9 +38,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function RootLayout({ params, children }: Props) {
   const { slug } = await params;
-  const user = await getCurrentUser();
+  const [user, droplet] = await Promise.all([
+    getCurrentUser(),
+    getCachedDropletBySlug(slug),
+  ]);
 
   if (!user) return notFound();
+  if (!droplet) return notFound();
 
   let completedLessonIds: number[] = [];
   let authorizedUser: AuthorizedUser | null = null;
@@ -45,26 +52,9 @@ export default async function RootLayout({ params, children }: Props) {
 
   if (user?.email) {
     authorizedUser = (await getCachedUser(user.email)) as AuthorizedUser;
-  }
-
-  // Fetch droplet first
-  const droplet = await getDropletBySlug<Droplet>(slug, {
-    fields: ["*"],
-    populate: {
-      authorized_users: { populate: "*" },
-      learningObjectives: { populate: "*" },
-      lessons: { populate: "*" },
-      tags: { populate: "*" },
-      prerequisites: { populate: ["id", "name", "slug"] },
-      postrequisites: { populate: ["id", "name", "slug"] },
-    },
-  });
-
-  if (!droplet) return notFound();
-
-  if (user?.email) {
-    const sessionUser = await getCachedUser(user.email);
-    const enrollments = await getCachedEnrollmentsWithLessonIds(sessionUser.id);
+    const enrollments = await getCachedEnrollmentsWithLessonIds(
+      authorizedUser.id,
+    );
 
     const currentEnrollment = enrollments.find(
       (enrollment) => enrollment.droplet?.id === droplet.id,
