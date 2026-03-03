@@ -140,7 +140,7 @@ export async function getRandomFunFactDroplet({
   },
   pagination = { pageSize: 1000, page: 1 },
   populate,
-  fields = ["*"],
+  fields = ["id", "name", "slug", "funFact"],
 }: StrapiRequestParams = {}): Promise<Droplet[]> {
   const path = `/droplets`;
   const urlParams = {

@@ -814,7 +814,6 @@ function convertSingleBlock(blockAny: any, blockIndex: number): Block | null {
     case "code-block": {
       // Code blocks need special handling - render them as a custom component
       // We'll create a simple code display block that respects the editable/runnable props
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const language = blockAny.props?.language || "javascript";
       const code = blockAny.props?.code || "";
       const editable = blockAny.props?.editable || false;

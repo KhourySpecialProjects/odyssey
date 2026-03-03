@@ -1,5 +1,7 @@
 import { DropletTile } from "@/components/droplets/droplet-tile";
-import { getDroplets } from "@/lib/requests/droplet";
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import { getDropletBySlug, getDroplets } from "@/lib/requests/droplet";
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { Droplet } from "@/types";
 import { GoalIcon, Link2Icon } from "lucide-react";
 import { Metadata } from "next";
