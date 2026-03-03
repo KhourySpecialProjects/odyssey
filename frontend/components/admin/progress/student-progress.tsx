@@ -1,5 +1,5 @@
 import { getCurrentUser } from "@/lib/auth/session";
-import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
+import { getCachedEnrollmentsWithLessonIds } from "@/lib/requests/cached";
 import { StudentProgressList } from "./student-progress-list";
 import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
 
@@ -16,7 +16,23 @@ export async function StudentProgress() {
   const user = await getCurrentUser();
   if (!user?.email) return null;
 
-  const author = await getAuthorizedUserByEmail(user.email);
+  const author = await getAuthorizedUserByEmail(user.email, {
+    fields: ["id"],
+    populate: {
+      created_playlists: {
+        fields: ["id", "name"],
+        populate: {
+          authorized_users: { fields: ["id", "email"] },
+          droplets: {
+            fields: ["id"],
+            populate: {
+              lessons: { fields: ["id"] },
+            },
+          },
+        },
+      },
+    },
+  });
   if (!author) return null;
 
   const playlists = author.created_playlists;
@@ -26,7 +42,7 @@ export async function StudentProgress() {
     playlists.map(async (playlist) => {
       const usersWithProgress = await Promise.all(
         (playlist.authorized_users || []).map(async (user: AuthorizedUser) => {
-          const enrollments = await getEnrollmentsByAuthorizedUser(user.id);
+          const enrollments = await getCachedEnrollmentsWithLessonIds(user.id);
           const completedLessonIds = enrollments.flatMap(
             (enrollment) =>
               enrollment.viewedLessons?.map((lesson: Lesson) => lesson.id) ||

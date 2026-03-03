@@ -3,6 +3,7 @@
 import { Enrollment, Lesson } from "@/types";
 import { StrapiRequestParams } from "@/types/strapi";
 import { fetchAPI } from "../utils";
+import { ENROLLMENT_POPULATES } from "./enrollment-populates";
 
 import { getCurrentUser } from "@/lib/auth/session";
 import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
@@ -25,25 +26,7 @@ export async function getEnrollmentsByAuthorizedUser(
     sort,
     filters,
     pagination = { pageSize: 250, page: 1 },
-    populate = {
-      droplet: {
-        populate: {
-          lessons: {
-            fields: ["id", "name", "slug"],
-          },
-          tags: {
-            fields: ["*"],
-          },
-          usersFavorited: {
-            fields: "*",
-          },
-        },
-        fields: ["id", "*"],
-      },
-      viewedLessons: {
-        fields: ["id", "name", "slug"],
-      },
-    },
+    populate = ENROLLMENT_POPULATES.minimal,
     fields = [
       "id",
       "rating",
@@ -71,8 +54,58 @@ export async function getEnrollmentsByAuthorizedUser(
   return await fetchAPI<Enrollment[]>(path, {
     urlParams,
     next: { tags: ["enrollments"], revalidate: 0 },
-    cache: "no-store",
   });
+}
+
+/**
+ * Fetches enrollments for multiple members filtered to specific droplets in a
+ * single paginated Strapi query. Replaces N per-member calls with 1 batched call.
+ */
+export async function getEnrollmentsForGroupMembers(
+  memberIds: number[],
+  groupDropletIds: number[],
+): Promise<Enrollment[]> {
+  const path = `/enrollments`;
+  const pageSize = 250;
+  let page = 1;
+  let allEnrollments: Enrollment[] = [];
+
+  while (true) {
+    const urlParams = {
+      filters: {
+        $and: [
+          { authorizedUser: { id: { $in: memberIds } } },
+          { droplet: { id: { $in: groupDropletIds } } },
+        ],
+      },
+      populate: {
+        droplet: {
+          populate: {
+            lessons: { fields: ["id", "name", "slug"] },
+          },
+          fields: ["id"],
+        },
+        viewedLessons: { fields: ["id", "name", "slug"] },
+        authorizedUser: { fields: ["id"] },
+      },
+      fields: ["id", "isComplete", "completionDate"],
+      pagination: { page, pageSize },
+    };
+
+    const enrollmentsPage = await fetchAPI<Enrollment[]>(path, {
+      urlParams,
+      next: { tags: ["enrollments"], revalidate: 0 },
+    });
+
+    if (!enrollmentsPage || enrollmentsPage.length === 0) break;
+
+    allEnrollments = allEnrollments.concat(enrollmentsPage);
+
+    if (enrollmentsPage.length < pageSize) break;
+    page++;
+  }
+
+  return allEnrollments;
 }
 
 /**
@@ -322,7 +355,6 @@ export async function fetchEnrollmentMetadata({
       };
     }>(path, {
       urlParams,
-      next: { tags: ["enrollments"], revalidate: 0 },
       cache: "no-store",
       flattenResponse: false,
     });

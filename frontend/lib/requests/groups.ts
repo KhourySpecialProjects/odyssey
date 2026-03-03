@@ -3,13 +3,16 @@
 import { Group } from "@/types";
 import { StrapiRequestParams } from "@/types/strapi";
 import { fetchAPI } from "@/lib/utils";
-import { getAuthorizedUserByEmail } from "./authorized-user";
+import {
+  getAuthorizedUserByEmail,
+  getAuthorizedUsersByEmails,
+  createAuthorizedUser,
+} from "./authorized-user";
 import type { Droplet, DueDate, Playlist } from "@/types";
 import { revalidatePath, revalidateTag } from "next/cache";
 import { enrollInPlaylist } from "./playlist-enrollment";
 import { getCurrentUser } from "../auth/session";
 import { createEnrollmentFromEmail } from "./enrollment";
-import { createAuthorizedUser } from "./authorized-user";
 
 const STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
@@ -552,29 +555,36 @@ export async function updateGroup(
 async function ensureAuthorizedUsers(
   emails: string[],
 ): Promise<Array<{ id: number; email: string }>> {
-  const results = [];
+  if (emails.length === 0) return [];
 
-  for (const email of emails) {
-    try {
-      const existingUser = await getAuthorizedUserByEmail(email);
-      if (existingUser) {
-        results.push({ id: existingUser.id, email });
-      } else {
-        const formData = new FormData();
-        formData.append("email", email);
-        formData.append("isEnabled", "true");
-        const newUser = await createAuthorizedUser(formData);
-        const newUserData = await getAuthorizedUserByEmail(email);
-        if (newUser.ok && newUserData) {
-          results.push({ id: newUserData.id, email });
+  const existingUsers = await getAuthorizedUsersByEmails(emails);
+
+  const existingEmailSet = new Set(
+    existingUsers.map((u) => u.email.toLowerCase()),
+  );
+  const missingEmails = emails.filter(
+    (e) => !existingEmailSet.has(e.toLowerCase()),
+  );
+
+  if (missingEmails.length > 0) {
+    await Promise.all(
+      missingEmails.map(async (email) => {
+        try {
+          const formData = new FormData();
+          formData.append("email", email);
+          formData.append("isEnabled", "true");
+          await createAuthorizedUser(formData);
+        } catch (error) {
+          console.error(`Failed to create user: ${email}`, error);
         }
-      }
-    } catch (error) {
-      console.error(`Failed to process email: ${email}`, error);
-    }
+      }),
+    );
+
+    const newUsers = await getAuthorizedUsersByEmails(missingEmails);
+    existingUsers.push(...newUsers);
   }
 
-  return results;
+  return existingUsers.map((u) => ({ id: u.id, email: u.email }));
 }
 
 export async function enrollUsers(group: Group) {
@@ -876,16 +886,11 @@ export async function getGroupDueDates(
     },
     fields: [...(fields || []), "dueDate"],
     pagination,
-    revalidate: 0,
   };
 
   return await fetchAPI<DueDate[]>(path, {
     urlParams,
     cache: "no-store",
-    next: {
-      revalidate: 0,
-      tags: ["due-dates"],
-    },
   });
 }
 
@@ -915,13 +920,11 @@ export async function getUserDueDates(
     },
     fields: [...(fields || []), "dueDate"],
     pagination,
-    revalidate: 0,
-    cache: "no-store",
   };
 
   return await fetchAPI<DueDate[]>(path, {
     urlParams,
-    next: { tags: ["due-dates"], revalidate: 0 },
+    cache: "no-store",
   });
 }
 

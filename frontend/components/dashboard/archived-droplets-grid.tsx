@@ -4,8 +4,10 @@ import {
   MessageHeader,
 } from "@/components/message";
 import { getCurrentUser } from "@/lib/auth/session";
-import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
-import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
+import {
+  getCachedUserDashboardFull,
+  getCachedEnrollmentsFavorites,
+} from "@/lib/requests/cached";
 import { EnrolledDropletsGridClient } from "./enrolled-droplets-grid-client";
 
 interface Lesson {
@@ -18,8 +20,8 @@ export async function ArchivedDropletsGrid({ sortKey }: { sortKey?: string }) {
   const user = await getCurrentUser();
   if (!user?.email) return null;
 
-  const authorizedUser = await getAuthorizedUserByEmail(user.email);
-  const enrollments = await getEnrollmentsByAuthorizedUser(authorizedUser.id);
+  const authorizedUser = await getCachedUserDashboardFull(user.email);
+  const enrollments = await getCachedEnrollmentsFavorites(authorizedUser.id);
 
   const filteredEnrollments = enrollments.filter((e) => e.isArchived === true);
 

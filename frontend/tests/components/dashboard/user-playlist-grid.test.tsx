@@ -1,24 +1,20 @@
 import { render, screen } from "@testing-library/react";
 import { UserPlaylistsGrid } from "@/components/dashboard/user-playlists-grid";
 import { getCurrentUser } from "@/lib/auth/session";
-import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
-import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
-import { getUserDueDates } from "@/lib/requests/groups";
+import {
+  getCachedUserDashboardFull,
+  getCachedEnrollmentsFavorites,
+  getCachedUserDueDates,
+} from "@/lib/requests/cached";
 
 jest.mock("@/lib/auth/session", () => ({
   getCurrentUser: jest.fn(),
 }));
 
-jest.mock("@/lib/requests/authorized-user", () => ({
-  getAuthorizedUserByEmail: jest.fn(),
-}));
-
-jest.mock("@/lib/requests/enrollment", () => ({
-  getEnrollmentsByAuthorizedUser: jest.fn(),
-}));
-
-jest.mock("@/lib/requests/groups", () => ({
-  getUserDueDates: jest.fn(),
+jest.mock("@/lib/requests/cached", () => ({
+  getCachedUserDashboardFull: jest.fn(),
+  getCachedEnrollmentsFavorites: jest.fn(),
+  getCachedUserDueDates: jest.fn(),
 }));
 
 jest.mock("@/components/playlists/playlist-card", () => ({
@@ -54,11 +50,11 @@ describe("UserPlaylistsGrid", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     (getCurrentUser as jest.Mock).mockResolvedValue(mockUser);
-    (getAuthorizedUserByEmail as jest.Mock).mockResolvedValue(
+    (getCachedUserDashboardFull as jest.Mock).mockResolvedValue(
       mockAuthorizedUser,
     );
-    (getEnrollmentsByAuthorizedUser as jest.Mock).mockResolvedValue([]);
-    (getUserDueDates as jest.Mock).mockResolvedValue([]);
+    (getCachedEnrollmentsFavorites as jest.Mock).mockResolvedValue([]);
+    (getCachedUserDueDates as jest.Mock).mockResolvedValue([]);
   });
 
   it("displays a message when no playlists are found", async () => {
@@ -89,7 +85,7 @@ describe("UserPlaylistsGrid", () => {
       playlists: mockPlaylists,
     };
 
-    (getAuthorizedUserByEmail as jest.Mock).mockResolvedValue(
+    (getCachedUserDashboardFull as jest.Mock).mockResolvedValue(
       mockUserWithPlaylists,
     );
 
@@ -116,7 +112,7 @@ describe("UserPlaylistsGrid", () => {
       playlists: mockPlaylists,
     };
 
-    (getAuthorizedUserByEmail as jest.Mock).mockResolvedValue(
+    (getCachedUserDashboardFull as jest.Mock).mockResolvedValue(
       mockUserWithPlaylists,
     );
 
@@ -154,10 +150,10 @@ describe("UserPlaylistsGrid", () => {
       },
     ];
 
-    (getAuthorizedUserByEmail as jest.Mock).mockResolvedValue(
+    (getCachedUserDashboardFull as jest.Mock).mockResolvedValue(
       mockUserWithPlaylists,
     );
-    (getEnrollmentsByAuthorizedUser as jest.Mock).mockResolvedValue(
+    (getCachedEnrollmentsFavorites as jest.Mock).mockResolvedValue(
       mockEnrollments,
     );
 
@@ -172,22 +168,6 @@ describe("UserPlaylistsGrid", () => {
     const result = await UserPlaylistsGrid({});
     expect(result).toBeNull();
   });
-
-  jest.mock("@/lib/auth/session", () => ({
-    getCurrentUser: jest.fn(),
-  }));
-
-  jest.mock("@/lib/requests/authorized-user", () => ({
-    getAuthorizedUserByEmail: jest.fn(),
-  }));
-
-  jest.mock("@/lib/requests/enrollment", () => ({
-    getEnrollmentsByAuthorizedUser: jest.fn(),
-  }));
-
-  jest.mock("@/lib/requests/groups", () => ({
-    getUserDueDates: jest.fn(),
-  }));
 
   describe("UserPlaylistsGrid", () => {
     const mockUser = {
@@ -213,12 +193,12 @@ describe("UserPlaylistsGrid", () => {
     beforeEach(() => {
       jest.clearAllMocks();
       (getCurrentUser as jest.Mock).mockResolvedValue(mockUser);
-      (getAuthorizedUserByEmail as jest.Mock).mockResolvedValue({
+      (getCachedUserDashboardFull as jest.Mock).mockResolvedValue({
         ...mockUser,
         playlists: mockPlaylists,
       });
-      (getEnrollmentsByAuthorizedUser as jest.Mock).mockResolvedValue([]);
-      (getUserDueDates as jest.Mock).mockResolvedValue([]);
+      (getCachedEnrollmentsFavorites as jest.Mock).mockResolvedValue([]);
+      (getCachedUserDueDates as jest.Mock).mockResolvedValue([]);
     });
 
     it("should render public and private playlists correctly", async () => {

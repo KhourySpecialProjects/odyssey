@@ -1,10 +1,10 @@
 import { render, screen, waitFor } from "@testing-library/react";
-import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
+import { getCachedEnrollmentsWithLessonIds } from "@/lib/requests/cached";
 import { FriendCompletedDroplets } from "@/components/friends/friend-completed-droplets";
 import { TimeZone } from "@/types";
 
-jest.mock("@/lib/requests/enrollment", () => ({
-  getEnrollmentsByAuthorizedUser: jest.fn(() => Promise.resolve([])),
+jest.mock("@/lib/requests/cached", () => ({
+  getCachedEnrollmentsWithLessonIds: jest.fn(() => Promise.resolve([])),
 }));
 
 jest.mock("@/components/friends/friend-completed-droplets-list", () => ({
@@ -69,7 +69,7 @@ describe("FriendCompletedDroplets", () => {
       },
     ];
 
-    (getEnrollmentsByAuthorizedUser as jest.Mock).mockResolvedValueOnce(
+    (getCachedEnrollmentsWithLessonIds as jest.Mock).mockResolvedValueOnce(
       mockEnrollments,
     );
 
@@ -83,7 +83,7 @@ describe("FriendCompletedDroplets", () => {
   });
 
   it("shows no completed droplets message when none available", async () => {
-    (getEnrollmentsByAuthorizedUser as jest.Mock).mockResolvedValueOnce([]);
+    (getCachedEnrollmentsWithLessonIds as jest.Mock).mockResolvedValueOnce([]);
 
     render(<FriendCompletedDroplets friend={mockFriend} />);
 
@@ -112,7 +112,7 @@ describe("FriendCompletedDroplets", () => {
       },
     ];
 
-    (getEnrollmentsByAuthorizedUser as jest.Mock).mockResolvedValueOnce(
+    (getCachedEnrollmentsWithLessonIds as jest.Mock).mockResolvedValueOnce(
       mockEnrollments,
     );
 

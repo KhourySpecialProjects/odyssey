@@ -1,4 +1,4 @@
-import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
+import { getCachedUserSocial } from "@/lib/requests/cached";
 import { FriendSentRequestsBlock } from "./friend-sent-requests-block";
 import { getCurrentUser } from "@/lib/auth/session";
 import { notFound } from "next/navigation";
@@ -6,7 +6,7 @@ import { notFound } from "next/navigation";
 export async function FriendSentRequests() {
   const user = await getCurrentUser();
   if (!user || !user?.email) return notFound();
-  const authUser = await getAuthorizedUserByEmail(user.email);
+  const authUser = await getCachedUserSocial(user.email);
   const sentRequests = authUser.sent_requests
     .filter(
       (friend) =>

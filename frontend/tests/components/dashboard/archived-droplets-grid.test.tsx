@@ -1,21 +1,19 @@
 import { render, screen } from "@testing-library/react";
 import { ArchivedDropletsGrid } from "@/components/dashboard/archived-droplets-grid";
 import { getCurrentUser } from "@/lib/auth/session";
-import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
-import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
+import {
+  getCachedUserDashboardFull,
+  getCachedEnrollmentsFavorites,
+} from "@/lib/requests/cached";
 import { Enrollment } from "@/types";
 
 jest.mock("@/lib/auth/session", () => ({
   getCurrentUser: jest.fn(),
 }));
 
-jest.mock("@/lib/requests/authorized-user", () => ({
-  getAuthorizedUserByEmail: jest.fn(),
-}));
-
-jest.mock("@/lib/requests/enrollment", () => ({
-  getEnrollmentsByAuthorizedUser: jest.fn(),
-  calculateDropletAverageRating: jest.fn(),
+jest.mock("@/lib/requests/cached", () => ({
+  getCachedUserDashboardFull: jest.fn(),
+  getCachedEnrollmentsFavorites: jest.fn(),
 }));
 
 jest.mock("@/components/dashboard/enrolled-droplets-grid-client", () => ({
@@ -59,13 +57,13 @@ describe("ArchivedDropletsGrid", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     (getCurrentUser as jest.Mock).mockResolvedValue(mockUser);
-    (getAuthorizedUserByEmail as jest.Mock).mockResolvedValue(
+    (getCachedUserDashboardFull as jest.Mock).mockResolvedValue(
       mockAuthorizedUser,
     );
   });
 
   it("displays a message when no archived droplets are found", async () => {
-    (getEnrollmentsByAuthorizedUser as jest.Mock).mockResolvedValue([]);
+    (getCachedEnrollmentsFavorites as jest.Mock).mockResolvedValue([]);
 
     render(await ArchivedDropletsGrid({}));
 
@@ -81,10 +79,10 @@ describe("ArchivedDropletsGrid", () => {
     const mockEnrollments = [] as Enrollment[];
 
     (getCurrentUser as jest.Mock).mockResolvedValue(mockUser);
-    (getAuthorizedUserByEmail as jest.Mock).mockResolvedValue(
+    (getCachedUserDashboardFull as jest.Mock).mockResolvedValue(
       mockAuthorizedUser,
     );
-    (getEnrollmentsByAuthorizedUser as jest.Mock).mockResolvedValue(
+    (getCachedEnrollmentsFavorites as jest.Mock).mockResolvedValue(
       mockEnrollments,
     );
 
@@ -109,7 +107,7 @@ describe("ArchivedDropletsGrid", () => {
       },
     ];
 
-    (getEnrollmentsByAuthorizedUser as jest.Mock).mockResolvedValue(
+    (getCachedEnrollmentsFavorites as jest.Mock).mockResolvedValue(
       mockEnrollments,
     );
 
@@ -124,18 +122,6 @@ describe("ArchivedDropletsGrid", () => {
     const result = await ArchivedDropletsGrid({});
     expect(result).toBeNull();
   });
-
-  jest.mock("@/lib/auth/session", () => ({
-    getCurrentUser: jest.fn(),
-  }));
-
-  jest.mock("@/lib/requests/authorized-user", () => ({
-    getAuthorizedUserByEmail: jest.fn(),
-  }));
-
-  jest.mock("@/lib/requests/enrollment", () => ({
-    getEnrollmentsByAuthorizedUser: jest.fn(),
-  }));
 
   describe("Droplets Grid Components", () => {
     const mockUser = {
@@ -165,8 +151,8 @@ describe("ArchivedDropletsGrid", () => {
     beforeEach(() => {
       jest.clearAllMocks();
       (getCurrentUser as jest.Mock).mockResolvedValue(mockUser);
-      (getAuthorizedUserByEmail as jest.Mock).mockResolvedValue(mockUser);
-      (getEnrollmentsByAuthorizedUser as jest.Mock).mockResolvedValue(
+      (getCachedUserDashboardFull as jest.Mock).mockResolvedValue(mockUser);
+      (getCachedEnrollmentsFavorites as jest.Mock).mockResolvedValue(
         mockEnrollments,
       );
     });
@@ -188,7 +174,7 @@ describe("ArchivedDropletsGrid", () => {
       beforeEach(() => {
         jest.clearAllMocks();
         (getCurrentUser as jest.Mock).mockResolvedValue(mockUser);
-        (getAuthorizedUserByEmail as jest.Mock).mockResolvedValue(mockUser);
+        (getCachedUserDashboardFull as jest.Mock).mockResolvedValue(mockUser);
       });
 
       it("should calculate 100% completion when all lessons are completed", async () => {
@@ -203,7 +189,7 @@ describe("ArchivedDropletsGrid", () => {
           },
         ];
 
-        (getEnrollmentsByAuthorizedUser as jest.Mock).mockResolvedValue(
+        (getCachedEnrollmentsFavorites as jest.Mock).mockResolvedValue(
           mockEnrollments,
         );
 
@@ -223,7 +209,7 @@ describe("ArchivedDropletsGrid", () => {
           },
         ];
 
-        (getEnrollmentsByAuthorizedUser as jest.Mock).mockResolvedValue(
+        (getCachedEnrollmentsFavorites as jest.Mock).mockResolvedValue(
           mockEnrollments,
         );
 
@@ -243,7 +229,7 @@ describe("ArchivedDropletsGrid", () => {
           },
         ];
 
-        (getEnrollmentsByAuthorizedUser as jest.Mock).mockResolvedValue(
+        (getCachedEnrollmentsFavorites as jest.Mock).mockResolvedValue(
           mockEnrollments,
         );
 
@@ -263,7 +249,7 @@ describe("ArchivedDropletsGrid", () => {
           },
         ];
 
-        (getEnrollmentsByAuthorizedUser as jest.Mock).mockResolvedValue(
+        (getCachedEnrollmentsFavorites as jest.Mock).mockResolvedValue(
           mockEnrollments,
         );
 
@@ -282,7 +268,7 @@ describe("ArchivedDropletsGrid", () => {
           },
         ];
 
-        (getEnrollmentsByAuthorizedUser as jest.Mock).mockResolvedValue(
+        (getCachedEnrollmentsFavorites as jest.Mock).mockResolvedValue(
           mockEnrollments,
         );
 
@@ -301,7 +287,7 @@ describe("ArchivedDropletsGrid", () => {
           },
         ];
 
-        (getEnrollmentsByAuthorizedUser as jest.Mock).mockResolvedValue(
+        (getCachedEnrollmentsFavorites as jest.Mock).mockResolvedValue(
           mockEnrollments,
         );
 
@@ -310,7 +296,7 @@ describe("ArchivedDropletsGrid", () => {
       });
 
       it("should show no archived droplets message when no archived enrollments", async () => {
-        (getEnrollmentsByAuthorizedUser as jest.Mock).mockResolvedValue([]);
+        (getCachedEnrollmentsFavorites as jest.Mock).mockResolvedValue([]);
 
         render(await ArchivedDropletsGrid({}));
         expect(screen.getByText("No Archived Droplets")).toBeInTheDocument();
@@ -336,7 +322,7 @@ describe("ArchivedDropletsGrid", () => {
           },
         ];
 
-        (getEnrollmentsByAuthorizedUser as jest.Mock).mockResolvedValue(
+        (getCachedEnrollmentsFavorites as jest.Mock).mockResolvedValue(
           mockEnrollments,
         );
 

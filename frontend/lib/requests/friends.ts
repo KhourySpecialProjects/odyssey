@@ -508,6 +508,70 @@ export async function fetchFriendshipsById(
   }
 }
 
+/**
+ * Batch-fetches all friendships where any of the given user IDs is a member.
+ * Paginates automatically for large friend networks.
+ */
+export async function fetchFriendshipsByUserIds(
+  userIds: number[],
+): Promise<Friendship[]> {
+  if (userIds.length === 0) return [];
+
+  const pageSize = 250;
+  let page = 1;
+  let allFriendships: Friendship[] = [];
+
+  while (true) {
+    const query = qs.stringify({
+      filters: {
+        authorized_users: {
+          id: { $in: userIds },
+        },
+      },
+      populate: {
+        authorized_users: {
+          fields: [
+            "id",
+            "email",
+            "firstName",
+            "lastName",
+            "bio",
+            "github",
+            "linkedin",
+            "profilePhoto",
+            "website",
+          ],
+          populate: {
+            blocked: { fields: ["id"] },
+            was_blocked: { fields: ["id"] },
+            received_requests: { fields: ["id"] },
+          },
+        },
+      },
+      pagination: { pageSize, page },
+    });
+
+    const response = await fetch(
+      NEXT_PUBLIC_STRAPI_API_URL + "/api/friendships?" + query,
+      {
+        headers: { Authorization: "Bearer " + STRAPI_ACCESS_TOKEN },
+        cache: "no-store",
+      },
+    );
+    const data = await response.json();
+    const friendships = flattenAttributes(data.data);
+
+    if (!friendships || friendships.length === 0) break;
+
+    allFriendships = allFriendships.concat(friendships);
+
+    if (friendships.length < pageSize) break;
+    page++;
+  }
+
+  return allFriendships;
+}
+
 export async function fetchSuggestionsById(
   userId: number,
 ): Promise<AuthorizedUser[]> {
@@ -528,36 +592,29 @@ export async function fetchSuggestionsById(
       ),
     );
 
-    const friendsOfFriends = await Promise.all(
-      directFriends.map(async (friend) => {
-        // Get all friendships for each direct friend
-        const friendFriendships = await fetchFriendshipsById(friend.id);
+    const friendIds = directFriends.map((f) => f.id);
+    const directFriendIdSet = new Set(friendIds);
 
-        // Return all users from these friendships except the direct friend and original user
-        return friendFriendships
-          .flatMap((friendship) =>
-            friendship.authorized_users.filter(
-              (user) =>
-                user.id !== friend.id &&
-                user.id !== userId &&
-                !directFriends.some(
-                  (newUser: AuthorizedUser) => newUser.id === user.id,
-                ) &&
-                !user.was_blocked.some(
-                  (blockedUser: AuthorizedUser) => blockedUser.id === userId,
-                ) &&
-                !user.received_requests.some(
-                  (otherUser: AuthorizedUser) => otherUser.id === userId,
-                ),
+    const allFriendFriendships = await fetchFriendshipsByUserIds(friendIds);
+
+    const friendsOfFriends = allFriendFriendships
+      .flatMap((friendship) =>
+        friendship.authorized_users.filter(
+          (user) =>
+            user.id !== userId &&
+            !directFriendIdSet.has(user.id) &&
+            !user.was_blocked.some(
+              (blockedUser: AuthorizedUser) => blockedUser.id === userId,
+            ) &&
+            !user.received_requests.some(
+              (otherUser: AuthorizedUser) => otherUser.id === userId,
             ),
-          )
-          .sort((a, b) => a.lastName?.localeCompare(b.lastName));
-      }),
-    );
+        ),
+      )
+      .sort((a, b) => a.lastName?.localeCompare(b.lastName));
 
-    // Flatten the array and remove duplicates based on user ID
     const uniqueFriendsOfFriends = Array.from(
-      new Map(friendsOfFriends.flat().map((user) => [user.id, user])).values(),
+      new Map(friendsOfFriends.map((user) => [user.id, user])).values(),
     );
 
     return uniqueFriendsOfFriends;
