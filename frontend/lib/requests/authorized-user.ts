@@ -93,7 +93,7 @@ export async function fetchAuthorizedUsers(): Promise<AuthorizedUser[]> {
 
     while (true) {
       const query = qs.stringify({
-        sort: ["lastName"],
+        sort: ["id"],
         fields: [
           "id",
           "email",
@@ -119,7 +119,7 @@ export async function fetchAuthorizedUsers(): Promise<AuthorizedUser[]> {
         `${NEXT_PUBLIC_STRAPI_API_URL}/api/authorized-users?${query}`,
         {
           headers: { Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}` },
-          cache: "no-store",
+          next: { tags: [CACHE_TAGS.users], revalidate: 900 },
         },
       );
       const data = await response.json();
@@ -132,6 +132,14 @@ export async function fetchAuthorizedUsers(): Promise<AuthorizedUser[]> {
 
       page++; // fetch next page
     }
+
+    // Deduplicate by id in case of overlapping pages
+    const seen = new Set<number>();
+    allUsers = allUsers.filter((user) => {
+      if (seen.has(user.id)) return false;
+      seen.add(user.id);
+      return true;
+    });
 
     return allUsers;
   } catch (error) {
