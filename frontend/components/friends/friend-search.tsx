@@ -34,6 +34,7 @@ export function FriendSearch({
           if (Array.isArray(results)) {
             const filtered = results.filter(
               (user) =>
+                user.id !== curUser.id &&
                 !curUser.blocked.some(
                   (blockedUser) => blockedUser.id === user.id,
                 ) &&
@@ -91,7 +92,9 @@ export function FriendSearch({
             onMouseLeave={() => setIsHovered(false)}
           >
             {isLoading ? (
-              <div className="p-4 text-center text-sm text-gray-500">Searching...</div>
+              <div className="p-4 text-center text-sm text-gray-500">
+                Searching...
+              </div>
             ) : searchResults.length > 0 ? (
               <ul className="p-4 md:space-y-4">
                 {searchResults.slice(0, 10).map((user, index) => {
@@ -130,7 +133,10 @@ export function FriendSearch({
                 })}
               </ul>
             ) : (
-              <p className="p-4 text-center text-sm text-gray-500" data-testid="no-results">
+              <p
+                className="p-4 text-center text-sm text-gray-500"
+                data-testid="no-results"
+              >
                 No users found.
               </p>
             )}

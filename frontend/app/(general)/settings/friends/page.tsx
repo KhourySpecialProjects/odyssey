@@ -3,10 +3,6 @@ import { FriendSuggestions } from "@/components/friends/friend-suggestions";
 import { Friends } from "@/components/friends/friends";
 import { getCurrentUser } from "@/lib/auth/session";
 import { notFound } from "next/navigation";
-import {
-  getAuthorizedUserByEmail,
-} from "@/lib/requests/authorized-user";
-import { fetchAuthorizedUsers } from "@/lib/requests/authorized-user";
 import { getCachedUserSocial } from "@/lib/requests/cached";
 import { FriendSentRequests } from "@/components/friends/friend-sent-requests";
 import { FriendSearch } from "@/components/friends/friend-search";

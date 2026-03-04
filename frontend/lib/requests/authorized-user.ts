@@ -522,8 +522,8 @@ export async function updateUserInfo(
     } = updates;
     const roleIds = roles
       ? await Promise.all(
-        roles.map((role) => getAuthorizedUserRoleIdByTitle(role)),
-      )
+          roles.map((role) => getAuthorizedUserRoleIdByTitle(role)),
+        )
       : [];
 
     const data: any = {};
