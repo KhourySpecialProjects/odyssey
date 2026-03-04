@@ -658,22 +658,31 @@ export async function assignDropletDueDate(
       return { success: false, error: "No members found in the group" };
     }
 
-    const dueDatePromises = group.members.map(async (member) => {
-      const existingDueDateResponse = await fetch(
-        `${STRAPI_API_URL}/api/due-dates?filters[authorized_user][id][$eq]=${member.id}&filters[droplet][id][$eq]=${droplet.id}&filters[group][id][$eq]=${group.id}`,
-        {
-          headers: {
-            Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
-          },
+    const memberIds = group.members.map((m) => m.id);
+
+    const existingDueDates = await fetchAPI<any[]>("/due-dates", {
+      urlParams: {
+        filters: {
+          authorized_user: { id: { $in: memberIds } },
+          droplet: { id: { $eq: droplet.id } },
+          group: { id: { $eq: group.id } },
         },
-      );
+        fields: ["id", "dueDate"],
+        populate: { authorized_user: { fields: ["id"] } },
+        pagination: { pageSize: Math.max(memberIds.length, 250), page: 1 },
+      },
+    });
 
-      const existingDueDates = await existingDueDateResponse.json();
+    const existingMap = new Map(
+      existingDueDates.map((dd) => [dd.authorized_user?.id, dd.id])
+    );
 
-      if (existingDueDates.data && existingDueDates.data.length > 0) {
-        const existingDueDate = existingDueDates.data[0];
+    const dueDatePromises = group.members.map(async (member) => {
+      const existingId = existingMap.get(member.id);
+
+      if (existingId) {
         const response = await fetch(
-          `${STRAPI_API_URL}/api/due-dates/${existingDueDate.id}`,
+          `${STRAPI_API_URL}/api/due-dates/${existingId}`,
           {
             method: "PUT",
             headers: {
@@ -758,23 +767,31 @@ export async function assignPlaylistDueDate(
       return { success: false, error: "No members found in the group" };
     }
 
-    const dueDatePromises = group.members.map(async (member) => {
-      const existingDueDateResponse = await fetch(
-        `${STRAPI_API_URL}/api/due-dates?filters[authorized_user][id][$eq]=${member.id}&filters[playlist][id][$eq]=${playlist.id}&filters[group][id][$eq]=${group.id}`,
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
-          },
+    const memberIds = group.members.map((m) => m.id);
+
+    const existingDueDates = await fetchAPI<any[]>("/due-dates", {
+      urlParams: {
+        filters: {
+          authorized_user: { id: { $in: memberIds } },
+          playlist: { id: { $eq: playlist.id } },
+          group: { id: { $eq: group.id } },
         },
-      );
+        fields: ["id", "dueDate"],
+        populate: { authorized_user: { fields: ["id"] } },
+        pagination: { pageSize: Math.max(memberIds.length, 250), page: 1 },
+      },
+    });
 
-      const existingDueDates = await existingDueDateResponse.json();
+    const existingMap = new Map(
+      existingDueDates.map((dd) => [dd.authorized_user?.id, dd.id])
+    );
 
-      if (existingDueDates.data && existingDueDates.data.length > 0) {
-        const existingDueDate = existingDueDates.data[0];
+    const dueDatePromises = group.members.map(async (member) => {
+      const existingId = existingMap.get(member.id);
+
+      if (existingId) {
         const response = await fetch(
-          `${STRAPI_API_URL}/api/due-dates/${existingDueDate.id}`,
+          `${STRAPI_API_URL}/api/due-dates/${existingId}`,
           {
             method: "PUT",
             headers: {

@@ -1384,22 +1384,17 @@ describe("Groups Tests", () => {
       };
       const mockDroplet = { id: 101, name: "Test Droplet" };
 
-      global.fetch
-        .mockResolvedValueOnce({
-          json: async () => ({
-            data: [
-              {
-                id: 201,
-                attributes: {
-                  dueDate: "2023-10-15",
-                },
-              },
-            ],
-          }),
-        })
-        .mockResolvedValueOnce({
-          ok: true,
-        });
+      fetchAPI.mockResolvedValueOnce([
+        {
+          id: 201,
+          authorized_user: { id: 10 },
+          dueDate: "2023-10-15",
+        },
+      ]);
+
+      global.fetch.mockResolvedValueOnce({
+        ok: true,
+      });
 
       const result = await assignDropletDueDate(date, mockGroup, mockDroplet);
 
@@ -1407,7 +1402,7 @@ describe("Groups Tests", () => {
       expect(revalidateTag).toHaveBeenCalledWith("due-dates");
 
       expect(global.fetch).toHaveBeenNthCalledWith(
-        2,
+        1,
         expect.stringContaining("/api/due-dates/201"),
         expect.objectContaining({
           method: "PUT",
@@ -1450,14 +1445,12 @@ describe("Groups Tests", () => {
       };
       const mockDroplet = { id: 101 };
 
-      global.fetch
-        .mockResolvedValueOnce({
-          json: async () => ({ data: [] }),
-        })
-        .mockResolvedValueOnce({
-          ok: false,
-          text: async () => "Server error",
-        });
+      fetchAPI.mockResolvedValueOnce([]);
+
+      global.fetch.mockResolvedValueOnce({
+        ok: false,
+        text: async () => "Server error",
+      });
 
       const result = await assignDropletDueDate(date, mockGroup, mockDroplet);
 
@@ -1480,16 +1473,13 @@ describe("Groups Tests", () => {
       };
       const mockDroplet = { id: 101 };
 
+      fetchAPI.mockResolvedValueOnce([]);
+
       // Both members run in parallel via Promise.all, so use a call counter
       let fetchCallCount = 0;
       global.fetch.mockImplementation(async (url, options) => {
         fetchCallCount++;
         const urlStr = String(url);
-
-        // Check-existing calls (GET with filters)
-        if (!options?.method || options?.method === "GET") {
-          return { json: async () => ({ data: [] }) };
-        }
 
         // POST calls — first POST succeeds, second fails
         if (options?.method === "POST") {
@@ -1523,7 +1513,7 @@ describe("Groups Tests", () => {
       };
       const mockDroplet = { id: 101 };
 
-      global.fetch.mockRejectedValueOnce(new Error("Network failure"));
+      fetchAPI.mockRejectedValueOnce(new Error("Network failure"));
 
       const result = await assignDropletDueDate(date, mockGroup, mockDroplet);
 
@@ -1553,13 +1543,11 @@ describe("Groups Tests", () => {
       };
       const mockPlaylist = { id: 201, name: "Test Playlist" };
 
-      global.fetch
-        .mockResolvedValueOnce({
-          json: async () => ({ data: [] }),
-        })
-        .mockResolvedValueOnce({
-          ok: true,
-        });
+      fetchAPI.mockResolvedValueOnce([]);
+
+      global.fetch.mockResolvedValueOnce({
+        ok: true,
+      });
 
       const result = await assignPlaylistDueDate(date, mockGroup, mockPlaylist);
 
@@ -1593,14 +1581,12 @@ describe("Groups Tests", () => {
       };
       const mockPlaylist = { id: 201 };
 
-      global.fetch
-        .mockResolvedValueOnce({
-          json: async () => ({ data: [] }),
-        })
-        .mockResolvedValueOnce({
-          ok: false,
-          text: async () => "Server error",
-        });
+      fetchAPI.mockResolvedValueOnce([]);
+
+      global.fetch.mockResolvedValueOnce({
+        ok: false,
+        text: async () => "Server error",
+      });
 
       const result = await assignPlaylistDueDate(date, mockGroup, mockPlaylist);
 
@@ -1623,14 +1609,11 @@ describe("Groups Tests", () => {
       };
       const mockPlaylist = { id: 201 };
 
+      fetchAPI.mockResolvedValueOnce([]);
+
       // Both members run in parallel via Promise.all, so use mockImplementation
       global.fetch.mockImplementation(async (url, options) => {
         const urlStr = String(url);
-
-        // Check-existing calls (GET with filters)
-        if (!options?.method || options?.method === "GET") {
-          return { json: async () => ({ data: [] }) };
-        }
 
         // POST calls — first POST succeeds, second fails
         if (options?.method === "POST") {
@@ -1664,7 +1647,7 @@ describe("Groups Tests", () => {
       };
       const mockPlaylist = { id: 201 };
 
-      global.fetch.mockRejectedValueOnce(new Error("Network failure"));
+      fetchAPI.mockRejectedValueOnce(new Error("Network failure"));
 
       const result = await assignPlaylistDueDate(date, mockGroup, mockPlaylist);
 
