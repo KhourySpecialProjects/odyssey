@@ -29,7 +29,7 @@ const {
   getAuthorizedUsersByEmails,
   createAuthorizedUser,
 } = require("../../lib/requests/authorized-user");
-const { createEnrollmentFromEmail } = require("../../lib/requests/enrollment");
+const { createEnrollmentDirect } = require("../../lib/requests/enrollment");
 const { enrollInPlaylist } = require("../../lib/requests/playlist-enrollment");
 const { revalidateTag } = require("next/cache");
 
@@ -58,6 +58,7 @@ jest.mock("../../lib/requests/authorized-user", () => ({
 
 jest.mock("../../lib/requests/enrollment", () => ({
   createEnrollmentFromEmail: jest.fn(),
+  createEnrollmentDirect: jest.fn(),
 }));
 
 jest.mock("../../lib/requests/playlist-enrollment", () => ({
@@ -1266,46 +1267,29 @@ describe("Groups Tests", () => {
         ],
       };
 
-      createEnrollmentFromEmail.mockResolvedValue({ id: 1, success: true });
+      fetchAPI.mockResolvedValue([]); // return empty enrollments
+      createEnrollmentDirect.mockResolvedValue({ id: 1, ok: true });
       enrollInPlaylist.mockResolvedValue({ success: true });
 
       await enrollUsers(mockGroup);
 
-      // Verify createEnrollmentFromEmail was called for each member-droplet pair
+      // Verify createEnrollmentDirect was called for each member-droplet pair
       // - 2 members × 2 direct droplets = 4 calls
       // - 2 members × 2 playlist droplets = 4 more calls
       // Total: 8 calls
-      expect(createEnrollmentFromEmail).toHaveBeenCalledTimes(8);
+      expect(createEnrollmentDirect).toHaveBeenCalledTimes(8);
 
-      expect(createEnrollmentFromEmail).toHaveBeenCalledWith(
-        { droplet: 101, viewedLessons: [] },
-        "member1@northeastern.edu",
-      );
-      expect(createEnrollmentFromEmail).toHaveBeenCalledWith(
-        { droplet: 102, viewedLessons: [] },
-        "member1@northeastern.edu",
-      );
-      expect(createEnrollmentFromEmail).toHaveBeenCalledWith(
-        { droplet: 101, viewedLessons: [] },
-        "member2@northeastern.edu",
-      );
-      expect(createEnrollmentFromEmail).toHaveBeenCalledWith(
-        { droplet: 102, viewedLessons: [] },
-        "member2@northeastern.edu",
-      );
+      expect(createEnrollmentDirect).toHaveBeenCalledWith(10, 101);
+      expect(createEnrollmentDirect).toHaveBeenCalledWith(10, 102);
+      expect(createEnrollmentDirect).toHaveBeenCalledWith(11, 101);
+      expect(createEnrollmentDirect).toHaveBeenCalledWith(11, 102);
 
       expect(enrollInPlaylist).toHaveBeenCalledTimes(2);
       expect(enrollInPlaylist).toHaveBeenCalledWith(201, 10);
       expect(enrollInPlaylist).toHaveBeenCalledWith(201, 11);
 
-      expect(createEnrollmentFromEmail).toHaveBeenCalledWith(
-        { droplet: 103, viewedLessons: [] },
-        "member1@northeastern.edu",
-      );
-      expect(createEnrollmentFromEmail).toHaveBeenCalledWith(
-        { droplet: 104, viewedLessons: [] },
-        "member1@northeastern.edu",
-      );
+      expect(createEnrollmentDirect).toHaveBeenCalledWith(10, 103);
+      expect(createEnrollmentDirect).toHaveBeenCalledWith(10, 104);
     });
 
     it("should handle empty members array", async () => {
@@ -1319,7 +1303,7 @@ describe("Groups Tests", () => {
 
       await enrollUsers(mockGroup);
 
-      expect(createEnrollmentFromEmail).not.toHaveBeenCalled();
+      expect(createEnrollmentDirect).not.toHaveBeenCalled();
       expect(enrollInPlaylist).not.toHaveBeenCalled();
     });
 
@@ -1334,7 +1318,7 @@ describe("Groups Tests", () => {
 
       await enrollUsers(mockGroup);
 
-      expect(createEnrollmentFromEmail).not.toHaveBeenCalled();
+      expect(createEnrollmentDirect).not.toHaveBeenCalled();
       expect(enrollInPlaylist).not.toHaveBeenCalled();
     });
 
@@ -1347,23 +1331,16 @@ describe("Groups Tests", () => {
         playlists: [],
       };
 
-      createEnrollmentFromEmail
+      fetchAPI.mockResolvedValue([]); // return empty enrollments
+      createEnrollmentDirect
         .mockRejectedValueOnce(new Error("Enrollment failed"))
         .mockResolvedValueOnce({ id: 1, success: true });
 
       await enrollUsers(mockGroup);
 
-      expect(createEnrollmentFromEmail).toHaveBeenCalledTimes(2);
-      expect(createEnrollmentFromEmail).toHaveBeenCalledWith(
-        { droplet: 101, viewedLessons: [] },
-        "member@northeastern.edu",
-      );
-      expect(createEnrollmentFromEmail).toHaveBeenCalledWith(
-        { droplet: 102, viewedLessons: [] },
-        "member@northeastern.edu",
-      );
-
-      expect(console.error).toHaveBeenCalled();
+      expect(createEnrollmentDirect).toHaveBeenCalledTimes(2);
+      expect(createEnrollmentDirect).toHaveBeenCalledWith(10, 101);
+      expect(createEnrollmentDirect).toHaveBeenCalledWith(10, 102);
     });
   });
 

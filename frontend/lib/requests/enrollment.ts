@@ -681,3 +681,39 @@ export async function updateCompletionDate(enrollmentID: string) {
     return { success: false, error: "Failed to add completion date" };
   }
 }
+
+export async function createEnrollmentDirect(
+  authorizedUserId: number,
+  dropletId: number,
+) {
+  try {
+    const response = await fetch(STRAPI_API_URL + "/api/enrollments", {
+      method: "POST",
+      body: JSON.stringify({
+        data: {
+          authorizedUser: authorizedUserId,
+          droplet: dropletId,
+          viewedLessons: [],
+        },
+      }),
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+      },
+    });
+    const data = await response.json();
+
+    if (!response.ok || (response.ok && data.error)) {
+      const errorPath =
+        data?.error?.details?.errors?.[0]?.path?.[0] || "Unknown";
+      const errorMessage = `${data?.error?.message} (${errorPath})`;
+      return { ok: false, error: errorMessage, data: null };
+    }
+
+    revalidateTag(CACHE_TAGS.enrollments(authorizedUserId));
+    return { ok: true, data: data.data };
+  } catch (err) {
+    console.error("Error in createEnrollmentDirect:", err);
+    return { error: "Database Error: Failed to enroll directly." };
+  }
+}
