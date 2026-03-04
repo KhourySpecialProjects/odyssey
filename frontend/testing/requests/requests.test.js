@@ -49,6 +49,8 @@ jest.mock("../../lib/utils", () => ({
 global.fetch = jest.fn();
 
 beforeEach(() => {
+  process.env.NEXT_PUBLIC_STRAPI_API_URL = "http://test-api-url";
+  process.env.STRAPI_ACCESS_TOKEN = "test-token";
   jest.spyOn(console, "error").mockImplementation(() => {});
   jest.spyOn(console, "warn").mockImplementation(() => {});
 });
@@ -189,13 +191,13 @@ describe("Data requests", () => {
           headers: expect.objectContaining({
             Authorization: expect.stringContaining("Bearer"),
           }),
-          cache: "no-store",
+          next: { tags: ["groups"], revalidate: 900 },
         }),
       );
 
       const callUrl = global.fetch.mock.calls[0][0];
 
-      expect(callUrl).toMatch(/sort%5B0%5D=groupName%3Aasc/);
+      expect(callUrl).toMatch(/sort%5B0%5D=id/);
 
       expect(callUrl).toMatch(
         /fields%5B0%5D=id&fields%5B1%5D=groupName&fields%5B2%5D=slug&fields%5B3%5D=isArchived/,
@@ -272,7 +274,7 @@ describe("Data requests", () => {
           headers: expect.objectContaining({
             Authorization: expect.stringContaining("Bearer"),
           }),
-          cache: "no-store",
+          next: { revalidate: 900 },
         }),
       );
     });
