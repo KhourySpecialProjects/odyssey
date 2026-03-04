@@ -57,6 +57,9 @@ export default async function Droplet({ params }: Props) {
     filters: {
       $and: [{ status: { $eq: "published" } }, { isHidden: false }],
     },
+    fields: ["id", "name", "slug"],
+    populate: {},
+    pagination: { pageSize: 250, page: 1 },
   });
 
   const tags = await getTags();
