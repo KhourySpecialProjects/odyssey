@@ -62,20 +62,27 @@ export async function getAuthorizedUsersByEmails(
   if (emails.length === 0) return [];
 
   const path = `/authorized-users`;
-  const urlParams = {
-    filters: {
-      email: { $in: emails },
-    },
-    fields: ["id", "email"],
-    pagination: {
-      pageSize: emails.length,
-      page: 1,
-    },
-  };
+  const PAGE_SIZE = 100;
 
-  return await fetchAPI<Array<{ id: number; email: string }>>(path, {
-    urlParams,
-  });
+  // Chunk emails to stay within Strapi's maxLimit, then fetch all chunks in parallel
+  const chunks: string[][] = [];
+  for (let i = 0; i < emails.length; i += PAGE_SIZE) {
+    chunks.push(emails.slice(i, i + PAGE_SIZE));
+  }
+
+  const results = await Promise.all(
+    chunks.map((chunk) =>
+      fetchAPI<Array<{ id: number; email: string }>>(path, {
+        urlParams: {
+          filters: { email: { $in: chunk } },
+          fields: ["id", "email"],
+          pagination: { pageSize: PAGE_SIZE, page: 1 },
+        },
+      }),
+    ),
+  );
+
+  return results.flat();
 }
 
 export async function fetchAuthorizedUsers(): Promise<AuthorizedUser[]> {
