@@ -118,9 +118,7 @@ describe("StatisticsSelector", () => {
     it("handles empty content object", () => {
       render(<StatisticsSelector content={{}} />);
 
-      expect(
-        screen.queryByText("General Statistics"),
-      ).not.toBeInTheDocument();
+      expect(screen.queryByText("General Statistics")).not.toBeInTheDocument();
     });
 
     it("handles single tab", () => {
