@@ -401,6 +401,36 @@ export async function createEnrollmentFromEmail(
   }
 }
 
+export async function createEnrollmentDirect(dropletId: number, memberId: number) {
+  try {
+    const response = await fetch(STRAPI_API_URL + "/api/enrollments", {
+      method: "POST",
+      body: JSON.stringify({
+        data: {
+          authorizedUser: memberId,
+          droplet: dropletId,
+          viewedLessons: [],
+        },
+      }),
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+      },
+    });
+
+    if (!response.ok) {
+      const data = await response.json();
+      console.error("Failed to enroll user in droplet", data);
+      return { ok: false };
+    }
+    
+    return { ok: true };
+  } catch (error) {
+    console.error("Error creating enrollment directly:", error);
+    return { ok: false };
+  }
+}
+
 export async function deleteEnrollment(
   formData: z.infer<typeof DropletEnrollmentSchema>,
 ) {

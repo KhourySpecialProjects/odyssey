@@ -8,7 +8,7 @@ import type { Droplet, DueDate, Playlist } from "@/types";
 import { revalidatePath, revalidateTag } from "next/cache";
 import { enrollInPlaylist } from "./playlist-enrollment";
 import { getCurrentUser } from "../auth/session";
-import { createEnrollmentFromEmail } from "./enrollment";
+import { createEnrollmentFromEmail, createEnrollmentDirect } from "./enrollment";
 import { createAuthorizedUser } from "./authorized-user";
 
 const STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
@@ -579,45 +579,55 @@ async function ensureAuthorizedUsers(
 
 export async function enrollUsers(group: Group) {
   try {
-    group.members?.map(async (member) => {
-      group.droplets?.map(async (droplet) => {
-        try {
-          const enrollmentData = {
-            droplet: droplet.id,
-            viewedLessons: [],
-          };
-          return await createEnrollmentFromEmail(enrollmentData, member.email);
-        } catch (error) {
-          console.error(
-            `Error enrolling this user in droplet [${droplet.name || droplet.id}]: `,
-            error,
-          );
-        }
-        //return await createEnrollment(enrollmentData);
-      }) || [];
+    const allDropletIds = [
+      ...(group.droplets?.map((d) => d.id) || []),
+      ...(group.playlists?.flatMap((p) => p.droplets?.map((d) => d.id) || []) || []),
+    ];
+    const uniqueDropletIds = [...new Set(allDropletIds)];
+    const memberIds = group.members?.map((m) => m.id) || [];
 
-      group.playlists?.map(async (playlist) => {
-        await enrollInPlaylist(playlist.id, member.id);
-        playlist.droplets?.map(async (droplet) => {
-          try {
-            const enrollmentData = {
-              droplet: droplet.id,
-              viewedLessons: [],
-            };
-            return await createEnrollmentFromEmail(
-              enrollmentData,
-              member.email,
-            );
-          } catch (error) {
-            console.error(
-              `Error enrolling this user in playlist [${playlist.name || playlist.id}] droplet [${droplet.name || droplet.id}]: `,
-              error,
-            );
-          }
-          //return await createEnrollment(enrollmentData);
-        }) || [];
-      }) || [];
-    }) || [];
+    if (memberIds.length === 0) return;
+
+    // 1 query: get all existing enrollments for these members + these droplets
+    const existingEnrollments = uniqueDropletIds.length > 0 ? await fetchAPI<any[]>("/enrollments", {
+      urlParams: {
+        filters: {
+          authorizedUser: { id: { $in: memberIds } },
+          droplet: { id: { $in: uniqueDropletIds } },
+        },
+        fields: ["id"],
+        populate: {
+          authorizedUser: { fields: ["id"] },
+          droplet: { fields: ["id"] },
+        },
+        pagination: { pageSize: 1000, page: 1 },
+      },
+    }) : [];
+
+    // Build set of "userId-dropletId" for quick lookup
+    const existingSet = new Set(
+      existingEnrollments.map((e) => `${e.authorizedUser?.id}-${e.droplet?.id}`)
+    );
+
+    // Create only missing enrollments in parallel
+    const creates = [];
+    for (const member of group.members || []) {
+      for (const dropletId of uniqueDropletIds) {
+        if (!existingSet.has(`${member.id}-${dropletId}`)) {
+          creates.push(createEnrollmentDirect(dropletId, member.id));
+        }
+      }
+    }
+    await Promise.all(creates);
+
+    // Enroll in playlists in parallel
+    const playlistEnrolls = [];
+    for (const member of group.members || []) {
+      for (const playlist of group.playlists || []) {
+        playlistEnrolls.push(enrollInPlaylist(playlist.id, member.id));
+      }
+    }
+    await Promise.all(playlistEnrolls);
   } catch (error) {
     console.error("Error enrolling users:", error);
     throw error;
