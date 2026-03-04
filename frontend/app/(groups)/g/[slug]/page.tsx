@@ -15,9 +15,6 @@ import { getEnrollmentsForGroupMembers } from "@/lib/requests/enrollment";
 import { AuthorizedUser, DueDate } from "@/types";
 import { DateTime } from "luxon";
 
-export const fetchCache = "force-no-store";
-export const revalidate = 0;
-
 type Props = {
   params: Promise<{
     slug: string;

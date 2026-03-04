@@ -56,13 +56,17 @@ export const getCachedUserDueDates = cache((authorizedUserId: number) =>
 export const getCachedDropletBySlug = cache((slug: string) =>
   getDropletBySlug(slug, {
     populate: {
-      authorized_users: { populate: "*" },
-      learningObjectives: { populate: "*" },
-      lessons: { populate: "*" },
-      tags: { populate: "*" },
-      prerequisites: { populate: ["id", "name", "slug"] },
-      postrequisites: { populate: ["id", "name", "slug"] },
-      nextSteps: { populate: "*" },
+      authorized_users: {
+        fields: ["id", "email", "firstName", "lastName", "profilePhoto"],
+      },
+      learningObjectives: { fields: ["id", "objective"] },
+      lessons: {
+        fields: ["id", "name", "slug", "orderIndex", "blocksVersion"],
+      },
+      tags: { fields: ["id", "name", "slug"] },
+      prerequisites: { fields: ["id", "name", "slug"] },
+      postrequisites: { fields: ["id", "name", "slug"] },
+      nextSteps: { fields: ["id", "label", "url"] },
     },
   }),
 );

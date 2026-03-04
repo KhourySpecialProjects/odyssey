@@ -1,6 +1,7 @@
 import { Tag } from "@/types";
 import { StrapiRequestParams } from "@/types/strapi";
 import { fetchAPI, PopulateValue } from "../utils";
+import { CACHE_TAGS } from "../cache-tags";
 
 // sort server side by name ascending
 export async function getTags({
@@ -25,7 +26,10 @@ export async function getTags({
     },
   };
 
-  return await fetchAPI<Tag[]>(path, { urlParams });
+  return await fetchAPI<Tag[]>(path, {
+    urlParams,
+    next: { tags: [CACHE_TAGS.tags], revalidate: 3600 },
+  });
 }
 
 export async function getTagBySlug(
@@ -38,5 +42,8 @@ export async function getTagBySlug(
     populate,
   };
 
-  return await fetchAPI<Tag[]>(path, { urlParams }).then((tags) => tags[0]);
+  return await fetchAPI<Tag[]>(path, {
+    urlParams,
+    next: { tags: [CACHE_TAGS.tags], revalidate: 3600 },
+  }).then((tags) => tags[0]);
 }

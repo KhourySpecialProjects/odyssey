@@ -17,11 +17,13 @@ import Link from "@tiptap/extension-link";
 
 export function NoteBlock({
   note,
+  authorizedUserId,
   onUpdate,
   onDelete,
   onFocus,
 }: {
   note: Note;
+  authorizedUserId: number;
   onUpdate: () => void;
   onDelete: (noteId: number) => void;
   onFocus: (focused: number | null) => void;
@@ -33,14 +35,14 @@ export function NoteBlock({
 
   const handleBlur = useCallback(async () => {
     setNoteMessage("Saving");
-    const result = await updateNoteContent(note.id, content);
+    const result = await updateNoteContent(note.id, content, authorizedUserId);
     if (!result.success) {
       console.error("Failed to update note content");
     } else {
       setNoteMessage("Saved");
       onUpdate();
     }
-  }, [content, note.id, onUpdate]);
+  }, [content, note.id, authorizedUserId, onUpdate]);
 
   function stripHtml(html: string): string {
     if (!html) return "General Note";

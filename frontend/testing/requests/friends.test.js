@@ -44,7 +44,7 @@ jest.mock("next/cache", () => ({
 }));
 
 describe("Friends tests", () => {
-  const { revalidatePath } = require("next/cache");
+  const { revalidateTag } = require("next/cache");
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -153,7 +153,7 @@ describe("Friends tests", () => {
           headers: expect.objectContaining({
             Authorization: expect.stringContaining("Bearer"),
           }),
-          cache: "no-store",
+          next: { tags: ["friendships-5"], revalidate: 900 },
         }),
       );
 
@@ -326,7 +326,7 @@ describe("Friends tests", () => {
           headers: expect.objectContaining({
             Authorization: expect.stringContaining("Bearer"),
           }),
-          cache: "no-store",
+          next: { tags: ["friendships-5"], revalidate: 900 },
         }),
       );
 
@@ -351,7 +351,6 @@ describe("Friends tests", () => {
   describe("acceptFriendRequest", () => {
     beforeEach(() => {
       global.fetch.mockReset();
-      revalidatePath.mockReset();
     });
 
     it("should successfully accept a friend request", async () => {
@@ -406,7 +405,8 @@ describe("Friends tests", () => {
         }),
       );
 
-      expect(revalidatePath).toHaveBeenCalledWith("/settings/friends");
+      expect(revalidateTag).toHaveBeenCalledWith("friendships-5");
+      expect(revalidateTag).toHaveBeenCalledWith("friendships-6");
 
       expect(result).toEqual({ success: true });
     });
@@ -427,7 +427,7 @@ describe("Friends tests", () => {
       const result = await acceptFriendRequest(userId, requesterId);
 
       expect(result).toEqual({ success: false, error: expect.any(Error) });
-      expect(revalidatePath).not.toHaveBeenCalled();
+      expect(revalidateTag).not.toHaveBeenCalled();
 
       consoleSpy.mockRestore();
     });
@@ -453,6 +453,7 @@ describe("Friends tests", () => {
       const result = await acceptFriendRequest(userId, requesterId);
 
       expect(result).toEqual({ success: false, error: expect.any(Error) });
+      expect(revalidateTag).not.toHaveBeenCalled();
 
       consoleSpy.mockRestore();
     });
@@ -470,7 +471,7 @@ describe("Friends tests", () => {
       const result = await acceptFriendRequest(userId, requesterId);
 
       expect(result).toEqual({ success: false, error: expect.any(Error) });
-      expect(revalidatePath).not.toHaveBeenCalled();
+      expect(revalidateTag).not.toHaveBeenCalled();
 
       consoleSpy.mockRestore();
     });
@@ -479,7 +480,6 @@ describe("Friends tests", () => {
   describe("sendFriendRequest", () => {
     beforeEach(() => {
       global.fetch.mockReset();
-      revalidatePath.mockReset();
     });
 
     it("should successfully send a friend request", async () => {
@@ -536,7 +536,8 @@ describe("Friends tests", () => {
         }),
       );
 
-      expect(revalidatePath).toHaveBeenCalledWith("/settings/friends");
+      expect(revalidateTag).toHaveBeenCalledWith("friendships-5");
+      expect(revalidateTag).toHaveBeenCalledWith("friendships-6");
 
       expect(result).toEqual({ success: true });
     });
@@ -557,7 +558,7 @@ describe("Friends tests", () => {
       const result = await sendFriendRequest(requester, requestee);
 
       expect(result).toEqual({ success: false, error: expect.any(Error) });
-      expect(revalidatePath).not.toHaveBeenCalled();
+      expect(revalidateTag).not.toHaveBeenCalled();
 
       consoleSpy.mockRestore();
     });
@@ -583,6 +584,7 @@ describe("Friends tests", () => {
       const result = await sendFriendRequest(requester, requestee);
 
       expect(result).toEqual({ success: false, error: expect.any(Error) });
+      expect(revalidateTag).not.toHaveBeenCalled();
 
       consoleSpy.mockRestore();
     });
@@ -600,7 +602,7 @@ describe("Friends tests", () => {
       const result = await sendFriendRequest(requester, requestee);
 
       expect(result).toEqual({ success: false, error: expect.any(Error) });
-      expect(revalidatePath).not.toHaveBeenCalled();
+      expect(revalidateTag).not.toHaveBeenCalled();
 
       consoleSpy.mockRestore();
     });
@@ -609,7 +611,6 @@ describe("Friends tests", () => {
   describe("rejectFriendRequest", () => {
     beforeEach(() => {
       global.fetch.mockReset();
-      revalidatePath.mockReset();
     });
 
     it("should successfully reject a friend request", async () => {
@@ -641,7 +642,8 @@ describe("Friends tests", () => {
         }),
       );
 
-      expect(revalidatePath).toHaveBeenCalledWith("/settings/friends");
+      expect(revalidateTag).toHaveBeenCalledWith("friendships-5");
+      expect(revalidateTag).toHaveBeenCalledWith("friendships-6");
 
       expect(result).toEqual({ success: true });
     });
@@ -662,7 +664,7 @@ describe("Friends tests", () => {
       const result = await rejectFriendRequest(userId, requesterId);
 
       expect(result).toEqual({ success: false, error: expect.any(Error) });
-      expect(revalidatePath).not.toHaveBeenCalled();
+      expect(revalidateTag).not.toHaveBeenCalled();
 
       consoleSpy.mockRestore();
     });
@@ -680,7 +682,7 @@ describe("Friends tests", () => {
       const result = await rejectFriendRequest(userId, requesterId);
 
       expect(result).toEqual({ success: false, error: expect.any(Error) });
-      expect(revalidatePath).not.toHaveBeenCalled();
+      expect(revalidateTag).not.toHaveBeenCalled();
 
       consoleSpy.mockRestore();
     });
@@ -689,7 +691,6 @@ describe("Friends tests", () => {
   describe("cancelFriendRequest", () => {
     beforeEach(() => {
       global.fetch.mockReset();
-      revalidatePath.mockReset();
     });
 
     it("should successfully cancel a friend request", async () => {
@@ -721,7 +722,8 @@ describe("Friends tests", () => {
         }),
       );
 
-      expect(revalidatePath).toHaveBeenCalledWith("/settings/friends");
+      expect(revalidateTag).toHaveBeenCalledWith("friendships-5");
+      expect(revalidateTag).toHaveBeenCalledWith("friendships-6");
 
       expect(result).toEqual({ success: true });
     });
@@ -742,7 +744,7 @@ describe("Friends tests", () => {
       const result = await cancelFriendRequest(userId, requesteeId);
 
       expect(result).toEqual({ success: false, error: expect.any(Error) });
-      expect(revalidatePath).not.toHaveBeenCalled();
+      expect(revalidateTag).not.toHaveBeenCalled();
 
       consoleSpy.mockRestore();
     });
@@ -760,7 +762,7 @@ describe("Friends tests", () => {
       const result = await cancelFriendRequest(userId, requesteeId);
 
       expect(result).toEqual({ success: false, error: expect.any(Error) });
-      expect(revalidatePath).not.toHaveBeenCalled();
+      expect(revalidateTag).not.toHaveBeenCalled();
 
       consoleSpy.mockRestore();
     });
@@ -769,7 +771,6 @@ describe("Friends tests", () => {
   describe("unblockUser", () => {
     beforeEach(() => {
       global.fetch.mockReset();
-      revalidatePath.mockReset();
     });
 
     it("should successfully unblock a user", async () => {
@@ -801,7 +802,8 @@ describe("Friends tests", () => {
         }),
       );
 
-      expect(revalidatePath).toHaveBeenCalledWith("/settings/friends");
+      expect(revalidateTag).toHaveBeenCalledWith("friendships-5");
+      expect(revalidateTag).toHaveBeenCalledWith("friendships-6");
 
       expect(result).toEqual({ success: true });
     });
@@ -822,7 +824,7 @@ describe("Friends tests", () => {
       const result = await unblockUser(userId, blockedUserId);
 
       expect(result).toEqual({ success: false, error: expect.any(Error) });
-      expect(revalidatePath).not.toHaveBeenCalled();
+      expect(revalidateTag).not.toHaveBeenCalled();
 
       consoleSpy.mockRestore();
     });
@@ -840,7 +842,7 @@ describe("Friends tests", () => {
       const result = await unblockUser(userId, blockedUserId);
 
       expect(result).toEqual({ success: false, error: expect.any(Error) });
-      expect(revalidatePath).not.toHaveBeenCalled();
+      expect(revalidateTag).not.toHaveBeenCalled();
 
       consoleSpy.mockRestore();
     });
@@ -849,7 +851,6 @@ describe("Friends tests", () => {
   describe("BlockUser", () => {
     beforeEach(() => {
       global.fetch.mockReset();
-      revalidatePath.mockReset();
     });
 
     it("should successfully block a user", async () => {
@@ -881,7 +882,8 @@ describe("Friends tests", () => {
         }),
       );
 
-      expect(revalidatePath).toHaveBeenCalledWith("/settings/friends");
+      expect(revalidateTag).toHaveBeenCalledWith("friendships-5");
+      expect(revalidateTag).toHaveBeenCalledWith("friendships-6");
 
       expect(result).toEqual({ success: true });
     });
@@ -902,7 +904,7 @@ describe("Friends tests", () => {
       const result = await BlockUser(userId, userToBlockId);
 
       expect(result).toEqual({ success: false, error: expect.any(Error) });
-      expect(revalidatePath).not.toHaveBeenCalled();
+      expect(revalidateTag).not.toHaveBeenCalled();
 
       consoleSpy.mockRestore();
     });
@@ -920,7 +922,7 @@ describe("Friends tests", () => {
       const result = await BlockUser(userId, userToBlockId);
 
       expect(result).toEqual({ success: false, error: expect.any(Error) });
-      expect(revalidatePath).not.toHaveBeenCalled();
+      expect(revalidateTag).not.toHaveBeenCalled();
 
       consoleSpy.mockRestore();
     });
@@ -929,7 +931,6 @@ describe("Friends tests", () => {
   describe("removeFriend", () => {
     beforeEach(() => {
       global.fetch.mockReset();
-      revalidatePath.mockReset();
     });
 
     it("should successfully remove a friend", async () => {
@@ -978,7 +979,8 @@ describe("Friends tests", () => {
         }),
       );
 
-      expect(revalidatePath).toHaveBeenCalledWith("/settings/friends");
+      expect(revalidateTag).toHaveBeenCalledWith("friendships-5");
+      expect(revalidateTag).toHaveBeenCalledWith("friendships-6");
 
       expect(result).toEqual({ success: true });
     });
@@ -1007,7 +1009,7 @@ describe("Friends tests", () => {
           message: "Friendship not found",
         }),
       );
-      expect(revalidatePath).not.toHaveBeenCalled();
+      expect(revalidateTag).not.toHaveBeenCalled();
 
       consoleSpy.mockRestore();
     });
@@ -1035,7 +1037,7 @@ describe("Friends tests", () => {
       const result = await removeFriend(userId, friendId);
 
       expect(result).toEqual({ success: false, error: expect.any(Error) });
-      expect(revalidatePath).not.toHaveBeenCalled();
+      expect(revalidateTag).not.toHaveBeenCalled();
 
       consoleSpy.mockRestore();
     });
@@ -1053,7 +1055,7 @@ describe("Friends tests", () => {
       const result = await removeFriend(userId, friendId);
 
       expect(result).toEqual({ success: false, error: expect.any(Error) });
-      expect(revalidatePath).not.toHaveBeenCalled();
+      expect(revalidateTag).not.toHaveBeenCalled();
 
       consoleSpy.mockRestore();
     });
@@ -1159,7 +1161,7 @@ describe("Friends tests", () => {
           headers: expect.objectContaining({
             Authorization: expect.stringContaining("Bearer"),
           }),
-          cache: "no-store",
+          next: { tags: ["friendships-5"], revalidate: 900 },
         }),
       );
 

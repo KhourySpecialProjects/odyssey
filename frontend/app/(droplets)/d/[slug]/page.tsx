@@ -34,7 +34,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const p = await params;
   const droplet = await getDropletBySlug<Pick<Droplet, "name">>(p.slug, {
     fields: ["name"],
-    populate: undefined,
+    populate: {},
   });
   if (!droplet) return {};
 
@@ -59,7 +59,9 @@ export default async function DropletRoute({ params }: Props) {
     const enrollments = await getCachedEnrollmentsWithLessonIds(
       authorizedUser.id,
     );
-    isEnrolled = enrollments.some((e) => e.droplet.id === droplet.id);
+    isEnrolled = enrollments.some(
+      (e) => e.droplet && e.droplet.id === droplet.id,
+    );
   }
 
   return (

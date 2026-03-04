@@ -8,7 +8,7 @@ import {
   revalidateLesson,
   duplicateLessonToDroplet,
 } from "@/lib/requests/lesson";
-import { revalidatePath, revalidateTag } from "next/cache";
+import { revalidateTag } from "next/cache";
 
 global.fetch = jest.fn();
 
@@ -22,6 +22,14 @@ jest.mock("next/cache", () => ({
   revalidateTag: jest.fn(),
 }));
 
+jest.mock("@/lib/auth/session", () => ({
+  getCurrentUser: jest.fn(),
+}));
+
+jest.mock("@/lib/requests/authorized-user", () => ({
+  getAuthorizedUserByEmail: jest.fn(),
+}));
+
 describe("Lesson API Functions", () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -29,7 +37,7 @@ describe("Lesson API Functions", () => {
   });
 
   describe("addLesson", () => {
-    it("successfully creates a lesson", async () => {
+    it("successfully creates a lesson and revalidates enrollment caches", async () => {
       global.fetch.mockResolvedValueOnce({
         ok: true,
         json: () =>
@@ -73,6 +81,7 @@ describe("Lesson API Functions", () => {
         data: expect.objectContaining({ id: 1 }),
       });
       expect(revalidateTag).toHaveBeenCalledWith("droplets");
+      expect(revalidateTag).toHaveBeenCalledWith("enrollments");
     });
 
     it("creates lesson with blocksV2", async () => {
@@ -216,6 +225,7 @@ describe("Lesson API Functions", () => {
         error: "Creation failed",
         data: null,
       });
+      expect(revalidateTag).not.toHaveBeenCalled();
     });
 
     it("handles network errors", async () => {
@@ -230,6 +240,7 @@ describe("Lesson API Functions", () => {
       expect(result).toEqual({
         error: "Database Error: Failed to create lesson.",
       });
+      expect(revalidateTag).not.toHaveBeenCalled();
     });
 
     it("creates lesson with empty blocks array when no blocksV2", async () => {
@@ -278,6 +289,8 @@ describe("Lesson API Functions", () => {
         }),
       );
       expect(result.ok).toBe(true);
+      expect(revalidateTag).toHaveBeenCalledWith("droplets");
+      expect(revalidateTag).toHaveBeenCalledWith("lesson");
     });
 
     it("strips IDs from blocks when updating", async () => {
@@ -320,6 +333,7 @@ describe("Lesson API Functions", () => {
         error: "Validation failed (name)",
         data: null,
       });
+      expect(revalidateTag).not.toHaveBeenCalled();
     });
 
     it("revalidates paths when reload option is true", async () => {
@@ -330,10 +344,8 @@ describe("Lesson API Functions", () => {
 
       await updateLesson(123, { name: "Test" }, { reload: true });
 
-      expect(revalidatePath).toHaveBeenCalledWith(
-        "(editing)/draft/d/[slug]/[lessonSlug]",
-        "page",
-      );
+      expect(revalidateTag).toHaveBeenCalledWith("droplets");
+      expect(revalidateTag).toHaveBeenCalledWith("lesson");
     });
 
     it("supports regenerateSlug option", async () => {
@@ -378,7 +390,7 @@ describe("Lesson API Functions", () => {
             },
           },
         }),
-        cache: "no-store",
+        next: { tags: ["droplets"], revalidate: 900 },
       });
       expect(result).toEqual(mockLesson);
     });
@@ -394,6 +406,13 @@ describe("Lesson API Functions", () => {
 
   describe("markLessonAsComplete", () => {
     it("successfully marks a lesson as complete", async () => {
+      const { getCurrentUser } = require("@/lib/auth/session");
+      const {
+        getAuthorizedUserByEmail,
+      } = require("@/lib/requests/authorized-user");
+      getCurrentUser.mockResolvedValue({ email: "test@test.com" });
+      getAuthorizedUserByEmail.mockResolvedValue({ id: 1 });
+
       global.fetch.mockResolvedValueOnce({
         ok: true,
         json: () => Promise.resolve({ data: { id: 1 } }),
@@ -402,7 +421,7 @@ describe("Lesson API Functions", () => {
       const result = await markLessonAsComplete("enrollment-1", [1, 2], 3);
 
       expect(result).toBe(true);
-      expect(revalidatePath).toHaveBeenCalledWith("/", "layout");
+      expect(revalidateTag).toHaveBeenCalledWith("enrollments-1");
     });
 
     it("handles errors when marking as complete", async () => {
@@ -413,11 +432,19 @@ describe("Lesson API Functions", () => {
 
       const result = await markLessonAsComplete("enrollment-1", [1, 2], 3);
       expect(result).toBe(false);
+      expect(revalidateTag).not.toHaveBeenCalled();
     });
   });
 
   describe("completeLesson", () => {
     it("successfully completes a lesson", async () => {
+      const { getCurrentUser } = require("@/lib/auth/session");
+      const {
+        getAuthorizedUserByEmail,
+      } = require("@/lib/requests/authorized-user");
+      getCurrentUser.mockResolvedValue({ email: "test@test.com" });
+      getAuthorizedUserByEmail.mockResolvedValue({ id: 1 });
+
       global.fetch.mockResolvedValueOnce({
         ok: true,
         json: () => Promise.resolve({ data: { id: 1 } }),
@@ -425,6 +452,7 @@ describe("Lesson API Functions", () => {
 
       const result = await completeLesson(1, [1, 2, 3]);
       expect(result).toEqual({ success: true });
+      expect(revalidateTag).toHaveBeenCalledWith("enrollments-1");
     });
 
     it("handles errors", async () => {
@@ -435,6 +463,7 @@ describe("Lesson API Functions", () => {
         success: false,
         error: expect.any(Error),
       });
+      expect(revalidateTag).not.toHaveBeenCalled();
     });
   });
 
@@ -466,15 +495,11 @@ describe("Lesson API Functions", () => {
       await revalidateLesson();
 
       expect(revalidateTag).toHaveBeenCalledWith("lesson");
-      expect(revalidatePath).toHaveBeenCalledWith(
-        "(editing)/draft/d/[slug]/[lessonSlug]",
-        "page",
-      );
     });
   });
 
   describe("duplicateLessonToDroplet", () => {
-    it("duplicates v2 lesson correctly", async () => {
+    it("duplicates v2 lesson correctly and revalidates enrollments", async () => {
       const mockV2Lesson = {
         data: {
           id: 1,
@@ -501,6 +526,8 @@ describe("Lesson API Functions", () => {
       const result = await duplicateLessonToDroplet(1, 2, 0);
 
       expect(result.ok).toBe(true);
+      expect(revalidateTag).toHaveBeenCalledWith("droplets");
+      expect(revalidateTag).toHaveBeenCalledWith("enrollments");
       expect(global.fetch).toHaveBeenCalledWith(
         expect.stringMatching("/api/lessons"),
         expect.objectContaining({
