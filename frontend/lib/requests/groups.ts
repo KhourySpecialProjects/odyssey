@@ -674,7 +674,7 @@ export async function assignDropletDueDate(
     });
 
     const existingMap = new Map(
-      existingDueDates.map((dd) => [dd.authorized_user?.id, dd.id])
+      existingDueDates.map((dd) => [dd.authorized_user?.id, dd.id]),
     );
 
     const dueDatePromises = group.members.map(async (member) => {
@@ -783,7 +783,7 @@ export async function assignPlaylistDueDate(
     });
 
     const existingMap = new Map(
-      existingDueDates.map((dd) => [dd.authorized_user?.id, dd.id])
+      existingDueDates.map((dd) => [dd.authorized_user?.id, dd.id]),
     );
 
     const dueDatePromises = group.members.map(async (member) => {
