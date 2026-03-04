@@ -1,5 +1,6 @@
 import { getCurrentUser } from "@/lib/auth/session";
-import { getCachedEnrollmentsWithLessonIds } from "@/lib/requests/cached";
+import { getEnrollmentsForGroupMembers } from "@/lib/requests/enrollment";
+import { ENROLLMENT_POPULATES } from "@/lib/requests/enrollment-populates";
 import { StudentProgressList } from "./student-progress-list";
 import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
 
@@ -38,45 +39,66 @@ export async function StudentProgress() {
   const playlists = author.created_playlists;
   if (!playlists) return null;
 
-  const playlistsWithProgress = await Promise.all(
-    playlists.map(async (playlist) => {
-      const usersWithProgress = await Promise.all(
-        (playlist.authorized_users || []).map(async (user: AuthorizedUser) => {
-          const enrollments = await getCachedEnrollmentsWithLessonIds(user.id);
-          const completedLessonIds = enrollments.flatMap(
-            (enrollment) =>
-              enrollment.viewedLessons?.map((lesson: Lesson) => lesson.id) ||
-              [],
-          );
-
-          const allLessonIds =
-            playlist.droplets?.flatMap(
-              (d) => d.lessons?.map((l: Lesson) => l.id) || [],
-            ) || [];
-
-          const progress =
-            allLessonIds.length > 0
-              ? Math.round(
-                  (completedLessonIds.filter((id) => allLessonIds.includes(id))
-                    .length /
-                    allLessonIds.length) *
-                    100,
-                )
-              : 0;
-
-          return {
-            ...user,
-            progress,
-          };
-        }),
-      );
-
-      return {
-        ...playlist,
-        authorized_users: usersWithProgress,
-      };
-    }),
+  // Collect all unique user IDs and droplet IDs across all playlists
+  const allUserIds = playlists.flatMap((p) =>
+    (p.authorized_users || []).map((u: AuthorizedUser) => u.id),
   );
+  const allDropletIds = playlists.flatMap((p) =>
+    (p.droplets || []).map((d) => d.id),
+  );
+  const uniqueUserIds = [...new Set(allUserIds)];
+  const uniqueDropletIds = [...new Set(allDropletIds)];
+
+  // 1-2 queries instead of N per user
+  const allEnrollments =
+    uniqueUserIds.length > 0 && uniqueDropletIds.length > 0
+      ? await getEnrollmentsForGroupMembers(uniqueUserIds, uniqueDropletIds, {
+          populate: {
+            ...ENROLLMENT_POPULATES.withLessonIds,
+            authorizedUser: { fields: ["id"] },
+          },
+          fields: ["id"],
+        })
+      : [];
+
+  // Build a map: userId -> set of completed lesson IDs
+  const completedByUser = new Map<number, Set<number>>();
+  for (const enrollment of allEnrollments) {
+    const userId = enrollment.authorizedUser?.id;
+    if (!userId) continue;
+    if (!completedByUser.has(userId)) {
+      completedByUser.set(userId, new Set());
+    }
+    const set = completedByUser.get(userId)!;
+    for (const lesson of enrollment.viewedLessons || []) {
+      set.add(lesson.id);
+    }
+  }
+
+  const playlistsWithProgress = playlists.map((playlist) => {
+    const allLessonIds =
+      playlist.droplets?.flatMap(
+        (d) => d.lessons?.map((l: Lesson) => l.id) || [],
+      ) || [];
+
+    const usersWithProgress = (playlist.authorized_users || []).map(
+      (u: AuthorizedUser) => {
+        const completed = completedByUser.get(u.id) || new Set();
+        const progress =
+          allLessonIds.length > 0
+            ? Math.round(
+                (allLessonIds.filter((id) => completed.has(id)).length /
+                  allLessonIds.length) *
+                  100,
+              )
+            : 0;
+
+        return { ...u, progress };
+      },
+    );
+
+    return { ...playlist, authorized_users: usersWithProgress };
+  });
 
   return (
     <div className="space-y-8">

@@ -71,6 +71,17 @@ export async function getEnrollmentsByAuthorizedUser(
 export async function getEnrollmentsForGroupMembers(
   memberIds: number[],
   groupDropletIds: number[],
+  {
+    populate = {
+      droplet: {
+        populate: { lessons: { fields: ["id", "name", "slug"] } },
+        fields: ["id"],
+      },
+      viewedLessons: { fields: ["id", "name", "slug"] },
+      authorizedUser: { fields: ["id"] },
+    },
+    fields = ["id", "isComplete", "completionDate"],
+  }: { populate?: Record<string, any>; fields?: string[] } = {},
 ): Promise<Enrollment[]> {
   const path = `/enrollments`;
   const pageSize = 250;
@@ -85,17 +96,8 @@ export async function getEnrollmentsForGroupMembers(
           { droplet: { id: { $in: groupDropletIds } } },
         ],
       },
-      populate: {
-        droplet: {
-          populate: {
-            lessons: { fields: ["id", "name", "slug"] },
-          },
-          fields: ["id"],
-        },
-        viewedLessons: { fields: ["id", "name", "slug"] },
-        authorizedUser: { fields: ["id"] },
-      },
-      fields: ["id", "isComplete", "completionDate"],
+      populate,
+      fields,
       pagination: { page, pageSize },
     };
 
