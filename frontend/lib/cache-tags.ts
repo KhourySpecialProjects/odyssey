@@ -44,6 +44,7 @@
 
 export const CACHE_TAGS = {
   // Global (shared across all users)
+  users: "users",
   droplets: "droplets",
   playlists: "playlists",
   authors: "authors",

@@ -22,8 +22,10 @@ const mockAuthUser: AuthorizedUser = {
   email: "test@test.com",
   roles: [],
   isEnabled: true,
+  isPublic: true,
   linkedin: "",
   github: "",
+  website: "",
   firstTime: false,
   firstName: "",
   lastName: "",
@@ -35,7 +37,7 @@ const mockAuthUser: AuthorizedUser = {
   blocked: [],
   was_blocked: [],
   timeZone: "America/New_York",
-  isPublic: true,
+  groups: [],
 };
 const mockDroplet = {
   id: 1,

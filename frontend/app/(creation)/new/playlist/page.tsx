@@ -13,18 +13,19 @@ export default async function NewPlaylist() {
     (!isContentCreator(user.roles) && !isAuthorizedUserAdmin(user.roles))
   )
     return notFound();
-  const authUser = await getCachedUser(user.email);
-
-  const droplets = await getDroplets({
-    filters: {
-      $and: [{ status: { $eq: "published" } }, { isHidden: false }],
-    },
-    populate: {
-      lessons: {
-        fields: ["id", "name", "slug"],
+  const [authUser, droplets] = await Promise.all([
+    getCachedUser(user.email),
+    getDroplets({
+      filters: {
+        $and: [{ status: { $eq: "published" } }, { isHidden: false }],
       },
-    },
-  });
+      populate: {
+        lessons: {
+          fields: ["id", "name", "slug"],
+        },
+      },
+    }),
+  ]);
 
   return (
     <div className="light:bg-slate-100 flex min-h-screen w-full flex-col items-center px-4 pt-12 md:px-24">

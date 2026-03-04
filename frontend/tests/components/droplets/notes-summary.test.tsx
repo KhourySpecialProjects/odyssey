@@ -1,10 +1,13 @@
 import { render, screen } from "@testing-library/react";
 import NotesSummary from "@/components/droplets/notes-summary";
 import {
+  Block,
+  Droplet,
   DropletStatus,
   DropletType,
   FocusArea,
   HighlightColor,
+  Lesson,
   Tag,
 } from "@/types";
 
@@ -13,9 +16,10 @@ describe("NotesSummary", () => {
     id: 1,
     name: "Test Lesson",
     slug: "test-lesson",
-    blocks: [],
-    droplets: [],
-    notes: [],
+    type: "standard",
+    blocks: [] as Block[],
+    droplets: [] as Droplet[],
+    notes: "",
     orderIndex: 0,
   };
 
@@ -26,7 +30,7 @@ describe("NotesSummary", () => {
     isHidden: false,
     focusArea: "personal" as FocusArea,
     type: "knowledge" as DropletType,
-    tags: [{ id: 1, name: "React" }] as Tag[],
+    tags: [{ id: 1, slug: "react", name: "React", droplets: [] }] as Tag[],
     learningObjectives: [],
     status: "published" as DropletStatus,
   };
@@ -34,11 +38,11 @@ describe("NotesSummary", () => {
   const mockEnrollment = {
     id: "1",
     authorizedUser: { id: 1 } as any,
-    droplet: mockDroplet,
-    viewedLessons: [],
+    droplet: mockDroplet as any,
+    viewedLessons: [] as Lesson[],
     isComplete: false,
     rating: 5,
-    notes: [],
+    notes: [] as any[],
     isFirstTime: false,
     isArchived: false,
     completionDate: new Date(),
@@ -413,9 +417,10 @@ describe("NotesSummary", () => {
         id: 2,
         name: "Second Lesson",
         slug: "second-lesson",
-        droplets: [],
-        notes: [],
-        blocks: [],
+        type: "standard",
+        droplets: [] as Droplet[],
+        notes: "",
+        blocks: [] as Block[],
         orderIndex: 2,
       };
 

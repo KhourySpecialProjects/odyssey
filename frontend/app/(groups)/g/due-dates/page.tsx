@@ -13,12 +13,14 @@ export default async function GroupDueDatesPage({ searchParams }: Props) {
   const user = await getCurrentUser();
   if (!user?.email) redirect("/");
 
-  const authorizedUser = await getCachedUser(user.email);
-  if (!authorizedUser) redirect("/");
-
   const p = await searchParams;
   const groupSlug = p?.slug as string;
-  const group = await getGroupBySlugV2(groupSlug);
+
+  const [authorizedUser, group] = await Promise.all([
+    getCachedUser(user.email),
+    getGroupBySlugV2(groupSlug),
+  ]);
+  if (!authorizedUser) redirect("/");
 
   if (group) {
     const isCreator = group.creator?.id === authorizedUser.id;

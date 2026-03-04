@@ -390,7 +390,7 @@ describe("Lesson API Functions", () => {
             },
           },
         }),
-        next: { tags: ["droplets"], revalidate: 900 },
+        next: { tags: ["droplets", "lesson"], revalidate: 900 },
       });
       expect(result).toEqual(mockLesson);
     });

@@ -9,7 +9,7 @@ import {
 } from "@/lib/requests/notes";
 import { getEnrollByID } from "@/lib/requests/enrollment";
 import { NotesBar } from "@/components/droplets/lessons/note-taking/notes-bar";
-import { DropletStatus, DropletType, FocusArea, Tag } from "@/types";
+import { DropletStatus, DropletType, FocusArea, Lesson, Tag } from "@/types";
 
 jest.mock("@/lib/requests/notes");
 jest.mock("@/lib/requests/enrollment");
@@ -37,12 +37,13 @@ jest.mock("next-themes", () => ({
 }));
 
 describe("NotesBar", () => {
-  const mockLesson = {
+  const mockLesson: Lesson = {
     id: 1,
     name: "Test Lesson",
     slug: "test-lesson",
+    type: "standard",
     droplets: [],
-    notes: [],
+    notes: "",
     blocks: [],
     orderIndex: 1,
   };

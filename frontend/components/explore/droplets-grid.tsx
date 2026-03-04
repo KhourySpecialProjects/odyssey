@@ -36,14 +36,16 @@ export async function DropletsGrid({
 
   if (user?.email) {
     const authorizedUser = await getCachedUser(user.email);
-    enrollments = await getCachedEnrollmentsWithLessonIds(authorizedUser.id);
+    [enrollments, dueDates] = await Promise.all([
+      getCachedEnrollmentsWithLessonIds(authorizedUser.id),
+      getUserDueDates(authorizedUser.id),
+    ]);
 
     enrolledDropletIds = enrollments.map((e) => e.droplet.id);
     completedLessonIds = enrollments.flatMap(
       (enrollment) =>
         enrollment.viewedLessons?.map((lesson: Lesson) => lesson.id) || [],
     );
-    dueDates = await getUserDueDates(authorizedUser.id);
   }
 
   const dropletsWithCompletion = droplets.map((droplet) => {

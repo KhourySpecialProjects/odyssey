@@ -46,6 +46,9 @@ describe("FirstVisitPopup", () => {
     blocked: [],
     was_blocked: [],
     timeZone: "America/New_York" as TimeZone,
+    isPublic: false,
+    website: "",
+    groups: [],
   };
 
   beforeEach(() => {

@@ -45,6 +45,7 @@ describe("ProfileContent - Additional Coverage", () => {
     isEnabled: true,
     linkedin: "linkedin.com/in/johndoe",
     github: "github.com/johndoe",
+    website: "",
     firstTime: false,
     roles: [],
     friendships: [],
@@ -53,6 +54,7 @@ describe("ProfileContent - Additional Coverage", () => {
     blocked: [],
     was_blocked: [],
     timeZone: "America/New_York",
+    groups: [],
     droplets: [
       {
         id: 1,
@@ -108,6 +110,7 @@ describe("ProfileContent - Additional Coverage", () => {
       isEnabled: true,
       linkedin: "",
       github: "",
+      website: "",
       firstTime: false,
       roles: [],
       friendships: [],
@@ -116,6 +119,7 @@ describe("ProfileContent - Additional Coverage", () => {
       blocked: [],
       was_blocked: [],
       timeZone: "America/New_York",
+      groups: [],
     },
   ];
 

@@ -21,21 +21,36 @@ export default async function CheckPermission({ params, children }: Props) {
   const user = await getCurrentUser();
   const p = await params;
   let authorizedUser: AuthorizedUser | null = null;
-  if (user?.email) {
-    authorizedUser = (await getCachedUser(user.email)) as AuthorizedUser;
-  }
 
-  const droplet = await getDropletBySlug<Droplet>(p.slug, {
-    fields: ["*"],
-    populate: {
-      authorized_users: { populate: "*" },
-      learningObjectives: { populate: "*" },
-      lessons: { populate: "*" },
-      tags: { populate: "*" },
-      prerequisites: { populate: ["id", "name", "slug"] },
-      postrequisites: { populate: ["id", "name", "slug"] },
-    },
-  });
+  const [cachedUser, droplet, availableDroplets] = await Promise.all([
+    user?.email ? getCachedUser(user.email) : Promise.resolve(null),
+    getDropletBySlug<Droplet>(p.slug, {
+      fields: ["*"],
+      populate: {
+        authorized_users: { populate: "*" },
+        learningObjectives: { populate: "*" },
+        lessons: { populate: "*" },
+        tags: { populate: "*" },
+        prerequisites: { populate: ["id", "name", "slug"] },
+        postrequisites: { populate: ["id", "name", "slug"] },
+      },
+    }),
+    getDroplets({
+      fields: ["id", "name", "slug"],
+      populate: {
+        lessons: {
+          fields: ["id", "name", "slug", "type", "orderIndex"],
+        },
+      },
+      filters: {
+        status: "published", // Only show published droplets
+      },
+    }),
+  ]);
+
+  if (cachedUser) {
+    authorizedUser = cachedUser as AuthorizedUser;
+  }
 
   if (!droplet || !user || !droplet.authorized_users || !user.email) {
     return notFound();
@@ -53,17 +68,6 @@ export default async function CheckPermission({ params, children }: Props) {
   if (!isAdmin && !isContentEditor && !isAuthor) {
     return notFound();
   }
-  const availableDroplets = await getDroplets({
-    fields: ["id", "name", "slug"],
-    populate: {
-      lessons: {
-        fields: ["id", "name", "slug", "type", "orderIndex"],
-      },
-    },
-    filters: {
-      status: "published", // Only show published droplets
-    },
-  });
 
   return (
     <div className="flex min-h-screen flex-col md:border-2 md:border-dashed md:border-slate-200 xl:flex-row md:dark:border-slate-700">

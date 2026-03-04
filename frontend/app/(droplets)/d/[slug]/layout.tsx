@@ -4,9 +4,8 @@ import {
   getCachedEnrollmentsWithLessonIds,
   getCachedDropletBySlug,
 } from "@/lib/requests/cached";
-import { getDropletBySlug } from "@/lib/requests/droplet";
 import { Metadata } from "next/types";
-import { AuthorizedUser, Droplet } from "@/types";
+import { AuthorizedUser } from "@/types";
 import { getCurrentUser } from "@/lib/auth/session";
 import { notFound } from "next/navigation";
 
@@ -22,10 +21,7 @@ type Params = {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const p = await params;
-  const droplet = await getDropletBySlug<Pick<Droplet, "name">>(p.slug, {
-    fields: ["name"],
-    populate: {},
-  });
+  const droplet = await getCachedDropletBySlug(p.slug);
   if (!droplet) return {};
 
   return {

@@ -9,7 +9,9 @@ import { Droplet } from "@/types";
 export async function giveKudos(announcementId: number, droplet: Droplet) {
   const user = await getCurrentUser();
   if (!user || !user?.email) return notFound();
-  const authUser = await getAuthorizedUserByEmail(user.email);
+  const authUser = await getAuthorizedUserByEmail(user.email, {
+    fields: ["id", "email", "firstName", "lastName"],
+  });
 
   try {
     return await createKudosAnnouncement(authUser, announcementId, droplet);

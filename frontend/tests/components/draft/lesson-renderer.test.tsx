@@ -102,8 +102,9 @@ describe("LessonRenderer", () => {
     id: 1,
     name: "Test Lesson",
     slug: "test-lesson",
+    type: "standard",
     droplets: [],
-    notes: [],
+    notes: "",
     orderIndex: 1,
     blocks: [
       {

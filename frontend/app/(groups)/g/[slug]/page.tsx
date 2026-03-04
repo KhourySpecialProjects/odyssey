@@ -25,11 +25,12 @@ export default async function GroupDetailPage({ params }: Props) {
   const user = await getCurrentUser();
   if (!user?.email) return null;
 
-  const authorizedUser = await getCachedUser(user.email);
-  if (!authorizedUser) return null;
-
   const p = await params;
-  const group = await getGroupBySlugV2(p?.slug);
+  const [authorizedUser, group] = await Promise.all([
+    getCachedUser(user.email),
+    getGroupBySlugV2(p?.slug),
+  ]);
+  if (!authorizedUser) return null;
   if (!group) {
     return notFound();
   }

@@ -27,17 +27,18 @@ export default async function AuthorProfileSettings({
   const authorizedUser = await getCachedUserSocial(user.email);
   if (!authorizedUser) return notFound();
 
-  const sentRequests = await getSentRequestIds(authorizedUser);
-  const friends = (await fetchFriends(authorizedUser)).map((user) => user.id);
+  const [sentRequests, friendsList, suggestions] = await Promise.all([
+    getSentRequestIds(authorizedUser),
+    fetchFriends(authorizedUser),
+    fetchSuggestionsById(authorizedUser.id),
+  ]);
 
-  const friendsList = await fetchFriends(authorizedUser);
+  const friends = friendsList.map((user) => user.id);
   const friendsLength = friendsList.length;
   const friendRequestsLength = authorizedUser.sent_requests.length;
   const friendReceivedRequestsLength = authorizedUser.received_requests.length;
   const friendBlockedLength = authorizedUser.blocked.length;
-  const friendSuggestionsLength = await (
-    await fetchSuggestionsById(authorizedUser.id)
-  ).length;
+  const friendSuggestionsLength = suggestions.length;
 
   return (
     <div className="flex flex-col">

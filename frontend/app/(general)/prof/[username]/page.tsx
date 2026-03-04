@@ -18,14 +18,18 @@ export default async function PublicProfilePage({
 
   try {
     const userEmail = username + "@northeastern.edu";
-    const currentUser = await getCurrentUser();
-    const userData: AuthorizedUser = await getAuthorizedUserByEmail(userEmail, {
-      fields: [...USER_POPULATES.social.fields],
-      populate: {
-        ...USER_POPULATES.social.populate,
-        droplets: { fields: ["*"] },
-      },
-    });
+    const [currentUser, userData] = await Promise.all([
+      getCurrentUser(),
+      getAuthorizedUserByEmail(userEmail, {
+        fields: [...USER_POPULATES.social.fields],
+        populate: {
+          ...USER_POPULATES.social.populate,
+          droplets: {
+            fields: ["id", "name", "slug", "description", "averageRating"],
+          },
+        },
+      }) as Promise<AuthorizedUser>,
+    ]);
     const isViewingOwnProfile = currentUser?.email === userEmail;
 
     if (!userData.isPublic && !isViewingOwnProfile) {

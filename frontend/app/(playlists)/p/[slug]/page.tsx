@@ -31,40 +31,41 @@ type Params = {
 
 export default async function PlaylistPage({ params }: Props) {
   const p = await params;
-  const playlist = await getPlaylistBySlug(p.slug, {
-    populate: {
-      droplets: {
-        populate: {
-          tags: true,
-          lessons: {
-            fields: ["id", "name", "slug"],
+  const [playlist, user] = await Promise.all([
+    getPlaylistBySlug(p.slug, {
+      populate: {
+        droplets: {
+          populate: {
+            tags: true,
+            lessons: {
+              fields: ["id", "name", "slug"],
+            },
+            fields: [
+              "id",
+              "name",
+              "slug",
+              "type",
+              "focusArea",
+              "learningObjectives",
+              "isHidden",
+              "status",
+            ],
           },
-          fields: [
-            "id",
-            "name",
-            "slug",
-            "type",
-            "focusArea",
-            "learningObjectives",
-            "isHidden",
-            "status",
-          ],
+        },
+        authorized_users: {
+          fields: ["id"],
+        },
+        authors: {
+          fields: ["id", "name"],
+          populate: "*",
         },
       },
-      authorized_users: {
-        fields: ["id"],
-      },
-      authors: {
-        fields: ["id", "name"],
-        populate: "*",
-      },
-    },
-  });
+    }),
+    getCurrentUser(),
+  ]);
   if (!playlist) {
     notFound();
   }
-
-  const user = await getCurrentUser();
   let enrolledDropletIds: number[] = [];
   let completedLessonIds: number[] = [];
   let isEnrolled = false;

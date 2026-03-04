@@ -2,16 +2,14 @@ import { DropletTile } from "@/components/droplets/droplet-tile";
 import { EnrollButton } from "@/components/droplets/enroll-button";
 import { GradientBackground } from "@/components/gradient-bg";
 import { Badge } from "@/components/ui/badge";
-import { getDropletBySlug } from "@/lib/requests/droplet";
 import { stripHtmlTags, uppercaseFirstChar } from "@/lib/utils";
-import { Droplet } from "@/types";
 import {
   BookTextIcon,
   FilePieChartIcon,
   GoalIcon,
   HammerIcon,
 } from "lucide-react";
-import { Metadata } from "next";
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/session";
 import {
@@ -32,10 +30,7 @@ type params = {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const p = await params;
-  const droplet = await getDropletBySlug<Pick<Droplet, "name">>(p.slug, {
-    fields: ["name"],
-    populate: {},
-  });
+  const droplet = await getCachedDropletBySlug(p.slug);
   if (!droplet) return {};
 
   return {

@@ -55,6 +55,7 @@ export async function togglePlaylistEnrollment(playlistId: number) {
 
     revalidateTag(CACHE_TAGS.playlists);
     revalidateTag(CACHE_TAGS.enrollments(authorizedUser.id));
+    revalidateTag(CACHE_TAGS.allEnrollments);
 
     return { success: true };
   } catch (error) {
@@ -88,6 +89,7 @@ export async function enrollInPlaylist(playlistId: number, userId: number) {
     }
     revalidateTag(CACHE_TAGS.playlists);
     revalidateTag(CACHE_TAGS.enrollments(userId));
+    revalidateTag(CACHE_TAGS.allEnrollments);
     return { success: true };
   } catch (error) {
     console.error("Error updating playlists:", error);

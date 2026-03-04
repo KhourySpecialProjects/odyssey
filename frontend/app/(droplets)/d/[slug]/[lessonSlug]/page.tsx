@@ -3,9 +3,9 @@ import {
   getCachedUser,
   getCachedEnrollmentsWithLessonIds,
   getCachedDropletBySlug,
+  getCachedLessonBySlug,
 } from "@/lib/requests/cached";
 import { updateCompletionDate } from "@/lib/requests/enrollment";
-import { getLessonBySlug } from "@/lib/requests/lesson";
 import { getCurrentUser } from "@/lib/auth/session";
 import { notFound } from "next/navigation";
 import { DropletLessonWrapper } from "@/components/droplets/lessons/droplet-lesson-wrapper";
@@ -21,7 +21,7 @@ type Params = {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const p = await params;
-  const lesson = await getLessonBySlug(p.lessonSlug);
+  const lesson = await getCachedLessonBySlug(p.lessonSlug);
   if (!lesson) return {};
 
   return {
@@ -35,7 +35,7 @@ export default async function Page({ params }: Props) {
 
   const [droplet, lesson, currentUser] = await Promise.all([
     getCachedDropletBySlug(slug),
-    getLessonBySlug(lessonSlug),
+    getCachedLessonBySlug(lessonSlug),
     getCurrentUser(),
   ]);
 
