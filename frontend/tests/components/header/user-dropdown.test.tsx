@@ -41,6 +41,8 @@ describe("UserDropdown", () => {
     blocked: [],
     was_blocked: [],
     timeZone: "America/New_York" as TimeZone,
+    website: "",
+    groups: [],
   };
 
   beforeEach(() => {

@@ -2,11 +2,12 @@
 import { fetchAPI, flattenAttributes } from "@/lib/utils";
 import { AuthorizedUser } from "@/types";
 import { StrapiRequestParams } from "@/types/strapi";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import qs from "qs";
 import { AuthorizedUserSchema } from "../validations/authorized-user";
 import { getAuthorizedUserRoleIdByTitle } from "./authorized-user-roles";
 import { AuthorizedUserRoleTitle } from "../globals";
+import { CACHE_TAGS } from "../cache-tags";
 import { USER_POPULATES } from "./user-populates";
 
 const NEXT_PUBLIC_STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
@@ -44,9 +45,10 @@ export async function getAuthorizedUserByEmail<
     },
   };
 
-  return await fetchAPI<T[]>(path, { urlParams }).then(
-    (authorizedUsers) => authorizedUsers[0],
-  );
+  return await fetchAPI<T[]>(path, {
+    urlParams,
+    next: { tags: [CACHE_TAGS.users], revalidate: 900 },
+  }).then((authorizedUsers) => authorizedUsers[0]);
 }
 
 /**
@@ -244,7 +246,7 @@ export async function fetchContentCreators(): Promise<AuthorizedUser[]> {
       NEXT_PUBLIC_STRAPI_API_URL + "/api/authorized-users?" + query,
       {
         headers: { Authorization: "Bearer " + STRAPI_ACCESS_TOKEN },
-        next: { revalidate: 3600 },
+        next: { tags: [CACHE_TAGS.authors], revalidate: 3600 },
       },
     );
     const data = await response.json();
@@ -306,7 +308,7 @@ export async function fetchWebsiteCreators(): Promise<AuthorizedUser[]> {
       NEXT_PUBLIC_STRAPI_API_URL + "/api/authorized-users?" + query,
       {
         headers: { Authorization: "Bearer " + STRAPI_ACCESS_TOKEN },
-        next: { revalidate: 3600 },
+        next: { tags: [CACHE_TAGS.authors], revalidate: 3600 },
       },
     );
 
@@ -556,6 +558,7 @@ export async function updateUserInfo(
         body: JSON.stringify({ data }),
       },
     );
+    revalidateTag(CACHE_TAGS.users);
     revalidatePath("/admin");
     return { success: true };
   } catch (error) {

@@ -18,20 +18,22 @@ export default async function NotesPage() {
   if (!currentUser?.email) return null;
 
   const user = await getCachedUser(currentUser.email);
-  const enrollments = await getEnrollmentsByAuthorizedUser(user.id, {
-    populate: {
-      droplet: {
-        populate: {
-          lessons: {
-            fields: ["id", "name", "slug"],
+  const [enrollments, allUserNotes, allUserHighlights] = await Promise.all([
+    getEnrollmentsByAuthorizedUser(user.id, {
+      populate: {
+        droplet: {
+          populate: {
+            lessons: {
+              fields: ["id", "name", "slug"],
+            },
           },
+          fields: ["id", "name", "slug"],
         },
-        fields: ["id", "name", "slug"],
       },
-    },
-  });
-
-  const authUser = await getCachedUser(user.email);
+    }),
+    getAllNotesByUser(user.id),
+    getAllHighlightsByUser(user.id),
+  ]);
 
   // Build lessonId -> dropletId map from enrollments
   const lessonToDroplet = new Map<number, number>();
@@ -40,11 +42,6 @@ export default async function NotesPage() {
       lessonToDroplet.set(lesson.id, enrollment.droplet.id);
     }
   }
-
-  const [allUserNotes, allUserHighlights] = await Promise.all([
-    getAllNotesByUser(authUser.id),
-    getAllHighlightsByUser(authUser.id),
-  ]);
 
   // Group by droplet
   const notesByDroplet = new Map<number, Note[]>();

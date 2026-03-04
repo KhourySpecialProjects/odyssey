@@ -41,14 +41,15 @@ export async function PlaylistsGrid({
 
   if (user?.email) {
     authorizedUser = (await getCachedUser(user.email)) as AuthorizedUser;
-    const enrollments = await getCachedEnrollmentsWithLessonIds(
-      authorizedUser.id,
-    );
+    const [enrollments, userDueDates] = await Promise.all([
+      getCachedEnrollmentsWithLessonIds(authorizedUser.id),
+      getUserDueDates(authorizedUser.id),
+    ]);
     completedLessonIds = enrollments.flatMap(
       (enrollment) =>
         enrollment.viewedLessons?.map((lesson: Lesson) => lesson.id) || [],
     );
-    dueDates = await getUserDueDates(authorizedUser.id);
+    dueDates = userDueDates;
   }
 
   const playlistsWithCompletion = playlists?.map((playlist) => {

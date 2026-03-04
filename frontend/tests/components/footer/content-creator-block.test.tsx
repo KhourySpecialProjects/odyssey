@@ -22,6 +22,9 @@ describe("ContentCreatorBlock", () => {
     blocked: [],
     was_blocked: [],
     timeZone: "America/New_York" as TimeZone,
+    isPublic: false,
+    website: "",
+    groups: [],
   };
 
   it("renders creator name when firstName and lastName are provided", () => {

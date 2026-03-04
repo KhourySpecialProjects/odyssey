@@ -30,9 +30,11 @@ describe("FriendCompletedDroplets", () => {
     bio: "Test bio",
     profilePhoto: "test.jpg",
     isEnabled: true,
+    isPublic: false,
     roles: [],
     linkedin: "https://linkedin.com/test",
     github: "https://github.com/test",
+    website: "",
     firstTime: false,
     friendships: [],
     sent_requests: [],
@@ -41,6 +43,7 @@ describe("FriendCompletedDroplets", () => {
     was_blocked: [],
     enrollments: [],
     timeZone: "America/New_York" as TimeZone,
+    groups: [],
   };
 
   beforeEach(() => {

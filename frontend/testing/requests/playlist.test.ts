@@ -25,6 +25,7 @@ describe("createPlaylist", () => {
   const mockPlaylistData = {
     name: "New Playlist",
     isPublic: true,
+    description: "test",
     droplets: [{ id: 1 }],
     author: { id: 123 },
     userId: 123,
@@ -69,6 +70,7 @@ describe("updatePlaylist", () => {
   const mockPlaylistData = {
     name: "Test Playlist",
     isPublic: true,
+    description: "test",
     droplets: [{ id: 1 }],
     userId: 123,
     slug: "test-playlist",
@@ -114,6 +116,7 @@ describe("Playlist Actions", () => {
     const mockPlaylistData = {
       name: "Test Playlist",
       isPublic: true,
+      description: "test",
       droplets: [{ id: 1 }],
       author: { id: 1 },
       userId: 1,
@@ -127,6 +130,7 @@ describe("Playlist Actions", () => {
     const mockUpdateData = {
       name: "Updated Playlist",
       isPublic: false,
+      description: "test",
       droplets: [{ id: 1 }],
       authors: { id: 1 },
       userId: 1,
@@ -191,7 +195,13 @@ describe("archivePlaylist", () => {
       text: () => Promise.resolve(JSON.stringify({ data: { id: 10 } })),
     });
 
-    const mockPlaylist = { id: 10, name: "Test Playlist" };
+    const mockPlaylist = {
+      id: 10,
+      name: "Test Playlist",
+      slug: "test-playlist",
+      isPublic: true,
+      duration: "short" as const,
+    };
     const result = await archivePlaylist(mockPlaylist, true);
 
     expect(result).toEqual({ success: true });
@@ -204,7 +214,13 @@ describe("archivePlaylist", () => {
       text: () => Promise.resolve(JSON.stringify({ data: { id: 10 } })),
     });
 
-    const mockPlaylist = { id: 10, name: "Test Playlist" };
+    const mockPlaylist = {
+      id: 10,
+      name: "Test Playlist",
+      slug: "test-playlist",
+      isPublic: true,
+      duration: "short" as const,
+    };
     const result = await archivePlaylist(mockPlaylist, false);
 
     expect(result).toEqual({ success: true });
@@ -218,7 +234,13 @@ describe("archivePlaylist", () => {
       status: 400,
     });
 
-    const mockPlaylist = { id: 10, name: "Test Playlist" };
+    const mockPlaylist = {
+      id: 10,
+      name: "Test Playlist",
+      slug: "test-playlist",
+      isPublic: true,
+      duration: "short" as const,
+    };
     const result = await archivePlaylist(mockPlaylist, true);
 
     expect(result).toEqual({ success: false, error: expect.any(Error) });

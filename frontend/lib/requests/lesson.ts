@@ -44,7 +44,7 @@ export async function getLessonBySlug<T extends Partial<Lesson> = Lesson>(
 
   return await fetchAPI<T[]>(path, {
     urlParams,
-    next: { tags: [CACHE_TAGS.droplets], revalidate: 900 },
+    next: { tags: [CACHE_TAGS.droplets, CACHE_TAGS.lesson], revalidate: 900 },
   }).then((lessons) => lessons[0]);
 }
 

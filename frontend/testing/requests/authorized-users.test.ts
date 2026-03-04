@@ -1,4 +1,4 @@
-const {
+import {
   getAuthorizedUserByEmail,
   getAuthorizedUsersByEmails,
   fetchAuthorizedUsers,
@@ -10,13 +10,10 @@ const {
   createBatchAuthorizedUsers,
   updateUserInfo,
   deleteAuthorizedUser,
-} = require("../../lib/requests/authorized-user");
-const { fetchAPI } = require("../../lib/utils");
-const {
-  getAuthorizedUserRoleIdByTitle,
-} = require("../../lib/requests/authorized-user-roles");
-
-const mockUsers = require("../mocks/authorizedUsersMock");
+} from "@/lib/requests/authorized-user";
+import { fetchAPI } from "@/lib/utils";
+import { getAuthorizedUserRoleIdByTitle } from "@/lib/requests/authorized-user-roles";
+import mockUsers from "../mocks/authorizedUsersMock";
 
 jest.mock("../../lib/utils", () => ({
   fetchAPI: jest.fn(),
@@ -37,6 +34,7 @@ jest.mock("../../lib/requests/authorized-user-roles", () => ({
 
 jest.mock("next/cache", () => ({
   revalidatePath: jest.fn(),
+  revalidateTag: jest.fn(),
 }));
 
 global.fetch = jest.fn();
@@ -70,12 +68,13 @@ describe("Authorized User Tests", () => {
       expect(result).toEqual(mockUser);
       expect(fetchAPI).toHaveBeenCalledWith("/authorized-users", {
         urlParams: expect.objectContaining({
-          filters: {
+          filters: expect.objectContaining({
             email: {
               $eq: testEmail,
             },
-          },
+          }),
         }),
+        next: { tags: ["users"], revalidate: 900 },
       });
     });
 
@@ -91,6 +90,7 @@ describe("Authorized User Tests", () => {
         urlParams: expect.objectContaining({
           populate: { roles: { fields: ["title"] } },
         }),
+        next: { tags: ["users"], revalidate: 900 },
       });
     });
 
@@ -106,6 +106,7 @@ describe("Authorized User Tests", () => {
         urlParams: expect.objectContaining({
           fields: ["id", "email"],
         }),
+        next: { tags: ["users"], revalidate: 900 },
       });
     });
 
@@ -124,6 +125,7 @@ describe("Authorized User Tests", () => {
             isEnabled: true,
           }),
         }),
+        next: { tags: ["users"], revalidate: 900 },
       });
     });
   });
@@ -440,7 +442,7 @@ describe("Authorized User Tests", () => {
           headers: expect.objectContaining({
             Authorization: expect.stringContaining("Bearer"),
           }),
-          next: { revalidate: 3600 },
+          next: { tags: ["authors"], revalidate: 3600 },
         }),
       );
 

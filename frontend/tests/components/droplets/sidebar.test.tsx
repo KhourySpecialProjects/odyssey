@@ -2,6 +2,7 @@ import { render, screen, fireEvent } from "@testing-library/react";
 import Sidebar from "@/components/droplets/sidebar";
 import { usePathname, useRouter } from "next/navigation";
 import { AuthorizedUserRoleTitle } from "@/lib/globals";
+import { Block, Droplet, Lesson } from "@/types";
 
 jest.mock("next/navigation", () => ({
   usePathname: jest.fn(),
@@ -49,32 +50,32 @@ describe("Sidebar", () => {
         id: 1,
         name: "Lesson 1",
         slug: "lesson-1",
-        type: "general" as const,
-        droplets: [],
-        notes: [],
-        blocks: [],
+        type: "general",
+        droplets: [] as Droplet[],
+        notes: "",
+        blocks: [] as Block[],
       },
       {
         orderIndex: 1,
         id: 2,
         name: "Lesson 2",
         slug: "lesson-2",
-        type: "activity" as const,
-        droplets: [],
-        notes: [],
-        blocks: [],
+        type: "activity",
+        droplets: [] as Droplet[],
+        notes: "",
+        blocks: [] as Block[],
       },
       {
         orderIndex: 2,
         id: 3,
         name: "Lesson 3",
         slug: "lesson-3",
-        type: "caseStudy" as const,
-        droplets: [],
-        notes: [],
-        blocks: [],
+        type: "caseStudy",
+        droplets: [] as Droplet[],
+        notes: "",
+        blocks: [] as Block[],
       },
-    ],
+    ] as Lesson[],
   };
 
   const mockRouter = {

@@ -16,9 +16,8 @@ describe("DropletRenderer", () => {
       {
         blocks: [
           {
-            __component: "droplets.video",
+            __component: "droplets.video" as const,
             url: "https://test.com",
-            content: "",
           },
         ],
       },
@@ -91,14 +90,12 @@ describe("DropletRenderer", () => {
           {
             blocks: [
               {
-                __component: "droplets.video",
+                __component: "droplets.video" as const,
                 url: "https://video1.com",
-                content: "",
               },
               {
-                __component: "droplets.video",
+                __component: "droplets.video" as const,
                 url: "https://video2.com",
-                content: "",
               },
             ],
           },
@@ -120,9 +117,9 @@ describe("DropletRenderer", () => {
           {
             blocks: [
               {
-                __component: "droplets.unknown",
+                __component: "droplets.generic" as const,
                 content: "Unknown content",
-              } as any,
+              },
             ],
           },
         ],
@@ -143,14 +140,13 @@ describe("DropletRenderer", () => {
           {
             blocks: [
               {
-                __component: "droplets.video",
+                __component: "droplets.video" as const,
                 url: "https://test.com",
-                content: "",
               },
               {
-                __component: "droplets.generic",
+                __component: "droplets.generic" as const,
                 content: "Generic content",
-              } as any,
+              },
             ],
           },
         ],

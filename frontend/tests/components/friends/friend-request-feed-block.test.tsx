@@ -38,9 +38,11 @@ describe("FriendRequestFeedBlock", () => {
     id: 1,
     email: `user@example.com`,
     isEnabled: true,
+    isPublic: false,
     roles: [],
     linkedin: "https://www.google.com/",
     github: "https://www.google.com/",
+    website: "",
     firstName: "first",
     lastName: "last",
     bio: "bio",
@@ -52,15 +54,18 @@ describe("FriendRequestFeedBlock", () => {
     blocked: [],
     was_blocked: [],
     timeZone: "America/New_York" as TimeZone,
+    groups: [],
   };
 
   const mockRequest = {
     id: 2,
     email: `user@example.com`,
     isEnabled: true,
+    isPublic: false,
     roles: [],
     linkedin: "https://www.google.com/",
     github: "https://www.google.com/",
+    website: "",
     firstName: "first",
     lastName: "last",
     bio: "bio",
@@ -72,6 +77,7 @@ describe("FriendRequestFeedBlock", () => {
     blocked: [],
     was_blocked: [],
     timeZone: "America/New_York" as TimeZone,
+    groups: [],
   };
 
   beforeEach(() => {
@@ -178,9 +184,11 @@ describe("FriendRequestFeedBlock", () => {
       id: 1,
       email: `user@example.com`,
       isEnabled: true,
+      isPublic: false,
       roles: [],
       linkedin: "https://www.google.com/",
       github: "https://www.google.com/",
+      website: "",
       firstName: "first",
       lastName: "last",
       bio: "bio",
@@ -191,6 +199,7 @@ describe("FriendRequestFeedBlock", () => {
       profilePhoto: "",
       was_blocked: [],
       timeZone: "America/New_York" as TimeZone,
+      groups: [],
       blocked: [mockRequest],
     };
 

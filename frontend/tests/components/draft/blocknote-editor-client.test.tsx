@@ -175,7 +175,7 @@ describe("BlockNoteEditorClient", () => {
         type: "paragraph",
         content: "Test content",
       },
-    ];
+    ] as any;
 
     render(
       <BlockNoteEditorClient

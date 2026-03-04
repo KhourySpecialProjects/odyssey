@@ -40,10 +40,13 @@ export default async function DashboardRoute({ searchParams }: Props) {
   const archivedPlaylists = authorizedUser.playlists?.filter((playlist) =>
     playlist.users_archived?.some((user) => user.id === authorizedUser.id),
   );
-  const allEnrollments = await getCachedEnrollmentsFavorites(authorizedUser.id);
+  const [allEnrollments, allGroupsRaw] = await Promise.all([
+    getCachedEnrollmentsFavorites(authorizedUser.id),
+    getCachedUserGroups(authorizedUser.id),
+  ]);
   const allPlaylists = authorizedUser.playlists?.length || 0;
-  const allGroups = (await getCachedUserGroups(authorizedUser.id)).filter(
-    (group) => group.members?.some((member) => member.id === authorizedUser.id),
+  const allGroups = allGroupsRaw.filter((group) =>
+    group.members?.some((member) => member.id === authorizedUser.id),
   );
   const activeGroups = allGroups.filter(
     (group) =>

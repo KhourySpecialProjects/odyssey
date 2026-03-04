@@ -41,8 +41,10 @@ describe("FeedClient", () => {
     email: "test@test.com",
     roles: [],
     isEnabled: true,
+    isPublic: false,
     linkedin: "",
     github: "",
+    website: "",
     firstTime: false,
     firstName: "",
     lastName: "",
@@ -54,6 +56,7 @@ describe("FeedClient", () => {
     blocked: [],
     was_blocked: [],
     timeZone: "America/New_York",
+    groups: [],
   };
 
   const generateMockAnnouncements = (

@@ -26,11 +26,14 @@ export function FriendSearch({
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
+    let cancelled = false;
+
     const delayDebounceFn = setTimeout(async () => {
       if (searchTerm.trim()) {
         try {
           setIsLoading(true);
           const results = await searchAuthorizedUsers(searchTerm);
+          if (cancelled) return;
           if (Array.isArray(results)) {
             const filtered = results.filter(
               (user) =>
@@ -47,10 +50,11 @@ export function FriendSearch({
             setSearchResults([]);
           }
         } catch (error) {
+          if (cancelled) return;
           console.error("Search failed:", error);
           setSearchResults([]);
         } finally {
-          setIsLoading(false);
+          if (!cancelled) setIsLoading(false);
         }
       } else {
         setSearchResults([]);
@@ -58,7 +62,10 @@ export function FriendSearch({
       }
     }, 300);
 
-    return () => clearTimeout(delayDebounceFn);
+    return () => {
+      cancelled = true;
+      clearTimeout(delayDebounceFn);
+    };
   }, [searchTerm, curUser.blocked, curUser.was_blocked]);
 
   const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {

@@ -1,8 +1,8 @@
-import { getDropletBySlug, updateDropletFunFact } from "@/lib/requests/droplet";
+import { updateDropletFunFact, getDroplets } from "@/lib/requests/droplet";
 import type { Droplet } from "@/types";
+import { getCachedDraftDropletBySlug } from "@/lib/requests/cached";
 import { DropletName } from "@/components/draft/metadata/droplet-name";
 import { LearningObjectives } from "@/components/draft/metadata/learning-objectives/learning-objectives";
-import { getDroplets } from "@/lib/requests/droplet";
 import { getTags } from "@/lib/requests/tag";
 import { NextSteps } from "@/components/draft/metadata/next-steps/next-steps";
 import { Overview } from "@/components/draft/metadata/overview";
@@ -28,10 +28,7 @@ type Params = {
 
 export async function generateMetadata({ params }: Props) {
   const p = await params;
-  const droplet = await getDropletBySlug<Pick<Droplet, "name">>(p.slug, {
-    fields: ["name"],
-    populate: {},
-  });
+  const droplet = await getCachedDraftDropletBySlug(p.slug);
   if (!droplet) return {};
 
   return {
@@ -41,37 +38,27 @@ export async function generateMetadata({ params }: Props) {
 
 export default async function Droplet({ params }: Props) {
   const p = await params;
-  const droplet = await getDropletBySlug<Droplet>(p.slug, {
-    fields: ["*"],
-    populate: {
-      authorized_users: { populate: "*" },
-      learningObjectives: { populate: "*" },
-      lessons: { populate: "*" },
-      tags: { populate: "*" },
-      prerequisites: { populate: "*" },
-      postrequisites: { populate: "*" },
-      nextSteps: { fields: ["label", "url"] },
-    },
-  });
-  const droplets = await getDroplets({
-    filters: {
-      $and: [{ status: { $eq: "published" } }, { isHidden: false }],
-    },
-    fields: ["id", "name", "slug"],
-    populate: {},
-    pagination: { pageSize: 250, page: 1 },
-  });
 
-  const tags = await getTags();
+  const user = await getCurrentUser();
+  if (!user) {
+    return notFound();
+  }
+
+  const [droplet, droplets, tags] = await Promise.all([
+    getCachedDraftDropletBySlug(p.slug),
+    getDroplets({
+      filters: {
+        $and: [{ status: { $eq: "published" } }, { isHidden: false }],
+      },
+      fields: ["id", "name", "slug"],
+      populate: {},
+      pagination: { pageSize: 250, page: 1 },
+    }),
+    getTags(),
+  ]);
 
   if (!droplet) {
     return <div data-testid={`not-found-message`}>Droplet not found</div>;
-  }
-
-  const user = await getCurrentUser();
-
-  if (!user) {
-    return notFound();
   }
 
   const generateFunFact = async () => {

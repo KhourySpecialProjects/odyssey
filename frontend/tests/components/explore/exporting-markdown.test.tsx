@@ -1,6 +1,6 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { DropletTile } from "@/components/droplets/droplet-tile";
-import { Droplet } from "@/types";
+import { Block, Droplet } from "@/types";
 import { getDropletBySlug } from "@/lib/requests/droplet";
 
 jest.mock("@/lib/requests/droplet", () => ({
@@ -96,9 +96,10 @@ describe("Export Droplet to Markdown", () => {
         id: 1,
         name: "Introduction",
         slug: "introduction",
+        type: "standard",
         orderIndex: 1,
-        droplets: [],
-        notes: [],
+        droplets: [] as Droplet[],
+        notes: "",
         blocks: [
           {
             __component: "droplets.generic" as const,
@@ -114,9 +115,10 @@ describe("Export Droplet to Markdown", () => {
         id: 2,
         name: "Advanced Topics",
         slug: "advanced",
+        type: "standard",
         orderIndex: 2,
-        droplets: [],
-        notes: [],
+        droplets: [] as Droplet[],
+        notes: "",
         blocks: [
           {
             __component: "droplets.expandable" as const,
@@ -509,10 +511,11 @@ describe("Export Droplet to Markdown", () => {
             id: 1,
             name: "Empty Lesson",
             slug: "empty",
+            type: "standard",
             orderIndex: 1,
-            droplets: [],
-            notes: [],
-            blocks: [],
+            droplets: [] as Droplet[],
+            notes: "",
+            blocks: [] as Block[],
           },
         ],
       };
@@ -567,9 +570,10 @@ describe("Export Droplet to Markdown", () => {
             id: 1,
             name: "Quiz Lesson",
             slug: "quiz",
+            type: "standard",
             orderIndex: 1,
-            droplets: [],
-            notes: [],
+            droplets: [] as Droplet[],
+            notes: "",
             blocks: [
               {
                 __component: "droplets.quiz" as const,
@@ -617,9 +621,10 @@ describe("Export Droplet to Markdown", () => {
             id: 1,
             name: "Open Quiz",
             slug: "open-quiz",
+            type: "standard",
             orderIndex: 1,
-            droplets: [],
-            notes: [],
+            droplets: [] as Droplet[],
+            notes: "",
             blocks: [
               {
                 __component: "droplets.open-ended-quiz" as const,
@@ -663,9 +668,10 @@ describe("Export Droplet to Markdown", () => {
             id: 1,
             name: "Callout Lesson",
             slug: "callout",
+            type: "standard",
             orderIndex: 1,
-            droplets: [],
-            notes: [],
+            droplets: [] as Droplet[],
+            notes: "",
             blocks: [
               {
                 __component: "droplets.callout" as const,
@@ -705,9 +711,10 @@ describe("Export Droplet to Markdown", () => {
             id: 1,
             name: "Empty Callout",
             slug: "empty-callout",
+            type: "standard",
             orderIndex: 1,
-            droplets: [],
-            notes: [],
+            droplets: [] as Droplet[],
+            notes: "",
             blocks: [
               {
                 __component: "droplets.callout" as const,
