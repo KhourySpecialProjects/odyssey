@@ -1,5 +1,6 @@
 import { AccessRequest } from "@/components/shared/access-manager/access-requests/access-requests";
 import { flattenAttributes } from "@/lib/utils";
+import { CACHE_TAGS } from "../cache-tags";
 import { Droplet, Group } from "@/types";
 import qs from "qs";
 import { Report } from "@/components/admin/reports/reports";
@@ -25,7 +26,7 @@ export async function fetchDroplets() {
         NEXT_PUBLIC_STRAPI_API_URL + "/api/droplets?" + query,
         {
           headers: { Authorization: "Bearer " + STRAPI_ACCESS_TOKEN },
-          next: { tags: ["droplets"], revalidate: 0 },
+          next: { tags: [CACHE_TAGS.droplets], revalidate: 900 },
         },
       );
       const data = await response.json();

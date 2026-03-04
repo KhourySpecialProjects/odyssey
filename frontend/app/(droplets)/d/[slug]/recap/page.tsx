@@ -1,17 +1,20 @@
 import { DropletTile } from "@/components/droplets/droplet-tile";
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { getDropletBySlug, getDroplets } from "@/lib/requests/droplet";
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { Droplet } from "@/types";
 import { GoalIcon, Link2Icon } from "lucide-react";
 import { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { StarRating } from "@/components/ui/rating-stars";
-import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
 import {
-  getEnrollmentsByAuthorizedUser,
-  updateCompletionDate,
-} from "@/lib/requests/enrollment";
-import { getServerSession } from "next-auth";
+  getCachedUser,
+  getCachedEnrollmentsWithLessonIds,
+  getCachedDropletBySlug,
+} from "@/lib/requests/cached";
+import { updateCompletionDate } from "@/lib/requests/enrollment";
+import { getCurrentUser } from "@/lib/auth/session";
 import { CompletedDropletBlock } from "@/components/droplets/completed-droplet-block";
 import { getNotesByDroplet } from "@/lib/requests/notes";
 import { getHighlightsByDroplet } from "@/lib/requests/highlights";
@@ -30,17 +33,7 @@ type Params = {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const p = await params;
-  const droplet = await getDropletBySlug<Droplet>(p.slug, {
-    fields: ["*"],
-    populate: {
-      learningObjectives: { populate: "*" },
-      tags: { populate: "*" },
-      nextSteps: { populate: "*" },
-      lessons: {
-        fields: ["id", "name", "slug"],
-      },
-    },
-  });
+  const droplet = await getCachedDropletBySlug(p.slug);
 
   if (!droplet) {
     return notFound();
@@ -53,14 +46,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function DropletRecapRoute({ params }: Props) {
   const p = await params;
-  const droplet = await getDropletBySlug<Droplet>(p.slug, {
-    fields: ["*"],
-    populate: {
-      learningObjectives: { populate: "*" },
-      tags: { populate: "*" },
-      nextSteps: { populate: "*" },
-    },
-  });
+  const [droplet, currentUser] = await Promise.all([
+    getCachedDropletBySlug(p.slug),
+    getCurrentUser(),
+  ]);
   if (!droplet) {
     return notFound();
   }
@@ -85,31 +74,16 @@ export default async function DropletRecapRoute({ params }: Props) {
     populate: { tags: { populate: "*" } },
   });
 
-  const session = await getServerSession();
+  if (currentUser?.email) {
+    const authUser = await getCachedUser(currentUser.email);
 
-  if (session?.user?.email) {
-    const user = await getAuthorizedUserByEmail(session.user.email);
+    const [enrollments, highlights, notes] = await Promise.all([
+      getCachedEnrollmentsWithLessonIds(authUser.id),
+      getHighlightsByDroplet(authUser.id, droplet.id),
+      getNotesByDroplet(authUser.id, droplet.id),
+    ]);
 
-    const enrollments = await getEnrollmentsByAuthorizedUser(user.id, {
-      populate: {
-        viewedLessons: {
-          fields: ["id", "name", "slug"],
-        },
-
-        droplet: {
-          populate: {
-            lessons: {
-              fields: ["id", "name", "slug"],
-            },
-          },
-        },
-      },
-    });
-
-    const authUser = await getAuthorizedUserByEmail(user.email);
     let enrollID: string = "";
-    const highlights = await getHighlightsByDroplet(authUser.id, droplet.id);
-    const notes = await getNotesByDroplet(authUser.id, droplet.id);
     const filteredHighlights = highlights.filter(
       (highlight) =>
         !notes.some((lesson) => lesson.highlight?.id === highlight.id),

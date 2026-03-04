@@ -1,4 +1,4 @@
-import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
+import { getCachedUserSocial } from "@/lib/requests/cached";
 import { getCurrentUser } from "@/lib/auth/session";
 import { notFound } from "next/navigation";
 import { BlockedUsersBlock } from "./blocked-users-block";
@@ -6,7 +6,7 @@ import { BlockedUsersBlock } from "./blocked-users-block";
 export async function BlockedUsers() {
   const user = await getCurrentUser();
   if (!user || !user?.email) return notFound();
-  const authUser = await getAuthorizedUserByEmail(user.email);
+  const authUser = await getCachedUserSocial(user.email);
   const blockedUsers = authUser.blocked;
 
   return (

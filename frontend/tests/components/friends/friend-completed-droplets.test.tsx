@@ -7,6 +7,10 @@ jest.mock("@/lib/requests/enrollment", () => ({
   getEnrollmentsByAuthorizedUser: jest.fn(() => Promise.resolve([])),
 }));
 
+jest.mock("@/lib/requests/enrollment-populates", () => ({
+  ENROLLMENT_POPULATES: { withLessonIds: {} },
+}));
+
 jest.mock("@/components/friends/friend-completed-droplets-list", () => ({
   FriendCompletedDropletsList: ({ droplets }: { droplets: any[] }) => (
     <div data-testid="completed-droplets">

@@ -7,6 +7,7 @@ import qs from "qs";
 import { AuthorizedUserSchema } from "../validations/authorized-user";
 import { getAuthorizedUserRoleIdByTitle } from "./authorized-user-roles";
 import { AuthorizedUserRoleTitle } from "../globals";
+import { USER_POPULATES } from "./user-populates";
 
 const NEXT_PUBLIC_STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
@@ -24,96 +25,8 @@ export async function getAuthorizedUserByEmail<
   {
     sort,
     filters,
-    populate = {
-      received_requests: {
-        fields: ["*"],
-      },
-      sent_requests: {
-        fields: ["*"],
-      },
-      blocked: {
-        fields: ["*"],
-      },
-      was_blocked: {
-        fields: ["*"],
-      },
-      droplets: {
-        fields: ["*"],
-      },
-      created_playlists: {
-        fields: ["*"],
-        populate: {
-          droplets: {
-            fields: "*",
-            populate: {
-              lessons: {
-                fields: ["*"], // or just ["id"] if you only need the count
-              },
-            },
-          },
-        },
-      },
-      playlists: {
-        fields: ["*"],
-        populate: {
-          droplets: {
-            fields: "*",
-            populate: {
-              lessons: {
-                fields: ["*"], // or just ["id"] if you only need the count
-              },
-            },
-          },
-          users_archived: {
-            fields: ["*"],
-          },
-        },
-      },
-      friendships: {
-        populate: {
-          authorized_users: {
-            fields: [
-              "id",
-              "email",
-              "firstName",
-              "lastName",
-              "bio",
-              "github",
-              "linkedin",
-              "profilePhoto",
-              "website",
-            ],
-            populate: {
-              blocked: {
-                fields: ["id"],
-              },
-              was_blocked: {
-                fields: ["id"],
-              },
-            },
-          },
-        },
-      },
-      groups: {
-        populate: {
-          playlists: {
-            fields: ["id"],
-          },
-        },
-        fields: ["id"],
-      },
-    },
-    fields = [
-      "*",
-      "firstName",
-      "lastName",
-      "bio",
-      "id",
-      "timeZone",
-      "linkedin",
-      "github",
-      "website",
-    ],
+    populate = USER_POPULATES.minimal.populate,
+    fields = [...USER_POPULATES.minimal.fields],
   }: StrapiRequestParams = {},
 ): Promise<T> {
   const path = `/authorized-users`;
@@ -134,6 +47,33 @@ export async function getAuthorizedUserByEmail<
   return await fetchAPI<T[]>(path, { urlParams }).then(
     (authorizedUsers) => authorizedUsers[0],
   );
+}
+
+/**
+ * Batch-fetches authorized users whose email is in the given list.
+ * Returns only `id` and `email` — designed for membership resolution, not
+ * full profile loads.
+ */
+export async function getAuthorizedUsersByEmails(
+  emails: string[],
+): Promise<Array<{ id: number; email: string }>> {
+  if (emails.length === 0) return [];
+
+  const path = `/authorized-users`;
+  const urlParams = {
+    filters: {
+      email: { $in: emails },
+    },
+    fields: ["id", "email"],
+    pagination: {
+      pageSize: emails.length,
+      page: 1,
+    },
+  };
+
+  return await fetchAPI<Array<{ id: number; email: string }>>(path, {
+    urlParams,
+  });
 }
 
 export async function fetchAuthorizedUsers(): Promise<AuthorizedUser[]> {
@@ -191,6 +131,22 @@ export async function fetchAuthorizedUsers(): Promise<AuthorizedUser[]> {
   }
 }
 
+export async function searchAuthorizedUsers(query: string) {
+  return fetchAPI<AuthorizedUser[]>("/authorized-users", {
+    urlParams: {
+      filters: {
+        $or: [
+          { email: { $containsi: query } },
+          { firstName: { $containsi: query } },
+          { lastName: { $containsi: query } },
+        ],
+      },
+      fields: ["id", "email", "firstName", "lastName", "profilePhoto"],
+      pagination: { pageSize: 20, page: 1 },
+    },
+  });
+}
+
 // Gets just one enrollment but also returns the response metadata to get pagination data
 export async function fetchAuthorizedUsersMetadata({
   sort,
@@ -231,7 +187,6 @@ export async function fetchAuthorizedUsersMetadata({
       };
     }>(path, {
       urlParams,
-      next: { tags: ["authorized-users"], revalidate: 0 },
       cache: "no-store",
       flattenResponse: false,
     });
@@ -289,7 +244,7 @@ export async function fetchContentCreators(): Promise<AuthorizedUser[]> {
       NEXT_PUBLIC_STRAPI_API_URL + "/api/authorized-users?" + query,
       {
         headers: { Authorization: "Bearer " + STRAPI_ACCESS_TOKEN },
-        cache: "no-store",
+        next: { revalidate: 3600 },
       },
     );
     const data = await response.json();
@@ -351,7 +306,7 @@ export async function fetchWebsiteCreators(): Promise<AuthorizedUser[]> {
       NEXT_PUBLIC_STRAPI_API_URL + "/api/authorized-users?" + query,
       {
         headers: { Authorization: "Bearer " + STRAPI_ACCESS_TOKEN },
-        cache: "no-store",
+        next: { revalidate: 3600 },
       },
     );
 
@@ -644,7 +599,6 @@ export async function deleteAuthorizedUser(formData: FormData) {
 export async function fetchContentEditors(): Promise<AuthorizedUser[]> {
   // create a query for the backend
   const query = qs.stringify({
-    // we need filter for role by title
     filters: {
       roles: {
         title: {
@@ -652,20 +606,15 @@ export async function fetchContentEditors(): Promise<AuthorizedUser[]> {
         },
       },
     },
-    // now we need what fields necessary
     fields: ["id", "username", "email"],
-
-    populate: "*",
-    // sort in query
+    populate: {},
     sort: ["username"],
-    // set pagination -
     pagination: {
-      pageSize: 900,
+      pageSize: 100,
       page: 1,
     },
   });
 
-  // now, we can await a response with our query
   const response = await fetch(`/api/authorized-users?${query}`);
 
   // finally got response, so handle it

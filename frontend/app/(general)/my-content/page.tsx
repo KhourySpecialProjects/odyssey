@@ -14,7 +14,7 @@ import { DropletsSkeleton } from "@/components/explore/droplets-skeleton";
 import { Separator } from "@/components/ui/separator";
 import { Metadata } from "next";
 import { PlaylistCard } from "@/components/playlists/playlist-card";
-import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
+import { getCachedUserCreation } from "@/lib/requests/cached";
 
 export const metadata: Metadata = {
   title: "Create",
@@ -31,7 +31,7 @@ export default async function CreateRoute() {
       !isAuthorizedUserFaculty(user.roles))
   )
     redirect("/unauthorized");
-  const authorizedUser = await getAuthorizedUserByEmail(user.email);
+  const authorizedUser = await getCachedUserCreation(user.email);
 
   const playlists = authorizedUser.created_playlists;
 

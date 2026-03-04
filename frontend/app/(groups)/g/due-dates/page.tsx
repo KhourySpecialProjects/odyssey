@@ -1,5 +1,5 @@
 import { getCurrentUser } from "@/lib/auth/session";
-import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
+import { getCachedUser } from "@/lib/requests/cached";
 import { notFound, redirect } from "next/navigation";
 import { getGroupBySlugV2 } from "@/lib/requests/groups";
 import { isAuthorizedUserAdmin } from "@/lib/utils";
@@ -13,7 +13,7 @@ export default async function GroupDueDatesPage({ searchParams }: Props) {
   const user = await getCurrentUser();
   if (!user?.email) redirect("/");
 
-  const authorizedUser = await getAuthorizedUserByEmail(user.email);
+  const authorizedUser = await getCachedUser(user.email);
   if (!authorizedUser) redirect("/");
 
   const p = await searchParams;

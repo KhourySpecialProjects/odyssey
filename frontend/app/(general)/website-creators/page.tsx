@@ -3,6 +3,8 @@ import { GradientBackground } from "@/components/gradient-bg";
 import { fetchWebsiteCreators } from "@/lib/requests/authorized-user";
 import { Metadata } from "next";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Website Creators",
 };

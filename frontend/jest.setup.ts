@@ -67,6 +67,7 @@ jest.mock("react-dom", () => ({
 jest.mock("react", () => ({
   ...jest.requireActual("react"),
   useActionState: () => [{ ok: false, error: null }, jest.fn(), false],
+  cache: (fn: Function) => fn,
 }));
 // Mock the flat package
 jest.mock("flat", () => ({

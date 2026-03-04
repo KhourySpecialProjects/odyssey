@@ -6,6 +6,8 @@ import {
 } from "@/lib/requests/authorized-user";
 import { Metadata } from "next";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Contributors",
 };

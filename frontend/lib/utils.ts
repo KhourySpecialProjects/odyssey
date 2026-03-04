@@ -50,13 +50,21 @@ export async function fetchAPI<T>(
   config: {
     urlParams?: Object;
     options?: RequestInit;
-    next?: Object;
-    revalidate?: number;
+    next?: { revalidate?: number; tags?: string[] };
     flattenResponse?: boolean;
     cache?: "no-store" | "force-cache";
   },
 ): Promise<T> {
   try {
+    // Dev-only guard: cache and next are mutually exclusive in Next.js 15.
+    // Passing both causes Next.js to silently ignore both options.
+    if (process.env.NODE_ENV === "development" && config.cache && config.next) {
+      throw new Error(
+        `fetchAPI("${path}"): "cache" and "next" options are mutually exclusive. ` +
+          `Use cache: "no-store" for uncached fetches, or next: { revalidate, tags } for cached fetches.`,
+      );
+    }
+
     const mergedOptions = {
       headers: {
         "Content-Type": "application/json",
@@ -64,9 +72,7 @@ export async function fetchAPI<T>(
       },
       ...config.options,
       ...(config.cache && { cache: config.cache }),
-      ...(config.next && {
-        next: { ...config.next, revalidate: config.revalidate ?? 60 },
-      }),
+      ...(config.next && { next: config.next }),
     };
 
     const queryString = qs.stringify(config.urlParams, {

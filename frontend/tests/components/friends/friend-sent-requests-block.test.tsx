@@ -31,6 +31,8 @@ describe("FriendSentRequestsBlock", () => {
     received_requests: [],
     blocked: [],
     was_blocked: [],
+    isPublic: true,
+    website: "",
     timeZone: "America/New_York" as TimeZone,
   };
   const mockRequest = {
@@ -50,6 +52,8 @@ describe("FriendSentRequestsBlock", () => {
     received_requests: [],
     blocked: [],
     was_blocked: [],
+    isPublic: true,
+    website: "",
     timeZone: "America/New_York" as TimeZone,
   };
 

@@ -291,7 +291,7 @@ describe("NotesBar", () => {
       await userEvent.click(deleteButtons[0]);
 
       await waitFor(() => {
-        expect(deleteNote).toHaveBeenCalledWith(1);
+        expect(deleteNote).toHaveBeenCalledWith(1, 1);
       });
     });
 

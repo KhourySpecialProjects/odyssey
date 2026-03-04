@@ -30,7 +30,7 @@ export async function generateMetadata({ params }: Props) {
   const p = await params;
   const droplet = await getDropletBySlug<Pick<Droplet, "name">>(p.slug, {
     fields: ["name"],
-    populate: undefined,
+    populate: {},
   });
   if (!droplet) return {};
 
@@ -57,6 +57,9 @@ export default async function Droplet({ params }: Props) {
     filters: {
       $and: [{ status: { $eq: "published" } }, { isHidden: false }],
     },
+    fields: ["id", "name", "slug"],
+    populate: {},
+    pagination: { pageSize: 250, page: 1 },
   });
 
   const tags = await getTags();

@@ -3,13 +3,15 @@
 import { Enrollment, Lesson } from "@/types";
 import { StrapiRequestParams } from "@/types/strapi";
 import { fetchAPI } from "../utils";
+import { ENROLLMENT_POPULATES } from "./enrollment-populates";
 
 import { getCurrentUser } from "@/lib/auth/session";
 import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
-import { revalidatePath, revalidateTag } from "next/cache";
+import { revalidateTag } from "next/cache";
 import { Droplet } from "@/types";
 import { DropletEnrollmentSchema } from "../validations/enrollment";
 import { z } from "zod";
+import { CACHE_TAGS } from "../cache-tags";
 
 const STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
@@ -25,25 +27,7 @@ export async function getEnrollmentsByAuthorizedUser(
     sort,
     filters,
     pagination = { pageSize: 250, page: 1 },
-    populate = {
-      droplet: {
-        populate: {
-          lessons: {
-            fields: ["id", "name", "slug"],
-          },
-          tags: {
-            fields: ["*"],
-          },
-          usersFavorited: {
-            fields: "*",
-          },
-        },
-        fields: ["id", "*"],
-      },
-      viewedLessons: {
-        fields: ["id", "name", "slug"],
-      },
-    },
+    populate = ENROLLMENT_POPULATES.minimal,
     fields = [
       "id",
       "rating",
@@ -70,9 +54,71 @@ export async function getEnrollmentsByAuthorizedUser(
   };
   return await fetchAPI<Enrollment[]>(path, {
     urlParams,
-    next: { tags: ["enrollments"], revalidate: 0 },
-    cache: "no-store",
+    next: {
+      tags: [
+        CACHE_TAGS.enrollments(authorizedUserId),
+        CACHE_TAGS.allEnrollments,
+      ],
+      revalidate: 900,
+    },
   });
+}
+
+/**
+ * Fetches enrollments for multiple members filtered to specific droplets in a
+ * single paginated Strapi query. Replaces N per-member calls with 1 batched call.
+ */
+export async function getEnrollmentsForGroupMembers(
+  memberIds: number[],
+  groupDropletIds: number[],
+): Promise<Enrollment[]> {
+  const path = `/enrollments`;
+  const pageSize = 250;
+  let page = 1;
+  let allEnrollments: Enrollment[] = [];
+
+  while (true) {
+    const urlParams = {
+      filters: {
+        $and: [
+          { authorizedUser: { id: { $in: memberIds } } },
+          { droplet: { id: { $in: groupDropletIds } } },
+        ],
+      },
+      populate: {
+        droplet: {
+          populate: {
+            lessons: { fields: ["id", "name", "slug"] },
+          },
+          fields: ["id"],
+        },
+        viewedLessons: { fields: ["id", "name", "slug"] },
+        authorizedUser: { fields: ["id"] },
+      },
+      fields: ["id", "isComplete", "completionDate"],
+      pagination: { page, pageSize },
+    };
+
+    const enrollmentsPage = await fetchAPI<Enrollment[]>(path, {
+      urlParams,
+      next: {
+        tags: [
+          ...memberIds.map((id) => CACHE_TAGS.enrollments(id)),
+          CACHE_TAGS.allEnrollments,
+        ],
+        revalidate: 900,
+      },
+    });
+
+    if (!enrollmentsPage || enrollmentsPage.length === 0) break;
+
+    allEnrollments = allEnrollments.concat(enrollmentsPage);
+
+    if (enrollmentsPage.length < pageSize) break;
+    page++;
+  }
+
+  return allEnrollments;
 }
 
 /**
@@ -82,6 +128,29 @@ export async function getEnrollmentsByAuthorizedUser(
  * @param options Strapi query modifiers.
  * @returns `true` if the authorized user is already enrolled in the Droplet, else `false`.
  */
+/**
+ * Fetches a single enrollment for a specific user and droplet.
+ * Returns null if no enrollment exists.
+ */
+export async function getEnrollmentByUserAndDroplet(
+  authorizedUserId: number,
+  dropletId: number,
+): Promise<Enrollment | null> {
+  return fetchAPI<Enrollment[]>("/enrollments", {
+    urlParams: {
+      filters: {
+        $and: [
+          { authorizedUser: { id: { $eq: authorizedUserId } } },
+          { droplet: { id: { $eq: dropletId } } },
+        ],
+      },
+      fields: ["id", "isComplete", "isArchived"],
+      populate: { viewedLessons: { fields: ["id"] } },
+      pagination: { pageSize: 1, page: 1 },
+    },
+  }).then((enrollments) => enrollments[0] || null);
+}
+
 export async function getIsEnrolled(
   authorizedUserId: number,
   dropletId: number,
@@ -175,8 +244,8 @@ export async function changeEnrollmentRating(
       throw new Error("Failed to update enrollment");
     }
 
-    revalidatePath("/p/[slug]", "page");
-    revalidatePath("/dashboard", "page");
+    const authorizedUser = await getAuthorizedUserByEmail(user.email);
+    revalidateTag(CACHE_TAGS.enrollments(authorizedUser.id));
 
     return { success: true };
   } catch (error) {
@@ -322,7 +391,6 @@ export async function fetchEnrollmentMetadata({
       };
     }>(path, {
       urlParams,
-      next: { tags: ["enrollments"], revalidate: 0 },
       cache: "no-store",
       flattenResponse: false,
     });
@@ -336,6 +404,10 @@ export async function fetchEnrollmentMetadata({
 
 export async function updateEnrollmentFirstTime(enrollmentId: string) {
   try {
+    const user = await getCurrentUser();
+    if (!user?.email) throw new Error("User not authenticated");
+    const authorizedUser = await getAuthorizedUserByEmail(user.email);
+
     const response = await fetch(
       `${process.env.NEXT_PUBLIC_STRAPI_API_URL}/api/enrollments/${enrollmentId}`,
       {
@@ -356,6 +428,7 @@ export async function updateEnrollmentFirstTime(enrollmentId: string) {
       throw new Error("Failed to update enrollment");
     }
 
+    revalidateTag(CACHE_TAGS.enrollments(authorizedUser.id));
     return await response.json();
   } catch (error) {
     console.error("Error updating enrollment:", error);
@@ -369,14 +442,12 @@ export async function createEnrollmentFromEmail(
 ) {
   try {
     const authorizedUser = await getAuthorizedUserByEmail(email);
-    const enrollments = await getEnrollmentsByAuthorizedUser(authorizedUser.id);
+    const existing = await getEnrollmentByUserAndDroplet(
+      authorizedUser.id,
+      formData.droplet,
+    );
 
-    if (
-      !enrollments
-        .filter((enrollment) => enrollment.droplet != null)
-        .map((enrollment) => enrollment.droplet.id)
-        .includes(formData.droplet)
-    ) {
+    if (!existing) {
       const response = await fetch(STRAPI_API_URL + "/api/enrollments", {
         method: "POST",
         body: JSON.stringify({
@@ -394,6 +465,8 @@ export async function createEnrollmentFromEmail(
         const errorMessage = `${data.error.message} (${errorPath})`;
         return { ok: false, error: errorMessage, data: null };
       }
+
+      revalidateTag(CACHE_TAGS.enrollments(authorizedUser.id));
     }
   } catch (err) {
     console.error(err);
@@ -438,15 +511,14 @@ export async function deleteEnrollment(
     const user = await getCurrentUser();
     if (!user?.email) throw new Error("No email identified");
     const authorizedUser = await getAuthorizedUserByEmail(user.email);
-    const enrollments = await getEnrollmentsByAuthorizedUser(authorizedUser.id);
+    const enrollment = await getEnrollmentByUserAndDroplet(
+      authorizedUser.id,
+      formData.droplet,
+    );
 
-    const toRemove = enrollments
-      .filter((e) => e.droplet != null)
-      .filter((e) => e.droplet.id === formData.droplet);
-
-    if (toRemove.length > 0) {
+    if (enrollment) {
       const response = await fetch(
-        STRAPI_API_URL + "/api/enrollments/" + toRemove[0].id,
+        STRAPI_API_URL + "/api/enrollments/" + enrollment.id,
         {
           method: "DELETE",
           headers: {
@@ -463,9 +535,7 @@ export async function deleteEnrollment(
         return { ok: false, error: errorMessage, data: null };
       }
 
-      revalidateTag("enrollments");
-      revalidatePath("/(droplets)/d/[slug]", "page");
-      revalidatePath("/(general)/dashboard", "page");
+      revalidateTag(CACHE_TAGS.enrollments(authorizedUser.id));
     }
   } catch (err) {
     console.error(err);
@@ -481,14 +551,12 @@ export async function createEnrollment(
     const user = await getCurrentUser();
     if (!user?.email) throw new Error("No email identified");
     const authorizedUser = await getAuthorizedUserByEmail(user.email);
-    const enrollments = await getEnrollmentsByAuthorizedUser(authorizedUser.id);
+    const existing = await getEnrollmentByUserAndDroplet(
+      authorizedUser.id,
+      droplet.id,
+    );
 
-    if (
-      !enrollments
-        .filter((enrollment) => enrollment.droplet != null)
-        .map((enrollment) => enrollment.droplet.id)
-        .includes(droplet.id)
-    ) {
+    if (!existing) {
       const response = await fetch(STRAPI_API_URL + "/api/enrollments", {
         method: "POST",
         body: JSON.stringify({
@@ -510,17 +578,7 @@ export async function createEnrollment(
         const errorMessage = `${data.error.message} (${errorPath})`;
         return { ok: false, error: errorMessage, data: null };
       }
-      revalidateTag("enrollments");
-      revalidatePath("/(droplets)/d/[slug]", "page");
-      revalidatePath("/(droplets)/d/[slug]/[lessonSlug]", "page");
-      revalidatePath("/(general)/dashboard", "page");
-      revalidatePath(`/(droplets)/d/${droplet.slug}`, "page");
-      if (droplet.lessons) {
-        revalidatePath(
-          `/(droplets)/d/${droplet.slug}/${droplet.lessons[0].slug}`,
-          "page",
-        );
-      }
+      revalidateTag(CACHE_TAGS.enrollments(authorizedUser.id));
       return { ok: true, error: null, data: data.data };
     }
     return { ok: true };
@@ -541,6 +599,7 @@ export async function updateViewedLessons(
     if (!user?.email) {
       throw new Error("User not authenticated");
     }
+    const authorizedUser = await getAuthorizedUserByEmail(user.email);
 
     // Get current enrollment to check current viewedLessons
     const enrollment = await getEnrollByID(enrollmentId, {
@@ -603,6 +662,9 @@ export async function updateViewedLessons(
       );
     }
     const alreadyViewed = currentViewedIds.includes(lessonId);
+    if (!alreadyViewed || (isNowComplete && !enrollment.isComplete)) {
+      revalidateTag(CACHE_TAGS.enrollments(authorizedUser.id));
+    }
     return { success: true, alreadyViewed };
   } catch (error) {
     console.error("Error updating viewed lessons:", error);
@@ -617,6 +679,7 @@ export async function updateCompletionDate(enrollmentID: string) {
     if (!user?.email) {
       throw new Error("User not authenticated");
     }
+    const authorizedUser = await getAuthorizedUserByEmail(user.email);
 
     const response = await fetch(
       `${process.env.NEXT_PUBLIC_STRAPI_API_URL}/api/enrollments/${enrollmentID}`,
@@ -639,6 +702,7 @@ export async function updateCompletionDate(enrollmentID: string) {
       throw new Error("Failed to update completion date");
     }
 
+    revalidateTag(CACHE_TAGS.enrollments(authorizedUser.id));
     return { success: true };
   } catch (error) {
     console.error("Error in adding completion date: ", error);

@@ -1,5 +1,6 @@
 const {
   getAuthorizedUserByEmail,
+  getAuthorizedUsersByEmails,
   fetchAuthorizedUsers,
   fetchAuthorizedUsersMetadata,
   fetchIsAuthorizedUser,
@@ -127,6 +128,80 @@ describe("Authorized User Tests", () => {
     });
   });
 
+  describe("getAuthorizedUsersByEmails", () => {
+    it("should return matching users for a list of emails", async () => {
+      const emails = ["a@test.com", "b@test.com", "c@test.com"];
+      const mockUsers = [
+        { id: 1, email: "a@test.com" },
+        { id: 2, email: "b@test.com" },
+        { id: 3, email: "c@test.com" },
+      ];
+      fetchAPI.mockResolvedValueOnce(mockUsers);
+
+      const result = await getAuthorizedUsersByEmails(emails);
+
+      expect(result).toEqual(mockUsers);
+      expect(fetchAPI).toHaveBeenCalledTimes(1);
+    });
+
+    it("should send $in filter with all provided emails", async () => {
+      const emails = ["a@test.com", "b@test.com"];
+      fetchAPI.mockResolvedValueOnce([]);
+
+      await getAuthorizedUsersByEmails(emails);
+
+      const callArgs = fetchAPI.mock.calls[0];
+      expect(callArgs[0]).toBe("/authorized-users");
+      expect(callArgs[1].urlParams.filters).toEqual({
+        email: { $in: emails },
+      });
+    });
+
+    it("should only request id and email fields", async () => {
+      fetchAPI.mockResolvedValueOnce([]);
+
+      await getAuthorizedUsersByEmails(["a@test.com"]);
+
+      const { fields } = fetchAPI.mock.calls[0][1].urlParams;
+      expect(fields).toEqual(["id", "email"]);
+    });
+
+    it("should set pageSize to the number of emails", async () => {
+      const emails = ["a@test.com", "b@test.com", "c@test.com"];
+      fetchAPI.mockResolvedValueOnce([]);
+
+      await getAuthorizedUsersByEmails(emails);
+
+      const { pagination } = fetchAPI.mock.calls[0][1].urlParams;
+      expect(pagination).toEqual({ pageSize: 3, page: 1 });
+    });
+
+    it("should return empty array for empty email list without calling API", async () => {
+      const result = await getAuthorizedUsersByEmails([]);
+
+      expect(result).toEqual([]);
+      expect(fetchAPI).not.toHaveBeenCalled();
+    });
+
+    it("should return partial results when only some emails match", async () => {
+      const emails = ["exists@test.com", "missing@test.com"];
+      fetchAPI.mockResolvedValueOnce([{ id: 1, email: "exists@test.com" }]);
+
+      const result = await getAuthorizedUsersByEmails(emails);
+
+      expect(result).toHaveLength(1);
+      expect(result[0].email).toBe("exists@test.com");
+    });
+
+    it("should handle fetch errors", async () => {
+      fetchAPI.mockRejectedValueOnce(new Error("API Error"));
+
+      await expect(getAuthorizedUsersByEmails(["a@test.com"])).rejects.toThrow(
+        "API Error",
+      );
+    });
+  });
+
   describe("fetchAuthorizedUsers", () => {
     beforeEach(() => {
       jest.clearAllMocks();
@@ -234,7 +309,6 @@ describe("Authorized User Tests", () => {
         urlParams: expect.objectContaining({
           pagination: { pageSize: 50, page: 2 },
         }),
-        next: expect.any(Object),
         cache: "no-store",
         flattenResponse: false,
       });
@@ -366,7 +440,7 @@ describe("Authorized User Tests", () => {
           headers: expect.objectContaining({
             Authorization: expect.stringContaining("Bearer"),
           }),
-          cache: "no-store",
+          next: { revalidate: 3600 },
         }),
       );
 

@@ -814,7 +814,6 @@ function convertSingleBlock(blockAny: any, blockIndex: number): Block | null {
     case "code-block": {
       // Code blocks need special handling - render them as a custom component
       // We'll create a simple code display block that respects the editable/runnable props
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const language = blockAny.props?.language || "javascript";
       const code = blockAny.props?.code || "";
       const editable = blockAny.props?.editable || false;
@@ -987,7 +986,7 @@ export function LessonRenderer({
   };
 
   const handleDeleteHighlight = async (highlightId: number) => {
-    const response = await deleteHighlight(highlightId);
+    const response = await deleteHighlight(highlightId, authUser!.id);
     if (response && !response.error) {
       setHighlights((prev) => prev.filter((h) => h.id !== highlightId));
       toast.success("Highlight removed");
@@ -1006,6 +1005,7 @@ export function LessonRenderer({
         lesson,
         enrollment,
         notePos,
+        authUser.id,
         highlight[0],
       );
       if (result.success) {
