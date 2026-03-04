@@ -29,6 +29,7 @@ const { getCurrentUser } = require("../../lib/auth/session");
 const {
   getAuthorizedUserByEmail,
 } = require("../../lib/requests/authorized-user");
+const { revalidateTag } = require("next/cache");
 
 const mockGroups = require("../mocks/groupsMock");
 
@@ -378,6 +379,7 @@ describe("Droplet tests", () => {
           filters: { slug: "droplet-1" },
           pagination: { pageSize: 1, page: 1 },
         }),
+        next: { tags: ["droplets"], revalidate: 900 },
       });
     });
 
@@ -522,6 +524,8 @@ describe("Playlist enrollment tests", () => {
       );
 
       expect(result).toEqual({ success: true });
+      expect(revalidateTag).toHaveBeenCalledWith("playlists");
+      expect(revalidateTag).toHaveBeenCalledWith("enrollments-12");
     });
 
     it("should enroll user in playlist when not already enrolled", async () => {
@@ -574,6 +578,8 @@ describe("Playlist enrollment tests", () => {
       );
 
       expect(result).toEqual({ success: true });
+      expect(revalidateTag).toHaveBeenCalledWith("playlists");
+      expect(revalidateTag).toHaveBeenCalledWith("enrollments-12");
     });
 
     it("should throw the correct error when an API error occurs", async () => {
@@ -655,6 +661,8 @@ describe("Playlist enrollment tests", () => {
       );
 
       expect(result).toEqual({ success: true });
+      expect(revalidateTag).toHaveBeenCalledWith("playlists");
+      expect(revalidateTag).toHaveBeenCalledWith("enrollments-1");
     });
 
     it("should throw the correct error when an API error occurs", async () => {

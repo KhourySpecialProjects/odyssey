@@ -4,9 +4,10 @@ import { Playlist } from "@/types";
 import { StrapiRequestParams } from "@/types/strapi";
 import { fetchAPI, flattenAttributes } from "@/lib/utils";
 import qs from "qs";
-import { revalidatePath, revalidateTag } from "next/cache";
+import { revalidateTag } from "next/cache";
 import { getCurrentUser } from "../auth/session";
 import { getAuthorizedUserByEmail } from "./authorized-user";
+import { CACHE_TAGS } from "../cache-tags";
 
 const NEXT_PUBLIC_STRAPI_API_URL =
   process.env.NEXT_PUBLIC_STRAPI_API_URL || "http://localhost:1337";
@@ -48,7 +49,7 @@ export async function getPlaylists({
 
   return await fetchAPI<Playlist[]>(path, {
     urlParams,
-    cache: "no-store",
+    next: { tags: [CACHE_TAGS.playlists], revalidate: 900 },
   });
 }
 
@@ -72,7 +73,6 @@ export async function getPlaylistBySlug(
       },
       authors: {
         fields: ["id", "name"],
-        populate: "*",
       },
     },
   }: StrapiRequestParams = {},
@@ -93,7 +93,7 @@ export async function getPlaylistBySlug(
 
   const playlists = await fetchAPI<Playlist[]>(path, {
     urlParams,
-    cache: "no-store",
+    next: { tags: [CACHE_TAGS.playlists], revalidate: 900 },
   });
 
   return playlists[0] || null;
@@ -121,7 +121,7 @@ export async function getPlaylistById<T extends Partial<Playlist> = Playlist>(
       NEXT_PUBLIC_STRAPI_API_URL + "/api/playlists/" + id + "?" + query,
       {
         headers: { Authorization: "Bearer " + NEXT_PUBLIC_STRAPI_API_TOKEN },
-        cache: "no-store",
+        next: { tags: [CACHE_TAGS.playlists], revalidate: 900 },
       },
     );
 
@@ -182,7 +182,7 @@ export async function updatePlaylist(
       };
     }
 
-    revalidateTag("playlists");
+    revalidateTag(CACHE_TAGS.playlists);
     return { ok: true, error: null, data: responseData.data };
   } catch (err) {
     console.error(err);
@@ -242,7 +242,7 @@ export async function createPlaylist(data: {
       };
     }
 
-    revalidateTag("playlists");
+    revalidateTag(CACHE_TAGS.playlists);
     return { ok: true, error: null, data: responseData.data };
   } catch (err) {
     console.error(err);
@@ -275,9 +275,9 @@ export async function deletePlaylist(id: number) {
       return { ok: false, error: "Failed to delete playlist.", data: null };
     }
 
-    revalidateTag("authors");
-    revalidateTag("groups");
-    revalidatePath("(general)/my-content", "page");
+    revalidateTag(CACHE_TAGS.playlists);
+    revalidateTag(CACHE_TAGS.authors);
+    revalidateTag(CACHE_TAGS.allGroups);
     return { ok: true, error: null, data: data.data };
   } catch (err) {
     console.error(err);
@@ -322,11 +322,7 @@ export async function archivePlaylist(
       throw new Error("Failed to archive playlist");
     }
 
-    revalidateTag("dashboard");
-    revalidatePath("/");
-    revalidatePath("/draft");
-    revalidatePath("/dashboard");
-    revalidatePath("/dashboard/archived");
+    revalidateTag(CACHE_TAGS.playlists);
     return { success: true };
   } catch (error) {
     console.error("Error archiving playlist:", error);

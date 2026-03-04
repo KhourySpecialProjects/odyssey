@@ -90,7 +90,7 @@ export function NotesBar({
     try {
       const currentNote = notes.find((n) => n.id === draggedNote.id);
       if (currentNote) {
-        await updateNotePosition(draggedNote.id, currentNote.positionY);
+        await updateNotePosition(draggedNote.id, currentNote.positionY, userId);
         await fetchNotes();
       }
     } catch (error) {
@@ -186,7 +186,12 @@ export function NotesBar({
       setNotes(tempNotes);
 
       const enrollment = await getEnrollByID(String(enrollmentId));
-      const result = await createNote(lesson, enrollment, mousePositionY + 50);
+      const result = await createNote(
+        lesson,
+        enrollment,
+        mousePositionY + 50,
+        userId,
+      );
 
       if (result.success) {
         await fetchNotes();
@@ -204,7 +209,7 @@ export function NotesBar({
       // Optimistically remove the note from UI
       setNotes((currentNotes) => currentNotes.filter((note) => note.id !== id));
 
-      const result = await deleteNote(id);
+      const result = await deleteNote(id, userId);
       if (!result.ok) {
         // If delete failed, restore the notes from server
         const updatedNotes = await getNotesByAuthorizedUserAndLesson(
@@ -278,6 +283,7 @@ export function NotesBar({
             >
               <NoteBlock
                 note={note}
+                authorizedUserId={userId}
                 onUpdate={fetchNotes}
                 onDelete={handleDeleteNote}
                 onFocus={setFocused}

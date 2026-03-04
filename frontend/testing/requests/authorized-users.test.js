@@ -440,7 +440,7 @@ describe("Authorized User Tests", () => {
           headers: expect.objectContaining({
             Authorization: expect.stringContaining("Bearer"),
           }),
-          cache: "no-store",
+          next: { revalidate: 3600 },
         }),
       );
 

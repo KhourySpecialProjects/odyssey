@@ -25,10 +25,18 @@ export const USER_POPULATES = {
   social: {
     fields: PROFILE_FIELDS,
     populate: {
-      received_requests: { fields: ["*"] },
-      sent_requests: { fields: ["*"] },
-      blocked: { fields: ["*"] },
-      was_blocked: { fields: ["*"] },
+      received_requests: {
+        fields: ["id", "email", "firstName", "lastName", "profilePhoto"],
+      },
+      sent_requests: {
+        fields: ["id", "email", "firstName", "lastName", "profilePhoto"],
+      },
+      blocked: {
+        fields: ["id", "email", "firstName", "lastName", "profilePhoto"],
+      },
+      was_blocked: {
+        fields: ["id", "email", "firstName", "lastName", "profilePhoto"],
+      },
       friendships: {
         populate: {
           authorized_users: {
@@ -84,10 +92,10 @@ export const USER_POPULATES = {
     fields: PROFILE_FIELDS,
     populate: {
       droplets: {
-        fields: ["*"],
+        fields: ["id", "name", "slug", "status", "type", "focusArea"],
       },
       created_playlists: {
-        fields: ["*"],
+        fields: ["id", "name", "slug", "isPublic"],
         populate: {
           droplets: {
             fields: ["id", "name", "slug"],

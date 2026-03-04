@@ -2,9 +2,12 @@
 import { Lesson } from "@/types";
 import { StrapiRequestParams } from "@/types/strapi";
 import { fetchAPI, stripHtmlTags } from "../utils";
-import { revalidatePath, revalidateTag } from "next/cache";
+import { revalidateTag } from "next/cache";
 import { z } from "zod";
 import { LessonSchema } from "../validations/lesson";
+import { CACHE_TAGS } from "@/lib/cache-tags";
+import { getCurrentUser } from "@/lib/auth/session";
+import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
 
 const NEXT_PUBLIC_STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
@@ -41,7 +44,7 @@ export async function getLessonBySlug<T extends Partial<Lesson> = Lesson>(
 
   return await fetchAPI<T[]>(path, {
     urlParams,
-    cache: "no-store",
+    next: { tags: [CACHE_TAGS.droplets], revalidate: 900 },
   }).then((lessons) => lessons[0]);
 }
 
@@ -51,6 +54,10 @@ export async function markLessonAsComplete(
   lessonId: number,
 ) {
   try {
+    const user = await getCurrentUser();
+    if (!user?.email) throw new Error("User not authenticated");
+    const authorizedUser = await getAuthorizedUserByEmail(user.email);
+
     const response = await fetch(
       `${process.env.NEXT_PUBLIC_STRAPI_API_URL}/api/enrollments/${enrollmentId}`,
       {
@@ -74,10 +81,7 @@ export async function markLessonAsComplete(
       throw new Error("Failed to mark lesson as complete");
     }
 
-    revalidatePath("/", "layout");
-    revalidatePath("/dashboard");
-    revalidatePath("/(droplets)/d/[slug]/[lessonSlug]", "page");
-    revalidatePath("/(playlists)/p/[slug]", "page");
+    revalidateTag(CACHE_TAGS.enrollments(authorizedUser.id));
 
     return true;
   } catch (error) {
@@ -88,6 +92,10 @@ export async function markLessonAsComplete(
 
 export async function completeLesson(activityId: number, lessonIds: number[]) {
   try {
+    const user = await getCurrentUser();
+    if (!user?.email) throw new Error("User not authenticated");
+    const authorizedUser = await getAuthorizedUserByEmail(user.email);
+
     const response = await fetch(
       NEXT_PUBLIC_STRAPI_API_URL +
         `/api/authorized-user-activities/${activityId}`,
@@ -109,7 +117,7 @@ export async function completeLesson(activityId: number, lessonIds: number[]) {
       throw new Error("Failed to complete lesson");
     }
 
-    revalidatePath("/(droplets)/d/[slug]/[lessonSlug]");
+    revalidateTag(CACHE_TAGS.enrollments(authorizedUser.id));
     return { success: true };
   } catch (error) {
     console.error("Error completing lesson:", error);
@@ -134,7 +142,8 @@ export async function deleteLesson(id: number, revalidate: boolean = true) {
       return { ok: false, error: data.error.message, data: null };
 
     if (revalidate) {
-      revalidateTag("droplets");
+      revalidateTag(CACHE_TAGS.droplets);
+      revalidateTag(CACHE_TAGS.allEnrollments);
     }
 
     return { ok: true, error: null, data: data.data };
@@ -185,13 +194,8 @@ export async function updateLesson(
       return { ok: false, error: errorMessage, data: null };
     }
 
-    if (options.reload) {
-      revalidatePath("(editing)/draft/d/[slug]/[lessonSlug]", "page");
-    }
-
-    if (data.name) {
-      revalidateTag("droplets");
-    }
+    revalidateTag(CACHE_TAGS.droplets);
+    revalidateTag(CACHE_TAGS.lesson);
 
     return { ok: true, error: null, data: responseData.data };
   } catch (err) {
@@ -205,8 +209,7 @@ export async function updateLesson(
 }
 
 export async function revalidateLesson() {
-  revalidateTag("lesson");
-  revalidatePath("(editing)/draft/d/[slug]/[lessonSlug]", "page");
+  revalidateTag(CACHE_TAGS.lesson);
 }
 
 const CreateLessonSchema = LessonSchema.pick({
@@ -254,7 +257,9 @@ export async function addLesson(formData: z.infer<typeof CreateLessonSchema>) {
       return { ok: false, error: lessonResult.error?.message, data: null };
     }
 
-    revalidateTag("droplets");
+    revalidateTag(CACHE_TAGS.droplets);
+    revalidateTag(CACHE_TAGS.allEnrollments);
+
     return { ok: true, error: null, data: lessonResult.data };
   } catch (err) {
     console.error(err);
@@ -437,8 +442,8 @@ export async function duplicateLessonToDroplet(
 
     console.log("Created lesson successfully:", responseData.data.id);
 
-    revalidateTag("droplets");
-    revalidatePath("(editing)/draft/d/[slug]", "page");
+    revalidateTag(CACHE_TAGS.droplets);
+    revalidateTag(CACHE_TAGS.allEnrollments);
 
     return {
       ok: true,

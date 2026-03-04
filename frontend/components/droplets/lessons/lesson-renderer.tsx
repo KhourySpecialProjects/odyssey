@@ -986,7 +986,7 @@ export function LessonRenderer({
   };
 
   const handleDeleteHighlight = async (highlightId: number) => {
-    const response = await deleteHighlight(highlightId);
+    const response = await deleteHighlight(highlightId, authUser!.id);
     if (response && !response.error) {
       setHighlights((prev) => prev.filter((h) => h.id !== highlightId));
       toast.success("Highlight removed");
@@ -1005,6 +1005,7 @@ export function LessonRenderer({
         lesson,
         enrollment,
         notePos,
+        authUser.id,
         highlight[0],
       );
       if (result.success) {

@@ -20,17 +20,13 @@ export function DropletBlock({
   const handleUpdateDroplet = async () => {
     setDroplet((prev) => ({ ...prev, isHidden: !prev.isHidden }));
 
-    const result = await updateDroplet(
-      droplet.id,
-      {
-        isHidden: !droplet.isHidden,
-        name: droplet.name,
-        focusArea: droplet.focusArea,
-        type: droplet.type,
-        tagIds: droplet.tags?.map((tag) => tag.id) || [],
-      },
-      { revalidate: true },
-    );
+    const result = await updateDroplet(droplet.id, {
+      isHidden: !droplet.isHidden,
+      name: droplet.name,
+      focusArea: droplet.focusArea,
+      type: droplet.type,
+      tagIds: droplet.tags?.map((tag) => tag.id) || [],
+    });
 
     if (result.ok) {
       toast.success(

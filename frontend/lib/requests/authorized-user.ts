@@ -244,7 +244,7 @@ export async function fetchContentCreators(): Promise<AuthorizedUser[]> {
       NEXT_PUBLIC_STRAPI_API_URL + "/api/authorized-users?" + query,
       {
         headers: { Authorization: "Bearer " + STRAPI_ACCESS_TOKEN },
-        cache: "no-store",
+        next: { revalidate: 3600 },
       },
     );
     const data = await response.json();
@@ -306,7 +306,7 @@ export async function fetchWebsiteCreators(): Promise<AuthorizedUser[]> {
       NEXT_PUBLIC_STRAPI_API_URL + "/api/authorized-users?" + query,
       {
         headers: { Authorization: "Bearer " + STRAPI_ACCESS_TOKEN },
-        cache: "no-store",
+        next: { revalidate: 3600 },
       },
     );
 
@@ -599,7 +599,6 @@ export async function deleteAuthorizedUser(formData: FormData) {
 export async function fetchContentEditors(): Promise<AuthorizedUser[]> {
   // create a query for the backend
   const query = qs.stringify({
-    // we need filter for role by title
     filters: {
       roles: {
         title: {
@@ -607,20 +606,15 @@ export async function fetchContentEditors(): Promise<AuthorizedUser[]> {
         },
       },
     },
-    // now we need what fields necessary
     fields: ["id", "username", "email"],
-
-    populate: "*",
-    // sort in query
+    populate: {},
     sort: ["username"],
-    // set pagination -
     pagination: {
-      pageSize: 900,
+      pageSize: 100,
       page: 1,
     },
   });
 
-  // now, we can await a response with our query
   const response = await fetch(`/api/authorized-users?${query}`);
 
   // finally got response, so handle it

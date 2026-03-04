@@ -8,8 +8,6 @@ export const metadata: Metadata = {
   title: "Feed",
   description: "Displays a user's feed.",
 };
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
 export default async function FeedPage() {
   const user = await getCurrentUser();
   if (!user || !user?.email) return notFound();

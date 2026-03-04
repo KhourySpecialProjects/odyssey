@@ -9,10 +9,11 @@ import {
   createAuthorizedUser,
 } from "./authorized-user";
 import type { Droplet, DueDate, Playlist } from "@/types";
-import { revalidatePath, revalidateTag } from "next/cache";
+import { revalidateTag } from "next/cache";
 import { enrollInPlaylist } from "./playlist-enrollment";
 import { getCurrentUser } from "../auth/session";
 import { createEnrollmentFromEmail } from "./enrollment";
+import { CACHE_TAGS } from "../cache-tags";
 
 const STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
@@ -64,7 +65,7 @@ export async function getManagedGroups(
 
   return await fetchAPI<Group[]>(path, {
     urlParams,
-    cache: "no-store",
+    next: { tags: [CACHE_TAGS.allGroups], revalidate: 900 },
   });
 }
 
@@ -114,7 +115,7 @@ export async function getGroupBySlug(
 
   return await fetchAPI<Group[]>(path, {
     urlParams,
-    cache: "no-store",
+    next: { tags: [CACHE_TAGS.allGroups], revalidate: 900 },
   }).then((groups) => groups[0] || null);
 }
 
@@ -171,12 +172,9 @@ export async function getGroupByID(
     },
   };
 
-  revalidatePath("/dashboard");
-  revalidatePath("/explore");
-
   return await fetchAPI<Group[]>(path, {
     urlParams,
-    cache: "no-store",
+    next: { tags: [CACHE_TAGS.allGroups], revalidate: 900 },
   }).then((groups) => groups[0]);
 }
 
@@ -203,10 +201,10 @@ export async function getUserGroups(
         fields: ["id", "email"],
       },
       creator: {
-        fields: ["*"],
+        fields: ["id", "email", "firstName", "lastName"],
       },
       users_archived: {
-        fields: ["*"],
+        fields: ["id"],
       },
     },
     fields = ["id", "groupName", "slug", "semester", "isArchived"],
@@ -231,7 +229,7 @@ export async function getUserGroups(
 
   return await fetchAPI<Group[]>(path, {
     urlParams,
-    cache: "no-store",
+    next: { tags: [CACHE_TAGS.allGroups], revalidate: 900 },
   });
 }
 
@@ -263,12 +261,14 @@ export async function updateGroupMembers(
     data[disconnect.role] = { disconnect: disconnect.userIds };
   }
 
-  return await fetchAPI<Group>(path, {
+  const result = await fetchAPI<Group>(path, {
     options: {
       method: "PUT",
       body: JSON.stringify({ data }),
     },
   });
+  revalidateTag(CACHE_TAGS.allGroups);
+  return result;
 }
 
 /**
@@ -379,14 +379,15 @@ export async function createGroup(
       playlists: { connect: playlists.map((id) => ({ id })) },
     }),
   };
-  revalidatePath("/g/dashboard");
-  revalidatePath("/g/dashboard?tab=creator");
-  return await fetchAPI<Group>(path, {
+  const result = await fetchAPI<Group>(path, {
     options: {
       method: "POST",
       body: JSON.stringify({ data: createData }),
     },
   });
+  revalidateTag(CACHE_TAGS.allGroups);
+
+  return result;
 }
 
 export async function getGroupBySlugV2(
@@ -447,7 +448,7 @@ export async function getGroupBySlugV2(
 
   const groups = await fetchAPI<Group[]>(path, {
     urlParams,
-    cache: "no-store",
+    next: { tags: [CACHE_TAGS.allGroups], revalidate: 900 },
   });
 
   return groups[0] || null;
@@ -542,14 +543,16 @@ export async function updateGroup(
     };
   }
 
-  revalidatePath("/admin");
-
-  return await fetchAPI<Group>(path, {
+  const result = await fetchAPI<Group>(path, {
     options: {
       method: "PUT",
       body: JSON.stringify({ data: dataToSend }),
     },
   });
+
+  revalidateTag(CACHE_TAGS.allGroups);
+
+  return result;
 }
 
 async function ensureAuthorizedUsers(
@@ -589,45 +592,54 @@ async function ensureAuthorizedUsers(
 
 export async function enrollUsers(group: Group) {
   try {
-    group.members?.map(async (member) => {
-      group.droplets?.map(async (droplet) => {
-        try {
-          const enrollmentData = {
-            droplet: droplet.id,
-            viewedLessons: [],
-          };
-          return await createEnrollmentFromEmail(enrollmentData, member.email);
-        } catch (error) {
-          console.error(
-            `Error enrolling this user in droplet [${droplet.name || droplet.id}]: `,
-            error,
-          );
-        }
-        //return await createEnrollment(enrollmentData);
-      }) || [];
+    await Promise.all(
+      group.members?.map(async (member) => {
+        await Promise.all(
+          group.droplets?.map(async (droplet) => {
+            try {
+              const enrollmentData = {
+                droplet: droplet.id,
+                viewedLessons: [],
+              };
+              return await createEnrollmentFromEmail(
+                enrollmentData,
+                member.email,
+              );
+            } catch (error) {
+              console.error(
+                `Error enrolling this user in droplet [${droplet.name || droplet.id}]: `,
+                error,
+              );
+            }
+          }) || [],
+        );
 
-      group.playlists?.map(async (playlist) => {
-        await enrollInPlaylist(playlist.id, member.id);
-        playlist.droplets?.map(async (droplet) => {
-          try {
-            const enrollmentData = {
-              droplet: droplet.id,
-              viewedLessons: [],
-            };
-            return await createEnrollmentFromEmail(
-              enrollmentData,
-              member.email,
+        await Promise.all(
+          group.playlists?.map(async (playlist) => {
+            await enrollInPlaylist(playlist.id, member.id);
+            await Promise.all(
+              playlist.droplets?.map(async (droplet) => {
+                try {
+                  const enrollmentData = {
+                    droplet: droplet.id,
+                    viewedLessons: [],
+                  };
+                  return await createEnrollmentFromEmail(
+                    enrollmentData,
+                    member.email,
+                  );
+                } catch (error) {
+                  console.error(
+                    `Error enrolling this user in playlist [${playlist.name || playlist.id}] droplet [${droplet.name || droplet.id}]: `,
+                    error,
+                  );
+                }
+              }) || [],
             );
-          } catch (error) {
-            console.error(
-              `Error enrolling this user in playlist [${playlist.name || playlist.id}] droplet [${droplet.name || droplet.id}]: `,
-              error,
-            );
-          }
-          //return await createEnrollment(enrollmentData);
-        }) || [];
-      }) || [];
-    }) || [];
+          }) || [],
+        );
+      }) || [],
+    );
   } catch (error) {
     console.error("Error enrolling users:", error);
     throw error;
@@ -714,7 +726,13 @@ export async function assignDropletDueDate(
 
     const results = await Promise.all(dueDatePromises);
 
+    const anySuccessful = results.some((result) => result === true);
     const allSuccessful = results.every((result) => result === true);
+
+    // Revalidate if ANY writes succeeded, even if some failed
+    if (anySuccessful) {
+      revalidateTag(CACHE_TAGS.allDueDates);
+    }
 
     if (!allSuccessful) {
       return {
@@ -722,11 +740,6 @@ export async function assignDropletDueDate(
         error: "Failed to process due dates for some users",
       };
     }
-
-    revalidatePath("/explore");
-    revalidatePath("/dashboard");
-    revalidatePath("/groups/g/[slug]", "page");
-    revalidatePath("/");
 
     return { success: true };
   } catch (error) {
@@ -814,7 +827,13 @@ export async function assignPlaylistDueDate(
 
     const results = await Promise.all(dueDatePromises);
 
+    const anySuccessful = results.some((result) => result === true);
     const allSuccessful = results.every((result) => result === true);
+
+    // Revalidate if ANY writes succeeded, even if some failed
+    if (anySuccessful) {
+      revalidateTag(CACHE_TAGS.allDueDates);
+    }
 
     if (!allSuccessful) {
       return {
@@ -822,11 +841,6 @@ export async function assignPlaylistDueDate(
         error: "Failed to process due dates for some users",
       };
     }
-
-    revalidatePath("/explore");
-    revalidatePath("/dashboard");
-    revalidatePath("/groups/g/[slug]", "page");
-    revalidatePath("/");
 
     return { success: true };
   } catch (error) {
@@ -890,7 +904,7 @@ export async function getGroupDueDates(
 
   return await fetchAPI<DueDate[]>(path, {
     urlParams,
-    cache: "no-store",
+    next: { tags: [CACHE_TAGS.allDueDates], revalidate: 900 },
   });
 }
 
@@ -924,7 +938,7 @@ export async function getUserDueDates(
 
   return await fetchAPI<DueDate[]>(path, {
     urlParams,
-    cache: "no-store",
+    next: { tags: [CACHE_TAGS.allDueDates], revalidate: 900 },
   });
 }
 
@@ -946,9 +960,8 @@ export async function deleteGroup(id: number) {
       return { ok: false, error: "Failed to delete group.", data: null };
     }
 
-    revalidateTag("authors");
-    revalidateTag("groups");
-    revalidatePath("(general)/my-content", "page");
+    revalidateTag(CACHE_TAGS.authors);
+    revalidateTag(CACHE_TAGS.allGroups);
     return { ok: true, error: null, data: data.data };
   } catch (err) {
     console.error(err);
@@ -987,11 +1000,7 @@ export async function archiveGroup(group: Group, archiveState: boolean) {
       throw new Error("Failed to archive group");
     }
 
-    revalidateTag("dashboard");
-    revalidatePath("/");
-    revalidatePath("/draft");
-    revalidatePath("/dashboard");
-    revalidatePath("/dashboard/archived");
+    revalidateTag(CACHE_TAGS.allGroups);
     return { success: true };
   } catch (error) {
     console.error("Error archiving group:", error);

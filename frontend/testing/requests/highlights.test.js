@@ -87,7 +87,7 @@ describe("Highlights Tests", () => {
           fields: ["id", "color", "text", "yLevel"],
           pagination: { pageSize: 250, page: 1 },
         }),
-        next: { tags: ["highlights"] },
+        next: { tags: ["highlights-5"] },
       });
     });
 
@@ -114,7 +114,7 @@ describe("Highlights Tests", () => {
           pagination: { pageSize: 50, page: 2 },
           fields: ["id", "color"],
         }),
-        next: { tags: ["highlights"] },
+        next: { tags: ["highlights-5"] },
       });
     });
 
@@ -189,7 +189,7 @@ describe("Highlights Tests", () => {
           fields: ["text", "color", "yLevel"],
           pagination: { pageSize: 250, page: 1 },
         }),
-        next: { tags: ["highlights"] },
+        next: { tags: ["highlights-5"] },
       });
     });
 
@@ -216,7 +216,7 @@ describe("Highlights Tests", () => {
           pagination: { pageSize: 100, page: 3 },
           fields: ["text", "color"],
         }),
-        next: { tags: ["highlights"] },
+        next: { tags: ["highlights-5"] },
       });
     });
 
@@ -263,11 +263,12 @@ describe("Highlights Tests", () => {
 
 describe("Highlight Actions", () => {
   it("should create highlight", async () => {
+    const { revalidateTag } = require("next/cache");
     const highlightData = {
       data: {
         content: "Test highlight",
         lesson: 1,
-        user: 1,
+        authorized_user: 5,
       },
     };
 
@@ -279,14 +280,16 @@ describe("Highlight Actions", () => {
     const result = await createHighlight(highlightData);
     expect(result.data).toBeDefined();
     expect(result.data.id).toBe(1);
+    expect(revalidateTag).toHaveBeenCalledWith("highlights-5");
   });
 
   it("should handle highlight creation error", async () => {
+    const { revalidateTag } = require("next/cache");
     const highlightData = {
       data: {
         content: "Test highlight",
         lesson: 1,
-        user: 1,
+        authorized_user: 5,
       },
     };
 
@@ -296,17 +299,20 @@ describe("Highlight Actions", () => {
     });
 
     await expect(createHighlight(highlightData)).rejects.toThrow();
+    expect(revalidateTag).not.toHaveBeenCalled();
   });
 
   it("should delete highlight", async () => {
+    const { revalidateTag } = require("next/cache");
     global.fetch.mockResolvedValueOnce({
       ok: true,
       json: () => Promise.resolve({ data: { id: 1 } }),
     });
 
-    const result = await deleteHighlight(1);
+    const result = await deleteHighlight(1, 5);
     expect(result).toBeDefined();
     expect(result.data.id).toBe(1);
+    expect(revalidateTag).toHaveBeenCalledWith("highlights-5");
   });
 
   it("should handle get highlights error", async () => {
@@ -330,7 +336,7 @@ describe("Error Cases", () => {
     global.fetch.mockRejectedValueOnce(new Error("Network error"));
 
     await expect(
-      createHighlight({ data: { content: "Test" } }),
+      createHighlight({ data: { content: "Test", authorized_user: 5 } }),
     ).rejects.toThrow();
   });
 

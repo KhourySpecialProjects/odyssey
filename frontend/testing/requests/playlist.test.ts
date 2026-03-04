@@ -2,12 +2,23 @@ import {
   createPlaylist,
   deletePlaylist,
   updatePlaylist,
+  archivePlaylist,
 } from "@/lib/requests/playlist";
 import { revalidateTag } from "next/cache";
+import { getCurrentUser } from "@/lib/auth/session";
+import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
 
 jest.mock("next/cache", () => ({
   revalidatePath: jest.fn(),
   revalidateTag: jest.fn(),
+}));
+
+jest.mock("@/lib/auth/session", () => ({
+  getCurrentUser: jest.fn(),
+}));
+
+jest.mock("@/lib/requests/authorized-user", () => ({
+  getAuthorizedUserByEmail: jest.fn(),
 }));
 
 describe("createPlaylist", () => {
@@ -50,6 +61,7 @@ describe("createPlaylist", () => {
       error: "Creation failed",
       data: null,
     });
+    expect(revalidateTag).not.toHaveBeenCalled();
   });
 });
 
@@ -93,6 +105,7 @@ describe("updatePlaylist", () => {
       error: "Update failed",
       data: null,
     });
+    expect(revalidateTag).not.toHaveBeenCalled();
   });
 });
 
@@ -130,6 +143,27 @@ describe("Playlist Actions", () => {
 });
 
 describe("deletePlaylist", () => {
+  it("successfully deletes a playlist and revalidates tags", async () => {
+    // Mock getPlaylistById (fetch for GET)
+    (global.fetch as jest.Mock).mockResolvedValueOnce({
+      ok: true,
+      json: () =>
+        Promise.resolve({ data: { id: 123, attributes: { name: "Test" } } }),
+    });
+    // Mock the DELETE fetch
+    (global.fetch as jest.Mock).mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve({ data: { id: 123 } }),
+    });
+
+    const result = await deletePlaylist(123);
+
+    expect(result).toEqual({ ok: true, error: null, data: { id: 123 } });
+    expect(revalidateTag).toHaveBeenCalledWith("playlists");
+    expect(revalidateTag).toHaveBeenCalledWith("authors");
+    expect(revalidateTag).toHaveBeenCalledWith("groups");
+  });
+
   it("handles playlist deletion failure", async () => {
     const mockResponse = { ok: false };
     (global.fetch as jest.Mock).mockResolvedValueOnce(mockResponse);
@@ -139,5 +173,55 @@ describe("deletePlaylist", () => {
     expect(result).toEqual({
       error: "Database Error: Failed to Delete Playlist.",
     });
+  });
+});
+
+describe("archivePlaylist", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    (getCurrentUser as jest.Mock).mockResolvedValue({
+      email: "test@example.com",
+    });
+    (getAuthorizedUserByEmail as jest.Mock).mockResolvedValue({ id: 5 });
+  });
+
+  it("successfully archives a playlist and revalidates", async () => {
+    (global.fetch as jest.Mock).mockResolvedValueOnce({
+      ok: true,
+      text: () => Promise.resolve(JSON.stringify({ data: { id: 10 } })),
+    });
+
+    const mockPlaylist = { id: 10, name: "Test Playlist" };
+    const result = await archivePlaylist(mockPlaylist, true);
+
+    expect(result).toEqual({ success: true });
+    expect(revalidateTag).toHaveBeenCalledWith("playlists");
+  });
+
+  it("successfully unarchives a playlist and revalidates", async () => {
+    (global.fetch as jest.Mock).mockResolvedValueOnce({
+      ok: true,
+      text: () => Promise.resolve(JSON.stringify({ data: { id: 10 } })),
+    });
+
+    const mockPlaylist = { id: 10, name: "Test Playlist" };
+    const result = await archivePlaylist(mockPlaylist, false);
+
+    expect(result).toEqual({ success: true });
+    expect(revalidateTag).toHaveBeenCalledWith("playlists");
+  });
+
+  it("does not revalidate on failure", async () => {
+    (global.fetch as jest.Mock).mockResolvedValueOnce({
+      ok: false,
+      text: () => Promise.resolve("Bad Request"),
+      status: 400,
+    });
+
+    const mockPlaylist = { id: 10, name: "Test Playlist" };
+    const result = await archivePlaylist(mockPlaylist, true);
+
+    expect(result).toEqual({ success: false, error: expect.any(Error) });
+    expect(revalidateTag).not.toHaveBeenCalled();
   });
 });
