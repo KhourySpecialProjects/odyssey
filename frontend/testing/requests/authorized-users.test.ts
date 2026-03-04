@@ -15,6 +15,9 @@ import { fetchAPI } from "@/lib/utils";
 import { getAuthorizedUserRoleIdByTitle } from "@/lib/requests/authorized-user-roles";
 import mockUsers from "../mocks/authorizedUsersMock";
 
+const mockFetchAPI = fetchAPI as jest.Mock;
+const mockGetRoleId = getAuthorizedUserRoleIdByTitle as jest.Mock;
+
 jest.mock("../../lib/utils", () => ({
   fetchAPI: jest.fn(),
   flattenAttributes: jest.fn((data) => {
@@ -42,7 +45,7 @@ global.fetch = jest.fn();
 beforeEach(() => {
   jest.spyOn(console, "error").mockImplementation(() => {});
   jest.spyOn(console, "warn").mockImplementation(() => {});
-  getAuthorizedUserRoleIdByTitle.mockResolvedValue(1);
+  mockGetRoleId.mockResolvedValue(1);
 });
 
 afterEach(() => {
@@ -61,7 +64,7 @@ describe("Authorized User Tests", () => {
         email: "palmer.gi@northeastern.edu",
       };
 
-      fetchAPI.mockResolvedValue([mockUser]);
+      mockFetchAPI.mockResolvedValue([mockUser]);
 
       const result = await getAuthorizedUserByEmail(testEmail);
 
@@ -80,7 +83,7 @@ describe("Authorized User Tests", () => {
 
     it("should use custom populate options", async () => {
       const testEmail = "test@northeastern.edu";
-      fetchAPI.mockResolvedValue([{ id: 1, email: testEmail }]);
+      mockFetchAPI.mockResolvedValue([{ id: 1, email: testEmail }]);
 
       await getAuthorizedUserByEmail(testEmail, {
         populate: { roles: { fields: ["title"] } },
@@ -96,7 +99,7 @@ describe("Authorized User Tests", () => {
 
     it("should use custom fields", async () => {
       const testEmail = "test@northeastern.edu";
-      fetchAPI.mockResolvedValue([{ id: 1, email: testEmail }]);
+      mockFetchAPI.mockResolvedValue([{ id: 1, email: testEmail }]);
 
       await getAuthorizedUserByEmail(testEmail, {
         fields: ["id", "email"],
@@ -112,7 +115,7 @@ describe("Authorized User Tests", () => {
 
     it("should use custom filters", async () => {
       const testEmail = "test@northeastern.edu";
-      fetchAPI.mockResolvedValue([{ id: 1, email: testEmail }]);
+      mockFetchAPI.mockResolvedValue([{ id: 1, email: testEmail }]);
 
       await getAuthorizedUserByEmail(testEmail, {
         filters: { isEnabled: true },
@@ -138,7 +141,7 @@ describe("Authorized User Tests", () => {
         { id: 2, email: "b@test.com" },
         { id: 3, email: "c@test.com" },
       ];
-      fetchAPI.mockResolvedValueOnce(mockUsers);
+      mockFetchAPI.mockResolvedValueOnce(mockUsers);
 
       const result = await getAuthorizedUsersByEmails(emails);
 
@@ -148,11 +151,11 @@ describe("Authorized User Tests", () => {
 
     it("should send $in filter with all provided emails", async () => {
       const emails = ["a@test.com", "b@test.com"];
-      fetchAPI.mockResolvedValueOnce([]);
+      mockFetchAPI.mockResolvedValueOnce([]);
 
       await getAuthorizedUsersByEmails(emails);
 
-      const callArgs = fetchAPI.mock.calls[0];
+      const callArgs = mockFetchAPI.mock.calls[0];
       expect(callArgs[0]).toBe("/authorized-users");
       expect(callArgs[1].urlParams.filters).toEqual({
         email: { $in: emails },
@@ -160,22 +163,22 @@ describe("Authorized User Tests", () => {
     });
 
     it("should only request id and email fields", async () => {
-      fetchAPI.mockResolvedValueOnce([]);
+      mockFetchAPI.mockResolvedValueOnce([]);
 
       await getAuthorizedUsersByEmails(["a@test.com"]);
 
-      const { fields } = fetchAPI.mock.calls[0][1].urlParams;
+      const { fields } = mockFetchAPI.mock.calls[0][1].urlParams;
       expect(fields).toEqual(["id", "email"]);
     });
 
-    it("should set pageSize to the number of emails", async () => {
+    it("should use pageSize of 100", async () => {
       const emails = ["a@test.com", "b@test.com", "c@test.com"];
-      fetchAPI.mockResolvedValueOnce([]);
+      mockFetchAPI.mockResolvedValueOnce([]);
 
       await getAuthorizedUsersByEmails(emails);
 
-      const { pagination } = fetchAPI.mock.calls[0][1].urlParams;
-      expect(pagination).toEqual({ pageSize: 3, page: 1 });
+      const { pagination } = mockFetchAPI.mock.calls[0][1].urlParams;
+      expect(pagination).toEqual({ pageSize: 100, page: 1 });
     });
 
     it("should return empty array for empty email list without calling API", async () => {
@@ -187,7 +190,7 @@ describe("Authorized User Tests", () => {
 
     it("should return partial results when only some emails match", async () => {
       const emails = ["exists@test.com", "missing@test.com"];
-      fetchAPI.mockResolvedValueOnce([{ id: 1, email: "exists@test.com" }]);
+      mockFetchAPI.mockResolvedValueOnce([{ id: 1, email: "exists@test.com" }]);
 
       const result = await getAuthorizedUsersByEmails(emails);
 
@@ -196,10 +199,90 @@ describe("Authorized User Tests", () => {
     });
 
     it("should handle fetch errors", async () => {
-      fetchAPI.mockRejectedValueOnce(new Error("API Error"));
+      mockFetchAPI.mockRejectedValueOnce(new Error("API Error"));
 
       await expect(getAuthorizedUsersByEmails(["a@test.com"])).rejects.toThrow(
         "API Error",
+      );
+    });
+
+    it("should chunk emails into batches of 100 and fetch in parallel", async () => {
+      const emails = Array.from({ length: 150 }, (_, i) => `user${i}@test.com`);
+      const chunk1Users = emails
+        .slice(0, 100)
+        .map((email, i) => ({ id: i + 1, email }));
+      const chunk2Users = emails
+        .slice(100)
+        .map((email, i) => ({ id: i + 101, email }));
+
+      fetchAPI
+        .mockResolvedValueOnce(chunk1Users)
+        .mockResolvedValueOnce(chunk2Users);
+
+      const result = await getAuthorizedUsersByEmails(emails);
+
+      expect(fetchAPI).toHaveBeenCalledTimes(2);
+      expect(
+        mockFetchAPI.mock.calls[0][1].urlParams.filters.email.$in,
+      ).toHaveLength(100);
+      expect(
+        mockFetchAPI.mock.calls[1][1].urlParams.filters.email.$in,
+      ).toHaveLength(50);
+      expect(result).toHaveLength(150);
+    });
+
+    it("should not chunk when emails fit in a single page", async () => {
+      const emails = Array.from({ length: 50 }, (_, i) => `user${i}@test.com`);
+      mockFetchAPI.mockResolvedValueOnce(
+        emails.map((email, i) => ({ id: i + 1, email })),
+      );
+
+      await getAuthorizedUsersByEmails(emails);
+
+      expect(fetchAPI).toHaveBeenCalledTimes(1);
+      expect(
+        mockFetchAPI.mock.calls[0][1].urlParams.filters.email.$in,
+      ).toHaveLength(50);
+    });
+
+    it("should handle exactly 100 emails in a single chunk", async () => {
+      const emails = Array.from({ length: 100 }, (_, i) => `user${i}@test.com`);
+      mockFetchAPI.mockResolvedValueOnce(
+        emails.map((email, i) => ({ id: i + 1, email })),
+      );
+
+      await getAuthorizedUsersByEmails(emails);
+
+      expect(fetchAPI).toHaveBeenCalledTimes(1);
+    });
+
+    it("should flatten results from multiple chunks", async () => {
+      const emails = Array.from({ length: 250 }, (_, i) => `user${i}@test.com`);
+
+      fetchAPI
+        .mockResolvedValueOnce([{ id: 1, email: "user0@test.com" }])
+        .mockResolvedValueOnce([{ id: 101, email: "user100@test.com" }])
+        .mockResolvedValueOnce([{ id: 201, email: "user200@test.com" }]);
+
+      const result = await getAuthorizedUsersByEmails(emails);
+
+      expect(fetchAPI).toHaveBeenCalledTimes(3);
+      expect(result).toEqual([
+        { id: 1, email: "user0@test.com" },
+        { id: 101, email: "user100@test.com" },
+        { id: 201, email: "user200@test.com" },
+      ]);
+    });
+
+    it("should reject if any chunk fails", async () => {
+      const emails = Array.from({ length: 150 }, (_, i) => `user${i}@test.com`);
+
+      fetchAPI
+        .mockResolvedValueOnce([{ id: 1, email: "user0@test.com" }])
+        .mockRejectedValueOnce(new Error("Chunk 2 failed"));
+
+      await expect(getAuthorizedUsersByEmails(emails)).rejects.toThrow(
+        "Chunk 2 failed",
       );
     });
   });
@@ -289,7 +372,7 @@ describe("Authorized User Tests", () => {
         },
       };
 
-      fetchAPI.mockResolvedValue(mockResponse);
+      mockFetchAPI.mockResolvedValue(mockResponse);
 
       const result = await fetchAuthorizedUsersMetadata();
 
@@ -301,7 +384,7 @@ describe("Authorized User Tests", () => {
     });
 
     it("should use custom pagination", async () => {
-      fetchAPI.mockResolvedValue({ data: [], meta: { pagination: {} } });
+      mockFetchAPI.mockResolvedValue({ data: [], meta: { pagination: {} } });
 
       await fetchAuthorizedUsersMetadata({
         pagination: { pageSize: 50, page: 2 },
@@ -317,7 +400,7 @@ describe("Authorized User Tests", () => {
     });
 
     it("should handle errors", async () => {
-      fetchAPI.mockRejectedValue(new Error("Fetch failed"));
+      mockFetchAPI.mockRejectedValue(new Error("Fetch failed"));
 
       await expect(fetchAuthorizedUsersMetadata()).rejects.toThrow(
         "Error getting authorized users metadata",
@@ -326,7 +409,7 @@ describe("Authorized User Tests", () => {
 
     it("should log error before rejecting", async () => {
       const consoleError = jest.spyOn(console, "error");
-      fetchAPI.mockRejectedValue(new Error("Fetch failed"));
+      mockFetchAPI.mockRejectedValue(new Error("Fetch failed"));
 
       await expect(fetchAuthorizedUsersMetadata()).rejects.toThrow();
       expect(consoleError).toHaveBeenCalledWith(
@@ -567,7 +650,7 @@ describe("Authorized User Tests", () => {
   describe("createAuthorizedUser", () => {
     beforeEach(() => {
       jest.clearAllMocks();
-      getAuthorizedUserRoleIdByTitle.mockResolvedValue(1);
+      mockGetRoleId.mockResolvedValue(1);
     });
 
     it("should create user with valid email", async () => {
@@ -694,7 +777,7 @@ describe("Authorized User Tests", () => {
   describe("createBatchAuthorizedUsers", () => {
     beforeEach(() => {
       jest.clearAllMocks();
-      getAuthorizedUserRoleIdByTitle.mockResolvedValue(1);
+      mockGetRoleId.mockResolvedValue(1);
     });
 
     it("should create multiple users successfully", async () => {
@@ -768,9 +851,7 @@ describe("Authorized User Tests", () => {
     });
 
     it("should handle role fetch error", async () => {
-      getAuthorizedUserRoleIdByTitle.mockRejectedValue(
-        new Error("Role not found"),
-      );
+      mockGetRoleId.mockRejectedValue(new Error("Role not found"));
 
       const result = await createBatchAuthorizedUsers(["test@test.com"]);
 
