@@ -6,6 +6,8 @@ import { notFound } from "next/navigation";
 import {
   getAuthorizedUserByEmail,
 } from "@/lib/requests/authorized-user";
+import { fetchAuthorizedUsers } from "@/lib/requests/authorized-user";
+import { getCachedUserSocial } from "@/lib/requests/cached";
 import { FriendSentRequests } from "@/components/friends/friend-sent-requests";
 import { FriendSearch } from "@/components/friends/friend-search";
 import {
@@ -26,7 +28,7 @@ export default async function AuthorProfileSettings({
   const user = await getCurrentUser();
   if (!user?.email) return notFound();
 
-  const authorizedUser = await getAuthorizedUserByEmail(user.email);
+  const authorizedUser = await getCachedUserSocial(user.email);
   if (!authorizedUser) return notFound();
 
   const sentRequests = await getSentRequestIds(authorizedUser);

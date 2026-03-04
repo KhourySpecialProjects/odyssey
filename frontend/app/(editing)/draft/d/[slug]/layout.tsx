@@ -4,7 +4,7 @@ import { isAuthorizedUserAdmin } from "@/lib/utils";
 import { getDropletBySlug } from "@/lib/requests/droplet";
 import { AuthorizedUser, Droplet } from "@/types";
 import { Sidebar } from "@/components/draft/sidebar";
-import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
+import { getCachedUser } from "@/lib/requests/cached";
 import { getDroplets } from "@/lib/requests/droplet";
 import { AuthorizedUserRoleTitle } from "@/lib/globals";
 
@@ -22,9 +22,7 @@ export default async function CheckPermission({ params, children }: Props) {
   const p = await params;
   let authorizedUser: AuthorizedUser | null = null;
   if (user?.email) {
-    authorizedUser = (await getAuthorizedUserByEmail(
-      user.email,
-    )) as AuthorizedUser;
+    authorizedUser = (await getCachedUser(user.email)) as AuthorizedUser;
   }
 
   const droplet = await getDropletBySlug<Droplet>(p.slug, {

@@ -2,7 +2,7 @@ import { Metadata } from "next";
 import { FeedContainer } from "@/components/feed/feed-container";
 import { notFound } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/session";
-import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
+import { getCachedUserSocial } from "@/lib/requests/cached";
 
 export const metadata: Metadata = {
   title: "Feed",
@@ -13,7 +13,7 @@ export const revalidate = 0;
 export default async function FeedPage() {
   const user = await getCurrentUser();
   if (!user || !user?.email) return notFound();
-  const authUser = await getAuthorizedUserByEmail(user.email);
+  const authUser = await getCachedUserSocial(user.email);
 
   return (
     <>

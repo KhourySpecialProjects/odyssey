@@ -1,14 +1,14 @@
 import { render, screen } from "@testing-library/react";
 import { FriendSentRequests } from "@/components/friends/friend-sent-requests";
 import { getCurrentUser } from "@/lib/auth/session";
-import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
+import { getCachedUserSocial } from "@/lib/requests/cached";
 
 jest.mock("@/lib/auth/session", () => ({
   getCurrentUser: jest.fn(),
 }));
 
-jest.mock("@/lib/requests/authorized-user", () => ({
-  getAuthorizedUserByEmail: jest.fn(),
+jest.mock("@/lib/requests/cached", () => ({
+  getCachedUserSocial: jest.fn(),
 }));
 
 describe("FriendSentRequests", () => {
@@ -26,7 +26,7 @@ describe("FriendSentRequests", () => {
       blocked: [],
       was_blocked: [],
     };
-    (getAuthorizedUserByEmail as jest.Mock).mockResolvedValue(mockAuthUser);
+    (getCachedUserSocial as jest.Mock).mockResolvedValue(mockAuthUser);
 
     const { container } = await render(await FriendSentRequests());
     expect(container.querySelector("ul")).toBeInTheDocument();
@@ -38,7 +38,7 @@ describe("FriendSentRequests", () => {
       blocked: [],
       was_blocked: [],
     };
-    (getAuthorizedUserByEmail as jest.Mock).mockResolvedValue(mockAuthUser);
+    (getCachedUserSocial as jest.Mock).mockResolvedValue(mockAuthUser);
 
     await render(await FriendSentRequests());
     expect(screen.getByText("You have no sent requests")).toBeInTheDocument();
@@ -61,7 +61,7 @@ describe("FriendSentRequests", () => {
       };
 
       (getCurrentUser as jest.Mock).mockResolvedValue(mockUser);
-      (getAuthorizedUserByEmail as jest.Mock).mockResolvedValue(mockAuthUser);
+      (getCachedUserSocial as jest.Mock).mockResolvedValue(mockAuthUser);
 
       const Component = await FriendSentRequests();
       const { container } = render(Component);

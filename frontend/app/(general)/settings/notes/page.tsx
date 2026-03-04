@@ -2,9 +2,9 @@ import { getDropletBySlug } from "@/lib/requests/droplet";
 import { Droplet } from "@/types";
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
+import { getCachedUser } from "@/lib/requests/cached";
 import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
-import { getServerSession } from "next-auth";
+import { getCurrentUser } from "@/lib/auth/session";
 import { getNotesByDroplet } from "@/lib/requests/notes";
 import { getHighlightsByDroplet } from "@/lib/requests/highlights";
 import { PDFDocument } from "pdf-lib";
@@ -58,9 +58,9 @@ export default async function DropletRecapRoute({ params }: Props) {
     return notFound();
   }
 
-  const session = await getServerSession();
-  if (session?.user?.email) {
-    const user = await getAuthorizedUserByEmail(session.user.email);
+  const currentUser = await getCurrentUser();
+  if (currentUser?.email) {
+    const user = await getCachedUser(currentUser.email);
     const enrollments = await getEnrollmentsByAuthorizedUser(user.id, {
       populate: {
         viewedLessons: {
@@ -83,7 +83,7 @@ export default async function DropletRecapRoute({ params }: Props) {
       },
     });
 
-    const authUser = await getAuthorizedUserByEmail(user.email);
+    const authUser = await getCachedUser(user.email);
 
     const defined = <T,>(v: T | null | undefined): v is T => v != null;
 

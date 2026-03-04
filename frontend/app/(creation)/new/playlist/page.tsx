@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { isAuthorizedUserAdmin, isContentCreator } from "@/lib/utils";
 import { getDroplets } from "@/lib/requests/droplet";
 import { PlaylistForm } from "@/components/playlists/playlist-form";
-import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
+import { getCachedUser } from "@/lib/requests/cached";
 
 export default async function NewPlaylist() {
   const user = await getCurrentUser();
@@ -13,7 +13,7 @@ export default async function NewPlaylist() {
     (!isContentCreator(user.roles) && !isAuthorizedUserAdmin(user.roles))
   )
     return notFound();
-  const authUser = await getAuthorizedUserByEmail(user.email);
+  const authUser = await getCachedUser(user.email);
 
   const droplets = await getDroplets({
     filters: {

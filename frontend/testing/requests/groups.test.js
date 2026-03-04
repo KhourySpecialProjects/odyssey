@@ -25,6 +25,8 @@ const {
 const { fetchAPI } = require("../../lib/utils");
 const {
   getAuthorizedUserByEmail,
+  getAuthorizedUsersByEmails,
+  createAuthorizedUser,
 } = require("../../lib/requests/authorized-user");
 const { createEnrollmentFromEmail } = require("../../lib/requests/enrollment");
 const { enrollInPlaylist } = require("../../lib/requests/playlist-enrollment");
@@ -49,6 +51,8 @@ jest.mock("../../lib/utils", () => ({
 
 jest.mock("../../lib/requests/authorized-user", () => ({
   getAuthorizedUserByEmail: jest.fn(),
+  getAuthorizedUsersByEmails: jest.fn(),
+  createAuthorizedUser: jest.fn(),
 }));
 
 jest.mock("../../lib/requests/enrollment", () => ({
@@ -777,14 +781,10 @@ describe("Groups Tests", () => {
         playlists: [3, 4],
       };
 
-      getAuthorizedUserByEmail.mockResolvedValueOnce({
-        id: 20,
-        email: "member1@northeastern.edu",
-      });
-      getAuthorizedUserByEmail.mockResolvedValueOnce({
-        id: 21,
-        email: "member2@northeastern.edu",
-      });
+      getAuthorizedUsersByEmails.mockResolvedValueOnce([
+        { id: 20, email: "member1@northeastern.edu" },
+        { id: 21, email: "member2@northeastern.edu" },
+      ]);
 
       const mockCreatedGroup = {
         id: 123,
@@ -799,6 +799,11 @@ describe("Groups Tests", () => {
       const result = await createGroup(authorizedUserId, groupData);
 
       expect(result).toEqual(mockCreatedGroup);
+
+      expect(getAuthorizedUsersByEmails).toHaveBeenCalledWith([
+        "member1@northeastern.edu",
+        "member2@northeastern.edu",
+      ]);
 
       expect(fetchAPI).toHaveBeenCalledWith("/groups", {
         options: {
@@ -867,30 +872,36 @@ describe("Groups Tests", () => {
         },
       };
 
-      getAuthorizedUserByEmail.mockResolvedValueOnce({
-        id: 30,
-        email: "existing@northeastern.edu",
-      });
+      // First batch lookup returns only the existing user
+      getAuthorizedUsersByEmails.mockResolvedValueOnce([
+        { id: 30, email: "existing@northeastern.edu" },
+      ]);
 
-      getAuthorizedUserByEmail.mockResolvedValueOnce(null);
+      // createAuthorizedUser succeeds for the missing email
+      createAuthorizedUser.mockResolvedValueOnce({ ok: true });
 
-      global.fetch = jest.fn().mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ data: { id: 31 } }),
-      });
+      // Second batch lookup (for newly created users) returns the new user
+      getAuthorizedUsersByEmails.mockResolvedValueOnce([
+        { id: 31, email: "new@northeastern.edu" },
+      ]);
 
       fetchAPI.mockResolvedValueOnce({ id: 125, groupName: "Test Group" });
 
       await createGroup(authorizedUserId, groupData);
 
-      expect(getAuthorizedUserByEmail).toHaveBeenCalledWith(
+      expect(getAuthorizedUsersByEmails).toHaveBeenCalledWith([
         "existing@northeastern.edu",
-      );
-      expect(getAuthorizedUserByEmail).toHaveBeenCalledWith(
         "new@northeastern.edu",
-      );
+      ]);
+      expect(createAuthorizedUser).toHaveBeenCalled();
+      expect(getAuthorizedUsersByEmails).toHaveBeenCalledWith([
+        "new@northeastern.edu",
+      ]);
 
       const requestBody = JSON.parse(fetchAPI.mock.calls[0][1].options.body);
+      expect(requestBody.data.members.set).toEqual(
+        expect.arrayContaining([{ id: 30 }, { id: 31 }]),
+      );
     });
 
     it("should handle errors during group creation", async () => {
@@ -1077,14 +1088,10 @@ describe("Groups Tests", () => {
         ],
       };
 
-      getAuthorizedUserByEmail.mockResolvedValueOnce({
-        id: 20,
-        email: "member1@northeastern.edu",
-      });
-      getAuthorizedUserByEmail.mockResolvedValueOnce({
-        id: 21,
-        email: "member2@northeastern.edu",
-      });
+      getAuthorizedUsersByEmails.mockResolvedValueOnce([
+        { id: 20, email: "member1@northeastern.edu" },
+        { id: 21, email: "member2@northeastern.edu" },
+      ]);
 
       const mockUpdatedGroup = {
         id: 1,
@@ -1099,6 +1106,11 @@ describe("Groups Tests", () => {
       const result = await updateGroup(groupId, updateData);
 
       expect(result).toEqual(mockUpdatedGroup);
+
+      expect(getAuthorizedUsersByEmails).toHaveBeenCalledWith([
+        "member1@northeastern.edu",
+        "member2@northeastern.edu",
+      ]);
 
       expect(fetchAPI).toHaveBeenCalledWith(`/groups/${groupId}`, {
         options: {
@@ -1180,14 +1192,10 @@ describe("Groups Tests", () => {
         ],
       };
 
-      getAuthorizedUserByEmail.mockResolvedValueOnce({
-        id: 101,
-        email: "email1@northeastern.edu",
-      });
-      getAuthorizedUserByEmail.mockResolvedValueOnce({
-        id: 102,
-        email: "email2@northeastern.edu",
-      });
+      getAuthorizedUsersByEmails.mockResolvedValueOnce([
+        { id: 101, email: "email1@northeastern.edu" },
+        { id: 102, email: "email2@northeastern.edu" },
+      ]);
 
       fetchAPI.mockResolvedValueOnce({ id: 1 });
 
@@ -1733,13 +1741,8 @@ describe("Groups Tests", () => {
             pageSize: 250,
             page: 1,
           },
-          revalidate: 0,
         },
         cache: "no-store",
-        next: {
-          revalidate: 0,
-          tags: ["due-dates"],
-        },
       });
 
       expect(result).toEqual(mockDueDates);
@@ -1858,13 +1861,8 @@ describe("Groups Tests", () => {
             pageSize: 250,
             page: 1,
           },
-          revalidate: 0,
-          cache: "no-store",
         },
-        next: {
-          tags: ["due-dates"],
-          revalidate: 0,
-        },
+        cache: "no-store",
       });
 
       expect(result).toEqual(mockDueDates);
