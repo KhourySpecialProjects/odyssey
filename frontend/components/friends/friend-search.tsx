@@ -1,22 +1,20 @@
 "use client";
 
 import { Input } from "@/components/ui/input";
-import { useState } from "react";
-import { ChangeEvent } from "react";
+import { useState, useEffect, ChangeEvent } from "react";
 import { AuthorizedUser } from "@/types";
 import { FriendSuggestionsBlock } from "./friend-suggestions-block";
 import { FriendBlock } from "./friend-block";
 import { cn } from "@/lib/utils";
+import { searchAuthorizedUsers } from "@/lib/requests/authorized-user";
 
 interface FriendSearchProps {
-  authUsers: AuthorizedUser[];
   curUser: AuthorizedUser;
   requestIds: number[];
   friendIds: number[];
 }
 
 export function FriendSearch({
-  authUsers,
   curUser,
   requestIds,
   friendIds,
@@ -25,40 +23,45 @@ export function FriendSearch({
   const [isHovered, setIsHovered] = useState(false);
   const [searchResults, setSearchResults] = useState<AuthorizedUser[]>([]);
   const [focused, setFocused] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    const delayDebounceFn = setTimeout(async () => {
+      if (searchTerm.trim()) {
+        try {
+          setIsLoading(true);
+          const results = await searchAuthorizedUsers(searchTerm);
+          if (Array.isArray(results)) {
+            const filtered = results.filter(
+              (user) =>
+                !curUser.blocked.some(
+                  (blockedUser) => blockedUser.id === user.id,
+                ) &&
+                !curUser.was_blocked.some(
+                  (blockedUser) => blockedUser.id === user.id,
+                ),
+            );
+            setSearchResults(filtered);
+          } else {
+            setSearchResults([]);
+          }
+        } catch (error) {
+          console.error("Search failed:", error);
+          setSearchResults([]);
+        } finally {
+          setIsLoading(false);
+        }
+      } else {
+        setSearchResults([]);
+        setIsLoading(false);
+      }
+    }, 300);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [searchTerm, curUser.blocked, curUser.was_blocked]);
 
   const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const searchTerm = e.target.value;
-    setSearchItem(searchTerm);
-
-    if (!searchTerm.trim()) {
-      setSearchResults([]);
-      return;
-    }
-
-    const filtered = authUsers.filter(
-      (user) =>
-        !curUser.blocked.some((blockedUser) => blockedUser.id === user.id) &&
-        !curUser.was_blocked.some(
-          (blockedUser) => blockedUser.id === user.id,
-        ) &&
-        (user.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          user.lastName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          user.email
-            ?.split("@")[0]
-            .toLowerCase()
-            .includes(searchTerm.toLowerCase()) ||
-          (
-            user.firstName?.toLowerCase() +
-            " " +
-            user.lastName?.toLowerCase()
-          ).includes(searchTerm.toLowerCase())),
-    );
-
-    if (filtered?.length === 0) {
-      setSearchResults([]);
-    } else {
-      setSearchResults(filtered);
-    }
+    setSearchItem(e.target.value);
   };
 
   return (
@@ -87,10 +90,12 @@ export function FriendSearch({
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
           >
-            {searchResults.length > 0 ? (
+            {isLoading ? (
+              <div className="p-4 text-center text-sm text-gray-500">Searching...</div>
+            ) : searchResults.length > 0 ? (
               <ul className="p-4 md:space-y-4">
                 {searchResults.slice(0, 10).map((user, index) => {
-                  if (!friendIds.includes(user.id)) {
+                  if (friendIds.includes(user.id)) {
                     return (
                       <FriendBlock
                         user={curUser}
@@ -99,7 +104,7 @@ export function FriendSearch({
                         data-testid={`user-item-${index + 1}`}
                       />
                     );
-                  } else if (requestIds.includes(user.id)) {
+                  } else if (!requestIds.includes(user.id)) {
                     return (
                       <FriendSuggestionsBlock
                         suggUser={user}
@@ -125,7 +130,7 @@ export function FriendSearch({
                 })}
               </ul>
             ) : (
-              <p className="p-1" data-testid="no-results">
+              <p className="p-4 text-center text-sm text-gray-500" data-testid="no-results">
                 No users found.
               </p>
             )}

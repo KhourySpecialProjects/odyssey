@@ -191,6 +191,22 @@ export async function fetchAuthorizedUsers(): Promise<AuthorizedUser[]> {
   }
 }
 
+export async function searchAuthorizedUsers(query: string) {
+  return fetchAPI<AuthorizedUser[]>("/authorized-users", {
+    urlParams: {
+      filters: {
+        $or: [
+          { email: { $containsi: query } },
+          { firstName: { $containsi: query } },
+          { lastName: { $containsi: query } },
+        ],
+      },
+      fields: ["id", "email", "firstName", "lastName", "profilePhoto"],
+      pagination: { pageSize: 20, page: 1 },
+    },
+  });
+}
+
 // Gets just one enrollment but also returns the response metadata to get pagination data
 export async function fetchAuthorizedUsersMetadata({
   sort,
@@ -567,8 +583,8 @@ export async function updateUserInfo(
     } = updates;
     const roleIds = roles
       ? await Promise.all(
-          roles.map((role) => getAuthorizedUserRoleIdByTitle(role)),
-        )
+        roles.map((role) => getAuthorizedUserRoleIdByTitle(role)),
+      )
       : [];
 
     const data: any = {};
