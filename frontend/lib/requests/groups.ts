@@ -594,13 +594,14 @@ export async function enrollUsers(group: Group) {
   try {
     const allDropletIds = [
       ...(group.droplets?.map((d) => d.id) || []),
-      ...(group.playlists?.flatMap((p) => p.droplets?.map((d) => d.id) || []) || []),
+      ...(group.playlists?.flatMap((p) => p.droplets?.map((d) => d.id) || []) ||
+        []),
     ];
     const uniqueDropletIds = [...new Set(allDropletIds)];
     const memberIds = group.members?.map((m) => m.id) || [];
 
     if (memberIds.length === 0) {
-      return; 
+      return;
     }
 
     // Need to collect existing enrollments if uniqueDropletIds is not empty
@@ -628,7 +629,7 @@ export async function enrollUsers(group: Group) {
         });
 
         if (!existingEnrollments || existingEnrollments.length === 0) break;
-        
+
         for (const e of existingEnrollments) {
           if (e.authorizedUser?.id && e.droplet?.id) {
             existingSet.add(`${e.authorizedUser.id}-${e.droplet.id}`);
@@ -647,14 +648,17 @@ export async function enrollUsers(group: Group) {
           if (!existingSet.has(`${member.id}-${dropletId}`)) {
             creates.push(
               createEnrollmentDirect(member.id, dropletId).catch((error) => {
-                console.error(`Error enrolling this user in droplet [${dropletId}]: `, error);
-              })
+                console.error(
+                  `Error enrolling this user in droplet [${dropletId}]: `,
+                  error,
+                );
+              }),
             );
           }
         }
       }
     }
-    
+
     // Enroll in playlists in parallel
     const playlistEnrolls = [];
     if (group.playlists && group.playlists.length > 0) {
@@ -662,15 +666,17 @@ export async function enrollUsers(group: Group) {
         for (const playlist of group.playlists || []) {
           playlistEnrolls.push(
             enrollInPlaylist(playlist.id, member.id).catch((error) => {
-              console.error(`Error enrolling this user in playlist [${playlist.id}]: `, error);
-            })
+              console.error(
+                `Error enrolling this user in playlist [${playlist.id}]: `,
+                error,
+              );
+            }),
           );
         }
       }
     }
 
     await Promise.all([...creates, ...playlistEnrolls]);
-    
   } catch (error) {
     console.error("Error enrolling users:", error);
     throw error;

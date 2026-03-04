@@ -704,7 +704,8 @@ export async function createEnrollmentDirect(
     const data = await response.json();
 
     if (!response.ok || (response.ok && data.error)) {
-      const errorPath = data?.error?.details?.errors?.[0]?.path?.[0] || 'Unknown';
+      const errorPath =
+        data?.error?.details?.errors?.[0]?.path?.[0] || "Unknown";
       const errorMessage = `${data?.error?.message} (${errorPath})`;
       return { ok: false, error: errorMessage, data: null };
     }
