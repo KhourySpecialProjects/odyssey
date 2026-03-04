@@ -40,11 +40,11 @@ export async function StudentProgress() {
   if (!playlists) return null;
 
   // Collect all unique user IDs and droplet IDs across all playlists
-  const allUserIds = playlists.flatMap(
-    (p) => (p.authorized_users || []).map((u: AuthorizedUser) => u.id),
+  const allUserIds = playlists.flatMap((p) =>
+    (p.authorized_users || []).map((u: AuthorizedUser) => u.id),
   );
-  const allDropletIds = playlists.flatMap(
-    (p) => (p.droplets || []).map((d) => d.id),
+  const allDropletIds = playlists.flatMap((p) =>
+    (p.droplets || []).map((d) => d.id),
   );
   const uniqueUserIds = [...new Set(allUserIds)];
   const uniqueDropletIds = [...new Set(allDropletIds)];
