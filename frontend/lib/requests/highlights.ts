@@ -81,6 +81,41 @@ export async function getHighlightsByDroplet(
   });
 }
 
+export async function getAllHighlightsByUser(
+  authorizedUserId: number,
+): Promise<Highlight[]> {
+  const path = `/highlights`;
+  const pageSize = 250;
+  let page = 1;
+  let allHighlights: Highlight[] = [];
+
+  while (true) {
+    const urlParams = {
+      sort: ["yLevel:asc"],
+      filters: {
+        authorized_user: { id: { $eq: authorizedUserId } },
+      },
+      populate: {
+        lesson: { fields: ["id", "name", "slug"] },
+      },
+      fields: ["text", "color", "yLevel"],
+      pagination: { page, pageSize },
+    };
+
+    const highlightsPage = await fetchAPI<Highlight[]>(path, {
+      urlParams,
+      next: { tags: [CACHE_TAGS.highlights(authorizedUserId)] },
+    });
+
+    if (!highlightsPage || highlightsPage.length === 0) break;
+    allHighlights = allHighlights.concat(highlightsPage);
+    if (highlightsPage.length < pageSize) break;
+    page++;
+  }
+
+  return allHighlights;
+}
+
 export async function deleteHighlight(id: number, authorizedUserId: number) {
   const response = await fetch(`${STRAPI_API_URL}/api/highlights/${id}`, {
     method: "DELETE",

@@ -202,6 +202,41 @@ export async function createNote(
   }
 }
 
+export async function getAllNotesByUser(
+  authorizedUserId: number,
+): Promise<Note[]> {
+  const path = `/notes`;
+  const pageSize = 250;
+  let page = 1;
+  let allNotes: Note[] = [];
+
+  while (true) {
+    const urlParams = {
+      filters: {
+        enrollment: { authorizedUser: { id: { $eq: authorizedUserId } } },
+      },
+      populate: {
+        highlight: { fields: ["text", "color", "yLevel"] },
+        lesson: { fields: ["id", "name", "slug"] },
+      },
+      fields: ["id", "content", "positionY"],
+      pagination: { page, pageSize },
+    };
+
+    const notesPage = await fetchAPI<Note[]>(path, {
+      urlParams,
+      next: { tags: [CACHE_TAGS.notes(authorizedUserId)] },
+    });
+
+    if (!notesPage || notesPage.length === 0) break;
+    allNotes = allNotes.concat(notesPage);
+    if (notesPage.length < pageSize) break;
+    page++;
+  }
+
+  return allNotes;
+}
+
 export async function deleteNote(id: number, authorizedUserId: number) {
   try {
     const response = await fetch(

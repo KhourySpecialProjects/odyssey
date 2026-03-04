@@ -2,8 +2,9 @@ import { Metadata } from "next";
 import { getCachedUser } from "@/lib/requests/cached";
 import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
 import { getCurrentUser } from "@/lib/auth/session";
-import { getNotesByDroplet } from "@/lib/requests/notes";
-import { getHighlightsByDroplet } from "@/lib/requests/highlights";
+import { getAllNotesByUser } from "@/lib/requests/notes";
+import { getAllHighlightsByUser } from "@/lib/requests/highlights";
+import { Note, Highlight } from "@/types";
 import { PDFDocument } from "pdf-lib";
 import { NoteSummary } from "@/components/droplets/lessons/note-taking/note-summary";
 import { NotesManager } from "@/components/droplets/notes-manager";
@@ -32,34 +33,48 @@ export default async function NotesPage() {
 
   const authUser = await getCachedUser(user.email);
 
-  const defined = <T,>(v: T | null | undefined): v is T => v != null;
+  // Build lessonId -> dropletId map from enrollments
+  const lessonToDroplet = new Map<number, number>();
+  for (const enrollment of enrollments) {
+    for (const lesson of enrollment.droplet.lessons || []) {
+      lessonToDroplet.set(lesson.id, enrollment.droplet.id);
+    }
+  }
 
-  const allNotes = (
-    await Promise.all(
-      enrollments.map(async (enrollment) => {
-        if (!enrollment) return null;
-        const dropletNotes = await getNotesByDroplet(
-          authUser.id,
-          enrollment.droplet.id,
-        );
-        const dropletHighlights = await getHighlightsByDroplet(
-          authUser.id,
-          enrollment.droplet.id,
-        );
+  const [allUserNotes, allUserHighlights] = await Promise.all([
+    getAllNotesByUser(authUser.id),
+    getAllHighlightsByUser(authUser.id),
+  ]);
 
-        return {
-          dropletId: enrollment.droplet.id,
-          notes: dropletNotes,
-          highlights: dropletHighlights.filter(
-            (highlight) =>
-              !dropletNotes.some(
-                (lesson) => lesson.highlight?.id === highlight.id,
-              ),
-          ),
-        };
-      }),
-    )
-  ).filter(defined);
+  // Group by droplet
+  const notesByDroplet = new Map<number, Note[]>();
+  for (const note of allUserNotes) {
+    const dropletId = lessonToDroplet.get(note.lesson?.id);
+    if (dropletId == null) continue;
+    if (!notesByDroplet.has(dropletId)) notesByDroplet.set(dropletId, []);
+    notesByDroplet.get(dropletId)!.push(note);
+  }
+
+  const highlightsByDroplet = new Map<number, Highlight[]>();
+  for (const hl of allUserHighlights) {
+    if (!hl.lesson?.id) continue;
+    const dropletId = lessonToDroplet.get(hl.lesson.id);
+    if (dropletId == null) continue;
+    if (!highlightsByDroplet.has(dropletId))
+      highlightsByDroplet.set(dropletId, []);
+    highlightsByDroplet.get(dropletId)!.push(hl);
+  }
+
+  // Build allNotes in the same shape as before
+  const allNotes = enrollments
+    .map((enrollment) => {
+      const notes = notesByDroplet.get(enrollment.droplet.id) || [];
+      const highlights = (
+        highlightsByDroplet.get(enrollment.droplet.id) || []
+      ).filter((hl) => !notes.some((n) => n.highlight?.id === hl.id));
+      return { dropletId: enrollment.droplet.id, notes, highlights };
+    })
+    .filter((d) => d.notes.length > 0 || d.highlights.length > 0);
 
   const pdfDoc = await PDFDocument.create();
 
