@@ -2,7 +2,7 @@
 import { fetchAPI, flattenAttributes } from "@/lib/utils";
 import { AuthorizedUser } from "@/types";
 import { StrapiRequestParams } from "@/types/strapi";
-import { revalidatePath, revalidateTag } from "next/cache";
+import { revalidateTag } from "next/cache";
 import qs from "qs";
 import { AuthorizedUserSchema } from "../validations/authorized-user";
 import { getAuthorizedUserRoleIdByTitle } from "./authorized-user-roles";
@@ -78,6 +78,7 @@ export async function getAuthorizedUsersByEmails(
           fields: ["id", "email"],
           pagination: { pageSize: PAGE_SIZE, page: 1 },
         },
+        next: { tags: [CACHE_TAGS.users], revalidate: 900 },
       }),
     ),
   );
@@ -161,6 +162,7 @@ export async function searchAuthorizedUsers(query: string) {
       fields: ["id", "email", "firstName", "lastName", "profilePhoto"],
       pagination: { pageSize: 20, page: 1 },
     },
+    next: { tags: [CACHE_TAGS.users], revalidate: 900 },
   });
 }
 
@@ -204,7 +206,7 @@ export async function fetchAuthorizedUsersMetadata({
       };
     }>(path, {
       urlParams,
-      cache: "no-store",
+      next: { tags: [CACHE_TAGS.users], revalidate: 900 },
       flattenResponse: false,
     });
 
@@ -366,7 +368,7 @@ export async function fetchIsAuthorizedUser(email: string) {
       NEXT_PUBLIC_STRAPI_API_URL + "/api/authorized-users?" + query,
       {
         headers: { Authorization: "Bearer " + STRAPI_ACCESS_TOKEN },
-        cache: "no-store",
+        next: { tags: [CACHE_TAGS.users], revalidate: 900 },
       },
     );
     const data = await response.json();
@@ -381,12 +383,13 @@ export async function fetchIsAuthorizedUser(email: string) {
 const CreateAuthorizedUser = AuthorizedUserSchema.omit({
   id: true,
 });
-export async function createAuthorizedUser(formData: FormData) {
-  // Determine which parameter is the FormData
-
-  const roleID = await getAuthorizedUserRoleIdByTitle(
-    AuthorizedUserRoleTitle.User,
-  );
+export async function createAuthorizedUser(
+  formData: FormData,
+  roleID?: number,
+) {
+  if (roleID === undefined) {
+    roleID = await getAuthorizedUserRoleIdByTitle(AuthorizedUserRoleTitle.User);
+  }
 
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!formData.get("email")) {
@@ -431,7 +434,7 @@ export async function createAuthorizedUser(formData: FormData) {
     return { error: "Database Error: Failed to Create Authorized User." };
   }
 
-  revalidatePath("/admin");
+  revalidateTag(CACHE_TAGS.users);
   return { message: `User ${email} created!`, ok: true };
 }
 
@@ -489,7 +492,7 @@ export async function createBatchAuthorizedUsers(emails: string[]) {
 
     await Promise.all(createUserPromises);
 
-    revalidatePath("/admin");
+    revalidateTag(CACHE_TAGS.users);
     return {
       ok: true,
       data: results,
@@ -574,7 +577,6 @@ export async function updateUserInfo(
       },
     );
     revalidateTag(CACHE_TAGS.users);
-    revalidatePath("/admin");
     return { success: true };
   } catch (error) {
     console.error("Error updating user info:", error);
@@ -610,7 +612,7 @@ export async function deleteAuthorizedUser(formData: FormData) {
     return { error: "Database Error: Failed to Delete Authorized User." };
   }
 
-  revalidatePath("/admin");
+  revalidateTag(CACHE_TAGS.users);
 }
 
 // fetching content editors
@@ -633,7 +635,9 @@ export async function fetchContentEditors(): Promise<AuthorizedUser[]> {
     },
   });
 
-  const response = await fetch(`/api/authorized-users?${query}`);
+  const response = await fetch(`/api/authorized-users?${query}`, {
+    next: { tags: [CACHE_TAGS.authors], revalidate: 3600 },
+  });
 
   // finally got response, so handle it
   if (!response.ok) {

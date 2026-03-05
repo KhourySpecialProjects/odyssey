@@ -51,6 +51,9 @@ export const CACHE_TAGS = {
   lesson: "lesson",
   announcements: "announcements",
   tags: "tags",
+  reports: "reports",
+  accessRequests: "access-requests",
+  creationRequests: "creation-requests",
   allGroups: "groups", // all group queries (getManagedGroups, getGroupBySlug, getGroupByID, getUserGroups, getGroupBySlugV2, fetchAnnouncements)
   allDueDates: "due-dates", // all due date queries (getGroupDueDates, getUserDueDates)
   allEnrollments: "enrollments", // global sweep for content mutations (updateDroplet, addLesson, etc.)

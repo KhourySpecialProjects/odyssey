@@ -274,7 +274,7 @@ describe("Data requests", () => {
           headers: expect.objectContaining({
             Authorization: expect.stringContaining("Bearer"),
           }),
-          next: { revalidate: 900 },
+          next: { tags: ["access-requests"], revalidate: 900 },
         }),
       );
     });

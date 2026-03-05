@@ -788,68 +788,73 @@ export async function duplicateDroplet(dropletId: number) {
         (a, b) => a.orderIndex - b.orderIndex,
       );
 
-      for (let index = 0; index < sortedLessons.length; index++) {
-        const lesson = sortedLessons[index];
-        const lessonTimestamp = Date.now();
-        const lessonRandomSuffix = Math.random().toString(36).substring(2, 15);
-        const uniqueLessonSlug = `lesson-${lessonTimestamp}-${lessonRandomSuffix}`;
+      await Promise.all(
+        sortedLessons.map(async (lesson, index) => {
+          const lessonTimestamp = Date.now();
+          const lessonRandomSuffix = Math.random()
+            .toString(36)
+            .substring(2, 15);
+          const uniqueLessonSlug = `lesson-${lessonTimestamp}-${lessonRandomSuffix}`;
 
-        // Determine which version of blocks to use
-        const blocksVersion = lesson.blocksVersion || "v1";
-        const isV2 = blocksVersion === "v2";
+          // Determine which version of blocks to use
+          const blocksVersion = lesson.blocksVersion || "v1";
+          const isV2 = blocksVersion === "v2";
 
-        console.log(`Lesson: ${lesson.name}, blocksVersion: ${blocksVersion}`);
-
-        // Prepare lesson data based on version
-        const lessonData: any = {
-          name: lesson.name,
-          slug: uniqueLessonSlug,
-          type: lesson.type,
-          orderIndex: index,
-          blocksVersion: blocksVersion,
-          notes: lesson.notes || null,
-          droplets: [newDropletId],
-        };
-
-        // Add the appropriate blocks field
-        if (isV2 && lesson.blocksV2) {
-          // For v2 lessons, copy the blocksV2 JSON directly
-          lessonData.blocksV2 = lesson.blocksV2;
-          console.log(`Creating v2 lesson: ${lesson.name} with blocksV2 data`);
-        } else {
-          // For v1 lessons, clean the blocks array
-          const cleanedBlocks = cleanBlocks(lesson.blocks || []);
-          lessonData.blocks = cleanedBlocks;
           console.log(
-            `Creating v1 lesson: ${lesson.name} with ${cleanedBlocks.length} blocks`,
+            `Lesson: ${lesson.name}, blocksVersion: ${blocksVersion}`,
           );
-        }
 
-        const response = await fetch(STRAPI_API_URL + "/api/lessons", {
-          method: "POST",
-          body: JSON.stringify({ data: lessonData }),
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
-          },
-        });
+          // Prepare lesson data based on version
+          const lessonData: any = {
+            name: lesson.name,
+            slug: uniqueLessonSlug,
+            type: lesson.type,
+            orderIndex: index,
+            blocksVersion: blocksVersion,
+            notes: lesson.notes || null,
+            droplets: [newDropletId],
+          };
 
-        if (!response.ok) {
-          const errorData = await response.json();
-          console.error(
-            "Failed to create lesson:",
-            JSON.stringify(errorData, null, 2),
+          // Add the appropriate blocks field
+          if (isV2 && lesson.blocksV2) {
+            // For v2 lessons, copy the blocksV2 JSON directly
+            lessonData.blocksV2 = lesson.blocksV2;
+            console.log(
+              `Creating v2 lesson: ${lesson.name} with blocksV2 data`,
+            );
+          } else {
+            // For v1 lessons, clean the blocks array
+            const cleanedBlocks = cleanBlocks(lesson.blocks || []);
+            lessonData.blocks = cleanedBlocks;
+            console.log(
+              `Creating v1 lesson: ${lesson.name} with ${cleanedBlocks.length} blocks`,
+            );
+          }
+
+          const response = await fetch(STRAPI_API_URL + "/api/lessons", {
+            method: "POST",
+            body: JSON.stringify({ data: lessonData }),
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+            },
+          });
+
+          if (!response.ok) {
+            const errorData = await response.json();
+            console.error(
+              "Failed to create lesson:",
+              JSON.stringify(errorData, null, 2),
+            );
+            throw new Error(`Failed to create lesson: ${lesson.name}`);
+          }
+
+          const createdLesson = await response.json();
+          console.log(
+            `Created lesson ${createdLesson.data.id} (${blocksVersion})`,
           );
-          throw new Error(`Failed to create lesson: ${lesson.name}`);
-        }
-
-        const createdLesson = await response.json();
-        console.log(
-          `Created lesson ${createdLesson.data.id} (${blocksVersion})`,
-        );
-
-        await new Promise((resolve) => setTimeout(resolve, 100));
-      }
+        }),
+      );
     }
 
     revalidateTag(CACHE_TAGS.authors);
@@ -1057,23 +1062,25 @@ export async function publishDraftToOriginal(
       console.log("Updating enrollments to point to original droplet");
 
       // Update each enrollment to point to the original droplet
-      for (const enrollment of draftEnrollments.data || []) {
-        await fetch(`${STRAPI_API_URL}/api/enrollments/${enrollment.id}`, {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
-          },
-          body: JSON.stringify({
-            data: {
-              droplet: originalDropletId,
+      await Promise.all(
+        (draftEnrollments.data || []).map(async (enrollment) => {
+          await fetch(`${STRAPI_API_URL}/api/enrollments/${enrollment.id}`, {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
             },
-          }),
-        });
-        console.log(
-          `Updated enrollment ${enrollment.id} to point to original droplet`,
-        );
-      }
+            body: JSON.stringify({
+              data: {
+                droplet: originalDropletId,
+              },
+            }),
+          });
+          console.log(
+            `Updated enrollment ${enrollment.id} to point to original droplet`,
+          );
+        }),
+      );
     } catch (error) {
       console.error("Error updating enrollments:", error);
     }
@@ -1130,9 +1137,8 @@ export async function publishDraftToOriginal(
         (a, b) => a.orderIndex - b.orderIndex,
       );
 
-      for (let index = 0; index < sortedLessons.length; index++) {
-        const lesson = sortedLessons[index];
-        try {
+      await Promise.all(
+        sortedLessons.map(async (lesson, index) => {
           // Determine which version of blocks to use
           const blocksVersion = lesson.blocksVersion || "v1";
           const isV2 = blocksVersion === "v2";
@@ -1150,7 +1156,7 @@ export async function publishDraftToOriginal(
             name: lesson.name,
             slug: `${lesson.slug}-${timestamp}-${randomSuffix}`,
             type: lesson.type,
-            orderIndex: index, // Use the array index to ensure sequential ordering
+            orderIndex: index,
             blocksVersion: blocksVersion,
             notes: lesson.notes || null,
             droplets: [originalDropletId],
@@ -1196,12 +1202,8 @@ export async function publishDraftToOriginal(
           console.log(
             `Successfully created lesson: ${lesson.name} with orderIndex: ${index}`,
           );
-          await new Promise((resolve) => setTimeout(resolve, 100));
-        } catch (error) {
-          console.error(`Error creating lesson ${lesson.name}:`, error);
-          throw error;
-        }
-      }
+        }),
+      );
     }
 
     console.log("Successfully merged lessons, now deleting draft droplet");
