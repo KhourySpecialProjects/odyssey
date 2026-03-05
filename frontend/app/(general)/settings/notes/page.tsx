@@ -62,25 +62,30 @@ export default async function NotesPage() {
     highlightsByDroplet.get(dropletId)!.push(hl);
   }
 
-  // Build allNotes in the same shape as before
-  const allNotes = enrollments
-    .map((enrollment) => {
-      const notes = notesByDroplet.get(enrollment.droplet.id) || [];
-      const highlights = (
-        highlightsByDroplet.get(enrollment.droplet.id) || []
-      ).filter((hl) => !notes.some((n) => n.highlight?.id === hl.id));
-      return { dropletId: enrollment.droplet.id, notes, highlights };
-    })
-    .filter((d) => d.notes.length > 0 || d.highlights.length > 0);
+  // Build per-enrollment note/highlight data (keep all entries so indices align)
+  const allNotesUnfiltered = enrollments.map((enrollment) => {
+    const notes = notesByDroplet.get(enrollment.droplet.id) || [];
+    const highlights = (
+      highlightsByDroplet.get(enrollment.droplet.id) || []
+    ).filter((hl) => !notes.some((n) => n.highlight?.id === hl.id));
+    return { dropletId: enrollment.droplet.id, notes, highlights };
+  });
+
+  // Filtered version for the UI (only droplets with content)
+  const allNotes = allNotesUnfiltered.filter(
+    (d) => d.notes.length > 0 || d.highlights.length > 0,
+  );
 
   const pdfDoc = await PDFDocument.create();
 
   for (let i = 0; i < enrollments.length; i++) {
     const enrollment = enrollments[i];
-    const dropletData = allNotes[i];
+    const dropletData = allNotesUnfiltered[i];
+    if (dropletData.notes.length === 0 && dropletData.highlights.length === 0)
+      continue;
     const sectionPdfBytes = await NoteSummary({
-      filteredHighlights: dropletData?.highlights || [],
-      notes: dropletData?.notes || [],
+      filteredHighlights: dropletData.highlights,
+      notes: dropletData.notes,
       droplet: enrollment.droplet,
     });
 

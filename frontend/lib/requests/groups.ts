@@ -8,6 +8,8 @@ import {
   getAuthorizedUsersByEmails,
   createAuthorizedUser,
 } from "./authorized-user";
+import { getAuthorizedUserRoleIdByTitle } from "./authorized-user-roles";
+import { AuthorizedUserRoleTitle } from "../globals";
 import type { Droplet, DueDate, Playlist } from "@/types";
 import { revalidateTag } from "next/cache";
 import { enrollInPlaylist } from "./playlist-enrollment";
@@ -570,13 +572,16 @@ async function ensureAuthorizedUsers(
   );
 
   if (missingEmails.length > 0) {
+    const roleID = await getAuthorizedUserRoleIdByTitle(
+      AuthorizedUserRoleTitle.User,
+    );
     await Promise.all(
       missingEmails.map(async (email) => {
         try {
           const formData = new FormData();
           formData.append("email", email);
           formData.append("isEnabled", "true");
-          await createAuthorizedUser(formData);
+          await createAuthorizedUser(formData, roleID);
         } catch (error) {
           console.error(`Failed to create user: ${email}`, error);
         }

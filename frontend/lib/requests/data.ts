@@ -128,7 +128,7 @@ export async function fetchAccessRequests() {
         NEXT_PUBLIC_STRAPI_API_URL + "/api/access-requests?" + query,
         {
           headers: { Authorization: "Bearer " + STRAPI_ACCESS_TOKEN },
-          next: { revalidate: 900 },
+          next: { tags: [CACHE_TAGS.accessRequests], revalidate: 900 },
         },
       );
       const data = await response.json();
@@ -166,7 +166,7 @@ export async function fetchReports() {
         NEXT_PUBLIC_STRAPI_API_URL + "/api/reports?" + query,
         {
           headers: { Authorization: "Bearer " + STRAPI_ACCESS_TOKEN },
-          next: { revalidate: 900 },
+          next: { tags: [CACHE_TAGS.reports], revalidate: 900 },
         },
       );
       const data = await response.json();

@@ -396,7 +396,7 @@ describe("Authorized User Tests", () => {
         urlParams: expect.objectContaining({
           pagination: { pageSize: 50, page: 2 },
         }),
-        cache: "no-store",
+        next: { tags: ["users"], revalidate: 900 },
         flattenResponse: false,
       });
     });

@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { accessRequestSchema } from "./validations/access-request";
@@ -17,6 +17,7 @@ import { createAuthorizedUser } from "./requests/authorized-user";
 import { creationRequestSchema } from "./validations/creation-request";
 import qs from "qs";
 import { flattenAttributes } from "@/lib/utils";
+import { CACHE_TAGS } from "./cache-tags";
 
 const STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
@@ -135,7 +136,7 @@ export async function deleteReport(id: string) {
     return { error: "Failed to delete report" };
   }
 
-  revalidatePath("/admin?adminTab=Reports");
+  revalidateTag(CACHE_TAGS.reports);
   return { success: true };
 }
 
@@ -217,7 +218,7 @@ export async function deleteAccessRequest(formData: FormData) {
     return { error: "Database Error: Failed to delete access request." };
   }
 
-  revalidatePath("/admin");
+  revalidateTag(CACHE_TAGS.accessRequests);
 }
 
 /**
@@ -372,7 +373,8 @@ export async function approveCreationRequest(
       };
     }
 
-    revalidatePath("/admin");
+    revalidateTag(CACHE_TAGS.users);
+    revalidateTag(CACHE_TAGS.creationRequests);
     return { ok: true, error: null, data: null };
   } catch (err) {
     console.error(err);
@@ -408,7 +410,7 @@ export async function deleteCreationRequest(requestId: string) {
       };
     }
 
-    revalidatePath("/admin");
+    revalidateTag(CACHE_TAGS.creationRequests);
     return { ok: true, error: null, data: null };
   } catch (err) {
     console.error(err);
@@ -448,7 +450,7 @@ export async function fetchCreationRequests(): Promise<CreationRequest[]> {
           headers: {
             Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
           },
-          cache: "no-store",
+          next: { tags: [CACHE_TAGS.creationRequests], revalidate: 900 },
         },
       );
 
@@ -504,7 +506,7 @@ export async function fetchCreationRequestByUser(
         headers: {
           Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
         },
-        cache: "no-store",
+        next: { tags: [CACHE_TAGS.creationRequests], revalidate: 900 },
       },
     );
 
