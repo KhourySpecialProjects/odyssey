@@ -1,22 +1,5 @@
 import { render, screen, fireEvent } from "@testing-library/react";
 import { StatisticsSelector } from "@/components/admin/statistics-selector";
-import { useRouter, usePathname, useSearchParams } from "next/navigation";
-
-// Create a variable to track the current statsTab
-let currentStatsTab = "General Statistics";
-const mockPush = jest.fn((url) => {
-  const match = url.match(/statsTab=([^&]*)/);
-  if (match) {
-    currentStatsTab = decodeURIComponent(match[1]);
-  }
-});
-
-// Mock Next.js navigation hooks
-jest.mock("next/navigation", () => ({
-  useRouter: jest.fn(),
-  usePathname: jest.fn(),
-  useSearchParams: jest.fn(),
-}));
 
 describe("StatisticsSelector", () => {
   const mockContent = {
@@ -24,21 +7,6 @@ describe("StatisticsSelector", () => {
     "Daily Active Users": <div>DAU Content</div>,
     "Weekly Active Users": <div>WAU Content</div>,
   };
-
-  beforeEach(() => {
-    currentStatsTab = "General Statistics";
-    mockPush.mockClear();
-
-    (useRouter as jest.Mock).mockReturnValue({
-      push: mockPush,
-    });
-
-    (usePathname as jest.Mock).mockReturnValue("/admin");
-
-    (useSearchParams as jest.Mock).mockReturnValue(
-      new URLSearchParams(currentStatsTab ? `statsTab=${currentStatsTab}` : ""),
-    );
-  });
 
   describe("Rendering", () => {
     it("renders all tabs", () => {
@@ -57,14 +25,10 @@ describe("StatisticsSelector", () => {
       expect(screen.queryByText("WAU Content")).not.toBeInTheDocument();
     });
 
-    it("renders correct content for current tab from URL", () => {
-      currentStatsTab = "Daily Active Users";
-
-      (useSearchParams as jest.Mock).mockReturnValue(
-        new URLSearchParams("statsTab=Daily Active Users"),
-      );
-
+    it("renders correct content when clicking a different tab", () => {
       render(<StatisticsSelector content={mockContent} />);
+
+      fireEvent.click(screen.getByText("Daily Active Users"));
 
       expect(screen.getByText("DAU Content")).toBeInTheDocument();
       expect(screen.queryByText("Stats Content")).not.toBeInTheDocument();
@@ -105,46 +69,48 @@ describe("StatisticsSelector", () => {
   });
 
   describe("Tab Navigation", () => {
-    it("updates URL when clicking on a different tab", () => {
+    it("switches content when clicking on a different tab", () => {
       render(<StatisticsSelector content={mockContent} />);
 
       fireEvent.click(screen.getByText("Daily Active Users"));
 
-      expect(mockPush).toHaveBeenCalledWith(
-        "/admin?statsTab=Daily+Active+Users",
-      );
+      expect(screen.getByText("DAU Content")).toBeInTheDocument();
+      expect(screen.queryByText("Stats Content")).not.toBeInTheDocument();
     });
 
-    it("updates URL when clicking on another tab", () => {
+    it("switches content when clicking on another tab", () => {
       render(<StatisticsSelector content={mockContent} />);
 
       fireEvent.click(screen.getByText("Weekly Active Users"));
 
-      expect(mockPush).toHaveBeenCalledWith(
-        "/admin?statsTab=Weekly+Active+Users",
-      );
+      expect(screen.getByText("WAU Content")).toBeInTheDocument();
+      expect(screen.queryByText("Stats Content")).not.toBeInTheDocument();
     });
 
-    it("preserves pathname when updating statsTab", () => {
-      (usePathname as jest.Mock).mockReturnValue("/admin/dashboard");
-
+    it("updates selected tab styling on click", () => {
       render(<StatisticsSelector content={mockContent} />);
 
       fireEvent.click(screen.getByText("Daily Active Users"));
 
-      expect(mockPush).toHaveBeenCalledWith(
-        expect.stringContaining("/admin/dashboard"),
+      expect(screen.getByText("Daily Active Users")).toHaveClass(
+        "bg-slate-200",
+      );
+      expect(screen.getByText("General Statistics")).not.toHaveClass(
+        "bg-slate-200",
       );
     });
 
-    it("creates query string correctly", () => {
+    it("can navigate through all tabs", () => {
       render(<StatisticsSelector content={mockContent} />);
 
       fireEvent.click(screen.getByText("Daily Active Users"));
+      expect(screen.getByText("DAU Content")).toBeInTheDocument();
 
-      expect(mockPush).toHaveBeenCalledWith(
-        expect.stringContaining("statsTab="),
-      );
+      fireEvent.click(screen.getByText("Weekly Active Users"));
+      expect(screen.getByText("WAU Content")).toBeInTheDocument();
+
+      fireEvent.click(screen.getByText("General Statistics"));
+      expect(screen.getByText("Stats Content")).toBeInTheDocument();
     });
   });
 
@@ -152,7 +118,6 @@ describe("StatisticsSelector", () => {
     it("handles empty content object", () => {
       render(<StatisticsSelector content={{}} />);
 
-      // Should render without crashing
       expect(screen.queryByText("General Statistics")).not.toBeInTheDocument();
     });
 
@@ -161,26 +126,10 @@ describe("StatisticsSelector", () => {
         "Only Tab": <div>Single Content</div>,
       };
 
-      (useSearchParams as jest.Mock).mockReturnValue(
-        new URLSearchParams("statsTab=Only Tab"),
-      );
-
       render(<StatisticsSelector content={singleTabContent} />);
 
       expect(screen.getByText("Only Tab")).toBeInTheDocument();
       expect(screen.getByText("Single Content")).toBeInTheDocument();
-    });
-
-    it("defaults to first tab when statsTab param is invalid", () => {
-      (useSearchParams as jest.Mock).mockReturnValue(
-        new URLSearchParams("statsTab=Invalid Tab Name"),
-      );
-
-      render(<StatisticsSelector content={mockContent} />);
-
-      // Should show nothing since invalid tab doesn't exist
-      expect(screen.queryByText("Stats Content")).not.toBeInTheDocument();
-      expect(screen.queryByText("DAU Content")).not.toBeInTheDocument();
     });
 
     it("handles tabs with special characters in names", () => {
@@ -190,27 +139,18 @@ describe("StatisticsSelector", () => {
 
       render(<StatisticsSelector content={specialContent} />);
 
-      fireEvent.click(screen.getByText("Tab & Special"));
-
-      expect(mockPush).toHaveBeenCalledWith(
-        expect.stringContaining("Tab+%26+Special"),
-      );
+      expect(screen.getByText("Tab & Special")).toBeInTheDocument();
+      expect(screen.getByText("Special Content")).toBeInTheDocument();
     });
   });
 
   describe("Multiple Renders", () => {
     it("updates content when tab changes", () => {
-      const { rerender } = render(<StatisticsSelector content={mockContent} />);
+      render(<StatisticsSelector content={mockContent} />);
 
       expect(screen.getByText("Stats Content")).toBeInTheDocument();
 
-      // Simulate tab change by updating the mock
-      currentStatsTab = "Daily Active Users";
-      (useSearchParams as jest.Mock).mockReturnValue(
-        new URLSearchParams("statsTab=Daily Active Users"),
-      );
-
-      rerender(<StatisticsSelector content={mockContent} />);
+      fireEvent.click(screen.getByText("Daily Active Users"));
 
       expect(screen.getByText("DAU Content")).toBeInTheDocument();
       expect(screen.queryByText("Stats Content")).not.toBeInTheDocument();

@@ -43,6 +43,8 @@ jest.mock("next/cache", () => ({
 global.fetch = jest.fn();
 
 beforeEach(() => {
+  process.env.NEXT_PUBLIC_STRAPI_API_URL = "http://test-api-url";
+  process.env.STRAPI_ACCESS_TOKEN = "test-token";
   jest.spyOn(console, "error").mockImplementation(() => {});
   jest.spyOn(console, "warn").mockImplementation(() => {});
   mockGetRoleId.mockResolvedValue(1);
@@ -321,7 +323,7 @@ describe("Authorized User Tests", () => {
           headers: expect.objectContaining({
             Authorization: expect.stringContaining("Bearer"),
           }),
-          cache: "no-store",
+          next: { tags: ["users"], revalidate: 900 },
         }),
       );
 
