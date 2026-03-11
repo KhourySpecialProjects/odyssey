@@ -12,6 +12,12 @@ jest.mock("next/navigation", () => ({
   usePathname: jest.fn(),
   useSearchParams: jest.fn(),
 }));
+jest.mock("posthog-js", () => ({
+  __esModule: true,
+  default: {
+    get_session_replay_url: jest.fn().mockReturnValue("https://posthog.com/replay/123"),
+  },
+}));
 
 describe("ReportBugForm", () => {
   const mockOnSuccess = jest.fn();
@@ -69,6 +75,7 @@ describe("ReportBugForm", () => {
           fullName: "Test User",
           email: "test@test.com",
           description: "Test description",
+          sessionUrl: "https://posthog.com/replay/123",
         }),
       );
       expect(mockOnSuccess).toHaveBeenCalled();
