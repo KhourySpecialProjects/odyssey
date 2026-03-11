@@ -174,7 +174,9 @@ export async function createBugReport(formData: z.infer<typeof reportSchema>) {
 }
 
 async function createLinearIssue(
-  formData: Omit<z.infer<typeof reportSchema>, "sessionUrl"> & { sessionUrl?: string }
+  formData: Omit<z.infer<typeof reportSchema>, "sessionUrl"> & {
+    sessionUrl?: string;
+  },
 ) {
   const anthropic = new Anthropic({
     apiKey: process.env.ANTHROPIC_API_KEY || "placeholder",
@@ -207,9 +209,13 @@ Page: "${formData.path}"`,
         },
       ],
     });
-    generatedSections = msg.content[0].type === "text" ? msg.content[0].text : "";
+    generatedSections =
+      msg.content[0].type === "text" ? msg.content[0].text : "";
   } catch (err) {
-    console.error("Anthropic generation failed, using placeholder sections:", err);
+    console.error(
+      "Anthropic generation failed, using placeholder sections:",
+      err,
+    );
     generatedSections = `## Acceptance Criteria
 - How do we know it's done?
 - [ ] [criteria #1]

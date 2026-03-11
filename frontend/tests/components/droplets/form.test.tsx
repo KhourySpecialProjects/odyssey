@@ -15,7 +15,9 @@ jest.mock("next/navigation", () => ({
 jest.mock("posthog-js", () => ({
   __esModule: true,
   default: {
-    get_session_replay_url: jest.fn().mockReturnValue("https://posthog.com/replay/123"),
+    get_session_replay_url: jest
+      .fn()
+      .mockReturnValue("https://posthog.com/replay/123"),
   },
 }));
 

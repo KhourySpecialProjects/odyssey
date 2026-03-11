@@ -45,9 +45,14 @@ jest.mock("@anthropic-ai/sdk", () => {
   return jest.fn().mockImplementation(() => ({
     messages: {
       create: jest.fn().mockResolvedValue({
-        content: [{ type: "text", text: "## Acceptance Criteria\n- [ ] generated criteria" }]
-      })
-    }
+        content: [
+          {
+            type: "text",
+            text: "## Acceptance Criteria\n- [ ] generated criteria",
+          },
+        ],
+      }),
+    },
   }));
 });
 
@@ -349,9 +354,7 @@ describe("Server Actions", () => {
         sessionUrl: "https://posthog.com/replay/123",
       };
 
-      (global.fetch as jest.Mock).mockRejectedValue(
-        new Error("Network error"),
-      );
+      (global.fetch as jest.Mock).mockRejectedValue(new Error("Network error"));
 
       const result = await createBugReport(formData);
 
