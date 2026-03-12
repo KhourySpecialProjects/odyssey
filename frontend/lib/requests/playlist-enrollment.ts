@@ -2,7 +2,8 @@
 
 import { getCurrentUser } from "@/lib/auth/session";
 import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
-import { revalidatePath } from "next/cache";
+import { revalidateTag } from "next/cache";
+import { CACHE_TAGS } from "../cache-tags";
 
 const STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
@@ -52,8 +53,9 @@ export async function togglePlaylistEnrollment(playlistId: number) {
       throw new Error("Failed to update enrollment");
     }
 
-    revalidatePath("/p/[slug]", "page");
-    revalidatePath("/dashboard", "page");
+    revalidateTag(CACHE_TAGS.playlists);
+    revalidateTag(CACHE_TAGS.enrollments(authorizedUser.id));
+    revalidateTag(CACHE_TAGS.allEnrollments);
 
     return { success: true };
   } catch (error) {
@@ -85,6 +87,9 @@ export async function enrollInPlaylist(playlistId: number, userId: number) {
     if (!response.ok) {
       throw new Error("Failed to update playlists");
     }
+    revalidateTag(CACHE_TAGS.playlists);
+    revalidateTag(CACHE_TAGS.enrollments(userId));
+    revalidateTag(CACHE_TAGS.allEnrollments);
     return { success: true };
   } catch (error) {
     console.error("Error updating playlists:", error);

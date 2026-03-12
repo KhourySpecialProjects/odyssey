@@ -1,5 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import DraggableDropletWideTile from "@/components/droplets/draggable-droplet-wide-tile";
+import { Droplet } from "@/types";
 
 jest.mock("@/lib/utils", () => ({
   uppercaseFirstChar: (str: string) =>
@@ -11,16 +12,17 @@ describe("DraggableDropletWideTile", () => {
   const mockDroplet = {
     id: 1,
     name: "Test Droplet",
-    status: "draft" as const,
-    focusArea: "frontend" as const,
-    type: "tutorial" as const,
+    slug: "test-droplet",
+    status: "draft",
+    focusArea: "technical",
+    type: "knowledge",
+    isHidden: false,
+    learningObjectives: [],
     tags: [
-      { id: 1, name: "Tag 1" },
-      { id: 2, name: "Tag 2" },
+      { id: 1, slug: "tag-1", name: "Tag 1", droplets: [] },
+      { id: 2, slug: "tag-2", name: "Tag 2", droplets: [] },
     ],
-  };
-
-  const mockMoveCard = jest.fn();
+  } as unknown as Droplet;
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -28,31 +30,17 @@ describe("DraggableDropletWideTile", () => {
 
   describe("Basic Rendering", () => {
     it("renders droplet name", () => {
-      render(
-        <DraggableDropletWideTile
-          droplet={mockDroplet as any}
-          index={0}
-          moveCard={mockMoveCard}
-          sourceList="test"
-        />,
-      );
+      render(<DraggableDropletWideTile droplet={mockDroplet} index={0} />);
 
       expect(screen.getByText("Test Droplet")).toBeInTheDocument();
     });
 
     it("renders all badges correctly", () => {
-      render(
-        <DraggableDropletWideTile
-          droplet={mockDroplet as any}
-          index={0}
-          moveCard={mockMoveCard}
-          sourceList="test"
-        />,
-      );
+      render(<DraggableDropletWideTile droplet={mockDroplet} index={0} />);
 
       expect(screen.getByText("Draft")).toBeInTheDocument();
-      expect(screen.getByText("Frontend")).toBeInTheDocument();
-      expect(screen.getByText("Tutorial")).toBeInTheDocument();
+      expect(screen.getByText("Technical")).toBeInTheDocument();
+      expect(screen.getByText("Knowledge")).toBeInTheDocument();
       expect(screen.getByText("Tag 1")).toBeInTheDocument();
       expect(screen.getByText("Tag 2")).toBeInTheDocument();
     });
@@ -60,14 +48,7 @@ describe("DraggableDropletWideTile", () => {
 
   describe("Draft Badge", () => {
     it("shows Draft badge for draft status", () => {
-      render(
-        <DraggableDropletWideTile
-          droplet={mockDroplet as any}
-          index={0}
-          moveCard={mockMoveCard}
-          sourceList="test"
-        />,
-      );
+      render(<DraggableDropletWideTile droplet={mockDroplet} index={0} />);
 
       expect(screen.getByText("Draft")).toBeInTheDocument();
     });
@@ -75,14 +56,7 @@ describe("DraggableDropletWideTile", () => {
     it("does not show Draft badge for published status", () => {
       const publishedDroplet = { ...mockDroplet, status: "published" as const };
 
-      render(
-        <DraggableDropletWideTile
-          droplet={publishedDroplet as any}
-          index={0}
-          moveCard={mockMoveCard}
-          sourceList="test"
-        />,
-      );
+      render(<DraggableDropletWideTile droplet={publishedDroplet} index={0} />);
 
       expect(screen.queryByText("Draft")).not.toBeInTheDocument();
     });
@@ -90,14 +64,7 @@ describe("DraggableDropletWideTile", () => {
 
   describe("Tags", () => {
     it("renders multiple tags", () => {
-      render(
-        <DraggableDropletWideTile
-          droplet={mockDroplet as any}
-          index={0}
-          moveCard={mockMoveCard}
-          sourceList="test"
-        />,
-      );
+      render(<DraggableDropletWideTile droplet={mockDroplet} index={0} />);
 
       expect(screen.getByText("Tag 1")).toBeInTheDocument();
       expect(screen.getByText("Tag 2")).toBeInTheDocument();
@@ -106,14 +73,7 @@ describe("DraggableDropletWideTile", () => {
     it("handles droplet with no tags", () => {
       const noTagsDroplet = { ...mockDroplet, tags: [] };
 
-      render(
-        <DraggableDropletWideTile
-          droplet={noTagsDroplet as any}
-          index={0}
-          moveCard={mockMoveCard}
-          sourceList="test"
-        />,
-      );
+      render(<DraggableDropletWideTile droplet={noTagsDroplet} index={0} />);
 
       expect(screen.getByText("Test Droplet")).toBeInTheDocument();
     });
@@ -122,12 +82,7 @@ describe("DraggableDropletWideTile", () => {
       const undefinedTagsDroplet = { ...mockDroplet, tags: undefined };
 
       render(
-        <DraggableDropletWideTile
-          droplet={undefinedTagsDroplet as any}
-          index={0}
-          moveCard={mockMoveCard}
-          sourceList="test"
-        />,
+        <DraggableDropletWideTile droplet={undefinedTagsDroplet} index={0} />,
       );
 
       expect(screen.getByText("Test Droplet")).toBeInTheDocument();
@@ -137,17 +92,13 @@ describe("DraggableDropletWideTile", () => {
   describe("Styling", () => {
     it("applies correct container classes", () => {
       const { container } = render(
-        <DraggableDropletWideTile
-          droplet={mockDroplet as any}
-          index={0}
-          moveCard={mockMoveCard}
-          sourceList="test"
-        />,
+        <DraggableDropletWideTile droplet={mockDroplet} index={0} />,
       );
 
-      expect(container.firstChild).toHaveClass("rounded-md");
-      expect(container.firstChild).toHaveClass("border");
-      expect(container.firstChild).toHaveClass("bg-slate-50");
+      const card = container.firstChild?.firstChild as HTMLElement;
+      expect(card).toHaveClass("rounded-md");
+      expect(card).toHaveClass("border");
+      expect(card).toHaveClass("bg-slate-50");
     });
   });
 
@@ -155,38 +106,23 @@ describe("DraggableDropletWideTile", () => {
     it("handles very long droplet name", () => {
       const longNameDroplet = { ...mockDroplet, name: "A".repeat(200) };
 
-      render(
-        <DraggableDropletWideTile
-          droplet={longNameDroplet as any}
-          index={0}
-          moveCard={mockMoveCard}
-          sourceList="test"
-        />,
-      );
+      render(<DraggableDropletWideTile droplet={longNameDroplet} index={0} />);
 
       expect(screen.getByText("A".repeat(200))).toBeInTheDocument();
     });
 
     it("handles droplet at different indexes", () => {
-      render(
-        <DraggableDropletWideTile
-          droplet={mockDroplet as any}
-          index={5}
-          moveCard={mockMoveCard}
-          sourceList="test"
-        />,
-      );
+      render(<DraggableDropletWideTile droplet={mockDroplet} index={5} />);
 
       expect(screen.getByText("Test Droplet")).toBeInTheDocument();
     });
 
-    it("handles different source lists", () => {
+    it("handles different action types", () => {
       render(
         <DraggableDropletWideTile
-          droplet={mockDroplet as any}
+          droplet={mockDroplet}
           index={0}
-          moveCard={mockMoveCard}
-          sourceList="different-list"
+          actionType="add"
         />,
       );
 

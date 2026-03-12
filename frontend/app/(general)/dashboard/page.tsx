@@ -13,9 +13,11 @@ import {
   playlistSorting,
   sorting,
 } from "@/lib/globals";
-import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
-import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
-import { getUserGroups } from "@/lib/requests/groups";
+import {
+  getCachedUserDashboardFull,
+  getCachedEnrollmentsFavorites,
+  getCachedUserGroups,
+} from "@/lib/requests/cached";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 
@@ -34,15 +36,16 @@ export default async function DashboardRoute({ searchParams }: Props) {
     return notFound();
   }
   const { sortKey } = sorting.find((item) => item.slug === sort) || defaultSort;
-  const authorizedUser = await getAuthorizedUserByEmail(user.email);
+  const authorizedUser = await getCachedUserDashboardFull(user.email);
   const archivedPlaylists = authorizedUser.playlists?.filter((playlist) =>
     playlist.users_archived?.some((user) => user.id === authorizedUser.id),
   );
-  const allEnrollments = await getEnrollmentsByAuthorizedUser(
-    authorizedUser.id,
-  );
+  const [allEnrollments, allGroupsRaw] = await Promise.all([
+    getCachedEnrollmentsFavorites(authorizedUser.id),
+    getCachedUserGroups(authorizedUser.id),
+  ]);
   const allPlaylists = authorizedUser.playlists?.length || 0;
-  const allGroups = (await getUserGroups(authorizedUser.id)).filter((group) =>
+  const allGroups = allGroupsRaw.filter((group) =>
     group.members?.some((member) => member.id === authorizedUser.id),
   );
   const activeGroups = allGroups.filter(

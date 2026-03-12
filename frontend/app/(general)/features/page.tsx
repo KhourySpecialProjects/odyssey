@@ -4,6 +4,8 @@ import { getGalleryBySlug } from "@/lib/requests/galleries";
 import { Gallery } from "@/types";
 import { Metadata } from "next";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Features",
 };

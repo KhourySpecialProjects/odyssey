@@ -2,7 +2,7 @@ import { render, screen } from "@testing-library/react";
 import { StudentProgress } from "@/components/admin/progress/student-progress";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
-import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
+import { getEnrollmentsForGroupMembers } from "@/lib/requests/enrollment";
 
 jest.mock("@/lib/auth/session", () => ({
   getCurrentUser: jest.fn(),
@@ -13,7 +13,7 @@ jest.mock("@/lib/requests/authorized-user", () => ({
 }));
 
 jest.mock("@/lib/requests/enrollment", () => ({
-  getEnrollmentsByAuthorizedUser: jest.fn(),
+  getEnrollmentsForGroupMembers: jest.fn(),
 }));
 
 jest.mock("@/components/admin/progress/student-progress-list", () => ({
@@ -51,6 +51,7 @@ describe("StudentProgress", () => {
   const mockEnrollments = [
     {
       id: 1,
+      authorizedUser: { id: 2 },
       viewedLessons: [{ id: 1 }],
     },
   ];
@@ -59,7 +60,7 @@ describe("StudentProgress", () => {
     jest.clearAllMocks();
     (getCurrentUser as jest.Mock).mockResolvedValue(mockUser);
     (getAuthorizedUserByEmail as jest.Mock).mockResolvedValue(mockAuthor);
-    (getEnrollmentsByAuthorizedUser as jest.Mock).mockResolvedValue(
+    (getEnrollmentsForGroupMembers as jest.Mock).mockResolvedValue(
       mockEnrollments,
     );
   });
@@ -85,7 +86,14 @@ describe("StudentProgress", () => {
   it("calculates progress correctly", async () => {
     render(await StudentProgress());
 
-    expect(getEnrollmentsByAuthorizedUser).toHaveBeenCalledWith(2);
+    expect(getEnrollmentsForGroupMembers).toHaveBeenCalledWith(
+      [2],
+      [1],
+      expect.objectContaining({
+        populate: expect.any(Object),
+        fields: expect.any(Array),
+      }),
+    );
   });
 
   it("returns null when user is not found", async () => {
@@ -111,6 +119,7 @@ describe("StudentProgress", () => {
           authorized_users: [{ id: 1, email: "student@test.com" }],
           droplets: [
             {
+              id: 10,
               lessons: [{ id: 1 }, { id: 2 }],
             },
           ],
@@ -119,13 +128,14 @@ describe("StudentProgress", () => {
     };
     const mockEnrollments = [
       {
+        authorizedUser: { id: 1 },
         viewedLessons: [{ id: 1 }],
       },
     ];
 
     (getCurrentUser as jest.Mock).mockResolvedValue(mockUser);
     (getAuthorizedUserByEmail as jest.Mock).mockResolvedValue(mockAuthor);
-    (getEnrollmentsByAuthorizedUser as jest.Mock).mockResolvedValue(
+    (getEnrollmentsForGroupMembers as jest.Mock).mockResolvedValue(
       mockEnrollments,
     );
 
@@ -146,6 +156,7 @@ describe("StudentProgress", () => {
           authorized_users: [{ id: 2, email: "student@test.com" }],
           droplets: [
             {
+              id: 10,
               lessons: [{ id: 1 }, { id: 2 }, { id: 3 }, { id: 4 }],
             },
           ],
@@ -156,8 +167,9 @@ describe("StudentProgress", () => {
       mockAuthorizedUser,
     );
 
-    (getEnrollmentsByAuthorizedUser as jest.Mock).mockResolvedValue([
+    (getEnrollmentsForGroupMembers as jest.Mock).mockResolvedValue([
       {
+        authorizedUser: { id: 2 },
         viewedLessons: [{ id: 1 }, { id: 2 }],
       },
     ]);
@@ -183,14 +195,14 @@ describe("StudentProgress", () => {
       created_playlists: [
         {
           authorized_users: [{ id: 1 }],
-          droplets: [{ lessons: [] }],
+          droplets: [{ id: 10, lessons: [] }],
         },
       ],
     };
     (getAuthorizedUserByEmail as jest.Mock).mockResolvedValue(
       mockAuthorizedUser,
     );
-    (getEnrollmentsByAuthorizedUser as jest.Mock).mockResolvedValue([]);
+    (getEnrollmentsForGroupMembers as jest.Mock).mockResolvedValue([]);
 
     const { container } = await render(await StudentProgress());
     expect(container).toHaveTextContent(/in your private playlists/i);

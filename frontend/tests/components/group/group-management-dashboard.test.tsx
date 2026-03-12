@@ -90,6 +90,8 @@ describe("GroupDashboard", () => {
     was_blocked: [],
     timeZone: "America/New_York" as TimeZone,
     isPublic: false,
+    website: "",
+    groups: [],
   };
 
   const mockDroplets = Array.from({ length: 12 }, (_, i) => ({

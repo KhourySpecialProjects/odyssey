@@ -47,6 +47,8 @@ describe("azure", () => {
       });
 
       it("handles fetch error", async () => {
+        const consoleSpy = jest.spyOn(console, "error").mockImplementation();
+
         (global.fetch as jest.Mock).mockRejectedValue(
           new Error("Network error"),
         );
@@ -54,6 +56,8 @@ describe("azure", () => {
         await expect(getUserProfile("test-token")).rejects.toThrow(
           "Failed to fetch user profile",
         );
+
+        consoleSpy.mockRestore();
       });
     });
   });

@@ -1,7 +1,8 @@
 "use server";
 import { flattenAttributes } from "@/lib/utils";
 import { AuthorizedUser, Friendship } from "@/types";
-import { revalidatePath } from "next/cache";
+import { revalidateTag } from "next/cache";
+import { CACHE_TAGS } from "../cache-tags";
 import qs from "qs";
 
 const NEXT_PUBLIC_STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
@@ -58,7 +59,10 @@ export async function fetchFriends(
         NEXT_PUBLIC_STRAPI_API_URL + "/api/friendships?" + query,
         {
           headers: { Authorization: "Bearer " + STRAPI_ACCESS_TOKEN },
-          cache: "no-store",
+          next: {
+            tags: [CACHE_TAGS.friendships(authorizedUser.id)],
+            revalidate: 900,
+          },
         },
       );
       const data = await response.json();
@@ -122,7 +126,10 @@ export async function getSentRequestIds(
         NEXT_PUBLIC_STRAPI_API_URL + "/api/authorized-users?" + query,
         {
           headers: { Authorization: "Bearer " + STRAPI_ACCESS_TOKEN },
-          cache: "no-store",
+          next: {
+            tags: [CACHE_TAGS.friendships(requester.id)],
+            revalidate: 900,
+          },
         },
       );
       const data = await response.json();
@@ -186,7 +193,8 @@ export async function acceptFriendRequest(userId: number, requestId: number) {
       console.error("Delete Response:", await deleteResponse.text());
       throw new Error("Failed to delete friend request");
     }
-    revalidatePath("/settings/friends");
+    revalidateTag(CACHE_TAGS.friendships(userId));
+    revalidateTag(CACHE_TAGS.friendships(requestId));
     return { success: true };
   } catch (error) {
     console.error("Error:", error);
@@ -246,7 +254,8 @@ export async function sendFriendRequest(
       throw new Error("Failed to add to sent requests");
     }
 
-    revalidatePath("/settings/friends");
+    revalidateTag(CACHE_TAGS.friendships(requester.id));
+    revalidateTag(CACHE_TAGS.friendships(requestee.id));
     return { success: true };
   } catch (error) {
     console.error("Error:", error);
@@ -279,7 +288,8 @@ export async function rejectFriendRequest(userId: number, requestId: number) {
       throw new Error("Failed to delete friend request");
     }
 
-    revalidatePath("/settings/friends");
+    revalidateTag(CACHE_TAGS.friendships(userId));
+    revalidateTag(CACHE_TAGS.friendships(requestId));
     return { success: true };
   } catch (error) {
     console.error("Error:", error);
@@ -311,7 +321,8 @@ export async function cancelFriendRequest(userId: number, requestId: number) {
       console.error("Delete Response:", await deleteResponse.text());
       throw new Error("Failed to delete friend request");
     }
-    revalidatePath("/settings/friends");
+    revalidateTag(CACHE_TAGS.friendships(userId));
+    revalidateTag(CACHE_TAGS.friendships(requestId));
     return { success: true };
   } catch (error) {
     console.error("Error:", error);
@@ -343,7 +354,8 @@ export async function unblockUser(userId: number, requestId: number) {
       console.error("Delete Response:", await deleteResponse.text());
       throw new Error("Failed to unblock user");
     }
-    revalidatePath("/settings/friends");
+    revalidateTag(CACHE_TAGS.friendships(userId));
+    revalidateTag(CACHE_TAGS.friendships(requestId));
     return { success: true };
   } catch (error) {
     console.error("Error:", error);
@@ -375,7 +387,8 @@ export async function BlockUser(userId: number, requestId: number) {
       console.error("Delete Response:", await deleteResponse.text());
       throw new Error("Failed to block user");
     }
-    revalidatePath("/settings/friends");
+    revalidateTag(CACHE_TAGS.friendships(userId));
+    revalidateTag(CACHE_TAGS.friendships(requestId));
     return { success: true };
   } catch (error) {
     console.error("Error:", error);
@@ -439,7 +452,8 @@ export async function removeFriend(userId: number, friendId: number) {
       console.error("Delete Response:", await deleteResponse.text());
       throw new Error("Failed to delete friendship");
     }
-    revalidatePath("/settings/friends");
+    revalidateTag(CACHE_TAGS.friendships(userId));
+    revalidateTag(CACHE_TAGS.friendships(friendId));
     return { success: true };
   } catch (error) {
     console.error("Error:", error);
@@ -496,7 +510,7 @@ export async function fetchFriendshipsById(
       NEXT_PUBLIC_STRAPI_API_URL + "/api/friendships?" + query,
       {
         headers: { Authorization: "Bearer " + STRAPI_ACCESS_TOKEN },
-        cache: "no-store",
+        next: { tags: [CACHE_TAGS.friendships(userId)], revalidate: 900 },
       },
     );
     const data = await response.json();
@@ -506,6 +520,73 @@ export async function fetchFriendshipsById(
     console.error("Database Error:", error);
     throw new Error("Failed to fetch friendships");
   }
+}
+
+/**
+ * Batch-fetches all friendships where any of the given user IDs is a member.
+ * Paginates automatically for large friend networks.
+ */
+export async function fetchFriendshipsByUserIds(
+  userIds: number[],
+): Promise<Friendship[]> {
+  if (userIds.length === 0) return [];
+
+  const pageSize = 250;
+  let page = 1;
+  let allFriendships: Friendship[] = [];
+
+  while (true) {
+    const query = qs.stringify({
+      filters: {
+        authorized_users: {
+          id: { $in: userIds },
+        },
+      },
+      populate: {
+        authorized_users: {
+          fields: [
+            "id",
+            "email",
+            "firstName",
+            "lastName",
+            "bio",
+            "github",
+            "linkedin",
+            "profilePhoto",
+            "website",
+          ],
+          populate: {
+            blocked: { fields: ["id"] },
+            was_blocked: { fields: ["id"] },
+            received_requests: { fields: ["id"] },
+          },
+        },
+      },
+      pagination: { pageSize, page },
+    });
+
+    const response = await fetch(
+      NEXT_PUBLIC_STRAPI_API_URL + "/api/friendships?" + query,
+      {
+        headers: { Authorization: "Bearer " + STRAPI_ACCESS_TOKEN },
+        next: {
+          tags: userIds.map((id) => CACHE_TAGS.friendships(id)),
+          revalidate: 900,
+        },
+      },
+    );
+    const data = await response.json();
+    const friendships = flattenAttributes(data.data);
+
+    if (!friendships || friendships.length === 0) break;
+
+    allFriendships = allFriendships.concat(friendships);
+
+    if (friendships.length < pageSize) break;
+    page++;
+  }
+
+  return allFriendships;
 }
 
 export async function fetchSuggestionsById(
@@ -528,36 +609,29 @@ export async function fetchSuggestionsById(
       ),
     );
 
-    const friendsOfFriends = await Promise.all(
-      directFriends.map(async (friend) => {
-        // Get all friendships for each direct friend
-        const friendFriendships = await fetchFriendshipsById(friend.id);
+    const friendIds = directFriends.map((f) => f.id);
+    const directFriendIdSet = new Set(friendIds);
 
-        // Return all users from these friendships except the direct friend and original user
-        return friendFriendships
-          .flatMap((friendship) =>
-            friendship.authorized_users.filter(
-              (user) =>
-                user.id !== friend.id &&
-                user.id !== userId &&
-                !directFriends.some(
-                  (newUser: AuthorizedUser) => newUser.id === user.id,
-                ) &&
-                !user.was_blocked.some(
-                  (blockedUser: AuthorizedUser) => blockedUser.id === userId,
-                ) &&
-                !user.received_requests.some(
-                  (otherUser: AuthorizedUser) => otherUser.id === userId,
-                ),
+    const allFriendFriendships = await fetchFriendshipsByUserIds(friendIds);
+
+    const friendsOfFriends = allFriendFriendships
+      .flatMap((friendship) =>
+        friendship.authorized_users.filter(
+          (user) =>
+            user.id !== userId &&
+            !directFriendIdSet.has(user.id) &&
+            !user.was_blocked.some(
+              (blockedUser: AuthorizedUser) => blockedUser.id === userId,
+            ) &&
+            !user.received_requests.some(
+              (otherUser: AuthorizedUser) => otherUser.id === userId,
             ),
-          )
-          .sort((a, b) => a.lastName?.localeCompare(b.lastName));
-      }),
-    );
+        ),
+      )
+      .sort((a, b) => a.lastName?.localeCompare(b.lastName));
 
-    // Flatten the array and remove duplicates based on user ID
     const uniqueFriendsOfFriends = Array.from(
-      new Map(friendsOfFriends.flat().map((user) => [user.id, user])).values(),
+      new Map(friendsOfFriends.map((user) => [user.id, user])).values(),
     );
 
     return uniqueFriendsOfFriends;

@@ -1,5 +1,6 @@
 import { AccessRequest } from "@/components/shared/access-manager/access-requests/access-requests";
 import { flattenAttributes } from "@/lib/utils";
+import { CACHE_TAGS } from "../cache-tags";
 import { Droplet, Group } from "@/types";
 import qs from "qs";
 import { Report } from "@/components/admin/reports/reports";
@@ -14,7 +15,7 @@ export async function fetchDroplets() {
     let allDroplets: Droplet[] = [];
     while (true) {
       const query = qs.stringify({
-        sort: ["name"],
+        sort: ["id"],
         fields: ["id", "name", "type", "slug", "isHidden"],
         pagination: {
           pageSize,
@@ -25,7 +26,7 @@ export async function fetchDroplets() {
         NEXT_PUBLIC_STRAPI_API_URL + "/api/droplets?" + query,
         {
           headers: { Authorization: "Bearer " + STRAPI_ACCESS_TOKEN },
-          next: { tags: ["droplets"], revalidate: 0 },
+          next: { tags: [CACHE_TAGS.droplets], revalidate: 900 },
         },
       );
       const data = await response.json();
@@ -51,7 +52,7 @@ export async function fetchGroups() {
     let allGroups: Group[] = [];
     while (true) {
       const query = qs.stringify({
-        sort: ["groupName:asc"],
+        sort: ["id"],
         fields: ["id", "groupName", "slug", "isArchived"],
         populate: {
           members: {
@@ -77,7 +78,7 @@ export async function fetchGroups() {
         `${NEXT_PUBLIC_STRAPI_API_URL}/api/groups?${query}`,
         {
           headers: { Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}` },
-          cache: "no-store",
+          next: { tags: [CACHE_TAGS.allGroups], revalidate: 900 },
         },
       );
 
@@ -109,7 +110,7 @@ export async function fetchAccessRequests() {
 
     while (true) {
       const query = qs.stringify({
-        sort: ["email"],
+        sort: ["id"],
         fields: [
           "id",
           "givenName",
@@ -127,7 +128,7 @@ export async function fetchAccessRequests() {
         NEXT_PUBLIC_STRAPI_API_URL + "/api/access-requests?" + query,
         {
           headers: { Authorization: "Bearer " + STRAPI_ACCESS_TOKEN },
-          cache: "no-store",
+          next: { tags: [CACHE_TAGS.accessRequests], revalidate: 900 },
         },
       );
       const data = await response.json();
@@ -154,7 +155,7 @@ export async function fetchReports() {
 
     while (true) {
       const query = qs.stringify({
-        sort: "createdAt:desc",
+        sort: ["id:desc"],
         fields: "*",
         pagination: {
           pageSize,
@@ -165,7 +166,7 @@ export async function fetchReports() {
         NEXT_PUBLIC_STRAPI_API_URL + "/api/reports?" + query,
         {
           headers: { Authorization: "Bearer " + STRAPI_ACCESS_TOKEN },
-          cache: "no-store",
+          next: { tags: [CACHE_TAGS.reports], revalidate: 900 },
         },
       );
       const data = await response.json();

@@ -22,8 +22,6 @@ export const metadata: Metadata = {
   title: "Explore",
   description: "Discover content on Khoury Odyssey.",
 };
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
 export default async function ExplorePage({
   searchParams,
 }: {
@@ -37,102 +35,70 @@ export default async function ExplorePage({
     contentType = "droplets",
   } = (await searchParams) as { [key: string]: string };
   const { sortKey } = sorting.find((item) => item.slug === sort) || defaultSort;
-  const droplets = await getDroplets({
-    filters: {
-      $and: [
-        { status: { $eq: "published" } },
-        { isHidden: false },
-        type
-          ? { $or: type.split(",").map((val) => ({ type: { $eq: val } })) }
-          : {},
-        focusArea
-          ? {
-              $or: focusArea
-                .split(",")
-                .map((val) => ({ focusArea: { $eq: val } })),
-            }
-          : {},
-        tags
-          ? {
-              $or: tags
-                .split(",")
-                .map((val) => ({ tags: { slug: { $eq: val } } })),
-            }
-          : {},
-      ],
-    },
-    populate: {
-      lessons: {
-        fields: ["*"],
-        populate: {
-          blocks: {
-            on: {
-              "droplets.generic": {
-                populate: "*",
-              },
-              "droplets.expandable": {
-                populate: "*",
-              },
-              "droplets.callout": {
-                populate: "*",
-              },
-              "droplets.video": {
-                populate: "*",
-              },
-              "droplets.quiz": {
-                populate: {
-                  questions: {
-                    populate: {
-                      answerOptions: true,
-                    },
-                  },
-                },
-              },
-              "droplets.open-ended-quiz": {
-                populate: {
-                  questions: true,
+  const droplets =
+    contentType === "droplets"
+      ? await getDroplets({
+          filters: {
+            $and: [
+              { status: { $eq: "published" } },
+              { isHidden: false },
+              type
+                ? {
+                    $or: type.split(",").map((val) => ({ type: { $eq: val } })),
+                  }
+                : {},
+              focusArea
+                ? {
+                    $or: focusArea
+                      .split(",")
+                      .map((val) => ({ focusArea: { $eq: val } })),
+                  }
+                : {},
+              tags
+                ? {
+                    $or: tags
+                      .split(",")
+                      .map((val) => ({ tags: { slug: { $eq: val } } })),
+                  }
+                : {},
+            ],
+          },
+          populate: {
+            lessons: { fields: ["id"] },
+            tags: { fields: ["id", "name", "slug"] },
+            authorized_users: { fields: ["id", "firstName", "lastName"] },
+          },
+          fields: [
+            "id",
+            "name",
+            "slug",
+            "type",
+            "focusArea",
+            "averageRating",
+            "description",
+            "isHidden",
+            "status",
+          ],
+        })
+      : [];
+
+  const playlists =
+    contentType === "playlists"
+      ? await getPlaylists({
+          filters: {
+            $and: [{ isPublic: true }],
+          },
+          populate: {
+            droplets: {
+              populate: {
+                lessons: {
+                  fields: ["id", "name", "slug"],
                 },
               },
             },
           },
-        },
-      },
-      tags: {
-        fields: ["*"],
-      },
-      authorized_users: {
-        fields: ["firstName", "lastName", "email"],
-      },
-      learningObjectives: {
-        fields: ["objective"],
-      },
-      nextSteps: {
-        fields: ["label", "url"],
-      },
-      prerequisites: {
-        fields: ["name"],
-      },
-      postrequisites: {
-        fields: ["name"],
-      },
-    },
-    fields: ["*"],
-  });
-
-  const playlists = await getPlaylists({
-    filters: {
-      $and: [{ isPublic: true }],
-    },
-    populate: {
-      droplets: {
-        populate: {
-          lessons: {
-            fields: ["id", "name", "slug"],
-          },
-        },
-      },
-    },
-  });
+        })
+      : [];
 
   return (
     <SearchProvider>
@@ -143,8 +109,10 @@ export default async function ExplorePage({
       <div className="mx-auto mt-4 mb-8 w-full max-w-7xl px-4 xl:p-0">
         <div className="flex flex-col gap-4 rounded-md border border-slate-200 bg-slate-50 p-4 dark:border-slate-500 dark:bg-slate-800">
           <ContentTypeSelector
-            droplets={droplets.length}
-            playlists={playlists.length}
+            droplets={contentType === "droplets" ? droplets.length : undefined}
+            playlists={
+              contentType === "playlists" ? playlists.length : undefined
+            }
           />
 
           <div className="flex flex-col gap-2 md:flex-row md:items-center">

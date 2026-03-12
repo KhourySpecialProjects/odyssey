@@ -1,5 +1,5 @@
 import { getCurrentUser } from "@/lib/auth/session";
-import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
+import { getCachedUser } from "@/lib/requests/cached";
 import { notFound } from "next/navigation";
 import { GroupManagementForm } from "@/components/group/group-management-form";
 import { getGroupBySlugV2 } from "@/lib/requests/groups";
@@ -25,12 +25,14 @@ export default async function GroupManagementPage({ searchParams }: Props) {
   )
     return notFound();
 
-  const authorizedUser = await getAuthorizedUserByEmail(user.email);
-  if (!authorizedUser) return notFound();
-
   const p = await searchParams;
   const groupSlug = p?.slug as string | undefined;
-  const group = groupSlug ? await getGroupBySlugV2(groupSlug) : null;
+
+  const [authorizedUser, group] = await Promise.all([
+    getCachedUser(user.email),
+    groupSlug ? getGroupBySlugV2(groupSlug) : Promise.resolve(null),
+  ]);
+  if (!authorizedUser) return notFound();
 
   if (group) {
     const isCreator = group.creator?.id === authorizedUser.id;

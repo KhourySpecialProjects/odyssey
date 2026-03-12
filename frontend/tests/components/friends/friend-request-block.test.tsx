@@ -24,9 +24,11 @@ describe("FriendRequestBlock", () => {
     id: 1,
     email: `user@example.com`,
     isEnabled: true,
+    isPublic: false,
     roles: [],
     linkedin: "https://www.google.com/",
     github: "https://www.google.com/",
+    website: "",
     firstName: "first",
     lastName: "last",
     bio: "bio",
@@ -38,15 +40,18 @@ describe("FriendRequestBlock", () => {
     blocked: [],
     was_blocked: [],
     timeZone: "America/New_York" as TimeZone,
+    groups: [],
   };
 
   const mockRequest = {
     id: 2,
     email: `user@example.com`,
     isEnabled: true,
+    isPublic: false,
     roles: [],
     linkedin: "https://www.google.com/",
     github: "https://www.google.com/",
+    website: "",
     firstName: "first",
     lastName: "last",
     bio: "bio",
@@ -58,6 +63,7 @@ describe("FriendRequestBlock", () => {
     blocked: [],
     was_blocked: [],
     timeZone: "America/New_York" as TimeZone,
+    groups: [],
   };
 
   beforeEach(() => {

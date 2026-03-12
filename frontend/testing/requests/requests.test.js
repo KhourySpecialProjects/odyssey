@@ -29,6 +29,7 @@ const { getCurrentUser } = require("../../lib/auth/session");
 const {
   getAuthorizedUserByEmail,
 } = require("../../lib/requests/authorized-user");
+const { revalidateTag } = require("next/cache");
 
 const mockGroups = require("../mocks/groupsMock");
 
@@ -48,6 +49,8 @@ jest.mock("../../lib/utils", () => ({
 global.fetch = jest.fn();
 
 beforeEach(() => {
+  process.env.NEXT_PUBLIC_STRAPI_API_URL = "http://test-api-url";
+  process.env.STRAPI_ACCESS_TOKEN = "test-token";
   jest.spyOn(console, "error").mockImplementation(() => {});
   jest.spyOn(console, "warn").mockImplementation(() => {});
 });
@@ -188,13 +191,13 @@ describe("Data requests", () => {
           headers: expect.objectContaining({
             Authorization: expect.stringContaining("Bearer"),
           }),
-          cache: "no-store",
+          next: { tags: ["groups"], revalidate: 900 },
         }),
       );
 
       const callUrl = global.fetch.mock.calls[0][0];
 
-      expect(callUrl).toMatch(/sort%5B0%5D=groupName%3Aasc/);
+      expect(callUrl).toMatch(/sort%5B0%5D=id/);
 
       expect(callUrl).toMatch(
         /fields%5B0%5D=id&fields%5B1%5D=groupName&fields%5B2%5D=slug&fields%5B3%5D=isArchived/,
@@ -271,7 +274,7 @@ describe("Data requests", () => {
           headers: expect.objectContaining({
             Authorization: expect.stringContaining("Bearer"),
           }),
-          cache: "no-store",
+          next: { tags: ["access-requests"], revalidate: 900 },
         }),
       );
     });
@@ -378,6 +381,7 @@ describe("Droplet tests", () => {
           filters: { slug: "droplet-1" },
           pagination: { pageSize: 1, page: 1 },
         }),
+        next: { tags: ["droplets"], revalidate: 900 },
       });
     });
 
@@ -522,6 +526,8 @@ describe("Playlist enrollment tests", () => {
       );
 
       expect(result).toEqual({ success: true });
+      expect(revalidateTag).toHaveBeenCalledWith("playlists");
+      expect(revalidateTag).toHaveBeenCalledWith("enrollments-12");
     });
 
     it("should enroll user in playlist when not already enrolled", async () => {
@@ -574,6 +580,8 @@ describe("Playlist enrollment tests", () => {
       );
 
       expect(result).toEqual({ success: true });
+      expect(revalidateTag).toHaveBeenCalledWith("playlists");
+      expect(revalidateTag).toHaveBeenCalledWith("enrollments-12");
     });
 
     it("should throw the correct error when an API error occurs", async () => {
@@ -655,6 +663,8 @@ describe("Playlist enrollment tests", () => {
       );
 
       expect(result).toEqual({ success: true });
+      expect(revalidateTag).toHaveBeenCalledWith("playlists");
+      expect(revalidateTag).toHaveBeenCalledWith("enrollments-1");
     });
 
     it("should throw the correct error when an API error occurs", async () => {

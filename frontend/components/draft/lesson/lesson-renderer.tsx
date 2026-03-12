@@ -216,9 +216,10 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
   }, []);
 
   const deleteLessonBackend = useCallback(async () => {
-    const response = await getDropletBySlug(dropletSlug).then(() =>
-      deleteLesson(lesson.id, true),
-    );
+    const response = await getDropletBySlug(dropletSlug, {
+      fields: ["id"],
+      populate: {},
+    }).then(() => deleteLesson(lesson.id, true));
     if (response && !response.error) {
       router.replace(`/draft/d/${dropletSlug}`);
       return;

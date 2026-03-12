@@ -3,13 +3,19 @@
 import { Group } from "@/types";
 import { StrapiRequestParams } from "@/types/strapi";
 import { fetchAPI } from "@/lib/utils";
-import { getAuthorizedUserByEmail } from "./authorized-user";
+import {
+  getAuthorizedUserByEmail,
+  getAuthorizedUsersByEmails,
+  createAuthorizedUser,
+} from "./authorized-user";
+import { getAuthorizedUserRoleIdByTitle } from "./authorized-user-roles";
+import { AuthorizedUserRoleTitle } from "../globals";
 import type { Droplet, DueDate, Playlist } from "@/types";
-import { revalidatePath, revalidateTag } from "next/cache";
+import { revalidateTag } from "next/cache";
 import { enrollInPlaylist } from "./playlist-enrollment";
 import { getCurrentUser } from "../auth/session";
-import { createEnrollmentFromEmail } from "./enrollment";
-import { createAuthorizedUser } from "./authorized-user";
+import { createEnrollmentDirect } from "./enrollment";
+import { CACHE_TAGS } from "../cache-tags";
 
 const STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
@@ -61,7 +67,7 @@ export async function getManagedGroups(
 
   return await fetchAPI<Group[]>(path, {
     urlParams,
-    cache: "no-store",
+    next: { tags: [CACHE_TAGS.allGroups], revalidate: 900 },
   });
 }
 
@@ -111,7 +117,7 @@ export async function getGroupBySlug(
 
   return await fetchAPI<Group[]>(path, {
     urlParams,
-    cache: "no-store",
+    next: { tags: [CACHE_TAGS.allGroups], revalidate: 900 },
   }).then((groups) => groups[0] || null);
 }
 
@@ -168,12 +174,9 @@ export async function getGroupByID(
     },
   };
 
-  revalidatePath("/dashboard");
-  revalidatePath("/explore");
-
   return await fetchAPI<Group[]>(path, {
     urlParams,
-    cache: "no-store",
+    next: { tags: [CACHE_TAGS.allGroups], revalidate: 900 },
   }).then((groups) => groups[0]);
 }
 
@@ -200,10 +203,10 @@ export async function getUserGroups(
         fields: ["id", "email"],
       },
       creator: {
-        fields: ["*"],
+        fields: ["id", "email", "firstName", "lastName"],
       },
       users_archived: {
-        fields: ["*"],
+        fields: ["id"],
       },
     },
     fields = ["id", "groupName", "slug", "semester", "isArchived"],
@@ -228,7 +231,7 @@ export async function getUserGroups(
 
   return await fetchAPI<Group[]>(path, {
     urlParams,
-    cache: "no-store",
+    next: { tags: [CACHE_TAGS.allGroups], revalidate: 900 },
   });
 }
 
@@ -260,12 +263,14 @@ export async function updateGroupMembers(
     data[disconnect.role] = { disconnect: disconnect.userIds };
   }
 
-  return await fetchAPI<Group>(path, {
+  const result = await fetchAPI<Group>(path, {
     options: {
       method: "PUT",
       body: JSON.stringify({ data }),
     },
   });
+  revalidateTag(CACHE_TAGS.allGroups);
+  return result;
 }
 
 /**
@@ -376,14 +381,15 @@ export async function createGroup(
       playlists: { connect: playlists.map((id) => ({ id })) },
     }),
   };
-  revalidatePath("/g/dashboard");
-  revalidatePath("/g/dashboard?tab=creator");
-  return await fetchAPI<Group>(path, {
+  const result = await fetchAPI<Group>(path, {
     options: {
       method: "POST",
       body: JSON.stringify({ data: createData }),
     },
   });
+  revalidateTag(CACHE_TAGS.allGroups);
+
+  return result;
 }
 
 export async function getGroupBySlugV2(
@@ -444,7 +450,7 @@ export async function getGroupBySlugV2(
 
   const groups = await fetchAPI<Group[]>(path, {
     urlParams,
-    cache: "no-store",
+    next: { tags: [CACHE_TAGS.allGroups], revalidate: 900 },
   });
 
   return groups[0] || null;
@@ -539,85 +545,156 @@ export async function updateGroup(
     };
   }
 
-  revalidatePath("/admin");
-
-  return await fetchAPI<Group>(path, {
+  const result = await fetchAPI<Group>(path, {
     options: {
       method: "PUT",
       body: JSON.stringify({ data: dataToSend }),
     },
   });
+
+  revalidateTag(CACHE_TAGS.allGroups);
+
+  return result;
 }
 
 async function ensureAuthorizedUsers(
   emails: string[],
 ): Promise<Array<{ id: number; email: string }>> {
-  const results = [];
+  if (emails.length === 0) return [];
 
-  for (const email of emails) {
-    try {
-      const existingUser = await getAuthorizedUserByEmail(email);
-      if (existingUser) {
-        results.push({ id: existingUser.id, email });
-      } else {
-        const formData = new FormData();
-        formData.append("email", email);
-        formData.append("isEnabled", "true");
-        const newUser = await createAuthorizedUser(formData);
-        const newUserData = await getAuthorizedUserByEmail(email);
-        if (newUser.ok && newUserData) {
-          results.push({ id: newUserData.id, email });
+  const existingUsers = await getAuthorizedUsersByEmails(emails);
+
+  const existingEmailSet = new Set(
+    existingUsers.map((u) => u.email.toLowerCase()),
+  );
+  const missingEmails = emails.filter(
+    (e) => !existingEmailSet.has(e.toLowerCase()),
+  );
+
+  if (missingEmails.length > 0) {
+    const roleID = await getAuthorizedUserRoleIdByTitle(
+      AuthorizedUserRoleTitle.User,
+    );
+    await Promise.all(
+      missingEmails.map(async (email) => {
+        try {
+          const formData = new FormData();
+          formData.append("email", email);
+          formData.append("isEnabled", "true");
+          await createAuthorizedUser(formData, roleID);
+        } catch (error) {
+          console.error(`Failed to create user: ${email}`, error);
         }
-      }
-    } catch (error) {
-      console.error(`Failed to process email: ${email}`, error);
-    }
+      }),
+    );
+
+    const newUsers = await getAuthorizedUsersByEmails(missingEmails);
+    existingUsers.push(...newUsers);
   }
 
-  return results;
+  return existingUsers.map((u) => ({ id: u.id, email: u.email }));
 }
 
 export async function enrollUsers(group: Group) {
   try {
-    group.members?.map(async (member) => {
-      group.droplets?.map(async (droplet) => {
-        try {
-          const enrollmentData = {
-            droplet: droplet.id,
-            viewedLessons: [],
-          };
-          return await createEnrollmentFromEmail(enrollmentData, member.email);
-        } catch (error) {
-          console.error(
-            `Error enrolling this user in droplet [${droplet.name || droplet.id}]: `,
-            error,
-          );
-        }
-        //return await createEnrollment(enrollmentData);
-      }) || [];
+    const allDropletIds = [
+      ...(group.droplets?.map((d) => d.id) || []),
+      ...(group.playlists?.flatMap((p) => p.droplets?.map((d) => d.id) || []) ||
+        []),
+    ];
+    const uniqueDropletIds = [...new Set(allDropletIds)];
+    const memberIds = group.members?.map((m) => m.id) || [];
 
-      group.playlists?.map(async (playlist) => {
-        await enrollInPlaylist(playlist.id, member.id);
-        playlist.droplets?.map(async (droplet) => {
-          try {
-            const enrollmentData = {
-              droplet: droplet.id,
-              viewedLessons: [],
-            };
-            return await createEnrollmentFromEmail(
-              enrollmentData,
-              member.email,
-            );
-          } catch (error) {
-            console.error(
-              `Error enrolling this user in playlist [${playlist.name || playlist.id}] droplet [${droplet.name || droplet.id}]: `,
-              error,
-            );
+    if (memberIds.length === 0) {
+      return;
+    }
+
+    // Need to collect existing enrollments if uniqueDropletIds is not empty
+    let existingSet = new Set<string>();
+
+    if (uniqueDropletIds.length > 0) {
+      const pageSize = 250;
+      let page = 1;
+
+      while (true) {
+        // 1 query: get all existing enrollments for these members + these droplets
+        const existingEnrollments = await fetchAPI<any[]>("/enrollments", {
+          urlParams: {
+            filters: {
+              authorizedUser: { id: { $in: memberIds } },
+              droplet: { id: { $in: uniqueDropletIds } },
+            },
+            fields: ["id"],
+            populate: {
+              authorizedUser: { fields: ["id"] },
+              droplet: { fields: ["id"] },
+            },
+            pagination: { pageSize, page },
+          },
+        });
+
+        if (!existingEnrollments || existingEnrollments.length === 0) break;
+
+        for (const e of existingEnrollments) {
+          if (e.authorizedUser?.id && e.droplet?.id) {
+            existingSet.add(`${e.authorizedUser.id}-${e.droplet.id}`);
           }
-          //return await createEnrollment(enrollmentData);
-        }) || [];
-      }) || [];
-    }) || [];
+        }
+
+        if (existingEnrollments.length < pageSize) break;
+        page++;
+      }
+    }
+
+    const allTasks: Array<() => Promise<void>> = [];
+    const failures: string[] = [];
+
+    if (uniqueDropletIds.length > 0) {
+      for (const member of group.members || []) {
+        for (const dropletId of uniqueDropletIds) {
+          if (!existingSet.has(`${member.id}-${dropletId}`)) {
+            allTasks.push(async () => {
+              try {
+                await createEnrollmentDirect(member.id, dropletId);
+              } catch (error) {
+                const msg = `Failed to enroll user ${member.id} in droplet ${dropletId}`;
+                console.error(msg, error);
+                failures.push(msg);
+              }
+            });
+          }
+        }
+      }
+    }
+
+    if (group.playlists && group.playlists.length > 0) {
+      for (const member of group.members || []) {
+        for (const playlist of group.playlists || []) {
+          allTasks.push(async () => {
+            try {
+              await enrollInPlaylist(playlist.id, member.id);
+            } catch (error) {
+              const msg = `Failed to enroll user ${member.id} in playlist ${playlist.id}`;
+              console.error(msg, error);
+              failures.push(msg);
+            }
+          });
+        }
+      }
+    }
+
+    // Process in chunks of 25 to avoid overwhelming Strapi
+    const CHUNK_SIZE = 25;
+    for (let i = 0; i < allTasks.length; i += CHUNK_SIZE) {
+      const chunk = allTasks.slice(i, i + CHUNK_SIZE);
+      await Promise.all(chunk.map((task) => task()));
+    }
+
+    if (failures.length > 0) {
+      console.warn(
+        `enrollUsers completed with ${failures.length} failures out of ${allTasks.length} tasks`,
+      );
+    }
   } catch (error) {
     console.error("Error enrolling users:", error);
     throw error;
@@ -636,22 +713,43 @@ export async function assignDropletDueDate(
       return { success: false, error: "No members found in the group" };
     }
 
-    const dueDatePromises = group.members.map(async (member) => {
-      const existingDueDateResponse = await fetch(
-        `${STRAPI_API_URL}/api/due-dates?filters[authorized_user][id][$eq]=${member.id}&filters[droplet][id][$eq]=${droplet.id}&filters[group][id][$eq]=${group.id}`,
-        {
-          headers: {
-            Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+    const memberIds = group.members.map((m) => m.id);
+
+    // Paginate to handle groups larger than Strapi's maxLimit
+    const pageSize = 100;
+    let page = 1;
+    let allExistingDueDates: any[] = [];
+
+    while (true) {
+      const dueDatePage = await fetchAPI<any[]>("/due-dates", {
+        urlParams: {
+          filters: {
+            authorized_user: { id: { $in: memberIds } },
+            droplet: { id: { $eq: droplet.id } },
+            group: { id: { $eq: group.id } },
           },
+          fields: ["id", "dueDate"],
+          populate: { authorized_user: { fields: ["id"] } },
+          pagination: { pageSize, page },
         },
-      );
+      });
 
-      const existingDueDates = await existingDueDateResponse.json();
+      if (!dueDatePage || dueDatePage.length === 0) break;
+      allExistingDueDates = allExistingDueDates.concat(dueDatePage);
+      if (dueDatePage.length < pageSize) break;
+      page++;
+    }
 
-      if (existingDueDates.data && existingDueDates.data.length > 0) {
-        const existingDueDate = existingDueDates.data[0];
+    const existingMap = new Map(
+      allExistingDueDates.map((dd) => [dd.authorized_user?.id, dd.id]),
+    );
+
+    const dueDatePromises = group.members.map(async (member) => {
+      const existingId = existingMap.get(member.id);
+
+      if (existingId) {
         const response = await fetch(
-          `${STRAPI_API_URL}/api/due-dates/${existingDueDate.id}`,
+          `${STRAPI_API_URL}/api/due-dates/${existingId}`,
           {
             method: "PUT",
             headers: {
@@ -704,7 +802,13 @@ export async function assignDropletDueDate(
 
     const results = await Promise.all(dueDatePromises);
 
+    const anySuccessful = results.some((result) => result === true);
     const allSuccessful = results.every((result) => result === true);
+
+    // Revalidate if ANY writes succeeded, even if some failed
+    if (anySuccessful) {
+      revalidateTag(CACHE_TAGS.allDueDates);
+    }
 
     if (!allSuccessful) {
       return {
@@ -712,11 +816,6 @@ export async function assignDropletDueDate(
         error: "Failed to process due dates for some users",
       };
     }
-
-    revalidatePath("/explore");
-    revalidatePath("/dashboard");
-    revalidatePath("/groups/g/[slug]", "page");
-    revalidatePath("/");
 
     return { success: true };
   } catch (error) {
@@ -735,23 +834,43 @@ export async function assignPlaylistDueDate(
       return { success: false, error: "No members found in the group" };
     }
 
-    const dueDatePromises = group.members.map(async (member) => {
-      const existingDueDateResponse = await fetch(
-        `${STRAPI_API_URL}/api/due-dates?filters[authorized_user][id][$eq]=${member.id}&filters[playlist][id][$eq]=${playlist.id}&filters[group][id][$eq]=${group.id}`,
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+    const memberIds = group.members.map((m) => m.id);
+
+    // Paginate to handle groups larger than Strapi's maxLimit
+    const pageSize = 100;
+    let page = 1;
+    let allExistingDueDates: any[] = [];
+
+    while (true) {
+      const dueDatePage = await fetchAPI<any[]>("/due-dates", {
+        urlParams: {
+          filters: {
+            authorized_user: { id: { $in: memberIds } },
+            playlist: { id: { $eq: playlist.id } },
+            group: { id: { $eq: group.id } },
           },
+          fields: ["id", "dueDate"],
+          populate: { authorized_user: { fields: ["id"] } },
+          pagination: { pageSize, page },
         },
-      );
+      });
 
-      const existingDueDates = await existingDueDateResponse.json();
+      if (!dueDatePage || dueDatePage.length === 0) break;
+      allExistingDueDates = allExistingDueDates.concat(dueDatePage);
+      if (dueDatePage.length < pageSize) break;
+      page++;
+    }
 
-      if (existingDueDates.data && existingDueDates.data.length > 0) {
-        const existingDueDate = existingDueDates.data[0];
+    const existingMap = new Map(
+      allExistingDueDates.map((dd) => [dd.authorized_user?.id, dd.id]),
+    );
+
+    const dueDatePromises = group.members.map(async (member) => {
+      const existingId = existingMap.get(member.id);
+
+      if (existingId) {
         const response = await fetch(
-          `${STRAPI_API_URL}/api/due-dates/${existingDueDate.id}`,
+          `${STRAPI_API_URL}/api/due-dates/${existingId}`,
           {
             method: "PUT",
             headers: {
@@ -804,7 +923,13 @@ export async function assignPlaylistDueDate(
 
     const results = await Promise.all(dueDatePromises);
 
+    const anySuccessful = results.some((result) => result === true);
     const allSuccessful = results.every((result) => result === true);
+
+    // Revalidate if ANY writes succeeded, even if some failed
+    if (anySuccessful) {
+      revalidateTag(CACHE_TAGS.allDueDates);
+    }
 
     if (!allSuccessful) {
       return {
@@ -812,11 +937,6 @@ export async function assignPlaylistDueDate(
         error: "Failed to process due dates for some users",
       };
     }
-
-    revalidatePath("/explore");
-    revalidatePath("/dashboard");
-    revalidatePath("/groups/g/[slug]", "page");
-    revalidatePath("/");
 
     return { success: true };
   } catch (error) {
@@ -876,16 +996,11 @@ export async function getGroupDueDates(
     },
     fields: [...(fields || []), "dueDate"],
     pagination,
-    revalidate: 0,
   };
 
   return await fetchAPI<DueDate[]>(path, {
     urlParams,
-    cache: "no-store",
-    next: {
-      revalidate: 0,
-      tags: ["due-dates"],
-    },
+    next: { tags: [CACHE_TAGS.allDueDates], revalidate: 900 },
   });
 }
 
@@ -915,13 +1030,11 @@ export async function getUserDueDates(
     },
     fields: [...(fields || []), "dueDate"],
     pagination,
-    revalidate: 0,
-    cache: "no-store",
   };
 
   return await fetchAPI<DueDate[]>(path, {
     urlParams,
-    next: { tags: ["due-dates"], revalidate: 0 },
+    next: { tags: [CACHE_TAGS.allDueDates], revalidate: 900 },
   });
 }
 
@@ -943,9 +1056,9 @@ export async function deleteGroup(id: number) {
       return { ok: false, error: "Failed to delete group.", data: null };
     }
 
-    revalidateTag("authors");
-    revalidateTag("groups");
-    revalidatePath("(general)/my-content", "page");
+    revalidateTag(CACHE_TAGS.authors);
+    revalidateTag(CACHE_TAGS.allGroups);
+    revalidateTag(CACHE_TAGS.allDueDates);
     return { ok: true, error: null, data: data.data };
   } catch (err) {
     console.error(err);
@@ -984,11 +1097,7 @@ export async function archiveGroup(group: Group, archiveState: boolean) {
       throw new Error("Failed to archive group");
     }
 
-    revalidateTag("dashboard");
-    revalidatePath("/");
-    revalidatePath("/draft");
-    revalidatePath("/dashboard");
-    revalidatePath("/dashboard/archived");
+    revalidateTag(CACHE_TAGS.allGroups);
     return { success: true };
   } catch (error) {
     console.error("Error archiving group:", error);

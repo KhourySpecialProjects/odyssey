@@ -78,8 +78,12 @@ describe("parseMarkdownToBlockNote", () => {
       const markdown = "First paragraph.\n\nSecond paragraph.";
       const result = parseMarkdownToBlockNote(markdown);
       expect(result.blocks).toHaveLength(2);
-      expect(result.blocks[0]?.content?.[0]?.text).toBe("First paragraph.");
-      expect(result.blocks[1]?.content?.[0]?.text).toBe("Second paragraph.");
+      expect((result.blocks[0]?.content as any)?.[0]?.text).toBe(
+        "First paragraph.",
+      );
+      expect((result.blocks[1]?.content as any)?.[0]?.text).toBe(
+        "Second paragraph.",
+      );
     });
 
     it("should skip empty lines between paragraphs", () => {
@@ -120,7 +124,7 @@ describe("parseMarkdownToBlockNote", () => {
     it("should handle list items with multiple words", () => {
       const markdown = "1. This is a longer list item with multiple words";
       const result = parseMarkdownToBlockNote(markdown);
-      expect(result.blocks[0]?.content?.[0]?.text).toBe(
+      expect((result.blocks[0]?.content as any)?.[0]?.text).toBe(
         "This is a longer list item with multiple words",
       );
     });
@@ -171,7 +175,7 @@ describe("parseMarkdownToBlockNote", () => {
     it("should handle callout content with special characters", () => {
       const markdown = "%warning Be careful with $special & characters!";
       const result = parseMarkdownToBlockNote(markdown);
-      expect(result.blocks[0]?.content?.[0]?.text).toBe(
+      expect((result.blocks[0]?.content as any)?.[0]?.text).toBe(
         "Be careful with $special & characters!",
       );
     });

@@ -12,36 +12,42 @@ describe("useLessonOrder", () => {
     id: 1,
     name: "Test Lesson",
     slug: "test-lesson",
+    type: "standard",
     droplets: [],
-    notes: [],
+    notes: "",
     orderIndex: 1,
     blocks: [
       {
         id: 1,
-        __component: "droplets.generic",
+        __component: "droplets.generic" as const,
         content: "Generic content",
       },
       {
         id: 2,
-        __component: "droplets.expandable",
+        __component: "droplets.expandable" as const,
         title: "Expandable title",
         content: "Expandable content",
       },
       {
         id: 3,
-        __component: "droplets.video",
+        __component: "droplets.video" as const,
         url: "https://example.com/video",
       },
       {
         id: 4,
-        __component: "droplets.callout",
-        content: "Callout content",
+        __component: "droplets.callout" as const,
+        content: [
+          {
+            type: "paragraph",
+            children: [{ type: "text", text: "Callout content" }],
+          },
+        ],
         type: "info",
         color: "bg-sky-50",
       },
       {
         id: 5,
-        __component: "droplets.quiz",
+        __component: "droplets.quiz" as const,
         questions: [
           {
             id: 1,
@@ -55,7 +61,7 @@ describe("useLessonOrder", () => {
       },
       {
         id: 6,
-        __component: "droplets.open-ended-quiz",
+        __component: "droplets.open-ended-quiz" as const,
         questions: [
           {
             id: 1,
@@ -87,18 +93,20 @@ describe("useLessonOrder", () => {
         id: 2,
         name: "Test Lesson",
         slug: "test-lesson",
+        type: "standard",
         blocks: [],
         droplets: [],
-        notes: [],
+        notes: "",
         orderIndex: 0,
       },
       {
         id: 1,
         name: "Test Lesson",
         slug: "test-lesson",
+        type: "standard",
         blocks: [],
         droplets: [],
-        notes: [],
+        notes: "",
         orderIndex: 1,
       },
     ];
@@ -123,18 +131,20 @@ describe("useLessonOrder", () => {
         id: 2,
         name: "Test Lesson",
         slug: "test-lesson",
+        type: "standard",
         blocks: [],
         droplets: [],
-        notes: [],
+        notes: "",
         orderIndex: 0,
       },
       {
         id: 1,
         name: "Test Lesson",
         slug: "test-lesson",
+        type: "standard",
         blocks: [],
         droplets: [],
-        notes: [],
+        notes: "",
         orderIndex: 1,
       },
     ];

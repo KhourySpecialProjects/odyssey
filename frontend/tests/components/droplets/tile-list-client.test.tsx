@@ -26,11 +26,15 @@ describe("DraggableTileListClient", () => {
   it("handles pagination correctly", () => {
     render(<DraggableTileListClient droplets={mockDroplets as any} />);
 
-    fireEvent.click(screen.getByText("Next"));
+    const buttons = screen.getAllByRole("button");
+    const prevButton = buttons[0];
+    const nextButton = buttons[1];
+
+    fireEvent.click(nextButton);
     expect(screen.getByText("Droplet 6")).toBeInTheDocument();
     expect(screen.getByText("Droplet 7")).toBeInTheDocument();
 
-    fireEvent.click(screen.getByText("Previous"));
+    fireEvent.click(prevButton);
     expect(screen.getByText("Droplet 1")).toBeInTheDocument();
   });
 });

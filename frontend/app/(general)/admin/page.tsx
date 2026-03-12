@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { AccessManager } from "@/components/shared/access-manager/access-manager";
 import { Reports } from "@/components/admin/reports/reports";
 import { AdminSelector } from "@/components/shared/selector";
@@ -24,9 +25,20 @@ import { StatisticsSelector } from "@/components/admin/statistics-selector";
 import { WeeklyActiveUsersChart } from "@/components/admin/weekly-active-users-chart";
 import { UniquePageviewChart } from "@/components/admin/unique-pageview";
 import { CreationRequestManager } from "@/components/shared/creation-request-manager/creation-manager";
+import { Loader2 } from "lucide-react";
+
+function TabFallback() {
+  return (
+    <div className="flex items-center justify-center py-12">
+      <Loader2 className="h-6 w-6 animate-spin text-slate-400" />
+    </div>
+  );
+}
 
 export default async function Page() {
   const user = await getCurrentUser();
+
+  if (!user || !isAuthorizedUserAdmin(user.roles)) return notFound();
 
   const [
     authorizedUsers,
@@ -47,17 +59,45 @@ export default async function Page() {
   const { retentionRate, totalEnrollments, incompleteEnrollments } =
     retentionData;
 
-  if (!user || !isAuthorizedUserAdmin(user.roles)) return notFound();
-
-  // Content for admin section
+  // Each tab is wrapped in Suspense so it streams independently.
+  // Async server components fetch their own data; the revalidate cache
+  // deduplicates any overlapping calls (e.g. fetchAuthorizedUsers, fetchDroplets).
   const pageContent = {
-    Users: <AuthorizedUsers />,
-    Droplets: <Droplets />,
-    Playlists: <Playlists />,
-    Groups: <Groups />,
-    "Access Manager": <AccessManager user={user} />,
-    "Creators Manager": <CreationRequestManager user={user} />,
-    Reports: <Reports />,
+    Users: (
+      <Suspense fallback={<TabFallback />}>
+        <AuthorizedUsers />
+      </Suspense>
+    ),
+    Droplets: (
+      <Suspense fallback={<TabFallback />}>
+        <Droplets />
+      </Suspense>
+    ),
+    Playlists: (
+      <Suspense fallback={<TabFallback />}>
+        <Playlists />
+      </Suspense>
+    ),
+    Groups: (
+      <Suspense fallback={<TabFallback />}>
+        <Groups />
+      </Suspense>
+    ),
+    "Access Manager": (
+      <Suspense fallback={<TabFallback />}>
+        <AccessManager user={user} />
+      </Suspense>
+    ),
+    "Creators Manager": (
+      <Suspense fallback={<TabFallback />}>
+        <CreationRequestManager user={user} />
+      </Suspense>
+    ),
+    Reports: (
+      <Suspense fallback={<TabFallback />}>
+        <Reports />
+      </Suspense>
+    ),
   };
 
   // Content for statistics section

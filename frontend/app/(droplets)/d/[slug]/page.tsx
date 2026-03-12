@@ -2,20 +2,21 @@ import { DropletTile } from "@/components/droplets/droplet-tile";
 import { EnrollButton } from "@/components/droplets/enroll-button";
 import { GradientBackground } from "@/components/gradient-bg";
 import { Badge } from "@/components/ui/badge";
-import { getDropletBySlug } from "@/lib/requests/droplet";
 import { stripHtmlTags, uppercaseFirstChar } from "@/lib/utils";
-import { Droplet } from "@/types";
 import {
   BookTextIcon,
   FilePieChartIcon,
   GoalIcon,
   HammerIcon,
 } from "lucide-react";
-import { Metadata } from "next";
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/session";
-import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
-import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
+import {
+  getCachedUser,
+  getCachedEnrollmentsWithLessonIds,
+  getCachedDropletBySlug,
+} from "@/lib/requests/cached";
 import { StarRating } from "@/components/ui/rating-stars";
 import { AuthorCard } from "@/components/droplets/author-block";
 
@@ -29,10 +30,7 @@ type params = {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const p = await params;
-  const droplet = await getDropletBySlug<Pick<Droplet, "name">>(p.slug, {
-    fields: ["name"],
-    populate: undefined,
-  });
+  const droplet = await getCachedDropletBySlug(p.slug);
   if (!droplet) return {};
 
   return {
@@ -42,27 +40,23 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function DropletRoute({ params }: Props) {
   const p = await params;
-  const droplet = await getDropletBySlug<Droplet>(p.slug, {
-    fields: ["*"],
-    populate: {
-      learningObjectives: { populate: "*" },
-      lessons: { populate: "*" },
-      tags: { populate: "*" },
-      authorized_users: { populate: "*", fields: ["*"] },
-      prerequisites: { populate: ["id", "name", "slug"] },
-      postrequisites: { populate: ["id", "name", "slug"] },
-    },
-  });
+  const [droplet, user] = await Promise.all([
+    getCachedDropletBySlug(p.slug),
+    getCurrentUser(),
+  ]);
   if (!droplet) return notFound();
 
   let isEnrolled = false;
-  const user = await getCurrentUser();
 
   if (user?.email) {
-    const authorizedUser = await getAuthorizedUserByEmail(user.email);
+    const authorizedUser = await getCachedUser(user.email);
 
-    const enrollments = await getEnrollmentsByAuthorizedUser(authorizedUser.id);
-    isEnrolled = enrollments.some((e) => e.droplet.id === droplet.id);
+    const enrollments = await getCachedEnrollmentsWithLessonIds(
+      authorizedUser.id,
+    );
+    isEnrolled = enrollments.some(
+      (e) => e.droplet && e.droplet.id === droplet.id,
+    );
   }
 
   return (

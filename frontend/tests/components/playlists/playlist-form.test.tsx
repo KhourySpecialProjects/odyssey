@@ -397,6 +397,7 @@ describe("PlaylistForm", () => {
     it("creates playlist with valid data", async () => {
       const user = userEvent.setup();
       (createPlaylist as jest.Mock).mockResolvedValue({ ok: true });
+      (updatePlaylist as jest.Mock).mockResolvedValue({ ok: true });
 
       const existingPlaylist = {
         id: 1,

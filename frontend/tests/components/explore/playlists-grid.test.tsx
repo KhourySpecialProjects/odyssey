@@ -1,8 +1,8 @@
 import { render, screen } from "@testing-library/react";
 import { PlaylistsGrid } from "@/components/explore/playlists-grid";
 import { getCurrentUser } from "@/lib/auth/session";
-import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
-import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
+import { getCachedUser } from "@/lib/requests/cached";
+import { getCachedEnrollmentsWithLessonIds } from "@/lib/requests/cached";
 import { getUserDueDates } from "@/lib/requests/groups";
 import { Playlist, DueDate } from "@/types";
 
@@ -10,12 +10,9 @@ jest.mock("@/lib/auth/session", () => ({
   getCurrentUser: jest.fn(),
 }));
 
-jest.mock("@/lib/requests/authorized-user", () => ({
-  getAuthorizedUserByEmail: jest.fn(),
-}));
-
-jest.mock("@/lib/requests/enrollment", () => ({
-  getEnrollmentsByAuthorizedUser: jest.fn(),
+jest.mock("@/lib/requests/cached", () => ({
+  getCachedUser: jest.fn(),
+  getCachedEnrollmentsWithLessonIds: jest.fn(),
 }));
 
 jest.mock("@/lib/requests/groups", () => ({
@@ -39,9 +36,9 @@ jest.mock("@/components/explore/sorted-playlists-grid", () => ({
 
 describe("PlaylistsGrid", () => {
   const mockGetCurrentUser = getCurrentUser as jest.Mock;
-  const mockGetAuthorizedUserByEmail = getAuthorizedUserByEmail as jest.Mock;
-  const mockGetEnrollmentsByAuthorizedUser =
-    getEnrollmentsByAuthorizedUser as jest.Mock;
+  const mockGetCachedUser = getCachedUser as jest.Mock;
+  const mockGetCachedEnrollmentsWithLessonIds =
+    getCachedEnrollmentsWithLessonIds as jest.Mock;
   const mockGetUserDueDates = getUserDueDates as jest.Mock;
 
   beforeEach(() => {
@@ -70,8 +67,8 @@ describe("PlaylistsGrid", () => {
 
       expect(screen.getByText("Test Playlist")).toBeInTheDocument();
       expect(screen.getByText("Completion: 0.0%")).toBeInTheDocument();
-      expect(mockGetAuthorizedUserByEmail).not.toHaveBeenCalled();
-      expect(mockGetEnrollmentsByAuthorizedUser).not.toHaveBeenCalled();
+      expect(mockGetCachedUser).not.toHaveBeenCalled();
+      expect(mockGetCachedEnrollmentsWithLessonIds).not.toHaveBeenCalled();
     });
 
     it("renders empty message when no playlists are provided", async () => {
@@ -124,8 +121,8 @@ describe("PlaylistsGrid", () => {
 
     beforeEach(() => {
       mockGetCurrentUser.mockResolvedValue(mockUser);
-      mockGetAuthorizedUserByEmail.mockResolvedValue(mockAuthorizedUser);
-      mockGetEnrollmentsByAuthorizedUser.mockResolvedValue([]);
+      mockGetCachedUser.mockResolvedValue(mockAuthorizedUser);
+      mockGetCachedEnrollmentsWithLessonIds.mockResolvedValue([]);
       mockGetUserDueDates.mockResolvedValue([]);
     });
 
@@ -145,10 +142,8 @@ describe("PlaylistsGrid", () => {
       render(component);
 
       expect(mockGetCurrentUser).toHaveBeenCalledTimes(1);
-      expect(mockGetAuthorizedUserByEmail).toHaveBeenCalledWith(
-        "test@example.com",
-      );
-      expect(mockGetEnrollmentsByAuthorizedUser).toHaveBeenCalledWith(1);
+      expect(mockGetCachedUser).toHaveBeenCalledWith("test@example.com");
+      expect(mockGetCachedEnrollmentsWithLessonIds).toHaveBeenCalledWith(1);
       expect(mockGetUserDueDates).toHaveBeenCalledWith(1);
     });
 
@@ -176,7 +171,7 @@ describe("PlaylistsGrid", () => {
         },
       ];
 
-      mockGetEnrollmentsByAuthorizedUser.mockResolvedValue([
+      mockGetCachedEnrollmentsWithLessonIds.mockResolvedValue([
         {
           id: 1,
           viewedLessons: [
@@ -214,7 +209,7 @@ describe("PlaylistsGrid", () => {
         },
       ];
 
-      mockGetEnrollmentsByAuthorizedUser.mockResolvedValue([
+      mockGetCachedEnrollmentsWithLessonIds.mockResolvedValue([
         {
           id: 1,
           viewedLessons: [
@@ -261,7 +256,7 @@ describe("PlaylistsGrid", () => {
         },
       ];
 
-      mockGetEnrollmentsByAuthorizedUser.mockResolvedValue([
+      mockGetCachedEnrollmentsWithLessonIds.mockResolvedValue([
         {
           id: 1,
           viewedLessons: [
@@ -321,7 +316,7 @@ describe("PlaylistsGrid", () => {
         },
       ];
 
-      mockGetEnrollmentsByAuthorizedUser.mockResolvedValue([
+      mockGetCachedEnrollmentsWithLessonIds.mockResolvedValue([
         {
           id: 1,
           viewedLessons: null,
@@ -464,7 +459,7 @@ describe("PlaylistsGrid", () => {
       };
 
       mockGetCurrentUser.mockResolvedValue(mockUser);
-      mockGetAuthorizedUserByEmail.mockResolvedValue(mockAuthorizedUser);
+      mockGetCachedUser.mockResolvedValue(mockAuthorizedUser);
       mockGetUserDueDates.mockResolvedValue([]);
 
       const mockPlaylists: any[] = [
@@ -507,7 +502,7 @@ describe("PlaylistsGrid", () => {
       ];
 
       // User has completed 1 lesson from Playlist 1 (50%) and 0 from Playlist 2 (0%)
-      mockGetEnrollmentsByAuthorizedUser.mockResolvedValue([
+      mockGetCachedEnrollmentsWithLessonIds.mockResolvedValue([
         {
           id: 1,
           viewedLessons: [{ id: 1, name: "Lesson 1", slug: "lesson-1" }],
@@ -538,7 +533,7 @@ describe("PlaylistsGrid", () => {
       };
 
       mockGetCurrentUser.mockResolvedValue(mockUser);
-      mockGetAuthorizedUserByEmail.mockResolvedValue(mockAuthorizedUser);
+      mockGetCachedUser.mockResolvedValue(mockAuthorizedUser);
       mockGetUserDueDates.mockResolvedValue([]);
 
       const mockPlaylists: any[] = [
@@ -581,7 +576,7 @@ describe("PlaylistsGrid", () => {
       ];
 
       // User has completed 0 lessons from Playlist 1 (0%) and 2 from Playlist 2 (100%)
-      mockGetEnrollmentsByAuthorizedUser.mockResolvedValue([
+      mockGetCachedEnrollmentsWithLessonIds.mockResolvedValue([
         {
           id: 1,
           viewedLessons: [
@@ -704,7 +699,7 @@ describe("PlaylistsGrid", () => {
       };
 
       mockGetCurrentUser.mockResolvedValue(mockUser);
-      mockGetAuthorizedUserByEmail.mockResolvedValue(mockAuthorizedUser);
+      mockGetCachedUser.mockResolvedValue(mockAuthorizedUser);
       mockGetUserDueDates.mockResolvedValue([]);
 
       const mockPlaylists: any[] = [
@@ -751,7 +746,7 @@ describe("PlaylistsGrid", () => {
         },
       ];
 
-      mockGetEnrollmentsByAuthorizedUser.mockResolvedValue([
+      mockGetCachedEnrollmentsWithLessonIds.mockResolvedValue([
         {
           id: 1,
           viewedLessons: [
@@ -789,7 +784,7 @@ describe("PlaylistsGrid", () => {
       const component = await PlaylistsGrid({ playlists: mockPlaylists });
       render(component);
 
-      expect(mockGetAuthorizedUserByEmail).not.toHaveBeenCalled();
+      expect(mockGetCachedUser).not.toHaveBeenCalled();
       expect(screen.getByText("Test Playlist")).toBeInTheDocument();
     });
 
@@ -815,7 +810,7 @@ describe("PlaylistsGrid", () => {
       },
     ];
 
-    mockGetEnrollmentsByAuthorizedUser.mockResolvedValue([
+    mockGetCachedEnrollmentsWithLessonIds.mockResolvedValue([
       {
         id: 1,
         viewedLessons: [{ id: 1, name: "Lesson 1", slug: "lesson-1" }],

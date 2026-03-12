@@ -1,6 +1,5 @@
 import { getCurrentUser } from "@/lib/auth/session";
-import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
-import { getUserGroups } from "@/lib/requests/groups";
+import { getCachedUser, getCachedUserGroups } from "@/lib/requests/cached";
 import { Group } from "@/types";
 import { GroupsSelector } from "./group-selector";
 import {
@@ -35,12 +34,12 @@ export default async function GroupsPage({ searchParams }: Props) {
     redirect("/unauthorized");
   }
 
-  const authorizedUser = await getAuthorizedUserByEmail(user.email);
+  const authorizedUser = await getCachedUser(user.email);
   if (!authorizedUser) {
     redirect("/unauthorized");
   }
 
-  const allGroups = await getUserGroups(authorizedUser.id);
+  const allGroups = await getCachedUserGroups(authorizedUser.id);
   const groupsByRole: Record<string, GroupWithRole[]> = {
     creator: [],
     admin: [],

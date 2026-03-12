@@ -1,10 +1,11 @@
 import Sidebar from "@/components/droplets/sidebar";
-import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
-import { getDropletBySlug } from "@/lib/requests/droplet";
-import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
-import { getServerSession } from "next-auth";
+import {
+  getCachedUser,
+  getCachedEnrollmentsWithLessonIds,
+  getCachedDropletBySlug,
+} from "@/lib/requests/cached";
 import { Metadata } from "next/types";
-import { AuthorizedUser, Droplet } from "@/types";
+import { AuthorizedUser } from "@/types";
 import { getCurrentUser } from "@/lib/auth/session";
 import { notFound } from "next/navigation";
 
@@ -20,10 +21,7 @@ type Params = {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const p = await params;
-  const droplet = await getDropletBySlug<Pick<Droplet, "name">>(p.slug, {
-    fields: ["name"],
-    populate: undefined,
-  });
+  const droplet = await getCachedDropletBySlug(p.slug);
   if (!droplet) return {};
 
   return {
@@ -36,39 +34,23 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function RootLayout({ params, children }: Props) {
   const { slug } = await params;
-  const session = await getServerSession();
-  const user = await getCurrentUser();
+  const [user, droplet] = await Promise.all([
+    getCurrentUser(),
+    getCachedDropletBySlug(slug),
+  ]);
 
   if (!user) return notFound();
+  if (!droplet) return notFound();
 
   let completedLessonIds: number[] = [];
   let authorizedUser: AuthorizedUser | null = null;
   let enrollmentId: string | undefined;
 
   if (user?.email) {
-    authorizedUser = (await getAuthorizedUserByEmail(
-      user.email,
-    )) as AuthorizedUser;
-  }
-
-  // Fetch droplet first
-  const droplet = await getDropletBySlug<Droplet>(slug, {
-    fields: ["*"],
-    populate: {
-      authorized_users: { populate: "*" },
-      learningObjectives: { populate: "*" },
-      lessons: { populate: "*" },
-      tags: { populate: "*" },
-      prerequisites: { populate: ["id", "name", "slug"] },
-      postrequisites: { populate: ["id", "name", "slug"] },
-    },
-  });
-
-  if (!droplet) return notFound();
-
-  if (session?.user?.email) {
-    const sessionUser = await getAuthorizedUserByEmail(session.user.email);
-    const enrollments = await getEnrollmentsByAuthorizedUser(sessionUser.id);
+    authorizedUser = (await getCachedUser(user.email)) as AuthorizedUser;
+    const enrollments = await getCachedEnrollmentsWithLessonIds(
+      authorizedUser.id,
+    );
 
     const currentEnrollment = enrollments.find(
       (enrollment) => enrollment.droplet?.id === droplet.id,

@@ -12,7 +12,11 @@ import { toast } from "sonner";
 import { Archive, ArchiveRestore, Clock, Download } from "lucide-react";
 import { getDueDateBadgeColor } from "@/lib/utils";
 import { DateTime } from "luxon";
-import { archiveDroplet, favoriteDroplet } from "@/lib/requests/droplet";
+import {
+  archiveDroplet,
+  favoriteDroplet,
+  getDropletBySlug,
+} from "@/lib/requests/droplet";
 import FavoriteIcon from "@mui/icons-material/Favorite";
 import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
 
@@ -157,42 +161,73 @@ export function DropletTile({
   }
 
   async function exportDropletMarkdown() {
-    // mock markdown content
-    const contentMeta = `# ${droplet.name}
+    const fullDroplet = await getDropletBySlug(droplet.slug, {
+      populate: {
+        authorized_users: { fields: ["firstName", "lastName"] },
+        learningObjectives: { fields: ["objective"] },
+        nextSteps: { fields: ["label", "url"] },
+        prerequisites: { fields: ["name"] },
+        postrequisites: { fields: ["name"] },
+        tags: { fields: ["name"] },
+        lessons: {
+          fields: ["*"],
+          populate: {
+            blocks: {
+              on: {
+                "droplets.generic": { populate: "*" },
+                "droplets.expandable": { populate: "*" },
+                "droplets.callout": { populate: "*" },
+                "droplets.video": { populate: "*" },
+                "droplets.quiz": {
+                  populate: {
+                    questions: { populate: { answerOptions: true } },
+                  },
+                },
+                "droplets.open-ended-quiz": {
+                  populate: { questions: true },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    const contentMeta = `# ${fullDroplet.name}
 
 ## **Metadata**
 
-Type: ${droplet.type}
-Focus Area: ${droplet.focusArea}
+Type: ${fullDroplet.type}
+Focus Area: ${fullDroplet.focusArea}
 
 ### Tags
-${droplet.tags?.map((tag) => `* ${tag.name}`).join("\n") || "No tags"}
+${fullDroplet.tags?.map((tag) => `* ${tag.name}`).join("\n") || "No tags"}
 
 ### Authors
-${droplet.authorized_users?.map((user) => `* ${user.firstName} ${user.lastName}`).join("\n") || "No authors"}
+${fullDroplet.authorized_users?.map((user) => `* ${user.firstName} ${user.lastName}`).join("\n") || "No authors"}
 
 ### Description
-${droplet.description ? droplet.description.concat("\n") : "No description"} 
+${fullDroplet.description ? fullDroplet.description.concat("\n") : "No description"}
 
 ### Overview
-${droplet.overview ? droplet.overview.concat("\n") : "No overview"}
+${fullDroplet.overview ? fullDroplet.overview.concat("\n") : "No overview"}
 
 ### Learning Objectives
-${droplet.learningObjectives?.map((objective) => `* ${objective.objective}`).join("\n") || "No objectives"}
+${fullDroplet.learningObjectives?.map((objective) => `* ${objective.objective}`).join("\n") || "No objectives"}
 
 ### Next Steps
-${droplet.nextSteps?.map((resource) => `* ${resource.label} linked to: ${resource.url}`).join("\n") || "No next steps"}
+${fullDroplet.nextSteps?.map((resource) => `* ${resource.label} linked to: ${resource.url}`).join("\n") || "No next steps"}
 
 ### Prerequisites
-${droplet.prerequisites?.map((prereq) => `* ${prereq.name}`).join("\n") || "No prereqs"}
+${fullDroplet.prerequisites?.map((prereq) => `* ${prereq.name}`).join("\n") || "No prereqs"}
 
 ### Postrequisites
-${droplet.postrequisites?.map((postreq) => `* ${postreq.name}`).join("\n") || "No postreqs"}`;
+${fullDroplet.postrequisites?.map((postreq) => `* ${postreq.name}`).join("\n") || "No postreqs"}`;
 
     const contentLessons = `
 ## **Lessons**
 ${
-  droplet.lessons
+  fullDroplet.lessons
     ?.map(
       (lesson) => `
 ### ${lesson.name}
@@ -267,7 +302,7 @@ ${
 
     const link = document.createElement("a");
     link.href = url;
-    link.download = `${droplet.name}.md`;
+    link.download = `${fullDroplet.name}.md`;
 
     document.body.appendChild(link);
     link.click();

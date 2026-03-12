@@ -4,8 +4,8 @@ import {
   MessageHeader,
 } from "@/components/message";
 import { getCurrentUser } from "@/lib/auth/session";
-import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
-import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
+import { getCachedUser } from "@/lib/requests/cached";
+import { getCachedEnrollmentsWithLessonIds } from "@/lib/requests/cached";
 import { DropletTile } from "../droplets/droplet-tile";
 import { SortedDropletsGrid } from "./sorted-droplets-grid";
 import { Droplet, DueDate, Enrollment } from "@/types";
@@ -35,15 +35,17 @@ export async function DropletsGrid({
   let dueDates: DueDate[] = [];
 
   if (user?.email) {
-    const authorizedUser = await getAuthorizedUserByEmail(user.email);
-    enrollments = await getEnrollmentsByAuthorizedUser(authorizedUser.id);
+    const authorizedUser = await getCachedUser(user.email);
+    [enrollments, dueDates] = await Promise.all([
+      getCachedEnrollmentsWithLessonIds(authorizedUser.id),
+      getUserDueDates(authorizedUser.id),
+    ]);
 
     enrolledDropletIds = enrollments.map((e) => e.droplet.id);
     completedLessonIds = enrollments.flatMap(
       (enrollment) =>
         enrollment.viewedLessons?.map((lesson: Lesson) => lesson.id) || [],
     );
-    dueDates = await getUserDueDates(authorizedUser.id);
   }
 
   const dropletsWithCompletion = droplets.map((droplet) => {

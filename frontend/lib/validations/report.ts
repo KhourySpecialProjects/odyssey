@@ -6,4 +6,5 @@ export const reportSchema = z.object({
   email: z.string().email(),
   path: z.string(),
   description: z.string().min(10).max(1000),
+  sessionUrl: z.string().optional(),
 });

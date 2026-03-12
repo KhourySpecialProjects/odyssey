@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { AccessManager } from "@/components/shared/access-manager/access-manager";
 import { AdminSelector } from "@/components/shared/selector";
 import { getCurrentUser } from "@/lib/auth/session";
@@ -8,10 +9,18 @@ import { Droplets } from "@/components/admin/droplets/droplets";
 import { Playlists } from "@/components/admin/playlists/playlists";
 import { Reports } from "@/components/admin/reports/reports";
 import { Groups } from "@/components/admin/groups/groups";
+import { Loader2 } from "lucide-react";
+
+function TabFallback() {
+  return (
+    <div className="flex items-center justify-center py-12">
+      <Loader2 className="h-6 w-6 animate-spin text-slate-400" />
+    </div>
+  );
+}
 
 export default async function Page() {
   const user = await getCurrentUser();
-  await new Promise((resolve) => setTimeout(resolve, 1000));
 
   if (!user || !isAuthorizedUserFaculty(user.roles)) return notFound();
 
@@ -25,12 +34,36 @@ export default async function Page() {
       {/* <Session /> */}
       <AdminSelector
         content={{
-          Users: <AuthorizedUsers />,
-          Droplets: <Droplets />,
-          Playlists: <Playlists />,
-          Groups: <Groups />,
-          "Access Manager": <AccessManager user={user} />,
-          Reports: <Reports />,
+          Users: (
+            <Suspense fallback={<TabFallback />}>
+              <AuthorizedUsers />
+            </Suspense>
+          ),
+          Droplets: (
+            <Suspense fallback={<TabFallback />}>
+              <Droplets />
+            </Suspense>
+          ),
+          Playlists: (
+            <Suspense fallback={<TabFallback />}>
+              <Playlists />
+            </Suspense>
+          ),
+          Groups: (
+            <Suspense fallback={<TabFallback />}>
+              <Groups />
+            </Suspense>
+          ),
+          "Access Manager": (
+            <Suspense fallback={<TabFallback />}>
+              <AccessManager user={user} />
+            </Suspense>
+          ),
+          Reports: (
+            <Suspense fallback={<TabFallback />}>
+              <Reports />
+            </Suspense>
+          ),
         }}
       />
     </div>

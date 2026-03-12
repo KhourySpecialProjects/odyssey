@@ -41,8 +41,23 @@ jest.mock("next/navigation", () => ({
   redirect: jest.fn(),
 }));
 
+jest.mock("@anthropic-ai/sdk", () => {
+  return jest.fn().mockImplementation(() => ({
+    messages: {
+      create: jest.fn().mockResolvedValue({
+        content: [
+          {
+            type: "text",
+            text: "## Acceptance Criteria\n- [ ] generated criteria",
+          },
+        ],
+      }),
+    },
+  }));
+});
+
 const { redirect } = require("next/navigation");
-const { revalidatePath } = require("next/cache");
+const { revalidatePath, revalidateTag } = require("next/cache");
 
 describe("Server Actions", () => {
   let mockS3Send: jest.Mock;
@@ -230,6 +245,7 @@ describe("Server Actions", () => {
         path: "/home",
         type: "bug" as const,
         fullName: "John Doe",
+        sessionUrl: "https://posthog.com/replay/123",
       };
 
       (global.fetch as jest.Mock).mockResolvedValueOnce({
@@ -251,6 +267,7 @@ describe("Server Actions", () => {
         path: "/home",
         type: "bug" as const,
         fullName: "John Doe",
+        sessionUrl: "https://posthog.com/replay/123",
       };
 
       (global.fetch as jest.Mock).mockResolvedValueOnce({
@@ -275,6 +292,7 @@ describe("Server Actions", () => {
         path: "/home",
         type: "bug" as const,
         fullName: "John Doe",
+        sessionUrl: "https://posthog.com/replay/123",
       };
 
       (global.fetch as jest.Mock).mockResolvedValueOnce({
@@ -303,6 +321,7 @@ describe("Server Actions", () => {
         path: "/home",
         type: "bug" as const,
         fullName: "John Doe",
+        sessionUrl: "https://posthog.com/replay/123",
       };
 
       (global.fetch as jest.Mock).mockResolvedValueOnce({
@@ -332,11 +351,10 @@ describe("Server Actions", () => {
         path: "/home",
         type: "bug" as const,
         fullName: "John Doe",
+        sessionUrl: "https://posthog.com/replay/123",
       };
 
-      (global.fetch as jest.Mock).mockRejectedValueOnce(
-        new Error("Network error"),
-      );
+      (global.fetch as jest.Mock).mockRejectedValue(new Error("Network error"));
 
       const result = await createBugReport(formData);
 
@@ -545,7 +563,7 @@ describe("Server Actions", () => {
           method: "DELETE",
         }),
       );
-      expect(revalidatePath).toHaveBeenCalledWith("/admin?adminTab=Reports");
+      expect(revalidateTag).toHaveBeenCalledWith("reports");
       expect(result).toEqual({ success: true });
     });
 
@@ -736,7 +754,8 @@ describe("Server Actions", () => {
       const result = await approveCreationRequest("123", 1);
 
       expect(result).toEqual({ ok: true, error: null, data: null });
-      expect(revalidatePath).toHaveBeenCalledWith("/admin");
+      expect(revalidateTag).toHaveBeenCalledWith("users");
+      expect(revalidateTag).toHaveBeenCalledWith("creation-requests");
       expect(global.fetch).toHaveBeenCalledTimes(4);
     });
 
@@ -964,7 +983,7 @@ describe("Server Actions", () => {
           method: "DELETE",
         }),
       );
-      expect(revalidatePath).toHaveBeenCalledWith("/admin");
+      expect(revalidateTag).toHaveBeenCalledWith("creation-requests");
       expect(result).toEqual({ ok: true, error: null, data: null });
     });
 
@@ -1155,7 +1174,7 @@ describe("Server Actions", () => {
       expect(global.fetch).toHaveBeenCalledWith(
         expect.stringContaining("/api/creation-requests"),
         expect.objectContaining({
-          cache: "no-store",
+          next: { tags: ["creation-requests"], revalidate: 900 },
         }),
       );
       expect(result).toBeTruthy();
@@ -1290,7 +1309,7 @@ describe("Server Actions", () => {
       expect(global.fetch).toHaveBeenCalledWith(
         expect.any(String),
         expect.objectContaining({
-          cache: "no-store",
+          next: { tags: ["creation-requests"], revalidate: 900 },
         }),
       );
     });

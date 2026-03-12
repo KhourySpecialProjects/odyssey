@@ -1,17 +1,6 @@
 import { render, screen, fireEvent } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { AdminSelector } from "@/components/shared/selector";
-import { useRouter, usePathname, useSearchParams } from "next/navigation";
-
-// Mock Next.js navigation hooks
-const mockPush = jest.fn();
-let mockSearchParamsValue: string | null = null;
-
-jest.mock("next/navigation", () => ({
-  useRouter: jest.fn(),
-  usePathname: jest.fn(),
-  useSearchParams: jest.fn(),
-}));
 
 describe("AdminSelector", () => {
   const mockContent = {
@@ -19,23 +8,6 @@ describe("AdminSelector", () => {
     "Tab 2": <div>Content 2</div>,
     "Tab 3": <div>Content 3</div>,
   };
-
-  beforeEach(() => {
-    jest.clearAllMocks();
-    mockSearchParamsValue = null;
-
-    (useRouter as jest.Mock).mockReturnValue({
-      push: mockPush,
-    });
-
-    (usePathname as jest.Mock).mockReturnValue("/admin");
-
-    (useSearchParams as jest.Mock).mockReturnValue(
-      new URLSearchParams(
-        mockSearchParamsValue ? `adminTab=${mockSearchParamsValue}` : "",
-      ),
-    );
-  });
 
   describe("Rendering", () => {
     it("renders all tabs from content object", () => {
@@ -62,24 +34,11 @@ describe("AdminSelector", () => {
       expect(tabs[2]).toHaveTextContent("Tab 3");
     });
 
-    it("shows first tab content by default when no adminTab param", () => {
+    it("shows first tab content by default", () => {
       render(<AdminSelector content={mockContent} />);
 
       expect(screen.getByText("Content 1")).toBeInTheDocument();
       expect(screen.queryByText("Content 2")).not.toBeInTheDocument();
-      expect(screen.queryByText("Content 3")).not.toBeInTheDocument();
-    });
-
-    it("renders content based on adminTab query parameter", () => {
-      mockSearchParamsValue = "Tab 2";
-      (useSearchParams as jest.Mock).mockReturnValue(
-        new URLSearchParams(`adminTab=${mockSearchParamsValue}`),
-      );
-
-      render(<AdminSelector content={mockContent} />);
-
-      expect(screen.getByText("Content 2")).toBeInTheDocument();
-      expect(screen.queryByText("Content 1")).not.toBeInTheDocument();
       expect(screen.queryByText("Content 3")).not.toBeInTheDocument();
     });
 
@@ -170,13 +129,10 @@ describe("AdminSelector", () => {
       expect(tabContainer).toBeInTheDocument();
     });
 
-    it("updates selected tab styling when adminTab changes", () => {
-      mockSearchParamsValue = "Tab 2";
-      (useSearchParams as jest.Mock).mockReturnValue(
-        new URLSearchParams(`adminTab=${mockSearchParamsValue}`),
-      );
-
+    it("updates selected tab styling when clicking a different tab", () => {
       render(<AdminSelector content={mockContent} />);
+
+      fireEvent.click(screen.getByText("Tab 2"));
 
       const tab1 = screen.getByText("Tab 1");
       const tab2 = screen.getByText("Tab 2");
@@ -191,20 +147,20 @@ describe("AdminSelector", () => {
       const user = userEvent.setup();
       render(<AdminSelector content={mockContent} />);
 
-      const tab2 = screen.getByText("Tab 2");
-      await user.click(tab2);
+      await user.click(screen.getByText("Tab 2"));
 
-      expect(mockPush).toHaveBeenCalledWith("/admin?adminTab=Tab+2");
+      expect(screen.getByText("Content 2")).toBeInTheDocument();
+      expect(screen.queryByText("Content 1")).not.toBeInTheDocument();
     });
 
-    it("updates URL with correct adminTab parameter on click", async () => {
+    it("switches content on click", async () => {
       const user = userEvent.setup();
       render(<AdminSelector content={mockContent} />);
 
-      const tab3 = screen.getByText("Tab 3");
-      await user.click(tab3);
+      await user.click(screen.getByText("Tab 3"));
 
-      expect(mockPush).toHaveBeenCalledWith("/admin?adminTab=Tab+3");
+      expect(screen.getByText("Content 3")).toBeInTheDocument();
+      expect(screen.queryByText("Content 1")).not.toBeInTheDocument();
     });
 
     it("handles multiple tab clicks", async () => {
@@ -212,59 +168,38 @@ describe("AdminSelector", () => {
       render(<AdminSelector content={mockContent} />);
 
       await user.click(screen.getByText("Tab 2"));
-      await user.click(screen.getByText("Tab 3"));
-      await user.click(screen.getByText("Tab 1"));
+      expect(screen.getByText("Content 2")).toBeInTheDocument();
 
-      expect(mockPush).toHaveBeenCalledTimes(3);
-      expect(mockPush).toHaveBeenNthCalledWith(1, "/admin?adminTab=Tab+2");
-      expect(mockPush).toHaveBeenNthCalledWith(2, "/admin?adminTab=Tab+3");
-      expect(mockPush).toHaveBeenNthCalledWith(3, "/admin?adminTab=Tab+1");
+      await user.click(screen.getByText("Tab 3"));
+      expect(screen.getByText("Content 3")).toBeInTheDocument();
+
+      await user.click(screen.getByText("Tab 1"));
+      expect(screen.getByText("Content 1")).toBeInTheDocument();
     });
 
     it("navigates using fireEvent click", () => {
       render(<AdminSelector content={mockContent} />);
 
-      const tab2 = screen.getByText("Tab 2");
-      fireEvent.click(tab2);
+      fireEvent.click(screen.getByText("Tab 2"));
 
-      expect(mockPush).toHaveBeenCalledWith("/admin?adminTab=Tab+2");
-    });
-
-    it("preserves existing query parameters when navigating", () => {
-      (useSearchParams as jest.Mock).mockReturnValue(
-        new URLSearchParams("otherParam=value"),
-      );
-
-      render(<AdminSelector content={mockContent} />);
-
-      const tab2 = screen.getByText("Tab 2");
-      fireEvent.click(tab2);
-
-      const calledUrl = mockPush.mock.calls[0][0];
-      expect(calledUrl).toContain("adminTab=Tab+2");
-      expect(calledUrl).toContain("otherParam=value");
+      expect(screen.getByText("Content 2")).toBeInTheDocument();
+      expect(screen.queryByText("Content 1")).not.toBeInTheDocument();
     });
 
     it("uses correct pathname in navigation", () => {
-      (usePathname as jest.Mock).mockReturnValue("/different/path");
-
       render(<AdminSelector content={mockContent} />);
 
-      const tab2 = screen.getByText("Tab 2");
-      fireEvent.click(tab2);
+      fireEvent.click(screen.getByText("Tab 2"));
 
-      expect(mockPush).toHaveBeenCalledWith("/different/path?adminTab=Tab+2");
+      expect(screen.getByText("Content 2")).toBeInTheDocument();
     });
   });
 
   describe("Content Display", () => {
     it("displays only the selected tab content", () => {
-      mockSearchParamsValue = "Tab 2";
-      (useSearchParams as jest.Mock).mockReturnValue(
-        new URLSearchParams(`adminTab=${mockSearchParamsValue}`),
-      );
-
       render(<AdminSelector content={mockContent} />);
+
+      fireEvent.click(screen.getByText("Tab 2"));
 
       expect(screen.getByText("Content 2")).toBeInTheDocument();
       expect(screen.queryByText("Content 1")).not.toBeInTheDocument();
@@ -273,32 +208,13 @@ describe("AdminSelector", () => {
 
     it("switches content when tab is clicked", async () => {
       const user = userEvent.setup();
-      const { rerender } = render(<AdminSelector content={mockContent} />);
+      render(<AdminSelector content={mockContent} />);
 
       expect(screen.getByText("Content 1")).toBeInTheDocument();
 
-      // Simulate clicking Tab 2 and updating state
       await user.click(screen.getByText("Tab 2"));
-      mockSearchParamsValue = "Tab 2";
-      (useSearchParams as jest.Mock).mockReturnValue(
-        new URLSearchParams(`adminTab=${mockSearchParamsValue}`),
-      );
-
-      rerender(<AdminSelector content={mockContent} />);
 
       expect(screen.getByText("Content 2")).toBeInTheDocument();
-      expect(screen.queryByText("Content 1")).not.toBeInTheDocument();
-    });
-
-    it("falls back to first tab when adminTab param is invalid", () => {
-      mockSearchParamsValue = "Invalid Tab";
-      (useSearchParams as jest.Mock).mockReturnValue(
-        new URLSearchParams(`adminTab=${mockSearchParamsValue}`),
-      );
-
-      render(<AdminSelector content={mockContent} />);
-
-      // Should show nothing or undefined content for invalid tab
       expect(screen.queryByText("Content 1")).not.toBeInTheDocument();
     });
 
@@ -335,7 +251,7 @@ describe("AdminSelector", () => {
       expect(screen.getByText("Tab #2")).toBeInTheDocument();
     });
 
-    it("URL encodes tab names with spaces when navigating", async () => {
+    it("switches to tab with spaces when clicked", async () => {
       const user = userEvent.setup();
       const contentWithSpaces = {
         "Tab One": <div>Content One</div>,
@@ -346,12 +262,10 @@ describe("AdminSelector", () => {
 
       await user.click(screen.getByText("Tab With Spaces"));
 
-      const calledUrl = mockPush.mock.calls[0][0];
-      expect(calledUrl).toContain("adminTab=Tab");
-      expect(calledUrl).toContain("Spaces");
+      expect(screen.getByText("Spaced Content")).toBeInTheDocument();
     });
 
-    it("URL encodes tab names with special characters when navigating", async () => {
+    it("switches to tab with special characters when clicked", async () => {
       const user = userEvent.setup();
       const contentWithSpecialChars = {
         "Tab #1": <div>Content</div>,
@@ -362,8 +276,7 @@ describe("AdminSelector", () => {
 
       await user.click(screen.getByText("Tab & More"));
 
-      const calledUrl = mockPush.mock.calls[0][0];
-      expect(calledUrl).toContain("adminTab=");
+      expect(screen.getByText("More Content")).toBeInTheDocument();
     });
   });
 
@@ -372,22 +285,20 @@ describe("AdminSelector", () => {
       const user = userEvent.setup();
       render(<AdminSelector content={mockContent} />);
 
-      const tab1 = screen.getByText("Tab 1");
-      await user.click(tab1);
+      await user.click(screen.getByText("Tab 1"));
 
-      expect(mockPush).toHaveBeenCalledWith("/admin?adminTab=Tab+1");
+      expect(screen.getByText("Content 1")).toBeInTheDocument();
     });
 
     it("handles rapid successive clicks", async () => {
       const user = userEvent.setup();
       render(<AdminSelector content={mockContent} />);
 
-      const tab2 = screen.getByText("Tab 2");
-      await user.click(tab2);
-      await user.click(tab2);
-      await user.click(tab2);
+      await user.click(screen.getByText("Tab 2"));
+      await user.click(screen.getByText("Tab 3"));
+      await user.click(screen.getByText("Tab 1"));
 
-      expect(mockPush).toHaveBeenCalledTimes(3);
+      expect(screen.getByText("Content 1")).toBeInTheDocument();
     });
 
     it("handles empty content object gracefully", () => {
@@ -395,19 +306,7 @@ describe("AdminSelector", () => {
 
       render(<AdminSelector content={emptyContent} />);
 
-      // Should render without crashing
       expect(screen.queryByText("Content 1")).not.toBeInTheDocument();
-    });
-
-    it("renders when pathname is root", () => {
-      (usePathname as jest.Mock).mockReturnValue("/");
-
-      render(<AdminSelector content={mockContent} />);
-
-      const tab2 = screen.getByText("Tab 2");
-      fireEvent.click(tab2);
-
-      expect(mockPush).toHaveBeenCalledWith("/?adminTab=Tab+2");
     });
 
     it("handles null content in tab", () => {
@@ -427,21 +326,15 @@ describe("AdminSelector", () => {
 
       const tab1 = screen.getByText("Tab 1");
       expect(tab1).toBeInTheDocument();
-
-      // Tabs should be clickable elements with cursor-pointer class
       expect(tab1).toHaveClass("cursor-pointer");
     });
 
     it("content area updates when tab changes", () => {
-      const { rerender } = render(<AdminSelector content={mockContent} />);
+      render(<AdminSelector content={mockContent} />);
 
       expect(screen.getByText("Content 1")).toBeInTheDocument();
 
-      mockSearchParamsValue = "Tab 3";
-      (useSearchParams as jest.Mock).mockReturnValue(
-        new URLSearchParams(`adminTab=${mockSearchParamsValue}`),
-      );
-      rerender(<AdminSelector content={mockContent} />);
+      fireEvent.click(screen.getByText("Tab 3"));
 
       expect(screen.getByText("Content 3")).toBeInTheDocument();
     });
@@ -450,11 +343,9 @@ describe("AdminSelector", () => {
       const user = userEvent.setup();
       render(<AdminSelector content={mockContent} />);
 
-      const tab2 = screen.getByText("Tab 2");
-      await user.click(tab2);
+      await user.click(screen.getByText("Tab 2"));
 
-      // Verify navigation was triggered
-      expect(mockPush).toHaveBeenCalled();
+      expect(screen.getByText("Content 2")).toBeInTheDocument();
     });
   });
 
@@ -470,7 +361,7 @@ describe("AdminSelector", () => {
         "Set 2 Tab 2": <div>Set 2 Content 2</div>,
       };
 
-      const { container } = render(
+      render(
         <>
           <AdminSelector content={content1} />
           <AdminSelector content={content2} />
@@ -485,28 +376,21 @@ describe("AdminSelector", () => {
   });
 
   describe("Query String Creation", () => {
-    it("creates query string with adminTab parameter", () => {
+    it("clicking tab updates displayed content", () => {
       render(<AdminSelector content={mockContent} />);
 
       fireEvent.click(screen.getByText("Tab 2"));
 
-      expect(mockPush).toHaveBeenCalledWith(
-        expect.stringContaining("adminTab=Tab"),
-      );
+      expect(screen.getByText("Content 2")).toBeInTheDocument();
     });
 
-    it("preserves other search parameters", () => {
-      (useSearchParams as jest.Mock).mockReturnValue(
-        new URLSearchParams("other=value"),
-      );
-
+    it("clicking tab switches away from previous content", () => {
       render(<AdminSelector content={mockContent} />);
 
       fireEvent.click(screen.getByText("Tab 2"));
 
-      const calledUrl = mockPush.mock.calls[0][0];
-      expect(calledUrl).toContain("adminTab=Tab");
-      expect(calledUrl).toContain("other=value");
+      expect(screen.queryByText("Content 1")).not.toBeInTheDocument();
+      expect(screen.getByText("Content 2")).toBeInTheDocument();
     });
   });
 });

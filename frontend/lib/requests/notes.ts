@@ -3,7 +3,8 @@
 import { Enrollment, Note, Lesson, Highlight } from "@/types";
 import { StrapiRequestParams } from "@/types/strapi";
 import { fetchAPI } from "../utils";
-import { revalidatePath, revalidateTag } from "next/cache";
+import { revalidateTag } from "next/cache";
+import { CACHE_TAGS } from "../cache-tags";
 
 const NEXT_PUBLIC_STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
@@ -46,7 +47,7 @@ export async function getNotesByAuthorizedUserAndLesson(
 
   return await fetchAPI<Note[]>(path, {
     urlParams,
-    next: { tags: ["notes"] },
+    next: { tags: [CACHE_TAGS.notes(authorizedUserId)], revalidate: 900 },
   });
 }
 
@@ -88,11 +89,15 @@ export async function getNotesByDroplet(
 
   return await fetchAPI<Note[]>(path, {
     urlParams,
-    next: { tags: ["notes"] },
+    next: { tags: [CACHE_TAGS.notes(authorizedUserId)], revalidate: 900 },
   });
 }
 
-export async function updateNoteContent(noteId: number, newContent: string) {
+export async function updateNoteContent(
+  noteId: number,
+  newContent: string,
+  authorizedUserId: number,
+) {
   try {
     const response = await fetch(
       `${NEXT_PUBLIC_STRAPI_API_URL}/api/notes/${noteId}`,
@@ -114,8 +119,7 @@ export async function updateNoteContent(noteId: number, newContent: string) {
       throw new Error("Failed to update note content");
     }
 
-    revalidatePath("/d/[slug]/[lessonSlug]", "page");
-    revalidateTag("notes");
+    revalidateTag(CACHE_TAGS.notes(authorizedUserId));
 
     return { success: true };
   } catch (error) {
@@ -124,7 +128,11 @@ export async function updateNoteContent(noteId: number, newContent: string) {
   }
 }
 
-export async function updateNotePosition(noteId: number, newPos: number) {
+export async function updateNotePosition(
+  noteId: number,
+  newPos: number,
+  authorizedUserId: number,
+) {
   try {
     const response = await fetch(
       `${NEXT_PUBLIC_STRAPI_API_URL}/api/notes/${noteId}`,
@@ -146,8 +154,7 @@ export async function updateNotePosition(noteId: number, newPos: number) {
       throw new Error("Failed to update note content");
     }
 
-    revalidatePath("/d/[slug]/[lessonSlug]", "page");
-    revalidateTag("notes");
+    revalidateTag(CACHE_TAGS.notes(authorizedUserId));
 
     return { success: true };
   } catch (error) {
@@ -160,6 +167,7 @@ export async function createNote(
   lesson: Lesson,
   enrollment: Enrollment,
   position: number,
+  authorizedUserId: number,
   highlight?: Highlight,
   content?: string,
 ) {
@@ -186,8 +194,7 @@ export async function createNote(
       return { success: false, error: "Failed to add new note" };
     }
 
-    revalidatePath("/d/[slug]/[lessonSlug]", "page");
-    revalidateTag("notes");
+    revalidateTag(CACHE_TAGS.notes(authorizedUserId));
     return { success: true };
   } catch (error) {
     console.error("Error adding note:", error);
@@ -195,7 +202,42 @@ export async function createNote(
   }
 }
 
-export async function deleteNote(id: number) {
+export async function getAllNotesByUser(
+  authorizedUserId: number,
+): Promise<Note[]> {
+  const path = `/notes`;
+  const pageSize = 250;
+  let page = 1;
+  let allNotes: Note[] = [];
+
+  while (true) {
+    const urlParams = {
+      filters: {
+        enrollment: { authorizedUser: { id: { $eq: authorizedUserId } } },
+      },
+      populate: {
+        highlight: { fields: ["text", "color", "yLevel"] },
+        lesson: { fields: ["id", "name", "slug"] },
+      },
+      fields: ["id", "content", "positionY"],
+      pagination: { page, pageSize },
+    };
+
+    const notesPage = await fetchAPI<Note[]>(path, {
+      urlParams,
+      next: { tags: [CACHE_TAGS.notes(authorizedUserId)], revalidate: 900 },
+    });
+
+    if (!notesPage || notesPage.length === 0) break;
+    allNotes = allNotes.concat(notesPage);
+    if (notesPage.length < pageSize) break;
+    page++;
+  }
+
+  return allNotes;
+}
+
+export async function deleteNote(id: number, authorizedUserId: number) {
   try {
     const response = await fetch(
       NEXT_PUBLIC_STRAPI_API_URL + "/api/notes/" + id,
@@ -211,8 +253,7 @@ export async function deleteNote(id: number) {
     if (!response.ok || (response.ok && data.error))
       return { ok: false, error: data.error.message, data: null };
 
-    revalidatePath("/d/[slug]/[lessonSlug]", "page");
-    revalidateTag("notes");
+    revalidateTag(CACHE_TAGS.notes(authorizedUserId));
 
     return { ok: true, error: null, data: data.data };
   } catch (err) {

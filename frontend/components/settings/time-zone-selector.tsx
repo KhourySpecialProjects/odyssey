@@ -57,7 +57,7 @@ export default function TimeZoneSelector({
 }: TimeZoneSelectorProps) {
   const [selectedTimeZone, setSelectedTimeZone] = useState(currentZone);
   const handleChange = async (zone: string) => {
-    await setTimeZone(zone + "  ", userId);
+    await setTimeZone(zone, userId);
     setSelectedTimeZone(zone);
     toast.success("Time zone updated successfully!");
   };

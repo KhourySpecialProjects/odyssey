@@ -10,6 +10,8 @@ const {
   sendFriendRequest,
   removeFriend,
   fetchFriendshipsById,
+  fetchFriendshipsByUserIds,
+  fetchSuggestionsById,
 } = require("../../lib/requests/friends");
 
 jest.mock("../../lib/utils", () => ({
@@ -42,7 +44,7 @@ jest.mock("next/cache", () => ({
 }));
 
 describe("Friends tests", () => {
-  const { revalidatePath } = require("next/cache");
+  const { revalidateTag } = require("next/cache");
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -151,7 +153,7 @@ describe("Friends tests", () => {
           headers: expect.objectContaining({
             Authorization: expect.stringContaining("Bearer"),
           }),
-          cache: "no-store",
+          next: { tags: ["friendships-5"], revalidate: 900 },
         }),
       );
 
@@ -324,7 +326,7 @@ describe("Friends tests", () => {
           headers: expect.objectContaining({
             Authorization: expect.stringContaining("Bearer"),
           }),
-          cache: "no-store",
+          next: { tags: ["friendships-5"], revalidate: 900 },
         }),
       );
 
@@ -349,7 +351,6 @@ describe("Friends tests", () => {
   describe("acceptFriendRequest", () => {
     beforeEach(() => {
       global.fetch.mockReset();
-      revalidatePath.mockReset();
     });
 
     it("should successfully accept a friend request", async () => {
@@ -404,7 +405,8 @@ describe("Friends tests", () => {
         }),
       );
 
-      expect(revalidatePath).toHaveBeenCalledWith("/settings/friends");
+      expect(revalidateTag).toHaveBeenCalledWith("friendships-5");
+      expect(revalidateTag).toHaveBeenCalledWith("friendships-6");
 
       expect(result).toEqual({ success: true });
     });
@@ -425,7 +427,7 @@ describe("Friends tests", () => {
       const result = await acceptFriendRequest(userId, requesterId);
 
       expect(result).toEqual({ success: false, error: expect.any(Error) });
-      expect(revalidatePath).not.toHaveBeenCalled();
+      expect(revalidateTag).not.toHaveBeenCalled();
 
       consoleSpy.mockRestore();
     });
@@ -451,6 +453,7 @@ describe("Friends tests", () => {
       const result = await acceptFriendRequest(userId, requesterId);
 
       expect(result).toEqual({ success: false, error: expect.any(Error) });
+      expect(revalidateTag).not.toHaveBeenCalled();
 
       consoleSpy.mockRestore();
     });
@@ -468,7 +471,7 @@ describe("Friends tests", () => {
       const result = await acceptFriendRequest(userId, requesterId);
 
       expect(result).toEqual({ success: false, error: expect.any(Error) });
-      expect(revalidatePath).not.toHaveBeenCalled();
+      expect(revalidateTag).not.toHaveBeenCalled();
 
       consoleSpy.mockRestore();
     });
@@ -477,7 +480,6 @@ describe("Friends tests", () => {
   describe("sendFriendRequest", () => {
     beforeEach(() => {
       global.fetch.mockReset();
-      revalidatePath.mockReset();
     });
 
     it("should successfully send a friend request", async () => {
@@ -534,7 +536,8 @@ describe("Friends tests", () => {
         }),
       );
 
-      expect(revalidatePath).toHaveBeenCalledWith("/settings/friends");
+      expect(revalidateTag).toHaveBeenCalledWith("friendships-5");
+      expect(revalidateTag).toHaveBeenCalledWith("friendships-6");
 
       expect(result).toEqual({ success: true });
     });
@@ -555,7 +558,7 @@ describe("Friends tests", () => {
       const result = await sendFriendRequest(requester, requestee);
 
       expect(result).toEqual({ success: false, error: expect.any(Error) });
-      expect(revalidatePath).not.toHaveBeenCalled();
+      expect(revalidateTag).not.toHaveBeenCalled();
 
       consoleSpy.mockRestore();
     });
@@ -581,6 +584,7 @@ describe("Friends tests", () => {
       const result = await sendFriendRequest(requester, requestee);
 
       expect(result).toEqual({ success: false, error: expect.any(Error) });
+      expect(revalidateTag).not.toHaveBeenCalled();
 
       consoleSpy.mockRestore();
     });
@@ -598,7 +602,7 @@ describe("Friends tests", () => {
       const result = await sendFriendRequest(requester, requestee);
 
       expect(result).toEqual({ success: false, error: expect.any(Error) });
-      expect(revalidatePath).not.toHaveBeenCalled();
+      expect(revalidateTag).not.toHaveBeenCalled();
 
       consoleSpy.mockRestore();
     });
@@ -607,7 +611,6 @@ describe("Friends tests", () => {
   describe("rejectFriendRequest", () => {
     beforeEach(() => {
       global.fetch.mockReset();
-      revalidatePath.mockReset();
     });
 
     it("should successfully reject a friend request", async () => {
@@ -639,7 +642,8 @@ describe("Friends tests", () => {
         }),
       );
 
-      expect(revalidatePath).toHaveBeenCalledWith("/settings/friends");
+      expect(revalidateTag).toHaveBeenCalledWith("friendships-5");
+      expect(revalidateTag).toHaveBeenCalledWith("friendships-6");
 
       expect(result).toEqual({ success: true });
     });
@@ -660,7 +664,7 @@ describe("Friends tests", () => {
       const result = await rejectFriendRequest(userId, requesterId);
 
       expect(result).toEqual({ success: false, error: expect.any(Error) });
-      expect(revalidatePath).not.toHaveBeenCalled();
+      expect(revalidateTag).not.toHaveBeenCalled();
 
       consoleSpy.mockRestore();
     });
@@ -678,7 +682,7 @@ describe("Friends tests", () => {
       const result = await rejectFriendRequest(userId, requesterId);
 
       expect(result).toEqual({ success: false, error: expect.any(Error) });
-      expect(revalidatePath).not.toHaveBeenCalled();
+      expect(revalidateTag).not.toHaveBeenCalled();
 
       consoleSpy.mockRestore();
     });
@@ -687,7 +691,6 @@ describe("Friends tests", () => {
   describe("cancelFriendRequest", () => {
     beforeEach(() => {
       global.fetch.mockReset();
-      revalidatePath.mockReset();
     });
 
     it("should successfully cancel a friend request", async () => {
@@ -719,7 +722,8 @@ describe("Friends tests", () => {
         }),
       );
 
-      expect(revalidatePath).toHaveBeenCalledWith("/settings/friends");
+      expect(revalidateTag).toHaveBeenCalledWith("friendships-5");
+      expect(revalidateTag).toHaveBeenCalledWith("friendships-6");
 
       expect(result).toEqual({ success: true });
     });
@@ -740,7 +744,7 @@ describe("Friends tests", () => {
       const result = await cancelFriendRequest(userId, requesteeId);
 
       expect(result).toEqual({ success: false, error: expect.any(Error) });
-      expect(revalidatePath).not.toHaveBeenCalled();
+      expect(revalidateTag).not.toHaveBeenCalled();
 
       consoleSpy.mockRestore();
     });
@@ -758,7 +762,7 @@ describe("Friends tests", () => {
       const result = await cancelFriendRequest(userId, requesteeId);
 
       expect(result).toEqual({ success: false, error: expect.any(Error) });
-      expect(revalidatePath).not.toHaveBeenCalled();
+      expect(revalidateTag).not.toHaveBeenCalled();
 
       consoleSpy.mockRestore();
     });
@@ -767,7 +771,6 @@ describe("Friends tests", () => {
   describe("unblockUser", () => {
     beforeEach(() => {
       global.fetch.mockReset();
-      revalidatePath.mockReset();
     });
 
     it("should successfully unblock a user", async () => {
@@ -799,7 +802,8 @@ describe("Friends tests", () => {
         }),
       );
 
-      expect(revalidatePath).toHaveBeenCalledWith("/settings/friends");
+      expect(revalidateTag).toHaveBeenCalledWith("friendships-5");
+      expect(revalidateTag).toHaveBeenCalledWith("friendships-6");
 
       expect(result).toEqual({ success: true });
     });
@@ -820,7 +824,7 @@ describe("Friends tests", () => {
       const result = await unblockUser(userId, blockedUserId);
 
       expect(result).toEqual({ success: false, error: expect.any(Error) });
-      expect(revalidatePath).not.toHaveBeenCalled();
+      expect(revalidateTag).not.toHaveBeenCalled();
 
       consoleSpy.mockRestore();
     });
@@ -838,7 +842,7 @@ describe("Friends tests", () => {
       const result = await unblockUser(userId, blockedUserId);
 
       expect(result).toEqual({ success: false, error: expect.any(Error) });
-      expect(revalidatePath).not.toHaveBeenCalled();
+      expect(revalidateTag).not.toHaveBeenCalled();
 
       consoleSpy.mockRestore();
     });
@@ -847,7 +851,6 @@ describe("Friends tests", () => {
   describe("BlockUser", () => {
     beforeEach(() => {
       global.fetch.mockReset();
-      revalidatePath.mockReset();
     });
 
     it("should successfully block a user", async () => {
@@ -879,7 +882,8 @@ describe("Friends tests", () => {
         }),
       );
 
-      expect(revalidatePath).toHaveBeenCalledWith("/settings/friends");
+      expect(revalidateTag).toHaveBeenCalledWith("friendships-5");
+      expect(revalidateTag).toHaveBeenCalledWith("friendships-6");
 
       expect(result).toEqual({ success: true });
     });
@@ -900,7 +904,7 @@ describe("Friends tests", () => {
       const result = await BlockUser(userId, userToBlockId);
 
       expect(result).toEqual({ success: false, error: expect.any(Error) });
-      expect(revalidatePath).not.toHaveBeenCalled();
+      expect(revalidateTag).not.toHaveBeenCalled();
 
       consoleSpy.mockRestore();
     });
@@ -918,7 +922,7 @@ describe("Friends tests", () => {
       const result = await BlockUser(userId, userToBlockId);
 
       expect(result).toEqual({ success: false, error: expect.any(Error) });
-      expect(revalidatePath).not.toHaveBeenCalled();
+      expect(revalidateTag).not.toHaveBeenCalled();
 
       consoleSpy.mockRestore();
     });
@@ -927,7 +931,6 @@ describe("Friends tests", () => {
   describe("removeFriend", () => {
     beforeEach(() => {
       global.fetch.mockReset();
-      revalidatePath.mockReset();
     });
 
     it("should successfully remove a friend", async () => {
@@ -976,7 +979,8 @@ describe("Friends tests", () => {
         }),
       );
 
-      expect(revalidatePath).toHaveBeenCalledWith("/settings/friends");
+      expect(revalidateTag).toHaveBeenCalledWith("friendships-5");
+      expect(revalidateTag).toHaveBeenCalledWith("friendships-6");
 
       expect(result).toEqual({ success: true });
     });
@@ -1005,7 +1009,7 @@ describe("Friends tests", () => {
           message: "Friendship not found",
         }),
       );
-      expect(revalidatePath).not.toHaveBeenCalled();
+      expect(revalidateTag).not.toHaveBeenCalled();
 
       consoleSpy.mockRestore();
     });
@@ -1033,7 +1037,7 @@ describe("Friends tests", () => {
       const result = await removeFriend(userId, friendId);
 
       expect(result).toEqual({ success: false, error: expect.any(Error) });
-      expect(revalidatePath).not.toHaveBeenCalled();
+      expect(revalidateTag).not.toHaveBeenCalled();
 
       consoleSpy.mockRestore();
     });
@@ -1051,7 +1055,7 @@ describe("Friends tests", () => {
       const result = await removeFriend(userId, friendId);
 
       expect(result).toEqual({ success: false, error: expect.any(Error) });
-      expect(revalidatePath).not.toHaveBeenCalled();
+      expect(revalidateTag).not.toHaveBeenCalled();
 
       consoleSpy.mockRestore();
     });
@@ -1157,7 +1161,7 @@ describe("Friends tests", () => {
           headers: expect.objectContaining({
             Authorization: expect.stringContaining("Bearer"),
           }),
-          cache: "no-store",
+          next: { tags: ["friendships-5"], revalidate: 900 },
         }),
       );
 
@@ -1199,6 +1203,434 @@ describe("Friends tests", () => {
     it("should throw error for null user ID", async () => {
       await expect(fetchFriendshipsById(null)).rejects.toThrow(
         "Failed to fetch friendships",
+      );
+    });
+  });
+
+  describe("fetchFriendshipsByUserIds", () => {
+    beforeEach(() => {
+      global.fetch.mockReset();
+    });
+
+    it("should return empty array for empty user IDs", async () => {
+      const result = await fetchFriendshipsByUserIds([]);
+
+      expect(result).toEqual([]);
+      expect(global.fetch).not.toHaveBeenCalled();
+    });
+
+    it("should fetch friendships for multiple user IDs in a single query", async () => {
+      const userIds = [6, 7];
+
+      const mockFriendships = [
+        {
+          id: 10,
+          attributes: {
+            authorized_users: {
+              data: [
+                {
+                  id: 6,
+                  attributes: {
+                    firstName: "A",
+                    lastName: "One",
+                    email: "a@test.com",
+                    blocked: { data: [] },
+                    was_blocked: { data: [] },
+                    received_requests: { data: [] },
+                  },
+                },
+                {
+                  id: 8,
+                  attributes: {
+                    firstName: "C",
+                    lastName: "Three",
+                    email: "c@test.com",
+                    blocked: { data: [] },
+                    was_blocked: { data: [] },
+                    received_requests: { data: [] },
+                  },
+                },
+              ],
+            },
+          },
+        },
+        {
+          id: 11,
+          attributes: {
+            authorized_users: {
+              data: [
+                {
+                  id: 7,
+                  attributes: {
+                    firstName: "B",
+                    lastName: "Two",
+                    email: "b@test.com",
+                    blocked: { data: [] },
+                    was_blocked: { data: [] },
+                    received_requests: { data: [] },
+                  },
+                },
+                {
+                  id: 9,
+                  attributes: {
+                    firstName: "D",
+                    lastName: "Four",
+                    email: "d@test.com",
+                    blocked: { data: [] },
+                    was_blocked: { data: [] },
+                    received_requests: { data: [] },
+                  },
+                },
+              ],
+            },
+          },
+        },
+      ];
+
+      global.fetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ data: mockFriendships }),
+      });
+
+      flattenAttributes.mockImplementationOnce((data) =>
+        data.map((f) => ({
+          id: f.id,
+          authorized_users: f.attributes.authorized_users.data.map((u) => ({
+            id: u.id,
+            ...u.attributes,
+            blocked: u.attributes.blocked.data,
+            was_blocked: u.attributes.was_blocked.data,
+            received_requests: u.attributes.received_requests.data,
+          })),
+        })),
+      );
+
+      const result = await fetchFriendshipsByUserIds(userIds);
+
+      expect(global.fetch).toHaveBeenCalledTimes(1);
+      expect(result).toHaveLength(2);
+
+      const callUrl = global.fetch.mock.calls[0][0];
+      expect(callUrl).toMatch(/filters/);
+      expect(callUrl).toMatch(/%24in/);
+    });
+
+    it("should handle fetch errors", async () => {
+      global.fetch.mockRejectedValueOnce(new Error("Network error"));
+
+      await expect(fetchFriendshipsByUserIds([6])).rejects.toThrow();
+    });
+
+    it("should paginate when first page is full", async () => {
+      const userIds = [6];
+
+      const fullPage = Array.from({ length: 250 }, (_, i) => ({
+        id: i + 1,
+        attributes: {
+          authorized_users: { data: [] },
+        },
+      }));
+      const partialPage = [
+        { id: 251, attributes: { authorized_users: { data: [] } } },
+      ];
+
+      flattenAttributes
+        .mockImplementationOnce((data) =>
+          data.map((f) => ({ id: f.id, authorized_users: [] })),
+        )
+        .mockImplementationOnce((data) =>
+          data.map((f) => ({ id: f.id, authorized_users: [] })),
+        );
+
+      global.fetch
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({ data: fullPage }),
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({ data: partialPage }),
+        });
+
+      const result = await fetchFriendshipsByUserIds(userIds);
+
+      expect(global.fetch).toHaveBeenCalledTimes(2);
+      expect(result).toHaveLength(251);
+    });
+  });
+
+  describe("fetchSuggestionsById", () => {
+    beforeEach(() => {
+      global.fetch.mockReset();
+    });
+
+    function makeFlatFriendship(id, users) {
+      return { id, authorized_users: users };
+    }
+
+    function makeUser(id, firstName, lastName, overrides = {}) {
+      return {
+        id,
+        firstName,
+        lastName,
+        email: `${firstName.toLowerCase()}@test.com`,
+        blocked: [],
+        was_blocked: [],
+        received_requests: [],
+        ...overrides,
+      };
+    }
+
+    it("should return friend-of-friend suggestions using 2 queries", async () => {
+      const userId = 1;
+      const user = makeUser(1, "Me", "User");
+      const friendA = makeUser(2, "Friend", "A");
+      const friendB = makeUser(3, "Friend", "B");
+      const suggestion = makeUser(4, "Suggested", "Person");
+
+      // Query 1: fetchFriendshipsById(userId) — user's friendships
+      const userFriendshipsRaw = [
+        {
+          id: 100,
+          attributes: {
+            authorized_users: {
+              data: [
+                {
+                  id: 1,
+                  attributes: {
+                    ...user,
+                    blocked: { data: [] },
+                    was_blocked: { data: [] },
+                    received_requests: { data: [] },
+                  },
+                },
+                {
+                  id: 2,
+                  attributes: {
+                    ...friendA,
+                    blocked: { data: [] },
+                    was_blocked: { data: [] },
+                    received_requests: { data: [] },
+                  },
+                },
+              ],
+            },
+          },
+        },
+        {
+          id: 101,
+          attributes: {
+            authorized_users: {
+              data: [
+                {
+                  id: 1,
+                  attributes: {
+                    ...user,
+                    blocked: { data: [] },
+                    was_blocked: { data: [] },
+                    received_requests: { data: [] },
+                  },
+                },
+                {
+                  id: 3,
+                  attributes: {
+                    ...friendB,
+                    blocked: { data: [] },
+                    was_blocked: { data: [] },
+                    received_requests: { data: [] },
+                  },
+                },
+              ],
+            },
+          },
+        },
+      ];
+
+      // Query 2: fetchFriendshipsByUserIds([2, 3]) — friends' friendships
+      const friendFriendshipsRaw = [
+        {
+          id: 200,
+          attributes: {
+            authorized_users: {
+              data: [
+                {
+                  id: 2,
+                  attributes: {
+                    ...friendA,
+                    blocked: { data: [] },
+                    was_blocked: { data: [] },
+                    received_requests: { data: [] },
+                  },
+                },
+                {
+                  id: 4,
+                  attributes: {
+                    ...suggestion,
+                    blocked: { data: [] },
+                    was_blocked: { data: [] },
+                    received_requests: { data: [] },
+                  },
+                },
+              ],
+            },
+          },
+        },
+      ];
+
+      const flattenImpl = (data) =>
+        data.map((f) => ({
+          id: f.id,
+          authorized_users: f.attributes.authorized_users.data.map((u) => ({
+            id: u.id,
+            ...u.attributes,
+            blocked: u.attributes.blocked.data,
+            was_blocked: u.attributes.was_blocked.data,
+            received_requests: u.attributes.received_requests.data,
+          })),
+        }));
+
+      flattenAttributes
+        .mockImplementationOnce(flattenImpl)
+        .mockImplementationOnce(flattenImpl);
+
+      global.fetch
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({ data: userFriendshipsRaw }),
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({ data: friendFriendshipsRaw }),
+        });
+
+      const result = await fetchSuggestionsById(userId);
+
+      expect(global.fetch).toHaveBeenCalledTimes(2);
+      expect(result).toHaveLength(1);
+      expect(result[0].id).toBe(4);
+      expect(result[0].firstName).toBe("Suggested");
+    });
+
+    it("should exclude users who blocked the caller", async () => {
+      const userId = 1;
+      const user = makeUser(1, "Me", "User");
+      const friendA = makeUser(2, "Friend", "A");
+      const blockerUser = makeUser(4, "Blocker", "Person", {
+        was_blocked: [{ id: 1 }],
+      });
+
+      const userFriendshipsRaw = [
+        {
+          id: 100,
+          attributes: {
+            authorized_users: {
+              data: [
+                {
+                  id: 1,
+                  attributes: {
+                    ...user,
+                    blocked: { data: [] },
+                    was_blocked: { data: [] },
+                    received_requests: { data: [] },
+                  },
+                },
+                {
+                  id: 2,
+                  attributes: {
+                    ...friendA,
+                    blocked: { data: [] },
+                    was_blocked: { data: [] },
+                    received_requests: { data: [] },
+                  },
+                },
+              ],
+            },
+          },
+        },
+      ];
+
+      const friendFriendshipsRaw = [
+        {
+          id: 200,
+          attributes: {
+            authorized_users: {
+              data: [
+                {
+                  id: 2,
+                  attributes: {
+                    ...friendA,
+                    blocked: { data: [] },
+                    was_blocked: { data: [] },
+                    received_requests: { data: [] },
+                  },
+                },
+                {
+                  id: 4,
+                  attributes: {
+                    ...blockerUser,
+                    blocked: { data: [] },
+                    was_blocked: { data: [{ id: 1 }] },
+                    received_requests: { data: [] },
+                  },
+                },
+              ],
+            },
+          },
+        },
+      ];
+
+      const flattenImpl = (data) =>
+        data.map((f) => ({
+          id: f.id,
+          authorized_users: f.attributes.authorized_users.data.map((u) => ({
+            id: u.id,
+            ...u.attributes,
+            blocked: u.attributes.blocked.data,
+            was_blocked: u.attributes.was_blocked.data,
+            received_requests: u.attributes.received_requests.data,
+          })),
+        }));
+
+      flattenAttributes
+        .mockImplementationOnce(flattenImpl)
+        .mockImplementationOnce(flattenImpl);
+
+      global.fetch
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({ data: userFriendshipsRaw }),
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({ data: friendFriendshipsRaw }),
+        });
+
+      const result = await fetchSuggestionsById(userId);
+
+      expect(result).toHaveLength(0);
+    });
+
+    it("should return empty array when user has no friends", async () => {
+      const userFriendshipsRaw = [];
+
+      flattenAttributes.mockImplementationOnce(() => []);
+
+      global.fetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ data: userFriendshipsRaw }),
+      });
+
+      const result = await fetchSuggestionsById(1);
+
+      expect(global.fetch).toHaveBeenCalledTimes(1);
+      expect(result).toEqual([]);
+    });
+
+    it("should handle errors", async () => {
+      global.fetch.mockRejectedValueOnce(new Error("Network error"));
+
+      await expect(fetchSuggestionsById(1)).rejects.toThrow(
+        "Failed to fetch friend suggestions",
       );
     });
   });

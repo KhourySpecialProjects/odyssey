@@ -3,13 +3,14 @@
 import { Droplet } from "@/types";
 import { StrapiRequestParams } from "@/types/strapi";
 import { fetchAPI } from "../utils";
-import { revalidatePath, revalidateTag } from "next/cache";
+import { revalidateTag } from "next/cache";
 import { deleteLesson } from "./lesson";
 import { DropletSchema } from "../validations/droplet";
 import { z } from "zod";
 import { getCurrentUser } from "../auth/session";
 import { getAuthorizedUserByEmail } from "./authorized-user";
-import { getEnrollmentsByAuthorizedUser } from "./enrollment";
+import { getEnrollmentByUserAndDroplet } from "./enrollment";
+import { CACHE_TAGS } from "../cache-tags";
 
 const STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
@@ -41,6 +42,7 @@ export async function getDroplets({
   };
   const retVal = await fetchAPI<Droplet[]>(path, {
     urlParams,
+    next: { tags: [CACHE_TAGS.droplets], revalidate: 900 },
   });
   return retVal;
 }
@@ -61,12 +63,19 @@ export async function getDropletBySlug<T extends Partial<Droplet> = Droplet>(
   }: StrapiRequestParams = {},
 ): Promise<T> {
   const path = `/droplets`;
+  const resolvedPopulate =
+    typeof populate === "object" ? populate : { populate: "*" };
+  const existingLessons =
+    resolvedPopulate && typeof resolvedPopulate === "object"
+      ? (resolvedPopulate as Record<string, any>).lessons ?? {}
+      : {};
   const urlParams = {
     sort,
     filters: { ...filters, slug },
     populate: {
-      ...(typeof populate === "object" ? populate : { populate: "*" }),
+      ...resolvedPopulate,
       lessons: {
+        ...(typeof existingLessons === "object" ? existingLessons : {}),
         sort: ["orderIndex:asc"],
       },
     },
@@ -79,6 +88,7 @@ export async function getDropletBySlug<T extends Partial<Droplet> = Droplet>(
 
   return await fetchAPI<T[]>(path, {
     urlParams,
+    next: { tags: [CACHE_TAGS.droplets], revalidate: 900 },
   }).then((droplets) => droplets[0]);
 }
 
@@ -105,6 +115,7 @@ export async function getDropletById<T extends Partial<Droplet> = Droplet>(
 
   return await fetchAPI<T>(path, {
     urlParams,
+    next: { tags: [CACHE_TAGS.droplets], revalidate: 900 },
   }).then((droplet) => droplet);
 }
 
@@ -133,7 +144,7 @@ export async function getRandomFunFactDroplet({
   },
   pagination = { pageSize: 1000, page: 1 },
   populate,
-  fields = ["*"],
+  fields = ["id", "name", "slug", "funFact"],
 }: StrapiRequestParams = {}): Promise<Droplet[]> {
   const path = `/droplets`;
   const urlParams = {
@@ -145,6 +156,7 @@ export async function getRandomFunFactDroplet({
   };
   const retVal = await fetchAPI<Droplet[]>(path, {
     urlParams,
+    next: { tags: [CACHE_TAGS.droplets], revalidate: 900 },
   });
   return retVal;
 }
@@ -178,10 +190,8 @@ export async function updateDropletAverageRating(
     if (!response.ok) {
       throw new Error("Failed to update average rating");
     }
-    revalidateTag("droplets");
-    revalidatePath("/(droplets)/d/[slug]", "page");
-    revalidatePath("/(general)/dashboard", "page");
-    revalidatePath("/(playlists)/p/[slug]", "page");
+    revalidateTag(CACHE_TAGS.droplets);
+    revalidateTag(CACHE_TAGS.allEnrollments);
     return { success: true };
   } catch (error) {
     console.error("Error updating average rating:", error);
@@ -210,6 +220,7 @@ export async function updateDropletFunFact(fact: string, dropletId: number) {
     if (!response.ok) {
       throw new Error("Failed to update fun fact");
     }
+    revalidateTag(CACHE_TAGS.droplets);
     return { success: true };
   } catch (error) {
     console.error("Error updating fun fact:", error);
@@ -220,15 +231,15 @@ export async function updateDropletFunFact(fact: string, dropletId: number) {
 export async function deepDeleteDroplet(id: number) {
   try {
     const droplet = await getDropletById<Droplet>(id, {
-      fields: ["*"],
+      fields: ["id", "name", "slug"],
       populate: {
-        authorized_users: { populate: "*" },
-        learningObjectives: { populate: "*" },
-        lessons: { populate: "*" },
-        tags: { populate: "*" },
-        prerequisites: { populate: ["id", "name", "slug"] },
-        postrequisites: { populate: ["id", "name", "slug"] },
-        nextSteps: { fields: ["label", "url"] },
+        authorized_users: { fields: ["id"] },
+        learningObjectives: { fields: ["id"] },
+        lessons: { fields: ["id"] },
+        tags: { fields: ["id"] },
+        prerequisites: { fields: ["id"] },
+        postrequisites: { fields: ["id"] },
+        nextSteps: { fields: ["id"] },
       },
     });
 
@@ -252,9 +263,11 @@ export async function deepDeleteDroplet(id: number) {
       return { ok: false, error: "Failed to delete droplet.", data: null };
     }
 
-    revalidateTag("authors");
-    revalidateTag("droplets");
-    revalidatePath("(general)/my-content", "page");
+    revalidateTag(CACHE_TAGS.authors);
+    revalidateTag(CACHE_TAGS.droplets);
+    revalidateTag(CACHE_TAGS.allEnrollments);
+    revalidateTag(CACHE_TAGS.playlists);
+    revalidateTag(CACHE_TAGS.allGroups);
     return { ok: true, error: null, data: data.data };
   } catch (err) {
     console.error(err);
@@ -265,9 +278,8 @@ export async function deepDeleteDroplet(id: number) {
 export async function updateDroplet(
   id: number,
   data: Partial<z.infer<typeof DropletSchema>>,
-  options: { regenerateSlug?: boolean; revalidate?: boolean } = {
+  options: { regenerateSlug?: boolean } = {
     regenerateSlug: false,
-    revalidate: false,
   },
 ) {
   try {
@@ -336,17 +348,12 @@ export async function updateDroplet(
       return { ok: false, error: errorMessage, data: null };
     }
 
-    if (
-      dataToSend.isHidden !== undefined ||
-      dataToSend.name ||
-      options.revalidate
-    ) {
-      revalidateTag("droplets");
-      revalidatePath("/admin");
-    }
+    revalidateTag(CACHE_TAGS.droplets);
+    revalidateTag(CACHE_TAGS.authors);
+    revalidateTag(CACHE_TAGS.allEnrollments);
+    revalidateTag(CACHE_TAGS.playlists);
+    revalidateTag(CACHE_TAGS.allGroups);
 
-    revalidateTag("authors");
-    revalidatePath("(general)/my-content", "page");
     return { ok: true, error: null, data: responseData.data };
   } catch (err) {
     console.error("Exception in updateDroplet:", err);
@@ -363,11 +370,13 @@ export async function archiveDroplet(droplet: Droplet, archiveState: boolean) {
     const user = await getCurrentUser();
     if (!user?.email) throw new Error("No email identified");
     const authorizedUser = await getAuthorizedUserByEmail(user.email);
-    const enrollments = await getEnrollmentsByAuthorizedUser(authorizedUser.id);
-
-    const toArchive = enrollments.filter((e) => e.droplet.id === droplet.id);
+    const enrollment = await getEnrollmentByUserAndDroplet(
+      authorizedUser.id,
+      droplet.id,
+    );
+    if (!enrollment) throw new Error("Not enrolled in this droplet");
     const response = await fetch(
-      `${STRAPI_API_URL}/api/enrollments/${toArchive[0].id}`,
+      `${STRAPI_API_URL}/api/enrollments/${enrollment.id}`,
       {
         method: "PUT",
         headers: {
@@ -385,12 +394,7 @@ export async function archiveDroplet(droplet: Droplet, archiveState: boolean) {
     if (!response.ok) {
       throw new Error("Failed to archive droplet");
     }
-    revalidateTag("dashboard");
-    revalidatePath("/");
-    revalidatePath("/draft");
-    revalidatePath(`/d/${droplet.slug}`);
-    revalidatePath("/dashboard");
-    revalidatePath("/dashboard/archived");
+    revalidateTag(CACHE_TAGS.enrollments(authorizedUser.id));
     return { success: true };
   } catch (error) {
     console.error("Error archiving droplet:", error);
@@ -422,8 +426,7 @@ export async function createNewTag(tag: string) {
     const result = await response.json();
     const createdTag = result.data;
 
-    revalidatePath("/new/droplet");
-    revalidatePath("/draft/d/[slug]/[lessonSlug]", "page");
+    revalidateTag(CACHE_TAGS.tags);
     return {
       success: true,
       data: {
@@ -504,9 +507,8 @@ export async function createDroplet(data: z.infer<typeof CreateDropletSchema>) {
       const errorMessage = `${responseData.error.message} (${errorPath})`;
       return { ok: false, error: errorMessage, data: null };
     }
-    revalidateTag("authors");
-    revalidateTag("droplets");
-    revalidatePath("(general)/my-content", "page");
+    revalidateTag(CACHE_TAGS.authors);
+    revalidateTag(CACHE_TAGS.droplets);
     return { ok: true, error: null, data: responseData.data };
   } catch (err) {
     console.error(err);
@@ -714,7 +716,6 @@ export async function duplicateDroplet(dropletId: number) {
 
       return blocks.map((block, index) => {
         console.log(`Block ${index}:`, block.__component);
-
         const { id, ...blockWithoutId } = block;
 
         switch (block.__component) {
@@ -789,73 +790,77 @@ export async function duplicateDroplet(dropletId: number) {
         (a, b) => a.orderIndex - b.orderIndex,
       );
 
-      for (let index = 0; index < sortedLessons.length; index++) {
-        const lesson = sortedLessons[index];
-        const lessonTimestamp = Date.now();
-        const lessonRandomSuffix = Math.random().toString(36).substring(2, 15);
-        const uniqueLessonSlug = `lesson-${lessonTimestamp}-${lessonRandomSuffix}`;
+      await Promise.all(
+        sortedLessons.map(async (lesson, index) => {
+          const lessonTimestamp = Date.now();
+          const lessonRandomSuffix = Math.random()
+            .toString(36)
+            .substring(2, 15);
+          const uniqueLessonSlug = `lesson-${lessonTimestamp}-${lessonRandomSuffix}`;
 
-        // Determine which version of blocks to use
-        const blocksVersion = lesson.blocksVersion || "v1";
-        const isV2 = blocksVersion === "v2";
+          // Determine which version of blocks to use
+          const blocksVersion = lesson.blocksVersion || "v1";
+          const isV2 = blocksVersion === "v2";
 
-        console.log(`Lesson: ${lesson.name}, blocksVersion: ${blocksVersion}`);
-
-        // Prepare lesson data based on version
-        const lessonData: any = {
-          name: lesson.name,
-          slug: uniqueLessonSlug,
-          type: lesson.type,
-          orderIndex: index,
-          blocksVersion: blocksVersion,
-          notes: lesson.notes || null,
-          droplets: [newDropletId],
-        };
-
-        // Add the appropriate blocks field
-        if (isV2 && lesson.blocksV2) {
-          // For v2 lessons, copy the blocksV2 JSON directly
-          lessonData.blocksV2 = lesson.blocksV2;
-          console.log(`Creating v2 lesson: ${lesson.name} with blocksV2 data`);
-        } else {
-          // For v1 lessons, clean the blocks array
-          const cleanedBlocks = cleanBlocks(lesson.blocks || []);
-          lessonData.blocks = cleanedBlocks;
           console.log(
-            `Creating v1 lesson: ${lesson.name} with ${cleanedBlocks.length} blocks`,
+            `Lesson: ${lesson.name}, blocksVersion: ${blocksVersion}`,
           );
-        }
 
-        const response = await fetch(STRAPI_API_URL + "/api/lessons", {
-          method: "POST",
-          body: JSON.stringify({ data: lessonData }),
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
-          },
-        });
+          // Prepare lesson data based on version
+          const lessonData: any = {
+            name: lesson.name,
+            slug: uniqueLessonSlug,
+            type: lesson.type,
+            orderIndex: index,
+            blocksVersion: blocksVersion,
+            notes: lesson.notes || null,
+            droplets: [newDropletId],
+          };
 
-        if (!response.ok) {
-          const errorData = await response.json();
-          console.error(
-            "Failed to create lesson:",
-            JSON.stringify(errorData, null, 2),
+          // Add the appropriate blocks field
+          if (isV2 && lesson.blocksV2) {
+            // For v2 lessons, copy the blocksV2 JSON directly
+            lessonData.blocksV2 = lesson.blocksV2;
+            console.log(
+              `Creating v2 lesson: ${lesson.name} with blocksV2 data`,
+            );
+          } else {
+            // For v1 lessons, clean the blocks array
+            const cleanedBlocks = cleanBlocks(lesson.blocks || []);
+            lessonData.blocks = cleanedBlocks;
+            console.log(
+              `Creating v1 lesson: ${lesson.name} with ${cleanedBlocks.length} blocks`,
+            );
+          }
+
+          const response = await fetch(STRAPI_API_URL + "/api/lessons", {
+            method: "POST",
+            body: JSON.stringify({ data: lessonData }),
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: "Bearer " + STRAPI_ACCESS_TOKEN,
+            },
+          });
+
+          if (!response.ok) {
+            const errorData = await response.json();
+            console.error(
+              "Failed to create lesson:",
+              JSON.stringify(errorData, null, 2),
+            );
+            throw new Error(`Failed to create lesson: ${lesson.name}`);
+          }
+
+          const createdLesson = await response.json();
+          console.log(
+            `Created lesson ${createdLesson.data.id} (${blocksVersion})`,
           );
-          throw new Error(`Failed to create lesson: ${lesson.name}`);
-        }
-
-        const createdLesson = await response.json();
-        console.log(
-          `Created lesson ${createdLesson.data.id} (${blocksVersion})`,
-        );
-
-        await new Promise((resolve) => setTimeout(resolve, 100));
-      }
+        }),
+      );
     }
 
-    revalidateTag("authors");
-    revalidateTag("droplets");
-    revalidatePath("(general)/my-content", "page");
+    revalidateTag(CACHE_TAGS.authors);
+    revalidateTag(CACHE_TAGS.droplets);
 
     return {
       ok: true,
@@ -881,6 +886,11 @@ export async function publishDraftToOriginal(
   draftDropletId: number,
   originalDropletId: number,
 ) {
+  let author: { id: number } | null = null;
+  let dbWritesStarted = false;
+  let draftEnrollments: { data?: any[] } = {};
+  let originalSlug: string | null = null;
+
   try {
     console.log("Starting publishDraftToOriginal", {
       draftDropletId,
@@ -889,10 +899,11 @@ export async function publishDraftToOriginal(
 
     const user = await getCurrentUser();
     if (!user?.email) throw new Error("No email identified");
-    const author = await getAuthorizedUserByEmail(user.email, {
+    const authorizedUser = await getAuthorizedUserByEmail(user.email, {
       populate: {},
     });
-    if (!author) throw new Error("No author identified");
+    if (!authorizedUser) throw new Error("No author identified");
+    author = authorizedUser;
 
     console.log("Fetching draft droplet...");
     // Fetch the draft droplet with all its data
@@ -939,6 +950,7 @@ export async function publishDraftToOriginal(
     if (!originalDroplet) {
       throw new Error("Original droplet not found");
     }
+    originalSlug = originalDroplet.slug;
     console.log(
       "Original droplet fetched:",
       originalDroplet.id,
@@ -946,6 +958,18 @@ export async function publishDraftToOriginal(
       originalDroplet.lessons?.length || 0,
       "lessons",
     );
+
+    // Fetch draft enrollments before DB writes begin
+    draftEnrollments = await fetch(
+      `${STRAPI_API_URL}/api/enrollments?filters[droplet][id][$eq]=${draftDropletId}&populate[authorizedUser][fields][0]=id`,
+      {
+        headers: {
+          Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+        },
+      },
+    ).then((res) => res.json());
+
+    dbWritesStarted = true;
 
     // Delete all lessons from the original droplet
     if (originalDroplet.lessons && originalDroplet.lessons.length > 0) {
@@ -1025,7 +1049,6 @@ export async function publishDraftToOriginal(
     );
     const updateResult = await updateDroplet(originalDropletId, updateData, {
       regenerateSlug: false,
-      revalidate: true,
     });
 
     if (!updateResult.ok) {
@@ -1037,38 +1060,38 @@ export async function publishDraftToOriginal(
 
     console.log("Updated original droplet successfully");
 
-    // After updating original droplet and creating lessons, update enrollments
     try {
       console.log("Updating enrollments to point to original droplet");
 
-      // Fetch all enrollments for the draft
-      const draftEnrollments = await fetch(
-        `${STRAPI_API_URL}/api/enrollments?filters[droplet][id][$eq]=${draftDropletId}&populate=*`,
-        {
-          headers: {
-            Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
-          },
-        },
-      ).then((res) => res.json());
-
       // Update each enrollment to point to the original droplet
-      for (const enrollment of draftEnrollments.data || []) {
-        await fetch(`${STRAPI_API_URL}/api/enrollments/${enrollment.id}`, {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
-          },
-          body: JSON.stringify({
-            data: {
-              droplet: originalDropletId,
+      await Promise.all(
+        (draftEnrollments.data || []).map(async (enrollment) => {
+          const res = await fetch(
+            `${STRAPI_API_URL}/api/enrollments/${enrollment.id}`,
+            {
+              method: "PUT",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
+              },
+              body: JSON.stringify({
+                data: {
+                  droplet: originalDropletId,
+                },
+              }),
             },
-          }),
-        });
-        console.log(
-          `Updated enrollment ${enrollment.id} to point to original droplet`,
-        );
-      }
+          );
+          if (!res.ok) {
+            console.error(
+              `Failed to update enrollment ${enrollment.id}: ${res.status}`,
+            );
+          } else {
+            console.log(
+              `Updated enrollment ${enrollment.id} to point to original droplet`,
+            );
+          }
+        }),
+      );
     } catch (error) {
       console.error("Error updating enrollments:", error);
     }
@@ -1125,9 +1148,8 @@ export async function publishDraftToOriginal(
         (a, b) => a.orderIndex - b.orderIndex,
       );
 
-      for (let index = 0; index < sortedLessons.length; index++) {
-        const lesson = sortedLessons[index];
-        try {
+      await Promise.all(
+        sortedLessons.map(async (lesson, index) => {
           // Determine which version of blocks to use
           const blocksVersion = lesson.blocksVersion || "v1";
           const isV2 = blocksVersion === "v2";
@@ -1145,7 +1167,7 @@ export async function publishDraftToOriginal(
             name: lesson.name,
             slug: `${lesson.slug}-${timestamp}-${randomSuffix}`,
             type: lesson.type,
-            orderIndex: index, // Use the array index to ensure sequential ordering
+            orderIndex: index,
             blocksVersion: blocksVersion,
             notes: lesson.notes || null,
             droplets: [originalDropletId],
@@ -1191,12 +1213,8 @@ export async function publishDraftToOriginal(
           console.log(
             `Successfully created lesson: ${lesson.name} with orderIndex: ${index}`,
           );
-          await new Promise((resolve) => setTimeout(resolve, 100));
-        } catch (error) {
-          console.error(`Error creating lesson ${lesson.name}:`, error);
-          throw error;
-        }
-      }
+        }),
+      );
     }
 
     console.log("Successfully merged lessons, now deleting draft droplet");
@@ -1212,13 +1230,8 @@ export async function publishDraftToOriginal(
       );
     }
 
-    revalidateTag("authors");
-    revalidateTag("droplets");
-    revalidatePath("(general)/my-content", "page");
-    revalidatePath(`/d/${originalDroplet.slug}`, "page");
-
     console.log("publishDraftToOriginal completed successfully");
-    return { ok: true, error: null, slug: originalDroplet.slug };
+    return { ok: true, error: null, slug: originalSlug };
   } catch (err) {
     console.error("Full error in publishDraftToOriginal:", err);
     return {
@@ -1229,6 +1242,15 @@ export async function publishDraftToOriginal(
           : "Database Error: Failed to publish draft.",
       slug: null,
     };
+  } finally {
+    if (dbWritesStarted) {
+      revalidateTag(CACHE_TAGS.authors);
+      revalidateTag(CACHE_TAGS.droplets);
+      revalidateTag(CACHE_TAGS.lesson);
+      revalidateTag(CACHE_TAGS.playlists);
+      revalidateTag(CACHE_TAGS.allEnrollments);
+      revalidateTag(CACHE_TAGS.allGroups);
+    }
   }
 }
 
@@ -1298,16 +1320,8 @@ export async function favoriteDroplet(
       throw new Error("Failed to update favorite status");
     }
 
-    revalidateTag("dashboard");
-    revalidateTag("droplets");
-    revalidatePath("/");
-    revalidatePath("/dashboard");
-    revalidatePath("/dashboard/favorited");
-    revalidatePath(`/d/${droplet.slug}`);
-    revalidatePath("/dashboard", "page");
-    revalidatePath("/", "page");
-    revalidateTag("enrollments");
-    revalidateTag("droplets");
+    revalidateTag(CACHE_TAGS.droplets);
+    revalidateTag(CACHE_TAGS.enrollments(authorizedUser.id));
     return { success: true };
   } catch (error) {
     console.error("Error updating favorite status:", error);
@@ -1362,7 +1376,7 @@ export async function updateDropletLearningObjective(
       throw new Error("Failed to update learning objective");
     }
 
-    revalidateTag("droplets");
+    revalidateTag(CACHE_TAGS.droplets);
     return { success: true };
   } catch (error) {
     console.error("Error updating learning objective:", error);

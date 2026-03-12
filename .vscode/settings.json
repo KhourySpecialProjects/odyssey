@@ -1,4 +1,5 @@
 {
   "r.lsp.promptToInstall": false,
-  "postman.settings.dotenv-detection-notification-visibility": false
+  "postman.settings.dotenv-detection-notification-visibility": false,
+  "jest.rootPath": "frontend"
 }

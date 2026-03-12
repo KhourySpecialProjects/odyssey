@@ -21,6 +21,7 @@ import { createBugReport } from "@/lib/actions";
 import { reportSchema } from "@/lib/validations/report";
 import { ArrowRightIcon, LoaderIcon } from "lucide-react";
 import { redirect, usePathname, useSearchParams } from "next/navigation";
+import posthog from "posthog-js";
 
 type Props = {
   name?: string | null;
@@ -45,8 +46,13 @@ export function ReportBugForm({ name, email, onSuccess }: Props) {
   });
 
   function onSubmit(values: z.infer<typeof reportSchema>) {
+    const sessionUrl = posthog.get_session_replay_url({
+      withTimestamp: true,
+      timestampLookBack: 30,
+    });
+
     startTransition(() => {
-      createBugReport(values).then((r) => {
+      createBugReport({ ...values, sessionUrl }).then((r) => {
         if (r && !r.ok) {
           toast.error("Uh oh! Something went wrong.", {
             description: r.error || "",
