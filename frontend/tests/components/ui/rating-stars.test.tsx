@@ -60,7 +60,10 @@ describe("StarRating", () => {
     );
 
     await waitFor(() => {
-      expect(getEnrollByID).toHaveBeenCalledWith(enrollmentID);
+      expect(getEnrollByID).toHaveBeenCalledWith(enrollmentID, {
+        fields: ["id", "rating"],
+        populate: {},
+      });
     });
   });
 
@@ -81,7 +84,10 @@ describe("StarRating", () => {
         render(<StarRating value={3} enrollmentID="123" average={false} />);
       });
 
-      expect(getEnrollByID).toHaveBeenCalledWith("123");
+      expect(getEnrollByID).toHaveBeenCalledWith("123", {
+        fields: ["id", "rating"],
+        populate: {},
+      });
     });
 
     it("handles error when fetching rating", async () => {

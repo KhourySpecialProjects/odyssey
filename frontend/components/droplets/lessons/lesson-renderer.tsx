@@ -997,7 +997,10 @@ export function LessonRenderer({
 
   const handleCreateNote = async (notePos: number, text: string) => {
     setExpanded(true);
-    const enrollment = await getEnrollByID(String(enrollmentId));
+    const enrollment = await getEnrollByID(String(enrollmentId), {
+      fields: ["id"],
+      populate: {},
+    });
 
     if (authUser) {
       const highlight = await getHighlights(authUser.id, text);

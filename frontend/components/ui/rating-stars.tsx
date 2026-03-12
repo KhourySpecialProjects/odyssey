@@ -39,7 +39,10 @@ const StarRating: React.FC<StarRatingProps> = ({
     const fetchRating = async () => {
       if (!average && enrollmentID) {
         try {
-          const enrollment = await getEnrollByID(enrollmentID);
+          const enrollment = await getEnrollByID(enrollmentID, {
+            fields: ["id", "rating"],
+            populate: {},
+          });
           if (enrollment?.rating) {
             setRating(enrollment.rating);
           }
@@ -55,7 +58,12 @@ const StarRating: React.FC<StarRatingProps> = ({
     if (!average && enrollmentID) {
       try {
         await changeEnrollmentRating(newRating, enrollmentID);
-        const droplet = (await getEnrollByID(enrollmentID)).droplet;
+        const droplet = (
+          await getEnrollByID(enrollmentID, {
+            fields: ["id"],
+            populate: { droplet: { fields: ["id"] } },
+          })
+        ).droplet;
         setRating(newRating);
         setHover(newRating);
         const averageRating = await calculateDropletAverageRating(droplet);

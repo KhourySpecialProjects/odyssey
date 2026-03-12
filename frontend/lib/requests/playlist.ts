@@ -183,6 +183,7 @@ export async function updatePlaylist(
     }
 
     revalidateTag(CACHE_TAGS.playlists);
+    revalidateTag(CACHE_TAGS.allGroups);
     return { ok: true, error: null, data: responseData.data };
   } catch (err) {
     console.error(err);

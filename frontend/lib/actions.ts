@@ -117,6 +117,7 @@ export async function setTimeZone(zone: string, userId: number) {
     if (!response.ok) {
       throw new Error("Failed to update timezone");
     }
+    revalidateTag(CACHE_TAGS.users);
     return { success: true };
   } catch (error) {
     console.error("Error updating timezone:", error);
@@ -162,6 +163,7 @@ export async function createBugReport(formData: z.infer<typeof reportSchema>) {
       const errorMessage = `${data.error.message} (${errorPath})`;
       return { ok: false, error: errorMessage, data: null };
     }
+    revalidateTag(CACHE_TAGS.reports);
 
     // Fire Linear issue creation — must not throw or block the return below
     await createLinearIssue({ ...strapiData, sessionUrl });
@@ -302,6 +304,7 @@ export async function createAccessRequest(
     return { error: "Database Error: Failed to create access request." };
   }
 
+  revalidateTag(CACHE_TAGS.accessRequests);
   redirect("/");
 }
 
@@ -356,6 +359,7 @@ export async function createCreationRequest(
       return { ok: false, error: errorMessage, data: null };
     }
 
+    revalidateTag(CACHE_TAGS.creationRequests);
     return { ok: true, data, error: null };
   } catch (err) {
     console.error(err);

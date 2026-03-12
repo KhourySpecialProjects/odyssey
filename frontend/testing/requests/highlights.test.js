@@ -87,7 +87,7 @@ describe("Highlights Tests", () => {
           fields: ["id", "color", "text", "yLevel"],
           pagination: { pageSize: 250, page: 1 },
         }),
-        next: { tags: ["highlights-5"] },
+        next: { tags: ["highlights-5"], revalidate: 900 },
       });
     });
 
@@ -114,7 +114,7 @@ describe("Highlights Tests", () => {
           pagination: { pageSize: 50, page: 2 },
           fields: ["id", "color"],
         }),
-        next: { tags: ["highlights-5"] },
+        next: { tags: ["highlights-5"], revalidate: 900 },
       });
     });
 
@@ -189,7 +189,7 @@ describe("Highlights Tests", () => {
           fields: ["text", "color", "yLevel"],
           pagination: { pageSize: 250, page: 1 },
         }),
-        next: { tags: ["highlights-5"] },
+        next: { tags: ["highlights-5"], revalidate: 900 },
       });
     });
 
@@ -216,7 +216,7 @@ describe("Highlights Tests", () => {
           pagination: { pageSize: 100, page: 3 },
           fields: ["text", "color"],
         }),
-        next: { tags: ["highlights-5"] },
+        next: { tags: ["highlights-5"], revalidate: 900 },
       });
     });
 

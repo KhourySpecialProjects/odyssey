@@ -144,6 +144,7 @@ export async function deleteLesson(id: number, revalidate: boolean = true) {
     if (revalidate) {
       revalidateTag(CACHE_TAGS.droplets);
       revalidateTag(CACHE_TAGS.allEnrollments);
+      revalidateTag(CACHE_TAGS.lesson);
     }
 
     return { ok: true, error: null, data: data.data };
@@ -196,6 +197,7 @@ export async function updateLesson(
 
     revalidateTag(CACHE_TAGS.droplets);
     revalidateTag(CACHE_TAGS.lesson);
+    revalidateTag(CACHE_TAGS.allEnrollments);
 
     return { ok: true, error: null, data: responseData.data };
   } catch (err) {
@@ -259,6 +261,7 @@ export async function addLesson(formData: z.infer<typeof CreateLessonSchema>) {
 
     revalidateTag(CACHE_TAGS.droplets);
     revalidateTag(CACHE_TAGS.allEnrollments);
+    revalidateTag(CACHE_TAGS.lesson);
 
     return { ok: true, error: null, data: lessonResult.data };
   } catch (err) {
@@ -444,6 +447,7 @@ export async function duplicateLessonToDroplet(
 
     revalidateTag(CACHE_TAGS.droplets);
     revalidateTag(CACHE_TAGS.allEnrollments);
+    revalidateTag(CACHE_TAGS.lesson);
 
     return {
       ok: true,

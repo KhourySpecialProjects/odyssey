@@ -9,6 +9,7 @@ import { getAuthorizedUserRoleIdByTitle } from "./authorized-user-roles";
 import { AuthorizedUserRoleTitle } from "../globals";
 import { CACHE_TAGS } from "../cache-tags";
 import { USER_POPULATES } from "./user-populates";
+import { getCurrentUser } from "../auth/session";
 
 const NEXT_PUBLIC_STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
@@ -150,6 +151,11 @@ export async function fetchAuthorizedUsers(): Promise<AuthorizedUser[]> {
 }
 
 export async function searchAuthorizedUsers(query: string) {
+  const user = await getCurrentUser();
+  if (!user?.email) {
+    throw new Error("User not authenticated");
+  }
+
   return fetchAPI<AuthorizedUser[]>("/authorized-users", {
     urlParams: {
       filters: {
@@ -617,34 +623,47 @@ export async function deleteAuthorizedUser(formData: FormData) {
 
 // fetching content editors
 export async function fetchContentEditors(): Promise<AuthorizedUser[]> {
-  // create a query for the backend
-  const query = qs.stringify({
-    filters: {
-      roles: {
-        title: {
-          $eq: "Content Editor",
+  const pageSize = 100;
+  let page = 1;
+  let allEditors: AuthorizedUser[] = [];
+
+  while (true) {
+    const query = qs.stringify({
+      filters: {
+        roles: {
+          title: {
+            $eq: "Content Editor",
+          },
         },
       },
-    },
-    fields: ["id", "username", "email"],
-    populate: {},
-    sort: ["username"],
-    pagination: {
-      pageSize: 100,
-      page: 1,
-    },
-  });
+      fields: ["id", "username", "email"],
+      populate: {},
+      sort: ["username"],
+      pagination: {
+        pageSize,
+        page,
+      },
+    });
 
-  const response = await fetch(`/api/authorized-users?${query}`, {
-    next: { tags: [CACHE_TAGS.authors], revalidate: 3600 },
-  });
+    const response = await fetch(
+      `${NEXT_PUBLIC_STRAPI_API_URL}/api/authorized-users?${query}`,
+      {
+        headers: { Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}` },
+        next: { tags: [CACHE_TAGS.authors], revalidate: 3600 },
+      },
+    );
 
-  // finally got response, so handle it
-  if (!response.ok) {
-    throw new Error("Could not get content editors");
+    if (!response.ok) {
+      throw new Error("Could not get content editors");
+    }
+
+    const data = await response.json();
+    const editors = flattenAttributes(data.data);
+    allEditors = allEditors.concat(editors);
+
+    if (editors.length < pageSize) break;
+    page++;
   }
 
-  // get the json from response and return
-  const data = await response.json();
-  return data.users;
+  return allEditors;
 }

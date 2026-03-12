@@ -185,7 +185,10 @@ export function NotesBar({
       tempNotes.push(newNote);
       setNotes(tempNotes);
 
-      const enrollment = await getEnrollByID(String(enrollmentId));
+      const enrollment = await getEnrollByID(String(enrollmentId), {
+        fields: ["id"],
+        populate: {},
+      });
       const result = await createNote(
         lesson,
         enrollment,

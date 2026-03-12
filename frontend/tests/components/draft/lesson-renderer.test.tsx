@@ -504,7 +504,10 @@ describe("LessonRenderer", () => {
       fireEvent.click(deleteButton);
 
       await waitFor(() => {
-        expect(getDropletBySlug).toHaveBeenCalledWith("test-droplet");
+        expect(getDropletBySlug).toHaveBeenCalledWith("test-droplet", {
+          fields: ["id"],
+          populate: {},
+        });
       });
 
       await waitFor(() => {
