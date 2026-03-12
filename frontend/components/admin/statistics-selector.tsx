@@ -1,27 +1,16 @@
 "use client";
 
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useState } from "react";
 
 // A component that displays a tab selector for different statistics views.
 // It takes a `content` prop, which is an object where keys are tab names and values are React nodes to display for each tab.
-// The selected tab is determined by the `statsTab` query parameter in the URL.
-// When a tab is clicked, it updates the URL with the corresponding `statsTab` value.
+// Uses local state for instant tab switching without server re-renders.
 export function StatisticsSelector({
   content,
 }: {
   content: Record<string, React.ReactNode>;
 }) {
-  const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const currentTab = searchParams.get("statsTab") || "General Statistics";
-
-  // Function to create a new query string with the updated statsTab parameter
-  const createQueryString = (value: string) => {
-    const params = new URLSearchParams(searchParams);
-    params.set("statsTab", value);
-    return params.toString();
-  };
+  const [currentTab, setCurrentTab] = useState(Object.keys(content)[0]);
 
   return (
     <div>
@@ -36,9 +25,7 @@ export function StatisticsSelector({
                   ? "bg-slate-200 dark:text-black"
                   : "hover:bg-slate-100 dark:hover:text-black")
               }
-              onClick={() => {
-                router.push(`${pathname}?${createQueryString(key)}`);
-              }}
+              onClick={() => setCurrentTab(key)}
             >
               {key}
             </div>

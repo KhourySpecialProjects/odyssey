@@ -1,5 +1,6 @@
 const {
   getEnrollmentsByAuthorizedUser,
+  getEnrollmentsForGroupMembers,
   getIsEnrolled,
   getIsEnrollComplete,
   changeEnrollmentRating,
@@ -60,7 +61,7 @@ afterEach(() => {
 });
 
 describe("Enrollment Tests", () => {
-  const { revalidatePath, revalidateTag } = require("next/cache");
+  const { revalidateTag } = require("next/cache");
 
   describe("getEnrollmentsByAuthorizedUser", () => {
     it("should find and return the enrollments corresponding to the given authorized user", async () => {
@@ -117,6 +118,152 @@ describe("Enrollment Tests", () => {
       fetchAPI.mockRejectedValueOnce(new Error("Failed to fetch enrollments"));
 
       await expect(getEnrollmentsByAuthorizedUser(500)).rejects.toThrow();
+    });
+  });
+
+  describe("getEnrollmentsForGroupMembers", () => {
+    const memberIds = [1, 2, 3];
+    const dropletIds = [10, 20];
+
+    function makeMockEnrollment(id, memberId, dropletId) {
+      return {
+        id: String(id),
+        authorizedUser: { id: memberId },
+        droplet: {
+          id: dropletId,
+          lessons: [{ id: 1, name: "Lesson 1", slug: "lesson-1" }],
+        },
+        viewedLessons: [],
+        isComplete: false,
+        completionDate: undefined,
+      };
+    }
+
+    it("should return enrollments from a single page", async () => {
+      const mockEnrollments = [
+        makeMockEnrollment(1, 1, 10),
+        makeMockEnrollment(2, 2, 10),
+        makeMockEnrollment(3, 3, 20),
+      ];
+      fetchAPI.mockResolvedValueOnce(mockEnrollments);
+
+      const result = await getEnrollmentsForGroupMembers(memberIds, dropletIds);
+
+      expect(result).toEqual(mockEnrollments);
+      expect(fetchAPI).toHaveBeenCalledTimes(1);
+    });
+
+    it("should return empty array when no enrollments exist", async () => {
+      fetchAPI.mockResolvedValueOnce([]);
+
+      const result = await getEnrollmentsForGroupMembers(memberIds, dropletIds);
+
+      expect(result).toEqual([]);
+      expect(fetchAPI).toHaveBeenCalledTimes(1);
+    });
+
+    it("should return empty array when fetchAPI returns null", async () => {
+      fetchAPI.mockResolvedValueOnce(null);
+
+      const result = await getEnrollmentsForGroupMembers(memberIds, dropletIds);
+
+      expect(result).toEqual([]);
+      expect(fetchAPI).toHaveBeenCalledTimes(1);
+    });
+
+    it("should paginate when first page is full (250 results)", async () => {
+      const fullPage = Array.from({ length: 250 }, (_, i) =>
+        makeMockEnrollment(i + 1, memberIds[i % 3], dropletIds[i % 2]),
+      );
+      const partialPage = [makeMockEnrollment(251, 1, 10)];
+
+      fetchAPI
+        .mockResolvedValueOnce(fullPage)
+        .mockResolvedValueOnce(partialPage);
+
+      const result = await getEnrollmentsForGroupMembers(memberIds, dropletIds);
+
+      expect(result).toHaveLength(251);
+      expect(fetchAPI).toHaveBeenCalledTimes(2);
+      expect(fetchAPI.mock.calls[0][1].urlParams.pagination.page).toBe(1);
+      expect(fetchAPI.mock.calls[1][1].urlParams.pagination.page).toBe(2);
+    });
+
+    it("should stop paginating when a full page is followed by an empty page", async () => {
+      const fullPage = Array.from({ length: 250 }, (_, i) =>
+        makeMockEnrollment(i + 1, memberIds[i % 3], dropletIds[i % 2]),
+      );
+      fetchAPI.mockResolvedValueOnce(fullPage).mockResolvedValueOnce([]);
+
+      const result = await getEnrollmentsForGroupMembers(memberIds, dropletIds);
+
+      expect(result).toHaveLength(250);
+      expect(fetchAPI).toHaveBeenCalledTimes(2);
+    });
+
+    it("should handle three pages of results", async () => {
+      const page1 = Array.from({ length: 250 }, (_, i) =>
+        makeMockEnrollment(i + 1, memberIds[i % 3], dropletIds[i % 2]),
+      );
+      const page2 = Array.from({ length: 250 }, (_, i) =>
+        makeMockEnrollment(i + 251, memberIds[i % 3], dropletIds[i % 2]),
+      );
+      const page3 = Array.from({ length: 50 }, (_, i) =>
+        makeMockEnrollment(i + 501, memberIds[i % 3], dropletIds[i % 2]),
+      );
+
+      fetchAPI
+        .mockResolvedValueOnce(page1)
+        .mockResolvedValueOnce(page2)
+        .mockResolvedValueOnce(page3);
+
+      const result = await getEnrollmentsForGroupMembers(memberIds, dropletIds);
+
+      expect(result).toHaveLength(550);
+      expect(fetchAPI).toHaveBeenCalledTimes(3);
+      expect(fetchAPI.mock.calls[0][1].urlParams.pagination.page).toBe(1);
+      expect(fetchAPI.mock.calls[1][1].urlParams.pagination.page).toBe(2);
+      expect(fetchAPI.mock.calls[2][1].urlParams.pagination.page).toBe(3);
+    });
+
+    it("should send correct $in filters for member and droplet IDs", async () => {
+      fetchAPI.mockResolvedValueOnce([]);
+
+      await getEnrollmentsForGroupMembers(memberIds, dropletIds);
+
+      const callArgs = fetchAPI.mock.calls[0];
+      expect(callArgs[0]).toBe("/enrollments");
+
+      const { filters } = callArgs[1].urlParams;
+      expect(filters.$and).toEqual([
+        { authorizedUser: { id: { $in: memberIds } } },
+        { droplet: { id: { $in: dropletIds } } },
+      ]);
+    });
+
+    it("should request authorizedUser, droplet, and viewedLessons in populate", async () => {
+      fetchAPI.mockResolvedValueOnce([]);
+
+      await getEnrollmentsForGroupMembers(memberIds, dropletIds);
+
+      const { populate, fields } = fetchAPI.mock.calls[0][1].urlParams;
+      expect(populate.authorizedUser).toEqual({ fields: ["id"] });
+      expect(populate.droplet.populate.lessons).toEqual({
+        fields: ["id", "name", "slug"],
+      });
+      expect(populate.viewedLessons).toEqual({
+        fields: ["id", "name", "slug"],
+      });
+      expect(fields).toContain("isComplete");
+      expect(fields).toContain("completionDate");
+    });
+
+    it("should handle fetch errors", async () => {
+      fetchAPI.mockRejectedValueOnce(new Error("API Error"));
+
+      await expect(
+        getEnrollmentsForGroupMembers(memberIds, dropletIds),
+      ).rejects.toThrow("API Error");
     });
   });
 
@@ -265,6 +412,7 @@ describe("Enrollment Tests", () => {
       getCurrentUser.mockResolvedValue({
         email: "test@northeastern.edu",
       });
+      getAuthorizedUserByEmail.mockResolvedValue({ id: 1 });
 
       global.fetch.mockResolvedValueOnce({
         ok: true,
@@ -274,8 +422,7 @@ describe("Enrollment Tests", () => {
       const result = await changeEnrollmentRating(3, "24");
 
       expect(result).toEqual({ success: true });
-      expect(revalidatePath).toHaveBeenCalledWith("/p/[slug]", "page");
-      expect(revalidatePath).toHaveBeenCalledWith("/dashboard", "page");
+      expect(revalidateTag).toHaveBeenCalledWith("enrollments-1");
     });
 
     it("should handle unauthenticated user", async () => {
@@ -285,6 +432,7 @@ describe("Enrollment Tests", () => {
 
       expect(result.success).toBe(false);
       expect(result.error).toBe("Failed to rate enrollment");
+      expect(revalidateTag).not.toHaveBeenCalled();
     });
 
     it("should handle user without email", async () => {
@@ -294,6 +442,7 @@ describe("Enrollment Tests", () => {
 
       expect(result.success).toBe(false);
       expect(result.error).toBe("Failed to rate enrollment");
+      expect(revalidateTag).not.toHaveBeenCalled();
     });
 
     it("should handle API error response", async () => {
@@ -311,7 +460,7 @@ describe("Enrollment Tests", () => {
         success: false,
         error: "Failed to rate enrollment",
       });
-      expect(revalidatePath).not.toHaveBeenCalled();
+      expect(revalidateTag).not.toHaveBeenCalled();
     });
 
     it("should handle network errors", async () => {
@@ -324,7 +473,7 @@ describe("Enrollment Tests", () => {
       const result = await changeEnrollmentRating(3, "24");
 
       expect(result.success).toBe(false);
-      expect(revalidatePath).not.toHaveBeenCalled();
+      expect(revalidateTag).not.toHaveBeenCalled();
     });
   });
 
@@ -447,6 +596,9 @@ describe("Enrollment Tests", () => {
 
   describe("updateEnrollmentFirstTime", () => {
     it("should successfully update isFirstTime", async () => {
+      getCurrentUser.mockResolvedValue({ email: "test@test.com" });
+      getAuthorizedUserByEmail.mockResolvedValue({ id: 1 });
+
       global.fetch.mockResolvedValueOnce({
         ok: true,
         json: () => Promise.resolve({ data: { id: 1, isFirstTime: false } }),
@@ -466,6 +618,7 @@ describe("Enrollment Tests", () => {
         }),
       );
       expect(result).toBeDefined();
+      expect(revalidateTag).toHaveBeenCalledWith("enrollments-1");
     });
 
     it("should handle API error", async () => {
@@ -476,6 +629,7 @@ describe("Enrollment Tests", () => {
       await expect(updateEnrollmentFirstTime("123")).rejects.toThrow(
         "Failed to update enrollment",
       );
+      expect(revalidateTag).not.toHaveBeenCalled();
     });
 
     it("should handle network error", async () => {
@@ -487,6 +641,7 @@ describe("Enrollment Tests", () => {
         "Error updating enrollment:",
         expect.any(Error),
       );
+      expect(revalidateTag).not.toHaveBeenCalled();
     });
   });
 
@@ -511,6 +666,7 @@ describe("Enrollment Tests", () => {
           method: "POST",
         }),
       );
+      expect(revalidateTag).toHaveBeenCalledWith("enrollments-1");
     });
 
     it("does not create enrollment when already enrolled", async () => {
@@ -548,6 +704,7 @@ describe("Enrollment Tests", () => {
       expect(result.ok).toBe(false);
       expect(result.error).toContain("Creation failed");
       expect(result.error).toContain("droplet");
+      expect(revalidateTag).not.toHaveBeenCalled();
     });
 
     it("handles API error when ok is true but has error", async () => {
@@ -572,6 +729,7 @@ describe("Enrollment Tests", () => {
 
       expect(result.ok).toBe(false);
       expect(result.error).toContain("Validation failed");
+      expect(revalidateTag).not.toHaveBeenCalled();
     });
 
     it("handles network errors", async () => {
@@ -585,6 +743,7 @@ describe("Enrollment Tests", () => {
 
       expect(result.error).toBe("Database Error: Failed to enroll.");
       expect(consoleError).toHaveBeenCalled();
+      expect(revalidateTag).not.toHaveBeenCalled();
     });
   });
 
@@ -607,13 +766,13 @@ describe("Enrollment Tests", () => {
           method: "DELETE",
         }),
       );
-      expect(revalidateTag).toHaveBeenCalledWith("enrollments");
+      expect(revalidateTag).toHaveBeenCalledWith("enrollments-1");
     });
 
     it("does not call API when enrollment not found", async () => {
       getCurrentUser.mockResolvedValue({ email: "test@test.com" });
       getAuthorizedUserByEmail.mockResolvedValue({ id: 1 });
-      fetchAPI.mockResolvedValue([{ id: 50, droplet: { id: 999 } }]);
+      fetchAPI.mockResolvedValue([]);
 
       await deleteEnrollment({ droplet: 123 });
 
@@ -628,6 +787,7 @@ describe("Enrollment Tests", () => {
 
       expect(result.error).toBe("Database Error: Failed to unenroll.");
       expect(consoleError).toHaveBeenCalled();
+      expect(revalidateTag).not.toHaveBeenCalled();
     });
 
     it("handles user without email", async () => {
@@ -638,6 +798,7 @@ describe("Enrollment Tests", () => {
 
       expect(result.error).toBe("Database Error: Failed to unenroll.");
       expect(consoleError).toHaveBeenCalled();
+      expect(revalidateTag).not.toHaveBeenCalled();
     });
 
     it("handles API error when ok is false", async () => {
@@ -660,6 +821,7 @@ describe("Enrollment Tests", () => {
 
       expect(result.ok).toBe(false);
       expect(result.error).toContain("Delete failed");
+      expect(revalidateTag).not.toHaveBeenCalled();
     });
 
     it("handles API error when ok is true but has error", async () => {
@@ -682,6 +844,7 @@ describe("Enrollment Tests", () => {
 
       expect(result.ok).toBe(false);
       expect(result.error).toContain("Validation error");
+      expect(revalidateTag).not.toHaveBeenCalled();
     });
   });
 
@@ -705,7 +868,7 @@ describe("Enrollment Tests", () => {
       const result = await createEnrollment(mockDroplet, []);
 
       expect(result.ok).toBe(true);
-      expect(revalidateTag).toHaveBeenCalledWith("enrollments");
+      expect(revalidateTag).toHaveBeenCalledWith("enrollments-1");
     });
 
     it("does not create when already enrolled", async () => {
@@ -717,28 +880,6 @@ describe("Enrollment Tests", () => {
 
       expect(result.ok).toBe(true);
       expect(global.fetch).not.toHaveBeenCalled();
-    });
-
-    it("revalidates droplet-specific paths when lessons exist", async () => {
-      getCurrentUser.mockResolvedValue({ email: "test@test.com" });
-      getAuthorizedUserByEmail.mockResolvedValue({ id: 1 });
-      fetchAPI.mockResolvedValue([]);
-
-      global.fetch.mockResolvedValueOnce({
-        ok: true,
-        json: () => Promise.resolve({ data: { id: 1 } }),
-      });
-
-      await createEnrollment(mockDroplet, []);
-
-      expect(revalidatePath).toHaveBeenCalledWith(
-        "/(droplets)/d/test-droplet",
-        "page",
-      );
-      expect(revalidatePath).toHaveBeenCalledWith(
-        "/(droplets)/d/test-droplet/lesson-1",
-        "page",
-      );
     });
 
     it("handles droplet without lessons", async () => {
@@ -753,11 +894,6 @@ describe("Enrollment Tests", () => {
 
       const dropletNoLessons = { ...mockDroplet, lessons: null };
       await createEnrollment(dropletNoLessons, []);
-
-      expect(revalidatePath).toHaveBeenCalledWith(
-        "/(droplets)/d/test-droplet",
-        "page",
-      );
     });
 
     it("handles unauthenticated user", async () => {
@@ -768,6 +904,7 @@ describe("Enrollment Tests", () => {
 
       expect(result.error).toBe("Database Error: Failed to enroll.");
       expect(consoleError).toHaveBeenCalled();
+      expect(revalidateTag).not.toHaveBeenCalled();
     });
 
     it("handles API error responses", async () => {
@@ -790,12 +927,14 @@ describe("Enrollment Tests", () => {
 
       expect(result.ok).toBe(false);
       expect(result.error).toContain("Creation failed");
+      expect(revalidateTag).not.toHaveBeenCalled();
     });
   });
 
   describe("updateViewedLessons", () => {
     it("adds lesson when not already viewed", async () => {
       getCurrentUser.mockResolvedValue({ email: "test@test.com" });
+      getAuthorizedUserByEmail.mockResolvedValue({ id: 1 });
       fetchAPI.mockResolvedValueOnce([
         {
           id: "123",
@@ -813,10 +952,12 @@ describe("Enrollment Tests", () => {
 
       expect(result.success).toBe(true);
       expect(result.alreadyViewed).toBe(false);
+      expect(revalidateTag).toHaveBeenCalledWith("enrollments-1");
     });
 
-    it("does not update when lesson already viewed", async () => {
+    it("does not update when lesson already viewed but not completing", async () => {
       getCurrentUser.mockResolvedValue({ email: "test@test.com" });
+      getAuthorizedUserByEmail.mockResolvedValue({ id: 1 });
       fetchAPI.mockResolvedValueOnce([
         {
           id: "123",
@@ -830,10 +971,36 @@ describe("Enrollment Tests", () => {
         json: async () => ({ data: {} }),
       });
 
+      const result = await updateViewedLessons("123", 3, [1, 2, 3, 4]);
+
+      expect(result.alreadyViewed).toBe(true);
+      expect(result.success).toBe(true);
+      // Not completing (4 not viewed) and already viewed, so no revalidation
+      expect(revalidateTag).not.toHaveBeenCalled();
+    });
+
+    it("revalidates when lesson already viewed but completion is newly detected", async () => {
+      getCurrentUser.mockResolvedValue({ email: "test@test.com" });
+      getAuthorizedUserByEmail.mockResolvedValue({ id: 1 });
+      fetchAPI.mockResolvedValueOnce([
+        {
+          id: "123",
+          viewedLessons: [{ id: 1 }, { id: 2 }, { id: 3 }],
+          isComplete: false,
+        },
+      ]);
+
+      global.fetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ data: {} }),
+      });
+
       const result = await updateViewedLessons("123", 3, [1, 2, 3]);
 
       expect(result.alreadyViewed).toBe(true);
       expect(result.success).toBe(true);
+      // Even though lesson was already viewed, completion changed so cache must refresh
+      expect(revalidateTag).toHaveBeenCalledWith("enrollments-1");
     });
 
     it("marks complete when all lessons viewed", async () => {
@@ -888,6 +1055,7 @@ describe("Enrollment Tests", () => {
 
       expect(result.success).toBe(false);
       expect(result.error).toBe("Failed to update viewed lessons");
+      expect(revalidateTag).not.toHaveBeenCalled();
     });
 
     it("handles API error", async () => {
@@ -907,6 +1075,7 @@ describe("Enrollment Tests", () => {
       const result = await updateViewedLessons("123", 1, [1, 2]);
 
       expect(result.success).toBe(false);
+      expect(revalidateTag).not.toHaveBeenCalled();
     });
 
     it("handles network errors", async () => {
@@ -921,6 +1090,7 @@ describe("Enrollment Tests", () => {
         "Error updating viewed lessons:",
         expect.any(Error),
       );
+      expect(revalidateTag).not.toHaveBeenCalled();
     });
   });
 
@@ -929,6 +1099,7 @@ describe("Enrollment Tests", () => {
       getCurrentUser.mockResolvedValue({
         email: "test@test.com",
       });
+      getAuthorizedUserByEmail.mockResolvedValue({ id: 1 });
 
       global.fetch.mockResolvedValue({
         ok: true,
@@ -945,6 +1116,7 @@ describe("Enrollment Tests", () => {
         }),
       );
       expect(result.success).toBe(true);
+      expect(revalidateTag).toHaveBeenCalledWith("enrollments-1");
     });
 
     it("should handle unauthenticated user", async () => {
@@ -954,6 +1126,7 @@ describe("Enrollment Tests", () => {
 
       expect(result.success).toBe(false);
       expect(result.error).toBe("Failed to add completion date");
+      expect(revalidateTag).not.toHaveBeenCalled();
     });
 
     it("should handle user without email", async () => {
@@ -962,6 +1135,7 @@ describe("Enrollment Tests", () => {
       const result = await updateCompletionDate("123");
 
       expect(result.success).toBe(false);
+      expect(revalidateTag).not.toHaveBeenCalled();
     });
 
     it("should handle API failure", async () => {
@@ -976,6 +1150,7 @@ describe("Enrollment Tests", () => {
       const result = await updateCompletionDate("123");
 
       expect(result.success).toBe(false);
+      expect(revalidateTag).not.toHaveBeenCalled();
     });
 
     it("should handle network errors", async () => {
@@ -991,6 +1166,7 @@ describe("Enrollment Tests", () => {
         "Error in adding completion date: ",
         expect.any(Error),
       );
+      expect(revalidateTag).not.toHaveBeenCalled();
     });
   });
 });

@@ -102,8 +102,9 @@ describe("LessonRenderer", () => {
     id: 1,
     name: "Test Lesson",
     slug: "test-lesson",
+    type: "standard",
     droplets: [],
-    notes: [],
+    notes: "",
     orderIndex: 1,
     blocks: [
       {
@@ -503,7 +504,10 @@ describe("LessonRenderer", () => {
       fireEvent.click(deleteButton);
 
       await waitFor(() => {
-        expect(getDropletBySlug).toHaveBeenCalledWith("test-droplet");
+        expect(getDropletBySlug).toHaveBeenCalledWith("test-droplet", {
+          fields: ["id"],
+          populate: {},
+        });
       });
 
       await waitFor(() => {

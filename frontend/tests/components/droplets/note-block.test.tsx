@@ -74,6 +74,7 @@ describe("NoteBlock", () => {
 
   const mockProps = {
     note: mockNote,
+    authorizedUserId: 1,
     onUpdate: jest.fn(),
     onDelete: jest.fn(),
     onFocus: jest.fn(),
@@ -217,6 +218,7 @@ describe("NoteBlock", () => {
         expect(updateNoteContent).toHaveBeenCalledWith(
           mockNote.id,
           expect.any(String),
+          1,
         );
         expect(mockProps.onUpdate).toHaveBeenCalled();
       });

@@ -27,7 +27,7 @@ describe("OpenEndedQuizEditor", () => {
   };
 
   const mockBlock = {
-    __component: "droplets.open-ended-quiz",
+    __component: "droplets.open-ended-quiz" as const,
     content: "",
     questions: [mockQuestion],
   };

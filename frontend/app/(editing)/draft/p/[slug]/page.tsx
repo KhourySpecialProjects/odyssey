@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { isAuthorizedUserAdmin, isContentCreator } from "@/lib/utils";
 import { getDroplets } from "@/lib/requests/droplet";
 import { PlaylistForm } from "@/components/playlists/playlist-form";
-import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
+import { getCachedUser } from "@/lib/requests/cached";
 import { getPlaylistBySlug } from "@/lib/requests/playlist";
 
 interface Props {
@@ -21,35 +21,36 @@ export default async function EditPlaylistPage({ params }: Props) {
   )
     return notFound();
 
-  const authUser = await getAuthorizedUserByEmail(user.email);
-
   const p = await params;
-  const playlist = await getPlaylistBySlug(p.slug, {
-    populate: {
-      droplets: {
-        populate: {
-          tags: true,
-          lessons: {
-            fields: ["id", "name", "slug"],
+  const [authUser, playlist] = await Promise.all([
+    getCachedUser(user.email),
+    getPlaylistBySlug(p.slug, {
+      populate: {
+        droplets: {
+          populate: {
+            tags: true,
+            lessons: {
+              fields: ["id", "name", "slug"],
+            },
+            fields: [
+              "id",
+              "name",
+              "slug",
+              "type",
+              "focusArea",
+              "learningObjectives",
+              "isHidden",
+              "status",
+            ],
           },
-          fields: [
-            "id",
-            "name",
-            "slug",
-            "type",
-            "focusArea",
-            "learningObjectives",
-            "isHidden",
-            "status",
-          ],
+        },
+        authors: {
+          fields: ["id", "name"],
+          populate: "*",
         },
       },
-      authors: {
-        fields: ["id", "name"],
-        populate: "*",
-      },
-    },
-  });
+    }),
+  ]);
 
   if (
     !playlist ||

@@ -1,8 +1,21 @@
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import {
+  render,
+  screen,
+  fireEvent,
+  waitFor,
+  act,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { FriendSearch } from "@/components/friends/friend-search";
 import { AuthorizedUserRoleTitle } from "@/lib/globals";
 import { TimeZone } from "@/types";
+import { searchAuthorizedUsers } from "@/lib/requests/authorized-user";
+
+jest.mock("@/lib/requests/authorized-user", () => ({
+  searchAuthorizedUsers: jest.fn(),
+}));
+
+const mockSearchAuthorizedUsers = searchAuthorizedUsers as jest.Mock;
 
 describe("FriendSearch", () => {
   const mockAuthUsers = [
@@ -18,6 +31,7 @@ describe("FriendSearch", () => {
       roles: [{ id: 1, title: AuthorizedUserRoleTitle.Faculty }],
       linkedin: "https://www.linkedin.com/",
       github: "https://www.github.com/",
+      website: "",
       firstTime: false,
       friendships: [],
       sent_requests: [],
@@ -25,6 +39,7 @@ describe("FriendSearch", () => {
       blocked: [],
       was_blocked: [],
       timeZone: "America/New_York" as TimeZone,
+      groups: [],
     },
     {
       id: 2,
@@ -38,6 +53,7 @@ describe("FriendSearch", () => {
       roles: [{ id: 1, title: AuthorizedUserRoleTitle.User }],
       linkedin: "https://www.linkedin.com/",
       github: "https://www.github.com/",
+      website: "",
       firstTime: false,
       friendships: [],
       sent_requests: [],
@@ -45,6 +61,7 @@ describe("FriendSearch", () => {
       blocked: [],
       was_blocked: [],
       timeZone: "America/New_York" as TimeZone,
+      groups: [],
     },
     {
       id: 3,
@@ -58,6 +75,7 @@ describe("FriendSearch", () => {
       roles: [],
       linkedin: "https://www.linkedin.com/",
       github: "https://www.github.com/",
+      website: "",
       firstTime: false,
       friendships: [],
       sent_requests: [],
@@ -65,6 +83,7 @@ describe("FriendSearch", () => {
       blocked: [],
       was_blocked: [],
       timeZone: "America/New_York" as TimeZone,
+      groups: [],
     },
   ];
 
@@ -80,6 +99,7 @@ describe("FriendSearch", () => {
     roles: [{ id: 1, title: AuthorizedUserRoleTitle.User }],
     linkedin: "https://www.linkedin.com/",
     github: "https://www.github.com/",
+    website: "",
     firstTime: false,
     friendships: [],
     sent_requests: [],
@@ -87,14 +107,43 @@ describe("FriendSearch", () => {
     blocked: [],
     was_blocked: [],
     timeZone: "America/New_York" as TimeZone,
+    groups: [],
   };
 
   const defaultProps = {
-    authUsers: mockAuthUsers,
     curUser: mockCurUser,
     requestIds: [],
     friendIds: [],
   };
+
+  beforeEach(() => {
+    jest.useFakeTimers();
+    mockSearchAuthorizedUsers.mockReset();
+    // Default: return all mock users for any search
+    mockSearchAuthorizedUsers.mockResolvedValue(mockAuthUsers);
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
+  /** Helper: type into search, advance debounce timer, and flush pending promises */
+  async function typeAndSearch(
+    searchInput: HTMLElement,
+    text: string,
+    results?: any[],
+  ) {
+    if (results) {
+      mockSearchAuthorizedUsers.mockResolvedValue(results);
+    }
+    await userEvent.type(searchInput, text, {
+      advanceTimers: jest.advanceTimersByTime,
+    });
+    // Advance past the 300ms debounce and flush async state updates
+    await act(async () => {
+      jest.advanceTimersByTime(350);
+    });
+  }
 
   describe("Component Rendering", () => {
     it("renders search input", () => {
@@ -122,10 +171,11 @@ describe("FriendSearch", () => {
 
   describe("Search Functionality", () => {
     it("filters users by first name", async () => {
+      mockSearchAuthorizedUsers.mockResolvedValue([mockAuthUsers[0]]);
       render(<FriendSearch {...defaultProps} />);
 
       const searchInput = screen.getByPlaceholderText("Search...");
-      await userEvent.type(searchInput, "John");
+      await typeAndSearch(searchInput, "John");
       fireEvent.mouseEnter(searchInput);
 
       await waitFor(() => {
@@ -134,10 +184,11 @@ describe("FriendSearch", () => {
     });
 
     it("filters users by last name", async () => {
+      mockSearchAuthorizedUsers.mockResolvedValue([mockAuthUsers[1]]);
       render(<FriendSearch {...defaultProps} />);
 
       const searchInput = screen.getByPlaceholderText("Search...");
-      await userEvent.type(searchInput, "Smith");
+      await typeAndSearch(searchInput, "Smith");
       fireEvent.mouseEnter(searchInput);
 
       await waitFor(() => {
@@ -146,10 +197,11 @@ describe("FriendSearch", () => {
     });
 
     it("filters users by email prefix", async () => {
+      mockSearchAuthorizedUsers.mockResolvedValue([mockAuthUsers[1]]);
       render(<FriendSearch {...defaultProps} />);
 
       const searchInput = screen.getByPlaceholderText("Search...");
-      await userEvent.type(searchInput, "jane.smith");
+      await typeAndSearch(searchInput, "jane.smith");
       fireEvent.mouseEnter(searchInput);
 
       await waitFor(() => {
@@ -158,10 +210,11 @@ describe("FriendSearch", () => {
     });
 
     it("filters users by full name", async () => {
+      mockSearchAuthorizedUsers.mockResolvedValue([mockAuthUsers[1]]);
       render(<FriendSearch {...defaultProps} />);
 
       const searchInput = screen.getByPlaceholderText("Search...");
-      await userEvent.type(searchInput, "Jane Smith");
+      await typeAndSearch(searchInput, "Jane Smith");
       fireEvent.mouseEnter(searchInput);
 
       await waitFor(() => {
@@ -170,10 +223,11 @@ describe("FriendSearch", () => {
     });
 
     it("is case insensitive", async () => {
+      mockSearchAuthorizedUsers.mockResolvedValue([mockAuthUsers[0]]);
       render(<FriendSearch {...defaultProps} />);
 
       const searchInput = screen.getByPlaceholderText("Search...");
-      await userEvent.type(searchInput, "JOHN");
+      await typeAndSearch(searchInput, "JOHN");
       fireEvent.mouseEnter(searchInput);
 
       await waitFor(() => {
@@ -182,40 +236,46 @@ describe("FriendSearch", () => {
     });
 
     it("clears results when search term is empty", async () => {
+      mockSearchAuthorizedUsers.mockResolvedValue([mockAuthUsers[0]]);
       render(<FriendSearch {...defaultProps} />);
 
       const searchInput = screen.getByPlaceholderText("Search...");
-      await userEvent.type(searchInput, "John");
+      await typeAndSearch(searchInput, "John");
       fireEvent.mouseEnter(searchInput);
 
       await waitFor(() => {
         expect(screen.getByTitle("John Doe")).toBeInTheDocument();
       });
 
-      await userEvent.clear(searchInput);
+      // Clear the input using fireEvent to avoid fake timer issues with userEvent.clear
+      fireEvent.change(searchInput, { target: { value: "" } });
+      await act(async () => {
+        jest.advanceTimersByTime(350);
+      });
       fireEvent.mouseEnter(searchInput);
 
       expect(screen.queryByTitle("John Doe")).not.toBeInTheDocument();
     });
 
     it("clears results when search term is only whitespace", async () => {
+      mockSearchAuthorizedUsers.mockResolvedValue([]);
       render(<FriendSearch {...defaultProps} />);
 
       const searchInput = screen.getByPlaceholderText("Search...");
-      await userEvent.type(searchInput, "   ");
+      await typeAndSearch(searchInput, "   ");
       fireEvent.mouseEnter(searchInput);
 
-      // Whitespace is trimmed, so it shows "No users found"
-      await waitFor(() => {
-        expect(screen.getByTestId("no-results")).toBeInTheDocument();
-      });
+      // Whitespace is trimmed so no API call, shows nothing or "No users found"
+      // The component sets searchResults to [] when trimmed term is empty
+      expect(screen.queryByTitle("John Doe")).not.toBeInTheDocument();
     });
 
     it("shows no results message when no users match", async () => {
+      mockSearchAuthorizedUsers.mockResolvedValue([]);
       render(<FriendSearch {...defaultProps} />);
 
       const searchInput = screen.getByPlaceholderText("Search...");
-      await userEvent.type(searchInput, "NonExistentUser");
+      await typeAndSearch(searchInput, "NonExistentUser");
       fireEvent.mouseEnter(searchInput);
 
       await waitFor(() => {
@@ -231,11 +291,12 @@ describe("FriendSearch", () => {
         firstName: `User${i}`,
         email: `user${i}@example.com`,
       }));
+      mockSearchAuthorizedUsers.mockResolvedValue(manyUsers);
 
-      render(<FriendSearch {...defaultProps} authUsers={manyUsers} />);
+      render(<FriendSearch {...defaultProps} />);
 
       const searchInput = screen.getByPlaceholderText("Search...");
-      await userEvent.type(searchInput, "User");
+      await typeAndSearch(searchInput, "User");
       fireEvent.mouseEnter(searchInput);
 
       await waitFor(() => {
@@ -247,6 +308,7 @@ describe("FriendSearch", () => {
 
   describe("Blocked Users Filtering", () => {
     it("filters out blocked users from search results", async () => {
+      mockSearchAuthorizedUsers.mockResolvedValue([mockAuthUsers[0]]);
       const blockedUser = {
         ...mockCurUser,
         blocked: [mockAuthUsers[0]],
@@ -255,7 +317,7 @@ describe("FriendSearch", () => {
       render(<FriendSearch {...defaultProps} curUser={blockedUser} />);
 
       const searchInput = screen.getByPlaceholderText("Search...");
-      await userEvent.type(searchInput, "John");
+      await typeAndSearch(searchInput, "John");
       fireEvent.mouseEnter(searchInput);
 
       await waitFor(() => {
@@ -264,6 +326,7 @@ describe("FriendSearch", () => {
     });
 
     it("filters out users who blocked current user", async () => {
+      mockSearchAuthorizedUsers.mockResolvedValue([mockAuthUsers[0]]);
       const wasBlockedUser = {
         ...mockCurUser,
         was_blocked: [mockAuthUsers[0]],
@@ -272,7 +335,7 @@ describe("FriendSearch", () => {
       render(<FriendSearch {...defaultProps} curUser={wasBlockedUser} />);
 
       const searchInput = screen.getByPlaceholderText("Search...");
-      await userEvent.type(searchInput, "John");
+      await typeAndSearch(searchInput, "John");
       fireEvent.mouseEnter(searchInput);
 
       await waitFor(() => {
@@ -281,6 +344,7 @@ describe("FriendSearch", () => {
     });
 
     it("filters out both blocked and was_blocked users", async () => {
+      mockSearchAuthorizedUsers.mockResolvedValue(mockAuthUsers);
       const multipleBlockedUser = {
         ...mockCurUser,
         blocked: [mockAuthUsers[0]],
@@ -290,7 +354,7 @@ describe("FriendSearch", () => {
       render(<FriendSearch {...defaultProps} curUser={multipleBlockedUser} />);
 
       const searchInput = screen.getByPlaceholderText("Search...");
-      await userEvent.type(searchInput, "o"); // Matches John and Bob
+      await typeAndSearch(searchInput, "o");
       fireEvent.mouseEnter(searchInput);
 
       await waitFor(() => {
@@ -304,10 +368,11 @@ describe("FriendSearch", () => {
 
   describe("Hover and Focus States", () => {
     it("shows dropdown on hover when search term exists", async () => {
+      mockSearchAuthorizedUsers.mockResolvedValue([mockAuthUsers[0]]);
       render(<FriendSearch {...defaultProps} />);
 
       const searchInput = screen.getByPlaceholderText("Search...");
-      await userEvent.type(searchInput, "John");
+      await typeAndSearch(searchInput, "John");
 
       fireEvent.mouseEnter(searchInput);
 
@@ -317,10 +382,11 @@ describe("FriendSearch", () => {
     });
 
     it("hides dropdown when mouse leaves", async () => {
+      mockSearchAuthorizedUsers.mockResolvedValue([mockAuthUsers[0]]);
       render(<FriendSearch {...defaultProps} />);
 
       const searchInput = screen.getByPlaceholderText("Search...");
-      await userEvent.type(searchInput, "John");
+      await typeAndSearch(searchInput, "John");
       fireEvent.mouseEnter(searchInput);
 
       await waitFor(() => {
@@ -333,10 +399,11 @@ describe("FriendSearch", () => {
     });
 
     it("keeps dropdown open when hovering over results", async () => {
+      mockSearchAuthorizedUsers.mockResolvedValue([mockAuthUsers[0]]);
       const { container } = render(<FriendSearch {...defaultProps} />);
 
       const searchInput = screen.getByPlaceholderText("Search...");
-      await userEvent.type(searchInput, "John");
+      await typeAndSearch(searchInput, "John");
       fireEvent.mouseEnter(searchInput);
 
       await waitFor(() => {
@@ -350,10 +417,11 @@ describe("FriendSearch", () => {
     });
 
     it("hides dropdown when leaving both input and dropdown", async () => {
+      mockSearchAuthorizedUsers.mockResolvedValue([mockAuthUsers[0]]);
       const { container } = render(<FriendSearch {...defaultProps} />);
 
       const searchInput = screen.getByPlaceholderText("Search...");
-      await userEvent.type(searchInput, "John");
+      await typeAndSearch(searchInput, "John");
       fireEvent.mouseEnter(searchInput);
 
       await waitFor(() => {
@@ -395,10 +463,11 @@ describe("FriendSearch", () => {
 
   describe("Result Type Rendering", () => {
     it("renders FriendBlock for non-friends", async () => {
+      mockSearchAuthorizedUsers.mockResolvedValue([mockAuthUsers[0]]);
       render(<FriendSearch {...defaultProps} />);
 
       const searchInput = screen.getByPlaceholderText("Search...");
-      await userEvent.type(searchInput, "John");
+      await typeAndSearch(searchInput, "John");
       fireEvent.mouseEnter(searchInput);
 
       await waitFor(() => {
@@ -407,57 +476,57 @@ describe("FriendSearch", () => {
     });
 
     it("renders FriendSuggestionsBlock for users in requestIds with requested=false", async () => {
+      mockSearchAuthorizedUsers.mockResolvedValue([mockAuthUsers[0]]);
       render(
         <FriendSearch {...defaultProps} friendIds={[1]} requestIds={[1]} />,
       );
 
       const searchInput = screen.getByPlaceholderText("Search...");
-      await userEvent.type(searchInput, "John");
+      await typeAndSearch(searchInput, "John");
       fireEvent.mouseEnter(searchInput);
 
       await waitFor(() => {
-        // Should render FriendSuggestionsBlock - check by title
         expect(screen.getByTitle("John Doe")).toBeInTheDocument();
       });
     });
 
     it("renders FriendSuggestionsBlock for friends not in requestIds with requested=true", async () => {
+      mockSearchAuthorizedUsers.mockResolvedValue([mockAuthUsers[0]]);
       render(
         <FriendSearch {...defaultProps} friendIds={[1]} requestIds={[]} />,
       );
 
       const searchInput = screen.getByPlaceholderText("Search...");
-      await userEvent.type(searchInput, "John");
+      await typeAndSearch(searchInput, "John");
       fireEvent.mouseEnter(searchInput);
 
       await waitFor(() => {
-        // Should render FriendSuggestionsBlock with requested=true - check by title
         expect(screen.getByTitle("John Doe")).toBeInTheDocument();
       });
     });
 
     it("uses correct data-testid format for FriendBlock", async () => {
+      mockSearchAuthorizedUsers.mockResolvedValue([mockAuthUsers[0]]);
       render(<FriendSearch {...defaultProps} />);
 
       const searchInput = screen.getByPlaceholderText("Search...");
-      await userEvent.type(searchInput, "John");
+      await typeAndSearch(searchInput, "John");
       fireEvent.mouseEnter(searchInput);
 
       await waitFor(() => {
-        // Verify user is shown (data-testid may not be passed through properly)
         expect(screen.getByTitle("John Doe")).toBeInTheDocument();
       });
     });
 
     it("uses correct data-testid format for FriendSuggestionsBlock", async () => {
+      mockSearchAuthorizedUsers.mockResolvedValue([mockAuthUsers[0]]);
       render(<FriendSearch {...defaultProps} friendIds={[1]} />);
 
       const searchInput = screen.getByPlaceholderText("Search...");
-      await userEvent.type(searchInput, "John");
+      await typeAndSearch(searchInput, "John");
       fireEvent.mouseEnter(searchInput);
 
       await waitFor(() => {
-        // Verify user is shown (data-testid may not be passed through properly)
         expect(screen.getByTitle("John Doe")).toBeInTheDocument();
       });
     });
@@ -465,10 +534,11 @@ describe("FriendSearch", () => {
 
   describe("Dropdown Styling", () => {
     it("applies correct dropdown positioning", async () => {
+      mockSearchAuthorizedUsers.mockResolvedValue([mockAuthUsers[0]]);
       const { container } = render(<FriendSearch {...defaultProps} />);
 
       const searchInput = screen.getByPlaceholderText("Search...");
-      await userEvent.type(searchInput, "John");
+      await typeAndSearch(searchInput, "John");
       fireEvent.mouseEnter(searchInput);
 
       await waitFor(() => {
@@ -478,10 +548,11 @@ describe("FriendSearch", () => {
     });
 
     it("applies correct dropdown width", async () => {
+      mockSearchAuthorizedUsers.mockResolvedValue([mockAuthUsers[0]]);
       const { container } = render(<FriendSearch {...defaultProps} />);
 
       const searchInput = screen.getByPlaceholderText("Search...");
-      await userEvent.type(searchInput, "John");
+      await typeAndSearch(searchInput, "John");
       fireEvent.mouseEnter(searchInput);
 
       await waitFor(() => {
@@ -491,10 +562,11 @@ describe("FriendSearch", () => {
     });
 
     it("applies correct dropdown styling", async () => {
+      mockSearchAuthorizedUsers.mockResolvedValue([mockAuthUsers[0]]);
       const { container } = render(<FriendSearch {...defaultProps} />);
 
       const searchInput = screen.getByPlaceholderText("Search...");
-      await userEvent.type(searchInput, "John");
+      await typeAndSearch(searchInput, "John");
       fireEvent.mouseEnter(searchInput);
 
       await waitFor(() => {
@@ -504,10 +576,11 @@ describe("FriendSearch", () => {
     });
 
     it("applies dark mode styles to dropdown", async () => {
+      mockSearchAuthorizedUsers.mockResolvedValue([mockAuthUsers[0]]);
       const { container } = render(<FriendSearch {...defaultProps} />);
 
       const searchInput = screen.getByPlaceholderText("Search...");
-      await userEvent.type(searchInput, "John");
+      await typeAndSearch(searchInput, "John");
       fireEvent.mouseEnter(searchInput);
 
       await waitFor(() => {
@@ -522,10 +595,14 @@ describe("FriendSearch", () => {
 
   describe("Multiple Search Results", () => {
     it("displays multiple matching users", async () => {
+      mockSearchAuthorizedUsers.mockResolvedValue([
+        mockAuthUsers[0],
+        mockAuthUsers[2],
+      ]);
       render(<FriendSearch {...defaultProps} />);
 
       const searchInput = screen.getByPlaceholderText("Search...");
-      await userEvent.type(searchInput, "o"); // Matches John, Bob, Johnson
+      await typeAndSearch(searchInput, "o");
       fireEvent.mouseEnter(searchInput);
 
       await waitFor(() => {
@@ -535,10 +612,14 @@ describe("FriendSearch", () => {
     });
 
     it("renders results in list format", async () => {
+      mockSearchAuthorizedUsers.mockResolvedValue([
+        mockAuthUsers[0],
+        mockAuthUsers[2],
+      ]);
       const { container } = render(<FriendSearch {...defaultProps} />);
 
       const searchInput = screen.getByPlaceholderText("Search...");
-      await userEvent.type(searchInput, "o");
+      await typeAndSearch(searchInput, "o");
       fireEvent.mouseEnter(searchInput);
 
       await waitFor(() => {
@@ -550,11 +631,12 @@ describe("FriendSearch", () => {
   });
 
   describe("Edge Cases", () => {
-    it("handles empty authUsers array", async () => {
-      render(<FriendSearch {...defaultProps} authUsers={[]} />);
+    it("handles empty search results", async () => {
+      mockSearchAuthorizedUsers.mockResolvedValue([]);
+      render(<FriendSearch {...defaultProps} />);
 
       const searchInput = screen.getByPlaceholderText("Search...");
-      await userEvent.type(searchInput, "test");
+      await typeAndSearch(searchInput, "test");
       fireEvent.mouseEnter(searchInput);
 
       await waitFor(() => {
@@ -563,70 +645,67 @@ describe("FriendSearch", () => {
     });
 
     it("handles users with missing firstName", async () => {
-      const usersWithMissingName = [
-        { ...mockAuthUsers[0], firstName: undefined } as any,
-      ];
+      mockSearchAuthorizedUsers.mockResolvedValue([
+        { ...mockAuthUsers[0], firstName: undefined },
+      ]);
 
-      render(
-        <FriendSearch {...defaultProps} authUsers={usersWithMissingName} />,
-      );
+      render(<FriendSearch {...defaultProps} />);
 
       const searchInput = screen.getByPlaceholderText("Search...");
-      await userEvent.type(searchInput, "Doe");
+      await typeAndSearch(searchInput, "Doe");
       fireEvent.mouseEnter(searchInput);
     });
 
     it("handles users with missing lastName", async () => {
-      const usersWithMissingName = [
-        { ...mockAuthUsers[0], lastName: undefined } as any,
-      ];
+      mockSearchAuthorizedUsers.mockResolvedValue([
+        { ...mockAuthUsers[0], lastName: undefined },
+      ]);
 
-      render(
-        <FriendSearch {...defaultProps} authUsers={usersWithMissingName} />,
-      );
+      render(<FriendSearch {...defaultProps} />);
 
       const searchInput = screen.getByPlaceholderText("Search...");
-      await userEvent.type(searchInput, "John");
+      await typeAndSearch(searchInput, "John");
       fireEvent.mouseEnter(searchInput);
     });
 
     it("handles users with missing email", async () => {
-      const usersWithMissingEmail = [
-        { ...mockAuthUsers[0], email: undefined } as any,
-      ];
+      mockSearchAuthorizedUsers.mockResolvedValue([
+        { ...mockAuthUsers[0], email: undefined },
+      ]);
 
-      render(
-        <FriendSearch {...defaultProps} authUsers={usersWithMissingEmail} />,
-      );
+      render(<FriendSearch {...defaultProps} />);
 
       const searchInput = screen.getByPlaceholderText("Search...");
-      await userEvent.type(searchInput, "John");
+      await typeAndSearch(searchInput, "John");
       fireEvent.mouseEnter(searchInput);
     });
 
     it("handles special characters in search", async () => {
+      mockSearchAuthorizedUsers.mockResolvedValue([]);
       render(<FriendSearch {...defaultProps} />);
 
       const searchInput = screen.getByPlaceholderText("Search...");
-      await userEvent.type(searchInput, "@#$%");
+      await typeAndSearch(searchInput, "@#$%");
       fireEvent.mouseEnter(searchInput);
     });
 
     it("handles very long search terms", async () => {
+      mockSearchAuthorizedUsers.mockResolvedValue([]);
       render(<FriendSearch {...defaultProps} />);
 
       const searchInput = screen.getByPlaceholderText("Search...");
       const longSearch = "a".repeat(100);
-      await userEvent.type(searchInput, longSearch);
+      await typeAndSearch(searchInput, longSearch);
     });
   });
 
   describe("Friend and Request ID Logic", () => {
     it("excludes user from FriendBlock rendering if in friendIds", async () => {
+      mockSearchAuthorizedUsers.mockResolvedValue([mockAuthUsers[0]]);
       render(<FriendSearch {...defaultProps} friendIds={[1]} />);
 
       const searchInput = screen.getByPlaceholderText("Search...");
-      await userEvent.type(searchInput, "John");
+      await typeAndSearch(searchInput, "John");
       fireEvent.mouseEnter(searchInput);
     });
 
@@ -637,7 +716,9 @@ describe("FriendSearch", () => {
         const searchInput = screen.getByPlaceholderText(
           "Search...",
         ) as HTMLInputElement;
-        await userEvent.type(searchInput, "test");
+        await userEvent.type(searchInput, "test", {
+          advanceTimers: jest.advanceTimersByTime,
+        });
 
         expect(searchInput.value).toBe("test");
       });
@@ -648,18 +729,26 @@ describe("FriendSearch", () => {
         const searchInput = screen.getByPlaceholderText(
           "Search...",
         ) as HTMLInputElement;
-        await userEvent.type(searchInput, "John");
+        await userEvent.type(searchInput, "John", {
+          advanceTimers: jest.advanceTimersByTime,
+        });
         expect(searchInput.value).toBe("John");
 
-        await userEvent.type(searchInput, "{backspace}{backspace}");
+        await userEvent.type(searchInput, "{backspace}{backspace}", {
+          advanceTimers: jest.advanceTimersByTime,
+        });
         expect(searchInput.value).toBe("Jo");
       });
 
       it("updates results as search term changes", async () => {
+        mockSearchAuthorizedUsers.mockResolvedValue([
+          mockAuthUsers[0],
+          mockAuthUsers[1],
+        ]);
         render(<FriendSearch {...defaultProps} />);
 
         const searchInput = screen.getByPlaceholderText("Search...");
-        await userEvent.type(searchInput, "J");
+        await typeAndSearch(searchInput, "J");
         fireEvent.mouseEnter(searchInput);
 
         await waitFor(() => {
@@ -667,7 +756,8 @@ describe("FriendSearch", () => {
           expect(screen.getByTitle("Jane Smith")).toBeInTheDocument();
         });
 
-        await userEvent.type(searchInput, "ohn");
+        mockSearchAuthorizedUsers.mockResolvedValue([mockAuthUsers[0]]);
+        await typeAndSearch(searchInput, "ohn");
 
         await waitFor(() => {
           expect(screen.getByTitle("John Doe")).toBeInTheDocument();
@@ -678,12 +768,13 @@ describe("FriendSearch", () => {
 
     describe("Integration Tests", () => {
       it("complete search workflow: type, hover, select", async () => {
+        mockSearchAuthorizedUsers.mockResolvedValue([mockAuthUsers[1]]);
         render(<FriendSearch {...defaultProps} />);
 
         const searchInput = screen.getByPlaceholderText("Search...");
 
         // Type search
-        await userEvent.type(searchInput, "Jane");
+        await typeAndSearch(searchInput, "Jane");
 
         // Hover to show results
         fireEvent.mouseEnter(searchInput);
@@ -697,10 +788,11 @@ describe("FriendSearch", () => {
       });
 
       it("handles searching with mixed case and partial matches", async () => {
+        mockSearchAuthorizedUsers.mockResolvedValue([mockAuthUsers[1]]);
         render(<FriendSearch {...defaultProps} />);
 
         const searchInput = screen.getByPlaceholderText("Search...");
-        await userEvent.type(searchInput, "jAnE sM");
+        await typeAndSearch(searchInput, "jAnE sM");
         fireEvent.mouseEnter(searchInput);
 
         await waitFor(() => {

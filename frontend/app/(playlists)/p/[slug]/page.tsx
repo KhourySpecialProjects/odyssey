@@ -2,8 +2,8 @@ import { getPlaylistBySlug } from "@/lib/requests/playlist";
 import { notFound } from "next/navigation";
 import { DropletTile } from "@/components/droplets/droplet-tile";
 import { getCurrentUser } from "@/lib/auth/session";
-import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
-import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
+import { getCachedUser } from "@/lib/requests/cached";
+import { getCachedEnrollmentsWithLessonIds } from "@/lib/requests/cached";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
@@ -31,47 +31,50 @@ type Params = {
 
 export default async function PlaylistPage({ params }: Props) {
   const p = await params;
-  const playlist = await getPlaylistBySlug(p.slug, {
-    populate: {
-      droplets: {
-        populate: {
-          tags: true,
-          lessons: {
-            fields: ["id", "name", "slug"],
+  const [playlist, user] = await Promise.all([
+    getPlaylistBySlug(p.slug, {
+      populate: {
+        droplets: {
+          populate: {
+            tags: true,
+            lessons: {
+              fields: ["id", "name", "slug"],
+            },
+            fields: [
+              "id",
+              "name",
+              "slug",
+              "type",
+              "focusArea",
+              "learningObjectives",
+              "isHidden",
+              "status",
+            ],
           },
-          fields: [
-            "id",
-            "name",
-            "slug",
-            "type",
-            "focusArea",
-            "learningObjectives",
-            "isHidden",
-            "status",
-          ],
+        },
+        authorized_users: {
+          fields: ["id"],
+        },
+        authors: {
+          fields: ["id", "name"],
+          populate: "*",
         },
       },
-      authorized_users: {
-        fields: ["id"],
-      },
-      authors: {
-        fields: ["id", "name"],
-        populate: "*",
-      },
-    },
-  });
+    }),
+    getCurrentUser(),
+  ]);
   if (!playlist) {
     notFound();
   }
-
-  const user = await getCurrentUser();
   let enrolledDropletIds: number[] = [];
   let completedLessonIds: number[] = [];
   let isEnrolled = false;
 
   if (user?.email) {
-    const authorizedUser = await getAuthorizedUserByEmail(user.email);
-    const enrollments = await getEnrollmentsByAuthorizedUser(authorizedUser.id);
+    const authorizedUser = await getCachedUser(user.email);
+    const enrollments = await getCachedEnrollmentsWithLessonIds(
+      authorizedUser.id,
+    );
     enrolledDropletIds = enrollments.map((e) => e.droplet.id);
 
     completedLessonIds = enrollments.flatMap(

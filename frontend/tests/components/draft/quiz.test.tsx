@@ -38,7 +38,7 @@ describe("QuizEditor", () => {
   };
 
   const mockBlock = {
-    __component: "droplets.quiz",
+    __component: "droplets.quiz" as const,
     questions: [mockQuestion],
   };
 
@@ -63,7 +63,7 @@ describe("QuizEditor", () => {
 
   it("renders with correct title for true/false quiz", () => {
     const trueFalseBlock = {
-      __component: "droplets.quiz",
+      __component: "droplets.quiz" as const,
       questions: [
         {
           id: 1,
@@ -151,7 +151,7 @@ describe("QuizEditor", () => {
 
   describe("QuizEditor", () => {
     const mockBlock = {
-      __component: "quiz",
+      __component: "droplets.quiz" as const,
       questions: [
         {
           id: 1,
@@ -181,7 +181,7 @@ describe("QuizEditor", () => {
       await user.click(screen.getByText("Add Question"));
 
       expect(mockProps.updateBlock).toHaveBeenCalledWith({
-        __component: "quiz",
+        __component: "droplets.quiz" as const,
         questions: expect.arrayContaining([
           expect.objectContaining({
             content: "",
@@ -202,7 +202,7 @@ describe("QuizEditor", () => {
 
   describe("QuizEditor", () => {
     const mockTrueFalseBlock = {
-      __component: "quiz",
+      __component: "droplets.quiz" as const,
       questions: [
         {
           id: 1,
@@ -216,7 +216,7 @@ describe("QuizEditor", () => {
     };
 
     const mockMultipleChoiceBlock = {
-      __component: "quiz",
+      __component: "droplets.quiz" as const,
       questions: [
         {
           id: 1,
@@ -255,7 +255,7 @@ describe("QuizEditor", () => {
 
     test("renders QuizQuestionEditor for each question", () => {
       const multipleQuestionBlock = {
-        __component: "quiz",
+        __component: "droplets.quiz" as const,
         questions: [
           {
             id: 1,
@@ -303,7 +303,7 @@ describe("QuizEditor", () => {
       fireEvent.click(addButton);
 
       expect(mockUpdateBlock).toHaveBeenCalledWith({
-        __component: "quiz",
+        __component: "droplets.quiz" as const,
         questions: expect.arrayContaining([
           ...mockTrueFalseBlock.questions,
           expect.objectContaining({
@@ -332,7 +332,7 @@ describe("QuizEditor", () => {
       fireEvent.click(addButton);
 
       expect(mockUpdateBlock).toHaveBeenCalledWith({
-        __component: "quiz",
+        __component: "droplets.quiz" as const,
         questions: expect.arrayContaining([
           ...mockMultipleChoiceBlock.questions,
           expect.objectContaining({
@@ -349,7 +349,7 @@ describe("QuizEditor", () => {
 
   describe("QuizEditor", () => {
     const mockBlock = {
-      __component: "droplets.quiz",
+      __component: "droplets.quiz" as const,
       questions: [
         {
           id: 1,

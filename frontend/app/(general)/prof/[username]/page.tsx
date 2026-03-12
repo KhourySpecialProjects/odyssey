@@ -1,4 +1,6 @@
 import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
+import { USER_POPULATES } from "@/lib/requests/user-populates";
+import { getCachedUserSocial } from "@/lib/requests/cached";
 import { AuthorizedUser, Enrollment } from "@/types";
 import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
 import { fetchFriends } from "@/lib/requests/friends";
@@ -16,8 +18,18 @@ export default async function PublicProfilePage({
 
   try {
     const userEmail = username + "@northeastern.edu";
-    const currentUser = await getCurrentUser();
-    const userData: AuthorizedUser = await getAuthorizedUserByEmail(userEmail);
+    const [currentUser, userData] = await Promise.all([
+      getCurrentUser(),
+      getAuthorizedUserByEmail(userEmail, {
+        fields: [...USER_POPULATES.social.fields],
+        populate: {
+          ...USER_POPULATES.social.populate,
+          droplets: {
+            fields: ["id", "name", "slug", "description", "averageRating"],
+          },
+        },
+      }) as Promise<AuthorizedUser>,
+    ]);
     const isViewingOwnProfile = currentUser?.email === userEmail;
 
     if (!userData.isPublic && !isViewingOwnProfile) {
@@ -50,7 +62,7 @@ export default async function PublicProfilePage({
 
     if (currentUser?.email) {
       try {
-        const maybeUserData = await getAuthorizedUserByEmail(currentUser.email);
+        const maybeUserData = await getCachedUserSocial(currentUser.email);
         if (!maybeUserData || typeof maybeUserData.id !== "number") {
           throw new Error("Current user data is missing a valid id");
         }

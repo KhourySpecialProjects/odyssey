@@ -21,9 +21,11 @@ describe("FriendBlock", () => {
     bio: "Test bio",
     profilePhoto: "https://example.com/photo.jpg",
     isEnabled: true,
+    isPublic: false,
     roles: [{ id: 1, title: AuthorizedUserRoleTitle.Faculty }],
     linkedin: "https://www.google.com/",
     github: "https://www.google.com/",
+    website: "",
     firstTime: false,
     friendships: [],
     sent_requests: [],
@@ -31,6 +33,7 @@ describe("FriendBlock", () => {
     blocked: [],
     was_blocked: [],
     timeZone: "America/New_York" as TimeZone,
+    groups: [],
   };
   const mockFriend = {
     id: 1,
@@ -40,9 +43,11 @@ describe("FriendBlock", () => {
     bio: "Test bio",
     profilePhoto: "https://example.com/photo.jpg",
     isEnabled: true,
+    isPublic: false,
     roles: [{ id: 1, title: AuthorizedUserRoleTitle.Faculty }],
     linkedin: "https://www.google.com/",
     github: "https://www.google.com/",
+    website: "",
     firstTime: false,
     friendships: [],
     sent_requests: [],
@@ -50,6 +55,7 @@ describe("FriendBlock", () => {
     blocked: [],
     was_blocked: [],
     timeZone: "America/New_York" as TimeZone,
+    groups: [],
   };
 
   it("renders friend information", () => {

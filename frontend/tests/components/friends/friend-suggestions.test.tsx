@@ -17,9 +17,11 @@ describe("FriendSuggestions", () => {
     bio: "Test bio",
     profilePhoto: "https://example.com/photo.jpg",
     isEnabled: true,
+    isPublic: false,
     roles: [{ id: 1, title: AuthorizedUserRoleTitle.Faculty }],
     linkedin: "https://www.google.com/",
     github: "https://www.google.com/",
+    website: "",
     firstTime: false,
     friendships: [],
     sent_requests: [],
@@ -27,6 +29,7 @@ describe("FriendSuggestions", () => {
     blocked: [],
     was_blocked: [],
     timeZone: "America/New_York" as TimeZone,
+    groups: [],
   };
 
   it("renders suggestions when available", async () => {

@@ -50,6 +50,7 @@ describe("FeedBlock", () => {
     roles: [],
     linkedin: "https://www.linkedin.com/",
     github: "https://www.github.com/",
+    website: "",
     firstName: "John",
     lastName: "Doe",
     bio: "Test bio",
@@ -61,6 +62,7 @@ describe("FeedBlock", () => {
     blocked: [],
     was_blocked: [],
     timeZone: "America/New_York" as TimeZone,
+    groups: [],
   };
 
   const mockAnnouncement = {

@@ -1,5 +1,5 @@
 import { getCurrentUser } from "@/lib/auth/session";
-import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
+import { getCachedUser } from "@/lib/requests/cached";
 import { getGroupBySlugV2 } from "@/lib/requests/groups";
 import { notFound } from "next/navigation";
 import { MemberList } from "@/components/group/member-list";
@@ -11,12 +11,9 @@ import { GroupDashboard } from "@/components/group/group-management-dashboard";
 import { isAuthorizedUserAdmin } from "@/lib/utils";
 import DueDateAnnouncements from "@/components/group/due-date-announcements";
 import { getGroupDueDates } from "@/lib/requests/groups";
-import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
+import { getEnrollmentsForGroupMembers } from "@/lib/requests/enrollment";
 import { AuthorizedUser, DueDate } from "@/types";
 import { DateTime } from "luxon";
-
-export const fetchCache = "force-no-store";
-export const revalidate = 0;
 
 type Props = {
   params: Promise<{
@@ -28,11 +25,12 @@ export default async function GroupDetailPage({ params }: Props) {
   const user = await getCurrentUser();
   if (!user?.email) return null;
 
-  const authorizedUser = await getAuthorizedUserByEmail(user.email);
-  if (!authorizedUser) return null;
-
   const p = await params;
-  const group = await getGroupBySlugV2(p?.slug);
+  const [authorizedUser, group] = await Promise.all([
+    getCachedUser(user.email),
+    getGroupBySlugV2(p?.slug),
+  ]);
+  if (!authorizedUser) return null;
   if (!group) {
     return notFound();
   }
@@ -88,38 +86,36 @@ export default async function GroupDetailPage({ params }: Props) {
     });
 
     try {
-      const memberEnrollmentsPromises = sortedMembers.map(async (member) => {
-        const enrollments = await getEnrollmentsByAuthorizedUser(member.id);
-        return { member, enrollments };
-      });
+      const memberIds = sortedMembers.map((m) => m.id);
+      const dropletIds = group.droplets.map((d) => d.id);
 
-      const memberEnrollments = await Promise.all(memberEnrollmentsPromises);
+      const allEnrollments = await getEnrollmentsForGroupMembers(
+        memberIds,
+        dropletIds,
+      );
 
-      memberEnrollments.forEach(({ member, enrollments }) => {
-        enrollments?.forEach((enrollment) => {
-          if (!enrollment.droplet) {
-            return;
-          }
+      allEnrollments.forEach((enrollment) => {
+        if (!enrollment.droplet || !enrollment.authorizedUser) return;
 
-          const completedLessons =
-            enrollment.viewedLessons?.map((lesson) => lesson.id) || [];
-          const dropletLessons = enrollment.droplet?.lessons?.length || 1;
-          const percentCompleted =
-            (completedLessons?.length / dropletLessons) * 100 || 0;
+        const memberId = enrollment.authorizedUser.id;
+        const completedLessons =
+          enrollment.viewedLessons?.map((lesson) => lesson.id) || [];
+        const dropletLessons = enrollment.droplet?.lessons?.length || 1;
+        const percentCompleted =
+          (completedLessons.length / dropletLessons) * 100 || 0;
 
-          const key = `${member.id}-${enrollment.droplet.id}`;
-          if (!completionStatuses[key]) {
-            completionStatuses[key] = {
-              completionPercentage: 0,
-              completionDate: undefined,
-            };
-          }
+        const key = `${memberId}-${enrollment.droplet.id}`;
+        if (!completionStatuses[key]) {
+          completionStatuses[key] = {
+            completionPercentage: 0,
+            completionDate: undefined,
+          };
+        }
 
-          completionStatuses[key].completionPercentage = percentCompleted;
-          if (enrollment.completionDate) {
-            completionStatuses[key].completionDate = enrollment.completionDate;
-          }
-        });
+        completionStatuses[key].completionPercentage = percentCompleted;
+        if (enrollment.completionDate) {
+          completionStatuses[key].completionDate = enrollment.completionDate;
+        }
       });
     } catch (error) {
       console.error("Error fetching completion statuses:", error);

@@ -1,149 +1,111 @@
-import { getDropletBySlug } from "@/lib/requests/droplet";
-import { Droplet } from "@/types";
 import { Metadata } from "next";
-import { notFound } from "next/navigation";
-import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
+import { getCachedUser } from "@/lib/requests/cached";
 import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
-import { getServerSession } from "next-auth";
-import { getNotesByDroplet } from "@/lib/requests/notes";
-import { getHighlightsByDroplet } from "@/lib/requests/highlights";
+import { getCurrentUser } from "@/lib/auth/session";
+import { getAllNotesByUser } from "@/lib/requests/notes";
+import { getAllHighlightsByUser } from "@/lib/requests/highlights";
+import { Note, Highlight } from "@/types";
 import { PDFDocument } from "pdf-lib";
 import { NoteSummary } from "@/components/droplets/lessons/note-taking/note-summary";
 import { NotesManager } from "@/components/droplets/notes-manager";
+import { redirect } from "next/navigation";
 
-type Props = {
-  params: Promise<Params>;
+export const metadata: Metadata = {
+  title: "Notes",
 };
 
-type Params = {
-  slug: string;
-};
+export default async function NotesPage() {
+  const currentUser = await getCurrentUser();
+  if (!currentUser?.email) redirect("/");
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const p = await params;
-  const droplet = await getDropletBySlug<Droplet>(p.slug, {
-    fields: ["*"],
-    populate: {
-      learningObjectives: { populate: "*" },
-      tags: { populate: "*" },
-      nextSteps: { populate: "*" },
-      lessons: {
-        fields: ["id", "name", "slug"],
-      },
-    },
-  });
-
-  if (!droplet) {
-    console.error("not found");
-    return notFound();
-  }
-
-  return {
-    title: `Recap | ${droplet.name}`,
-  };
-}
-
-export default async function DropletRecapRoute({ params }: Props) {
-  const p = await params;
-  const droplet = await getDropletBySlug<Droplet>(p.slug, {
-    fields: ["*"],
-    populate: {
-      learningObjectives: { populate: "*" },
-      tags: { populate: "*" },
-      nextSteps: { populate: "*" },
-    },
-  });
-  if (!droplet) {
-    console.error("not found");
-    return notFound();
-  }
-
-  const session = await getServerSession();
-  if (session?.user?.email) {
-    const user = await getAuthorizedUserByEmail(session.user.email);
-    const enrollments = await getEnrollmentsByAuthorizedUser(user.id, {
+  const user = await getCachedUser(currentUser.email);
+  const [enrollments, allUserNotes, allUserHighlights] = await Promise.all([
+    getEnrollmentsByAuthorizedUser(user.id, {
       populate: {
-        viewedLessons: {
-          fields: ["id", "name", "slug"],
-        },
         droplet: {
           populate: {
             lessons: {
               fields: ["id", "name", "slug"],
             },
-            tags: {
-              fields: ["*"],
-            },
-            usersFavorited: {
-              fields: "*",
-            },
           },
-          fields: ["id", "*"],
+          fields: ["id", "name", "slug"],
         },
       },
+    }),
+    getAllNotesByUser(user.id),
+    getAllHighlightsByUser(user.id),
+  ]);
+
+  // Build lessonId -> dropletId map from enrollments
+  const lessonToDroplet = new Map<number, number>();
+  for (const enrollment of enrollments) {
+    for (const lesson of enrollment.droplet.lessons || []) {
+      lessonToDroplet.set(lesson.id, enrollment.droplet.id);
+    }
+  }
+
+  // Group by droplet
+  const notesByDroplet = new Map<number, Note[]>();
+  for (const note of allUserNotes) {
+    const dropletId = lessonToDroplet.get(note.lesson?.id);
+    if (dropletId == null) continue;
+    if (!notesByDroplet.has(dropletId)) notesByDroplet.set(dropletId, []);
+    notesByDroplet.get(dropletId)!.push(note);
+  }
+
+  const highlightsByDroplet = new Map<number, Highlight[]>();
+  for (const hl of allUserHighlights) {
+    if (!hl.lesson?.id) continue;
+    const dropletId = lessonToDroplet.get(hl.lesson.id);
+    if (dropletId == null) continue;
+    if (!highlightsByDroplet.has(dropletId))
+      highlightsByDroplet.set(dropletId, []);
+    highlightsByDroplet.get(dropletId)!.push(hl);
+  }
+
+  // Build per-enrollment note/highlight data (keep all entries so indices align)
+  const allNotesUnfiltered = enrollments.map((enrollment) => {
+    const notes = notesByDroplet.get(enrollment.droplet.id) || [];
+    const highlights = (
+      highlightsByDroplet.get(enrollment.droplet.id) || []
+    ).filter((hl) => !notes.some((n) => n.highlight?.id === hl.id));
+    return { dropletId: enrollment.droplet.id, notes, highlights };
+  });
+
+  // Filtered version for the UI (only droplets with content)
+  const allNotes = allNotesUnfiltered.filter(
+    (d) => d.notes.length > 0 || d.highlights.length > 0,
+  );
+
+  const pdfDoc = await PDFDocument.create();
+
+  for (let i = 0; i < enrollments.length; i++) {
+    const enrollment = enrollments[i];
+    const dropletData = allNotesUnfiltered[i];
+    if (dropletData.notes.length === 0 && dropletData.highlights.length === 0)
+      continue;
+    const sectionPdfBytes = await NoteSummary({
+      filteredHighlights: dropletData.highlights,
+      notes: dropletData.notes,
+      droplet: enrollment.droplet,
     });
 
-    const authUser = await getAuthorizedUserByEmail(user.email);
+    const sectionPdfDoc = await PDFDocument.load(sectionPdfBytes);
+    const sectionPages = sectionPdfDoc.getPages();
 
-    const defined = <T,>(v: T | null | undefined): v is T => v != null;
-
-    const allNotes = (
-      await Promise.all(
-        enrollments.map(async (enrollment) => {
-          if (!enrollment) return null;
-          const dropletNotes = await getNotesByDroplet(
-            authUser.id,
-            enrollment.droplet.id,
-          );
-          const dropletHighlights = await getHighlightsByDroplet(
-            authUser.id,
-            enrollment.droplet.id,
-          );
-          // console.log(`Enrollment ${enrollment.id}, Droplet ${enrollment.droplet.id}: ${dropletHighlights.length} highlights found`);
-          // console.log(`Lessons in droplet: ${enrollment.droplet.lessons?.map(l => l.id).join(', ')}`);
-
-          return {
-            dropletId: enrollment.droplet.id,
-            notes: dropletNotes,
-            highlights: dropletHighlights.filter(
-              (highlight) =>
-                !dropletNotes.some(
-                  (lesson) => lesson.highlight?.id === highlight.id,
-                ),
-            ),
-          };
-        }),
-      )
-    ).filter(defined);
-
-    const pdfDoc = await PDFDocument.create();
-
-    for (let i = 0; i < enrollments.length; i++) {
-      const enrollment = enrollments[i];
-      const dropletData = allNotes[i];
-      const sectionPdfBytes = await NoteSummary({
-        filteredHighlights: dropletData?.highlights || [],
-        notes: dropletData?.notes || [],
-        droplet: enrollment.droplet,
-      });
-
-      const sectionPdfDoc = await PDFDocument.load(sectionPdfBytes);
-      const sectionPages = sectionPdfDoc.getPages();
-
-      for (let j = 0; j < sectionPages.length; j++) {
-        const [copiedPage] = await pdfDoc.copyPages(sectionPdfDoc, [j]);
-        pdfDoc.addPage(copiedPage);
-      }
+    for (let j = 0; j < sectionPages.length; j++) {
+      const [copiedPage] = await pdfDoc.copyPages(sectionPdfDoc, [j]);
+      pdfDoc.addPage(copiedPage);
     }
-
-    const initialPdfBytes = await pdfDoc.save();
-
-    return (
-      <NotesManager
-        enrollments={enrollments}
-        allNotes={allNotes ? allNotes : []}
-        initialPdfBytes={initialPdfBytes}
-      />
-    );
   }
+
+  const initialPdfBytes = await pdfDoc.save();
+
+  return (
+    <NotesManager
+      enrollments={enrollments}
+      allNotes={allNotes ? allNotes : []}
+      initialPdfBytes={initialPdfBytes}
+    />
+  );
 }

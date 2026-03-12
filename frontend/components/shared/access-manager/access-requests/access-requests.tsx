@@ -16,23 +16,19 @@ export function accessFilter(
   requests: AccessRequest[],
   users: AuthorizedUser[],
 ) {
+  const userEmails = new Set(
+    users.map((user) => user.email?.toLowerCase()?.trim()),
+  );
   return requests.filter(
-    (req) =>
-      !users.some(
-        (user) =>
-          user.firstName?.toLowerCase()?.trim() ===
-            req.givenName?.toLowerCase()?.trim() &&
-          user.lastName?.toLowerCase()?.trim() ===
-            req.familyName?.toLowerCase()?.trim() &&
-          user.email?.toLowerCase()?.trim() ===
-            req.email?.toLowerCase()?.trim(),
-      ),
+    (req) => !userEmails.has(req.email?.toLowerCase()?.trim()),
   );
 }
 
 export async function AccessRequests() {
-  const accessRequests = await fetchAccessRequests();
-  const authorizedUsers = await fetchAuthorizedUsers();
+  const [accessRequests, authorizedUsers] = await Promise.all([
+    fetchAccessRequests(),
+    fetchAuthorizedUsers(),
+  ]);
 
   const filteredRequests = accessFilter(accessRequests, authorizedUsers);
 

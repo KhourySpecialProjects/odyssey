@@ -1,6 +1,6 @@
 import { getCurrentUser } from "@/lib/auth/session";
 import { AuthorizedUser } from "@/types";
-import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
+import { getCachedUser } from "@/lib/requests/cached";
 import { Header } from "./index";
 
 export async function HeaderWrapper() {
@@ -8,9 +8,7 @@ export async function HeaderWrapper() {
 
   let authorizedUser: AuthorizedUser | null = null;
   if (user?.email) {
-    authorizedUser = (await getAuthorizedUserByEmail(
-      user.email,
-    )) as AuthorizedUser;
+    authorizedUser = (await getCachedUser(user.email)) as AuthorizedUser;
   }
 
   return <Header user={user} authorizedUser={authorizedUser} />;

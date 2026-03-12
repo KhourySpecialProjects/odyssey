@@ -29,9 +29,11 @@ describe("UserBlock", () => {
     bio: "Test bio",
     profilePhoto: "test.jpg",
     isEnabled: true,
+    isPublic: true,
     roles: [],
     linkedin: "https://linkedin.com/test",
     github: "https://github.com/test",
+    website: "",
     firstTime: false,
     friendships: [],
     sent_requests: [],
@@ -39,7 +41,7 @@ describe("UserBlock", () => {
     blocked: [],
     was_blocked: [],
     timeZone: "America/New_York" as TimeZone,
-    isPublic: true,
+    groups: [],
   };
 
   const mockCurrentUser = {
@@ -50,9 +52,11 @@ describe("UserBlock", () => {
     bio: "Test bio",
     profilePhoto: "test.jpg",
     isEnabled: true,
+    isPublic: true,
     roles: [],
     linkedin: "https://linkedin.com/test",
     github: "https://github.com/test",
+    website: "",
     firstTime: false,
     friendships: [],
     sent_requests: [],
@@ -60,7 +64,7 @@ describe("UserBlock", () => {
     blocked: [],
     was_blocked: [],
     timeZone: "America/New_York" as TimeZone,
-    isPublic: true,
+    groups: [],
   };
 
   beforeEach(() => {

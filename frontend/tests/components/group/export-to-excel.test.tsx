@@ -45,6 +45,8 @@ const mockAuthUser1: AuthorizedUser = {
   was_blocked: [],
   timeZone: "America/New_York",
   isPublic: true,
+  website: "",
+  groups: [],
 };
 
 const mockAuthUser2: AuthorizedUser = {
@@ -66,6 +68,8 @@ const mockAuthUser2: AuthorizedUser = {
   was_blocked: [],
   timeZone: "America/New_York",
   isPublic: true,
+  website: "",
+  groups: [],
 };
 
 const mockAuthUser3: AuthorizedUser = {
@@ -87,15 +91,18 @@ const mockAuthUser3: AuthorizedUser = {
   was_blocked: [],
   timeZone: "America/New_York",
   isPublic: true,
+  website: "",
+  groups: [],
 };
 
 const mockLesson1: Lesson = {
   id: 1,
   name: "Lesson 1",
   slug: "lesson-1",
+  type: "lesson",
   blocks: [],
   droplets: [],
-  notes: [],
+  notes: "",
   orderIndex: 0,
 };
 
@@ -103,9 +110,10 @@ const mockLesson2: Lesson = {
   id: 2,
   name: "Lesson 2",
   slug: "lesson-2",
+  type: "lesson",
   blocks: [],
   droplets: [],
-  notes: [],
+  notes: "",
   orderIndex: 1,
 };
 

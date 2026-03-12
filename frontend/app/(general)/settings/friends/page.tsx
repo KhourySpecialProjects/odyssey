@@ -3,10 +3,7 @@ import { FriendSuggestions } from "@/components/friends/friend-suggestions";
 import { Friends } from "@/components/friends/friends";
 import { getCurrentUser } from "@/lib/auth/session";
 import { notFound } from "next/navigation";
-import {
-  fetchAuthorizedUsers,
-  getAuthorizedUserByEmail,
-} from "@/lib/requests/authorized-user";
+import { getCachedUserSocial } from "@/lib/requests/cached";
 import { FriendSentRequests } from "@/components/friends/friend-sent-requests";
 import { FriendSearch } from "@/components/friends/friend-search";
 import {
@@ -24,40 +21,31 @@ export default async function AuthorProfileSettings({
 }) {
   const tab = (await searchParams)?.tab || "friends";
 
-  const authorizedUsers = await fetchAuthorizedUsers();
-
   const user = await getCurrentUser();
   if (!user?.email) return notFound();
 
-  const authorizedUser = await getAuthorizedUserByEmail(user.email);
+  const authorizedUser = await getCachedUserSocial(user.email);
   if (!authorizedUser) return notFound();
 
-  const sentRequests = await getSentRequestIds(authorizedUser);
-  const friends = (await fetchFriends(authorizedUser)).map((user) => user.id);
+  const [sentRequests, friendsList, suggestions] = await Promise.all([
+    getSentRequestIds(authorizedUser),
+    fetchFriends(authorizedUser),
+    fetchSuggestionsById(authorizedUser.id),
+  ]);
 
-  const requestedAuthUsers = authorizedUsers
-    .filter((user) => !sentRequests.includes(user.id))
-    .map((user) => user.id);
-  const friendedAuthUsers = authorizedUsers
-    .filter((user) => !friends.includes(user.id))
-    .map((user) => user.id);
-
-  const friendsList = await fetchFriends(authorizedUser);
+  const friends = friendsList.map((user) => user.id);
   const friendsLength = friendsList.length;
   const friendRequestsLength = authorizedUser.sent_requests.length;
   const friendReceivedRequestsLength = authorizedUser.received_requests.length;
   const friendBlockedLength = authorizedUser.blocked.length;
-  const friendSuggestionsLength = await (
-    await fetchSuggestionsById(authorizedUser.id)
-  ).length;
+  const friendSuggestionsLength = suggestions.length;
 
   return (
     <div className="flex flex-col">
       <FriendSearch
-        authUsers={authorizedUsers}
         curUser={authorizedUser}
-        requestIds={requestedAuthUsers}
-        friendIds={friendedAuthUsers}
+        requestIds={sentRequests}
+        friendIds={friends}
       ></FriendSearch>
 
       <div className="flex flex-col">

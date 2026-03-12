@@ -1,4 +1,4 @@
-import { revalidatePath, revalidateTag } from "next/cache";
+import { revalidateTag } from "next/cache";
 
 const {
   getNotesByAuthorizedUserAndLesson,
@@ -42,7 +42,7 @@ jest.mock("next/cache", () => ({
 }));
 
 describe("Notes Tests", () => {
-  const { revalidatePath, revalidateTag } = require("next/cache");
+  const { revalidateTag } = require("next/cache");
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -91,7 +91,8 @@ describe("Notes Tests", () => {
           },
         },
         next: {
-          tags: ["notes"],
+          tags: ["notes-4"],
+          revalidate: 900,
         },
       });
 
@@ -151,7 +152,8 @@ describe("Notes Tests", () => {
           },
         },
         next: {
-          tags: ["notes"],
+          tags: ["notes-4"],
+          revalidate: 900,
         },
       });
 
@@ -184,7 +186,8 @@ describe("Notes Tests", () => {
           fields: ["id", "content"],
         }),
         next: {
-          tags: ["notes"],
+          tags: ["notes-4"],
+          revalidate: 900,
         },
       });
     });
@@ -193,7 +196,6 @@ describe("Notes Tests", () => {
   describe("updateNoteContent", () => {
     beforeEach(() => {
       global.fetch.mockReset();
-      revalidatePath.mockReset();
       revalidateTag.mockReset();
     });
 
@@ -207,7 +209,7 @@ describe("Notes Tests", () => {
 
       global.fetch.mockResolvedValueOnce(mockResponse);
 
-      const result = await updateNoteContent(1, "Updated content");
+      const result = await updateNoteContent(1, "Updated content", 4);
 
       expect(global.fetch).toHaveBeenCalledWith(
         expect.stringContaining("/api/notes/1"),
@@ -225,11 +227,7 @@ describe("Notes Tests", () => {
         }),
       );
 
-      expect(revalidatePath).toHaveBeenCalledWith(
-        "/d/[slug]/[lessonSlug]",
-        "page",
-      );
-      expect(revalidateTag).toHaveBeenCalledWith("notes");
+      expect(revalidateTag).toHaveBeenCalledWith("notes-4");
 
       expect(result).toEqual({ success: true });
     });
@@ -245,10 +243,9 @@ describe("Notes Tests", () => {
         .spyOn(console, "error")
         .mockImplementation(() => {});
 
-      const result = await updateNoteContent(1, "Test content");
+      const result = await updateNoteContent(1, "Test content", 4);
 
       expect(result).toEqual({ success: false, error: expect.any(Object) });
-      expect(revalidatePath).not.toHaveBeenCalled();
       expect(revalidateTag).not.toHaveBeenCalled();
 
       consoleSpy.mockRestore();
@@ -261,10 +258,9 @@ describe("Notes Tests", () => {
         .spyOn(console, "error")
         .mockImplementation(() => {});
 
-      const result = await updateNoteContent(1, "Test content");
+      const result = await updateNoteContent(1, "Test content", 4);
 
       expect(result).toEqual({ success: false, error: expect.any(Error) });
-      expect(revalidatePath).not.toHaveBeenCalled();
       expect(revalidateTag).not.toHaveBeenCalled();
 
       consoleSpy.mockRestore();
@@ -274,7 +270,6 @@ describe("Notes Tests", () => {
   describe("updateNotePosition", () => {
     beforeEach(() => {
       global.fetch.mockReset();
-      revalidatePath.mockReset();
       revalidateTag.mockReset();
     });
 
@@ -286,7 +281,7 @@ describe("Notes Tests", () => {
 
       global.fetch.mockResolvedValueOnce(mockResponse);
 
-      const result = await updateNotePosition(1, 150);
+      const result = await updateNotePosition(1, 150, 4);
 
       expect(global.fetch).toHaveBeenCalledWith(
         expect.stringContaining("/api/notes/1"),
@@ -304,11 +299,7 @@ describe("Notes Tests", () => {
         }),
       );
 
-      expect(revalidatePath).toHaveBeenCalledWith(
-        "/d/[slug]/[lessonSlug]",
-        "page",
-      );
-      expect(revalidateTag).toHaveBeenCalledWith("notes");
+      expect(revalidateTag).toHaveBeenCalledWith("notes-4");
 
       expect(result).toEqual({ success: true });
     });
@@ -324,10 +315,9 @@ describe("Notes Tests", () => {
         .spyOn(console, "error")
         .mockImplementation(() => {});
 
-      const result = await updateNotePosition(1, 150);
+      const result = await updateNotePosition(1, 150, 4);
 
       expect(result).toEqual({ success: false, error: expect.any(Object) });
-      expect(revalidatePath).not.toHaveBeenCalled();
       expect(revalidateTag).not.toHaveBeenCalled();
 
       consoleSpy.mockRestore();
@@ -340,10 +330,9 @@ describe("Notes Tests", () => {
         .spyOn(console, "error")
         .mockImplementation(() => {});
 
-      const result = await updateNotePosition(1, 150);
+      const result = await updateNotePosition(1, 150, 4);
 
       expect(result).toEqual({ success: false, error: expect.any(Error) });
-      expect(revalidatePath).not.toHaveBeenCalled();
       expect(revalidateTag).not.toHaveBeenCalled();
 
       consoleSpy.mockRestore();
@@ -353,7 +342,6 @@ describe("Notes Tests", () => {
   describe("createNote", () => {
     beforeEach(() => {
       global.fetch.mockReset();
-      revalidatePath.mockReset();
       revalidateTag.mockReset();
     });
 
@@ -393,6 +381,7 @@ describe("Notes Tests", () => {
         mockLesson,
         mockEnrollment,
         mockPosition,
+        4,
         mockHighlight,
         mockContent,
       );
@@ -417,11 +406,7 @@ describe("Notes Tests", () => {
         }),
       );
 
-      expect(revalidatePath).toHaveBeenCalledWith(
-        "/d/[slug]/[lessonSlug]",
-        "page",
-      );
-      expect(revalidateTag).toHaveBeenCalledWith("notes");
+      expect(revalidateTag).toHaveBeenCalledWith("notes-4");
 
       expect(result).toEqual({ success: true });
     });
@@ -438,7 +423,12 @@ describe("Notes Tests", () => {
 
       global.fetch.mockResolvedValueOnce(mockResponse);
 
-      const result = await createNote(mockLesson, mockEnrollment, mockPosition);
+      const result = await createNote(
+        mockLesson,
+        mockEnrollment,
+        mockPosition,
+        4,
+      );
 
       expect(global.fetch).toHaveBeenCalledWith(
         expect.anything(),
@@ -472,13 +462,17 @@ describe("Notes Tests", () => {
         .spyOn(console, "error")
         .mockImplementation(() => {});
 
-      const result = await createNote(mockLesson, mockEnrollment, mockPosition);
+      const result = await createNote(
+        mockLesson,
+        mockEnrollment,
+        mockPosition,
+        4,
+      );
 
       expect(result).toEqual({
         success: false,
         error: "Failed to add new note",
       });
-      expect(revalidatePath).not.toHaveBeenCalled();
       expect(revalidateTag).not.toHaveBeenCalled();
 
       consoleSpy.mockRestore();
@@ -495,13 +489,17 @@ describe("Notes Tests", () => {
         .spyOn(console, "error")
         .mockImplementation(() => {});
 
-      const result = await createNote(mockLesson, mockEnrollment, mockPosition);
+      const result = await createNote(
+        mockLesson,
+        mockEnrollment,
+        mockPosition,
+        4,
+      );
 
       expect(result).toEqual({
         success: false,
         error: "Failed to process request",
       });
-      expect(revalidatePath).not.toHaveBeenCalled();
       expect(revalidateTag).not.toHaveBeenCalled();
 
       consoleSpy.mockRestore();
@@ -512,7 +510,6 @@ describe("Notes Tests", () => {
 describe("deleteNote", () => {
   beforeEach(() => {
     global.fetch.mockReset();
-    revalidatePath.mockReset();
     revalidateTag.mockReset();
   });
   it("successfully deletes a note", async () => {
@@ -524,7 +521,7 @@ describe("deleteNote", () => {
 
     global.fetch.mockResolvedValueOnce(mockResponse);
 
-    const result = await deleteNote(1);
+    const result = await deleteNote(1, 4);
 
     expect(global.fetch).toHaveBeenCalledWith(
       expect.stringMatching("/api/notes/1"),
@@ -543,11 +540,7 @@ describe("deleteNote", () => {
       data: { id: 1 },
     });
 
-    expect(revalidatePath).toHaveBeenCalledWith(
-      "/d/[slug]/[lessonSlug]",
-      "page",
-    );
-    expect(revalidateTag).toHaveBeenCalledWith("notes");
+    expect(revalidateTag).toHaveBeenCalledWith("notes-4");
   });
 
   it("handles deletion failure", async () => {
@@ -559,7 +552,7 @@ describe("deleteNote", () => {
 
     global.fetch.mockResolvedValueOnce(mockResponse);
 
-    const result = await deleteNote(1);
+    const result = await deleteNote(1, 4);
 
     expect(result).toEqual({
       ok: false,
@@ -567,7 +560,6 @@ describe("deleteNote", () => {
       data: null,
     });
 
-    expect(revalidatePath).not.toHaveBeenCalled();
     expect(revalidateTag).not.toHaveBeenCalled();
   });
 });

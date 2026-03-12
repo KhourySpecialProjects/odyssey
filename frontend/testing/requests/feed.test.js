@@ -5,6 +5,7 @@ const {
   createKudosAnnouncement,
   createPlaylistAnnouncement,
   createGroupAnnouncement,
+  createSystemAnnouncement,
 } = require("../../lib/requests/feed");
 const { flattenAttributes } = require("../../lib/utils");
 
@@ -38,7 +39,7 @@ jest.mock("next/cache", () => ({
 }));
 
 describe("Feed tests", () => {
-  const { revalidatePath } = require("next/cache");
+  const { revalidateTag } = require("next/cache");
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -46,11 +47,18 @@ describe("Feed tests", () => {
 
   describe("fetchAnnouncements", () => {
     it("should fetch and return announcements for a user", async () => {
+      const { fetchAPI } = require("../../lib/utils");
+
       const mockUser = {
         id: 5,
         firstName: "Test",
         lastName: "User",
         email: "test.user@northeastern.edu",
+        friendships: [
+          {
+            authorized_users: [{ id: 5 }, { id: 10 }],
+          },
+        ],
       };
 
       const mockAnnouncements = [
@@ -68,8 +76,6 @@ describe("Feed tests", () => {
         },
       ];
 
-      const mockDroplet = { id: 10, name: "Sample Droplet" };
-
       const mockStrapiResponse = {
         data: mockAnnouncements.map((announcement) => ({
           id: announcement.id,
@@ -81,6 +87,12 @@ describe("Feed tests", () => {
         })),
       };
 
+      // Mock the 3 parallel pre-compute queries via fetchAPI
+      fetchAPI
+        .mockResolvedValueOnce([{ id: 1 }]) // groups
+        .mockResolvedValueOnce([{ id: 2 }]) // playlists
+        .mockResolvedValueOnce([{ id: 3, droplet: { id: 100 } }]); // enrollments
+
       global.fetch.mockResolvedValueOnce({
         ok: true,
         json: async () => mockStrapiResponse,
@@ -88,13 +100,16 @@ describe("Feed tests", () => {
 
       const result = await fetchAnnouncements(mockUser);
 
+      // fetchAPI called 3 times for pre-compute
+      expect(fetchAPI).toHaveBeenCalledTimes(3);
+
       expect(global.fetch).toHaveBeenCalledWith(
         expect.stringMatching(/\/api\/announcements\?/),
         expect.objectContaining({
           headers: expect.objectContaining({
             Authorization: expect.stringContaining("Bearer"),
           }),
-          cache: "no-store",
+          next: { tags: ["announcements"], revalidate: 900 },
         }),
       );
 
@@ -110,7 +125,15 @@ describe("Feed tests", () => {
     });
 
     it("should handle fetch errors", async () => {
-      const mockUser = { id: 5 };
+      const { fetchAPI } = require("../../lib/utils");
+      const mockUser = { id: 5, friendships: [] };
+
+      // Mock pre-compute queries to succeed, but the main fetch fails
+      fetchAPI
+        .mockResolvedValueOnce([])
+        .mockResolvedValueOnce([])
+        .mockResolvedValueOnce([]);
+
       global.fetch.mockRejectedValueOnce(new Error("Network error"));
 
       await expect(fetchAnnouncements(mockUser)).rejects.toThrow(
@@ -122,7 +145,6 @@ describe("Feed tests", () => {
   describe("createFriendAnnouncement", () => {
     beforeEach(() => {
       global.fetch.mockReset();
-      revalidatePath.mockReset();
     });
 
     it("should successfully create a friend announcement", async () => {
@@ -162,7 +184,7 @@ describe("Feed tests", () => {
       expect(requestBody.data.type).toBe("friend");
       expect(requestBody.data.authorized_user).toBe(mockUser.id);
 
-      expect(revalidatePath).toHaveBeenCalledWith("/feed");
+      expect(revalidateTag).toHaveBeenCalledWith("announcements");
 
       expect(result).toEqual({ success: true });
     });
@@ -201,7 +223,7 @@ describe("Feed tests", () => {
       const result = await createFriendAnnouncement(mockDroplet, mockUser);
 
       expect(result).toEqual({ success: false, error: expect.any(Error) });
-      expect(revalidatePath).not.toHaveBeenCalled();
+      expect(revalidateTag).not.toHaveBeenCalled();
 
       consoleSpy.mockRestore();
     });
@@ -219,7 +241,7 @@ describe("Feed tests", () => {
       const result = await createFriendAnnouncement(mockDroplet, mockUser);
 
       expect(result).toEqual({ success: false, error: expect.any(Error) });
-      expect(revalidatePath).not.toHaveBeenCalled();
+      expect(revalidateTag).not.toHaveBeenCalled();
 
       consoleSpy.mockRestore();
     });
@@ -228,7 +250,6 @@ describe("Feed tests", () => {
   describe("createKudosAnnouncement", () => {
     beforeEach(() => {
       global.fetch.mockReset();
-      revalidatePath.mockReset();
       process.env.NEXT_PUBLIC_STRAPI_API_URL = "http://test-api-url";
       process.env.STRAPI_ACCESS_TOKEN = "test-token";
     });
@@ -297,7 +318,7 @@ describe("Feed tests", () => {
       expect(requestBody.data.type).toBe("kudos");
       expect(requestBody.data.authorized_user).toBe(mockUser.id);
 
-      expect(revalidatePath).toHaveBeenCalledWith("/feed");
+      expect(revalidateTag).toHaveBeenCalledWith("announcements");
 
       expect(result).toEqual({ success: true });
     });
@@ -320,7 +341,6 @@ describe("Feed tests", () => {
       ).rejects.toThrow("Failed to update kudos status");
 
       expect(global.fetch).toHaveBeenCalledTimes(1);
-      expect(revalidatePath).not.toHaveBeenCalled();
 
       consoleSpy.mockRestore();
     });
@@ -351,7 +371,7 @@ describe("Feed tests", () => {
       );
 
       expect(result).toEqual({ success: false, error: expect.any(Error) });
-      expect(revalidatePath).not.toHaveBeenCalled();
+      expect(revalidateTag).not.toHaveBeenCalled();
 
       consoleSpy.mockRestore();
     });
@@ -377,7 +397,6 @@ describe("Feed tests", () => {
   describe("createPlaylistAnnouncement", () => {
     beforeEach(() => {
       global.fetch.mockReset();
-      revalidatePath.mockReset();
     });
 
     it("should successfully create a playlist announcement", async () => {
@@ -411,7 +430,7 @@ describe("Feed tests", () => {
       expect(requestBody.data.playlist).toBe(playlistId);
       expect(requestBody.data.firstCreated).toBeDefined();
 
-      expect(revalidatePath).toHaveBeenCalledWith("/feed");
+      expect(revalidateTag).toHaveBeenCalledWith("announcements");
 
       expect(result).toEqual({ success: true });
     });
@@ -432,7 +451,7 @@ describe("Feed tests", () => {
       const result = await createPlaylistAnnouncement(playlistName, playlistId);
 
       expect(result).toEqual({ success: false, error: expect.any(Error) });
-      expect(revalidatePath).not.toHaveBeenCalled();
+      expect(revalidateTag).not.toHaveBeenCalled();
 
       consoleSpy.mockRestore();
     });
@@ -450,7 +469,7 @@ describe("Feed tests", () => {
       const result = await createPlaylistAnnouncement(playlistName, playlistId);
 
       expect(result).toEqual({ success: false, error: expect.any(Error) });
-      expect(revalidatePath).not.toHaveBeenCalled();
+      expect(revalidateTag).not.toHaveBeenCalled();
 
       consoleSpy.mockRestore();
     });
@@ -459,7 +478,6 @@ describe("Feed tests", () => {
   describe("createGroupAnnouncement", () => {
     beforeEach(() => {
       global.fetch.mockReset();
-      revalidatePath.mockReset();
     });
 
     it("should successfully create a group announcement", async () => {
@@ -493,7 +511,7 @@ describe("Feed tests", () => {
       expect(requestBody.data.group).toBe(groupId);
       expect(requestBody.data.firstCreated).toBeDefined();
 
-      expect(revalidatePath).toHaveBeenCalledWith("/feed");
+      expect(revalidateTag).toHaveBeenCalledWith("announcements");
 
       expect(result).toEqual({ success: true });
     });
@@ -514,7 +532,7 @@ describe("Feed tests", () => {
       const result = await createGroupAnnouncement(groupName, groupId);
 
       expect(result).toEqual({ success: false, error: expect.any(Error) });
-      expect(revalidatePath).not.toHaveBeenCalled();
+      expect(revalidateTag).not.toHaveBeenCalled();
 
       consoleSpy.mockRestore();
     });
@@ -532,7 +550,7 @@ describe("Feed tests", () => {
       const result = await createGroupAnnouncement(groupName, groupId);
 
       expect(result).toEqual({ success: false, error: expect.any(Error) });
-      expect(revalidatePath).not.toHaveBeenCalled();
+      expect(revalidateTag).not.toHaveBeenCalled();
 
       consoleSpy.mockRestore();
     });
@@ -541,7 +559,6 @@ describe("Feed tests", () => {
   describe("createDropletAnnouncement", () => {
     beforeEach(() => {
       global.fetch.mockReset();
-      revalidatePath.mockReset();
     });
 
     it("should successfully create a droplet announcement", async () => {
@@ -575,7 +592,7 @@ describe("Feed tests", () => {
       expect(requestBody.data.droplet).toBe(dropletId);
       expect(requestBody.data.firstCreated).toBeDefined();
 
-      expect(revalidatePath).toHaveBeenCalledWith("/feed");
+      expect(revalidateTag).toHaveBeenCalledWith("announcements");
 
       expect(result).toEqual({ success: true });
     });
@@ -596,7 +613,7 @@ describe("Feed tests", () => {
       const result = await createDropletAnnouncement(dropletName, dropletId);
 
       expect(result).toEqual({ success: false, error: expect.any(Error) });
-      expect(revalidatePath).not.toHaveBeenCalled();
+      expect(revalidateTag).not.toHaveBeenCalled();
 
       consoleSpy.mockRestore();
     });
@@ -614,9 +631,61 @@ describe("Feed tests", () => {
       const result = await createDropletAnnouncement(dropletName, dropletId);
 
       expect(result).toEqual({ success: false, error: expect.any(Error) });
-      expect(revalidatePath).not.toHaveBeenCalled();
+      expect(revalidateTag).not.toHaveBeenCalled();
 
       consoleSpy.mockRestore();
+    });
+  });
+
+  describe("createSystemAnnouncement", () => {
+    beforeEach(() => {
+      global.fetch.mockReset();
+      revalidateTag.mockReset();
+    });
+
+    it("should successfully create a system announcement and revalidate", async () => {
+      const mockAuthUser = { id: 5, email: "admin@northeastern.edu" };
+      const content = "System maintenance scheduled";
+
+      global.fetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ data: { id: 1 } }),
+      });
+
+      const result = await createSystemAnnouncement(content, mockAuthUser);
+
+      expect(global.fetch).toHaveBeenCalledWith(
+        expect.stringContaining("/api/announcements"),
+        expect.objectContaining({
+          method: "POST",
+          headers: expect.objectContaining({
+            "Content-Type": "application/json",
+          }),
+        }),
+      );
+
+      const requestBody = JSON.parse(global.fetch.mock.calls[0][1].body);
+      expect(requestBody.data.content).toBe(content);
+      expect(requestBody.data.authorized_user).toBe(mockAuthUser.id);
+      expect(requestBody.data.type).toBe("system");
+      expect(requestBody.data.firstCreated).toBeDefined();
+
+      expect(revalidateTag).toHaveBeenCalledWith("announcements");
+      expect(result).toEqual({ success: true });
+    });
+
+    it("should handle API errors when creating a system announcement", async () => {
+      const mockAuthUser = { id: 5 };
+
+      global.fetch.mockResolvedValueOnce({
+        ok: false,
+        text: async () => "Bad Request",
+      });
+
+      const result = await createSystemAnnouncement("Test", mockAuthUser);
+
+      expect(result).toEqual({ success: false, error: expect.any(Error) });
+      expect(revalidateTag).not.toHaveBeenCalled();
     });
   });
 });

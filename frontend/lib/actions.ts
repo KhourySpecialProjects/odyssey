@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { accessRequestSchema } from "./validations/access-request";
@@ -17,6 +17,8 @@ import { createAuthorizedUser } from "./requests/authorized-user";
 import { creationRequestSchema } from "./validations/creation-request";
 import qs from "qs";
 import { flattenAttributes } from "@/lib/utils";
+import { CACHE_TAGS } from "./cache-tags";
+import Anthropic from "@anthropic-ai/sdk";
 
 const STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
@@ -115,6 +117,7 @@ export async function setTimeZone(zone: string, userId: number) {
     if (!response.ok) {
       throw new Error("Failed to update timezone");
     }
+    revalidateTag(CACHE_TAGS.users);
     return { success: true };
   } catch (error) {
     console.error("Error updating timezone:", error);
@@ -135,16 +138,18 @@ export async function deleteReport(id: string) {
     return { error: "Failed to delete report" };
   }
 
-  revalidatePath("/admin?adminTab=Reports");
+  revalidateTag(CACHE_TAGS.reports);
   return { success: true };
 }
 
 export async function createBugReport(formData: z.infer<typeof reportSchema>) {
   try {
+    const { sessionUrl, ...strapiData } = formData; // sessionUrl excluded from Strapi
+
     const response = await fetch(STRAPI_API_URL + "/api/reports", {
       method: "POST",
       body: JSON.stringify({
-        data: { ...formData, type: "bug", time: new Date().toISOString() },
+        data: { ...strapiData, type: "bug", time: new Date().toISOString() },
       }),
       headers: {
         "Content-Type": "application/json",
@@ -158,10 +163,120 @@ export async function createBugReport(formData: z.infer<typeof reportSchema>) {
       const errorMessage = `${data.error.message} (${errorPath})`;
       return { ok: false, error: errorMessage, data: null };
     }
+    revalidateTag(CACHE_TAGS.reports);
+
+    // Fire Linear issue creation — must not throw or block the return below
+    await createLinearIssue({ ...strapiData, sessionUrl });
+
     return { ok: true, data };
   } catch (err) {
     console.error(err);
     return { error: "Database Error: Failed to create bug report." };
+  }
+}
+
+async function createLinearIssue(
+  formData: Omit<z.infer<typeof reportSchema>, "sessionUrl"> & {
+    sessionUrl?: string;
+  },
+) {
+  const anthropic = new Anthropic({
+    apiKey: process.env.ANTHROPIC_API_KEY || "placeholder",
+    dangerouslyAllowBrowser: true,
+  });
+
+  // AI-generate the Acceptance Criteria, Steps to Reproduce, and Impact sections
+  let generatedSections = "";
+  try {
+    const msg = await anthropic.messages.create({
+      model: "claude-3-haiku-20240307",
+      max_tokens: 1024,
+      messages: [
+        {
+          role: "user",
+          content: `You are a technical project manager writing a Linear bug ticket. Based on the bug description and page below, generate the following three sections in Markdown. Output only the three sections with no preamble or explanation.
+
+## Acceptance Criteria
+- How do we know it's done?
+- [ ] [write 2-3 specific, testable criteria based on the bug]
+
+## Steps to Reproduce Bug
+- [write 3-5 specific steps someone could follow to reproduce this bug based on the description]
+
+## Impact
+[One sentence describing how this bug affects users or the system]
+
+Bug description: "${formData.description}"
+Page: "${formData.path}"`,
+        },
+      ],
+    });
+    generatedSections =
+      msg.content[0].type === "text" ? msg.content[0].text : "";
+  } catch (err) {
+    console.error(
+      "Anthropic generation failed, using placeholder sections:",
+      err,
+    );
+    generatedSections = `## Acceptance Criteria
+- How do we know it's done?
+- [ ] [criteria #1]
+- [ ] [criteria #2]
+
+## Steps to Reproduce Bug
+- [Step #1]
+- [Step #2]
+- [Step #3]
+
+## Impact
+Describe how this affects users, performance, or other parts of the system.`;
+  }
+
+  const description = `
+## Overview
+${formData.description}
+
+**Page:** ${formData.path}
+
+${generatedSections}
+
+---
+## 🎥 PostHog Session Replay
+${formData.sessionUrl ? `[View session at time of report](${formData.sessionUrl})` : "Session replay not available"}
+  `.trim();
+
+  const mutation = `
+    mutation {
+      issueCreate(input: {
+        title: "[Bug] ${formData.description.slice(0, 60).replace(/"/g, '\\"')}..."
+        description: ${JSON.stringify(description)}
+        teamId: "${process.env.LINEAR_TEAM_ID}"
+        labelIds: ["${process.env.LINEAR_BUG_LABEL_ID}"]
+        priority: 1
+      }) {
+        success
+        issue { id identifier }
+      }
+    }
+  `;
+
+  try {
+    const res = await fetch("https://api.linear.app/graphql", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: process.env.LINEAR_API_KEY ?? "",
+      },
+      body: JSON.stringify({ query: mutation }),
+    });
+
+    const result = await res.json();
+
+    if (!result.data?.issueCreate?.success) {
+      console.error("Linear issue creation failed:", JSON.stringify(result));
+    }
+  } catch (err) {
+    console.error("Linear API call threw an error:", err);
   }
 }
 
@@ -189,6 +304,7 @@ export async function createAccessRequest(
     return { error: "Database Error: Failed to create access request." };
   }
 
+  revalidateTag(CACHE_TAGS.accessRequests);
   redirect("/");
 }
 
@@ -217,7 +333,7 @@ export async function deleteAccessRequest(formData: FormData) {
     return { error: "Database Error: Failed to delete access request." };
   }
 
-  revalidatePath("/admin");
+  revalidateTag(CACHE_TAGS.accessRequests);
 }
 
 /**
@@ -243,6 +359,7 @@ export async function createCreationRequest(
       return { ok: false, error: errorMessage, data: null };
     }
 
+    revalidateTag(CACHE_TAGS.creationRequests);
     return { ok: true, data, error: null };
   } catch (err) {
     console.error(err);
@@ -372,7 +489,8 @@ export async function approveCreationRequest(
       };
     }
 
-    revalidatePath("/admin");
+    revalidateTag(CACHE_TAGS.users);
+    revalidateTag(CACHE_TAGS.creationRequests);
     return { ok: true, error: null, data: null };
   } catch (err) {
     console.error(err);
@@ -408,7 +526,7 @@ export async function deleteCreationRequest(requestId: string) {
       };
     }
 
-    revalidatePath("/admin");
+    revalidateTag(CACHE_TAGS.creationRequests);
     return { ok: true, error: null, data: null };
   } catch (err) {
     console.error(err);
@@ -448,7 +566,7 @@ export async function fetchCreationRequests(): Promise<CreationRequest[]> {
           headers: {
             Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
           },
-          cache: "no-store",
+          next: { tags: [CACHE_TAGS.creationRequests], revalidate: 900 },
         },
       );
 
@@ -504,7 +622,7 @@ export async function fetchCreationRequestByUser(
         headers: {
           Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
         },
-        cache: "no-store",
+        next: { tags: [CACHE_TAGS.creationRequests], revalidate: 900 },
       },
     );
 

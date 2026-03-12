@@ -1,8 +1,8 @@
 import { render, screen } from "@testing-library/react";
 import { Enrollments } from "@/components/dashboard/enrollments";
 import { getCurrentUser } from "@/lib/auth/session";
-import { getAuthorizedUserByEmail } from "@/lib/requests/authorized-user";
-import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
+import { getCachedUser } from "@/lib/requests/cached";
+import { getCachedEnrollmentsDashboard } from "@/lib/requests/cached";
 import { notFound } from "next/navigation";
 import { Enrollment } from "@/types";
 
@@ -10,12 +10,9 @@ jest.mock("@/lib/auth/session", () => ({
   getCurrentUser: jest.fn(),
 }));
 
-jest.mock("@/lib/requests/authorized-user", () => ({
-  getAuthorizedUserByEmail: jest.fn(),
-}));
-
-jest.mock("@/lib/requests/enrollment", () => ({
-  getEnrollmentsByAuthorizedUser: jest.fn(),
+jest.mock("@/lib/requests/cached", () => ({
+  getCachedUser: jest.fn(),
+  getCachedEnrollmentsDashboard: jest.fn(),
 }));
 
 jest.mock("next/navigation", () => ({
@@ -41,9 +38,7 @@ describe("Enrollments", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     (getCurrentUser as jest.Mock).mockResolvedValue(mockUser);
-    (getAuthorizedUserByEmail as jest.Mock).mockResolvedValue(
-      mockAuthorizedUser,
-    );
+    (getCachedUser as jest.Mock).mockResolvedValue(mockAuthorizedUser);
   });
 
   it("renders a list of enrolled droplets", async () => {
@@ -69,7 +64,7 @@ describe("Enrollments", () => {
       },
     ];
 
-    (getEnrollmentsByAuthorizedUser as jest.Mock).mockResolvedValue(
+    (getCachedEnrollmentsDashboard as jest.Mock).mockResolvedValue(
       mockEnrollments,
     );
 
@@ -87,29 +82,15 @@ describe("Enrollments", () => {
     expect(notFound).toHaveBeenCalled();
   });
 
-  it("passes the correct parameters to getEnrollmentsByAuthorizedUser", async () => {
+  it("passes the correct parameters to getCachedEnrollmentsDashboard", async () => {
     const mockEnrollments = [] as Enrollment[];
-    (getEnrollmentsByAuthorizedUser as jest.Mock).mockResolvedValue(
+    (getCachedEnrollmentsDashboard as jest.Mock).mockResolvedValue(
       mockEnrollments,
     );
 
     await Enrollments();
 
-    expect(getEnrollmentsByAuthorizedUser).toHaveBeenCalledWith(1, {
-      populate: {
-        droplet: {
-          populate: {
-            tags: true,
-            lessons: {
-              fields: ["id", "name", "slug"],
-            },
-          },
-        },
-        viewedLessons: {
-          fields: ["id", "name", "slug"],
-        },
-      },
-    });
+    expect(getCachedEnrollmentsDashboard).toHaveBeenCalledWith(1);
   });
 
   it("calls notFound when user email is missing", async () => {
@@ -137,7 +118,7 @@ describe("Enrollments", () => {
       },
     ];
 
-    (getEnrollmentsByAuthorizedUser as jest.Mock).mockResolvedValue(
+    (getCachedEnrollmentsDashboard as jest.Mock).mockResolvedValue(
       mockEnrollments,
     );
 
@@ -147,7 +128,7 @@ describe("Enrollments", () => {
   });
 
   it("renders correctly when there are no enrollments", async () => {
-    (getEnrollmentsByAuthorizedUser as jest.Mock).mockResolvedValue([]);
+    (getCachedEnrollmentsDashboard as jest.Mock).mockResolvedValue([]);
 
     render(await Enrollments());
 

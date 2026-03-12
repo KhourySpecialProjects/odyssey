@@ -45,16 +45,36 @@ describe("kudos", () => {
       const mockResponse = { data: { id: 1 }, ok: true };
       (fetchAPI as jest.Mock).mockResolvedValue(mockResponse);
 
-      await giveKudos(1, "droplet");
+      await giveKudos(1, {
+        id: 1,
+        name: "Test Droplet",
+        slug: "test-droplet",
+        isHidden: false,
+        focusArea: "personal",
+        type: "knowledge",
+        status: "published",
+        learningObjectives: [],
+      } as any);
 
       expect(getCurrentUser).toHaveBeenCalled();
-      expect(getAuthorizedUserByEmail).toHaveBeenCalledWith("test@test.com");
+      expect(getAuthorizedUserByEmail).toHaveBeenCalledWith("test@test.com", {
+        fields: ["id", "email", "firstName", "lastName"],
+      });
     });
 
     it("calls notFound when user is not found", async () => {
       (getCurrentUser as jest.Mock).mockResolvedValue(null);
 
-      await giveKudos(1, "droplet");
+      await giveKudos(1, {
+        id: 1,
+        name: "Test Droplet",
+        slug: "test-droplet",
+        isHidden: false,
+        focusArea: "personal",
+        type: "knowledge",
+        status: "published",
+        learningObjectives: [],
+      } as any);
 
       expect(notFound).toHaveBeenCalled();
     });

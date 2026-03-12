@@ -25,7 +25,7 @@ describe("QuizBlock", () => {
   };
 
   it("renders quiz title and description", () => {
-    render(<QuizBlock data={mockQuizData} />);
+    render(<QuizBlock data={mockQuizData} lessonId={1} />);
 
     expect(screen.getByText(/check in/i)).toBeInTheDocument();
     expect(
@@ -34,7 +34,7 @@ describe("QuizBlock", () => {
   });
 
   it("renders all questions", () => {
-    render(<QuizBlock data={mockQuizData} />);
+    render(<QuizBlock data={mockQuizData} lessonId={1} />);
 
     expect(screen.getByText("Test question 1")).toBeInTheDocument();
     expect(screen.getByText("Test question 2")).toBeInTheDocument();
