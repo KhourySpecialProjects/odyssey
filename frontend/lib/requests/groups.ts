@@ -646,42 +646,55 @@ export async function enrollUsers(group: Group) {
       }
     }
 
-    const creates = [];
+    const allTasks: Array<() => Promise<void>> = [];
+    const failures: string[] = [];
+
     if (uniqueDropletIds.length > 0) {
       for (const member of group.members || []) {
         for (const dropletId of uniqueDropletIds) {
           if (!existingSet.has(`${member.id}-${dropletId}`)) {
-            creates.push(
-              createEnrollmentDirect(member.id, dropletId).catch((error) => {
-                console.error(
-                  `Error enrolling this user in droplet [${dropletId}]: `,
-                  error,
-                );
-              }),
-            );
+            allTasks.push(async () => {
+              try {
+                await createEnrollmentDirect(member.id, dropletId);
+              } catch (error) {
+                const msg = `Failed to enroll user ${member.id} in droplet ${dropletId}`;
+                console.error(msg, error);
+                failures.push(msg);
+              }
+            });
           }
         }
       }
     }
 
-    // Enroll in playlists in parallel
-    const playlistEnrolls = [];
     if (group.playlists && group.playlists.length > 0) {
       for (const member of group.members || []) {
         for (const playlist of group.playlists || []) {
-          playlistEnrolls.push(
-            enrollInPlaylist(playlist.id, member.id).catch((error) => {
-              console.error(
-                `Error enrolling this user in playlist [${playlist.id}]: `,
-                error,
-              );
-            }),
-          );
+          allTasks.push(async () => {
+            try {
+              await enrollInPlaylist(playlist.id, member.id);
+            } catch (error) {
+              const msg = `Failed to enroll user ${member.id} in playlist ${playlist.id}`;
+              console.error(msg, error);
+              failures.push(msg);
+            }
+          });
         }
       }
     }
 
-    await Promise.all([...creates, ...playlistEnrolls]);
+    // Process in chunks of 25 to avoid overwhelming Strapi
+    const CHUNK_SIZE = 25;
+    for (let i = 0; i < allTasks.length; i += CHUNK_SIZE) {
+      const chunk = allTasks.slice(i, i + CHUNK_SIZE);
+      await Promise.all(chunk.map((task) => task()));
+    }
+
+    if (failures.length > 0) {
+      console.warn(
+        `enrollUsers completed with ${failures.length} failures out of ${allTasks.length} tasks`,
+      );
+    }
   } catch (error) {
     console.error("Error enrolling users:", error);
     throw error;
@@ -702,21 +715,33 @@ export async function assignDropletDueDate(
 
     const memberIds = group.members.map((m) => m.id);
 
-    const existingDueDates = await fetchAPI<any[]>("/due-dates", {
-      urlParams: {
-        filters: {
-          authorized_user: { id: { $in: memberIds } },
-          droplet: { id: { $eq: droplet.id } },
-          group: { id: { $eq: group.id } },
+    // Paginate to handle groups larger than Strapi's maxLimit
+    const pageSize = 100;
+    let page = 1;
+    let allExistingDueDates: any[] = [];
+
+    while (true) {
+      const dueDatePage = await fetchAPI<any[]>("/due-dates", {
+        urlParams: {
+          filters: {
+            authorized_user: { id: { $in: memberIds } },
+            droplet: { id: { $eq: droplet.id } },
+            group: { id: { $eq: group.id } },
+          },
+          fields: ["id", "dueDate"],
+          populate: { authorized_user: { fields: ["id"] } },
+          pagination: { pageSize, page },
         },
-        fields: ["id", "dueDate"],
-        populate: { authorized_user: { fields: ["id"] } },
-        pagination: { pageSize: Math.max(memberIds.length, 250), page: 1 },
-      },
-    });
+      });
+
+      if (!dueDatePage || dueDatePage.length === 0) break;
+      allExistingDueDates = allExistingDueDates.concat(dueDatePage);
+      if (dueDatePage.length < pageSize) break;
+      page++;
+    }
 
     const existingMap = new Map(
-      existingDueDates.map((dd) => [dd.authorized_user?.id, dd.id]),
+      allExistingDueDates.map((dd) => [dd.authorized_user?.id, dd.id]),
     );
 
     const dueDatePromises = group.members.map(async (member) => {
@@ -811,21 +836,33 @@ export async function assignPlaylistDueDate(
 
     const memberIds = group.members.map((m) => m.id);
 
-    const existingDueDates = await fetchAPI<any[]>("/due-dates", {
-      urlParams: {
-        filters: {
-          authorized_user: { id: { $in: memberIds } },
-          playlist: { id: { $eq: playlist.id } },
-          group: { id: { $eq: group.id } },
+    // Paginate to handle groups larger than Strapi's maxLimit
+    const pageSize = 100;
+    let page = 1;
+    let allExistingDueDates: any[] = [];
+
+    while (true) {
+      const dueDatePage = await fetchAPI<any[]>("/due-dates", {
+        urlParams: {
+          filters: {
+            authorized_user: { id: { $in: memberIds } },
+            playlist: { id: { $eq: playlist.id } },
+            group: { id: { $eq: group.id } },
+          },
+          fields: ["id", "dueDate"],
+          populate: { authorized_user: { fields: ["id"] } },
+          pagination: { pageSize, page },
         },
-        fields: ["id", "dueDate"],
-        populate: { authorized_user: { fields: ["id"] } },
-        pagination: { pageSize: Math.max(memberIds.length, 250), page: 1 },
-      },
-    });
+      });
+
+      if (!dueDatePage || dueDatePage.length === 0) break;
+      allExistingDueDates = allExistingDueDates.concat(dueDatePage);
+      if (dueDatePage.length < pageSize) break;
+      page++;
+    }
 
     const existingMap = new Map(
-      existingDueDates.map((dd) => [dd.authorized_user?.id, dd.id]),
+      allExistingDueDates.map((dd) => [dd.authorized_user?.id, dd.id]),
     );
 
     const dueDatePromises = group.members.map(async (member) => {
@@ -1021,6 +1058,7 @@ export async function deleteGroup(id: number) {
 
     revalidateTag(CACHE_TAGS.authors);
     revalidateTag(CACHE_TAGS.allGroups);
+    revalidateTag(CACHE_TAGS.allDueDates);
     return { ok: true, error: null, data: data.data };
   } catch (err) {
     console.error(err);

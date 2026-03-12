@@ -47,7 +47,7 @@ export async function getNotesByAuthorizedUserAndLesson(
 
   return await fetchAPI<Note[]>(path, {
     urlParams,
-    next: { tags: [CACHE_TAGS.notes(authorizedUserId)] },
+    next: { tags: [CACHE_TAGS.notes(authorizedUserId)], revalidate: 900 },
   });
 }
 
@@ -89,7 +89,7 @@ export async function getNotesByDroplet(
 
   return await fetchAPI<Note[]>(path, {
     urlParams,
-    next: { tags: [CACHE_TAGS.notes(authorizedUserId)] },
+    next: { tags: [CACHE_TAGS.notes(authorizedUserId)], revalidate: 900 },
   });
 }
 
@@ -225,7 +225,7 @@ export async function getAllNotesByUser(
 
     const notesPage = await fetchAPI<Note[]>(path, {
       urlParams,
-      next: { tags: [CACHE_TAGS.notes(authorizedUserId)] },
+      next: { tags: [CACHE_TAGS.notes(authorizedUserId)], revalidate: 900 },
     });
 
     if (!notesPage || notesPage.length === 0) break;

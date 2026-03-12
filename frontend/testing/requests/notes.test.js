@@ -92,6 +92,7 @@ describe("Notes Tests", () => {
         },
         next: {
           tags: ["notes-4"],
+          revalidate: 900,
         },
       });
 
@@ -152,6 +153,7 @@ describe("Notes Tests", () => {
         },
         next: {
           tags: ["notes-4"],
+          revalidate: 900,
         },
       });
 
@@ -185,6 +187,7 @@ describe("Notes Tests", () => {
         }),
         next: {
           tags: ["notes-4"],
+          revalidate: 900,
         },
       });
     });

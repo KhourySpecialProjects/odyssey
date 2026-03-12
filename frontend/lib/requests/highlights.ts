@@ -40,7 +40,7 @@ export async function getHighlights(
 
   return await fetchAPI<Highlight[]>(path, {
     urlParams,
-    next: { tags: [CACHE_TAGS.highlights(authorizedUserId)] },
+    next: { tags: [CACHE_TAGS.highlights(authorizedUserId)], revalidate: 900 },
   });
 }
 
@@ -77,7 +77,7 @@ export async function getHighlightsByDroplet(
 
   return await fetchAPI<Highlight[]>(path, {
     urlParams,
-    next: { tags: [CACHE_TAGS.highlights(authUser)] },
+    next: { tags: [CACHE_TAGS.highlights(authUser)], revalidate: 900 },
   });
 }
 
@@ -104,7 +104,10 @@ export async function getAllHighlightsByUser(
 
     const highlightsPage = await fetchAPI<Highlight[]>(path, {
       urlParams,
-      next: { tags: [CACHE_TAGS.highlights(authorizedUserId)] },
+      next: {
+        tags: [CACHE_TAGS.highlights(authorizedUserId)],
+        revalidate: 900,
+      },
     });
 
     if (!highlightsPage || highlightsPage.length === 0) break;

@@ -266,6 +266,8 @@ export async function deepDeleteDroplet(id: number) {
     revalidateTag(CACHE_TAGS.authors);
     revalidateTag(CACHE_TAGS.droplets);
     revalidateTag(CACHE_TAGS.allEnrollments);
+    revalidateTag(CACHE_TAGS.playlists);
+    revalidateTag(CACHE_TAGS.allGroups);
     return { ok: true, error: null, data: data.data };
   } catch (err) {
     console.error(err);
@@ -1064,21 +1066,30 @@ export async function publishDraftToOriginal(
       // Update each enrollment to point to the original droplet
       await Promise.all(
         (draftEnrollments.data || []).map(async (enrollment) => {
-          await fetch(`${STRAPI_API_URL}/api/enrollments/${enrollment.id}`, {
-            method: "PUT",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
-            },
-            body: JSON.stringify({
-              data: {
-                droplet: originalDropletId,
+          const res = await fetch(
+            `${STRAPI_API_URL}/api/enrollments/${enrollment.id}`,
+            {
+              method: "PUT",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}`,
               },
-            }),
-          });
-          console.log(
-            `Updated enrollment ${enrollment.id} to point to original droplet`,
+              body: JSON.stringify({
+                data: {
+                  droplet: originalDropletId,
+                },
+              }),
+            },
           );
+          if (!res.ok) {
+            console.error(
+              `Failed to update enrollment ${enrollment.id}: ${res.status}`,
+            );
+          } else {
+            console.log(
+              `Updated enrollment ${enrollment.id} to point to original droplet`,
+            );
+          }
         }),
       );
     } catch (error) {
@@ -1238,6 +1249,7 @@ export async function publishDraftToOriginal(
       revalidateTag(CACHE_TAGS.lesson);
       revalidateTag(CACHE_TAGS.playlists);
       revalidateTag(CACHE_TAGS.allEnrollments);
+      revalidateTag(CACHE_TAGS.allGroups);
     }
   }
 }

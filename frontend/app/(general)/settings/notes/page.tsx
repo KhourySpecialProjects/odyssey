@@ -8,6 +8,7 @@ import { Note, Highlight } from "@/types";
 import { PDFDocument } from "pdf-lib";
 import { NoteSummary } from "@/components/droplets/lessons/note-taking/note-summary";
 import { NotesManager } from "@/components/droplets/notes-manager";
+import { redirect } from "next/navigation";
 
 export const metadata: Metadata = {
   title: "Notes",
@@ -15,7 +16,7 @@ export const metadata: Metadata = {
 
 export default async function NotesPage() {
   const currentUser = await getCurrentUser();
-  if (!currentUser?.email) return null;
+  if (!currentUser?.email) redirect("/");
 
   const user = await getCachedUser(currentUser.email);
   const [enrollments, allUserNotes, allUserHighlights] = await Promise.all([

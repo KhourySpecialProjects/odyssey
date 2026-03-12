@@ -7,39 +7,56 @@
  * ── Tag → Invalidated by ──────────────────────── Revalidate ────────────
  *
  * droplets        createDroplet, updateDroplet, deepDeleteDroplet,          900s
- *                 publishDraftDroplet, addLesson, updateLesson,
- *                 deleteLesson, updateDropletFunFact
+ *                 duplicateDroplet, publishDraftToOriginal, addLesson,
+ *                 updateLesson, deleteLesson, duplicateLessonToDroplet,
+ *                 updateDropletAverageRating, updateDropletFunFact,
+ *                 favoriteDroplet, updateDropletLearningObjective
  * enrollments     Two-level tag system:                                      900s
  *                 ↳ Per-user tag "enrollments-{userId}":
  *                   createEnrollment, createEnrollmentFromEmail,
- *                   deleteEnrollment, markLessonAsComplete, completeLesson,
+ *                   createEnrollmentDirect, deleteEnrollment,
+ *                   markLessonAsComplete, completeLesson,
  *                   archiveDroplet, togglePlaylistEnrollment,
  *                   enrollInPlaylist, changeEnrollmentRating,
  *                   updateEnrollmentFirstTime, updateViewedLessons,
  *                   updateCompletionDate, favoriteDroplet
  *                 ↳ Global tag "enrollments" (sweeps all users):
- *                   updateDroplet, deepDeleteDroplet, publishDraftDroplet,
- *                   addLesson, deleteLesson, duplicateLessonToDroplet,
- *                   updateDropletAverageRating
+ *                   updateDroplet, deepDeleteDroplet,
+ *                   publishDraftToOriginal, addLesson, deleteLesson,
+ *                   duplicateLessonToDroplet, updateDropletAverageRating,
+ *                   togglePlaylistEnrollment, enrollInPlaylist
  *                 ↳ shared by all presets: minimal, withLessonIds,
  *                   dashboard, favorites (see enrollment-populates.ts)
  * playlists       createPlaylist, updatePlaylist, deletePlaylist,           900s
- *                 archivePlaylist, togglePlaylistEnrollment
- * groups          createGroup, updateGroup, deleteGroup,                    900s
- *                 updateGroupMembers, archiveGroup (global tag only)
- * authors         updateDroplet, createDroplet, deepDeleteDroplet,          900s
- *                 publishDraftDroplet, deletePlaylist, deleteGroup
- * notes           createNote, updateNote, deleteNote, duplicateNote         900s
+ *                 archivePlaylist, togglePlaylistEnrollment,
+ *                 enrollInPlaylist, updateDroplet,
+ *                 publishDraftToOriginal
+ * groups          createGroup, updateGroup, updateGroupMembers,             900s
+ *                 deleteGroup, archiveGroup, deletePlaylist,
+ *                 updateDroplet
+ * authors         createDroplet, updateDroplet, deepDeleteDroplet,          900s
+ *                 duplicateDroplet, publishDraftToOriginal,
+ *                 deletePlaylist, deleteGroup
+ * notes           createNote, updateNoteContent, updateNotePosition,        900s
+ *                 deleteNote
  * highlights      createHighlight, deleteHighlight                          900s
- * lesson          updateLesson                                              900s
+ * lesson          updateLesson, publishDraftToOriginal                      900s
  * friendships     sendFriendRequest, acceptFriendRequest,                   900s
  *                 rejectFriendRequest, cancelFriendRequest,
- *                 removeFriend, blockUser, unblockUser
- * announcements   createFriend/Kudos/Playlist/Group/Droplet/               900s
- *                 SystemAnnouncement
+ *                 removeFriend, BlockUser, unblockUser
+ * announcements   createFriendAnnouncement, createKudosAnnouncement,        900s
+ *                 createPlaylistAnnouncement, createGroupAnnouncement,
+ *                 createDropletAnnouncement, createSystemAnnouncement
  * tags            createNewTag                                              3600s
  * due-dates       assignDropletDueDate, assignPlaylistDueDate               900s
  *                 (global tag only)
+ * reports         createBugReport, deleteReport                             900s
+ * access-requests createAccessRequest, deleteAccessRequest                  900s
+ * creation-reqs   createCreationRequest, approveCreationRequest,            900s
+ *                 deleteCreationRequest
+ * users           createAuthorizedUser, createBatchAuthorizedUsers,         900s
+ *                 updateUserInfo, deleteAuthorizedUser, setTimeZone,
+ *                 approveCreationRequest
  */
 
 export const CACHE_TAGS = {
