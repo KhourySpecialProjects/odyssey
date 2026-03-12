@@ -41,6 +41,21 @@ jest.mock("next/navigation", () => ({
   redirect: jest.fn(),
 }));
 
+jest.mock("@anthropic-ai/sdk", () => {
+  return jest.fn().mockImplementation(() => ({
+    messages: {
+      create: jest.fn().mockResolvedValue({
+        content: [
+          {
+            type: "text",
+            text: "## Acceptance Criteria\n- [ ] generated criteria",
+          },
+        ],
+      }),
+    },
+  }));
+});
+
 const { redirect } = require("next/navigation");
 const { revalidatePath, revalidateTag } = require("next/cache");
 
@@ -230,6 +245,7 @@ describe("Server Actions", () => {
         path: "/home",
         type: "bug" as const,
         fullName: "John Doe",
+        sessionUrl: "https://posthog.com/replay/123",
       };
 
       (global.fetch as jest.Mock).mockResolvedValueOnce({
@@ -251,6 +267,7 @@ describe("Server Actions", () => {
         path: "/home",
         type: "bug" as const,
         fullName: "John Doe",
+        sessionUrl: "https://posthog.com/replay/123",
       };
 
       (global.fetch as jest.Mock).mockResolvedValueOnce({
@@ -275,6 +292,7 @@ describe("Server Actions", () => {
         path: "/home",
         type: "bug" as const,
         fullName: "John Doe",
+        sessionUrl: "https://posthog.com/replay/123",
       };
 
       (global.fetch as jest.Mock).mockResolvedValueOnce({
@@ -303,6 +321,7 @@ describe("Server Actions", () => {
         path: "/home",
         type: "bug" as const,
         fullName: "John Doe",
+        sessionUrl: "https://posthog.com/replay/123",
       };
 
       (global.fetch as jest.Mock).mockResolvedValueOnce({
@@ -332,11 +351,10 @@ describe("Server Actions", () => {
         path: "/home",
         type: "bug" as const,
         fullName: "John Doe",
+        sessionUrl: "https://posthog.com/replay/123",
       };
 
-      (global.fetch as jest.Mock).mockRejectedValueOnce(
-        new Error("Network error"),
-      );
+      (global.fetch as jest.Mock).mockRejectedValue(new Error("Network error"));
 
       const result = await createBugReport(formData);
 
