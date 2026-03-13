@@ -21,7 +21,7 @@
  *                   updateEnrollmentFirstTime, updateViewedLessons,
  *                   updateCompletionDate, favoriteDroplet
  *                 ↳ Global tag "enrollments" (sweeps all users):
- *                   updateDroplet, deepDeleteDroplet,
+ *                   updateDroplet, deepDeleteDroplet, duplicateDroplet,
  *                   publishDraftToOriginal, addLesson, deleteLesson,
  *                   duplicateLessonToDroplet, updateDropletAverageRating,
  *                   togglePlaylistEnrollment, enrollInPlaylist
@@ -36,11 +36,13 @@
  *                 updateDroplet
  * authors         createDroplet, updateDroplet, deepDeleteDroplet,          900s
  *                 duplicateDroplet, publishDraftToOriginal,
- *                 deletePlaylist, deleteGroup
+ *                 deletePlaylist, deleteGroup, approveCreationRequest,
+ *                 updateUserInfo, deleteAuthorizedUser
  * notes           createNote, updateNoteContent, updateNotePosition,        900s
  *                 deleteNote
  * highlights      createHighlight, deleteHighlight                          900s
- * lesson          updateLesson, publishDraftToOriginal                      900s
+ * lesson          addLesson, updateLesson, deleteLesson,                    900s
+ *                 duplicateLessonToDroplet, publishDraftToOriginal
  * friendships     sendFriendRequest, acceptFriendRequest,                   900s
  *                 rejectFriendRequest, cancelFriendRequest,
  *                 removeFriend, BlockUser, unblockUser
@@ -48,8 +50,9 @@
  *                 createPlaylistAnnouncement, createGroupAnnouncement,
  *                 createDropletAnnouncement, createSystemAnnouncement
  * tags            createNewTag                                              3600s
- * due-dates       assignDropletDueDate, assignPlaylistDueDate               900s
- *                 (global tag only)
+ * due-dates       assignDropletDueDate, assignPlaylistDueDate,              900s
+ *                 updateGroup, updateGroupMembers, deleteGroup,
+ *                 archiveGroup (global tag only)
  * reports         createBugReport, deleteReport                             900s
  * access-requests createAccessRequest, deleteAccessRequest                  900s
  * creation-reqs   createCreationRequest, approveCreationRequest,            900s
@@ -57,11 +60,31 @@
  * users           createAuthorizedUser, createBatchAuthorizedUsers,         900s
  *                 updateUserInfo, deleteAuthorizedUser, setTimeZone,
  *                 approveCreationRequest
+ *                 (profile fields, roles, account data only)
+ * user-content    createDroplet, updateDroplet, duplicateDroplet,            900s
+ *                 deepDeleteDroplet, createPlaylist, updatePlaylist,
+ *                 deletePlaylist, publishDraftToOriginal (via finally)
+ *                 (droplets + playlists on /my-content)
+ * user-dashboard  createPlaylist, archivePlaylist, updatePlaylist,           900s
+ *                 deletePlaylist, createGroup, updateGroup,
+ *                 updateGroupMembers, deleteGroup, archiveGroup,
+ *                 updateDroplet, deepDeleteDroplet,
+ *                 togglePlaylistEnrollment, enrollInPlaylist,
+ *                 publishDraftToOriginal (via finally)
+ *                 (playlists + groups on /dashboard)
+ * user-social     Per-user tag "user-social-{userId}":                       900s
+ *                 sendFriendRequest, acceptFriendRequest,
+ *                 rejectFriendRequest, cancelFriendRequest,
+ *                 removeFriend, BlockUser, unblockUser
+ *                 (friend requests, blocked users, friendships)
  */
 
 export const CACHE_TAGS = {
   // Global (shared across all users)
-  users: "users",
+  users: "users", // profile fields, roles, account-level data
+  userContent: "user-content", // user's droplets + playlists (/my-content)
+  userDashboard: "user-dashboard", // user's playlists + groups (/dashboard)
+  userSocial: (userId: number) => `user-social-${userId}`, // friend requests, blocked, friendships
   droplets: "droplets",
   playlists: "playlists",
   authors: "authors",

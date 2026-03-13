@@ -1,8 +1,6 @@
 const {
   getEnrollmentsByAuthorizedUser,
   getEnrollmentsForGroupMembers,
-  getIsEnrolled,
-  getIsEnrollComplete,
   changeEnrollmentRating,
   getEnrollByID,
   calculateDropletAverageRating,
@@ -264,101 +262,6 @@ describe("Enrollment Tests", () => {
       await expect(
         getEnrollmentsForGroupMembers(memberIds, dropletIds),
       ).rejects.toThrow("API Error");
-    });
-  });
-
-  describe("getIsEnrolled", () => {
-    it("should return true when user is enrolled", async () => {
-      const mockEnrollment = [
-        {
-          id: 1,
-          name: "Droplet 1",
-          slug: "droplet-1",
-        },
-      ];
-
-      fetchAPI.mockResolvedValue(mockEnrollment);
-
-      const result = await getIsEnrolled(1, 1);
-
-      expect(result).toBe(true);
-    });
-
-    it("should return false when user is not enrolled", async () => {
-      fetchAPI.mockResolvedValue([]);
-
-      const result = await getIsEnrolled(1, 1);
-
-      expect(result).toBe(false);
-    });
-
-    it("should handle fetch errors", async () => {
-      fetchAPI.mockRejectedValueOnce(
-        new Error("Failed to fetch enrollment info"),
-      );
-
-      await expect(getIsEnrolled(1, 1)).rejects.toThrow();
-    });
-  });
-
-  describe("getIsEnrollComplete", () => {
-    it("should return true when enrollment is complete", async () => {
-      const mockEnrollment = [
-        {
-          id: 1,
-          isComplete: true,
-        },
-      ];
-
-      fetchAPI.mockResolvedValue(mockEnrollment);
-
-      const result = await getIsEnrollComplete(5, 3);
-
-      expect(result).toBe(true);
-    });
-
-    it("should return false when enrollment is not complete", async () => {
-      const mockEnrollment = [
-        {
-          id: 1,
-          isComplete: false,
-        },
-      ];
-
-      fetchAPI.mockResolvedValue(mockEnrollment);
-
-      const result = await getIsEnrollComplete(5, 3);
-
-      expect(result).toBe(false);
-    });
-
-    it("should return false when no enrollment exists", async () => {
-      fetchAPI.mockResolvedValue([]);
-
-      const result = await getIsEnrollComplete(1, 1);
-
-      expect(result).toBe(false);
-    });
-
-    it("should return false when isComplete is undefined", async () => {
-      fetchAPI.mockResolvedValue([{ id: 1 }]);
-
-      const result = await getIsEnrollComplete(1, 1);
-
-      expect(result).toBe(false);
-    });
-
-    it("should handle fetch errors and return false", async () => {
-      const consoleError = jest.spyOn(console, "error");
-      fetchAPI.mockRejectedValueOnce(new Error("Failed to fetch"));
-
-      const result = await getIsEnrollComplete(1, 1);
-
-      expect(result).toBe(false);
-      expect(consoleError).toHaveBeenCalledWith(
-        "Error fetching enrollment status: ",
-        expect.any(Error),
-      );
     });
   });
 

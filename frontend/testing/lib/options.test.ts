@@ -2,7 +2,7 @@ import { authOptions } from "@/lib/auth/options";
 import { fetchIsAuthorizedUser } from "@/lib/requests/authorized-user";
 
 jest.mock("@/lib/utils", () => ({
-  fetchAPI: jest.fn(),
+  fetchAPI: jest.fn().mockResolvedValue([{ roles: [{ title: "User" }] }]),
 }));
 
 jest.mock("@/lib/auth/azure", () => ({
