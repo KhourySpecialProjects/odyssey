@@ -244,9 +244,9 @@ export async function deepDeleteDroplet(id: number) {
     });
 
     if (droplet.lessons) {
-      droplet.lessons.forEach((lesson) => {
-        deleteLesson(lesson.id, false);
-      });
+      for (const lesson of droplet.lessons) {
+        await deleteLesson(lesson.id, false);
+      }
     }
 
     const response = await fetch(STRAPI_API_URL + "/api/droplets/" + id, {
@@ -268,6 +268,8 @@ export async function deepDeleteDroplet(id: number) {
     revalidateTag(CACHE_TAGS.allEnrollments);
     revalidateTag(CACHE_TAGS.playlists);
     revalidateTag(CACHE_TAGS.allGroups);
+    revalidateTag(CACHE_TAGS.userContent);
+    revalidateTag(CACHE_TAGS.userDashboard);
     return { ok: true, error: null, data: data.data };
   } catch (err) {
     console.error(err);
@@ -303,7 +305,9 @@ export async function updateDroplet(
       ...(data.overview !== undefined && { overview: data.overview }),
       ...(data.lessons && { lessons: data.lessons }),
       ...(data.inReview !== undefined && { inReview: data.inReview }),
-      ...(data.status !== undefined && { status: data.status }),
+      ...(data.inReview === true && { status: "edit" }),
+      ...(data.inReview !== true &&
+        data.status !== undefined && { status: data.status }),
       ...(data.afterReview !== undefined && { afterReview: data.afterReview }),
     };
 
@@ -353,6 +357,8 @@ export async function updateDroplet(
     revalidateTag(CACHE_TAGS.allEnrollments);
     revalidateTag(CACHE_TAGS.playlists);
     revalidateTag(CACHE_TAGS.allGroups);
+    revalidateTag(CACHE_TAGS.userContent);
+    revalidateTag(CACHE_TAGS.userDashboard);
 
     return { ok: true, error: null, data: responseData.data };
   } catch (err) {
@@ -509,6 +515,7 @@ export async function createDroplet(data: z.infer<typeof CreateDropletSchema>) {
     }
     revalidateTag(CACHE_TAGS.authors);
     revalidateTag(CACHE_TAGS.droplets);
+    revalidateTag(CACHE_TAGS.userContent);
     return { ok: true, error: null, data: responseData.data };
   } catch (err) {
     console.error(err);
@@ -861,6 +868,8 @@ export async function duplicateDroplet(dropletId: number) {
 
     revalidateTag(CACHE_TAGS.authors);
     revalidateTag(CACHE_TAGS.droplets);
+    revalidateTag(CACHE_TAGS.allEnrollments);
+    revalidateTag(CACHE_TAGS.userContent);
 
     return {
       ok: true,
@@ -1250,6 +1259,8 @@ export async function publishDraftToOriginal(
       revalidateTag(CACHE_TAGS.playlists);
       revalidateTag(CACHE_TAGS.allEnrollments);
       revalidateTag(CACHE_TAGS.allGroups);
+      revalidateTag(CACHE_TAGS.userContent);
+      revalidateTag(CACHE_TAGS.userDashboard);
     }
   }
 }

@@ -60,20 +60,6 @@ export const USER_POPULATES = {
       },
     },
   },
-  dashboard: {
-    fields: PROFILE_FIELDS,
-    populate: {
-      playlists: {
-        fields: ["id", "name", "slug"],
-        populate: {
-          users_archived: { fields: ["id"] },
-        },
-      },
-      groups: {
-        fields: ["id"],
-      },
-    },
-  },
   dashboardFull: {
     fields: PROFILE_FIELDS,
     populate: {

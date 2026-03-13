@@ -195,6 +195,8 @@ export async function acceptFriendRequest(userId: number, requestId: number) {
     }
     revalidateTag(CACHE_TAGS.friendships(userId));
     revalidateTag(CACHE_TAGS.friendships(requestId));
+    revalidateTag(CACHE_TAGS.userSocial(userId));
+    revalidateTag(CACHE_TAGS.userSocial(requestId));
     return { success: true };
   } catch (error) {
     console.error("Error:", error);
@@ -256,6 +258,8 @@ export async function sendFriendRequest(
 
     revalidateTag(CACHE_TAGS.friendships(requester.id));
     revalidateTag(CACHE_TAGS.friendships(requestee.id));
+    revalidateTag(CACHE_TAGS.userSocial(requester.id));
+    revalidateTag(CACHE_TAGS.userSocial(requestee.id));
     return { success: true };
   } catch (error) {
     console.error("Error:", error);
@@ -290,6 +294,8 @@ export async function rejectFriendRequest(userId: number, requestId: number) {
 
     revalidateTag(CACHE_TAGS.friendships(userId));
     revalidateTag(CACHE_TAGS.friendships(requestId));
+    revalidateTag(CACHE_TAGS.userSocial(userId));
+    revalidateTag(CACHE_TAGS.userSocial(requestId));
     return { success: true };
   } catch (error) {
     console.error("Error:", error);
@@ -323,6 +329,8 @@ export async function cancelFriendRequest(userId: number, requestId: number) {
     }
     revalidateTag(CACHE_TAGS.friendships(userId));
     revalidateTag(CACHE_TAGS.friendships(requestId));
+    revalidateTag(CACHE_TAGS.userSocial(userId));
+    revalidateTag(CACHE_TAGS.userSocial(requestId));
     return { success: true };
   } catch (error) {
     console.error("Error:", error);
@@ -356,6 +364,8 @@ export async function unblockUser(userId: number, requestId: number) {
     }
     revalidateTag(CACHE_TAGS.friendships(userId));
     revalidateTag(CACHE_TAGS.friendships(requestId));
+    revalidateTag(CACHE_TAGS.userSocial(userId));
+    revalidateTag(CACHE_TAGS.userSocial(requestId));
     return { success: true };
   } catch (error) {
     console.error("Error:", error);
@@ -389,6 +399,8 @@ export async function BlockUser(userId: number, requestId: number) {
     }
     revalidateTag(CACHE_TAGS.friendships(userId));
     revalidateTag(CACHE_TAGS.friendships(requestId));
+    revalidateTag(CACHE_TAGS.userSocial(userId));
+    revalidateTag(CACHE_TAGS.userSocial(requestId));
     return { success: true };
   } catch (error) {
     console.error("Error:", error);
@@ -454,6 +466,8 @@ export async function removeFriend(userId: number, friendId: number) {
     }
     revalidateTag(CACHE_TAGS.friendships(userId));
     revalidateTag(CACHE_TAGS.friendships(friendId));
+    revalidateTag(CACHE_TAGS.userSocial(userId));
+    revalidateTag(CACHE_TAGS.userSocial(friendId));
     return { success: true };
   } catch (error) {
     console.error("Error:", error);

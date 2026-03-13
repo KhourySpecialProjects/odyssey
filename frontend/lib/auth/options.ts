@@ -2,11 +2,10 @@ import { User } from "@/types";
 import { NextAuthOptions } from "next-auth";
 import AzureADProvider from "next-auth/providers/azure-ad";
 import GitHubProvider from "next-auth/providers/github";
-import {
-  fetchIsAuthorizedUser as fetchIsAuthorized,
-  getAuthorizedUserByEmail,
-} from "../requests/authorized-user";
+import { fetchIsAuthorizedUser as fetchIsAuthorized } from "../requests/authorized-user";
+import { fetchAPI } from "../utils";
 import { getUserProfile } from "./azure";
+import { AuthorizedUserRoleTitle } from "../globals";
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -48,10 +47,18 @@ export const authOptions: NextAuthOptions = {
           account?.access_token as string,
         );
 
-        const authorizedUser = await getAuthorizedUserByEmail(
-          user.email as string,
-          { populate: { roles: { fields: ["title"] } } },
-        );
+        // Bypass Next.js Data Cache so login always gets fresh roles
+        // (changes made directly in Strapi admin won't trigger revalidateTag)
+        const [authorizedUser] = await fetchAPI<
+          { roles: { title: string }[] }[]
+        >("/authorized-users", {
+          urlParams: {
+            filters: { email: { $eq: user.email } },
+            populate: { roles: { fields: ["title"] } },
+            pagination: { pageSize: 1, page: 1 },
+          },
+          cache: "no-store",
+        });
 
         // Enrich token with user details
         token.user = {
@@ -60,7 +67,9 @@ export const authOptions: NextAuthOptions = {
           image: user.image,
           nuid: graphProfile.nuid,
           isActive: true,
-          roles: authorizedUser.roles.map((elem) => elem.title),
+          roles: authorizedUser.roles.map(
+            (elem) => elem.title as AuthorizedUserRoleTitle,
+          ),
         };
       }
 

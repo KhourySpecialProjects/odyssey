@@ -30,6 +30,7 @@ export async function getAuthorizedUserByEmail<
     populate = USER_POPULATES.minimal.populate,
     fields = [...USER_POPULATES.minimal.fields],
   }: StrapiRequestParams = {},
+  cacheTag: string = CACHE_TAGS.users,
 ): Promise<T> {
   const path = `/authorized-users`;
   const urlParams = {
@@ -48,7 +49,7 @@ export async function getAuthorizedUserByEmail<
 
   return await fetchAPI<T[]>(path, {
     urlParams,
-    next: { tags: [CACHE_TAGS.users], revalidate: 900 },
+    next: { tags: [cacheTag], revalidate: 900 },
   }).then((authorizedUsers) => authorizedUsers[0]);
 }
 
@@ -583,6 +584,7 @@ export async function updateUserInfo(
       },
     );
     revalidateTag(CACHE_TAGS.users);
+    revalidateTag(CACHE_TAGS.authors);
     return { success: true };
   } catch (error) {
     console.error("Error updating user info:", error);
@@ -619,6 +621,7 @@ export async function deleteAuthorizedUser(formData: FormData) {
   }
 
   revalidateTag(CACHE_TAGS.users);
+  revalidateTag(CACHE_TAGS.authors);
 }
 
 // fetching content editors

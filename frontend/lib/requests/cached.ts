@@ -6,17 +6,27 @@ import { getLessonBySlug } from "./lesson";
 import { ENROLLMENT_POPULATES } from "./enrollment-populates";
 import { getUserGroups, getUserDueDates } from "./groups";
 import { USER_POPULATES } from "./user-populates";
+import { CACHE_TAGS } from "../cache-tags";
 
 export const getCachedUser = cache((email: string) =>
-  getAuthorizedUserByEmail(email, USER_POPULATES.profile),
+  getAuthorizedUserByEmail(email, USER_POPULATES.profile, CACHE_TAGS.users),
 );
 
-export const getCachedUserSocial = cache((email: string) =>
-  getAuthorizedUserByEmail(email, USER_POPULATES.social),
-);
+export const getCachedUserSocial = cache(async (email: string) => {
+  const user = await getCachedUser(email);
+  return getAuthorizedUserByEmail(
+    email,
+    USER_POPULATES.social,
+    CACHE_TAGS.userSocial(user.id),
+  );
+});
 
 export const getCachedUserCreation = cache((email: string) =>
-  getAuthorizedUserByEmail(email, USER_POPULATES.creation),
+  getAuthorizedUserByEmail(
+    email,
+    USER_POPULATES.creation,
+    CACHE_TAGS.userContent,
+  ),
 );
 
 export const getCachedEnrollments = cache((authorizedUserId: number) =>
@@ -43,7 +53,11 @@ export const getCachedEnrollmentsFavorites = cache((authorizedUserId: number) =>
 );
 
 export const getCachedUserDashboardFull = cache((email: string) =>
-  getAuthorizedUserByEmail(email, USER_POPULATES.dashboardFull),
+  getAuthorizedUserByEmail(
+    email,
+    USER_POPULATES.dashboardFull,
+    CACHE_TAGS.userDashboard,
+  ),
 );
 
 export const getCachedUserGroups = cache((authorizedUserId: number) =>

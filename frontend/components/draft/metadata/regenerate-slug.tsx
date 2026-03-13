@@ -42,7 +42,7 @@ export function RegenerateSlugButton({
   const handleRequestReview = async () => {
     const response = await updateDroplet(
       droplet.id,
-      { name: name, inReview: true },
+      { name: name, inReview: true, status: "edit" },
       { regenerateSlug: false },
     );
     if (response.ok && !response.error) {
