@@ -1,5 +1,10 @@
+import pkg from "./package.json" with { type: "json" };
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  env: {
+    NEXT_PUBLIC_APP_VERSION: pkg.version,
+  },
   reactStrictMode: true,
   eslint: {
     // Warning: This allows production builds to successfully complete even if
