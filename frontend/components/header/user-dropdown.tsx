@@ -58,7 +58,7 @@ export function UserDropdown({
               Role(s): {condenseRoleTitles(user.roles)}
             </p>
             <p className="text-muted-foreground mt-1 text-xs leading-none">
-              v{process.env.NEXT_PUBLIC_APP_VERSION}
+              v{process.env.NEXT_PUBLIC_APP_VERSION ?? "dev"}
             </p>
           </div>
         </DropdownMenuLabel>
