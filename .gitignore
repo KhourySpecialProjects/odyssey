@@ -9,6 +9,13 @@ frontend/providers/PHProvider.tsx
 .DS_Store
 *.pem
 
+# Claude Code audit log
+.claude/bash-audit.log
+
+# personal agent settings (each developer has their own)
+.claude/settings.local.json
+.claude/.env
+
 # debug
 npm-debug.log*
 yarn-debug.log*
