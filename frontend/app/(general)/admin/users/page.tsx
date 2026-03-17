@@ -11,8 +11,8 @@ export default async function Page() {
   if (!user || !isAuthorizedUserAdmin(user.roles)) return notFound();
 
   return (
-    <div className="mx-auto w-full max-w-5xl">
-      <div className="mx-auto mt-4 mb-2 w-full max-w-7xl px-8 pt-4 pb-2">
+    <div className="mx-auto w-full px-[100px]">
+      <div className="mt-4 mb-2 px-4 pt-4 pb-2">
         <h1 className="text-3xl font-bold tracking-tight sm:text-4xl dark:text-slate-100">
           Users
         </h1>
