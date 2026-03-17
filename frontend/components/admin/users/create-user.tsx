@@ -35,7 +35,10 @@ export function CreateUser() {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button className="dark:bg-slate-300" after={<PlusIcon />}>
+        <Button
+          className="bg-[#2D7597] text-white hover:bg-[#255e78] dark:bg-[#2D7597] dark:hover:bg-[#255e78]"
+          before={<PlusIcon />}
+        >
           Create User
         </Button>
       </DialogTrigger>
