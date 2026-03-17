@@ -1,0 +1,167 @@
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { UsersPageClient } from "@/components/admin/users/users-page-client";
+import { AuthorizedUserRoleTitle } from "@/lib/globals";
+import { AuthorizedUser, TimeZone } from "@/types";
+
+// Mock updateUserInfo to avoid "use server" issues in tests
+jest.mock("@/lib/requests/authorized-user", () => ({
+  updateUserInfo: jest.fn().mockResolvedValue({ success: true }),
+}));
+
+jest.mock("sonner", () => ({
+  toast: {
+    success: jest.fn(),
+    error: jest.fn(),
+  },
+}));
+
+const makeUser = (overrides: Partial<AuthorizedUser> = {}): AuthorizedUser => ({
+  id: 1,
+  email: "user@example.com",
+  isEnabled: true,
+  firstName: "Jane",
+  lastName: "Doe",
+  bio: "",
+  profilePhoto: "",
+  linkedin: "",
+  github: "",
+  website: "",
+  firstTime: false,
+  isPublic: true,
+  friendships: [],
+  sent_requests: [],
+  received_requests: [],
+  blocked: [],
+  was_blocked: [],
+  timeZone: "America/New_York" as TimeZone,
+  roles: [],
+  ...overrides,
+});
+
+const mockUsers = [
+  makeUser({
+    id: 1,
+    email: "alice@example.com",
+    firstName: "Alice",
+    lastName: "Smith",
+    roles: [{ id: 1, title: AuthorizedUserRoleTitle.SysAdmin }],
+  }),
+  makeUser({
+    id: 2,
+    email: "bob@example.com",
+    firstName: "Bob",
+    lastName: "Jones",
+    roles: [{ id: 2, title: AuthorizedUserRoleTitle.Faculty }],
+  }),
+  makeUser({
+    id: 3,
+    email: "carol@example.com",
+    firstName: "Carol",
+    lastName: "Lee",
+    roles: [{ id: 3, title: AuthorizedUserRoleTitle.ContentCreator }],
+  }),
+];
+
+describe("UsersPageClient", () => {
+  it("renders the table with column headers", () => {
+    render(<UsersPageClient users={mockUsers} />);
+
+    expect(screen.getByText("Name")).toBeInTheDocument();
+    expect(screen.getByText("Roles")).toBeInTheDocument();
+    expect(screen.getByText("Actions")).toBeInTheDocument();
+  });
+
+  it("renders all users in the table", () => {
+    render(<UsersPageClient users={mockUsers} />);
+
+    expect(screen.getByText("Alice Smith")).toBeInTheDocument();
+    expect(screen.getByText("Bob Jones")).toBeInTheDocument();
+    expect(screen.getByText("Carol Lee")).toBeInTheDocument();
+  });
+
+  it("shows role badges for each user", () => {
+    render(<UsersPageClient users={mockUsers} />);
+
+    expect(screen.getByText("Admin")).toBeInTheDocument();
+    expect(screen.getByText("Faculty")).toBeInTheDocument();
+    expect(screen.getByText("Content Creator")).toBeInTheDocument();
+  });
+
+  it("renders edit and activity action buttons for each user", () => {
+    render(<UsersPageClient users={mockUsers} />);
+
+    const editButtons = screen.getAllByRole("button", { name: /edit user/i });
+    const activityButtons = screen.getAllByRole("button", {
+      name: /view activity/i,
+    });
+
+    expect(editButtons).toHaveLength(mockUsers.length);
+    expect(activityButtons).toHaveLength(mockUsers.length);
+  });
+
+  it("shows email when no name is set", () => {
+    const users = [
+      makeUser({
+        id: 4,
+        email: "noname@example.com",
+        firstName: "",
+        lastName: "",
+      }),
+    ];
+    render(<UsersPageClient users={users} />);
+    expect(screen.getByText("noname@example.com")).toBeInTheDocument();
+  });
+
+  it("displays empty state when no users found", () => {
+    render(<UsersPageClient users={[]} />);
+    expect(screen.getByText("No users found.")).toBeInTheDocument();
+  });
+
+  it("filters users by search term", async () => {
+    render(<UsersPageClient users={mockUsers} />);
+
+    const searchInput = screen.getByPlaceholderText(/search by name or email/i);
+    fireEvent.change(searchInput, { target: { value: "alice" } });
+
+    await waitFor(() => {
+      expect(screen.getByText("Alice Smith")).toBeInTheDocument();
+      expect(screen.queryByText("Bob Jones")).not.toBeInTheDocument();
+    });
+  });
+
+  it("paginates with 10 items per page", () => {
+    const manyUsers = Array.from({ length: 15 }, (_, i) =>
+      makeUser({
+        id: i + 1,
+        email: `user${i + 1}@example.com`,
+        firstName: `First${i + 1}`,
+        lastName: `Last${i + 1}`,
+        roles: [],
+      }),
+    );
+
+    render(<UsersPageClient users={manyUsers} />);
+
+    // First 10 should be visible
+    expect(screen.getByText("First1 Last1")).toBeInTheDocument();
+    expect(screen.getByText("First10 Last10")).toBeInTheDocument();
+    // 11th should not be visible
+    expect(screen.queryByText("First11 Last11")).not.toBeInTheDocument();
+  });
+
+  it("shows Previous and Next pagination buttons when there are multiple pages", () => {
+    const manyUsers = Array.from({ length: 15 }, (_, i) =>
+      makeUser({
+        id: i + 10,
+        email: `u${i}@example.com`,
+        firstName: `F${i}`,
+        lastName: `L${i}`,
+      }),
+    );
+    render(<UsersPageClient users={manyUsers} />);
+    expect(
+      screen.getByRole("button", { name: /previous/i }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /next/i })).toBeInTheDocument();
+  });
+});
