@@ -197,7 +197,7 @@ function UserTableRow({ user: initialUser }: { user: AuthorizedUser }) {
     <>
       <tr className="border-b border-slate-200 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800/50">
         {/* Name */}
-        <td className="px-4 py-3">
+        <td className="px-6 py-4">
           <div className="flex items-center gap-3">
             <Avatar variant="round" size="sm">
               <AvatarImage src={user.profilePhoto || undefined} />
@@ -206,16 +206,16 @@ function UserTableRow({ user: initialUser }: { user: AuthorizedUser }) {
               </AvatarFallback>
             </Avatar>
             <div className="min-w-0">
-              <p className="truncate font-medium text-slate-900 dark:text-slate-100">
+              <p className="truncate text-base font-medium text-slate-900 dark:text-slate-100">
                 {displayName}
                 {!user.isEnabled && (
-                  <span className="ml-1 text-xs font-normal text-slate-400">
+                  <span className="ml-1 text-sm font-normal text-slate-400">
                     (Disabled)
                   </span>
                 )}
               </p>
               {user.firstName && user.lastName && (
-                <p className="truncate text-xs text-slate-500 dark:text-slate-400">
+                <p className="truncate text-sm text-slate-500 dark:text-slate-400">
                   {user.email}
                 </p>
               )}
@@ -224,10 +224,10 @@ function UserTableRow({ user: initialUser }: { user: AuthorizedUser }) {
         </td>
 
         {/* Roles */}
-        <td className="px-4 py-3">
-          <div className="flex flex-wrap gap-1">
+        <td className="px-6 py-4">
+          <div className="flex flex-wrap gap-1.5">
             {user.roles.length === 0 ? (
-              <span className="text-sm text-slate-400">—</span>
+              <span className="text-base text-slate-400">—</span>
             ) : (
               user.roles.map((role) => {
                 const config = ROLE_CONFIG[role.title];
@@ -235,7 +235,7 @@ function UserTableRow({ user: initialUser }: { user: AuthorizedUser }) {
                   <Badge
                     key={role.title}
                     variant="outline"
-                    className={cn("text-xs font-medium", config.className)}
+                    className={cn("text-sm font-medium", config.className)}
                   >
                     {config.label}
                   </Badge>
@@ -246,7 +246,7 @@ function UserTableRow({ user: initialUser }: { user: AuthorizedUser }) {
         </td>
 
         {/* Actions */}
-        <td className="px-4 py-3">
+        <td className="px-6 py-4">
           <div className="flex items-center gap-2">
             <Button
               size="sm"
@@ -600,16 +600,16 @@ export function UsersPageClient({ users }: { users: AuthorizedUser[] }) {
 
       {/* Table */}
       <div className="overflow-hidden rounded-md border border-slate-200 dark:border-slate-700">
-        <table className="w-full text-sm">
+        <table className="w-full text-base">
           <thead className="bg-slate-50 dark:bg-slate-800">
             <tr>
-              <th className="px-4 py-3 text-left font-semibold text-slate-700 dark:text-slate-300">
+              <th className="px-6 py-4 text-left text-base font-semibold text-slate-700 dark:text-slate-300">
                 Name
               </th>
-              <th className="px-4 py-3 text-left font-semibold text-slate-700 dark:text-slate-300">
+              <th className="px-6 py-4 text-left text-base font-semibold text-slate-700 dark:text-slate-300">
                 Roles
               </th>
-              <th className="px-4 py-3 text-left font-semibold text-slate-700 dark:text-slate-300">
+              <th className="px-6 py-4 text-left text-base font-semibold text-slate-700 dark:text-slate-300">
                 Actions
               </th>
             </tr>
