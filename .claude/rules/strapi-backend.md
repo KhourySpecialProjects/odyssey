@@ -12,3 +12,5 @@ paths:
 - Schema files are the source of truth: `backend/src/api/{type}/content-types/{type}/schema.json`
 - Check `blocksVersion` on lessons: `v1` = TipTap `blocks`, `v2` = BlockNote `blocksV2`.
 - Load the `strapi-v4-patterns` skill for query building guidance.
+- If you find Strapi v5 docs online, they will NOT work here.
+- See `docs/agent/backend-architecture.md` for the full domain model.
