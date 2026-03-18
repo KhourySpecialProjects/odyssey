@@ -1,6 +1,7 @@
 ---
 name: systematic-debugging
 description: Use when encountering any bug, test failure, or unexpected behavior. 4-phase root cause process that prevents fix-first-think-later mistakes. Covers Strapi API errors, Next.js hydration mismatches, cache staleness, and enrollment state bugs.
+invocation: auto
 ---
 
 # Systematic Debugging for Odyssey

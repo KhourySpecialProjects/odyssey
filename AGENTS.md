@@ -4,12 +4,11 @@
 > For agent implementation details, see `.claude/agents/*.md`.
 > This file documents the **workflow** — when to use which agent, how state flows between them, and what to do when things break.
 
-## The Six Agents
+## The Five Agents
 
 | Agent            | When to invoke                         | What it produces                                   |
 | ---------------- | -------------------------------------- | -------------------------------------------------- |
-| **brainstormer** | Before planning non-trivial features   | Design brief (intent, constraints, alternatives)   |
-| **planner**      | After brainstorming or for clear tasks | `docs/plans/<slug>-spec.md` + `<slug>-plan.md`     |
+| **planner**      | Starting any feature, bug fix, or refactor | `docs/plans/<slug>-spec.md` + `<slug>-plan.md`     |
 | **implementer**  | After plan is approved                 | Code, tests, updated plan with completion status   |
 | **reviewer**     | After each implementation chunk        | Prioritized findings (critical/warning/suggestion) |
 | **auditor**      | Feature branch complete, before merge  | `docs/plans/<slug>-audit.md` with verdict          |
@@ -33,14 +32,9 @@
                  yes              no
                    │              │
                    ▼              ▼
-            Just ask         ┌──────────────┐
-            Claude           │ Brainstormer │ (optional but recommended)
-            directly         └──────┬───────┘
-                                    │ design brief
-                                    ▼
-                             ┌──────────┐
-                             │ Planner  │
-                             └────┬─────┘
+            Just ask         ┌──────────┐
+            Claude           │ Planner  │ (explores alternatives, then writes spec + plan)
+            directly         └────┬─────┘
                                   │ writes spec + plan
                                   ▼
                           ┌──────────────┐
@@ -83,7 +77,6 @@ Agents run in isolated context windows. They share state through files, not memo
 
 | Handoff                | Mechanism                                                                        |
 | ---------------------- | -------------------------------------------------------------------------------- |
-| Brainstormer → Planner | Human passes design brief to planner prompt (brainstormer saves nothing to disk) |
 | Planner → Implementer  | Implementer reads `docs/plans/<slug>-plan.md`                                    |
 | Implementer → Reviewer | Reviewer reads the code directly + the plan file                                 |
 | Reviewer → Implementer | Human pastes findings into implementer prompt, or reviewer appends to plan file  |
@@ -98,7 +91,6 @@ If an agent needs information from a previous agent's session, it must be in a f
 Each agent is invoked by asking Claude Code to use it:
 
 ```
-"Use the brainstormer agent to explore [task description]"
 "Use the planner agent to plan [task description]"
 "Use the implementer agent to execute docs/plans/<slug>-plan.md"
 "Use the reviewer agent to review the latest changes"

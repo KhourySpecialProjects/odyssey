@@ -1,6 +1,7 @@
 ---
 name: schema-change-checklist
 description: Step-by-step checklist for modifying Strapi content types. Use when adding, removing, or changing fields on any Strapi schema, or when modifying relations between content types. Ensures all downstream files are updated.
+invocation: auto
 ---
 
 # Schema Change Checklist

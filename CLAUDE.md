@@ -32,8 +32,7 @@ Run `/ci quick` to skip builds. Linting and formatting run automatically via CI 
 
 Workflow commands:
 
-- `/brainstorm [task]` — Explore intent, constraints, and alternatives before planning
-- `/plan [task]` — Invoke the planner agent
+- `/plan [task]` — Invoke the planner agent (explores alternatives for non-trivial tasks, then writes spec + plan)
 - `/implement [plan path]` — Invoke the implementer agent
 - `/review [focus]` — Invoke the reviewer agent
 - `/audit [scope]` — Invoke the auditor agent (expensive, use once before merge)
@@ -73,7 +72,7 @@ Read these when your task touches the relevant area. Don't preload all of them.
 
 ## Skills
 
-Load via `claude skills use <name>` only when the task requires them:
+Six domain-specific skills with `invocation: auto` — Claude loads them automatically when the task matches. No manual invocation needed.
 
 | Skill                     | Use when                                                           |
 | ------------------------- | ------------------------------------------------------------------ |
@@ -86,7 +85,7 @@ Load via `claude skills use <name>` only when the task requires them:
 
 ## Agents
 
-Six agents in `.claude/agents/` for structured workflows. Use `/brainstorm`, `/plan`, `/implement`, `/review`, `/audit` commands to invoke them, or "Use the wrap-up agent" for end-of-session. See `AGENTS.md` for the workflow and state passing.
+Five agents in `.claude/agents/` for structured workflows. Use `/plan`, `/implement`, `/review`, `/audit` commands to invoke them, or "Use the wrap-up agent" for end-of-session. See `AGENTS.md` for the workflow and state passing.
 
 ## MCP Servers
 

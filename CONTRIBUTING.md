@@ -107,19 +107,18 @@ You're in the loop between every step. Agents share state through files in `docs
 
 - Each agent runs in **fresh context** — the reviewer never sees the implementer struggle, preventing bias.
 - The implementer runs in an **isolated git worktree** — can't corrupt your working tree.
-- Read-only agents (brainstormer, reviewer) **cannot edit files** at the tool level, not just by instruction.
+- Read-only agents (reviewer) **cannot edit files** at the tool level, not just by instruction.
 - State passes through **files** (`docs/plans/*.md`), not memory. No agent is trusted to remember anything.
 
 ## Hooks
 
-Nine shell scripts that run automatically at specific lifecycle events. They execute outside the model's context — Claude never sees the hook code, only the results.
+Seven shell scripts that run automatically at specific lifecycle events. They execute outside the model's context — Claude never sees the hook code, only the results.
 
 ### Session Lifecycle
 
 | Hook               | Event        | What it does                                                                                                                                             |
 | ------------------ | ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `session-start.sh` | SessionStart | Checks Docker status, flags incomplete plans in `docs/plans/`, injects branch/commit/plan context and `PROGRESS.md` into Claude's session                |
-| `pre-compact.sh`   | PreCompact   | Re-injects critical version constraints (Strapi v4.22, Tailwind v3.4, Next.js 15 cache rules) into context before compaction so they survive compression |
 | `notify.sh`        | Notification | Sends macOS notification when Claude needs attention (permission prompts, idle)                                                                          |
 
 ### Safety Guards
@@ -141,11 +140,10 @@ Nine shell scripts that run automatically at specific lifecycle events. They exe
 | Hook               | Event            | What it does                                                                                                                                            |
 | ------------------ | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `suggest-next.sh`  | SubagentStop     | Reads plan file checkboxes and suggests the next agent (e.g., "3 done, 2 remaining. Next: /implement or /review")                                       |
-| `skill-suggest.sh` | UserPromptSubmit | Keyword-matches your prompt and suggests relevant skills before Claude responds (e.g., "fix cache bug" → suggests systematic-debugging + data-fetching) |
 
 ## Skills
 
-Six domain-specific reference guides. Only `name` + `description` load at startup. Full content loads only when invoked, keeping context lean.
+Six domain-specific reference guides with `invocation: auto`. Claude reads the `name` + `description` at startup and automatically loads the full skill content when the task matches — no manual invocation needed.
 
 | Skill                     | What it provides                                                                                              |
 | ------------------------- | ------------------------------------------------------------------------------------------------------------- |
@@ -181,9 +179,8 @@ This workflow was built from scratch for Odyssey, informed by patterns from othe
 - **All 6 skills** — Every line encodes Odyssey-specific knowledge (Strapi v4.22 query patterns, the `flattenAttributes` rule, the cache tag invalidation matrix). Generic skills were removed.
 - **All 6 rules** — Path-conditional to Odyssey's file structure.
 - **All 7 commands** — Dispatch logic tailored to Odyssey's workflow and `docs/plans/` convention.
-- **9 hooks** — Safety guards, formatting, and workflow automation.
+- **7 hooks** — Safety guards, formatting, and workflow automation.
 - **Wrap-up + learnings system** — Custom knowledge management with lifecycle tracking, hard file limits, and pruning. Not derived from any framework.
-- **`pre-compact.sh`** — Preserving version constraints through context compression. No framework does this.
 - **`suggest-next.sh`** — Auto-detecting workflow position by parsing plan file checkboxes.
 
 ### Inspired by other frameworks
@@ -196,7 +193,7 @@ This workflow was built from scratch for Odyssey, informed by patterns from othe
 | File-based state passing via `docs/plans/`                               | [BMAD Method](https://github.com/aj-geddes/claude-code-bmad-skills) phase system               | Used `docs/plans/` as the shared state bus instead of BMAD's role-based handoffs |
 | Path-conditional rules                                                   | [Cursor](https://cursor.com/docs/context/rules) `.mdc` rules                                   | Claude Code's native `paths:` frontmatter                                        |
 | Quality gate hook                                                        | [Trail of Bits](https://github.com/trailofbits/claude-code-config) hook patterns               | Auto-format on every turn using Prettier                                         |
-| `skill-suggest.sh` keyword matching                                      | Cursor's auto-rule suggestion                                                                  | Adapted as a UserPromptSubmit hook                                               |
+
 
 ### Used as-is from Superpowers plugin
 
@@ -288,7 +285,7 @@ odyssey/
 │   ├── skills/              ← 6 domain-specific skills (on-demand)
 │   ├── rules/               ← 6 path-conditional rules (auto-activate)
 │   ├── commands/            ← 7 slash commands
-│   └── hooks/               ← 9 shell scripts (formatting, protection, suggestions, audit)
+│   └── hooks/               ← 7 shell scripts (formatting, protection, suggestions, audit)
 │
 ├── docs/
 │   ├── agent/               ← Reference docs (architecture, data fetching, testing, workflow)

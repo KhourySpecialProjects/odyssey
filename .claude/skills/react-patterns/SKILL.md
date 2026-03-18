@@ -1,6 +1,7 @@
 ---
 name: react-patterns
 description: Next.js 15 App Router component patterns specific to Odyssey. Use when building routes, pages, layouts, Server/Client Components, or deciding component boundaries. Covers Suspense, error boundaries, data fetching in components, route structure, auth, and Odyssey's component organization.
+invocation: auto
 ---
 
 # React & Next.js 15 Patterns for Odyssey

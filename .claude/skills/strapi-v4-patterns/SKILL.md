@@ -1,6 +1,7 @@
 ---
 name: strapi-v4-patterns
 description: Strapi v4.22 Entity Service API patterns, query building, schema reading, and common gotchas. Use when working with Strapi content types, writing request functions, building populate/filter queries, or debugging Strapi API responses.
+invocation: auto
 ---
 
 # Strapi v4.22 Patterns for Odyssey

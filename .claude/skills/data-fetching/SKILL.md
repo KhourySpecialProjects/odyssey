@@ -1,6 +1,7 @@
 ---
 name: data-fetching
 description: Data fetching, caching, and cache invalidation patterns for Odyssey. Use when writing request functions, debugging stale data, adding cache tags, or implementing Server Actions that mutate data.
+invocation: auto
 ---
 
 # Data Fetching Patterns for Odyssey

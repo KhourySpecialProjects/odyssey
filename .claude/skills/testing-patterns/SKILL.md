@@ -1,6 +1,7 @@
 ---
 name: testing-patterns
 description: Jest testing patterns for the Odyssey frontend. Use when writing unit tests, fixing test failures, or setting up mocks. Covers fetchAPI mocking, Server Action mocking, next-auth mocking, component testing with RTL, and mock data conventions.
+invocation: auto
 ---
 
 # Testing Patterns for Odyssey
