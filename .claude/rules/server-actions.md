@@ -14,3 +14,4 @@ paths:
 - MUST call `flattenAttributes()` manually on raw `fetch()` responses — `fetchAPI()` auto-flattens but raw `fetch()` does NOT.
 - MUST call `revalidateTag()` with appropriate `CACHE_TAGS` after every mutation.
 - Never hardcode cache tag strings — always use `CACHE_TAGS` constants from `lib/cache-tags.ts`.
+- **#1 bug source in this codebase:** `fetchAPI()` auto-flattens but raw `fetch()` does NOT. Always call `flattenAttributes()` after raw `fetch()`.
