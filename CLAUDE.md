@@ -106,9 +106,23 @@ Per-developer (user-scoped, not committed):
 
 ## Plugins
 
-**Code Simplifier** (official Anthropic) — Reviews changed code for clarity, consistency, and maintainability. Install with: `claude plugin install code-simplifier`
+Plugins extend Claude Code with LSP intelligence, workflow tools, and external integrations. They are pre-packaged and installed from the `claude-plugins-official` marketplace. Install with `claude plugin install <name>@claude-plugins-official --scope project`.
 
-**Superpowers** — Installed as a plugin. These overrides control which skills are active.
+Three types of plugins exist:
+
+- **LSP plugins** — Connect to a language server running locally, providing real type checking, diagnostics, and code navigation (same engine that powers VS Code squiggly lines).
+- **Workflow plugins** — Add skills, agents, and slash commands that extend how Claude works (debugging workflows, code review, etc.).
+- **MCP plugins** — Pre-configured MCP servers for external services (Figma, GitHub, Linear, etc.). Same as `.mcp.json` entries but packaged for easy install.
+
+### Project-scoped plugins (shared via repo)
+
+| Plugin            | Type     | What it does                                                                                                                              |
+| ----------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| `typescript-lsp`  | LSP      | Connects to the TypeScript compiler for real type errors, missing imports, and go-to-definition after edits. Essential for this codebase. |
+| `code-simplifier` | Workflow | Reviews changed code for clarity, consistency, and maintainability.                                                                       |
+| `superpowers`     | Workflow | Extended skills for debugging, verification, and parallel agents. See overrides below.                                                    |
+
+### Superpowers overrides
 
 **USE these Superpowers skills** (they fill gaps our agents don't cover):
 
