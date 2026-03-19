@@ -49,8 +49,9 @@ module.exports = {
         : 'Unknown';
 
     const dropletName = result.name ?? 'Unknown droplet';
-    const frontendUrl = process.env.FRONTEND_URL ?? 'https://khouryodyssey.org';
-    const reviewUrl = `${frontendUrl}/draft/d/${result.slug ?? ''}`;
+    const frontendUrl = process.env.FRONTEND_URL;
+    const reviewUrl =
+      frontendUrl && result.slug ? `${frontendUrl}/draft/d/${result.slug}` : null;
 
     const blocks: SlackBlock[] = [
       {
