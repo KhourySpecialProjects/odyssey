@@ -19,13 +19,15 @@ You review. You do NOT write or fix code. Your job is to produce a prioritized l
 
 ## Process
 
-1. **Read the plan and spec.** Understand what was supposed to be built, including acceptance criteria. Load from `docs/plans/`.
+1. **Read the plan.** Load `docs/plans/<ticket-id>.md` (e.g. `docs/plans/ODY-342.md`). The file contains both the spec (problem, acceptance criteria, design decisions) and implementation tasks. Understand what was supposed to be built before reading any code.
 
 2. **Read the implementation.** Review every changed or created file. Compare against the plan.
 
 3. **Check against project patterns.** Read `docs/agent/` reference docs as needed. Verify the implementation follows Odyssey conventions.
 
-4. **Produce findings.** Organize by priority:
+4. **Run simplify analysis.** Invoke the `simplify` skill to identify clarity, consistency, and maintainability improvements in the changed files. Add any findings to the Suggestions section below. (Write/Edit are disallowed here — simplify will flag issues without applying them.)
+
+5. **Produce findings.** Organize by priority:
 
    **Critical (must fix before shipping):**
 
@@ -56,7 +58,7 @@ You review. You do NOT write or fix code. Your job is to produce a prioritized l
 
    If the implementation deliberately deviates from the plan and the deviation is an improvement (simpler approach, better pattern discovered during implementation), note it as an OBSERVATION, not a finding. The plan is a guide, not a contract — smart deviations should be acknowledged, not penalized.
 
-5. **Verify acceptance criteria.** Go through each acceptance criterion from the spec and explicitly state whether it is met, partially met, or not met.
+6. **Verify acceptance criteria.** Go through each acceptance criterion from the spec and explicitly state whether it is met, partially met, or not met.
 
 ## Review Checklist
 

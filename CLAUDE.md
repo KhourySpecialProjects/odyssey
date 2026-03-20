@@ -92,10 +92,12 @@ Five agents in `.claude/agents/` for structured workflows. Use `/plan`, `/implem
 Configured in `.mcp.json` (project-scoped, safe to commit):
 
 - **Playwright** — Browser automation via accessibility tree. Use to verify UI changes, explore the running app, or generate E2E test code from real interactions.
+- **Context7** — Up-to-date library documentation for Next.js, Strapi, Tailwind, and other dependencies. Use when the correct API or pattern is unclear.
 
 Per-developer (user-scoped, not committed):
 
 - **Linear** — Read/create/update Linear issues. Set up with: `claude mcp add --transport http linear https://mcp.linear.app/mcp`
+- **Figma** — Inspect designs, extract tokens, and implement components with 1:1 fidelity. Set up with: `claude mcp add --scope user --transport http figma https://mcp.figma.com/mcp` then authenticate via `/mcp` → figma → Authenticate.
 
 ## Restrictions
 

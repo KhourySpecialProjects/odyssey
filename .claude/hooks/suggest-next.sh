@@ -11,8 +11,8 @@ PLANS_DIR="$PROJECT_ROOT/docs/plans"
 
 # Check for plan files that suggest where we are in the workflow
 if [ -d "$PLANS_DIR" ]; then
-    # Find the most recently modified plan file
-    LATEST_PLAN=$(ls -t "$PLANS_DIR"/*-plan.md 2>/dev/null | head -1)
+    # Find the most recently modified plan file (ODY-342.md style, excludes PROGRESS.md and *-audit.md)
+    LATEST_PLAN=$(ls -t "$PLANS_DIR"/*.md 2>/dev/null | grep -v "PROGRESS.md" | grep -v "\-audit\.md" | head -1)
     LATEST_AUDIT=$(ls -t "$PLANS_DIR"/*-audit.md 2>/dev/null | head -1)
 
     if [ -n "$LATEST_AUDIT" ] && [ -f "$LATEST_AUDIT" ]; then
@@ -34,7 +34,7 @@ if [ -d "$PLANS_DIR" ]; then
             echo "Implementation in progress ($COMPLETE done, $INCOMPLETE remaining)." >&2
             echo "Next: Continue with the implementer, or use the reviewer agent to review what's done so far." >&2
         elif [ "$INCOMPLETE" -gt 0 ] && [ "$COMPLETE" -eq 0 ]; then
-            echo "Plan ready. Next: Use the implementer agent to execute $(basename "$LATEST_PLAN")" >&2
+            echo "Plan ready. Next: /implement $(basename "$LATEST_PLAN")" >&2
         elif [ "$INCOMPLETE" -eq 0 ] && [ "$COMPLETE" -gt 0 ]; then
             echo "All plan tasks complete. Next: Use the reviewer agent to review the changes." >&2
         fi

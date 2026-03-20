@@ -6,13 +6,13 @@
 
 ## The Five Agents
 
-| Agent            | When to invoke                         | What it produces                                   |
-| ---------------- | -------------------------------------- | -------------------------------------------------- |
-| **planner**      | Starting any feature, bug fix, or refactor | `docs/plans/<slug>-spec.md` + `<slug>-plan.md`     |
-| **implementer**  | After plan is approved                 | Code, tests, updated plan with completion status   |
-| **reviewer**     | After each implementation chunk        | Prioritized findings (critical/warning/suggestion) |
-| **auditor**      | Feature branch complete, before merge  | `docs/plans/<slug>-audit.md` with verdict          |
-| **wrap-up**      | End of every working session           | Learnings, progress file, bloat pruning            |
+| Agent           | When to invoke                             | What it produces                                                  |
+| --------------- | ------------------------------------------ | ----------------------------------------------------------------- |
+| **planner**     | Starting any feature, bug fix, or refactor | `docs/plans/ODY-342.md` (spec + implementation tasks in one file) |
+| **implementer** | After plan is approved                     | Code, tests, updated plan with completion status                  |
+| **reviewer**    | After each implementation chunk            | Prioritized findings (critical/warning/suggestion)                |
+| **auditor**     | Feature branch complete, before merge      | `docs/plans/<slug>-audit.md` with verdict                         |
+| **wrap-up**     | End of every working session               | Learnings, progress file, bloat pruning                           |
 
 ## The Workflow
 
@@ -75,14 +75,14 @@
 
 Agents run in isolated context windows. They share state through files, not memory.
 
-| Handoff                | Mechanism                                                                        |
-| ---------------------- | -------------------------------------------------------------------------------- |
-| Planner → Implementer  | Implementer reads `docs/plans/<slug>-plan.md`                                    |
-| Implementer → Reviewer | Reviewer reads the code directly + the plan file                                 |
-| Reviewer → Implementer | Human pastes findings into implementer prompt, or reviewer appends to plan file  |
-| All → Auditor          | Auditor reads `git diff production` + the plan file                              |
-| All → Wrap-up          | Wrap-up reads `git log`, `git diff --stat`, and `docs/plans/`                    |
-| Wrap-up → Next session | Wrap-up writes `docs/plans/PROGRESS.md`, session-start.sh injects it             |
+| Handoff                | Mechanism                                                                                |
+| ---------------------- | ---------------------------------------------------------------------------------------- |
+| Planner → Implementer  | Implementer reads `docs/plans/ODY-342.md` (single file with spec + tasks)                |
+| Implementer → Reviewer | Reviewer reads the code directly + the plan file                                         |
+| Reviewer → Implementer | Human pastes findings into implementer prompt, or reviewer appends to plan file          |
+| All → Auditor          | Auditor reads `git diff production` + `docs/plans/ODY-342.md`; writes `ODY-342-audit.md` |
+| All → Wrap-up          | Wrap-up reads `git log`, `git diff --stat`, and `docs/plans/`                            |
+| Wrap-up → Next session | Wrap-up writes `docs/plans/PROGRESS.md`, session-start.sh injects it                     |
 
 If an agent needs information from a previous agent's session, it must be in a file. There is no shared memory between agents. This is intentional — it prevents context rot and ensures the reviewer isn't biased by watching the implementer work.
 

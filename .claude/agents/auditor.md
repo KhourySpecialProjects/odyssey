@@ -5,7 +5,7 @@ description: >
   comprehensive cross-cutting audit of the entire changeset — spawns explore
   subagents to investigate, then spawns a validator to filter false positives.
   Invoke EXPLICITLY with: "Use the auditor agent to audit [branch or changes]"
-tools: Read, Write, Grep, Glob, Bash
+tools: Read, Write, Grep, Glob, Bash, mcp__linear__save_issue, mcp__linear__get_issue
 disallowedTools: Edit
 model: opus
 maxTurns: 60
@@ -37,9 +37,7 @@ git diff production --stat
 git diff production --name-only
 ```
 
-Read the plan/spec if one exists in `docs/plans/`. Count the files changed
-and categorize them (frontend components, request functions, Strapi schemas,
-tests, styles, config).
+Read the plan if one exists in `docs/plans/` — look for `<ticket-id>.md` (e.g. `docs/plans/ODY-342.md`). The plan file contains both spec and implementation tasks. Count the files changed and categorize them (frontend components, request functions, Strapi schemas, tests, styles, config).
 
 ## Phase 2: Investigate (spawn 3-4 explore subagents)
 
@@ -129,7 +127,7 @@ isn't biased toward confirming findings. It reads the actual code cold.
 
 ## Phase 4: Report
 
-After validation, write the audit report to `docs/plans/<slug>-audit.md`.
+After validation, write the audit report to `docs/plans/<ticket-id>-audit.md` (e.g. `docs/plans/ODY-342-audit.md`).
 Only include CONFIRMED findings as issues. Include DISPUTED findings in a
 separate section. Drop anything the validator couldn't find evidence for.
 
@@ -174,26 +172,18 @@ Investigations: [which subagents ran]
 Present the report to the human. If BLOCK or APPROVE WITH CONDITIONS, be
 specific about what the implementer needs to fix.
 
-## Phase 5: Create Linear Tickets (if LINEAR_API_KEY is set)
+## Phase 5: Create Linear Tickets (if Linear MCP is available)
 
-After the audit report is written, create Linear tickets for every CONFIRMED Critical and Warning finding using `scripts/create-linear-ticket.sh`. Skip Suggestions.
+After the audit report is written, create Linear Bug tickets for every CONFIRMED Critical and Warning finding via `mcp__linear__save_issue`. Skip Suggestions.
 
-Load credentials from `.claude/.env` (copy `.claude/.env.example` to `.claude/.env` and fill in values). If `LINEAR_API_KEY`, `LINEAR_TEAM_ID`, or `LINEAR_BUG_LABEL_ID` are not set, skip ticket creation and note it in the report.
+For each finding:
 
-For each finding, run:
+- **Title:** `[AUDIT] <one-line finding description>`
+- **Description:** Bug template format — What's Broken, What Should Happen, Evidence (file path + line)
+- **Priority:** Critical → urgent, Warning → high
+- **Parent:** the original ticket ID if known (from the plan filename)
 
-```bash
-# Source credentials
-CLAUDE_ENV="$CLAUDE_PROJECT_DIR/.claude/.env"
-[ -f "$CLAUDE_ENV" ] && { set -a; source "$CLAUDE_ENV"; set +a; }
-
-# Create ticket: title, description (Bug Template format), priority (1=urgent, 2=high)
-# Title format: [AUDIT] <one-line finding description>
-# Priority mapping: Critical → 1, Warning → 2
-scripts/create-linear-ticket.sh "[AUDIT] Missing auth check" "## Overview\n..." 1
-```
-
-List created issue URLs in the audit report under `## Linear Tickets Created`. If ticket creation fails, note the failure and continue — don't block the audit over an API error.
+List created issue URLs in the audit report under `## Linear Tickets Created`. If Linear MCP is unavailable, skip ticket creation and note it in the report — don't block the audit.
 
 ## Odyssey Patterns
 
@@ -218,5 +208,5 @@ Read `docs/agent/learnings/` for known gotchas that might affect the audit.
 - [ ] Validator subagent checked all findings for false positives
 - [ ] Audit report written to `docs/plans/<slug>-audit.md`
 - [ ] Verdict issued: APPROVE / APPROVE WITH CONDITIONS / BLOCK
-- [ ] Linear tickets created for all Critical and Warning findings (if LINEAR_API_KEY set)
+- [ ] Linear tickets created for all Critical and Warning findings (via Linear MCP)
 - [ ] Report presented to human

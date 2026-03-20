@@ -8,17 +8,20 @@
 # Exit code 0 = let the agent proceed.
 #
 
-set -eo pipefail
-
 PROJECT_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 
 # ─── Collect changed files (staged + unstaged + untracked) ───────────
 cd "$PROJECT_ROOT"
 
-CHANGED_FILES=$({
-    git diff --name-only HEAD 2>/dev/null
-    git ls-files --others --exclude-standard 2>/dev/null
-} | sort -u | while read -r f; do [ -f "$f" ] && echo "$f"; done)
+CHANGED_FILES=$(
+    {
+        git diff --name-only HEAD 2>/dev/null
+        git ls-files --others --exclude-standard 2>/dev/null
+    } | sort -u | while read -r f; do
+        [ -f "$f" ] && echo "$f"
+        true
+    done
+)
 
 if [ -z "$CHANGED_FILES" ]; then
     exit 0
