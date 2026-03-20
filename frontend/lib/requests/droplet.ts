@@ -305,9 +305,7 @@ export async function updateDroplet(
       ...(data.overview !== undefined && { overview: data.overview }),
       ...(data.lessons && { lessons: data.lessons }),
       ...(data.inReview !== undefined && { inReview: data.inReview }),
-      ...(data.inReview === true && { status: "edit" }),
-      ...(data.inReview !== true &&
-        data.status !== undefined && { status: data.status }),
+      ...(data.status !== undefined && { status: data.status }),
       ...(data.afterReview !== undefined && { afterReview: data.afterReview }),
     };
 
