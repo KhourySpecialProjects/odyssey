@@ -28,19 +28,40 @@ export const AuthorizedUserAdminRoles = [AuthorizedUserRoleTitle.SysAdmin];
 type College = {
   value: string;
   label: string;
+  shortLabel: string;
 };
 export const COLLEGES: College[] = [
-  { value: "BV", label: "Bouvé College of Health Sciences" },
-  { value: "CAMD", label: "College of Arts, Media and Design" },
-  { value: "COE", label: "College of Engineering" },
-  { value: "CPS", label: "College of Professional Studies" },
-  { value: "COS", label: "College of Science" },
-  { value: "CSSH", label: "College of Social Sciences and Humanities" },
-  { value: "DMSB", label: "D’Amore-McKim School of Business" },
-  { value: "KCCS", label: "Khoury College of Computer Sciences" },
-  { value: "MI", label: "Mills College at Northeastern" },
-  { value: "LAW", label: "School of Law" },
-  { value: "other", label: "Other" },
+  {
+    value: "BV",
+    label: "Bouvé College of Health Sciences",
+    shortLabel: "Bouvé",
+  },
+  {
+    value: "CAMD",
+    label: "College of Arts, Media and Design",
+    shortLabel: "CAMD",
+  },
+  { value: "COE", label: "College of Engineering", shortLabel: "COE" },
+  { value: "CPS", label: "College of Professional Studies", shortLabel: "CPS" },
+  { value: "COS", label: "College of Science", shortLabel: "COS" },
+  {
+    value: "CSSH",
+    label: "College of Social Sciences and Humanities",
+    shortLabel: "CSSH",
+  },
+  {
+    value: "DMSB",
+    label: "D’Amore-McKim School of Business",
+    shortLabel: "D’Amore-McKim",
+  },
+  {
+    value: "KCCS",
+    label: "Khoury College of Computer Sciences",
+    shortLabel: "Khoury",
+  },
+  { value: "MI", label: "Mills College at Northeastern", shortLabel: "Mills" },
+  { value: "LAW", label: "School of Law", shortLabel: "Law" },
+  { value: "other", label: "Other", shortLabel: "Other" },
 ];
 
 export type FilterOption = {

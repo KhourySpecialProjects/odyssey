@@ -14,8 +14,7 @@ describe("AdminNav", () => {
     "Droplets",
     "Playlists",
     "Groups",
-    "Access Manager",
-    "Creators Manager",
+    "Requests",
     "Reports",
   ];
 
@@ -23,7 +22,7 @@ describe("AdminNav", () => {
     usePathname.mockReturnValue("/admin");
   });
 
-  it("renders all 8 nav items", () => {
+  it("renders all 7 nav items", () => {
     render(<AdminNav />);
     NAV_LABELS.forEach((label) => {
       expect(screen.getByText(label)).toBeInTheDocument();
@@ -87,11 +86,8 @@ describe("AdminNav", () => {
       "/admin/groups",
     );
     expect(
-      screen.getByRole("link", { name: /access manager/i }),
-    ).toHaveAttribute("href", "/admin/access-manager");
-    expect(
-      screen.getByRole("link", { name: /creators manager/i }),
-    ).toHaveAttribute("href", "/admin/creators-manager");
+      screen.getByRole("link", { name: /requests/i }),
+    ).toHaveAttribute("href", "/admin/requests");
     expect(screen.getByRole("link", { name: /reports/i })).toHaveAttribute(
       "href",
       "/admin/reports",

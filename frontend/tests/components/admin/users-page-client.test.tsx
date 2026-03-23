@@ -3,9 +3,16 @@ import { UsersPageClient } from "@/components/admin/users/users-page-client";
 import { AuthorizedUserRoleTitle } from "@/lib/globals";
 import { AuthorizedUser, TimeZone } from "@/types";
 
+jest.mock("next/navigation", () => ({
+  useRouter: jest.fn(() => ({ push: jest.fn(), refresh: jest.fn() })),
+  usePathname: jest.fn(() => "/admin/users"),
+}));
+
 // Mock updateUserInfo to avoid "use server" issues in tests
 jest.mock("@/lib/requests/authorized-user", () => ({
   updateUserInfo: jest.fn().mockResolvedValue({ success: true }),
+  createAuthorizedUser: jest.fn().mockResolvedValue({ ok: true }),
+  createBatchAuthorizedUsers: jest.fn().mockResolvedValue({ ok: true, data: { successful: [], failed: [] } }),
 }));
 
 jest.mock("sonner", () => ({
@@ -129,24 +136,25 @@ describe("UsersPageClient", () => {
     });
   });
 
-  it("paginates with 10 items per page", () => {
+  it("paginates with 8 items per page", () => {
+    // Use zero-padded names so alphabetical sort matches numeric order
     const manyUsers = Array.from({ length: 15 }, (_, i) =>
       makeUser({
         id: i + 1,
-        email: `user${i + 1}@example.com`,
-        firstName: `First${i + 1}`,
-        lastName: `Last${i + 1}`,
+        email: `user${String(i + 1).padStart(2, "0")}@example.com`,
+        firstName: `First`,
+        lastName: `User${String(i + 1).padStart(2, "0")}`,
         roles: [],
       }),
     );
 
     render(<UsersPageClient users={manyUsers} />);
 
-    // First 10 should be visible
-    expect(screen.getByText("First1 Last1")).toBeInTheDocument();
-    expect(screen.getByText("First10 Last10")).toBeInTheDocument();
-    // 11th should not be visible
-    expect(screen.queryByText("First11 Last11")).not.toBeInTheDocument();
+    // First 8 (sorted alphabetically) should be visible
+    expect(screen.getByText("First User01")).toBeInTheDocument();
+    expect(screen.getByText("First User08")).toBeInTheDocument();
+    // 9th should not be visible on page 1
+    expect(screen.queryByText("First User09")).not.toBeInTheDocument();
   });
 
   it("shows Previous and Next pagination buttons when there are multiple pages", () => {

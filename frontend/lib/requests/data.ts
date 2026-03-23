@@ -156,7 +156,15 @@ export async function fetchReports() {
     while (true) {
       const query = qs.stringify({
         sort: ["id:desc"],
-        fields: "*",
+        fields: [
+          "id",
+          "type",
+          "fullName",
+          "email",
+          "path",
+          "description",
+          "time",
+        ],
         pagination: {
           pageSize,
           page,
