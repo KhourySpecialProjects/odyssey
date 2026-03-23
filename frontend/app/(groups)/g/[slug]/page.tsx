@@ -78,7 +78,16 @@ export default async function GroupDetailPage({ params }: Props) {
     { completionPercentage: number; completionDate: Date | undefined }
   > = {};
 
-  if (group.members && group.droplets) {
+  const allDropletIds = [
+    ...new Set([
+      ...(group.droplets?.map((d) => d.id) || []),
+      ...(group.playlists?.flatMap(
+        (p) => p.droplets?.map((d) => d.id) || [],
+      ) || []),
+    ]),
+  ];
+
+  if (group.members && allDropletIds.length > 0) {
     sortedMembers = [...group.members].sort((a, b) => {
       const aValue = a.lastName || a.email;
       const bValue = b.lastName || b.email;
@@ -87,11 +96,10 @@ export default async function GroupDetailPage({ params }: Props) {
 
     try {
       const memberIds = sortedMembers.map((m) => m.id);
-      const dropletIds = group.droplets.map((d) => d.id);
 
       const allEnrollments = await getEnrollmentsForGroupMembers(
         memberIds,
-        dropletIds,
+        allDropletIds,
       );
 
       allEnrollments.forEach((enrollment) => {
