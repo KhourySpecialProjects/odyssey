@@ -1,213 +1,192 @@
 import { Suspense } from "react";
-import { AccessManager } from "@/components/shared/access-manager/access-manager";
-import { Reports } from "@/components/admin/reports/reports";
-import { AdminSelector } from "@/components/shared/selector";
-import { AuthorizedUsers } from "@/components/admin/users/authorized-users";
-import { getCurrentUser } from "@/lib/auth/session";
-import { notFound } from "next/navigation";
-import { isAuthorizedUserAdmin } from "@/lib/utils";
-import { Separator } from "@/components/ui/separator";
-import { fetchAuthorizedUsersMetadata } from "@/lib/requests/authorized-user";
-import { fetchDroplets } from "@/lib/requests/data";
-import { Droplets } from "@/components/admin/droplets/droplets";
-import { Groups } from "@/components/admin/groups/groups";
-import { Playlists } from "@/components/admin/playlists/playlists";
-import { ComponentDropdown } from "@/components/shared/component-dropdown";
-import { getRetentionData } from "@/lib/requests/analytics";
 import {
-  fetchDailyActiveUsers,
+  fetchAvgSessionDuration,
   fetchUniquePageview,
-  fetchWeeklyActiveUsers,
+  fetchDailyActiveUsers,
 } from "@/lib/requests/posthog";
-import { DailyActiveUsersChart } from "@/components/admin/daily-active-users-chart";
-import { Droplet } from "@/types";
-import { StatisticsSelector } from "@/components/admin/statistics-selector";
-import { WeeklyActiveUsersChart } from "@/components/admin/weekly-active-users-chart";
-import { UniquePageviewChart } from "@/components/admin/unique-pageview";
-import { CreationRequestManager } from "@/components/shared/creation-request-manager/creation-manager";
-import { Loader2 } from "lucide-react";
+import { getAdminDashboardStats } from "@/lib/requests/admin-stats";
+import { Card } from "@/components/ui/card";
+import { ActiveUsersChart } from "@/components/admin/charts/active-users-chart";
+import { AvgSessionDurationChart } from "@/components/admin/charts/avg-session-duration-chart";
+import { UniquePageviewBarChart } from "@/components/admin/charts/unique-pageview-chart";
+import { TrendingDown, TrendingUp } from "lucide-react";
+import { RefreshButton } from "@/components/admin/refresh-button";
 
-function TabFallback() {
+export const dynamic = "force-dynamic";
+
+// ——— Skeletons ———
+
+function StatCardSkeleton() {
   return (
-    <div className="flex items-center justify-center py-12">
-      <Loader2 className="h-6 w-6 animate-spin text-slate-400" />
+    <div className="h-[130px] animate-pulse rounded-[20px] bg-[#FCFCFD] dark:bg-slate-800 shadow-[0px_0px_4px_0px_rgba(0,0,0,0.25)]">
+      <div className="px-[27px] pt-[14px]">
+        <div className="h-[18px] w-[120px] rounded bg-slate-200 dark:bg-slate-700" />
+        <div className="mt-[10px] h-[40px] w-[80px] rounded bg-slate-200 dark:bg-slate-700" />
+        <div className="mt-[8px] h-[16px] w-[140px] rounded bg-slate-200 dark:bg-slate-700" />
+      </div>
     </div>
   );
 }
 
-export default async function Page() {
-  const user = await getCurrentUser();
-
-  if (!user || !isAuthorizedUserAdmin(user.roles)) return notFound();
-
-  const [
-    authorizedUsers,
-    droplets,
-    dailyActiveUsers,
-    weeklyActiveUsers,
-    pageviewCount,
-    retentionData,
-  ] = await Promise.all([
-    fetchAuthorizedUsersMetadata(),
-    fetchDroplets(),
-    fetchDailyActiveUsers(),
-    fetchWeeklyActiveUsers(),
-    fetchUniquePageview(),
-    getRetentionData(),
-  ]);
-
-  const { retentionRate, totalEnrollments, incompleteEnrollments } =
-    retentionData;
-
-  // Each tab is wrapped in Suspense so it streams independently.
-  // Async server components fetch their own data; the revalidate cache
-  // deduplicates any overlapping calls (e.g. fetchAuthorizedUsers, fetchDroplets).
-  const pageContent = {
-    Users: (
-      <Suspense fallback={<TabFallback />}>
-        <AuthorizedUsers />
-      </Suspense>
-    ),
-    Droplets: (
-      <Suspense fallback={<TabFallback />}>
-        <Droplets />
-      </Suspense>
-    ),
-    Playlists: (
-      <Suspense fallback={<TabFallback />}>
-        <Playlists />
-      </Suspense>
-    ),
-    Groups: (
-      <Suspense fallback={<TabFallback />}>
-        <Groups />
-      </Suspense>
-    ),
-    "Access Manager": (
-      <Suspense fallback={<TabFallback />}>
-        <AccessManager user={user} />
-      </Suspense>
-    ),
-    "Creators Manager": (
-      <Suspense fallback={<TabFallback />}>
-        <CreationRequestManager user={user} />
-      </Suspense>
-    ),
-    Reports: (
-      <Suspense fallback={<TabFallback />}>
-        <Reports />
-      </Suspense>
-    ),
-  };
-
-  // Content for statistics section
-  const statisticsContent = {
-    "General Statistics": (
-      <GeneralStatistics
-        droplets={droplets}
-        authorizedUsersLength={authorizedUsers.meta.pagination.total}
-        totalEnrollments={totalEnrollments}
-        retentionRate={retentionRate}
-        incompleteEnrollments={incompleteEnrollments}
-      />
-    ),
-    "Daily Active Users": <DailyActiveUsersChart data={dailyActiveUsers} />,
-    "Weekly Active Users": <WeeklyActiveUsersChart data={weeklyActiveUsers} />,
-    "Daily Unique Pageviews": <UniquePageviewChart data={pageviewCount} />,
-  };
-
-  // Main render
+function ChartSkeleton({ height = "h-[280px]" }: { height?: string }) {
   return (
-    <div className="mx-auto w-full max-w-5xl">
-      <div className="mx-auto my-4 w-full max-w-7xl p-8 text-center">
-        <h1 className="light:text-slate-900 text-3xl font-bold tracking-tight sm:text-4xl">
-          Admin
-        </h1>
-        <p className="light:text-slate-600 mt-4 text-lg leading-normal text-balance">
-          View Odyssey statistics and edit existing information.
+    <div
+      className={`${height} animate-pulse rounded-[20px] bg-[#FCFCFD] dark:bg-slate-800 shadow-[0px_0px_4px_0px_rgba(0,0,0,0.25)]`}
+    >
+      <div className="px-5 pt-4">
+        <div className="h-[20px] w-[180px] rounded bg-slate-200 dark:bg-slate-700" />
+        <div className="mt-3 h-[14px] w-[260px] rounded bg-slate-100 dark:bg-slate-700" />
+      </div>
+    </div>
+  );
+}
+
+// ——— Stat Card ———
+
+interface StatCardProps {
+  title: string;
+  value: string | number;
+  lastMonth: string | number;
+  trend?: { value: string; direction: "up" | "down" };
+}
+
+function StatCard({ title, value, lastMonth, trend }: StatCardProps) {
+  return (
+    <Card className="h-[130px] rounded-[20px] border-0 bg-[#FCFCFD] dark:bg-slate-800 shadow-[0px_0px_4px_0px_rgba(0,0,0,0.25)]">
+      <div className="px-[27px] pt-[14px]">
+        <p className="text-[18px] font-normal leading-none text-black dark:text-white">
+          {title}
+        </p>
+        <div className="mt-[10px] flex items-center gap-[7px]">
+          <span className="text-[40px] font-semibold leading-none text-black dark:text-white">
+            {value}
+          </span>
+          {trend && (
+            <span
+              className={`flex items-center gap-[7px] rounded-[36px] px-[10px] py-[5px] text-[15px] font-normal ${
+                trend.direction === "up"
+                  ? "bg-[#f0f9f5] dark:bg-[#1ea438]/10 text-[#1ea438]"
+                  : "bg-[#fcefe9] dark:bg-[#ce3131]/10 text-[#ce3131]"
+              }`}
+            >
+              {trend.direction === "up" ? (
+                <TrendingUp className="h-[10px] w-[8px]" />
+              ) : (
+                <TrendingDown className="h-[10px] w-[8px]" />
+              )}
+              {trend.value}
+            </span>
+          )}
+        </div>
+        <p className="mt-[8px] text-[16px] text-black dark:text-slate-300">
+          Last month: {lastMonth}
         </p>
       </div>
+    </Card>
+  );
+}
 
-      <Separator />
+// ——— Async data sections (streamed with Suspense) ———
 
-      <div className="hidden p-4 sm:flex sm:flex-col">
-        <StatisticsSelector content={statisticsContent} />
+async function StatsAndPageviews() {
+  const [stats, pageviewCountRaw] = await Promise.all([
+    getAdminDashboardStats(),
+    fetchUniquePageview(),
+  ]);
+
+  return (
+    <div className="grid grid-cols-[524fr_578fr] items-start gap-[25px]">
+      <div className="grid grid-cols-2 gap-5">
+        <StatCard
+          title="Total Users"
+          value={stats.users.current}
+          lastMonth={stats.users.lastMonth}
+          trend={stats.users.trend}
+        />
+        <StatCard
+          title="Retention Rate"
+          value={stats.retentionRate.currentPct}
+          lastMonth={stats.retentionRate.lastMonthPct}
+          trend={stats.retentionRate.trend}
+        />
+        <StatCard
+          title="Total Droplets"
+          value={stats.droplets.current}
+          lastMonth={stats.droplets.lastMonth}
+          trend={stats.droplets.trend}
+        />
+        <StatCard
+          title="Total Enrollments"
+          value={stats.enrollments.current}
+          lastMonth={stats.enrollments.lastMonth}
+          trend={stats.enrollments.trend}
+        />
       </div>
-
-      <div className="flex flex-col p-4 sm:hidden">
-        <ComponentDropdown content={statisticsContent} />
-      </div>
-
-      <Separator />
-
-      <div className="hidden p-4 sm:flex sm:flex-col">
-        <AdminSelector content={pageContent} />
-      </div>
-
-      <div className="flex flex-col p-4 sm:hidden">
-        <ComponentDropdown content={pageContent} />
-      </div>
+      <UniquePageviewBarChart data={pageviewCountRaw} />
     </div>
   );
 }
 
-// General Statistics Component
-function GeneralStatistics({
-  authorizedUsersLength,
-  droplets,
-  totalEnrollments,
-  retentionRate,
-}: {
-  authorizedUsersLength: number;
-  droplets: Droplet[];
-  totalEnrollments: number;
-  retentionRate: number;
-  incompleteEnrollments: number;
-}) {
+async function BottomCharts() {
+  const [dailyActiveUsers, sessionDurationRaw] = await Promise.all([
+    fetchDailyActiveUsers(),
+    fetchAvgSessionDuration(),
+  ]);
+
   return (
-    <div className="flex items-center justify-center gap-x-8 gap-y-6 text-center sm:flex-row">
-      <div className="flex flex-row items-center justify-center space-x-3 pt-2">
-        <div className="flex items-center space-x-3">
-          <div>
-            <div className="font-medium dark:text-slate-300">
-              Total Number of Users
-            </div>
-            <div className="text-sm text-slate-500 dark:text-slate-400">
-              {authorizedUsersLength}
-            </div>
-          </div>
+    <div className="mt-5 grid grid-cols-[682fr_421fr] gap-5">
+      <ActiveUsersChart data={dailyActiveUsers} />
+      <AvgSessionDurationChart data={sessionDurationRaw} />
+    </div>
+  );
+}
+
+// ——— Page ———
+
+export default function Page() {
+  return (
+    <div className="w-full px-[56px] py-8">
+      {/* Page header — renders immediately */}
+      <div className="mb-6 flex items-start justify-between">
+        <div>
+          <h1 className="text-[40px] font-semibold leading-tight text-black dark:text-white">
+            Admin
+          </h1>
+          <p className="mt-1 text-[20px] text-[#475569] dark:text-slate-400">
+            View Odyssey statistics and edit existing information.
+          </p>
         </div>
-        <div className="flex items-center space-x-3">
-          <div>
-            <div className="font-medium dark:text-slate-300">
-              Total Number of Droplets
-            </div>
-            <div className="text-sm text-slate-500 dark:text-slate-400">
-              {droplets.length}
-            </div>
-          </div>
-        </div>
-        <div className="flex items-center space-x-3">
-          <div>
-            <div className="font-medium dark:text-slate-300">
-              Total Number of Enrollments
-            </div>
-            <div className="text-sm text-slate-500 dark:text-slate-400">
-              {totalEnrollments}
-            </div>
-          </div>
-        </div>
-        <div className="flex items-center space-x-3">
-          <div>
-            <div className="font-medium dark:text-slate-300">
-              Retention Rate
-            </div>
-            <div className="text-sm text-slate-500 dark:text-slate-400">
-              {retentionRate}%
-            </div>
-          </div>
-        </div>
+        <RefreshButton />
       </div>
+
+      {/* Top row: stat cards + pageviews — streams in */}
+      <Suspense
+        fallback={
+          <div className="grid grid-cols-[524fr_578fr] items-start gap-[25px]">
+            <div className="grid grid-cols-2 gap-5">
+              <StatCardSkeleton />
+              <StatCardSkeleton />
+              <StatCardSkeleton />
+              <StatCardSkeleton />
+            </div>
+            <ChartSkeleton />
+          </div>
+        }
+      >
+        <StatsAndPageviews />
+      </Suspense>
+
+      {/* Bottom row: charts — streams in */}
+      <Suspense
+        fallback={
+          <div className="mt-5 grid grid-cols-[682fr_421fr] gap-5">
+            <ChartSkeleton height="h-[396px]" />
+            <ChartSkeleton height="h-[396px]" />
+          </div>
+        }
+      >
+        <BottomCharts />
+      </Suspense>
     </div>
   );
 }
