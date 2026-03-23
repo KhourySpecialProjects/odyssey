@@ -1,4 +1,4 @@
-import { sendSlackNotification, SlackBlock } from '../../../../lib/slack';
+import { sendSlackNotification, escapeSlackMrkdwn, SlackBlock } from '../../../../lib/slack';
 import { formatPersonName } from '../../../../lib/lifecycle-utils';
 import { CreationRequestWithUser } from '../../types';
 
@@ -13,7 +13,7 @@ module.exports = {
     )) as CreationRequestWithUser | null;
 
     const user = creationRequest?.user;
-    const userName = user ? formatPersonName(user) : 'Unknown';
+    const userName = escapeSlackMrkdwn(user ? formatPersonName(user) : 'Unknown');
 
     const blocks: SlackBlock[] = [
       {
@@ -24,7 +24,7 @@ module.exports = {
         type: 'section',
         fields: [
           { type: 'mrkdwn', text: `*User:* ${userName}` },
-          { type: 'mrkdwn', text: `*Email:* ${user?.email ?? 'Unknown'}` },
+          { type: 'mrkdwn', text: `*Email:* ${escapeSlackMrkdwn(user?.email ?? 'Unknown')}` },
         ],
       },
     ];
@@ -32,14 +32,14 @@ module.exports = {
     if (result.motivation) {
       blocks.push({
         type: 'section',
-        text: { type: 'mrkdwn', text: `*Motivation:*\n> ${result.motivation}` },
+        text: { type: 'mrkdwn', text: `*Motivation:*\n> ${escapeSlackMrkdwn(result.motivation)}` },
       });
     }
 
     if (result.dropletIdea) {
       blocks.push({
         type: 'section',
-        text: { type: 'mrkdwn', text: `*Droplet Idea:*\n> ${result.dropletIdea}` },
+        text: { type: 'mrkdwn', text: `*Droplet Idea:*\n> ${escapeSlackMrkdwn(result.dropletIdea)}` },
       });
     }
 

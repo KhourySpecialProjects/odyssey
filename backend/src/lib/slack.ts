@@ -7,6 +7,17 @@
  * the app never fails due to a missing webhook.
  */
 
+/**
+ * Escape user-controlled text for use in Slack mrkdwn blocks.
+ * Slack treats &, <, and > as special characters; replace them with their
+ * HTML entities so they render as literals instead of being interpreted.
+ * Do NOT apply this to URLs or explicit <url|label> link constructs —
+ * only escape the user-supplied label portion.
+ */
+export function escapeSlackMrkdwn(text: string): string {
+  return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
 export interface SlackBlock {
   type: string;
   [key: string]: unknown;

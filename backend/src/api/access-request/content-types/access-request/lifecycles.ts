@@ -1,4 +1,4 @@
-import { sendSlackNotification, SlackBlock } from '../../../../lib/slack';
+import { sendSlackNotification, escapeSlackMrkdwn, SlackBlock } from '../../../../lib/slack';
 import { formatPersonName } from '../../../../lib/lifecycle-utils';
 import { AccessRequest, AFFILIATION_LABELS } from '../../types';
 
@@ -6,13 +6,13 @@ module.exports = {
   async afterCreate(event) {
     const result = event.result as AccessRequest;
 
-    const name = formatPersonName({
+    const name = escapeSlackMrkdwn(formatPersonName({
       firstName: result.givenName,
       lastName: result.familyName,
       email: result.email,
-    });
-    const affiliation = AFFILIATION_LABELS[result.affiliation] ?? result.affiliation ?? 'Unknown';
-    const college = result.college ?? 'Unknown';
+    }));
+    const affiliation = escapeSlackMrkdwn(AFFILIATION_LABELS[result.affiliation] ?? result.affiliation ?? 'Unknown');
+    const college = escapeSlackMrkdwn(result.college ?? 'Unknown');
 
     const blocks: SlackBlock[] = [
       {
@@ -23,7 +23,7 @@ module.exports = {
         type: 'section',
         fields: [
           { type: 'mrkdwn', text: `*Name:* ${name}` },
-          { type: 'mrkdwn', text: `*Email:* ${result.email}` },
+          { type: 'mrkdwn', text: `*Email:* ${escapeSlackMrkdwn(result.email)}` },
           { type: 'mrkdwn', text: `*Affiliation:* ${affiliation}` },
           { type: 'mrkdwn', text: `*College:* ${college}` },
         ],

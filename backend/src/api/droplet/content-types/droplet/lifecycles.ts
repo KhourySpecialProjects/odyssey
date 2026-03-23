@@ -1,4 +1,4 @@
-import { sendSlackNotification, SlackBlock } from '../../../../lib/slack';
+import { sendSlackNotification, escapeSlackMrkdwn, SlackBlock } from '../../../../lib/slack';
 import { generateSlug, formatPersonName, capitalize } from '../../../../lib/lifecycle-utils';
 import { DropletStatus, DropletWithRelations } from '../../types';
 
@@ -41,14 +41,14 @@ module.exports = {
 
     if (!droplet) return;
 
-    const lessonNames = droplet.lessons.map((l) => l.name);
-    const tagNames = droplet.tags.map((t) => t.name);
+    const lessonNames = droplet.lessons.map((l) => escapeSlackMrkdwn(l.name));
+    const tagNames = droplet.tags.map((t) => escapeSlackMrkdwn(t.name));
     const authorText =
       droplet.authorized_users.length > 0
-        ? droplet.authorized_users.map(formatPersonName).join(', ')
+        ? droplet.authorized_users.map((u) => escapeSlackMrkdwn(formatPersonName(u))).join(', ')
         : 'Unknown';
 
-    const dropletName = result.name ?? 'Unknown droplet';
+    const dropletName = escapeSlackMrkdwn(result.name ?? 'Unknown droplet');
     const frontendUrl = process.env.FRONTEND_URL;
     const reviewUrl =
       frontendUrl && result.slug ? `${frontendUrl}/draft/d/${result.slug}` : null;
@@ -67,7 +67,7 @@ module.exports = {
     if (result.description) {
       blocks.push({
         type: 'section',
-        text: { type: 'mrkdwn', text: `> ${result.description}` },
+        text: { type: 'mrkdwn', text: `> ${escapeSlackMrkdwn(result.description)}` },
       });
     }
 
@@ -75,8 +75,8 @@ module.exports = {
       {
         type: 'section',
         fields: [
-          { type: 'mrkdwn', text: `*Type:* ${capitalize(result.type ?? 'unknown')}` },
-          { type: 'mrkdwn', text: `*Focus:* ${capitalize(result.focusArea ?? 'unknown')}` },
+          { type: 'mrkdwn', text: `*Type:* ${escapeSlackMrkdwn(capitalize(result.type ?? 'unknown'))}` },
+          { type: 'mrkdwn', text: `*Focus:* ${escapeSlackMrkdwn(capitalize(result.focusArea ?? 'unknown'))}` },
           { type: 'mrkdwn', text: `*Author:* ${authorText}` },
           {
             type: 'mrkdwn',
