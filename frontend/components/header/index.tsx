@@ -38,7 +38,7 @@ export function Header({
   };
 
   return (
-    <header className="sticky top-0 z-50 border-b border-slate-200 bg-white dark:border-slate-500 dark:bg-slate-900">
+    <header className="border-b border-slate-200 bg-white dark:border-slate-500 dark:bg-slate-900">
       <div className="flex h-full w-full items-center justify-between px-4 py-3">
         <div className="flex w-full flex-row justify-between xl:grid xl:grid-cols-[1fr_auto_1fr]">
           <div className="flex flex-row gap-4">
