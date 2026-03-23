@@ -9,9 +9,5 @@ export async function UsersPage() {
     return aValue.localeCompare(bValue);
   });
 
-  return (
-    <div className="p-4">
-      <UsersPageClient users={sortedUsers} />
-    </div>
-  );
+  return <UsersPageClient users={sortedUsers} />;
 }
