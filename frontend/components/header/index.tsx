@@ -28,18 +28,18 @@ export function Header({
 }) {
   const [isOpen, setIsOpen] = useState(false);
 
+  const generalConfig = getGeneralConfig(user);
   const getNavLinks = () => {
     return generalConfig.mainNav;
   };
-  const generalConfig = getGeneralConfig(user);
 
   const handleCloseSheet = () => {
     setIsOpen(false);
   };
 
   return (
-    <header className="sticky top-0 z-50 border-b border-slate-200 bg-white xl:px-6 dark:border-slate-500 dark:bg-slate-900">
-      <div className="mx-auto flex h-full max-w-screen-xl items-center justify-between px-4 py-3">
+    <header className="sticky top-0 z-50 border-b border-slate-200 bg-white dark:border-slate-500 dark:bg-slate-900">
+      <div className="flex h-full w-full items-center justify-between px-4 py-3">
         <div className="flex w-full flex-row justify-between xl:grid xl:grid-cols-[1fr_auto_1fr]">
           <div className="flex flex-row gap-4">
             <Sheet open={isOpen} onOpenChange={setIsOpen}>
@@ -72,7 +72,7 @@ export function Header({
                 </nav>
               </SheetContent>
             </Sheet>
-            <Link href="/" className="hidden w-max sm:block">
+            <Link href="/" className="hidden w-max sm:block ml-[66px]">
               <Logo width={165} height={45} />
               <span className="sr-only">
                 Odyssey, a Khoury College Learning Platform
@@ -94,7 +94,7 @@ export function Header({
             />
           </nav>
 
-          <div className="flex items-center gap-4 md:ml-auto md:gap-2 xl:gap-2">
+          <div className="flex items-center gap-4 md:ml-auto md:gap-2 xl:mr-[66px] xl:gap-2">
             {user ? (
               <div className="flex items-center justify-center">
                 <UserDropdown user={user} authorizedUser={authorizedUser} />

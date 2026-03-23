@@ -12,6 +12,7 @@ import {
   ShieldCheck,
   PenLine,
   BarChart2,
+  ClipboardList,
 } from "lucide-react";
 import type { LucideProps } from "lucide-react";
 
@@ -23,11 +24,12 @@ export type AdminNavVariant =
   | "Droplets"
   | "Playlists"
   | "Groups"
+  | "Requests"
   | "Access Manager"
   | "Creators Manager"
   | "Reports";
 
-// ——— Per-icon sub-components (Default and active/white variant) ———
+// ——— Per-icon sub-components ———
 function NavIcon({
   Icon,
   active,
@@ -38,8 +40,8 @@ function NavIcon({
   return (
     <Icon
       className={cn(
-        "h-[22px] w-[22px] flex-shrink-0",
-        active ? "text-white" : "text-[#344054]",
+        "h-[20px] w-[20px] flex-shrink-0",
+        active ? "text-white" : "text-[#344054] dark:text-slate-400",
       )}
       strokeWidth={1.8}
     />
@@ -60,6 +62,12 @@ export function PlaylistIcon({ active }: { active: boolean }) {
 }
 export function GroupsIcon({ active }: { active: boolean }) {
   return <NavIcon Icon={UsersRound} active={active} />;
+}
+export function RequestsIcon({ active }: { active: boolean }) {
+  return <NavIcon Icon={ClipboardList} active={active} />;
+}
+export function RolesIcon({ active }: { active: boolean }) {
+  return <NavIcon Icon={ShieldCheck} active={active} />;
 }
 export function AccessManagerIcon({ active }: { active: boolean }) {
   return <NavIcon Icon={ShieldCheck} active={active} />;
@@ -104,16 +112,10 @@ const NAV_ITEMS: {
     Icon: GroupsIcon,
   },
   {
-    label: "Access Manager",
-    variant: "Access Manager",
-    href: "/admin/access-manager",
-    Icon: AccessManagerIcon,
-  },
-  {
-    label: "Creators Manager",
-    variant: "Creators Manager",
-    href: "/admin/creators-manager",
-    Icon: CreatorsManagerIcon,
+    label: "Requests",
+    variant: "Requests",
+    href: "/admin/requests",
+    Icon: RequestsIcon,
   },
   {
     label: "Reports",
@@ -136,11 +138,8 @@ export function AdminNav({ property1 }: AdminNavProps) {
   const pathname = usePathname();
 
   const activeVariant: AdminNavVariant = (() => {
-    // Explicit prop wins (unless "Default")
     if (property1 && property1 !== "Default") return property1;
-    // Exact match for dashboard root
     if (pathname === "/admin") return "Dashboard";
-    // Prefix match for sub-pages (longest match first)
     const match = [...NAV_ITEMS]
       .reverse()
       .find((item) => item.href !== "/admin" && pathname.startsWith(item.href));
@@ -150,10 +149,9 @@ export function AdminNav({ property1 }: AdminNavProps) {
   return (
     <nav
       aria-label="Admin navigation"
-      className="sticky top-0 flex h-screen w-[281px] flex-shrink-0 flex-col bg-[#FCFCFD] shadow-[0px_4px_4px_rgba(0,0,0,0.25)]"
+      className="sticky top-0 flex h-screen w-64 flex-shrink-0 flex-col bg-[#FCFCFD] dark:bg-slate-900 shadow-[0px_4px_4px_rgba(0,0,0,0.25)] dark:shadow-[0px_4px_4px_rgba(0,0,0,0.5)]"
     >
-      {/* Nav items */}
-      <ul className="mt-2 flex flex-col gap-1 px-3">
+      <ul className="mt-6 flex flex-col gap-1 px-3">
         {NAV_ITEMS.map((item) => {
           const isActive = activeVariant === item.variant;
           return (
@@ -161,21 +159,18 @@ export function AdminNav({ property1 }: AdminNavProps) {
               <Link
                 href={item.href}
                 className={cn(
-                  "relative flex h-12 w-full items-center rounded-xl transition-colors",
-                  isActive ? "bg-[#2D7597]" : "hover:bg-slate-100",
+                  "relative flex h-[44px] w-full items-center rounded-[78px] transition-colors",
+                  isActive ? "bg-[#2D7597]" : "hover:bg-slate-100 dark:hover:bg-slate-800",
                 )}
                 aria-current={isActive ? "page" : undefined}
               >
-                {/* Icon — ~15% indent */}
                 <span className="ml-[15%]">
                   <item.Icon active={isActive} />
                 </span>
-
-                {/* Label — ~27.4% indent, Lato Regular 20px */}
                 <span
                   className={cn(
                     "absolute left-[27.4%] text-[18px] leading-none font-normal",
-                    isActive ? "text-white" : "text-black",
+                    isActive ? "text-white" : "text-black dark:text-white",
                   )}
                 >
                   {item.label}

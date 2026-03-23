@@ -35,9 +35,9 @@ export function SearchBar({
         onChange={onChange}
         placeholder={placeholder}
         className={cn(
-          "h-11 w-full rounded-[30px] border-2 border-[#EFEFF0] bg-[#FCFCFD]",
+          "h-11 w-full rounded-[30px] border-2 border-[#EFEFF0] bg-[#FCFCFD] dark:border-slate-700 dark:bg-slate-800",
           "pr-2 pl-11",
-          "text-base text-slate-900 placeholder:font-normal placeholder:text-[#667085]",
+          "text-base text-slate-900 placeholder:font-normal placeholder:text-[#667085] dark:text-white dark:placeholder:text-slate-500",
           "transition-colors outline-none focus:border-[#2D7597] focus:ring-0",
           "[&::-webkit-search-cancel-button]:hidden [&::-webkit-search-decoration]:hidden",
         )}

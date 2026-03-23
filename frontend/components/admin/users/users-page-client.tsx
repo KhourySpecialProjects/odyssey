@@ -1,14 +1,13 @@
 "use client";
 
-import { useCallback, useState } from "react";
-import { debounce } from "lodash";
+import { useState } from "react";
 import { AuthorizedUser } from "@/types";
+import { useAdminTableFilters } from "@/hooks/use-admin-table-filters";
 import { AuthorizedUserRoleTitle } from "@/lib/globals";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { SearchBar } from "@/components/admin/search-bar";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Dialog,
   DialogContent,
@@ -19,15 +18,17 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input as TextInput } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { BarChart2, Pencil, User2Icon, Activity, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { updateUserInfo } from "@/lib/requests/authorized-user";
 import { useFormStatus } from "react-dom";
 import { SortButton } from "@/components/admin/sort-button";
 import { FilterButton } from "@/components/admin/filter-button";
+import { AdminPagination } from "@/components/admin/admin-pagination";
+import { SortRadioGroup } from "@/components/admin/sort-radio-group";
+import { FilterCheckboxGroup } from "@/components/admin/filter-checkbox-group";
 import { CreateUser } from "./create-user";
-
-const ITEMS_PER_PAGE = 10;
 
 // ——— Role display config ———
 const ROLE_CONFIG: Record<
@@ -36,28 +37,23 @@ const ROLE_CONFIG: Record<
 > = {
   [AuthorizedUserRoleTitle.SysAdmin]: {
     label: "Admin",
-    className:
-      "bg-rose-100 text-rose-700 border-rose-200 dark:bg-rose-900/30 dark:text-rose-400 dark:border-rose-800",
+    className: "bg-[#fef9ef] text-[#af5b42] border-0",
   },
   [AuthorizedUserRoleTitle.Faculty]: {
     label: "Faculty",
-    className:
-      "bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800",
+    className: "bg-[#eff6ff] text-[#2865bb] border-0",
   },
   [AuthorizedUserRoleTitle.ContentCreator]: {
     label: "Content Creator",
-    className:
-      "bg-green-100 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800",
+    className: "bg-[#f4ffe6] text-[#567f12] border-0",
   },
   [AuthorizedUserRoleTitle.ContentEditor]: {
     label: "Content Editor",
-    className:
-      "bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800",
+    className: "bg-[#ecffff] text-[#347d8f] border-0",
   },
   [AuthorizedUserRoleTitle.User]: {
     label: "User",
-    className:
-      "bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-700/50 dark:text-slate-300 dark:border-slate-600",
+    className: "bg-[#fbf7ff] text-[#8a41c3] border-0",
   },
 };
 
@@ -188,46 +184,36 @@ function UserTableRow({ user: initialUser }: { user: AuthorizedUser }) {
       ? `${user.firstName} ${user.lastName}`
       : user.email;
 
-  const initials =
-    user.firstName && user.lastName
-      ? user.firstName[0] + user.lastName[0]
-      : null;
+  const initial = user.firstName ? user.firstName[0] : null;
 
   return (
     <>
-      <tr className="border-b border-slate-200 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800/50">
+      <tr className="border-b border-[#eaecf0] transition-colors hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800/50">
         {/* Name */}
-        <td className="px-6 py-4">
-          <div className="flex items-center gap-3">
-            <Avatar variant="round" size="sm">
+        <td className="h-[56px] pl-[30px] pr-6 py-3">
+          <div className="flex items-center gap-3 overflow-hidden">
+            <Avatar variant="round" size="sm" className="shrink-0">
               <AvatarImage src={user.profilePhoto || undefined} />
               <AvatarFallback>
-                {initials ?? <User2Icon className="h-4 w-4" />}
+                {initial ?? <User2Icon className="h-4 w-4" />}
               </AvatarFallback>
             </Avatar>
-            <div className="min-w-0">
-              <p className="truncate text-base font-medium text-slate-900 dark:text-slate-100">
-                {displayName}
-                {!user.isEnabled && (
-                  <span className="ml-1 text-sm font-normal text-slate-400">
-                    (Disabled)
-                  </span>
-                )}
-              </p>
-              {user.firstName && user.lastName && (
-                <p className="truncate text-sm text-slate-500 dark:text-slate-400">
-                  {user.email}
-                </p>
+            <p className="truncate text-[16px] font-medium text-[#101828] underline dark:text-white">
+              {displayName}
+              {!user.isEnabled && (
+                <span className="ml-1 text-sm font-normal text-slate-400 no-underline">
+                  (Disabled)
+                </span>
               )}
-            </div>
+            </p>
           </div>
         </td>
 
         {/* Roles */}
-        <td className="px-6 py-4">
-          <div className="flex flex-wrap gap-1.5">
+        <td className="h-[56px] px-6 py-[11px]">
+          <div className="flex flex-wrap gap-[5px]">
             {user.roles.length === 0 ? (
-              <span className="text-base text-slate-400">—</span>
+              <span className="text-sm text-slate-400">—</span>
             ) : (
               user.roles.map((role) => {
                 const config = ROLE_CONFIG[role.title];
@@ -235,7 +221,10 @@ function UserTableRow({ user: initialUser }: { user: AuthorizedUser }) {
                   <Badge
                     key={role.title}
                     variant="outline"
-                    className={cn("text-sm font-medium", config.className)}
+                    className={cn(
+                      "rounded-[16px] px-[9px] py-[4px] text-[14px] font-medium leading-[18px]",
+                      config.className,
+                    )}
                   >
                     {config.label}
                   </Badge>
@@ -246,7 +235,7 @@ function UserTableRow({ user: initialUser }: { user: AuthorizedUser }) {
         </td>
 
         {/* Actions */}
-        <td className="px-6 py-4">
+        <td className="h-[56px] px-6 py-3">
           <div className="flex items-center gap-2">
             <Button
               size="sm"
@@ -433,101 +422,48 @@ function SaveButton() {
 
 // ——— Main Client Component ———
 export function UsersPageClient({ users }: { users: AuthorizedUser[] }) {
-  const [currentPage, setCurrentPage] = useState(1);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [filteredUsers, setFilteredUsers] = useState<AuthorizedUser[]>(users);
-
-  // Active (committed) sort/filter
-  const [activeSortBy, setActiveSortBy] = useState(DEFAULT_SORT);
-  const [activeFilterRoles, setActiveFilterRoles] = useState<string[]>([]);
-
-  // Draft (in-popout) sort/filter — only committed on Apply
-  const [draftSortBy, setDraftSortBy] = useState(DEFAULT_SORT);
-  const [draftFilterRoles, setDraftFilterRoles] = useState<string[]>([]);
-
-  const applyFiltersAndSort = useCallback(
-    (search: string, sort: string, roles: string[]) => {
-      let result = [...users];
-
-      if (search.trim()) {
-        const q = search.toLowerCase();
-        result = result.filter(
-          (u) =>
-            u.firstName?.toLowerCase().includes(q) ||
-            u.lastName?.toLowerCase().includes(q) ||
-            u.email?.toLowerCase().includes(q),
-        );
-      }
-
-      if (roles.length > 0) {
-        result = result.filter((u) =>
-          u.roles.some((r) => roles.includes(r.title)),
-        );
-      }
-
+  const {
+    currentPage,
+    setCurrentPage,
+    totalPages,
+    pageItems: pageUsers,
+    searchTerm,
+    handleSearch,
+    draftSortBy,
+    setDraftSortBy,
+    handleSortApply,
+    handleSortReset,
+    draftFilters: draftFilterRoles,
+    toggleDraftFilter: toggleDraftFilterRole,
+    handleFilterApply,
+    handleFilterReset,
+    hasActiveFilters,
+  } = useAdminTableFilters<AuthorizedUser>({
+    items: users,
+    defaultSort: DEFAULT_SORT,
+    searchFn: (u, q) =>
+      !!(
+        u.firstName?.toLowerCase().includes(q) ||
+        u.lastName?.toLowerCase().includes(q) ||
+        u.email?.toLowerCase().includes(q)
+      ),
+    sortFn: (items, sort) => {
+      const sorted = [...items];
       if (sort === "name-asc") {
-        result.sort((a, b) =>
+        sorted.sort((a, b) =>
           (a.lastName || a.email).localeCompare(b.lastName || b.email),
         );
       } else if (sort === "name-desc") {
-        result.sort((a, b) =>
+        sorted.sort((a, b) =>
           (b.lastName || b.email).localeCompare(a.lastName || a.email),
         );
       } else if (sort === "email-asc") {
-        result.sort((a, b) => a.email.localeCompare(b.email));
+        sorted.sort((a, b) => a.email.localeCompare(b.email));
       }
-
-      setFilteredUsers(result);
-      setCurrentPage(1);
+      return sorted;
     },
-    [users],
-  );
-
-  const debouncedSearch = useCallback(
-    debounce((value: string) => {
-      applyFiltersAndSort(value, activeSortBy, activeFilterRoles);
-    }, 400),
-    [applyFiltersAndSort, activeSortBy, activeFilterRoles],
-  );
-
-  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(e.target.value);
-    debouncedSearch(e.target.value);
-  };
-
-  const handleSortApply = () => {
-    setActiveSortBy(draftSortBy);
-    applyFiltersAndSort(searchTerm, draftSortBy, activeFilterRoles);
-  };
-
-  const handleSortReset = () => {
-    setDraftSortBy(DEFAULT_SORT);
-    setActiveSortBy(DEFAULT_SORT);
-    applyFiltersAndSort(searchTerm, DEFAULT_SORT, activeFilterRoles);
-  };
-
-  const handleFilterApply = () => {
-    setActiveFilterRoles(draftFilterRoles);
-    applyFiltersAndSort(searchTerm, activeSortBy, draftFilterRoles);
-  };
-
-  const handleFilterReset = () => {
-    setDraftFilterRoles([]);
-    setActiveFilterRoles([]);
-    applyFiltersAndSort(searchTerm, activeSortBy, []);
-  };
-
-  const toggleDraftFilterRole = (role: string) => {
-    setDraftFilterRoles((current) =>
-      current.includes(role)
-        ? current.filter((r) => r !== role)
-        : [...current, role],
-    );
-  };
-
-  const totalPages = Math.ceil(filteredUsers.length / ITEMS_PER_PAGE);
-  const start = (currentPage - 1) * ITEMS_PER_PAGE;
-  const pageUsers = filteredUsers.slice(start, start + ITEMS_PER_PAGE);
+    filterFn: (u, roles) => u.roles.some((r) => roles.includes(r.title)),
+  });
 
   return (
     <div className="space-y-4">
@@ -541,57 +477,15 @@ export function UsersPageClient({ users }: { users: AuthorizedUser[] }) {
         />
         <div className="flex items-center gap-2">
           <SortButton onApply={handleSortApply} onReset={handleSortReset}>
-            <div className="space-y-3">
-              {SORT_GROUPS.map((group) => (
-                <div key={group.header}>
-                  <p className="mb-1.5 text-xs font-semibold tracking-wide text-slate-400 uppercase">
-                    {group.header}
-                  </p>
-                  <div className="space-y-1.5">
-                    {group.options.map((opt) => (
-                      <label
-                        key={opt.value}
-                        className="flex cursor-pointer items-center gap-2 text-sm text-[#344054]"
-                      >
-                        <input
-                          type="radio"
-                          name="sort-option"
-                          value={opt.value}
-                          checked={draftSortBy === opt.value}
-                          onChange={() => setDraftSortBy(opt.value)}
-                          className="accent-[#2D7597]"
-                        />
-                        {opt.label}
-                      </label>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
+            <SortRadioGroup groups={SORT_GROUPS} value={draftSortBy} onChange={setDraftSortBy} />
           </SortButton>
 
           <FilterButton
             onApply={handleFilterApply}
             onReset={handleFilterReset}
-            hasActiveFilters={activeFilterRoles.length > 0}
+            hasActiveFilters={hasActiveFilters}
           >
-            <div className="space-y-2">
-              {FILTER_ROLE_OPTIONS.map((opt) => (
-                <label
-                  key={opt.value}
-                  className="flex cursor-pointer items-center gap-2 text-sm text-[#344054]"
-                >
-                  <input
-                    type="checkbox"
-                    value={opt.value}
-                    checked={draftFilterRoles.includes(opt.value)}
-                    onChange={() => toggleDraftFilterRole(opt.value)}
-                    className="accent-[#2D7597]"
-                  />
-                  {opt.label}
-                </label>
-              ))}
-            </div>
+            <FilterCheckboxGroup options={FILTER_ROLE_OPTIONS} selected={draftFilterRoles} onToggle={toggleDraftFilterRole} />
           </FilterButton>
 
           <CreateUser />
@@ -599,17 +493,22 @@ export function UsersPageClient({ users }: { users: AuthorizedUser[] }) {
       </div>
 
       {/* Table */}
-      <div className="overflow-hidden rounded-md border border-slate-200 dark:border-slate-700">
-        <table className="w-full text-base">
-          <thead className="bg-slate-50 dark:bg-slate-800">
-            <tr>
-              <th className="px-6 py-4 text-left text-base font-semibold text-slate-700 dark:text-slate-300">
+      <div className="overflow-hidden rounded-[8px] border-2 border-[rgba(0,0,0,0.05)] dark:border-slate-700">
+        <table className="w-full table-fixed">
+          <colgroup>
+            <col className="w-[45%]" />
+            <col className="w-[40%]" />
+            <col className="w-[15%]" />
+          </colgroup>
+          <thead>
+            <tr className="border-b border-[#eaecf0] bg-[#fcfcfd] dark:border-slate-700 dark:bg-slate-800">
+              <th className="h-[55px] pl-[30px] pr-6 py-3 text-left text-[16px] font-medium text-[#667085] dark:text-slate-400">
                 Name
               </th>
-              <th className="px-6 py-4 text-left text-base font-semibold text-slate-700 dark:text-slate-300">
+              <th className="h-[55px] px-6 py-3 text-left text-[16px] font-medium text-[#667085] dark:text-slate-400">
                 Roles
               </th>
-              <th className="px-6 py-4 text-left text-base font-semibold text-slate-700 dark:text-slate-300">
+              <th className="h-[55px] px-6 py-3 text-left text-[16px] font-medium text-[#667085] dark:text-slate-400">
                 Actions
               </th>
             </tr>
@@ -629,82 +528,11 @@ export function UsersPageClient({ users }: { users: AuthorizedUser[] }) {
                 </td>
               </tr>
             )}
+            {/* Pagination row inside table */}
+            <AdminPagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} colSpan={3} />
           </tbody>
         </table>
       </div>
-
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="grid grid-cols-3 items-center border-t border-slate-200 pt-3 dark:border-slate-700">
-          {/* Previous — far left */}
-          <div>
-            <button
-              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-              disabled={currentPage === 1}
-              className="rounded-md border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
-            >
-              Previous
-            </button>
-          </div>
-
-          {/* Page numbers — centre */}
-          <div className="flex justify-center gap-1">
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map(
-              (pageNum) => {
-                const isEllipsis =
-                  totalPages > 5 &&
-                  pageNum !== 1 &&
-                  pageNum !== totalPages &&
-                  (pageNum < currentPage - 1 || pageNum > currentPage + 1);
-                const prevWasEllipsis =
-                  totalPages > 5 &&
-                  pageNum - 1 !== 1 &&
-                  pageNum - 1 !== totalPages &&
-                  (pageNum - 1 < currentPage - 1 ||
-                    pageNum - 1 > currentPage + 1);
-
-                if (isEllipsis) {
-                  // Only render one ellipsis per gap
-                  return prevWasEllipsis ? null : (
-                    <span
-                      key={`ellipsis-${pageNum}`}
-                      className="flex items-end pb-0.5 text-slate-400"
-                    >
-                      …
-                    </span>
-                  );
-                }
-
-                return (
-                  <button
-                    key={pageNum}
-                    onClick={() => setCurrentPage(pageNum)}
-                    className={cn(
-                      "h-8 min-w-8 rounded-md px-2 text-sm font-medium transition-colors",
-                      pageNum === currentPage
-                        ? "bg-[#2D7597] text-white"
-                        : "text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800",
-                    )}
-                  >
-                    {pageNum}
-                  </button>
-                );
-              },
-            )}
-          </div>
-
-          {/* Next — far right */}
-          <div className="flex justify-end">
-            <button
-              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-              disabled={currentPage === totalPages}
-              className="rounded-md border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
-            >
-              Next
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

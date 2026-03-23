@@ -1,10 +1,16 @@
 import { AdminNav } from "@/components/admin/admin-nav";
+import { getCurrentUser } from "@/lib/auth/session";
+import { isAuthorizedUserAdmin } from "@/lib/utils";
+import { notFound } from "next/navigation";
 
-export default function AdminLayout({
+export default async function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const user = await getCurrentUser();
+  if (!user || !isAuthorizedUserAdmin(user.roles)) return notFound();
+
   return (
     <div className="flex min-h-screen">
       <AdminNav />

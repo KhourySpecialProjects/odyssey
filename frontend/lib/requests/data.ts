@@ -17,6 +17,7 @@ export async function fetchDroplets() {
       const query = qs.stringify({
         sort: ["id"],
         fields: ["id", "name", "type", "slug", "isHidden"],
+        populate: { tags: { fields: ["id", "name", "slug"] } },
         pagination: {
           pageSize,
           page,
@@ -53,19 +54,10 @@ export async function fetchGroups() {
     while (true) {
       const query = qs.stringify({
         sort: ["id"],
-        fields: ["id", "groupName", "slug", "isArchived"],
+        fields: ["id", "groupName", "slug", "isArchived", "semester"],
         populate: {
           members: {
-            fields: ["id", "email"],
-          },
-          admins: {
-            fields: ["id", "email"],
-          },
-          managers: {
-            fields: ["id", "email"],
-          },
-          creator: {
-            fields: ["id", "email"],
+            fields: ["id"],
           },
         },
         pagination: {
