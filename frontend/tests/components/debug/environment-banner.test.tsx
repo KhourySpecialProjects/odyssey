@@ -6,9 +6,15 @@ jest.mock("@/lib/auth/session", () => ({
   getCurrentUser: jest.fn(),
 }));
 
-jest.mock("@/components/debug/reportBugButton", () => ({
-  ReportBugButton: () => (
-    <button data-testid="report-bug-button">Report Bug</button>
+jest.mock("next/headers", () => ({
+  cookies: jest.fn().mockResolvedValue({
+    get: jest.fn().mockReturnValue(undefined),
+  }),
+}));
+
+jest.mock("@/components/debug/role-switcher", () => ({
+  RoleSwitcher: ({ currentRoles }: { currentRoles: string[] }) => (
+    <div data-testid="role-switcher">{currentRoles.join(", ")}</div>
   ),
 }));
 
@@ -21,6 +27,7 @@ describe("EnvironmentBanner", () => {
     (getCurrentUser as jest.Mock).mockResolvedValue({
       id: 1,
       email: "test@example.com",
+      roles: ["User"],
     });
   });
 
@@ -58,5 +65,24 @@ describe("EnvironmentBanner", () => {
 
     const banner = screen.getByText("< test ENVIRONMENT >").parentElement;
     expect(banner).toHaveClass("test-class");
+  });
+
+  it("renders role switcher when user is logged in (dev mode)", async () => {
+    process.env.NEXT_PUBLIC_APP_ENV = "development";
+    process.env.NODE_ENV = "development";
+
+    render(await EnvironmentBanner({}));
+
+    expect(screen.getByTestId("role-switcher")).toBeInTheDocument();
+    expect(screen.getByText("User")).toBeInTheDocument();
+  });
+
+  it("hides role switcher outside dev mode", async () => {
+    process.env.NEXT_PUBLIC_APP_ENV = "staging";
+    process.env.NODE_ENV = "production";
+
+    render(await EnvironmentBanner({}));
+
+    expect(screen.queryByTestId("role-switcher")).not.toBeInTheDocument();
   });
 });
