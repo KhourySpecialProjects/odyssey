@@ -104,7 +104,7 @@ Rules: one function per query purpose, always specify `next.tags` with `CACHE_TA
 
 ## Populate Presets
 
-Reusable configs in `enrollment-populates.ts` and `user-populates.ts`. Import and spread: `populate: { ...ENROLLMENT_POPULATES.dashboard }`.
+Reusable configs in `enrollment-populates.ts` and `user-populates.ts`. Pass preset directly: `populate: ENROLLMENT_POPULATES.dashboard`.
 
 ## The flattenAttributes Rule
 
