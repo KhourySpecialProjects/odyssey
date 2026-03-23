@@ -3,13 +3,12 @@
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
-import { Download } from "lucide-react";
+import { IconDownload, IconChevronDown } from "@tabler/icons-react";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { ChevronDown } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 
@@ -91,7 +90,7 @@ export function StudentProgressList({ playlists }: StudentProgressListProps) {
                     {playlist.authorized_users.length !== 1 ? "s" : ""}
                   </p>
                 </div>
-                <ChevronDown
+                <IconChevronDown
                   className={cn(
                     "h-4 w-4 transition-transform duration-200",
                     openPlaylists.includes(playlist.id)
@@ -114,7 +113,7 @@ export function StudentProgressList({ playlists }: StudentProgressListProps) {
                     }}
                     className="mb-4 w-full"
                   >
-                    <Download className="mr-2 h-4 w-4" />
+                    <IconDownload className="mr-2 h-4 w-4" />
                     Export Progress as CSV
                   </Button>
                   {playlist.authorized_users.map((user) => (

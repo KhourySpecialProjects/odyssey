@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowUpDown } from "lucide-react";
+import { IconArrowsUpDown } from "@tabler/icons-react";
 import { cn } from "@/lib/utils";
 import {
   Popover,
@@ -62,7 +62,7 @@ export function SortButton({
               : "border-[#D0D5DD] hover:border-slate-400",
           )}
         >
-          <ArrowUpDown className="h-4 w-4 flex-shrink-0" />
+          <IconArrowsUpDown className="h-4 w-4 flex-shrink-0" />
           <span>Sort by</span>
         </button>
       </PopoverTrigger>

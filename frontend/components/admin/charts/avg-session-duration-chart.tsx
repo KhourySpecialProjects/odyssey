@@ -21,7 +21,7 @@ import {
   CardTitle,
   CardFooter,
 } from "@/components/ui/card";
-import { TrendingUp, TrendingDown } from "lucide-react";
+import { IconTrendingUp, IconTrendingDown } from "@tabler/icons-react";
 import { filterByDays, filterByDateRange, CHART_TIMEFRAMES } from "@/lib/chart-utils";
 import { TimeframeSelector, type DateRange } from "@/components/admin/charts/timeframe-selector";
 
@@ -129,7 +129,7 @@ export function AvgSessionDurationChart({
               <ChartTooltip
                 content={
                   <ChartTooltipContent
-                    formatter={(value: number) => [
+                    formatter={(value) => [
                       `${value} min`,
                       "Avg Duration",
                     ]}
@@ -150,9 +150,9 @@ export function AvgSessionDurationChart({
       {formatted.length > 0 && (
         <CardFooter className="flex items-center gap-2 px-6 pb-4 pt-0 text-sm">
           {trendUp ? (
-            <TrendingUp className="h-4 w-4 text-[#1ea438]" />
+            <IconTrendingUp className="h-4 w-4 text-[#1ea438]" />
           ) : (
-            <TrendingDown className="h-4 w-4 text-[#ce3131]" />
+            <IconTrendingDown className="h-4 w-4 text-[#ce3131]" />
           )}
           <span
             className={`font-medium ${trendUp ? "text-[#1ea438]" : "text-[#ce3131]"}`}

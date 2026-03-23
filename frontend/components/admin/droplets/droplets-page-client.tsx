@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { SearchBar } from "@/components/admin/search-bar";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { BarChart2, Pencil, EyeOff, Eye } from "lucide-react";
+import { IconChartBar, IconPencil, IconEyeOff, IconEye } from "@tabler/icons-react";
 import { SortButton } from "@/components/admin/sort-button";
 import { FilterButton } from "@/components/admin/filter-button";
 import {
@@ -160,7 +160,7 @@ function DropletTableRow({ droplet }: { droplet: Droplet }) {
               className="h-8 w-8 p-0"
               onClick={() => setAnalyticsOpen(true)}
             >
-              <BarChart2 className="h-4 w-4 text-sky-600" />
+              <IconChartBar className="h-4 w-4 text-sky-600" />
             </Button>
             <Button
               size="sm"
@@ -168,7 +168,7 @@ function DropletTableRow({ droplet }: { droplet: Droplet }) {
               aria-label="edit droplet"
               className="h-8 w-8 p-0"
             >
-              <Pencil className="h-4 w-4 text-sky-600" />
+              <IconPencil className="h-4 w-4 text-sky-600" />
             </Button>
             <Button
               size="sm"
@@ -178,9 +178,9 @@ function DropletTableRow({ droplet }: { droplet: Droplet }) {
               onClick={() => setIsHidden((prev) => !prev)}
             >
               {isHidden ? (
-                <Eye className="h-4 w-4 text-sky-600" />
+                <IconEye className="h-4 w-4 text-sky-600" />
               ) : (
-                <EyeOff className="h-4 w-4 text-sky-600" />
+                <IconEyeOff className="h-4 w-4 text-sky-600" />
               )}
             </Button>
           </div>

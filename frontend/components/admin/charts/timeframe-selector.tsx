@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { CalendarIcon } from "lucide-react";
+import { IconCalendar } from "@tabler/icons-react";
 import { type TimeframeOption } from "@/lib/chart-utils";
 import {
   Popover,
@@ -70,7 +70,7 @@ export function TimeframeSelector({
                   : "text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
               }`}
             >
-              <CalendarIcon className="h-3 w-3" />
+              <IconCalendar className="h-3 w-3" />
             </button>
           </PopoverTrigger>
           <PopoverContent className="w-auto p-3" align="end">

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ListFilter } from "lucide-react";
+import { IconFilter } from "@tabler/icons-react";
 import { cn } from "@/lib/utils";
 import {
   Popover,
@@ -72,7 +72,7 @@ export function FilterButton({
               : "border-[#D0D5DD] hover:border-slate-400",
           )}
         >
-          <ListFilter className="h-4 w-4 flex-shrink-0" />
+          <IconFilter className="h-4 w-4 flex-shrink-0" />
           <span>Filter</span>
         </button>
       </PopoverTrigger>

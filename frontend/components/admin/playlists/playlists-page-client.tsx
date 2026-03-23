@@ -13,7 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { SearchBar } from "@/components/admin/search-bar";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { Pencil } from "lucide-react";
+import { IconPencil } from "@tabler/icons-react";
 import { SortButton } from "@/components/admin/sort-button";
 import { FilterButton } from "@/components/admin/filter-button";
 import {
@@ -166,7 +166,7 @@ function PlaylistTableRow({ playlist }: { playlist: PlaylistWithCounts }) {
             aria-label="edit playlist"
             className="h-8 w-8 p-0"
           >
-            <Pencil className="h-4 w-4 text-sky-600" />
+            <IconPencil className="h-4 w-4 text-sky-600" />
           </Button>
         </div>
       </td>

@@ -19,7 +19,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input as TextInput } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { BarChart2, Pencil, User2Icon, Activity, Loader2 } from "lucide-react";
+import { IconChartBar, IconPencil, IconUser, IconActivity, IconLoader2 } from "@tabler/icons-react";
 import { toast } from "sonner";
 import { updateUserInfo } from "@/lib/requests/authorized-user";
 import { useFormStatus } from "react-dom";
@@ -204,7 +204,7 @@ function UserTableRow({ user: initialUser }: { user: AuthorizedUser }) {
             <Avatar variant="round" size="sm" className="shrink-0">
               <AvatarImage src={user.profilePhoto || undefined} />
               <AvatarFallback>
-                {initial ?? <User2Icon className="h-4 w-4" />}
+                {initial ?? <IconUser className="h-4 w-4" />}
               </AvatarFallback>
             </Avatar>
             <p className="truncate text-[16px] font-medium text-[#101828] underline dark:text-white">
@@ -253,7 +253,7 @@ function UserTableRow({ user: initialUser }: { user: AuthorizedUser }) {
               aria-label="view activity"
               className="h-8 w-8 p-0"
             >
-              <BarChart2 className="h-4 w-4 text-sky-600" />
+              <IconChartBar className="h-4 w-4 text-sky-600" />
             </Button>
             <Button
               size="sm"
@@ -262,7 +262,7 @@ function UserTableRow({ user: initialUser }: { user: AuthorizedUser }) {
               aria-label="edit user"
               className="h-8 w-8 p-0"
             >
-              <Pencil className="h-4 w-4 text-sky-600" />
+              <IconPencil className="h-4 w-4 text-sky-600" />
             </Button>
           </div>
         </td>
@@ -341,7 +341,7 @@ function UserTableRow({ user: initialUser }: { user: AuthorizedUser }) {
         <DialogContent className="max-h-[80vh] max-w-3xl overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Activity className="h-5 w-5" />
+              <IconActivity className="h-5 w-5" />
               Activity Timeline — {user.firstName} {user.lastName}
             </DialogTitle>
             <DialogDescription>
@@ -351,7 +351,7 @@ function UserTableRow({ user: initialUser }: { user: AuthorizedUser }) {
           <div className="mt-4">
             {loadingActivities ? (
               <div className="flex items-center justify-center py-8">
-                <Loader2 className="h-8 w-8 animate-spin text-sky-600" />
+                <IconLoader2 className="h-8 w-8 animate-spin text-sky-600" />
               </div>
             ) : activities.length === 0 ? (
               <p className="py-8 text-center text-slate-500">

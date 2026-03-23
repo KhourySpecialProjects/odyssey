@@ -1,6 +1,6 @@
 "use client";
 
-import { Search } from "lucide-react";
+import { IconSearch } from "@tabler/icons-react";
 import { cn } from "@/lib/utils";
 
 interface SearchBarProps {
@@ -24,9 +24,9 @@ export function SearchBar({
   return (
     <div className={cn("relative flex w-full items-center", className)}>
       {/* Search icon — 20px from left edge */}
-      <Search
+      <IconSearch
         className="pointer-events-none absolute left-5 h-5 w-5 flex-shrink-0 text-[#667085]"
-        strokeWidth={1.8}
+        stroke={1.8}
       />
 
       <input

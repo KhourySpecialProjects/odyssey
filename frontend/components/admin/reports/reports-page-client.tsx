@@ -14,7 +14,7 @@ import {
 import { SortRadioGroup } from "@/components/admin/sort-radio-group";
 import { deleteReport } from "@/lib/actions";
 import { toast } from "sonner";
-import { Trash2 } from "lucide-react";
+import { IconTrash } from "@tabler/icons-react";
 import Link from "next/link";
 
 // ——— Sort config ———
@@ -143,7 +143,7 @@ function ReportRow({ report }: { report: Report }) {
             className="flex h-[26px] w-[26px] items-center justify-center rounded-md text-red-500 transition-colors hover:bg-red-50 disabled:opacity-50 dark:text-red-400 dark:hover:bg-red-950"
             title="Delete report"
           >
-            <Trash2 className="h-4 w-4" />
+            <IconTrash className="h-4 w-4" />
           </button>
         </div>
       </td>

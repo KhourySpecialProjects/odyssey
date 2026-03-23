@@ -9,7 +9,7 @@ import { Card } from "@/components/ui/card";
 import { ActiveUsersChart } from "@/components/admin/charts/active-users-chart";
 import { AvgSessionDurationChart } from "@/components/admin/charts/avg-session-duration-chart";
 import { UniquePageviewBarChart } from "@/components/admin/charts/unique-pageview-chart";
-import { TrendingDown, TrendingUp } from "lucide-react";
+import { IconTrendingDown, IconTrendingUp } from "@tabler/icons-react";
 import { RefreshButton } from "@/components/admin/refresh-button";
 
 export const dynamic = "force-dynamic";
@@ -70,9 +70,9 @@ function StatCard({ title, value, lastMonth, trend }: StatCardProps) {
               }`}
             >
               {trend.direction === "up" ? (
-                <TrendingUp className="h-[10px] w-[8px]" />
+                <IconTrendingUp className="h-[10px] w-[8px]" />
               ) : (
-                <TrendingDown className="h-[10px] w-[8px]" />
+                <IconTrendingDown className="h-[10px] w-[8px]" />
               )}
               {trend.value}
             </span>

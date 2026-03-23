@@ -23,7 +23,7 @@ import {
   deleteCreationRequest,
 } from "@/lib/actions";
 import { toast } from "sonner";
-import { Check, X } from "lucide-react";
+import { IconCheck, IconX } from "@tabler/icons-react";
 import { CreationRequestModal } from "@/components/shared/creation-request-manager/view-request";
 
 // ——— Tab types ———
@@ -84,7 +84,7 @@ function AcceptRejectButtons({
         disabled={disabled}
         className="inline-flex items-center gap-[6px] rounded-[16px] bg-[#ecfdf3] px-[10px] py-[4px] text-[14px] leading-[18px] font-medium text-[#14ba6d] transition-colors hover:bg-[#d1fae5] disabled:opacity-50"
       >
-        <Check className="h-[10px] w-[10px]" strokeWidth={3} />
+        <IconCheck className="h-[10px] w-[10px]" stroke={3} />
         Accept
       </button>
       <button
@@ -92,7 +92,7 @@ function AcceptRejectButtons({
         disabled={disabled}
         className="inline-flex items-center gap-[6px] rounded-[16px] bg-[#fdf0f1] px-[10px] py-[4px] text-[14px] leading-[18px] font-medium text-[#de3b48] transition-colors hover:bg-[#fee2e2] disabled:opacity-50"
       >
-        <X className="h-[10px] w-[10px]" strokeWidth={3} />
+        <IconX className="h-[10px] w-[10px]" stroke={3} />
         Reject
       </button>
     </div>

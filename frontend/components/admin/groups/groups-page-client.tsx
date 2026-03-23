@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { SearchBar } from "@/components/admin/search-bar";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { Pencil, Archive } from "lucide-react";
+import { IconPencil, IconArchive } from "@tabler/icons-react";
 import { SortButton } from "@/components/admin/sort-button";
 import { FilterButton } from "@/components/admin/filter-button";
 import {
@@ -94,7 +94,7 @@ function GroupTableRow({ group }: { group: Group }) {
             aria-label="edit group"
             className="h-8 w-8 p-0"
           >
-            <Pencil className="h-4 w-4 text-sky-600" />
+            <IconPencil className="h-4 w-4 text-sky-600" />
           </Button>
           <Button
             size="sm"
@@ -102,7 +102,7 @@ function GroupTableRow({ group }: { group: Group }) {
             aria-label="archive group"
             className="h-8 w-8 p-0"
           >
-            <Archive className="h-4 w-4 text-sky-600" />
+            <IconArchive className="h-4 w-4 text-sky-600" />
           </Button>
         </div>
       </td>
