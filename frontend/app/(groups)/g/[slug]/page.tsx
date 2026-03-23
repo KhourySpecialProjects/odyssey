@@ -81,9 +81,8 @@ export default async function GroupDetailPage({ params }: Props) {
   const allDropletIds = [
     ...new Set([
       ...(group.droplets?.map((d) => d.id) || []),
-      ...(group.playlists?.flatMap(
-        (p) => p.droplets?.map((d) => d.id) || [],
-      ) || []),
+      ...(group.playlists?.flatMap((p) => p.droplets?.map((d) => d.id) || []) ||
+        []),
     ]),
   ];
 
