@@ -24,8 +24,11 @@ module.exports = {
 
       const finalBlocks = 'blocks' in data ? data.blocks : existing?.blocks;
       const finalBlocksV2 = 'blocksV2' in data ? data.blocksV2 : existing?.blocksV2;
+      const hasBlocks = Array.isArray(finalBlocks)
+        ? finalBlocks.length > 0
+        : Boolean(finalBlocks);
 
-      if (!finalBlocks && !finalBlocksV2) {
+      if (!hasBlocks && !finalBlocksV2) {
         throw new Error('Lesson must have either blocks or blocksV2 content');
       }
     }
