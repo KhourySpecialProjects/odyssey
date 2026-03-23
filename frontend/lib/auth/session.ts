@@ -14,7 +14,7 @@ export const getCurrentUser = cache(async () => {
     const override = cookieStore.get("dev-role-override")?.value;
     if (override) {
       try {
-        const parsed = JSON.parse(override);
+        const parsed = JSON.parse(decodeURIComponent(override));
         const validValues = Object.values(AuthorizedUserRoleTitle) as string[];
         if (Array.isArray(parsed)) {
           const roles = parsed.filter((r) =>

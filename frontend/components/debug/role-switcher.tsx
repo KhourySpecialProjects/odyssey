@@ -40,8 +40,8 @@ export function RoleSwitcher({
 
   function setPersona(persona: (typeof DEV_PERSONAS)[number] | null) {
     if (persona) {
-      document.cookie = `dev-role-override=${JSON.stringify(persona.roles)};path=/`;
-      document.cookie = `dev-role-label=${persona.label};path=/`;
+      document.cookie = `dev-role-override=${encodeURIComponent(JSON.stringify(persona.roles))};path=/`;
+      document.cookie = `dev-role-label=${encodeURIComponent(persona.label)};path=/`;
     } else {
       document.cookie = "dev-role-override=;path=/;max-age=0";
       document.cookie = "dev-role-label=;path=/;max-age=0";

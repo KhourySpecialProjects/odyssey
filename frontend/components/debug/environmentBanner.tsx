@@ -9,9 +9,10 @@ export async function EnvironmentBanner({ className }: { className?: string }) {
 
   const isDev = process.env.NODE_ENV === "development";
   const user = isDev ? await getCurrentUser() : null;
-  const activePersona = isDev
+  const rawLabel = isDev
     ? (await cookies()).get("dev-role-label")?.value ?? null
     : null;
+  const activePersona = rawLabel ? decodeURIComponent(rawLabel) : null;
 
   return (
     <div
