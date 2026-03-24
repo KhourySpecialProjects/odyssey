@@ -5,7 +5,7 @@ import { useDropzone } from "react-dropzone";
 import { Button } from "@/components/ui/button";
 import { uploadImage } from "@/lib/actions";
 import { AuthorizedUser } from "@/types";
-import { Pencil, User2Icon, Activity } from "lucide-react";
+import { IconPencil, IconUser, IconActivity } from "@tabler/icons-react";
 import { useFormStatus } from "react-dom";
 import { isAuthorizedUserAdmin } from "@/lib/utils";
 import {
@@ -214,7 +214,7 @@ export function AuthorizedUserBlock({
                 {user.firstName && user.lastName ? (
                   user.firstName[0] + user.lastName[0]
                 ) : (
-                  <User2Icon />
+                  <IconUser />
                 )}
               </AvatarFallback>
             </Avatar>
@@ -243,7 +243,7 @@ export function AuthorizedUserBlock({
             aria-label="view activity"
           >
             <div className="group relative">
-              <Activity className="h-5 w-5 text-sky-600" />
+              <IconActivity className="h-5 w-5 text-sky-600" />
               <span className="absolute top-full left-1/2 mt-1 w-max -translate-x-1/2 transform rounded bg-gray-800 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100">
                 View Activity
               </span>
@@ -259,7 +259,7 @@ export function AuthorizedUserBlock({
                 aria-label="edit user"
               >
                 <div className="group relative">
-                  <Pencil className="h-5 w-5 text-sky-600" />
+                  <IconPencil className="h-5 w-5 text-sky-600" />
                   <span className="absolute top-full left-1/2 mt-1 w-max -translate-x-1/2 transform rounded bg-gray-800 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100">
                     Edit User
                   </span>
@@ -395,7 +395,7 @@ export function AuthorizedUserBlock({
         <DialogContent className="max-h-[80vh] max-w-3xl overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Activity className="h-5 w-5" />
+              <IconActivity className="h-5 w-5" />
               Activity Timeline - {user.firstName} {user.lastName}
             </DialogTitle>
             <DialogDescription>

@@ -1,21 +1,24 @@
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { CreateUser } from "@/components/admin/users/create-user";
-import { useActionState } from "react";
 
-jest.mock("@/lib/requests/authorized-user", () => ({
-  createAuthorizedUser: jest.fn(),
+const mockRouterRefresh = jest.fn();
+jest.mock("next/navigation", () => ({
+  useRouter: () => ({ refresh: mockRouterRefresh }),
 }));
 
-jest.mock("react", () => ({
-  ...jest.requireActual("react"),
-  useActionState: jest.fn().mockImplementation((action) => {
-    return [null, action, false];
-  }),
+const mockToastSuccess = jest.fn();
+const mockToastError = jest.fn();
+jest.mock("sonner", () => ({
+  toast: {
+    success: (...args: unknown[]) => mockToastSuccess(...args),
+    error: (...args: unknown[]) => mockToastError(...args),
+  },
 }));
 
-jest.mock("flat", () => ({
-  flatten: jest.fn((obj) => obj),
-  unflatten: jest.fn((obj) => obj),
+const mockCreateUser = jest.fn();
+jest.mock("@/lib/actions", () => ({
+  createAuthorizedUserWithState: (...args: unknown[]) =>
+    mockCreateUser(...args),
 }));
 
 describe("CreateUser", () => {
@@ -30,48 +33,46 @@ describe("CreateUser", () => {
 
   it("has the correct button text and icon", () => {
     render(<CreateUser />);
-    const button = screen.getByText("Create User");
-    expect(button).toBeInTheDocument();
+    expect(screen.getByText("Create User")).toBeInTheDocument();
   });
 
-  it("displays success message and add another option when user is created", () => {
-    (useActionState as jest.Mock).mockImplementation(() => [
-      {
-        ok: true,
-        message: "User created successfully",
-      },
-      jest.fn(),
-      false,
-    ]);
+  it("shows toast and refreshes on successful single user add", async () => {
+    mockCreateUser.mockResolvedValue({ ok: true });
 
     render(<CreateUser />);
-
     fireEvent.click(screen.getByText("Create User"));
 
-    expect(screen.getByText("User created successfully")).toBeInTheDocument();
-    expect(screen.getByText("Add Another?")).toBeInTheDocument();
-    expect(screen.getByText("Close")).toBeInTheDocument();
+    const emailInput = await screen.findByPlaceholderText(
+      "Enter email address",
+    );
+    fireEvent.change(emailInput, { target: { value: "test@example.com" } });
+    fireEvent.click(screen.getByRole("button", { name: /^Add User$/ }));
+
+    await waitFor(() => {
+      expect(mockToastSuccess).toHaveBeenCalledWith(
+        "User test@example.com added successfully",
+      );
+      expect(mockRouterRefresh).toHaveBeenCalled();
+    });
   });
 
-  it("displays error message when user creation fails", () => {
-    (useActionState as jest.Mock).mockImplementation(() => [
-      {
-        ok: false,
-        error: "Failed to create user",
-      },
-      jest.fn(),
-      false,
-    ]);
+  it("shows error toast when user creation fails", async () => {
+    mockCreateUser.mockResolvedValue({
+      ok: false,
+      error: "Failed to add user",
+    });
 
     render(<CreateUser />);
-
     fireEvent.click(screen.getByText("Create User"));
 
-    expect(screen.getByText(/Failed to create user/)).toBeInTheDocument();
-    expect(
-      screen.getByText(
-        /Confirm that no other user exists with this email address./,
-      ),
-    ).toBeInTheDocument();
+    const emailInput = await screen.findByPlaceholderText(
+      "Enter email address",
+    );
+    fireEvent.change(emailInput, { target: { value: "bad@example.com" } });
+    fireEvent.click(screen.getByRole("button", { name: /^Add User$/ }));
+
+    await waitFor(() => {
+      expect(mockToastError).toHaveBeenCalledWith("Failed to add user");
+    });
   });
 });
