@@ -8,10 +8,10 @@ export default function Page() {
     <div className="w-full px-[56px] py-8">
       <div className="mb-4">
         <h1 className="text-[40px] leading-tight font-semibold text-black dark:text-white">
-          Access Requests
+          Requests
         </h1>
         <p className="mt-1 text-[20px] text-[#475569] dark:text-slate-400">
-          The following users have requested access to this application.
+          Manage access requests and content creator applications.
         </p>
       </div>
 

@@ -172,9 +172,15 @@ function UserTableRow({ user: initialUser }: { user: AuthorizedUser }) {
   };
 
   const handleToggleEnabled = async () => {
-    const next = !user.isEnabled;
-    setUser((prev) => ({ ...prev, isEnabled: next }));
-    await updateUserInfo(user.id, { isEnabled: next });
+    const prev = user.isEnabled;
+    const next = !prev;
+    setUser((u) => ({ ...u, isEnabled: next }));
+    try {
+      await updateUserInfo(user.id, { isEnabled: next });
+    } catch {
+      setUser((u) => ({ ...u, isEnabled: prev }));
+      toast.error("Failed to update user access");
+    }
   };
 
   const handleViewActivity = async () => {

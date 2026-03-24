@@ -116,7 +116,11 @@ function DropletTableRow({ droplet }: { droplet: Droplet }) {
     const next = !isHidden;
     setIsHidden(next);
     try {
-      await updateDroplet(droplet.id, { isHidden: next });
+      const result = await updateDroplet(droplet.id, { isHidden: next });
+      if (!result.ok) {
+        setIsHidden(!next);
+        toast.error(result.error ?? "Failed to update visibility");
+      }
     } catch {
       setIsHidden(!next);
       toast.error("Failed to update visibility");
@@ -179,7 +183,7 @@ function DropletTableRow({ droplet }: { droplet: Droplet }) {
         </td>
 
         {/* Actions */}
-        <td className="h-[56px] py-3 pr-6 pl-10">
+        <td className="h-[56px] px-6 py-3">
           <TooltipProvider delayDuration={300}>
             <div className="flex items-center gap-3">
               <Tooltip>

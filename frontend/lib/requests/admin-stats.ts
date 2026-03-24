@@ -33,13 +33,17 @@ async function fetchDropletCount(before?: string): Promise<number> {
     filters: before ? { createdAt: { $lt: before } } : {},
     pagination: { pageSize: 1, page: 1 },
   });
-  const res = await fetch(`${STRAPI_API_URL}/api/droplets?${query}`, {
-    headers: { Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}` },
-    cache: "no-store",
-  });
-  if (!res.ok) return 0;
-  const data = await res.json();
-  return data?.meta?.pagination?.total ?? 0;
+  try {
+    const res = await fetch(`${STRAPI_API_URL}/api/droplets?${query}`, {
+      headers: { Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}` },
+      cache: "no-store",
+    });
+    if (!res.ok) return 0;
+    const data = await res.json();
+    return data?.meta?.pagination?.total ?? 0;
+  } catch {
+    return 0;
+  }
 }
 
 export interface StatCardData {
@@ -59,14 +63,14 @@ export async function getAdminDashboardStats(): Promise<AdminDashboardStats> {
   const cutoff = daysAgo(30);
 
   const [
-    currentUsersRes,
-    lastMonthUsersRes,
-    currentDroplets,
-    lastMonthDroplets,
-    currentEnrollmentsRes,
-    lastMonthEnrollmentsRes,
-    completedEnrollmentsRes,
-  ] = await Promise.all([
+    currentUsersResult,
+    lastMonthUsersResult,
+    currentDropletsResult,
+    lastMonthDropletsResult,
+    currentEnrollmentsResult,
+    lastMonthEnrollmentsResult,
+    completedEnrollmentsResult,
+  ] = await Promise.allSettled([
     // Users
     fetchAuthorizedUsersMetadata({ pagination: { pageSize: 1, page: 1 } }),
     fetchAuthorizedUsersMetadata({
@@ -90,6 +94,33 @@ export async function getAdminDashboardStats(): Promise<AdminDashboardStats> {
       pagination: { pageSize: 1, page: 1 },
     }),
   ]);
+
+  const currentUsersRes =
+    currentUsersResult.status === "fulfilled" ? currentUsersResult.value : null;
+  const lastMonthUsersRes =
+    lastMonthUsersResult.status === "fulfilled"
+      ? lastMonthUsersResult.value
+      : null;
+  const currentDroplets =
+    currentDropletsResult.status === "fulfilled"
+      ? currentDropletsResult.value
+      : 0;
+  const lastMonthDroplets =
+    lastMonthDropletsResult.status === "fulfilled"
+      ? lastMonthDropletsResult.value
+      : 0;
+  const currentEnrollmentsRes =
+    currentEnrollmentsResult.status === "fulfilled"
+      ? currentEnrollmentsResult.value
+      : null;
+  const lastMonthEnrollmentsRes =
+    lastMonthEnrollmentsResult.status === "fulfilled"
+      ? lastMonthEnrollmentsResult.value
+      : null;
+  const completedEnrollmentsRes =
+    completedEnrollmentsResult.status === "fulfilled"
+      ? completedEnrollmentsResult.value
+      : null;
 
   const currentUsers = currentUsersRes?.meta?.pagination?.total ?? 0;
   const lastMonthUsers = lastMonthUsersRes?.meta?.pagination?.total ?? 0;

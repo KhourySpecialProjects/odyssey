@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Group } from "@/types";
 import { useAdminTableFilters } from "@/hooks/use-admin-table-filters";
 import { cn } from "@/lib/utils";
@@ -14,7 +14,9 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import Link from "next/link";
-import { IconPencil, IconArchive } from "@tabler/icons-react";
+import { IconPencil, IconArchive, IconArchiveOff } from "@tabler/icons-react";
+import { toast } from "sonner";
+import { archiveGroup } from "@/lib/requests/groups";
 import { SortButton } from "@/components/admin/sort-button";
 import { FilterButton } from "@/components/admin/filter-button";
 import {
@@ -25,8 +27,9 @@ import { SortRadioGroup } from "@/components/admin/sort-radio-group";
 import { FilterCheckboxGroup } from "@/components/admin/filter-checkbox-group";
 
 const GROUP_COLUMNS: AdminColumnDef[] = [
-  { label: "Title", width: "w-[50%]" },
-  { label: "Members", width: "w-[15%]" },
+  { label: "Title", width: "w-[30%]" },
+  { label: "Creator", width: "w-[25%]" },
+  { label: "Members", width: "w-[10%]" },
   { label: "Semester", width: "w-[20%]" },
   { label: "Actions", width: "w-[15%]" },
 ];
@@ -55,6 +58,25 @@ const SORT_GROUPS = [
 // ——— GroupTableRow ———
 function GroupTableRow({ group }: { group: Group }) {
   const membersCount = group.members?.length ?? 0;
+  const [isArchived, setIsArchived] = useState(group.isArchived);
+
+  async function handleToggleArchive() {
+    try {
+      const result = await archiveGroup(group, !isArchived);
+      if (result.success) {
+        setIsArchived(!isArchived);
+        toast.success(
+          isArchived
+            ? `${group.groupName} is now unarchived!`
+            : `${group.groupName} is now archived!`,
+        );
+      } else {
+        toast.error("Failed to update group archive status");
+      }
+    } catch {
+      toast.error("An error occurred while archiving the group");
+    }
+  }
 
   return (
     <tr className="border-b border-[#eaecf0] transition-colors hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800/50">
@@ -67,6 +89,15 @@ function GroupTableRow({ group }: { group: Group }) {
         >
           {group.groupName}
         </Link>
+      </td>
+
+      {/* Creator */}
+      <td className="h-[56px] px-6 py-3">
+        <span className="truncate text-[16px] text-[#101828] dark:text-white">
+          {group.creator?.email ?? (
+            <span className="text-slate-400">&mdash;</span>
+          )}
+        </span>
       </td>
 
       {/* Members */}
@@ -120,13 +151,20 @@ function GroupTableRow({ group }: { group: Group }) {
                 <Button
                   size="sm"
                   variant="outline"
-                  aria-label="archive group"
+                  aria-label={isArchived ? "unarchive group" : "archive group"}
                   className="h-8 w-8 p-0"
+                  onClick={handleToggleArchive}
                 >
-                  <IconArchive className="h-4 w-4 text-sky-600" />
+                  {isArchived ? (
+                    <IconArchiveOff className="h-4 w-4 text-slate-400" />
+                  ) : (
+                    <IconArchive className="h-4 w-4 text-sky-600" />
+                  )}
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>Archive group</TooltipContent>
+              <TooltipContent>
+                {isArchived ? "Archived — click to restore" : "Archive group"}
+              </TooltipContent>
             </Tooltip>
           </div>
         </TooltipProvider>
