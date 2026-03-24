@@ -1,13 +1,7 @@
 "use client";
 
 import { useId, useState } from "react";
-import {
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-} from "recharts";
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid } from "recharts";
 import {
   ChartContainer,
   ChartTooltip,
@@ -22,8 +16,15 @@ import {
   CardFooter,
 } from "@/components/ui/card";
 import { IconTrendingUp, IconTrendingDown } from "@tabler/icons-react";
-import { filterByDays, filterByDateRange, CHART_TIMEFRAMES } from "@/lib/chart-utils";
-import { TimeframeSelector, type DateRange } from "@/components/admin/charts/timeframe-selector";
+import {
+  filterByDays,
+  filterByDateRange,
+  CHART_TIMEFRAMES,
+} from "@/lib/chart-utils";
+import {
+  TimeframeSelector,
+  type DateRange,
+} from "@/components/admin/charts/timeframe-selector";
 
 const chartConfig = {
   duration: {
@@ -70,13 +71,12 @@ export function AvgSessionDurationChart({
     secondHalf.length > 0
       ? secondHalf.reduce((s, d) => s + d.duration, 0) / secondHalf.length
       : 0;
-  const trendPct =
-    avgFirst > 0 ? ((avgSecond - avgFirst) / avgFirst) * 100 : 0;
+  const trendPct = avgFirst > 0 ? ((avgSecond - avgFirst) / avgFirst) * 100 : 0;
   const trendUp = trendPct >= 0;
 
   return (
-    <Card className="flex h-[396px] flex-col overflow-hidden rounded-[20px] shadow-[0px_0px_4px_0px_rgba(0,0,0,0.25)] border-0 bg-[#FCFCFD] dark:bg-slate-800">
-      <CardHeader className="flex-row items-start justify-between pb-1 pt-5 px-6">
+    <Card className="flex h-[396px] flex-col overflow-hidden rounded-[20px] border-0 bg-[#FCFCFD] shadow-[0px_0px_4px_0px_rgba(0,0,0,0.25)] dark:bg-slate-800">
+      <CardHeader className="flex-row items-start justify-between px-6 pt-5 pb-1">
         <CardTitle className="text-[20px] font-medium dark:text-white">
           Avg Session Duration
         </CardTitle>
@@ -100,13 +100,7 @@ export function AvgSessionDurationChart({
               margin={{ top: 5, right: 10, left: 0, bottom: 5 }}
             >
               <defs>
-                <linearGradient
-                  id={gradientId}
-                  x1="0"
-                  y1="0"
-                  x2="0"
-                  y2="1"
-                >
+                <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor="#2D7597" stopOpacity={0.3} />
                   <stop offset="95%" stopColor="#2D7597" stopOpacity={0.05} />
                 </linearGradient>
@@ -129,10 +123,7 @@ export function AvgSessionDurationChart({
               <ChartTooltip
                 content={
                   <ChartTooltipContent
-                    formatter={(value) => [
-                      `${value} min`,
-                      "Avg Duration",
-                    ]}
+                    formatter={(value) => [`${value} min`, "Avg Duration"]}
                   />
                 }
               />
@@ -148,7 +139,7 @@ export function AvgSessionDurationChart({
         )}
       </CardContent>
       {formatted.length > 0 && (
-        <CardFooter className="flex items-center gap-2 px-6 pb-4 pt-0 text-sm">
+        <CardFooter className="flex items-center gap-2 px-6 pt-0 pb-4 text-sm">
           {trendUp ? (
             <IconTrendingUp className="h-4 w-4 text-[#1ea438]" />
           ) : (

@@ -81,24 +81,21 @@ export function CreateUser() {
     setBatchLoading(false);
   };
 
-  const handleFileUpload = useCallback(
-    (file: File) => {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const text = e.target?.result as string;
-        if (text) {
-          // Parse CSV — extract emails from all rows/columns
-          const emails = text
-            .split(/[,\n\r]+/)
-            .map((s) => s.trim().replace(/^["']|["']$/g, ""))
-            .filter((s) => s.includes("@"));
-          setBatchEmails(emails.join("\n"));
-        }
-      };
-      reader.readAsText(file);
-    },
-    [],
-  );
+  const handleFileUpload = useCallback((file: File) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const text = e.target?.result as string;
+      if (text) {
+        // Parse CSV — extract emails from all rows/columns
+        const emails = text
+          .split(/[,\n\r]+/)
+          .map((s) => s.trim().replace(/^["']|["']$/g, ""))
+          .filter((s) => s.includes("@"));
+        setBatchEmails(emails.join("\n"));
+      }
+    };
+    reader.readAsText(file);
+  }, []);
 
   const handleDrop = useCallback(
     (e: React.DragEvent) => {

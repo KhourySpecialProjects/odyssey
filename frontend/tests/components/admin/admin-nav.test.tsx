@@ -85,9 +85,10 @@ describe("AdminNav", () => {
       "href",
       "/admin/groups",
     );
-    expect(
-      screen.getByRole("link", { name: /requests/i }),
-    ).toHaveAttribute("href", "/admin/requests");
+    expect(screen.getByRole("link", { name: /requests/i })).toHaveAttribute(
+      "href",
+      "/admin/requests",
+    );
     expect(screen.getByRole("link", { name: /reports/i })).toHaveAttribute(
       "href",
       "/admin/reports",

@@ -147,7 +147,7 @@ export function AdminNav({ property1 }: AdminNavProps) {
   return (
     <nav
       aria-label="Admin navigation"
-      className="sticky top-0 flex h-screen w-64 flex-shrink-0 flex-col bg-[#FCFCFD] dark:bg-slate-900 shadow-[0px_4px_4px_rgba(0,0,0,0.25)] dark:shadow-[0px_4px_4px_rgba(0,0,0,0.5)]"
+      className="sticky top-0 flex h-screen w-64 flex-shrink-0 flex-col bg-[#FCFCFD] shadow-[0px_4px_4px_rgba(0,0,0,0.25)] dark:bg-slate-900 dark:shadow-[0px_4px_4px_rgba(0,0,0,0.5)]"
     >
       <ul className="mt-6 flex flex-col gap-1 px-3">
         {NAV_ITEMS.map((item) => {
@@ -158,7 +158,9 @@ export function AdminNav({ property1 }: AdminNavProps) {
                 href={item.href}
                 className={cn(
                   "relative flex h-[44px] w-full items-center rounded-[78px] transition-colors",
-                  isActive ? "bg-[#2D7597]" : "hover:bg-slate-100 dark:hover:bg-slate-800",
+                  isActive
+                    ? "bg-[#2D7597]"
+                    : "hover:bg-slate-100 dark:hover:bg-slate-800",
                 )}
                 aria-current={isActive ? "page" : undefined}
               >

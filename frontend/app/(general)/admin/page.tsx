@@ -18,7 +18,7 @@ export const dynamic = "force-dynamic";
 
 function StatCardSkeleton() {
   return (
-    <div className="h-[130px] animate-pulse rounded-[20px] bg-[#FCFCFD] dark:bg-slate-800 shadow-[0px_0px_4px_0px_rgba(0,0,0,0.25)]">
+    <div className="h-[130px] animate-pulse rounded-[20px] bg-[#FCFCFD] shadow-[0px_0px_4px_0px_rgba(0,0,0,0.25)] dark:bg-slate-800">
       <div className="px-[27px] pt-[14px]">
         <div className="h-[18px] w-[120px] rounded bg-slate-200 dark:bg-slate-700" />
         <div className="mt-[10px] h-[40px] w-[80px] rounded bg-slate-200 dark:bg-slate-700" />
@@ -31,7 +31,7 @@ function StatCardSkeleton() {
 function ChartSkeleton({ height = "h-[280px]" }: { height?: string }) {
   return (
     <div
-      className={`${height} animate-pulse rounded-[20px] bg-[#FCFCFD] dark:bg-slate-800 shadow-[0px_0px_4px_0px_rgba(0,0,0,0.25)]`}
+      className={`${height} animate-pulse rounded-[20px] bg-[#FCFCFD] shadow-[0px_0px_4px_0px_rgba(0,0,0,0.25)] dark:bg-slate-800`}
     >
       <div className="px-5 pt-4">
         <div className="h-[20px] w-[180px] rounded bg-slate-200 dark:bg-slate-700" />
@@ -52,21 +52,21 @@ interface StatCardProps {
 
 function StatCard({ title, value, lastMonth, trend }: StatCardProps) {
   return (
-    <Card className="h-[130px] rounded-[20px] border-0 bg-[#FCFCFD] dark:bg-slate-800 shadow-[0px_0px_4px_0px_rgba(0,0,0,0.25)]">
+    <Card className="h-[130px] rounded-[20px] border-0 bg-[#FCFCFD] shadow-[0px_0px_4px_0px_rgba(0,0,0,0.25)] dark:bg-slate-800">
       <div className="px-[27px] pt-[14px]">
-        <p className="text-[18px] font-normal leading-none text-black dark:text-white">
+        <p className="text-[18px] leading-none font-normal text-black dark:text-white">
           {title}
         </p>
         <div className="mt-[10px] flex items-center gap-[7px]">
-          <span className="text-[40px] font-semibold leading-none text-black dark:text-white">
+          <span className="text-[40px] leading-none font-semibold text-black dark:text-white">
             {value}
           </span>
           {trend && (
             <span
               className={`flex items-center gap-[7px] rounded-[36px] px-[10px] py-[5px] text-[15px] font-normal ${
                 trend.direction === "up"
-                  ? "bg-[#f0f9f5] dark:bg-[#1ea438]/10 text-[#1ea438]"
-                  : "bg-[#fcefe9] dark:bg-[#ce3131]/10 text-[#ce3131]"
+                  ? "bg-[#f0f9f5] text-[#1ea438] dark:bg-[#1ea438]/10"
+                  : "bg-[#fcefe9] text-[#ce3131] dark:bg-[#ce3131]/10"
               }`}
             >
               {trend.direction === "up" ? (
@@ -149,7 +149,7 @@ export default function Page() {
       {/* Page header — renders immediately */}
       <div className="mb-6 flex items-start justify-between">
         <div>
-          <h1 className="text-[40px] font-semibold leading-tight text-black dark:text-white">
+          <h1 className="text-[40px] leading-tight font-semibold text-black dark:text-white">
             Admin
           </h1>
           <p className="mt-1 text-[20px] text-[#475569] dark:text-slate-400">

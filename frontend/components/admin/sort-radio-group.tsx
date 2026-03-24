@@ -11,7 +11,11 @@ interface SortRadioGroupProps {
   onChange: (value: string) => void;
 }
 
-export function SortRadioGroup({ groups, value, onChange }: SortRadioGroupProps) {
+export function SortRadioGroup({
+  groups,
+  value,
+  onChange,
+}: SortRadioGroupProps) {
   return (
     <div className="space-y-3">
       {groups.map((group) => (

@@ -1,7 +1,7 @@
 function RowSkeleton() {
   return (
     <tr className="border-b border-[#eaecf0] dark:border-slate-700">
-      <td className="h-[56px] pl-[30px] pr-6 py-3">
+      <td className="h-[56px] py-3 pr-6 pl-[30px]">
         <div className="h-4 w-[180px] animate-pulse rounded bg-slate-200 dark:bg-slate-700" />
       </td>
       <td className="h-[56px] px-6 py-3">
@@ -49,10 +49,18 @@ export default function GroupsLoading() {
             </colgroup>
             <thead>
               <tr className="border-b border-[#eaecf0] bg-[#fcfcfd] dark:border-slate-700 dark:bg-slate-800">
-                <th className="h-[55px] pl-[30px] pr-6 py-3 text-left text-[16px] font-medium text-[#667085] dark:text-slate-400">Title</th>
-                <th className="h-[55px] px-6 py-3 text-left text-[16px] font-medium text-[#667085] dark:text-slate-400">Members</th>
-                <th className="h-[55px] px-6 py-3 text-left text-[16px] font-medium text-[#667085] dark:text-slate-400">Semester</th>
-                <th className="h-[55px] px-6 py-3 text-left text-[16px] font-medium text-[#667085] dark:text-slate-400">Actions</th>
+                <th className="h-[55px] py-3 pr-6 pl-[30px] text-left text-[16px] font-medium text-[#667085] dark:text-slate-400">
+                  Title
+                </th>
+                <th className="h-[55px] px-6 py-3 text-left text-[16px] font-medium text-[#667085] dark:text-slate-400">
+                  Members
+                </th>
+                <th className="h-[55px] px-6 py-3 text-left text-[16px] font-medium text-[#667085] dark:text-slate-400">
+                  Semester
+                </th>
+                <th className="h-[55px] px-6 py-3 text-left text-[16px] font-medium text-[#667085] dark:text-slate-400">
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody className="bg-white dark:bg-slate-900">

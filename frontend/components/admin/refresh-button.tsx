@@ -21,11 +21,9 @@ export function RefreshButton() {
       size="sm"
       onClick={handleRefresh}
       disabled={isPending}
-      className="flex items-center gap-2 rounded-[12px] border border-slate-200 dark:border-slate-700 bg-[#FCFCFD] dark:bg-slate-800 text-[14px] text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700"
+      className="flex items-center gap-2 rounded-[12px] border border-slate-200 bg-[#FCFCFD] text-[14px] text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
     >
-      <IconRefresh
-        className={`h-4 w-4 ${isPending ? "animate-spin" : ""}`}
-      />
+      <IconRefresh className={`h-4 w-4 ${isPending ? "animate-spin" : ""}`} />
       {isPending ? "Refreshing…" : "Refresh"}
     </Button>
   );

@@ -65,7 +65,10 @@ let insightsListCache: { data: any; timestamp: number } | null = null;
 const CACHE_TTL = 5000; // 5 seconds
 
 async function getInsightsList(): Promise<any | null> {
-  if (insightsListCache && Date.now() - insightsListCache.timestamp < CACHE_TTL) {
+  if (
+    insightsListCache &&
+    Date.now() - insightsListCache.timestamp < CACHE_TTL
+  ) {
     return insightsListCache.data;
   }
 

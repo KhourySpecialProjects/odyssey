@@ -1,11 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import {
   BarChart,
   Bar,
@@ -16,6 +12,7 @@ import {
   CartesianGrid,
   LabelList,
   Tooltip,
+  type LabelProps,
 } from "recharts";
 
 // ---------------------------------------------------------------------------
@@ -113,7 +110,7 @@ function StatCard({
         {title}
       </p>
       <div>
-        <p className="text-[64px] font-semibold leading-none text-black dark:text-white">
+        <p className="text-[64px] leading-none font-semibold text-black dark:text-white">
           {value}
         </p>
         <div className="mt-3 flex items-center gap-2">
@@ -131,7 +128,7 @@ function StatCard({
 // Custom bar label (white text inside bar)
 // ---------------------------------------------------------------------------
 
-function BarInsideLabel(props: Record<string, unknown>) {
+function BarInsideLabel(props: LabelProps) {
   const { x, y, width, height, value } = props as {
     x: number;
     y: number;
@@ -174,7 +171,7 @@ export function DropletAnalyticsModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="!rounded-[20px] max-w-[1260px] max-h-[90vh] overflow-y-auto p-0 border-0 dark:border-slate-700 dark:bg-slate-900">
+      <DialogContent className="max-h-[90vh] max-w-[1260px] overflow-y-auto !rounded-[20px] border-0 p-0 dark:border-slate-700 dark:bg-slate-900">
         <DialogTitle className="sr-only">
           Droplet Analytics - {droplet.name}
         </DialogTitle>
@@ -195,7 +192,12 @@ export function DropletAnalyticsModal({
                 {droplet.name}
               </p>
               <p className="text-[14px] text-[#94a3b8] dark:text-slate-500">
-                Last updated: {new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                Last updated:{" "}
+                {new Date().toLocaleDateString("en-US", {
+                  month: "short",
+                  day: "numeric",
+                  year: "numeric",
+                })}
               </p>
             </div>
           </div>
@@ -269,10 +271,7 @@ export function DropletAnalyticsModal({
                   radius={[16, 16, 16, 16]}
                   barSize={36}
                 >
-                  <LabelList
-                    dataKey="name"
-                    content={BarInsideLabel}
-                  />
+                  <LabelList dataKey="name" content={BarInsideLabel} />
                   <LabelList
                     dataKey="count"
                     position="right"
@@ -342,7 +341,12 @@ export function DropletAnalyticsModal({
                   dataKey="users"
                   stroke="#2D7597"
                   strokeWidth={3}
-                  dot={{ r: 5, fill: "#2D7597", stroke: "#fff", strokeWidth: 2 }}
+                  dot={{
+                    r: 5,
+                    fill: "#2D7597",
+                    stroke: "#fff",
+                    strokeWidth: 2,
+                  }}
                   activeDot={{ r: 7 }}
                 />
               </LineChart>

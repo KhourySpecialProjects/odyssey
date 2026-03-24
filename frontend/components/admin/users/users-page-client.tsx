@@ -19,7 +19,13 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input as TextInput } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { IconChartBar, IconPencil, IconUser, IconActivity, IconLoader2 } from "@tabler/icons-react";
+import {
+  IconChartBar,
+  IconPencil,
+  IconUser,
+  IconActivity,
+  IconLoader2,
+} from "@tabler/icons-react";
 import { toast } from "sonner";
 import { updateUserInfo } from "@/lib/requests/authorized-user";
 import { useFormStatus } from "react-dom";

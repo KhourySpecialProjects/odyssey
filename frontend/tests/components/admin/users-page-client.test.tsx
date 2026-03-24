@@ -12,7 +12,9 @@ jest.mock("next/navigation", () => ({
 jest.mock("@/lib/requests/authorized-user", () => ({
   updateUserInfo: jest.fn().mockResolvedValue({ success: true }),
   createAuthorizedUser: jest.fn().mockResolvedValue({ ok: true }),
-  createBatchAuthorizedUsers: jest.fn().mockResolvedValue({ ok: true, data: { successful: [], failed: [] } }),
+  createBatchAuthorizedUsers: jest
+    .fn()
+    .mockResolvedValue({ ok: true, data: { successful: [], failed: [] } }),
 }));
 
 jest.mock("sonner", () => ({

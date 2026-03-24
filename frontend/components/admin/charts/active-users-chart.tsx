@@ -1,29 +1,18 @@
 "use client";
 
 import { useId, useState } from "react";
-import {
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-} from "recharts";
-import {
-  ChartContainer,
-  ChartTooltip,
-} from "@/components/ui/chart";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid } from "recharts";
+import { ChartContainer, ChartTooltip } from "@/components/ui/chart";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   filterByDays,
   filterByDateRange,
   CHART_TIMEFRAMES,
 } from "@/lib/chart-utils";
-import { TimeframeSelector, type DateRange } from "@/components/admin/charts/timeframe-selector";
+import {
+  TimeframeSelector,
+  type DateRange,
+} from "@/components/admin/charts/timeframe-selector";
 
 const chartConfig = {
   count: {
@@ -32,7 +21,15 @@ const chartConfig = {
   },
 };
 
-function ActiveUsersTooltip({ active, payload, label }: any) {
+function ActiveUsersTooltip({
+  active,
+  payload,
+  label,
+}: {
+  active?: boolean;
+  payload?: { value: number }[];
+  label?: string;
+}) {
   if (!active || !payload?.length) return null;
   return (
     <div className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-[13px] shadow-sm dark:border-slate-700 dark:bg-slate-800">
@@ -71,8 +68,8 @@ export function ActiveUsersChart({
   }));
 
   return (
-    <Card className="flex h-[396px] flex-col overflow-hidden rounded-[20px] shadow-[0px_0px_4px_0px_rgba(0,0,0,0.25)] border-0 bg-[#FCFCFD] dark:bg-slate-800">
-      <CardHeader className="flex-row items-start justify-between pb-1 pt-5 px-6">
+    <Card className="flex h-[396px] flex-col overflow-hidden rounded-[20px] border-0 bg-[#FCFCFD] shadow-[0px_0px_4px_0px_rgba(0,0,0,0.25)] dark:bg-slate-800">
+      <CardHeader className="flex-row items-start justify-between px-6 pt-5 pb-1">
         <CardTitle className="text-[20px] font-medium dark:text-white">
           Active Users
         </CardTitle>

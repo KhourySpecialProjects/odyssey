@@ -11,7 +11,11 @@ interface FilterCheckboxGroupProps {
   onToggle: (value: string) => void;
 }
 
-export function FilterCheckboxGroup({ options, selected, onToggle }: FilterCheckboxGroupProps) {
+export function FilterCheckboxGroup({
+  options,
+  selected,
+  onToggle,
+}: FilterCheckboxGroupProps) {
   return (
     <div className="space-y-2">
       {options.map((opt) => (

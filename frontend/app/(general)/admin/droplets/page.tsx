@@ -7,7 +7,7 @@ export default function Page() {
   return (
     <div className="w-full px-[56px] py-8">
       <div className="mb-4">
-        <h1 className="text-[40px] font-semibold leading-tight text-black dark:text-white">
+        <h1 className="text-[40px] leading-tight font-semibold text-black dark:text-white">
           Droplets
         </h1>
         <p className="mt-1 text-[20px] text-[#475569] dark:text-slate-400">
@@ -44,15 +44,21 @@ function TableSkeleton() {
           </colgroup>
           <thead>
             <tr className="border-b border-[#eaecf0] bg-[#fcfcfd] dark:border-slate-700 dark:bg-slate-800">
-              <th className="h-[55px] pl-[30px] pr-6 py-3 text-left text-[16px] font-medium text-[#667085] dark:text-slate-400">Title</th>
-              <th className="h-[55px] px-6 py-3 text-left text-[16px] font-medium text-[#667085] dark:text-slate-400">Tags</th>
-              <th className="h-[55px] px-6 py-3 text-left text-[16px] font-medium text-[#667085] dark:text-slate-400">Actions</th>
+              <th className="h-[55px] py-3 pr-6 pl-[30px] text-left text-[16px] font-medium text-[#667085] dark:text-slate-400">
+                Title
+              </th>
+              <th className="h-[55px] px-6 py-3 text-left text-[16px] font-medium text-[#667085] dark:text-slate-400">
+                Tags
+              </th>
+              <th className="h-[55px] px-6 py-3 text-left text-[16px] font-medium text-[#667085] dark:text-slate-400">
+                Actions
+              </th>
             </tr>
           </thead>
           <tbody className="bg-white dark:bg-slate-900">
             {Array.from({ length: 8 }).map((_, i) => (
               <tr key={i} className="border-b border-[#eaecf0]">
-                <td className="h-[56px] pl-[30px] pr-6 py-3">
+                <td className="h-[56px] py-3 pr-6 pl-[30px]">
                   <div className="h-4 w-[200px] animate-pulse rounded bg-slate-200" />
                 </td>
                 <td className="h-[56px] px-6 py-3">

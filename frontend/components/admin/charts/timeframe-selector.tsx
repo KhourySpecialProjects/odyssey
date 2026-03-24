@@ -33,7 +33,10 @@ export function TimeframeSelector({
   const [start, setStart] = useState(activeDateRange?.start ?? "");
   const [end, setEnd] = useState(activeDateRange?.end ?? "");
 
-  const rangeError = start && end && end < start ? "End date must be on or after start date." : null;
+  const rangeError =
+    start && end && end < start
+      ? "End date must be on or after start date."
+      : null;
 
   function applyRange() {
     if (start && end && !rangeError && onDateRange) {

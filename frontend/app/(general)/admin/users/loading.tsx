@@ -1,7 +1,7 @@
 function RowSkeleton() {
   return (
     <tr className="border-b border-[#eaecf0]">
-      <td className="h-[56px] pl-[30px] pr-6 py-3">
+      <td className="h-[56px] py-3 pr-6 pl-[30px]">
         <div className="flex items-center gap-3">
           <div className="h-8 w-8 shrink-0 animate-pulse rounded-full bg-slate-200" />
           <div className="h-4 w-[200px] animate-pulse rounded bg-slate-200" />
@@ -52,7 +52,7 @@ export default function UsersLoading() {
             </colgroup>
             <thead>
               <tr className="border-b border-[#eaecf0] bg-[#fcfcfd]">
-                <th className="h-[55px] pl-[30px] pr-6 py-3 text-left text-[16px] font-medium text-[#667085]">
+                <th className="h-[55px] py-3 pr-6 pl-[30px] text-left text-[16px] font-medium text-[#667085]">
                   Name
                 </th>
                 <th className="h-[55px] px-6 py-3 text-left text-[16px] font-medium text-[#667085]">
