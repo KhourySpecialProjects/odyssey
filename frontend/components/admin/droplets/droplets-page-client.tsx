@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { Droplet } from "@/types";
+import { updateDroplet } from "@/lib/requests/droplet";
+import { toast } from "sonner";
 import { useAdminTableFilters } from "@/hooks/use-admin-table-filters";
 import { cn, uppercaseFirstChar } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -101,6 +103,17 @@ function DropletTableRow({ droplet }: { droplet: Droplet }) {
 
   const typeColors = getTagColors(droplet.type);
 
+  async function handleToggleVisibility() {
+    const next = !isHidden;
+    setIsHidden(next);
+    try {
+      await updateDroplet(droplet.id, { isHidden: next });
+    } catch {
+      setIsHidden(!next);
+      toast.error("Failed to update visibility");
+    }
+  }
+
   return (
     <>
       {analyticsOpen && (
@@ -184,7 +197,7 @@ function DropletTableRow({ droplet }: { droplet: Droplet }) {
               variant="outline"
               aria-label={isHidden ? "show droplet" : "hide droplet"}
               className="h-8 w-8 p-0"
-              onClick={() => setIsHidden((prev) => !prev)}
+              onClick={handleToggleVisibility}
             >
               {isHidden ? (
                 <IconEye className="h-4 w-4 text-sky-600" />

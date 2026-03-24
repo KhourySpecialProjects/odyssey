@@ -53,7 +53,7 @@ export async function fetchGroups() {
     while (true) {
       const query = qs.stringify({
         sort: ["id"],
-        fields: ["id", "groupName", "slug", "isArchived"],
+        fields: ["id", "groupName", "slug", "isArchived", "semester"],
         populate: {
           members: {
             fields: ["id", "email"],

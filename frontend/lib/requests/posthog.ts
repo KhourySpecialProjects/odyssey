@@ -229,7 +229,7 @@ export async function fetchUniquePageview(): Promise<
 > {
   try {
     const rows = await runHogQLQuery(
-      `SELECT toString(toStartOfDay(timestamp)) AS date, count() AS pageviews
+      `SELECT toString(toStartOfDay(timestamp)) AS date, count(DISTINCT distinct_id) AS pageviews
        FROM events
        WHERE event = '$pageview'
          AND timestamp >= today() - INTERVAL 90 DAY

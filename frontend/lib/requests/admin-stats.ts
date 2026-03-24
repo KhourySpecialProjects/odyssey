@@ -66,7 +66,6 @@ export async function getAdminDashboardStats(): Promise<AdminDashboardStats> {
     currentEnrollmentsRes,
     lastMonthEnrollmentsRes,
     completedEnrollmentsRes,
-    lastMonthCompletedRes,
   ] = await Promise.all([
     // Users
     fetchAuthorizedUsersMetadata({ pagination: { pageSize: 1, page: 1 } }),
@@ -83,16 +82,11 @@ export async function getAdminDashboardStats(): Promise<AdminDashboardStats> {
       filters: { createdAt: { $lt: cutoff } },
       pagination: { pageSize: 1, page: 1 },
     }),
-    // Completed enrollments (for retention)
+    // Completed enrollments (for current retention only)
+    // lastMonth retention is omitted: no completedAt field exists in the schema,
+    // so a historical completion count cannot be computed accurately.
     fetchEnrollmentMetadata({
       filters: { isComplete: { $eq: true } },
-      pagination: { pageSize: 1, page: 1 },
-    }),
-    fetchEnrollmentMetadata({
-      filters: {
-        isComplete: { $eq: true },
-        createdAt: { $lt: cutoff },
-      },
       pagination: { pageSize: 1, page: 1 },
     }),
   ]);
@@ -107,18 +101,11 @@ export async function getAdminDashboardStats(): Promise<AdminDashboardStats> {
 
   const completedEnrollments =
     completedEnrollmentsRes?.meta?.pagination?.total ?? 0;
-  const lastMonthCompleted =
-    lastMonthCompletedRes?.meta?.pagination?.total ?? 0;
 
   const currentRetentionPct =
     currentEnrollments === 0
       ? 0
       : Math.round((completedEnrollments / currentEnrollments) * 10000) / 100;
-
-  const lastMonthRetentionPct =
-    lastMonthEnrollments === 0
-      ? 0
-      : Math.round((lastMonthCompleted / lastMonthEnrollments) * 10000) / 100;
 
   return {
     users: {
@@ -138,10 +125,10 @@ export async function getAdminDashboardStats(): Promise<AdminDashboardStats> {
     },
     retentionRate: {
       current: Math.round(currentRetentionPct),
-      lastMonth: Math.round(lastMonthRetentionPct),
+      lastMonth: 0,
       currentPct: `${currentRetentionPct.toFixed(2)}%`,
-      lastMonthPct: `${lastMonthRetentionPct.toFixed(2)}%`,
-      trend: computeTrend(currentRetentionPct, lastMonthRetentionPct),
+      lastMonthPct: "N/A",
+      trend: undefined,
     },
   };
 }
