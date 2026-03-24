@@ -1,11 +1,14 @@
 import { z } from "zod";
 import { DROPLET_FILTERS } from "../globals";
-const focusAreas: [string, ...string[]] = [
-  ...DROPLET_FILTERS[0].options.map((option) => option.value),
-] as [string, ...string[]];
-const types: [string, ...string[]] = [
-  ...DROPLET_FILTERS[1].options.map((option) => option.value),
-] as [string, ...string[]];
+const findFilterOptions = (name: string) =>
+  DROPLET_FILTERS.find((f) => f.name === name)!.options.map((o) => o.value) as [
+    string,
+    ...string[],
+  ];
+
+const focusAreas = findFilterOptions("focusArea");
+const types = findFilterOptions("type");
+const difficulties = findFilterOptions("difficulty");
 
 export const DropletSchema = z.object({
   name: z.string().min(2).max(100),
@@ -13,6 +16,7 @@ export const DropletSchema = z.object({
   authorized_users: z.number().array(),
   focusArea: z.enum(focusAreas),
   type: z.enum(types),
+  difficulty: z.enum(difficulties).optional(),
   tagIds: z.number().array(),
   isHidden: z.boolean().optional(),
   learningObjectives: z.string().min(2).max(200).array(),

@@ -1,6 +1,6 @@
 import { Droplet, Tag } from "@/types/index.d";
 import { Badge } from "@/components/ui/badge";
-import { cn, uppercaseFirstChar } from "@/lib/utils";
+import { cn, uppercaseFirstChar, getDifficultyBadgeColor } from "@/lib/utils";
 import { Plus, XCircleIcon, ChevronUp, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -81,6 +81,14 @@ export default function DraggableDropletWideTile({
               >
                 {uppercaseFirstChar(droplet.type)}
               </Badge>
+              {droplet.difficulty && (
+                <Badge
+                  variant="outline"
+                  className={getDifficultyBadgeColor(droplet.difficulty)}
+                >
+                  {uppercaseFirstChar(droplet.difficulty)}
+                </Badge>
+              )}
               {droplet.tags?.map((tag: Tag) => (
                 <Badge key={tag.id} variant="outline">
                   {tag.name}

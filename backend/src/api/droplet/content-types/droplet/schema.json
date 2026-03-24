@@ -39,6 +39,14 @@
       ],
       "required": true
     },
+    "difficulty": {
+      "type": "enumeration",
+      "enum": [
+        "beginner",
+        "intermediate",
+        "advanced"
+      ]
+    },
     "lessons": {
       "type": "relation",
       "relation": "manyToMany",

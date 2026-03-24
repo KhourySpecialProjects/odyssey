@@ -290,6 +290,9 @@ export async function updateDroplet(
       ...(data.slug && { slug: data.slug }),
       ...(data.focusArea && { focusArea: data.focusArea }),
       ...(data.type && { type: data.type }),
+      ...(data.difficulty !== undefined && {
+        difficulty: data.difficulty || null,
+      }),
       ...(data.authorized_users && { authorized_users: data.authorized_users }),
       ...(data.tagIds && { tags: data.tagIds }),
       ...(data.isHidden !== undefined && { isHidden: data.isHidden }),
@@ -452,6 +455,7 @@ const CreateDropletSchema = DropletSchema.pick({
   type: true,
   tagIds: true,
   learningObjectives: true,
+  difficulty: true,
 });
 
 export async function createDroplet(data: z.infer<typeof CreateDropletSchema>) {
@@ -468,6 +472,7 @@ export async function createDroplet(data: z.infer<typeof CreateDropletSchema>) {
       slug: "random", // this gets overwritten when created, but just has to be defined as something
       focusArea: data.focusArea,
       type: data.type,
+      ...(data.difficulty && { difficulty: data.difficulty }),
       tags: {
         connect: data.tagIds,
       },
@@ -660,6 +665,9 @@ export async function duplicateDroplet(dropletId: number) {
       slug: uniqueSlug,
       focusArea: originalDroplet.focusArea,
       type: originalDroplet.type,
+      ...(originalDroplet.difficulty && {
+        difficulty: originalDroplet.difficulty,
+      }),
       description: originalDroplet.description,
       overview: originalDroplet.overview,
       status: "draft",
@@ -1007,6 +1015,8 @@ export async function publishDraftToOriginal(
     // Only add fields that exist and are valid
     if (draftDroplet.focusArea) updateData.focusArea = draftDroplet.focusArea;
     if (draftDroplet.type) updateData.type = draftDroplet.type;
+    if (draftDroplet.difficulty)
+      updateData.difficulty = draftDroplet.difficulty;
     if (draftDroplet.description !== undefined)
       updateData.description = draftDroplet.description;
     if (draftDroplet.overview !== undefined)
