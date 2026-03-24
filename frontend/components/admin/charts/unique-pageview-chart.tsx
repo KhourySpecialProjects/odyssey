@@ -18,6 +18,7 @@ import {
 import {
   filterByDays,
   filterByDateRange,
+  formatChartDate,
   CHART_TIMEFRAMES_COMPACT,
 } from "@/lib/chart-utils";
 import {
@@ -50,10 +51,7 @@ export function UniquePageviewBarChart({
     : filterByDays(data, timeframe);
 
   const formatted = filtered.map((d) => ({
-    date: new Date(d.date).toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-    }),
+    date: formatChartDate(d.date),
     count: d.count,
   }));
 

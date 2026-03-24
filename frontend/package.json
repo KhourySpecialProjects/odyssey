@@ -139,6 +139,7 @@
     "react-syntax-highlighter": "^16.1.0",
     "react-tabs": "^6.1.0",
     "react-wavify": "^1.11.1",
+    "recharts": "^2.15.0",
     "shiki": "^3.15.0",
     "sonner": "^1.7.4",
     "tailwind-merge": "^2.2.1",

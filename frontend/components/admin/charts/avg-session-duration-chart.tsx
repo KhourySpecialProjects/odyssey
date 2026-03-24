@@ -19,6 +19,7 @@ import { IconTrendingUp, IconTrendingDown } from "@tabler/icons-react";
 import {
   filterByDays,
   filterByDateRange,
+  formatChartDate,
   CHART_TIMEFRAMES,
 } from "@/lib/chart-utils";
 import {
@@ -52,10 +53,7 @@ export function AvgSessionDurationChart({
     : filterByDays(data, timeframe);
 
   const formatted = filtered.map((d) => ({
-    date: new Date(d.date).toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-    }),
+    date: formatChartDate(d.date),
     duration: d.duration,
   }));
 
@@ -73,6 +71,16 @@ export function AvgSessionDurationChart({
       : 0;
   const trendPct = avgFirst > 0 ? ((avgSecond - avgFirst) / avgFirst) * 100 : 0;
   const trendUp = trendPct >= 0;
+
+  const periodLabel = dateRange
+    ? `from ${formatChartDate(dateRange.start)} – ${formatChartDate(dateRange.end)}`
+    : timeframe === 7
+      ? "this week"
+      : timeframe === 30
+        ? "this month"
+        : timeframe === 90
+          ? "this quarter"
+          : `in the last ${timeframe} days`;
 
   return (
     <Card className="flex h-[396px] flex-col overflow-hidden rounded-[20px] border-0 bg-[#FCFCFD] shadow-[0px_0px_4px_0px_rgba(0,0,0,0.25)] dark:bg-slate-800">
@@ -149,7 +157,7 @@ export function AvgSessionDurationChart({
             className={`font-medium ${trendUp ? "text-[#1ea438]" : "text-[#ce3131]"}`}
           >
             {trendUp ? "Trending up" : "Trending down"} by{" "}
-            {Math.abs(trendPct).toFixed(1)}% this month
+            {Math.abs(trendPct).toFixed(1)}% {periodLabel}
           </span>
         </CardFooter>
       )}

@@ -12,6 +12,12 @@ import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { SearchBar } from "@/components/admin/search-bar";
 import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import Link from "next/link";
 import { IconPencil } from "@tabler/icons-react";
 import { SortButton } from "@/components/admin/sort-button";
@@ -160,19 +166,26 @@ function PlaylistTableRow({ playlist }: { playlist: PlaylistWithCounts }) {
 
       {/* Actions */}
       <td className="h-[56px] px-6 py-3">
-        <div className="flex items-center gap-2">
-          <Button
-            size="sm"
-            variant="outline"
-            aria-label="edit playlist"
-            className="h-8 w-8 p-0"
-            asChild
-          >
-            <Link href={`/draft/p/${playlist.slug}`} prefetch={false}>
-              <IconPencil className="h-4 w-4 text-sky-600" />
-            </Link>
-          </Button>
-        </div>
+        <TooltipProvider delayDuration={300}>
+          <div className="flex items-center gap-2">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  aria-label="edit playlist"
+                  className="h-8 w-8 p-0"
+                  asChild
+                >
+                  <Link href={`/draft/p/${playlist.slug}`} prefetch={false}>
+                    <IconPencil className="h-4 w-4 text-sky-600" />
+                  </Link>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Edit playlist</TooltipContent>
+            </Tooltip>
+          </div>
+        </TooltipProvider>
       </td>
     </tr>
   );

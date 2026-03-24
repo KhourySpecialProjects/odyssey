@@ -37,6 +37,19 @@ export function filterByDays<T extends { date: string }>(
   return filtered.length > 0 ? filtered : data;
 }
 
+/**
+ * Format a date string (e.g. "2024-03-15 00:00:00" from PostHog) for display.
+ * Parses only the YYYY-MM-DD portion as a local date to avoid UTC-to-local
+ * timezone shifts that cause off-by-one day errors.
+ */
+export function formatChartDate(dateStr: string): string {
+  const [year, month, day] = dateStr.slice(0, 10).split("-").map(Number);
+  return new Date(year, month - 1, day).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+  });
+}
+
 /** Filter time-series data to a custom start/end date range (inclusive).
  *  Compares YYYY-MM-DD strings directly to avoid UTC/local timezone shifts.
  */

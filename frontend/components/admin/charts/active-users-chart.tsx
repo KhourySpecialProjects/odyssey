@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   filterByDays,
   filterByDateRange,
+  formatChartDate,
   CHART_TIMEFRAMES,
 } from "@/lib/chart-utils";
 import {
@@ -60,10 +61,7 @@ export function ActiveUsersChart({
     : filterByDays(data, timeframe);
 
   const formatted = filtered.map((d) => ({
-    date: new Date(d.date).toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-    }),
+    date: formatChartDate(d.date),
     count: d.count,
   }));
 

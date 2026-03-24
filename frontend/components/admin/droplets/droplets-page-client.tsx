@@ -9,6 +9,12 @@ import { cn, uppercaseFirstChar } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { SearchBar } from "@/components/admin/search-bar";
 import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import Link from "next/link";
 import {
   IconChartBar,
@@ -100,10 +106,13 @@ const FILTER_TYPE_OPTIONS = [
 function DropletTableRow({ droplet }: { droplet: Droplet }) {
   const [isHidden, setIsHidden] = useState(droplet.isHidden);
   const [analyticsOpen, setAnalyticsOpen] = useState(false);
+  const [isAnimating, setIsAnimating] = useState(false);
 
   const typeColors = getTagColors(droplet.type);
 
   async function handleToggleVisibility() {
+    setIsAnimating(true);
+    setTimeout(() => setIsAnimating(false), 300);
     const next = !isHidden;
     setIsHidden(next);
     try {
@@ -171,41 +180,71 @@ function DropletTableRow({ droplet }: { droplet: Droplet }) {
 
         {/* Actions */}
         <td className="h-[56px] py-3 pr-6 pl-10">
-          <div className="flex items-center gap-3">
-            <Button
-              size="sm"
-              variant="outline"
-              aria-label="analytics"
-              className="h-8 w-8 p-0"
-              onClick={() => setAnalyticsOpen(true)}
-            >
-              <IconChartBar className="h-4 w-4 text-sky-600" />
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              aria-label="edit droplet"
-              className="h-8 w-8 p-0"
-              asChild
-            >
-              <Link href={`/draft/d/${droplet.slug}`} prefetch={false}>
-                <IconPencil className="h-4 w-4 text-sky-600" />
-              </Link>
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              aria-label={isHidden ? "show droplet" : "hide droplet"}
-              className="h-8 w-8 p-0"
-              onClick={handleToggleVisibility}
-            >
-              {isHidden ? (
-                <IconEye className="h-4 w-4 text-sky-600" />
-              ) : (
-                <IconEyeOff className="h-4 w-4 text-sky-600" />
-              )}
-            </Button>
-          </div>
+          <TooltipProvider delayDuration={300}>
+            <div className="flex items-center gap-3">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    aria-label="edit droplet"
+                    className="h-8 w-8 p-0"
+                    asChild
+                  >
+                    <Link href={`/draft/d/${droplet.slug}`} prefetch={false}>
+                      <IconPencil className="h-4 w-4 text-sky-600" />
+                    </Link>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Edit droplet</TooltipContent>
+              </Tooltip>
+
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    aria-label="analytics"
+                    className="h-8 w-8 p-0"
+                    onClick={() => setAnalyticsOpen(true)}
+                  >
+                    <IconChartBar className="h-4 w-4 text-sky-600" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>View analytics</TooltipContent>
+              </Tooltip>
+
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    aria-label={isHidden ? "show droplet" : "hide droplet"}
+                    className="h-8 w-8 p-0"
+                    onClick={handleToggleVisibility}
+                  >
+                    <span
+                      className={cn(
+                        "transition-transform duration-200",
+                        isAnimating && "scale-125",
+                      )}
+                    >
+                      {isHidden ? (
+                        <IconEyeOff className="h-4 w-4 text-slate-400" />
+                      ) : (
+                        <IconEye className="h-4 w-4 text-sky-600" />
+                      )}
+                    </span>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  {isHidden
+                    ? "Hidden — click to publish"
+                    : "Visible — click to hide"}
+                </TooltipContent>
+              </Tooltip>
+            </div>
+          </TooltipProvider>
         </td>
       </tr>
     </>

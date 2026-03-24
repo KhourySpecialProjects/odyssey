@@ -7,6 +7,12 @@ import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { SearchBar } from "@/components/admin/search-bar";
 import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import Link from "next/link";
 import { IconPencil, IconArchive } from "@tabler/icons-react";
 import { SortButton } from "@/components/admin/sort-button";
@@ -88,27 +94,42 @@ function GroupTableRow({ group }: { group: Group }) {
 
       {/* Actions */}
       <td className="h-[56px] px-6 py-3">
-        <div className="flex items-center gap-2">
-          <Button
-            size="sm"
-            variant="outline"
-            aria-label="edit group"
-            className="h-8 w-8 p-0"
-            asChild
-          >
-            <Link href={`/g/management?slug=${group.slug}`} prefetch={false}>
-              <IconPencil className="h-4 w-4 text-sky-600" />
-            </Link>
-          </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            aria-label="archive group"
-            className="h-8 w-8 p-0"
-          >
-            <IconArchive className="h-4 w-4 text-sky-600" />
-          </Button>
-        </div>
+        <TooltipProvider delayDuration={300}>
+          <div className="flex items-center gap-2">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  aria-label="edit group"
+                  className="h-8 w-8 p-0"
+                  asChild
+                >
+                  <Link
+                    href={`/g/management?slug=${group.slug}`}
+                    prefetch={false}
+                  >
+                    <IconPencil className="h-4 w-4 text-sky-600" />
+                  </Link>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Edit group</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  aria-label="archive group"
+                  className="h-8 w-8 p-0"
+                >
+                  <IconArchive className="h-4 w-4 text-sky-600" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Archive group</TooltipContent>
+            </Tooltip>
+          </div>
+        </TooltipProvider>
       </td>
     </tr>
   );
