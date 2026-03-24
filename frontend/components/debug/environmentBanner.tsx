@@ -30,7 +30,7 @@ export async function EnvironmentBanner({ className }: { className?: string }) {
         )}
       </div>
 
-      <p className="pointer-events-none absolute left-1/2 -translate-x-1/2 transform">
+      <p className="pointer-events-none flex-1 text-center">
         &lt; {app_env} ENVIRONMENT &gt;
       </p>
     </div>

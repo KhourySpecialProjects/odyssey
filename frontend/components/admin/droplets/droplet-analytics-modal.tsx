@@ -128,6 +128,7 @@ function ScrollDepthChart({
 
       <div className="mt-6 w-full overflow-x-auto">
         <LineChart
+          key={active.lessonId}
           width={1100}
           height={320}
           data={chartData}
