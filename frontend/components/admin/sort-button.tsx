@@ -56,10 +56,10 @@ export function SortButton({
           aria-expanded={open}
           aria-haspopup="dialog"
           className={cn(
-            "flex h-10 w-[100px] items-center justify-center gap-2 rounded-lg border bg-white px-3.5 text-sm font-medium text-[#344054] transition-colors",
+            "flex h-10 w-[100px] items-center justify-center gap-2 rounded-lg border bg-white px-3.5 text-sm font-medium text-[#344054] transition-colors dark:bg-slate-800 dark:text-slate-300",
             active
               ? "border-[#2D7597] shadow-[0px_0px_4px_#2D7597]"
-              : "border-[#D0D5DD] hover:border-slate-400",
+              : "border-[#D0D5DD] hover:border-slate-400 dark:border-slate-600",
           )}
         >
           <IconArrowsUpDown className="h-4 w-4 flex-shrink-0" />

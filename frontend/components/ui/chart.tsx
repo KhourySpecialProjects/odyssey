@@ -140,7 +140,9 @@ const ChartTooltipContent = React.forwardRef<
         );
       }
       if (!value) return null;
-      return <div className={cn("font-medium", labelClassName)}>{value}</div>;
+      return (
+        <div className={cn("font-medium", labelClassName)}>{value}</div>
+      );
     }, [
       label,
       labelFormatter,
@@ -188,11 +190,9 @@ const ChartTooltipContent = React.forwardRef<
                         <div
                           className={cn(
                             "shrink-0 rounded-[2px] border-(--color-border) bg-(--color-bg)",
-                            indicator === "dot" &&
-                              "mt-0.5 h-2.5 w-2.5 rounded-full",
+                            indicator === "dot" && "mt-0.5 h-2.5 w-2.5 rounded-full",
                             indicator === "line" && "w-1",
-                            indicator === "dashed" &&
-                              "w-0 border-[1.5px] border-dashed bg-transparent",
+                            indicator === "dashed" && "w-0 border-[1.5px] border-dashed bg-transparent",
                             nestLabel && indicator === "dashed" && "my-0.5",
                           )}
                           style={
@@ -244,48 +244,43 @@ const ChartLegendContent = React.forwardRef<
       hideIcon?: boolean;
       nameKey?: string;
     }
->(
-  (
-    { className, hideIcon = false, payload, verticalAlign = "bottom", nameKey },
-    ref,
-  ) => {
-    const { config } = useChart();
-    if (!payload?.length) return null;
-    return (
-      <div
-        ref={ref}
-        className={cn(
-          "flex items-center justify-center gap-4",
-          verticalAlign === "top" ? "pb-3" : "pt-3",
-          className,
-        )}
-      >
-        {payload.map((item) => {
-          const key = `${nameKey || item.dataKey || "value"}`;
-          const itemConfig = getPayloadConfigFromPayload(config, item, key);
-          return (
-            <div
-              key={item.value}
-              className={cn(
-                "[&>svg]:text-muted-foreground flex items-center gap-1.5 [&>svg]:h-3 [&>svg]:w-3",
-              )}
-            >
-              {itemConfig?.icon && !hideIcon ? (
-                <itemConfig.icon />
-              ) : (
-                <div
-                  className="h-2 w-2 shrink-0 rounded-[2px]"
-                  style={{ backgroundColor: item.color }}
-                />
-              )}
-              {itemConfig?.label}
-            </div>
-          );
-        })}
-      </div>
-    );
-  },
-);
+>(({ className, hideIcon = false, payload, verticalAlign = "bottom", nameKey }, ref) => {
+  const { config } = useChart();
+  if (!payload?.length) return null;
+  return (
+    <div
+      ref={ref}
+      className={cn(
+        "flex items-center justify-center gap-4",
+        verticalAlign === "top" ? "pb-3" : "pt-3",
+        className,
+      )}
+    >
+      {payload.map((item) => {
+        const key = `${nameKey || item.dataKey || "value"}`;
+        const itemConfig = getPayloadConfigFromPayload(config, item, key);
+        return (
+          <div
+            key={item.value}
+            className={cn(
+              "[&>svg]:text-muted-foreground flex items-center gap-1.5 [&>svg]:h-3 [&>svg]:w-3",
+            )}
+          >
+            {itemConfig?.icon && !hideIcon ? (
+              <itemConfig.icon />
+            ) : (
+              <div
+                className="h-2 w-2 shrink-0 rounded-[2px]"
+                style={{ backgroundColor: item.color }}
+              />
+            )}
+            {itemConfig?.label}
+          </div>
+        );
+      })}
+    </div>
+  );
+});
 ChartLegendContent.displayName = "ChartLegendContent";
 
 // ——— Helpers ———
@@ -302,20 +297,18 @@ function getPayloadConfigFromPayload(
       ? payload.payload
       : undefined;
   let configLabelKey: string = key;
-  if (key in config) {
+  if (
+    key in config
+  ) {
     configLabelKey = key;
   } else if (
     payloadPayload &&
     key in payloadPayload &&
     typeof payloadPayload[key as keyof typeof payloadPayload] === "string"
   ) {
-    configLabelKey = payloadPayload[
-      key as keyof typeof payloadPayload
-    ] as string;
+    configLabelKey = payloadPayload[key as keyof typeof payloadPayload] as string;
   }
-  return configLabelKey in config
-    ? config[configLabelKey]
-    : config[key as keyof typeof config];
+  return configLabelKey in config ? config[configLabelKey] : config[key as keyof typeof config];
 }
 
 export {

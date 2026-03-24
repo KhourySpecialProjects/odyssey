@@ -100,8 +100,7 @@ export async function getAdminDashboardStats(): Promise<AdminDashboardStats> {
   const currentUsers = currentUsersRes?.meta?.pagination?.total ?? 0;
   const lastMonthUsers = lastMonthUsersRes?.meta?.pagination?.total ?? 0;
 
-  const currentEnrollments =
-    currentEnrollmentsRes?.meta?.pagination?.total ?? 0;
+  const currentEnrollments = currentEnrollmentsRes?.meta?.pagination?.total ?? 0;
   const lastMonthEnrollments =
     lastMonthEnrollmentsRes?.meta?.pagination?.total ?? 0;
 
