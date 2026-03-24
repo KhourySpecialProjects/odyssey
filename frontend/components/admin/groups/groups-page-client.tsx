@@ -56,6 +56,7 @@ function GroupTableRow({ group }: { group: Group }) {
       <td className="h-[56px] py-3 pr-6 pl-[30px]">
         <Link
           href={`/g/${group.slug}`}
+          prefetch={false}
           className="truncate text-[16px] font-medium text-[#101828] underline hover:text-[#2D7597] dark:text-white"
         >
           {group.groupName}
@@ -93,8 +94,11 @@ function GroupTableRow({ group }: { group: Group }) {
             variant="outline"
             aria-label="edit group"
             className="h-8 w-8 p-0"
+            asChild
           >
-            <IconPencil className="h-4 w-4 text-sky-600" />
+            <Link href={`/g/management?slug=${group.slug}`} prefetch={false}>
+              <IconPencil className="h-4 w-4 text-sky-600" />
+            </Link>
           </Button>
           <Button
             size="sm"

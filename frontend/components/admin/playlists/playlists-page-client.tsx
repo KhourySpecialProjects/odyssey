@@ -113,6 +113,7 @@ function PlaylistTableRow({ playlist }: { playlist: PlaylistWithCounts }) {
       <td className="h-[56px] py-3 pr-6 pl-[30px]">
         <Link
           href={`/p/${playlist.slug}`}
+          prefetch={false}
           className="truncate text-[16px] font-medium text-[#101828] underline hover:text-[#2D7597] dark:text-white"
         >
           {playlist.name}
@@ -165,8 +166,11 @@ function PlaylistTableRow({ playlist }: { playlist: PlaylistWithCounts }) {
             variant="outline"
             aria-label="edit playlist"
             className="h-8 w-8 p-0"
+            asChild
           >
-            <IconPencil className="h-4 w-4 text-sky-600" />
+            <Link href={`/draft/p/${playlist.slug}`} prefetch={false}>
+              <IconPencil className="h-4 w-4 text-sky-600" />
+            </Link>
           </Button>
         </div>
       </td>
