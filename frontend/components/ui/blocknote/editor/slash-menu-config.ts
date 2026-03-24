@@ -17,6 +17,11 @@ import {
   FileText,
   LayoutList,
   TypeIcon,
+  SeparatorHorizontal,
+  PanelLeftIcon,
+  PanelRightIcon,
+  ImageIcon,
+  ColumnsIcon,
 } from "lucide-react";
 
 const createCalloutItem = (
@@ -234,5 +239,80 @@ export const getCodeSlashMenuItems = (
     aliases: ["code", "snippet", "programming", "syntax"],
     group: "Code",
     subtext: "Display code with syntax highlighting",
+  },
+];
+
+export const getSlideBreakSlashMenuItems = (
+  editor: CustomBlockNoteEditor,
+): DefaultReactSuggestionItem[] => [
+  {
+    title: "Slide Break",
+    icon: createElement(SeparatorHorizontal, { className: "h-4 w-4" }),
+    onItemClick: () => {
+      editor.insertBlocks(
+        [{ type: "slide-break" }],
+        editor.getTextCursorPosition().block,
+        "after",
+      );
+    },
+    aliases: ["slide", "break", "presentation", "page break", "divider"],
+    group: "Presentation",
+    subtext: "Start a new presentation slide",
+  },
+  {
+    title: "Image Left Layout",
+    icon: createElement(PanelLeftIcon, { className: "h-4 w-4" }),
+    onItemClick: () => {
+      editor.insertBlocks(
+        [{ type: "slide-image-left" }],
+        editor.getTextCursorPosition().block,
+        "after",
+      );
+    },
+    aliases: ["image left", "left image", "layout left"],
+    group: "Presentation",
+    subtext: "Image on left, text on right",
+  },
+  {
+    title: "Image Right Layout",
+    icon: createElement(PanelRightIcon, { className: "h-4 w-4" }),
+    onItemClick: () => {
+      editor.insertBlocks(
+        [{ type: "slide-image-right" }],
+        editor.getTextCursorPosition().block,
+        "after",
+      );
+    },
+    aliases: ["image right", "right image", "layout right"],
+    group: "Presentation",
+    subtext: "Text on left, image on right",
+  },
+  {
+    title: "Full Image",
+    icon: createElement(ImageIcon, { className: "h-4 w-4" }),
+    onItemClick: () => {
+      editor.insertBlocks(
+        [{ type: "slide-full-image" }],
+        editor.getTextCursorPosition().block,
+        "after",
+      );
+    },
+    aliases: ["full image", "big image", "image slide"],
+    group: "Presentation",
+    subtext: "Image takes the full slide",
+  },
+  {
+    title: "Two Columns",
+    icon: createElement(ColumnsIcon, { className: "h-4 w-4" }),
+    onItemClick: () => {
+      editor.insertBlocks(
+        [{ type: "slide-two-columns" }],
+        editor.getTextCursorPosition().block,
+        "after",
+      );
+    },
+    aliases: ["two columns", "columns", "split", "side by side"],
+    group: "Presentation",
+    subtext: "Split content into two columns",
   },
 ];

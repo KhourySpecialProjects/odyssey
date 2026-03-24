@@ -16,7 +16,14 @@ import { OpenEndedQuiz } from "@/components/ui/blocknote/blocks/quiz-open-ended-
 import { MultipleChoiceQuiz } from "@/components/ui/blocknote/blocks/quiz-multiple-choice-block";
 import { LatexBlock } from "@/components/ui/blocknote/blocks/latex-block";
 import { ImageBlock } from "@/components/ui/blocknote/blocks/image-block";
-import { CodeBlock } from "@/components/ui/blocknote/blocks/code-block"; // ADD THIS
+import { CodeBlock } from "@/components/ui/blocknote/blocks/code-block";
+import { SlideBreak } from "@/components/ui/blocknote/blocks/slide-break-block";
+import {
+  ImageLeftLayout,
+  ImageRightLayout,
+  FullImageLayout,
+  TwoColumnsLayout,
+} from "@/components/ui/blocknote/blocks/slide-layout-blocks";
 
 const blockTypesToHide = new Set([
   "quote",
@@ -139,6 +146,11 @@ export const blockNoteSchema = BlockNoteSchema.create({
     latex: LatexBlock(),
     image: ImageBlock(),
     "code-block": CodeBlock(),
+    "slide-break": SlideBreak(),
+    "slide-image-left": ImageLeftLayout(),
+    "slide-image-right": ImageRightLayout(),
+    "slide-full-image": FullImageLayout(),
+    "slide-two-columns": TwoColumnsLayout(),
   },
   styleSpecs: customStyleSpecs,
 });

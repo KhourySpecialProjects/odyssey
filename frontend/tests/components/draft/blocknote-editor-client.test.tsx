@@ -3,6 +3,17 @@ jest.mock("@/components/ui/blocknote/blocks/code-block", () => ({
   CodeBlock: jest.fn(() => ({ type: "code-block" })),
 }));
 
+jest.mock("@/components/ui/blocknote/blocks/slide-break-block", () => ({
+  SlideBreak: jest.fn(() => ({ type: "slide-break" })),
+}));
+
+jest.mock("@/components/ui/blocknote/blocks/slide-layout-blocks", () => ({
+  ImageLeftLayout: jest.fn(() => ({ type: "slide-image-left" })),
+  ImageRightLayout: jest.fn(() => ({ type: "slide-image-right" })),
+  FullImageLayout: jest.fn(() => ({ type: "slide-full-image" })),
+  TwoColumnsLayout: jest.fn(() => ({ type: "slide-two-columns" })),
+}));
+
 jest.mock("react-syntax-highlighter", () => ({
   Light: jest.fn(({ children }: any) => <div>{children}</div>),
 }));
