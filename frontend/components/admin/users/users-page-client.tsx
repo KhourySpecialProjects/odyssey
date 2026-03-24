@@ -176,7 +176,11 @@ function UserTableRow({ user: initialUser }: { user: AuthorizedUser }) {
     const next = !prev;
     setUser((u) => ({ ...u, isEnabled: next }));
     try {
-      await updateUserInfo(user.id, { isEnabled: next });
+      const result = await updateUserInfo(user.id, { isEnabled: next });
+      if (!result.success) {
+        setUser((u) => ({ ...u, isEnabled: prev }));
+        toast.error("Failed to update user access");
+      }
     } catch {
       setUser((u) => ({ ...u, isEnabled: prev }));
       toast.error("Failed to update user access");
@@ -435,7 +439,7 @@ function UserTableRow({ user: initialUser }: { user: AuthorizedUser }) {
 function SaveButton() {
   const { pending } = useFormStatus();
   return (
-    <Button type="submit" aria-disabled={pending}>
+    <Button type="submit" disabled={pending} aria-disabled={pending}>
       Save Changes
     </Button>
   );

@@ -59,8 +59,11 @@ const SORT_GROUPS = [
 function GroupTableRow({ group }: { group: Group }) {
   const membersCount = group.members?.length ?? 0;
   const [isArchived, setIsArchived] = useState(group.isArchived);
+  const [isArchiving, setIsArchiving] = useState(false);
 
   async function handleToggleArchive() {
+    if (isArchiving) return;
+    setIsArchiving(true);
     try {
       const result = await archiveGroup(group, !isArchived);
       if (result.success) {
@@ -75,6 +78,8 @@ function GroupTableRow({ group }: { group: Group }) {
       }
     } catch {
       toast.error("An error occurred while archiving the group");
+    } finally {
+      setIsArchiving(false);
     }
   }
 
@@ -153,6 +158,7 @@ function GroupTableRow({ group }: { group: Group }) {
                   variant="outline"
                   aria-label={isArchived ? "unarchive group" : "archive group"}
                   className="h-8 w-8 p-0"
+                  disabled={isArchiving}
                   onClick={handleToggleArchive}
                 >
                   {isArchived ? (

@@ -286,7 +286,7 @@ export function DropletsPageClient({ droplets }: { droplets: Droplet[] }) {
       }
       return sorted;
     },
-    filterFn: (d, types) => types.includes(d.type),
+    filterFn: (d, types) => types.length === 0 || types.includes(d.type),
   });
 
   return (

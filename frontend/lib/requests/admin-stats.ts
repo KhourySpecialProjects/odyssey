@@ -29,6 +29,11 @@ function computeTrend(
 
 /** Fetch total count of droplets (optionally before a given ISO date) */
 async function fetchDropletCount(before?: string): Promise<number> {
+  if (!STRAPI_API_URL || !STRAPI_ACCESS_TOKEN) {
+    throw new Error(
+      "fetchDropletCount: STRAPI_API_URL or STRAPI_ACCESS_TOKEN is not set",
+    );
+  }
   const query = qs.stringify({
     filters: before ? { createdAt: { $lt: before } } : {},
     pagination: { pageSize: 1, page: 1 },
@@ -38,11 +43,17 @@ async function fetchDropletCount(before?: string): Promise<number> {
       headers: { Authorization: `Bearer ${STRAPI_ACCESS_TOKEN}` },
       cache: "no-store",
     });
-    if (!res.ok) return 0;
+    if (!res.ok) {
+      const text = await res.text().catch(() => "");
+      throw new Error(
+        `fetchDropletCount: Strapi returned ${res.status} ${res.statusText}${text ? ` — ${text}` : ""}`,
+      );
+    }
     const data = await res.json();
     return data?.meta?.pagination?.total ?? 0;
-  } catch {
-    return 0;
+  } catch (err) {
+    console.error("fetchDropletCount failed:", err);
+    throw err;
   }
 }
 

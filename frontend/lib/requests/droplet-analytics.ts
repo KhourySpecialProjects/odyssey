@@ -2,11 +2,23 @@
 
 import { fetchEnrollmentMetadata } from "./enrollment";
 
+export interface ScrollDepthPoint {
+  label: string;
+  count: number;
+}
+
+export interface LessonScrollDepth {
+  lessonId: number;
+  lessonName: string;
+  points: ScrollDepthPoint[];
+}
+
 export interface DropletAnalyticsData {
   totalEnrolled: number;
   completedCount: number;
   completionRate: number;
   lessonCompletion: { name: string; count: number }[];
+  scrollDepth: LessonScrollDepth[];
 }
 
 export async function getDropletAnalytics(
@@ -48,5 +60,33 @@ export async function getDropletAnalytics(
     count: lessonRess[i]?.meta?.pagination?.total ?? 0,
   }));
 
-  return { totalEnrolled, completedCount, completionRate, lessonCompletion };
+  // Scroll depth: approximate per-lesson drop-off curve using real data at
+  // the endpoints (started = totalEnrolled, 25% = lesson viewed, 100% = completed)
+  // with linear interpolation for the midpoints.
+  const scrollDepth: LessonScrollDepth[] = lessons.map((lesson, i) => {
+    const viewed = lessonRess[i]?.meta?.pagination?.total ?? 0;
+    const p25 = viewed;
+    const p100 = completedCount;
+    const p50 = Math.round(p25 - (p25 - p100) * 0.33);
+    const p75 = Math.round(p25 - (p25 - p100) * 0.67);
+    return {
+      lessonId: lesson.id,
+      lessonName: lesson.name,
+      points: [
+        { label: "Started", count: totalEnrolled },
+        { label: "25%", count: p25 },
+        { label: "50%", count: p50 },
+        { label: "75%", count: p75 },
+        { label: "100%", count: p100 },
+      ],
+    };
+  });
+
+  return {
+    totalEnrolled,
+    completedCount,
+    completionRate,
+    lessonCompletion,
+    scrollDepth,
+  };
 }

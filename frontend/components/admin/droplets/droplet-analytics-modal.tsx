@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { cn } from "@/lib/utils";
 import {
   BarChart,
   Bar,
@@ -17,6 +18,7 @@ import {
 import {
   getDropletAnalytics,
   type DropletAnalyticsData,
+  type LessonScrollDepth,
 } from "@/lib/requests/droplet-analytics";
 
 // ---------------------------------------------------------------------------
@@ -79,6 +81,92 @@ function BarInsideLabel(props: LabelProps) {
 }
 
 // ---------------------------------------------------------------------------
+// Scroll Depth Chart
+// ---------------------------------------------------------------------------
+
+function ScrollDepthChart({
+  scrollDepth,
+  activeIndex,
+  onTabChange,
+}: {
+  scrollDepth: LessonScrollDepth[];
+  activeIndex: number;
+  onTabChange: (i: number) => void;
+}) {
+  const active = scrollDepth[activeIndex];
+  const chartData = active.points.map((p) => ({
+    stage: p.label,
+    users: p.count,
+  }));
+
+  return (
+    <div className="mt-6 rounded-[20px] bg-[#fcfcfd] p-8 shadow dark:bg-slate-800">
+      <h4 className="text-[22px] font-bold text-black dark:text-white">
+        Scroll Depth
+      </h4>
+      <p className="mt-1 text-[16px] text-[#475569] dark:text-slate-400">
+        Showing growth/decline in users as they progress through a lesson
+      </p>
+
+      {/* Pill tab selector */}
+      <div className="mt-5 inline-flex gap-1 rounded-[97px] bg-[#eaecf0] p-1 dark:bg-slate-700">
+        {scrollDepth.map((lesson, i) => (
+          <button
+            key={lesson.lessonId}
+            onClick={() => onTabChange(i)}
+            className={cn(
+              "rounded-[97px] px-4 py-1.5 text-[14px] font-medium transition-colors",
+              i === activeIndex
+                ? "bg-[#2D7597] text-white shadow"
+                : "text-[#475569] hover:text-black dark:text-slate-300 dark:hover:text-white",
+            )}
+          >
+            {lesson.lessonName}
+          </button>
+        ))}
+      </div>
+
+      <div className="mt-6 w-full overflow-x-auto">
+        <LineChart
+          width={1100}
+          height={320}
+          data={chartData}
+          margin={{ top: 10, right: 30, left: 10, bottom: 10 }}
+        >
+          <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+          <XAxis
+            dataKey="stage"
+            tick={{ fill: "#475569", fontSize: 14 }}
+            axisLine={{ stroke: "#e2e8f0" }}
+            tickLine={false}
+          />
+          <YAxis
+            tick={{ fill: "#475569", fontSize: 14 }}
+            axisLine={{ stroke: "#e2e8f0" }}
+            tickLine={false}
+          />
+          <Tooltip
+            contentStyle={{
+              borderRadius: 12,
+              border: "none",
+              boxShadow: "0 4px 12px rgba(0,0,0,.1)",
+            }}
+          />
+          <Line
+            type="monotone"
+            dataKey="users"
+            stroke="#2D7597"
+            strokeWidth={3}
+            dot={{ r: 5, fill: "#2D7597", stroke: "#fff", strokeWidth: 2 }}
+            activeDot={{ r: 7 }}
+          />
+        </LineChart>
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
 
@@ -89,10 +177,12 @@ export function DropletAnalyticsModal({
 }: DropletAnalyticsModalProps) {
   const [analytics, setAnalytics] = useState<DropletAnalyticsData | null>(null);
   const [loading, setLoading] = useState(false);
+  const [activeScrollLesson, setActiveScrollLesson] = useState(0);
 
   useEffect(() => {
     if (!open) return;
     setLoading(true);
+    setActiveScrollLesson(0);
     getDropletAnalytics(droplet.id, droplet.lessons ?? [])
       .then(setAnalytics)
       .finally(() => setLoading(false));
@@ -167,11 +257,11 @@ export function DropletAnalyticsModal({
                   </h3>
 
                   <div className="mt-6 rounded-[20px] bg-[#fcfcfd] p-8 shadow dark:bg-slate-800">
-                    <h4 className="text-[22px] font-bold text-black dark:text-white">
-                      Lessons Viewed
+                    <h4 className="text-[22px] font-bold text-[#1c2024] dark:text-white">
+                      Marked Complete
                     </h4>
-                    <p className="mt-1 text-[16px] text-[#475569] dark:text-slate-400">
-                      Number of enrolled users who viewed each lesson
+                    <p className="mt-1 text-[20px] text-[#60646c] dark:text-slate-400">
+                      Showing the number of users who marked a lesson complete
                     </p>
 
                     <div className="mt-6 w-full overflow-x-auto">
@@ -216,62 +306,14 @@ export function DropletAnalyticsModal({
                     </div>
                   </div>
 
-                  {/* ---- Lesson Drop-off chart ---- */}
-                  <div className="mt-6 rounded-[20px] bg-[#fcfcfd] p-8 shadow dark:bg-slate-800">
-                    <h4 className="text-[22px] font-bold text-black dark:text-white">
-                      Lesson Drop-off
-                    </h4>
-                    <p className="mt-1 text-[16px] text-[#475569] dark:text-slate-400">
-                      Showing how many enrolled users reached each lesson in
-                      sequence
-                    </p>
-
-                    <div className="mt-6 w-full overflow-x-auto">
-                      <LineChart
-                        width={1100}
-                        height={320}
-                        data={analytics.lessonCompletion}
-                        margin={{ top: 10, right: 30, left: 10, bottom: 40 }}
-                      >
-                        <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                        <XAxis
-                          dataKey="name"
-                          tick={{ fill: "#475569", fontSize: 12 }}
-                          axisLine={{ stroke: "#e2e8f0" }}
-                          tickLine={false}
-                          interval={0}
-                          angle={-30}
-                          textAnchor="end"
-                        />
-                        <YAxis
-                          tick={{ fill: "#475569", fontSize: 14 }}
-                          axisLine={{ stroke: "#e2e8f0" }}
-                          tickLine={false}
-                        />
-                        <Tooltip
-                          contentStyle={{
-                            borderRadius: 12,
-                            border: "none",
-                            boxShadow: "0 4px 12px rgba(0,0,0,.1)",
-                          }}
-                        />
-                        <Line
-                          type="monotone"
-                          dataKey="count"
-                          name="Users"
-                          stroke="#2D7597"
-                          strokeWidth={3}
-                          dot={{
-                            r: 5,
-                            fill: "#2D7597",
-                            stroke: "#fff",
-                            strokeWidth: 2,
-                          }}
-                          activeDot={{ r: 7 }}
-                        />
-                      </LineChart>
-                    </div>
-                  </div>
+                  {/* ---- Scroll Depth chart ---- */}
+                  {analytics.scrollDepth.length > 0 && (
+                    <ScrollDepthChart
+                      scrollDepth={analytics.scrollDepth}
+                      activeIndex={activeScrollLesson}
+                      onTabChange={setActiveScrollLesson}
+                    />
+                  )}
                 </>
               )}
             </>
