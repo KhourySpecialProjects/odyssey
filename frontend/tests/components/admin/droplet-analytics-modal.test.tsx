@@ -26,12 +26,12 @@ const mockDroplet = {
   lessons: [],
 };
 
-describe("DropletAnalyticsModal — Avg Rating stat card", () => {
+describe("DropletAnalyticsModal — Average Rating stat card", () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  it("renders the Avg Rating card with value and last month when ratings exist", async () => {
+  it("renders the Average Rating card with value and last month when ratings exist", async () => {
     mockGetDropletAnalytics.mockResolvedValue(baseAnalytics);
 
     render(
@@ -43,18 +43,18 @@ describe("DropletAnalyticsModal — Avg Rating stat card", () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText("Avg Rating")).toBeInTheDocument();
+      expect(screen.getByText("Average Rating")).toBeInTheDocument();
     });
 
     expect(screen.getByText("4.2 / 5")).toBeInTheDocument();
     expect(screen.getByText(/Last month:.*3\.8 \/ 5/)).toBeInTheDocument();
   });
 
-  it("shows N/A when averageRating is -1 (no ratings)", async () => {
+  it("shows N/A when averageRating is null (no ratings)", async () => {
     mockGetDropletAnalytics.mockResolvedValue({
       ...baseAnalytics,
-      averageRating: -1,
-      lastMonthAverageRating: -1,
+      averageRating: null,
+      lastMonthAverageRating: null,
     });
 
     render(
@@ -66,7 +66,7 @@ describe("DropletAnalyticsModal — Avg Rating stat card", () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText("Avg Rating")).toBeInTheDocument();
+      expect(screen.getByText("Average Rating")).toBeInTheDocument();
     });
 
     // The value should be N/A (not a rating string)
@@ -91,6 +91,6 @@ describe("DropletAnalyticsModal — Avg Rating stat card", () => {
 
     expect(screen.getByText("Completed")).toBeInTheDocument();
     expect(screen.getByText("Completion Rate")).toBeInTheDocument();
-    expect(screen.getByText("Avg Rating")).toBeInTheDocument();
+    expect(screen.getByText("Average Rating")).toBeInTheDocument();
   });
 });

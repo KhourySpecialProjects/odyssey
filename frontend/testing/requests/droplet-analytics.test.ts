@@ -4,7 +4,9 @@ jest.mock("../../lib/requests/enrollment", () => ({
   fetchEnrollmentMetadata: jest.fn(),
 }));
 
-const { fetchEnrollmentMetadata } = require("../../lib/requests/enrollment");
+const { fetchEnrollmentMetadata } = jest.requireMock(
+  "../../lib/requests/enrollment",
+);
 
 // Helper to build a raw enrollment object with optional rating
 function makeRawEnrollment(
@@ -31,7 +33,7 @@ describe("getDropletAnalytics — averageRating", () => {
     jest.resetAllMocks();
   });
 
-  it("returns averageRating=-1 and lastMonthAverageRating=-1 when no ratings exist", async () => {
+  it("returns averageRating=null and lastMonthAverageRating=null when no ratings exist", async () => {
     // The first four calls are the count-only metadata calls
     fetchEnrollmentMetadata
       .mockResolvedValueOnce({ data: [], meta: makeMeta(2) }) // total
@@ -51,8 +53,8 @@ describe("getDropletAnalytics — averageRating", () => {
 
     const result = await getDropletAnalytics(10, []);
 
-    expect(result.averageRating).toBe(-1);
-    expect(result.lastMonthAverageRating).toBe(-1);
+    expect(result.averageRating).toBeNull();
+    expect(result.lastMonthAverageRating).toBeNull();
   });
 
   it("computes averageRating from valid ratings, ignoring null/0", async () => {
@@ -105,7 +107,7 @@ describe("getDropletAnalytics — averageRating", () => {
 
     // (4+3+5)/3 = 4.0
     expect(result.averageRating).toBe(4);
-    expect(result.lastMonthAverageRating).toBe(-1);
+    expect(result.lastMonthAverageRating).toBeNull();
   });
 
   it("skips zero-value ratings (treats 0 as no rating)", async () => {
@@ -126,7 +128,7 @@ describe("getDropletAnalytics — averageRating", () => {
     expect(result.averageRating).toBe(4);
   });
 
-  it("does not run the main paginated loop when totalEnrolled is 0", async () => {
+  it("does not run the main paginated loop when totalEnrolled is 0 and returns null ratings", async () => {
     fetchEnrollmentMetadata
       .mockResolvedValueOnce({ data: [], meta: makeMeta(0) })
       .mockResolvedValueOnce({ data: [], meta: makeMeta(0) })
@@ -135,8 +137,8 @@ describe("getDropletAnalytics — averageRating", () => {
 
     const result = await getDropletAnalytics(10, []);
 
-    expect(result.averageRating).toBe(-1);
-    expect(result.lastMonthAverageRating).toBe(-1);
+    expect(result.averageRating).toBeNull();
+    expect(result.lastMonthAverageRating).toBeNull();
     // Only the 4 count calls should have been made (no paginated loops)
     expect(fetchEnrollmentMetadata).toHaveBeenCalledTimes(4);
   });
