@@ -88,7 +88,7 @@ export function ActiveUsersChart({
           <ChartContainer config={chartConfig} className="h-full w-full">
             <AreaChart
               data={formatted}
-              margin={{ top: 5, right: 10, left: 0, bottom: 5 }}
+              margin={{ top: 5, right: 10, left: 10, bottom: 5 }}
             >
               <defs>
                 <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
@@ -102,7 +102,8 @@ export function ActiveUsersChart({
                 tickLine={false}
                 axisLine={false}
                 tick={{ fontSize: 12, fill: "#60646c" }}
-                interval="preserveStartEnd"
+                interval={Math.max(0, Math.floor(formatted.length / 7) - 1)}
+                padding={{ left: 24, right: 10 }}
               />
               <YAxis
                 tickLine={false}

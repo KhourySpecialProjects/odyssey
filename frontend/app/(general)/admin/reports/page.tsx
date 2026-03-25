@@ -6,7 +6,7 @@ export const dynamic = "force-dynamic";
 export default function Page() {
   return (
     <div className="w-full px-[56px] py-8">
-      <div className="mb-4">
+      <div className="mb-6">
         <h1 className="text-[40px] leading-tight font-semibold text-black dark:text-white">
           Reports
         </h1>

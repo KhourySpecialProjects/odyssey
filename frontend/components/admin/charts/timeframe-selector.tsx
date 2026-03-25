@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useLayoutEffect } from "react";
 import { IconCalendar } from "@tabler/icons-react";
 import { type TimeframeOption } from "@/lib/chart-utils";
 import {
@@ -47,16 +47,38 @@ export function TimeframeSelector({
 
   const calendarActive = !!activeDateRange;
 
+  // ——— Sliding pill ———
+  const buttonRefs = useRef<Map<number, HTMLButtonElement>>(new Map());
+  const calendarRef = useRef<HTMLButtonElement | null>(null);
+  const [pill, setPill] = useState({ left: 0, width: 0 });
+
+  useLayoutEffect(() => {
+    const el = calendarActive
+      ? calendarRef.current
+      : buttonRefs.current.get(value) ?? null;
+    if (el) setPill({ left: el.offsetLeft, width: el.offsetWidth });
+  }, [value, calendarActive]);
+
   return (
-    <div className="flex gap-1 rounded-lg border border-slate-200 bg-white p-0.5 dark:border-slate-700 dark:bg-slate-900">
+    <div className="relative flex gap-1 rounded-lg border border-slate-200 bg-white p-0.5 dark:border-slate-700 dark:bg-slate-900">
+      {/* Sliding indicator */}
+      <div
+        className="absolute rounded-md bg-[#2D7597] transition-all duration-200 ease-in-out"
+        style={{ left: pill.left, width: pill.width, top: 2, bottom: 2 }}
+      />
+
       {options.map((tf) => (
         <button
           key={tf.value}
+          ref={(el) => {
+            if (el) buttonRefs.current.set(tf.value, el);
+            else buttonRefs.current.delete(tf.value);
+          }}
           onClick={() => onChange(tf.value)}
-          className={`rounded-md px-2 py-1 text-[12px] transition-colors ${
+          className={`relative z-10 rounded-md px-2 py-1 text-[12px] transition-colors duration-200 ${
             value === tf.value && !calendarActive
-              ? "bg-[#2D7597] text-white"
-              : "text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
+              ? "text-white"
+              : "text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200"
           }`}
         >
           {tf.label}
@@ -67,13 +89,14 @@ export function TimeframeSelector({
         <Popover open={open} onOpenChange={setOpen}>
           <PopoverTrigger asChild>
             <button
-              className={`rounded-md px-2 py-1 text-[12px] transition-colors ${
+              ref={calendarRef}
+              className={`relative z-10 rounded-md px-2 py-1 text-[12px] transition-colors duration-200 ${
                 calendarActive
-                  ? "bg-[#2D7597] text-white"
-                  : "text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
+                  ? "text-white"
+                  : "text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200"
               }`}
             >
-              <IconCalendar className="h-3 w-3" />
+              <IconCalendar className="h-4 w-4" />
             </button>
           </PopoverTrigger>
           <PopoverContent className="w-auto p-3" align="end">

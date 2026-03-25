@@ -6,6 +6,7 @@ import { getEnrollmentsByAuthorizedUser } from "@/lib/requests/enrollment";
 import { fetchFriends } from "@/lib/requests/friends";
 import { fetchUserAnnouncements } from "@/lib/requests/feed";
 import { getCurrentUser } from "@/lib/auth/session";
+import { isAuthorizedUserAdmin } from "@/lib/utils";
 import { ProfileContent } from "./profile-content";
 import { PrivateProfileError } from "./private-profile-error";
 
@@ -32,7 +33,11 @@ export default async function PublicProfilePage({
     ]);
     const isViewingOwnProfile = currentUser?.email === userEmail;
 
-    if (!userData.isPublic && !isViewingOwnProfile) {
+    if (
+      !userData.isPublic &&
+      !isViewingOwnProfile &&
+      !isAuthorizedUserAdmin(currentUser?.roles)
+    ) {
       return <PrivateProfileError />;
     }
 

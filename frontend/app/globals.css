@@ -74,6 +74,33 @@
   background-color: rgb(15 23 42) !important;
 }
 
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(-40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+.slide-left {
+  animation: slideInLeft 0.28s ease;
+}
+.slide-right {
+  animation: slideInRight 0.28s ease;
+}
+
 @property --border-angle {
   inherits: false;
   initial-value: 0deg;
