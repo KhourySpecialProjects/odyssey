@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { AuthorizedUser } from "@/types";
 import { useAdminTableFilters } from "@/hooks/use-admin-table-filters";
 import { AuthorizedUserRoleTitle } from "@/lib/globals";
@@ -10,6 +11,7 @@ import { SearchBar } from "@/components/admin/search-bar";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogDescription,
   DialogHeader,
@@ -25,6 +27,7 @@ import {
   IconUser,
   IconActivity,
   IconLoader2,
+  IconX,
 } from "@tabler/icons-react";
 import { toast } from "sonner";
 import { updateUserInfo } from "@/lib/requests/authorized-user";
@@ -38,6 +41,12 @@ import {
 import { SortRadioGroup } from "@/components/admin/sort-radio-group";
 import { FilterCheckboxGroup } from "@/components/admin/filter-checkbox-group";
 import { CreateUser } from "./create-user";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 const USER_COLUMNS: AdminColumnDef[] = [
   { label: "Name", width: "w-[45%]" },
@@ -223,14 +232,17 @@ function UserTableRow({ user: initialUser }: { user: AuthorizedUser }) {
                 {initial ?? <IconUser className="h-4 w-4" />}
               </AvatarFallback>
             </Avatar>
-            <p className="truncate text-[16px] font-medium text-[#101828] underline dark:text-white">
+            <Link
+              href={`/prof/${user.email.split("@")[0]}`}
+              className="truncate text-[16px] font-medium text-[#101828] underline transition-colors hover:text-[#2D7597] dark:text-white dark:hover:text-[#5aadc9]"
+            >
               {displayName}
               {!user.isEnabled && (
                 <span className="ml-1 text-sm font-normal text-slate-400 no-underline">
                   (Disabled)
                 </span>
               )}
-            </p>
+            </Link>
           </div>
         </td>
 
@@ -261,32 +273,47 @@ function UserTableRow({ user: initialUser }: { user: AuthorizedUser }) {
 
         {/* Actions */}
         <td className="h-[56px] px-6 py-3">
-          <div className="flex items-center gap-2">
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={handleViewActivity}
-              aria-label="view activity"
-              className="h-8 w-8 p-0"
-            >
-              <IconChartBar className="h-4 w-4 text-sky-600" />
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => setEditOpen(true)}
-              aria-label="edit user"
-              className="h-8 w-8 p-0"
-            >
-              <IconPencil className="h-4 w-4 text-sky-600" />
-            </Button>
-          </div>
+          <TooltipProvider delayDuration={300}>
+            <div className="flex items-center gap-2">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setEditOpen(true)}
+                    aria-label="edit user"
+                    className="h-8 w-8 p-0"
+                  >
+                    <IconPencil className="h-4 w-4 text-sky-600" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Edit user</TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={handleViewActivity}
+                    aria-label="view activity"
+                    className="h-8 w-8 p-0"
+                  >
+                    <IconChartBar className="h-4 w-4 text-sky-600" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>View activity</TooltipContent>
+              </Tooltip>
+            </div>
+          </TooltipProvider>
         </td>
       </tr>
 
       {/* Edit Dialog */}
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
         <DialogContent className="scale-75 sm:scale-100">
+          <DialogClose className="absolute top-3 right-3 rounded-full p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-300">
+            <IconX className="h-4 w-4" />
+          </DialogClose>
           <DialogHeader>
             <DialogTitle>Edit User</DialogTitle>
             <DialogDescription>Update user information</DialogDescription>
@@ -354,7 +381,10 @@ function UserTableRow({ user: initialUser }: { user: AuthorizedUser }) {
 
       {/* Activity Dialog */}
       <Dialog open={activityOpen} onOpenChange={setActivityOpen}>
-        <DialogContent className="max-h-[80vh] max-w-3xl overflow-y-auto">
+        <DialogContent className="max-h-[80vh] max-w-3xl overflow-y-auto [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-transparent [&::-webkit-scrollbar-track]:bg-transparent [&:hover::-webkit-scrollbar-thumb]:bg-slate-300 dark:[&:hover::-webkit-scrollbar-thumb]:bg-slate-600">
+          <DialogClose className="absolute top-3 right-3 rounded-full p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-300">
+            <IconX className="h-4 w-4" />
+          </DialogClose>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <IconActivity className="h-5 w-5" />
@@ -498,7 +528,7 @@ export function UsersPageClient({ users }: { users: AuthorizedUser[] }) {
           placeholder="Search by name or email…"
           value={searchTerm}
           onChange={handleSearch}
-          className="max-w-[560px]"
+          className="max-w-[818px]"
         />
         <div className="flex items-center gap-2">
           <SortButton onApply={handleSortApply} onReset={handleSortReset}>

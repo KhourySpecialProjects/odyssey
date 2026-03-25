@@ -14,8 +14,15 @@ import {
 import { SortRadioGroup } from "@/components/admin/sort-radio-group";
 import { deleteReport } from "@/lib/actions";
 import { toast } from "sonner";
-import { IconTrash } from "@tabler/icons-react";
+import { IconTrash, IconExternalLink } from "@tabler/icons-react";
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 // ——— Sort config ———
 const SORT_GROUPS = [
@@ -129,23 +136,39 @@ function ReportRow({ report }: { report: Report }) {
 
       {/* Actions */}
       <td className="h-[80px] px-6 py-3">
-        <div className="flex items-center gap-[10px]">
-          <Link
-            href={report.path}
-            target="_blank"
-            className="inline-flex items-center rounded-[16px] bg-[#2D7597] px-[9px] py-[4px] text-[14px] leading-[18px] font-medium text-white transition-colors hover:bg-[#255e78]"
-          >
-            Visit Page
-          </Link>
-          <button
-            onClick={handleDelete}
-            disabled={isPending}
-            className="flex h-[26px] w-[26px] items-center justify-center rounded-md text-red-500 transition-colors hover:bg-red-50 disabled:opacity-50 dark:text-red-400 dark:hover:bg-red-950"
-            title="Delete report"
-          >
-            <IconTrash className="h-4 w-4" />
-          </button>
-        </div>
+        <TooltipProvider delayDuration={300}>
+          <div className="flex items-center gap-[10px]">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-[30px] w-[30px] p-0"
+                  asChild
+                >
+                  <Link href={report.path} target="_blank">
+                    <IconExternalLink className="h-4 w-4 text-[#2D7597]" />
+                  </Link>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Visit page</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={handleDelete}
+                  disabled={isPending}
+                  className="h-[30px] w-[30px] p-0 text-red-500 hover:bg-slate-100 hover:text-red-500 dark:text-red-400 dark:hover:bg-slate-800 dark:hover:text-red-400"
+                >
+                  <IconTrash className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Delete report</TooltipContent>
+            </Tooltip>
+          </div>
+        </TooltipProvider>
       </td>
     </tr>
   );
@@ -205,7 +228,7 @@ export function ReportsPageClient({ reports }: { reports: Report[] }) {
           placeholder="Search reports…"
           value={searchTerm}
           onChange={handleSearch}
-          className="max-w-[560px]"
+          className="max-w-[818px]"
         />
         <div className="flex items-center gap-2">
           <SortButton onApply={handleSortApply} onReset={handleSortReset}>

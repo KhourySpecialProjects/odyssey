@@ -10,7 +10,6 @@ import { ActiveUsersChart } from "@/components/admin/charts/active-users-chart";
 import { AvgSessionDurationChart } from "@/components/admin/charts/avg-session-duration-chart";
 import { UniquePageviewBarChart } from "@/components/admin/charts/unique-pageview-chart";
 import { IconTrendingDown, IconTrendingUp } from "@tabler/icons-react";
-import { RefreshButton } from "@/components/admin/refresh-button";
 
 export const dynamic = "force-dynamic";
 
@@ -156,7 +155,6 @@ export default function Page() {
             View Odyssey statistics and edit existing information.
           </p>
         </div>
-        <RefreshButton />
       </div>
 
       {/* Top row: stat cards + pageviews — streams in */}

@@ -19,7 +19,7 @@ export function FriendsSelector({
   const searchParams = useSearchParams();
   const pathname = usePathname();
   const router = useRouter();
-  const currentTab = searchParams.get("tab") || "droplets";
+  const currentTab = searchParams.get("tab") || "friends";
 
   const tabs = [
     { name: `Friends (${friends})`, value: "friends" },

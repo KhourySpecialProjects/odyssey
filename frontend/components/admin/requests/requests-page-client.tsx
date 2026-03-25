@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useRef, useLayoutEffect } from "react";
 import type { AccessRequest } from "@/components/shared/access-manager/access-requests/access-requests";
 import type { CreationRequest } from "@/types";
 import { useAdminTableFilters } from "@/hooks/use-admin-table-filters";
@@ -333,7 +333,7 @@ function AccessRequestsTable({
           placeholder="Search by name or email…"
           value={searchTerm}
           onChange={handleSearch}
-          className="max-w-[560px]"
+          className="max-w-[818px]"
         />
         <div className="flex items-center gap-2">
           <SortButton onApply={handleSortApply} onReset={handleSortReset}>
@@ -431,7 +431,7 @@ function CreationRequestsTable({
           placeholder="Search by name or email…"
           value={searchTerm}
           onChange={handleSearch}
-          className="max-w-[560px]"
+          className="max-w-[818px]"
         />
         <div className="flex items-center gap-2">
           <SortButton onApply={handleSortApply} onReset={handleSortReset}>
@@ -470,22 +470,40 @@ export function RequestsPageClient({
   creationRequests: CreationRequest[];
 }) {
   const [activeTab, setActiveTab] = useState<Tab>("access");
+  const tabRefs = useRef<Record<Tab, HTMLButtonElement | null>>({
+    access: null,
+    creators: null,
+  });
+  const [pill, setPill] = useState({ left: 0, width: 0 });
+
+  useLayoutEffect(() => {
+    const el = tabRefs.current[activeTab];
+    if (el) setPill({ left: el.offsetLeft, width: el.offsetWidth });
+  }, [activeTab]);
 
   return (
     <div className="space-y-6">
       {/* Tabs */}
-      <div className="inline-flex h-[45px] items-center rounded-[97px] bg-[#fcfcfd] shadow-[0px_0px_4px_0px_rgba(0,0,0,0.25)] dark:bg-slate-800">
+      <div className="relative inline-flex h-[45px] items-center rounded-[97px] bg-[#fcfcfd] shadow-[0px_0px_4px_0px_rgba(0,0,0,0.25)] dark:bg-slate-800">
+        {/* Sliding indicator */}
+        <div
+          className="absolute h-[37px] rounded-[35px] bg-[#2D7597] transition-all duration-200 ease-in-out"
+          style={{ left: pill.left, width: pill.width }}
+        />
         {[
           { key: "access" as Tab, label: "Access Requests" },
           { key: "creators" as Tab, label: "Creators Request" },
         ].map((tab) => (
           <button
             key={tab.key}
+            ref={(el) => {
+              tabRefs.current[tab.key] = el;
+            }}
             onClick={() => setActiveTab(tab.key)}
             className={cn(
-              "h-[37px] rounded-[35px] px-5 text-[16px] font-semibold transition-colors",
+              "relative z-10 mx-1 h-[37px] rounded-[35px] px-5 text-[16px] font-semibold transition-colors duration-200",
               activeTab === tab.key
-                ? "mx-1 bg-[#2D7597] text-white"
+                ? "text-white"
                 : "text-[#202630] hover:text-[#2D7597] dark:text-slate-300",
             )}
           >
