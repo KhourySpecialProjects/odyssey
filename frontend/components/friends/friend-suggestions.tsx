@@ -13,7 +13,7 @@ export async function FriendSuggestions({ user }: { user: AuthorizedUser }) {
       <div className="mt-4 rounded-md bg-slate-100 p-1 md:p-4 dark:bg-slate-800">
         {suggestions.length > 0 ? (
           <ul className="divide-y divide-slate-200 md:space-y-4 dark:divide-slate-700">
-            {(await fetchSuggestionsById(user.id)).map((suggestedUser) => (
+            {suggestions.map((suggestedUser) => (
               <FriendSuggestionsBlock
                 curUser={user}
                 suggUser={suggestedUser}

@@ -154,11 +154,12 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
   );
 
   useEffect(() => {
+    if (editorVersion !== "v1") return;
     debounceUpdate(blocks);
     return () => {
       debounceUpdate.cancel();
     };
-  }, [blocks, debounceUpdate]);
+  }, [blocks, debounceUpdate, editorVersion]);
 
   useEffect(() => {
     setBlocks(lesson.blocks);
@@ -331,13 +332,6 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
   );
 
   useEffect(() => {
-    debounceUpdate(blocks);
-    return () => {
-      debounceUpdate.cancel();
-    };
-  }, [blocks, debounceUpdate]);
-
-  useEffect(() => {
     lastSavedBlocksRef.current = lastSavedBlocks;
   }, [lastSavedBlocks]);
 
@@ -462,11 +456,9 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
               BlockNote Editor - Changes saved automatically
             </p>
             <BlockNoteEditor
-              key={`editor-${lesson.id}`} // Add this line - forces remount on navigation
+              key={`editor-${lesson.id}`}
               initialContent={lesson.blocksV2 as unknown as BlockNoteBlock[]}
-              onChange={(content) => {
-                debounceUpdateV2(content);
-              }}
+              onChange={debounceUpdateV2}
             />
           </div>
         </div>

@@ -184,6 +184,8 @@ export async function updatePlaylist(
 
     revalidateTag(CACHE_TAGS.playlists);
     revalidateTag(CACHE_TAGS.allGroups);
+    revalidateTag(CACHE_TAGS.userContent);
+    revalidateTag(CACHE_TAGS.userDashboard);
     return { ok: true, error: null, data: responseData.data };
   } catch (err) {
     console.error(err);
@@ -244,6 +246,8 @@ export async function createPlaylist(data: {
     }
 
     revalidateTag(CACHE_TAGS.playlists);
+    revalidateTag(CACHE_TAGS.userContent);
+    revalidateTag(CACHE_TAGS.userDashboard);
     return { ok: true, error: null, data: responseData.data };
   } catch (err) {
     console.error(err);
@@ -279,6 +283,8 @@ export async function deletePlaylist(id: number) {
     revalidateTag(CACHE_TAGS.playlists);
     revalidateTag(CACHE_TAGS.authors);
     revalidateTag(CACHE_TAGS.allGroups);
+    revalidateTag(CACHE_TAGS.userContent);
+    revalidateTag(CACHE_TAGS.userDashboard);
     return { ok: true, error: null, data: data.data };
   } catch (err) {
     console.error(err);
@@ -324,6 +330,8 @@ export async function archivePlaylist(
     }
 
     revalidateTag(CACHE_TAGS.playlists);
+    revalidateTag(CACHE_TAGS.userContent);
+    revalidateTag(CACHE_TAGS.userDashboard);
     return { success: true };
   } catch (error) {
     console.error("Error archiving playlist:", error);

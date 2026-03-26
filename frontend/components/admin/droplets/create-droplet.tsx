@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { PlusIcon } from "lucide-react";
+import { IconPlus } from "@tabler/icons-react";
 import Link from "next/link";
 
 export function CreateDroplet() {
@@ -9,7 +9,7 @@ export function CreateDroplet() {
     <Link href="/new/droplet">
       <Button
         className="dark:bg-slate-300"
-        after={<PlusIcon />}
+        after={<IconPlus />}
         data-testid="create-droplet"
       >
         Create Droplet

@@ -17,6 +17,10 @@ export async function fetchDroplets() {
       const query = qs.stringify({
         sort: ["id"],
         fields: ["id", "name", "type", "slug", "isHidden"],
+        populate: {
+          lessons: { fields: ["id", "name"] },
+          tags: { fields: ["id", "name"] },
+        },
         pagination: {
           pageSize,
           page,
@@ -53,7 +57,7 @@ export async function fetchGroups() {
     while (true) {
       const query = qs.stringify({
         sort: ["id"],
-        fields: ["id", "groupName", "slug", "isArchived"],
+        fields: ["id", "groupName", "slug", "isArchived", "semester"],
         populate: {
           members: {
             fields: ["id", "email"],
@@ -156,7 +160,15 @@ export async function fetchReports() {
     while (true) {
       const query = qs.stringify({
         sort: ["id:desc"],
-        fields: "*",
+        fields: [
+          "id",
+          "type",
+          "fullName",
+          "email",
+          "path",
+          "description",
+          "time",
+        ],
         pagination: {
           pageSize,
           page,

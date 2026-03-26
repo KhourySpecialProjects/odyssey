@@ -491,6 +491,7 @@ export async function approveCreationRequest(
 
     revalidateTag(CACHE_TAGS.users);
     revalidateTag(CACHE_TAGS.creationRequests);
+    revalidateTag(CACHE_TAGS.authors);
     return { ok: true, error: null, data: null };
   } catch (err) {
     console.error(err);

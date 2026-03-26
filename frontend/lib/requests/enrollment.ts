@@ -153,68 +153,6 @@ export async function getEnrollmentByUserAndDroplet(
   }).then((enrollments) => enrollments[0] || null);
 }
 
-export async function getIsEnrolled(
-  authorizedUserId: number,
-  dropletId: number,
-  { sort, filters, populate = "*", fields = ["*"] }: StrapiRequestParams = {},
-): Promise<boolean> {
-  const path = `/enrollments`;
-  const urlParams = {
-    sort,
-    filters: {
-      $and: {
-        ...filters,
-        authorizedUser: { id: { $eq: authorizedUserId } },
-        droplet: { id: { $eq: dropletId } },
-      },
-    },
-    populate,
-    fields,
-    pagination: {
-      pageSize: 1,
-      page: 1,
-    },
-  };
-
-  return await fetchAPI<Enrollment[]>(path, { urlParams }).then(
-    (enrollments) => enrollments.length > 0,
-  );
-}
-
-/**
- * Determines if the given authorized user is enrolled in the given Droplet.
- * @param authorizedUserId The unique ID of the authorized user.
- * @param dropletId The unique ID of the Droplet.
- * @param options Strapi query modifiers.
- * @returns `true` if the authorized user is already enrolled in the Droplet, else `false`.
- */
-
-export async function getIsEnrollComplete(
-  authorizedUserId: number,
-  dropletId: number,
-): Promise<boolean> {
-  const path = `/enrollments`;
-  const urlParams = {
-    filters: {
-      $and: [
-        { authorizedUser: { id: { $eq: authorizedUserId } } },
-        { droplet: { id: { $eq: dropletId } } },
-      ],
-    },
-    fields: ["isComplete"],
-    pagination: {
-      pageSize: 1,
-      page: 1,
-    },
-  };
-  try {
-    const enrollments = await fetchAPI<Enrollment[]>(path, { urlParams });
-    return enrollments[0]?.isComplete ?? false;
-  } catch (error) {
-    console.error("Error fetching enrollment status: ", error);
-    return false;
-  }
-}
 export async function changeEnrollmentRating(
   newRating: number,
   enrollmentID: string,

@@ -1,0 +1,71 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+.yarn/
+
+# Build artifacts
+.next/
+frontend/.next/
+frontend/.swc/
+backend/.cache/
+backend/dist/
+backend/build/
+dist/
+build/
+
+# Coverage and test artifacts
+coverage/
+frontend/coverage/
+frontend/playwright-report/
+frontend/test-results/
+
+# Lock files (large, not useful for agents)
+package-lock.json
+pnpm-lock.yaml
+yarn.lock
+skills-lock.json
+
+# Infrastructure (should never be read or modified)
+terraform/
+.terraform/
+
+# Docker
+docker-compose.playwright.yml
+
+# Environment files (secrets)
+.env
+.env.*
+!.env.example
+!.env.docker.example
+frontend/.env.local
+backend/.env
+
+# IDE and OS
+.DS_Store
+.idea/
+.vscode/
+
+# Git internals
+.git/
+
+# Large/binary assets
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.svg
+*.ico
+*.woff
+*.woff2
+*.ttf
+*.eot
+*.mp4
+*.mp3
+*.pdf
+
+# Agent ephemeral state
+.claude/bash-audit.log
+
+# Strapi uploads (if any exist locally)
+backend/public/uploads/

@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Playlist } from "@/types";
-import { Pencil } from "lucide-react";
+import { IconPencil } from "@tabler/icons-react";
 import Link from "next/link";
 
 export function PlaylistBlock({ playlist }: { playlist: Playlist }) {
@@ -22,7 +22,7 @@ export function PlaylistBlock({ playlist }: { playlist: Playlist }) {
           <Link href={linkTo} target="_blank" rel="noopener noreferrer">
             <Button size="sm" className="bg-white dark:bg-slate-300">
               <div className="group relative">
-                <Pencil className="text-sky-600" />
+                <IconPencil className="text-sky-600" />
                 <span className="absolute top-full left-1/2 mt-1 w-max -translate-x-1/2 transform rounded bg-gray-800 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100">
                   Edit Playlist
                 </span>

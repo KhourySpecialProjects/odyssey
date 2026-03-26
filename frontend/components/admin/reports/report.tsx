@@ -1,7 +1,8 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { ArrowRightIcon, Trash2Icon } from "lucide-react";
+import { ArrowRightIcon } from "lucide-react";
+import { IconTrash } from "@tabler/icons-react";
 import Link from "next/link";
 import { Report } from "./reports";
 import { toast } from "sonner";
@@ -140,7 +141,7 @@ export function ReportBlock({ report }: { report: Report }) {
             onClick={() => handleDeleteReport(report.id)}
             title="Delete Report"
           >
-            <Trash2Icon />
+            <IconTrash />
           </Button>
         </div>
       </div>
