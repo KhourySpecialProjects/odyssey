@@ -222,12 +222,9 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           
           # Create annotated tag with details
-          git tag -a "$NEW_VERSION" -m "Release $NEW_VERSION
-
-Bump type: $BUMP_TYPE
-Source branch: $BRANCH
-Target branch: ${{ github.ref_name }}
-Commit: ${{ github.sha }}"
+          TAG_MSG=$(printf "Release %s\n\nBump type: %s\nSource branch: %s\nTarget branch: %s\nCommit: %s" \
+            "$NEW_VERSION" "$BUMP_TYPE" "$BRANCH" "${{ github.ref_name }}" "${{ github.sha }}")
+          git tag -a "$NEW_VERSION" -m "$TAG_MSG"
           
           git push origin "$NEW_VERSION"
           echo "✓ Created and pushed tag: $NEW_VERSION"
