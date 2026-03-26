@@ -1,12 +1,9 @@
 /**
  * Presentation mode slide-splitting utilities.
  *
- * If the lesson has explicit <!--SLIDE_BREAK--> markers (from the "Slide Break"
- * BlockNote block), it splits on those markers — giving authors full control.
- *
- * If no markers exist, falls back to smart auto-splitting:
- * headings start new slides, heavy blocks get isolated, lightweight
- * blocks are grouped until they'd overflow.
+ * Splits on <!--SLIDE_BREAK--> markers. If an image block within a slide
+ * has a layout set, it emits a <!--LAYOUT:...--> marker that controls
+ * how that slide is presented (image-left, image-right, full-image).
  */
 import { Block, Lesson } from "@/types";
 import { convertBlockNoteToV1Blocks } from "@/lib/blocknote/convert-blocks";
@@ -15,15 +12,15 @@ export type SlideLayout =
   | "default"
   | "image-left"
   | "image-right"
-  | "full-image"
-  | "two-columns";
+  | "full-image";
 
 export type Slide = {
   blocks: Block[];
   title?: string;
   lessonName: string;
   lessonIndex: number;
-  layout?: SlideLayout;
+  layout: SlideLayout;
+  layoutImageUrl?: string;
 };
 
 // ── Helpers ──
@@ -48,13 +45,18 @@ function isLayoutMarker(block: Block): boolean {
 }
 
 function getLayout(block: Block): SlideLayout {
-  if (block.__component !== "droplets.generic") return "default";
-  const c = block.content;
-  if (c === "<!--LAYOUT:IMAGE_LEFT-->") return "image-left";
-  if (c === "<!--LAYOUT:IMAGE_RIGHT-->") return "image-right";
-  if (c === "<!--LAYOUT:FULL_IMAGE-->") return "full-image";
-  if (c === "<!--LAYOUT:TWO_COLUMNS-->") return "two-columns";
+  const c = (block as { content: string }).content;
+  if (c.startsWith("<!--LAYOUT:IMAGE_LEFT")) return "image-left";
+  if (c.startsWith("<!--LAYOUT:IMAGE_RIGHT")) return "image-right";
+  if (c.startsWith("<!--LAYOUT:FULL_IMAGE")) return "full-image";
   return "default";
+}
+
+function getLayoutImageUrl(block: Block): string | undefined {
+  const match = (block as { content: string }).content.match(
+    /<!--LAYOUT:[A-Z_]+:(.*?)-->/,
+  );
+  return match ? match[1] : undefined;
 }
 
 function extractHeadingTitle(block: Block): string | undefined {
@@ -76,12 +78,12 @@ export function splitBlocksIntoSlides(
       : lesson.blocks ?? [];
 
   const cleanBlocks = rawBlocks.filter(
-    (b) => !isEmptySpacing(b) && !isSlideBreak(b),
+    (b) => !isEmptySpacing(b) && !isSlideBreak(b) && !isLayoutMarker(b),
   );
   if (cleanBlocks.length === 0) return [];
 
-  // Check if this lesson has explicit slide breaks
   const hasSlideBreaks = rawBlocks.some(isSlideBreak);
+  if (!hasSlideBreaks) return [];
 
   const slides: Slide[] = [];
 
@@ -97,20 +99,12 @@ export function splitBlocksIntoSlides(
     title: lesson.name,
     lessonName: lesson.name,
     lessonIndex,
+    layout: "default",
   });
 
-  if (hasSlideBreaks) {
-    // ── Explicit slide breaks: author-controlled ──
-    return splitByMarkers(rawBlocks, lesson, lessonIndex, slides);
-  } else {
-    // No slide breaks → no slides for this lesson
-    // TODO: Uncomment to enable auto-splitting for lessons without breaks
-    // return splitAuto(rawBlocks, lesson, lessonIndex, slides);
-    return [];
-  }
+  return splitByMarkers(rawBlocks, lesson, lessonIndex, slides);
 }
 
-/** Split on explicit <!--SLIDE_BREAK--> and layout markers. */
 function splitByMarkers(
   rawBlocks: Block[],
   lesson: Lesson,
@@ -120,6 +114,7 @@ function splitByMarkers(
   let current: Block[] = [];
   let heading: string | undefined;
   let currentLayout: SlideLayout = "default";
+  let currentLayoutImageUrl: string | undefined;
 
   function flush() {
     if (current.length > 0) {
@@ -129,30 +124,31 @@ function splitByMarkers(
         lessonName: lesson.name,
         lessonIndex,
         layout: currentLayout,
+        layoutImageUrl: currentLayoutImageUrl,
       });
       current = [];
       currentLayout = "default";
+      currentLayoutImageUrl = undefined;
     }
   }
 
   for (const block of rawBlocks) {
     if (isEmptySpacing(block)) continue;
 
-    const h = extractHeadingTitle(block);
-    if (h) heading = h;
-
-    // Slide break → flush and start new slide
     if (isSlideBreak(block)) {
       flush();
       continue;
     }
 
-    // Layout marker → flush current, set layout for next slide
+    // Layout markers set the layout for the current slide (not added to content)
     if (isLayoutMarker(block)) {
-      flush();
       currentLayout = getLayout(block);
+      currentLayoutImageUrl = getLayoutImageUrl(block);
       continue;
     }
+
+    const h = extractHeadingTitle(block);
+    if (h) heading = h;
 
     current.push(block);
   }

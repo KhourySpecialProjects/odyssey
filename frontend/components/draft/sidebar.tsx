@@ -261,10 +261,23 @@ export function Sidebar({
             <div className="flex w-full flex-col gap-2 pb-2">
               <Link
                 className="rounded-full bg-purple-400 px-6 py-2 text-center text-black hover:bg-purple-500 dark:bg-purple-600 dark:text-white dark:hover:bg-purple-800"
-                href={`/d/${pathname.split("/d/")[1]}`}
+                href={`/d/${droplet.slug}`}
               >
                 Preview
               </Link>
+              {lessons.length > 0 ? (
+                <Link
+                  className="rounded-full bg-indigo-400 px-6 py-2 text-center text-black hover:bg-indigo-500 dark:bg-indigo-600 dark:text-white dark:hover:bg-indigo-800"
+                  href={`/d/${droplet.slug}/present`}
+                  target="_blank"
+                >
+                  Present
+                </Link>
+              ) : (
+                <div className="cursor-not-allowed rounded-full bg-slate-300 px-6 py-2 text-center text-slate-500 dark:bg-slate-700 dark:text-slate-400">
+                  Present
+                </div>
+              )}
 
               {/* Edit Draft - Special handling */}
               {droplet.originalDropletId && droplet.status === "draft" && (

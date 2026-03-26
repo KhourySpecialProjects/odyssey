@@ -13,6 +13,7 @@ import {
   uppercaseFirstChar,
 } from "@/lib/utils";
 import { PresentationShell } from "@/components/presentation/presentation-shell";
+import { NoPresentationWarning } from "@/components/presentation/no-presentation-warning";
 import { splitBlocksIntoSlides, Slide } from "@/components/presentation/utils";
 import { Lesson } from "@/types";
 
@@ -130,6 +131,10 @@ async function LessonContentLoader({
     .map((l, idx) => ({ name: l.name, hasSlides: allSlides[idx].length > 0 }))
     .filter((l) => l.hasSlides)
     .map((l) => l.name);
+
+  if (nonEmptySlides.length === 0) {
+    return <NoPresentationWarning dropletSlug={slug} />;
+  }
 
   return (
     <PresentationShell

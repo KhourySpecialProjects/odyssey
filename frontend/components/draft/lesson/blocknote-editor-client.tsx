@@ -25,6 +25,8 @@ import {
 import "@/components/ui/blocknote/editor/custom-blocknote.css";
 import type { Block } from "@blocknote/core";
 
+const knownBlockTypes = new Set(Object.keys(blockNoteSchema.blockSpecs));
+
 interface BlockNoteEditorClientProps {
   initialContent?: Block[];
   onChange?: (content: Block[]) => void;
@@ -39,9 +41,16 @@ export function BlockNoteEditorClient({
   const { resolvedTheme } = useTheme();
   const [isReady, setIsReady] = useState(false);
 
+  const safeInitialContent = initialContent?.filter((b) =>
+    knownBlockTypes.has(b.type as string),
+  );
+
   const editor = useCreateBlockNote({
     schema: blockNoteSchema,
-    initialContent: initialContent || undefined,
+    initialContent:
+      safeInitialContent && safeInitialContent.length > 0
+        ? safeInitialContent
+        : undefined,
     tables: {
       splitCells: false,
       cellBackgroundColor: true,

@@ -367,10 +367,24 @@ function convertSingleBlock(blockAny: any, blockIndex: number): Block | null {
     }
 
     case "image": {
+      const url = (blockAny.props?.url as string) || "";
+      const alt = (blockAny.props?.name as string) || "";
+      const layout = (blockAny.props?.layout as string) || "default";
+      const imgTag = `<img src="${url}" alt="${alt}" class="rounded-md" />`;
+      if (layout !== "default" && url) {
+        const layoutKey = layout.toUpperCase().replace(/-/g, "_");
+        // Prefix with layout comment for presentation mode.
+        // Regular renderers (DOMPurify) strip the comment and show just the <img>.
+        return {
+          __component: "droplets.generic",
+          id: blockId,
+          content: `<!--LAYOUT:${layoutKey}:${url}-->${imgTag}`,
+        };
+      }
       return {
         __component: "droplets.generic",
         id: blockId,
-        content: `<img src="${blockAny.props?.url || ""}" alt="${blockAny.props?.name || ""}" class="rounded-md" />`,
+        content: imgTag,
       };
     }
 
@@ -492,38 +506,6 @@ function convertSingleBlock(blockAny: any, blockIndex: number): Block | null {
         __component: "droplets.generic",
         id: blockId,
         content: "<!--SLIDE_BREAK-->",
-      };
-    }
-
-    case "slide-image-left": {
-      return {
-        __component: "droplets.generic",
-        id: blockId,
-        content: "<!--LAYOUT:IMAGE_LEFT-->",
-      };
-    }
-
-    case "slide-image-right": {
-      return {
-        __component: "droplets.generic",
-        id: blockId,
-        content: "<!--LAYOUT:IMAGE_RIGHT-->",
-      };
-    }
-
-    case "slide-full-image": {
-      return {
-        __component: "droplets.generic",
-        id: blockId,
-        content: "<!--LAYOUT:FULL_IMAGE-->",
-      };
-    }
-
-    case "slide-two-columns": {
-      return {
-        __component: "droplets.generic",
-        id: blockId,
-        content: "<!--LAYOUT:TWO_COLUMNS-->",
       };
     }
 

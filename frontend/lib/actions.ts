@@ -13,6 +13,8 @@ import {
 } from "@aws-sdk/client-s3";
 import { v4 as uuidv4 } from "uuid";
 import { Buffer } from "node:buffer";
+import { writeFile, mkdir, unlink } from "node:fs/promises";
+import path from "node:path";
 import { createAuthorizedUser } from "./requests/authorized-user";
 import { creationRequestSchema } from "./validations/creation-request";
 import qs from "qs";
@@ -22,6 +24,9 @@ import Anthropic from "@anthropic-ai/sdk";
 
 const STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
 const STRAPI_ACCESS_TOKEN = process.env.STRAPI_ACCESS_TOKEN;
+
+const isLocal = process.env.NODE_ENV === "development";
+const LOCAL_UPLOADS_DIR = path.join(process.cwd(), "public", "uploads");
 
 const s3 = new S3Client({
   region: process.env.AWS_REGION || "us-east-2",
@@ -38,9 +43,16 @@ export async function uploadImage(formData: FormData) {
   try {
     const file = formData.get("image") as File;
     const fileName = `${uuidv4()}-${encodeURIComponent(file.name)}`;
+    const buffer = Buffer.from(await file.arrayBuffer());
+
+    if (isLocal) {
+      await mkdir(LOCAL_UPLOADS_DIR, { recursive: true });
+      await writeFile(path.join(LOCAL_UPLOADS_DIR, fileName), buffer);
+      return { ok: true, error: null, url: `/uploads/${fileName}` };
+    }
+
     const bucketName = process.env.AWS_S3_BUCKET_NAME!;
     const rootPath = process.env.AWS_S3_BUCKET_ROOT!;
-    const buffer = Buffer.from(await file.arrayBuffer());
 
     const uploadParams = {
       Bucket: bucketName,
@@ -77,6 +89,11 @@ export async function createAuthorizedUserWithState(
 
 export async function deleteImage(fileName: string) {
   try {
+    if (isLocal) {
+      await unlink(path.join(LOCAL_UPLOADS_DIR, fileName));
+      return { ok: true, error: null };
+    }
+
     const bucketName = process.env.AWS_S3_BUCKET_NAME!;
     const rootPath = process.env.AWS_S3_BUCKET_ROOT!;
 

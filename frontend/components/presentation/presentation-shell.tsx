@@ -55,7 +55,13 @@ export function PresentationShell({
     const introNames: string[] = [];
 
     introSlides.push([
-      { blocks: [], title: dropletName, lessonName: "", lessonIndex: -1 },
+      {
+        blocks: [],
+        title: dropletName,
+        lessonName: "",
+        lessonIndex: -1,
+        layout: "default",
+      },
     ]);
     introNames.push("");
 
@@ -72,6 +78,7 @@ export function PresentationShell({
           title: "Overview",
           lessonName: "Overview",
           lessonIndex: -2,
+          layout: "default",
         },
       ]);
       introNames.push("Overview");
@@ -90,6 +97,7 @@ export function PresentationShell({
           title: "Learning Objectives",
           lessonName: "Learning Objectives",
           lessonIndex: -3,
+          layout: "default",
         },
       ]);
       introNames.push("Learning Objectives");
@@ -109,6 +117,7 @@ export function PresentationShell({
           title: "What's Inside",
           lessonName: "What's Inside",
           lessonIndex: -4,
+          layout: "default",
         },
       ]);
       introNames.push("What's Inside");
@@ -128,13 +137,22 @@ export function PresentationShell({
           title: "About the Authors",
           lessonName: "About the Authors",
           lessonIndex: -5,
+          layout: "default",
         },
       ]);
       introNames.push("About the Authors");
     }
 
     const endSlide: Slide[][] = [
-      [{ blocks: [], title: "End", lessonName: "", lessonIndex: -99 }],
+      [
+        {
+          blocks: [],
+          title: "End",
+          lessonName: "",
+          lessonIndex: -99,
+          layout: "default",
+        },
+      ],
     ];
 
     return {
@@ -448,37 +466,27 @@ export function PresentationShell({
                 );
               }
 
-              // ── Layout-aware content slide ──
-              const layout = currentSlide.layout || "default";
+              const layout = currentSlide.layout;
+              const layoutImageUrl = currentSlide.layoutImageUrl;
               const allBlocks = currentSlide.blocks;
-
-              // For image layouts, separate image blocks from text blocks
-              const imgIdx = allBlocks.findIndex(
-                (b) =>
-                  b.__component === "droplets.generic" &&
-                  b.content.includes("<img"),
-              );
-              const imageBlock = imgIdx >= 0 ? allBlocks[imgIdx] : null;
-              const textBlocks =
-                imgIdx >= 0
-                  ? allBlocks.filter((_, i) => i !== imgIdx)
-                  : allBlocks;
 
               if (
                 (layout === "image-left" || layout === "image-right") &&
-                imageBlock
+                layoutImageUrl
               ) {
                 const imgSide = (
-                  <div className="flex w-2/5 shrink-0 items-center justify-center [&_img]:max-h-[55vh] [&_img]:w-auto [&_img]:rounded-lg [&_img]:object-contain">
-                    <PresentationBlockRenderer
-                      key={`${currentSlideKey}-img`}
-                      block={imageBlock}
+                  <div className="flex h-full w-1/2 shrink-0 items-center justify-center rounded-2xl bg-slate-100 p-4 dark:bg-slate-800/60">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={layoutImageUrl}
+                      alt=""
+                      className="max-h-[60vh] w-full rounded-xl object-cover shadow-md"
                     />
                   </div>
                 );
                 const textSide = (
-                  <div className="max-h-[70vh] flex-1 space-y-4 overflow-y-auto">
-                    {textBlocks.map((block, idx) => (
+                  <div className="flex h-full w-1/2 flex-col justify-center space-y-5 overflow-y-auto px-2">
+                    {allBlocks.map((block, idx) => (
                       <PresentationBlockRenderer
                         key={`${currentSlideKey}-${idx}`}
                         block={block}
@@ -487,7 +495,10 @@ export function PresentationShell({
                   </div>
                 );
                 return (
-                  <div className="flex w-full max-w-5xl items-start gap-8 text-left">
+                  <div
+                    className="flex w-full max-w-5xl items-stretch gap-10 text-left"
+                    style={{ minHeight: "60vh" }}
+                  >
                     {layout === "image-left" ? (
                       <>
                         {imgSide}
@@ -503,39 +514,15 @@ export function PresentationShell({
                 );
               }
 
-              if (layout === "full-image" && imageBlock) {
+              if (layout === "full-image" && layoutImageUrl) {
                 return (
-                  <div className="flex w-full items-center justify-center [&_img]:max-h-[75vh] [&_img]:w-auto [&_img]:rounded-lg [&_img]:object-contain">
-                    <PresentationBlockRenderer
-                      key={`${currentSlideKey}-img`}
-                      block={imageBlock}
+                  <div className="flex w-full items-center justify-center">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={layoutImageUrl}
+                      alt=""
+                      className="max-h-[75vh] w-auto rounded-lg object-contain"
                     />
-                  </div>
-                );
-              }
-
-              if (layout === "two-columns") {
-                const mid = Math.ceil(allBlocks.length / 2);
-                const leftBlocks = allBlocks.slice(0, mid);
-                const rightBlocks = allBlocks.slice(mid);
-                return (
-                  <div className="flex w-full max-w-5xl items-start gap-8 text-left">
-                    <div className="flex-1 space-y-4">
-                      {leftBlocks.map((block, idx) => (
-                        <PresentationBlockRenderer
-                          key={`${currentSlideKey}-l${idx}`}
-                          block={block}
-                        />
-                      ))}
-                    </div>
-                    <div className="flex-1 space-y-4">
-                      {rightBlocks.map((block, idx) => (
-                        <PresentationBlockRenderer
-                          key={`${currentSlideKey}-r${idx}`}
-                          block={block}
-                        />
-                      ))}
-                    </div>
                   </div>
                 );
               }
@@ -588,11 +575,14 @@ export function PresentationShell({
       </div>
 
       {/* ── Lesson indicator (bottom-left) ── */}
-      {!isTitleCard && currentSlide && (
-        <div className="fixed bottom-3 left-4 z-[102] max-w-[40%] truncate text-xs text-slate-400 dark:text-slate-600">
-          {currentSlide.lessonName}
-        </div>
-      )}
+      {!isTitleCard &&
+        !isEndSlide &&
+        currentSlide &&
+        currentSlide.lessonIndex >= 0 && (
+          <div className="fixed bottom-3 left-4 z-[102] max-w-[40%] truncate text-xs text-slate-400 dark:text-slate-600">
+            Lesson {currentSlide.lessonIndex + 1}: {currentSlide.lessonName}
+          </div>
+        )}
 
       {/* ── Progress bar ── */}
       <div className="fixed inset-x-0 bottom-0 z-[102] h-[3px] bg-transparent">
