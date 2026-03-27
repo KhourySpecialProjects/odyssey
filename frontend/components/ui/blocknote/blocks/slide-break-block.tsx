@@ -1,15 +1,6 @@
 import { createReactBlockSpec } from "@blocknote/react";
 import { SeparatorHorizontal } from "lucide-react";
-
-const dashedLineStyle = {
-  height: "2px",
-  background:
-    "repeating-linear-gradient(to right, #7dd3fc 0, #7dd3fc 6px, transparent 6px, transparent 12px)",
-  maskImage:
-    "linear-gradient(to right, transparent, black 20%, black 80%, transparent)",
-  WebkitMaskImage:
-    "linear-gradient(to right, transparent, black 20%, black 80%, transparent)",
-} as const;
+import { dashedLineStyle, SLIDE_BREAK_TYPE } from "@/lib/blocknote/slide-break";
 
 /**
  * Slide Break block for BlockNote.
@@ -19,7 +10,7 @@ const dashedLineStyle = {
  */
 export const SlideBreak = createReactBlockSpec(
   {
-    type: "slide-break" as const,
+    type: SLIDE_BREAK_TYPE,
     propSchema: {},
     content: "none",
   },

@@ -7,6 +7,7 @@
  */
 import { Block, Lesson } from "@/types";
 import { convertBlockNoteToV1Blocks } from "@/lib/blocknote/convert-blocks";
+import { SLIDE_BREAK_MARKER } from "@/lib/blocknote/slide-break";
 
 export type SlideLayout =
   | "default"
@@ -33,7 +34,7 @@ function isEmptySpacing(block: Block): boolean {
 function isSlideBreak(block: Block): boolean {
   return (
     block.__component === "droplets.generic" &&
-    block.content === "<!--SLIDE_BREAK-->"
+    block.content === SLIDE_BREAK_MARKER
   );
 }
 

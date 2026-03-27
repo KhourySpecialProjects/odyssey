@@ -7,11 +7,20 @@ import { QuizEditor } from "./blocks/quiz";
 import { OpenEndedQuizEditor } from "./blocks/open-ended-quiz";
 import { cn } from "@/lib/utils";
 import { VideoEditor } from "./blocks/video";
-import { ChevronUp, ChevronDown } from "lucide-react";
+import {
+  ChevronUp,
+  ChevronDown,
+  SeparatorHorizontal,
+  Trash2Icon,
+} from "lucide-react";
 import type { GenericBlock } from "./blocks/generic";
 import type { ExpandableBlock } from "./blocks/expandable";
 import type { VideoBlock } from "./blocks/video";
 import type { CalloutBlock } from "./blocks/callout";
+import {
+  SLIDE_BREAK_MARKER,
+  dashedLineStyle,
+} from "@/lib/blocknote/slide-break";
 
 export default function BlockTile({
   block,
@@ -67,6 +76,36 @@ export default function BlockTile({
           </button>
         </div>
       );
+
+      // Slide break blocks get a special non-editable visual treatment
+      const isSlideBreak =
+        block.__component === "droplets.generic" &&
+        block.content === SLIDE_BREAK_MARKER;
+
+      if (isSlideBreak) {
+        return (
+          <div className="relative w-full">
+            {blockControls}
+            <div className="group relative my-2 w-full">
+              <div style={dashedLineStyle} />
+              <div className="h-3 w-full bg-gradient-to-b from-sky-50/40 to-transparent dark:from-sky-950/20" />
+              <div className="flex items-center justify-center gap-2 py-0.5 text-xs font-semibold tracking-widest text-sky-400 uppercase dark:text-sky-500">
+                <SeparatorHorizontal className="h-3 w-3" />
+                Slide Break
+              </div>
+              <div className="h-3 w-full bg-gradient-to-t from-sky-50/40 to-transparent dark:from-sky-950/20" />
+              <div style={dashedLineStyle} />
+              <button
+                onClick={deleteBlock(index)}
+                className="absolute top-1/2 right-2 -translate-y-1/2 rounded-md p-1 text-slate-400 opacity-0 transition-opacity group-hover:opacity-100 hover:text-red-600"
+                aria-label="Delete slide break"
+              >
+                <Trash2Icon className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+        );
+      }
 
       const blockContent = (() => {
         switch (block.__component) {

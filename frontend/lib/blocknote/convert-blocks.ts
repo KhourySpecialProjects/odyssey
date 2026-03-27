@@ -5,6 +5,7 @@
  */
 import katex from "katex";
 import { Block, CustomBlockNoteBlock } from "@/types";
+import { SLIDE_BREAK_MARKER } from "@/lib/blocknote/slide-break";
 
 type BlockNoteTextStyles = {
   bold?: boolean;
@@ -505,7 +506,7 @@ function convertSingleBlock(blockAny: any, blockIndex: number): Block | null {
       return {
         __component: "droplets.generic",
         id: blockId,
-        content: "<!--SLIDE_BREAK-->",
+        content: SLIDE_BREAK_MARKER,
       };
     }
 

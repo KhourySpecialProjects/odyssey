@@ -425,47 +425,6 @@ export function PresentationShell({
                 );
               }
 
-              // Side-by-side image check
-              const sideImageIdx = currentSlide.blocks.findIndex(
-                (b) =>
-                  b.__component === "droplets.generic" &&
-                  b.content.startsWith("<!--SIDE_IMAGE-->"),
-              );
-
-              if (sideImageIdx >= 0) {
-                const textBlocks = currentSlide.blocks.filter(
-                  (_, i) => i !== sideImageIdx,
-                );
-                const imgBlock = currentSlide.blocks[sideImageIdx] as {
-                  __component: "droplets.generic";
-                  id: number;
-                  content: string;
-                };
-                const cleanImgBlock = {
-                  ...imgBlock,
-                  content: imgBlock.content.replace("<!--SIDE_IMAGE-->", ""),
-                };
-
-                return (
-                  <div className="flex w-full max-w-5xl items-start gap-8 text-left">
-                    <div className="max-h-[70vh] flex-1 space-y-4 overflow-y-auto">
-                      {textBlocks.map((block, idx) => (
-                        <PresentationBlockRenderer
-                          key={`${currentSlideKey}-${idx}`}
-                          block={block}
-                        />
-                      ))}
-                    </div>
-                    <div className="flex w-2/5 shrink-0 items-center justify-center [&_img]:max-h-[55vh] [&_img]:w-auto [&_img]:object-contain">
-                      <PresentationBlockRenderer
-                        key={`${currentSlideKey}-img`}
-                        block={cleanImgBlock}
-                      />
-                    </div>
-                  </div>
-                );
-              }
-
               const layout = currentSlide.layout;
               const layoutImageUrl = currentSlide.layoutImageUrl;
               const allBlocks = currentSlide.blocks;
@@ -476,7 +435,6 @@ export function PresentationShell({
               ) {
                 const imgSide = (
                   <div className="flex h-full w-1/2 shrink-0 items-center justify-center rounded-2xl bg-slate-100 p-4 dark:bg-slate-800/60">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={layoutImageUrl}
                       alt=""
@@ -517,7 +475,6 @@ export function PresentationShell({
               if (layout === "full-image" && layoutImageUrl) {
                 return (
                   <div className="flex w-full items-center justify-center">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={layoutImageUrl}
                       alt=""

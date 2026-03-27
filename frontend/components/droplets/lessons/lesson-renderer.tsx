@@ -6,13 +6,7 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { extractHeadings, isAuthorizedUserAdmin } from "@/lib/utils";
-import {
-  User,
-  Droplet,
-  Lesson,
-  AuthorizedUser,
-  CustomBlockNoteBlock,
-} from "@/types";
+import { User, Droplet, Lesson, AuthorizedUser } from "@/types";
 import { BlocksRenderer } from "@strapi/blocks-react-renderer";
 import { ArrowDownFromLineIcon } from "lucide-react";
 import { QuizBlock } from "./quiz";
