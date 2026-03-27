@@ -28,7 +28,14 @@ yarn-error.log*
 .terraform/
 terraform/terraform.tfvars
 
-# playwright 
+# playwright
 docker-compose.playwright.yml
+.playwright-mcp/
+
+# claude worktrees
+.claude/worktrees/
+
+# Strapi auto-generated docs (regenerated on schema changes)
+backend/src/extensions/documentation/documentation/
 
 */auth.json

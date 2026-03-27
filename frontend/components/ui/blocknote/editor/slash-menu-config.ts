@@ -17,6 +17,7 @@ import {
   FileText,
   LayoutList,
   TypeIcon,
+  SeparatorHorizontal,
 } from "lucide-react";
 
 const createCalloutItem = (
@@ -234,5 +235,24 @@ export const getCodeSlashMenuItems = (
     aliases: ["code", "snippet", "programming", "syntax"],
     group: "Code",
     subtext: "Display code with syntax highlighting",
+  },
+];
+
+export const getSlideBreakSlashMenuItems = (
+  editor: CustomBlockNoteEditor,
+): DefaultReactSuggestionItem[] => [
+  {
+    title: "Slide Break",
+    icon: createElement(SeparatorHorizontal, { className: "h-4 w-4" }),
+    onItemClick: () => {
+      editor.insertBlocks(
+        [{ type: "slide-break" }],
+        editor.getTextCursorPosition().block,
+        "after",
+      );
+    },
+    aliases: ["slide", "break", "presentation", "page break", "divider"],
+    group: "Presentation",
+    subtext: "Start a new presentation slide",
   },
 ];

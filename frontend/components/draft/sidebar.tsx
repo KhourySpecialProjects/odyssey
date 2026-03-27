@@ -10,6 +10,16 @@ import {
   isContentEditor,
 } from "@/lib/utils";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "../ui/tooltip";
+import {
+  SLIDE_BREAK_MARKER,
+  SLIDE_BREAK_TYPE,
+} from "@/lib/blocknote/slide-break";
 import { Droplet, Lesson, User } from "@/types";
 import {
   SettingsIcon,
@@ -20,7 +30,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import React, { useLayoutEffect, useState, useEffect } from "react";
+import React, { useLayoutEffect, useState, useEffect, useMemo } from "react";
 import { Separator } from "../ui/separator";
 import { AddLesson } from "@/components/draft/add-lesson";
 import {
@@ -84,6 +94,23 @@ export function Sidebar({
   const lessons = (dropletLessons || [])
     .slice()
     .sort((a, b) => a.orderIndex - b.orderIndex);
+
+  const hasSlideBreaks = useMemo(
+    () =>
+      lessons.some((lesson) => {
+        if (lesson.blocksVersion === "v2" && lesson.blocksV2) {
+          return lesson.blocksV2.some(
+            (b: { type?: string }) => b.type === SLIDE_BREAK_TYPE,
+          );
+        }
+        return lesson.blocks?.some(
+          (b) =>
+            b.__component === "droplets.generic" &&
+            b.content === SLIDE_BREAK_MARKER,
+        );
+      }),
+    [lessons],
+  );
 
   useLayoutEffect(() => {
     const handleResize = () => {
@@ -261,10 +288,36 @@ export function Sidebar({
             <div className="flex w-full flex-col gap-2 pb-2">
               <Link
                 className="rounded-full bg-purple-400 px-6 py-2 text-center text-black hover:bg-purple-500 dark:bg-purple-600 dark:text-white dark:hover:bg-purple-800"
-                href={`/d/${pathname.split("/d/")[1]}`}
+                href={`/d/${droplet.slug}`}
               >
                 Preview
               </Link>
+              {hasSlideBreaks ? (
+                <Link
+                  className="rounded-full bg-indigo-400 px-6 py-2 text-center text-black hover:bg-indigo-500 dark:bg-indigo-600 dark:text-white dark:hover:bg-indigo-800"
+                  href={`/d/${droplet.slug}/present`}
+                  target="_blank"
+                >
+                  Present
+                </Link>
+              ) : (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        aria-disabled="true"
+                        onClick={(e) => e.preventDefault()}
+                        className="w-full cursor-not-allowed rounded-full bg-slate-300 px-6 py-2 text-center text-slate-500 dark:bg-slate-700 dark:text-slate-400"
+                      >
+                        Present
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom">
+                      No presentation blocks in sight
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              )}
 
               {/* Edit Draft - Special handling */}
               {droplet.originalDropletId && droplet.status === "draft" && (

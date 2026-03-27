@@ -19,6 +19,7 @@ import { toast } from "sonner";
 import { deleteLesson, updateLesson } from "@/lib/requests/lesson";
 import AddLessonBlock from "./add-tools";
 import { BlockNoteEditor } from "./blocknote-editor";
+import { SLIDE_BREAK_MARKER } from "@/lib/blocknote/slide-break";
 
 export interface BaseBlock {
   __component: string;
@@ -318,6 +319,12 @@ export function LessonRenderer({ lesson, dropletSlug }: LessonRendererProps) {
                 ],
               },
             ],
+          };
+          break;
+        case "Slide Break":
+          newBlock = {
+            __component: "droplets.generic",
+            content: SLIDE_BREAK_MARKER,
           };
           break;
         default:

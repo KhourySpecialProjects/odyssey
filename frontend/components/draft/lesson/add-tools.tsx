@@ -16,6 +16,7 @@ import {
   FileText,
   CheckCircle2,
   ArrowLeft,
+  SeparatorHorizontal,
 } from "lucide-react";
 
 interface AddLessonBlockProps {
@@ -55,6 +56,11 @@ export default function AddLessonBlock({ onAddBlock }: AddLessonBlockProps) {
       label: "True/False Quiz",
       icon: CheckCircle2,
       color: "bg-indigo-500 hover:bg-indigo-600",
+    },
+    {
+      label: "Slide Break",
+      icon: SeparatorHorizontal,
+      color: "bg-sky-400 hover:bg-sky-500",
     },
   ];
 

@@ -20,9 +20,12 @@ import {
   getQuizSlashMenuItems,
   getLatexSlashMenuItems,
   getCodeSlashMenuItems,
+  getSlideBreakSlashMenuItems,
 } from "@/components/ui/blocknote/editor/slash-menu-config";
 import "@/components/ui/blocknote/editor/custom-blocknote.css";
 import type { Block } from "@blocknote/core";
+
+const knownBlockTypes = new Set(Object.keys(blockNoteSchema.blockSpecs));
 
 interface BlockNoteEditorClientProps {
   initialContent?: Block[];
@@ -38,9 +41,16 @@ export function BlockNoteEditorClient({
   const { resolvedTheme } = useTheme();
   const [isReady, setIsReady] = useState(false);
 
+  const safeInitialContent = initialContent?.filter((b) =>
+    knownBlockTypes.has(b.type as string),
+  );
+
   const editor = useCreateBlockNote({
     schema: blockNoteSchema,
-    initialContent: initialContent || undefined,
+    initialContent:
+      safeInitialContent && safeInitialContent.length > 0
+        ? safeInitialContent
+        : undefined,
     tables: {
       splitCells: false,
       cellBackgroundColor: true,
@@ -245,6 +255,7 @@ export function BlockNoteEditorClient({
             const quizItems = getQuizSlashMenuItems(editor);
             const latexItems = getLatexSlashMenuItems(editor);
             const codeItems = getCodeSlashMenuItems(editor);
+            const slideBreakItems = getSlideBreakSlashMenuItems(editor);
 
             const allItems = [
               ...defaultItems,
@@ -252,6 +263,7 @@ export function BlockNoteEditorClient({
               ...quizItems,
               ...latexItems,
               ...codeItems,
+              ...slideBreakItems,
             ];
 
             return allItems.filter(

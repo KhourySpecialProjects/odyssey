@@ -8,3 +8,5 @@ docker-compose.yml
 **/*.json
 .next
 frontend/components/ui/blocknote/editor/custom-blocknote.css
+frontend/coverage
+frontend/playwright-report
