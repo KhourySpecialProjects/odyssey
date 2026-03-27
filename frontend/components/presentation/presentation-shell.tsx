@@ -47,6 +47,10 @@ export function PresentationShell({
 
   useEffect(() => {
     setMounted(true);
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = "";
+    };
   }, []);
 
   // ── Build slide deck: intro + lessons + end (memoized) ──
@@ -223,7 +227,7 @@ export function PresentationShell({
       : 0;
 
   return (
-    <div className="fixed inset-0 z-[100] bg-white text-slate-900 select-none dark:bg-[#191919] dark:text-white">
+    <div className="fixed inset-0 z-[100] overflow-hidden bg-white text-slate-900 select-none dark:bg-[#191919] dark:text-white">
       {/* ── Odyssey logo (top-right) ── */}
       <div className="fixed top-5 right-6 z-[102]">
         <Logo width={160} height={50} />
@@ -487,7 +491,7 @@ export function PresentationShell({
               // Default layout
               return (
                 <div className="w-full max-w-4xl text-left">
-                  <div className="space-y-4">
+                  <div className="max-h-[85vh] space-y-4 overflow-hidden [&_img]:max-h-[40vh] [&_img]:w-auto [&_img]:object-contain [&_pre]:max-h-[55vh] [&_pre]:overflow-y-auto">
                     {allBlocks.map((block, idx) => (
                       <PresentationBlockRenderer
                         key={`${currentSlideKey}-${idx}`}
