@@ -304,9 +304,13 @@ export function Sidebar({
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <div className="cursor-not-allowed rounded-full bg-slate-300 px-6 py-2 text-center text-slate-500 dark:bg-slate-700 dark:text-slate-400">
+                      <button
+                        aria-disabled="true"
+                        onClick={(e) => e.preventDefault()}
+                        className="w-full cursor-not-allowed rounded-full bg-slate-300 px-6 py-2 text-center text-slate-500 dark:bg-slate-700 dark:text-slate-400"
+                      >
                         Present
-                      </div>
+                      </button>
                     </TooltipTrigger>
                     <TooltipContent side="bottom">
                       No presentation blocks in sight

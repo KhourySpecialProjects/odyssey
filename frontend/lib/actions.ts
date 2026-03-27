@@ -90,7 +90,11 @@ export async function createAuthorizedUserWithState(
 export async function deleteImage(fileName: string) {
   try {
     if (isLocal) {
-      await unlink(path.join(LOCAL_UPLOADS_DIR, fileName));
+      const resolved = path.resolve(LOCAL_UPLOADS_DIR, fileName);
+      if (!resolved.startsWith(LOCAL_UPLOADS_DIR + path.sep)) {
+        return { ok: false, error: "Invalid file path" };
+      }
+      await unlink(resolved);
       return { ok: true, error: null };
     }
 

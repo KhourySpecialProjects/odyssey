@@ -59,17 +59,26 @@ function blockNoteIdToNumber(blockId: string): number {
   return Math.abs(hash);
 }
 
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 function renderTextWithStyles(
   text: string,
   styles?: BlockNoteTextStyles,
 ): string {
-  if (!styles) return text;
+  if (!styles) return escapeHtml(text);
 
   if (styles.latex) {
     return `$${text}$`;
   }
 
-  let styledText = text;
+  let styledText = escapeHtml(text);
   if (styles.bold) styledText = `<strong>${styledText}</strong>`;
   if (styles.italic) styledText = `<em>${styledText}</em>`;
   if (styles.underline) styledText = `<u>${styledText}</u>`;
@@ -371,7 +380,7 @@ function convertSingleBlock(blockAny: any, blockIndex: number): Block | null {
       const url = (blockAny.props?.url as string) || "";
       const alt = (blockAny.props?.name as string) || "";
       const layout = (blockAny.props?.layout as string) || "default";
-      const imgTag = `<img src="${url}" alt="${alt}" class="rounded-md" />`;
+      const imgTag = `<img src="${escapeHtml(url)}" alt="${escapeHtml(alt)}" class="rounded-md" />`;
       if (layout !== "default" && url) {
         const layoutKey = layout.toUpperCase().replace(/-/g, "_");
         // Prefix with layout comment for presentation mode.

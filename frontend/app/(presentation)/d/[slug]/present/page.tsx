@@ -88,7 +88,7 @@ export default async function PresentationPage({ params }: Props) {
             ) ?? []
           }
           allSlides={[]}
-          lessonNames={lessonNames}
+          lessonNames={[]}
         />
       }
     >
