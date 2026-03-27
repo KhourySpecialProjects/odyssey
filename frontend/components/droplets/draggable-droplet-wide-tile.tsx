@@ -81,6 +81,11 @@ export default function DraggableDropletWideTile({
               >
                 {uppercaseFirstChar(droplet.type)}
               </Badge>
+              {droplet.tags?.map((tag: Tag) => (
+                <Badge key={tag.id} variant="outline">
+                  {tag.name}
+                </Badge>
+              ))}
               {droplet.difficulty && (
                 <Badge
                   variant="outline"
@@ -89,11 +94,6 @@ export default function DraggableDropletWideTile({
                   {uppercaseFirstChar(droplet.difficulty)}
                 </Badge>
               )}
-              {droplet.tags?.map((tag: Tag) => (
-                <Badge key={tag.id} variant="outline">
-                  {tag.name}
-                </Badge>
-              ))}
             </div>
             <span className="block w-full place-self-end pt-2 pl-1 text-xl font-black text-slate-950 dark:text-slate-300">
               {droplet.name}

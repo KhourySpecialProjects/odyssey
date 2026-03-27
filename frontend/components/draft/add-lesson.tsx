@@ -14,7 +14,7 @@ export function AddLesson({
   droplet,
   onAddLesson,
 }: {
-  droplet: Pick<Droplet, "id" | "name" | "slug" | "lessons">;
+  droplet: Pick<Droplet, "id" | "name" | "slug" | "lessons" | "difficulty">;
   onAddLesson: (newLesson: Lesson) => void;
 }) {
   const [isHidden, setIsHidden] = useState(true);
@@ -70,6 +70,7 @@ export function AddLesson({
             slug: droplet.slug,
             type: response.data.attributes.type || "",
             focusArea: response.data.attributes.focusArea || "",
+            difficulty: droplet.difficulty,
             learningObjectives: [],
             isHidden: false,
             status: "draft",
@@ -120,6 +121,7 @@ export function AddLesson({
               slug: droplet.slug,
               type: createResponse.data.attributes.type || "",
               focusArea: createResponse.data.attributes.focusArea || "",
+              difficulty: droplet.difficulty,
               learningObjectives: [],
               isHidden: false,
               status: "draft",

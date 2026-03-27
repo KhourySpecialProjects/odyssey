@@ -212,7 +212,7 @@ export type Droplet = {
   overview?: string;
   type: DropletType;
   focusArea: FocusArea;
-  difficulty?: DropletDifficulty;
+  difficulty: DropletDifficulty;
   tags?: Tag[];
   learningObjectives: LearningObjective[];
   lessons?: Lesson[];

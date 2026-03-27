@@ -86,9 +86,7 @@ export function CreateDropletForm({
       name: normalizedName,
       focusArea: focusAreaValue as FocusArea,
       type: typeValue as DropletType,
-      ...(difficultyValue && {
-        difficulty: difficultyValue as DropletDifficulty,
-      }),
+      difficulty: difficultyValue as DropletDifficulty,
       tagIds: selectedTags.map((tag) => tag.id),
       learningObjectives: learningObjectives.filter(
         (objective) => objective.trim() !== "",
@@ -99,6 +97,7 @@ export function CreateDropletForm({
       !data.name ||
       !data.focusArea ||
       !data.type ||
+      !data.difficulty ||
       data.tagIds.length === 0 ||
       data.learningObjectives.length === 0
     ) {
@@ -266,7 +265,8 @@ export function CreateDropletForm({
               >
                 <SelectGroup className="xs:w-full flex flex-col items-start lg:w-1/2">
                   <SelectLabel className="pb-2 pl-0">
-                    {difficultyFilter.label}
+                    {difficultyFilter.label}{" "}
+                    <span className="text-red-500">*</span>
                   </SelectLabel>
                   <SelectTrigger className="w-full">
                     <SelectValue

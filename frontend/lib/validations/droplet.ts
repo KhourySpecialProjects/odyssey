@@ -16,7 +16,7 @@ export const DropletSchema = z.object({
   authorized_users: z.number().array(),
   focusArea: z.enum(focusAreas),
   type: z.enum(types),
-  difficulty: z.enum(difficulties).optional(),
+  difficulty: z.enum(difficulties),
   tagIds: z.number().array(),
   isHidden: z.boolean().optional(),
   learningObjectives: z.string().min(2).max(200).array(),

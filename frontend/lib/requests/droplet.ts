@@ -314,11 +314,6 @@ export async function updateDroplet(
 
     dataToSend.regenerateSlug = options.regenerateSlug;
 
-    console.log(
-      "Sending update to Strapi:",
-      JSON.stringify(dataToSend, null, 2),
-    );
-
     const response = await fetch(STRAPI_API_URL + "/api/droplets/" + id, {
       method: "PUT",
       body: JSON.stringify({ data: dataToSend }),
@@ -328,8 +323,6 @@ export async function updateDroplet(
       },
     });
     const responseData = await response.json();
-
-    console.log("Strapi response:", JSON.stringify(responseData, null, 2));
 
     if (!response.ok || (response.ok && responseData.error)) {
       // Better error handling
@@ -472,7 +465,7 @@ export async function createDroplet(data: z.infer<typeof CreateDropletSchema>) {
       slug: "random", // this gets overwritten when created, but just has to be defined as something
       focusArea: data.focusArea,
       type: data.type,
-      ...(data.difficulty && { difficulty: data.difficulty }),
+      difficulty: data.difficulty,
       tags: {
         connect: data.tagIds,
       },
@@ -665,9 +658,7 @@ export async function duplicateDroplet(dropletId: number) {
       slug: uniqueSlug,
       focusArea: originalDroplet.focusArea,
       type: originalDroplet.type,
-      ...(originalDroplet.difficulty && {
-        difficulty: originalDroplet.difficulty,
-      }),
+      difficulty: originalDroplet.difficulty,
       description: originalDroplet.description,
       overview: originalDroplet.overview,
       status: "draft",
@@ -1015,7 +1006,7 @@ export async function publishDraftToOriginal(
     // Only add fields that exist and are valid
     if (draftDroplet.focusArea) updateData.focusArea = draftDroplet.focusArea;
     if (draftDroplet.type) updateData.type = draftDroplet.type;
-    if (draftDroplet.difficulty)
+    if (draftDroplet.difficulty !== undefined)
       updateData.difficulty = draftDroplet.difficulty;
     if (draftDroplet.description !== undefined)
       updateData.description = draftDroplet.description;

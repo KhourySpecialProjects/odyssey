@@ -403,6 +403,14 @@ ${
               <Badge className="pointer-events-none border-black bg-white text-black dark:bg-slate-300">
                 {uppercaseFirstChar(droplet.type)}
               </Badge>
+              {droplet.tags?.map((tag) => (
+                <Badge
+                  key={tag.id}
+                  className="pointer-events-none border-black bg-white text-black dark:bg-slate-300"
+                >
+                  {tag.name}
+                </Badge>
+              ))}
               {droplet.difficulty && (
                 <Badge
                   className={cn(
@@ -414,14 +422,6 @@ ${
                   {uppercaseFirstChar(droplet.difficulty)}
                 </Badge>
               )}
-              {droplet.tags?.map((tag) => (
-                <Badge
-                  key={tag.id}
-                  className="pointer-events-none border-black bg-white text-black dark:bg-slate-300"
-                >
-                  {tag.name}
-                </Badge>
-              ))}
             </div>
             <div className="flex flex-col justify-center gap-1">
               <span className="block w-full place-self-end text-3xl font-black text-slate-950 dark:text-slate-300">

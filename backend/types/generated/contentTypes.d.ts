@@ -846,7 +846,10 @@ export interface ApiDropletDroplet extends Schema.CollectionType {
       Attribute.SetMinMaxLength<{
         maxLength: 500;
       }>;
-    difficulty: Attribute.Enumeration<['beginner', 'intermediate', 'advanced']>;
+    difficulty: Attribute.Enumeration<
+      ['beginner', 'intermediate', 'advanced']
+    > &
+      Attribute.Required;
     droplet_lessons: Attribute.Relation<
       'api::droplet.droplet',
       'oneToMany',

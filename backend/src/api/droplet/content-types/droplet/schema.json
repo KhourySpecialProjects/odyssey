@@ -45,7 +45,8 @@
         "beginner",
         "intermediate",
         "advanced"
-      ]
+      ],
+      "required": true
     },
     "lessons": {
       "type": "relation",

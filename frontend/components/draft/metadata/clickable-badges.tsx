@@ -9,6 +9,7 @@ import { updateDroplet, createNewTag } from "@/lib/requests/droplet";
 import { useRouter } from "next/navigation";
 import type { Tag, DropletDifficulty } from "@/types";
 import { Button } from "@/components/ui/button";
+import { DROPLET_FILTERS } from "@/lib/globals";
 
 type ClickableBadgesProps = {
   focusArea: string;
@@ -19,9 +20,12 @@ type ClickableBadgesProps = {
   availableTags: Tag[];
 };
 
-const focusAreaOptions = ["Personal", "Professional", "Academic"];
-const typeOptions = ["Skill", "Knowledge"];
-const difficultyOptions = ["Beginner", "Intermediate", "Advanced"];
+const getOptions = (name: string) =>
+  DROPLET_FILTERS.find((f) => f.name === name)!.options.map((o) => o.label);
+
+const focusAreaOptions = getOptions("focusArea");
+const typeOptions = getOptions("type");
+const difficultyOptions = getOptions("difficulty");
 
 export function ClickableBadges({
   focusArea,
@@ -306,6 +310,19 @@ export function ClickableBadges({
         )}
       </div>
 
+      {selectedTags.map((tag) => (
+        <button
+          key={tag.id}
+          onClick={() => handleRemoveTag(tag.id)}
+          disabled={isPending}
+          className="h-full"
+        >
+          <Badge className="h-full border border-slate-300 bg-transparent text-black hover:bg-red-300 dark:text-white">
+            {tag.name}
+          </Badge>
+        </button>
+      ))}
+
       <div className="relative">
         <button
           className="h-full"
@@ -320,9 +337,13 @@ export function ClickableBadges({
                 : "bg-slate-200 dark:bg-slate-600",
             )}
           >
-            {localDifficulty
-              ? uppercaseFirstChar(localDifficulty.toLowerCase())
-              : "No Difficulty"}
+            {localDifficulty ? (
+              uppercaseFirstChar(localDifficulty.toLowerCase())
+            ) : (
+              <>
+                No Difficulty <span className="text-red-500">*</span>
+              </>
+            )}
           </Badge>
         </button>
 
@@ -360,19 +381,6 @@ export function ClickableBadges({
           </>
         )}
       </div>
-
-      {selectedTags.map((tag) => (
-        <button
-          key={tag.id}
-          onClick={() => handleRemoveTag(tag.id)}
-          disabled={isPending}
-          className="h-full"
-        >
-          <Badge className="h-full border border-slate-300 bg-transparent text-black hover:bg-red-300 dark:text-white">
-            {tag.name}
-          </Badge>
-        </button>
-      ))}
 
       <div className="relative h-full p-0">
         <button
