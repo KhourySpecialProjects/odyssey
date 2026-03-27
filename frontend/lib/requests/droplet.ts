@@ -965,6 +965,13 @@ export async function publishDraftToOriginal(
       "lessons",
     );
 
+    // Fail fast before any destructive writes if required fields are missing
+    if (draftDroplet.difficulty == null) {
+      throw new Error(
+        "Draft droplet is missing a difficulty. Set it in the editor before publishing.",
+      );
+    }
+
     // Fetch draft enrollments before DB writes begin
     draftEnrollments = await fetch(
       `${STRAPI_API_URL}/api/enrollments?filters[droplet][id][$eq]=${draftDropletId}&populate[authorizedUser][fields][0]=id`,
