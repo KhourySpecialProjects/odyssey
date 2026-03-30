@@ -54,11 +54,13 @@ export default async function EditPlaylistPage({ params }: Props) {
 
   if (
     !playlist ||
-    (!playlist.authors?.some((author) => author.id === authUser.id) &&
-      !isAuthorizedUserAdmin(user.roles))
+    (!isAuthorizedUserAdmin(user.roles) &&
+      !playlist.authors?.some((author) => author.id === authUser?.id))
   ) {
     return notFound();
   }
+
+  if (!authUser) return notFound();
 
   const allDroplets = await getDroplets({
     filters: {

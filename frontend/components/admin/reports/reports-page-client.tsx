@@ -4,7 +4,6 @@ import { useMemo, useState, useTransition } from "react";
 import type { Report } from "./reports";
 import { useAdminTableFilters } from "@/hooks/use-admin-table-filters";
 import { cn } from "@/lib/utils";
-import { Badge } from "@/components/ui/badge";
 import { SearchBar } from "@/components/admin/search-bar";
 import { SortButton } from "@/components/admin/sort-button";
 import {
@@ -42,19 +41,22 @@ const SORT_GROUPS = [
   },
 ] as const;
 
-const DESC_CHAR_LIMIT = 80;
+const DESC_CHAR_LIMIT = 50;
+const PATH_CHAR_LIMIT = 40;
 
 const REPORT_COLUMNS: AdminColumnDef[] = [
   { label: "Name", width: "w-[20%]" },
-  { label: "Description", width: "w-[40%]" },
-  { label: "Path", width: "w-[18%]" },
-  { label: "Actions", width: "w-[22%]" },
+  { label: "Description", width: "w-[37%]" },
+  { label: "Path", width: "w-[28%]" },
+  { label: "Actions", width: "w-[15%]" },
 ];
 
 // ——— Report Row ———
 function ReportRow({ report }: { report: Report }) {
   const [isPending, startTransition] = useTransition();
   const [expanded, setExpanded] = useState(false);
+  const [pathExpanded, setPathExpanded] = useState(false);
+  const isPathLong = report.path && report.path.length > PATH_CHAR_LIMIT;
 
   const strippedDescription = useMemo(
     () =>
@@ -95,14 +97,14 @@ function ReportRow({ report }: { report: Report }) {
       )}
     >
       {/* Name */}
-      <td className="h-[80px] py-3 pr-6 pl-[30px]">
+      <td className="h-[56px] py-3 pr-6 pl-[30px]">
         <p className="truncate text-[16px] font-medium text-[#101828] dark:text-white">
           {report.fullName}
         </p>
       </td>
 
       {/* Description */}
-      <td className="h-[80px] px-6 py-[11px]">
+      <td className="h-[56px] px-6 py-[11px]">
         <p className="text-[16px] leading-[20px] font-medium text-[#101828] dark:text-white">
           {displayDescription}
           {isTruncated && !expanded && (
@@ -125,17 +127,34 @@ function ReportRow({ report }: { report: Report }) {
       </td>
 
       {/* Path */}
-      <td className="h-[80px] px-6 py-[11px]">
-        <Badge
-          variant="outline"
-          className="max-w-full truncate rounded-[16px] border-0 bg-[#f2f4f7] px-[9px] py-[4px] text-[14px] leading-[18px] font-medium text-[#60646c] dark:bg-slate-700 dark:text-slate-300"
-        >
-          {report.path}
-        </Badge>
+      <td className="h-[56px] px-6 py-[11px]">
+        {pathExpanded ? (
+          <p className="text-[16px] font-medium break-all text-[#101828] dark:text-white">
+            {report.path}{" "}
+            <button
+              onClick={() => setPathExpanded(false)}
+              className="text-[#2D7597] hover:underline"
+            >
+              See Less
+            </button>
+          </p>
+        ) : (
+          <div className="flex min-w-0 items-center gap-1 text-[16px] font-medium text-[#101828] dark:text-white">
+            <span className="min-w-0 truncate">{report.path}</span>
+            {isPathLong && (
+              <button
+                onClick={() => setPathExpanded(true)}
+                className="shrink-0 text-[#2D7597] hover:underline"
+              >
+                See More
+              </button>
+            )}
+          </div>
+        )}
       </td>
 
       {/* Actions */}
-      <td className="h-[80px] px-6 py-3">
+      <td className="h-[56px] px-6 py-3">
         <TooltipProvider delayDuration={300}>
           <div className="flex items-center gap-[10px]">
             <Tooltip>

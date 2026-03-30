@@ -20,7 +20,7 @@ export function SortRadioGroup({
     <div className="space-y-3">
       {groups.map((group) => (
         <div key={group.header}>
-          <p className="mb-1.5 text-xs font-semibold tracking-wide text-slate-400 uppercase">
+          <p className="mb-1.5 text-xs font-semibold tracking-wide text-[#667085] uppercase">
             {group.header}
           </p>
           <div className="space-y-1.5">

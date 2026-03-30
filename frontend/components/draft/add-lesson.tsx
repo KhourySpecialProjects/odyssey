@@ -2,7 +2,12 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useFormStatus } from "react-dom";
-import { PlusIcon, CornerDownLeftIcon, LoaderIcon, Import } from "lucide-react";
+import {
+  PlusIcon,
+  CornerDownLeftIcon,
+  LoaderIcon,
+  FileInput,
+} from "lucide-react";
 import { Droplet, Lesson } from "@/types";
 import { useRouter } from "next/navigation";
 import { addLesson } from "@/lib/requests/lesson";
@@ -151,7 +156,7 @@ export function AddLesson({
           {" "}
           {/* Changed to flex container */}
           <div className="cursor-pointer p-2">
-            <Import
+            <FileInput
               role="button"
               onClick={handleImportClick}
               className="transition-colors hover:text-slate-600 dark:hover:text-slate-300"

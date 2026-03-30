@@ -17,7 +17,7 @@ import { BlocksRenderer } from "@strapi/blocks-react-renderer";
 import { ArrowDownFromLineIcon } from "lucide-react";
 import { QuizBlock } from "./quiz";
 import GenericBlockRenderer from "./generic-block-renderer";
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { LockIcon } from "lucide-react";
 import { CalloutIcon } from "@/components/ui/callout-icons";
@@ -851,6 +851,8 @@ export function LessonRenderer({
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
   const [highlights, setHighlights] = useState<Highlight[]>([]);
+  const lessonContentRef = useRef<HTMLDivElement>(null);
+  const firedMilestones = useRef<Set<number>>(new Set());
 
   // Move all hooks before any early returns
   useEffect(() => {
@@ -939,6 +941,41 @@ export function LessonRenderer({
       }
     }
   }, [authUser?.id]);
+
+  useEffect(() => {
+    firedMilestones.current = new Set();
+  }, [lesson.id]);
+
+  useEffect(() => {
+    if (!enrollmentId) return;
+
+    const MILESTONES = [25, 50, 75, 100];
+
+    function handleScroll() {
+      const el = lessonContentRef.current;
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      if (rect.height === 0) return;
+      const scrolled = window.innerHeight - rect.top;
+      const pct = Math.min(100, Math.max(0, (scrolled / rect.height) * 100));
+      for (const milestone of MILESTONES) {
+        if (pct >= milestone && !firedMilestones.current.has(milestone)) {
+          firedMilestones.current.add(milestone);
+          posthog.capture("lesson_scroll_depth", {
+            percent: milestone,
+            lesson_id: lesson.id,
+            lesson_name: lesson.name,
+            droplet_id: droplet.id,
+            user_id: authUser?.id,
+          });
+        }
+      }
+    }
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    handleScroll();
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [lesson.id, droplet.id, enrollmentId, authUser?.id]);
 
   if (isNotEnrolled) {
     return (
@@ -1089,7 +1126,10 @@ export function LessonRenderer({
   }
 
   return (
-    <div className="mx-auto w-full min-w-[300px] py-8 md:min-w-[700px]">
+    <div
+      ref={lessonContentRef}
+      className="mx-auto w-full min-w-[300px] py-8 md:min-w-[700px]"
+    >
       <div className="relative mx-auto w-full max-w-2xl xl:py-8">
         <h1 className="text-6xl font-extrabold text-balance">{lesson.name}</h1>
 

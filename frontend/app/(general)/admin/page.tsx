@@ -94,7 +94,7 @@ async function StatsAndPageviews() {
   ]);
 
   return (
-    <div className="grid grid-cols-[524fr_578fr] items-start gap-[25px]">
+    <div className="grid grid-cols-[524fr_578fr] items-start gap-5">
       <div className="grid grid-cols-2 gap-5">
         <StatCard
           title="Total Users"
@@ -160,7 +160,7 @@ export default function Page() {
       {/* Top row: stat cards + pageviews — streams in */}
       <Suspense
         fallback={
-          <div className="grid grid-cols-[524fr_578fr] items-start gap-[25px]">
+          <div className="grid grid-cols-[524fr_578fr] items-start gap-5">
             <div className="grid grid-cols-2 gap-5">
               <StatCardSkeleton />
               <StatCardSkeleton />
