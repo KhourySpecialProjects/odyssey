@@ -968,6 +968,7 @@ describe("publishDraftToOriginal", () => {
       name: "[EDIT] Original Droplet",
       focusArea: "Science",
       type: "standard",
+      difficulty: "beginner",
       description: "A droplet",
       overview: "Overview",
       slug: "edit-original-droplet",

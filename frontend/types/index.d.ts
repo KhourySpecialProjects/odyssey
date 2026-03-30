@@ -5,6 +5,8 @@ export type FocusArea = "personal" | "professional" | "technical";
 
 export type DropletType = "knowledge" | "skill";
 
+export type DropletDifficulty = "beginner" | "intermediate" | "advanced";
+
 export type DropletStatus = "draft" | "edit" | "published";
 
 export type AnnouncementType =
@@ -210,6 +212,7 @@ export type Droplet = {
   overview?: string;
   type: DropletType;
   focusArea: FocusArea;
+  difficulty: DropletDifficulty;
   tags?: Tag[];
   learningObjectives: LearningObjective[];
   lessons?: Lesson[];

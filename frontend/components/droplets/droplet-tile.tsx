@@ -1,7 +1,12 @@
 "use client";
 
 import { Badge } from "@/components/ui/badge";
-import { convertBlockNoteToMarkdown, uppercaseFirstChar } from "@/lib/utils";
+import {
+  convertBlockNoteToMarkdown,
+  uppercaseFirstChar,
+  getDifficultyBadgeColor,
+  cn,
+} from "@/lib/utils";
 import { Droplet } from "@/types";
 import Link from "next/link";
 
@@ -199,6 +204,7 @@ export function DropletTile({
 
 Type: ${fullDroplet.type}
 Focus Area: ${fullDroplet.focusArea}
+Difficulty: ${fullDroplet.difficulty || "Not set"}
 
 ### Tags
 ${fullDroplet.tags?.map((tag) => `* ${tag.name}`).join("\n") || "No tags"}
@@ -405,6 +411,17 @@ ${
                   {tag.name}
                 </Badge>
               ))}
+              {droplet.difficulty && (
+                <Badge
+                  className={cn(
+                    "pointer-events-none",
+                    getDifficultyBadgeColor(droplet.difficulty),
+                  )}
+                  variant="outline"
+                >
+                  {uppercaseFirstChar(droplet.difficulty)}
+                </Badge>
+              )}
             </div>
             <div className="flex flex-col justify-center gap-1">
               <span className="block w-full place-self-end text-3xl font-black text-slate-950 dark:text-slate-300">

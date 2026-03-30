@@ -31,6 +31,7 @@ export default async function ExplorePage({
     sort,
     type,
     focusArea,
+    difficulty,
     tags,
     contentType = "droplets",
   } = (await searchParams) as { [key: string]: string };
@@ -54,6 +55,13 @@ export default async function ExplorePage({
                       .map((val) => ({ focusArea: { $eq: val } })),
                   }
                 : {},
+              difficulty
+                ? {
+                    $or: difficulty
+                      .split(",")
+                      .map((val) => ({ difficulty: { $eq: val } })),
+                  }
+                : {},
               tags
                 ? {
                     $or: tags
@@ -74,6 +82,7 @@ export default async function ExplorePage({
             "slug",
             "type",
             "focusArea",
+            "difficulty",
             "averageRating",
             "description",
             "isHidden",
