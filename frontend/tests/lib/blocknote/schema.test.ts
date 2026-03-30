@@ -20,6 +20,7 @@ jest.mock("react-syntax-highlighter", () => ({
 
 jest.mock("react-syntax-highlighter/dist/esm/styles/hljs", () => ({
   atomOneDark: {},
+  githubGist: {},
 }));
 
 // Mock all language imports
@@ -133,6 +134,10 @@ jest.mock("@/components/ui/blocknote/blocks/latex-block", () => ({
 
 jest.mock("@/components/ui/blocknote/blocks/image-block", () => ({
   ImageBlock: jest.fn(() => ({ type: "image" })),
+}));
+
+jest.mock("@/components/ui/blocknote/blocks/notebook-code-block", () => ({
+  NotebookCodeBlock: jest.fn(() => ({ type: "notebook-code" })),
 }));
 
 import { blockNoteSchema } from "@/lib/blocknote/schema";

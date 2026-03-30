@@ -1,0 +1,51 @@
+{
+  "kind": "collectionType",
+  "collectionName": "datasets",
+  "info": {
+    "singularName": "dataset",
+    "pluralName": "datasets",
+    "displayName": "Dataset",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "name": {
+      "type": "string",
+      "required": true,
+      "maxLength": 255
+    },
+    "format": {
+      "type": "enumeration",
+      "enum": ["csv", "json", "xlsx"],
+      "required": true
+    },
+    "fileUrl": {
+      "type": "string",
+      "required": true
+    },
+    "fileSize": {
+      "type": "integer"
+    },
+    "rowCount": {
+      "type": "integer"
+    },
+    "columnCount": {
+      "type": "integer"
+    },
+    "columnNames": {
+      "type": "json"
+    },
+    "columnTypes": {
+      "type": "json"
+    },
+    "droplet": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::droplet.droplet",
+      "inversedBy": "datasets"
+    }
+  }
+}

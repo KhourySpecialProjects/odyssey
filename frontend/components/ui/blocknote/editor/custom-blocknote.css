@@ -102,8 +102,8 @@
 .bn-inline-latex-input {
   min-width: 0.5ch;
   outline: none;
-  font-family: "KaTeX_Main", "KaTeX_Math", "KaTeX_AMS", "Times New Roman",
-    Georgia, serif;
+  font-family:
+    "KaTeX_Main", "KaTeX_Math", "KaTeX_AMS", "Times New Roman", Georgia, serif;
 }
 
 .bn-inline-latex-preview {

@@ -18,6 +18,7 @@ import { LatexBlock } from "@/components/ui/blocknote/blocks/latex-block";
 import { ImageBlock } from "@/components/ui/blocknote/blocks/image-block";
 import { CodeBlock } from "@/components/ui/blocknote/blocks/code-block";
 import { SlideBreak } from "@/components/ui/blocknote/blocks/slide-break-block";
+import { NotebookCodeBlock } from "@/components/ui/blocknote/blocks/notebook-code-block";
 
 const blockTypesToHide = new Set([
   "quote",
@@ -141,6 +142,7 @@ export const blockNoteSchema = BlockNoteSchema.create({
     image: ImageBlock(),
     "code-block": CodeBlock(),
     "slide-break": SlideBreak(),
+    "notebook-code": NotebookCodeBlock(),
   },
   styleSpecs: customStyleSpecs,
 });

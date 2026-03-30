@@ -756,6 +756,52 @@ export interface ApiCreationRequestCreationRequest
   };
 }
 
+export interface ApiDatasetDataset extends Schema.CollectionType {
+  collectionName: 'datasets';
+  info: {
+    description: '';
+    displayName: 'Dataset';
+    pluralName: 'datasets';
+    singularName: 'dataset';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    columnCount: Attribute.Integer;
+    columnNames: Attribute.JSON;
+    columnTypes: Attribute.JSON;
+    createdAt: Attribute.DateTime;
+    createdBy: Attribute.Relation<
+      'api::dataset.dataset',
+      'oneToOne',
+      'admin::user'
+    > &
+      Attribute.Private;
+    droplet: Attribute.Relation<
+      'api::dataset.dataset',
+      'manyToOne',
+      'api::droplet.droplet'
+    >;
+    fileSize: Attribute.Integer;
+    fileUrl: Attribute.String & Attribute.Required;
+    format: Attribute.Enumeration<['csv', 'json', 'xlsx']> & Attribute.Required;
+    name: Attribute.String &
+      Attribute.Required &
+      Attribute.SetMinMaxLength<{
+        maxLength: 255;
+      }>;
+    rowCount: Attribute.Integer;
+    updatedAt: Attribute.DateTime;
+    updatedBy: Attribute.Relation<
+      'api::dataset.dataset',
+      'oneToOne',
+      'admin::user'
+    > &
+      Attribute.Private;
+  };
+}
+
 export interface ApiDropletLessonDropletLesson extends Schema.CollectionType {
   collectionName: 'droplet_lessons';
   info: {
@@ -842,6 +888,11 @@ export interface ApiDropletDroplet extends Schema.CollectionType {
       'admin::user'
     > &
       Attribute.Private;
+    datasets: Attribute.Relation<
+      'api::droplet.droplet',
+      'oneToMany',
+      'api::dataset.dataset'
+    >;
     description: Attribute.Text &
       Attribute.SetMinMaxLength<{
         maxLength: 500;
@@ -1951,6 +2002,7 @@ declare module '@strapi/types' {
       'api::authorized-user-role.authorized-user-role': ApiAuthorizedUserRoleAuthorizedUserRole;
       'api::authorized-user.authorized-user': ApiAuthorizedUserAuthorizedUser;
       'api::creation-request.creation-request': ApiCreationRequestCreationRequest;
+      'api::dataset.dataset': ApiDatasetDataset;
       'api::droplet-lesson.droplet-lesson': ApiDropletLessonDropletLesson;
       'api::droplet.droplet': ApiDropletDroplet;
       'api::due-date.due-date': ApiDueDateDueDate;

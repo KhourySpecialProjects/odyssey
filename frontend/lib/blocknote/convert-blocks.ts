@@ -511,6 +511,21 @@ function convertSingleBlock(blockAny: any, blockIndex: number): Block | null {
       };
     }
 
+    case "notebook-code": {
+      const language = blockAny.props?.language || "python";
+      const code = blockAny.props?.code || "";
+      const editable = blockAny.props?.editable === "true";
+
+      return {
+        __component: "droplets.code-block",
+        id: blockIndex,
+        language,
+        code,
+        editable,
+        runnable: true,
+      };
+    }
+
     case "slide-break": {
       return {
         __component: "droplets.generic",

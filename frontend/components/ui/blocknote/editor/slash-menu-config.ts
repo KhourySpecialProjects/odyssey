@@ -4,7 +4,7 @@ import { createElement } from "react";
 import type { ReactElement } from "react";
 import type { CustomBlockNoteEditor } from "@/lib/blocknote/schema";
 import type { CalloutType } from "@/lib/blocknote/types";
-import { Code } from "lucide-react";
+import { Code, Play } from "lucide-react";
 import {
   TriangleAlert,
   CircleHelp,
@@ -235,6 +235,34 @@ export const getCodeSlashMenuItems = (
     aliases: ["code", "snippet", "programming", "syntax"],
     group: "Code",
     subtext: "Display code with syntax highlighting",
+  },
+];
+
+export const getNotebookCodeSlashMenuItems = (
+  editor: CustomBlockNoteEditor,
+): DefaultReactSuggestionItem[] => [
+  {
+    title: "Notebook Code",
+    icon: createElement(Play, { className: "h-4 w-4" }),
+    onItemClick: () => {
+      editor.insertBlocks(
+        [
+          {
+            type: "notebook-code",
+            props: {
+              code: "# Write your Python code here\n",
+              language: "python",
+              editable: "true",
+            },
+          },
+        ],
+        editor.getTextCursorPosition().block,
+        "after",
+      );
+    },
+    aliases: ["notebook", "jupyter", "python", "colab"],
+    group: "Data Science",
+    subtext: "Interactive Python notebook cell with Pyodide",
   },
 ];
 
