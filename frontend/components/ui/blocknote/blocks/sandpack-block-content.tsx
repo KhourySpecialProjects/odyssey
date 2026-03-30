@@ -149,7 +149,6 @@ function FileChangeListener({ onFilesChange }: FileChangeListenerProps) {
       simplified[filename] = fileObj.code;
     });
     onFilesChange(simplified);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sandpack.files]);
 
   return null;
