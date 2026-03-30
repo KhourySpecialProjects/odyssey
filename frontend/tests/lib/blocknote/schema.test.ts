@@ -55,7 +55,7 @@ jest.mock("react-syntax-highlighter/dist/esm/languages/hljs/swift", () => ({}));
 
 // Mock BlockNote before importing schema
 jest.mock("@blocknote/react", () => ({
-  createReactBlockSpec: jest.fn((config, spec) => ({
+  createReactBlockSpec: jest.fn((config, spec) => () => ({
     type: config.type,
     propSchema: config.propSchema,
     ...spec,

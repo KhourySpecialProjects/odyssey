@@ -32,6 +32,20 @@ import { markLessonAsComplete } from "@/lib/requests/lesson";
 import posthog from "posthog-js";
 import "katex/dist/katex.min.css";
 import { CodeBlockViewer } from "@/components/draft/lesson/code-block-viewer";
+import dynamic from "next/dynamic";
+
+const SandpackViewer = dynamic(
+  () =>
+    import("@/components/draft/lesson/sandpack-viewer").then(
+      (mod) => mod.SandpackViewer,
+    ),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="my-4 h-64 animate-pulse rounded-lg bg-gray-200 dark:bg-gray-800" />
+    ),
+  },
+);
 import { convertBlockNoteToV1Blocks } from "@/lib/blocknote/convert-blocks";
 
 interface LessonRendererProps {
@@ -501,6 +515,25 @@ function LessonBlockRenderer({
           runnable={block.runnable}
         />
       );
+
+    case "droplets.sandpack-block": {
+      let sandpackFiles: Record<string, string> = {};
+      try {
+        const parsed = JSON.parse(block.files || "{}");
+        if (typeof parsed === "object" && parsed !== null)
+          sandpackFiles = parsed;
+      } catch {
+        // malformed JSON — use empty files, sandpack falls back to template defaults
+      }
+      return (
+        <SandpackViewer
+          template={block.template}
+          files={sandpackFiles}
+          showPreview={block.showPreview}
+          editable={block.editable}
+        />
+      );
+    }
 
     default:
       return null;

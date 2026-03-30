@@ -171,6 +171,15 @@ export type Block =
       editable: boolean;
       runnable: boolean;
       _clientId?: string;
+    }
+  | {
+      __component: "droplets.sandpack-block";
+      id?: number;
+      template: string;
+      files: string;
+      showPreview: boolean;
+      editable: boolean;
+      _clientId?: string;
     };
 
 export type Lesson = {
