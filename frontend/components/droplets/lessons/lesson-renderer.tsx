@@ -5,7 +5,11 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { extractHeadings, isAuthorizedUserAdmin } from "@/lib/utils";
+import {
+  extractHeadings,
+  isAuthorizedUserAdmin,
+  parseSandpackFiles,
+} from "@/lib/utils";
 import { User, Droplet, Lesson, AuthorizedUser } from "@/types";
 import { BlocksRenderer } from "@strapi/blocks-react-renderer";
 import { ArrowDownFromLineIcon } from "lucide-react";
@@ -32,6 +36,20 @@ import { markLessonAsComplete } from "@/lib/requests/lesson";
 import posthog from "posthog-js";
 import "katex/dist/katex.min.css";
 import { CodeBlockViewer } from "@/components/draft/lesson/code-block-viewer";
+import dynamic from "next/dynamic";
+
+const SandpackViewer = dynamic(
+  () =>
+    import("@/components/draft/lesson/sandpack-viewer").then(
+      (mod) => mod.SandpackViewer,
+    ),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="my-4 h-64 animate-pulse rounded-lg bg-gray-200 dark:bg-gray-800" />
+    ),
+  },
+);
 import { convertBlockNoteToV1Blocks } from "@/lib/blocknote/convert-blocks";
 
 interface LessonRendererProps {
@@ -499,6 +517,16 @@ function LessonBlockRenderer({
           code={block.code}
           editable={block.editable}
           runnable={block.runnable}
+        />
+      );
+
+    case "droplets.sandpack-block":
+      return (
+        <SandpackViewer
+          template={block.template}
+          files={parseSandpackFiles(block.files)}
+          showPreview={block.showPreview}
+          editable={block.editable}
         />
       );
 
