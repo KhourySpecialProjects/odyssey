@@ -5,7 +5,11 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { extractHeadings, isAuthorizedUserAdmin } from "@/lib/utils";
+import {
+  extractHeadings,
+  isAuthorizedUserAdmin,
+  parseSandpackFiles,
+} from "@/lib/utils";
 import { User, Droplet, Lesson, AuthorizedUser } from "@/types";
 import { BlocksRenderer } from "@strapi/blocks-react-renderer";
 import { ArrowDownFromLineIcon } from "lucide-react";
@@ -516,24 +520,15 @@ function LessonBlockRenderer({
         />
       );
 
-    case "droplets.sandpack-block": {
-      let sandpackFiles: Record<string, string> = {};
-      try {
-        const parsed = JSON.parse(block.files || "{}");
-        if (typeof parsed === "object" && parsed !== null)
-          sandpackFiles = parsed;
-      } catch {
-        // malformed JSON — use empty files, sandpack falls back to template defaults
-      }
+    case "droplets.sandpack-block":
       return (
         <SandpackViewer
           template={block.template}
-          files={sandpackFiles}
+          files={parseSandpackFiles(block.files)}
           showPreview={block.showPreview}
           editable={block.editable}
         />
       );
-    }
 
     default:
       return null;

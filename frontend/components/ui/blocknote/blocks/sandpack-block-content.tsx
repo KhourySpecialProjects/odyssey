@@ -354,12 +354,10 @@ export function SandpackBlockContent({
     }, 0);
   };
 
-  const editorContent = (fullscreen: boolean) => (
+  const titleBar = (
     <TooltipProvider delayDuration={400}>
-      {/* IDE title bar */}
       <div className="flex items-center justify-between border-b border-[#333] bg-[#2d2d2d] px-3 py-2">
         <div className="flex items-center gap-3">
-          {/* File explorer toggle */}
           <Tooltip>
             <TooltipTrigger asChild>
               <button
@@ -379,7 +377,6 @@ export function SandpackBlockContent({
             </TooltipContent>
           </Tooltip>
 
-          {/* Template selector */}
           {isAuthorMode ? (
             <div
               className="flex items-center gap-0.5"
@@ -414,7 +411,6 @@ export function SandpackBlockContent({
           )}
         </div>
 
-        {/* Right controls */}
         <div className="flex items-center gap-1">
           {isAuthorMode && (
             <>
@@ -472,48 +468,54 @@ export function SandpackBlockContent({
                 onClick={() => setIsFullscreen((v) => !v)}
                 className="rounded p-1.5 text-gray-300 transition-colors hover:bg-[#3e3e3e] hover:text-white"
               >
-                {fullscreen ? <Minimize2 size={13} /> : <Maximize2 size={13} />}
+                {isFullscreen ? (
+                  <Minimize2 size={13} />
+                ) : (
+                  <Maximize2 size={13} />
+                )}
               </button>
             </TooltipTrigger>
             <TooltipContent>
-              {fullscreen ? "Exit fullscreen (Esc)" : "Enter fullscreen"}
+              {isFullscreen ? "Exit fullscreen (Esc)" : "Enter fullscreen"}
             </TooltipContent>
           </Tooltip>
         </div>
       </div>
-
-      <SandpackBlockInner
-        template={currentTemplate}
-        files={parsedFiles}
-        showPreview={currentShowPreview}
-        showFileExplorer={showFileExplorer}
-        editable={currentEditable}
-        isAuthorMode={isAuthorMode}
-        resolvedTheme={resolvedTheme}
-        onFilesChange={isAuthorMode ? handleFilesChange : undefined}
-        fullscreen={fullscreen}
-      />
     </TooltipProvider>
+  );
+
+  const sandpackInner = (
+    <SandpackBlockInner
+      template={currentTemplate}
+      files={parsedFiles}
+      showPreview={currentShowPreview}
+      showFileExplorer={showFileExplorer}
+      editable={currentEditable}
+      isAuthorMode={isAuthorMode}
+      resolvedTheme={resolvedTheme}
+      onFilesChange={isAuthorMode ? handleFilesChange : undefined}
+      fullscreen={isFullscreen}
+    />
   );
 
   return (
     <>
-      {/* Inline block */}
       <div
         className="my-4 w-full overflow-hidden rounded-lg border border-[#333] bg-[#1e1e1e]"
         contentEditable={false}
         onMouseDown={handleMouseDown}
       >
-        {editorContent(false)}
+        {titleBar}
+        {!isFullscreen && sandpackInner}
       </div>
 
-      {/* Fullscreen overlay */}
       {isFullscreen && (
         <div
           className="fixed inset-0 z-50 flex flex-col bg-[#1e1e1e]"
           onMouseDown={handleMouseDown}
         >
-          {editorContent(true)}
+          {titleBar}
+          {sandpackInner}
         </div>
       )}
     </>

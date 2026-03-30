@@ -1,9 +1,15 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import dynamic from "next/dynamic";
 import { useTheme } from "next-themes";
 import { PanelLeft, Maximize2, Minimize2 } from "lucide-react";
+import {
+  SandpackProvider,
+  SandpackLayout,
+  SandpackCodeEditor,
+  SandpackPreview,
+  SandpackFileExplorer,
+} from "@codesandbox/sandpack-react";
 import {
   SandpackTemplate,
   TEMPLATE_LABELS,
@@ -14,37 +20,6 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-
-const SandpackProvider = dynamic(
-  () =>
-    import("@codesandbox/sandpack-react").then((mod) => mod.SandpackProvider),
-  { ssr: false },
-);
-
-const SandpackLayout = dynamic(
-  () => import("@codesandbox/sandpack-react").then((mod) => mod.SandpackLayout),
-  { ssr: false },
-);
-
-const SandpackCodeEditor = dynamic(
-  () =>
-    import("@codesandbox/sandpack-react").then((mod) => mod.SandpackCodeEditor),
-  { ssr: false },
-);
-
-const SandpackPreview = dynamic(
-  () =>
-    import("@codesandbox/sandpack-react").then((mod) => mod.SandpackPreview),
-  { ssr: false },
-);
-
-const SandpackFileExplorer = dynamic(
-  () =>
-    import("@codesandbox/sandpack-react").then(
-      (mod) => mod.SandpackFileExplorer,
-    ),
-  { ssr: false },
-);
 
 interface SandpackViewerProps {
   template: SandpackTemplate;
@@ -78,45 +53,44 @@ export function SandpackViewer({
     return () => window.removeEventListener("keydown", onKey);
   }, [isFullscreen]);
 
-  const sandpackPanel = (fullscreen: boolean) => {
-    const panelHeight =
-      fullscreen || presentationMode ? "calc(100vh - 37px)" : "560px";
-    return (
-      <SandpackProvider
-        template={template}
-        files={sandpackFiles}
-        theme={sandpackTheme}
-        options={{ recompileMode: "delayed", recompileDelay: 500 }}
-      >
-        <SandpackLayout>
-          {showFileExplorer && (
-            <SandpackFileExplorer
-              style={{
-                height: panelHeight,
-                minWidth: "160px",
-                maxWidth: "200px",
-              }}
-            />
-          )}
-          <SandpackCodeEditor
-            readOnly={!editable}
-            showLineNumbers
-            showTabs={false}
-            showInlineErrors
-            style={{ height: panelHeight, flex: 1 }}
-          />
-          {showPreview && (
-            <SandpackPreview
-              style={{ height: panelHeight, flex: 1 }}
-              showNavigator
-            />
-          )}
-        </SandpackLayout>
-      </SandpackProvider>
-    );
-  };
+  const panelHeight =
+    isFullscreen || presentationMode ? "calc(100vh - 37px)" : "560px";
 
-  const titleBar = (fullscreen: boolean) => (
+  const sandpackPanel = (
+    <SandpackProvider
+      template={template}
+      files={sandpackFiles}
+      theme={sandpackTheme}
+      options={{ recompileMode: "delayed", recompileDelay: 500 }}
+    >
+      <SandpackLayout>
+        {showFileExplorer && (
+          <SandpackFileExplorer
+            style={{
+              height: panelHeight,
+              minWidth: "160px",
+              maxWidth: "200px",
+            }}
+          />
+        )}
+        <SandpackCodeEditor
+          readOnly={!editable}
+          showLineNumbers
+          showTabs={false}
+          showInlineErrors
+          style={{ height: panelHeight, flex: 1 }}
+        />
+        {showPreview && (
+          <SandpackPreview
+            style={{ height: panelHeight, flex: 1 }}
+            showNavigator
+          />
+        )}
+      </SandpackLayout>
+    </SandpackProvider>
+  );
+
+  const titleBar = (
     <TooltipProvider delayDuration={400}>
       <div className="flex items-center justify-between border-b border-[#333] bg-[#2d2d2d] px-3 py-2">
         <div className="flex items-center gap-3">
@@ -141,19 +115,25 @@ export function SandpackViewer({
             {TEMPLATE_LABELS[template]}
           </span>
         </div>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <button
-              onClick={() => setIsFullscreen((v) => !v)}
-              className="rounded p-1.5 text-gray-300 transition-colors hover:bg-[#3e3e3e] hover:text-white"
-            >
-              {fullscreen ? <Minimize2 size={13} /> : <Maximize2 size={13} />}
-            </button>
-          </TooltipTrigger>
-          <TooltipContent>
-            {fullscreen ? "Exit fullscreen (Esc)" : "Enter fullscreen"}
-          </TooltipContent>
-        </Tooltip>
+        {!presentationMode && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={() => setIsFullscreen((v) => !v)}
+                className="rounded p-1.5 text-gray-300 transition-colors hover:bg-[#3e3e3e] hover:text-white"
+              >
+                {isFullscreen ? (
+                  <Minimize2 size={13} />
+                ) : (
+                  <Maximize2 size={13} />
+                )}
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>
+              {isFullscreen ? "Exit fullscreen (Esc)" : "Enter fullscreen"}
+            </TooltipContent>
+          </Tooltip>
+        )}
       </div>
     </TooltipProvider>
   );
@@ -161,8 +141,8 @@ export function SandpackViewer({
   if (presentationMode) {
     return (
       <div className="fixed inset-0 z-[101] flex flex-col overflow-hidden bg-[#1e1e1e]">
-        {titleBar(false)}
-        {sandpackPanel(false)}
+        {titleBar}
+        {sandpackPanel}
       </div>
     );
   }
@@ -170,14 +150,14 @@ export function SandpackViewer({
   return (
     <>
       <div className="my-4 w-full overflow-hidden rounded-lg border border-[#333] bg-[#1e1e1e]">
-        {titleBar(false)}
-        {sandpackPanel(false)}
+        {titleBar}
+        {!isFullscreen && sandpackPanel}
       </div>
 
       {isFullscreen && (
         <div className="fixed inset-0 z-50 flex flex-col bg-[#1e1e1e]">
-          {titleBar(true)}
-          {sandpackPanel(true)}
+          {titleBar}
+          {sandpackPanel}
         </div>
       )}
     </>

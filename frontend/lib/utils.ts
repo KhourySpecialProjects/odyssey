@@ -568,6 +568,17 @@ export const stripHtmlTags = (html: string) => {
     .trim();
 };
 
+export function parseSandpackFiles(
+  json: string | null | undefined,
+): Record<string, string> {
+  try {
+    const parsed = JSON.parse(json || "{}");
+    return typeof parsed === "object" && parsed !== null ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
 // Helper function to convert BlockNote JSON to markdown
 export function convertBlockNoteToMarkdown(blocks: any[]): string {
   return blocks
