@@ -1,6 +1,7 @@
 "use server";
 
 import { fetchEnrollmentMetadata } from "./enrollment";
+import { fetchLessonScrollDepth } from "./posthog";
 
 export interface ScrollDepthPoint {
   label: string;
@@ -11,6 +12,7 @@ export interface LessonScrollDepth {
   lessonId: number;
   lessonName: string;
   points: ScrollDepthPoint[];
+  estimated: boolean;
 }
 
 export interface DropletAnalyticsData {
@@ -185,19 +187,40 @@ export async function getDropletAnalytics(
       : Math.round((lastMonthRatingSum / lastMonthRatingCount) * 10) / 10;
   }
 
-  const [averageRating, lastMonthAverageRating] = await Promise.all([
-    fetchAllEnrollments(),
-    fetchLastMonthRating(),
-  ]);
+  const [averageRating, lastMonthAverageRating, posthogScrollDepth] =
+    await Promise.all([
+      fetchAllEnrollments(),
+      fetchLastMonthRating(),
+      fetchLessonScrollDepth(
+        dropletId,
+        lessons.map((l) => l.id),
+      ),
+    ]);
 
   const lessonCompletion = lessons.map((lesson) => ({
     name: lesson.name,
     count: lessonViewCounts.get(lesson.id) ?? 0,
   }));
 
-  // Scroll depth: approximate per-lesson drop-off curve.
-  // Started = totalEnrolled, 25% = lesson view count, 100% = droplet completions.
+  // Scroll depth: use PostHog event counts when available, otherwise fall back
+  // to the approximate drop-off curve derived from Strapi enrollment data.
   const scrollDepth: LessonScrollDepth[] = lessons.map((lesson) => {
+    const phData = posthogScrollDepth.get(lesson.id);
+    if (phData && phData.size > 0) {
+      return {
+        lessonId: lesson.id,
+        lessonName: lesson.name,
+        estimated: false,
+        points: [
+          { label: "Started", count: totalEnrolled },
+          { label: "25%", count: phData.get(25) ?? 0 },
+          { label: "50%", count: phData.get(50) ?? 0 },
+          { label: "75%", count: phData.get(75) ?? 0 },
+          { label: "100%", count: phData.get(100) ?? 0 },
+        ],
+      };
+    }
+    // Fallback: interpolate from Strapi view/completion counts
     const viewed = lessonViewCounts.get(lesson.id) ?? 0;
     const p25 = viewed;
     const p100 = completedCount;
@@ -206,6 +229,7 @@ export async function getDropletAnalytics(
     return {
       lessonId: lesson.id,
       lessonName: lesson.name,
+      estimated: true,
       points: [
         { label: "Started", count: totalEnrolled },
         { label: "25%", count: p25 },

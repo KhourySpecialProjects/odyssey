@@ -126,7 +126,7 @@ async function StatsAndPageviews() {
   return (
     <>
       {/* Desktop */}
-      <div className="hidden md:grid md:grid-cols-[524fr_578fr] md:items-start md:gap-[25px]">
+      <div className="hidden md:grid md:grid-cols-[524fr_578fr] md:items-start md:gap-5">
         <div className="grid grid-cols-2 gap-5">{statCards}</div>
         <UniquePageviewBarChart data={pageviewCountRaw} />
       </div>
@@ -193,7 +193,7 @@ export default function Page() {
         fallback={
           <>
             {/* Desktop */}
-            <div className="hidden md:grid md:grid-cols-[524fr_578fr] md:items-start md:gap-[25px]">
+            <div className="hidden md:grid md:grid-cols-[524fr_578fr] md:items-start md:gap-5">
               <div className="grid grid-cols-2 gap-5">
                 <StatCardSkeleton />
                 <StatCardSkeleton />

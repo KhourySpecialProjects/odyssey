@@ -95,6 +95,27 @@ function computeTrend(
   };
 }
 
+function RoundedRightCursor({
+  x,
+  y,
+  width,
+  height,
+}: {
+  x?: number;
+  y?: number;
+  width?: number;
+  height?: number;
+}) {
+  if (x == null || y == null || width == null || height == null) return null;
+  const r = 6;
+  return (
+    <path
+      d={`M${x},${y} h${width - r} a${r},${r} 0 0 1 ${r},${r} v${height - 2 * r} a${r},${r} 0 0 1 ${-r},${r} h${-(width - r)}z`}
+      fill="rgba(0,0,0,0.1)"
+    />
+  );
+}
+
 function BarInsideLabel(props: LabelProps) {
   const { x, y, width, height, value } = props as {
     x: number;
@@ -155,37 +176,48 @@ function ScrollDepthChart({
 
   return (
     <div className="mt-6 rounded-[20px] bg-[#fcfcfd] p-8 shadow dark:bg-slate-800">
-      <h4 className="text-[22px] font-bold text-black dark:text-white">
-        Scroll Depth
-      </h4>
-      <p className="mt-1 text-[16px] text-[#475569] dark:text-slate-400">
-        Showing growth/decline in users as they progress through a lesson
-      </p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h4 className="text-[22px] font-bold text-black dark:text-white">
+            Scroll Depth
+          </h4>
+          <p className="mt-1 text-[16px] text-[#475569] dark:text-slate-400">
+            Showing growth/decline in users as they progress through a lesson
+          </p>
+        </div>
+        {scrollDepth[activeIndex].estimated && (
+          <span className="mt-1 shrink-0 rounded-full bg-[#2D7597] px-3 py-1 text-[13px] text-white">
+            Estimated — real tracking in progress
+          </span>
+        )}
+      </div>
 
       {/* Sliding pill tab selector */}
-      <div className="relative mt-5 inline-flex rounded-[97px] bg-[#eaecf0] p-1 dark:bg-slate-700">
-        <div
-          className="absolute rounded-[97px] bg-[#2D7597] shadow transition-all duration-200 ease-in-out"
-          style={{ left: pill.left, width: pill.width, top: 4, bottom: 4 }}
-        />
-        {scrollDepth.map((lesson, i) => (
-          <button
-            key={lesson.lessonId}
-            ref={(el) => {
-              if (el) tabRefs.current.set(i, el);
-              else tabRefs.current.delete(i);
-            }}
-            onClick={() => onTabChange(i)}
-            className={cn(
-              "relative z-10 rounded-[97px] px-4 py-1.5 text-[14px] font-medium transition-colors duration-200",
-              i === activeIndex
-                ? "text-white"
-                : "text-[#475569] hover:text-black dark:text-slate-300 dark:hover:text-white",
-            )}
-          >
-            {lesson.lessonName}
-          </button>
-        ))}
+      <div className="mt-5 max-w-full overflow-x-auto [&::-webkit-scrollbar]:hidden">
+        <div className="relative inline-flex rounded-[97px] bg-[#eaecf0] p-1 dark:bg-slate-700">
+          <div
+            className="absolute rounded-[97px] bg-[#2D7597] shadow transition-all duration-200 ease-in-out"
+            style={{ left: pill.left, width: pill.width, top: 4, bottom: 4 }}
+          />
+          {scrollDepth.map((lesson, i) => (
+            <button
+              key={lesson.lessonId}
+              ref={(el) => {
+                if (el) tabRefs.current.set(i, el);
+                else tabRefs.current.delete(i);
+              }}
+              onClick={() => onTabChange(i)}
+              className={cn(
+                "relative z-10 shrink-0 rounded-[97px] px-4 py-1.5 text-[14px] font-medium whitespace-nowrap transition-colors duration-200",
+                i === activeIndex
+                  ? "text-white"
+                  : "text-[#475569] hover:text-black dark:text-slate-300 dark:hover:text-white",
+              )}
+            >
+              {lesson.lessonName}
+            </button>
+          ))}
+        </div>
       </div>
 
       <div className={cn("mt-6 w-full overflow-x-auto", animClass)}>
@@ -201,11 +233,13 @@ function ScrollDepthChart({
             tick={{ fill: "#475569", fontSize: 14 }}
             axisLine={{ stroke: "#e2e8f0" }}
             tickLine={false}
+            padding={{ left: 24, right: 10 }}
           />
           <YAxis
             tick={{ fill: "#475569", fontSize: 14 }}
             axisLine={{ stroke: "#e2e8f0" }}
             tickLine={false}
+            width={40}
           />
           <Tooltip
             contentStyle={{
@@ -254,13 +288,13 @@ export function DropletAnalyticsModal({
           Droplet Analytics - {droplet.name}
         </DialogTitle>
 
-        <div className="flex max-h-[90vh] flex-col overflow-y-auto [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-transparent [&::-webkit-scrollbar-track]:bg-transparent [&:hover::-webkit-scrollbar-thumb]:bg-slate-300 dark:[&:hover::-webkit-scrollbar-thumb]:bg-slate-600">
+        <div className="flex max-h-[90vh] flex-col overflow-y-auto [&::-webkit-scrollbar]:hidden">
           {/* ---- Header ---- */}
           <div className="sticky top-0 z-10 rounded-t-[20px] bg-white pt-10 pr-10 pb-0 pl-14 dark:bg-slate-900">
-            <DialogClose className="absolute top-4 right-5 rounded-full p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-300">
+            <DialogClose className="absolute top-7 right-7 rounded-full p-1.5 text-[#475569] transition-colors hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-300">
               <IconX className="h-5 w-5" />
             </DialogClose>
-            <div className="flex items-start justify-between pr-8">
+            <div className="flex items-baseline justify-between pr-8">
               <div>
                 <h2 className="text-[40px] font-semibold text-black dark:text-white">
                   Analytics
@@ -273,7 +307,7 @@ export function DropletAnalyticsModal({
                 <p className="text-[32px] font-semibold text-black dark:text-white">
                   {droplet.name}
                 </p>
-                <p className="text-[14px] text-[#94a3b8] dark:text-slate-500">
+                <p className="text-[14px] text-[#475569] dark:text-slate-400">
                   Last updated:{" "}
                   {new Date().toLocaleDateString("en-US", {
                     month: "short",
@@ -352,7 +386,7 @@ export function DropletAnalyticsModal({
                 {/* Lesson-level analytics */}
                 {analytics.lessonCompletion.length > 0 && (
                   <>
-                    <h3 className="mt-12 text-[32px] font-semibold text-black dark:text-white">
+                    <h3 className="mt-8 text-[32px] font-semibold text-black dark:text-white">
                       Lesson-level Analytics
                     </h3>
 
@@ -381,6 +415,7 @@ export function DropletAnalyticsModal({
                           <XAxis type="number" hide />
                           <YAxis type="category" dataKey="name" hide />
                           <Tooltip
+                            cursor={<RoundedRightCursor />}
                             contentStyle={{
                               borderRadius: 12,
                               border: "none",
@@ -390,8 +425,8 @@ export function DropletAnalyticsModal({
                           <Bar
                             dataKey="count"
                             fill="#2D7597"
-                            radius={[16, 16, 16, 16]}
-                            barSize={36}
+                            radius={[0, 6, 6, 0]}
+                            barSize={44}
                           >
                             <LabelList
                               dataKey="name"

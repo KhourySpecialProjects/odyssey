@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { IconTrendingUp, IconTrendingDown } from "@tabler/icons-react";
 import {
   BarChart,
   Bar,
@@ -12,7 +13,6 @@ import {
 import {
   ChartContainer,
   ChartTooltip,
-  ChartTooltipContent,
   type ChartConfig,
 } from "@/components/ui/chart";
 import {
@@ -25,6 +25,47 @@ import {
   TimeframeSelector,
   type DateRange,
 } from "@/components/admin/charts/timeframe-selector";
+
+function PageviewTooltip({
+  active,
+  payload,
+  label,
+}: {
+  active?: boolean;
+  payload?: { value: number }[];
+  label?: string;
+}) {
+  if (!active || !payload?.length) return null;
+  return (
+    <div className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-[13px] shadow-sm dark:border-slate-700 dark:bg-slate-800">
+      <p className="text-slate-500 dark:text-slate-400">{label}</p>
+      <p className="font-medium text-black dark:text-white">
+        Pageviews: {payload[0].value}
+      </p>
+    </div>
+  );
+}
+
+function RoundedTopCursor({
+  x,
+  y,
+  width,
+  height,
+}: {
+  x?: number;
+  y?: number;
+  width?: number;
+  height?: number;
+}) {
+  if (x == null || y == null || width == null || height == null) return null;
+  const r = 6;
+  return (
+    <path
+      d={`M${x + r},${y} h${width - 2 * r} a${r},${r} 0 0 1 ${r},${r} v${height - r} h${-width} v${-(height - r)} a${r},${r} 0 0 1 ${r},${-r}z`}
+      fill="rgba(0,0,0,0.1)"
+    />
+  );
+}
 
 const chartConfig = {
   count: {
@@ -55,6 +96,30 @@ export function UniquePageviewBarChart({
     count: d.count,
   }));
 
+  const mid = Math.floor(formatted.length / 2);
+  const firstHalf = formatted.slice(0, mid);
+  const secondHalf = formatted.slice(mid);
+  const avgFirst =
+    firstHalf.length > 0
+      ? firstHalf.reduce((s, d) => s + d.count, 0) / firstHalf.length
+      : 0;
+  const avgSecond =
+    secondHalf.length > 0
+      ? secondHalf.reduce((s, d) => s + d.count, 0) / secondHalf.length
+      : 0;
+  const trendPct = avgFirst > 0 ? ((avgSecond - avgFirst) / avgFirst) * 100 : 0;
+  const trendUp = trendPct >= 0;
+
+  const periodLabel = dateRange
+    ? `from ${formatChartDate(dateRange.start)} – ${formatChartDate(dateRange.end)}`
+    : timeframe === 7
+      ? "this week"
+      : timeframe === 14
+        ? "last 2 weeks"
+        : timeframe === 30
+          ? "this month"
+          : `in the last ${timeframe} days`;
+
   return (
     <div className="flex h-[280px] flex-col overflow-hidden rounded-[20px] bg-[#FCFCFD] shadow-[0px_0px_4px_0px_rgba(0,0,0,0.25)] dark:bg-slate-800">
       <div className="flex items-start justify-between px-5 pt-4 pb-2">
@@ -69,7 +134,7 @@ export function UniquePageviewBarChart({
           activeDateRange={dateRange}
         />
       </div>
-      <div className="min-h-0 flex-1 px-5 pb-4">
+      <div className="min-h-0 flex-1 px-5 pt-2 pb-0">
         {formatted.length === 0 ? (
           <div className="flex h-full items-center justify-center text-[14px] text-slate-400">
             No pageview data available
@@ -78,7 +143,7 @@ export function UniquePageviewBarChart({
           <ChartContainer config={chartConfig} className="h-full w-full">
             <BarChart
               data={formatted}
-              margin={{ top: 15, right: 10, left: 0, bottom: 5 }}
+              margin={{ top: 8, right: 10, left: 0, bottom: 0 }}
             >
               <CartesianGrid vertical={false} stroke="#e2e8f0" />
               <XAxis
@@ -97,7 +162,10 @@ export function UniquePageviewBarChart({
                 tick={{ fontSize: 12, fill: "#60646c" }}
                 width={40}
               />
-              <ChartTooltip content={<ChartTooltipContent />} />
+              <ChartTooltip
+                cursor={<RoundedTopCursor />}
+                content={<PageviewTooltip />}
+              />
               <Bar dataKey="count" fill="#2D7597" radius={[4, 4, 0, 0]}>
                 <LabelList
                   dataKey="count"
@@ -111,6 +179,21 @@ export function UniquePageviewBarChart({
           </ChartContainer>
         )}
       </div>
+      {formatted.length > 0 && (
+        <div className="flex items-center gap-2 px-5 pt-0 pb-4 text-sm">
+          {trendUp ? (
+            <IconTrendingUp className="h-4 w-4 text-[#1ea438]" />
+          ) : (
+            <IconTrendingDown className="h-4 w-4 text-[#ce3131]" />
+          )}
+          <span
+            className={`font-medium ${trendUp ? "text-[#1ea438]" : "text-[#ce3131]"}`}
+          >
+            {trendUp ? "Trending up" : "Trending down"} by{" "}
+            {Math.abs(trendPct).toFixed(1)}% {periodLabel}
+          </span>
+        </div>
+      )}
     </div>
   );
 }
