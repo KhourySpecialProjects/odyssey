@@ -25,6 +25,7 @@ export function AdminPagination({
         <button
           onClick={() => onPageChange(Math.max(1, currentPage - 1))}
           disabled={currentPage === 1}
+          aria-label="Go to previous page"
           className="text-sm font-medium text-[#344054] disabled:opacity-40 dark:text-slate-300"
         >
           ‹ Prev
@@ -35,6 +36,7 @@ export function AdminPagination({
         <button
           onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
           disabled={currentPage === totalPages}
+          aria-label="Go to next page"
           className="text-sm font-medium text-[#2D7597] disabled:opacity-40"
         >
           Next ›

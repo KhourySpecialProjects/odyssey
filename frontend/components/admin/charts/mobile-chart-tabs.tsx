@@ -15,10 +15,15 @@ export function MobileChartTabs({ charts }: MobileChartTabsProps) {
 
   return (
     <div>
-      <div className="flex rounded-lg bg-slate-100 p-1 dark:bg-slate-800">
+      <div
+        role="tablist"
+        className="flex rounded-lg bg-slate-100 p-1 dark:bg-slate-800"
+      >
         {charts.map((chart, i) => (
           <button
             key={chart.label}
+            role="tab"
+            aria-selected={i === activeTab}
             onClick={() => setActiveTab(i)}
             className={cn(
               "flex-1 rounded-md px-2 py-1.5 text-xs font-medium transition-colors",

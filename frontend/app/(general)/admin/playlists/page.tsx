@@ -41,8 +41,8 @@ function TableSkeleton() {
             key={i}
             className="rounded-xl border border-[#e2e8f0] bg-white p-3 dark:border-slate-700 dark:bg-slate-900"
           >
-            <div className="h-4 w-36 animate-pulse rounded bg-slate-200" />
-            <div className="mt-1.5 h-3 w-48 animate-pulse rounded bg-slate-100" />
+            <div className="h-4 w-36 animate-pulse rounded bg-slate-200 dark:bg-slate-700" />
+            <div className="mt-1.5 h-3 w-48 animate-pulse rounded bg-slate-100 dark:bg-slate-700" />
           </div>
         ))}
       </div>

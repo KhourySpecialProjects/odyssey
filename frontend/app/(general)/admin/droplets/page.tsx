@@ -29,8 +29,8 @@ function TableSkeleton() {
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div className="h-[44px] w-full animate-pulse rounded-[30px] bg-slate-200 sm:w-[560px] dark:bg-slate-700" />
         <div className="flex gap-2">
-          <div className="h-10 w-[70px] animate-pulse rounded-[8px] bg-slate-200 md:w-[100px]" />
-          <div className="h-10 w-[60px] animate-pulse rounded-[8px] bg-slate-200 md:w-[80px]" />
+          <div className="h-10 w-[70px] animate-pulse rounded-[8px] bg-slate-200 md:w-[100px] dark:bg-slate-700" />
+          <div className="h-10 w-[60px] animate-pulse rounded-[8px] bg-slate-200 md:w-[80px] dark:bg-slate-700" />
         </div>
       </div>
 
@@ -41,10 +41,10 @@ function TableSkeleton() {
             key={i}
             className="rounded-xl border border-[#e2e8f0] bg-white p-3 dark:border-slate-700 dark:bg-slate-900"
           >
-            <div className="h-4 w-36 animate-pulse rounded bg-slate-200" />
+            <div className="h-4 w-36 animate-pulse rounded bg-slate-200 dark:bg-slate-700" />
             <div className="mt-2 flex gap-1.5">
-              <div className="h-5 w-16 animate-pulse rounded-full bg-slate-100" />
-              <div className="h-5 w-14 animate-pulse rounded-full bg-slate-100" />
+              <div className="h-5 w-16 animate-pulse rounded-full bg-slate-100 dark:bg-slate-700" />
+              <div className="h-5 w-14 animate-pulse rounded-full bg-slate-100 dark:bg-slate-700" />
             </div>
           </div>
         ))}
@@ -73,21 +73,24 @@ function TableSkeleton() {
           </thead>
           <tbody className="bg-white dark:bg-slate-900">
             {Array.from({ length: 8 }).map((_, i) => (
-              <tr key={i} className="border-b border-[#eaecf0]">
+              <tr
+                key={i}
+                className="border-b border-[#eaecf0] dark:border-slate-700"
+              >
                 <td className="h-[56px] py-3 pr-6 pl-[30px]">
-                  <div className="h-4 w-[200px] animate-pulse rounded bg-slate-200" />
+                  <div className="h-4 w-[200px] animate-pulse rounded bg-slate-200 dark:bg-slate-700" />
                 </td>
                 <td className="h-[56px] px-6 py-3">
                   <div className="flex gap-[5px]">
-                    <div className="h-[26px] w-[70px] animate-pulse rounded-[16px] bg-slate-200" />
-                    <div className="h-[26px] w-[60px] animate-pulse rounded-[16px] bg-slate-100" />
+                    <div className="h-[26px] w-[70px] animate-pulse rounded-[16px] bg-slate-200 dark:bg-slate-700" />
+                    <div className="h-[26px] w-[60px] animate-pulse rounded-[16px] bg-slate-100 dark:bg-slate-700" />
                   </div>
                 </td>
                 <td className="h-[56px] px-6 py-3">
                   <div className="flex gap-2">
-                    <div className="h-8 w-8 animate-pulse rounded bg-slate-200" />
-                    <div className="h-8 w-8 animate-pulse rounded bg-slate-200" />
-                    <div className="h-8 w-8 animate-pulse rounded bg-slate-200" />
+                    <div className="h-8 w-8 animate-pulse rounded bg-slate-200 dark:bg-slate-700" />
+                    <div className="h-8 w-8 animate-pulse rounded bg-slate-200 dark:bg-slate-700" />
+                    <div className="h-8 w-8 animate-pulse rounded bg-slate-200 dark:bg-slate-700" />
                   </div>
                 </td>
               </tr>

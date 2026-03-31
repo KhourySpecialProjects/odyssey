@@ -33,10 +33,10 @@ export function Header({
   const pathname = usePathname();
   const isAdminRoute = pathname.startsWith("/admin");
 
+  const generalConfig = getGeneralConfig(user);
   const getNavLinks = () => {
     return generalConfig.mainNav;
   };
-  const generalConfig = getGeneralConfig(user);
 
   const handleCloseSheet = () => {
     setIsOpen(false);
