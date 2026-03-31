@@ -782,7 +782,8 @@ export interface ApiDatasetDataset extends Schema.CollectionType {
       'api::dataset.dataset',
       'manyToOne',
       'api::droplet.droplet'
-    >;
+    > &
+      Attribute.Required;
     fileSize: Attribute.Integer;
     fileUrl: Attribute.String & Attribute.Required;
     format: Attribute.Enumeration<['csv', 'json', 'xlsx']> & Attribute.Required;

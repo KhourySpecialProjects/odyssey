@@ -3,9 +3,14 @@
 const PYODIDE_CDN = "https://cdn.jsdelivr.net/pyodide/v0.27.0/full/";
 
 // Load Pyodide by injecting a script tag (NOT via npm — that breaks webpack)
+// CDN script injects loadPyodide onto globalThis
+declare const globalThis: typeof global & {
+  loadPyodide?: (options: { indexURL: string }) => Promise<PyodideInstance>;
+};
+
 let cdnLoadPromise: Promise<void> | null = null;
 async function loadPyodideFromCDN(): Promise<void> {
-  if ((globalThis as any).loadPyodide) return;
+  if (globalThis.loadPyodide) return;
   if (cdnLoadPromise) return cdnLoadPromise;
   cdnLoadPromise = new Promise<void>((resolve, reject) => {
     const script = document.createElement("script");
@@ -20,17 +25,31 @@ async function loadPyodideFromCDN(): Promise<void> {
   return cdnLoadPromise;
 }
 
-let pyodideInstance: any = null;
-let initPromise: Promise<any> | null = null;
+// Pyodide doesn't ship TS types — use a minimal interface
+interface PyodideResult {
+  toJs: (options?: { dict_converter?: typeof Object.fromEntries }) => unknown[];
+}
 
-export async function initPyodide(): Promise<any> {
+interface PyodideInstance {
+  runPythonAsync: (code: string) => Promise<PyodideResult>;
+  loadPackage: (packages: string[]) => Promise<void>;
+  FS: {
+    writeFile: (path: string, data: Uint8Array) => void;
+    mkdir: (path: string, mode?: number) => void;
+  };
+}
+
+let pyodideInstance: PyodideInstance | null = null;
+let initPromise: Promise<PyodideInstance> | null = null;
+
+export async function initPyodide(): Promise<PyodideInstance> {
   if (pyodideInstance) return pyodideInstance;
   if (initPromise) return initPromise;
 
   initPromise = (async () => {
     await loadPyodideFromCDN();
 
-    const pyodide = await (globalThis as any).loadPyodide({
+    const pyodide = await globalThis.loadPyodide!({
       indexURL: PYODIDE_CDN,
     });
 
@@ -141,19 +160,21 @@ finally:
 
     try {
       const pyResult = await pyodide.runPythonAsync(wrappedCode);
-      const [stdout, stderr, plots] = pyResult.toJs({
+      const jsResult = pyResult.toJs({
         dict_converter: Object.fromEntries,
       });
 
-      result.stdout = stdout || "";
-      result.stderr = stderr || "";
-      result.plots = Array.isArray(plots) ? [...plots] : [];
+      result.stdout = String(jsResult[0] ?? "");
+      result.stderr = String(jsResult[1] ?? "");
+      result.plots = Array.isArray(jsResult[2])
+        ? ([...jsResult[2]] as string[])
+        : [];
 
       if (result.stderr) {
         result.error = result.stderr;
       }
-    } catch (err: any) {
-      const errMsg: string = err?.message ?? String(err);
+    } catch (err: unknown) {
+      const errMsg = err instanceof Error ? err.message : String(err);
       result.error = errMsg;
       result.stderr = errMsg;
     }
@@ -163,12 +184,13 @@ finally:
 
   try {
     return await Promise.race([executionPromise, timeoutPromise]);
-  } catch (err: any) {
+  } catch (err: unknown) {
+    const errMsg = err instanceof Error ? err.message : String(err);
     return {
       stdout: "",
-      stderr: err?.message ?? String(err),
+      stderr: errMsg,
       plots: [],
-      error: err?.message ?? String(err),
+      error: errMsg,
     };
   }
 }

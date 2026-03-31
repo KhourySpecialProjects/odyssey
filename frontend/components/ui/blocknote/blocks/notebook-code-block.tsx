@@ -28,6 +28,8 @@ import type { ExecutionResult } from "@/lib/pyodide/runtime";
 
 SyntaxHighlighter.registerLanguage("python", python);
 
+// BlockNote's createReactBlockSpec doesn't export prop types for the render callback.
+// This matches the pattern used by the existing CodeBlock component.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const NotebookCodeBlockComponent = ({ block, editor }: any) => {
   const [code, setCode] = useState<string>(block.props.code || "");
@@ -53,7 +55,7 @@ const NotebookCodeBlockComponent = ({ block, editor }: any) => {
 
   // Dataset loading
   const { datasets } = useDatasets();
-  const datasetsLoadedRef = useRef(false);
+  const datasetsLoadedRef = useRef<Set<number>>(new Set());
   const pyodide = usePyodide();
 
   useEffect(() => {
@@ -109,13 +111,21 @@ const NotebookCodeBlockComponent = ({ block, editor }: any) => {
   };
 
   const loadDatasetsIfNeeded = async () => {
-    if (datasetsLoadedRef.current || datasets.length === 0) return;
-    datasetsLoadedRef.current = true;
+    if (datasets.length === 0) return;
+    const unloaded = datasets.filter(
+      (ds) => !datasetsLoadedRef.current.has(ds.id),
+    );
+    if (unloaded.length === 0) return;
     await Promise.all(
-      datasets.map((ds) =>
-        pyodide.loadDataset(ds.name, ds.fileUrl).catch((err) => {
-          console.warn(`Failed to load dataset "${ds.name}":`, err);
-        }),
+      unloaded.map((ds) =>
+        pyodide
+          .loadDataset(ds.name, ds.fileUrl)
+          .then(() => {
+            datasetsLoadedRef.current.add(ds.id);
+          })
+          .catch((err) => {
+            console.warn(`Failed to load dataset "${ds.name}":`, err);
+          }),
       ),
     );
   };
@@ -129,12 +139,13 @@ const NotebookCodeBlockComponent = ({ block, editor }: any) => {
       const execResult = await pyodide.runCode(code);
       setResult(execResult);
       setExecutionCount((c) => (c === null ? 1 : c + 1));
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
       setResult({
         stdout: "",
-        stderr: err?.message ?? String(err),
+        stderr: message,
         plots: [],
-        error: err?.message ?? String(err),
+        error: message,
       });
     } finally {
       setIsRunning(false);
@@ -177,8 +188,9 @@ print("__TEST_RESULTS__" + _json.dumps(_test_results))
       } else if (testResult.error) {
         setTestResults([{ passed: false, message: testResult.error }]);
       }
-    } catch (err: any) {
-      setTestResults([{ passed: false, message: err?.message ?? String(err) }]);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      setTestResults([{ passed: false, message }]);
     } finally {
       setIsTestRunning(false);
     }

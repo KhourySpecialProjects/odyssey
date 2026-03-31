@@ -112,7 +112,10 @@ export function DatasetUpload({ dropletId, datasets }: DatasetUploadProps) {
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     multiple: false,
-    disabled: atLimit || uploadState.status === "uploading",
+    disabled:
+      atLimit ||
+      uploadState.status === "uploading" ||
+      uploadState.status === "parsing",
     maxSize: MAX_DATASET_FILE_SIZE,
     accept: {
       "text/csv": [".csv"],

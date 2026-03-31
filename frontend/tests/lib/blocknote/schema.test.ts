@@ -180,6 +180,11 @@ describe("blockNoteSchema", () => {
     expect(blockSpecs).toHaveProperty("code-block");
   });
 
+  it("should include custom notebook-code block", () => {
+    const blockSpecs = blockNoteSchema.blockSpecs;
+    expect(blockSpecs).toHaveProperty("notebook-code");
+  });
+
   it("should include default blocks that are not filtered", () => {
     const blockSpecs = blockNoteSchema.blockSpecs;
     expect(blockSpecs).toHaveProperty("paragraph");

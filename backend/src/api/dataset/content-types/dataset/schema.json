@@ -45,7 +45,8 @@
       "type": "relation",
       "relation": "manyToOne",
       "target": "api::droplet.droplet",
-      "inversedBy": "datasets"
+      "inversedBy": "datasets",
+      "required": true
     }
   }
 }

@@ -1,5 +1,6 @@
 import { getDatasetsByDropletId } from "@/lib/requests/dataset";
 import { CACHE_TAGS } from "@/lib/cache-tags";
+import { fetchAPI } from "@/lib/utils";
 
 jest.mock("@/lib/utils", () => ({
   fetchAPI: jest.fn(),
@@ -16,7 +17,6 @@ describe("getDatasetsByDropletId", () => {
   });
 
   it("fetches datasets filtered by droplet id", async () => {
-    const { fetchAPI } = require("@/lib/utils");
     const mockDatasets = [
       {
         id: 1,
@@ -50,7 +50,6 @@ describe("getDatasetsByDropletId", () => {
   });
 
   it("returns empty array when no datasets exist for droplet", async () => {
-    const { fetchAPI } = require("@/lib/utils");
     (fetchAPI as jest.Mock).mockResolvedValue([]);
 
     const result = await getDatasetsByDropletId(99);

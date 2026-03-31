@@ -8,7 +8,7 @@
  * because the sorting / filtering / pagination behavior is the whole point.
  */
 
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { render, screen, fireEvent } from "@testing-library/react";
 import { DataTable } from "@/components/notebook/data-table/data-table";
 import type { ParsedDataset } from "@/lib/dataset-parser";
 
