@@ -20,6 +20,7 @@ jest.mock("react-syntax-highlighter", () => ({
 
 jest.mock("react-syntax-highlighter/dist/esm/styles/hljs", () => ({
   atomOneDark: {},
+  githubGist: {},
 }));
 
 // Mock all language imports
@@ -135,6 +136,10 @@ jest.mock("@/components/ui/blocknote/blocks/image-block", () => ({
   ImageBlock: jest.fn(() => ({ type: "image" })),
 }));
 
+jest.mock("@/components/ui/blocknote/blocks/notebook-code-block", () => ({
+  NotebookCodeBlock: jest.fn(() => ({ type: "notebook-code" })),
+}));
+
 import { blockNoteSchema } from "@/lib/blocknote/schema";
 
 describe("blockNoteSchema", () => {
@@ -173,6 +178,11 @@ describe("blockNoteSchema", () => {
   it("should include custom code-block", () => {
     const blockSpecs = blockNoteSchema.blockSpecs;
     expect(blockSpecs).toHaveProperty("code-block");
+  });
+
+  it("should include custom notebook-code block", () => {
+    const blockSpecs = blockNoteSchema.blockSpecs;
+    expect(blockSpecs).toHaveProperty("notebook-code");
   });
 
   it("should include default blocks that are not filtered", () => {

@@ -511,6 +511,24 @@ function convertSingleBlock(blockAny: any, blockIndex: number): Block | null {
       };
     }
 
+    case "notebook-code": {
+      const language = blockAny.props?.language || "python";
+      const code = blockAny.props?.code || "";
+      const editable = blockAny.props?.editable === "true";
+      const testCode = blockAny.props?.testCode || "";
+
+      return {
+        __component: "droplets.code-block" as const,
+        id: blockIndex,
+        language,
+        code,
+        editable,
+        runnable: true,
+        testCode,
+        isNotebook: true,
+      } as Block;
+    }
+
     case "sandpack-block": {
       const template = blockAny.props?.template || "vanilla";
       const files = blockAny.props?.files || "{}";
