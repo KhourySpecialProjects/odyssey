@@ -85,8 +85,11 @@ export function UniquePageviewBarChart({
                 dataKey="date"
                 tickLine={false}
                 axisLine={false}
-                tick={{ fontSize: 12, fill: "#60646c" }}
+                tick={{ fontSize: 11, fill: "#60646c" }}
                 interval="preserveStartEnd"
+                angle={-35}
+                textAnchor="end"
+                height={45}
               />
               <YAxis
                 tickLine={false}

@@ -310,7 +310,7 @@ function UserTableRow({ user: initialUser }: { user: AuthorizedUser }) {
 
       {/* Edit Dialog */}
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
-        <DialogContent className="scale-75 sm:scale-100">
+        <DialogContent>
           <DialogClose className="absolute top-3 right-3 rounded-full p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-300">
             <IconX className="h-4 w-4" />
           </DialogClose>
@@ -475,6 +475,198 @@ function SaveButton() {
   );
 }
 
+// ——— UserMobileCard ———
+function UserMobileCard({ user: initialUser }: { user: AuthorizedUser }) {
+  const [user, setUser] = useState(initialUser);
+  const [editOpen, setEditOpen] = useState(false);
+  const [firstName, setFirstName] = useState(user.firstName || "");
+  const [lastName, setLastName] = useState(user.lastName || "");
+  const [bio, setBio] = useState(user.bio || "");
+  const [selectedRoles, setSelectedRoles] = useState<AuthorizedUserRoleTitle[]>(
+    user.roles.map((r) => r.title),
+  );
+
+  const roleOptions = [
+    { value: AuthorizedUserRoleTitle.Faculty, label: "Faculty" },
+    { value: AuthorizedUserRoleTitle.ContentCreator, label: "Content Creator" },
+    { value: AuthorizedUserRoleTitle.ContentEditor, label: "Content Editor" },
+    { value: AuthorizedUserRoleTitle.SysAdmin, label: "System Admin" },
+  ] as const;
+
+  const toggleRole = (role: AuthorizedUserRoleTitle) => {
+    setSelectedRoles((current) =>
+      current.includes(role)
+        ? current.filter((r) => r !== role)
+        : [...current, role],
+    );
+  };
+
+  const handleEditUser = async (formData: FormData) => {
+    const result = await updateUserInfo(user.id, {
+      first: formData.get("firstName") as string,
+      last: formData.get("lastName") as string,
+      bio: formData.get("bio") as string,
+      roles: selectedRoles,
+    });
+    if (result.success) {
+      setUser((prev) => ({
+        ...prev,
+        firstName: formData.get("firstName") as string,
+        lastName: formData.get("lastName") as string,
+        bio: formData.get("bio") as string,
+        roles: selectedRoles.map((title) => ({ id: 0, title })),
+      }));
+      toast.success("User updated successfully");
+      setEditOpen(false);
+    } else {
+      toast.error("Failed to update user");
+    }
+  };
+
+  const handleToggleEnabled = async () => {
+    const prev = user.isEnabled;
+    const next = !prev;
+    setUser((u) => ({ ...u, isEnabled: next }));
+    try {
+      const result = await updateUserInfo(user.id, { isEnabled: next });
+      if (!result.success) {
+        setUser((u) => ({ ...u, isEnabled: prev }));
+        toast.error("Failed to update user access");
+      }
+    } catch {
+      setUser((u) => ({ ...u, isEnabled: prev }));
+      toast.error("Failed to update user access");
+    }
+  };
+
+  const displayName =
+    user.firstName && user.lastName
+      ? `${user.firstName} ${user.lastName}`
+      : user.email;
+  const initial = user.firstName ? user.firstName[0] : null;
+
+  return (
+    <>
+      <button
+        onClick={() => setEditOpen(true)}
+        className="w-full rounded-xl border border-[#e2e8f0] bg-white p-3 text-left transition-colors hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:hover:bg-slate-800/50"
+      >
+        <div className="flex items-center gap-3">
+          <Avatar variant="round" size="sm" className="shrink-0">
+            <AvatarImage src={user.profilePhoto || undefined} />
+            <AvatarFallback>
+              {initial ?? <IconUser className="h-4 w-4" />}
+            </AvatarFallback>
+          </Avatar>
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-semibold text-[#101828] dark:text-white">
+              {displayName}
+              {!user.isEnabled && (
+                <span className="ml-1 text-xs font-normal text-slate-400">
+                  (Disabled)
+                </span>
+              )}
+            </p>
+            <p className="truncate text-xs text-[#667085] dark:text-slate-400">
+              {user.email}
+            </p>
+          </div>
+          <span className="text-slate-400">&#8250;</span>
+        </div>
+        {user.roles.length > 0 && (
+          <div className="mt-2 flex flex-wrap gap-1">
+            {user.roles.map((role) => {
+              const config = ROLE_CONFIG[role.title];
+              return config ? (
+                <Badge
+                  key={role.title}
+                  variant="outline"
+                  className={cn(
+                    "rounded-full px-2 py-0.5 text-xs font-medium",
+                    config.className,
+                  )}
+                >
+                  {config.label}
+                </Badge>
+              ) : null;
+            })}
+          </div>
+        )}
+      </button>
+
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        <DialogContent>
+          <DialogClose className="absolute top-3 right-3 rounded-full p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-300">
+            <IconX className="h-4 w-4" />
+          </DialogClose>
+          <DialogHeader>
+            <DialogTitle>Edit User</DialogTitle>
+            <DialogDescription>Update user information</DialogDescription>
+          </DialogHeader>
+          <form action={handleEditUser} className="space-y-3">
+            <input type="hidden" name="id" value={user.id} />
+            <TextInput
+              name="firstName"
+              value={firstName}
+              onChange={(e) => setFirstName(e.target.value)}
+              placeholder="First Name"
+            />
+            <TextInput
+              name="lastName"
+              value={lastName}
+              onChange={(e) => setLastName(e.target.value)}
+              placeholder="Last Name"
+            />
+            <Textarea
+              name="bio"
+              value={bio}
+              onChange={(e) => setBio(e.target.value)}
+              placeholder="Bio"
+            />
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Roles</label>
+              <div className="space-y-2">
+                {roleOptions.map((role) => (
+                  <div key={role.value} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={`mobile-edit-role-${role.value}`}
+                      checked={selectedRoles.includes(role.value)}
+                      onCheckedChange={() => toggleRole(role.value)}
+                      className="border-sky-500 focus-visible:ring-sky-500 data-[state=checked]:border-sky-500 data-[state=checked]:bg-sky-500"
+                    />
+                    <label
+                      htmlFor={`mobile-edit-role-${role.value}`}
+                      className="text-sm leading-none font-medium"
+                    >
+                      {role.label}
+                    </label>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="flex items-center justify-between pt-1">
+              <SaveButton />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className={
+                  user.isEnabled
+                    ? "border-red-200 text-red-600 hover:bg-red-50 dark:border-red-800 dark:text-red-400"
+                    : "border-green-200 text-green-600 hover:bg-green-50 dark:border-green-800 dark:text-green-400"
+                }
+                onClick={handleToggleEnabled}
+              >
+                {user.isEnabled ? "Disable Access" : "Enable Access"}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}
+
 // ——— Main Client Component ———
 export function UsersPageClient({ users }: { users: AuthorizedUser[] }) {
   const {
@@ -562,6 +754,9 @@ export function UsersPageClient({ users }: { users: AuthorizedUser[] }) {
         currentPage={currentPage}
         totalPages={totalPages}
         onPageChange={setCurrentPage}
+        mobileCards={pageUsers.map((user) => (
+          <UserMobileCard key={user.id} user={user} />
+        ))}
       >
         {pageUsers.map((user) => (
           <UserTableRow key={user.id} user={user} />

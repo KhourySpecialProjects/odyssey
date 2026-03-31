@@ -255,6 +255,61 @@ function DropletTableRow({ droplet }: { droplet: Droplet }) {
   );
 }
 
+// ——— DropletMobileCard ———
+function DropletMobileCard({ droplet }: { droplet: Droplet }) {
+  const typeColors = getTagColors(droplet.type);
+  const visibleTags = droplet.tags?.slice(0, 3) ?? [];
+  const extraCount = (droplet.tags?.length ?? 0) - 3;
+
+  return (
+    <Link
+      href={`/draft/d/${droplet.slug}`}
+      prefetch={false}
+      className="block w-full rounded-xl border border-[#e2e8f0] bg-white p-3 text-left transition-colors hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:hover:bg-slate-800/50"
+    >
+      <div className="flex items-center justify-between gap-2">
+        <p className="min-w-0 truncate text-sm font-semibold text-[#101828] dark:text-white">
+          {droplet.name}
+        </p>
+        <span className="shrink-0 text-slate-400">&#8250;</span>
+      </div>
+      <div className="mt-2 flex flex-wrap gap-1">
+        <Badge
+          variant="outline"
+          className={cn(
+            "rounded-full border-0 px-2 py-0.5 text-xs font-medium",
+            typeColors.bg,
+            typeColors.text,
+          )}
+        >
+          {uppercaseFirstChar(droplet.type)}
+        </Badge>
+        {visibleTags.map((tag) => {
+          const colors = getTagColors(tag.name);
+          return (
+            <Badge
+              key={tag.id}
+              variant="outline"
+              className={cn(
+                "rounded-full border-0 px-2 py-0.5 text-xs font-medium",
+                colors.bg,
+                colors.text,
+              )}
+            >
+              {tag.name}
+            </Badge>
+          );
+        })}
+        {extraCount > 0 && (
+          <span className="px-1 text-xs text-slate-400">
+            +{extraCount} more
+          </span>
+        )}
+      </div>
+    </Link>
+  );
+}
+
 // ——— Main Client Component ———
 export function DropletsPageClient({ droplets }: { droplets: Droplet[] }) {
   const {
@@ -330,6 +385,9 @@ export function DropletsPageClient({ droplets }: { droplets: Droplet[] }) {
         currentPage={currentPage}
         totalPages={totalPages}
         onPageChange={setCurrentPage}
+        mobileCards={pageDroplets.map((droplet) => (
+          <DropletMobileCard key={droplet.id} droplet={droplet} />
+        ))}
       >
         {pageDroplets.map((droplet) => (
           <DropletTableRow key={droplet.id} droplet={droplet} />

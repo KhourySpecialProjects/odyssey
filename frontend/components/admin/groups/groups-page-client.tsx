@@ -179,6 +179,54 @@ function GroupTableRow({ group }: { group: Group }) {
   );
 }
 
+// ——— GroupMobileCard ———
+function GroupMobileCard({ group }: { group: Group }) {
+  const membersCount = group.members?.length ?? 0;
+
+  return (
+    <Link
+      href={`/g/management?slug=${group.slug}`}
+      prefetch={false}
+      className="block w-full rounded-xl border border-[#e2e8f0] bg-white p-3 text-left transition-colors hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:hover:bg-slate-800/50"
+    >
+      <div className="flex items-center justify-between gap-2">
+        <p className="min-w-0 truncate text-sm font-semibold text-[#101828] dark:text-white">
+          {group.groupName}
+        </p>
+        <span className="shrink-0 text-slate-400">&#8250;</span>
+      </div>
+      <div className="mt-2 flex flex-wrap items-center gap-2">
+        <span className="text-xs text-[#667085] dark:text-slate-400">
+          {membersCount} member{membersCount !== 1 && "s"}
+        </span>
+        {group.semester && (
+          <>
+            <span className="text-xs text-slate-300 dark:text-slate-600">
+              |
+            </span>
+            <Badge
+              variant="outline"
+              className="rounded-full border-0 bg-[#f2f4f7] px-2 py-0.5 text-xs font-medium text-[#60646c] dark:bg-slate-700 dark:text-slate-300"
+            >
+              {group.semester}
+            </Badge>
+          </>
+        )}
+        {group.creator?.email && (
+          <>
+            <span className="text-xs text-slate-300 dark:text-slate-600">
+              |
+            </span>
+            <span className="truncate text-xs text-[#667085] dark:text-slate-400">
+              {group.creator.email}
+            </span>
+          </>
+        )}
+      </div>
+    </Link>
+  );
+}
+
 // ——— Main Client Component ———
 export function GroupsPageClient({ groups }: { groups: Group[] }) {
   // Derive semester options from actual data instead of hardcoding
@@ -268,6 +316,9 @@ export function GroupsPageClient({ groups }: { groups: Group[] }) {
         currentPage={currentPage}
         totalPages={totalPages}
         onPageChange={setCurrentPage}
+        mobileCards={pageGroups.map((group) => (
+          <GroupMobileCard key={group.id} group={group} />
+        ))}
       >
         {pageGroups.map((group) => (
           <GroupTableRow key={group.id} group={group} />
