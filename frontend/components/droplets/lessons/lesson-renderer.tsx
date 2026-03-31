@@ -36,6 +36,9 @@ import { markLessonAsComplete } from "@/lib/requests/lesson";
 import posthog from "posthog-js";
 import "katex/dist/katex.min.css";
 import { CodeBlockViewer } from "@/components/draft/lesson/code-block-viewer";
+import { NotebookCodeViewer } from "@/components/notebook/notebook-code-viewer";
+import { PyodideProvider } from "@/lib/pyodide/pyodide-context";
+import { DatasetProvider } from "@/lib/contexts/dataset-context";
 import dynamic from "next/dynamic";
 
 const SandpackViewer = dynamic(
@@ -54,7 +57,7 @@ import { convertBlockNoteToV1Blocks } from "@/lib/blocknote/convert-blocks";
 
 interface LessonRendererProps {
   lesson: Lesson;
-  droplet: Pick<Droplet, "id" | "lessons" | "name">;
+  droplet: Pick<Droplet, "id" | "lessons" | "name" | "datasets">;
   enrollmentId?: string;
   completedLessonIds: number[];
   user?: User | null;
@@ -336,29 +339,33 @@ export function LessonRenderer({
       <div className="relative mx-auto w-full max-w-2xl xl:py-8">
         <h1 className="text-6xl font-extrabold text-balance">{lesson.name}</h1>
 
-        <div className="mt-8 space-y-2">
-          {displayBlocks.map((b: Block, i: number) => (
-            <LessonBlockRenderer
-              key={i}
-              block={b}
-              lessonId={lesson.id}
-              dropletId={droplet.id}
-              dropletName={droplet.name}
-              lessonName={lesson.name}
-              userId={authUser?.id}
-              highlights={highlights}
-              onHighlight={handleHighlight}
-              onDeleteHighlight={handleDeleteHighlight}
-              onNote={handleCreateNote}
-              enrollmentId={enrollmentId}
-              expanded={expanded}
-              setExpanded={setExpanded}
-              activeBlock={activeBlock}
-              setActiveBlock={(id: number) => setActiveBlock(id)}
-              author={author}
-            />
-          ))}
-        </div>
+        <DatasetProvider datasets={droplet.datasets ?? []}>
+          <PyodideProvider>
+            <div className="mt-8 space-y-2">
+              {displayBlocks.map((b: Block, i: number) => (
+                <LessonBlockRenderer
+                  key={i}
+                  block={b}
+                  lessonId={lesson.id}
+                  dropletId={droplet.id}
+                  dropletName={droplet.name}
+                  lessonName={lesson.name}
+                  userId={authUser?.id}
+                  highlights={highlights}
+                  onHighlight={handleHighlight}
+                  onDeleteHighlight={handleDeleteHighlight}
+                  onNote={handleCreateNote}
+                  enrollmentId={enrollmentId}
+                  expanded={expanded}
+                  setExpanded={setExpanded}
+                  activeBlock={activeBlock}
+                  setActiveBlock={(id: number) => setActiveBlock(id)}
+                  author={author}
+                />
+              ))}
+            </div>
+          </PyodideProvider>
+        </DatasetProvider>
         <div className="mt-8 flex items-center justify-between">
           <button
             onClick={handleMarkAsComplete}
@@ -517,6 +524,16 @@ function LessonBlockRenderer({
           code={block.code}
           editable={block.editable}
           runnable={block.runnable}
+        />
+      );
+
+    case "droplets.notebook-code":
+      return (
+        <NotebookCodeViewer
+          code={block.code}
+          language={block.language}
+          editable={block.editable}
+          testCode={block.testCode}
         />
       );
 

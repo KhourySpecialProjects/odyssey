@@ -515,14 +515,15 @@ function convertSingleBlock(blockAny: any, blockIndex: number): Block | null {
       const language = blockAny.props?.language || "python";
       const code = blockAny.props?.code || "";
       const editable = blockAny.props?.editable === "true";
+      const testCode = blockAny.props?.testCode || "";
 
       return {
-        __component: "droplets.code-block",
+        __component: "droplets.notebook-code",
         id: blockIndex,
         language,
         code,
         editable,
-        runnable: true,
+        testCode,
       };
     }
 
